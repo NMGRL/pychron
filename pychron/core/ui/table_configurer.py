@@ -158,7 +158,6 @@ class TableConfigurer(HasTraits):
         p = os.path.join(paths.appdata_dir, self.id)
         state = None
 
-        print('asfdasdfasfasdf', p)
         if os.path.isfile(p):
             try:
                 with open(p, 'rb') as rfile:
@@ -166,7 +165,6 @@ class TableConfigurer(HasTraits):
             except (pickle.PickleError, OSError, EOFError, TraitError):
                 return
         elif os.path.isfile('{}.yaml'.format(p)):
-            print('log yaml')
             state = yload('{}.yaml'.format(p))
 
         return state

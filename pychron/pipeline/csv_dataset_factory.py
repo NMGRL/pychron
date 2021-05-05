@@ -35,6 +35,7 @@ from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.ui.dialogs import cinformation
 from pychron.core.ui.strings import SpacelessStr
+from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 from pychron.processing.analyses.file_analysis import FileAnalysis
@@ -338,6 +339,29 @@ e.g.
         return cols
 
     def traits_view(self):
+        def paste_factory(runid, row):
+            vs = row.split('\t')
+            n = len(vs)
+            group, aliquot, sample, label_name = 0, 0, '', ''
+            if n == 2:
+                age, err = vs
+            elif n == 3:
+                runid, age, err = vs
+            elif n == 4:
+                runid, age, err, group = vs
+            elif n == 5:
+                runid, age, err, group, aliquot = vs
+            elif n == 6:
+                runid, age, err, group, aliquot, sample = vs
+            elif n == 7:
+                runid, age, err, group, aliquot, sample, label_name = vs
+
+            return CSVRecord(status=True, runid=runid,
+                             age=age, age_err=err, group=group,
+                             aliquot=aliquot,
+                             sample=sample,
+                             label_name=label_name)
+
         cols = self._get_columns()
 
         gcols = [ObjectColumn(name='name'),
@@ -375,14 +399,15 @@ e.g.
                                        UItem('names', editor=ListStrEditor(selected='name')),
                                        label='DataSets'))
 
-        record_grp = VSplit(UItem('records', editor=TableEditor(columns=cols,
-                                                                selected='selected',
-                                                                sortable=False,
-                                                                edit_on_first_click=False,
-                                                                # clear_selection_on_dclicked=True,
-                                                                menu=MenuManager(Action(name='Group Selected',
-                                                                                        perform=self._group_selected)),
-                                                                selection_mode='rows')),
+        record_grp = VSplit(UItem('records', editor=myTableEditor(columns=cols,
+                                                                  selected='selected',
+                                                                  sortable=False,
+                                                                  edit_on_first_click=False,
+                                                                  paste_factory=paste_factory,
+                                                                  # clear_selection_on_dclicked=True,
+                                                                  menu=MenuManager(Action(name='Group Selected',
+                                                                                          perform=self._group_selected)),
+                                                                  selection_mode='rows')),
                             UItem('groups', editor=TableEditor(columns=gcols)))
 
         main_grp = HSplit(repo_grp, record_grp)

@@ -17,10 +17,13 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Instance
 from traitsui.api import View, Item, VGroup, Spring, HGroup, ButtonEditor
+from traitsui.item import UItem
 
-from pychron.core.pychron_traits import BorderVGroup
+from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.pychron_constants import POSTCLEANUP, CLEANUP, PRECLEANUP, CRYO_TEMP, OVERLAP, LIGHT_VALUE, \
+    USE_CDD_WARMING, POSITION, PATTERN, EXTRACT_VALUE, EXTRACT_UNITS, RAMP_DURATION, DURATION, BEAM_DIAMETER, TEMPLATE
 
 POSITION_TOOLTIP = '''Set the position for this analysis or group of analyses.
 Examples:
@@ -36,7 +39,7 @@ Examples:
 10. 1.0,2.0 (goto the point defined by x,y[,z]. Use ";" to treat multiple points as one analysis e.g 1.0,2.0;3.0,4.0)
 '''
 
-PATTERN_TOOLTIP = 'Select a pattern from Remote or Local Patterns. \
+PATTERN_TOOLTIP = 'Please select a pattern from Remote or Local Patterns. \
 If unsure from which group to choice use a "Remote" pattern'
 
 
@@ -51,61 +54,63 @@ class FactoryView(HasTraits):
         return v
 
     def _get_group(self):
-        sspring = lambda width=17: Spring(springy=False, width=width)
-        extract_grp = BorderVGroup(HGroup(sspring(width=33),
-                                          Item('extract_value', label='Extract',
-                                               tooltip='Set the extract value in extract units',
-                                               enabled_when='extractable'),
-                                          Item('extract_units',
-                                               show_label=False,
-                                               editor=myEnumEditor(name='extract_units_names')),
-                                          Item('ramp_duration', label='Ramp Dur. (s)'), ),
-                                   HGroup(Item('use_cdd_warming', label='CDD Warm',
-                                               tooltip='Use the CDD warming routine at end of measurement'),
-                                          # Item('collection_time_zero_offset',
-                                          #      label='T_o offset (s)',
-                                          #      tooltip='# of seconds afer inlet opens to set time zero'),
-                                          Item('overlap', label='Overlap (s)',
-                                               tooltip='Duration to wait before staring next run')),
+        egrp = BorderVGroup(HGroup(Spring(springy=False, width=33),
+                                   Item(EXTRACT_VALUE, label='Extract',
+                                        tooltip='Set the extract value in extract units',
+                                        enabled_when='extractable'),
+                                   Item(EXTRACT_UNITS,
+                                        show_label=False,
+                                        editor=myEnumEditor(name='extract_units_names')),
+                                   Item(RAMP_DURATION, label='Ramp Dur. (s)'), ),
+                            Item(DURATION, label='Extract Duration (s)',
+                                 tooltip='Set the number of seconds to run the extraction device.'),
+                            Item(BEAM_DIAMETER),
+                            label='Fusion')
+
+        extract_grp = BorderVGroup(egrp,
                                    self._step_heat_group(),
-                                   HGroup(Item('duration', label='Duration (s)',
-                                               tooltip='Set the number of seconds to run the extraction device.'),
-                                          Item('pre_cleanup', label='Pre Cleanup (s)'),
-                                          Item('cleanup', label='Cleanup (s)',
-                                               tooltip='Set the number of seconds to getter the sample gas'),
-                                          Item('post_cleanup', label='Post Cleanup (s)')),
-                                   HGroup(Item('beam_diameter'), Item('light_value', label='Lighting')),
                                    self._position_group(),
+                                   BorderHGroup(Item(USE_CDD_WARMING, label='CDD Warm',
+                                                     tooltip='Use the CDD warming routine at end of measurement'),
+                                                # Item('collection_time_zero_offset',
+                                                #      label='T_o offset (s)',
+                                                #      tooltip='# of seconds afer inlet opens to set time zero'),
+                                                Item(OVERLAP, label='Overlap (s)',
+                                                     tooltip='Duration to wait before staring next run'),
+                                                Item(LIGHT_VALUE, label='Lighting'),
+                                                Item(CRYO_TEMP, label='Cryo Temp. (K)'),
+                                                label='Extras'),
                                    label='Extract')
+        cleanup_grp = BorderVGroup(Item(PRECLEANUP, label='Pre Cleanup (s)'),
+                                   Item(CLEANUP, label='Cleanup (s)',
+                                        tooltip='Set the number of seconds to getter the sample gas'),
+                                   Item(POSTCLEANUP, label='Post Cleanup (s)'),
+                                   label='Cleanup')
 
         post_measurement_group = BorderVGroup(Item('delay_after'), label='Post Measurement')
-        grp = VGroup(extract_grp, post_measurement_group)
+        grp = VGroup(extract_grp, cleanup_grp, post_measurement_group)
         return grp
 
     def _position_group(self):
-        grp = HGroup(Item('position',
-                          tooltip=POSITION_TOOLTIP),
-                     Item('pattern',
-                          show_label=False,
-                          tooltip=PATTERN_TOOLTIP,
-                          editor=myEnumEditor(name='patterns')),
-                     Item('edit_pattern',
-                          show_label=False,
-                          editor=ButtonEditor(label_value='edit_pattern_label')))
+        grp = BorderHGroup(Item(POSITION,
+                                tooltip=POSITION_TOOLTIP),
+                           UItem(PATTERN,
+                                 tooltip=PATTERN_TOOLTIP,
+                                 editor=myEnumEditor(name='patterns')),
+                           UItem('edit_pattern',
+                                 editor=ButtonEditor(label_value='edit_pattern_label')),
+                           label='Positioning')
         return grp
 
     def _step_heat_group(self):
-        grp = HGroup(Item('template',
-                          label='Step Heat Template',
-                          editor=myEnumEditor(name='templates'),
-                          show_label=False, ),
-                     Item('edit_template',
-                          show_label=False,
-                          editor=ButtonEditor(label_value='edit_template_label')),
-                     icon_button_editor('apply_stepheat', 'arrow_right',
-                                        enabled_when='_selected_runs',
-                                        tooltip='Apply step heat template to selected'),
-                     )
+        grp = BorderHGroup(UItem(TEMPLATE,
+                                 editor=myEnumEditor(name='templates'), ),
+                           UItem('edit_template',
+                                 editor=ButtonEditor(label_value='edit_template_label')),
+                           icon_button_editor('apply_stepheat', 'arrow_right',
+                                              enabled_when='_selected_runs',
+                                              tooltip='Apply step heat template to selected'),
+                           label='Step Heating')
         return grp
 
         # ============= EOF =============================================

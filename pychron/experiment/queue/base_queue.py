@@ -29,7 +29,7 @@ from pychron.experiment.stats import ExperimentStats
 from pychron.experiment.utilities.frequency_generator import frequency_index_gen
 from pychron.pychron_constants import NULL_STR, LINE_STR, FUSIONS_UV, COLLECTION_TIME_ZERO_OFFSET, USE_CDD_WARMING, \
     REPOSITORY_IDENTIFIER, DELAY_AFTER, COMMENT, WEIGHT, RAMP_DURATION, LIGHT_VALUE, PATTERN, BEAM_DIAMETER, OVERLAP, \
-    PRECLEANUP, POSTCLEANUP, CLEANUP, DURATION, EXTRACT_UNITS, EXTRACT_VALUE, POSITION, SAMPLE
+    PRECLEANUP, POSTCLEANUP, CLEANUP, DURATION, EXTRACT_UNITS, EXTRACT_VALUE, POSITION, SAMPLE, CRYO_TEMP
 
 
 def extract_meta(line_gen):
@@ -357,7 +357,7 @@ class BaseExperimentQueue(RunBlock):
                ('e_units', EXTRACT_UNITS),
                DURATION,
                CLEANUP,
-               PRECLEANUP, POSTCLEANUP,
+               PRECLEANUP, POSTCLEANUP, CRYO_TEMP,
                OVERLAP,
                ('beam_diam', BEAM_DIAMETER),
                PATTERN,

@@ -38,6 +38,15 @@ def to_list(a, delimiter=',', mapping=None):
     return l
 
 
+def to_terminator(t):
+    if t=='\n' or '\\n' or t=='chr(10)':
+        t=chr(10)
+    elif t=='\r' or t=='\\r' or t=='char(13)':
+        t=chr(13)
+
+    return t
+
+
 def to_bool(a):
     """
         a: a str or bool object

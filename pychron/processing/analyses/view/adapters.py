@@ -45,7 +45,7 @@ def sigmaf(s):
 def handle_error(func):
     def wrapper(self, *args, **kw):
         try:
-            return func(self, *args, **kw)
+            return func(self)
         except ValueError:
             return ''
 
@@ -551,7 +551,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
         return format_percent_error(b.value, b.error)
 
     @handle_error
-    def _get_value_percent_error_text(self, *args):
+    def _get_value_percent_error_text(self):
         cv = self.item.get_non_detector_corrected_value()
         return format_percent_error(cv.nominal_value, cv.std_dev)
 

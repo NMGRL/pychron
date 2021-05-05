@@ -22,7 +22,7 @@ import subprocess
 import requests
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Str, Interface, Password, provides, Dict
+from traits.api import Str, Interface, Password, provides, Dict, Bool
 
 from pychron import json
 from pychron.git_archive.repo_manager import GitRepoManager
@@ -119,6 +119,7 @@ class GitHostService(BaseGitHostService):
     _clear_cached_repo_names = False
     _session = None
     organization = Str
+    disable_authentication_message = Bool
 
     def bind_preferences(self):
         bind_preference(self, 'organization', '{}.organization'.format(self.preference_path))
@@ -126,27 +127,31 @@ class GitHostService(BaseGitHostService):
         bind_preference(self, 'password', '{}.password'.format(self.preference_path))
         bind_preference(self, 'oauth_token', '{}.oauth_token'.format(self.preference_path))
         bind_preference(self, 'default_remote_name', '{}.default_remote_name'.format(self.preference_path))
+        bind_preference(self, 'disable_authentication_message',
+                        '{}.disable_authentication_message'.format(self.preference_path))
 
     def set_authentication(self):
-        self.info('setting authentication')
         if platform.system() == 'Windows':
-            askpass = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'askpass.bat')
+            # askpass = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'askpass.bat')
+            self._set_authentication_windows_hook()
         else:
+            self.info('setting authentication')
             askpass = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'askpass.sh')
 
-        os.environ['GIT_ASKPASS'] = askpass
-        st = os.stat(askpass)
-        os.chmod(askpass, st.st_mode | stat.S_IXUSR)
+            os.environ['GIT_ASKPASS'] = askpass
+            st = os.stat(askpass)
+            os.chmod(askpass, st.st_mode | stat.S_IXUSR)
 
-        if self.oauth_token:
-            u = ''
-            p = self.oauth_token
-        else:
-            u = self.username
-            p = self.password
+            if self.oauth_token:
+                u = self.oauth_token
+                p = ''
+            else:
+                u = self.username
+                p = self.password
 
-        os.environ['GIT_ASKPASS_USERNAME'] = u
-        os.environ['GIT_ASKPASS_PASSWORD'] = p
+            os.environ['GIT_ASKPASS_USERNAME'] = u
+            os.environ['GIT_ASKPASS_PASSWORD'] = p
+            self.debug('Environ:{}'.format(os.environ))
 
     def up_to_date(self, organization, name, sha, branch='master'):
         return True, None
@@ -194,6 +199,9 @@ class GitHostService(BaseGitHostService):
         pass
 
     # private
+    def _set_authentication_windows_hook(self):
+        pass
+
     def _get(self, cmd, verbose=False):
 
         def func(s):

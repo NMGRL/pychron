@@ -248,6 +248,7 @@ class AutomatedRunPersister(BasePersister):
             set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
 
         set_preference(preferences, self, 'use_massspec_database', 'pychron.massspec.database.enabled', to_bool)
+
     # ===============================================================================
     # data writing
     # ===============================================================================
@@ -457,100 +458,99 @@ class AutomatedRunPersister(BasePersister):
         #     self.datahub.update_spec(run_spec)
 
         cp = self._current_data_frame
-
         ln = run_spec.labnumber
-        aliquot = run_spec.aliquot
+        # aliquot = run_spec.aliquot
 
         if save_local:
             # save to local sqlite database for backup and reference
             self._local_db_save()
 
-        # save to a database
-        db = self.datahub.get_db('isotopedb')
-        if not db or not db.connected:
-            self.warning('No database instance. Not saving post measurement to isotopedb database')
-        else:
-            with db.session_ctx() as sess:
-                pt = time.time()
-
-                lab = db.get_labnumber(ln)
-
-                endtime = get_datetime().time()
-                self.info('analysis finished at {}'.format(endtime))
-
-                un = run_spec.username
-                dbuser = db.get_user(un)
-                if dbuser is None:
-                    self.debug('user= {} does not existing. adding to database now'.format(un))
-                    dbuser = db.add_user(un)
-
-                self.debug('adding analysis identifier={}, aliquot={}, '
-                           'step={}, increment={}'.format(ln, aliquot,
-                                                          run_spec.step,
-                                                          run_spec.increment))
-                a = db.add_analysis(lab,
-                                    user=dbuser,
-                                    uuid=run_spec.uuid,
-                                    endtime=endtime,
-                                    aliquot=aliquot,
-                                    step=run_spec.step,
-                                    increment=run_spec.increment,
-                                    comment=run_spec.comment,
-                                    whiff_result=self.per_spec.whiff_result)
-                sess.flush()
-                run_spec.analysis_dbid = a.id
-                run_spec.analysis_timestamp = a.analysis_timestamp
-
-                experiment = db.get_experiment(self.dbexperiment_identifier, key='id')
-                if experiment is not None:
-                    # added analysis to experiment
-                    a.experiment_id = experiment.id
-                else:
-                    self.warning('no experiment found for {}'.format(self.dbexperiment_identifier))
-
-                # save measurement
-                meas = self._save_measurement(db, a)
-                # save extraction
-                ext = self._db_extraction_id
-                if ext is not None:
-                    dbext = db.get_extraction(ext, key='id')
-                    a.extraction_id = dbext.id
-                    # save sensitivity info to extraction
-                    self._save_sensitivity(dbext, meas)
-
-                else:
-                    self.debug('no extraction to associate with this run')
-
-                self._save_spectrometer_info(db, meas)
-
-                # add selected history
-                db.add_selected_histories(a)
-                # self._save_isotope_info(a, ss)
-                self._save_isotope_data(db, a)
-
-                # save ic factor
-                self._save_detector_intercalibration(db, a)
-
-                # save blanks
-                self._save_blank_info(db, a)
-
-                # save peak center
-                self._save_peak_center(db, a, cp)
-
-                # save monitor
-                self._save_monitor_info(db, a)
-
-                # save gains
-                self._save_gains(db, a)
-
-                if self.use_analysis_grouping:
-                    self._save_analysis_group(db, a)
-
-                # mem_log('post pychron save')
-
-                pt = time.time() - pt
-                self.debug('pychron save time= {:0.3f} '.format(pt))
-                # file_log(pt)
+        # # save to a database
+        # db = self.datahub.get_db('isotopedb')
+        # if not db or not db.connected:
+        #     self.warning('No database instance. Not saving post measurement to isotopedb database')
+        # else:
+        #     with db.session_ctx() as sess:
+        #         pt = time.time()
+        #
+        #         lab = db.get_labnumber(ln)
+        #
+        #         endtime = get_datetime().time()
+        #         self.info('analysis finished at {}'.format(endtime))
+        #
+        #         un = run_spec.username
+        #         dbuser = db.get_user(un)
+        #         if dbuser is None:
+        #             self.debug('user= {} does not existing. adding to database now'.format(un))
+        #             dbuser = db.add_user(un)
+        #
+        #         self.debug('adding analysis identifier={}, aliquot={}, '
+        #                    'step={}, increment={}'.format(ln, aliquot,
+        #                                                   run_spec.step,
+        #                                                   run_spec.increment))
+        #         a = db.add_analysis(lab,
+        #                             user=dbuser,
+        #                             uuid=run_spec.uuid,
+        #                             endtime=endtime,
+        #                             aliquot=aliquot,
+        #                             step=run_spec.step,
+        #                             increment=run_spec.increment,
+        #                             comment=run_spec.comment,
+        #                             whiff_result=self.per_spec.whiff_result)
+        #         sess.flush()
+        #         run_spec.analysis_dbid = a.id
+        #         run_spec.analysis_timestamp = a.analysis_timestamp
+        #
+        #         experiment = db.get_experiment(self.dbexperiment_identifier, key='id')
+        #         if experiment is not None:
+        #             # added analysis to experiment
+        #             a.experiment_id = experiment.id
+        #         else:
+        #             self.warning('no experiment found for {}'.format(self.dbexperiment_identifier))
+        #
+        #         # save measurement
+        #         meas = self._save_measurement(db, a)
+        #         # save extraction
+        #         ext = self._db_extraction_id
+        #         if ext is not None:
+        #             dbext = db.get_extraction(ext, key='id')
+        #             a.extraction_id = dbext.id
+        #             # save sensitivity info to extraction
+        #             self._save_sensitivity(dbext, meas)
+        #
+        #         else:
+        #             self.debug('no extraction to associate with this run')
+        #
+        #         self._save_spectrometer_info(db, meas)
+        #
+        #         # add selected history
+        #         db.add_selected_histories(a)
+        #         # self._save_isotope_info(a, ss)
+        #         self._save_isotope_data(db, a)
+        #
+        #         # save ic factor
+        #         self._save_detector_intercalibration(db, a)
+        #
+        #         # save blanks
+        #         self._save_blank_info(db, a)
+        #
+        #         # save peak center
+        #         self._save_peak_center(db, a, cp)
+        #
+        #         # save monitor
+        #         self._save_monitor_info(db, a)
+        #
+        #         # save gains
+        #         self._save_gains(db, a)
+        #
+        #         if self.use_analysis_grouping:
+        #             self._save_analysis_group(db, a)
+        #
+        #         # mem_log('post pychron save')
+        #
+        #         pt = time.time() - pt
+        #         self.debug('pychron save time= {:0.3f} '.format(pt))
+        #         # file_log(pt)
 
         self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(self.per_spec.auto_save_detector_ic))
         if self.per_spec.auto_save_detector_ic:
@@ -589,94 +589,94 @@ class AutomatedRunPersister(BasePersister):
 
             save_csv(self.per_spec.run_spec.record_id, items)
 
-    def _save_gains(self, db, analysis):
-        self.debug('saving gains')
-        ha = db.make_gains_hash(self.per_spec.gains)
-        dbhist = db.get_gain_history(ha)
-        if not dbhist:
-            dbhist = db.add_gain_history(ha, save_type='arun')
-            for d, v in self.per_spec.gains.items():
-                db.add_gain(d, v, dbhist)
-            db.commit()
+    # def _save_gains(self, db, analysis):
+    #     self.debug('saving gains')
+    #     ha = db.make_gains_hash(self.per_spec.gains)
+    #     dbhist = db.get_gain_history(ha)
+    #     if not dbhist:
+    #         dbhist = db.add_gain_history(ha, save_type='arun')
+    #         for d, v in self.per_spec.gains.items():
+    #             db.add_gain(d, v, dbhist)
+    #         db.commit()
+    #
+    #     analysis.gain_history_id = dbhist.id
+    #
+    # def _save_analysis_group(self, db, analysis):
+    #     """
+    #         if analysis is an unknown add to project's analysis_group
+    #         if analysis_group does not exist make it
+    #
+    #         if project is reference then find and associate with the unknown's project
+    #         if the next analysis is not from the same project then need to associate this analysis
+    #         with that project as well.
+    #     """
+    #     self.debug('save analysis_group')
+    #     rs = self.per_spec.run_spec
+    #     prj = rs.project
+    #     if prj == 'references':
+    #         # get the most recent unknown analysis
+    #         lan = db.get_last_analysis(spectrometer=rs.mass_spectrometer,
+    #                                    analysis_type=rs.analysis_type,
+    #                                    hours_limit=self.grouping_threshold)
+    #         if lan is not None:
+    #             try:
+    #                 # prj = lan.labnumber.sample.project.name
+    #                 prj = lan.project_name
+    #                 self._add_to_project_group(db, prj, analysis)
+    #
+    #                 # add this analysis to a temporary buffer. this is used when a following
+    #                 # analysis is associated with a different project
+    #                 self._temp_analysis_buffer.append((prj, analysis.uuid))
+    #
+    #             except AttributeError:
+    #                 pass
+    #         else:
+    #             # this maybe the first reference in the queue, so it should be associated with
+    #             # the first subsequent unknown.
+    #             self._temp_analysis_buffer.append((None, analysis.uuid))
+    #
+    #     else:
+    #         self._add_to_project_group(db, prj, analysis)
+    #
+    #         if self._temp_analysis_buffer:
+    #             for p, uuid in self._temp_analysis_buffer:
+    #                 if p != prj:
+    #                     analysis = db.get_analysis_uuid(uuid)
+    #                     self._add_to_project_group(db, prj, analysis)
+    #
+    #         self._temp_analysis_buffer = []
 
-        analysis.gain_history_id = dbhist.id
+    # def _add_to_project_group(self, db, prj, analysis):
+    #     if self.grouping_suffix:
+    #         prj = '{}-{}'.format(prj, self.grouping_suffix)
+    #
+    #     ag = db.get_analysis_group(prj, key='name')
+    #     if ag is None:
+    #         ag = db.add_analysis_group(prj)
+    #
+    #     # modify ag's id to reflect addition of another analysis
+    #     aa = ag.analyses[:]
+    #     aa.append(analysis)
+    #     ag.id = binascii.crc32(''.join([ai.uuid for ai in aa]))
+    #
+    #     db.add_analysis_group_set(ag, analysis)
 
-    def _save_analysis_group(self, db, analysis):
-        """
-            if analysis is an unknown add to project's analysis_group
-            if analysis_group does not exist make it
-
-            if project is reference then find and associate with the unknown's project
-            if the next analysis is not from the same project then need to associate this analysis
-            with that project as well.
-        """
-        self.debug('save analysis_group')
-        rs = self.per_spec.run_spec
-        prj = rs.project
-        if prj == 'references':
-            # get the most recent unknown analysis
-            lan = db.get_last_analysis(spectrometer=rs.mass_spectrometer,
-                                       analysis_type=rs.analysis_type,
-                                       hours_limit=self.grouping_threshold)
-            if lan is not None:
-                try:
-                    # prj = lan.labnumber.sample.project.name
-                    prj = lan.project_name
-                    self._add_to_project_group(db, prj, analysis)
-
-                    # add this analysis to a temporary buffer. this is used when a following
-                    # analysis is associated with a different project
-                    self._temp_analysis_buffer.append((prj, analysis.uuid))
-
-                except AttributeError:
-                    pass
-            else:
-                # this maybe the first reference in the queue, so it should be associated with
-                # the first subsequent unknown.
-                self._temp_analysis_buffer.append((None, analysis.uuid))
-
-        else:
-            self._add_to_project_group(db, prj, analysis)
-
-            if self._temp_analysis_buffer:
-                for p, uuid in self._temp_analysis_buffer:
-                    if p != prj:
-                        analysis = db.get_analysis_uuid(uuid)
-                        self._add_to_project_group(db, prj, analysis)
-
-            self._temp_analysis_buffer = []
-
-    def _add_to_project_group(self, db, prj, analysis):
-        if self.grouping_suffix:
-            prj = '{}-{}'.format(prj, self.grouping_suffix)
-
-        ag = db.get_analysis_group(prj, key='name')
-        if ag is None:
-            ag = db.add_analysis_group(prj)
-
-        # modify ag's id to reflect addition of another analysis
-        aa = ag.analyses[:]
-        aa.append(analysis)
-        ag.id = binascii.crc32(''.join([ai.uuid for ai in aa]))
-
-        db.add_analysis_group_set(ag, analysis)
-
-    def _save_isotope_data(self, db, analysis):
-        self.debug('saving isotopes')
-
-        dbhist = db.add_fit_history(analysis,
-                                    user=self.per_spec.run_spec.username)
-
-        for iso in self.per_spec.isotope_group.itervalues():
-            detname = iso.detector
-            dbdet = db.get_detector(detname)
-            if dbdet is None:
-                dbdet = db.add_detector(detname)
-                # db.sess.flush()
-
-            self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso.sniff, 'sniff')
-            self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso, 'signal')
-            self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso.baseline, 'baseline')
+    # def _save_isotope_data(self, db, analysis):
+    #     self.debug('saving isotopes')
+    #
+    #     dbhist = db.add_fit_history(analysis,
+    #                                 user=self.per_spec.run_spec.username)
+    #
+    #     for iso in self.per_spec.isotope_group.itervalues():
+    #         detname = iso.detector
+    #         dbdet = db.get_detector(detname)
+    #         if dbdet is None:
+    #             dbdet = db.add_detector(detname)
+    #             # db.sess.flush()
+    #
+    #         self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso.sniff, 'sniff')
+    #         self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso, 'signal')
+    #         self._save_signal_data(db, dbhist, analysis, dbdet, iso, iso.baseline, 'baseline')
 
     # def _get_filter_outlier_dict(self, iso, kind):
     #     if kind == 'baseline':
@@ -692,237 +692,238 @@ class AutomatedRunPersister(BasePersister):
     #         fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
     #     return fod
 
-    def _save_signal_data(self, db, dbhist, analysis, dbdet, iso, m, kind):
-        if not (len(m.xs) and len(m.ys)):
-            self.debug('no data for {} {}'.format(iso.name, kind))
-            return
-
-        self.debug('saving data {} {} xs={}'.format(iso.name, kind, len(m.xs)))
-        dbiso = db.add_isotope(analysis, iso.name, dbdet, kind=kind)
-        data = ''.join([struct.pack('>ff', x, y) for x, y in zip(m.xs, m.ys)])
-        db.add_signal(dbiso, data)
-
-        add_result = kind in ('baseline', 'signal')
-
-        if add_result:
-            # fod = self._get_filter_outlier_dict(iso, kind)
-            # m.set_filtering(fod)
-            fod = m.filter_outliers_dict
-            if m.fit:
-                # add fit
-                db.add_fit(dbhist, dbiso,
-                           fit=m.fit,
-                           filter_outliers=fod.get('filter_outliers', False),
-                           filter_outlier_iterations=fod.get('iterations', 1),
-                           filter_outlier_std_devs=fod.get('std_devs', 2))
-
-            # add isotope result
-            # print 'a',m.value, m.error, type(m.error), type(nan)
-            v, e = float(m.value), float(m.error)
-            v = 0 if math.isnan(v) or math.isinf(v) else v
-            e = 0 if math.isnan(e) or math.isinf(e) else e
-
-            db.add_isotope_result(dbiso,
-                                  dbhist,
-                                  signal_=v, signal_err=e)
-
-    def _save_sensitivity(self, extraction, measurement):
-        self.info('saving sensitivity')
-
-        # get the latest sensitivity entry for this spectrometer
-        spec = measurement.mass_spectrometer
-        if spec:
-            sens = spec.sensitivities
-            if sens:
-                extraction.sensitivity = sens[-1]
-
-    def _save_peak_center(self, db, analysis, cp):
-        self.info('saving peakcenter')
-
-        dm = self.data_manager
-        with dm.open_file(cp) as f:
-            if hasattr(f.root, 'peak_centers'):
-                for tab in f.walk_nodes(where='/peak_centers'):
-                    packed_xy = [struct.pack('<ff', r['time'], r['value']) for r in tab.iterrows()]
-                    points = ''.join(packed_xy)
-                    center = tab.attrs.center_dac
-                    db.add_peak_center(analysis,
-                                       detector=tab.attrs.detector,
-                                       center=float(center) or 0,
-                                       points=points)
-
-    def _save_measurement(self, db, analysis):
-        self.info('saving measurement')
-
-        spec = self.per_spec.run_spec
-        meas = db.add_measurement(
-            analysis,
-            spec.analysis_type,
-            spec.mass_spectrometer,
-            time_zero_offset=spec.collection_time_zero_offset)
-
-        script = db.add_script(self.per_spec.measurement_name, self.per_spec.measurement_blob)
-
-        meas.script_id = script.id
-
-        return meas
-
-    def _save_extraction(self, db, analysis=None, loadtable=None,
-                         output_blob=None, response_blob=None, snapshots=None):
-        """
-            snapshots: list of tuples, (local_path, remote_path, imageblob)
-        """
-        self.info('saving extraction')
-
-        spec = self.per_spec.run_spec
-
-        self.debug('Saving extraction device {}'.format(spec.extract_device))
-
-        d = dict(extract_device=spec.extract_device,
-                 extract_value=spec.extract_value,
-                 extract_duration=spec.duration,
-                 cleanup_duration=spec.cleanup,
-                 pre_cleanup_duration=spec.pre_cleanup,
-                 post_cleanup_duration=spec.post_cleanup,
-                 weight=spec.weight,
-                 response_blob=response_blob or '',
-                 output_blob=output_blob or '',
-                 sensitivity_multiplier=self.per_spec.sensitivity_multiplier,
-                 is_degas=spec.labnumber == 'dg')
-
-        self._assemble_extraction_parameters(d)
-
-        ext = db.add_extraction(analysis, **d)
-
-        exp = db.add_script(self.per_spec.experiment_queue_name,
-                            self.per_spec.experiment_queue_blob)
-        self.debug('Script id {}'.format(exp.id))
-        ext.experiment_blob_id = exp.id
-
-        if self.per_spec.extraction_name:
-            script = db.add_script(self.per_spec.extraction_name,
-                                   self.per_spec.extraction_blob)
-            ext.script_id = script.id
-
-        for i, pp in enumerate(self.per_spec.positions):
-            if isinstance(pp, tuple):
-                if len(pp) > 1:
-
-                    if len(pp) == 3:
-                        dbpos = db.add_analysis_position(ext, x=pp[0], y=pp[1], z=pp[2])
-                    else:
-                        dbpos = db.add_analysis_position(ext, x=pp[0], y=pp[1])
-
-            else:
-                dbpos = db.add_analysis_position(ext, pp)
-                try:
-                    ep = self.per_spec.extraction_positions[i]
-                    dbpos.x = ep[0]
-                    dbpos.y = ep[1]
-                    if len(ep) == 3:
-                        dbpos.z = ep[2]
-                except IndexError:
-                    self.debug('no extraction position for {}'.format(pp))
-
-            if loadtable and dbpos:
-                dbpos.load_identifier = loadtable.name
-
-        if snapshots:
-            for lpath, rpath, image in snapshots:
-                dbsnap = self.db.add_snapshot(lpath, remote_path=rpath,
-                                              image=image)
-                ext.snapshots.append(dbsnap)
-        return ext
-
-    def _save_spectrometer_info(self, db, meas):
-        self.info('saving spectrometer info')
-
-        if self.per_spec.spec_dict:
-            db.add_spectrometer_parameters(meas, self.per_spec.spec_dict)
-            for det, deflection in self.per_spec.defl_dict.items():
-                det = db.add_detector(det)
-                db.add_deflection(meas, det, deflection)
-
-    def _save_detector_intercalibration(self, db, analysis):
-        self.info('saving detector intercalibration')
-        if self.per_spec.isotope_group:
-            history = None
-            for det in self.per_spec.active_detectors:
-                det = det.name
-                ic = self.per_spec.isotope_group.get_ic_factor(det)
-                self.info('default ic_factor {}= {}'.format(det, ic))
-                if det == 'CDD':
-                    # save cdd_ic_factor so it can be exported to secondary db
-                    self.cdd_ic_factor = ic
-                    self.debug('default cdd_ic_factor={}'.format(ic))
-
-                user = self.per_spec.run_spec.username
-                user = user if user else NULL_STR
-
-                self.info(
-                    '{} adding detector intercalibration history for {}'.format(user, self.per_spec.run_spec.runid))
-
-                if history is None:
-                    history = db.add_detector_intercalibration_history(analysis,
-                                                                       user=user)
-                    analysis.selected_histories.selected_detector_intercalibration = history
-
-                uv, ue = ic.nominal_value, ic.std_dev
-                db.add_detector_intercalibration(history, det,
-                                                 user_value=float(uv),
-                                                 user_error=float(ue))
-
-    def _save_blank_info(self, db, analysis):
-        self.info('saving blank info')
-        self.debug('preceding blank id={}'.format(self.per_spec.previous_blank_id))
-
-        self._save_history_info(db, analysis, 'blanks', self.per_spec.previous_blanks,
-                                preceding_id=self.per_spec.previous_blank_id)
-
-    def _save_history_info(self, db, analysis, name, values, preceding_id=None):
-        if not values:
-            self.debug('no previous {} to save {}'.format(name, values))
-            return
-        spec = self.per_spec.run_spec
-        if spec.analysis_type.startswith('blank') or \
-                spec.analysis_type.startswith('background'):
-            return
-
-        user = spec.username
-        user = user if user else NULL_STR
-
-        funchist = getattr(db, 'add_{}_history'.format(name))
-        self.info('{} adding {} history for {}-{}'.format(user, name,
-                                                          analysis.labnumber.identifier,
-                                                          analysis.aliquot))
-        history = funchist(analysis, user=user)
-
-        setattr(analysis.selected_histories,
-                'selected_{}'.format(name), history)
-
-        func = getattr(db, 'add_{}'.format(name))
-        for isotope, v in values.items():
-            uv = v.nominal_value
-            ue = float(v.std_dev)
-            if preceding_id:
-                func(history, user_value=uv, user_error=ue,
-                     isotope=isotope, preceding_id=preceding_id)
-            else:
-                func(history, user_value=uv, user_error=ue,
-                     isotope=isotope)
-
-    def _save_monitor_info(self, db, analysis):
-        if self.per_spec.monitor:
-            self.info('saving monitor info')
-
-            for ci in self.per_spec.monitor.checks:
-                data = ''.join([struct.pack('>ff', x, y) for x, y in ci.data])
-                params = dict(name=ci.name,
-                              parameter=ci.parameter, criterion=ci.criterion,
-                              comparator=ci.comparator, tripped=ci.tripped,
-                              data=data)
-
-                db.add_monitor(analysis, **params)
+    # def _save_signal_data(self, db, dbhist, analysis, dbdet, iso, m, kind):
+    #     if not (len(m.xs) and len(m.ys)):
+    #         self.debug('no data for {} {}'.format(iso.name, kind))
+    #         return
+    #
+    #     self.debug('saving data {} {} xs={}'.format(iso.name, kind, len(m.xs)))
+    #     dbiso = db.add_isotope(analysis, iso.name, dbdet, kind=kind)
+    #     data = ''.join([struct.pack('>ff', x, y) for x, y in zip(m.xs, m.ys)])
+    #     db.add_signal(dbiso, data)
+    #
+    #     add_result = kind in ('baseline', 'signal')
+    #
+    #     if add_result:
+    #         # fod = self._get_filter_outlier_dict(iso, kind)
+    #         # m.set_filtering(fod)
+    #         fod = m.filter_outliers_dict
+    #         if m.fit:
+    #             # add fit
+    #             db.add_fit(dbhist, dbiso,
+    #                        fit=m.fit,
+    #                        filter_outliers=fod.get('filter_outliers', False),
+    #                        filter_outlier_iterations=fod.get('iterations', 1),
+    #                        filter_outlier_std_devs=fod.get('std_devs', 2))
+    #
+    #         # add isotope result
+    #         # print 'a',m.value, m.error, type(m.error), type(nan)
+    #         v, e = float(m.value), float(m.error)
+    #         v = 0 if math.isnan(v) or math.isinf(v) else v
+    #         e = 0 if math.isnan(e) or math.isinf(e) else e
+    #
+    #         db.add_isotope_result(dbiso,
+    #                               dbhist,
+    #                               signal_=v, signal_err=e)
+    #
+    # def _save_sensitivity(self, extraction, measurement):
+    #     self.info('saving sensitivity')
+    #
+    #     # get the latest sensitivity entry for this spectrometer
+    #     spec = measurement.mass_spectrometer
+    #     if spec:
+    #         sens = spec.sensitivities
+    #         if sens:
+    #             extraction.sensitivity = sens[-1]
+    #
+    # def _save_peak_center(self, db, analysis, cp):
+    #     self.info('saving peakcenter')
+    #
+    #     dm = self.data_manager
+    #     with dm.open_file(cp) as f:
+    #         if hasattr(f.root, 'peak_centers'):
+    #             for tab in f.walk_nodes(where='/peak_centers'):
+    #                 packed_xy = [struct.pack('<ff', r['time'], r['value']) for r in tab.iterrows()]
+    #                 points = ''.join(packed_xy)
+    #                 center = tab.attrs.center_dac
+    #                 db.add_peak_center(analysis,
+    #                                    detector=tab.attrs.detector,
+    #                                    center=float(center) or 0,
+    #                                    points=points)
+    #
+    # def _save_measurement(self, db, analysis):
+    #     self.info('saving measurement')
+    #
+    #     spec = self.per_spec.run_spec
+    #     meas = db.add_measurement(
+    #         analysis,
+    #         spec.analysis_type,
+    #         spec.mass_spectrometer,
+    #         time_zero_offset=spec.collection_time_zero_offset)
+    #
+    #     script = db.add_script(self.per_spec.measurement_name, self.per_spec.measurement_blob)
+    #
+    #     meas.script_id = script.id
+    #
+    #     return meas
+    #
+    # def _save_extraction(self, db, analysis=None, loadtable=None,
+    #                      output_blob=None, response_blob=None, snapshots=None):
+    #     """
+    #         snapshots: list of tuples, (local_path, remote_path, imageblob)
+    #     """
+    #     self.info('saving extraction')
+    #
+    #     spec = self.per_spec.run_spec
+    #
+    #     self.debug('Saving extraction device {}'.format(spec.extract_device))
+    #
+    #     d = dict(extract_device=spec.extract_device,
+    #              extract_value=spec.extract_value,
+    #              extract_duration=spec.duration,
+    #              cleanup_duration=spec.cleanup,
+    #              pre_cleanup_duration=spec.pre_cleanup,
+    #              post_cleanup_duration=spec.post_cleanup,
+    #              cryo_temperature=spec.cryo_temperature,
+    #              weight=spec.weight,
+    #              response_blob=response_blob or '',
+    #              output_blob=output_blob or '',
+    #              sensitivity_multiplier=self.per_spec.sensitivity_multiplier,
+    #              is_degas=spec.labnumber == 'dg')
+    #
+    #     self._assemble_extraction_parameters(d)
+    #
+    #     ext = db.add_extraction(analysis, **d)
+    #
+    #     exp = db.add_script(self.per_spec.experiment_queue_name,
+    #                         self.per_spec.experiment_queue_blob)
+    #     self.debug('Script id {}'.format(exp.id))
+    #     ext.experiment_blob_id = exp.id
+    #
+    #     if self.per_spec.extraction_name:
+    #         script = db.add_script(self.per_spec.extraction_name,
+    #                                self.per_spec.extraction_blob)
+    #         ext.script_id = script.id
+    #
+    #     for i, pp in enumerate(self.per_spec.positions):
+    #         if isinstance(pp, tuple):
+    #             if len(pp) > 1:
+    #
+    #                 if len(pp) == 3:
+    #                     dbpos = db.add_analysis_position(ext, x=pp[0], y=pp[1], z=pp[2])
+    #                 else:
+    #                     dbpos = db.add_analysis_position(ext, x=pp[0], y=pp[1])
+    #
+    #         else:
+    #             dbpos = db.add_analysis_position(ext, pp)
+    #             try:
+    #                 ep = self.per_spec.extraction_positions[i]
+    #                 dbpos.x = ep[0]
+    #                 dbpos.y = ep[1]
+    #                 if len(ep) == 3:
+    #                     dbpos.z = ep[2]
+    #             except IndexError:
+    #                 self.debug('no extraction position for {}'.format(pp))
+    #
+    #         if loadtable and dbpos:
+    #             dbpos.load_identifier = loadtable.name
+    #
+    #     if snapshots:
+    #         for lpath, rpath, image in snapshots:
+    #             dbsnap = self.db.add_snapshot(lpath, remote_path=rpath,
+    #                                           image=image)
+    #             ext.snapshots.append(dbsnap)
+    #     return ext
+    #
+    # def _save_spectrometer_info(self, db, meas):
+    #     self.info('saving spectrometer info')
+    #
+    #     if self.per_spec.spec_dict:
+    #         db.add_spectrometer_parameters(meas, self.per_spec.spec_dict)
+    #         for det, deflection in self.per_spec.defl_dict.items():
+    #             det = db.add_detector(det)
+    #             db.add_deflection(meas, det, deflection)
+    #
+    # def _save_detector_intercalibration(self, db, analysis):
+    #     self.info('saving detector intercalibration')
+    #     if self.per_spec.isotope_group:
+    #         history = None
+    #         for det in self.per_spec.active_detectors:
+    #             det = det.name
+    #             ic = self.per_spec.isotope_group.get_ic_factor(det)
+    #             self.info('default ic_factor {}= {}'.format(det, ic))
+    #             if det == 'CDD':
+    #                 # save cdd_ic_factor so it can be exported to secondary db
+    #                 self.cdd_ic_factor = ic
+    #                 self.debug('default cdd_ic_factor={}'.format(ic))
+    #
+    #             user = self.per_spec.run_spec.username
+    #             user = user if user else NULL_STR
+    #
+    #             self.info(
+    #                 '{} adding detector intercalibration history for {}'.format(user, self.per_spec.run_spec.runid))
+    #
+    #             if history is None:
+    #                 history = db.add_detector_intercalibration_history(analysis,
+    #                                                                    user=user)
+    #                 analysis.selected_histories.selected_detector_intercalibration = history
+    #
+    #             uv, ue = ic.nominal_value, ic.std_dev
+    #             db.add_detector_intercalibration(history, det,
+    #                                              user_value=float(uv),
+    #                                              user_error=float(ue))
+    #
+    # def _save_blank_info(self, db, analysis):
+    #     self.info('saving blank info')
+    #     self.debug('preceding blank id={}'.format(self.per_spec.previous_blank_id))
+    #
+    #     self._save_history_info(db, analysis, 'blanks', self.per_spec.previous_blanks,
+    #                             preceding_id=self.per_spec.previous_blank_id)
+    #
+    # def _save_history_info(self, db, analysis, name, values, preceding_id=None):
+    #     if not values:
+    #         self.debug('no previous {} to save {}'.format(name, values))
+    #         return
+    #     spec = self.per_spec.run_spec
+    #     if spec.analysis_type.startswith('blank') or \
+    #             spec.analysis_type.startswith('background'):
+    #         return
+    #
+    #     user = spec.username
+    #     user = user if user else NULL_STR
+    #
+    #     funchist = getattr(db, 'add_{}_history'.format(name))
+    #     self.info('{} adding {} history for {}-{}'.format(user, name,
+    #                                                       analysis.labnumber.identifier,
+    #                                                       analysis.aliquot))
+    #     history = funchist(analysis, user=user)
+    #
+    #     setattr(analysis.selected_histories,
+    #             'selected_{}'.format(name), history)
+    #
+    #     func = getattr(db, 'add_{}'.format(name))
+    #     for isotope, v in values.items():
+    #         uv = v.nominal_value
+    #         ue = float(v.std_dev)
+    #         if preceding_id:
+    #             func(history, user_value=uv, user_error=ue,
+    #                  isotope=isotope, preceding_id=preceding_id)
+    #         else:
+    #             func(history, user_value=uv, user_error=ue,
+    #                  isotope=isotope)
+    #
+    # def _save_monitor_info(self, db, analysis):
+    #     if self.per_spec.monitor:
+    #         self.info('saving monitor info')
+    #
+    #         for ci in self.per_spec.monitor.checks:
+    #             data = ''.join([struct.pack('>ff', x, y) for x, y in ci.data])
+    #             params = dict(name=ci.name,
+    #                           parameter=ci.parameter, criterion=ci.criterion,
+    #                           comparator=ci.comparator, tripped=ci.tripped,
+    #                           data=data)
+    #
+    #             db.add_monitor(analysis, **params)
 
     def _save_to_massspec(self, p):
         # dm = self.data_manager
@@ -974,19 +975,19 @@ class AutomatedRunPersister(BasePersister):
 
         return exp
 
-    def _assemble_extraction_parameters(self, edict):
-        spec = self.per_spec.run_spec
+    # def _assemble_extraction_parameters(self, edict):
+    #     spec = self.per_spec.run_spec
+    #
+    #     edict.update(beam_diameter=spec.beam_diameter or 0,
+    #                  pattern=spec.pattern,
+    #                  ramp_duration=spec.ramp_duration or 0,
+    #                  ramp_rate=spec.ramp_rate or 0)
 
-        edict.update(beam_diameter=spec.beam_diameter or 0,
-                     pattern=spec.pattern,
-                     ramp_duration=spec.ramp_duration or 0,
-                     ramp_rate=spec.ramp_rate or 0)
-
-    def _set_table_attr(self, name, grp, attr, value):
-        dm = self.data_manager
-        tab = dm.get_table(name, grp)
-        setattr(tab.attrs, attr, value)
-        tab.flush()
+    # def _set_table_attr(self, name, grp, attr, value):
+    #     dm = self.data_manager
+    #     tab = dm.get_table(name, grp)
+    #     setattr(tab.attrs, attr, value)
+    #     tab.flush()
 
     def _local_db_save(self):
         ldb = self._local_lab_db_factory()

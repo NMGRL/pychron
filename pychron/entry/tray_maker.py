@@ -15,7 +15,7 @@
 # ===============================================================================
 from enable.component_editor import ComponentEditor
 from traits.api import Instance, HasTraits, Float, List, Int, on_trait_change, Button
-from traitsui.api import UItem, TableEditor, HGroup
+from traitsui.api import UItem, TableEditor, HGroup, HSplit
 from traitsui.table_column import ObjectColumn
 
 from pychron.canvas.canvas2D.irradiation_canvas import IrradiationCanvas
@@ -34,6 +34,14 @@ class Position(HasTraits):
     def totuple(self):
         return self.x, self.y, self.radius, str(self.id)
 
+    def dump(self, inches=False):
+        x, y = self.x, self.y
+        if inches:
+            x /= 25.4
+            y /= 25.4
+
+        return '{},{:0.5f},{:0.5f}'.format(self.id, x, y)
+
 
 class TrayMaker(Loggable):
     canvas = Instance(IrradiationCanvas, ())
@@ -42,6 +50,44 @@ class TrayMaker(Loggable):
     refresh_button = Button
     names = List
     name = RestrictedStr(name='names')
+    save_button = Button
+
+    def gen(self):
+        rows = [(5, -2),
+                (9, -4),
+                (13, -6),
+                (15, -7),
+                (17, -8),
+                (19, -9),
+                (19, -9),
+                (21, -10),
+                (21, -10),
+                (23, -11),
+                (23, -11),
+                (23, -11),
+                (23, -11),
+                (23, -11),
+                (21, -10),
+                (21, -10),
+                (19, -9),
+                (19, -9),
+                (17, -8),
+                (15, -7),
+                (13, -6),
+                (9, -4),
+                (5, -2)]
+        space = 2
+        oy = 24
+        ps = []
+        for ri, (rc, ox) in enumerate(rows):
+            y = oy - ri * space
+            for ji in range(rc):
+                x = (ox * space) + ji * space
+                p = Position(x=x, y=y, radius=1)
+                ps.append(p)
+                print(x, y)
+
+        self.positions = ps
 
     def holes(self):
         return [p.totuple() for p in self.positions]
@@ -49,6 +95,14 @@ class TrayMaker(Loggable):
     def _add_position_button_fired(self):
         p = Position()
         self.positions.append(p)
+
+    def _save_button_fired(self):
+        out = 'out.txt'
+        with open(out, 'w') as wfile:
+            wfile.write('circle, 0.02\n')
+            wfile.write('\n\n')
+            for p in self.positions:
+                wfile.write('{}\n'.format(p.dump('inches')))
 
     @on_trait_change('positions[], positions:[x,y]')
     def _positions_changed(self):
@@ -63,16 +117,23 @@ class TrayMaker(Loggable):
                 ObjectColumn(name='x'),
                 ObjectColumn(name='y')]
 
-        v = okcancel_view(HGroup(icon_button_editor('add_position_button', 'add'), ),
+        v = okcancel_view(HGroup(icon_button_editor('add_position_button', 'add'),
+                                 icon_button_editor('save_button', 'save')),
                           UItem('name'),
-                          UItem('positions', editor=TableEditor(columns=cols)),
-                          UItem('canvas', editor=ComponentEditor()),
+                          HSplit(UItem('positions', width=0.25,
+                                       editor=TableEditor(columns=cols)),
+                                 UItem('canvas',
+                                       width=0.75,
+                                       editor=ComponentEditor())),
+                          width=900,
+                          height=900,
                           )
         return v
 
 
 if __name__ == '__main__':
     t = TrayMaker()
+    t.gen()
     t.names = ['a', 'bc']
     t.configure_traits()
 # ============= EOF =============================================

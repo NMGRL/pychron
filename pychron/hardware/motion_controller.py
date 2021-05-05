@@ -93,6 +93,9 @@ class MotionController(CoreDevice):
     _stopped = True
     nonstoppable = Bool(False)
 
+    def xy_swapped(self):
+        return False
+
     def update_position(self):
         pass
 

@@ -291,6 +291,10 @@ class ArArAge(IsotopeGroup):
 
         return r
 
+    def set_cosmogenic_correction(self, rs, rc):
+        self.arar_constants.set_cosmogenic_ratios(rs, rc)
+        self.recalculate_age(force=True)
+
     def set_sensitivity(self, sens):
         for si in sorted(sens, key=itemgetter('create_date'), reverse=True):
             if si['create_date'] < self.rundate:
@@ -302,7 +306,16 @@ class ArArAge(IsotopeGroup):
         self.temporary_ic_factors[k] = uv
 
     def set_beta(self, beta, is_peak_hop):
-        self.info('calculated beta value={}'.format(beta))
+        """
+        this is a source discrimination correction and assumes detectors are already "perfectly" calibrated
+        Requested by WiscAr for NGX.  They do detector calibration in IsoLinx (Iconia) and assume the detectors stay in
+        calibration.  Measure Air to generate a source mass discrimination correction.
+
+        :param beta:
+        :param is_peak_hop:
+        :return:
+        """
+        self.info('calculated beta value={} ispeakhop={}'.format(beta, is_peak_hop))
 
         m40 = 39.9624
 

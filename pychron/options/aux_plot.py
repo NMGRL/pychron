@@ -112,7 +112,10 @@ class AuxPlot(HasTraits):
 
     def _get_plot_name(self):
         if self._plot_names and self.name in self.names:
-            return self._plot_names[self.names.index(self.name)]
+            try:
+                return self._plot_names[self.names.index(self.name)]
+            except IndexError:
+                return ''
         else:
             return self.name
 

@@ -92,7 +92,7 @@ class BaseLaserManager(Manager):
         pass
 
     def end_extract(self, *args, **kw):
-        pass
+        self.disable_laser()
 
     def extract(self, *args, **kw):
         pass
@@ -125,6 +125,9 @@ class BaseLaserManager(Manager):
         pass
 
     def get_pyrometer_temperature(self):
+        pass
+
+    def get_grain_polygon_blob(self):
         pass
 
     def get_pattern_names(self):

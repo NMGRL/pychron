@@ -304,6 +304,10 @@ class ExperimentEditor(BaseTraitsEditor):
         # self.bulk_run_fixer.fix(runs)
 
         hec = qi.human_error_checker
+
+        hec.check_runs_repairable(runs)
+        qi.refresh_table_needed = True
+
         info = hec.check_runs_non_fatal(runs)
         if info:
             if not self.confirmation_dialog('There is a nonfatal issue.\n\n{}\n\n Are you sure you want to '
@@ -319,6 +323,7 @@ class ExperimentEditor(BaseTraitsEditor):
             return
 
         err = hec.check_queue(qi)
+
         if err:
             return
         else:

@@ -292,6 +292,11 @@ if paths.setup_dir:
                 pass
 
 AR_AR = 'Ar/Ar'
+HE = 'He'
+NE = 'Ne'
+KR = 'Kr'
+XE = 'Xe'
+GENERIC = 'Generic'
 
 QTEGRA_SOURCE_KEYS = ('extraction_lens', 'ysymmetry', 'zsymmetry', 'zfocus')
 QTEGRA_SOURCE_NAMES = ('ExtractionLens', 'Y-Symmetry', 'Z-Symmetry', 'Z-Focus')
@@ -340,9 +345,11 @@ SAMPLE_METADATA = (SAMPLE,
 CLEANUP = 'cleanup'
 PRECLEANUP = 'pre_cleanup'
 POSTCLEANUP = 'post_cleanup'
+CRYO_TEMP = 'cryo_temperature'
 EXTRACT_VALUE = 'extract_value'
 EXTRACT_UNITS = 'extract_units'
 EXTRACT_DEVICE = 'extract_device'
+EXTRACT = 'extract'
 MASS_SPECTROMETER = 'mass_spectrometer'
 COLLECTION_TIME_ZERO_OFFSET = 'collection_time_zero_offset'
 DURATION = 'duration'
@@ -360,24 +367,38 @@ RAMP_DURATION = 'ramp_duration'
 RAMP_RATE = 'ramp_rate'
 TRAY = 'tray'
 USERNAME = 'username'
+TEMPLATE = 'template'
 DISABLE_BETWEEN_POSITIONS = 'disable_between_positions'
-EXTRACTION_ATTRS = (WEIGHT, EXTRACT_DEVICE, 'tray',
+
+
+def duration(k):
+    return '{}_duration'.format(k)
+
+
+EXTRACTION_ATTRS = (WEIGHT, EXTRACT_DEVICE, TRAY,
                     EXTRACT_VALUE, EXTRACT_UNITS,
                     'load_name',
                     'load_holder',
-                    'extract_duration',
-                    'cleanup_duration',
-                    'pre_cleanup_duration',
-                    'post_cleanup_duration',
+                    duration(EXTRACT),
+                    duration(CLEANUP),
+                    duration(PRECLEANUP),
+                    duration(POSTCLEANUP),
+                    CRYO_TEMP,
                     LIGHT_VALUE,
                     PATTERN, BEAM_DIAMETER, RAMP_DURATION, RAMP_RATE)
 
-META_ATTRS = ('analysis_type', 'uuid', 'identifier', 'aliquot', 'increment',
-              'comment', 'mass_spectrometer',
+LABORATORY = 'laboratory'
+INSTRUMENT_NAME = 'instrument_name'
+EXPERIMENT_TYPE = 'experiment_type'
+ALIQUOT = 'aliquot'
+INCREMENT = 'increment'
+
+META_ATTRS = ('analysis_type', 'uuid', 'identifier', ALIQUOT, INCREMENT,
+              COMMENT, MASS_SPECTROMETER,
               'username', 'queue_conditionals_name',
               REPOSITORY_IDENTIFIER,
               'acquisition_software',
-              'data_reduction_software', 'instrument_name', 'laboratory',
-              'experiment_queue_name', 'experiment_type') + SAMPLE_METADATA
+              'data_reduction_software', INSTRUMENT_NAME, LABORATORY,
+              'experiment_queue_name', EXPERIMENT_TYPE) + SAMPLE_METADATA
 
 # ============= EOF =============================================

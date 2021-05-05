@@ -71,7 +71,7 @@ class AblationCO2Manager(SerialLaserManager):
         self.info('fire laser')
         self._ask('SetLaserOn 1')
 
-    def extract(self, value, units=None, tol=0.1, fire_laser=True):
+    def extract(self, value, units=None, tol=0.1, fire_laser=True, **kw):
         if units is None:
             units = 'watts'
 

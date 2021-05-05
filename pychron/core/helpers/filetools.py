@@ -28,20 +28,29 @@ import yaml
 from pychron.core.yaml import yload
 
 
-def subdirize(root, name, n=1, sublen=2, mode='r'):
-    for i in range(n):
+def subdirize(root, name, sublen=2, mode='r'):
+    if not isinstance(sublen,  (tuple, list)):
+        sublen = (sublen, )
 
-        d, name = name[:sublen], name[sublen:]
-        path = os.path.join(root, d)
+    oroot = root
+    for si in sublen:
+        d, nname = name[:si], name[si:]
+        path = os.path.join(oroot, d)
         if not os.path.isdir(path):
             if mode == 'r':
-                return
+                root = None
+                continue
 
             os.mkdir(path)
 
         root = path
+        # use the first sublen if in write mode
+        # if in read mode need to continue checking other sublens
+        if mode != 'r' or os.path.isdir(root):
+            break
 
-    return root, name
+    if root:
+        return root, nname
 
 
 def backup(p, backupdir, **kw):
@@ -252,7 +261,7 @@ def max_file_cnt(root, excludes=None):
     return len(ps) + 1
 
 
-def max_path_cnt(root, base, delimiter='-', extension='.txt'):
+def max_path_cnt(root, base, delimiter='-', extension='.txt', ndigits=5):
     """
 
     :param root:
@@ -260,14 +269,14 @@ def max_path_cnt(root, base, delimiter='-', extension='.txt'):
     :param extension:
     :return: int max+1
     """
-    basename = '{}{}[0123456789][0123456789][0123456789]{}'.format(base, delimiter, extension)
+    ndigits = '[0-9]'*ndigits
+    basename = '{}{}{}{}'.format(base, delimiter, ndigits, extension)
     cnt = 0
-    for p in glob.iglob(os.path.join(root, basename)):
+    for p in glob.glob(os.path.join(root, basename)):
         p = os.path.basename(p)
         head, tail = os.path.splitext(p)
 
         cnt = max(int(head.split(delimiter)[-1]), cnt)
-
     cnt += 1
     return cnt
 

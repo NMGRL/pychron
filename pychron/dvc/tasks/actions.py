@@ -29,6 +29,7 @@ from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.dvc import repository_path
 from pychron.envisage.resources import icon
 from pychron.envisage.tasks.actions import restart
+from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.pychron_constants import DVC_PROTOCOL
 
 
@@ -101,6 +102,12 @@ class DeleteChangesAction(LocalRepositoryAction):
     image = icon('trashcan')
 
 
+class RevertCommitAction(LocalRepositoryAction):
+    name = 'Revert Selected Commit'
+    method = 'revert_selected_commit'
+    image = icon('trashcan')
+
+
 class ArchiveRepositoryAction(LocalRepositoryAction):
     name = 'Archive Repository'
     method = 'archive_repository'
@@ -164,7 +171,6 @@ class ShareChangesAction(Action):
     name = 'Share Changes'
 
     def perform(self, event):
-        from git import Repo
         from git.exc import InvalidGitRepositoryError
         from pychron.paths import paths
         remote = 'origin'
@@ -175,7 +181,9 @@ class ShareChangesAction(Action):
                 continue
 
             try:
-                r = Repo(repository_path(d))
+                r = GitRepoManager()
+                r.open_repo(repository_path(d))
+                # r = Repo(repository_path(d))
             except InvalidGitRepositoryError:
                 continue
             repos.append(r)
@@ -186,16 +194,22 @@ class ShareChangesAction(Action):
                               can_ok=False)
         pd.open()
         shared = False
-        for r in repos:
-            pd.change_message('Fetch {}'.format(os.path.basename(r.working_dir)))
+        for rm in repos:
+            r = rm.active_repo
+
+            d = os.path.basename(r.working_dir)
+
+            pd.change_message('Fetch {}'.format(d))
+
             c = r.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
             if c:
+                try:
+                    rm.pull()
+                except BaseException:
+                    warning(None, 'Failed to pull updates for {}'.format(rm.name))
 
-                r.git.pull()
-
-                d = os.path.basename(r.working_dir)
                 if confirm(None, 'Share changes made to {}.\n\n{}'.format(d, c)) == YES:
-                    r.git.push(remote, branch)
+                    rm.push(remote=remote, branch=branch)
                     shared = True
 
         msg = 'Changes successfully shared' if shared else 'No changes to share'

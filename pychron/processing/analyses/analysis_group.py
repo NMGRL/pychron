@@ -272,6 +272,11 @@ class AnalysisGroup(IdeogramPlotable):
 
         return mswd, v, n, p
 
+    @property
+    def featuregroup_id(self):
+        if self.analyses:
+            return getattr(self.analyses[0], 'featuregroup_id')
+
     # properties
     @property
     def flatlon(self):

@@ -18,7 +18,7 @@ from math import isnan
 
 from numpy import hstack, array
 # ============= standard library imports ========================
-from traits.api import Array, List, Instance
+from traits.api import Array, List, Instance, Dict
 from uncertainties import nominal_value, std_dev
 
 from pychron.pipeline.plot.overlays.label_overlay import SpectrumLabelOverlay, RelativePlotLabel
@@ -31,7 +31,7 @@ from pychron.pychron_constants import PLUSMINUS, SIGMA, MSEM
 
 class Spectrum(BaseArArFigure):
     xs = Array
-
+    spectrum_values = Dict
     _analysis_group_klass = StepHeatAnalysisGroup
     spectrum_overlays = List
     plateau_overlay = Instance(PlateauOverlay)
@@ -47,13 +47,17 @@ class Spectrum(BaseArArFigure):
         ag = self.analysis_group
 
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
-            plot = getattr(self, '_plot_{}'.format(po.plot_name))(po, plotobj, pid)
+            plot_name = po.plot_name
+            if not plot_name:
+                continue
+
+            plot = getattr(self, '_plot_{}'.format(plot_name))(po, plotobj, pid)
 
             if pid == 0:
                 # self._set_ml_title('Cumulative %<sup>39</sup>Ar<sub>K</sub>', 0, 'x')
                 graph.set_x_title('Cumulative %<sup>39</sup>Ar<sub>K</sub>', plotid=0)
 
-            if legend and po.plot_name == 'age_spectrum':
+            if legend and plot_name == 'age_spectrum':
                 ident = ag.identifier
                 sample = ag.sample
 
@@ -73,11 +77,16 @@ class Spectrum(BaseArArFigure):
     def mean_x(self, *args):
         return 50
 
-    def calculate_ylimits(self, po, s39, vs, pma=None):
+    def get_ybounds(self, plotid=None, vs=None, s39=None, pma=None):
+        if plotid is not None:
+            xs, ys, es, c39s, s39, vs = self.spectrum_values[plotid]
+
+        if s39 is None:
+            s39 = self.s39
+
         ps = s39 / s39.sum()
         ps = ps > 0.01
         vs = vs[ps]
-
         # filter ys,es if 39Ar < 1% of total
         try:
             vs, es = zip(*[(nominal_value(vi), std_dev(vi)) for vi in vs])
@@ -94,6 +103,29 @@ class Spectrum(BaseArArFigure):
             _mi = 0
             _ma = 1
 
+        return _ma, _mi
+
+    def calculate_ylimits(self, po, s39, vs, pma=None):
+        # ps = s39 / s39.sum()
+        # ps = ps > 0.01
+        # vs = vs[ps]
+        #
+        # # filter ys,es if 39Ar < 1% of total
+        # try:
+        #     vs, es = zip(*[(nominal_value(vi), std_dev(vi)) for vi in vs])
+        #     vs, es = array(vs), array(es)
+        #     nes = es * self.options.step_nsigma
+        #     yl = vs - nes
+        #     yu = vs + nes
+        #
+        #     _mi = min(yl)
+        #     _ma = max(yu)
+        #     if pma:
+        #         _ma = max(pma, _ma)
+        # except ValueError:
+        #     _mi = 0
+        #     _ma = 1
+        _ma, _mi = self.get_ybounds(vs=vs, s39=s39, pma=pma)
         if not po.has_ylimits():
             if po.calculated_ymin is None:
                 po.calculated_ymin = _mi
@@ -117,6 +149,7 @@ class Spectrum(BaseArArFigure):
 
         graph.set_y_title(title, plotid=pid)
         xs, ys, es, c39s, s39, vs = self._calculate_spectrum(value_key=vk)
+        self.spectrum_values[pid] = xs, ys, es, c39s, s39, vs
         self.calculate_ylimits(po, s39, vs)
 
         s = self._add_plot(xs, ys, es, pid, po)
@@ -128,8 +161,9 @@ class Spectrum(BaseArArFigure):
         op = opt
 
         xs, ys, es, c39s, s39, vs = self._calculate_spectrum()
-
+        self.spectrum_values[pid] = xs, ys, es, c39s, s39, vs
         self.xs = c39s
+
         ref = self.analyses[0]
         au = ref.arar_constants.age_units
         graph.set_y_title('Apparent Age ({})'.format(au), plotid=pid)

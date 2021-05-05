@@ -475,7 +475,7 @@ class SwitchManager(Manager):
     def load_valve_lock_states(self, *args, **kw):
         self._load_soft_lock_states()
 
-    def load_valve_owners(self, verbose=False, **kw):
+    def load_valve_owners(self, verbose=False, refresh_canvas=True, **kw):
         """
 
         :return:
@@ -498,7 +498,9 @@ class SwitchManager(Manager):
 
         if states:
             self.refresh_owned_state = states
-            self.refresh_canvas_needed = True
+            if refresh_canvas:
+                self.refresh_canvas_needed = True
+            return True
 
     def _verbose(self, msg):
         self.log(msg, VERBOSE)
@@ -506,7 +508,7 @@ class SwitchManager(Manager):
     def _verbose_debug(self, msg):
         self.log(msg, VERBOSE_DEBUG)
 
-    def load_hardware_states(self, force=False, verbose=False):
+    def load_hardware_states(self, force=False, verbose=False, refresh_canvas=True):
         """
         """
         states = []
@@ -545,7 +547,10 @@ class SwitchManager(Manager):
 
         if states:
             self.refresh_state = states
-            self.refresh_canvas_needed = True
+            if refresh_canvas:
+                self.refresh_canvas_needed = True
+
+            return True
 
     def load_hardware_states_old(self, force=False, verbose=False):
         self._verbose('load hardware states')

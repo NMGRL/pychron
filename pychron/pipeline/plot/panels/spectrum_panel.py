@@ -44,4 +44,27 @@ class SpectrumPanel(FigurePanel):
     def _make_graph_hook(self, g):
         g.on_trait_change(self._handle_figure_event, 'figure_event')
 
+    def _handle_rescale(self, obj, name, new):
+        if new == 'y':
+            plotid = obj.selected_plotid
+            for f in self.figures:
+                ma, mi = f.get_ybounds(plotid)
+            obj.set_y_limits(mi, ma, pad='0.025', plotid=plotid)
+        # elif new == 'valid':
+        #     l, h = None, None
+        #     for f in self.figures:
+        #         ll, hh = f.get_valid_xbounds()
+        #         if l is None:
+        #             l, h = ll, hh
+        #
+        #         l = min(l, ll)
+        #         h = max(h, hh)
+        #
+        #     obj.set_x_limits(l, h)
+        #
+        # elif new == 'x':
+        #     center, xmi, xma = self._get_init_xlimits()
+        #     obj.set_x_limits(xmi, xma)
+        #     for f in self.figures:
+        #         f.replot()
 # ============= EOF =============================================

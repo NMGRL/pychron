@@ -37,12 +37,13 @@ TRAY_HELP = '''1. Locate center hole
 '''
 
 HELP_DICT = {
-    'Free': '''1. Move to Point, Enter Reference Position. Repeat at least 2X
-2. Hit End Calibrate to finish and compute parameters
+    'Free': '''1. Move to Point, Click "Accept Point" to enter Reference Position. Repeat at least 2X
+2. Click "End Calibrate" to finish and compute parameters
 ''',
-    'Hole': '''1. Move to Hole, Enter Reference hole. Repeat at least 2X
-2. Hit End Calibrate to finish and compute parameters''',
-    'Linear': '1. Locate Origin (i.e. 0)'
+    'Hole': '''1. Move to Hole,  Click "Accept Point" to enter Reference Hole. Repeat at least 2X
+2. Click "End Calibrate" to finish and compute parameters''',
+    'Linear': '1. Locate Origin (i.e. 0)',
+    'Irregular': '''1. Move to Point,  Click "Accept Point" to manually define x,y for hole.'''
 
 }
 
@@ -202,7 +203,7 @@ class TrayCalibrationManager(Loggable):
                     setattr(self, a, kw[a])
 
             cc = kw.get('clear_corrections', True)
-            self.save_calibration(clear_corrections=cc)
+            self.save_calibration(clear_corrections=cc, reload=kw.get('reload', True))
 
     def _destroy_calibrator(self):
         if self.calibrator:
