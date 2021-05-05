@@ -50,7 +50,7 @@ class GpibCommunicator(Communicator):
         self.handle.trigger()
 
     def ask(self, cmd):
-        return self.handle.ask(cmd)
+        return self.handle.query(cmd)
 
     def tell(self, cmd):
         self.handle.write(cmd)
