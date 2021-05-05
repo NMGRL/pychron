@@ -49,10 +49,10 @@ class GpibCommunicator(Communicator):
     def trigger(self):
         self.handle.trigger()
 
-    def ask(self, cmd):
+    def ask(self, cmd, verbose=False):
         return self.handle.query(cmd)
 
-    def tell(self, cmd):
+    def tell(self, cmd, verbose=False):
         self.handle.write(cmd)
 
 # address = 16

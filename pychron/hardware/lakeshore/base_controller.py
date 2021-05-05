@@ -122,8 +122,8 @@ class BaseLakeShoreController(CoreDevice):
             setattr(self, '{}_readback'.format(tag), v)
         return self._update_hook()
 
-    # def _update_hook(self):
-    #     return self.input_a
+    def _update_hook(self):
+        return self.input_a
 
     def setpoints_achieved(self, tol=1):
         for i, (tag, key) in enumerate(zip(self.iomap, string.ascii_lowercase)):
@@ -141,7 +141,7 @@ class BaseLakeShoreController(CoreDevice):
     @get_float(default=0)
     def read_setpoint(self, output, verbose=False):
         if output is not None:
-            return self.ask('SETP? {}'.format(re.sub('[^0-9]', '', output)))
+            return self.ask('SETP? {}'.format(re.sub('[^0-9]', '', output)), verbose=verbose)
 
     def set_setpoints(self, *setpoints, block=False, delay=1):
         for i, v in enumerate(setpoints):
@@ -192,8 +192,8 @@ class BaseLakeShoreController(CoreDevice):
         return self._read_input('b', self.units, **kw)
 
     @get_float(default=0)
-    def _read_input(self, tag, mode='C'):
-        return self.ask('{}RDG? {}'.format(mode, tag))
+    def _read_input(self, tag, mode='C', verbose=False):
+        return self.ask('{}RDG? {}'.format(mode, tag), verbose=verbose)
 
     def _setpoint1_changed(self):
         self.set_setpoint(self.setpoint1, 1)
@@ -203,7 +203,6 @@ class BaseLakeShoreController(CoreDevice):
 
     def _update_hook(self):
         r = PlotRecord((self.input_a, self.input_b), (0, 1), ('a', 'b'))
-        print('second update hook')
         return r
 
     def get_control_group(self):
