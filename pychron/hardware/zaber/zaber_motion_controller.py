@@ -84,15 +84,10 @@ class LegacyBinaryZaberMotionController(MotionController):
         return False
 
     def linear_move(self, x, y, block=True, *args, **kw):
-        xaxis = self.single_axis_move('x', x, block=False)
-        yaxis = self.single_axis_move('y', y, block=False)
-        self.update_axes()
-        return
-
-        # if block:
-        #     while 1:
-        #         if not xaxis.is_busy() and not yaxis.is_busy():
-        #             return
+        if kw.get('source') != 'laser_canvas':
+            xaxis = self.single_axis_move('x', x, block=False)
+            yaxis = self.single_axis_move('y', y, block=False)
+            self.update_axes()
 
     def single_axis_move(self, key, value, block=True, *args, **kw):
         axis = self.axes[key]
