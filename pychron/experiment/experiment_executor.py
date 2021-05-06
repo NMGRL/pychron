@@ -759,17 +759,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.debug('join run finished')
 
     def _set_prev(self, run):
+        at = run.spec.analysis_type
         if hasattr(run, 'get_baseline_corrected_signal_dict'):
             d = (run.record_id, run.get_baseline_corrected_signal_dict())
-            self._prev_blanks[run.analysis_type] = d
-            self._prev_blanks['blank'] = d
+            if self.use_preceding_blank:
+                self._prev_blanks[at] = d
+                self._prev_blanks['blank'] = d
             self._prev_baselines = run.get_baseline_dict()
         else:
-            if run.analysis_type.startswith('blank'):
+            if self.use_preceding_blank and at.startswith('blank'):
                 pb = run.get_baseline_corrected_signals()
                 if pb is not None:
                     d = (run.spec.runid, pb)
-                    self._prev_blanks[run.spec.analysis_type] = d
+                    self._prev_blanks[at] = d
                     self._prev_blanks['blank'] = d
                     self.debug('previous blanks ={}'.format(d))
 
