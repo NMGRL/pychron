@@ -17,6 +17,7 @@
 # ============= standard library imports ========================
 import glob
 import os
+from datetime import datetime
 from math import isnan
 
 from git import Repo
@@ -161,7 +162,7 @@ def make_interpreted_age_dict(ia):
     # make analyses
     def analysis_factory(x):
         return dict(uuid=x.uuid,
-                    rundate=x.rundate.isoformat(),
+                    rundate=x.rundate,
                     record_id=x.record_id,
                     extract_value=x.extract_value,
                     age=x.age,
@@ -202,6 +203,10 @@ def make_interpreted_age_dict(ia):
                'arar_constants': ia.arar_constants.to_dict(),
                'ages': ia.ages()})
     d['preferred'] = pf
+
+    d['collection_metadata'] = {'instrument': ia.mass_spectrometer,
+                                'technique': 'Ar/Ar'}
+    d['session_metadata'] = {'date': datetime.now().isoformat()}
     return d
 
 # ============= EOF =============================================
