@@ -1195,7 +1195,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         try:
             pb = self._prev_blanks[spec.analysis_type]
         except KeyError:
-            pb = self._prev_blanks['blank']
+            pb = self._prev_blanks.get('blank', ({}, ''))
 
         arun.previous_blanks = pb
         arun.previous_baselines = self._prev_baselines
