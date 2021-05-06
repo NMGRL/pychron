@@ -77,6 +77,15 @@ class BaseValve(Connectable):
     oactive_color = (0, 255, 0)
     description = ''
 
+    def toyaml(self):
+        y = super(BaseValve, self).toyaml()
+        del y['color']
+        del y['display_name']
+        del y['border_width']
+        del y['fill']
+
+        return y
+
     def get_tooltip_text(self):
         state = 'Open' if self.state else 'Closed'
         if self.soft_lock:

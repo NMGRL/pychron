@@ -321,7 +321,7 @@ class LoadingManager(DVCIrradiationable):
                                      level=level,
                                      irrad_position=int(irradpos),
                                      position=pi.position,
-                                     packet=packet)
+                                     packet=packet or '')
                     pos.append(p)
 
         self.positions = pos
@@ -880,8 +880,7 @@ class LoadingManager(DVCIrradiationable):
                 pp = []
                 ps = self.canvas.get_selection()
                 for p in ps:
-                    po = next((ppp for ppp in self.positions if
-                               int(p.name) in ppp.positions), None)
+                    po = next((ppp for ppp in self.positions if int(p.name) == ppp.position), None)
                     if po:
                         pp.append(po)
 

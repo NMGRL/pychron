@@ -24,6 +24,7 @@ from traits.has_traits import HasTraits
 from uncertainties import ufloat
 
 from pychron.core.helpers.isotope_utils import sort_isotopes, convert_detector
+from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.processing.isotope import Isotope, Baseline
 
@@ -222,8 +223,18 @@ class IsotopeGroup(HasTraits):
                         e = c.getfloat(si, 'ic_factor_err')
                     ic = v, e
                     break
+
         else:
-            self.debug('no detector file {}. cannot retrieve ic_factor'.format(p))
+            p = os.path.join(paths.spectrometer_dir, 'detectors.yaml')
+            if os.path.isfile(p):
+                for i, di in enumerate(yload(p)):
+                    if di.get('name', '').lower() == det:
+                        v = di.get('ic_factor', 1)
+                        e = di.get('ic_factor_err', 0)
+                        ic = v, e
+                        break
+            else:
+                self.debug('no detector file {}. cannot retrieve ic_factor'.format(p))
 
         r = ufloat(*ic)
         return r

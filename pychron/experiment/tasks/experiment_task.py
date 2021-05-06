@@ -506,22 +506,17 @@ class ExperimentEditorTask(EditorTask):
 
             rf.selected_irradiation = nn.irradiation
             rf.selected_level = nn.level
-            rf.labnumber = nn.labnumber
+            rf.labnumber = nn.identifier
 
             # filter rows that dont match the first rows labnumber
-            ns = [str(ni.positions[0]) for ni in new
-                  if ni.labnumber == nn.labnumber]
+            ns = [str(ni.position) for ni in new
+                  if ni.identifier == nn.identifier]
 
-            group_positions = self.loading_manager.group_positions
-            # group_positions = False
-            if group_positions:
-                rf.position = ','.join(ns)
+            n = len(ns)
+            if n > 1 and abs(int(ns[0]) - int(ns[-1])) == n - 1:
+                rf.position = '{}-{}'.format(ns[0], ns[-1])
             else:
-                n = len(ns)
-                if n > 1 and abs(int(ns[0]) - int(ns[-1])) == n - 1:
-                    rf.position = '{}-{}'.format(ns[0], ns[-1])
-                else:
-                    rf.position = str(ns[0])
+                rf.position = str(ns[0])
 
     @on_trait_change('manager:experiment_factory:extract_device')
     def _handle_extract_device(self, new):
@@ -561,6 +556,7 @@ class ExperimentEditorTask(EditorTask):
     @on_trait_change('manager:experiment_factory:queue_factory:load_name')
     def _update_load(self, new):
         lm = self.loading_manager
+        self.debug('load_name changed={} {}'.format(new, lm))
         if lm is not None:
             lm.set_load_by_name(new)
             if lm.canvas:
@@ -750,6 +746,7 @@ class ExperimentEditorTask(EditorTask):
             dvc = self.window.application.get_service(DVC_PROTOCOL)
             lm.trait_set(db=dvc.db,
                          show_group_positions=True)
+            lm.setup()
             return lm
 
     def _default_directory_default(self):

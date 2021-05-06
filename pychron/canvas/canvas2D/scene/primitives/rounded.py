@@ -177,18 +177,18 @@ class Spectrometer(RoundedRectangle):
     tag = 'spectrometer'
 
     def __init__(self, *args, **kw):
-        super(Spectrometer, self).__init__(*args, **kw)
         self.width = 10
         self.height = 10
+        super(Spectrometer, self).__init__(*args, **kw)
 
 
 class Stage(RoundedRectangle):
     tag = 'stage'
 
     def __init__(self, *args, **kw):
-        super(Spectrometer, self).__init__(*args, **kw)
         self.width = 10
         self.height = 5
+        super(Stage, self).__init__(*args, **kw)
 
 
 class CircleStage(Connectable, Bordered):
@@ -291,5 +291,9 @@ class CircleStage(Connectable, Bordered):
 
 
 class Getter(RoundedRectangle):
+    pass
+
+
+class Gauge(RoundedRectangle):
     pass
 # ============= EOF =============================================

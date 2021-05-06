@@ -98,6 +98,7 @@ class ScanManager(StreamGraphManager):
                              remove=remove)
 
     def prepare_destroy(self):
+        self.set_streaming_active(False)
         self.stop_scan()
         self.log_events_enabled = False
         self._bind_listeners(remove=True)
@@ -132,6 +133,7 @@ class ScanManager(StreamGraphManager):
         # del self.graph_scan_width
 
     def activate(self):
+        self.set_streaming_active(False)
         self.bind_preferences()
 
         self.load_event_marker_config()
@@ -323,7 +325,7 @@ class ScanManager(StreamGraphManager):
     #     self._prev_signals = signals
 
     def _update(self, data):
-        keys, signals, _ = data
+        keys, signals, _, _ = data
         if keys:
             self._signal_failed_cnt = 0
             # if self._check_intensity_no_change(signals):
@@ -530,8 +532,9 @@ class ScanManager(StreamGraphManager):
             self.debug('setting integration time={}'.format(self.integration_time))
 
             if not self.timer:
-                self.spectrometer.set_integration_time(self.integration_time, force=True)
-                self.reset_scan_timer()
+                if self._is_active:
+                    self.spectrometer.set_integration_time(self.integration_time, force=True)
+                    self.reset_scan_timer()
             else:
                 self._integration_time_flag = True
 

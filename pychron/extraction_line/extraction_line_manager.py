@@ -242,7 +242,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def test_valve_communication(self):
         self.info('test valve communication')
-        print('asdf', self.switch_manager, hasattr(self.switch_manager, 'get_state_checksum'))
         ret, err = True, ''
         if self.switch_manager:
             if hasattr(self.switch_manager, 'get_state_checksum'):
@@ -301,8 +300,8 @@ class ExtractionLineManager(Manager, Consoleable):
             self.canvas_editor.load(c.canvas2D, self.canvas_path)
             # c.load_canvas_file(c.config_name)
 
+            c.load_canvas_file()
             if self.switch_manager:
-                c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.switch_manager.valves_path)
 
                 for k, v in self.switch_manager.switches.items():
                     vc = c.get_object(k)
@@ -572,8 +571,19 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def _update(self):
         if self.use_hardware_update and self._active:
-            self.switch_manager.load_hardware_states()
-            self.switch_manager.load_valve_owners()
+            rc = self.switch_manager.load_hardware_states(refresh_canvas=False)
+            rc = self.switch_manager.load_valve_owners(refresh_canvas=False) or rc
+
+            if self.canvas.canvas2D.scene.widgets:
+                # update registered widgets
+                for widget in self.canvas.canvas2D.scene.widgets.values():
+                    try:
+                        rc = widget.update() or rc
+                    except BaseException as e:
+                        self.critical('failed updating widget {}, {}'.format(widget, e))
+            if rc:
+                self.refresh_canvas()
+
             do_after(self.hardware_update_period * 1000, self._update)
 
     def _deactivate_hook(self):
@@ -659,22 +669,22 @@ class ExtractionLineManager(Manager, Consoleable):
             if result:
                 if all(result):
                     valve = vm.get_switch_by_name(name)
+                    if valve:
+                        description = valve.description
+                        self._log_spec_event(name, action)
 
-                    description = valve.description
-                    self._log_spec_event(name, action)
+                        self.info('{:<6s} {} ({})'.format(action.upper(), valve.name, description),
+                                  color='red' if action == 'close' else 'green')
 
-                    self.info('{:<6s} {} ({})'.format(action.upper(), valve.name, description),
-                              color='red' if action == 'close' else 'green')
-
-                    vm.actuate_children(name, action, mode)
-                    ld = self.link_valve_actuation_dict
-                    if ld:
-                        try:
-                            func = ld[name]
-                            func(name, action)
-                        except KeyError:
-                            self.debug('name="{}" not in '
-                                       'link_valve_actuation_dict. keys={}'.format(name, ','.join(list(ld.keys()))))
+                        vm.actuate_children(name, action, mode)
+                        ld = self.link_valve_actuation_dict
+                        if ld:
+                            try:
+                                func = ld[name]
+                                func(name, action)
+                            except KeyError:
+                                self.debug('name="{}" not in '
+                                           'link_valve_actuation_dict. keys={}'.format(name, ','.join(list(ld.keys()))))
 
             return result
 

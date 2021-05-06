@@ -59,7 +59,8 @@ class PeakCenterConfig(HasTraits):
     integration_time = Either(Float, Int)
     integration_times = List(transient=True)
 
-    directions = Enum('Increase', 'Decrease', 'Oscillate')
+    # directions = Enum('Increase', 'Decrease', 'Oscillate')
+    directions = Enum('Increase', 'Decrease')
 
     dataspace = Enum('dac', 'mass', 'av')
 

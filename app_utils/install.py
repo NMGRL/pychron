@@ -57,7 +57,7 @@ INITIALIZATION_TXT = '''<root>
             <plugin enabled="false">Query</plugin>
             <plugin enabled="false">GitLab</plugin>
         </general>
-        <hardware>
+        <hardware>{}
         </hardware>
         <social>
         </social>
@@ -69,6 +69,13 @@ INITIALIZATION_TXT = '''<root>
     </plugins>
 </root>
 '''
+
+HARDWARE_PLUGIN_TXT = """
+            <plugin enabled="true">ExtractionLine
+                <manager enabled="true">switch_manager
+                <device enabled="true">switch_controller</device>
+                </manager>
+            </plugin>"""
 
 DEFAULTS_TXT = '''#script defaults file
 #defines default pyscripts for the analysis types
@@ -275,131 +282,76 @@ def main():
         
 """
 
+CANVAS_XML = """<?xml version="1.0" ?>
+<root>
+    <!-- Spectrometer -->
+    <spectrometer>Spec
+        <translation>-24,0</translation><dimension>8,8</dimension><color>85,110,180</color>
+    </spectrometer>
+    
+    <!-- Valves -->
+    <valve>A
+        <translation>-23,-3</translation>
+    </valve>
+    <valve>B
+        <translation>-14,3</translation>
+    </valve>
+    
+    <!-- pump -->
+    <ionpump>IonPump
+        <translation>-24,-8</translation><dimension>8,3</dimension><color>234,165,57</color>
+    </ionpump>
+
+    <!-- connections -->
+    <connection orientation="vertical"><start>A</start><end>Spec</end></connection>
+    <connection orientation="vertical"><start>A</start><end>IonPump</end></connection>
+    <connection orientation="horizontal"><start>B</start><end>Spec</end></connection>
+</root>
+"""
+
 CANVAS_TXT = """connection: []
 getter: []
 hconnection:
-- end:
-    name: '2'
-    offset: ''
-  name: '1_2'
-  start:
-    name: '1'
-    offset: ''
+  - end:
+      name: 'Spec'
+      offset: ''
+    start:
+      name: 'B'
+      offset: ''
 ionpump:
-- border_width: 5
-  color: 50,150,100,255
-  dimension: 6.0, 5.0
-  display_name: IonPump
-  fill: true
-  name: IonPump
-  translation: -30.0,20.0
+  - name: IonPump
+    color: 234,165,57
+    dimension: 8,3
+    translation: -24.0,-8
 laser: []
 manualswitch: []
 spectrometer:
-- border_width: 5
-  color: 250,120,150,255
-  dimension: 10.0, 10.0
-  display_name: QMS
-  fill: true
-  name: QMS
-  translation: -28.0,-15.0
+  - name: Spec
+    border_width: 5
+    color: 250,120,150,255
+    dimension: 10.0, 10.0
+    translation: -25.0,0.0
 stage: []
 switch: []
 turbo:
-- border_width: 5
-  color: 250,250,0,255
+- color: 250,250,0,255
   dimension: 4.0, 4.0
-  display_name: Turbo
-  fill: true
-  name: Turbo
   translation: -11.0,-28.0
+  name: Turbo
 valve:
-- border_width: 3
-  color: 255,0,0,255
-  dimension: 3.0, 3.0
-  display_name: null
-  fill: true
-  name: '0'
-  translation: -27.0,14.5
-- border_width: 3
-  color: 255,0,0,255
-  dimension: 3.0, 3.0
-  display_name: null
-  fill: true
-  name: '1'
-  translation: -22.0,0.0
-- border_width: 3
-  color: 255,0,0,255
-  dimension: 3.0, 3.0
-  display_name: null
-  fill: true
-  name: '2'
-  translation: -14.0,0.0
-- border_width: 3
-  color: 255,0,0,255
-  dimension: 3.0, 3.0
-  display_name: null
-  fill: true
-  name: '3'
-  translation: -10.0,-15.0
-- border_width: 3
-  color: 255,0,0,255
-  dimension: 3.0, 3.0
-  display_name: null
-  fill: true
-  name: '4'
-  translation: -6.0,5.0
-- border_width: 3
-  color: 255,0,0,255
-  dimension: 3.0, 3.0
-  display_name: null
-  fill: true
-  name: '5'
-  translation: -6.0,-5.0
-- border_width: 3
-  color: 255,0,0,255
-  dimension: 3.0, 3.0
-  display_name: null
-  fill: true
-  name: '6'
-  translation: 2.0,11.5
-- border_width: 3
-  color: 255,0,0,255
-  dimension: 3.0, 3.0
-  display_name: null
-  fill: true
-  name: '7'
-  translation: 8.5,11.5
-- border_width: 3
-  color: 255,0,0,255
-  dimension: 3.0, 3.0
-  display_name: null
-  fill: true
-  name: '8'
-  translation: 2.0,-10.5
-- border_width: 3
-  color: 255,0,0,255
-  dimension: 3.0, 3.0
-  display_name: null
-  fill: true
-  name: '9'
-  translation: 8.5,-10.5
-- border_width: 3
-  color: 255,0,0,255
-  dimension: 3.0, 3.0
-  display_name: null
-  fill: true
-  name: '10'
-  translation: -6.0,-27.0
-- border_width: 3
-  color: 255,0,0,255
-  dimension: 3.0, 3.0
-  display_name: null
-  fill: true
-  name: '11'
-  translation: -18.0,22.0
-vconnection: []
-
+  - name: 'A'
+    translation: -23, -3
+  - name: 'B'
+    translation: -14, 3
+vconnection: 
+  - start: 
+      name: A
+    end: 
+      name: Spec
+  - start:
+      name: A
+    end:
+      name: IonPump
 """
 CANVAS_CONFIG_TXT = """<root>
     <origin>0,0</origin>
@@ -521,7 +473,6 @@ export PYTHONPATH={pychron_path:}
 
 {conda_distro:}/envs/{conda_env_name:}/bin/pythonw {pychron_path:}/launchers/launcher.py"""
 
-
 LAUNCHER_BAT = """call {conda_distro:}\\Scripts\\activate.bat {conda_distro:}\\envs\\{conda_env_name:}
 set GITHUB_ORGANIZATION={github_org:}
 set GITHUB_TOKEN={github_token:}
@@ -540,6 +491,16 @@ export PYCHRON_USE_LOGIN=0
 set PYTHONPATH={pychron_path:}
 
 {conda_distro:}\\envs\\{conda_env_name:}\\python.exe {pychron_path:}\\launchers\\launcher.py
+"""
+
+# =========== Default Preferences
+EXTRACTION_LINE_PREFERENCES = """
+[pychron.extraction_line]
+use_hardware_update = True
+hardware_update_period = 3.0
+canvas_path = {canvas_path:}
+canvas_config_path = {canvas_config_path:}
+valves_path = {valves_path:}
 """
 
 if IS_WINDOWS:
@@ -631,6 +592,18 @@ def which(program):
                 return exe_file
 
 
+def install_setupfiles_only():
+    info_header('Install Setupfiles only')
+    cfg = {}
+    vv = input('Install setup files only [n]')
+    if vv.lower() in ('y', 'yes'):
+        cfg['install_exp_setupfiles'] = True
+        cfg['pychron_data_dir'] = 'PychronUF'
+        cfg['include_hardware_plugins'] = True
+
+    return cfg
+
+
 def ask_config():
     info_header('Getting User Configuration')
     YES = ('y', 'yes', 'Y', 'Yes', 'YES')
@@ -661,7 +634,8 @@ def ask_config():
               'update_db': 0,
               'alembic_url': 'mysql+pymysql://<user>:<pwd>@<host>/<db>',
               'install_gis_plugin': False,
-              'install_exp_setupfiles': False
+              'install_exp_setupfiles': False,
+              'include_hardware_plugins': False
               }
 
     ask(config, 'use_all_defaults', 'Use all defaults')
@@ -697,28 +671,51 @@ def ask_config():
     for k, v in config.items():
         print('{:<20s}: {}'.format(k, v))
 
-    config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray'
-    config['pip_git_requirements'] = ['git+https://github.com/enthought/chaco.git#egg=chaco',
-                                      'git+https://github.com/enthought/enable.git#egg=enable']
-
-    creq = 'pip qt numpy statsmodels scikit-learn PyYAML yaml traitsui envisage sqlalchemy ' \
-           'Reportlab lxml xlrd xlwt xlsxwriter requests keyring pillow gitpython cython pytables ' \
-            'pyproj pymysql certifi jinja2 swig {}'.format(config['qt_bindings'])
-
-    if IS_MAC:
-        creq = '{} python.app'.format(creq)
-
-    if config['install_gis_plugin']:
-        creq = '{} '.format('qgis')
-
-
-    config['conda_requirements'] = creq
+    build_requirements(config)
 
     print()
     print()
     if yes('Continue? [y]/n >> '):
         return config
 
+
+def build_requirements(cfg):
+    pip_reqs = ['uncertainties',
+                'peakutils',
+                'qimage2ndarray']
+    pip_git_reqs = ['git+https://github.com/enthought/chaco.git#egg=chaco',
+                    'git+https://github.com/enthought/enable.git#egg=enable']
+
+    conda_reqs = ['numpy', 'statsmodels', 'scikit-learn', 'PyYAML', 'yaml', 'traits=5', 'traitsui=6', 'pyface=6',
+                  'envisage', 'sqlalchemy', 'Reportlab', 'lxml', 'xlrd', 'xlwt', 'xlsxwriter', 'requests', 'keyring',
+                  'pillow', 'gitpython', 'cython', 'pytables', 'pyproj', 'pymysql', 'certifi', 'jinja2', 'swig=3',
+                  cfg['qt_bindings']]
+
+    if IS_MAC:
+        conda_reqs.append('python.app')
+
+    if cfg['install_gis_plugin']:
+        conda_reqs.append('qgis')
+
+    cfg['pip_requirements'] = pip_reqs
+    cfg['pip_git_requirements'] = pip_git_reqs
+    cfg['conda_requirements'] = conda_reqs
+
+
+# config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray'
+# config['pip_git_requirements'] =
+#
+# creq = 'pip qt numpy statsmodels scikit-learn PyYAML yaml traits=5 traitsui=6 pyface=6 envisage sqlalchemy ' \
+#        'Reportlab lxml xlrd xlwt xlsxwriter requests keyring pillow gitpython cython pytables ' \
+#         'pyproj pymysql certifi jinja2 swig=3 {}'.format(config['qt_bindings'])
+#
+# if IS_MAC:
+#     creq = '{} python.app'.format(creq)
+#
+# if config['install_gis_plugin']:
+#     creq = '{} '.format('qgis')
+
+# config['conda_requirements'] = creq
 
 def yes(msg):
     return input(msg) in ('', 'y', 'yes', 'Yes', 'YES')
@@ -766,14 +763,14 @@ def install_conda(cfg):
 
     # install deps
     subprocess.call(['conda', 'install', '--yes',
-                     '--name', env_name] + cfg['conda_requirements'].split(' '))
+                     '--name', env_name] + cfg['conda_requirements'])
 
     if IS_MAC:
-        subprocess.call(['conda', 'activate', cfg['conda_env_name']])
+        subprocess.call(['conda', 'activate', env_name])
         # install pip deps
         # pip_path = os.path.join(cfg['conda_distro'], 'envs', env_name, 'bin', 'pip')
         pip_path = 'pip'
-        subprocess.call([pip_path, 'install'] + cfg['pip_requirements'].split(' '))
+        subprocess.call([pip_path, 'install'] + cfg['pip_requirements'])
         for r in cfg['pip_git_requirements']:
             subprocess.call([pip_path, 'install', '-e', r])
     else:
@@ -813,6 +810,13 @@ def install_app(cfg):
             shutil.move(l, os.path.join(HOME, 'Desktop', l))
 
 
+def get_hardware_plugins(cfg):
+    t = ''
+    if cfg['include_hardware_plugins']:
+        t = HARDWARE_PLUGIN_TXT
+    return t
+
+
 def install_setupfiles(cfg):
     root = os.path.join(HOME, cfg['pychron_data_dir'])
 
@@ -830,7 +834,8 @@ def install_setupfiles(cfg):
     make_dir(setupfiles)
 
     p = os.path.join(root, setupfiles, 'initialization.xml')
-    write(p, INITIALIZATION_TXT)
+    v = INITIALIZATION_TXT.format(get_hardware_plugins(cfg))
+    write(p, v)
 
     if cfg['install_exp_setupfiles']:
         p = os.path.join(root, setupfiles, 'startup_tests.yaml')
@@ -858,19 +863,21 @@ def install_setupfiles(cfg):
         # Canvas
         canvas = os.path.join('setupfiles', 'canvas2D')
         make_dir(canvas)
-        p = os.path.join(root, canvas, 'canvas.yaml')
-        write(p, CANVAS_TXT)
+        canvas_path = os.path.join(root, canvas, 'canvas.yaml')
+        write(canvas_path, CANVAS_TXT)
+        p = os.path.join(root, canvas, 'canvas.xml')
+        write(p, CANVAS_XML)
 
-        p = os.path.join(root, canvas, 'canvas_config.xml')
-        write(p, CANVAS_CONFIG_TXT)
+        canvas_config_path = os.path.join(root, canvas, 'canvas_config.xml')
+        write(canvas_config_path, CANVAS_CONFIG_TXT)
         p = os.path.join(root, canvas, 'alt_config.xml')
         write(p, CANVAS_CONFIG_TXT)
 
         # Extraction line
         el = os.path.join('setupfiles', 'extractionline')
         make_dir(el)
-        p = os.path.join(root, el, 'valves.yaml')
-        write(p, SWITCHES_TXT)
+        valves_path = os.path.join(root, el, 'valves.yaml')
+        write(valves_path, SWITCHES_TXT)
 
         # Monitors
         monitors = os.path.join(setupfiles, 'monitors')
@@ -880,24 +887,37 @@ def install_setupfiles(cfg):
         p = os.path.join(d, 'system_monitor.cfg')
         write(p, SYSTEM_MONITOR_TXT)
 
+        # Make preferences
+
+        v = EXTRACTION_LINE_PREFERENCES.format(canvas_path=canvas_path,
+                                               canvas_config_path=canvas_config_path,
+                                               valves_path=valves_path)
+        d = os.path.join(root, 'preferences')
+        make_dir(d)
+        p =os.path.join(d, 'extractionline.ini')
+        write(p, v)
+
 
 def main():
     welcome()
 
     pre_checks()
-
-    cfg = ask_config()
+    cfg = install_setupfiles_only()
     if cfg:
-        install_src(cfg)
         install_setupfiles(cfg)
-        install_conda(cfg)
-        install_launcher_script(cfg)
-        install_app(cfg)
-
-        print()
-        print('Installation Complete!')
     else:
-        print('Failed getting configuration. Exiting')
+        cfg = ask_config()
+        if cfg:
+            install_src(cfg)
+            install_setupfiles(cfg)
+            install_conda(cfg)
+            install_launcher_script(cfg)
+            install_app(cfg)
+
+            print()
+            print('Installation Complete!')
+        else:
+            print('Failed getting configuration. Exiting')
 
 
 if __name__ == '__main__':
