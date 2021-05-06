@@ -415,8 +415,7 @@ class BaseArArFigure(SelectionFigure):
         return self._plot_aux('clk', po, pid)
 
     def _plot_kca(self, po, pobj, pid):
-        k = 'kca'
-        return self._plot_aux('K/Ca', k, po, pid)
+        return self._plot_aux('kca', po, pid)
 
     def _plot_signal_k39(self, po, pobj, pid):
         return self._plot_aux('k39', po, pid)
@@ -609,10 +608,10 @@ class BaseArArFigure(SelectionFigure):
         display_mswd = n >= 2 and display_mswd
 
         if display_n:
-            if total_n and n != total_n:
-                n = 'n= {}/{}'.format(n, total_n)
-            else:
-                n = 'n= {}'.format(n)
+            n = 'n= {}/{}'.format(n, total_n)
+            # if total_n and n != total_n:
+            # else:
+            #     n = 'n= {}'.format(n)
         else:
             n = ''
 
