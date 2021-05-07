@@ -22,7 +22,7 @@ from pychron.managers.manager import Manager
 
 
 class HeaterManager(Manager):
-    period = Float(2)
+    period = Float(5)
     is_alive = Bool
 
     def start_scans(self):

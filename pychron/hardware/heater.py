@@ -24,7 +24,7 @@ from pychron.hardware.core.modbus import ModbusMixin
 
 
 class HeaterMixin(HasTraits):
-    setpoint = Float
+    setpoint = Float(enter_set=True, auto_set=False)
     readback = Float
     onoff_button = Event
     onoff_state = Bool
@@ -34,6 +34,9 @@ class HeaterMixin(HasTraits):
     graph = Instance(StreamGraph)
 
     # heater interface
+    def _setpoint_changed(self, new):
+        self.set_sepoint(new)
+
     def set_sepoint(self, v):
         raise NotImplementedError
 
@@ -52,8 +55,9 @@ class HeaterMixin(HasTraits):
     def update(self):
         if self.onoff_state:
             v = self.read_readback()
-            self.readback = v
-            self.graph.record(v)
+            if v is not None:
+                self.readback = v
+                self.graph.record(v)
 
     def _use_pid_changed(self, v):
         self.debug('set use_pid={}'.format(v))
@@ -96,21 +100,45 @@ class PLC2000Heater(CoreDevice, ModbusMixin, HeaterMixin):
         self.set_attribute(config, 'readback_address', 'Register', 'readback', cast='int')
         self.set_attribute(config, 'use_pid_address', 'Register', 'use_pid', cast='int')
         self.set_attribute(config, 'enable_address', 'Register', 'enable', cast='int')
+        self.debug('Automatically do coil_address = address-1')
+
+        for attr in ('setpoint', 'readback', 'use_pid', 'enable'):
+            attr = '{}_address'.format(attr)
+            v = getattr(self, attr)
+            setattr(self, attr, v-1)
+
         return True
 
     def set_sepoint(self, v):
-        self._write_register(self.setpoint_address, v)
+        if self.setpoint_address is not None:
+            self.debug('set setpoint addr={}, {}'.format(self.setpoint_address, v))
+            self._write_int(self.setpoint_address, v)
+        else:
+            self.debug('setpoint_address not set')
 
     def read_setpoint(self):
         pass
 
     def set_active(self, state):
-        self._write_coil(self.enable_address, bool(state))
+        if self.enable_address is not None:
+            self.debug('set active addr={}, {}'.format(self.enable_address, bool(state)))
+            self._write_coil(self.enable_address, bool(state))
+        else:
+            self.debug('enable_address not set')
 
     def set_use_pid(self, state):
-        self._write_coil(self.use_pid_address, bool(state))
+        if self.use_pid_address is not None:
+            self.debug('set use pid addr={}, {}'.format(self.use_pid_address, bool(state)))
+            self._write_coil(self.use_pid_address, bool(state))
+        else:
+            self.debug('use_pid_address not set')
 
     @get_float()
     def read_readback(self):
-        return self._read_float(self.readback_address)
+        if self.readback_address is not None:
+            v = self._read_input_float(self.readback_address)
+            self.debug('read readback addr={}, {}'.format(self.readback_address, v))
+            return v
+        else:
+            self.debug('readback address not set')
 # ============= EOF =============================================
