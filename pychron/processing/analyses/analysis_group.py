@@ -99,6 +99,7 @@ class AnalysisGroup(IdeogramPlotable):
     longitude = Any
     reference = Any
     rlocation = Any
+    mass_spectrometer = Any
 
     arar_constants = Any
     production_ratios = Any
@@ -136,7 +137,8 @@ class AnalysisGroup(IdeogramPlotable):
     def _analyses_changed(self, new):
         if new:
             a = new[0]
-            for attr in ('identifier',
+            for attr in ('mass_spectrometer',
+                         'identifier',
                          'aliquot',
                          'repository_identifier',
                          'igsn',

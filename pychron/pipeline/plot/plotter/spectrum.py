@@ -501,8 +501,7 @@ class Spectrum(BaseArArFigure):
                                       std_dev(a) * op.nsigma, n,
                                       mswd_args=mswd_args,
                                       mswd_sig_figs=op.mswd_sig_figs,
-                                      sig_figs=op.weighted_mean_sig_figs,
-                                      total_n=ag.total_n)
+                                      sig_figs=op.weighted_mean_sig_figs)
         text = u'Weighted Mean= {}'.format(text)
         return text
 
@@ -536,7 +535,8 @@ class Spectrum(BaseArArFigure):
             age, error = nominal_value(tga.nominal_value), std_dev(tga)
 
             error *= self.options.nsigma
-            txt = self._build_label_text(age, error, n, sig_figs=self.options.integrated_sig_figs)
+            txt = self._build_label_text(age, error, n,
+                                         sig_figs=self.options.integrated_sig_figs)
 
         return u'Integrated Age= {}'.format(txt)
 

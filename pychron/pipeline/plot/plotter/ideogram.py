@@ -671,13 +671,11 @@ class Ideogram(BaseArArFigure):
         opt = self.options
         text = ''
         if opt.display_mean:
-            total_n = self.xs.shape[0]
-
             mswd_args = None
             if opt.display_mean_mswd:
                 mswd_args = (mswd, valid_mswd, n, pvalue)
 
-            text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args)
+            text = self._make_mean_label(wm, we * opt.nsigma, n, mswd_args)
 
         plotkw = opt.get_plot_dict(ogid, self.subgroup_id)
 
@@ -761,7 +759,6 @@ class Ideogram(BaseArArFigure):
         lp.value.set_data(ys)
         lp.index.set_data(xs)
 
-        total_n = self.xs.shape[0]
         opt = self.options
         for ov in lp.overlays:
             if isinstance(ov, MeanIndicatorOverlay):
@@ -773,7 +770,7 @@ class Ideogram(BaseArArFigure):
                     if opt.display_mean_mswd:
                         mswd_args = (mswd, valid_mswd, n, pvalue)
 
-                    text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args)
+                    text = self._make_mean_label(wm, we * opt.nsigma, n, mswd_args)
                     ov.label.text = text
 
         lp.overlays = [o for o in lp.overlays if not isinstance(o, PeakLabel)]
@@ -801,9 +798,8 @@ class Ideogram(BaseArArFigure):
     # ===============================================================================
     # utils
     # ===============================================================================
-    def _make_mean_label(self, wm, we, n, total_n, mswd_args, **kw):
+    def _make_mean_label(self, wm, we, n, mswd_args, **kw):
         text = self._build_label_text(wm, we, n,
-                                      total_n=total_n,
                                       mswd_args=mswd_args,
                                       mswd_sig_figs=self.options.mswd_sig_figs,
                                       sig_figs=self.options.mean_sig_figs,

@@ -202,7 +202,7 @@ class IdeogramAppearance(AppearanceSubOptions):
     def traits_view(self):
         mi = BorderVGroup(HGroup(UItem('mean_indicator_fontname'),
                           UItem('mean_indicator_fontsize')),
-                          Item('display_mean_location'),
+                          Item('display_mean_location', label='Location'),
                           label='Mean Indicator')
 
         ee = BorderHGroup(UItem('error_info_fontname'),

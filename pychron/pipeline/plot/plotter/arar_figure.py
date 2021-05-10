@@ -200,15 +200,6 @@ class BaseArArFigure(SelectionFigure):
     def _apply_aux_plot_options(self, pp, po):
         options = self.options
 
-        for k, axis in (('x', pp.x_axis), ('y', pp.y_axis)):
-            for attr in ('title_font', 'tick_in', 'tick_out', 'tick_label_formatter'):
-                value = getattr(options, '{}{}'.format(k, attr))
-                try:
-                    setattr(axis, attr, value)
-                except TraitError:
-                    pass
-
-            axis.tick_label_font = getattr(options, '{}tick_font'.format(k))
 
         # pp.x_axis.title_font = options.xtitle_font
         # pp.x_axis.tick_label_font = options.xtick_font
@@ -235,6 +226,9 @@ class BaseArArFigure(SelectionFigure):
                     alt_axis = PlotAxis(pp, orientation='left' if po.y_axis_right else 'right')
                     alt_axis.tick_label_formatter = lambda x: ''
                     alt_axis.axis_line_visible = False
+                    alt_axis.tick_in = options.ytick_in-1
+                    alt_axis.tick_out = options.ytick_out
+
                     pp.underlays.append(alt_axis)
                     pp.add(alt_axis)
 
@@ -264,6 +258,18 @@ class BaseArArFigure(SelectionFigure):
                 if st is not None:
                     pp.value_axis.tick_generator = st
                     pp.value_grid.tick_generator = st
+                    if alt_axis:
+                        alt_axis.tick_generator = st
+
+        for k, axis in (('x', pp.x_axis), ('y', pp.y_axis)):
+            for attr in ('title_font', 'tick_in', 'tick_out', 'tick_label_formatter'):
+                value = getattr(options, '{}{}'.format(k, attr))
+                try:
+                    setattr(axis, attr, value)
+                except TraitError:
+                    pass
+
+            axis.tick_label_font = getattr(options, '{}tick_font'.format(k))
 
     def _set_options_format(self, pp):
         # print 'using options format'
@@ -596,7 +602,6 @@ class BaseArArFigure(SelectionFigure):
         return label
 
     def _build_label_text(self, x, we, n,
-                          total_n=None,
                           mswd_args=None,
                           display_n=True,
                           display_mswd=True,
@@ -608,6 +613,7 @@ class BaseArArFigure(SelectionFigure):
         display_mswd = n >= 2 and display_mswd
 
         if display_n:
+            total_n = self.analysis_group.total_n
             n = 'n= {}/{}'.format(n, total_n)
             # if total_n and n != total_n:
             # else:
