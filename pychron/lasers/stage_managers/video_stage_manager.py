@@ -681,7 +681,7 @@ class VideoStageManager(StageManager):
                                      use_calibration=False,
                                      update_hole=False,
                                      velocity_scalar=0.1)
-                    time.sleep(0.1)
+                    time.sleep(0.5)
                 else:
                     self.snapshot(auto=True,
                                   name='pos_err_{}_{}'.format(holenum, ti),

@@ -66,6 +66,7 @@ class Locator(Loggable):
     pixel_depth = 255
 
     alive = True
+    _cached_threshold = None
 
     def cancel(self):
         self.debug('canceling')
@@ -141,10 +142,12 @@ class Locator(Loggable):
                       filter_targets=True,
                       convexity_filter=False,
                       mask=False,
-                      set_image=True, inverted=False):
+                      set_image=True, inverted=False,
+                      use_threshold_caching=False):
         """
             use a segmentor to segment the image
         """
+        self.debug('use thrshold caching={}'.format(use_threshold_caching))
 
         if search is None:
             search = {}
@@ -195,6 +198,12 @@ class Locator(Loggable):
             nsrc = seg.segment(src)
             seg.blocksize += blocksize_step
 
+            m = nsrc.mean()
+            self.debug('image mean={}'.format(m))
+            if m < 10 or m > 200:
+                self.debug('image mean out of bounds 10,200 m={}'.format(m))
+                break
+
             nf = colorspace(nsrc)
 
             # draw contours
@@ -212,11 +221,17 @@ class Locator(Loggable):
                     #     print t.convexity, t.area, t.min_enclose_area, t.perimeter_convexity
                     targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
 
+            self._cached_threshold = None
             if targets:
+                # remember this thresholding for the next time
+                if use_threshold_caching:
+                    self._cached_threshold = (plow, phigh)
                 return sorted(targets, key=attrgetter('area'), reverse=True)
                 # time.sleep(0.5)
 
     def _generate_steps(self, src, search):
+        self.debug('generate steps search={}'.format(search))
+        self.debug('cached_threshold={}'.format(self._cached_threshold))
         if search.get('use_adaptive_threshold'):
             def func():
                 yield 0, 255
@@ -227,9 +242,12 @@ class Locator(Loggable):
                 bands = [2 ** n for n in range(7, 1, -1)]
                 shifts = [2, 4, 8]
 
+                if self._cached_threshold:
+                    yield self._cached_threshold
+
                 for band in bands:
                     for shift in shifts:
-                        for shift_dir in (1, -1):
+                        for shift_dir in (-1, 1):
                             for i in range(1, 128):
                                 m = me - shift * i * shift_dir
                                 low = m - band / 2
@@ -247,6 +265,9 @@ class Locator(Loggable):
 
                 step = search.get('step', 2)
                 n = search.get('n', 20)
+
+                if self._cached_threshold:
+                    yield self._cached_threshold
 
                 for j in range(n):
                     ww = w * (j + 1)

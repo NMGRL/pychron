@@ -383,7 +383,7 @@ class StageManager(BaseStageManager):
 
             msg = 'homing all motors'
             homed = ['x', 'y', 'z']
-            home_kwargs = dict(x=-25, y=-25, z=50)
+            home_kwargs = dict(x=-25, y=-25, z=0)
 
         elif self.home_option == 'XY':
             msg = 'homing x,y'
@@ -398,9 +398,10 @@ class StageManager(BaseStageManager):
         self.info(msg)
 
         # if define_home:
-        self.stage_controller.set_home_position(**home_kwargs)
+        #self.stage_controller.set_home_position(**home_kwargs)
 
         self.stage_controller.home(homed)
+        #self.stage_controller.set_home_position(**home_kwargs)
 
         # explicitly block
         #        self.stage_controller.block()

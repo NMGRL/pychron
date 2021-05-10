@@ -56,7 +56,6 @@ class NewportMotionController(MotionController):
 
         # try to get x position to test comms
         if super(NewportMotionController, self).initialize(*args, **kw):
-            r = True if self.get_current_position('x') is not None else False
 
             # force group destruction
             self.destroy_group(force=True)
@@ -65,6 +64,7 @@ class NewportMotionController(MotionController):
             self.read_error()
 
             self.setup_consumer()
+            r = True if self.get_current_position('x', verbose=True) is not None else False
             return r
 
     def load_additional_args(self, config):
@@ -185,7 +185,7 @@ class NewportMotionController(MotionController):
 
         # args = f.split(',')[:2]
 
-    def get_current_position(self, aid):
+    def get_current_position(self, aid, verbose=False):
         if isinstance(aid, str):
             if aid in self.axes:
                 ax = self.axes[aid]
@@ -198,7 +198,7 @@ class NewportMotionController(MotionController):
             axis = ax.name
 
         cmd = self._build_query('TP', xx=aid)
-        f = self.ask(cmd, verbose=False)
+        f = self.ask(cmd, verbose=verbose)
 
         aname = '_{}_position'.format(axis)
         if f != 'simulation' and f is not None:
@@ -331,7 +331,7 @@ class NewportMotionController(MotionController):
     def single_axis_move(self, key, value, block=False, mode='absolute',
                          velocity=None,
                          velocity_scalar=None,
-                         update=250,
+                         update=25,
                          immediate=False, **kw):
         args = (key, value, block, mode, velocity, velocity_scalar, update, kw)
         if block or immediate:
@@ -402,9 +402,11 @@ class NewportMotionController(MotionController):
         #        cmd = ';'.join(['{}OR{{}}'.format(k.id) for k in self.axes.itervalues()])
         # if all:
         #            cmd = ';'.join(['{}OR{{}}'.format(k.id) for k in self.axes.itervalues()])
+
+        axis_objs = [a for a in self.axes.values() if a.name in axes]
+
         cmd = ';'.join([self._build_command('OR', a.id,
-                                            nn=search_mode if a.name.lower() != 'z' else 3)
-                        for a in self.axes.values() if a.name in axes])
+                                            nn=search_mode) for a in axis_objs])
         # force z axis home positive
         # cmd = '1OR{};2OR{};3OR{}' .format(search_mode, search_mode, 3)
         #        cmd = cmd.format(*[search_mode if v.id != 3 else 3 for k, v in self.axes.iteritems()])
@@ -415,7 +417,17 @@ class NewportMotionController(MotionController):
 
         #            cmd = self._build_command('OR', xx = axis, nn = )
         self._homing = True
-        self.timer = self.timer_factory()
+
+        def is_homing():
+            for a in axis_objs:
+                m = self._moving(a.id, verbose=True)
+                if m:
+                    self.update_axes()
+                    break
+            else:
+                self.timer.stop()
+
+        self.timer = self.timer_factory(func=is_homing, period=50)
 
         if self.group_commands:
             self.tell(cmd)
@@ -425,6 +437,8 @@ class NewportMotionController(MotionController):
 
         if block:
             self._block()
+
+        self.timer = None
         self._homing = False
 
     def block_group(self, n=10):
@@ -472,6 +486,8 @@ class NewportMotionController(MotionController):
         self.set_trajectory_mode(mode)
         self.mode = 'normal'
 
+        self.read_error()
+
     #            if self.speed_mode == 'low':
     #                self.set_low_speed()
 
@@ -484,6 +500,7 @@ class NewportMotionController(MotionController):
                 cmd.append(self._build_command('SH', xx=aid, nn=kw[k]))
 
         self.tell(';'.join(cmd))
+        self.read_error()
 
     def define_home(self, axis=None):
         """
@@ -542,24 +559,21 @@ class NewportMotionController(MotionController):
 
     def read_error(self):
         error = None
-        #        cmd = 'TB?'
         cmd = self._build_query('TB')
         r = self.ask(cmd)
         if r is not None and r != 'simulation':
-            eargs = r.split(',')
-            try:
-                error_code = int(eargs[0])
-                #                error_msg = eargs[-1]
-                if error_code == 0:
-                    error = None
-                else:
-                    error = error_code
-                    self.warning(
-                        'Newport Motion Controller:{} {}'.format(self.name,
-                                                                 r))
-                    #                    gWarningDisplay.add_text('%s - %s' % (self.name, error_msg))
-            except:
-                pass
+            r = r.strip()
+            for eargs in r.split(','):
+                try:
+                    error_code = int(eargs[0])
+                    if error_code == 0:
+                        error = None
+                    else:
+                        error = error_code
+                        self.warning('Newport Motion Controller:{}'.format(r))
+                except Exception:
+                    pass
+
         return error
 
     def set_group_motion_parameters(self, acceleration=None, deceleration=None,
@@ -649,7 +663,7 @@ class NewportMotionController(MotionController):
             param_coms = [('VA', 'velocity'),
                           ('AC', 'acceleration'),
                           ('AG', 'deceleration')]
-            pdict = dict(velocity=axis.velocity,
+            pdict = dict(velocity=axis.calibrated_velocity,
                          acceleration=axis.acceleration,
                          deceleration=axis.deceleration)
 
@@ -687,6 +701,7 @@ class NewportMotionController(MotionController):
                 time.sleep(0.1)
                 # self.read_error()
                 # time.sleep(0.1)
+        self.read_error()
 
     def _single_axis_move(self, *args):
         key, value, block, mode, velocity, velocity_scalar, update, kw = args
@@ -858,6 +873,7 @@ class NewportMotionController(MotionController):
             for c in com.split(';'):
                 self.tell(c)
                 time.sleep(0.1)
+
         if update:
             func, update = update
             if update:
@@ -895,11 +911,13 @@ class NewportMotionController(MotionController):
                     moving = not int(r)
 
         elif not self.simulation:
-            r = self.repeat_command('TX', 5, check_type=str, verbose=verbose)
+            # r = self.repeat_command('TX', 5, check_type=str, verbose=verbose)
+            r = self.repeat_command('TS', 5, check_type=str, verbose=verbose)
             if r is not None and len(r) > 0:
                 controller_state = ord(r[0])
-                cs = make_bitarray(controller_state, width=8)
-                moving = cs[3] == '1'
+                cs = make_bitarray(controller_state, width=8)[::-1]
+                self.debug('r={} cs={}'.format(r, cs))
+                moving = any(cs[i] == '1' for i in (0, 1, 2))
         else:
             time.sleep(0.5)
 
@@ -946,6 +964,17 @@ class NewportMotionController(MotionController):
         self.parent.canvas.set_stage_position(self._x_position,
                                               self._y_position)
 
+
+class ESP301(NewportMotionController):
+    pass
+
+
+class ESP302(ESP301):
+    def set_home_position(self, **kw):
+        self.debug('set home position obsolete')
+
+    def set_trajectory_mode(self, mode):
+        self.debug('set trajectory mode obsolete')
 # ======================EOF========================================
 # def jog_move(self, c):
 #

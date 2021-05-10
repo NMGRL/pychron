@@ -96,8 +96,8 @@ class Image(HasTraits):
 
         return frame
 
-    def get_cached_frame(self):
-        if self._cached_frame is None:
+    def get_cached_frame(self, force=False):
+        if self._cached_frame is None or force:
             self.get_frame()
 
         return self._cached_frame

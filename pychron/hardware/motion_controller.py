@@ -183,8 +183,9 @@ class MotionController(CoreDevice):
                                     id=i + 1,
                                     negative_limit=limits[0],
                                     positive_limit=limits[1],
-                                    loadposition=loadposition[i]
-                                    )
+                                    loadposition=loadposition[i],
+                                    min_velocity=self.motion_profiler.min_velocity,
+                                    max_velocity=self.motion_profiler.max_velocity)
 
             self.axes[a] = na
 
@@ -336,16 +337,16 @@ class MotionController(CoreDevice):
 
         if timer is not None:
             self.debug('using existing timer')
-            period = 0.01
+            period = 0.15
 
             def func():
-                return self.timer.isActive()
+                return timer.isActive()
         else:
             self.debug('check moving={}'.format(axis))
             period = 0.15
 
             def func():
-                return self._moving(axis=axis, verbose=False)
+                return self._moving(axis=axis, verbose=True)
 
         cnt = 0
         threshold = 0 if timer else 1

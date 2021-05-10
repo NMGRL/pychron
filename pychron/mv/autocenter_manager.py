@@ -72,6 +72,7 @@ class AutoCenterManager(MachineVisionManager):
         loc = self._get_locator(shape=shape)
         self.locator = loc
 
+        self.debug('dim={}'.format(dim))
         cropdim = ceil(dim * 2.55)
 
         frame = loc.crop(frame, cropdim, cropdim, offx, offy)
@@ -88,7 +89,8 @@ class AutoCenterManager(MachineVisionManager):
                       blocksize=self.blocksize,
                       blocksize_step=self.blocksize_step,
                       use_adaptive_threshold=self.use_adaptive_threshold)
-        dx, dy = loc.find(im, frame, dim=dim, preprocess=preprop, search=search)
+
+        dx, dy = loc.find(im, frame, dim=dim, preprocess=preprop, search=search, use_threshold_caching=True)
 
         if dx is None and dy is None:
             return

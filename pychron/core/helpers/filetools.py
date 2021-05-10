@@ -310,6 +310,8 @@ def unique_path_from_manifest(root, base, extension='.txt'):
                 cnt = v + 1
                 p = os.path.join(root, '{}-{:03d}{}'.format(base, cnt, extension))
                 yd[base] = cnt
+        else:
+            yd = {}
 
     if not p:
         p, cnt = unique_path2(root, base, extension=extension)

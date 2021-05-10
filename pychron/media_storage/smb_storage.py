@@ -121,9 +121,10 @@ class SMBStorage(RemoteStorage):
         localname = socket.gethostname()
         remotename = 'agustin'
         conn = SMBConnection(self.username, self.password,
-                             localname, remotename)
+                             localname, remotename,
+                             is_direct_tcp=True)
         self.debug('get connection {}'.format(self.host))
-        if conn.connect(self.host):
+        if conn.connect(self.host, 445):
             return conn
         else:
             print('failed to connect')
