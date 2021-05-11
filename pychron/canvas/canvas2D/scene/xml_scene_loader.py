@@ -287,6 +287,25 @@ class XMLLoader(BaseLoader):
 
         super(XMLLoader, self)._new_label(scene, label_dict, name, c **kw)
 
+    def load_widgets(self, scene, canvas):
+        app = canvas.manager.application
+        for wi in self._cp.get_elements('widget'):
+            key = wi['name']
+            x, y = self._get_translation(wi)
+
+            devname = wi['devname']
+            funcname = wi['funcname']
+            dev = app.get_service(ICoreDevice, query="name=='{}'".format(devname))
+            if dev:
+                func = getattr(dev, funcname)
+            else:
+                def func():
+                    return 'NoDevice'
+
+            v = Widget(func, x, y, text='value={}')
+            scene.add_item(v)
+            scene.widgets[key] = v
+
     def load_switchables(self, scene, vpath):
         cp = self._cp
         ox, oy = self._origin
