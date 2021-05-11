@@ -71,6 +71,7 @@ HW_PACKAGE_MAP = {
     'NMGRLMagnetDumper': 'pychron.furnace.magnet_dumper',
     'LamontFurnaceControl': hardware_pkg('labjack.ldeo_furnace'),
 
+    'Model330TemperatureController': hardware_pkg('lakeshore.model330'),
     'Model335TemperatureController': hardware_pkg('lakeshore.model335'),
     'Model336TemperatureController': hardware_pkg('lakeshore.model336'),
     'MKSSRG': gauge_pkg('mks.srg'),
