@@ -277,15 +277,18 @@ class XMLLoader(BaseLoader):
 
     def _new_label(self, scene, label, name, c, **kw):
         label_dict = {}
-        label_dict['use_border']=to_bool(label.get('use_border', 'T'))
+        label_dict['use_border'] = to_bool(label.get('use_border', 'T'))
         label_dict['text'] = label.text.strip()
-        label_dict['translation'] = self
+        label_dict['translation'] = label
 
         font = label.find('font')
         if font is not None:
             label_dict['font'] = font.text.strip()
 
-        super(XMLLoader, self)._new_label(scene, label_dict, name, c **kw)
+        return super(XMLLoader, self)._new_label(scene, label_dict, name, c, **kw)
+
+    def load_widgets(self, scene, canvas):
+        pass
 
     def load_switchables(self, scene, vpath):
         cp = self._cp

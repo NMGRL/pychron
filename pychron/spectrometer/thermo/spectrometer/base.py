@@ -138,20 +138,29 @@ class ThermoSpectrometer(BaseSpectrometer):
         :return:
         """
         ret, err = True, ''
-        keys, one, _ = self.get_intensities()
+        keys, one, _, _ = self.get_intensities()
         it = 0.1 if self.simulation else self.integration_time
 
-        time.sleep(it)
-        keys, two, _ = self.get_intensities()
-
-        if all(one == two):
+        pv = None
+        for i in range(4):
             time.sleep(it)
-            keys, three, _ = self.get_intensities()
-            if all(two == three):
-                time.sleep(it)
-                keys, four, _ = self.get_intensities()
-                if all(three == four):
-                    ret = False
+            _, v, _, _ = self.get_intensities()
+            if pv is None or all(pv == v):
+                pv = v
+            else:
+                break
+        else:
+            ret = False
+        # time.sleep(it)
+        # keys, two, _, _ = self.get_intensities()
+        # if all(one == two):
+        #     time.sleep(it)
+        #     keys, three, _, _ = self.get_intensities()
+        #     if all(two == three):
+        #         time.sleep(it)
+        #         keys, four, _, _ = self.get_intensities()
+        #         if all(three == four):
+        #             ret = False
         return ret, err
 
     def set_gains(self, history=None):
@@ -383,7 +392,7 @@ class ThermoSpectrometer(BaseSpectrometer):
 
             signals = [float(s) for s in signals]
 
-        return keys, signals, None
+        return keys, signals, None, True
 
     def get_intensity(self, dkeys):
         """
