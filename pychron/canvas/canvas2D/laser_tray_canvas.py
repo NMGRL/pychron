@@ -207,7 +207,9 @@ class LaserTrayCanvas(StageCanvas):
             radius = self.beam_radius
 
         if screen:
-            radius = self.get_wh(radius, 0)[0]
+            w,h = self.get_wh(radius, radius)
+            radius = (w+h)/2.
+
         return radius
 
     def add_image_underlay(self, p, alpha=1.0):

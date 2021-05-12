@@ -133,8 +133,8 @@ class MotionController(CoreDevice):
         else:
             timer.stop()
             self._not_moving_count = 0
-            time.sleep(period / 1000.)
-            timer = Timer(period, func)
+            # time.sleep(period / 1000.)
+            timer = Timer(period, func, delay=period)
 
         timer.set_interval(period)
         return timer

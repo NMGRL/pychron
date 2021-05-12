@@ -97,6 +97,9 @@ class StageManager(BaseStageManager):
         super(StageManager, self).__init__(*args, **kw)
         self.stage_controller = self._stage_controller_factory()
 
+    #def fiber_light_changed(self, v):
+    #    pass
+
     def measure_grain_polygon(self):
         pass
 

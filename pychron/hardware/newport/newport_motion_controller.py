@@ -56,7 +56,6 @@ class NewportMotionController(MotionController):
 
         # try to get x position to test comms
         if super(NewportMotionController, self).initialize(*args, **kw):
-
             # force group destruction
             self.destroy_group(force=True)
 
@@ -557,20 +556,24 @@ class NewportMotionController(MotionController):
 
         return r
 
-    def read_error(self):
+    def read_error(self, read_all=True):
         error = None
         cmd = self._build_query('TB')
-        r = self.ask(cmd)
-        if r is not None and r != 'simulation':
-            r = r.strip()
-            for eargs in r.split(','):
+
+        n = 10 if read_all else 1
+        for i in range(n):
+            r = self.ask(cmd)
+            if r is not None and r != 'simulation':
+                r = r.strip()
+                eargs = r.split(',')
                 try:
                     error_code = int(eargs[0])
                     if error_code == 0:
                         error = None
+                        break
                     else:
                         error = error_code
-                        self.warning('Newport Motion Controller:{}'.format(r))
+                        self.warning('Newport Motion Controller: i={} {}'.format(i, r))
                 except Exception:
                     pass
 
@@ -906,7 +909,7 @@ class NewportMotionController(MotionController):
             else:
                 r = self.repeat_command(('MD?', axis), 5, check_type=int,
                                         verbose=verbose)
-                if r is not None:
+                if r is not None and r != '':
                     # stage is moving if r==0
                     moving = not int(r)
 
@@ -929,18 +932,26 @@ class NewportMotionController(MotionController):
         if isinstance(nn, list):
             nn = to_csv_str(nn)
 
-        cmd = '{}'
         args = (command,)
         if xx is not None:
-            cmd += '{}'
             args = (xx, command)
+
         if nn is not None:
-            cmd += '{}'
-            args = (xx, command, nn)
+            args += (nn,)
 
-        return cmd.format(*args)
+        return ''.join((str(a) for a in args))
+        # cmd = '{}'
+        # args = (command,)
+        # if xx is not None:
+        #     cmd += '{}'
+        #     args = (xx, command)
+        # if nn is not None:
+        #     cmd += '{}'
+        #     args = (xx, command, nn)
+        #
+        # return cmd.format(*args)
 
-    def _build_query(self, command, xx=' '):
+    def _build_query(self, command, xx=None):
         return self._build_command(command, xx=xx, nn='?')
 
     def _axis_factory(self, path, **kw):

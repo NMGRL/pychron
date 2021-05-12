@@ -113,7 +113,7 @@ class StageControlPane(TraitsDockPane):
                                   label='Degas', show_border=True)
 
             mvgrp = VGroup(VGroup(UItem('stage_manager.autocenter_manager.display_image',
-                                        width=240, height=240,
+                                        width=-400, height=-400,
                                         editor=ImageEditor(refresh='stage_manager.autocenter_manager.'
                                                                    'display_image.refresh_needed'))),
                            label='Machine Vision', show_border=True)

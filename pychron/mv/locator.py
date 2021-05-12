@@ -15,6 +15,7 @@
 
 # ============= enthought library imports =======================
 import time
+from collections import deque
 
 from traits.api import Float
 # ============= standard library imports ========================
@@ -37,7 +38,7 @@ from pychron.image.cv_wrapper import grayspace, draw_contour_list, contour, \
     draw_polygons, crop
 from pychron.mv.target import Target
 from pychron.core.geometry.geometry import approximate_polygon_center, \
-    calc_length
+    calc_length, approximate_polygon_center3
 
 
 def _coords_inside_image(rr, cc, shape):
@@ -52,7 +53,6 @@ def draw_circle(frame, center_x, center_y, radius, color, **kw):
 
 def draw_circle_perimeter(frame, center_x, center_y, radius, color):
     cy, cx = circle_perimeter(int(center_y), int(center_x), int(radius))
-
     cy, cx = _coords_inside_image(cy, cx, frame.shape)
     frame[cy, cx] = color
 
@@ -66,7 +66,13 @@ class Locator(Loggable):
     pixel_depth = 255
 
     alive = True
-    _cached_threshold = None
+
+    # class level _cache
+    _cached_threshold = deque()
+
+    # @classmethod
+    # def clear_cache(cls):
+    #     cls._cached_threshold = deque()
 
     def cancel(self):
         self.debug('canceling')
@@ -93,7 +99,7 @@ class Locator(Loggable):
                        'width={}, height={}, ox={}, oy={}'.format(x, y, cw_px, ch_px, w, h, ox, oy))
         return asarray(crop(src, x, y, cw_px, ch_px))
 
-    def find(self, image, frame, dim, shape='circle', **kw):
+    def find(self, image, frame, dim, shape='circle', confirm=False, **kw):
         """
             image is a stand alone image
             dim = float. radius or half length of a square in pixels
@@ -116,7 +122,6 @@ class Locator(Loggable):
 
             # draw center indicator
             src = image.source_frame
-            self._draw_center_indicator(src, size=2, shape='rect', radius=round(dim))
 
             # draw targets
             self._draw_targets(src, targets)
@@ -134,7 +139,14 @@ class Locator(Loggable):
 
                 # image.set_frame(src[:])
 
+            self._draw_center_indicator(src, size=50, shape='crosshairs', color=(255, 255, 0))
+
+        image.refresh_needed = True
         self.info('dx={}, dy={}'.format(dx, dy))
+        if confirm:
+            if not self.confirmation_dialog('Move to position'):
+                dx, dy = None, None
+
         return dx, dy
 
     def _find_targets(self, image, frame, dim, shape='circle',
@@ -171,67 +183,73 @@ class Locator(Loggable):
 
         blocksize_step = search.get('blocksize_step', 5)
         seg = RegionSegmenter(use_adaptive_threshold=search.get('use_adaptive_threshold', False),
-                              blocksize=search.get('blocksize', 20))
+                              blocksize=search.get('blocksize', 20),
+                              use_watershed=True)
         fa = self._get_filter_target_area(shape, dim)
         phigh, plow = None, None
 
-        for low, high in self._generate_steps(src, search)():
-            if not self.alive:
-                self.debug('canceled')
-                return
+        for sdir in (1, -1):
+            for low, high in self._generate_steps(src, search, sdir)():
+                st = time.time()
+                if not self.alive:
+                    self.debug('canceled')
+                    return
 
-            self.debug('bandwidth low={}, high={}'.format(low, high))
+                # self.debug('bandwidth low={}, high={}, {}'.format(low, high, sdir))
 
-            if inverted:
-                low = 255 - low
-                high = 255 - high
+                if inverted:
+                    low = 255 - low
+                    high = 255 - high
 
-            seg.threshold_low = low
-            seg.threshold_high = high
+                seg.threshold_low = low
+                seg.threshold_high = high
 
-            if seg.threshold_low == plow and seg.threshold_high == phigh:
-                return
+                if seg.threshold_low == plow and seg.threshold_high == phigh:
+                    return
 
-            plow = seg.threshold_low
-            phigh = seg.threshold_high
+                plow = seg.threshold_low
+                phigh = seg.threshold_high
 
-            nsrc = seg.segment(src)
-            seg.blocksize += blocksize_step
+                nsrc = seg.segment(src)
+                seg.blocksize += blocksize_step
 
-            m = nsrc.mean()
-            self.debug('image mean={}'.format(m))
-            if m < 10 or m > 200:
-                self.debug('image mean out of bounds 10,200 m={}'.format(m))
-                break
+                m = nsrc.mean()
+                if (m > 190 and sdir == -1) or (m < 5 and sdir == 1):
+                    self.debug('image mean out of bounds 5,190 m={}'.format(m))
+                    continue
 
-            nf = colorspace(nsrc)
+                nf = colorspace(nsrc)
 
-            # draw contours
-            targets = self._find_polygon_targets(nsrc, frame=nf)
-            if set_image and image is not None:
-                image.set_frame(nf)
+                # draw contours
+                targets = self._find_polygon_targets(nsrc, frame=nf)
+                if set_image and image is not None:
+                    image.set_frame(nf)
 
-            if targets:
+                if targets:
 
-                # filter targets
-                if filter_targets:
-                    targets = self._filter_targets(image, frame, dim, targets, fa)
-                elif convexity_filter:
-                    # for t in targets:
-                    #     print t.convexity, t.area, t.min_enclose_area, t.perimeter_convexity
-                    targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
+                    # filter targets
+                    if filter_targets:
+                        targets = self._filter_targets(image, frame, dim, targets, fa)
+                    elif convexity_filter:
+                        # for t in targets:
+                        #     print t.convexity, t.area, t.min_enclose_area, t.perimeter_convexity
+                        targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
 
-            self._cached_threshold = None
-            if targets:
-                # remember this thresholding for the next time
-                if use_threshold_caching:
-                    self._cached_threshold = (plow, phigh)
-                return sorted(targets, key=attrgetter('area'), reverse=True)
-                # time.sleep(0.5)
+                et = time.time() - st
+                self.debug('targets={} et={}'.format(len(targets), et))
+                if targets:
+                    # remember this thresholding for the next time
+                    if use_threshold_caching:
+                        self.debug('appending cached_threshold {}, {}, {}'.format(plow, phigh, id(self)))
+                        self._cached_threshold.append((plow, phigh))
+                    return sorted(targets, key=attrgetter('area'), reverse=True)
+                    # time.sleep(0.5)
 
-    def _generate_steps(self, src, search):
+
+
+    def _generate_steps(self, src, search, shift_dir):
         self.debug('generate steps search={}'.format(search))
-        self.debug('cached_threshold={}'.format(self._cached_threshold))
+        self.debug('cached_threshold={}, {}'.format(self._cached_threshold, id(self)))
         if search.get('use_adaptive_threshold'):
             def func():
                 yield 0, 255
@@ -242,20 +260,31 @@ class Locator(Loggable):
                 bands = [2 ** n for n in range(7, 1, -1)]
                 shifts = [2, 4, 8]
 
+                r = []
                 if self._cached_threshold:
-                    yield self._cached_threshold
+                    while 1:
+                        try:
+                            y = self._cached_threshold.pop()
+                            yield y
+                            r.append(y)
+                        except IndexError:
+                            break
+
+                self.debug('r={}'.format(r))
+                if r:
+                    self._cached_threshold.extend(r)
 
                 for band in bands:
                     for shift in shifts:
-                        for shift_dir in (-1, 1):
-                            for i in range(1, 128):
-                                m = me - shift * i * shift_dir
-                                low = m - band / 2
-                                high = low + band
-                                if low < 0 or high > 255:
-                                    break
+                        # for shift_dir in (-1, 1):
+                        for i in range(1, 128):
+                            m = me - shift * i * shift_dir
+                            low = m - band / 2
+                            high = low + band
+                            if low < 0 or high > 255:
+                                break
 
-                                yield low, high
+                            yield low, high
         else:
             def func():
                 start = search.get('start')
@@ -266,8 +295,19 @@ class Locator(Loggable):
                 step = search.get('step', 2)
                 n = search.get('n', 20)
 
+                r = []
                 if self._cached_threshold:
-                    yield self._cached_threshold
+                    while 1:
+                        try:
+                            y = self._cached_threshold.pop()
+                            yield y
+                            r.append(y)
+                        except IndexError:
+                            break
+
+                self.debug('r={}'.format(r))
+                if r:
+                    self._cached_threshold.extend(r)
 
                 for j in range(n):
                     ww = w * (j + 1)
@@ -488,22 +528,51 @@ class Locator(Loggable):
             convexity is simply defined as ratio of area to convex hull area
 
         """
-        tol = 0.8
+        dim = round(dim)
+        tol = 0.60
+        # self.debug('target convexity={}'.format(target.convexity))
+        tx, ty = self._get_frame_center(src)
+        dx, dy = None, None
         if target.convexity > tol:
-            self.info('doing arc approximation radius={}'.format(dim))
-            tx, ty = self._get_frame_center(src)
+            dim *= 1.1
+            # self.info('doing arc approximation radius={}'.format(dim))
             pts = target.poly_points
-            pts[:, 1] = pts[:, 1] - ty
-            pts[:, 0] = pts[:, 0] - tx
-            dx, dy = approximate_polygon_center(pts, dim)
-            cx, cy = dx + tx, dy + ty
-            dy = -dy
+            # pts[:, 1] = pts[:, 1] - ty
+            # pts[:, 0] = pts[:, 0] - tx
+            # args = approximate_polygon_center(pts, dim)
+            h, w = src.shape[0], src.shape[1]
+            args = approximate_polygon_center3(pts, dim, w, h)
+            if args:
+                cx, cy, cpts = args
 
-            self._draw_indicator(src, (cx, cy), color=(255, 0, 128), shape='crosshairs')
-            draw_circle_perimeter(src, cx, cy, round(dim), color=(255, 0, 128))
+                for cpt in cpts:
+                    self._draw_indicator(src, cpt, size=2)
+
+                # for i, ppt in enumerate(ppts[::2]):
+                #     self._draw_indicator(src, ppt, size=2, color=(100, 0, 100))
+                #     self._draw_indicator(src, ppts[i + 1], size=2, color=(100, 0, 100))
+                #     if not i % 5:
+                #         pj = ppts[i + 1]
+                #         draw_circle_perimeter(src, ppt[0], ppt[1], dim, (100, 0, 100))
+                #         draw_circle_perimeter(src, pj[0], pj[1], dim, (100, 0, 100))
+
+                dx = cx - tx
+                dy = cy - ty
+                # cx, cy = dx + tx, dy + ty
+                # cx, cy = dx - tx, dy - ty
+                dy = -dy
+                color = (255, 0, 128)
+            else:
+                self.debug('arc approximation failed')
 
         else:
             dx, dy = self._calculate_error([target])
+            cx, cy = dx + tx, dy + ty
+
+        if target.convexity > tol and dx is not None and dy is not None:
+            draw_circle_perimeter(src, cx, cy, dim, color)
+
+        self._draw_indicator(src, (cx, cy), color=color, shape='crosshairs', size=round(dim), thickness=2)
 
         return dx, dy
 
@@ -606,43 +675,42 @@ class Locator(Loggable):
         """
             draw a crosshairs indicator
         """
+        color = (255, 165, 0)
         if targets:
             for ta in targets:
                 pt = new_point(*ta.centroid)
                 self._draw_indicator(src, pt,
-                                     color=(0, 255, 0),
-                                     size=10,
+                                     color=color,
+                                     size=20,
+                                     thickness=2,
                                      shape='crosshairs')
                 # draw_circle(src, pt,
                 #             color=(0,255,0),
                 #             radius=int(dim))
+                # self.debug('drawing target {}'.format(pt))
 
-                draw_polygons(src, [ta.poly_points], color=(255, 255, 255))
+                draw_polygons(src, [ta.poly_points], color=color, thickness=2)
 
     def _draw_center_indicator(self, src, color=(0, 0, 255), shape='crosshairs',
-                               size=10, radius=1):
+                               size=10, thickness=2):
         """
             draw indicator at center of frame
         """
         cpt = self._get_frame_center(src)
         self._draw_indicator(src, new_point(*cpt),
-                             #                             shape='crosshairs',
                              shape=shape,
                              color=color,
-                             size=size)
-
-        # draw_circle_perimeter(src, cpt[0], cpt[1], radius, color=color)
+                             size=size, thickness=thickness)
 
     def _draw_indicator(self, src, center, color=(255, 0, 0), shape='circle',
-                        size=4, thickness=-1):
+                        size=4, thickness=1):
         """
             convenience function for drawing indicators
         """
         if isinstance(center, tuple):
             center = new_point(*center)
-        r = size
         if shape == 'rect':
-            draw_rectangle(src, center.x - r / 2., center.y - r / 2., r, r,
+            draw_rectangle(src, center.x - size / 2., center.y - size / 2., size, size,
                            color=color,
                            thickness=thickness)
         elif shape == 'crosshairs':
@@ -652,9 +720,9 @@ class Locator(Loggable):
                         [(center.x, center.y - size),
                          (center.x, center.y + size)]],
                        color=color,
-                       thickness=1)
+                       thickness=thickness)
         else:
-            draw_circle(src, center[0], center[1], r, color=color)
+            draw_circle(src, center[0], center[1], size, color=color)
 
 # ============= EOF =============================================
 #  def _segment_polygon2(self, image, frame, target,

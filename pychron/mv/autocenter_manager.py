@@ -67,6 +67,11 @@ class AutoCenterManager(MachineVisionManager):
         if self.locator:
             self.locator.cancel()
 
+    # def clear_cache(self):
+    #     self.debug('clear locator cache')
+    #     if self.locator:
+    #         self.locator.clear_cache()
+
     def calculate_new_center(self, cx, cy, offx, offy, dim=1.0, shape='circle'):
         frame = self.new_image_frame()
         loc = self._get_locator(shape=shape)

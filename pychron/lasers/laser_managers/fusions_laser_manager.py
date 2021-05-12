@@ -183,6 +183,10 @@ class FusionsLaserManager(LaserManager):
     def set_light_intensity(self, v):
         self.fiber_light.intensity = min(max(0, v), 100)
 
+    # @on_trait_change('fiber_light.intensity')
+    # def handle_fiber_light(self, v):
+    #     self.stage_manager.fiber_light_changed(v)
+
     @on_trait_change('laser_controller:refresh_canvas')
     def refresh_canvas(self):
         print('frefasdfeasdfasd')

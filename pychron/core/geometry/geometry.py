@@ -18,7 +18,7 @@
 # ============= standard library imports ========================
 import math
 
-from numpy import array, vstack, mean, average, hstack, zeros, gradient, asarray, ones_like, column_stack
+from numpy import array, vstack, mean, average, hstack, zeros, gradient, asarray, ones_like, column_stack, ones
 # ============= local library imports  ==========================
 from numpy.linalg import norm
 
@@ -177,8 +177,9 @@ def find_arc_center(p1, p2, r):
     """
 
     from scipy.optimize import fsolve
-    cx, cy = fsolve(arc_cost_func, [0, 0], args=(p1, p2, r))
-    return cx, cy
+    x, info, status, message = fsolve(arc_cost_func, [0, 0], args=(p1, p2, r), full_output=True)
+    if status == 1:
+        return x
 
 
 def approximage_polygon_center2(pts, r, weight=True):
@@ -223,34 +224,44 @@ def approximate_polygon_center(pts, r, weight=True):
     """
 
     n = len(pts)
-    cxs = []
-    cys = []
+    # cxs = []
+    # cys = []
 
     pts = array(pts)
     pts = vstack((pts, pts))
-    for i in range(2 * n - 5):
-        p1 = pts[i]
-        p2 = pts[i + 4]
-        cx, cy = find_arc_center(p1, p2, r)
-        cxs.append(cx)
-        cys.append(cy)
+    # for i in range(2 * n - 5):
+    #     p1 = pts[i]
+    #     p2 = pts[i + 4]
+    m = int(n / 3)
+    # for i in range(n):
+    #     p1 = pts[i]
+    #     p2 = pts[(i + m) % n]
+    #
+    #     cx, cy = find_arc_center(p1, p2, r)
+    #     cxs.append(cx)
+    #     cys.append(cy)
 
-    mcx = mean(cxs)
-    mcy = mean(cys)
+    cs = [find_arc_center(pts[i], pts[(i + m) % n], r) for i in range(n)]
+    cs = [c for c in cs if c is not None]
+    if cs:
+        cxs, cys = zip(*cs)
 
-    if weight:
-        # pts = sort_clockwise(pts, pts)
-        #        cenx, ceny = calculate_centroid(array(pts))
-        cxs = array(cxs)
-        cys = array(cys)
-        # weight each arc center by the inverse distance to the centroid
-        #        ws = ((cxs - cenx) ** 2 + (cys - ceny) ** 2) ** -0.5
-        # weight each arc center by the inverse distance to the mean
-        ws = ((cxs - mcx) ** 2 + (cys - mcy) ** 2) ** -2
-        mcx = average(cxs, weights=ws)
-        mcy = average(cys, weights=ws)
+        mcx = mean(cxs)
+        mcy = mean(cys)
 
-    return mcx, mcy
+        if weight:
+            # pts = sort_clockwise(pts, pts)
+            #        cenx, ceny = calculate_centroid(array(pts))
+            cxs = array(cxs)
+            cys = array(cys)
+            # weight each arc center by the inverse distance to the centroid
+            #        ws = ((cxs - cenx) ** 2 + (cys - ceny) ** 2) ** -0.5
+            # weight each arc center by the inverse distance to the mean
+            ws = ((cxs - mcx) ** 2 + (cys - mcy) ** 2) ** -2
+            mcx = average(cxs, weights=ws)
+            mcy = average(cys, weights=ws)
+
+        return mcx, mcy
 
 
 TRANSPOSE = array([[0, -1], [1, 0]])
@@ -271,7 +282,7 @@ def get_intersections(p0, r0, p1, r1):
     # circle 2: (x1, y1), radius r1
     dx = x1 - x0
     dy = y1 - y0
-    d = (dx**2+dy**2)**0.5
+    d = (dx ** 2 + dy ** 2) ** 0.5
     # d = math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
 
     # non intersecting
@@ -285,7 +296,7 @@ def get_intersections(p0, r0, p1, r1):
         return None
     else:
         a = (r0 ** 2 - r1 ** 2 + d ** 2) / (2 * d)
-        h = (r0**2-a**2)**0.5
+        h = (r0 ** 2 - a ** 2) ** 0.5
         # h = math.sqrt(r0 ** 2 - a ** 2)
         # x2 = x0 + a * (x1 - x0) / d
         # y2 = y0 + a * (y1 - y0) / d
@@ -295,8 +306,8 @@ def get_intersections(p0, r0, p1, r1):
         # x4 = x2 - h * (y1 - y0) / d
         # y4 = y2 + h * (x1 - x0) / d
 
-        dxd = dx/d
-        dyd = dy/d
+        dxd = dx / d
+        dyd = dy / d
 
         x2 = x0 + a * dxd
         y2 = y0 + a * dyd
@@ -309,7 +320,7 @@ def get_intersections(p0, r0, p1, r1):
         return x3, y3, x4, y4
 
 
-def approximate_polygon_center3(pts, r, width, height, weight=True):
+def approximate_polygon_center3(pts, r, width, height, weight=True, k=3, freq=6):
     """
     get 2 points
     if d btw points is > 2*r skip
@@ -322,38 +333,43 @@ def approximate_polygon_center3(pts, r, width, height, weight=True):
     :param weight:
     :return:
     """
+
+    # ppts = []
+    pts = pts[::freq]
     n = len(pts)
-    xs, ys = [], []
-    for k in (3, 4, 5):
-        m = n / k
-        for i, p_i in enumerate(pts):
-            j = (i + m) % n
-            p_j = pts[j]
+    rpts = []
+    pad = 3
+    m = n / k
+    for i, p_i in enumerate(pts):
+        j = int((i + m) % n)
+        p_j = pts[j]
+        if pad < p_i[0] < width - pad and pad < p_i[1] < height - pad and \
+                pad < p_j[0] < width - pad and pad < p_j[1] < height - pad:
             npts = get_intersections(p_i, r, p_j, r)
+
             if npts:
                 x3, y3, x4, y4 = npts
-                if 0 < x3 < width:
-                    xs.append(x3)
-                if 0 < x4 < width:
-                    xs.append(x4)
-                if 0 < y3 < height:
-                    ys.append(y3)
-                if 0 < y4 < height:
-                    ys.append(y4)
+                if pad < x3 < width - pad and pad < y3 < height - pad:
+                    rpts.append((x3, y3))
 
-    xs = array(xs)
-    ys = array(ys)
+                # if pad < x4 < width - pad and pad < y4 < height - pad:
+                #     rpts.append((x4, y4))
+
+    rpts = array(rpts)
+    xs = rpts[:, 0]
+    ys = rpts[:, 1]
     if weight:
-        cxs = ones_like(xs)*xs.mean()
-        cys = ones_like(xs)*ys.mean()
-        ds = calc_distances(column_stack((xs, ys)), column_stack((cxs, cys)))
-        ws = 1/ds**2
+        cxs = ones(rpts.shape[0]) * xs.mean()
+        cys = ones(rpts.shape[0]) * ys.mean()
+
+        ds = calc_distances(rpts, column_stack((cxs, cys))).T[0]
+        ws = 1 / ds ** 2
     else:
         ws = ones_like(xs)
 
     mcx = average(xs, weights=ws)
     mcy = average(ys, weights=ws)
-    return mcx, mcy, xs, ys
+    return mcx, mcy, rpts
 
 
 def approximate_polygon_center2(pts, r=None):

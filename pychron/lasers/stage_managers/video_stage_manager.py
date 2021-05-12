@@ -116,6 +116,9 @@ class VideoStageManager(StageManager):
         if name == 'zoom':
             self._update_zoom(value)
 
+    #def fiber_light_changed(self, v):
+    #    self.autocenter_manager.clear_cache()
+
     def bind_preferences(self, pref_id):
         self.debug('binding preferences')
         super(VideoStageManager, self).bind_preferences(pref_id)
@@ -619,6 +622,7 @@ class VideoStageManager(StageManager):
             try:
                 self._autocenter(holenum=holenum, ntries=ntries, save=True)
             except BaseException as e:
+                self.debug_exception()
                 self.critical('Autocentering failed. {}'.format(e))
 
             self._auto_correcting = False
@@ -666,7 +670,9 @@ class VideoStageManager(StageManager):
                     shape = hole.shape
 
             ox, oy = self.canvas.get_screen_offset()
-            for ti in range(max(1, ntries)):
+            mxs, mys = [],[]
+            n = max(1, ntries)
+            for ti in range(n):
                 # use machine vision to calculate positioning error
                 rpos = self.autocenter_manager.calculate_new_center(
                     self.stage_controller.x,
@@ -676,18 +682,29 @@ class VideoStageManager(StageManager):
                     shape=shape)
 
                 if rpos is not None:
-                    self.linear_move(*rpos, block=True,
-                                     source='autocenter',
-                                     use_calibration=False,
-                                     update_hole=False,
-                                     velocity_scalar=0.1)
-                    time.sleep(0.5)
+                    if ti < n-1:
+                        self.linear_move(*rpos, block=True,
+                                         source='autocenter',
+                                         use_calibration=False,
+                                         update_hole=False,
+                                         velocity_scalar=0.5)
+                    mxs.append(rpos[0])
+                    mys.append(rpos[1])
+
                 else:
                     self.snapshot(auto=True,
                                   name='pos_err_{}_{}'.format(holenum, ti),
                                   inform=inform)
                     break
 
+            if mxs:
+                n = len(mxs)
+                rpos = sum(mxs)/n, sum(mys)/n
+                self.linear_move(*rpos, block=True,
+                                 source='autocenter',
+                                 use_calibration=False,
+                                 update_hole=False,
+                                 velocity_scalar=0.1)
                     # if use_interpolation and rpos is None:
                     #     self.info('trying to get interpolated position')
                     #     rpos = sm.get_interpolated_position(holenum)
