@@ -59,7 +59,7 @@ class RegionSegmenter(BaseSegmenter):
         # labels = watershed(-distance, markers, mask=nimage)
         # print(labels)
         # labels[labels > 1] = 0
-        return nimage
+        return invert(nimage)
         # return labels.astype(uint8)
         # return invert(labels)
             # markers = zeros_like(image)

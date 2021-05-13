@@ -14,18 +14,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import time
-from collections import deque
-
 from traits.api import Float
 # ============= standard library imports ========================
 
-from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
-    nonzero, max, arange, argsort, invert, median, mean, zeros_like
+import time
 from operator import attrgetter
-# from skimage.morphology import watershed
-from skimage.draw import polygon, circle, circle_perimeter, circle_perimeter_aa
+from collections import deque
+from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
+    nonzero, max, arange, argsort, invert, median, mean, zeros_like, ones, count_nonzero, unique
 from scipy import ndimage
+from skimage.morphology import watershed
+from skimage.draw import polygon, circle, circle_perimeter, circle_perimeter_aa
 from skimage.exposure import rescale_intensity
 from skimage.filters import gaussian
 from skimage import feature
@@ -55,6 +54,10 @@ def draw_circle_perimeter(frame, center_x, center_y, radius, color):
     cy, cx = circle_perimeter(int(center_y), int(center_x), int(radius))
     cy, cx = _coords_inside_image(cy, cx, frame.shape)
     frame[cy, cx] = color
+
+
+def _binary_percent(src):
+    return count_nonzero(src) / src.size
 
 
 class Locator(Loggable):
@@ -190,7 +193,7 @@ class Locator(Loggable):
         # phigh, plow = None, None
 
         low, high, prev_m = None, None, None
-        for i in range(10):
+        for i in range(100):
             try:
                 low, high = self._get_bounds(src, search, low, high, prev_m, i)
             except ValueError:
@@ -217,12 +220,18 @@ class Locator(Loggable):
 
             nsrc = seg.segment(src)
             # seg.blocksize += blocksize_step
-
-            prev_m = nsrc.mean()
+            # per = count_nonzero(nsrc) / nsrc.size
+            # per = 1
+            per = _binary_percent(nsrc)
+            # print(count_nonzero(nsrc), nsrc.shape, nsrc.size, per)
+            if per > 0.65:
+                self.debug('image too bright binary percent {}'.format(per))
+                break
+            # prev_m = nsrc.mean()
             # if (m > 190 and sdir == -1) or (m < 5 and sdir == 1):
-            if prev_m > 190 or prev_m < 5:
-                self.debug('image mean out of bounds 5,190 m={}'.format(prev_m))
-                continue
+            # if prev_m > 190 or prev_m < 5:
+            #     self.debug('image mean out of bounds 5,190 m={}'.format(prev_m))
+            #     continue
 
             nf = colorspace(nsrc)
 
@@ -312,89 +321,93 @@ class Locator(Loggable):
             return self._cached_threshold.pop()
 
         if low is None:
-            band = 128
+            band = 32
             low = src.mean() - band / 2
             high = low + band
 
         else:
-            step = 5
-            if m < 5:  # too much of the scene is dark need to lower the high threshold
-                high -= step
-            elif m>190: # too much of the scene is light need to
-                pass
+            step = 1
+            low += step
+            # high -= step
+            # if m < 5:  # too much of the scene is dark need to lower the high threshold
+            #     high -= step
+            # elif m>190: # too much of the scene is light need to
+            #     pass
+            # else:
 
-        return low, high
+        return low, low
+        # return low, high
 
-    def _generate_steps(self, src, search, shift_dir):
-        self.debug('generate steps search={}'.format(search))
-        self.debug('cached_threshold={}, {}'.format(self._cached_threshold, id(self)))
-        if search.get('use_adaptive_threshold'):
-            def func():
-                yield 0, 255
-
-        elif search.get('use_new_style', True):
-            def func():
-                me = int(mean(src[src > 0]))
-                bands = [2 ** n for n in range(7, 1, -1)]
-                shifts = [2, 4, 8]
-
-                r = []
-                if self._cached_threshold:
-                    while 1:
-                        try:
-                            y = self._cached_threshold.pop()
-                            yield y
-                            r.append(y)
-                        except IndexError:
-                            break
-
-                self.debug('r={}'.format(r))
-                if r:
-                    self._cached_threshold.extend(r)
-
-                for band in bands:
-                    for shift in shifts:
-                        # for shift_dir in (-1, 1):
-                        for i in range(1, 128):
-                            m = me - shift * i * shift_dir
-                            low = m - band / 2
-                            high = low + band
-                            if low < 0 or high > 255:
-                                break
-
-                            yield low, high
-        else:
-            def func():
-                start = search.get('start')
-                if start is None:
-                    w = search.get('width', 10)
-                    start = int(mean(src[src > 0])) - search.get('start_offset_scalar', 3) * w
-
-                step = search.get('step', 2)
-                n = search.get('n', 20)
-
-                r = []
-                if self._cached_threshold:
-                    while 1:
-                        try:
-                            y = self._cached_threshold.pop()
-                            yield y
-                            r.append(y)
-                        except IndexError:
-                            break
-
-                self.debug('r={}'.format(r))
-                if r:
-                    self._cached_threshold.extend(r)
-
-                for j in range(n):
-                    ww = w * (j + 1)
-                    for i in range(n):
-                        low = max((0, start + i * step - ww))
-                        high = max((1, min((255, start + i * step + ww))))
-                        yield low, high
-
-        return func
+    # def _generate_steps(self, src, search, shift_dir):
+    #     self.debug('generate steps search={}'.format(search))
+    #     self.debug('cached_threshold={}, {}'.format(self._cached_threshold, id(self)))
+    #     if search.get('use_adaptive_threshold'):
+    #         def func():
+    #             yield 0, 255
+    #
+    #     elif search.get('use_new_style', True):
+    #         def func():
+    #             me = int(mean(src[src > 0]))
+    #             bands = [2 ** n for n in range(7, 1, -1)]
+    #             shifts = [2, 4, 8]
+    #
+    #             r = []
+    #             if self._cached_threshold:
+    #                 while 1:
+    #                     try:
+    #                         y = self._cached_threshold.pop()
+    #                         yield y
+    #                         r.append(y)
+    #                     except IndexError:
+    #                         break
+    #
+    #             self.debug('r={}'.format(r))
+    #             if r:
+    #                 self._cached_threshold.extend(r)
+    #
+    #             for band in bands:
+    #                 for shift in shifts:
+    #                     # for shift_dir in (-1, 1):
+    #                     for i in range(1, 128):
+    #                         m = me - shift * i * shift_dir
+    #                         low = m - band / 2
+    #                         high = low + band
+    #                         if low < 0 or high > 255:
+    #                             break
+    #
+    #                         yield low, high
+    #     else:
+    #         def func():
+    #             start = search.get('start')
+    #             if start is None:
+    #                 w = search.get('width', 10)
+    #                 start = int(mean(src[src > 0])) - search.get('start_offset_scalar', 3) * w
+    #
+    #             step = search.get('step', 2)
+    #             n = search.get('n', 20)
+    #
+    #             r = []
+    #             if self._cached_threshold:
+    #                 while 1:
+    #                     try:
+    #                         y = self._cached_threshold.pop()
+    #                         yield y
+    #                         r.append(y)
+    #                     except IndexError:
+    #                         break
+    #
+    #             self.debug('r={}'.format(r))
+    #             if r:
+    #                 self._cached_threshold.extend(r)
+    #
+    #             for j in range(n):
+    #                 ww = w * (j + 1)
+    #                 for i in range(n):
+    #                     low = max((0, start + i * step - ww))
+    #                     high = max((1, min((255, start + i * step + ww))))
+    #                     yield low, high
+    #
+    #     return func
 
     def _mask(self, src, radius=None):
 
@@ -437,24 +450,30 @@ class Locator(Loggable):
         # print('ctest', ctest, cthreshold, 'centtest', centtest, 'atereat', atest, mi, ma)
         # result = ctest and atest and centtest
         # if not ctest and (atest and centtest):
-        #     target = self._segment_polygon(image, frame,
-        #                                    target,
-        #                                    dim,
-        #                                    cthreshold, mi, ma)
-        #     result = True if target else False
+        #print(ctest, centtest, atest)
+        if (not ctest or not atest) and centtest:
+            target = self._segment_polygon(image, frame,
+                                           target,
+                                           dim,
+                                           cthreshold, mi, ma)
+            result = True if target else False
 
         return target, result
 
-    def _test_target(self, frame, ti, cthreshold, mi, ma):
+    def _test_target(self, frame, ti, cthreshold, mi, ma, use_centest=True):
         # print('converasdf', ti.convexity, 'ara', ti.area)
         ctest = ti.convexity > cthreshold
         centtest = self._near_center(ti.centroid, frame)
         atest = ma > ti.area > mi
 
-        return ctest, centtest, atest
+        return ctest, centtest or not use_centest, atest
 
     def _find_polygon_targets(self, src, frame=None):
-        contours, hieararchy = contour(src)
+        args = contour(src)
+        try:
+            contours, hieararchy = args
+        except ValueError:
+            src, contours, hieararchy = args
         # contours, hieararchy = find_contours(src)
 
         # convert to color for display
@@ -467,33 +486,79 @@ class Locator(Loggable):
         return self._make_targets(pargs, origin)
 
     def _segment_polygon(self, image, frame, target, dim, cthreshold, mi, ma):
+        self.debug('trying to segment polygon')
+        # src = frame[:]
 
-        src = frame[:]
-
-        wh = get_size(src)
+        wh = get_size(frame)
         # make image with polygon
         im = zeros(wh)
         points = asarray(target.poly_points)
-
         rr, cc = polygon(*points.T)
-        im[cc, rr] = 255
+        im[cc, rr] = 1
 
         # do watershedding
-        # distance = ndimage.distance_transform_edt(im)
-        # local_maxi = feature.peak_local_max(distance, labels=im, indices=False)
+        distance = ndimage.distance_transform_edt(im)
+        coords = feature.peak_local_max(distance, footprint=ones((9, 9)), labels=im)
+        # print(coords)
+        mask = zeros(distance.shape, dtype=bool)
+        mask[tuple(coords.T)] = True
+        markers, ns = ndimage.label(mask)
+        # print('m', nf, markers)
+        wsrc = watershed(-distance, markers, mask=im)
+
         # markers, ns = ndimage.label(local_maxi)
         # wsrc = watershed(-distance, markers, mask=im)
         # wsrc = wsrc.astype('uint8')
-        wsrc = im.astype('uint8')
+        # print(nonzero(im))
+        # wsrc = im.astype('uint8')
         #         self.test_image.setup_images(3, wh)
         #         self.test_image.set_image(distance, idx=0)
         #         self.test_image.set_image(wsrc, idx=1)
 
         #         self.wait()
+        # image.set_frame(colorspace(wsrc))
+        # wsrc = wsrc.astype('uint8')
+        # m = max(wsrc)
+        # wsrc[wsrc < m] = 0
+        # wsrc[wsrc == m] = 255
 
-        targets = self._find_polygon_targets(wsrc)
-        ct = cthreshold * 0.75
-        target = self._test_targets(wsrc, targets, ct, mi, ma)
+        # wsrc=invert(wsrc)*255
+        # image.set_frame(colorspace(wsrc))
+        # time.sleep(2)
+
+        # return []
+        # self.wait()
+        self.debug('number markers={}'.format(ns))
+        for i in range(1, ns):
+            target = None
+            tsrc = zeros_like(wsrc, dtype='uint8')
+            mask = wsrc == i
+            tsrc[mask] = 255
+
+            # csrc = colorspace(tsrc)
+            # csrc[mask] = (240, 0, 255)
+            # image.set_frame(csrc)
+            # time.sleep(1)
+
+            bp = _binary_percent(tsrc)
+            self.debug('binary percent {} {}'.format(i, bp))
+            if bp < 0.40:
+                continue
+            # per = count_nonzero(nsrc) / nsrc.size
+
+            targets = self._find_polygon_targets(tsrc)
+            if targets:
+                csrc = colorspace(tsrc)
+                csrc[mask] = (240, 50, 255)
+                image.set_frame(csrc)
+                # print('found target={}'.format(targets))
+                ct = cthreshold * 0.75
+                target = self._test_targets(tsrc, targets, ct, mi, ma*1.25, use_centest=False)
+                # print('filterd {}'.format(target))
+                # time.sleep(1)
+                if target:
+                    self.debug('target found for segment {}, ns={}'.format(i, ns))
+                    break
         # if not target:
         #     values, bins = histogram(wsrc, bins=max((10, ns)))
         #     # assume 0 is the most abundant pixel. ie the image is mostly background
@@ -512,17 +577,17 @@ class Locator(Loggable):
         #         nimage[((wsrc >= bl) & (wsrc <= bu))] = 0
         #
         #         targets = self._find_polygon_targets(nimage)
-        #         target = self._test_targets(nimage, targets, ct, mi, ma)
+        #         target = self._test_targets(nimage, targets, ct, mi, ma, use_centest=False)
         #         if target:
         #             break
 
         return target
 
-    def _test_targets(self, src, targets, ct, mi, ma):
+    def _test_targets(self, src, targets, ct, mi, ma, **kw):
         if targets:
             for ti in targets:
                 if all(self._test_target(src,
-                                         ti, ct, mi, ma)):
+                                         ti, ct, mi, ma, **kw)):
                     return ti
 
     # ===============================================================================
@@ -608,10 +673,12 @@ class Locator(Loggable):
 
         """
         dim = round(dim)
-        tol = 0.60
-        # self.debug('target convexity={}'.format(target.convexity))
+        tol = 0.75
+        self.debug('target convexity={}'.format(target.convexity))
         tx, ty = self._get_frame_center(src)
         dx, dy = None, None
+        color = (150, 100, 50)
+
         if target.convexity > tol:
             dim *= 1.1
             # self.info('doing arc approximation radius={}'.format(dim))

@@ -314,10 +314,10 @@ def get_intersections(p0, r0, p1, r1):
         x3 = x2 + h * dyd
         y3 = y2 - h * dxd
 
-        x4 = x2 - h * dyd
-        y4 = y2 + h * dxd
+        #x4 = x2 - h * dyd
+        #y4 = y2 + h * dxd
 
-        return x3, y3, x4, y4
+        return x3, y3 #, x4, y4
 
 
 def approximate_polygon_center3(pts, r, width, height, weight=True, k=3, freq=6):
@@ -348,7 +348,8 @@ def approximate_polygon_center3(pts, r, width, height, weight=True, k=3, freq=6)
             npts = get_intersections(p_i, r, p_j, r)
 
             if npts:
-                x3, y3, x4, y4 = npts
+                # x3, y3, x4, y4 = npts
+                x3, y3 = npts
                 if pad < x3 < width - pad and pad < y3 < height - pad:
                     rpts.append((x3, y3))
 
