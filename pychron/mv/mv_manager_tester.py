@@ -53,6 +53,9 @@ class TestAutocenter(HasTraits):
         self.display_image = a.display_image
         self.manager = a
 
+    def _test_co2_locator(self):
+        self.manager.calculate_new_center(0, 0, 0, 0, 1)
+
     def _test1(self):
         print('test1')
         ld = LumenDetector()
@@ -91,7 +94,8 @@ class TestAutocenter(HasTraits):
 
     def _test1_button_fired(self):
         self._set_test_image()
-        self._test1()
+        # self._test1()
+        self._test_co2_locator()
 
 
 if __name__ == '__main__':
