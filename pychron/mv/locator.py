@@ -118,8 +118,9 @@ class Locator(Loggable):
         self.alive = True
         dx, dy = None, None
 
+        st = time.time()
         targets = self._find_targets(image, frame, dim, shape=shape, **kw)
-
+        self.debug('time to find targets={:0.5f}'.format(time.time() - st))
         if targets:
             self.info('found {} potential targets'.format(len(targets)))
 
@@ -149,7 +150,7 @@ class Locator(Loggable):
         if confirm:
             if not self.confirmation_dialog('Move to position'):
                 dx, dy = None, None
-
+        self.debug('total find time={:0.5f}'.format(time.time() - st))
         return dx, dy
 
     def _find_targets(self, image, frame, dim, shape='circle',
@@ -158,7 +159,7 @@ class Locator(Loggable):
                       convexity_filter=False,
                       mask=False,
                       set_image=True, inverted=False,
-                      use_threshold_caching=False):
+                      use_threshold_caching=False, dual_search=False):
         """
             use a segmentor to segment the image
         """
@@ -186,11 +187,17 @@ class Locator(Loggable):
 
         stargets = []
         sm = src.mean()
+
+        othreshold = None
+        if self._cached_threshold:
+            othreshold = self._cached_threshold.pop()
+
+        if othreshold is None:
+            othreshold = sm - 32
+
         for step in (1, -1):
-            if step == 1:
-                threshold = sm - 64
-            else:
-                threshold = sm + 64
+            if step == -1:
+                othreshold = sm + 32
 
             for i in range(255):
                 st = time.time()
@@ -198,22 +205,28 @@ class Locator(Loggable):
                     self.debug('canceled')
                     return
 
-                if self._cached_threshold:
-                    threshold = self._cached_threshold.pop()
-                else:
-                    threshold += step
-
+                threshold = othreshold + (2 * step) * i
                 if inverted:
                     # low = 255 - low
                     # high = 255 - high
                     threshold = 255 - threshold
 
-                self.debug('threshold={}'.format(threshold))
                 nsrc = seg.segment(src, threshold)
                 per = _binary_percent(nsrc)
-                if per > 0.65:
+                self.debug('threshold={} step={} i={} per={}'.format(threshold, step, i, per))
+                if per > 0.65 and step == 1:
                     self.debug('image too bright binary percent {}'.format(per))
-                    break
+                    if i:
+                        break
+                    else:
+                        continue
+
+                if per < 0.35 and step == -1:
+                    self.debug('image too dark binary percent {}'.format(per))
+                    if i:
+                        break
+                    else:
+                        continue
 
                 nf = colorspace(nsrc)
                 targets = self._find_polygon_targets(nsrc, frame=nf)
@@ -234,11 +247,16 @@ class Locator(Loggable):
                     if use_threshold_caching:
                         self.debug('appending cached_threshold {}, {}'.format(threshold, id(self)))
                         self._cached_threshold.append(threshold)
-                    stargets.extend(sorted(targets, key=attrgetter('area'), reverse=True))
-                    break
 
-        if stargets:
-            pass
+                    stargets.extend(sorted(targets, key=attrgetter('area'), reverse=step == 1))
+                    if dual_search:
+                        break
+                    else:
+                        self.debug('stargets.b={}'.format(len(stargets)))
+                        return stargets
+
+
+        self.debug('stargets.a={}'.format(len(stargets)))
         return stargets
 
     def _mask(self, src, radius=None):
@@ -385,7 +403,7 @@ class Locator(Loggable):
                 image.set_frame(csrc)
                 # print('found target={}'.format(targets))
                 ct = cthreshold * 0.75
-                target = self._test_targets(tsrc, targets, ct, mi, ma * 1.25, use_centest=False)
+                target = self._test_targets(tsrc, targets, ct, mi, ma * 1.1, use_centest=False)
                 # print('filterd {}'.format(target))
                 # time.sleep(1)
                 if target:
@@ -505,7 +523,7 @@ class Locator(Loggable):
 
         """
         dim = round(dim)
-        tol = 0.75
+        tol = 0.50
         self.debug('target convexity={}'.format(target.convexity))
         tx, ty = self._get_frame_center(src)
         dx, dy = None, None
@@ -544,6 +562,7 @@ class Locator(Loggable):
                 self.debug('arc approximation failed')
 
         else:
+            self.debug('target convexity too low')
             dx, dy = self._calculate_error([target])
             cx, cy = dx + tx, dy + ty
 
