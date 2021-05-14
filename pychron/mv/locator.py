@@ -162,10 +162,7 @@ class Locator(Loggable):
         """
             use a segmentor to segment the image
         """
-        self.debug('use thrshold caching={}'.format(use_threshold_caching))
-
-        if search is None:
-            search = {}
+        self.debug('use threshold caching={}'.format(use_threshold_caching))
 
         if preprocess:
             if not isinstance(preprocess, dict):
@@ -184,230 +181,65 @@ class Locator(Loggable):
         if inverted:
             src = invert(src)
 
-        # blocksize_step = search.get('blocksize_step', 5)
-        # seg = RegionSegmenter(use_adaptive_threshold=search.get('use_adaptive_threshold', False),
-        #                       blocksize=search.get('blocksize', 20),
-        #                       use_watershed=True)
         seg = RegionSegmenter()
         fa = self._get_filter_target_area(shape, dim)
-        # phigh, plow = None, None
 
-        low, high, prev_m = None, None, None
-        for i in range(100):
-            try:
-                low, high = self._get_bounds(src, search, low, high, prev_m, i)
-            except ValueError:
-                break
+        stargets = []
+        sm = src.mean()
+        for step in (1, -1):
+            if step == 1:
+                threshold = sm - 64
+            else:
+                threshold = sm + 64
 
-            st = time.time()
-            if not self.alive:
-                self.debug('canceled')
-                return
+            for i in range(255):
+                st = time.time()
+                if not self.alive:
+                    self.debug('canceled')
+                    return
 
-            if inverted:
-                low = 255 - low
-                high = 255 - high
+                if self._cached_threshold:
+                    threshold = self._cached_threshold.pop()
+                else:
+                    threshold += step
 
-            self.debug('bandwidth low={}, high={}'.format(low, high))
-            seg.threshold_low = low
-            seg.threshold_high = high
+                if inverted:
+                    # low = 255 - low
+                    # high = 255 - high
+                    threshold = 255 - threshold
 
-            # if seg.threshold_low == plow and seg.threshold_high == phigh:
-            #     return
+                self.debug('threshold={}'.format(threshold))
+                nsrc = seg.segment(src, threshold)
+                per = _binary_percent(nsrc)
+                if per > 0.65:
+                    self.debug('image too bright binary percent {}'.format(per))
+                    break
 
-            # plow = seg.threshold_low
-            # phigh = seg.threshold_high
+                nf = colorspace(nsrc)
+                targets = self._find_polygon_targets(nsrc, frame=nf)
+                if set_image and image is not None:
+                    image.set_frame(nf)
 
-            nsrc = seg.segment(src)
-            # seg.blocksize += blocksize_step
-            # per = count_nonzero(nsrc) / nsrc.size
-            # per = 1
-            per = _binary_percent(nsrc)
-            # print(count_nonzero(nsrc), nsrc.shape, nsrc.size, per)
-            if per > 0.65:
-                self.debug('image too bright binary percent {}'.format(per))
-                break
-            # prev_m = nsrc.mean()
-            # if (m > 190 and sdir == -1) or (m < 5 and sdir == 1):
-            # if prev_m > 190 or prev_m < 5:
-            #     self.debug('image mean out of bounds 5,190 m={}'.format(prev_m))
-            #     continue
+                if targets:
+                    # filter targets
+                    if filter_targets:
+                        targets = self._filter_targets(image, frame, dim, targets, fa)
+                    elif convexity_filter:
+                        targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
 
-            nf = colorspace(nsrc)
+                et = time.time() - st
+                self.debug('targets={} et={}'.format(len(targets), et))
+                if targets:
+                    # remember this thresholding for the next time
+                    if use_threshold_caching:
+                        self.debug('appending cached_threshold {}, {}'.format(threshold, id(self)))
+                        self._cached_threshold.append(threshold)
+                    stargets.extend(sorted(targets, key=attrgetter('area'), reverse=True))
+                    break
 
-            # draw contours
-            targets = self._find_polygon_targets(nsrc, frame=nf)
-            if set_image and image is not None:
-                image.set_frame(nf)
-
-            if targets:
-                # filter targets
-                if filter_targets:
-                    targets = self._filter_targets(image, frame, dim, targets, fa)
-                elif convexity_filter:
-                    # for t in targets:
-                    #     print t.convexity, t.area, t.min_enclose_area, t.perimeter_convexity
-                    targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
-
-            et = time.time() - st
-            self.debug('targets={} et={}'.format(len(targets), et))
-            if targets:
-                # remember this thresholding for the next time
-                if use_threshold_caching:
-                    self.debug('appending cached_threshold {}, {}, {}'.format(low, high, id(self)))
-                    self._cached_threshold.append((low, high))
-                return sorted(targets, key=attrgetter('area'), reverse=True)
-                # time.sleep(0.5)
-
-        # for sdir in (1, -1):
-        #     for low, high in self._generate_steps(src, search, sdir)():
-        #         st = time.time()
-        #         if not self.alive:
-        #             self.debug('canceled')
-        #             return
-        #
-        #         # self.debug('bandwidth low={}, high={}, {}'.format(low, high, sdir))
-        #
-        #         if inverted:
-        #             low = 255 - low
-        #             high = 255 - high
-        #
-        #         seg.threshold_low = low
-        #         seg.threshold_high = high
-        #
-        #         if seg.threshold_low == plow and seg.threshold_high == phigh:
-        #             return
-        #
-        #         plow = seg.threshold_low
-        #         phigh = seg.threshold_high
-        #
-        #         nsrc = seg.segment(src)
-        #         seg.blocksize += blocksize_step
-        #
-        #         m = nsrc.mean()
-        #         if (m > 190 and sdir == -1) or (m < 5 and sdir == 1):
-        #             self.debug('image mean out of bounds 5,190 m={}'.format(m))
-        #             continue
-        #
-        #         nf = colorspace(nsrc)
-        #
-        #         # draw contours
-        #         targets = self._find_polygon_targets(nsrc, frame=nf)
-        #         if set_image and image is not None:
-        #             image.set_frame(nf)
-        #
-        #         if targets:
-        #
-        #             # filter targets
-        #             if filter_targets:
-        #                 targets = self._filter_targets(image, frame, dim, targets, fa)
-        #             elif convexity_filter:
-        #                 # for t in targets:
-        #                 #     print t.convexity, t.area, t.min_enclose_area, t.perimeter_convexity
-        #                 targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
-        #
-        #         et = time.time() - st
-        #         self.debug('targets={} et={}'.format(len(targets), et))
-        #         if targets:
-        #             # remember this thresholding for the next time
-        #             if use_threshold_caching:
-        #                 self.debug('appending cached_threshold {}, {}, {}'.format(plow, phigh, id(self)))
-        #                 self._cached_threshold.append((plow, phigh))
-        #             return sorted(targets, key=attrgetter('area'), reverse=True)
-        #             # time.sleep(0.5)
-
-    def _get_bounds(self, src, search, low, high, m, i):
-        if self._cached_threshold:
-            return self._cached_threshold.pop()
-
-        if low is None:
-            band = 32
-            low = src.mean() - band / 2
-            high = low + band
-
-        else:
-            step = 1
-            low += step
-            # high -= step
-            # if m < 5:  # too much of the scene is dark need to lower the high threshold
-            #     high -= step
-            # elif m>190: # too much of the scene is light need to
-            #     pass
-            # else:
-
-        return low, low
-        # return low, high
-
-    # def _generate_steps(self, src, search, shift_dir):
-    #     self.debug('generate steps search={}'.format(search))
-    #     self.debug('cached_threshold={}, {}'.format(self._cached_threshold, id(self)))
-    #     if search.get('use_adaptive_threshold'):
-    #         def func():
-    #             yield 0, 255
-    #
-    #     elif search.get('use_new_style', True):
-    #         def func():
-    #             me = int(mean(src[src > 0]))
-    #             bands = [2 ** n for n in range(7, 1, -1)]
-    #             shifts = [2, 4, 8]
-    #
-    #             r = []
-    #             if self._cached_threshold:
-    #                 while 1:
-    #                     try:
-    #                         y = self._cached_threshold.pop()
-    #                         yield y
-    #                         r.append(y)
-    #                     except IndexError:
-    #                         break
-    #
-    #             self.debug('r={}'.format(r))
-    #             if r:
-    #                 self._cached_threshold.extend(r)
-    #
-    #             for band in bands:
-    #                 for shift in shifts:
-    #                     # for shift_dir in (-1, 1):
-    #                     for i in range(1, 128):
-    #                         m = me - shift * i * shift_dir
-    #                         low = m - band / 2
-    #                         high = low + band
-    #                         if low < 0 or high > 255:
-    #                             break
-    #
-    #                         yield low, high
-    #     else:
-    #         def func():
-    #             start = search.get('start')
-    #             if start is None:
-    #                 w = search.get('width', 10)
-    #                 start = int(mean(src[src > 0])) - search.get('start_offset_scalar', 3) * w
-    #
-    #             step = search.get('step', 2)
-    #             n = search.get('n', 20)
-    #
-    #             r = []
-    #             if self._cached_threshold:
-    #                 while 1:
-    #                     try:
-    #                         y = self._cached_threshold.pop()
-    #                         yield y
-    #                         r.append(y)
-    #                     except IndexError:
-    #                         break
-    #
-    #             self.debug('r={}'.format(r))
-    #             if r:
-    #                 self._cached_threshold.extend(r)
-    #
-    #             for j in range(n):
-    #                 ww = w * (j + 1)
-    #                 for i in range(n):
-    #                     low = max((0, start + i * step - ww))
-    #                     high = max((1, min((255, start + i * step + ww))))
-    #                     yield low, high
-    #
-    #     return func
+        if stargets:
+            pass
+        return stargets
 
     def _mask(self, src, radius=None):
 
@@ -450,7 +282,7 @@ class Locator(Loggable):
         # print('ctest', ctest, cthreshold, 'centtest', centtest, 'atereat', atest, mi, ma)
         # result = ctest and atest and centtest
         # if not ctest and (atest and centtest):
-        #print(ctest, centtest, atest)
+        # print(ctest, centtest, atest)
         if (not ctest or not atest) and centtest:
             target = self._segment_polygon(image, frame,
                                            target,
@@ -553,7 +385,7 @@ class Locator(Loggable):
                 image.set_frame(csrc)
                 # print('found target={}'.format(targets))
                 ct = cthreshold * 0.75
-                target = self._test_targets(tsrc, targets, ct, mi, ma*1.25, use_centest=False)
+                target = self._test_targets(tsrc, targets, ct, mi, ma * 1.25, use_centest=False)
                 # print('filterd {}'.format(target))
                 # time.sleep(1)
                 if target:
