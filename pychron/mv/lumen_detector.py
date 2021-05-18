@@ -90,6 +90,7 @@ class LumenDetector(Locator):
             if targets:
                 self.debug('found targets={}'.format(len(targets)))
                 for t in targets:
+                    self.debug('t.area={}, marea={}'.format(t.area, marea*0.15))
                     if t.area > marea * 0.15:
                         if t.area > area:
                             area = t.area
@@ -144,8 +145,6 @@ class LumenDetector(Locator):
                 self.debug('no active targets')
         else:
             targets = self.find_targets(None, lum, dim, mask=mask_dim, search={'n': 2})
-            if targets:
-                self.debug('found targets={}'.format(len(targets)))
 
         src = gaussian(lum, blur) * pixel_depth
         # mask = self._mask(lum)

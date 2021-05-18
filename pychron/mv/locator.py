@@ -163,7 +163,7 @@ class Locator(Loggable):
         """
             use a segmentor to segment the image
         """
-        self.debug('use threshold caching={}'.format(use_threshold_caching))
+        # self.debug('use threshold caching={}'.format(use_threshold_caching))
 
         if preprocess:
             if not isinstance(preprocess, dict):
@@ -196,6 +196,7 @@ class Locator(Loggable):
             othreshold = sm - 32
 
         for step in (1, -1):
+
             if step == -1:
                 othreshold = sm + 32
 
@@ -206,10 +207,13 @@ class Locator(Loggable):
                     return
 
                 threshold = othreshold + (2 * step) * i
-                if inverted:
-                    # low = 255 - low
-                    # high = 255 - high
-                    threshold = 255 - threshold
+                # if inverted:
+                #     # low = 255 - low
+                #     # high = 255 - high
+                #     threshold = 255 - threshold
+
+                if threshold > 255 or threshold < 0:
+                    break
 
                 nsrc = seg.segment(src, threshold)
                 per = _binary_percent(nsrc)
@@ -241,7 +245,7 @@ class Locator(Loggable):
                         targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
 
                 et = time.time() - st
-                self.debug('targets={} et={}'.format(len(targets), et))
+                # self.debug('targets={} et={}'.format(len(targets), et))
                 if targets:
                     # remember this thresholding for the next time
                     if use_threshold_caching:
@@ -254,7 +258,6 @@ class Locator(Loggable):
                     else:
                         self.debug('stargets.b={}'.format(len(stargets)))
                         return stargets
-
 
         self.debug('stargets.a={}'.format(len(stargets)))
         return stargets

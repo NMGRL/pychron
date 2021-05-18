@@ -515,9 +515,9 @@ class PatternExecutor(Patternable):
             pattern.position_str = '{:0.5f},{:0.5f}'.format(px, py)
 
             # if there is less than 1 duration left then block is true
-            block = total_duration - (time.time() - st) < duration
-            self.debug('blocking ={}'.format(block))
-
+            # block = total_duration - (time.time() - st) < duration
+            block = True
+            self.debug('move to {}, {} blocking ={}'.format(px, py, block))
             try:
                 linear_move(px, py, source='dragonfly{}'.format(cnt), block=block, velocity=pattern.velocity,
                             use_calibration=False)

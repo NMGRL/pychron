@@ -419,7 +419,7 @@ class NewportMotionController(MotionController):
 
         def is_homing():
             for a in axis_objs:
-                m = self._moving(a.id, verbose=True)
+                m = self._moving(a.id, verbose=False)
                 if m:
                     self.update_axes()
                     break
@@ -840,6 +840,8 @@ class NewportMotionController(MotionController):
 
             self.multiple_axis_move([(self.axes['y'].id, kwargs['y']),
                                      (self.axes['x'].id, kwargs['x'])])
+
+        self.read_error()
 
         if block or start_timer:
             self.start_timer()
