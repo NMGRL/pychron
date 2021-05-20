@@ -19,7 +19,6 @@ import os
 
 from chaco.plot_label import PlotLabel
 from chaco.svg_graphics_context import SVGGraphicsContext
-from kiva.fonttools.font_manager import findfont, FontProperties
 from kiva.ps import PSGC
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
