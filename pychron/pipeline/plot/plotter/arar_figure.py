@@ -614,10 +614,9 @@ class BaseArArFigure(SelectionFigure):
 
         if display_n:
             total_n = self.analysis_group.total_n
-            n = 'n= {}/{}'.format(n, total_n)
-            # if total_n and n != total_n:
-            # else:
-            #     n = 'n= {}'.format(n)
+            n = 'n= {}'.format(n)
+            if total_n:
+                n = '{}/{}'.format(n, total_n)
         else:
             n = ''
 

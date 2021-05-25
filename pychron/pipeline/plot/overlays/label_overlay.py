@@ -83,10 +83,16 @@ class SpectrumLabelOverlay(AbstractOverlay):
     use_user_color = Bool
     user_color = Color
 
-    def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
-        labels = self._cached_labels
-        for label in labels:
-            label.overlay(other_component, gc)
+    def overlay(self, component, gc, view_bounds=None, mode="normal"):
+        if not self._cached_labels:
+            self._do_layout()
+
+        with gc:
+            gc.clip_to_rect(component.x, component.y, component.width, component.height)
+
+            labels = self._cached_labels
+            for label in labels:
+                label.overlay(component, gc)
 
     def _do_layout(self):
         if self._layout_needed or not self._cached_labels:
@@ -145,7 +151,12 @@ class SpectrumLabelOverlay(AbstractOverlay):
 
     @on_trait_change('component.+')
     def _handle_component_change(self, name, new):
-        if name in ('bounds', ):
+
+        if name in ('bounds', '_cache_valid'):
+            if name == '_cache_valid' and not new:
+                return
+
+            self._cached_labels = []
             self._layout_needed = True
             self.invalidate_and_redraw()
 
