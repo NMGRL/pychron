@@ -18,10 +18,13 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import os
+import platform
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.yaml import yload
 from pychron.paths import paths
+
+IS_WINDOWS = platform.system() == 'Windows'
 
 STARTUP_MESSAGE_POSITION = (100, 300)
 

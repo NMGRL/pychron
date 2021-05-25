@@ -66,7 +66,10 @@ def gitlog(repo, branch=None, args=None, path=None, limit=None, greps=None):
         cmd.extend(args)
 
     if greps:
-        cmd.append('--grep={}'.format(greps))
+        if isinstance(greps, str):
+            cmd.append('--grep={}'.format(greps))
+        else:
+            cmd.extend(greps)
 
     if path:
         cmd.append('--')
@@ -75,7 +78,6 @@ def gitlog(repo, branch=None, args=None, path=None, limit=None, greps=None):
         else:
             cmd.append(path)
 
-        # cmd.extend(['--', path])
     return repo.git.log(*cmd)
 
 

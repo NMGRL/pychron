@@ -31,19 +31,31 @@ class CommitSelector(HasTraits):
     repo = Any
     branches = List
     branch = Str
+    paths = List
+    greps = List
+
+    def __init__(self, repo, unks, *args, **kw):
+        super(CommitSelector, self).__init__(*args, **kw)
+        self.repo = repo
+        self.set_paths(unks)
+        self.load_branches()
+        self.load_commits()
+
+    def _branch_changed(self):
+        self.load_commits()
 
     def load_branches(self):
         self.branches = self.repo.get_branch_names()
         b = self.repo.get_active_branch()
         self.branch = b
 
-    def load_commits(self, unks):
-        paths = [a.make_path(p) for p in HISTORY_PATHS for a in unks]
-        greps = ['<{}>'.format(t) for t in HISTORY_TAGS]
-        greps = '\|'.join(greps)
-        greps = '^{}'.format(greps)
+    def set_paths(self, unks):
+        self.paths = [a.make_path(p) for a in unks for p in HISTORY_PATHS]
+        greps = ['--grep=^<{}>'.format(t) for t in HISTORY_TAGS]
+        self.greps = greps
 
-        cs = get_commits(self.repo.path, self.branch, paths, '', greps=greps)
+    def load_commits(self):
+        cs = get_commits(self.repo.path, self.branch, self.paths, '', greps=self.greps)
         self.commits = cs
 
     def traits_view(self):
@@ -69,11 +81,8 @@ class DVCHistoryNode(BaseDVCNode):
         state.selected_commits = {}
         for repo, unks in groupby_repo(unks):
             # cs = get_commits(repo, , None, '')()
-            cv = CommitSelector()
             repo = self.dvc.get_repository(repo)
-            cv.repo = repo
-            cv.load_branches()
-            cv.load_commits(unks)
+            cv = CommitSelector(repo, unks)
 
             info = cv.edit_traits(kind='livemodal')
             if not info.result:
