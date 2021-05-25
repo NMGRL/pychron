@@ -36,7 +36,7 @@ from pychron.experiment.utilities.runid import make_aliquot_step, make_step
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS, NULL_STR, ARAR_MAPPING, EXTRACTION_ATTRS, META_ATTRS, \
-    NO_BLANK_CORRECT, DATE_FORMAT
+    NO_BLANK_CORRECT, DATE_FORMAT, EXPONENTIAL
 
 
 class Blank:
@@ -510,7 +510,7 @@ class DVCAnalysis(Analysis):
         for det, value in self.temporary_ic_factors.items():
             v, e = nominal_value(value), std_dev(value)
             jd[det] = {'value': float(v), 'error': float(e), 'reviewed': True,
-                       'fit': 'exponential',
+                       'fit': EXPONENTIAL,
                        'standard_ratio': standard_ratio,
                        'source_correction': True,
                        'references': make_ref_list(refs)

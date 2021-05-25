@@ -95,8 +95,9 @@ VALID_INTEGRATED = 'Valid Integrated'
 PLATEAU_INTEGRATED = '{} Integrated'.format(PLATEAU)
 AUTO_LINEAR_PARABOLIC = 'Auto Linear/Parabolic'
 AUTO_N = 'Auto N'
+EXPONENTIAL = 'exponential'
 FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
-             'Average', 'Exponential', WEIGHTED_MEAN, 'Custom', AUTO_LINEAR_PARABOLIC]
+             'Average', EXPONENTIAL.capitalize(), WEIGHTED_MEAN, 'Custom', AUTO_LINEAR_PARABOLIC]
 
 FIT_ERROR_TYPES = [SD, SEM, MSEM, 'CI', 'MonteCarlo']
 SERIES_FIT_TYPES = [NULL_STR] + FIT_TYPES

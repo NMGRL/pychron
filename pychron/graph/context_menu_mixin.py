@@ -20,7 +20,7 @@ from __future__ import absolute_import
 from traits.api import HasTraits
 from traitsui.menu import Action, Menu as MenuManager
 
-from pychron.pychron_constants import PLUSMINUS
+from pychron.pychron_constants import PLUSMINUS, EXPONENTIAL
 
 
 # from pyface.action.group import Group
@@ -130,7 +130,8 @@ class RegressionContextMenuMixin(ContextMenuMixin):
                    ('parabolic', 'cm_parabolic'),
                    ('cubic', 'cm_cubic'),
                    ('quartic', 'cm_quartic'),
-                   ('exponential', 'cm_exponential'),
+                   (EXPONENTIAL, 'cm_exponential'),
+                   ('auto_linear_parabolic', 'cm_auto_linear_parabolic'),
                    (u'average {}SD'.format(PLUSMINUS), 'cm_average_std'),
                    (u'average {}SEM'.format(PLUSMINUS), 'cm_average_sem')]
 

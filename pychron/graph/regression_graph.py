@@ -33,6 +33,7 @@ from pychron.graph.tools.rect_selection_tool import RectSelectionTool, \
     RectSelectionOverlay
 from pychron.graph.tools.regression_inspector import RegressionInspectorTool, \
     RegressionInspectorOverlay, make_statistics, make_correlation_statistics
+from pychron.pychron_constants import AUTO_LINEAR_PARABOLIC, EXPONENTIAL
 
 
 class StatisticsTextBoxOverlay(TextBoxOverlay):
@@ -147,7 +148,11 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         self._update_graph()
 
     def cm_exponential(self):
-        self.set_fit('exponential', plotid=self.selected_plotid)
+        self.set_fit(EXPONENTIAL, plotid=self.selected_plotid)
+        self._update_graph()
+
+    def cm_auto_linear_parabolic(self):
+        self.set_fit(AUTO_LINEAR_PARABOLIC, plotid=self.selected_plotid)
         self._update_graph()
 
     def cm_average_std(self):
@@ -442,7 +447,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if line and hasattr(line, 'regressor'):
             r = line.regressor
 
-        if fit in [1, 2, 3, 4]:
+        if fit in [1, 2, 3, 4, AUTO_LINEAR_PARABOLIC.lower()]:
             r = self._poly_regress(scatter, r, fit)
         elif fit == 'exponential':
             r = self._exponential_regress(scatter, r, fit)
@@ -544,11 +549,16 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 r = PolynomialRegressor()
 
         self._set_regressor(scatter, r)
+        minpoints = 3
         r.trait_set(degree=fit)
-        r.set_truncate(scatter.truncate)
-        if r.ys.shape[0] < fit + 1:
+        if isinstance(fit, int):
+            minpoints = fit + 1
+
+        if r.ys.shape[0] < minpoints:
             return
 
+        r.determine_fit()
+        r.set_truncate(scatter.truncate)
         r.calculate()
 
         self._set_excluded(scatter, r)
