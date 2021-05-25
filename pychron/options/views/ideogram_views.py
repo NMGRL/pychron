@@ -194,7 +194,6 @@ class IdeogramSubOptions(SubOptions):
 
         cgrp = BorderVGroup(Item('show_correlation_ellipses'),
                             label='Correlation')
-
         return self._make_view(VGroup(xgrp, tgrp, rtgrp, cgrp))
 
 
@@ -220,7 +219,10 @@ class IdeogramAppearance(AppearanceSubOptions):
                                    self._get_yfont_group()),
                             label='Fonts')
 
-        g = VGroup(self._get_nominal_group(),
+        subgroup = BorderVGroup(Item('show_subgroup_indicators'), label='Subgroup')
+
+        g = VGroup(subgroup,
+                   self._get_nominal_group(),
                    self._get_layout_group(),
                    self._get_padding_group(),
                    fgrp)

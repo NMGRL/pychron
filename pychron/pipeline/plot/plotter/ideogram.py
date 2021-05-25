@@ -313,8 +313,8 @@ class Ideogram(BaseArArFigure):
 
             if po.show_labels:
                 self._add_point_labels(scatter, ans=items)
-
-            self._add_subgroup_overlay(scatter, items)
+            if self.options.show_subgroup_indicators:
+                self._add_subgroup_overlay(scatter, items)
 
             func = self._get_index_attr_label_func()
             self._add_scatter_inspector(scatter,
@@ -453,7 +453,8 @@ class Ideogram(BaseArArFigure):
             if po.show_labels:
                 self._add_point_labels(scatter, ans=ais)
 
-            self._add_subgroup_overlay(scatter, ais)
+            if self.options.show_subgroup_indicators:
+                self._add_subgroup_overlay(scatter, ais)
 
             # set tick generator
             gen = IntTickGenerator()

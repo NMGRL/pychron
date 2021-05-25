@@ -103,6 +103,7 @@ class IdeogramOptions(AgeOptions):
     show_results_table = Bool(False)
     show_ttest_table = Bool(False)
     show_rvalues = Bool(False)
+    show_subgroup_indicators = Bool(True)
 
     # correlation
     show_correlation_ellipses = Bool(False)

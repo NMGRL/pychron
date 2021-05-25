@@ -187,10 +187,12 @@ def build_requirements(cfg):
     pip_reqs = ['uncertainties',
                 'peakutils',
                 'qimage2ndarray']
-    pip_git_reqs = ['git+https://github.com/enthought/chaco.git#egg=chaco',
-                    'git+https://github.com/enthought/enable.git#egg=enable']
 
-    conda_reqs = ['numpy', 'statsmodels', 'scikit-learn', 'PyYAML', 'yaml', 'traits=5', 'traitsui=6', 'pyface=6',
+    # pip_git_reqs =  ['git+https://github.com/enthought/chaco.git#egg=chaco',
+    #                 'git+https://github.com/enthought/enable.git#egg=enable']
+    pip_git_reqs = []
+
+    conda_reqs = ['numpy', 'statsmodels', 'scikit-learn', 'PyYAML', 'yaml', 'traits', 'traitsui', 'pyface',
                   'envisage', 'sqlalchemy', 'Reportlab', 'lxml', 'xlrd', 'xlwt', 'xlsxwriter', 'requests', 'keyring',
                   'pillow', 'gitpython', 'cython', 'pytables', 'pyproj', 'pymysql', 'certifi', 'jinja2', 'swig=3',
                   cfg['qt_bindings']]
@@ -205,6 +207,12 @@ def build_requirements(cfg):
     cfg['pip_git_requirements'] = pip_git_reqs
     cfg['conda_requirements'] = conda_reqs
 
+    print('=========Conda Reqs==============')
+    print(' '.join(conda_reqs))
+    print('=================================')
+    print('=========PIP Reqs================')
+    print(' '.join(pip_reqs))
+    print('=================================')
 # config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray'
 # config['pip_git_requirements'] =
 #
