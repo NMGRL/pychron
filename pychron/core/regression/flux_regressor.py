@@ -91,7 +91,7 @@ class GridDataRegressor(InterpolationRegressor):
         pass
 
     def predict_grid(self, x, y):
-        return griddata(self.clean_xs, self.clean_ys, (x, y), method=self.method).T
+        return griddata(self.clean_xs, self.clean_ys, (x, y), method=self.method)
 
 
 class IDWRegressor(InterpolationRegressor):

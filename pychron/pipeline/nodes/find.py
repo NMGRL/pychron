@@ -134,7 +134,7 @@ class BaseFindFluxNode(FindNode):
                           mean_jerr=mean_j_err or 0,
                           mean_j_mswd=mean_j_mswd or 0,
                           model_kind=model_kind,
-                          x=x, y=y)
+                          x=x, y=y, r=r)
         return fp
 
 

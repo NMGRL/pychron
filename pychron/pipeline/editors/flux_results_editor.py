@@ -27,10 +27,11 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.core.stats import validate_mswd
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
-from pychron.pipeline.editors.flux_visualization_editor import BaseFluxVisualizationEditor
+from pychron.pipeline.editors.flux_visualization_editor import BaseFluxVisualizationEditor, HEADER_KEYS
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
 from pychron.processing.flux import mean_j
 from pychron.pychron_constants import LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
@@ -109,6 +110,7 @@ class FluxPosition(HasTraits):
     x = Float
     y = Float
     z = Float
+    r = Float
     theta = Float
     saved_j = Float
     saved_jerr = Float
@@ -117,6 +119,10 @@ class FluxPosition(HasTraits):
     mean_jerr = Float
     mean_j_mswd = Float
     mean_j_valid_mswd = Bool
+
+    min_j = Float
+    max_j = Float
+    variation_percent_j = Float
 
     model_kind = Str
 
@@ -181,11 +187,18 @@ class FluxPosition(HasTraits):
         if new:
             self.save = new
 
+    def to_row(self, keys=None):
+        if keys is None:
+            keys = HEADER_KEYS
+        return [str(getattr(self, attr)) for attr in keys]
+
 
 class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
     selected_monitors = List
+    selected_unknowns = List
     toggle_use_button = Button('Toggle Use')
     toggle_save_button = Button('Toggle Save')
+    toggle_save_unknowns_button = Button('Toggle Save')
     save_monitor_flux_csv_button = Button('Monitor Fluxes CSV')
     recalculate_button = Button('Calculate')
     suppress_metadata_change = Bool(False)
@@ -254,6 +267,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
                              analyses=ais,
                              lambda_k=lk,
                              x=x, y=y,
+                             r=r,
                              n=n)
 
             p.set_mean_j(self.plotter_options.use_weighted_fit)
@@ -353,6 +367,10 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
         self._suppress_predict = False
         self.predict_values()
 
+    def _toggle_save_unknowns_button_fired(self):
+        for p in self.selected_unknowns:
+            p.save = not p.save
+
     def _toggle_save_button_fired(self):
         for p in self.selected_monitors:
             p.save = not p.save
@@ -388,15 +406,18 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
                            width=70)]
 
         unk_editor = TableEditor(columns=unk_cols, sortable=False,
+                                 selected='selected_unknowns',
+                                 selection_mode='rows',
                                  reorderable=False)
 
         pgrp = VGroup(HGroup(UItem('toggle_use_button'),
                              UItem('toggle_save_button'),
                              UItem('save_monitor_flux_csv_button')),
-                      HGroup(UItem('monitor_positions', editor=MONITOR_EDITOR),
-                             show_border=True, label='Monitors'),
-                      HGroup(UItem('unknown_positions', editor=unk_editor),
-                             show_border=True, label='Unknowns'),
+                      BorderHGroup(UItem('monitor_positions', editor=MONITOR_EDITOR),
+                                   label='Monitors'),
+                      BorderVGroup(UItem('toggle_save_unknowns_button'),
+                                   UItem('unknown_positions', editor=unk_editor),
+                                   label='Unknowns'),
                       label='Tables')
 
         ggrp = UItem('graph', style='custom')
