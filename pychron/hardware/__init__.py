@@ -109,6 +109,20 @@ def get_float(default=None):
     return dec
 
 
+def get_boolean(default=False):
+    def dec(func):
+        def wrapper(*args, **kw):
+            t = func(*args, **kw)
+            try:
+                return bool(t)
+            except (TypeError, ValueError):
+                return default
+
+        return wrapper
+
+    return dec
+
+
 def get_blob(default=b''):
     def dec(func):
         def wrapper(*args, **kw):

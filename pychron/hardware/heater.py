@@ -18,7 +18,7 @@ from traitsui.api import View, Item, UItem, ButtonEditor, HGroup, VGroup
 
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.graph.stream_graph import StreamGraph
-from pychron.hardware import get_float
+from pychron.hardware import get_float, get_boolean
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.modbus import ModbusMixin
 
@@ -33,11 +33,24 @@ class HeaterMixin(HasTraits):
     use_pid = Bool
     graph = Instance(StreamGraph)
 
+    def initialize(self):
+        self.setpoint = self.read_setpoint()
+        self.readback = self.read_readback()
+        self.use_pid = self.read_use_pid()
+        self.onoff_state = self.read_onoff_state()
+        return True
+
     # heater interface
     def _setpoint_changed(self, new):
         self.set_sepoint(new)
 
-    def set_sepoint(self, v):
+    def set_setpoint(self, v):
+        raise NotImplementedError
+
+    def read_use_pid(self):
+        raise NotImplementedError
+
+    def read_onoff_state(self):
         raise NotImplementedError
 
     def read_setpoint(self):
@@ -109,15 +122,12 @@ class PLC2000Heater(CoreDevice, ModbusMixin, HeaterMixin):
 
         return True
 
-    def set_sepoint(self, v):
+    def set_setpoint(self, v):
         if self.setpoint_address is not None:
             self.debug('set setpoint addr={}, {}'.format(self.setpoint_address, v))
             self._write_int(self.setpoint_address, v)
         else:
             self.debug('setpoint_address not set')
-
-    def read_setpoint(self):
-        pass
 
     def set_active(self, state):
         if self.enable_address is not None:
@@ -141,4 +151,27 @@ class PLC2000Heater(CoreDevice, ModbusMixin, HeaterMixin):
             return v
         else:
             self.debug('readback address not set')
+
+    @get_boolean()
+    def read_use_pid(self):
+        if self.use_pid_address:
+            rr = self._read_coils([self.use_pid_address])
+            return rr.bits[0]
+        else:
+            self.debug('use_pid address not set')
+
+    @get_boolean()
+    def read_onoff_state(self):
+        if self.enable_address is not None:
+            rr = self._read_coils(self.enable_address)
+            return rr.bits[0]
+        else:
+            self.debug('enable address not set')
+
+    @get_float()
+    def read_setpoint(self):
+        if self.setpoint_address is not None:
+            return self._read_input_float(self.setpoint_address)
+        else:
+            self.debug('setpoint address not set')
 # ============= EOF =============================================
