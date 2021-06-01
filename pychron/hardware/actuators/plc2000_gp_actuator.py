@@ -20,10 +20,20 @@ from pychron.hardware.core.modbus import ModbusMixin
 
 class PLC2000GPActuator(GPActuator, ModbusMixin, ClientMixin):
     def _actuate(self, obj, action):
-        self._write_coil(int(obj.address), action.lower() == 'open')
+        addr = int(obj.address) - 1
+        state = action.lower() == 'open'
+        self.debug('actuate. write coil {} {}'.format(addr, state))
 
-    def get_channel_state(self, address, *args, **kw):
-        resp = self._read_coils(int(address))
+        self._write_coil(addr, state)
+        return True
+
+    def get_channel_state(self, obj, *args, **kw):
+        try:
+            address = obj.address
+        except (ValueError, AttributeError):
+            address = int(obj)
+
+        resp = self._read_coils(int(address)-1, 1)
         return bool(resp.bits[0])
 
 # ============= EOF =============================================
