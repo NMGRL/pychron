@@ -22,15 +22,12 @@ from traits.api import Bool, Enum, Directory, \
     Color, Range, Float, Int
 from traitsui.api import View, Item, VGroup, HGroup, Group, UItem
 
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
-from pychron.pychron_constants import SIZES, FUSIONS_DIODE, FUSIONS_CO2, FUSIONS_UV
+from pychron.pychron_constants import SIZES, FUSIONS_DIODE, FUSIONS_CO2, FUSIONS_UV, OSTECH_DIODE
 
 
 class LaserPreferences(BasePreferencesHelper):
-    pass
-
-
-class FusionsLaserPreferences(LaserPreferences):
     use_video = Bool(False)
     # video_output_mode = Enum('MPEG', 'Raw')
     # ffmpeg_path = File
@@ -66,6 +63,7 @@ class FusionsLaserPreferences(LaserPreferences):
     autocenter_search_step = Int
     autocenter_search_n = Int
     autocenter_search_width = Int
+    dimension_multiplier = Float(1)
 
     render_with_markup = Bool(False)
     crosshairs_offsetx = Float(0)
@@ -96,6 +94,9 @@ class FusionsLaserPreferences(LaserPreferences):
     use_calibrated_power = Bool(True)
     show_bounds_rect = Bool(True)
 
+
+class FusionsLaserPreferences(LaserPreferences):
+    pass
     # def _get_value(self, name, value):
     #     if 'color' in name:
     #         value = value.split('(')[1]
@@ -122,10 +123,15 @@ class FusionsUVPreferences(FusionsLaserPreferences):
     preferences_path = 'pychron.fusions.uv'
 
 
+class OsTechDiodePreferences(LaserPreferences):
+    name = OSTECH_DIODE
+    preferences_path = 'pychron.ostech.diode'
+
+
 # ===============================================================================
 # Panes
 # ===============================================================================
-class FusionsLaserPreferencesPane(PreferencesPane):
+class LaserPreferencesPane(PreferencesPane):
     def traits_view(self):
         grps = self.get_additional_groups()
         v = View(Group(*grps, layout='tabbed'))
@@ -158,6 +164,7 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                                 VGroup(
                                     VGroup(Item('autocenter_blur', label='Blur'),
                                            Item('autocenter_stretch_intensity', label='Stretch Intensity'),
+                                           Item('dimension_multiplier', label='Dimension Multiplier'),
                                            show_border=True,
                                            label='Preprocess'),
                                     VGroup(Item('autocenter_search_step', label='Step'),
@@ -183,17 +190,39 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                               # Item('video_output_mode', label='Output Mode'),
                               # Item('ffmpeg_path', label='FFmpeg Location'),
                               Item('render_with_markup', label='Render Snapshot with markup'),
-                              Item('burst_delay', label='Burst Delay (ms)', tooltip='delay between snapshots in burst mode'),
+                              Item('burst_delay', label='Burst Delay (ms)',
+                                   tooltip='delay between snapshots in burst mode'),
                               recgrp,
                               archivergrp,
                               media_storage_grp,
                               enabled_when='use_video'),
                           label='Video')
 
+        crosshairs_grp = BorderVGroup(HGroup(Item('show_laser_position', label='Display Current Position'),
+                                             Item('crosshairs_kind', label='Crosshairs',
+                                                  enabled_when='show_laser_position')),
+                                      Item('crosshairs_radius',
+                                           visible_when='crosshairs_kind=="UserRadius"'),
+                                      Item('crosshairs_color', enabled_when='show_laser_position'),
+                                      Item('crosshairs_line_width', enabled_when='show_laser_position'),
+                                      HGroup(Item('crosshairs_offsetx', label='Offset'),
+                                             UItem('crosshairs_offsety')),
+                                      UItem('crosshairs_offset_color'),
+                                      label='Crosshairs')
+        aux_crosshairs_grp = BorderVGroup(HGroup(Item('aux_crosshairs_kind', label='Crosshairs',
+                                                      enabled_when='aux_show_laser_position')),
+                                          Item('aux_crosshairs_radius',
+                                               visible_when='aux_crosshairs_kind=="UserRadius"'),
+                                          Item('aux_crosshairs_color', enabled_when='aux_show_laser_position'),
+                                          Item('aux_crosshairs_line_width', enabled_when='aux_show_laser_position'),
+                                          HGroup(Item('aux_crosshairs_offsetx', label='Offset'),
+                                                 UItem('aux_crosshairs_offsety')),
+                                          UItem('aux_crosshairs_offset_color'),
+                                          label='Aux. Crosshairs')
+
         canvasgrp = VGroup(Item('show_bounds_rect', label='Display Bounds Rectangle'),
                            Item('show_map', label='Display Map'),
                            Item('show_grids', label='Display Grids'),
-                           Item('show_laser_position', label='Display Current Position'),
                            Item('show_desired_position', label='Display Desired Position'),
                            Item('show_hole_label', label='Display Hole Label'),
 
@@ -201,16 +230,8 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                            Item('hole_label_size'),
 
                            UItem('desired_position_color', enabled_when='show_desired_position'),
-                           Item('crosshairs_kind', label='Crosshairs',
-                                enabled_when='show_laser_position'),
-                           Item('crosshairs_radius',
-                                visible_when='crosshairs_kind=="UserRadius"'),
-                           Item('crosshairs_color', enabled_when='show_laser_position'),
-                           Item('crosshairs_line_width', enabled_when='show_laser_position'),
-                           HGroup(
-                               Item('crosshairs_offsetx', label='Offset'),
-                               UItem('crosshairs_offsety')),
-                           UItem('crosshairs_offset_color'),
+                           crosshairs_grp,
+                           aux_crosshairs_grp,
                            Item('scaling'),
                            label='Canvas')
 
@@ -220,6 +241,10 @@ class FusionsLaserPreferencesPane(PreferencesPane):
                          label='Power')
         return [canvasgrp, videogrp, autocenter_grp,
                 patgrp, powergrp]
+
+
+class FusionsLaserPreferencesPane(PreferencesPane):
+    pass
 
 
 class FusionsDiodePreferencesPane(FusionsLaserPreferencesPane):
@@ -236,4 +261,8 @@ class FusionsUVPreferencesPane(FusionsLaserPreferencesPane):
     category = FUSIONS_UV
     model_factory = FusionsUVPreferences
 
+
+class OsTechDiodePreferencesPane(LaserPreferencesPane):
+    category = OSTECH_DIODE
+    model_factory = OsTechDiodePreferences
 # ============= EOF =============================================

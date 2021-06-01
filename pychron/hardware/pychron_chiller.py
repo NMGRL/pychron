@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.has_traits import provides
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -28,7 +27,10 @@ from pychron.tx.registry import registered_function
 
 @provides(IChiller)
 class PychronChiller(CoreDevice):
-
+    """
+    :hardware
+    This is the main doc
+    """
     def get(self):
         return self.get_coolant_out_temperature()
 

@@ -94,6 +94,7 @@ class ExperimentPreferences(BasePreferencesHelper):
     n_executed_display = PositiveInteger
     failed_intensity_count_threshold = PositiveInteger(3)
     ratio_change_detection_enabled = Bool(False)
+    use_preceding_blank = Bool(False)
     plot_panel_update_period = PositiveInteger(1)
     execute_open_queues = Bool
 
@@ -172,6 +173,8 @@ class ExperimentPreferencesPane(PreferencesPane):
                              Item('n_executed_display',
                                   label='N. Executed',
                                   tooltip='Number of analyses to display in the "Executed" table'),
+                             Item('use_preceding_blank',
+                                  label='Use Preceding Blank'),
                              label='General')
         editor_grp = VGroup(Item('automated_runs_editable',
                                  label='Direct editing',

@@ -15,8 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import Instance, Bool, Str
+from traits.api import Instance, Bool, Str, Button
 # import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 from threading import Event, Thread
@@ -28,6 +27,7 @@ from pychron.core.pid import PID
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.monitors.laser_monitor import LaserMonitor
 from pychron.lasers.laser_managers.pulse import Pulse
+from pychron.mv.degas.degasser import Degasser
 from pychron.paths import paths
 from pychron.lasers.laser_managers.laser_script_executor import LaserScriptExecutor
 from pychron.lasers.laser_managers.base_lase_manager import BaseLaserManager
@@ -54,6 +54,10 @@ class LaserManager(BaseLaserManager):
     pulse = Instance(Pulse)
 
     auxilary_graph = Instance(Component)
+    degasser = Instance(Degasser)
+
+    degas_test_button = Button('test')
+    _test_state = False
 
     # ===============================================================================
     # public interface
@@ -127,12 +131,12 @@ class LaserManager(BaseLaserManager):
 
         return enabled
 
-    def set_laser_output(self, *args, **kw):
-        """
-            by default set_laser_output simply uses set_laser_power
-            but subclasses can override for different units
-        """
-        self.set_laser_power(*args, **kw)
+    # def set_laser_output(self, *args, **kw):
+    #     """
+    #         by default set_laser_output simply uses set_laser_power
+    #         but subclasses can override for different units
+    #     """
+    #     self.set_laser_power(*args, **kw)
 
     def set_laser_power(self, power, verbose=True, units=None, *args, **kw):
         """
@@ -184,7 +188,7 @@ class LaserManager(BaseLaserManager):
         """
         self.warning('Emergency shutoff')
         self.disable_laser()
-
+        self.emergency_shutoff_hook()
         if reason is not None:
             self.warning('EMERGENCY SHUTOFF reason: {}'.format(reason))
 
@@ -194,6 +198,9 @@ class LaserManager(BaseLaserManager):
             self.error_code = LaserMonitorErrorCode(reason)
 
             invoke_in_main_thread(self.warning_dialog, reason, title='AUTOMATIC LASER SHUTOFF')
+
+    def emergency_shutoff_hook(self):
+        pass
 
     def start_video_recording(self, *args, **kw):
         pass
@@ -274,6 +281,13 @@ class LaserManager(BaseLaserManager):
     #        if isinstance(new, tuple):
     #            self.status_text = 'x = {:n} ({:0.4f} mm), y = {:n} ({:0.4f} mm)'.format(*new)
 
+    def _degas_test_button_fired(self):
+        if self._test_state:
+            self.disable_laser()
+        else:
+            self.luminosity_degas_test()
+        self._test_state = not self._test_state
+
     def _enable_fired(self):
         """
         """
@@ -298,13 +312,22 @@ class LaserManager(BaseLaserManager):
     #         self.pulse.dump()
 
     def _enable_hook(self, **kw):
-        return True
+        resp = True
+        if self.laser_controller:
+            resp = self.laser_controller.enable(**kw)
+            if self.laser_controller.simulation:
+                resp = True
+        return resp
 
     def _disable_hook(self):
-        pass
+        if self.laser_controller:
+            resp = self.laser_controller.disable()
+            if self.laser_controller.simulation:
+                resp = True
+            return resp
 
-    def _set_laser_power_hook(self, *args, **kw):
-        pass
+    #def _set_laser_power_hook(self, *args, **kw):
+    #    pass
 
     def set_laser_power_hook(self, *args, **kw):
         self._set_laser_power_hook(*args, **kw)
@@ -354,6 +377,10 @@ class LaserManager(BaseLaserManager):
         return LaserScriptExecutor(laser_manager=self,
                                    name=self.name)
 
+    def _degasser_default(self):
+        d = Degasser(laser_manager=self)
+        d.load()
+        return d
 
 # ===============================================================================
 # zobed

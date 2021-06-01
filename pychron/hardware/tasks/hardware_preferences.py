@@ -59,6 +59,7 @@ class HardwarePreferences(BasePreferencesHelper):
         ap = (('ValveProtocol', 'pychron.tx.factories.ValveFactory'),
               ('FusionsCO2Protocol', 'pychron.tx.factories.FusionsCO2Factory'),
               ('FusionsDiodeProtocol', 'pychron.tx.factories.FusionsDiodeFactory'),
+              ('OsTechDiodeProtocol', 'pychron.tx.factories.OsTechDiodeFactory'),
               ('FusionsUVProtocol', 'pychron.tx.factories.FusionsUVFactory'),
               ('FurnaceProtocol', 'pychron.tx.factories.FurnaceFactory'))
         self._protocols = [Protocol(name=n, factory=f,

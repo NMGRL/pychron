@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import math
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.primitives import Animation
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
 
+class IonPump(RoundedRectangle):
+    pass
 
 class Turbo(RoundedRectangle, Animation):
     animate = False
@@ -57,6 +58,9 @@ class Turbo(RoundedRectangle, Animation):
         self.increment_cnt(15)
         # if self.refresh_required():
 
+
+class IonPump(RoundedRectangle):
+    pass
 
 # ============= EOF =============================================
 

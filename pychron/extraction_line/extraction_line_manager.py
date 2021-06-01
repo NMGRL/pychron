@@ -65,6 +65,7 @@ class ExtractionLineManager(Manager, Consoleable):
     cryo_manager = Any
     multiplexer_manager = Any
     manometer_manager = Any
+    pump_manager = Any
     heater_manager = Any
 
     network = Instance(ExtractionLineGraph)
@@ -241,7 +242,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def test_valve_communication(self):
         self.info('test valve communication')
-        print('asdf', self.switch_manager, hasattr(self.switch_manager, 'get_state_checksum'))
         ret, err = True, ''
         if self.switch_manager:
             if hasattr(self.switch_manager, 'get_state_checksum'):
@@ -300,8 +300,8 @@ class ExtractionLineManager(Manager, Consoleable):
             self.canvas_editor.load(c.canvas2D, self.canvas_path)
             # c.load_canvas_file(c.config_name)
 
+            c.load_canvas_file()
             if self.switch_manager:
-                c.load_canvas_file(self.canvas_path, self.canvas_config_path, self.switch_manager.valves_path)
 
                 for k, v in self.switch_manager.switches.items():
                     vc = c.get_object(k)
@@ -513,10 +513,10 @@ class ExtractionLineManager(Manager, Consoleable):
             self.cryo_manager.species = v
 
     # =========== Cryo ==============================================================
-    def set_cryo(self, v, v2=None):
+    def set_cryo(self, v, v2=None, **kw):
         self.debug('setting cryo to {}, {}'.format(v, v2))
         if self.cryo_manager:
-            return self.cryo_manager.set_setpoint(v, v2)
+            return self.cryo_manager.set_setpoint(v, v2, **kw)
         else:
             self.warning('cryo manager not available')
             return 0, 0
@@ -571,8 +571,19 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def _update(self):
         if self.use_hardware_update and self._active:
-            self.switch_manager.load_hardware_states()
-            self.switch_manager.load_valve_owners()
+            rc = self.switch_manager.load_hardware_states(refresh_canvas=False)
+            rc = self.switch_manager.load_valve_owners(refresh_canvas=False) or rc
+
+            if self.canvas.canvas2D.scene.widgets:
+                # update registered widgets
+                for widget in self.canvas.canvas2D.scene.widgets.values():
+                    try:
+                        rc = widget.update() or rc
+                    except BaseException as e:
+                        self.critical('failed updating widget {}, {}'.format(widget, e))
+            if rc:
+                self.refresh_canvas()
+
             do_after(self.hardware_update_period * 1000, self._update)
 
     def _deactivate_hook(self):
@@ -658,22 +669,22 @@ class ExtractionLineManager(Manager, Consoleable):
             if result:
                 if all(result):
                     valve = vm.get_switch_by_name(name)
+                    if valve:
+                        description = valve.description
+                        self._log_spec_event(name, action)
 
-                    description = valve.description
-                    self._log_spec_event(name, action)
+                        self.info('{:<6s} {} ({})'.format(action.upper(), valve.name, description),
+                                  color='red' if action == 'close' else 'green')
 
-                    self.info('{:<6s} {} ({})'.format(action.upper(), valve.name, description),
-                              color='red' if action == 'close' else 'green')
-
-                    vm.actuate_children(name, action, mode)
-                    ld = self.link_valve_actuation_dict
-                    if ld:
-                        try:
-                            func = ld[name]
-                            func(name, action)
-                        except KeyError:
-                            self.debug('name="{}" not in '
-                                       'link_valve_actuation_dict. keys={}'.format(name, ','.join(list(ld.keys()))))
+                        vm.actuate_children(name, action, mode)
+                        ld = self.link_valve_actuation_dict
+                        if ld:
+                            try:
+                                func = ld[name]
+                                func(name, action)
+                            except KeyError:
+                                self.debug('name="{}" not in '
+                                           'link_valve_actuation_dict. keys={}'.format(name, ','.join(list(ld.keys()))))
 
             return result
 
@@ -762,11 +773,9 @@ class ExtractionLineManager(Manager, Consoleable):
             if class_factory is None:
                 package = 'pychron.extraction_line.{}'.format(manager)
                 class_factory = self.get_manager_factory(package, klass)
-
             if class_factory:
                 m = class_factory(**params)
                 self.add_trait(manager, m)
-
                 return m
             else:
                 self.debug('could not create manager {}, {},{},{}'.format(klass, manager, params, kw))
@@ -792,7 +801,7 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.use_hardware_update:
             do_after(1000, self._update)
 
-    @on_trait_change('switch_manager:pipette_trackers:counts')
+    # @on_trait_change('switch_manager:pipette_trackers:counts')
     def _update_pipette_counts(self, obj, name, old, new):
         self._set_pipette_counts(obj.name, new)
 
@@ -855,20 +864,8 @@ class ExtractionLineManager(Manager, Consoleable):
             self.console_display.add_text(msg, color=color)
 
     # ===============================================================================
-    # defaults
+    # factories
     # ===============================================================================
-    # def _manometer_manager_default(self):
-    #     from pychron.extraction_line.manometer_manager import ManometerManager
-    #     return ManometerManager(application=self.application)
-    #
-    # def _cryo_manager_default(self):
-    #     from pychron.extraction_line.cryo_manager import CryoManager
-    #     return CryoManager(application=self.application)
-    #
-    # def _gauge_manager_default(self):
-    #     from pychron.extraction_line.gauge_manager import GaugeManager
-    #     return GaugeManager(application=self.application)
-
     def _switch_manager_factory(self):
         klass = self._get_switch_manager_klass()
         vm = klass(application=self.application)
@@ -877,7 +874,7 @@ class ExtractionLineManager(Manager, Consoleable):
         vm.on_trait_change(self._handle_owned_state, 'refresh_owned_state')
         vm.on_trait_change(self._handle_refresh_canvas, 'refresh_canvas_needed')
         vm.on_trait_change(self._handle_console_message, 'console_message')
-
+        vm.on_trait_change(self._update_pipette_counts, 'pipette_trackers:counts')
         bind_preference(vm, 'valves_path', 'pychron.extraction_line.valves_path')
 
         return vm

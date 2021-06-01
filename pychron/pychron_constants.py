@@ -47,13 +47,6 @@ TTF_FONTS = ['Andale Mono', 'Arial', 'Arial Black',
 FONTS = TTF_FONTS
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
-try:
-    from kiva.fonttools.font_manager import fontManager
-
-    fontManager.defaultFamily = {'ttf': 'Arial', 'afm': 'Arial'}
-except ImportError:
-    pass
-
 PLUSMINUS = '\N{Plus-minus sign}'
 SIGMA = '\N{Greek Small Letter Sigma}'
 LAMBDA = '\u03BB'
@@ -97,9 +90,10 @@ INTEGRATED = 'Total Integrated'
 DEFAULT_INTEGRATED = '{} else Valid Integrated'.format(PLATEAU)
 VALID_INTEGRATED = 'Valid Integrated'
 PLATEAU_INTEGRATED = '{} Integrated'.format(PLATEAU)
-
+AUTO_LINEAR_PARABOLIC = 'Auto Linear/Parabolic'
+AUTO_N = 'Auto N'
 FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
-             'Average', 'Exponential', WEIGHTED_MEAN, 'Custom']
+             'Average', 'Exponential', WEIGHTED_MEAN, 'Custom', AUTO_LINEAR_PARABOLIC]
 
 FIT_ERROR_TYPES = [SD, SEM, MSEM, 'CI', 'MonteCarlo']
 SERIES_FIT_TYPES = [NULL_STR] + FIT_TYPES
@@ -186,8 +180,12 @@ NULL_EXTRACT_DEVICES = [EXTRACT_DEVICE, LINE_STR, NO_EXTRACT_DEVICE, None, '']
 CRYO = 'Cryo'
 FUSIONS_UV = 'Fusions UV'
 FUSIONS_DIODE = 'Fusions Diode'
+OSTECH_DIODE = 'OsTech Diode'
 FUSIONS_CO2 = 'Fusions CO2'
+CHROMIUM_CO2 = 'Chromium CO2'
+ABLATION_CO2 = 'Ablation CO2'
 FUSIONS = [FUSIONS_CO2, FUSIONS_DIODE, FUSIONS_UV]
+LASER_PLUGINS = [a.replace(' ', '') for a in (FUSIONS_CO2, FUSIONS_DIODE, CHROMIUM_CO2, ABLATION_CO2, OSTECH_DIODE)]
 
 NO_BLANK_CORRECT = (BLANK, DETECTOR_IC, BACKGROUND)
 
@@ -250,8 +248,10 @@ QTEGRA_INTEGRATION_TIMES = [0.065536, 0.131072, 0.262144, 0.524288,
 
 QTEGRA_DEFAULT_INTEGRATION_TIME = 1.048576
 ISOTOPX_INTEGRATION_TIMES = [1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 20.0, 100.0]
+QUADERA_INTEGRATION_TIMES = [1.0,]
 ISOTOPX_DEFAULT_INTEGRATION_TIME = 1
-
+ATONA = 'ATONA'
+QUADERA_DEFAULT_INTEGRATION_TIME = 1
 DEFAULT_INTEGRATION_TIME = 1
 
 K_DECAY_CONSTANTS = {'Min et al., 2000': (5.80e-11, 0.099e-10, 4.883e-10, 0.014e-10),
@@ -274,7 +274,12 @@ BRACKETING = 'Bracketing'
 NN = 'Nearest Neighbors'
 PLANE = 'Plane'
 BOWL = 'Bowl'
-FLUX_MODEL_KINDS = PLANE, BOWL, WEIGHTED_MEAN, MATCHING, NN, BRACKETING, LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
+BSPLINE = 'BSpline'
+RBF = 'RBF'
+GRIDDATA = 'GridData'
+IDW = 'IDW'
+FLUX_MODEL_KINDS = PLANE, BOWL, WEIGHTED_MEAN, MATCHING, NN, BRACKETING, LEAST_SQUARES_1D, \
+                   WEIGHTED_MEAN_1D
 
 if paths.setup_dir:
     flux_constants = os.path.join(paths.setup_dir, 'flux_constants.yaml')

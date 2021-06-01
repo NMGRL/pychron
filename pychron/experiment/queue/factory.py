@@ -69,7 +69,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
     note = Str
     default_lighting = CInt(0)
 
-    load_name = Str
+    load_name = Str(enter_set=True, auto_set=False)
 
     select_existing_load_name_button = Button
 

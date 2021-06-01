@@ -71,6 +71,7 @@ HW_PACKAGE_MAP = {
     'NMGRLMagnetDumper': 'pychron.furnace.magnet_dumper',
     'LamontFurnaceControl': hardware_pkg('labjack.ldeo_furnace'),
 
+    'Model330TemperatureController': hardware_pkg('lakeshore.model330'),
     'Model335TemperatureController': hardware_pkg('lakeshore.model335'),
     'Model336TemperatureController': hardware_pkg('lakeshore.model336'),
     'MKSSRG': gauge_pkg('mks.srg'),
@@ -78,6 +79,11 @@ HW_PACKAGE_MAP = {
     'GenericDevice': hardware_pkg('generic_device'),
     'PLC2000Heater': hardware_pkg('heater'),
     'PLC2000GaugeController': gauge_pkg('plc2000.plc2000_gauge_controller')
+    'T4Actuator': hardware_pkg('actuators.t4_actuator'),
+    'U3Actuator': hardware_pkg('actuators.u3_actuator'),
+    'ProXRActuator': hardware_pkg('actuators.proxr_actuator'),
+    'U3GaugeController': hardware_pkg('labjack.u3_gauge_controller'),
+    'SPCIonPumpController': hardware_pkg('ionpump.spc_ion_pump_controller'),
 }
 
 

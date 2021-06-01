@@ -22,12 +22,13 @@ from datetime import datetime
 from traits.api import List
 
 from pychron.hardware.isotopx_spectrometer_controller import NGXController
-from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR
+from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR, ATONA
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
 from pychron.spectrometer.isotopx import SOURCE_CONTROL_PARAMETERS, IsotopxMixin
 from pychron.spectrometer.isotopx.detector.ngx import NGXDetector
 from pychron.spectrometer.isotopx.magnet.ngx import NGXMagnet
 from pychron.spectrometer.isotopx.source.ngx import NGXSource
+from pychron.core.codetools.inspection import caller
 
 
 class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
@@ -47,6 +48,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     _read_enabled = True
     use_deflection_correction = False
     use_hv_correction = False
+    _triggered = False
 
     def _microcontroller_default(self):
         service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
@@ -84,7 +86,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
     def _send_configuration(self, **kw):
         pass
-
+    
+    def _check_intensity_no_change(self, signals):
+        return 
+    
     def get_update_period(self, it=None, is_scan=False):
         """
         acquisition period is always set to 1s so update period always needs to be <1s
@@ -96,7 +101,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         return 0.95
         # return self.integration_time * 0.95
 
-    def trigger_acq(self, verbose=False):
+    def trigger_acq(self, verbose=True):
         # self.debug('trigger acquie {}'.format(self.microcontroller.lock))
         # locking the microcontroller not necessary and detrimental when doing long integration times
         # other commands can be executed when waiting 10-20 sec integration period.
@@ -109,45 +114,58 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         # while self.microcontroller.lock.locked():
         #    time.sleep(0.25)
 
-        self.ask('StopAcq', verbose=verbose)
-        # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
-        return self.ask('StartAcq {},{}'.format(int(self.integration_time), self.rcs_id))
-
+        if not self.microcontroller.triggered:
+            self.ask('StopAcq', verbose=verbose)
+            self.microcontroller.triggered = True
+            # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
+            return self.ask('StartAcq {},{}'.format(int(self.integration_time), self.rcs_id))
+        return True
+    
     def readline(self, verbose=False):
         if verbose:
             self.debug('readline')
         st = time.time()
         ds = ''
         while 1:
-            if time.time() - st > (1.25 * self.integration_time):
+            if time.time() - st > 3: #(1.25 * self.integration_time):
                 if verbose:
-                    self.debug('readline timeout')
+                    self.debug('readline timeout. raw={}'.format(ds))
                 return
 
-            if not self._read_enabled:
+            if not self._read_enabled or self.microcontroller.canceled:
+                self.microcontroller.canceled=False
                 self.debug('readline canceled')
                 return
 
             try:
-                ds += self.read(16)
+                ds += self.read(1)
             except BaseException:
-                self.debug_exception()
-                self.debug('data left: {}'.format(ds))
-
-            if ds.endswith('\r\n'):
-                return ds.strip()
+                if not self.microcontroller.canceled:
+                    self.debug_exception()
+                    self.debug(f'data left: {ds}')
+                    
+            if '#\r\n' in ds:
+                
+                ds = ds.split('#\r\n')[0]
+                return ds
 
     def cancel(self):
         self.debug('canceling')
         self._read_enabled = False
-
+    
     def read_intensities(self, timeout=60, trigger=False, target='ACQ.B', verbose=False):
+        #self.microcontroller.lock.acquire()
+        #verbose=True
         self._read_enabled = True
+
+        verbose = True
+
         if verbose:
-            self.debug('read intensities')
+            self.debug('read intensities trigger={} triggered={}'.format(trigger, self.microcontroller.triggered))
         resp = True
         if trigger:
             resp = self.trigger_acq()
+            #self.microcontroller.lock.release()
             if resp is not None:
                 # if verbose:
                 #     self.debug(f'waiting {self.integration_time * 0.95} before trying to get data')
@@ -159,41 +177,62 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         keys = []
         signals = []
         collection_time = None
-
-        # self.microcontroller.lock.acquire()
+        inc = False
         # self.debug(f'acquired mcir lock {self.microcontroller.lock}')
-        target = '#EVENT:{},{}'.format(target, self.rcs_id)
+        targetb = '#EVENT:ACQ.B,{}'.format(self.rcs_id)
+        targeta = '#EVENT:ACQ,{}'.format(self.rcs_id)
         if resp is not None:
             keys = self.detector_names[::-1]
-            while 1:
-                line = self.readline()
+            while self._read_enabled:
+                with self.microcontroller.lock:
+                    line = self.readline(verbose=True)
+                
+                if verbose:
+                    self.debug('raw: {}'.format(line))
+                
                 if line is None:
                     break
 
-                if verbose:
-                    self.debug('raw: {}'.format(line))
-                if line and line.startswith(target):
-                    args = line[:-1].split(',')
-                    ct = datetime.strptime(args[4], '%H:%M:%S.%f')
-
-                    collection_time = datetime.now()
-
-                    # copy to collection time
-                    collection_time.replace(hour=ct.hour, minute=ct.minute, second=ct.second,
-                                            microsecond=ct.microsecond)
+                if line and (line.startswith(targeta) or line.startswith(targetb)):
                     try:
-                        signals = [float(i) for i in args[5:]]
-                    except ValueError as e:
-                        self.warning('Failed getting data. error={}'.format(e))
+                        args = line.split(',')
 
-                    if verbose:
-                        self.debug('line: {}'.format(line[:15]))
-                    break
+                        ct = datetime.strptime(args[4], '%H:%M:%S.%f')
 
-        # self.microcontroller.lock.release()
+                        collection_time = datetime.now()
+
+                        # copy to collection time
+                        collection_time.replace(hour=ct.hour, minute=ct.minute, second=ct.second,
+                                                microsecond=ct.microsecond)
+                        signals = [float(i.strip()) for i in args[5:]]
+
+                        if line.startswith(targeta):
+                            nsignals, keys = [], []
+                            for i, di in enumerate(self.detectors[::-1]):
+                                if di.kind == 'CDD':
+                                    nsignals.append(signals[i])
+                                    keys.append(di.name)
+                            signals = nsignals
+                            break
+
+                        elif line.startswith(targetb):
+                            self.microcontroller.triggered = False
+                            inc = True
+
+                            break
+                    except BaseException as e:
+                        self.debug('read intensities errror={}'.format(e))
+
+        #self.microcontroller.lock.release()
         if len(signals) != len(keys):
             keys, signals = [], []
-        return keys, signals, collection_time
+
+        if verbose:
+            self.debug('collection time: {}'.format(collection_time))
+            self.debug('keys: {}'.format(keys))
+            self.debug('signals: {}'.format(signals))
+
+        return keys, signals, collection_time, inc
 
     def read_integration_time(self):
         return self.integration_time
@@ -206,7 +245,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         :return: float, integration time
         """
         self.debug('acquisition period set to 1 second.  integration time set to {}'.format(it))
+        self.ask('StopAcq')
         self.ask('SetAcqPeriod 1000')
+        self._read_enabled=False
+        self.microcontroller.triggered=False
         self.integration_time = it
 
         # if self.integration_time != it or force:

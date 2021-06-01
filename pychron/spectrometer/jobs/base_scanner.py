@@ -108,11 +108,11 @@ class BaseScanner(PersistenceLoggable):
                 break
 
             self._do_step(magnet, si)
-            time.sleep(period)
+            time.sleep(max(0, period))
             if i == 0:
                 time.sleep(3)
-
-            ks, ss, t = spec.get_intensities()
+            
+            ks, ss, t, inc = spec.get_intensities(integrated_intensity=True)
 
             refsig = float(refdet.intensity)
             refk = '{}y{}'.format(refdet, self.plotid)

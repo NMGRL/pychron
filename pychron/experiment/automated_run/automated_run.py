@@ -52,6 +52,9 @@ from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR, NO_BLANK_CORRECT, EXTRACTION, MEASUREMENT, EM_SCRIPT_KEYS, SCRIPT_NAMES, \
     POST_MEASUREMENT, POST_EQUILIBRATION
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
+from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
+from pychron.spectrometer.pfeiffer.manager.quadera import QuaderaSpectrometerManager
+from pychron.spectrometer.thermo.manager.base import ThermoSpectrometerManager
 
 DEBUG = False
 
@@ -232,6 +235,9 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_measure(self):
+        return self.spectrometer_manager.measure()
+
     def py_get_intensity(self, detector):
         if self._intensities:
             try:
@@ -476,10 +482,6 @@ class AutomatedRun(Loggable):
                                check_conditionals, self.baseline_color)
 
         if self.plot_panel:
-            bs = dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
-                       self.isotope_group.values()])
-            # self.set_previous_baselines(bs)
-            self.executor_event = {'kind': 'baselines', 'baselines': bs}
             self.plot_panel.is_baseline = False
 
         self.multi_collector.is_baseline = False
@@ -777,10 +779,10 @@ class AutomatedRun(Loggable):
         if self.peak_center:
             self.debug('cancel peak center')
             self.peak_center.cancel()
-            
+
         if self.spectrometer_manager:
             self.spectrometer_manager.spectrometer.cancel()
-            
+
         self.do_post_termination(do_post_equilibration=do_post_equilibration)
 
         self.finish()
@@ -1025,8 +1027,13 @@ class AutomatedRun(Loggable):
             if env:
                 set_environmentals(self.spec, env)
 
+            tag = 'ok'
+            if self.spec.state == 'canceled':
+                tag = 'canceled'
+
             self._update_persister_spec(active_detectors=self._active_detectors,
                                         conditionals=[c for cond in conds for c in cond],
+                                        tag=tag,
                                         tripped_conditional=self.tripped_conditional, **env)
 
             # save to database
@@ -1357,6 +1364,12 @@ anaylsis_type={}
 '''.format(self.runid, self.persister.rundate, self.persister.runtime,
            self.spec.analysis_type,
            signal_string, age_string)
+
+    def get_baselines(self):
+        if self.isotope_group:
+            return {iso.name: (iso.detector, iso.baseline.uvalue) for iso in self.isotope_group.values()}
+            # return dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
+            #              self.isotope_group.values()])
 
     def get_baseline_corrected_signals(self):
         if self.isotope_group:
@@ -1788,14 +1801,13 @@ anaylsis_type={}
 
     def _load_previous(self):
         if not self.spec.analysis_type.startswith('blank') and not self.spec.analysis_type.startswith('background'):
-            pid, blanks, runid = self.previous_blanks
+            runid, blanks = self.previous_blanks
 
             self.debug('setting previous blanks')
             for iso, v in blanks.items():
                 self.isotope_group.set_blank(iso, v[0], v[1])
 
-            self._update_persister_spec(previous_blank_id=pid,
-                                        previous_blanks=blanks,
+            self._update_persister_spec(previous_blanks=blanks,
                                         previous_blank_runid=runid)
 
         self.isotope_group.clear_baselines()
@@ -2107,7 +2119,7 @@ anaylsis_type={}
         self._intensities = {}
         while 1:
             try:
-                k, s, t = spec.get_intensities(tagged=True, trigger=False)
+                k, s, t, inc = spec.get_intensities(tagged=True, trigger=False)
             except NoIntensityChange:
                 self.warning('Canceling Run. Intensity from mass spectrometer not changing')
 
@@ -2138,7 +2150,7 @@ anaylsis_type={}
                     self.cancel_run(state='failed')
                     yield None
                 else:
-                    yield None, None, None
+                    yield None, None, None, False
             else:
                 # reset the counter
                 cnt = 0
@@ -2148,7 +2160,7 @@ anaylsis_type={}
                 self._intensities['tags'] = k
                 self._intensities['signals'] = s
 
-                yield k, s, t
+                yield k, s, t, inc
 
         # return gen()
 
@@ -2262,7 +2274,7 @@ anaylsis_type={}
             m.trait_set(trigger=self.spectrometer_manager.spectrometer.trigger_acq)
 
         if self.plot_panel:
-            self.plot_panel.integration_time = period
+            self.plot_panel.integration_time = self._integration_seconds
             self.plot_panel.set_ncounts(ncounts)
 
             if grpname == 'sniff':
@@ -2483,16 +2495,16 @@ anaylsis_type={}
         sname = self.script_info.measurement_script_name
         sname = self._make_script_name(sname)
 
-        from pychron.spectrometer.thermo.manager.base import ThermoSpectrometerManager
-        from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
-
         klass = MeasurementPyScript
         if isinstance(self.spectrometer_manager, ThermoSpectrometerManager):
-            from pychron.pyscripts.thermo_measurement_pyscript import ThermoMeasurementPyScript
+            from pychron.pyscripts.measurement.thermo_measurement_pyscript import ThermoMeasurementPyScript
             klass = ThermoMeasurementPyScript
         elif isinstance(self.spectrometer_manager, NGXSpectrometerManager):
-            from pychron.pyscripts.ngx_measurement_pyscript import NGXMeasurementPyScript
+            from pychron.pyscripts.measurement.ngx_measurement_pyscript import NGXMeasurementPyScript
             klass = NGXMeasurementPyScript
+        elif isinstance(self.spectrometer_manager, QuaderaSpectrometerManager):
+            from pychron.pyscripts.measurement.quadera_measurement_pyscript import QuaderaMeasurementPyScript
+            klass = QuaderaMeasurementPyScript
 
         ms = klass(root=paths.measurement_dir, name=sname, automated_run=self, runner=self.runner)
         return ms

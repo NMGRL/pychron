@@ -171,6 +171,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     ratio_change_detection_enabled = Bool(False)
     execute_open_queues = Bool(True)
+    use_preceding_blank = Bool(True)
 
     # dvc
     use_dvc_persistence = Bool(False)
@@ -190,9 +191,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     _prev_blanks = Dict
     _prev_baselines = Dict
-    _prev_blank_runid = String
     _err_message = String
-    _prev_blank_id = Long
+
     _ratios = Dict
     _failure_counts = Dict
     _excluded_uuids = Dict
@@ -253,6 +253,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'experiment_type',
                  'laboratory',
                  'ratio_change_detection_enabled',
+                 'use_preceding_blank',
                  'execute_open_queues')
         self._preference_binder(prefid, attrs)
 
@@ -750,18 +751,31 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.debug('{} finished'.format(run.runid))
         if self.is_alive():
             self.debug('spec analysis type {}'.format(spec.analysis_type))
-            if spec.analysis_type.startswith('blank'):
-                pb = run.get_baseline_corrected_signals()
-                if pb is not None:
-                    self._prev_blank_runid = run.spec.runid
-                    # self._prev_blank_id = run.spec.analysis_dbid
-                    self._prev_blanks = pb
-                    self.debug('previous blanks ={}'.format(pb))
+            self._set_prev(run)
 
         run.teardown()
 
         self.measuring_run = None
         self.debug('join run finished')
+
+    def _set_prev(self, run):
+        if hasattr(run, 'get_baseline_corrected_signal_dict'):
+            d = (run.record_id, run.get_baseline_corrected_signal_dict())
+            if self.use_preceding_blank:
+                self._prev_blanks[run.analysis_type] = d
+                self._prev_blanks['blank'] = d
+            self._prev_baselines = run.get_baseline_dict()
+        else:
+            at = run.spec.analysis_type
+            if self.use_preceding_blank and at.startswith('blank'):
+                pb = run.get_baseline_corrected_signals()
+                if pb is not None:
+                    d = (run.spec.runid, pb)
+                    self._prev_blanks[at] = d
+                    self._prev_blanks['blank'] = d
+                    self.debug('previous blanks ={}'.format(d))
+
+            self._prev_baselines = run.get_baselines()
 
     def _do_run(self, run):
         self._set_thread_name(run.runid)
@@ -811,7 +825,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if run.spec.state not in ('truncated', 'canceled', 'failed'):
                 run.spec.state = 'success'
 
-        if run.spec.state in ('success', 'truncated', 'terminated'):
+        if run.spec.state in ('success', 'truncated', 'terminated', 'canceled'):
             run.save()
             self.run_completed = run
 
@@ -833,8 +847,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             run.spec.uage = run.isotope_group.uage
             run.spec.k39 = run.isotope_group.get_computed_value('k39')
 
-        if run.spec.state not in ('canceled', 'failed', 'aborted'):
-            self._retroactive_repository_identifiers(run.spec)
+        # if run.spec.state not in ('canceled', 'failed', 'aborted'):
+        #     self._retroactive_repository_identifiers(run.spec)
 
         if self.use_autoplot:
             self.autoplot_event = run
@@ -888,10 +902,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         t.join()
 
         self.debug('{} finished'.format(run.runid))
-        if run.analysis_type.startswith('blank'):
-            pb = run.get_baseline_corrected_signals()
-            if pb is not None:
-                self._prev_blanks = pb
+        self._set_prev(run)
+        # if run.analysis_type.startswith('blank'):
+        #     pb = run.get_baseline_corrected_signals()
+        #     if pb is not None:
+        #         self._prev_blanks[run.spec.analysis_type] = (run.spec.runid, pb)
+        #         self._prev_blanks['blank'] = (run.spec.runid, pb)
 
         do_after(1000, run.teardown)
 
@@ -1178,7 +1194,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                   'use_db_persistence', 'use_dvc_persistence', 'use_xls_persistence'):
             setattr(arun, k, getattr(self, k))
 
-        arun.previous_blanks = self._prev_blank_id, self._prev_blanks, self._prev_blank_runid
+        try:
+            pb = self._prev_blanks[spec.analysis_type]
+        except KeyError:
+            pb = self._prev_blanks.get('blank', ('', {}))
+
+        arun.previous_blanks = pb
         arun.previous_baselines = self._prev_baselines
         arun.on_trait_change(self._handle_executor_event, 'executor_event')
 
@@ -1689,16 +1710,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _check_preceding_blank(self, inform):
         mainstore = self.datahub.mainstore
         with mainstore.session_ctx(use_parent_session=True):
-            an = self._get_preceding_blank_or_background(inform=inform)
+            an = self._get_previous_blank_from_db(inform=inform)
             if an is not True:
                 if an is None:
                     return
                 else:
                     self.info('using {} as the previous blank'.format(an.record_id))
                     try:
-                        # self._prev_blank_id = an.meas_analysis_id
-                        self._prev_blanks = an.get_baseline_corrected_signal_dict()
-                        self._prev_baselines = an.get_baseline_dict()
+                        self._set_prev(an)
+
                     except TraitError:
                         self.debug_exception()
                         self.warning('failed loading previous blank')
@@ -1874,19 +1894,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._wait_for_save()
         self.heading('Pre Run Check Passed')
 
-    def _retroactive_repository_identifiers(self, spec):
-        self.warning('retroactive repository identifiers disabled')
-        return
-
-        db = self.datahub.mainstore
-        crun, expid = retroactive_repository_identifiers(spec, self._cached_runs, self._active_repository_identifier)
-        self._cached_runs, self._active_repository_identifier = crun, expid
-
-        db.add_repository_association(spec.repository_identifier, spec)
-        if not is_special(spec.identifier) and self._cached_runs:
-            for c in self._cached_runs:
-                db.add_repository_association(expid, c)
-            self._cached_runs = []
+    # def _retroactive_repository_identifiers(self, spec):
+    #     self.warning('retroactive repository identifiers disabled')
+    #     return
+    #
+    #     db = self.datahub.mainstore
+    #     crun, expid = retroactive_repository_identifiers(spec, self._cached_runs, self._active_repository_identifier)
+    #     self._cached_runs, self._active_repository_identifier = crun, expid
+    #
+    #     db.add_repository_association(spec.repository_identifier, spec)
+    #     if not is_special(spec.identifier) and self._cached_runs:
+    #         for c in self._cached_runs:
+    #             db.add_repository_association(expid, c)
+    #         self._cached_runs = []
 
     def _check_repository_identifiers(self, inform):
         db = self.datahub.mainstore.db
@@ -2087,11 +2107,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         elif action.action == 'cancel':
             self.cancel(confirm=False)
 
-    def _get_preceding_blank_or_background(self, inform=True):
-        #temporarily disable for now
-        # need to come up with a better way of handling blanks with SimpleIDs
-        return True
-        
+    def _get_previous_blank_from_db(self, inform=True):
+        if not self.use_preceding_blank:
+            return True
+
         exp = self.experiment_queue
 
         types = ['air', 'unknown', 'cocktail']
@@ -2131,13 +2150,11 @@ Use Last "blank_{}"= {}
                         self.debug('use user selected blank {}'.format(pdbr.record_id))
                         return pdbr
                     else:
-                        msg = msg.format(an.analysis_type,
-                                         an.analysis_type,
-                                         pdbr.record_id)
-
                         retval = NO
                         if inform:
-                            retval = self.confirmation_dialog(msg,
+                            retval = self.confirmation_dialog(msg.format(an.analysis_type,
+                                                                         an.analysis_type,
+                                                                         pdbr.record_id),
                                                               no_label='Select From Database',
                                                               cancel=True,
                                                               return_retval=True)
@@ -2238,10 +2255,10 @@ Use Last "blank_{}"= {}
                 self.ms_pumptime_start = new['time']
             elif kind == 'cancel':
                 self.cancel(**new)
-            elif kind == 'previous_baselines':
-                self._prev_baselines = new['baselines']
-            elif kind == 'previous_blanks':
-                self._prev_baselines = new['baselines']
+            # elif kind == 'previous_baselines':
+            #     self._prev_baselines = new['baselines']
+            # elif kind == 'previous_blanks':
+            #     self._prev_baselines = new['baselines']
             elif kind == 'show_conditionals':
                 self.show_conditionals(active_run=obj, **new)
             elif kind == 'end_after':

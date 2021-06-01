@@ -900,7 +900,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                             new_script_name = default_scripts.get(skey, 'pump_{}'.format(extract_device))
 
                     script = getattr(self, '{}_script'.format(skey))
-                    script.name = new_script_name
+                    script.name = new_script_name or ''
 
     def _load_default_file(self):
         # open the yaml config file
