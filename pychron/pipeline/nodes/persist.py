@@ -92,7 +92,7 @@ class DVCPersistNode(PersistNode):
         modp = []
         for mi in mods:
             modpi = self.dvc.update_analyses(state.unknowns,
-                                             mi, '<{}> {}'.format(self.commit_tag, msg))
+                                             mi, '<{}>.{} {}'.format(self.commit_tag, mi, msg))
             modp.extend(modpi)
 
         if modp:
