@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2016 ross
+# Copyright 2021 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,23 +14,19 @@
 # limitations under the License.
 # ===============================================================================
 
-# ============= enthought library imports =======================
-from pychron.dvc.func import repository_has_staged
-from pychron.pipeline.nodes.data import BaseDVCNode
-
-
-class PushNode(BaseDVCNode):
-
-    def __init__(self, *args, **kw):
-        super(PushNode, self).__init__(*args, **kw)
-        self.configurable = False
-        self.name = 'Push'
-
-    def run(self, state):
-        ps = {ai.repository_identifier for ans in (state.unknowns, state.references) for ai in ans}
-        if ps:
-            changed = repository_has_staged(ps)
-            if changed:
-                self.dvc.push_repositories(changed)
 
 # ============= EOF =============================================
+from traits.has_traits import HasTraits
+from traits.trait_types import Str, Bool
+
+
+class User(HasTraits):
+    name = Str
+    email = Str
+    enabled = Bool
+    keys = ('name', 'email', 'enabled')
+
+    def __init__(self, dbrecord, *args, **kw):
+        super(User, self).__init__(*args, **kw)
+        self.name = dbrecord.name
+        self.email = dbrecord.email or ''

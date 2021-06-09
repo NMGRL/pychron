@@ -97,6 +97,8 @@ class DVCPreferences(BasePreferencesHelper):
     max_cache_size = Int
     update_currents_enabled = Bool
     use_auto_pull = Bool(True)
+    use_auto_push = Bool(False)
+    use_default_commit_author = Bool(False)
 
 
 class DVCPreferencesPane(PreferencesPane):
@@ -112,7 +114,12 @@ class DVCPreferencesPane(PreferencesPane):
                                                                                       'update your version to the '
                                                                                       'latest version. Deselect if '
                                                                                       'you want to be asked to pull '
-                                                                                      'the official version.')),
+                                                                                      'the official version.'),
+                                     Item('use_auto_push', label='Auto Push',
+                                          tooltip='Push changes when a PushNode is used automatically without asking '
+                                                  'for confirmation.')),
+                        BorderVGroup(Item('use_default_commit_author', label='Use Default Commit Author'),
+                                     label='Commit'),
                         BorderVGroup(Item('update_currents_enabled', label='Enabled'),
                                      label='Current Values'),
                         BorderVGroup(HGroup(Item('use_cache', label='Enabled'),

@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from chaco.array_data_source import ArrayDataSource
 from traits.api import List, Callable
 from traitsui.menu import Action, Menu as MenuManager
@@ -52,9 +50,11 @@ class AnalysisPointInspector(PointInspector):
         return ctx_menu
 
     def normal_right_down(self, event):
+        print('nsdo', event, self.current_position)
         self._selected_indices = []
         if self.current_position:
             inds = self.get_selected_index()
+            print('insdf', inds)
             if inds is not None:
                 self._selected_indices = list(inds)
                 self._show_menu(event)

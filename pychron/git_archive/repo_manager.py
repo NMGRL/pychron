@@ -915,12 +915,13 @@ class GitRepoManager(Loggable):
             if inform:
                 self.warning_dialog('Merging {} into {} failed. See log file for more details'.format(from_, to_))
 
-    def commit(self, msg):
-        self.debug('commit message={}'.format(msg))
+    def commit(self, msg, author=None):
+        self.debug('commit message={}, author={}'.format(msg, author))
+
         index = self.index
         if index:
             try:
-                index.commit(msg)
+                index.commit(msg, author=author, committer=author)
                 return True
             except git.exc.GitError as e:
                 self.warning('Commit failed: {}'.format(e))

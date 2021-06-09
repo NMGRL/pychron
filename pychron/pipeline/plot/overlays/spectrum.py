@@ -32,6 +32,7 @@ from traits.api import Array, Int, Float, Str, Color, Bool, List
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
+from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.info_inspector import InfoOverlay, InfoInspector
 from pychron.pychron_constants import PLUSMINUS, SIGMA
 
@@ -51,14 +52,17 @@ class BasePlateauOverlay(AbstractOverlay):
         return tt
 
 
-class SpectrumTool(InfoInspector, BasePlateauOverlay):
+class SpectrumTool(AnalysisPointInspector, BasePlateauOverlay):
     nsigma = Int(2)
     # metadata_changed = Event
     # current_position = None
     # current_screen = None
-    analyses = List
-
+    # analyses = List
+    single_point = True
     _cached_lines = None
+    current_idx = Int
+    def get_selected_index(self):
+        return [self.current_idx]
 
     def hittest(self, screen_pt, ndx=None):
         comp = self.component
@@ -93,7 +97,7 @@ class SpectrumTool(InfoInspector, BasePlateauOverlay):
 
     def assemble_lines(self):
         if self._cached_lines is None:
-            idx = self.current_position
+            idx = self.current_idx
             comp = self.component
 
             idx2 = idx * 2
@@ -117,6 +121,8 @@ class SpectrumTool(InfoInspector, BasePlateauOverlay):
         return self._cached_lines
 
     def normal_mouse_move(self, event):
+        super(SpectrumTool, self).normal_mouse_move(event)
+
         pt = event.x, event.y
         hover = self._get_section(pt)
 
@@ -124,18 +130,20 @@ class SpectrumTool(InfoInspector, BasePlateauOverlay):
             # print('setting cross')
             # event.window.set_pointer('cross')
             # self.component.index.metadata['hover'] = [hover]
-            if self.current_position != hover:
+            if self.current_idx != hover:
                 self._cached_lines = None
 
-            self.current_position = hover
+            self.current_idx = hover
             self.current_screen = pt
+            self.current_position = pt
         else:
             # print('settinasg arrow')
             # event.window.set_pointer('arrow')
             # self.component.index.metadata['hover'] = None
 
-            self.current_position = None
+            self.current_idx = -1
             self.current_screen = None
+            self.current_position = None
 
         self.metadata_changed = True
 

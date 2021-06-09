@@ -23,7 +23,7 @@ from operator import itemgetter
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from git import Repo, GitCommandError, NoSuchPathError
+from git import Repo, GitCommandError, NoSuchPathError, Actor
 from traits.api import Instance, Str, Set, List, provides, Bool, Int
 from uncertainties import ufloat, std_dev, nominal_value
 
@@ -46,6 +46,7 @@ from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.experiment.utilities.runid import make_increment
 from pychron.git.hosts import IGitHost
 from pychron.git.hosts.local import LocalGitHostService
+from pychron.git_archive.author_view import GitCommitAuthorView
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
 from pychron.git_archive.views import StatusView
 from pychron.globals import globalv
@@ -53,6 +54,7 @@ from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
 from pychron.processing.interpreted_age import InterpretedAge
 from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, STARTUP_MESSAGE_POSITION, DATE_FORMAT
+from pychron.user.user import User
 
 HOST_WARNING_MESSAGE = 'GitLab or GitHub or LocalGit plugin is required'
 
@@ -74,6 +76,9 @@ class DVC(Loggable):
     current_repository = Instance(GitRepoManager)
     auto_add = True
     use_auto_pull = Bool(True)
+    use_auto_push = Bool(False)
+    use_default_commit_author = Bool(False)
+
     pulled_repositories = Set
     selected_repositories = List
 
@@ -90,6 +95,7 @@ class DVC(Loggable):
     _cache = None
     _uuid_runid_cache = None
     _pull_cache = None
+    _author = None
 
     def __init__(self, bind=True, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
@@ -1038,7 +1044,25 @@ class DVC(Loggable):
     def repository_commit(self, repository, msg):
         self.debug('Repository commit: {} msg: {}'.format(repository, msg))
         repo = self._get_repository(repository)
-        return repo.commit(msg)
+        author = None
+        if not self.use_default_commit_author:
+            if not self._author:
+                db = self.db
+                with db.session_ctx():
+                    authors = [User(r) for r in db.get_users()]
+
+                    g = GitCommitAuthorView(authors=authors)
+
+                    info = g.edit_traits()
+                    if info.result:
+                        author = Actor(g.author, g.email)
+                        if not self.db.get_user(g.author):
+                            self.db.add_user(g.author, email=g.email)
+
+                        if g.remember_choice:
+                            self._author = author
+
+        return repo.commit(msg, author=author)
 
     def remote_repositories(self):
         rs = []
@@ -1161,8 +1185,9 @@ class DVC(Loggable):
             repo.push(remote=gi.default_remote_name, **kw)
 
     def push_repositories(self, changes):
-        for gi in self.application.get_services(IGitHost):
-            push_repositories(changes, gi, quiet=False)
+        if self.use_auto_push or self.confirmation_dialog('Would you like to push (share) your changes?'):
+            for gi in self.application.get_services(IGitHost):
+                push_repositories(changes, gi, quiet=False)
 
     def delete_local_commits(self, repo, **kw):
         r = self._get_repository(repo)
@@ -1868,6 +1893,9 @@ class DVC(Loggable):
         bind_preference(self, 'max_cache_size', '{}.max_cache_size'.format(prefid))
         bind_preference(self, 'update_currents_enabled', '{}.update_currents_enabled'.format(prefid))
         bind_preference(self, 'use_auto_pull', '{}.use_auto_pull'.format(prefid))
+        bind_preference(self, 'use_auto_push', '{}.use_auto_push'.format(prefid))
+        bind_preference(self, 'use_default_commit_author', '{}.use_default_commit_author'.format(prefid))
+
 
         prefid = 'pychron.entry'
         bind_preference(self, 'irradiation_prefix', '{}.irradiation_prefix'.format(prefid))

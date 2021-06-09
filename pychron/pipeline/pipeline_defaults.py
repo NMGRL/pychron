@@ -59,6 +59,7 @@ nodes:
   - klass: FitICFactorNode
   - klass: ReviewNode
   - klass: ICFactorPersistNode
+  - klass: PushNode
 """
 
 DEFINE_EQUILIBRATION = """
@@ -79,6 +80,7 @@ nodes:
   - klass: ReviewNode
   - klass: IsotopeEvolutionPersistNode
     use_editor: False
+  - klass: PushNode
 """
 
 BLANKS = """
@@ -92,6 +94,7 @@ nodes:
   - klass: FitBlanksNode
   - klass: ReviewNode
   - klass: BlanksPersistNode
+  - klass: PushNode
 """
 
 CSV_IDEO = """

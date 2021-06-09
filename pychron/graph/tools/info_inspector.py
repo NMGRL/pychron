@@ -54,8 +54,8 @@ class InfoInspector(ScatterInspector):
     hittest_threshold = 5
     # select_event = Event
 
-    def normal_left_down(self, event):
-        pass
+    # def normal_left_down(self, event):
+    #     pass
         # print('infaso', event, id(event))
         # if not event.handled:
         #     super(InfoInspector, self).normal_left_down(event)
