@@ -92,6 +92,8 @@ def view_file(p, application='Preview', logger=None):
         app_path = '/Applications/{}.app'.format(application)
         if not os.path.exists(app_path):
             app_path = '/Applications/Preview.app'
+            if not os.path.exists(app_path):
+                app_path = '/System/Applications/Preview.app'
 
         try:
             subprocess.call(['open', '-a', app_path, p])

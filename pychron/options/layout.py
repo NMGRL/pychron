@@ -124,7 +124,8 @@ class FigureLayout(HasTraits):
         self.items.append(LayoutItem(kind=kind))
 
     def traits_view(self):
-        rc_grp = VGroup(Item('fixed_width'),
+        rc_grp = VGroup(Item('fixed_width', tooltip='You must remake the figure if you edit this value. The figure '
+                                                    'will not automatically resize'),
                         HGroup(Item('rows',
                                     enabled_when='row_enabled'),
                                Item('columns',

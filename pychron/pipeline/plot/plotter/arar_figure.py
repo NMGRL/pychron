@@ -123,14 +123,14 @@ class BaseArArFigure(SelectionFigure):
             if po.height:
                 kw['bounds'] = [50, po.height]
 
-            if self.options.layout.fixed_width:
-                kw['bounds'] = [self.options.layout.fixed_width, kw['bounds'][1]]
-                kw['resizable'] = ''
+            # if self.options.layout.fixed_width:
+            #     kw['bounds'] = [self.options.layout.fixed_width, kw['bounds'][1]]
+            #     kw['resizable'] = ''
 
             if i == nplots - 1:
                 kw['title'] = title
 
-            if i == 0 and self.ytitle:
+            if not i and self.ytitle:
                 kw['ytitle'] = self.ytitle
 
             if not po.ytitle_visible:

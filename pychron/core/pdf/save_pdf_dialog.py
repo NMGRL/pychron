@@ -30,7 +30,7 @@ from traitsui.handler import Controller
 
 from pychron import pychron_constants
 # ============= local library imports  ==========================
-from pychron.core.helpers.filetools import view_file, add_extension
+from pychron.core.helpers.filetools import view_file, add_extension, unique_path2
 from pychron.core.pdf.options import BasePDFOptions, PDFLayoutView
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 
@@ -130,17 +130,14 @@ def save_pdf(component, path=None, default_directory=None, view=False, options=N
                                               pagesize=options.page_size)
 
                 obounds = component.bounds
-                # size = None
-                if not obounds[0] and not obounds[1]:
-                    size = options.bounds
-                    component.do_layout(size=size, force=True)
-
-                if options.fit_to_page:
+                print('obounds', obounds, options.valign, options.halign, options.page_size, options.dest_box)
+                # if component not yet drawn e.g. no bounds then force render
+                if (not obounds[0] and not obounds[1]) or options.fit_to_page:
                     size = options.bounds
                     component.do_layout(size=size, force=True)
 
                 gc.render_component(component,
-                                    valign='center')
+                                    valign=options.valign, halign=options.halign)
                 gc.save()
                 if view:
                     view_file(path)
@@ -160,11 +157,18 @@ if __name__ == '__main__':
 
     class Demo(HasTraits):
         test = Button('Test')
+        save = Button('Save')
         graph = Instance(Graph)
 
         def _graph_default(self):
-            g = Graph()
-            p = g.new_plot()
+            g = Graph(container_dict={'padding_top': 15 * 4,
+                                     'bgcolor': 'purple',
+                                     # 'bounds': [500,500],
+                                     'spacing': 10,
+                                     'resizable': '',
+                                     'padding_bottom': 40})
+            p = g.new_plot(padding=[80, 10, 10, 40], resizable='',
+                           bounds=(100, 100))
             txt = 'gooiooi \N{Plus-minus sign} \N{Greek Small Letter Sigma} \u03AE \u00ae \u00a3'
             txt2 = 'aaaaaa \xb1 \u00b1'
 
@@ -184,13 +188,19 @@ if __name__ == '__main__':
             s.overlays.append(pl2)
             return g
 
+        def _save_fired(self):
+            p, cnt = unique_path2('/Users/ross/Desktop', 'foo', extension='.pdf')
+            save_pdf(self.graph.plotcontainer, path=p, view=True)
+
         def _test_fired(self):
+            self.graph.window_width = 800
+            self.graph.window_height = 600
             self.graph.edit_traits()
-            self.graph.plotcontainer.bounds = [600, 600]
-            self.graph.plotcontainer.do_layout(force=True)
-            save_pdf(self.graph.plotcontainer, path='/Users/ross/Desktop/foo')
+            # self.graph.plotcontainer.bounds = [600, 600]
+            # self.graph.plotcontainer.do_layout(force=True)
+
 
 
     d = Demo()
-    d.configure_traits(view=View('test'))
+    d.configure_traits(view=View('test', 'save'))
 # ============= EOF =============================================
