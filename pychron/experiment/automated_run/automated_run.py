@@ -1061,8 +1061,13 @@ class AutomatedRun(Loggable):
             if env:
                 set_environmentals(self.spec, env)
 
+            tag = 'ok'
+            if self.spec.state == 'canceled':
+                tag = 'canceled'
+
             self._update_persister_spec(active_detectors=self._active_detectors,
                                         conditionals=[c for cond in conds for c in cond],
+                                        tag=tag,
                                         tripped_conditional=self.tripped_conditional, **env)
 
             # save to database
@@ -1830,7 +1835,7 @@ anaylsis_type={}
 
     def _load_previous(self):
         if not self.spec.analysis_type.startswith('blank') and not self.spec.analysis_type.startswith('background'):
-            blanks, runid = self.previous_blanks
+            runid, blanks = self.previous_blanks
 
             self.debug('setting previous blanks')
             for iso, v in blanks.items():

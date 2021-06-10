@@ -110,7 +110,7 @@ class BaseSpectrometer(SpectrometerDevice):
         send configuration if self.send_config_on_startup set in Preferences
         :return:
         """
-
+        self.info('finish loading')
         if self.microcontroller:
             self.name = self.microcontroller.name
 
@@ -127,7 +127,7 @@ class BaseSpectrometer(SpectrometerDevice):
 
         :return: bool
         """
-        self.info('testing connnection')
+        self.info('testing connection')
         ret, err = False, ''
         if not self.simulation:
             if force:

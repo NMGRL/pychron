@@ -759,14 +759,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.debug('join run finished')
 
     def _set_prev(self, run):
-        at = run.spec.analysis_type
         if hasattr(run, 'get_baseline_corrected_signal_dict'):
             d = (run.record_id, run.get_baseline_corrected_signal_dict())
             if self.use_preceding_blank:
-                self._prev_blanks[at] = d
+                self._prev_blanks[run.analysis_type] = d
                 self._prev_blanks['blank'] = d
             self._prev_baselines = run.get_baseline_dict()
         else:
+            at = run.spec.analysis_type
             if self.use_preceding_blank and at.startswith('blank'):
                 pb = run.get_baseline_corrected_signals()
                 if pb is not None:
@@ -825,7 +825,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if run.spec.state not in ('truncated', 'canceled', 'failed'):
                 run.spec.state = 'success'
 
-        if run.spec.state in ('success', 'truncated', 'terminated'):
+        if run.spec.state in ('success', 'truncated', 'terminated', 'canceled'):
             run.save()
             self.run_completed = run
 
@@ -847,8 +847,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             run.spec.uage = run.isotope_group.uage
             run.spec.k39 = run.isotope_group.get_computed_value('k39')
 
-        if run.spec.state not in ('canceled', 'failed', 'aborted'):
-            self._retroactive_repository_identifiers(run.spec)
+        # if run.spec.state not in ('canceled', 'failed', 'aborted'):
+        #     self._retroactive_repository_identifiers(run.spec)
 
         if self.use_autoplot:
             self.autoplot_event = run
@@ -1197,7 +1197,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         try:
             pb = self._prev_blanks[spec.analysis_type]
         except KeyError:
-            pb = self._prev_blanks.get('blank', ({}, ''))
+            pb = self._prev_blanks.get('blank', ('', {}))
 
         arun.previous_blanks = pb
         arun.previous_baselines = self._prev_baselines
@@ -1894,19 +1894,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._wait_for_save()
         self.heading('Pre Run Check Passed')
 
-    def _retroactive_repository_identifiers(self, spec):
-        self.warning('retroactive repository identifiers disabled')
-        return
-
-        db = self.datahub.mainstore
-        crun, expid = retroactive_repository_identifiers(spec, self._cached_runs, self._active_repository_identifier)
-        self._cached_runs, self._active_repository_identifier = crun, expid
-
-        db.add_repository_association(spec.repository_identifier, spec)
-        if not is_special(spec.identifier) and self._cached_runs:
-            for c in self._cached_runs:
-                db.add_repository_association(expid, c)
-            self._cached_runs = []
+    # def _retroactive_repository_identifiers(self, spec):
+    #     self.warning('retroactive repository identifiers disabled')
+    #     return
+    #
+    #     db = self.datahub.mainstore
+    #     crun, expid = retroactive_repository_identifiers(spec, self._cached_runs, self._active_repository_identifier)
+    #     self._cached_runs, self._active_repository_identifier = crun, expid
+    #
+    #     db.add_repository_association(spec.repository_identifier, spec)
+    #     if not is_special(spec.identifier) and self._cached_runs:
+    #         for c in self._cached_runs:
+    #             db.add_repository_association(expid, c)
+    #         self._cached_runs = []
 
     def _check_repository_identifiers(self, inform):
         db = self.datahub.mainstore.db

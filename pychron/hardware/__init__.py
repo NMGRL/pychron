@@ -71,13 +71,14 @@ HW_PACKAGE_MAP = {
     'NMGRLMagnetDumper': 'pychron.furnace.magnet_dumper',
     'LamontFurnaceControl': hardware_pkg('labjack.ldeo_furnace'),
 
+    'Model330TemperatureController': hardware_pkg('lakeshore.model330'),
     'Model335TemperatureController': hardware_pkg('lakeshore.model335'),
     'Model336TemperatureController': hardware_pkg('lakeshore.model336'),
     'MKSSRG': gauge_pkg('mks.srg'),
 
     'GenericDevice': hardware_pkg('generic_device'),
     'PLC2000Heater': hardware_pkg('heater'),
-    'PLC2000GaugeController': gauge_pkg('plc2000'),
+    'PLC2000GaugeController': gauge_pkg('plc2000.plc2000_gauge_controller')
     'T4Actuator': hardware_pkg('actuators.t4_actuator'),
     'U3Actuator': hardware_pkg('actuators.u3_actuator'),
     'ProXRActuator': hardware_pkg('actuators.proxr_actuator'),
@@ -106,6 +107,20 @@ def get_float(default=None):
             t = func(*args, **kw)
             try:
                 return float(t)
+            except (TypeError, ValueError):
+                return default
+
+        return wrapper
+
+    return dec
+
+
+def get_boolean(default=False):
+    def dec(func):
+        def wrapper(*args, **kw):
+            t = func(*args, **kw)
+            try:
+                return bool(t)
             except (TypeError, ValueError):
                 return default
 

@@ -20,7 +20,7 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.core.communicators.communicator import Communicator
+from pychron.hardware.core.communicators.communicator import Communicator, remove_eol_func
 from pychron.hardware.core.communicators.visa import resource_manager
 
 
@@ -49,8 +49,12 @@ class GpibCommunicator(Communicator):
     def trigger(self):
         self.handle.trigger()
 
-    def ask(self, cmd, verbose=False):
-        return self.handle.query(cmd)
+    def ask(self, cmd, remove_eol=True, verbose=False):
+        re = self.handle.query(cmd)
+        if remove_eol:
+            re = remove_eol_func(re)
+
+        return re
 
     def tell(self, cmd, verbose=False):
         self.handle.write(cmd)

@@ -133,7 +133,7 @@ class ScanManager(StreamGraphManager):
         # del self.graph_scan_width
 
     def activate(self):
-        self.set_streaming_active(False)
+        self.set_streaming_active(True)
         self.bind_preferences()
 
         self.load_event_marker_config()
