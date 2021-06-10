@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import struct
 import time
 from datetime import datetime
 
@@ -45,13 +46,56 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
     use_hv_correction = False
 
     def _microcontroller_default(self):
-        #service = 'pychron.hardware.quadera_spectrometer_controller.QuaderaController'
-        #s = self.application.get_service(service)
+        # service = 'pychron.hardware.quadera_spectrometer_controller.QuaderaController'
+        # s = self.application.get_service(service)
 
         s = QuaderaController(name='spectrometer_microcontroller')
         s.bootstrap()
         s.communicator.simulation = True
         return s
+
+    def set_data_pump_mode(self, mode):
+        resp = self.microcontroller.ask('General.DataPump.Mode {}'.format(mode))
+
+    def halted(self):
+        """
+        General.Cycle.Status
+        1= halt, 5=run multi
+        """
+        resp = self.microcontroller.ask('General.Cycle.Status')
+        if resp:
+            resp = resp.strip()
+            return int(resp) == 1
+
+    def sink_data(self):
+        packet = self.microcontroller.ask('General.DataPump.Data')
+
+        def get_bytes(n):
+            i = 0
+            while 1:
+                yield packet[i:i+n]
+                i+=n
+
+        channel = get_bytes(1)
+        datatype = get_bytes(1)
+        status = get_bytes(1)
+        ndata = get_bytes(1)
+
+        timestamp = get_bytes(8)
+        max_data_tuples = get_bytes(2)
+        first_mass = get_bytes(2)
+        last_mass = get_bytes(2)
+        dwell_speed = get_bytes(1)
+        measure_unit_mass_resol = get_bytes(1)
+        ndata_tuples = int(get_bytes(1), 16)
+
+        for j in range(ndata_tuples):
+            intensity = get_bytes(4)
+            mass = get_bytes(2)
+            status = get_bytes(1)
+            adjust_mode = get_bytes(1)
+
+        return timestamp, channel, intensity
 
     def make_configuration_dict(self):
         return {}
@@ -63,19 +107,19 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         return {}
 
     # def start(self):
-        # self.set_integration_time(1, force=True)
+    # self.set_integration_time(1, force=True)
 
     # def finish_loading(self):
     #     super(QuaderaSpectrometer, self).finish_loading()
-        # config = self._get_cached_config()
-        # if config is not None:
-        #     magnet = config['magnet']
-        #     # specparams, defl, trap, magnet = ret
-        #     mftable_name = magnet.get('mftable')
-        #     if mftable_name:
-        #         self.debug('updating mftable name {}'.format(mftable_name))
-        #         self.magnet.field_table.path = mftable_name
-        #         self.magnet.field_table.load_table(load_items=True)
+    # config = self._get_cached_config()
+    # if config is not None:
+    #     magnet = config['magnet']
+    #     # specparams, defl, trap, magnet = ret
+    #     mftable_name = magnet.get('mftable')
+    #     if mftable_name:
+    #         self.debug('updating mftable name {}'.format(mftable_name))
+    #         self.magnet.field_table.path = mftable_name
+    #         self.magnet.field_table.load_table(load_items=True)
 
     def _send_configuration(self, **kw):
         pass

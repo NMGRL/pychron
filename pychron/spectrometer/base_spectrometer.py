@@ -71,6 +71,15 @@ class BaseSpectrometer(SpectrometerDevice):
     _no_intensity_change_cnt = 0
     active_detectors = List
 
+    def set_data_pump_mode(self):
+        pass
+
+    def halted(self):
+        pass
+
+    def sink_data(self):
+        pass
+
     def cancel(self):
         pass
 

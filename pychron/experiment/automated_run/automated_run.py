@@ -29,7 +29,7 @@ from traits.api import Any, Str, List, Property, \
     Event, Instance, Bool, HasTraits, Float, Int, Long, Tuple, Dict
 from traits.trait_errors import TraitError
 
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension, unique_path2
 from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
@@ -235,6 +235,40 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_data_sink(self):
+        """
+
+        new measurement interface for just sinking the data from a ring buffer
+        """
+        import csv
+        spec = self.spectrometer_manager.spectrommeter
+        spec.set_data_pump_mode(1)
+        p = unique_path2(paths.isotope_dir, self.runid, extension='.csv')
+        channels = []
+        with open(p, 'w') as rfile:
+            writer = csv.writer(rfile)
+            while 1:
+                if spec.halted():
+                    break
+                else:
+                    timestamp, channel, intenisty = spec.sink_data()
+
+                    if channel in channels:
+                        self.debug('data sink: {}'.format(row))
+                        writer.writerow(row)
+                        channels = [channel]
+                        row = [timestamp, intenisty]
+                    else:
+                        if channels:
+                            channels.append(channel)
+                            row.extend((timestamp, intenisty))
+                        else:
+                            channels = [channel]
+                            row = [timestamp, intenisty]
+
+
+        spec.set_data_pump_mode(0)
+
     def py_measure(self):
         return self.spectrometer_manager.measure()
 
