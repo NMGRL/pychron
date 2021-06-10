@@ -26,8 +26,10 @@ from pychron.canvas.canvas2D.scene.primitives.connections import Connection, Elb
 from pychron.canvas.canvas2D.scene.primitives.primitives import Line, Label, Image, ValueLabel
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
 from pychron.canvas.canvas2D.scene.primitives.valves import Switch, Valve, RoughValve, ManualSwitch
+from pychron.canvas.canvas2D.scene.primitives.widgets import Widget
 from pychron.core.helpers.strtools import to_bool
 from pychron.extraction_line.switch_parser import SwitchParser
+from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.paths import paths
 
 
@@ -286,9 +288,6 @@ class XMLLoader(BaseLoader):
             label_dict['font'] = font.text.strip()
 
         return super(XMLLoader, self)._new_label(scene, label_dict, name, c, **kw)
-
-    def load_widgets(self, scene, canvas):
-        pass
 
     def load_widgets(self, scene, canvas):
         app = canvas.manager.application
