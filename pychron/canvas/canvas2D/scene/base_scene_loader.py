@@ -123,7 +123,7 @@ class BaseLoader:
             klass = Label
 
         # tran = label_dict['translation']
-        x, y = self._get_translation(label_dict)
+        x, y = self._get_translation(label_dict['translation'])
         # x, y = 0, 0
         # trans = label.find('translation')
         # if trans is not None:

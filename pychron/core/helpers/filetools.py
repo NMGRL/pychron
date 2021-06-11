@@ -269,6 +269,7 @@ def max_path_cnt(root, base, delimiter='-', extension='.txt', ndigits=5):
     :param extension:
     :return: int max+1
     """
+
     ndigits = '[0-9]'*ndigits
     basename = '{}{}{}{}'.format(base, delimiter, ndigits, extension)
     cnt = 0

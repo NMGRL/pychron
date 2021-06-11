@@ -50,7 +50,7 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR, NO_BLANK_CORRECT, EXTRACTION, MEASUREMENT, EM_SCRIPT_KEYS, SCRIPT_NAMES, \
-    POST_MEASUREMENT, POST_EQUILIBRATION
+    POST_MEASUREMENT, POST_EQUILIBRATION, FAILED, TRUNCATED, SUCCESS, CANCELED
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
 from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
 from pychron.spectrometer.pfeiffer.manager.quadera import QuaderaSpectrometerManager
@@ -846,8 +846,8 @@ class AutomatedRun(Loggable):
             self.monitor.stop()
 
         if self.spec:
-            if self.spec.state not in ('not run', 'canceled', 'success', 'truncated', 'aborted'):
-                self.spec.state = 'failed'
+            if self.spec.state not in ('not run', CANCELED, SUCCESS, TRUNCATED, 'aborted'):
+                self.spec.state = FAILED
                 self.experiment_queue.refresh_table_needed = True
 
         self.spectrometer_manager.spectrometer.active_detectors = []
@@ -1027,8 +1027,13 @@ class AutomatedRun(Loggable):
             if env:
                 set_environmentals(self.spec, env)
 
+            tag = 'ok'
+            if self.spec.state in (CANCELED, FAILED):
+                tag = self.spec.state
+
             self._update_persister_spec(active_detectors=self._active_detectors,
                                         conditionals=[c for cond in conds for c in cond],
+                                        tag=tag,
                                         tripped_conditional=self.tripped_conditional, **env)
 
             # save to database
@@ -1796,7 +1801,7 @@ anaylsis_type={}
 
     def _load_previous(self):
         if not self.spec.analysis_type.startswith('blank') and not self.spec.analysis_type.startswith('background'):
-            blanks, runid = self.previous_blanks
+            runid, blanks = self.previous_blanks
 
             self.debug('setting previous blanks')
             for iso, v in blanks.items():
@@ -2124,7 +2129,7 @@ anaylsis_type={}
                 except BaseException:
                     self.warning('Failed to save run')
 
-                self.cancel_run(state='failed')
+                self.cancel_run(state=FAILED)
                 yield None
 
             if not k:
@@ -2142,7 +2147,7 @@ anaylsis_type={}
 
                     # do we need to cancel the experiment or will the subsequent pre run
                     # checks sufficient to catch spectrometer communication errors.
-                    self.cancel_run(state='failed')
+                    self.cancel_run(state=FAILED)
                     yield None
                 else:
                     yield None, None, None, False

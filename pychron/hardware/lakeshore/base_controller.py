@@ -23,7 +23,7 @@ from pychron.graph.stream_graph import StreamStackedGraph
 from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice
 import re
-from time import sleep, time
+import time
 import string
 
 IDN_RE = re.compile(r'\w{4},\w{8},\w{7}\/[\w\#]{7},\d.\d')
@@ -122,26 +122,28 @@ class BaseLakeShoreController(CoreDevice):
             setattr(self, '{}_readback'.format(tag), v)
         return self._update_hook()
 
-    def _update_hook(self):
-        return self.input_a
-
     def setpoints_achieved(self, tol=1):
         for i, (tag, key) in enumerate(zip(self.iomap, string.ascii_lowercase)):
             idx = i + 1
             v = self._read_input(key, self.units)
             if tag is not None:
-                setpoint = getattr(self, tag)
-                if abs(v - setpoint) > tol:
-                    return
-                else:
-                    self.debug('setpoint {} achieved'.format(idx))
-
+                try:
+                    setpoint = getattr(self, tag)
+                    self.debug('{}={}, v={}'.format(tag, setpoint, v))
+                    if abs(v - setpoint) > tol:
+                        return
+                    else:
+                        self.debug('setpoint {} achieved'.format(idx))
+                except AttributeError:
+                    pass
         return True
 
     @get_float(default=0)
     def read_setpoint(self, output, verbose=False):
         if output is not None:
-            return self.ask('SETP? {}'.format(re.sub('[^0-9]', '', output)), verbose=verbose)
+            if isinstance(output, str):
+                output = re.sub('[^0-9]', '', output)
+            return self.ask('SETP? {}'.format(output), verbose=verbose)
 
     def set_setpoints(self, *setpoints, block=False, delay=1):
         for i, v in enumerate(setpoints):
@@ -160,9 +162,20 @@ class BaseLakeShoreController(CoreDevice):
                     break
                 time.sleep(delay)
 
-    def set_setpoint(self, v, output=1):
+    def set_setpoint(self, v, output=1, retries=3):
+
         self.set_range(v, output)
-        self.tell('SETP {},{}'.format(output, v))
+        for i in range(retries):
+            self.tell('SETP {},{}'.format(output, v))
+            time.sleep(2)
+            sp = self.read_setpoint(output, verbose=True)
+            self.debug('setpoint set to={} target={}'.format(sp, v))
+            if sp==v:
+                break
+            time.sleep(1)
+            
+        else:
+            self.warning_dialog('Failed setting setpoint to {}. Got={}'.format(v, sp))
 
     def set_range(self, v, output):
         # if v <= 10:
@@ -178,7 +191,7 @@ class BaseLakeShoreController(CoreDevice):
                 self.tell('RANGE {},{}'.format(output, ra))
                 break
 
-        sleep(1)
+        time.sleep(1)
 
     def read_input(self, v, **kw):
         if isinstance(v, int):
@@ -219,7 +232,7 @@ class BaseLakeShoreController(CoreDevice):
 
     def graph_builder(self, g, **kw):
         g.plotcontainer.spacing = 10
-        g.new_plot(xtitle='Time (s)', ytitle='InputA',
+        g.new_plot(xtitle='Time f(s)', ytitle='InputA',
                    padding=[100, 10, 0, 60])
         g.new_series()
 

@@ -47,13 +47,6 @@ TTF_FONTS = ['Andale Mono', 'Arial', 'Arial Black',
 FONTS = TTF_FONTS
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
-try:
-    from kiva.fonttools.font_manager import fontManager
-
-    fontManager.defaultFamily = {'ttf': 'Arial', 'afm': 'Arial'}
-except ImportError:
-    pass
-
 PLUSMINUS = '\N{Plus-minus sign}'
 SIGMA = '\N{Greek Small Letter Sigma}'
 LAMBDA = '\u03BB'
@@ -97,9 +90,10 @@ INTEGRATED = 'Total Integrated'
 DEFAULT_INTEGRATED = '{} else Valid Integrated'.format(PLATEAU)
 VALID_INTEGRATED = 'Valid Integrated'
 PLATEAU_INTEGRATED = '{} Integrated'.format(PLATEAU)
-
+AUTO_LINEAR_PARABOLIC = 'Auto Linear/Parabolic'
+AUTO_N = 'Auto N'
 FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
-             'Average', 'Exponential', WEIGHTED_MEAN, 'Custom']
+             'Average', 'Exponential', WEIGHTED_MEAN, 'Custom', AUTO_LINEAR_PARABOLIC]
 
 FIT_ERROR_TYPES = [SD, SEM, MSEM, 'CI', 'MonteCarlo']
 SERIES_FIT_TYPES = [NULL_STR] + FIT_TYPES
@@ -280,7 +274,12 @@ BRACKETING = 'Bracketing'
 NN = 'Nearest Neighbors'
 PLANE = 'Plane'
 BOWL = 'Bowl'
-FLUX_MODEL_KINDS = PLANE, BOWL, WEIGHTED_MEAN, MATCHING, NN, BRACKETING, LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
+BSPLINE = 'BSpline'
+RBF = 'RBF'
+GRIDDATA = 'GridData'
+IDW = 'IDW'
+FLUX_MODEL_KINDS = PLANE, BOWL, WEIGHTED_MEAN, MATCHING, NN, BRACKETING, LEAST_SQUARES_1D, \
+                   WEIGHTED_MEAN_1D
 
 if paths.setup_dir:
     flux_constants = os.path.join(paths.setup_dir, 'flux_constants.yaml')
@@ -401,5 +400,14 @@ META_ATTRS = ('analysis_type', 'uuid', 'identifier', ALIQUOT, INCREMENT,
               'acquisition_software',
               'data_reduction_software', INSTRUMENT_NAME, LABORATORY,
               'experiment_queue_name', EXPERIMENT_TYPE) + SAMPLE_METADATA
+
+
+FAILED = 'failed'
+TRUNCATED = 'truncated'
+CANCELED = 'canceled'
+SUCCESS = 'success'
+END_AFTER = 'end_after'
+ABORTED = 'aborted'
+NOT_RUN = 'not run'
 
 # ============= EOF =============================================

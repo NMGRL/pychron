@@ -62,7 +62,7 @@ from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, AR_AR, DVC_PROTOCOL, DEFAULT_MONITOR_NAME, \
     SCRIPT_NAMES, EM_SCRIPT_KEYS, NULL_STR, NULL_EXTRACT_DEVICES, IPIPETTE_PROTOCOL, ILASER_PROTOCOL, IFURNACE_PROTOCOL, \
-    CRYO_PROTOCOL
+    CRYO_PROTOCOL, FAILED, CANCELED, TRUNCATED, SUCCESS
 
 
 def remove_backup(uuid_str):
@@ -172,6 +172,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     ratio_change_detection_enabled = Bool(False)
     execute_open_queues = Bool(True)
     use_preceding_blank = Bool(True)
+    save_all_runs = Bool(False)
 
     # dvc
     use_dvc_persistence = Bool(False)
@@ -254,7 +255,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'laboratory',
                  'ratio_change_detection_enabled',
                  'use_preceding_blank',
-                 'execute_open_queues')
+                 'execute_open_queues',
+                 'save_all_runs')
         self._preference_binder(prefid, attrs)
 
         # dvc
@@ -761,15 +763,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _set_prev(self, run):
         if hasattr(run, 'get_baseline_corrected_signal_dict'):
             d = (run.record_id, run.get_baseline_corrected_signal_dict())
-            self._prev_blanks[run.analysis_type] = d
-            self._prev_blanks['blank'] = d
+            if self.use_preceding_blank:
+                self._prev_blanks[run.analysis_type] = d
+                self._prev_blanks['blank'] = d
             self._prev_baselines = run.get_baseline_dict()
         else:
-            if run.analysis_type.startswith('blank'):
+            at = run.spec.analysis_type
+            if self.use_preceding_blank and at.startswith('blank'):
                 pb = run.get_baseline_corrected_signals()
                 if pb is not None:
                     d = (run.spec.runid, pb)
-                    self._prev_blanks[run.spec.analysis_type] = d
+                    self._prev_blanks[at] = d
                     self._prev_blanks['blank'] = d
                     self.debug('previous blanks ={}'.format(d))
 
@@ -809,28 +813,29 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             if self.monitor and self.monitor.has_fatal_error():
                 run.cancel_run()
-                run.spec.state = 'failed'
+                run.spec.state = FAILED
                 break
 
             if not getattr(self, step)(run):
                 self.warning('{} did not complete successfully'.format(step[1:]))
                 if step != '_post_measurement':  # save data even if post measurement fails
-                    run.spec.state = 'failed'
+                    run.spec.state = FAILED
                 break
 
         else:
             self.debug('$$$$$$$$$$$$$$$$$$$$ state at run end {}'.format(run.spec.state))
-            if run.spec.state not in ('truncated', 'canceled', 'failed'):
-                run.spec.state = 'success'
+            if run.spec.state not in (TRUNCATED, CANCELED, FAILED):
+                run.spec.state = SUCCESS
 
-        if run.spec.state in ('success', 'truncated', 'terminated'):
+        if self.save_all_runs or run.spec.state in ('success', 'truncated'):
             run.save()
-            self.run_completed = run
+
+        self.run_completed = run
 
         remove_backup(run.uuid)
 
         # check to see if action should be taken
-        if run.spec.state not in ('canceled', 'failed'):
+        if run.spec.state not in (CANCELED, FAILED):
             if self._post_run_check(run):
                 self._err_message = 'Post Run Check Failed'
                 self.warning('post run check failed')
@@ -841,12 +846,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.spec.state, t))
 
         run.finish()
-        if self.experiment_type == AR_AR and run.spec.state in ('success', 'truncated'):
+        if self.experiment_type == AR_AR and run.spec.state in (SUCCESS, TRUNCATED):
             run.spec.uage = run.isotope_group.uage
             run.spec.k39 = run.isotope_group.get_computed_value('k39')
 
-        if run.spec.state not in ('canceled', 'failed', 'aborted'):
-            self._retroactive_repository_identifiers(run.spec)
+        # if run.spec.state not in ('canceled', 'failed', 'aborted'):
+        #     self._retroactive_repository_identifiers(run.spec)
 
         if self.use_autoplot:
             self.autoplot_event = run
@@ -1064,7 +1069,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not run.start():
             self.alive = False
             ret = False
-            run.spec.state = 'failed'
+            run.spec.state = FAILED
 
             msg = 'Run {} did not start properly'.format(run.runid)
             self._err_message = msg
@@ -1195,7 +1200,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         try:
             pb = self._prev_blanks[spec.analysis_type]
         except KeyError:
-            pb = self._prev_blanks['blank']
+            pb = self._prev_blanks.get('blank', ('', {}))
 
         arun.previous_blanks = pb
         arun.previous_baselines = self._prev_baselines
@@ -1892,19 +1897,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._wait_for_save()
         self.heading('Pre Run Check Passed')
 
-    def _retroactive_repository_identifiers(self, spec):
-        self.warning('retroactive repository identifiers disabled')
-        return
-
-        db = self.datahub.mainstore
-        crun, expid = retroactive_repository_identifiers(spec, self._cached_runs, self._active_repository_identifier)
-        self._cached_runs, self._active_repository_identifier = crun, expid
-
-        db.add_repository_association(spec.repository_identifier, spec)
-        if not is_special(spec.identifier) and self._cached_runs:
-            for c in self._cached_runs:
-                db.add_repository_association(expid, c)
-            self._cached_runs = []
+    # def _retroactive_repository_identifiers(self, spec):
+    #     self.warning('retroactive repository identifiers disabled')
+    #     return
+    #
+    #     db = self.datahub.mainstore
+    #     crun, expid = retroactive_repository_identifiers(spec, self._cached_runs, self._active_repository_identifier)
+    #     self._cached_runs, self._active_repository_identifier = crun, expid
+    #
+    #     db.add_repository_association(spec.repository_identifier, spec)
+    #     if not is_special(spec.identifier) and self._cached_runs:
+    #         for c in self._cached_runs:
+    #             db.add_repository_association(expid, c)
+    #         self._cached_runs = []
 
     def _check_repository_identifiers(self, inform):
         db = self.datahub.mainstore.db

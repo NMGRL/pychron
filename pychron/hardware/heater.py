@@ -13,18 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Float, Event, Bool, Property, Int, HasTraits
+from traits.api import Float, Event, Bool, Property, Int, HasTraits, Instance
 from traitsui.api import View, Item, UItem, ButtonEditor, HGroup, VGroup
 
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.graph.stream_graph import StreamGraph
-from pychron.hardware import get_float
+from pychron.hardware import get_float, get_boolean
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.modbus import ModbusMixin
 
 
 class HeaterMixin(HasTraits):
-    setpoint = Float
+    setpoint = Float(enter_set=True, auto_set=False)
     readback = Float
     onoff_button = Event
     onoff_state = Bool
@@ -33,8 +33,24 @@ class HeaterMixin(HasTraits):
     use_pid = Bool
     graph = Instance(StreamGraph)
 
+    def initialize(self):
+        self.setpoint = self.read_setpoint()
+        self.readback = self.read_readback()
+        self.use_pid = self.read_use_pid()
+        self.onoff_state = self.read_onoff_state()
+        return True
+
     # heater interface
-    def set_sepoint(self, v):
+    def _setpoint_changed(self, new):
+        self.set_sepoint(new)
+
+    def set_setpoint(self, v):
+        raise NotImplementedError
+
+    def read_use_pid(self):
+        raise NotImplementedError
+
+    def read_onoff_state(self):
         raise NotImplementedError
 
     def read_setpoint(self):
@@ -52,14 +68,17 @@ class HeaterMixin(HasTraits):
     def update(self):
         if self.onoff_state:
             v = self.read_readback()
-            self.readback = v
-            self.graph.record(v)
+            if v is not None:
+                self.readback = v
+                self.graph.record(v)
 
     def _use_pid_changed(self, v):
+        self.debug('set use_pid={}'.format(v))
         self.set_use_pid(v)
 
     def _onoff_button_fired(self):
         self.onoff_state = not self.onoff_state
+        self.debug('set state = {}'.format(self.onoff_state))
         self.set_active(self.onoff_state)
 
     def _get_onoff_label(self):
@@ -72,12 +91,14 @@ class HeaterMixin(HasTraits):
         return g
 
     def heater_view(self):
-        v = View(VGroup(HGroup(UItem('name'),
+        v = View(VGroup(HGroup(UItem('name', style='readonly'),
+                               Item('use_pid', label='Use PID'),
                                UItem('onoff_button',
-                                     editor=ButtonEditor(name='onoff_label'))),
+                                     editor=ButtonEditor(label_value='onoff_label'))),
                         HGroup(Item('setpoint'),
-                               UItem('readback', editor=LCDEditor(height=30))),
-                        UItem('graph', style='custom')))
+                               UItem('readback', editor=LCDEditor(width=100, height=30))),
+                        UItem('graph',
+                              style='custom')))
         return v
 
 
@@ -92,22 +113,65 @@ class PLC2000Heater(CoreDevice, ModbusMixin, HeaterMixin):
         self.set_attribute(config, 'readback_address', 'Register', 'readback', cast='int')
         self.set_attribute(config, 'use_pid_address', 'Register', 'use_pid', cast='int')
         self.set_attribute(config, 'enable_address', 'Register', 'enable', cast='int')
+        self.debug('Automatically do coil_address = address-1')
+
+        for attr in ('setpoint', 'readback', 'use_pid', 'enable'):
+            attr = '{}_address'.format(attr)
+            v = getattr(self, attr)
+            setattr(self, attr, v-1)
+
         return True
 
-    def set_sepoint(self, v):
-        self._write_register(self.setpoint_address, v)
-
-    def read_setpoint(self):
-        pass
+    def set_setpoint(self, v):
+        if self.setpoint_address is not None:
+            self.debug('set setpoint addr={}, {}'.format(self.setpoint_address, v))
+            self._write_int(self.setpoint_address, v)
+        else:
+            self.debug('setpoint_address not set')
 
     def set_active(self, state):
-        self._write_coil(self.enable_address, bool(state))
+        if self.enable_address is not None:
+            self.debug('set active addr={}, {}'.format(self.enable_address, bool(state)))
+            self._write_coil(self.enable_address, bool(state))
+        else:
+            self.debug('enable_address not set')
 
     def set_use_pid(self, state):
-        self._write_coil(self.use_pid_address, bool(state))
+        if self.use_pid_address is not None:
+            self.debug('set use pid addr={}, {}'.format(self.use_pid_address, bool(state)))
+            self._write_coil(self.use_pid_address, bool(state))
+        else:
+            self.debug('use_pid_address not set')
 
     @get_float()
     def read_readback(self):
-        resp = self._read_holding_registers(self.readback_address)
-        return resp
+        if self.readback_address is not None:
+            v = self._read_input_float(self.readback_address)
+            self.debug('read readback addr={}, {}'.format(self.readback_address, v))
+            return v
+        else:
+            self.debug('readback address not set')
+
+    @get_boolean()
+    def read_use_pid(self):
+        if self.use_pid_address:
+            rr = self._read_coils([self.use_pid_address])
+            return rr.bits[0]
+        else:
+            self.debug('use_pid address not set')
+
+    @get_boolean()
+    def read_onoff_state(self):
+        if self.enable_address is not None:
+            rr = self._read_coils(self.enable_address)
+            return rr.bits[0]
+        else:
+            self.debug('enable address not set')
+
+    @get_float()
+    def read_setpoint(self):
+        if self.setpoint_address is not None:
+            return self._read_input_float(self.setpoint_address)
+        else:
+            self.debug('setpoint address not set')
 # ============= EOF =============================================

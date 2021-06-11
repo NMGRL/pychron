@@ -33,12 +33,17 @@ class PLC2000GaugeController(BaseGaugeController, CoreDevice, ModbusMixin):
 
         if isinstance(name, str):
             gauge = self.get_gauge(name)
-            register = gauge.channel
+            channel = gauge.channel
         else:
-            register = name.channel
+            channel = name.channel
 
         if name is not None:
-            pressure = self._read_holding_registers(register)
-
+            # register = channel-1
+            register = int(channel) - 1
+            try:
+                pressure = self._read_float(register)
+            except BaseException as e:
+                self.debug_exception()
+                self.debug('failed reading register={}, error={}'.format(register, e))
         return pressure
 # ============= EOF =============================================
