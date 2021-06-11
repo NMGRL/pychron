@@ -46,7 +46,13 @@ class HeadlessLoggable(HasTraits):
     def warning(self, msg, **kw):
         self.logger.warning(msg)
 
-    def debug(self, msg, **kw):
+    def debug(self, msg, *args, **kw):
+        if args:
+            try:
+                msg = msg.format(args)
+            except BaseException:
+                pass
+
         self.logger.debug(msg)
 
     def critical(self, msg, **kw):
