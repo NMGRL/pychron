@@ -401,4 +401,13 @@ META_ATTRS = ('analysis_type', 'uuid', 'identifier', ALIQUOT, INCREMENT,
               'data_reduction_software', INSTRUMENT_NAME, LABORATORY,
               'experiment_queue_name', EXPERIMENT_TYPE) + SAMPLE_METADATA
 
+
+FAILED = 'failed'
+TRUNCATED = 'truncated'
+CANCELED = 'canceled'
+SUCCESS = 'success'
+END_AFTER = 'end_after'
+ABORTED = 'aborted'
+NOT_RUN = 'not run'
+
 # ============= EOF =============================================
