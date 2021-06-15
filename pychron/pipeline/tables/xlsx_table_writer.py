@@ -237,6 +237,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         # remove non enabled columns
         columns = [c for c in columns if c.enabled]
 
+        # remove non visible columns
+        if self._options.exclude_hidden_columns:
+            columns = [c for c in columns if c.visible]
+
         return columns
 
     def _flux_columns(self, columns):
@@ -503,28 +507,31 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return cols
 
     def _make_human_unknowns(self, unks):
-        return self._make_sheet(unks, 'Unknowns')
+        name = self._options.human_sheet_name
+        return self._make_sheet(unks, name, 'unknown')
 
     def _make_machine_unknowns(self, unks):
-        self._make_machine_sheet(unks, 'Unknowns (Machine)')
+        name = self._options.machine_sheet_name
+        self._make_machine_sheet(unks, name)
 
     def _make_airs(self, airs):
-        self._make_sheet(airs, 'Airs')
+        self._make_sheet(airs, 'Airs', 'airs')
 
     def _make_blanks(self, blanks):
-        self._make_sheet(blanks, 'Blanks')
+        self._make_sheet(blanks, 'Blanks', 'blanks')
 
     def _make_monitors(self, monitors):
-        self._make_sheet(monitors, 'Monitors')
+        self._make_sheet(monitors, 'Monitors', 'monitors')
 
     def _make_summary_sheet(self, unks):
         self._current_row = 1
-        sh = self._workbook.add_worksheet('Summary')
+        name = self._options.summary_sheet_name
+        sh = self._workbook.add_worksheet(name)
         self._format_generic_worksheet(sh)
 
         cols = self._get_summary_columns()
         cols = [c for c in cols if c.visible]
-        self._make_title(sh, 'Summary', cols)
+        self._make_title(sh, 'Summary', cols, key='summary')
 
         fmt = self._workbook.add_format({'bottom': 1, 'align': 'center'})
         sh.set_row(self._current_row, 5)
@@ -603,7 +610,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         return ngs
 
-    def _make_sheet(self, groups, name):
+    def _make_sheet(self, groups, name, key):
         self._current_row = 1
 
         worksheet = self._workbook.add_worksheet(name)
@@ -611,7 +618,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         cols = self._get_columns(name, groups)
         self._format_worksheet(worksheet, cols, (8, 2))
 
-        self._make_title(worksheet, name, cols)
+        self._make_title(worksheet, name, cols, key=key)
 
         options = self._options
         repeat_header = options.repeat_header
@@ -682,7 +689,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
             self._current_row += 1
 
-        self._make_notes(groups, worksheet, len(cols), name)
+        self._make_notes(groups, worksheet, len(cols), key)
         self._current_row = 1
 
         for i, c in enumerate(cols):
@@ -702,7 +709,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         cols = self._get_machine_columns(name, groups)
         self._format_worksheet(worksheet, cols, (5, 2))
 
-        self._make_title(worksheet, name, cols)
+        self._make_title(worksheet, name, cols, key='machine')
 
         repeat_header = self._options.repeat_header
 
@@ -731,19 +738,25 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             if not c.visible:
                 sh.set_column(i, i, options={'hidden': True})
 
-    def _make_title(self, sh, name, cols):
+    def _make_title(self, sh, name, cols, key=None):
+        if key is None:
+            key = name.lower()[:-1]
+
         try:
-            title = getattr(self._options, '{}_title'.format(name.lower()[:-1]))
+            title = getattr(self._options, '{}_title'.format(key))
         except AttributeError:
+            self.debug_exception()
             title = None
 
         fmt = self._workbook.add_format({'font_size': 14, 'bold': True,
                                          'bottom': 6 if not title else 0})
 
-        sh.write_string(self._current_row, 0, 'Table X. {}'.format(name), fmt)
-        if title:
-            self._current_row += 1
-            sh.write_string(self._current_row, 0, title)
+        if title is None:
+            title = 'Table X. {}'.format(name)
+
+        sh.write_string(self._current_row, 0, title, fmt)
+
+        self._current_row += 1
 
         for i in range(1, len(cols)):
             sh.write_blank(self._current_row, i, '', cell_format=fmt)
@@ -966,7 +979,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             nfmt.set_bold(True)
 
             kcalabel = 'Ca/K' if self._options.invert_kca_kcl else 'K/Ca'
-            idx = next((i for i, c in enumerate(cols) if c.label == kcalabel))
+            idx = next((i for i, c in enumerate(cols) if c.label == kcalabel), 3)
 
             nsigma = self._options.asummary_kca_nsigma
             pmsigma = PLUSMINUS_NSIGMA.format(nsigma)
@@ -995,9 +1008,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         nfmt = self._get_number_format('asummary_age')
         nfmt.set_bold(True)
 
-        idx = next((i for i, c in enumerate(cols) if c.label == 'Age'))
+        idx = next((i for i, c in enumerate(cols) if c.label == 'Age'), 5)
 
-        k2o_idx, k2o_col = next((c for c in enumerate(cols) if c[1].attr == 'display_k2o'))
+        k2o = next((c for c in enumerate(cols) if c[1].attr == 'display_k2o'), None)
+        if k2o:
+            k2o_idx, k2o_col = k2o
+
         nsigma = self._options.asummary_age_nsigma
         pmsigma = PLUSMINUS_NSIGMA.format(nsigma)
 
@@ -1035,8 +1051,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             sh.write_number(self._current_row, idx + 1, std_dev(integrated_age) * nsigma, nfmt)
 
             # write total k2o
-            v = floatfmt(nominal_value(group.total_k2o), k2o_col.nsigfigs)
-            sh.write_rich_string(self._current_row, k2o_idx, 'K', self._subscript, '2', 'O wt. %={}'.format(v), fmt)
+            if k2o:
+                v = floatfmt(nominal_value(group.total_k2o), k2o_col.nsigfigs)
+                sh.write_rich_string(self._current_row, k2o_idx, 'K', self._subscript, '2', 'O wt. %={}'.format(v), fmt)
 
             self._current_row += 1
 
@@ -1080,7 +1097,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
             self._current_row += 1
 
-    def _make_notes(self, groups, sh, ncols, name):
+    def _make_notes(self, groups, sh, ncols, key):
         top = self._workbook.add_format({'top': 1, 'bold': True})
 
         sh.write_string(self._current_row, 0, 'Notes:', top)
@@ -1088,7 +1105,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             sh.write_blank(self._current_row, i, '', cell_format=top)
         self._current_row += 1
 
-        func = getattr(self, '_make_{}_notes'.format(name.lower()))
+        func = getattr(self, '_make_{}_notes'.format(key))
         func(groups, sh)
 
         for i in range(0, ncols):
@@ -1098,7 +1115,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         notes = six.text_type(self._options.summary_notes)
         self._write_notes(sh, notes)
 
-    def _make_unknowns_notes(self, groups, sh):
+    def _make_unknown_notes(self, groups, sh):
 
         g = groups[0]
         monitor_age, decay_ref = g.monitor_info
@@ -1117,8 +1134,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         x_note = opt.unknown_x_note
         px_note = opt.unknown_px_note
 
-        notes = notes.format(monitor_age=monitor_age, decay_ref=decay_ref)
-
         sh.write_rich_string(self._current_row, 0, self._superscript, '1', corrected_note)
         self._current_row += 1
         sh.write_rich_string(self._current_row, 0, self._superscript, '2', intercept_note)
@@ -1131,6 +1146,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         sh.write(self._current_row, 0, px_note)
         self._current_row += 1
+
+        try:
+            notes = notes.format(monitor_age=monitor_age, decay_ref=decay_ref)
+        except BaseException as e:
+            self.debug('failed formatting notes. {}'.format(e))
+            self.debug_exception()
 
         self._write_notes(sh, notes)
 

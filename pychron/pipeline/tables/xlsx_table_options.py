@@ -128,6 +128,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     monitor_notes = dumpable(Str(''))
     monitor_title = dumpable(Str(''))
     summary_notes = dumpable(Str(''))
+    summary_title = dumpable(Str(''))
+    machine_title = dumpable(Str('Non-formatted Table'))
 
     include_summary_sheet = dumpable(Bool(True))
     include_summary_age = dumpable(Bool(True))
@@ -181,6 +183,12 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     # _suppress = False
 
     include_decay_error = dumpable(Bool(False))
+
+    human_sheet_name = dumpable(Str('Unknowns'))
+    machine_sheet_name = dumpable(Str('Unknowns (Machine)'))
+    summary_sheet_name = dumpable(Str('Summary'))
+
+    exclude_hidden_columns = dumpable(Bool(False))
 
     def __init__(self, name, *args, **kw):
         self._persistence_name = name
@@ -252,7 +260,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         class UUItem(UCustom):
             height = -50
 
-        unknown_grp = VGroup(Item('unknown_title', label='Table Heading', springy=True),
+        unknown_grp = VGroup(Item('unknown_title', label='Table Title', springy=True),
                              VBorder(VBorder(UItem('unknown_note_name',
                                                    editor=EnumEditor(name='available_unknown_note_names')),
                                              UItem('unknown_notes', style='custom'), label='Main'),
@@ -262,10 +270,17 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                      VBorder(UUItem('unknown_x_note'), label='X'),
                                      VBorder(UUItem('unknown_px_note'), label='pX'),
                                      label='Notes'), label='Unknowns Cont.')
+        sheet_grp = BorderVGroup(
+            Item('human_sheet_name', label='Formatted'),
+            Item('machine_sheet_name', label='Machine'),
+            Item('summary_sheet_name', label='Summary'),
+            label='Sheet Names')
+        behavior_grp = BorderVGroup(Item('exclude_hidden_columns'),
+                                    label='Behavior')
 
         def note(name):
             tag = '{}s'.format(name.capitalize())
-            return VGroup(Item('{}_title'.format(name), label='Table Heading'),
+            return VGroup(Item('{}_title'.format(name), label='Table Title'),
                           VBorder(UItem('{}_notes'.format(name), style='custom'), label='Notes'), label=tag)
 
         air_grp = note('air')
@@ -314,24 +329,24 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
         sig_figs_grp = BorderVGroup(Item('use_standard_sigfigs'),
                                     VGroup(Item('sig_figs', label='Default'),
-                                    HGroup(isigfig('age', 'Age'),
-                                           isigfig('asummary_age', 'Summary Age')),
-                                    HGroup(isigfig('kca', 'K/Ca'),
-                                           isigfig('asummary_kca', 'Summary K/Ca')),
-                                    HGroup(isigfig('kcl', 'K/Cl'),
-                                           isigfig('asummary_kcl', 'Summary K/Cl')),
-                                    HGroup(isigfig('asummary_trapped_ratio', 'Trapped 40/36'),
-                                           isigfig('asummary_mswd', 'Summary MSWD')),
-                                    HGroup(isigfig('radiogenic_yield', '%40Ar*'),
-                                           isigfig('cumulative_ar39', 'Cum. %39Ar')),
-                                    HGroup(isigfig('signal', 'Signal'),
-                                           isigfig('j', 'Flux')),
-                                    HGroup(isigfig('ic', 'IC'),
-                                           isigfig('disc', 'Disc.')),
-                                    HGroup(isigfig('decay', 'Decay'),
-                                           isigfig('correction', 'Correction Factors')),
-                                    HGroup(isigfig('sens', 'Sensitivity'),
-                                           isigfig('k2o', 'K2O')), enabled_when='not use_standard_sigfigs'),
+                                           HGroup(isigfig('age', 'Age'),
+                                                  isigfig('asummary_age', 'Summary Age')),
+                                           HGroup(isigfig('kca', 'K/Ca'),
+                                                  isigfig('asummary_kca', 'Summary K/Ca')),
+                                           HGroup(isigfig('kcl', 'K/Cl'),
+                                                  isigfig('asummary_kcl', 'Summary K/Cl')),
+                                           HGroup(isigfig('asummary_trapped_ratio', 'Trapped 40/36'),
+                                                  isigfig('asummary_mswd', 'Summary MSWD')),
+                                           HGroup(isigfig('radiogenic_yield', '%40Ar*'),
+                                                  isigfig('cumulative_ar39', 'Cum. %39Ar')),
+                                           HGroup(isigfig('signal', 'Signal'),
+                                                  isigfig('j', 'Flux')),
+                                           HGroup(isigfig('ic', 'IC'),
+                                                  isigfig('disc', 'Disc.')),
+                                           HGroup(isigfig('decay', 'Decay'),
+                                                  isigfig('correction', 'Correction Factors')),
+                                           HGroup(isigfig('sens', 'Sensitivity'),
+                                                  isigfig('k2o', 'K2O')), enabled_when='not use_standard_sigfigs'),
                                     label='Significant Figures')
 
         def inc(k):
@@ -382,7 +397,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                    label='Columns')
         unk_columns_grp = VGroup(HGroup(columns_grp, sig_figs_grp),
                                  summary_rows_grp, label='Unknowns')
-        g1 = VGroup(HGroup(grp, appearence_grp), label='Main')
+        g1 = VGroup(HGroup(grp, appearence_grp),
+                    HGroup(sheet_grp, behavior_grp),
+                    label='Main')
 
         def isum(k):
             return inc('summary_{}'.format(k))
@@ -415,7 +432,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                                        Item('summary_age_sig_figs', label='Age'),
                                        label='Sig Figs')
 
-        summary_grp = VGroup(iisum('sheet', 'Summary Sheet'),
+        summary_grp = VGroup(HGroup(iisum('sheet', 'Summary Sheet'),
+                                    Item('summary_title', label='Table Title')),
                              HGroup(summary_columns, summary_sigfigs),
                              BorderVGroup(UItem('summary_notes', style='custom'),
                                           label='Notes'),
