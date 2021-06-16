@@ -105,12 +105,18 @@ class BulkEditNode(BaseDVCNode):
 
         icfs = [ic_factor for ic_factor in self.options.ic_factors if ic_factor.enabled]
         if icfs:
+            author = self.dvc.get_author()
             for ai in ans:
                 self._bulk_ic_factor(ai, icfs)
 
-            self.dvc.update_analyses(ans, 'icfactors', '<ICFactor> bulk edit {}'.format(self.options.icfactor_message))
+            self.dvc.update_analyses(ans, 'icfactors',
+                                     '<ICFactor> bulk edit {}'.format(self.options.icfactor_message),
+                                     author)
 
         if self.options.aliquot or self.options.step:
+            if not author:
+                author = self.dvc.get_author()
+
             paths = {}
             for ai in ans:
                 expid, ps = self._bulk_runid(ai, self.options.aliquot, self.options.step)
@@ -124,9 +130,12 @@ class BulkEditNode(BaseDVCNode):
 
             for expid, ps in paths.items():
                 if self.dvc.repository_add_paths(expid, ps):
-                    self.dvc.repository_commit(expid, '<EDIT> RunID')
+                    self.dvc.repository_commit(expid, '<EDIT> RunID', author)
 
         if self.options.sync_sample_enabled:
+            if not author:
+                author = self.dvc.get_author()
+
             for repo, ais in groupby_repo(ans):
                 self.dvc.pull_repository(repo)
                 ps = []
@@ -134,7 +143,7 @@ class BulkEditNode(BaseDVCNode):
                     ps.extend(self.dvc.analyses_db_sync(identifier, ais, repo))
 
                 if self.dvc.repository_add_paths(repo, ps):
-                    self.dvc.repository_commit(repo, '<EDIT> Sync Sample MetaData')
+                    self.dvc.repository_commit(repo, '<EDIT> Sync Sample MetaData', author)
 
     def _bulk_runid(self, ai, aliquot, step):
         if not aliquot:

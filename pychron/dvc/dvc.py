@@ -569,7 +569,7 @@ class DVC(Loggable):
         repo = self._get_repository(repo, as_current=False)
         repo.add_tag(name, message, hexsha)
 
-    def update_analysis_paths(self, items, msg):
+    def update_analysis_paths(self, items, msg, author=None):
         """
         items is a list of (analysis, path) tuples
         :param items:
@@ -581,15 +581,19 @@ class DVC(Loggable):
         def key(x):
             return x[0].repository_identifier
 
+        author = self.get_author(author)
         for expid, ais in groupby(sorted(items, key=key), key=key):
             ps = [p for _, p in ais]
             if self.repository_add_paths(expid, ps):
-                self.repository_commit(expid, msg)
+                self.repository_commit(expid, msg, author)
                 mod_repositories.append(expid)
 
         return mod_repositories
 
-    def update_analyses(self, ans, modifiers, msg):
+    def update_analyses(self, ans, modifiers, msg, author=None):
+
+        author = self.get_author(author)
+
         if not isinstance(modifiers, (list, tuple)):
             modifiers = (modifiers,)
 
@@ -597,7 +601,7 @@ class DVC(Loggable):
         for expid, ais in groupby_repo(ans):
             ps = [analysis_path(x, x.repository_identifier, modifier=modifier) for x in ais for modifier in modifiers]
             if self.repository_add_paths(expid, ps):
-                if self.repository_commit(expid, msg):
+                if self.repository_commit(expid, msg, author):
                     mod_repositories.append(expid)
                 else:
                     self.warning_dialog('There is an issue with your repository. {}. Please fix it before '
@@ -1041,12 +1045,9 @@ class DVC(Loggable):
         repo = self._get_repository(repository_identifier)
         return repo.add_paths(paths)
 
-    def repository_commit(self, repository, msg):
-        self.debug('Repository commit: {} msg: {}'.format(repository, msg))
-        repo = self._get_repository(repository)
-        author = None
+    def get_author(self, author=None):
         if not self.use_default_commit_author:
-            if not self._author:
+            if author is None or not self._author:
                 db = self.db
                 with db.session_ctx():
                     authors = [User(r) for r in db.get_users()]
@@ -1061,7 +1062,12 @@ class DVC(Loggable):
 
                         if g.remember_choice:
                             self._author = author
+        return author
 
+    def repository_commit(self, repository, msg, author=None):
+        self.debug('Repository commit: {} msg: {}'.format(repository, msg))
+        repo = self._get_repository(repository)
+        author = self.get_author(author)
         return repo.commit(msg, author=author)
 
     def remote_repositories(self):

@@ -55,6 +55,8 @@ class InterpretedAgeTable(ColumnSorterMixin):
                 return os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(s.path))))
 
             dvc = self.dvc
+
+            author = dvc.get_author()
             for repo, records in groupby_key(self.selected, key):
                 ps = []
                 ns = []
@@ -66,7 +68,7 @@ class InterpretedAgeTable(ColumnSorterMixin):
                         self.interpreted_ages.remove(r)
 
                 if dvc.repository_add_paths(repo, ps):
-                    dvc.repository_commit(repo, 'Removed interpreted ages {}'.format(','.join(ns)))
+                    dvc.repository_commit(repo, 'Removed interpreted ages {}'.format(','.join(ns)), author)
 
     # handlers
     def _interpreted_ages_items_changed(self, old, new):

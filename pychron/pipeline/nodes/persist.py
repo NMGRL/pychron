@@ -89,6 +89,8 @@ class DVCPersistNode(PersistNode):
         if not isinstance(mods, tuple):
             mods = (self.modifier,)
 
+
+
         modp = []
         for mi in mods:
             modpi = self.dvc.update_analyses(state.unknowns,
@@ -113,8 +115,10 @@ class DefineEquilibrationPersistNode(DVCPersistNode):
 
         msg = ','.join('{}({})'.format(*a) for a in zip(state.saveable_keys, state.saveable_fits))
         items = progress_loader(state.unknowns, wrapper, threshold=1, unpack=False)
-        modpis = self.dvc.update_analysis_paths(items, '<DEFINE EQUIL> {}'.format(msg))
-        modpps = self.dvc.update_analyses(state.unknowns, 'intercepts', '<ISOEVO> modified by DEFINE EQUIL')
+
+        author = self.dvc.get_author()
+        modpis = self.dvc.update_analysis_paths(items, '<DEFINE EQUIL> {}'.format(msg), author)
+        modpps = self.dvc.update_analyses(state.unknowns, 'intercepts', '<ISOEVO> modified by DEFINE EQUIL', author)
         modpis.extend(modpps)
 
         if modpis:
