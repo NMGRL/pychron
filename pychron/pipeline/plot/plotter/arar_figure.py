@@ -498,15 +498,8 @@ class BaseArArFigure(SelectionFigure):
                                items=None,
                                update_meta_func=None):
         if add_tool:
-            broadcaster = BroadcasterTool()
-            scatter.tools.append(broadcaster)
-            if add_selection:
-                rect_tool = RectSelectionTool(scatter)
-                rect_overlay = RectSelectionOverlay(component=scatter,
-                                                    tool=rect_tool)
-
-                scatter.overlays.append(rect_overlay)
-                broadcaster.tools.append(rect_tool)
+            # broadcaster = BroadcasterTool()
+            # scatter.tools.append(broadcaster)
 
             if inspector is None:
                 if value_format is None:
@@ -531,13 +524,15 @@ class BaseArArFigure(SelectionFigure):
                 pinspector_overlay = PointInspectorOverlay(component=scatter,
                                                            tool=inspector)
                 scatter.overlays.append(pinspector_overlay)
-                broadcaster.tools.append(inspector)
+                # broadcaster.tools.append(inspector)
+                scatter.tools.append(inspector)
             else:
                 if not isinstance(inspector, (list, tuple)):
                     inspector = (inspector,)
 
                 for i in inspector:
-                    broadcaster.tools.append(i)
+                    # broadcaster.tools.append(i)
+                    scatter.tools.append(i)
                     # # pinspector_overlay = PointInspectorOverlay(component=scatter,
                     # #                                            tool=point_inspector)
                     # # print 'fff', inspector
@@ -548,6 +543,14 @@ class BaseArArFigure(SelectionFigure):
                     #     i.on_trait_change(self._handle_inspection, 'inspector_item')
                     #     # scatter.overlays.append(pinspector_overlay)
                     #     broadcaster.tools.append(i)
+            if add_selection:
+                rect_tool = RectSelectionTool(scatter)
+                rect_overlay = RectSelectionOverlay(component=scatter,
+                                                    tool=rect_tool)
+
+                scatter.overlays.append(rect_overlay)
+                # broadcaster.tools.append(rect_tool)
+                scatter.tools.append(rect_tool)
 
             if update_meta_func is None:
                 update_meta_func = self.update_graph_metadata

@@ -19,7 +19,7 @@ from __future__ import absolute_import
 
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.tools.scatter_inspector import ScatterInspector, ScatterInspectorEvent
-from enable.base_tool import BaseTool
+from enable.base_tool import BaseTool, KeySpec
 from kiva.fonttools import Font
 # from pychron.pipeline.plot.inspector_item import BaseInspectorItem
 from six.moves import range
@@ -52,6 +52,11 @@ class InfoInspector(ScatterInspector):
     # inspector_item_klass = BaseInspectorItem
     event_queue = None
     hittest_threshold = 5
+
+    def __init__(self, *args, **kw):
+        super(InfoInspector, self).__init__(*args, **kw)
+        self.selection_mode = 'multi'
+        self.multiselect_modifier = KeySpec(None)
     # select_event = Event
 
     # def normal_left_down(self, event):

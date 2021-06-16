@@ -22,7 +22,8 @@ from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.ideogram_views import VIEWS
-from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS, MAIN, APPEARANCE, DISPLAY, GROUPS, STD_SIG_FIGS
+from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS, MAIN, APPEARANCE, DISPLAY, GROUPS, STD_SIG_FIGS, \
+    CUMULATIVE, WEIGHTED_MEAN, KERNEL, SCHAEN2020_1, SCHAEN2020_2, SCHAEN2020_3, DEINO
 
 
 class IdeogramAuxPlot(AuxPlot):
@@ -55,8 +56,17 @@ class IdeogramOptions(AgeOptions):
     # edit_label_format = Button
     # refresh_asymptotic_button = Button
     index_attrs = Dict(transient=True)
-    probability_curve_kind = Enum('cumulative', 'kernel')
-    mean_calculation_kind = Enum('weighted mean', 'kernel')
+    probability_curve_kind = Enum(CUMULATIVE, KERNEL)
+    mean_calculation_kind = Enum(WEIGHTED_MEAN,
+                                 KERNEL,
+                                 SCHAEN2020_1,
+                                 SCHAEN2020_2,
+                                 SCHAEN2020_3,
+                                 DEINO)
+    skew_min = Float(-0.2)
+    skew_max = Float(0.2)
+    shapiro_wilk_alpha = Float(0.05)
+
     use_centered_range = Bool
     use_static_limits = Bool
     xlow = Float

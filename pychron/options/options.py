@@ -24,6 +24,7 @@ from enable.markers import marker_names
 from pyface.message_dialog import warning
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
     Color, Button, Instance
+from traits.trait_errors import TraitError
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
     spring, UItem, ListEditor, InstanceEditor, CheckListEditor, TextEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -451,7 +452,10 @@ class BaseOptions(HasTraits):
     def _load_factory_defaults(self, yd):
         for k, v in yd.items():
             if hasattr(self, k):
-                setattr(self, k, v)
+                try:
+                    setattr(self, k, v)
+                except TraitError as e:
+                    print('failed setting factory default. {}, {}, {}'.format(k, v, e))
 
 
 class GroupMixin(HasTraits):

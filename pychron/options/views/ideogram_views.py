@@ -20,7 +20,7 @@ from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, MainOptions, TitleSubOptions
 from pychron.processing.j_error_mixin import J_ERROR_GROUP
-from pychron.pychron_constants import MAIN, APPEARANCE
+from pychron.pychron_constants import MAIN, APPEARANCE, SCHAEN2020_3
 
 
 class DisplaySubOptions(TitleSubOptions):
@@ -115,24 +115,28 @@ class DisplaySubOptions(TitleSubOptions):
 
 class CalculationSubOptions(SubOptions):
     def traits_view(self):
-        calcgrp = Group(
-            Item('probability_curve_kind',
-                 width=-150,
-                 label='Probability Curve Method'),
-            Item('mean_calculation_kind',
-                 width=-150,
-                 label='Mean Calculation Method'),
-            Item('error_calc_method',
-                 width=-150,
-                 label='Error Calculation Method'),
-            Item('nsigma', label='Age Error NSigma'),
+        calcgrp = BorderVGroup(Item('probability_curve_kind',
+                                    width=-150,
+                                    label='Probability Curve Method'),
+                               Item('mean_calculation_kind',
+                                    width=-150,
+                                    label='Mean Calculation Method'),
+                               BorderVGroup(Item('shapiro_wilk_alpha', label='Shapiro-Wilk alpha'),
+                                            HGroup(Item('skew_min', label='Skew Min.'),
+                                                   Item('skew_max', label='Skew Max')),
+                                            visible_when='mean_calculation_kind=="{}"'.format(SCHAEN2020_3),
+                                            label='Normality Options'),
 
-            VGroup(J_ERROR_GROUP,
-                   HGroup(Item('include_irradiation_error'),
-                          Item('include_decay_error'), show_border=True),
-                   label='Uncertainty', show_border=True),
-            show_border=True,
-            label='Calculations')
+                               Item('error_calc_method',
+                                    width=-150,
+                                    label='Error Calculation Method'),
+                               Item('nsigma', label='Age Error NSigma'),
+
+                               BorderVGroup(J_ERROR_GROUP,
+                                            BorderHGroup(Item('include_irradiation_error'),
+                                                         Item('include_decay_error')),
+                                            label='Uncertainty'),
+                               label='Calculations')
 
         return self._make_view(calcgrp)
 
@@ -200,7 +204,7 @@ class IdeogramSubOptions(SubOptions):
 class IdeogramAppearance(AppearanceSubOptions):
     def traits_view(self):
         mi = BorderVGroup(HGroup(UItem('mean_indicator_fontname'),
-                          UItem('mean_indicator_fontsize')),
+                                 UItem('mean_indicator_fontsize')),
                           Item('display_mean_location', label='Location'),
                           label='Mean Indicator')
 

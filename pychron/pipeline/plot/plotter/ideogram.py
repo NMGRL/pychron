@@ -43,7 +43,7 @@ from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.processing.interpreted_age import InterpretedAge
-from pychron.pychron_constants import PLUSMINUS, SIGMA
+from pychron.pychron_constants import PLUSMINUS, SIGMA, KERNEL, SCHAEN2020_3, SCHAEN2020_2, SCHAEN2020_1, DEINO
 from pychron.regex import ORDER_PREFIX_REGEX
 
 N = 500
@@ -173,13 +173,22 @@ class Ideogram(BaseArArFigure):
 
         # if self.options.omit_by_tag:
         selection = self.analysis_group.get_omitted_by_tag(self.sorted_analyses)
+
+        mck = opt.mean_calculation_kind
+        if mck in [SCHAEN2020_1, SCHAEN2020_2, SCHAEN2020_3, DEINO]:
+            kw = {'skew_min': opt.skew_min,
+                  'skew_max': opt.skew_max,
+                  'alpha': opt.shapiro_wilk_alpha}
+            print(kw)
+            selection = list(set(selection + self.analysis_group.get_outliers(mck, **kw)))
+            print('modificas setion', selection)
         # else:
         #     selection = []
         for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             # plotobj.group_id = self.group_id
             # print(id(plotobj), plotobj.group_id)
 
-            if self.options.reverse_x_axis:
+            if opt.reverse_x_axis:
                 plotobj.default_origin = 'bottom right'
 
             plot_name = po.plot_name
@@ -252,7 +261,6 @@ class Ideogram(BaseArArFigure):
         ans = self.sorted_analyses
         sel = obj.metadata.get('selections', [])
         self._set_selected(ans, sel)
-
         self._rebuild_ideo(sel)
         self.recalculate_event = True
 
@@ -1011,15 +1019,22 @@ class Ideogram(BaseArArFigure):
                               options.include_decay_error, dirty=True)
 
         mswd, valid_mswd, n, pvalue = self.analysis_group.get_mswd_tuple()
-
-        if options.mean_calculation_kind == 'kernel':
+        mck = options.mean_calculation_kind
+        if mck == KERNEL:
             wm, we = 0, 0
             peak_xs, peak_ys, xr = fast_find_peaks(ys, xs)
             wm = peak_xs[0]
             # wm = np_max(maxs, axis=1)[0]
+        # elif mck == SCHAEN2020_1:
+        #     wm, we, mswd, valid_mswd, n, pvalue = self.analysis_group.apply_outlier_filtering(SCHAEN2020_1)
+        # elif mck == SCHAEN2020_2:
+        #     wm, we, mswd, valid_mswd, n, pvalue = self.analysis_group.apply_outlier_filtering(SCHAEN2020_1)
+        # elif mck == SCHAEN2020_3:
+        #     wm, we, mswd, valid_mswd, n, pvalue = self.analysis_group.apply_outlier_filtering(SCHAEN2020_1)
         else:
             wage = self.analysis_group.weighted_age
             wm, we = nominal_value(wage), std_dev(wage)
+
         return wm, we, mswd, valid_mswd, n, pvalue
 
 # ============= EOF =============================================

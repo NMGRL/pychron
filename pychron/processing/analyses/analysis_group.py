@@ -16,6 +16,7 @@
 
 
 import math
+from operator import attrgetter
 
 from numpy import array, nan, average
 # ============= enthought library imports =======================
@@ -31,9 +32,10 @@ from pychron.processing.analyses.analysis import IdeogramPlotable
 from pychron.processing.analyses.preferred import Preferred
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
+from pychron.processing.sclf import schaen_2020_1, schaen_2020_2, schaen_2020_3, deino_filter
 from pychron.pychron_constants import MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
     DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR, \
-    ISOCHRON, MSE, SE, INTEGRATED
+    ISOCHRON, MSE, SE, INTEGRATED, SCHAEN2020_1, SCHAEN2020_2, SCHAEN2020_3, DEINO
 
 
 def AGProperty(*depends):
@@ -195,6 +197,23 @@ class AnalysisGroup(IdeogramPlotable):
                 'valid_mswd': valid_mswd,
                 'min': mi, 'max': ma, 'total_dev': total_dev}
 
+    def get_outliers(self, mck, **options):
+        if mck == SCHAEN2020_1:
+            func = schaen_2020_1
+        elif mck == SCHAEN2020_2:
+            func = schaen_2020_2
+        elif mck == SCHAEN2020_3:
+            func = schaen_2020_3
+        elif mck == DEINO:
+            func = deino_filter
+
+        _, ans = func(self.sorted_clean_analyses(), **options)
+
+        if ans is not None:
+            idx = [i for i, a in enumerate(self.analyses) if a not in ans]
+
+        return idx
+
     def get_mswd_tuple(self):
         mswd = self.mswd
         valid_mswd = validate_mswd(mswd, self.nanalyses)
@@ -225,6 +244,9 @@ class AnalysisGroup(IdeogramPlotable):
 
     def clean_analyses(self):
         return (ai for ai in self.analyses if not self._is_omitted(ai))
+
+    def sorted_clean_analyses(self, key='age'):
+        return sorted(self.clean_analyses(), key=attrgetter(key))
 
     def do_omit_non_plateau(self):
         self.calculate_plateau()
@@ -1066,6 +1088,12 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             if not self.plateau_steps:
                 pa = self.integrated_age
                 pv.computed_kind = INTEGRATED
+        # elif pak == 'schaen_2020_1':
+        #     pa = schaen_2020_1(self.sorted_clean_analyses())
+        # elif pak == 'schaen_2020_2':
+        #     pa = schaen_2020_2(self.sorted_clean_analyses())
+        # elif pak == 'schaen_2020_3':
+        #     pa = schaen_2020_3(self.sorted_clean_analyses())
 
         return pa
 
