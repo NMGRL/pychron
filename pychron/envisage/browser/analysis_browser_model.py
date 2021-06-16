@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Instance, Button, Property
+from traits.api import Instance, Button, Property, Color
 
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.ui.preference_binding import bind_preference
@@ -104,19 +104,19 @@ class AnalysisBrowserModel(BrowserModel):
 
     def _analysis_table_default(self):
         at = AnalysisTable(dvc=self.dvc)
-        # at.on_trait_change(self._analysis_set_changed, 'analysis_set')
-        # at.load()
+
         prefid = 'pychron.browser'
         bind_preference(at, 'max_history', '{}.max_history'.format(prefid))
 
-        bind_preference(at.tabular_adapter,
-                        'unknown_color', '{}.unknown_color'.format(prefid))
-        bind_preference(at.tabular_adapter,
-                        'blank_color', '{}.blank_color'.format(prefid))
-        bind_preference(at.tabular_adapter,
-                        'air_color', '{}.air_color'.format(prefid))
+        adapter = at.tabular_adapter
+        bind_preference(adapter, 'use_analysis_colors', '{}.use_analysis_colors'.format(prefid))
 
-        bind_preference(at.tabular_adapter,
-                        'use_analysis_colors', '{}.use_analysis_colors'.format(prefid))
+        from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_UNDERSCORE_KEY
+        for analysis_type in ANALYSIS_MAPPING_UNDERSCORE_KEY.keys():
+            key = '{}_color'.format(analysis_type)
+            if not hasattr(adapter, key):
+                adapter.add_trait(key, Color)
+            bind_preference(adapter, key, '{}.{}_color'.format(prefid, analysis_type))
+
         return at
 # ============= EOF =============================================

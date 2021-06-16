@@ -180,9 +180,6 @@ class AnalysisAdapter(BrowserAdapter):
     odd_bg_color = 'lightgray'
     font = 'arial 10'
 
-    unknown_color = Color
-    blank_color = Color
-    air_color = Color
     use_analysis_colors = Bool
 
     def run_history_columns(self):
@@ -267,12 +264,12 @@ class AnalysisAdapter(BrowserAdapter):
 
                 else:
                     if self.use_analysis_colors:
-                        if item.analysis_type == 'unknown':
-                            color = self.unknown_color
-                        elif item.analysis_type == 'air':
-                            color = self.air_color
-                        elif item.analysis_type.startswith('blank'):
-                            color = self.blank_color
+                        key = '{}_color'.format(item.analysis_type)
+                        if hasattr(self, key):
+                            color = getattr(self, key)
+                        else:
+                            if item.analysis_type.startswith('blank'):
+                                color = self.blank_color
 
         return color
 

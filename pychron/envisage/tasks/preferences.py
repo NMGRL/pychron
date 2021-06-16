@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Directory, Bool, String, Float, Int, Str, Property, Enum
+from traits.has_traits import MetaHasTraits
 from traits.traits import Color
 from traitsui.api import View, Item, VGroup
 
@@ -93,7 +94,17 @@ class GeneralPreferencesPane(PreferencesPane):
         return v
 
 
-class BrowserPreferences(BasePreferencesHelper):
+class AnalysisTypeColorMeta(MetaHasTraits):
+    def __new__(cls, name, bases, d):
+        from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_UNDERSCORE_KEY
+        for k in ANALYSIS_MAPPING_UNDERSCORE_KEY.keys():
+            name = '{}_color'.format(k)
+            d[name] = Color
+
+        return super().__new__(cls, name, bases, d)
+
+
+class BrowserPreferences(BasePreferencesHelper, metaclass=AnalysisTypeColorMeta):
     preferences_path = 'pychron.browser'
     reference_hours_padding = Float
     auto_load_database = Bool
@@ -101,9 +112,7 @@ class BrowserPreferences(BasePreferencesHelper):
     mounted_media_root = Directory
 
     max_history = Int
-    unknown_color = Color
-    blank_color = Color
-    air_color = Color
+
     use_analysis_colors = Bool
     one_selected_is_all = Bool
     auto_scroll_kind = Enum(AUTO_SCROLL_KINDS)
@@ -114,14 +123,17 @@ class BrowserPreferencesPane(PreferencesPane):
     category = 'Browser'
 
     def traits_view(self):
+        from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING
+        color_items = []
+        # print(self.model, id(self.model), self.model.traits())
+        for k in sorted(ANALYSIS_MAPPING.values()):
+            name = '{}_color'.format(k.lower().replace(' ', '_'))
+            if hasattr(self.model, name):
+                color_items.append(Item(name, label=k))
+
         acgrp = VGroup(Item('use_analysis_colors', label='Use Analysis Colors',
                             tooltip='Color analyses based on type in the Browser window'),
-                       VGroup(Item('unknown_color', label='Unknown',
-                                   tooltip='Color for unknown and monitor analyses'),
-                              Item('blank_color', label='Blank',
-                                   tooltip='Color for all blank analysis types, e.g. blank_unknown, blank_air, etc'),
-                              Item('air_color', label='Air',
-                                   tooltip='Color for air analyses'),
+                       VGroup(*color_items,
                               enabled_when='use_analysis_colors'),
                        show_border=True, label='Analysis Colors')
         load_grp = VGroup(Item('auto_load_database', label='Auto Load',
