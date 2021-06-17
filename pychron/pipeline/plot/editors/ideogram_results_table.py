@@ -32,7 +32,9 @@ class IdeogramResultsAdapter(TabularAdapter):
                ('Weighted Mean Age', 'weighted_mean_age'),
                ('Weighted Mean Age Err.', 'weighted_mean_age_error'),
                ('N', 'nanalyses'),
-               ('MSWD', 'mswd')]
+               ('MSWD', 'mswd'),
+               ('Shapiro-Wilk', 'shapiro_wilk_pvalue'),
+               ('Skewness', 'skewness')]
 
     group_id_width = Int(50)
     identifier_width = Int(75)
@@ -48,9 +50,28 @@ class IdeogramResultsAdapter(TabularAdapter):
     age_span_text = Property
     nsigma = Int(1)
 
+    skewness_text = Property
+    shapiro_wilk_pvalue_text = Property
+
     def get_text_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
         return item.color
+
+    def _get_skewness_text(self):
+
+        txt = floatfmt(self.item.skewness, n=3)
+        if txt:
+            smi = self.item.outlier_options.get('skew_min', -0.02)
+            sma = self.item.outlier_options.get('skew_max', 0.02)
+            txt = '{} ({},{})'.format(txt, smi, sma)
+        return txt
+
+    def _get_shapiro_wilk_pvalue_text(self):
+        txt = floatfmt(self.item.shapiro_wilk_pvalue, n=5)
+        if txt:
+            txt = '{} (>{})'.format(txt, self.item.outlier_options.get('alpha', 0.05))
+
+        return txt
 
     def _get_age_span_text(self):
         return floatfmt(self.item.age_span, n=5)

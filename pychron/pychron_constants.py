@@ -89,6 +89,7 @@ STD_SIG_FIGS = ['Std', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
 SCHAEN2020_1 = 'Schaen 2020. (Low MSWD weighted mean)'
 SCHAEN2020_2 = 'Schaen 2020. (Weighted mean filter)'
 SCHAEN2020_3 = 'Schaen 2020. (Normality)'
+SCHAEN2020_3youngest = 'Schaen 2020. (Normality, youngest)'
 DEINO = 'Deino. Filter Extreme'
 
 CUMULATIVE = 'Cumulative'

@@ -20,6 +20,7 @@ from scipy.stats import shapiro, skew, norm
 from uncertainties import ufloat
 
 from pychron.core.stats import calculate_mswd, validate_mswd, calculate_weighted_mean
+from pychron.pychron_constants import SCHAEN2020_1, SCHAEN2020_2, SCHAEN2020_3, DEINO, SCHAEN2020_3youngest
 
 
 def age_errors(ais):
@@ -101,9 +102,30 @@ def schaen_2020_2(ans, **kw):
             return ufloat(lwm, le), lais
 
 
-def schaen_2020_3(ans, alpha=0.05, skew_min=-0.2, skew_max=0.2, **kw):
+def shapiro_wilk_pvalue(ans):
+    xs, es = age_errors(ans)
+    if len(xs) >= 3:
+        stat, pvalue = shapiro(xs)
+        return pvalue
+
+
+def skewness_value(ans):
+    xs, es = age_errors(ans)
+    return skew(xs)
+
+
+def schaen_2020_3youngest(*args, **kw):
+    kw['find_youngest'] = True
+    return schaen_2020_3(*args, **kw)
+
+
+def schaen_2020_3(ans, alpha=0.05, skew_min=-0.2, skew_max=0.2, find_youngest=False, **kw):
     """
         normality and goodness-of-fit parameter
+
+
+        if find_youngest is True find the youngest gaussian population
+        if find_youngest is False[default] find the largest gaussian population
     :param threshold:
     :param ans:
     :return: ufloat
@@ -112,31 +134,53 @@ def schaen_2020_3(ans, alpha=0.05, skew_min=-0.2, skew_max=0.2, **kw):
     maxn = -1
     mean = ufloat(0, 0)
     mean_ans = []
-    print(alpha, skew_max, skew_min)
+    # print(alpha, skew_max, skew_min)
     for i in range(0, len(ans) + 1):
+        if find_youngest:
+            if mean_ans:
+                break
+
         for j in range(i + 3, len(ans) + 1):
             ais = ans[i:j]
             n = len(ais)
-            if n < maxn:
-                continue
+
+            if not find_youngest:
+                if n < maxn:
+                    continue
 
             xs, es = age_errors(ais)
             mswd = calculate_mswd(xs, es)
             valid = validate_mswd(mswd, n)
-            print(i, j, mswd, n, maxn, valid)
+            # print('mswd ---- ', i, j, mswd, n, maxn, valid)
             if valid:
                 stat, pvalue = shapiro(xs)
-                print(pvalue, alpha)
+                # print('shapiro ---- ', pvalue, alpha)
                 if pvalue > alpha:
                     skewness = skew(xs)
+                    # print('skew ---- ', skewness)
                     if skew_min <= skewness <= skew_max:
-                        if maxn < n:
-                            maxn = n
+                        if find_youngest:
                             m, e = calculate_weighted_mean(xs, es)
-                            mean = ufloat(m, e)
-                            mean_ans = ais
+                            mm = ufloat(m, e)
+                            if not mean or mm < mean:
+                                mean = mm
+                                mean_ans = ais
+                                break
+                        else:
+                            if maxn < n:
+                                maxn = n
+                                m, e = calculate_weighted_mean(xs, es)
+                                mean = ufloat(m, e)
+                                mean_ans = ais
 
     return mean, mean_ans
+
+
+OUTLIER_FUNCS = {SCHAEN2020_1: schaen_2020_1,
+                 SCHAEN2020_2: schaen_2020_2,
+                 SCHAEN2020_3: schaen_2020_3,
+                 SCHAEN2020_3youngest: schaen_2020_3youngest,
+                 DEINO: deino_filter}
 
 
 def plot(s, mu, sigma, um3, um2):

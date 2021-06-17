@@ -20,7 +20,7 @@ from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, MainOptions, TitleSubOptions
 from pychron.processing.j_error_mixin import J_ERROR_GROUP
-from pychron.pychron_constants import MAIN, APPEARANCE, SCHAEN2020_3
+from pychron.pychron_constants import MAIN, APPEARANCE, SCHAEN2020_3, SCHAEN2020_3youngest
 
 
 class DisplaySubOptions(TitleSubOptions):
@@ -124,7 +124,9 @@ class CalculationSubOptions(SubOptions):
                                BorderVGroup(Item('shapiro_wilk_alpha', label='Shapiro-Wilk alpha'),
                                             HGroup(Item('skew_min', label='Skew Min.'),
                                                    Item('skew_max', label='Skew Max')),
-                                            visible_when='mean_calculation_kind=="{}"'.format(SCHAEN2020_3),
+                                            visible_when='mean_calculation_kind =="{}" '
+                                                         'or mean_calculation_kind=="{}"'.format(SCHAEN2020_3,
+                                                                                                 SCHAEN2020_3youngest),
                                             label='Normality Options'),
 
                                Item('error_calc_method',

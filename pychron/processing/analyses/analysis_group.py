@@ -20,7 +20,8 @@ from operator import attrgetter
 
 from numpy import array, nan, average
 # ============= enthought library imports =======================
-from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float, Any, Enum, on_trait_change, Color
+from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float, Any, Enum, on_trait_change, \
+    Color, Dict
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.pychron_traits import StepStr
@@ -32,7 +33,8 @@ from pychron.processing.analyses.analysis import IdeogramPlotable
 from pychron.processing.analyses.preferred import Preferred
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
-from pychron.processing.sclf import schaen_2020_1, schaen_2020_2, schaen_2020_3, deino_filter
+from pychron.processing.sclf import schaen_2020_1, schaen_2020_2, schaen_2020_3, deino_filter, OUTLIER_FUNCS, \
+    shapiro_wilk_pvalue, skewness_value
 from pychron.pychron_constants import MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
     DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR, \
     ISOCHRON, MSE, SE, INTEGRATED, SCHAEN2020_1, SCHAEN2020_2, SCHAEN2020_3, DEINO
@@ -58,6 +60,10 @@ class AnalysisGroup(IdeogramPlotable):
     analyses = List
     nanalyses = AGProperty()
     age_span = AGProperty()
+    shapiro_wilk_pvalue = AGProperty()
+    skewness = AGProperty()
+    outlier_options = Dict
+
 
     weighted_age = AGProperty()
     arith_age = AGProperty()
@@ -177,6 +183,11 @@ class AnalysisGroup(IdeogramPlotable):
 
             self.age_units = self.arar_constants.age_units
 
+    def clear_temp_selected(self):
+        for a in self.analyses:
+            if a.temp_selected:
+                a.temp_status = 'ok'
+
     def attr_stats(self, attr):
         w, sd, sem, (vs, es) = self._calculate_weighted_mean(attr, error_kind='both')
         mi, ma, total_dev, mswd, valid_mswd = 0, 0, 0, 0, False
@@ -198,14 +209,18 @@ class AnalysisGroup(IdeogramPlotable):
                 'min': mi, 'max': ma, 'total_dev': total_dev}
 
     def get_outliers(self, mck, **options):
-        if mck == SCHAEN2020_1:
-            func = schaen_2020_1
-        elif mck == SCHAEN2020_2:
-            func = schaen_2020_2
-        elif mck == SCHAEN2020_3:
-            func = schaen_2020_3
-        elif mck == DEINO:
-            func = deino_filter
+
+        func = OUTLIER_FUNCS.get(mck)
+        # if mck == SCHAEN2020_1:
+        #     func = schaen_2020_1
+        # elif mck == SCHAEN2020_2:
+        #     func = schaen_2020_2
+        # elif mck == SCHAEN2020_3:
+        #     func = schaen_2020_3
+        # elif mck == DEINO:
+        #     func = deino_filter
+        if not options:
+            options = self.outlier_options
 
         _, ans = func(self.sorted_clean_analyses(), **options)
 
@@ -354,6 +369,14 @@ class AnalysisGroup(IdeogramPlotable):
                 attr = 'uage_w_position_err'
 
         return self._calculate_mswd(attr)
+
+    @cached_property
+    def _get_shapiro_wilk_pvalue(self):
+        return shapiro_wilk_pvalue(self.sorted_clean_analyses())
+
+    @cached_property
+    def _get_skewness(self):
+        return skewness_value(self.sorted_clean_analyses())
 
     @cached_property
     def _get_age_span(self):

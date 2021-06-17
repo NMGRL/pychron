@@ -43,7 +43,8 @@ from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.processing.interpreted_age import InterpretedAge
-from pychron.pychron_constants import PLUSMINUS, SIGMA, KERNEL, SCHAEN2020_3, SCHAEN2020_2, SCHAEN2020_1, DEINO
+from pychron.pychron_constants import PLUSMINUS, SIGMA, KERNEL, SCHAEN2020_3, SCHAEN2020_2, SCHAEN2020_1, DEINO, \
+    SCHAEN2020_3youngest
 from pychron.regex import ORDER_PREFIX_REGEX
 
 N = 500
@@ -172,22 +173,15 @@ class Ideogram(BaseArArFigure):
             return
 
         # if self.options.omit_by_tag:
-        selection = self.analysis_group.get_omitted_by_tag(self.sorted_analyses)
-
+        selection = []
         mck = opt.mean_calculation_kind
-        if mck in [SCHAEN2020_1, SCHAEN2020_2, SCHAEN2020_3, DEINO]:
-            kw = {'skew_min': opt.skew_min,
-                  'skew_max': opt.skew_max,
-                  'alpha': opt.shapiro_wilk_alpha}
-            print(kw)
-            selection = list(set(selection + self.analysis_group.get_outliers(mck, **kw)))
-            print('modificas setion', selection)
-        # else:
-        #     selection = []
-        for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
-            # plotobj.group_id = self.group_id
-            # print(id(plotobj), plotobj.group_id)
+        if mck in [SCHAEN2020_1, SCHAEN2020_2, SCHAEN2020_3, SCHAEN2020_3youngest, DEINO]:
+            self.analysis_group.clear_temp_selected()
+            selection = self.analysis_group.get_outliers(mck, **opt.outlier_options)
 
+        selection = list(set(selection + self.analysis_group.get_omitted_by_tag(self.sorted_analyses)))
+
+        for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             if opt.reverse_x_axis:
                 plotobj.default_origin = 'bottom right'
 
@@ -1013,7 +1007,7 @@ class Ideogram(BaseArArFigure):
         ag.attribute = options.index_attr
         ag.age_error_kind = options.error_calc_method
         ag.weighted_age_error_kind = options.error_calc_method
-
+        ag.outlier_options = options.outlier_options
         ag.set_external_error(options.include_j_position_error,
                               options.include_j_error_in_mean,
                               options.include_decay_error, dirty=True)

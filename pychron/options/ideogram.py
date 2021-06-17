@@ -23,7 +23,7 @@ from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.ideogram_views import VIEWS
 from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS, MAIN, APPEARANCE, DISPLAY, GROUPS, STD_SIG_FIGS, \
-    CUMULATIVE, WEIGHTED_MEAN, KERNEL, SCHAEN2020_1, SCHAEN2020_2, SCHAEN2020_3, DEINO
+    CUMULATIVE, WEIGHTED_MEAN, KERNEL, SCHAEN2020_1, SCHAEN2020_2, SCHAEN2020_3, DEINO, SCHAEN2020_3youngest
 
 
 class IdeogramAuxPlot(AuxPlot):
@@ -62,6 +62,7 @@ class IdeogramOptions(AgeOptions):
                                  SCHAEN2020_1,
                                  SCHAEN2020_2,
                                  SCHAEN2020_3,
+                                 SCHAEN2020_3youngest,
                                  DEINO)
     skew_min = Float(-0.2)
     skew_max = Float(0.2)
@@ -126,6 +127,12 @@ class IdeogramOptions(AgeOptions):
     _use_centered_range = Bool
     _use_asymptotic_limits = Bool
     _suppress_xlimits_clear = Bool
+
+    @property
+    def outlier_options(self):
+        return {'skew_min': self.skew_min,
+                'skew_max': self.skew_max,
+                'alpha': self.shapiro_wilk_alpha}
 
     def initialize(self):
         self.subview_names = [MAIN, 'Ideogram', APPEARANCE, 'Calculations', DISPLAY, GROUPS]
