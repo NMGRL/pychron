@@ -84,14 +84,20 @@ def validate_mswd(mswd, n, k=1):
     return bool(low <= mswd <= high)
 
 
+MSWD_LIMITS = {}
+
+
 def get_mswd_limits(n, k=1):
     dof = n - k
-    # calculate the reduced chi2 95% interval for given dof
-    # use scale parameter to calculate the chi2_reduced from chi2
-    from scipy.stats import chi2
+    limits = MSWD_LIMITS.get(dof, None)
+    if not limits:
+        # calculate the reduced chi2 95% interval for given dof
+        # use scale parameter to calculate the chi2_reduced from chi2
+        rv = chi2(dof, scale=1 / float(dof))
+        limits = rv.interval(0.95)
+        MSWD_LIMITS[dof] = limits
 
-    rv = chi2(dof, scale=1 / float(dof))
-    return rv.interval(0.95)
+    return limits
 
 
 def chi_squared(x, y, sx, sy, a, b, corrcoeffs=None):

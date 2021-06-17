@@ -48,7 +48,6 @@ class IdeogramOptions(AgeOptions):
     naux_plots = 8
     aux_plot_klass = IdeogramAuxPlot
 
-    edit_label_format_button = Button
     edit_mean_format_button = Button
 
     mean_label_format = Str
@@ -233,17 +232,6 @@ class IdeogramOptions(AgeOptions):
     def _index_attr_changed(self):
         for ap in self.aux_plots:
             ap.clear_ylimits()
-
-    def _edit_label_format_button_fired(self):
-        from pychron.options.label_maker import LabelTemplater, LabelTemplateView
-
-        lm = LabelTemplater(label=self.analysis_label_display)
-        lv = LabelTemplateView(model=lm)
-        info = lv.edit_traits()
-        if info.result:
-            self.analysis_label_format = lm.formatter
-            self.analysis_label_display = lm.label
-            # self.refresh_plot_needed = True
 
     def _edit_mean_format_button_fired(self):
         from pychron.options.label_maker import MeanLabelTemplater, MeanLabelTemplateView

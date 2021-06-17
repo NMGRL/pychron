@@ -450,10 +450,7 @@ class BaseArArFigure(SelectionFigure):
         pass
 
     def _add_point_labels(self, scatter, ans=None):
-        labels = []
-
         f = self.options.analysis_label_format
-
         if not f:
             f = '{aliquot:02d}{step:}'
 

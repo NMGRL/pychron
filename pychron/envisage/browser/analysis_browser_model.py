@@ -25,7 +25,7 @@ from pychron.envisage.browser.view import BrowserView
 
 
 class AnalysisBrowserModel(BrowserModel):
-    analysis_table = Instance(AnalysisTable)
+    table = Instance(AnalysisTable)
     advanced_filter = Instance(AdvancedFilterView, ())
     browser_view = Instance(BrowserView)
     recall_editor = Instance(RecallEditor)
@@ -37,18 +37,18 @@ class AnalysisBrowserModel(BrowserModel):
     advanced_filter_button = Button
     add_analysis_group_button = Button
 
-    find_references_enabled = Property(depends_on='analysis_table:analyses[]')
+    find_references_enabled = Property(depends_on='table:analyses[]')
 
     def add_analysis_set(self):
-        self.analysis_table.add_analysis_set()
+        self.table.add_analysis_set()
 
     def dump(self):
         # self.time_view_model.dump_filter()
-        self.analysis_table.dump()
+        self.table.dump()
         super(AnalysisBrowserModel, self).dump()
 
     def _get_find_references_enabled(self):
-        return bool(self.analysis_table.analyses)
+        return bool(self.table.analyses)
 
     def _advanced_filter_button_fired(self):
         self.debug('advanced filter')
@@ -63,14 +63,14 @@ class AnalysisBrowserModel(BrowserModel):
         info = m.edit_traits(kind='livemodal')
         if info.result:
             uuids = None
-            at = self.analysis_table
+            at = self.table
             if not m.apply_to_current_selection and not m.apply_to_current_samples:
                 lns = self.dvc.get_analyses_advanced(m, return_labnumbers=True)
                 sams = self._load_sample_record_views(lns)
                 self.samples = sams
                 self.osamples = sams
             elif m.apply_to_current_selection:
-                ans = self.analysis_table.get_selected_analyses()
+                ans = self.table.get_selected_analyses()
                 if ans:
                     uuids = [ai.uuid for ai in ans]
 
@@ -86,10 +86,10 @@ class AnalysisBrowserModel(BrowserModel):
                 return
 
             ans = self._make_records(ans)
-            self.analysis_table.set_analyses(ans)
+            self.table.set_analyses(ans)
 
     def _add_analysis_group_button_fired(self):
-        ans = self.analysis_table.get_selected_analyses()
+        ans = self.table.get_selected_analyses()
         if ans:
             self.add_analysis_group(ans)
 
@@ -102,7 +102,7 @@ class AnalysisBrowserModel(BrowserModel):
         self.debug('load recent button fired')
         self._load_recent()
 
-    def _analysis_table_default(self):
+    def _table_default(self):
         at = AnalysisTable(dvc=self.dvc)
 
         prefid = 'pychron.browser'

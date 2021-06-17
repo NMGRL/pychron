@@ -592,7 +592,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             self.debug('analysis group changed={}'.format(grps))
             ans = [si.analysis for gi in grps for si in gi.sets]
             xx = self._make_records(ans)
-            self.analysis_table.set_analyses(xx)
+            self.table.set_analyses(xx)
 
     # handlers
     def _selected_analysis_groups_changed(self):

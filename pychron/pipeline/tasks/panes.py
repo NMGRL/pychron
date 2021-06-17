@@ -700,13 +700,13 @@ class SearcherPane(TraitsDockPane):
         v = View(VGroup(HGroup(UItem('search_entry'),
                                UItem('search_entry', editor=myEnumEditor(name='search_entries'), width=-35),
                                icon_button_editor('pane.add_search_entry_button', 'add')),
-                        UItem('object.analysis_table.analyses',
-                              editor=myTabularEditor(adapter=self.model.analysis_table.tabular_adapter,
+                        UItem('object.table.analyses',
+                              editor=myTabularEditor(adapter=self.model.table.tabular_adapter,
                                                      operations=['move', 'delete'],
-                                                     column_clicked='object.analysis_table.column_clicked',
-                                                     refresh='object.analysis_table.refresh_needed',
-                                                     selected='object.analysis_table.selected',
-                                                     dclicked='object.analysis_table.dclicked'))))
+                                                     column_clicked='object.table.column_clicked',
+                                                     refresh='object.table.refresh_needed',
+                                                     selected='object.table.selected',
+                                                     dclicked='object.table.dclicked'))))
         return v
 
 # ============= EOF =============================================

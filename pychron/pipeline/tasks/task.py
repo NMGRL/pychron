@@ -105,7 +105,7 @@ class PipelineTask(BaseBrowserTask):
 
         self.engine.dvc = self.dvc
         self.browser_model.dvc = self.dvc
-        self.browser_model.analysis_table.dvc = self.dvc
+        self.browser_model.table.dvc = self.dvc
 
         self.engine.browser_model = self.browser_model
         self.engine.interpreted_age_browser_model = self.interpreted_age_browser_model
@@ -276,8 +276,8 @@ class PipelineTask(BaseBrowserTask):
                     self.active_editor.figure_model = None
                     self.active_editor.refresh_needed = True
 
-                self.browser_model.analysis_table.set_tags(tag, items)
-                self.browser_model.analysis_table.remove_invalid()
+                self.browser_model.table.set_tags(tag, items)
+                self.browser_model.table.remove_invalid()
                 self.engine.remove_invalid()
 
     def set_invalid(self):

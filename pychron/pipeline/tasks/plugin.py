@@ -157,7 +157,7 @@ class PipelinePlugin(BaseTaskPlugin):
                      (BlanksAction, 'blanks'),
                      (ICFactorAction, 'icfactor'),
                      (FluxAction, 'flux'),
-                     (AnalysisTableAction, 'analysis_table'),
+                     (AnalysisTableAction, 'table'),
                      (FreezeProductionRatios, 'freeze_production'),
                      (MassSpecReducedAction, 'mass_spec_reduced')):
             fit_actions.append(SchemaAddition(factory=f,

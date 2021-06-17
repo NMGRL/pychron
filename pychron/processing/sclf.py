@@ -135,12 +135,13 @@ def schaen_2020_3(ans, alpha=0.05, skew_min=-0.2, skew_max=0.2, find_youngest=Fa
     mean = ufloat(0, 0)
     mean_ans = []
     # print(alpha, skew_max, skew_min)
-    for i in range(0, len(ans) + 1):
+    n = len(ans)
+    for i in range(0, n+1):
         if find_youngest:
             if mean_ans:
                 break
 
-        for j in range(i + 3, len(ans) + 1):
+        for j in range(i + 3, n+1):
             ais = ans[i:j]
             n = len(ais)
 

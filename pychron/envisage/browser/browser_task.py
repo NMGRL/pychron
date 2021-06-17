@@ -237,7 +237,7 @@ class BaseBrowserTask(BaseEditorTask):
 
     def configure_analyses_table(self):
         self.debug('configure analyses table')
-        at = self.browser_model.analysis_table
+        at = self.browser_model.table
         at.configure_table()
 
     def load_review_status(self):
@@ -393,11 +393,11 @@ class BaseBrowserTask(BaseEditorTask):
         else:
             self.warning('could not load records')
 
-    # @on_trait_change('browser_model:[analysis_table:context_menu_event, time_view_model:context_menu_event]')
-    @on_trait_change('browser_model:analysis_table:context_menu_event')
+    # @on_trait_change('browser_model:[table:context_menu_event, time_view_model:context_menu_event]')
+    @on_trait_change('browser_model:table:context_menu_event')
     def _handle_analysis_table_context_menu(self, new):
         if new:
-            sel = self.browser_model.analysis_table.selected
+            sel = self.browser_model.table.selected
 
             action, modifiers = new
             # if action in ('append', 'replace'):
@@ -421,7 +421,7 @@ class BaseBrowserTask(BaseEditorTask):
                 traceback.print_exc()
                 self.critical('interpeted_age_table:dclicked error {}'.format(str(e)))
 
-    @on_trait_change('browser_model:[analysis_table:key_pressed]')
+    @on_trait_change('browser_model:[table:key_pressed]')
     def _handle_key_pressed(self, new):
         if new and new.control:
             d = None
@@ -431,10 +431,10 @@ class BaseBrowserTask(BaseEditorTask):
                 d = -1
 
             if d:
-                item = self.browser_model.analysis_table.increment_selected(d)
+                item = self.browser_model.table.increment_selected(d)
                 self.recall(item)
 
-    @on_trait_change('browser_model:[analysis_table:dclicked]')
+    @on_trait_change('browser_model:[table:dclicked]')
     def _handle_dclicked(self, new):
         if new:
             try:
@@ -442,7 +442,7 @@ class BaseBrowserTask(BaseEditorTask):
             except BaseException as e:
                 import traceback
                 traceback.print_exc()
-                self.critical('analysis_table:dclicked error {}'.format(str(e)))
+                self.critical('table:dclicked error {}'.format(str(e)))
 
     def _dclicked_sample_hook(self):
         pass

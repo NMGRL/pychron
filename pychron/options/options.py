@@ -789,6 +789,8 @@ class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
 
     mswd_sig_figs = Enum(*SIG_FIGS)
 
+    edit_label_format_button = Button
+
     def make_legend_key(self, ident, sample):
         key = ident
         if self.include_sample_in_legend:
@@ -808,4 +810,15 @@ class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
     def _get_inset_y_bounds(self):
         mi, ma = self.inset_ymin, self.inset_ymax
         return mi, ma
+
+    def _edit_label_format_button_fired(self):
+        from pychron.options.label_maker import LabelTemplater, LabelTemplateView
+
+        lm = LabelTemplater(label=self.analysis_label_display)
+        lv = LabelTemplateView(model=lm)
+        info = lv.edit_traits()
+        if info.result:
+            self.analysis_label_format = lm.formatter
+            self.analysis_label_display = lm.label
+            # self.refresh_plot_needed = True
 # ============= EOF =============================================
