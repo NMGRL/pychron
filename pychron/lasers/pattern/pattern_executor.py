@@ -122,6 +122,10 @@ class PatternExecutor(Patternable):
 
     def stop(self):
         self._alive = False
+
+        if self.laser_manager.stage_manager:
+            self.laser_manager.stage_manager.cancel()
+
         if self.controller:
             self.info('User requested stop')
             self.controller.stop()
@@ -528,14 +532,17 @@ class PatternExecutor(Patternable):
                 self.debug('Target position error: {}'.format(e))
 
             ay, ax = py - cy, px - cx
-            # self.debug('position mm ax={},ay={}'.format(ax, ay))
+
+            self.debug('position mm ax={},ay={}, pxpermm={}, w={}, h={}'.format(ax, ay, pxpermm, img_h, img_w))
+
             ay, ax = int(-ay * pxpermm) + img_h / 2, int(ax * pxpermm) + img_w / 2
             # self.debug('position pixel ax={},ay={}'.format(ax, ay))
 
             pos_img -= 5
             pos_img = pos_img.clip(0, color)
 
-            c = circle(ay, ax, 2)
+            cxx, cyy = circle(ay, ax, 2)
+            c = _coords_inside_image(cxx, cyy, pos_img.shape)
             pos_img[c] = color - 60
             nimg = ((pos_img + per_img).astype(uint8))
 

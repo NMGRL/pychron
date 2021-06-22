@@ -140,6 +140,9 @@ class StageManager(BaseStageManager):
 
         return self._cached_current_hole
 
+    def cancel(self):
+        pass
+
     def is_auto_correcting(self):
         return False
 

@@ -356,21 +356,22 @@ def approximate_polygon_center3(pts, r, width, height, weight=True, k=3, freq=6)
                 # if pad < x4 < width - pad and pad < y4 < height - pad:
                 #     rpts.append((x4, y4))
 
-    rpts = array(rpts)
-    xs = rpts[:, 0]
-    ys = rpts[:, 1]
-    if weight:
-        cxs = ones(rpts.shape[0]) * xs.mean()
-        cys = ones(rpts.shape[0]) * ys.mean()
+    if rpts:
+        rpts = array(rpts)
+        xs = rpts[:, 0]
+        ys = rpts[:, 1]
+        if weight:
+            cxs = ones(rpts.shape[0]) * xs.mean()
+            cys = ones(rpts.shape[0]) * ys.mean()
 
-        ds = calc_distances(rpts, column_stack((cxs, cys))).T[0]
-        ws = 1 / ds ** 2
-    else:
-        ws = ones_like(xs)
+            ds = calc_distances(rpts, column_stack((cxs, cys))).T[0]
+            ws = 1 / ds ** 2
+        else:
+            ws = ones_like(xs)
 
-    mcx = average(xs, weights=ws)
-    mcy = average(ys, weights=ws)
-    return mcx, mcy, rpts
+        mcx = average(xs, weights=ws)
+        mcy = average(ys, weights=ws)
+        return mcx, mcy, rpts
 
 
 def approximate_polygon_center2(pts, r=None):

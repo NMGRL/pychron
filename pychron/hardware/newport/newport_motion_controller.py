@@ -290,8 +290,8 @@ class NewportMotionController(MotionController):
                 raise ZeroDisplacementException()
             return
 
-        tol = 0.033
-
+        # tol = 0.033
+        tol = 0.001
         if abs(dx) < tol:
             if 'grouped_move' in kw:
                 kw.pop('grouped_move')

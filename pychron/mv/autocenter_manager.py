@@ -77,14 +77,14 @@ class AutoCenterManager(MachineVisionManager):
         loc = self._get_locator(shape=shape)
         self.locator = loc
 
-        self.debug('dim={}'.format(dim))
+        self.debug('dim={} pxpermm={}, loc.pxpermm={}'.format(dim, self.pxpermm, loc.pxpermm))
         cropdim = ceil(dim * 2.55)
 
         frame = loc.crop(frame, cropdim, cropdim, offx, offy)
+        dim = self.pxpermm * dim
 
         im = self.display_image
         im.source_frame = frame
-        dim = self.pxpermm * dim
 
         preprop = {'stretch_intensity': self.stretch_intensity,
                    'blur': self.blur}
@@ -170,7 +170,10 @@ class CO2AutocenterManager(AutoCenterManager):
         else:
             from pychron.mv.co2_locator import CO2Locator
             loc = CO2Locator(pxpermm=self.pxpermm, pixel_depth=self.video.pixel_depth)
+        loc.pxpermm = self.pxpermm
+        loc.pixel_depth = self.video.pixel_depth
         return loc
+
 
 class DiodeAutocenterManager(AutoCenterManager):
     # private

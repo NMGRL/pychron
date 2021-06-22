@@ -400,6 +400,9 @@ class VideoStageManager(StageManager):
     def is_auto_correcting(self):
         return self._auto_correcting
 
+    def cancel(self):
+        return self.cancel_auto_correcting()
+
     def cancel_auto_correcting(self):
         self.autocenter_manager.cancel()
         return True

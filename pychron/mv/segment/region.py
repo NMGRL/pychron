@@ -24,6 +24,9 @@ from numpy import zeros_like, invert, uint8, zeros, ones
 # from scipy import ndimage as ndi
 
 # ============= local library imports  ==========================
+from scipy.ndimage import binary_fill_holes
+from skimage.morphology import binary_closing
+
 from pychron.mv.segment.base import BaseSegmenter
 
 
@@ -32,8 +35,11 @@ class RegionSegmenter(BaseSegmenter):
     def segment(self, image, threshold):
         """
         """
-        nimage = zeros_like(image).astype('uint8')
+        nimage = zeros_like(image, dtype='uint8')
         nimage[image >= threshold] = 255
-        return invert(nimage)
+        nimage = invert(nimage)
+        nimage = binary_fill_holes(nimage).astype('uint8')*255
+
+        return nimage
 
 # ============= EOF =============================================
