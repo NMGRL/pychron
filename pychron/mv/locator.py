@@ -29,6 +29,7 @@ from skimage.exposure import rescale_intensity
 from skimage.filters import gaussian
 from skimage import feature
 # ============= local library imports  ==========================
+from pychron.core.geometry.convex_hull import convex_hull
 from pychron.loggable import Loggable
 from pychron.mv.segment.region import RegionSegmenter
 from pychron.image.cv_wrapper import grayspace, draw_contour_list, contour, \
@@ -114,7 +115,8 @@ class Locator(Loggable):
         # cw_px = ch_px = cw_px + r
         if verbose:
             self.debug('Crop: x={},y={}, cw={}, ch={}, '
-                       'width={}, height={}, ox={}, oy={}, pxpermm={}'.format(x, y, cw_px, ch_px, w, h, ox, oy, self.pxpermm))
+                       'width={}, height={}, ox={}, oy={}, pxpermm={}'.format(x, y, cw_px, ch_px, w, h, ox, oy,
+                                                                              self.pxpermm))
         return asarray(crop(src, x, y, cw_px, ch_px))
 
     def find(self, image, frame, dim, shape='circle', confirm=False, **kw):
@@ -158,8 +160,8 @@ class Locator(Loggable):
 
                 # image.set_frame(src[:])
 
-            self._draw_center_indicator(src, size=max(10, int(src.shape[0]*0.25)),
-                                        shape='crosshairs', color=(255, 255, 0))
+            self._draw_center_indicator(src, size=max(10, int(src.shape[0] * 0.25)),
+                                        shape='crosshairs')
 
         image.refresh_needed = True
         self.info('dx={}, dy={}'.format(dx, dy))
@@ -205,8 +207,8 @@ class Locator(Loggable):
         sm = src.mean()
         self.debug('recurse= {}'.format(recurse))
         if isinstance(recurse, float):
-            othreshold = recurse+10
-            sm = max(255, othreshold+32)
+            othreshold = recurse + 10
+            sm = max(255, othreshold + 32)
             recurse = False
 
         else:
@@ -369,8 +371,8 @@ class Locator(Loggable):
         # contours, hieararchy = find_contours(src)
 
         # convert to color for display
-        if frame is not None:
-            draw_contour_list(frame, contours, hieararchy)
+        # if frame is not None:
+        #     draw_contour_list(frame, contours, hieararchy)
 
         # do polygon approximation
         origin = self._get_frame_center(src)
@@ -580,12 +582,16 @@ class Locator(Loggable):
             # pts[:, 0] = pts[:, 0] - tx
             # args = approximate_polygon_center(pts, dim)
             h, w = src.shape[0], src.shape[1]
+
+            pts = list(reversed(convex_hull(pts)))
+            draw_polygons(src, [pts], color=(0, 200, 0), thickness=1)
+
             args = approximate_polygon_center3(pts, dim, w, h)
             if args:
                 cx, cy, cpts = args
 
                 for cpt in cpts:
-                    self._draw_indicator(src, cpt, size=2)
+                    self._draw_indicator(src, cpt, size=1)
 
                 dx = cx - tx
                 dy = cy - ty
