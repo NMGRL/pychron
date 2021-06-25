@@ -64,6 +64,9 @@ class PatternExecutor(Patternable):
             self.pattern.clear_graph()
 
     def finish(self):
+        if self.pattern and self.controller:
+            self.controller.linear_move(self.pattern.cx, self.pattern.cy, source='pattern stop')
+
         self._alive = False
         self.close_pattern()
         self.pattern = None
@@ -131,8 +134,8 @@ class PatternExecutor(Patternable):
             self.controller.stop()
 
         if self.pattern is not None:
-            if self.controller:
-                self.controller.linear_move(self.pattern.cx, self.pattern.cy, source='pattern stop')
+            # if self.controller:
+            #     self.controller.linear_move(self.pattern.cx, self.pattern.cy, source='pattern stop')
             # self.pattern.close_ui()
             self.info('Pattern {} stopped'.format(self.pattern_name))
 
@@ -414,7 +417,10 @@ class PatternExecutor(Patternable):
             ist = time.time()
             npt = None
             self.debug('starting iteration={}, in_motion={}'.format(cnt, in_motion()))
-            while time.time() - ist < duration or in_motion():
+            while time.time() - ist < duration:
+                if not self._alive:
+                    break
+
                 args = find_lum_peak(min_distance, blur)
 
                 if args is None:
@@ -524,31 +530,33 @@ class PatternExecutor(Patternable):
             # if there is less than 1 duration left then block is true
             # block = total_duration - (time.time() - st) < duration
             block = True
-            self.debug('move to {}, {} blocking ={}'.format(px, py, block))
-            try:
-                linear_move(px, py, source='dragonfly{}'.format(cnt), block=block, velocity=pattern.velocity,
-                            use_calibration=False)
-            except TargetPositionError as e:
-                self.debug('Target position error: {}'.format(e))
+            self.debug('move to {}, {} blocking ={}, alive={}'.format(px, py, block, self._alive))
+            if self._alive:
+                try:
+                    linear_move(px, py, source='dragonfly{}'.format(cnt), block=block, velocity=pattern.velocity,
+                                use_calibration=False)
+                except TargetPositionError as e:
+                    self.debug('Target position error: {}'.format(e))
+                    break
 
-            ay, ax = py - cy, px - cx
+                ay, ax = py - cy, px - cx
 
-            self.debug('position mm ax={},ay={}, pxpermm={}, w={}, h={}'.format(ax, ay, pxpermm, img_h, img_w))
+                # self.debug('position mm ax={},ay={}, pxpermm={}, w={}, h={}'.format(ax, ay, pxpermm, img_h, img_w))
 
-            ay, ax = int(-ay * pxpermm) + img_h / 2, int(ax * pxpermm) + img_w / 2
-            # self.debug('position pixel ax={},ay={}'.format(ax, ay))
+                ay, ax = int(-ay * pxpermm) + img_h / 2, int(ax * pxpermm) + img_w / 2
+                # self.debug('position pixel ax={},ay={}'.format(ax, ay))
 
-            pos_img -= 5
-            pos_img = pos_img.clip(0, color)
+                pos_img -= 5
+                pos_img = pos_img.clip(0, color)
 
-            cxx, cyy = circle(ay, ax, 2)
-            c = _coords_inside_image(cxx, cyy, pos_img.shape)
-            pos_img[c] = color - 60
-            nimg = ((pos_img + per_img).astype(uint8))
+                cxx, cyy = circle(ay, ax, 2)
+                c = _coords_inside_image(cxx, cyy, pos_img.shape)
+                pos_img[c] = color - 60
+                nimg = ((pos_img + per_img).astype(uint8))
 
-            set_data('imagedata', gray2rgb(nimg))
+                set_data('imagedata', gray2rgb(nimg))
 
-            cnt += 1
+                cnt += 1
 
         self.debug('dragonfly complete')
         controller.block()

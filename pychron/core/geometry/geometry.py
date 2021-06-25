@@ -314,10 +314,10 @@ def get_intersections(p0, r0, p1, r1):
         x3 = x2 + h * dyd
         y3 = y2 - h * dxd
 
-        #x4 = x2 - h * dyd
-        #y4 = y2 + h * dxd
+        # x4 = x2 - h * dyd
+        # y4 = y2 + h * dxd
 
-        return x3, y3 #, x4, y4
+        return x3, y3  # , x4, y4
 
 
 def approximate_polygon_center3(pts, r, width, height, weight=True, k=3, freq=6):
@@ -346,7 +346,6 @@ def approximate_polygon_center3(pts, r, width, height, weight=True, k=3, freq=6)
         if pad < p_i[0] < width - pad and pad < p_i[1] < height - pad and \
                 pad < p_j[0] < width - pad and pad < p_j[1] < height - pad:
             npts = get_intersections(p_i, r, p_j, r)
-
             if npts:
                 # x3, y3, x4, y4 = npts
                 x3, y3 = npts
@@ -355,19 +354,19 @@ def approximate_polygon_center3(pts, r, width, height, weight=True, k=3, freq=6)
 
                 # if pad < x4 < width - pad and pad < y4 < height - pad:
                 #     rpts.append((x4, y4))
-
     if rpts:
         rpts = array(rpts)
         xs = rpts[:, 0]
         ys = rpts[:, 1]
+        ws = ones_like(xs)
         if weight:
-            cxs = ones(rpts.shape[0]) * xs.mean()
-            cys = ones(rpts.shape[0]) * ys.mean()
+            n = rpts.shape[0]
+            if n > 1:
+                cxs = ones(rpts.shape[0]) * xs.mean()
+                cys = ones(rpts.shape[0]) * ys.mean()
 
-            ds = calc_distances(rpts, column_stack((cxs, cys))).T[0]
-            ws = 1 / ds ** 2
-        else:
-            ws = ones_like(xs)
+                ds = calc_distances(rpts, column_stack((cxs, cys))).T[0]
+                ws = 1 / ds ** 2
 
         mcx = average(xs, weights=ws)
         mcy = average(ys, weights=ws)

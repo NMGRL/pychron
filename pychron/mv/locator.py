@@ -21,7 +21,7 @@ import time
 from operator import attrgetter
 from collections import deque
 from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
-    nonzero, arange, argsort, invert, median, mean, zeros_like, ones, count_nonzero, unique
+    nonzero, arange, argsort, invert, median, mean, zeros_like, ones, count_nonzero, unique, isnan
 from scipy import ndimage
 from skimage.morphology import watershed
 from skimage.draw import polygon, circle, circle_perimeter, circle_perimeter_aa
@@ -119,7 +119,7 @@ class Locator(Loggable):
                                                                               self.pxpermm))
         return asarray(crop(src, x, y, cw_px, ch_px))
 
-    def find(self, image, frame, dim, shape='circle', confirm=False, **kw):
+    def find2(self, image, frame, dim, shape='circle', confirm=False, **kw):
         """
             image is a stand alone image
             dim = float. radius or half length of a square in pixels
@@ -170,6 +170,89 @@ class Locator(Loggable):
                 dx, dy = None, None
         self.debug('total find time={:0.5f}'.format(time.time() - st))
         return dx, dy
+
+    def find(self, image, frame, dim, shape='circle', confirm=False, **kw):
+        self.alive = True
+        dx, dy = None, None
+
+        st = time.time()
+        targets = self._find_targets_bs(image, frame, dim, shape=shape, **kw)
+        self.debug('time to find targets={:0.5f}'.format(time.time() - st))
+        if targets:
+            self.info('found {} potential targets'.format(len(targets)))
+            src = image.source_frame
+            # draw targets
+            self._draw_targets(src, targets)
+
+            dx, dy = self._calculate_error(targets)
+            self._draw_center_indicator(src, size=max(10, int(src.shape[0] * 0.25)),
+                                        shape='crosshairs')
+
+        image.refresh_needed = True
+        self.info('dx={}, dy={}'.format(dx, dy))
+        if confirm:
+            if not self.confirmation_dialog('Move to position'):
+                dx, dy = None, None
+        self.debug('total find time={:0.5f}'.format(time.time() - st))
+        return dx, dy
+
+    def _find_targets_bs(self, image, frame, dim, shape, preprocess, **kw):
+        if preprocess:
+            if not isinstance(preprocess, dict):
+                preprocess = {}
+            src = self._preprocess(frame, **preprocess)
+        else:
+            src = grayspace(frame)
+
+        image.set_frame(colorspace(frame / self.pixel_depth * 255))
+
+        seg = RegionSegmenter()
+        fa = self._get_filter_target_area(shape, dim)
+
+        sm = src.mean()
+        low = sm / 2
+        high = 255 - low
+        step = 5
+
+        self.debug('src mean={}, {}, {}'.format(sm, low, high))
+
+        def find(t):
+
+            nsrc = seg.segment(src, t)
+            per = _binary_percent(nsrc)
+            if per > 0.85 or per < 0.25:
+                return []
+
+            ts = self._find_polygon_targets(nsrc)
+            ts = self._filter_targets(image, frame, dim, ts, fa, use_segmentation=False)
+            # ts = _arc_approximation_filter(frame, ts, dim)
+
+            return ts
+
+        visited = {}
+
+        def find_bs(threshold):
+            if threshold in visited:
+                return []
+
+            if threshold > high or threshold < low:
+                return []
+
+            tt = find(threshold)
+            visited[threshold] = len(tt) if tt else 0
+            if tt:
+                at = find_bs(int(threshold-step))
+                bt = find_bs(int(threshold+step))
+
+                if at:
+                    tt.extend(at)
+                if bt:
+                    tt.extend(bt)
+            return tt
+
+        ts = find_bs(sm)
+        self.debug('visited n={} thresholds={}'.format(len(visited), visited))
+        return ts
 
     def _find_targets(self, image, frame, dim, shape='circle',
                       search=None, preprocess=True,
@@ -318,18 +401,18 @@ class Locator(Loggable):
     # filter
     # ===============================================================================
 
-    def _filter_targets(self, image, frame, dim, targets, fa, threshold=0.5):
+    def _filter_targets(self, image, frame, dim, targets, fa, threshold=0.5, use_segmentation=True):
         """
             filter targets using the _filter_test function
 
             return list of Targets that pass _filter_test
         """
 
-        ts = [self._filter_test(image, frame, ti, dim, threshold, fa[0], fa[1])
+        ts = [self._filter_test(image, frame, ti, dim, threshold, fa[0], fa[1], use_segmentation=use_segmentation)
               for ti in targets]
         return [ta[0] for ta in ts if ta[1]]
 
-    def _filter_test(self, image, frame, target, dim, cthreshold, mi, ma):
+    def _filter_test(self, image, frame, target, dim, cthreshold, mi, ma, use_segmentation=True):
         """
             if the convexity of the target is <threshold try to do a watershed segmentation
 
@@ -345,12 +428,13 @@ class Locator(Loggable):
         # result = ctest and atest and centtest
         # if not ctest and (atest and centtest):
         # print(ctest, centtest, atest)
-        if (not ctest or not atest) and centtest:
-            target = self._segment_polygon(image, frame,
-                                           target,
-                                           dim,
-                                           cthreshold, mi, ma)
-            result = True if target else False
+        if use_segmentation:
+            if (not ctest or not atest) and centtest:
+                target = self._segment_polygon(image, frame,
+                                               target,
+                                               dim,
+                                               cthreshold, mi, ma)
+                result = True if target else False
 
         return target, result
 
@@ -589,18 +673,22 @@ class Locator(Loggable):
             args = approximate_polygon_center3(pts, dim, w, h)
             if args:
                 cx, cy, cpts = args
+                self.debug('arc_approximation cx={}, cy={}, cpts={}'.format(cx, cy, cpts))
 
-                for cpt in cpts:
-                    self._draw_indicator(src, cpt, size=1)
+                if cx is not None and not isnan(cx) and cy is not None and not isnan(cy):
 
-                dx = cx - tx
-                dy = cy - ty
+                    for cpt in cpts:
+                        self._draw_indicator(src, cpt, size=1)
 
-                dy = -dy
-                color = (255, 0, 128)
+                    dx = cx - tx
+                    dy = cy - ty
+
+                    dy = -dy
+                    color = (255, 0, 128)
             else:
                 self.debug('arc approximation failed')
-
+                dx, dy = self._calculate_error([target])
+                cx, cy = dx + tx, -dy + ty
         else:
             self.debug('target convexity too low')
             dx, dy = self._calculate_error([target])

@@ -49,6 +49,7 @@ class NewportMotionController(MotionController):
 
     group_commands = True
     _trajectory_mode = None
+    use_hack_axis = True
 
     def initialize(self, *args, **kw):
         """
@@ -291,22 +292,23 @@ class NewportMotionController(MotionController):
             return
 
         # tol = 0.033
-        tol = 0.001
-        if abs(dx) < tol:
-            if 'grouped_move' in kw:
-                kw.pop('grouped_move')
+        if self.use_hack_axis:
+            tol = 0.001
+            if abs(dx) < tol:
+                if 'grouped_move' in kw:
+                    kw.pop('grouped_move')
 
-            self.info('x displacement {} doing a hack axis move'.format(dx))
-            self.single_axis_move('y', y, **kw)
-            # self._y_position = y
-            return
-        if abs(dy) < tol:
-            if 'grouped_move' in kw:
-                kw.pop('grouped_move')
-            self.info('y displacement {} doing a hack axis move'.format(dy))
-            self.single_axis_move('x', x, **kw)
-            # self._x_position = x
-            return
+                self.info('x displacement {} doing a hack axis move'.format(dx))
+                self.single_axis_move('y', y, **kw)
+                # self._y_position = y
+                return
+            if abs(dy) < tol:
+                if 'grouped_move' in kw:
+                    kw.pop('grouped_move')
+                self.info('y displacement {} doing a hack axis move'.format(dy))
+                self.single_axis_move('x', x, **kw)
+                # self._x_position = x
+                return
 
         errx = self._validate(x, 'x', cur=self._x_position)
         erry = self._validate(y, 'y', cur=self._y_position)
@@ -561,9 +563,14 @@ class NewportMotionController(MotionController):
         cmd = self._build_query('TB')
 
         n = 10 if read_all else 1
+        has_error = False
         for i in range(n):
             r = self.ask(cmd)
             if r is not None and r != 'simulation':
+
+                if not i:
+                    self.debug('------------- Errors ------------')
+                    has_error = True
                 r = r.strip()
                 eargs = r.split(',')
                 try:
@@ -576,7 +583,8 @@ class NewportMotionController(MotionController):
                         self.warning('Newport Motion Controller: i={} {}'.format(i, r))
                 except Exception:
                     pass
-
+        if has_error:
+            self.debug('---------------------------------')
         return error
 
     def set_group_motion_parameters(self, acceleration=None, deceleration=None,
@@ -860,6 +868,7 @@ class NewportMotionController(MotionController):
                 if abs(x - target_x) > tol or abs(y - target_y) > tol:
                     self.warning('TargetPosition warning:  '
                                  'current={},{}  target={},{}'.format(x, y, target_x, target_y))
+                    self.read_error()
                     tol = 0.5
                     if abs(x - target_x) > tol or abs(y - target_y) > tol:
                         raise TargetPositionError(x, y, target_x, target_y)
