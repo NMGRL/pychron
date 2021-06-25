@@ -19,7 +19,7 @@ from traits.api import Float
 
 import time
 from operator import attrgetter
-from collections import deque
+from collections import deque, OrderedDict
 from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
     nonzero, arange, argsort, invert, median, mean, zeros_like, ones, count_nonzero, unique, isnan
 from scipy import ndimage
@@ -212,7 +212,7 @@ class Locator(Loggable):
         sm = src.mean()
         low = sm / 2
         high = 255 - low
-        step = 5
+        # step = 5
 
         self.debug('src mean={}, {}, {}'.format(sm, low, high))
 
@@ -229,28 +229,44 @@ class Locator(Loggable):
 
             return ts
 
-        visited = {}
+        visited = OrderedDict()
 
-        def find_bs(threshold):
+        def find_bs(threshold, depth):
+            self.debug('find bs {} {}'.format(threshold, depth))
+
             if threshold in visited:
+                # self.debug('visited {}'.format(threshold))
                 return []
+            visited[threshold] = 0
 
             if threshold > high or threshold < low:
+                # self.debug('outbounds {}'.format(threshold))
+                return []
+
+            if depth > 6:
                 return []
 
             tt = find(threshold)
             visited[threshold] = len(tt) if tt else 0
             if tt:
-                at = find_bs(int(threshold-step))
-                bt = find_bs(int(threshold+step))
+
+                at = find_bs(int(threshold / 2), depth + 1)
+                if not at:
+                    at = find_bs(int(threshold / 1.5), depth + 1)
 
                 if at:
                     tt.extend(at)
+
+                bt = find_bs(int(threshold * 1.5), depth + 1)
+                if not bt:
+                    bt = find_bs(int(threshold*1.25), depth + 1)
+
                 if bt:
                     tt.extend(bt)
+
             return tt
 
-        ts = find_bs(sm)
+        ts = find_bs(int(sm), 0)
         self.debug('visited n={} thresholds={}'.format(len(visited), visited))
         return ts
 
