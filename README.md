@@ -20,6 +20,14 @@ Pychron is a set of applications for the collection and processing of noble gas 
 
 Pychron aims to augment and replace the current widely used program Mass Spec by Alan Deino of Berkeley Geochronology Center
 
+Give it a try
+====================
+Interesting in seeing pychron in action? Don't want to/can't install all the required dependencies? 
+
+A demo version of Pychron Data Reduction aka PyCrunch is now available via a docker image. Checkout https://github.com/NMGRL/pychron_docker for more details
+
+**NOTE: this is an experimental feature and is likely to evolve over time**
+
 Who's Using Pychron
 ====================
 
