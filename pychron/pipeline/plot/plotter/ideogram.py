@@ -24,13 +24,14 @@ from chaco.data_label import DataLabel
 from chaco.scatterplot import render_markers
 from chaco.tooltip import ToolTip
 from enable.colors import ColorTrait
-from numpy import array, arange, Inf, argmax
+from numpy import array, arange, Inf, argmax, asarray
 from pyface.message_dialog import warning
 from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.stats import calculate_weighted_mean
 from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
 from pychron.graph.explicit_legend import ExplicitLegend
@@ -163,9 +164,12 @@ class Ideogram(BaseArArFigure):
         graph = self.graph
 
         try:
-            self.xs, self.xes = array([(nominal_value(ai), std_dev(ai))
+            xs, es = array([(nominal_value(ai), std_dev(ai))
                                        for ai in self._get_xs(key=index_attr)]).T
 
+            xs = self.normalize(xs, es)
+            self.xs = xs
+            self.xes = es
         except (ValueError, AttributeError) as e:
             print('asdfasdf', e, index_attr)
             import traceback
@@ -222,20 +226,27 @@ class Ideogram(BaseArArFigure):
         # todo: handle other attributes
         return nominal_value(self.analysis_group.weighted_age)
 
-    def max_x(self, attr, exclude_omit=False):
-        try:
-            return max([nominal_value(ai) + std_dev(ai) * 2
-                        for ai in self._unpack_attr(attr, exclude_omit=exclude_omit) if ai is not None])
-        except (AttributeError, ValueError) as e:
-            print('max', e, 'attr={}'.format(attr))
-            return 0
+    def max_x(self, *args, **kw):
+        # try:
+        #     return max([nominal_value(ai) + std_dev(ai) * 2
+        #                 for ai in self._unpack_attr(attr, exclude_omit=exclude_omit) if ai is not None])
+        # except (AttributeError, ValueError) as e:
+        #     print('max', e, 'attr={}'.format(attr))
+        #     return 0
+        return max(self._min_max(*args, **kw))
 
-    def min_x(self, attr, exclude_omit=False):
+    def min_x(self, *args, **kw):
+        return min(self._min_max(sign=-1, *args, **kw))
+
+    def _min_max(self, attr, sign=1, exclude_omit=False):
         try:
-            return min([nominal_value(ai) - std_dev(ai) * 2
-                        for ai in self._unpack_attr(attr, exclude_omit=exclude_omit) if ai is not None])
+            ans = [ai for ai in self._unpack_attr(attr, exclude_omit=exclude_omit) if ai is not None]
+            xs = [nominal_value(ai) + sign*std_dev(ai) * 2 for ai in ans]
+            es = [std_dev(ai) for ai in ans]
+            xs = self.normalize(xs, es)
+            return xs
         except (AttributeError, ValueError) as e:
-            print('min', e)
+            print('min max', e)
             return 0
 
     def get_valid_xbounds(self):
@@ -274,6 +285,18 @@ class Ideogram(BaseArArFigure):
     def replot(self):
         self._rebuild_ideo()
 
+    def normalize(self, xs, es):
+        xs = asarray(xs)
+        opt = self.options
+        if opt.age_normalize:
+            offset = opt.age_normalize_value
+            if not offset:
+                offset, _ = calculate_weighted_mean(xs, es)
+            xs -= offset
+
+            print('asfd', offset)
+        print(xs)
+        return xs
     # ===============================================================================
     # plotters
     # ===============================================================================
@@ -284,7 +307,7 @@ class Ideogram(BaseArArFigure):
                 ais = list(ais)
                 xs, xes = zip(*[(nominal_value(vi), std_dev(vi)) for vi in
                                 self._unpack_attr(self.options.index_attr, ans=ais)])
-
+                xs = self.normalize(xs, xes)
                 ys, yes = zip(*[(nominal_value(vi), std_dev(vi)) for vi in
                                 self._unpack_attr(k, ans=ais, scalar=scalar)])
 
@@ -407,6 +430,8 @@ class Ideogram(BaseArArFigure):
 
             xs, xes = zip(*((nominal_value(xi), std_dev(xi)) for xi in
                             self._unpack_attr(index_attr, ans=ais)))
+            xs = self.normalize(xs, xes)
+
             startidx += n + 1
             kw = {}
             if opt.use_cmap_analysis_number:

@@ -107,7 +107,14 @@ class Login(HasTraits):
 
     def __init__(self, *args, **kw):
         super(Login, self).__init__(*args, **kw)
-        self.environment, self.environments = load_environments_file()
+
+        env = os.environ.get('PYCHRON_ENV')
+        if not env:
+            self.environment, self.environments = load_environments_file()
+        else:
+            self.environment = env
+            self.environments = [env]
+
         self.user, self.users, isfile = load_user_file()
         if not isfile or not self.users:
             self.user = 'root'

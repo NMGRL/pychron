@@ -26,6 +26,10 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 class ArArConstantsPlugin(BaseTaskPlugin):
     id = 'pychron.arar_constants'
     name = 'ArArConstants'
+
+    def _preferences_default(self):
+        return self._preferences_factory('arar_constants')
+
     def _preferences_panes_default(self):
         return [ArArConstantsPreferencesPane]
 

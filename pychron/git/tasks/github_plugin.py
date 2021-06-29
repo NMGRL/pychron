@@ -28,6 +28,9 @@ class GitHubPlugin(BaseGitPlugin):
     service_klass = GitHubService
     id = 'pychron.github.plugin'
 
+    def _preferences_default(self):
+        return self._preferences_factory('github')
+
     def _preferences_panes_default(self):
         return [GitHubPreferencesPane]
 
