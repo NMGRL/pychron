@@ -42,7 +42,8 @@
       <plugin enabled="true">DVC</plugin>
       <plugin enabled="true">MassSpec</plugin>
       <plugin enabled="false">IGSN</plugin>
-      <plugin enabled="true">GitHub</plugin>
+      <plugin enabled="false">GitHub</plugin>
+      <plugin enabled="true">LocalGit</plugin>
       <plugin enabled="false">MachineLearning</plugin>
       <plugin enabled="false">Image</plugin>
       <plugin enabled="false">RemoteExperiment</plugin>
