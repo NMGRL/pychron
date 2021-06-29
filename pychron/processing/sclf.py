@@ -73,10 +73,12 @@ def schaen_2020_1(ans, **kw):
         valid = validate_mswd(mswd, len(xs))
         if valid:
             u, e = calculate_weighted_mean(xs, es)
-            mean = ufloat(u, e)
-            mean_ans = ais
-        else:
-            break
+            nmean = ufloat(u, e)
+            if not mean or nmean < mean:
+                mean = nmean
+                mean_ans = ais
+        # else:
+        #     break
 
     return mean, mean_ans
 
@@ -136,12 +138,12 @@ def schaen_2020_3(ans, alpha=0.05, skew_min=-0.2, skew_max=0.2, find_youngest=Fa
     mean_ans = []
     # print(alpha, skew_max, skew_min)
     n = len(ans)
-    for i in range(0, n+1):
+    for i in range(0, n + 1):
         if find_youngest:
             if mean_ans:
                 break
 
-        for j in range(i + 3, n+1):
+        for j in range(i + 3, n + 1):
             ais = ans[i:j]
             n = len(ais)
 
