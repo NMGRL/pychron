@@ -33,8 +33,6 @@ COPY ./app_utils/.appdata /home/Pychron/.appdata
 ENV QT_GRAPHICSSYSTEM="native"
 ENV QT_DEBUG_PLUGINS=0
 ENV PYTHONPATH=.
-ENV DISPLAY=$ip:0
-VOLUME /tmp/.X11-unix:/tmp/.X11-unix
 ENV PYCHRON_APPNAME=pycrunch
 ENV PYCHRON_ENV=/home/Pychron
 ENV PYCHRON_USE_LOGIN=0
