@@ -42,6 +42,7 @@ from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 HEADER = 'status', 'runid', 'age', 'age_err', 'group', 'aliquot', 'sample', 'label_name'
+SPECTRUM_HEADER = HEADER + ('k39', 'k39_err', 'rad40', 'rad40_err')
 
 
 def make_line(vs, delimiter=','):
@@ -52,11 +53,14 @@ class CSVRecord(HasTraits):
     runid = Str('')
     age = CFloat
     age_err = CFloat
+
+
     group = CInt
     aliquot = CInt
     sample = Str
     status = Bool(True)
     label_name = Str
+    header = HEADER
 
     def __init__(self, *args, **kw):
         if 'status' in kw:
@@ -67,7 +71,15 @@ class CSVRecord(HasTraits):
         return self.runid and self.age and self.age_err
 
     def to_csv(self, delimiter=','):
-        return make_line([str(getattr(self, attr)) for attr in HEADER], delimiter=delimiter)
+        return make_line([str(getattr(self, attr)) for attr in self.header], delimiter=delimiter)
+
+
+class CSVSpectrumRecord(CSVRecord):
+    header = SPECTRUM_HEADER
+    k39 = CFloat
+    k39_err = CFloat
+    rad40 = CFloat
+    rad40_err = CFloat
 
 
 class CSVRecordGroup(HasTraits):
@@ -165,6 +177,7 @@ class CSVDataSetFactory(HasTraits):
     name_filter = Str
     repo_filter = Str
     dirty = False
+    _record_klass = CSVRecord
 
     _message_text = '''Create/select a file with a column header as the first line.<br/><br/>
         
@@ -235,7 +248,7 @@ e.g.
     #         gi.calculate()
 
     def _add_record_button_fired(self):
-        self.records.append(CSVRecord())
+        self.records.append(self._record_klass)
         self._make_groups()
 
     def _name_filter_changed(self, new):
@@ -299,7 +312,7 @@ e.g.
             parser = CSVColumnParser()
             parser.load(p)
 
-            records = [CSVRecord(**row) for row in parser.values()]
+            records = [self._record_klass(**row) for row in parser.values()]
             self.records = records
 
             self._make_groups()
@@ -308,7 +321,8 @@ e.g.
             self.dirty = False
 
     def _make_csv_data(self):
-        return [make_line(HEADER)] + [ri.to_csv() for ri in self.records if ri.valid()]
+        header = self.records[0].header
+        return [make_line(header)] + [ri.to_csv() for ri in self.records if ri.valid()]
 
     def _load_names(self, repo=None):
         if repo is None:
@@ -484,6 +498,7 @@ e.g.
     # Run1, 10, 0.24, 0.4, 0.001, 1, 0.1
     # Run2, 11, 0.32, 0.23, 0.02, 2, 0.1
     # Run3, 10, 0.40, 0.01, 0.1, 4, 0.1
+    _record_klass = CSVSpectrumRecord
 
     def _get_columns(self):
         cols = [CheckboxColumn(name='status'),

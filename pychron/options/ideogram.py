@@ -66,6 +66,8 @@ class IdeogramOptions(AgeOptions):
     skew_min = Float(-0.2)
     skew_max = Float(0.2)
     shapiro_wilk_alpha = Float(0.05)
+    age_normalize = Bool
+    age_normalize_value = Float(0)
 
     use_centered_range = Bool
     use_static_limits = Bool

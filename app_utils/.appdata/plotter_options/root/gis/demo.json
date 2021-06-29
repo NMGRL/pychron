@@ -1,0 +1,459 @@
+{
+    "__traits_version__": "5.2.0",
+    "_suppress_template_update": false,
+    "basemap_path": "",
+    "basemap_uri": "type=xyz&url=http://a.tile.stamen.com/toner/{z}/{x}/{y}.png&zmax=19&zmin=5",
+    "fontname": "Andale Mono",
+    "grouping_attribute": "Material",
+    "groups": [
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4279271425,
+                "group_id": 0,
+                "line_color": 4279271425,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 5.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4281519410,
+                "group_id": 1,
+                "line_color": 4281519410,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4278190335,
+                "group_id": 2,
+                "line_color": 4278190335,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4293821166,
+                "group_id": 3,
+                "line_color": 4293821166,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4286578688,
+                "group_id": 4,
+                "line_color": 4286578688,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4294901760,
+                "group_id": 5,
+                "line_color": 4294901760,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4286611584,
+                "group_id": 6,
+                "line_color": 4286611584,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4278222848,
+                "group_id": 7,
+                "line_color": 4278222848,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4286578644,
+                "group_id": 8,
+                "line_color": 4286578644,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4290822336,
+                "group_id": 9,
+                "line_color": 4290822336,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4278190208,
+                "group_id": 10,
+                "line_color": 4278190208,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4292714717,
+                "group_id": 11,
+                "line_color": 4292714717,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4286578816,
+                "group_id": 12,
+                "line_color": 4286578816,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4287245282,
+                "group_id": 13,
+                "line_color": 4287245282,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4289014314,
+                "group_id": 14,
+                "line_color": 4289014314,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4289864226,
+                "group_id": 15,
+                "line_color": 4289864226,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4289593135,
+                "group_id": 16,
+                "line_color": 4289593135,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4294934352,
+                "group_id": 17,
+                "line_color": 4294934352,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4289014314,
+                "group_id": 18,
+                "line_color": 4289014314,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4278255615,
+                "group_id": 19,
+                "line_color": 4278255615,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4293984255,
+                "group_id": 20,
+                "line_color": 4293984255,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4289309097,
+                "group_id": 21,
+                "line_color": 4289309097,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4278215680,
+                "group_id": 22,
+                "line_color": 4278215680,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4278255615,
+                "group_id": 23,
+                "line_color": 4278255615,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ],
+        [
+            "<class 'pychron.gis.options.GISGroup'>",
+            {
+                "__traits_version__": "5.2.0",
+                "alpha": 70,
+                "angle": 0,
+                "bind_colors": true,
+                "color": 4294309340,
+                "group_id": 24,
+                "line_color": 4294309340,
+                "line_width": 1,
+                "marker": "Square",
+                "marker_size": 0.0,
+                "opacity": 1.0,
+                "use_fill": true
+            }
+        ]
+    ],
+    "klass": "<class 'pychron.gis.options.GISOptions'>",
+    "layers": [
+        [
+            "<class 'pychron.gis.options.CSVLayerOption'>",
+            {
+                "__traits_version__": "5.2.0",
+                "_fields": [
+                    "id",
+                    "x",
+                    "y"
+                ],
+                "color": 4279206143,
+                "delimiter": ",",
+                "kind": "Triangle",
+                "label": "testgeom.csv",
+                "path": "/Users/ross/Documents/testgeom.csv",
+                "size": 4,
+                "visible": true,
+                "xfield": "x",
+                "yfield": "y"
+            }
+        ]
+    ],
+    "name": "demo"
+}

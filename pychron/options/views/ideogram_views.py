@@ -148,6 +148,8 @@ class IdeogramSubOptions(SubOptions):
         xgrp = VGroup(Item('index_attr',
                            editor=EnumEditor(name='index_attrs'),
                            label='X Value'),
+                      HGroup(Item('age_normalize', label='Normalize Age'),
+                             UItem('age_normalize_value')),
                       Item('reverse_x_axis', label='Reverse',
                            tooltip='Display decreasing left to right'),
                       HGroup(UItem('use_static_limits'),

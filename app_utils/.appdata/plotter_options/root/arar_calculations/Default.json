@@ -1,0 +1,15 @@
+{
+    "__traits_version__": "5.1.2",
+    "error_calc_method": "SEM, but if MSWD>1 use SEM * sqrt(MSWD)",
+    "fontname": "Andale Mono",
+    "integrated_include_omitted": true,
+    "isochron_exclude_non_plateau": false,
+    "isochron_omit_non_plateau": true,
+    "klass": "<class 'pychron.options.arar_calculations.ArArCalculationsOptions'>",
+    "mean_calculation_kind": "kernel",
+    "name": "Default",
+    "pc_gas_fraction": 60.0,
+    "pc_nsteps": 3,
+    "plateau_method": "Fleck 1977",
+    "probability_curve_kind": "kernel"
+}

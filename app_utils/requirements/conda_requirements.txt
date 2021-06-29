@@ -1,4 +1,5 @@
-qt=4
+qt
+pyqt
 statsmodels
 scikit-learn
 PyYAML
@@ -17,7 +18,6 @@ PyMySQL
 requests
 keyring
 pillow
-python.app
 pytables
 jinja2
 psutil

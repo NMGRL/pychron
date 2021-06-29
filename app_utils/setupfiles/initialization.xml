@@ -1,0 +1,72 @@
+<?xml version='1.0' encoding='ASCII'?>
+<root>
+  <globals>
+    <irradiation_pdf_debug>True</irradiation_pdf_debug>
+    <pipeline_debug>false</pipeline_debug>
+    <run_pipeline>false</run_pipeline>
+    <pipeline_template>Analysis</pipeline_template>
+    <mdd_workspace_debug>True</mdd_workspace_debug>
+    <skip_configure>false</skip_configure>
+    <system_monitor_debug>True</system_monitor_debug>
+    <use_ipc>True</use_ipc>
+    <use_startup_tests>True</use_startup_tests>
+    <show_startup_results>False</show_startup_results>
+    <experiment_debug>True</experiment_debug>
+    <ignore_initialization_warnings>True</ignore_initialization_warnings>
+    <ignore_initialization_questions>True</ignore_initialization_questions>
+    <ignore_initialization_required>True</ignore_initialization_required>
+    <ignore_shareable>True</ignore_shareable>
+    <communication_simulation>True</communication_simulation>
+    <dashboard_simulation>True</dashboard_simulation>
+    <random_tip_enabled>True</random_tip_enabled>
+    <auto_pipeline_debug>True</auto_pipeline_debug>
+    <ignore_connection_warnings>True</ignore_connection_warnings>
+    </globals>
+  <plugins>
+    <general>
+      <plugin enabled="false">CanvasDesigner</plugin>
+      <plugin enabled="true">PyScript</plugin>
+      <plugin enabled="false">Video</plugin>
+      <plugin enabled="false">Database</plugin>
+      <plugin enabled="true">Entry</plugin>
+      <plugin enabled="false">SystemMonitor</plugin>
+      <plugin enabled="true">ArArConstants</plugin>
+      <plugin enabled="false">Loading</plugin>
+      <plugin enabled="false">LabBook</plugin>
+      <plugin enabled="false">DashboardServer</plugin>
+      <plugin enabled="false">DashboardClient</plugin>
+      <plugin enabled="true">Pipeline</plugin>
+      <plugin enabled="false">Geochron</plugin>
+      <plugin enabled="false">MediaStorage</plugin>
+      <plugin enabled="false">Update</plugin>
+      <plugin enabled="true">DVC</plugin>
+      <plugin enabled="true">MassSpec</plugin>
+      <plugin enabled="false">IGSN</plugin>
+      <plugin enabled="true">GitHub</plugin>
+      <plugin enabled="false">MachineLearning</plugin>
+      <plugin enabled="false">Image</plugin>
+      <plugin enabled="false">RemoteExperiment</plugin>
+      <plugin enabled="false">Experiment</plugin>
+      <plugin enabled="false">LabspyClient</plugin>
+      <plugin enabled="false">SimpleIdentifier</plugin>
+      <plugin enabled="false">Classifier</plugin>
+      <plugin enabled="false">Auto</plugin>
+      <plugin enabled="true">MDD</plugin>
+      <plugin enabled="false">Query</plugin>
+      <plugin enabled="false">GitLab</plugin>
+      <plugin enabled="false">GIS</plugin>
+      <plugin enabled="false">Caffeine</plugin>
+      </general>
+    <hardware>
+    </hardware>
+    <social>
+      <plugin enabled="false">Email</plugin>
+    </social>
+    <data>
+      <plugin enabled="false">USGSVSCData</plugin>
+      <plugin enabled="false">WiscArData</plugin>
+      <plugin enabled="false">Sparrow</plugin>
+      </data>
+    </plugins>
+  </root>
+
