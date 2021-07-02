@@ -90,17 +90,17 @@ def schaen_2020_2(ans, **kw):
     :return: ufloat
     """
 
-    for i in range(2, len(ans)-1):
+    for i in range(2, len(ans) - 1):
         ais = ans[:i]
         next_a = ans[i]
 
-        xs,es = age_errors(ais)
+        xs, es = age_errors(ais)
         wm, we = calculate_weighted_mean(xs, es)
 
         rv1 = norm.rvs(loc=wm, scale=we)
         rv2 = norm.rvs(loc=next_a.age, scale=next_a.age_err)
         result = ttest_rel(rv1, rv2)
-        if result.pvalue<0.05:
+        if result.pvalue < 0.05:
             return ufloat(wm, we), ais
     else:
         return ufloat(wm, we), ais
