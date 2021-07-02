@@ -16,7 +16,7 @@
 from operator import attrgetter
 from numpy import array, argmax, delete
 from numpy.random import normal
-from scipy.stats import shapiro, skew, norm
+from scipy.stats import shapiro, skew, norm, ttest_rel
 from uncertainties import ufloat
 
 from pychron.core.stats import calculate_mswd, validate_mswd, calculate_weighted_mean
@@ -90,18 +90,36 @@ def schaen_2020_2(ans, **kw):
     :return: ufloat
     """
 
-    for i in range(len(ans) - 2, 1, -1):
-        lais = ans[:i]
-        hais = ans[i:]
+    for i in range(2, len(ans)-1):
+        ais = ans[:i]
+        next_a = ans[i]
 
-        lxs, les = age_errors(lais)
-        hxs, hes = age_errors(hais)
+        xs,es = age_errors(ais)
+        wm, we = calculate_weighted_mean(xs, es)
 
-        lwm, le = calculate_weighted_mean(lxs, les)
-        hwm, he = calculate_weighted_mean(hxs, hes)
-        # the two means differ by > 2sigma
-        if (hwm - he * 2) - (lwm + 2 * le) > 0:
-            return ufloat(lwm, le), lais
+        rv1 = norm.rvs(loc=wm, scale=we)
+        rv2 = norm.rvs(loc=next_a.age, scale=next_a.age_err)
+        result = ttest_rel(rv1, rv2)
+        if result.pvalue<0.05:
+            return ufloat(wm, we), ais
+    else:
+        return ufloat(wm, we), ais
+
+        # sed = (le**2+next_a.age_err**2)**0.5
+        # t = abs(lwm-next_a.age)/sed
+
+    # for i in range(len(ans) - 2, 1, -1):
+    #     lais = ans[:i]
+    #     hais = ans[i:]
+    #
+    #     lxs, les = age_errors(lais)
+    #     hxs, hes = age_errors(hais)
+    #
+    #     lwm, le = calculate_weighted_mean(lxs, les)
+    #     hwm, he = calculate_weighted_mean(hxs, hes)
+    #     # the two means differ by > 2sigma
+    #     if (hwm - he * 2) - (lwm + 2 * le) > 0:
+    #         return ufloat(lwm, le), lais
 
 
 def shapiro_wilk_pvalue(ans):
