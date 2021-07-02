@@ -430,12 +430,12 @@ class PatternExecutor(Patternable):
                 pt, peakcol, peakrow, peak_img, sat, src = args
 
                 sats.append(sat)
-                src = gray2rgb(src).astype(uint8)
+                # src = gray2rgb(src).astype(uint8)
                 if pt:
                     pts.append(pt)
-                    c = circle(peakrow, peakcol, 2)
+                    #c = circle(peakrow, peakcol, 2)
                     # img[c] = (255, 0, 0)
-                    src[c] = (255, 0, 0)
+                    #src[c] = (225, 0, 225)
 
                 set_data2('imagedata', src)
 

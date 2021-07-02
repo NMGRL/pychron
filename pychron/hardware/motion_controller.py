@@ -109,7 +109,7 @@ class MotionController(CoreDevice):
         self.parent.canvas.set_stage_position(self._x_position,
                                               self._y_position)
 
-    @caller
+    # @caller
     def timer_factory(self, func=None, period=150):
         """
 

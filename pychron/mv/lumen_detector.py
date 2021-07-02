@@ -17,6 +17,9 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
+from operator import attrgetter
+
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import hot
 from numpy import invert, zeros_like, asarray, max, copy, ones_like, zeros, uint8, average, ravel_multi_index
@@ -83,14 +86,14 @@ class LumenDetector(Locator):
         src[src <= threshold] = 0
 
         if not self._target:
-            targets = self.find_targets(None, src, dim, search={'n': 2})
+            targets = self.find_targets(None, src, dim)
             marea = m.sum()
 
             area = 0
             if targets:
                 self.debug('found targets={}'.format(len(targets)))
                 for t in targets:
-                    self.debug('t.area={}, marea={}'.format(t.area, marea*0.15))
+                    self.debug('t.area={}, marea={}'.format(t.area, marea * 0.15))
                     if t.area > marea * 0.15:
                         if t.area > area:
                             area = t.area
@@ -119,22 +122,28 @@ class LumenDetector(Locator):
 
         return src, v, targets
 
-    def find_targets(self, image, src, dim, mask=False, search=None):
-        targets = self._find_targets(image, src, dim,
-                                     filter_targets=False,
-                                     inverted=True,
-                                     convexity_filter=0.75,
-                                     mask=mask, search=search)
+    def find_targets(self, image, src, dim, mask=False):
+        targets = self._find_targets_bs(image, src, dim, 'circle',
+                                        True,
+                                        filter_targets=False,
+                                        inverted=True,
+                                        threshold_limiting=False,
+                                        min_targets=2,
+                                        search_depth=5,
+                                        search_start=254,
+                                        # convexity_filter=0.75,
+                                        mask=mask)
         self.active_targets = None
         if targets:
             targets = self._filter(targets, self._target_near_center, src)
             if targets:
+                targets = sorted(targets, key=attrgetter('area'))
                 self.active_targets = targets
                 if image is not None:
                     self._draw_targets(image.source_frame, targets)
                 return targets
 
-    def find_lum_peak(self, lum, dim, mask_dim, min_distance=5, blur=1):
+    def find_lum_peak(self, lum, dim, mask_dim, min_distance=5, blur=0):
         pixel_depth = self.pixel_depth
 
         if self.grain_measuring:
@@ -144,10 +153,10 @@ class LumenDetector(Locator):
             else:
                 self.debug('no active targets')
         else:
-            targets = self.find_targets(None, lum, dim, mask=mask_dim, search={'n': 2})
+            targets = self.find_targets(None, lum, dim, mask=mask_dim)
 
-        src = gaussian(lum, blur) * pixel_depth
-        # mask = self._mask(lum)
+        img = lum / pixel_depth * 255
+        img = gray2rgb(img).astype(uint8)
 
         h, w = lum.shape[:2]
 
@@ -159,7 +168,9 @@ class LumenDetector(Locator):
         if targets:
             target = targets[0]
             px, py = target.centroid
-            self._draw_targets(src, targets)
+            # self._draw_targets(img, targets)
+            self._draw_targets(img, targets[1:])
+            self._draw_targets(img, targets[:1], color=(252, 169, 3))
 
             peak_img[circle(py, px, min_distance)] = 255
 
@@ -187,7 +198,7 @@ class LumenDetector(Locator):
             #     except ZeroDivisionError:
             #         pass
 
-            return pt, px, py, peak_img, sat, src
+            return pt, px, py, peak_img, sat, img
 
     def get_scores(self, lum, pixel_depth=None):
         if pixel_depth is None:

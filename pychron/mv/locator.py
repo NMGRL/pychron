@@ -14,6 +14,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from skimage.transform import rescale
 from traits.api import Float
 # ============= standard library imports ========================
 
@@ -23,10 +24,10 @@ from collections import deque, OrderedDict
 from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
     nonzero, arange, argsort, invert, median, mean, zeros_like, ones, count_nonzero, unique, isnan
 from scipy import ndimage
-from skimage.morphology import watershed
+from skimage.morphology import watershed, disk
 from skimage.draw import polygon, circle, circle_perimeter, circle_perimeter_aa
 from skimage.exposure import rescale_intensity
-from skimage.filters import gaussian
+from skimage.filters import gaussian, rank
 from skimage import feature
 # ============= local library imports  ==========================
 from pychron.core.geometry.convex_hull import convex_hull
@@ -101,6 +102,9 @@ class Locator(Loggable):
         if self.step_signal:
             self.step_signal.wait()
             self.step_signal.clear()
+
+    def rescale(self, src, v):
+        return rescale(src, v, preserve_range=True)
 
     def crop(self, src, cw, ch, ox=0, oy=0, verbose=True):
 
@@ -181,6 +185,10 @@ class Locator(Loggable):
         if targets:
             self.info('found {} potential targets'.format(len(targets)))
             src = image.source_frame
+
+            self._draw_center_indicator(src, size=max(10, int(src.shape[0] * 0.25)),
+                                        shape='crosshairs')
+
             # draw targets
             self._draw_targets(src, targets)
 
@@ -196,22 +204,40 @@ class Locator(Loggable):
         self.debug('total find time={:0.5f}'.format(time.time() - st))
         return dx, dy
 
-    def _find_targets_bs(self, image, frame, dim, shape, preprocess, **kw):
+    def _find_targets_bs(self, image, frame, dim, shape, preprocess, mask=False, inverted=False,
+                         search_depth=6, min_targets=3,
+                         threshold_limiting=True,
+                         filter_targets=True,
+                         search_start=False, **kw):
         if preprocess:
             if not isinstance(preprocess, dict):
                 preprocess = {}
             src = self._preprocess(frame, **preprocess)
         else:
-            src = grayspace(frame)
+            src = grayspace(frame) * 255
 
-        image.set_frame(colorspace(frame / self.pixel_depth * 255))
+        if mask:
+            self._mask(src, mask)
 
+        if inverted:
+            src = invert(src)
+
+        # image.set_frame(colorspace(frame / self.pixel_depth * 255))
+        if image:
+            image.set_frame(colorspace(src))
         seg = RegionSegmenter()
         fa = self._get_filter_target_area(shape, dim)
 
-        sm = src.mean()
+        if search_start:
+            sm = search_start
+        else:
+            sm = src.mean()
+
         low = sm / 2
-        high = 255 - low
+        if threshold_limiting:
+            high = 255 - low
+        else:
+            high = 255
         # step = 5
 
         self.debug('src mean={}, {}, {}'.format(sm, low, high))
@@ -220,11 +246,14 @@ class Locator(Loggable):
 
             nsrc = seg.segment(src, t)
             per = _binary_percent(nsrc)
-            if per > 0.85 or per < 0.25:
+            if threshold_limiting and (per > 0.85 or per < 0.25):
                 return []
 
             ts = self._find_polygon_targets(nsrc)
-            ts = self._filter_targets(image, frame, dim, ts, fa, use_segmentation=False)
+            # self.debug('t={} polygons={}'.format(t, len(ts) if ts else 0))
+            if filter_targets:
+                ts = self._filter_targets(image, frame, dim, ts, fa, use_segmentation=False)
+                # self.debug('t={} filtered poly={}'.format(t, len(ts) if ts else 0))
             # ts = _arc_approximation_filter(frame, ts, dim)
 
             return ts
@@ -232,23 +261,22 @@ class Locator(Loggable):
         visited = OrderedDict()
 
         def find_bs(threshold, depth):
-            self.debug('find bs {} {}'.format(threshold, depth))
+            # self.debug('find bs {} {}'.format(threshold, depth))
 
             if threshold in visited:
                 # self.debug('visited {}'.format(threshold))
                 return []
-            visited[threshold] = 0
 
             if threshold > high or threshold < low:
                 # self.debug('outbounds {}'.format(threshold))
                 return []
 
-            if depth > 6:
+            if depth > search_depth:
                 return []
 
             tt = find(threshold)
             visited[threshold] = len(tt) if tt else 0
-            if tt:
+            if tt or sum(visited.values()) < min_targets:
 
                 at = find_bs(int(threshold / 2), depth + 1)
                 if not at:
@@ -259,7 +287,7 @@ class Locator(Loggable):
 
                 bt = find_bs(int(threshold * 1.5), depth + 1)
                 if not bt:
-                    bt = find_bs(int(threshold*1.25), depth + 1)
+                    bt = find_bs(int(threshold * 1.25), depth + 1)
 
                 if bt:
                     tt.extend(bt)
@@ -589,7 +617,7 @@ class Locator(Loggable):
     # ===============================================================================
     # preprocessing
     # ===============================================================================
-    def _preprocess(self, frame, stretch_intensity=True, blur=1, denoise=0):
+    def _preprocess(self, frame, stretch_intensity=True, blur=0, denoise=0):
         """
             1. convert frame to grayscale
             2. remove noise from frame. increase denoise value for more noise filtering
@@ -602,22 +630,14 @@ class Locator(Loggable):
 
         frm = frm.astype('uint8')
 
-        # self.preprocessed_frame = frame
-        # if denoise:
-        #     frm = self._denoise(frm, weight=denoise)
-        # print 'gray', frm.shape
         if blur:
             frm = gaussian(frm, blur) * 255
             frm = frm.astype('uint8')
 
-            # frm1 = gaussian(self.preprocessed_frame, blur,
-            #                 multichannel=True) * 255
-            # self.preprocessed_frame = frm1.astype('uint8')
-
         if stretch_intensity:
             frm = rescale_intensity(frm)
-            # frm = self._contrast_equalization(frm)
-            # self.preprocessed_frame = self._contrast_equalization(self.preprocessed_frame)
+        #     d = disk(int(frm.shape[0]/2))
+        #     frm = rank.equalize(frm, d)
 
         return frm
 
@@ -811,25 +831,43 @@ class Locator(Loggable):
     # ===============================================================================
     # draw
     # ===============================================================================
-    def _draw_targets(self, src, targets):
+    def _draw_targets(self, src, targets, include_indicator=True, color=None):
         """
             draw a crosshairs indicator
         """
-        color = (255, 165, 0)
+        # color = (255, 165, 0)
         if targets:
-            for ta in targets:
-                pt = new_point(*ta.centroid)
-                self._draw_indicator(src, pt,
-                                     color=color,
-                                     size=20,
-                                     thickness=1,
-                                     shape='crosshairs')
-                # draw_circle(src, pt,
-                #             color=(0,255,0),
-                #             radius=int(dim))
-                # self.debug('drawing target {}'.format(pt))
 
-                draw_polygons(src, [ta.poly_points], color=color, thickness=1)
+            size = 20
+            sstep = 0
+            start = 100
+            n = len(targets)
+            if n == 1:
+                g = 225
+                step = 0
+                size = 4
+            else:
+                step = (255 - start) / n
+                g = start
+                sstep = 20 / (n + 1)
+
+            for ta in targets:
+                g += step
+                _color = color
+                if _color is None:
+                    _color = (0, int(min(g, 255)), 0)
+
+                if include_indicator:
+                    size -= sstep
+                    pt = new_point(*ta.centroid)
+                    # print('fff',n, color, size, sstep)
+                    self._draw_indicator(src, pt,
+                                         color=_color,
+                                         size=max(2, size),
+                                         thickness=1,
+                                         shape='crosshairs')
+
+                draw_polygons(src, [ta.poly_points], color=_color, thickness=1)
 
     def _draw_center_indicator(self, src, color=(0, 0, 255), shape='crosshairs',
                                size=10, thickness=1):

@@ -70,10 +70,7 @@ class TestAutocenter(HasTraits):
             cropdim = dim * 2.5
             src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
 
-            ld.find_targets(self.display_image, src, dim, mask=mask_dim,
-                            search={'start_offset_scalar': 1,
-                                    # 'width': 2
-                                    })
+            ld.find_targets(self.display_image, src, dim, mask=mask_dim)
             # self.manager.calculate_new_center(0, 0, 0, 0, dim=1.25)
 
         t = Thread(target=func)

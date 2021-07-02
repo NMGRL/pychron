@@ -80,7 +80,9 @@ class AutoCenterManager(MachineVisionManager):
         self.debug('dim={} pxpermm={}, loc.pxpermm={}'.format(dim, self.pxpermm, loc.pxpermm))
         cropdim = ceil(dim * 2.55)
 
+        # frame = loc.rescale(frame, 1.5)
         frame = loc.crop(frame, cropdim, cropdim, offx, offy)
+
         dim = self.pxpermm * dim
 
         im = self.display_image

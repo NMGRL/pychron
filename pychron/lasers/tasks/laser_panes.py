@@ -121,8 +121,8 @@ class StageControlPane(TraitsDockPane):
             recgrp = VGroup(HGroup(icon_button_editor('stage_manager.snapshot_button',
                                                       'camera',
                                                       tooltip='Take a snapshot'),
-                                   Item('stage_manager.snapshot_mode', label='Mode'),
-                                   icon_button_editor('stage_manager.record',
+                                   Item('stage_manager.snapshot_mode', label='Mode')),
+                            HGroup(icon_button_editor('stage_manager.record',
                                                       'media-record',
                                                       tooltip='Record video'),
                                    CustomLabel('stage_manager.record_label',
@@ -142,7 +142,8 @@ class StageControlPane(TraitsDockPane):
             camera_grp = VGroup(HGroup(cfggrp, recgrp),
                                 mvgrp,
                                 visible_when='use_video', label='Camera')
-            tabs.content.append(camera_grp)
+            # tabs.content.append(camera_grp)
+            tabs.content.insert(0, camera_grp)
             tabs.content.append(degasser_grp)
 
         mode = self.model.mode
