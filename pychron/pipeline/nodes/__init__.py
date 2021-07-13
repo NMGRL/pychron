@@ -24,7 +24,7 @@ from pychron.pipeline.nodes.bulk_edit import BulkEditNode
 from pychron.pipeline.nodes.correction_factors import CaCorrectionFactorsNode, KCorrectionFactorsNode
 from pychron.pipeline.nodes.cosmogenic_correction import CosmogenicCorrectionNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, FluxMonitorsNode, ListenUnknownNode, CSVNode, \
-    InterpretedAgeNode, CalendarUnknownNode, CSVSpectrumNode
+    InterpretedAgeNode, CalendarUnknownNode, CSVSpectrumNode, CSVIsochronNode
 from pychron.pipeline.nodes.detector_yield import YieldNode
 from pychron.pipeline.nodes.diff import DiffNode
 from pychron.pipeline.nodes.ds_correlation import DSCorrelationNode

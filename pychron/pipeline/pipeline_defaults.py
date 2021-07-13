@@ -172,6 +172,14 @@ nodes:
   - klass: SpectrumNode
 """
 
+CSV_INVERSE_ISOCHRON = """
+required:
+nodes:
+  - klass: CSVIsochronNode
+  - klass: GroupingNode
+  - klass: InverseIsochronNode
+"""
+
 COMPOSITE = """
 required:
 nodes:

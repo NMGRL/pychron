@@ -22,6 +22,7 @@ from traits.api import Str, Property, cached_property, Float
 from uncertainties import ufloat
 
 from pychron.processing.analyses.analysis import Analysis
+from pychron.processing.isotope import Isotope
 
 
 class NonDBAnalysis(Analysis):
@@ -46,6 +47,17 @@ class NonDBAnalysis(Analysis):
             except AttributeError:
                 pass
 
+        for k in ('ar40', 'ar39', 'ar36'):
+            iso = Isotope(k.capitalize(), 'Det')
+            try:
+                iso.interference_corrected_value = ufloat(getattr(ri, k),
+                                                          getattr(ri, '{}_err'.format(k)))
+            except AttributeError:
+                continue
+
+            obj.isotopes[k.capitalize()] = iso
+
+        obj.record_id = ri.runid
         return obj
 
     def get_computed_value(self, attr):
@@ -68,6 +80,5 @@ class FileAnalysis(NonDBAnalysis):
 
 class InterpretedAgeAnalysis(NonDBAnalysis):
     pass
-
 
 # ============= EOF =============================================
