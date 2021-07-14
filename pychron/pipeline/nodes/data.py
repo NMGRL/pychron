@@ -228,12 +228,13 @@ class CSVNode(BaseCSVNode):
             return ans
 
         except (TypeError, ValueError) as e:
+
             warning(None, 'Invalid values in the import file. Error="{}"'.format(e))
 
     def _analysis_factory(self, d):
         from pychron.processing.analyses.file_analysis import FileAnalysis
-        fa = FileAnalysis(age=float(get_case_insensitive(d, 'age')),
-                          age_err=float(get_case_insensitive(d, 'age_err')),
+        fa = FileAnalysis(age=float(get_case_insensitive(d, 'age', default=0)),
+                          age_err=float(get_case_insensitive(d, 'age_err', default=0)),
                           record_id=get_case_insensitive(d, 'runid'),
                           sample=get_case_insensitive(d, 'sample', ''),
                           label_name=get_case_insensitive(d, 'label_name', ''),
@@ -267,8 +268,17 @@ class CSVIsochronNode(CSVNode):
 
 
 class CSVRegressionNode(CSVNode):
-    required = ('runid', 'x', 'y')
+    required_columns = ('runid', 'x', 'y')
     _factory_klass = CSVRegressionDataSetFactory
+
+    def _analysis_factory(self, d):
+        f = super(CSVRegressionNode, self)._analysis_factory(d)
+
+        for k in ('x', 'y'):
+            for kk in ('', '_err'):
+                kk = '{}{}'.format(k, kk)
+                setattr(f, kk, float(get_case_insensitive(d, kk)))
+        return f
 
 
 class UnknownNode(DataNode):

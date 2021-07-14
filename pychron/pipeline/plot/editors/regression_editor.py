@@ -19,12 +19,15 @@ from chaco.array_data_source import ArrayDataSource
 
 from numpy import linspace, ones_like
 
+from pychron.core.helpers.formatting import floatfmt
 from pychron.core.regression.new_york_regressor import NewYorkRegressor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
 from pychron.graph.graph import Graph
 from pychron.graph.regression_graph import RegressionGraph
+from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
+from pychron.graph.tools.point_inspector import PointInspectorOverlay
 
 
 class RegressionEditor(BaseTraitsEditor):
@@ -38,16 +41,31 @@ rsquared={rsquared:}
 '''
 
     def set_items(self, items):
-        print(items)
         xs = [r.x for r in items]
         xe = [r.x_err for r in items]
         ys = [r.y for r in items]
         ye = [r.y_err for r in items]
-        print(self.plotter_options)
 
         g = Graph()
-        g.new_plot()
+        g.new_plot(ytitle='Y', xtitle='X')
         scatter, plot = g.new_series(xs, ys, type='scatter')
+
+        inspector = AnalysisPointInspector(scatter,
+                                           use_pane=False,
+                                           analyses=items,
+                                           include_x=True
+                                           # convert_index=convert_index,
+                                           # index_tag=index_tag,
+                                           # index_attr=index_attr,
+                                           # value_format=value_format,
+                                           # additional_info=additional_info
+                                           )
+
+        pinspector_overlay = PointInspectorOverlay(component=scatter,
+                                                   tool=inspector)
+        scatter.overlays.append(pinspector_overlay)
+        # broadcaster.tools.append(inspector)
+        scatter.tools.append(inspector)
 
         kw = {}
         if any(xe):

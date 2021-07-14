@@ -1174,8 +1174,8 @@ class PipelineEngine(Loggable):
 
         if getattr(self, lc) >= getattr(self, lr) or n == 1:
             setattr(self, lc, 0)
-            func(editor)
             if editor:
+                func(editor)
                 editor.refresh_needed = True
 
     def _dclicked_changed(self, new):
