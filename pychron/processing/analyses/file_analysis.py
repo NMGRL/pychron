@@ -41,7 +41,7 @@ class NonDBAnalysis(Analysis):
         obj = cls()
         for a in ('age', 'age_err', 'group', 'aliquot', 'sample', 'label_name',
                   'k39', 'k39_err', 'rad40', 'rad40_err',
-                  'kca', 'kca_err', 'radiogenic_yield', 'radiogenic_yield_err'):
+                  'kca', 'kca_err', 'radiogenic_yield', 'radiogenic_yield_err','x', 'y', 'x_err', 'y_err'):
             try:
                 setattr(obj, a, getattr(ri, a))
             except AttributeError:
@@ -58,6 +58,7 @@ class NonDBAnalysis(Analysis):
             obj.isotopes[k.capitalize()] = iso
 
         obj.record_id = ri.runid
+
         return obj
 
     def get_computed_value(self, attr):

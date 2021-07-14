@@ -48,6 +48,7 @@ HEADER = 'status', 'runid', 'age', 'age_err', 'group', 'aliquot', 'sample', 'lab
 SPECTRUM_HEADER = HEADER + ('k39', 'k39_err', 'rad40', 'rad40_err')
 ISOCHRON_HEADER = ('status', 'runid', 'ar40', 'ar40_err', 'ar39', 'ar39_err',
                    'ar36', 'ar36_err', 'group', 'aliquot', 'sample', 'label_name')
+REGRESSION_HEADER = ('status', 'runid', 'x', 'x_err', 'y', 'y_err', 'group', 'aliquot', 'sample', 'label_name')
 
 
 def make_line(vs, delimiter=','):
@@ -98,6 +99,22 @@ class CSVIsochronRecord(CSVRecord):
 
     def valid(self):
         return self.runid and self.ar40 and self.a40_err and self.ar39 and self.ar39_err and self.ar36 and self.ar36_err
+
+
+class CSVRegressionRecord(CSVRecord):
+    header = REGRESSION_HEADER
+    x = CFloat
+    y = CFloat
+    x_err = CFloat
+    y_err = CFloat
+
+    def __init__(self, test=False, *args, **kw):
+        super(CSVRegressionRecord, self).__init__(*args, **kw)
+        if test:
+            self.x = test
+            self.y = 10-test+random()/10
+            self.x_err = random()
+            self.y_err = random()
 
 
 class CSVRecordGroup(HasTraits):
@@ -417,7 +434,7 @@ e.g.
                             icon_button_editor('save_as_button', 'save_as', tooltip='Save As'),
                             icon_button_editor('clear_button', 'clear', tooltip='Clear current data'),
                             icon_button_editor('add_record_button', 'add'),
-                            icon_button_editor('test_button', 'test'),
+                            # icon_button_editor('test_button', 'test'),
                             icon_button_editor('open_help_button', 'help', tooltip='Show CSV formatting instructions'),
                             UItem('open_via_finder_button', tooltip='Open a csv file on your computer'),
                             # UItem('calculate_button')
@@ -628,6 +645,51 @@ class CSVIsochronDataSetFactory(CSVDataSetFactory):
         r3.ar36_err = 0.01
 
         self.records = [r1, r2, r3]
+
+
+class CSVRegressionDataSetFactory(CSVDataSetFactory):
+    _message_text = '''Create/select a file with a column header as the first line.<br/><br/>
+
+        The following columns are required:<br/>
+        &nbsp;&nbsp;<b>runid, x, y</b><br/><br/>
+
+        Optional columns are:<br/>
+        &nbsp;&nbsp;<b>x_err, y_err, group, aliquot, sample, label_name</b><br/><br/>
+
+        e.g.
+        <table cellpadding="3" style="border-width: 1px; border-color: black; border-style: solid;">
+        <tr>
+            <th>runid</th>
+            <th>x</th>
+            <th>x_err</th>
+            <th>y</th>
+            <th>y_err</th> 
+        </tr>
+        <tr><td>Run1</td><td>10</td><td>0.24</td><td>0.4</td><td>0.001</td><td>1</td><td>0.1</td></tr>
+        <tr><td>Run2</td><td>11</td><td>0.13</td><td>0.24</td><td>0.004</td><td>1.1</td><td>0.1</td></tr>
+        <tr><td>Run3</td><td>12</td><td>0.40</td><td>0.44</td><td>0.003</td><td>1.5</td><td>0.1</td></tr>
+
+        </table>
+    '''
+    _record_klass = CSVRegressionRecord
+
+    def _get_columns(self):
+        cols = [CheckboxColumn(name='status'),
+                ObjectColumn(name='runid', width=50, label='RunID'),
+                ObjectColumn(name='x', width=100),
+                ObjectColumn(name='x_err', width=100,
+                             label=PLUSMINUS_ONE_SIGMA),
+                ObjectColumn(name='y', width=100),
+                ObjectColumn(name='y_err', width=100,
+                             label=PLUSMINUS_ONE_SIGMA),
+                ObjectColumn(name='group'),
+                ObjectColumn(name='aliquot'),
+                ObjectColumn(name='sample'),
+                ObjectColumn(name='label_name', label='Label Name')]
+        return cols
+
+    def _load_test_data(self):
+        self.records = [self._record_klass(runid='foo-{}'.format(i), test=i + 1) for i in range(10)]
 
 
 if __name__ == '__main__':

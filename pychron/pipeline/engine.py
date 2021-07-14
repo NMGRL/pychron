@@ -55,7 +55,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     MASSSPEC_REDUCED, DEFINE_EQUILIBRATION, CA_CORRECTION_FACTORS, K_CORRECTION_FACTORS, \
     FLUX_VISUALIZATION, CSV_RAW_DATA_EXPORT, COMPOSITE, SIMPLE_ANALYSIS_TABLE, MASS_SPEC_FLUX, PYSCRIPT, RATIO_SERIES, \
     CSV_SPEC, ARAR_IDEO, ARAR_SPEC, ARAR_INVERSE_ISOCHRON, ARAR_SIMPLE_ANALYSIS_TABLE, RUNID_EDIT, CORRELATION_IDEO, \
-    COSMOGENIC, FLUX_EXPORT, RECENT_RUNS, CSV_INVERSE_ISOCHRON
+    COSMOGENIC, FLUX_EXPORT, RECENT_RUNS, CSV_INVERSE_ISOCHRON, CSV_REGRESSION
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
@@ -879,7 +879,8 @@ class PipelineEngine(Loggable):
                      ('InverseIsochron', INVERSE_ISOCHRON),
                      ('CSV InverseIsochron', CSV_INVERSE_ISOCHRON),
                      ('XY Scatter', XY_SCATTER),
-                     ('Regression', REGRESSION_SERIES),
+                     ('CSV Regression', CSV_REGRESSION),
+                     ('Isotope Regression', REGRESSION_SERIES),
                      ('Flux Visualization', FLUX_VISUALIZATION),
                      ('Vertical Flux', VERTICAL_FLUX))
             tables = (('SubGrouped Analyses', ANALYSIS_TABLE),

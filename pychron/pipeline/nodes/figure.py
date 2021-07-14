@@ -27,7 +27,7 @@ from pychron.core.progress import progress_iterator
 from pychron.options.options_manager import IdeogramOptionsManager, OptionsController, SeriesOptionsManager, \
     SpectrumOptionsManager, InverseIsochronOptionsManager, VerticalFluxOptionsManager, XYScatterOptionsManager, \
     RadialOptionsManager, RegressionSeriesOptionsManager, FluxVisualizationOptionsManager, CompositeOptionsManager, \
-    RatioSeriesOptionsManager
+    RatioSeriesOptionsManager, RegressionOptionsManager
 from pychron.options.views.views import view
 from pychron.pipeline.editors.flux_visualization_editor import FluxVisualizationEditor
 from pychron.pipeline.nodes.base import SortableNode
@@ -356,4 +356,9 @@ class RatioSeriesNode(FigureNode):
         keys = get_isotope_set(self.unknowns)
         self.plotter_options_manager.set_detectors(list(keys))
 
+
+class RegressionNode(FigureNode):
+    name = 'Regression'
+    editor_klass = 'pychron.pipeline.plot.editors.regression_editor,RegressionEditor'
+    plotter_options_manager_klass = RegressionOptionsManager
 # ============= EOF =============================================

@@ -28,7 +28,8 @@ from traitsui.api import Item, EnumEditor, CheckListEditor
 from pychron.core.helpers.strtools import to_bool, get_case_insensitive, to_int
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.globals import globalv
-from pychron.pipeline.csv_dataset_factory import CSVDataSetFactory, CSVSpectrumDataSetFactory, CSVIsochronDataSetFactory
+from pychron.pipeline.csv_dataset_factory import CSVDataSetFactory, CSVSpectrumDataSetFactory, \
+    CSVIsochronDataSetFactory, CSVRegressionDataSetFactory
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pychron_constants import ANALYSIS_TYPES
 
@@ -263,6 +264,11 @@ class CSVSpectrumNode(CSVNode):
 class CSVIsochronNode(CSVNode):
     required_columns = ('runid', 'ar40', 'ar40_err', 'ar39', 'ar39_err', 'ar36', 'ar36_err')
     _factory_klass = CSVIsochronDataSetFactory
+
+
+class CSVRegressionNode(CSVNode):
+    required = ('runid', 'x', 'y')
+    _factory_klass = CSVRegressionDataSetFactory
 
 
 class UnknownNode(DataNode):

@@ -44,6 +44,7 @@ from pychron.options.isochron import InverseIsochronOptions
 from pychron.options.options import BaseOptions, SubOptions, importklass
 from pychron.options.radial import RadialOptions
 from pychron.options.ratio_series import RatioSeriesOptions
+from pychron.options.regression import RegressionOptions
 from pychron.options.regression_series import RegressionSeriesOptions
 from pychron.options.series import SeriesOptions
 from pychron.options.spectrum import SpectrumOptions
@@ -266,7 +267,6 @@ def options_load_json(p):
 
 
 class OptionsManager(BaseOptionsManager):
-
     subview_names = Tuple
     subview = Instance(SubOptions)
     selected_subview = Str
@@ -504,6 +504,11 @@ class SeriesOptionsManager(FigureOptionsManager):
 class RatioSeriesOptionsManager(FigureOptionsManager):
     id = 'ratio_series'
     options_klass = RatioSeriesOptions
+
+
+class RegressionOptionsManager(FigureOptionsManager):
+    id = 'regression'
+    options_klass = RegressionOptions
 
 
 class BlanksOptionsManager(FigureOptionsManager):

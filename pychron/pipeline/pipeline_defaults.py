@@ -179,6 +179,12 @@ nodes:
   - klass: GroupingNode
   - klass: InverseIsochronNode
 """
+CSV_REGRESSION = """
+required:
+nodes:
+  - klass: CSVRegressionNode
+  - klass: RegressionNode
+"""
 
 COMPOSITE = """
 required:
