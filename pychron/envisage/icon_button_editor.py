@@ -16,11 +16,11 @@
 
 # ============= enthought library imports =======================
 # from traitsui.editors.api import ButtonEditor
-from __future__ import absolute_import
+
+from traitsui.editors import ButtonEditor
 from traitsui.item import Item
 
 from pychron.core.helpers.filetools import add_extension
-from pychron.core.ui.button_editor import ButtonEditor
 from pychron.envisage.resources import icon
 
 
