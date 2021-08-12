@@ -413,7 +413,7 @@ class XMLLoader(BaseLoader):
             else:
                 c = (204, 204, 204)
             name = '{:03}'.format(i)
-            self._new_label(cp, l, name, c)
+            self._new_label(scene, l, name, c)
 
         for i, line in enumerate(cp.get_elements('line')):
             self._new_line(scene, line, 'l{}'.format(i))
