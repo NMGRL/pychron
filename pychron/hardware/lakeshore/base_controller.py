@@ -229,7 +229,7 @@ class BaseLakeShoreController(CoreDevice):
                                   Item('setpoint2'),
                                   UItem('setpoint2_readback', editor=LCDEditor(width=120, height=30),
                                         style='readonly'), Spring(width=10, springy=False)),
-                           title=self.name)
+                           label=self.name)
         return grp
 
     def graph_builder(self, g, **kw):
