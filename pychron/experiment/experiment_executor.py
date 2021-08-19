@@ -2285,6 +2285,8 @@ Use Last "blank_{}"= {}
 
     def _datahub_default(self):
         dh = Datahub()
+        dh.mainstore = self.application.get_service(DVC_PROTOCOL)
+        dh.bind_preferences()
         return dh
 
     def _pyscript_runner_default(self):

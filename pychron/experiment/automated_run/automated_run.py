@@ -17,6 +17,7 @@
 # # ============= enthought library imports =======================
 
 import ast
+import importlib
 import os
 import re
 import time
@@ -40,7 +41,7 @@ from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.conditional.conditional import TruncationConditional, \
     ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file, \
-    QueueModificationConditional
+    QueueModificationConditional, EquilibrationConditional
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, QUEUE, SYSTEM, RUN
 from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import convert_identifier
@@ -164,6 +165,7 @@ class AutomatedRun(Loggable):
 
     termination_conditionals = List
     truncation_conditionals = List
+    equilibration_conditionals = List
     action_conditionals = List
     cancelation_conditionals = List
     modification_conditionals = List
@@ -1021,7 +1023,8 @@ class AutomatedRun(Loggable):
             self._set_filtering()
 
             conds = (self.termination_conditionals, self.truncation_conditionals,
-                     self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals)
+                     self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals,
+                     self.equilibration_conditionals)
 
             env = self._get_environmentals()
             if env:
@@ -1641,9 +1644,9 @@ anaylsis_type={}
     def _add_conditionals_from_file(self, p, level=None):
         d = conditionals_from_file(p, level=level)
         for k, v in d.items():
-            if k in ('actions', 'truncations', 'terminations', 'cancelations'):
-                var = getattr(self, '{}_conditionals'.format(k[:-1]))
-                var.extend(v)
+            # if k in ('actions', 'truncations', 'terminations', 'cancelations'):
+            var = getattr(self, '{}_conditionals'.format(k[:-1]))
+            var.extend(v)
 
     def _conditional_appender(self, name, cd, klass, level=None, location=None):
         if not self.isotope_group:
@@ -1711,8 +1714,15 @@ anaylsis_type={}
         dfp = self._get_default_fits_file()
         if dfp:
             ys = yload(dfp)
-            extract_fit_dict(sfods, ys['signal'])
-            extract_fit_dict(bsfods, ys['baseline'])
+            for fod, key in ((sfods, 'signal'), (bsfods, 'baseline')):
+                try:
+                    extract_fit_dict(fod, ys[key])
+                except BaseException:
+                    self.debug_exception()
+                    try:
+                        yload(dfp, reraise=True)
+                    except BaseException as ye:
+                        self.warning('Failed getting signal from fits file. Please check the syntax. {}'.format(ye))
 
         return sfods, bsfods
 
@@ -1817,9 +1827,6 @@ anaylsis_type={}
             self.isotope_group.set_baseline(iso, v[0], v[1])
 
     def _add_conditionals(self):
-        klass_dict = {'actions': ActionConditional, 'truncations': TruncationConditional,
-                      'terminations': TerminationConditional, 'cancelations': CancelationConditional,
-                      'modifications': QueueModificationConditional}
 
         t = self.spec.conditionals
         self.debug('adding conditionals {}'.format(t))
@@ -1831,8 +1838,12 @@ anaylsis_type={}
                 failure = False
                 for kind, items in yd.items():
                     try:
-                        klass = klass_dict[kind]
-                    except KeyError:
+                        # klass = CONDITIONALS_KLASS[kind]
+                        mod = 'pychron.experiment.conditional.conditional'
+                        mod = importlib.import_module(mod)
+                        klass = getattr(mod, '{}sConditional'.format(kind.capitalize()))
+                    except (ImportError, AttributeError):
+
                         self.debug('Invalid conditional kind="{}"'.format(kind))
                         continue
 
@@ -2225,7 +2236,7 @@ anaylsis_type={}
         self.persister.build_tables(gn, self._active_detectors, ncounts)
         # mem_log('build tables')
 
-        check_conditionals = False
+        check_conditionals = True
         writer = self.persister.get_data_writer(gn)
 
         result = self._measure(gn,
