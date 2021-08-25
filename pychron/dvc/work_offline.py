@@ -24,7 +24,7 @@ from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import Str, Button, List
 from traitsui.api import View, UItem, VGroup
-from traitsui.editors import TabularEditor
+from traitsui.editors.api import TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.filetools import unique_path2, add_extension

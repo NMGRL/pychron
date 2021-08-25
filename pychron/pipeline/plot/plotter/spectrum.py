@@ -141,12 +141,13 @@ class Spectrum(BaseArArFigure):
     # plotters
     # ===============================================================================
 
-    def _plot_aux(self, title, vk, po, pid):
+    def _plot_aux(self, vk, po, pid):
         graph = self.graph
         # if '<sup>' in title or '<sub>' in title:
         #     self._set_ml_title(title, pid, 'y')
         # else:
 
+        title = po.get_ytitle(vk)
         graph.set_y_title(title, plotid=pid)
         xs, ys, es, c39s, s39, vs = self._calculate_spectrum(value_key=vk)
         self.spectrum_values[pid] = xs, ys, es, c39s, s39, vs
@@ -461,10 +462,12 @@ class Spectrum(BaseArArFigure):
         mswd_args = ag.get_plateau_mswd_tuple()
         plateau_mswd, valid_mswd, nsteps, pvalue = mswd_args
 
-        e = plateau_age.std_dev * self.options.nsigma
+        op = self.options
+        e = plateau_age.std_dev * op.nsigma
         text = self._build_label_text(nominal_value(plateau_age), e, nsteps,
                                       mswd_args=mswd_args,
-                                      sig_figs=self.options.plateau_sig_figs)
+                                      mswd_sig_figs=op.mswd_sig_figs,
+                                      sig_figs=op.plateau_sig_figs)
 
         sample = ag.sample
         identifier = ag.identifier
@@ -476,12 +479,12 @@ class Spectrum(BaseArArFigure):
 
         text = '{}Plateau= {}'.format(fixed, text)
 
-        if self.options.include_plateau_sample:
-            if self.options.include_plateau_identifier:
+        if op.include_plateau_sample:
+            if op.include_plateau_identifier:
                 text = u'{}({}) {}'.format(sample, identifier, text)
             else:
                 text = u'{} {}'.format(sample, text)
-        elif self.options.include_plateau_identifier:
+        elif op.include_plateau_identifier:
             text = u'{} {}'.format(identifier, text)
 
         return text
@@ -497,8 +500,8 @@ class Spectrum(BaseArArFigure):
         text = self._build_label_text(nominal_value(a),
                                       std_dev(a) * op.nsigma, n,
                                       mswd_args=mswd_args,
-                                      sig_figs=op.weighted_mean_sig_figs,
-                                      total_n=ag.total_n)
+                                      mswd_sig_figs=op.mswd_sig_figs,
+                                      sig_figs=op.weighted_mean_sig_figs)
         text = u'Weighted Mean= {}'.format(text)
         return text
 
@@ -532,7 +535,8 @@ class Spectrum(BaseArArFigure):
             age, error = nominal_value(tga.nominal_value), std_dev(tga)
 
             error *= self.options.nsigma
-            txt = self._build_label_text(age, error, n, sig_figs=self.options.integrated_sig_figs)
+            txt = self._build_label_text(age, error, n,
+                                         sig_figs=self.options.integrated_sig_figs)
 
         return u'Integrated Age= {}'.format(txt)
 

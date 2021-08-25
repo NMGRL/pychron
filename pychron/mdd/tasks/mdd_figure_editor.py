@@ -18,7 +18,7 @@ import os
 
 from traits.api import Instance, List, HasTraits, Str, Event, Any, Bool, Color
 from traitsui.api import View, UItem, VGroup
-# from traitsui.editors import TreeEditor
+# from traitsui.editors.api import TreeEditor
 from traitsui.tree_node import TreeNode
 
 from pychron.core.ui.tree_editor import TreeEditor

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pyface.qt.QtGui import QSizePolicy
 from traits.api import Property, Enum, Range, Str, Trait, Bool
 from traitsui.api import View

@@ -20,18 +20,21 @@ from uncertainties import std_dev, nominal_value
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.pychron_traits import BorderVGroup
-from pychron.pychron_constants import format_mswd
+from pychron.processing.analyses.analysis_group import AnalysisGroup, InterpretedAgeGroup
+from pychron.pychron_constants import format_mswd, NULL_STR, WEIGHTED_MEAN, MSEM
 
 
 class IdeogramResultsAdapter(TabularAdapter):
-    columns = [('Name', 'group_id'),
+    columns = [('GroupID', 'group_id'),
                ('Identifier', 'identifier'),
                ('Sample', 'sample'),
                ('Age Span', 'age_span'),
                ('Weighted Mean Age', 'weighted_mean_age'),
                ('Weighted Mean Age Err.', 'weighted_mean_age_error'),
                ('N', 'nanalyses'),
-               ('MSWD', 'mswd')]
+               ('MSWD', 'mswd'),
+               ('Shapiro-Wilk', 'shapiro_wilk_pvalue'),
+               ('Skewness', 'skewness')]
 
     group_id_width = Int(50)
     identifier_width = Int(75)
@@ -47,9 +50,28 @@ class IdeogramResultsAdapter(TabularAdapter):
     age_span_text = Property
     nsigma = Int(1)
 
+    skewness_text = Property
+    shapiro_wilk_pvalue_text = Property
+
     def get_text_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
         return item.color
+
+    def _get_skewness_text(self):
+
+        txt = floatfmt(self.item.skewness, n=3)
+        if txt:
+            smi = self.item.outlier_options.get('skew_min', -0.02)
+            sma = self.item.outlier_options.get('skew_max', 0.02)
+            txt = '{} ({},{})'.format(txt, smi, sma)
+        return txt
+
+    def _get_shapiro_wilk_pvalue_text(self):
+        txt = floatfmt(self.item.shapiro_wilk_pvalue, n=5)
+        if txt:
+            txt = '{} (>{})'.format(txt, self.item.outlier_options.get('alpha', 0.05))
+
+        return txt
 
     def _get_age_span_text(self):
         return floatfmt(self.item.age_span, n=5)
@@ -72,6 +94,13 @@ class IdeogramResultsTable(HasTraits):
 
     def __init__(self, analysis_groups, nsigma, *args, **kw):
         super(IdeogramResultsTable, self).__init__(*args, **kw)
+
+        sgroup = InterpretedAgeGroup(analyses=analysis_groups)
+        sgroup.set_preferred_age(WEIGHTED_MEAN, MSEM)
+        sgroup.sample = NULL_STR
+        sgroup.identifier = 'Summary'
+
+        analysis_groups.append(sgroup)
         self.analysis_groups = analysis_groups
         self.adapter = IdeogramResultsAdapter(nsigma=nsigma)
 

@@ -55,7 +55,7 @@ from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, S
     MASSSPEC_REDUCED, DEFINE_EQUILIBRATION, CA_CORRECTION_FACTORS, K_CORRECTION_FACTORS, \
     FLUX_VISUALIZATION, CSV_RAW_DATA_EXPORT, COMPOSITE, SIMPLE_ANALYSIS_TABLE, MASS_SPEC_FLUX, PYSCRIPT, RATIO_SERIES, \
     CSV_SPEC, ARAR_IDEO, ARAR_SPEC, ARAR_INVERSE_ISOCHRON, ARAR_SIMPLE_ANALYSIS_TABLE, RUNID_EDIT, CORRELATION_IDEO, \
-    COSMOGENIC
+    COSMOGENIC, FLUX_EXPORT, RECENT_RUNS, CSV_INVERSE_ISOCHRON, CSV_REGRESSION
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
@@ -242,6 +242,7 @@ class PipelineEngine(Loggable):
     dclicked_references = Event
 
     recall_analyses_needed = Event
+    play_analysis_video_needed = Event
     reset_event = Event
 
     state = Instance(EngineState)
@@ -324,6 +325,11 @@ class PipelineEngine(Loggable):
             i.temp_status = 'ok' if i.temp_status == 'omit' else 'omit'
             if hasattr(self.selected, 'editor') and self.selected.editor:
                 self.selected.editor.refresh_needed = True
+
+    def play_analysis_video(self):
+        self.debug('play analysis video')
+        self.play_analysis_video_needed = self.selected_unknowns
+
 
     def recall_unknowns(self):
         self.debug('recall unks')
@@ -858,7 +864,8 @@ class PipelineEngine(Loggable):
                       ('Interpreted Age', INTERPRETED_AGE_TABLE),
                       ('Report', REPORT))
         else:
-            plots = (('Ideogram', IDEO),
+            plots = (('Recent Recall', RECENT_RUNS),
+                     ('Ideogram', IDEO),
                      ('Correlation Ideogram', CORRELATION_IDEO),
                      ('CSV Ideogram', CSV_IDEO),
                      ('Interpreted Age Ideogram', INTERPRETED_AGE_IDEOGRAM),
@@ -870,8 +877,10 @@ class PipelineEngine(Loggable):
                      ('Series', SERIES),
                      ('Ratio Series', RATIO_SERIES),
                      ('InverseIsochron', INVERSE_ISOCHRON),
+                     ('CSV InverseIsochron', CSV_INVERSE_ISOCHRON),
                      ('XY Scatter', XY_SCATTER),
-                     ('Regression', REGRESSION_SERIES),
+                     ('CSV Regression', CSV_REGRESSION),
+                     ('Isotope Regression', REGRESSION_SERIES),
                      ('Flux Visualization', FLUX_VISUALIZATION),
                      ('Vertical Flux', VERTICAL_FLUX))
             tables = (('SubGrouped Analyses', ANALYSIS_TABLE),
@@ -895,7 +904,8 @@ class PipelineEngine(Loggable):
                    ('History', (('Ideogram', HISTORY_IDEOGRAM),
                                 ('Spectrum', HISTORY_SPECTRUM))),
                    ('Share', (('CSV Analyses Export', CSV_ANALYSES_EXPORT),
-                              ('CSV Raw Data Export', CSV_RAW_DATA_EXPORT))),
+                              ('CSV Raw Data Export', CSV_RAW_DATA_EXPORT),
+                              ('CSV Flux Export', FLUX_EXPORT))),
                    ('Transfer', (('Mass Spec Reduced', MASSSPEC_REDUCED),
                                  ('Mass Spec Flux', MASS_SPEC_FLUX))),
                    ('Scripting', (('PyScript', PYSCRIPT),))]
@@ -954,7 +964,8 @@ class PipelineEngine(Loggable):
 
         def func(editor):
             vs = self.selected.unknowns
-            editor.set_items(vs)
+            if editor:
+                editor.set_items(vs)
             self.state.unknowns = vs
             for node in self.pipeline.nodes:
                 if isinstance(node, UnknownNode) and node is not self.selected:
@@ -1161,8 +1172,9 @@ class PipelineEngine(Loggable):
                 setattr(self, lc, 0)
                 setattr(self, lr, n)
 
-            if getattr(self, lc) >= getattr(self, lr) or n == 1:
-                setattr(self, lc, 0)
+        if getattr(self, lc) >= getattr(self, lr) or n == 1:
+            setattr(self, lc, 0)
+            if editor:
                 func(editor)
                 editor.refresh_needed = True
 

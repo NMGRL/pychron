@@ -19,6 +19,9 @@
 
 # ============= local library imports  ==========================
 import six
+
+from pychron.pychron_constants import AUTO_LINEAR_PARABOLIC, EXPONENTIAL
+
 FITS = ['linear', 'parabolic', 'cubic', 'quartic']
 
 
@@ -48,7 +51,7 @@ def convert_fit(f):
 
         if f in FITS:
             f = FITS.index(f) + 1
-        elif f in ('average', 'weighted mean', 'exponential') or f.startswith('custom:'):
+        elif f in ('average', 'weighted mean', EXPONENTIAL, AUTO_LINEAR_PARABOLIC.lower()) or f.startswith('custom:'):
             if not err:
                 err = 'SEM' if 'sem' in f else 'SD'
         else:

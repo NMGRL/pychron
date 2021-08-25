@@ -23,6 +23,7 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter
 from pychron.processing.analyses.view.main_view import MainView
 from pychron.processing.analyses.view.values import MeasurementValue
+from pychron.pychron_constants import DATE_FORMAT
 
 
 class AutomatedRunAnalysisView(MainView):
@@ -92,7 +93,7 @@ class GenericAutomatedRunAnalysisView(AutomatedRunAnalysisView):
             MeasurementValue(name='Spectrometer',
                              value=an.mass_spectrometer),
             MeasurementValue(name='Run Date',
-                             value=an.rundate.strftime('%Y-%m-%d %H:%M:%S')),
+                             value=an.rundate.strftime(DATE_FORMAT)),
             MeasurementValue(name='Project',
                              value=an.project),
             MeasurementValue(name='Sample',

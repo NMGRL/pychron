@@ -18,7 +18,7 @@ from operator import attrgetter
 
 from numpy import array, array_split
 # ============= enthought library imports =======================
-from traits.api import Str, Enum
+from traits.api import Str, Enum, Tuple
 from traitsui.api import UItem, EnumEditor, VGroup
 
 from pychron.core.helpers.datetime_tools import bin_timestamps
@@ -34,7 +34,7 @@ from pychron.pychron_constants import SUBGROUPING_ATTRS, WEIGHTED_MEAN, \
 
 class GroupingNode(BaseNode):
     by_key = Str
-    keys = ('Aliquot', 'Comment', 'Identifier', 'Sample', 'Step', 'SubGroup',
+    keys = Tuple('Aliquot', 'Comment', 'Identifier', 'Sample', 'Step', 'SubGroup',
             'Group Name',
             'Label Name',
             'No Grouping')

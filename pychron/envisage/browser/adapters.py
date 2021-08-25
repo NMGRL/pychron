@@ -30,6 +30,7 @@ from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PRECLEANUP, POSTCLEAN
 
 class BrowserAdapter(TabularAdapter, ConfigurableMixin):
     font = 'arial 10'
+    name_width = Int(200)
 
     def get_tooltip(self, obj, trait, row, column):
         name = self.column_map[column]
@@ -39,6 +40,7 @@ class BrowserAdapter(TabularAdapter, ConfigurableMixin):
 class ProjectAdapter(BrowserAdapter):
     columns = [('Name', 'name'),
                ('IR', 'unique_id')]
+    unique_id_width = Int(75)
 
     def get_menu(self, obj, trait, row, column):
         return MenuManager(Action(name='Unselect', action='unselect_projects'))
@@ -46,6 +48,7 @@ class ProjectAdapter(BrowserAdapter):
 
 class PrincipalInvestigatorAdapter(BrowserAdapter):
     columns = [('Name', 'name')]
+    # name_width = Int(10)
 
 
 class LoadAdapter(BrowserAdapter):
@@ -177,9 +180,6 @@ class AnalysisAdapter(BrowserAdapter):
     odd_bg_color = 'lightgray'
     font = 'arial 10'
 
-    unknown_color = Color
-    blank_color = Color
-    air_color = Color
     use_analysis_colors = Bool
 
     def run_history_columns(self):
@@ -264,12 +264,12 @@ class AnalysisAdapter(BrowserAdapter):
 
                 else:
                     if self.use_analysis_colors:
-                        if item.analysis_type == 'unknown':
-                            color = self.unknown_color
-                        elif item.analysis_type == 'air':
-                            color = self.air_color
-                        elif item.analysis_type.startswith('blank'):
-                            color = self.blank_color
+                        key = '{}_color'.format(item.analysis_type)
+                        if hasattr(self, key):
+                            color = getattr(self, key)
+                        else:
+                            if item.analysis_type.startswith('blank'):
+                                color = self.blank_color
 
         return color
 

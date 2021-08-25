@@ -19,6 +19,7 @@ from traitsui.api import UItem, TabularEditor, EnumEditor, VGroup
 
 from pychron.core.helpers.iterfuncs import groupby_repo
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.dvc import HISTORY_PATHS, HISTORY_TAGS
 from pychron.git_archive.utils import get_commits
 from pychron.git_archive.views import CommitAdapter
 from pychron.pipeline.nodes.data import BaseDVCNode
@@ -30,14 +31,31 @@ class CommitSelector(HasTraits):
     repo = Any
     branches = List
     branch = Str
+    paths = List
+    greps = List
+
+    def __init__(self, repo, unks, *args, **kw):
+        super(CommitSelector, self).__init__(*args, **kw)
+        self.repo = repo
+        self.set_paths(unks)
+        self.load_branches()
+        self.load_commits()
+
+    def _branch_changed(self):
+        self.load_commits()
 
     def load_branches(self):
         self.branches = self.repo.get_branch_names()
         b = self.repo.get_active_branch()
         self.branch = b
 
+    def set_paths(self, unks):
+        self.paths = [a.make_path(p) for a in unks for p in HISTORY_PATHS]
+        greps = ['--grep=^<{}>'.format(t) for t in HISTORY_TAGS]
+        self.greps = greps
+
     def load_commits(self):
-        cs = get_commits(self.repo.path, self.branch, None, '')
+        cs = get_commits(self.repo.path, self.branch, self.paths, '', greps=self.greps)
         self.commits = cs
 
     def traits_view(self):
@@ -47,6 +65,7 @@ class CommitSelector(HasTraits):
                                        editor=TabularEditor(adapter=CommitAdapter(),
                                                             editable=False,
                                                             selected='selected'))),
+                          title='Change Selector',
                           height=600,
                           width=700)
         return v
@@ -62,11 +81,8 @@ class DVCHistoryNode(BaseDVCNode):
         state.selected_commits = {}
         for repo, unks in groupby_repo(unks):
             # cs = get_commits(repo, , None, '')()
-            cv = CommitSelector()
             repo = self.dvc.get_repository(repo)
-            cv.repo = repo
-            cv.load_branches()
-            cv.load_commits()
+            cv = CommitSelector(repo, unks)
 
             info = cv.edit_traits(kind='livemodal')
             if not info.result:

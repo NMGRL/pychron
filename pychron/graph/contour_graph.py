@@ -76,13 +76,14 @@ class ContourGraph(Graph):
             rd['colormap'] = color_map_name_dict.get(cmap)
             zname = next(self.zdataname_generators[plotid])
             plot.data.set_data(zname, z)
-            contour = plot.img_plot(zname, **rd)[0]
-            plot.contour_plot(zname, type='poly', **rd)
 
-            if 'levels' in kw:
-                contour.levels = kw.get('levels')
+            # plot.contour_plot(zname, type='poly', **rd)
+            imgplot = plot.img_plot(zname, **rd)[0]
 
-            return contour, plot
+            # if 'levels' in kw:
+            #     contour.levels = kw.get('levels')
+
+            return imgplot, plot
 
     def add_inspectors(self, s, color='black', **kw):
         s.overlays.append(LineInspector(component=s,
@@ -165,9 +166,8 @@ class FluxVisualizationGraph(ContourGraph):
     def metadata_changed(self):
 
         plot = self.plots[0]
-
-        contour_pp = plot.plots['plot0'][0]
-        means_pp = plot.plots['plot2'][0]
+        contour_pp = plot.plots['imgplot'][0]
+        means_pp = plot.plots['meansplot'][0]
         index = contour_pp.index
         data = contour_pp.value
 

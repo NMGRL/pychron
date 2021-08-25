@@ -41,6 +41,7 @@ class StackedGraph(Graph):
     panel_height = 100
     _has_title = False
     # padding_bottom = 40
+    fixed_bounds = Bool(False)
 
     metadata_updated = Event
     vertical_resize = Bool(True)
@@ -171,6 +172,8 @@ class StackedGraph(Graph):
             self._update_bounds(bounds, self.plotcontainer.components)
 
     def _update_bounds(self, bounds, comps):
+        if self.fixed_bounds:
+            return
 
         padding_top = sum([getattr(p, 'padding_top') for p in comps])
         padding_bottom = sum([getattr(p, 'padding_bottom') for p in comps])
@@ -267,15 +270,17 @@ class ColumnStackedGraph(StackedGraph):
 
 
 if __name__ == '__main__':
-    g = ColumnStackedGraph(resizable=True,
-                           nrows=4, ncols=2, container_dict={'padding_top': 15*4,
-                                                             'spacing': (0, 15),
-                                                             'padding_bottom': 40})
-    for i in range(7):
-        p = g.new_plot(padding=[80, 10, 10, 40])
+    g = StackedGraph(resizable=True,
+                     fixed_bounds=True,
+                     container_dict={'padding_top': 15 * 4,
+                                     'spacing': 10,
+                                     'padding_bottom': 40})
+    for i in range(3):
+        p = g.new_plot(padding=[80, 10, 10, 40], resizable='',
+                       bounds=(100, 100))
         p.fill_padding = True
         p.bgcolor = 'green'
         # p=g.new_plot()
-        g.new_series([1, 2, 3], [4, 5, 10*i])
+        g.new_series([1, 2, 3], [4, 5, 10 * i])
     g.configure_traits()
 # ============= EOF ====================================

@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from traitsui.api import View, Item, UItem, HGroup, Heading, spring, FileEditor
-from traitsui.editors import InstanceEditor, ListEditor
+from traitsui.editors.api import InstanceEditor, ListEditor
 from traitsui.group import VGroup
 
 from pychron.core.pychron_traits import BorderVGroup

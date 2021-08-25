@@ -118,7 +118,7 @@ class BaseFindFluxNode(FindNode):
             j_err = pp.get('j_err', 0)
             mean_j = pp.get('mean_j', 0)
             mean_j_err = pp.get('mean_j_err', 0)
-
+            mean_j_mswd = pp.get('mean_j_mswd', 0)
             options = pp.get('options')
             if options:
                 model_kind = options.get('model_kind', '')
@@ -132,8 +132,9 @@ class BaseFindFluxNode(FindNode):
                           saved_jerr=j_err or 0,
                           mean_j=mean_j or 0,
                           mean_jerr=mean_j_err or 0,
+                          mean_j_mswd=mean_j_mswd or 0,
                           model_kind=model_kind,
-                          x=x, y=y)
+                          x=x, y=y, r=r)
         return fp
 
 
@@ -213,10 +214,13 @@ class TransferFluxMonitorMeansNode(FindIrradiationNode):
 class FindFluxMonitorMeansNode(BaseFindFluxNode):
     name = 'Find Flux Monitor Means'
     exclude = None
+    include_all_positions = Bool
 
     def _load_hook(self, nodedict):
-        self.level = nodedict.get('level', '')
         self.irradiation = nodedict.get('irradiation', '')
+        self.level = nodedict.get('level', '')
+        if self.level and self.level not in self.levels:
+            self.dirty = True
 
     def run(self, state):
         if not self.irradiation or not self.level:
@@ -236,23 +240,38 @@ class FindFluxMonitorMeansNode(BaseFindFluxNode):
             if not msn:
                 msn = 'FC-2'
 
+            include_all = self.include_all_positions
+
             fluxes = dvc.get_flux_positions(self.irradiation, self.level)
             if self.irradiation.endswith('_MST'):
+                def check(ip):
+                    ret = True
+                    if not include_all:
+                        ret = ip['sample'] == msn
+                    return ret
+
                 monitor_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
                                                       ip['identifier'], ip['sample'], ip['position'], fluxes)
-                                     for ip in fluxes if ip['sample'] == msn]
+                                     for ip in fluxes if check(ip)]
             else:
+                if include_all:
+                    msn = None
                 ips = dvc.get_flux_monitors(self.irradiation, self.level, msn)
+
                 monitor_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
                                                       ip.identifier, ip.sample.name, ip.position, fluxes)
                                      for ip in ips if ip.identifier]
 
             state.monitor_positions = monitor_positions
+            state.irradiation = self.irradiation
+            state.level = self.level
 
     def traits_view(self):
         v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
                                Item('level', editor=EnumEditor(name='levels')),
-                               Item('monitor_sample_name', editor=EnumEditor(name='samples')),
+                               Item('include_all_positions', label='Include All Positions'),
+                               Item('monitor_sample_name', editor=EnumEditor(name='samples'),
+                                    enabled_when='not include_all_positions'),
                                width=300,
                                title='Select Irradiation and Level')
         return v

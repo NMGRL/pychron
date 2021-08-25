@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from operator import attrgetter
-
+import csv
 # ============= enthought library imports =======================
 from numpy import average, array, diff, arctan, Inf
 from scipy.stats import mode
@@ -24,11 +24,14 @@ from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from uncertainties import nominal_value, std_dev
 
+from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.formatting import calc_percent_error, floatfmt
 from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.core.stats import validate_mswd
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.pipeline.editors.flux_visualization_editor import BaseFluxVisualizationEditor
+from pychron.paths import paths
+from pychron.pipeline.editors.flux_visualization_editor import BaseFluxVisualizationEditor, HEADER_KEYS
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
 from pychron.processing.flux import mean_j
 from pychron.pychron_constants import LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
@@ -50,6 +53,8 @@ def ff(x):
 MONITOR_COLUMNS = [
     column(klass=CheckboxColumn, name='use', label='Use', editable=True, width=30),
     column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
+    column(klass=CheckboxColumn, name='save_predicted', label='Save Pred.',
+           editable=True, width=60),
     column(name='hole_id', label='Hole'),
     column(name='identifier', label='Identifier'),
     column(name='sample', label='Sample', width=115),
@@ -92,7 +97,10 @@ MONITOR_COLUMNS = [
            label='%',
            format_func=ff)]
 
-MONITOR_EDITOR = TableEditor(columns=MONITOR_COLUMNS, sortable=False, reorderable=False)
+MONITOR_EDITOR = TableEditor(columns=MONITOR_COLUMNS,
+                             selected='selected_monitors',
+                             selection_mode='rows',
+                             sortable=False, reorderable=False)
 
 
 class FluxPosition(HasTraits):
@@ -102,6 +110,7 @@ class FluxPosition(HasTraits):
     x = Float
     y = Float
     z = Float
+    r = Float
     theta = Float
     saved_j = Float
     saved_jerr = Float
@@ -110,6 +119,10 @@ class FluxPosition(HasTraits):
     mean_jerr = Float
     mean_j_mswd = Float
     mean_j_valid_mswd = Bool
+
+    min_j = Float
+    max_j = Float
+    variation_percent_j = Float
 
     model_kind = Str
 
@@ -121,7 +134,9 @@ class FluxPosition(HasTraits):
 
     use = Bool(True)
     save = Bool(True)
+    save_predicted = Bool(True)
     dev = Float
+    mean_dev = Float
 
     percent_saved_error = Property
     percent_mean_error = Property
@@ -165,12 +180,27 @@ class FluxPosition(HasTraits):
         if self.j and self.position_jerr:
             return calc_percent_error(self.j, self.position_jerr)
 
+    def _save_changed(self, new):
+        self.save_predicted = new
+
+    def _save_predicted_changed(self, new):
+        if new:
+            self.save = new
+
+    def to_row(self, keys=None):
+        if keys is None:
+            keys = HEADER_KEYS
+        return [str(getattr(self, attr)) for attr in keys]
+
 
 class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
-    save_all_button = Event
-    save_unknowns_button = Event
+    selected_monitors = List
+    selected_unknowns = List
+    toggle_use_button = Button('Toggle Use')
+    toggle_save_button = Button('Toggle Save')
+    toggle_save_unknowns_button = Button('Toggle Save')
+    save_monitor_flux_csv_button = Button('Monitor Fluxes CSV')
     recalculate_button = Button('Calculate')
-
     suppress_metadata_change = Bool(False)
     _analyses = List
 
@@ -183,9 +213,6 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
         # if self.geometry:
         #     self.set_positions(analyses)
         #     self.predict_values()
-
-    def _recalculate_button_fired(self):
-        self.predict_values()
 
     def set_positions(self, monitors, unk=None):
         self.debug('setting positions mons={}, unks={}'.format(len(monitors), len(unk) if unk else 0))
@@ -208,7 +235,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
             vs = abs(diff(vs))
             vs = vs[vs.astype(bool)].mean()
         else:
-            vs = [p[1]/p[0] if p[0] else Inf for p in geom]
+            vs = [p[1] / p[0] if p[0] else Inf for p in geom]
             vs = arctan(vs)
 
             vs = abs(diff(vs))
@@ -240,6 +267,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
                              analyses=ais,
                              lambda_k=lk,
                              x=x, y=y,
+                             r=r,
                              n=n)
 
             p.set_mean_j(self.plotter_options.use_weighted_fit)
@@ -290,6 +318,66 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
 
         self.predict_values(refresh=True)
 
+    def _save_monitor_flux_csv(self, p=None):
+        if p is None:
+            p = self.save_file_dialog(default_filename='{}{}_MonitorFluxes.csv'.format(self.irradiation, self.level),
+                                      default_directory=paths.data_dir)
+
+        if p:
+            p = add_extension(p, '.csv')
+            attrs = ['hole_id',
+                     'identifier',
+                     'sample',
+                     'n',
+                     'saved_j',
+                     'saved_jerr',
+                     'percent_saved_error',
+                     'mean_j',
+                     'mean_jerr',
+                     'percent_mean_error',
+                     'mean_j_mswd',
+                     'j',
+                     'jerr',
+                     'percent_pred_error',
+                     'dev',
+                     'position_jerr',
+                     'percent_position_jerr',
+                     'x', 'y']
+
+            with open(p, 'w') as wfile:
+                w = csv.writer(wfile, delimiter=',')
+                w.writerow(attrs)
+                rows = [[str(getattr(p, a)) for a in attrs] for p in self.monitor_positions]
+                w.writerows(rows)
+                w.writerow([])
+                rows = [[str(getattr(p, a)) for a in attrs] for p in self.unknown_positions]
+                w.writerows(rows)
+
+            self.information_dialog('Fluxes saved to\n\n{}'.format(p))
+
+    # handlers
+    def _recalculate_button_fired(self):
+        self.predict_values()
+
+    def _toggle_use_button_fired(self):
+        self._suppress_predict = True
+        for p in self.selected_monitors:
+            p.use = not p.use
+
+        self._suppress_predict = False
+        self.predict_values()
+
+    def _toggle_save_unknowns_button_fired(self):
+        for p in self.selected_unknowns:
+            p.save = not p.save
+
+    def _toggle_save_button_fired(self):
+        for p in self.selected_monitors:
+            p.save = not p.save
+
+    def _save_monitor_flux_csv_button_fired(self):
+        self._save_monitor_flux_csv()
+
     def traits_view(self):
         unk_cols = [column(klass=CheckboxColumn, name='save', label='Save', editable=True, width=30),
                     column(name='hole_id', label='Hole'),
@@ -318,12 +406,18 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
                            width=70)]
 
         unk_editor = TableEditor(columns=unk_cols, sortable=False,
+                                 selected='selected_unknowns',
+                                 selection_mode='rows',
                                  reorderable=False)
 
-        pgrp = VGroup(HGroup(UItem('monitor_positions', editor=MONITOR_EDITOR),
-                             show_border=True, label='Monitors'),
-                      HGroup(UItem('unknown_positions', editor=unk_editor),
-                             show_border=True, label='Unknowns'),
+        pgrp = VGroup(HGroup(UItem('toggle_use_button'),
+                             UItem('toggle_save_button'),
+                             UItem('save_monitor_flux_csv_button')),
+                      BorderHGroup(UItem('monitor_positions', editor=MONITOR_EDITOR),
+                                   label='Monitors'),
+                      BorderVGroup(UItem('toggle_save_unknowns_button'),
+                                   UItem('unknown_positions', editor=unk_editor),
+                                   label='Unknowns'),
                       label='Tables')
 
         ggrp = UItem('graph', style='custom')
@@ -343,10 +437,11 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
                       #      style='readonly',
                       #      format_func=floatfmt,
                       #      label='Gradient J(%/cm)'),
-                      spring, icon_button_editor('save_unknowns_button', 'dialog-ok-5',
-                                                 tooltip='Toggle "save" for unknown positions'),
-                      icon_button_editor('save_all_button', 'dialog-ok-apply-5',
-                                         tooltip='Toggle "save" for all positions'))
+                      # spring, icon_button_editor('save_unknowns_button', 'dialog-ok-5',
+                      #                            tooltip='Toggle "save" for unknown positions'),
+                      # icon_button_editor('save_all_button', 'dialog-ok-apply-5',
+                      #                    tooltip='Toggle "save" for all positions')
+                      )
 
         v = View(VGroup(tgrp, Tabbed(ggrp, pgrp)))
         return v
@@ -428,10 +523,11 @@ class BracketingFluxResultsEditor(FluxResultsEditor):
                       #      style='readonly',
                       #      format_func=floatfmt,
                       #      label='Gradient J(%/cm)'),
-                      spring, icon_button_editor('save_unknowns_button', 'dialog-ok-5',
-                                                 tooltip='Toggle "save" for unknown positions'),
-                      icon_button_editor('save_all_button', 'dialog-ok-apply-5',
-                                         tooltip='Toggle "save" for all positions'))
+                      # spring, icon_button_editor('save_unknowns_button', 'dialog-ok-5',
+                      #                            tooltip='Toggle "save" for unknown positions'),
+                      # icon_button_editor('save_all_button', 'dialog-ok-apply-5',
+                      #                    tooltip='Toggle "save" for all positions')
+                      )
 
         ggrp = UItem('graph', style='custom')
         v = View(VGroup(tgrp, Tabbed(ggrp, pgrp)))

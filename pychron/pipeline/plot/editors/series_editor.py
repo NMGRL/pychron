@@ -18,7 +18,7 @@
 from pyface.timer.do_later import do_after
 from traits.api import List, Event
 from traitsui.api import View, UItem, Group, VSplit
-from traitsui.editors import TabularEditor
+from traitsui.editors.api import TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
