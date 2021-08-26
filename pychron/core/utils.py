@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import string
 from collections import namedtuple
 
 
@@ -79,6 +80,10 @@ def alphas(n):
 def alpha_to_int(l):
     if not l:
         return
+
+    # if l is digits just cast to int
+    if all(li in string.digits for li in l):
+        return int(l)-1
 
     s = sum((ord(li) - A_UPPERCASE + 1) * BASE ** i for i, li in enumerate(reversed(l.upper())))
 

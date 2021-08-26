@@ -21,7 +21,7 @@ import os
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Bool, Int, Float, Enum
 from traitsui.api import View, Item, VGroup, HGroup, spring
-from traitsui.editors import FileEditor
+from traitsui.editors.api import FileEditor
 from traitsui.group import Tabbed
 from traitsui.item import UItem
 

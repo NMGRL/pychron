@@ -21,7 +21,7 @@ from traits.api import Int, Property, List
 from traitsui.api import VGroup, UItem, HGroup, Group, Tabbed
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.editors import TabularEditor
+from traitsui.editors.api import TabularEditor
 from traitsui.handler import Controller
 from traitsui.item import Readonly
 from traitsui.tabular_adapter import TabularAdapter

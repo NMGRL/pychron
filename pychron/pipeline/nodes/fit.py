@@ -200,6 +200,7 @@ class FitICFactorNode(FitReferencesNode):
         super(FitICFactorNode, self)._set_saveable(state)
         ps = self.plotter_options.get_saveable_aux_plots()
         state.saveable_keys = [p.denominator for p in ps]
+        state.standard_ratios = [p.standard_ratio for p in ps]
 
     def _check_refit(self, ai):
         for k in self._keys:
@@ -294,8 +295,7 @@ class FitIsotopeEvolutionNode(FitNode):
 
             self._set_saveable(state)
             if fs:
-                e = IsoEvolutionResultsEditor(fs)
-                # e.plotter_options = po
+                e = IsoEvolutionResultsEditor(fs, self._fits)
                 state.editors.append(e)
 
     def _assemble_result(self, xi, prog, i, n):
@@ -321,30 +321,44 @@ class FitIsotopeEvolutionNode(FitNode):
                 except ZeroDivisionError:
                     pe = inf
 
+                smart_filter_coefficients = f.get_filter_coefficients()
+                if smart_filter_coefficients:
+                    smart_filter_threshold = f.smart_filter_values(i)
+                    smart_filter_goodness = e < f.smart_filter_values(i)
+
                 goodness_threshold = f.goodness_threshold
                 int_err_goodness = None
                 if goodness_threshold:
                     int_err_goodness = bool(pe < goodness_threshold)
 
-                slope = None
+                signal_to_baseline_threshold = f.signal_to_baseline_goodness
+                signal_to_baseline_percent_threshold = f.signal_to_baseline_percent_goodness
+                signal_to_baseline_goodness = None
+                signal_to_baseline = 0
+                if hasattr(iso, 'baseline'):
+                    bs = iso.baseline.error
+                    signal_to_baseline = abs(bs / i * 100)
+                    if signal_to_baseline_threshold and signal_to_baseline_percent_threshold:
+                        if signal_to_baseline > signal_to_baseline_threshold:
+                            signal_to_baseline_goodness = bool(pe < signal_to_baseline_percent_threshold)
+
+                slope = iso.get_slope()
                 slope_goodness = None
                 slope_threshold = None
                 if f.slope_goodness:
                     if f.slope_goodness_intensity < i:
                         slope_threshold = f.slope_goodness
-                        slope = iso.get_slope()
                         slope_goodness = bool(slope < 0 or slope < slope_threshold)
 
-                outliers = None
+                outliers = iso.noutliers()
                 outliers_threshold = None
                 outlier_goodness = None
                 if f.outlier_goodness:
-                    outlier = iso.noutliers()
                     outliers_threshold = f.outlier_goodness
-                    outlier_goodness = bool(outlier < f.outlier_goodness)
+                    outlier_goodness = bool(outliers < f.outlier_goodness)
 
                 curvature_goodness = None
-                curvature = None
+                curvature = 0
                 curvature_threshold = None
                 if f.curvature_goodness:
                     curvature = iso.get_curvature(f.curvature_goodness_at)
@@ -355,26 +369,30 @@ class FitIsotopeEvolutionNode(FitNode):
                 if iso.noutliers():
                     nstr = '{}({})'.format(iso.n - iso.noutliers(), nstr)
 
+                rsquared = iso.rsquared_adj
                 rsquared_goodness = None
-                rsquared = 0
                 rsquared_threshold = 0
                 if f.rsquared_goodness:
-                    rsquared = iso.rsquared_adj
                     rsquared_threshold = f.rsquared_goodness
                     rsquared_goodness = rsquared > rsquared_threshold
 
+                if hasattr(iso, 'blank'):
+                    signal_to_blank = iso.blank.value / iso.value * 100
+                else:
+                    signal_to_blank = 0
+
                 signal_to_blank_goodness = None
-                signal_to_blank = 0
                 signal_to_blank_threshold = 0
                 if f.signal_to_blank_goodness:
-                    signal_to_blank = iso.blank.value / iso.value * 100
                     signal_to_blank_threshold = f.signal_to_blank_goodness
                     signal_to_blank_goodness = signal_to_blank < signal_to_blank_threshold
 
                 yield IsoEvoResult(analysis=xi,
+                                   isotope_obj=iso,
                                    nstr=nstr,
                                    intercept_value=i,
                                    intercept_error=e,
+                                   normalized_error=e*iso.n**0.5,
                                    percent_error=pe,
                                    int_err=pe,
                                    int_err_threshold=goodness_threshold,
@@ -384,8 +402,8 @@ class FitIsotopeEvolutionNode(FitNode):
                                    slope_threshold=slope_threshold,
                                    slope_goodness=slope_goodness,
 
-                                   outliers=outliers,
-                                   outliers_threshold=outliers_threshold,
+                                   outlier=outliers,
+                                   outlier_threshold=outliers_threshold,
                                    outlier_goodness=outlier_goodness,
 
                                    curvature=curvature,
@@ -400,6 +418,14 @@ class FitIsotopeEvolutionNode(FitNode):
                                    signal_to_blank_threshold=signal_to_blank_threshold,
                                    signal_to_blank_goodness=signal_to_blank_goodness,
 
+                                   signal_to_baseline=signal_to_baseline,
+                                   signal_to_baseline_goodness=signal_to_baseline_goodness,
+                                   signal_to_baseline_threshold=signal_to_baseline_threshold,
+                                   signal_to_baseline_percent_threshold=signal_to_baseline_percent_threshold,
+
+                                   smart_filter_goodness=smart_filter_goodness,
+                                   smart_filter_threshold=smart_filter_threshold,
+                                   smart_filter=e,
                                    regression_str=iso.regressor.tostring(),
                                    fit=iso.fit,
                                    isotope=k)
@@ -528,7 +554,8 @@ class FitFluxNode(FitNode):
             editor.holder = state.holder
 
             editor.set_positions(monitors, state.unknown_positions)
-            state.saveable_irradiation_positions = editor.monitor_positions + state.unknown_positions
+            # state.saveable_irradiation_positions = editor.monitor_positions + state.unknown_positions
+            state.monitor_positions = editor.monitor_positions
             editor.predict_values()
             editor.name = 'Flux: {}{}'.format(state.irradiation, state.level)
 

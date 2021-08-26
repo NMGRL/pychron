@@ -20,7 +20,8 @@ from uncertainties import ufloat
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import FigureOptions
-from pychron.pychron_constants import FLUX_CONSTANTS, ERROR_TYPES, MAIN, APPEARANCE, FLUX_MODEL_KINDS
+from pychron.pychron_constants import FLUX_CONSTANTS, ERROR_TYPES, MAIN, APPEARANCE, FLUX_MODEL_KINDS, RBF, BSPLINE, \
+    BOWL, PLANE, GRIDDATA, IDW
 
 
 class BaseFluxOptions(FigureOptions):
@@ -33,6 +34,7 @@ class BaseFluxOptions(FigureOptions):
     use_monte_carlo = Bool(False)
     position_error = Float
     predicted_j_error_type = Enum(*ERROR_TYPES)
+    flux_scalar = Float(1000)
 
 
 class MonitorMixin(HasTraits):
@@ -48,7 +50,7 @@ class MonitorMixin(HasTraits):
         dc = FLUX_CONSTANTS[self.selected_monitor]
         b = ufloat(*dc['lambda_b'])
         ec = ufloat(*dc['lambda_ec'])
-        return b+ec
+        return b + ec
 
     def _get_monitor_name(self):
         return FLUX_CONSTANTS[self.selected_monitor].get('monitor_name', '')
@@ -61,9 +63,7 @@ class MonitorMixin(HasTraits):
 
 
 class FluxOptions(BaseFluxOptions, MonitorMixin):
-
     model_kind = Enum(FLUX_MODEL_KINDS)
-    flux_scalar = Float(1000)
     n_neighbors = Int(2)
 
     least_squares_fit = Enum('Linear', 'Parabolic', 'Cubic', 'Quartic')
@@ -78,7 +78,15 @@ class FluxOptions(BaseFluxOptions, MonitorMixin):
 
 
 class FluxVisualizationOptions(BaseFluxOptions):
-    model_kind = Enum('Plane', 'Bowl')
+    model_kind = Enum(PLANE, BOWL, BSPLINE, RBF, GRIDDATA, IDW)
+    rbf_kind = Enum('multiquadric',
+                    'inverse',
+                    'gaussian',
+                    'linear',
+                    'cubic',
+                    'quintic',
+                    'thin_plate')
+    griddata_method = Enum('linear', 'nearest', 'cubic')
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]
@@ -93,7 +101,6 @@ class VerticalFluxAuxPlot(AuxPlot):
 
 
 class VerticalFluxOptions(FigureOptions, MonitorMixin):
-
     use_j = Bool
     use_f_enabled = Bool
 

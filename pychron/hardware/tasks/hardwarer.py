@@ -15,16 +15,15 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 
 import os
 
-import six.moves.configparser
 from traits.api import HasTraits, Button, Instance, List, Str, \
     Enum, Int, Float
 from traits.trait_types import Bool
 from traitsui.api import View, Item, VGroup
 
+from pychron.config_mixin import ParserWrapper
 from pychron.core.helpers.filetools import backup
 from pychron.core.pychron_traits import IPAddress
 from pychron.hardware.core.i_core_device import ICoreDevice
@@ -37,7 +36,7 @@ from pychron.paths import paths
 
 
 class ConfigGroup(HasTraits):
-    config_obj = Instance(six.moves.configparser.ConfigParser)
+    config_obj = None
 
     def _anytrait_changed(self, name, new):
         """
@@ -114,33 +113,34 @@ class DeviceConfigurer(Loggable):
     def _load_configuration(self, path):
         self.config_path = path
         self.config_name = os.path.relpath(path, paths.device_dir)
-        self._config = cfg = six.moves.configparser.ConfigParser()
-
+        # self._config = cfg = six.moves.configparser.ConfigParser()
+        self._config = cfg = ParserWrapper()
         cfg.read(path)
 
         section = 'Communications'
         if cfg.has_section(section):
-            kind = cfg.get(section, 'type')
-            klass = CKLASS_DICT.get(kind)
-            if klass:
-                self.communication_grp = klass()
+            if cfg.has_option(section, 'type'):
+                kind = cfg.get(section, 'type')
+                klass = CKLASS_DICT.get(kind)
+                if klass:
+                    self.communication_grp = klass()
 
-                def func(option, cast=None, default=None, **kw):
-                    f = getattr(cfg, 'get{}'.format(cast if cast else ''))
-                    try:
-                        v = f(section, option, **kw)
-                    except six.moves.configparser.NoOptionError:
-                        v = default
-                        if v is None:
-                            if cast == 'boolean':
-                                v = False
-                            elif cast in ('float', 'int'):
-                                v = 0
-                    return v
+                    def func(option, cast=None, default=None, **kw):
+                        f = getattr(cfg, 'get{}'.format(cast if cast else ''))
+                        if cfg.has_option(section, option):
+                            v = f(section, option, **kw)
+                        else:
+                            v = default
+                            if v is None:
+                                if cast == 'boolean':
+                                    v = False
+                                elif cast in ('float', 'int'):
+                                    v = 0
+                        return v
 
-                self.communication_grp.load_from_config(func)
-                self.communication_grp.config_obj = cfg
-                self.comms_visible = True
+                    self.communication_grp.load_from_config(func)
+                    self.communication_grp.config_obj = cfg
+                    self.comms_visible = True
         else:
             self.comms_visible = False
             self.communication_grp = CommunicationGroup()
@@ -155,16 +155,16 @@ class DeviceConfigurer(Loggable):
 
         sgrp = self.scan_grp
         for attr in ('enabled', 'graph', 'record', 'auto_start'):
-            try:
+            if cfg.has_option(section, attr):
                 v = bfunc(section, attr)
-            except six.moves.configparser.NoOptionError:
+            else:
                 v = False
             setattr(sgrp, attr, v)
 
         for attr in ('period',):
-            try:
+            if cfg.has_option(section, attr):
                 v = ffunc(section, attr)
-            except six.moves.configparser.NoOptionError:
+            else:
                 v = 0
             setattr(sgrp, attr, v)
 

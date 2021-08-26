@@ -1,5 +1,43 @@
 CHANGELOG
 =========
+
+4/22/2021
+### Features ###
+* added ability to play analysis videos from pycrunch
+* added ability to display group marker with mean label on an ideogram
+* added ability to display y ticks on both sides of the figure
+* added custom ytitles for aux plots
+* added subgroup ideogram overlay to aux plots
+* added error bar line width
+
+
+3/24/2021
+### Features ####
+* added ability to view a single recalled analysis at a time in the browser window
+* started Iso Evo discriminator
+* added limits tools to iso evo discriminator
+
+
+2/19/2021
+### Bug fixes ###
+* fixed Weighted mean SEM if MSWD<1 else SEM*SQRT(MSWD). SEM is not SD/sqrt(N) SEM is Taylor Error i.e. sum of 
+  1/variances
+  
+### Maintenance ###
+* improved FluxPersistNode
+
+
+### Features ### 
+* added interpolation methods to FluxVisualization
+
+
+2/16/2021
+### Features ###
+* added J History to Recall
+* added "Show Inspection"
+* added "Show Residuals"
+* added Share/CSV Flux Export
+
 3/27/2020
 ### Maintenance ###
 * cleaned up ExperimentStats

@@ -18,6 +18,7 @@ import math
 
 # ============= enthought library imports =======================
 from chaco.array_data_source import ArrayDataSource
+from chaco.axis import PlotAxis
 from chaco.tools.broadcaster import BroadcasterTool
 from chaco.tools.data_label_tool import DataLabelTool
 from numpy import Inf, vstack, zeros_like, ma
@@ -28,7 +29,7 @@ from uncertainties import std_dev, nominal_value, ufloat
 from pychron.core.filtering import filter_ufloats, sigma_filter
 from pychron.core.helpers.formatting import floatfmt, format_percent_error, standard_sigfigsfmt
 from pychron.graph.error_bar_overlay import ErrorBarOverlay
-from pychron.graph.ticks import SparseLogTicks
+from pychron.graph.ticks import SparseLogTicks, IntTickGenerator, IntSparseTicks
 from pychron.graph.ticks import SparseTicks
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
@@ -69,6 +70,7 @@ class BaseArArFigure(SelectionFigure):
     _analysis_group_klass = AnalysisGroup
 
     group_id = Int
+    subgroup_id = Int
     ytitle = Str
     title = Str
     xtitle = Str
@@ -112,6 +114,7 @@ class BaseArArFigure(SelectionFigure):
         if not title:
             title = self.options.title
 
+        nplots = len(plots)
         for i, po in enumerate(plots):
             kw = {'ytitle': po.name}
             if plot_dict:
@@ -120,10 +123,14 @@ class BaseArArFigure(SelectionFigure):
             if po.height:
                 kw['bounds'] = [50, po.height]
 
-            if i == (len(plots) - 1):
+            # if self.options.layout.fixed_width:
+            #     kw['bounds'] = [self.options.layout.fixed_width, kw['bounds'][1]]
+            #     kw['resizable'] = ''
+
+            if i == nplots - 1:
                 kw['title'] = title
 
-            if i == 0 and self.ytitle:
+            if not i and self.ytitle:
                 kw['ytitle'] = self.ytitle
 
             if not po.ytitle_visible:
@@ -193,15 +200,6 @@ class BaseArArFigure(SelectionFigure):
     def _apply_aux_plot_options(self, pp, po):
         options = self.options
 
-        for k, axis in (('x', pp.x_axis), ('y', pp.y_axis)):
-            for attr in ('title_font', 'tick_in', 'tick_out', 'tick_label_formatter'):
-                value = getattr(options, '{}{}'.format(k, attr))
-                try:
-                    setattr(axis, attr, value)
-                except TraitError:
-                    pass
-
-            axis.tick_label_font = getattr(options, '{}tick_font'.format(k))
 
         # pp.x_axis.title_font = options.xtitle_font
         # pp.x_axis.tick_label_font = options.xtick_font
@@ -218,13 +216,27 @@ class BaseArArFigure(SelectionFigure):
         pp.y_grid.visible = options.use_ygrid
 
         if po:
-            if not po.ytick_visible:
-                pp.y_axis.tick_visible = False
-                pp.y_axis.tick_label_formatter = lambda x: ''
-
+            alt_axis = None
             if po.y_axis_right:
                 pp.y_axis.orientation = 'right'
                 pp.y_axis.axis_line_visible = False
+
+            if po.yticks_both_sides:
+                if self.group_id == 0 and self.subgroup_id == 0:
+                    alt_axis = PlotAxis(pp, orientation='left' if po.y_axis_right else 'right')
+                    alt_axis.tick_label_formatter = lambda x: ''
+                    alt_axis.axis_line_visible = False
+                    alt_axis.tick_in = options.ytick_in-1
+                    alt_axis.tick_out = options.ytick_out
+
+                    pp.underlays.append(alt_axis)
+                    pp.add(alt_axis)
+
+            if not po.ytick_visible:
+                pp.y_axis.tick_visible = False
+                pp.y_axis.tick_label_formatter = lambda x: ''
+                if alt_axis:
+                    alt_axis.tick_visible = False
 
             pp.value_scale = po.scale
             if po.scale == 'log':
@@ -233,11 +245,31 @@ class BaseArArFigure(SelectionFigure):
                     pp.value_axis.tick_generator = st
                     pp.value_grid.tick_generator = st
             else:
+                st = None
                 pp.value_axis.tick_interval = po.ytick_interval
                 if po.use_sparse_yticks:
-                    st = SparseTicks(step=po.sparse_yticks_step)
+                    if po.use_integer_ticks:
+                        st = IntSparseTicks(step=po.sparse_yticks_step)
+                    else:
+                        st = SparseTicks(step=po.sparse_yticks_step)
+                elif po.use_integer_ticks:
+                    st = IntTickGenerator()
+
+                if st is not None:
                     pp.value_axis.tick_generator = st
                     pp.value_grid.tick_generator = st
+                    if alt_axis:
+                        alt_axis.tick_generator = st
+
+        for k, axis in (('x', pp.x_axis), ('y', pp.y_axis)):
+            for attr in ('title_font', 'tick_in', 'tick_out', 'tick_label_formatter'):
+                value = getattr(options, '{}{}'.format(k, attr))
+                try:
+                    setattr(axis, attr, value)
+                except TraitError:
+                    pass
+
+            axis.tick_label_font = getattr(options, '{}tick_font'.format(k))
 
     def _set_options_format(self, pp):
         # print 'using options format'
@@ -371,48 +403,37 @@ class BaseArArFigure(SelectionFigure):
         return omits, invalids, outliers
 
     def _plot_raw_40_36(self, po, pid):
-        k = 'uAr40/Ar36'
-        return self._plot_aux('noncor. <sup>40</sup>Ar/<sup>36</sup>Ar', k, po, pid)
+        return self._plot_aux('uAr40/Ar36', po, pid)
 
     def _plot_ic_40_36(self, po, pobj, pid):
-        k = 'Ar40/Ar36'
-        return self._plot_aux('<sup>40</sup>Ar/<sup>36</sup>Ar', k, po, pid)
+        return self._plot_aux('Ar40/Ar36', po, pid)
 
     def _plot_icf_40_36(self, po, pobj, pid):
-        k = 'icf_40_36'
-        return self._plot_aux('ifc <sup>40</sup>Ar/<sup>36</sup>Ar', k, po, pid)
+        return self._plot_aux('icf_40_36', po, pid)
 
     def _plot_radiogenic_yield(self, po, pobj, pid):
-        k = 'radiogenic_yield'
-        return self._plot_aux('%<sup>40</sup>Ar*', k, po, pid)
+        return self._plot_aux('radiogenic_yield', po, pid)
 
     def _plot_kcl(self, po, pobj, pid):
-        k = 'kcl'
-        return self._plot_aux('K/Cl', k, po, pid)
+        return self._plot_aux('kcl', po, pid)
 
     def _plot_clk(self, po, pobj, pid):
-        k = 'clk'
-        return self._plot_aux('Cl/K', k, po, pid)
+        return self._plot_aux('clk', po, pid)
 
     def _plot_kca(self, po, pobj, pid):
-        k = 'kca'
-        return self._plot_aux('K/Ca', k, po, pid)
+        return self._plot_aux('kca', po, pid)
 
     def _plot_signal_k39(self, po, pobj, pid):
-        k = 'k39'
-        return self._plot_aux('<sup>39</sup>Ar<sub>K</sub>(fA)', k, po, pid)
+        return self._plot_aux('k39', po, pid)
 
     def _plot_moles_k39(self, po, pobj, pid):
-        k = 'moles_k39'
-        return self._plot_aux('<sup>39</sup>Ar<sub>K</sub>(mol)', k, po, pid)
+        return self._plot_aux('moles_k39', po, pid)
 
     def _plot_moles_ar40(self, po, pobj, pid):
-        k = 'Ar40'
-        return self._plot_aux('<sup>40</sup>Ar<sub>tot</sub>(fA)', k, po, pid)
+        return self._plot_aux('Ar40', po, pid)
 
     def _plot_moles_ar36(self, po, pobj, pid):
-        k = 'Ar36'
-        return self._plot_aux('<sup>36</sup>Ar<sub>tot</sub>(fA)', k, po, pid)
+        return self._plot_aux('Ar36', po, pid)
 
     def _plot_extract_value(self, po, pobj, pid):
         k = 'extract_value'
@@ -429,10 +450,7 @@ class BaseArArFigure(SelectionFigure):
         pass
 
     def _add_point_labels(self, scatter, ans=None):
-        labels = []
-
         f = self.options.analysis_label_format
-
         if not f:
             f = '{aliquot:02d}{step:}'
 
@@ -450,12 +468,14 @@ class BaseArArFigure(SelectionFigure):
         scatter.underlays.append(ov)
 
     def _add_error_bars(self, scatter, errors, axis, nsigma,
+                        line_width=1,
                         end_caps=True,
                         visible=True):
         ebo = ErrorBarOverlay(component=scatter,
                               orientation=axis,
                               nsigma=nsigma,
                               visible=visible,
+                              line_width=line_width,
                               use_end_caps=end_caps)
 
         scatter.underlays.append(ebo)
@@ -475,15 +495,8 @@ class BaseArArFigure(SelectionFigure):
                                items=None,
                                update_meta_func=None):
         if add_tool:
-            broadcaster = BroadcasterTool()
-            scatter.tools.append(broadcaster)
-            if add_selection:
-                rect_tool = RectSelectionTool(scatter)
-                rect_overlay = RectSelectionOverlay(component=scatter,
-                                                    tool=rect_tool)
-
-                scatter.overlays.append(rect_overlay)
-                broadcaster.tools.append(rect_tool)
+            # broadcaster = BroadcasterTool()
+            # scatter.tools.append(broadcaster)
 
             if inspector is None:
                 if value_format is None:
@@ -508,13 +521,15 @@ class BaseArArFigure(SelectionFigure):
                 pinspector_overlay = PointInspectorOverlay(component=scatter,
                                                            tool=inspector)
                 scatter.overlays.append(pinspector_overlay)
-                broadcaster.tools.append(inspector)
+                # broadcaster.tools.append(inspector)
+                scatter.tools.append(inspector)
             else:
                 if not isinstance(inspector, (list, tuple)):
                     inspector = (inspector,)
 
                 for i in inspector:
-                    broadcaster.tools.append(i)
+                    # broadcaster.tools.append(i)
+                    scatter.tools.append(i)
                     # # pinspector_overlay = PointInspectorOverlay(component=scatter,
                     # #                                            tool=point_inspector)
                     # # print 'fff', inspector
@@ -525,6 +540,14 @@ class BaseArArFigure(SelectionFigure):
                     #     i.on_trait_change(self._handle_inspection, 'inspector_item')
                     #     # scatter.overlays.append(pinspector_overlay)
                     #     broadcaster.tools.append(i)
+            if add_selection:
+                rect_tool = RectSelectionTool(scatter)
+                rect_overlay = RectSelectionOverlay(component=scatter,
+                                                    tool=rect_tool)
+
+                scatter.overlays.append(rect_overlay)
+                # broadcaster.tools.append(rect_tool)
+                scatter.tools.append(rect_tool)
 
             if update_meta_func is None:
                 update_meta_func = self.update_graph_metadata
@@ -579,7 +602,6 @@ class BaseArArFigure(SelectionFigure):
         return label
 
     def _build_label_text(self, x, we, n,
-                          total_n=None,
                           mswd_args=None,
                           display_n=True,
                           display_mswd=True,
@@ -591,10 +613,10 @@ class BaseArArFigure(SelectionFigure):
         display_mswd = n >= 2 and display_mswd
 
         if display_n:
-            if total_n and n != total_n:
-                n = 'n= {}/{}'.format(n, total_n)
-            else:
-                n = 'n= {}'.format(n)
+            total_n = self.analysis_group.total_n
+            n = 'n= {}'.format(n)
+            if total_n:
+                n = '{}/{}'.format(n, total_n)
         else:
             n = ''
 

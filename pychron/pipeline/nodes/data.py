@@ -28,7 +28,8 @@ from traitsui.api import Item, EnumEditor, CheckListEditor
 from pychron.core.helpers.strtools import to_bool, get_case_insensitive, to_int
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.globals import globalv
-from pychron.pipeline.csv_dataset_factory import CSVDataSetFactory, CSVSpectrumDataSetFactory
+from pychron.pipeline.csv_dataset_factory import CSVDataSetFactory, CSVSpectrumDataSetFactory, \
+    CSVIsochronDataSetFactory, CSVRegressionDataSetFactory
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pychron_constants import ANALYSIS_TYPES
 
@@ -227,12 +228,13 @@ class CSVNode(BaseCSVNode):
             return ans
 
         except (TypeError, ValueError) as e:
+
             warning(None, 'Invalid values in the import file. Error="{}"'.format(e))
 
     def _analysis_factory(self, d):
         from pychron.processing.analyses.file_analysis import FileAnalysis
-        fa = FileAnalysis(age=float(get_case_insensitive(d, 'age')),
-                          age_err=float(get_case_insensitive(d, 'age_err')),
+        fa = FileAnalysis(age=float(get_case_insensitive(d, 'age', default=0)),
+                          age_err=float(get_case_insensitive(d, 'age_err', default=0)),
                           record_id=get_case_insensitive(d, 'runid'),
                           sample=get_case_insensitive(d, 'sample', ''),
                           label_name=get_case_insensitive(d, 'label_name', ''),
@@ -257,6 +259,25 @@ class CSVSpectrumNode(CSVNode):
         # f.k39_err = float(get_case_insensitive(d, 'k39_err'))
         # f.rad40 = float(get_case_insensitive(d, 'rad40'))
         # f.rad40_err = float(get_case_insensitive(d, 'rad40_err'))
+        return f
+
+
+class CSVIsochronNode(CSVNode):
+    required_columns = ('runid', 'ar40', 'ar40_err', 'ar39', 'ar39_err', 'ar36', 'ar36_err')
+    _factory_klass = CSVIsochronDataSetFactory
+
+
+class CSVRegressionNode(CSVNode):
+    required_columns = ('runid', 'x', 'y')
+    _factory_klass = CSVRegressionDataSetFactory
+
+    def _analysis_factory(self, d):
+        f = super(CSVRegressionNode, self)._analysis_factory(d)
+
+        for k in ('x', 'y'):
+            for kk in ('', '_err'):
+                kk = '{}{}'.format(k, kk)
+                setattr(f, kk, float(get_case_insensitive(d, kk)))
         return f
 
 

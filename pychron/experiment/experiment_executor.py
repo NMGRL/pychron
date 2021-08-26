@@ -35,7 +35,7 @@ from pychron.core.helpers.filetools import add_extension, get_path, unique_path2
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.logger_setup import add_root_handler, remove_root_handler
 from pychron.core.progress import open_progress
-from pychron.core.stats import calculate_weighted_mean
+from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.wait.wait_group import WaitGroup
 from pychron.core.yaml import yload
@@ -62,7 +62,7 @@ from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, AR_AR, DVC_PROTOCOL, DEFAULT_MONITOR_NAME, \
     SCRIPT_NAMES, EM_SCRIPT_KEYS, NULL_STR, NULL_EXTRACT_DEVICES, IPIPETTE_PROTOCOL, ILASER_PROTOCOL, IFURNACE_PROTOCOL, \
-    CRYO_PROTOCOL
+    CRYO_PROTOCOL, FAILED, CANCELED, TRUNCATED, SUCCESS
 
 
 def remove_backup(uuid_str):
@@ -171,6 +171,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     ratio_change_detection_enabled = Bool(False)
     execute_open_queues = Bool(True)
+    use_preceding_blank = Bool(True)
+    save_all_runs = Bool(False)
 
     # dvc
     use_dvc_persistence = Bool(False)
@@ -190,9 +192,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     _prev_blanks = Dict
     _prev_baselines = Dict
-    _prev_blank_runid = String
     _err_message = String
-    _prev_blank_id = Long
+
     _ratios = Dict
     _failure_counts = Dict
     _excluded_uuids = Dict
@@ -253,7 +254,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'experiment_type',
                  'laboratory',
                  'ratio_change_detection_enabled',
-                 'execute_open_queues')
+                 'use_preceding_blank',
+                 'execute_open_queues',
+                 'save_all_runs')
         self._preference_binder(prefid, attrs)
 
         # dvc
@@ -750,18 +753,31 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.debug('{} finished'.format(run.runid))
         if self.is_alive():
             self.debug('spec analysis type {}'.format(spec.analysis_type))
-            if spec.analysis_type.startswith('blank'):
-                pb = run.get_baseline_corrected_signals()
-                if pb is not None:
-                    self._prev_blank_runid = run.spec.runid
-                    # self._prev_blank_id = run.spec.analysis_dbid
-                    self._prev_blanks = pb
-                    self.debug('previous blanks ={}'.format(pb))
+            self._set_prev(run)
 
         run.teardown()
 
         self.measuring_run = None
         self.debug('join run finished')
+
+    def _set_prev(self, run):
+        if hasattr(run, 'get_baseline_corrected_signal_dict'):
+            d = (run.record_id, run.get_baseline_corrected_signal_dict())
+            if self.use_preceding_blank:
+                self._prev_blanks[run.analysis_type] = d
+                self._prev_blanks['blank'] = d
+            self._prev_baselines = run.get_baseline_dict()
+        else:
+            at = run.spec.analysis_type
+            if self.use_preceding_blank and at.startswith('blank'):
+                pb = run.get_baseline_corrected_signals()
+                if pb is not None:
+                    d = (run.spec.runid, pb)
+                    self._prev_blanks[at] = d
+                    self._prev_blanks['blank'] = d
+                    self.debug('previous blanks ={}'.format(d))
+
+            self._prev_baselines = run.get_baselines()
 
     def _do_run(self, run):
         self._set_thread_name(run.runid)
@@ -797,28 +813,29 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             if self.monitor and self.monitor.has_fatal_error():
                 run.cancel_run()
-                run.spec.state = 'failed'
+                run.spec.state = FAILED
                 break
 
             if not getattr(self, step)(run):
                 self.warning('{} did not complete successfully'.format(step[1:]))
                 if step != '_post_measurement':  # save data even if post measurement fails
-                    run.spec.state = 'failed'
+                    run.spec.state = FAILED
                 break
 
         else:
             self.debug('$$$$$$$$$$$$$$$$$$$$ state at run end {}'.format(run.spec.state))
-            if run.spec.state not in ('truncated', 'canceled', 'failed'):
-                run.spec.state = 'success'
+            if run.spec.state not in (TRUNCATED, CANCELED, FAILED):
+                run.spec.state = SUCCESS
 
-        if run.spec.state in ('success', 'truncated', 'terminated'):
+        if self.save_all_runs or run.spec.state in ('success', 'truncated'):
             run.save()
-            self.run_completed = run
+
+        self.run_completed = run
 
         remove_backup(run.uuid)
 
         # check to see if action should be taken
-        if run.spec.state not in ('canceled', 'failed'):
+        if run.spec.state not in (CANCELED, FAILED):
             if self._post_run_check(run):
                 self._err_message = 'Post Run Check Failed'
                 self.warning('post run check failed')
@@ -829,12 +846,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.spec.state, t))
 
         run.finish()
-        if self.experiment_type == AR_AR and run.spec.state in ('success', 'truncated'):
+        if self.experiment_type == AR_AR and run.spec.state in (SUCCESS, TRUNCATED):
             run.spec.uage = run.isotope_group.uage
             run.spec.k39 = run.isotope_group.get_computed_value('k39')
 
-        if run.spec.state not in ('canceled', 'failed', 'aborted'):
-            self._retroactive_repository_identifiers(run.spec)
+        # if run.spec.state not in ('canceled', 'failed', 'aborted'):
+        #     self._retroactive_repository_identifiers(run.spec)
 
         if self.use_autoplot:
             self.autoplot_event = run
@@ -888,10 +905,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         t.join()
 
         self.debug('{} finished'.format(run.runid))
-        if run.analysis_type.startswith('blank'):
-            pb = run.get_baseline_corrected_signals()
-            if pb is not None:
-                self._prev_blanks = pb
+        self._set_prev(run)
+        # if run.analysis_type.startswith('blank'):
+        #     pb = run.get_baseline_corrected_signals()
+        #     if pb is not None:
+        #         self._prev_blanks[run.spec.analysis_type] = (run.spec.runid, pb)
+        #         self._prev_blanks['blank'] = (run.spec.runid, pb)
 
         do_after(1000, run.teardown)
 
@@ -1050,7 +1069,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not run.start():
             self.alive = False
             ret = False
-            run.spec.state = 'failed'
+            run.spec.state = FAILED
 
             msg = 'Run {} did not start properly'.format(run.runid)
             self._err_message = msg
@@ -1178,7 +1197,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                   'use_db_persistence', 'use_dvc_persistence', 'use_xls_persistence'):
             setattr(arun, k, getattr(self, k))
 
-        arun.previous_blanks = self._prev_blank_id, self._prev_blanks, self._prev_blank_runid
+        try:
+            pb = self._prev_blanks[spec.analysis_type]
+        except KeyError:
+            pb = self._prev_blanks.get('blank', ('', {}))
+
+        arun.previous_blanks = pb
         arun.previous_baselines = self._prev_baselines
         arun.on_trait_change(self._handle_executor_event, 'executor_event')
 
@@ -1379,6 +1403,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             nominal_ratio = check.get('nominal_ratio')
             nanalyses = check['nanalyses'] + 1
             pthreshold = check.get('percent_threshold', 0)
+            mswd_threshold = check.get('mswd_threshold', 0)
+            send_email_only = check.get('send_email_only', False)
 
             if not threshold and not nsigma:
                 self.warning('invalid ratio change check. need to specify either threshold or nsigma')
@@ -1429,7 +1455,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     xs = [nominal_value(ri[2]) for ri in ratios[:-1]]
                     es = [std_dev(ri[2]) for ri in ratios[:-1]]
                     wm, werr = calculate_weighted_mean(xs, es)
-
+                    mswd = calculate_mswd(xs, es, wm=wm)
                     cur = nominal_value(ratios[-1][2])
                     dev = abs(wm - cur)
                     if pthreshold:
@@ -1438,7 +1464,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                     if not threshold:
                         threshold = nsigma * werr
-                    msg = 'wm={}+/-{}, cur={}, dev={}, threshold={}'.format(wm, werr, cur, dev, threshold)
+
+                    if mswd_threshold:
+                        threshold = mswd_threshold
+                        dev = mswd
+                    msg = 'wm={}+/-{}, mswd={}, cur={}, dev={}, threshold={}'.format(wm, werr, mswd, cur, dev,
+                                                                                     threshold)
                 else:
                     return
 
@@ -1453,9 +1484,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 msg = 'Ratio change detected. {}, Total failures={}/{}'.format(msg, fc, failure_cnt)
                 self.debug(msg)
                 if fc >= failure_cnt:
-                    self._err_message = msg
-                    invoke_in_main_thread(self.warning_dialog, msg)
-                    return True
+                    if send_email_only:
+                        pass
+                    else:
+                        self._err_message = msg
+                        invoke_in_main_thread(self.warning_dialog, msg)
+                        return True
             else:
                 if consecutive_failure:
                     self._failure_counts[atype] = 0
@@ -1679,16 +1713,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _check_preceding_blank(self, inform):
         mainstore = self.datahub.mainstore
         with mainstore.session_ctx(use_parent_session=True):
-            an = self._get_preceding_blank_or_background(inform=inform)
+            an = self._get_previous_blank_from_db(inform=inform)
             if an is not True:
                 if an is None:
                     return
                 else:
                     self.info('using {} as the previous blank'.format(an.record_id))
                     try:
-                        # self._prev_blank_id = an.meas_analysis_id
-                        self._prev_blanks = an.get_baseline_corrected_signal_dict()
-                        self._prev_baselines = an.get_baseline_dict()
+                        self._set_prev(an)
+
                     except TraitError:
                         self.debug_exception()
                         self.warning('failed loading previous blank')
@@ -1864,19 +1897,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._wait_for_save()
         self.heading('Pre Run Check Passed')
 
-    def _retroactive_repository_identifiers(self, spec):
-        self.warning('retroactive repository identifiers disabled')
-        return
-
-        db = self.datahub.mainstore
-        crun, expid = retroactive_repository_identifiers(spec, self._cached_runs, self._active_repository_identifier)
-        self._cached_runs, self._active_repository_identifier = crun, expid
-
-        db.add_repository_association(spec.repository_identifier, spec)
-        if not is_special(spec.identifier) and self._cached_runs:
-            for c in self._cached_runs:
-                db.add_repository_association(expid, c)
-            self._cached_runs = []
+    # def _retroactive_repository_identifiers(self, spec):
+    #     self.warning('retroactive repository identifiers disabled')
+    #     return
+    #
+    #     db = self.datahub.mainstore
+    #     crun, expid = retroactive_repository_identifiers(spec, self._cached_runs, self._active_repository_identifier)
+    #     self._cached_runs, self._active_repository_identifier = crun, expid
+    #
+    #     db.add_repository_association(spec.repository_identifier, spec)
+    #     if not is_special(spec.identifier) and self._cached_runs:
+    #         for c in self._cached_runs:
+    #             db.add_repository_association(expid, c)
+    #         self._cached_runs = []
 
     def _check_repository_identifiers(self, inform):
         db = self.datahub.mainstore.db
@@ -2077,11 +2110,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         elif action.action == 'cancel':
             self.cancel(confirm=False)
 
-    def _get_preceding_blank_or_background(self, inform=True):
-        #temporarily disable for now
-        # need to come up with a better way of handling blanks with SimpleIDs
-        return True
-        
+    def _get_previous_blank_from_db(self, inform=True):
+        if not self.use_preceding_blank:
+            return True
+
         exp = self.experiment_queue
 
         types = ['air', 'unknown', 'cocktail']
@@ -2121,13 +2153,11 @@ Use Last "blank_{}"= {}
                         self.debug('use user selected blank {}'.format(pdbr.record_id))
                         return pdbr
                     else:
-                        msg = msg.format(an.analysis_type,
-                                         an.analysis_type,
-                                         pdbr.record_id)
-
                         retval = NO
                         if inform:
-                            retval = self.confirmation_dialog(msg,
+                            retval = self.confirmation_dialog(msg.format(an.analysis_type,
+                                                                         an.analysis_type,
+                                                                         pdbr.record_id),
                                                               no_label='Select From Database',
                                                               cancel=True,
                                                               return_retval=True)
@@ -2228,10 +2258,10 @@ Use Last "blank_{}"= {}
                 self.ms_pumptime_start = new['time']
             elif kind == 'cancel':
                 self.cancel(**new)
-            elif kind == 'previous_baselines':
-                self._prev_baselines = new['baselines']
-            elif kind == 'previous_blanks':
-                self._prev_baselines = new['baselines']
+            # elif kind == 'previous_baselines':
+            #     self._prev_baselines = new['baselines']
+            # elif kind == 'previous_blanks':
+            #     self._prev_baselines = new['baselines']
             elif kind == 'show_conditionals':
                 self.show_conditionals(active_run=obj, **new)
             elif kind == 'end_after':
@@ -2255,6 +2285,8 @@ Use Last "blank_{}"= {}
 
     def _datahub_default(self):
         dh = Datahub()
+        dh.mainstore = self.application.get_service(DVC_PROTOCOL)
+        dh.bind_preferences()
         return dh
 
     def _pyscript_runner_default(self):

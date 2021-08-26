@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Str, Int, \
     Bool, Password, Color, Property, Float, Enum
@@ -26,7 +24,7 @@ from pychron.core.pychron_traits import PositiveInteger, PositiveFloat
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper, BaseConsolePreferences, \
     BaseConsolePreferencesPane
-from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
+from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES, XE, NE, KR, HE, AR_AR, GENERIC
 
 
 class ExperimentPreferences(BasePreferencesHelper):
@@ -34,7 +32,7 @@ class ExperimentPreferences(BasePreferencesHelper):
     id = 'pychron.experiment.preferences_page'
 
     laboratory = Str
-    experiment_type = Enum('Ar/Ar', 'Generic', 'He', 'Kr', 'Ne', 'Xe')
+    experiment_type = Enum(AR_AR, GENERIC, HE, KR, NE, XE)
     instrument_name = Str
 
     use_uuid_path_name = Bool
@@ -96,8 +94,10 @@ class ExperimentPreferences(BasePreferencesHelper):
     n_executed_display = PositiveInteger
     failed_intensity_count_threshold = PositiveInteger(3)
     ratio_change_detection_enabled = Bool(False)
+    use_preceding_blank = Bool(False)
     plot_panel_update_period = PositiveInteger(1)
     execute_open_queues = Bool
+    save_all_runs = Bool
 
     def _get_memory_threshold(self):
         return self._memory_threshold
@@ -174,6 +174,8 @@ class ExperimentPreferencesPane(PreferencesPane):
                              Item('n_executed_display',
                                   label='N. Executed',
                                   tooltip='Number of analyses to display in the "Executed" table'),
+                             Item('use_preceding_blank',
+                                  label='Use Preceding Blank'),
                              label='General')
         editor_grp = VGroup(Item('automated_runs_editable',
                                  label='Direct editing',
@@ -224,6 +226,8 @@ class ExperimentPreferencesPane(PreferencesPane):
         persist_grp = Group(Item('use_xls_persistence', label='Save analyses to Excel workbook'),
                             Item('use_db_persistence', label='Save analyses to Database'),
                             Item('use_uuid_path_name', label='Use UUID Path Names'),
+                            Item('save_all_runs', label='Save All analyses',
+                                 tooltip='Save analysis even if run canceled or failed'),
                             label='Persist', show_border=True)
 
         pc_grp = Group(Item('use_peak_center_threshold', label='Use Peak Center Threshold',

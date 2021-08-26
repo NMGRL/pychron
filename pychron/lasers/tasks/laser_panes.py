@@ -182,6 +182,7 @@ class StageControlPane(TraitsDockPane):
                                    enabled_when='tray_calibration.isCalibrating()'),
                              UItem('tray_calibration.set_center_button'))
             tc_grp = VGroup(cal_grp,
+                            UItem('tray_calibration.calibrator', style='custom'),
                             HGroup(cal_results_grp, cal_help_grp),
                             label='Calibration')
 
@@ -189,17 +190,28 @@ class StageControlPane(TraitsDockPane):
         return tabs
 
     def traits_view(self):
-        pgrp = HGroup(UItem('stage_manager.calibrated_position_entry',
-                            tooltip='Enter a position e.g 1 for a hole, '
-                                    'or 3,4 for X,Y'),
-                      icon_button_editor('stage_manager.autocenter_button', 'find',
-                                         tooltip='Do an autocenter at the current location',
-                                         enabled_when='stage_manager.autocenter_manager.use_autocenter'),
-                      icon_button_editor('stage_manager.manual_override_position_button', 'edit-move',
-                                         tooltip='Manual define the X,Y coordinates for current position',
-                                         enabled_when='stage_manager.calibrated_position_entry'),
-                      label='Calibrated Position',
-                      show_border=True)
+        if self.model.stage_manager.__class__.__name__ == 'VideoStageManager':
+            pgrp = HGroup(UItem('stage_manager.calibrated_position_entry',
+                                tooltip='Enter a position e.g 1 for a hole, '
+                                        'or 3,4 for X,Y'),
+                          icon_button_editor('stage_manager.autocenter_button', 'find',
+                                             tooltip='Do an autocenter at the current location',
+                                             enabled_when='stage_manager.autocenter_manager.use_autocenter'),
+                          icon_button_editor('stage_manager.manual_override_position_button', 'edit-move',
+                                             tooltip='Manual define the X,Y coordinates for current position',
+                                             enabled_when='stage_manager.calibrated_position_entry'),
+                          label='Calibrated Position',
+                          show_border=True)
+        else:
+            pgrp = HGroup(UItem('stage_manager.calibrated_position_entry',
+                                tooltip='Enter a position e.g 1 for a hole, '
+                                        'or 3,4 for X,Y'),
+                          icon_button_editor('stage_manager.manual_override_position_button', 'edit-move',
+                                             tooltip='Manual define the X,Y coordinates for current position',
+                                             enabled_when='stage_manager.calibrated_position_entry'),
+                          label='Calibrated Position',
+                          show_border=True)
+
         hgrp = HGroup(UItem('stage_manager.stop_button'),
                       UItem('stage_manager.home'),
                       UItem('stage_manager.home_option',
@@ -310,6 +322,12 @@ class OpticsPane(TraitsDockPane):
 class ClientMixin(object):
     name = Property(depends_on='model')
     id = 'pychron.lasers.client'
+    xmax = 25
+    xmin = -25
+    ymax = 25
+    ymin = -25
+    zmax = 25
+    zmin = -25
 
     def _get_name(self):
         n = 'Laser Client'
@@ -326,11 +344,11 @@ class ClientMixin(object):
                                                name='object.stage_manager.stage_map_names')),
                                        UItem('stage_stop_button')),
                                 Item('x',
-                                     editor=RangeEditor(low=-25.0, high=25.0)),
+                                     editor=RangeEditor(low=self.xmin, high=self.xmax)),
                                 Item('y',
-                                     editor=RangeEditor(low=-25.0, high=25.0)),
+                                     editor=RangeEditor(low=self.ymin, high=self.ymax)),
                                 Item('z',
-                                     editor=RangeEditor(low=-25.0, high=25.0)),
+                                     editor=RangeEditor(low=self.zmin, high=self.zmax)),
                                 enabled_when='_move_enabled'),
                          label='Positioning')
 

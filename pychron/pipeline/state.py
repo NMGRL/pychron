@@ -46,7 +46,6 @@ class EngineState(HasTraits):
 
     saveable_keys = List
     saveable_fits = List
-    saveable_irradiation_positions = List
     delete_existing_icfactors = Bool
 
     veto = Any

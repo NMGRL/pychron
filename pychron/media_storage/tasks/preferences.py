@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Enum, Str, Password
 from traitsui.api import View, Item, VGroup
-from traitsui.editors import DirectoryEditor
+from traitsui.editors.api import DirectoryEditor
 
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 from pychron.media_storage import BACKENDS

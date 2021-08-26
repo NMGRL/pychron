@@ -121,13 +121,21 @@ class ReferencesSeries(BaseSeries):
 
                 self._set_values(plotobj, reg, key)
 
+    def _get_signal_intensity(self, po, analysis):
+        v, e = 0, 0
+        iso = self._get_isotope(po, analysis)
+        if iso:
+            i = iso.get_intensity()
+            v, e = nominal_value(i), std_dev(i)
+        return v, e
+
     def _get_isotope(self, po, analysis):
         return analysis.get_isotope(po.name)
 
     def _calc_limits(self, ys, ye):
         return calc_limits(ys, ye, self.options.nsigma)
 
-    def _add_plot_label(self, pid, po,  overlay_position='inside top', hjustify='left', **kw):
+    def _add_plot_label(self, pid, po, overlay_position='inside top', hjustify='left', **kw):
         txt = self._get_plot_label_text(po)
         if txt:
             comp = self.graph.plots[pid]
@@ -217,9 +225,11 @@ class ReferencesSeries(BaseSeries):
 
             def af(i, x, y, analysis):
                 v, e = self._get_interpolated_value(po, analysis)
+                s, se = self._get_signal_intensity(po, analysis)
                 return (u'Interpolated: {}{}{}'.format(floatfmt(v), PLUSMINUS, floatfmt(e)),
                         'Run Date: {}'.format(analysis.rundate.strftime('%m-%d-%Y %H:%M')),
-                        'Rel. Time: {:0.4f}'.format(x))
+                        'Rel. Time: {:0.4f}'.format(x),
+                        'Signal: {}{}{}'.format(floatfmt(s), PLUSMINUS, floatfmt(se)))
 
             self._add_error_bars(scatter, ye, 'y', self.options.nsigma, True)
             self._add_scatter_inspector(scatter,

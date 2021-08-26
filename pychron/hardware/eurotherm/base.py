@@ -30,6 +30,16 @@ from pychron.paths import paths
 PID_REGEX = re.compile(r'[A-Z]{2},\d+(;[A-Z]{2},\d+)*')
 
 
+def modify_pid_parameter(param_str, key, value):
+    nparam = []
+    for a in param_str.split(';'):
+        k, v = a.split(',')
+        if k.strip() == key:
+            v = value
+        nparam.append('{},{}'.format(k, v))
+    return ';'.join(nparam)
+
+
 def get_pid_parameters(v):
     """
     """

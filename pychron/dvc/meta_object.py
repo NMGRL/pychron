@@ -21,7 +21,7 @@ from datetime import datetime
 from uncertainties import ufloat, std_dev
 
 from pychron.dvc import dvc_dump
-from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS
+from pychron.pychron_constants import INTERFERENCE_KEYS, RATIO_KEYS, DATE_FORMAT
 
 
 class MetaObjectException(BaseException):
@@ -84,8 +84,8 @@ class Chronology(MetaObject):
             except ValueError:
                 continue
 
-            start = datetime.strptime(start, '%Y-%m-%d %H:%M:%S')
-            end = datetime.strptime(end, '%Y-%m-%d %H:%M:%S')
+            start = datetime.strptime(start, DATE_FORMAT)
+            end = datetime.strptime(end, DATE_FORMAT)
             ds = (end - start).total_seconds()
             d += ds
             self._doses.append((float(power), start, end))
@@ -134,33 +134,33 @@ class Chronology(MetaObject):
         return date
 
 
-class Production2(MetaObject):
-    name = ''
-    note = ''
-
-    def _load_hook(self, path, rfile):
-        self.name = os.path.splitext(os.path.basename(path))[0]
-        attrs = []
-        for line in rfile:
-            if line.startswith('#-----'):
-                break
-            k, v, e = line.split(',')
-            setattr(self, k, float(v))
-            setattr(self, '{}_err'.format(k), float(e))
-            attrs.append(k)
-
-        self.attrs = attrs
-        self.note = rfile.read()
-
-    def to_dict(self, keys):
-        return {t: ufloat(getattr(self, t), getattr(self, '{}_err'.format(t))) for t in keys}
-        # return {t: getattr(self, t) for a in keys for t in (a, '{}_err'.format(a))}
-
-    def dump(self):
-        with open(self.path, 'w') as wfile:
-            for a in self.attrs:
-                row = ','.join(map(str, (a, getattr(self, a), getattr(self, '{}_err'.format(a)))))
-                wfile.write('{}\n'.format(row))
+# class Production2(MetaObject):
+#     name = ''
+#     note = ''
+#
+#     def _load_hook(self, path, rfile):
+#         self.name = os.path.splitext(os.path.basename(path))[0]
+#         attrs = []
+#         for line in rfile:
+#             if line.startswith('#-----'):
+#                 break
+#             k, v, e = line.split(',')
+#             setattr(self, k, float(v))
+#             setattr(self, '{}_err'.format(k), float(e))
+#             attrs.append(k)
+#
+#         self.attrs = attrs
+#         self.note = rfile.read()
+#
+#     def to_dict(self, keys):
+#         return {t: ufloat(getattr(self, t), getattr(self, '{}_err'.format(t))) for t in keys}
+#         # return {t: getattr(self, t) for a in keys for t in (a, '{}_err'.format(a))}
+#
+#     def dump(self):
+#         with open(self.path, 'w') as wfile:
+#             for a in self.attrs:
+#                 row = ','.join(map(str, (a, getattr(self, a), getattr(self, '{}_err'.format(a)))))
+#                 wfile.write('{}\n'.format(row))
 
 
 class Production(MetaObject):
@@ -184,6 +184,16 @@ class Production(MetaObject):
     @property
     def k_ca_err(self):
         return std_dev(1 / ufloat(self.Ca_K, self.Ca_K_err))
+
+    def setattr(self, k, v, e):
+        if not self.attrs:
+            self.attrs = []
+
+        if k not in self.attrs:
+            self.attrs.append(k)
+
+        setattr(self, k, v)
+        setattr(self, '{}_err'.format(k), e)
 
     def _load_hook(self, path, rfile):
         self.name = os.path.splitext(os.path.basename(path))[0]
@@ -233,9 +243,11 @@ class Production(MetaObject):
 
         obj = {}
         for a in self.attrs:
-            obj[a] = (getattr(self, a), getattr(self, '{}_err'.format(a)))
+            obj[a] = (getattr(self, a, 0), getattr(self, '{}_err'.format(a), 0))
         dvc_dump(obj, path)
 
+    def __repr__(self):
+        return 'Production<{}:{}>'.format(self.name, os.path.dirname(self.path) if self.path else '')
 
 class BaseGeometry(MetaObject):
     holes = None

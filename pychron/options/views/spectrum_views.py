@@ -74,6 +74,7 @@ class SpectrumAppearance(AppearanceSubOptions):
                       label='Fonts', show_border=True)
 
         g = VGroup(self._get_bg_group(),
+                   self._get_layout_group(),
                    self._get_padding_group(),
                    self._get_grid_group())
         return self._make_view(VGroup(g, fgrp))
@@ -100,6 +101,7 @@ class DisplaySubOptions(TitleSubOptions):
                            label='Labels')
 
         age_grp = HGroup(Item('nsigma', tooltip='NSigma to display for Plateau and Integrated ages'),
+                         Item('mswd_sig_figs', label='MSWD SigFIgs'),
                          show_border=True,
                          label='Age Info')
 

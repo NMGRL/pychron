@@ -53,6 +53,14 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
     fill = True
     use_border_gaps = True
 
+    def toyaml(self):
+        y = super(RoundedRectangle, self).toyaml()
+        y['display_name'] = self.display_name
+        y['fill'] = self.fill
+        y['color'] = ','.join([str(a) for a in self.default_color.getRgb()])
+        y['border_width'] = self.border_width
+        return y
+
     def get_tooltip_text(self):
         return 'Stage={}\nVolume={}'.format(self.name, self.volume)
 
@@ -169,18 +177,18 @@ class Spectrometer(RoundedRectangle):
     tag = 'spectrometer'
 
     def __init__(self, *args, **kw):
-        super(Spectrometer, self).__init__(*args, **kw)
         self.width = 10
         self.height = 10
+        super(Spectrometer, self).__init__(*args, **kw)
 
 
 class Stage(RoundedRectangle):
     tag = 'stage'
 
     def __init__(self, *args, **kw):
-        super(Spectrometer, self).__init__(*args, **kw)
         self.width = 10
         self.height = 5
+        super(Stage, self).__init__(*args, **kw)
 
 
 class CircleStage(Connectable, Bordered):
@@ -281,4 +289,11 @@ class CircleStage(Connectable, Bordered):
                     gc.arc(cx, cy, r, theta - dw, theta + dw)
                     gc.stroke_path()
 
+
+class Getter(RoundedRectangle):
+    pass
+
+
+class Gauge(RoundedRectangle):
+    pass
 # ============= EOF =============================================

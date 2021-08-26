@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 import os
+from random import random
 
 from numpy import array
 from pyface.confirmation_dialog import confirm
@@ -25,6 +26,7 @@ from traitsui.api import UItem, TableEditor, HGroup, Item, VGroup, ListStrEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.menu import Action, Menu as MenuManager
 from traitsui.table_column import ObjectColumn
+from uncertainties import ufloat
 
 from pychron.core.csv.csv_parser import CSVColumnParser
 from pychron.core.fuzzyfinder import fuzzyfinder
@@ -39,9 +41,14 @@ from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.paths import paths
 from pychron.processing.analyses.file_analysis import FileAnalysis
+from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 HEADER = 'status', 'runid', 'age', 'age_err', 'group', 'aliquot', 'sample', 'label_name'
+SPECTRUM_HEADER = HEADER + ('k39', 'k39_err', 'rad40', 'rad40_err')
+ISOCHRON_HEADER = ('status', 'runid', 'ar40', 'ar40_err', 'ar39', 'ar39_err',
+                   'ar36', 'ar36_err', 'group', 'aliquot', 'sample', 'label_name')
+REGRESSION_HEADER = ('status', 'runid', 'x', 'x_err', 'y', 'y_err', 'group', 'aliquot', 'sample', 'label_name')
 
 
 def make_line(vs, delimiter=','):
@@ -52,11 +59,13 @@ class CSVRecord(HasTraits):
     runid = Str('')
     age = CFloat
     age_err = CFloat
+
     group = CInt
     aliquot = CInt
     sample = Str
     status = Bool(True)
     label_name = Str
+    header = HEADER
 
     def __init__(self, *args, **kw):
         if 'status' in kw:
@@ -67,7 +76,45 @@ class CSVRecord(HasTraits):
         return self.runid and self.age and self.age_err
 
     def to_csv(self, delimiter=','):
-        return make_line([str(getattr(self, attr)) for attr in HEADER], delimiter=delimiter)
+        return make_line([str(getattr(self, attr)) for attr in self.header], delimiter=delimiter)
+
+
+class CSVSpectrumRecord(CSVRecord):
+    header = SPECTRUM_HEADER
+    k39 = CFloat
+    k39_err = CFloat
+    rad40 = CFloat
+    rad40_err = CFloat
+
+
+class CSVIsochronRecord(CSVRecord):
+    header = ISOCHRON_HEADER
+
+    ar40 = CFloat
+    ar40_err = CFloat
+    ar39 = CFloat
+    ar39_err = CFloat
+    ar36 = CFloat
+    ar36_err = CFloat
+
+    def valid(self):
+        return self.runid and self.ar40 and self.a40_err and self.ar39 and self.ar39_err and self.ar36 and self.ar36_err
+
+
+class CSVRegressionRecord(CSVRecord):
+    header = REGRESSION_HEADER
+    x = CFloat
+    y = CFloat
+    x_err = CFloat
+    y_err = CFloat
+
+    def __init__(self, test=False, *args, **kw):
+        super(CSVRegressionRecord, self).__init__(*args, **kw)
+        if test:
+            self.x = test
+            self.y = 10-test+random()/10
+            self.x_err = random()
+            self.y_err = random()
 
 
 class CSVRecordGroup(HasTraits):
@@ -165,6 +212,7 @@ class CSVDataSetFactory(HasTraits):
     name_filter = Str
     repo_filter = Str
     dirty = False
+    _record_klass = CSVRecord
 
     _message_text = '''Create/select a file with a column header as the first line.<br/><br/>
         
@@ -235,7 +283,7 @@ e.g.
     #         gi.calculate()
 
     def _add_record_button_fired(self):
-        self.records.append(CSVRecord())
+        self.records.append(self._record_klass())
         self._make_groups()
 
     def _name_filter_changed(self, new):
@@ -299,7 +347,7 @@ e.g.
             parser = CSVColumnParser()
             parser.load(p)
 
-            records = [CSVRecord(**row) for row in parser.values()]
+            records = [self._record_klass(**row) for row in parser.values()]
             self.records = records
 
             self._make_groups()
@@ -308,7 +356,8 @@ e.g.
             self.dirty = False
 
     def _make_csv_data(self):
-        return [make_line(HEADER)] + [ri.to_csv() for ri in self.records if ri.valid()]
+        header = self.records[0].header
+        return [make_line(header)] + [ri.to_csv() for ri in self.records if ri.valid()]
 
     def _load_names(self, repo=None):
         if repo is None:
@@ -385,6 +434,7 @@ e.g.
                             icon_button_editor('save_as_button', 'save_as', tooltip='Save As'),
                             icon_button_editor('clear_button', 'clear', tooltip='Clear current data'),
                             icon_button_editor('add_record_button', 'add'),
+                            # icon_button_editor('test_button', 'test'),
                             icon_button_editor('open_help_button', 'help', tooltip='Show CSV formatting instructions'),
                             UItem('open_via_finder_button', tooltip='Open a csv file on your computer'),
                             # UItem('calculate_button')
@@ -421,6 +471,9 @@ e.g.
         return v
 
     def _test_button_fired(self):
+        self._load_test_data()
+
+    def _load_test_data(self):
         self.records[0].runid = 'A'
         self.records[1].runid = 'B'
         self.records[2].runid = 'C'
@@ -484,6 +537,7 @@ e.g.
     # Run1, 10, 0.24, 0.4, 0.001, 1, 0.1
     # Run2, 11, 0.32, 0.23, 0.02, 2, 0.1
     # Run3, 10, 0.40, 0.01, 0.1, 4, 0.1
+    _record_klass = CSVSpectrumRecord
 
     def _get_columns(self):
         cols = [CheckboxColumn(name='status'),
@@ -502,6 +556,140 @@ e.g.
                 ObjectColumn(name='sample'),
                 ObjectColumn(name='label_name', label='Label Name')]
         return cols
+
+
+class CSVIsochronDataSetFactory(CSVDataSetFactory):
+    _message_text = '''Create/select a file with a column header as the first line.<br/><br/>
+
+    The following columns are required:<br/>
+    &nbsp;&nbsp;<b>runid, ar40, ar40_err, ar39, ar39_err, ar36, ar36_err</b><br/><br/>
+
+    Optional columns are:<br/>
+    &nbsp;&nbsp;<b>group, aliquot, sample, label_name</b><br/><br/>
+
+    e.g.
+    <table cellpadding="3" style="border-width: 1px; border-color: black; border-style: solid;">
+    <tr>
+        <th>runid</th>
+        <th>ar40</th>
+        <th>ar40_err</th>
+        <th>ar39</th>
+        <th>ar39_err</th> 
+        <th>ar36</th> 
+        <th>ar36_err</th>
+    </tr>
+    <tr><td>Run1</td><td>10</td><td>0.24</td><td>0.4</td><td>0.001</td><td>1</td><td>0.1</td></tr>
+    <tr><td>Run2</td><td>11</td><td>0.13</td><td>0.24</td><td>0.004</td><td>1.1</td><td>0.1</td></tr>
+    <tr><td>Run3</td><td>12</td><td>0.40</td><td>0.44</td><td>0.003</td><td>1.5</td><td>0.1</td></tr>
+
+    </table>
+    '''
+
+    # Run1, 10, 0.24, 0.4, 0.001, 1, 0.1
+    # Run2, 11, 0.32, 0.23, 0.02, 2, 0.1
+    # Run3, 10, 0.40, 0.01, 0.1, 4, 0.1
+    _record_klass = CSVIsochronRecord
+
+    def _get_columns(self):
+        cols = [CheckboxColumn(name='status'),
+                ObjectColumn(name='runid', width=50, label='RunID'),
+                ObjectColumn(name='ar40', width=100),
+                ObjectColumn(name='ar40_err', width=100,
+                             label=PLUSMINUS_ONE_SIGMA),
+                ObjectColumn(name='ar39', width=100),
+                ObjectColumn(name='ar39_err', width=100,
+                             label=PLUSMINUS_ONE_SIGMA),
+                ObjectColumn(name='ar36', width=100),
+                ObjectColumn(name='ar36_err', width=100,
+                             label=PLUSMINUS_ONE_SIGMA),
+                ObjectColumn(name='group'),
+                ObjectColumn(name='aliquot'),
+                ObjectColumn(name='sample'),
+                ObjectColumn(name='label_name', label='Label Name')]
+        return cols
+
+    def _load_test_data(self):
+        r1 = self._record_klass()
+        r2 = self._record_klass()
+        r3 = self._record_klass()
+
+        r1.runid = 'foo-1'
+        r2.runid = 'foo-2'
+        r3.runid = 'foo-3'
+
+        r1.ar40 = 10
+        r1.ar40_err = 0.1
+
+        r1.ar39 = 10
+        r1.ar39_err = 0.1
+
+        r1.ar36 = 1
+        r1.ar36_err = 0.01
+
+        r2.ar40 = 10.4
+        r2.ar40_err = 0.1
+
+        r2.ar39 = 10.5
+        r2.ar39_err = 0.1
+
+        r2.ar36 = 1.1
+        r2.ar36_err = 0.01
+
+        r3.ar40 = 11.3
+        r3.ar40_err = 0.1
+
+        r3.ar39 = 9.4
+        r3.ar39_err = 0.1
+
+        r3.ar36 = 1.4
+        r3.ar36_err = 0.01
+
+        self.records = [r1, r2, r3]
+
+
+class CSVRegressionDataSetFactory(CSVDataSetFactory):
+    _message_text = '''Create/select a file with a column header as the first line.<br/><br/>
+
+        The following columns are required:<br/>
+        &nbsp;&nbsp;<b>runid, x, y</b><br/><br/>
+
+        Optional columns are:<br/>
+        &nbsp;&nbsp;<b>x_err, y_err, group, aliquot, sample, label_name</b><br/><br/>
+
+        e.g.
+        <table cellpadding="3" style="border-width: 1px; border-color: black; border-style: solid;">
+        <tr>
+            <th>runid</th>
+            <th>x</th>
+            <th>x_err</th>
+            <th>y</th>
+            <th>y_err</th> 
+        </tr>
+        <tr><td>Run1</td><td>10</td><td>0.24</td><td>0.4</td><td>0.001</td><td>1</td><td>0.1</td></tr>
+        <tr><td>Run2</td><td>11</td><td>0.13</td><td>0.24</td><td>0.004</td><td>1.1</td><td>0.1</td></tr>
+        <tr><td>Run3</td><td>12</td><td>0.40</td><td>0.44</td><td>0.003</td><td>1.5</td><td>0.1</td></tr>
+
+        </table>
+    '''
+    _record_klass = CSVRegressionRecord
+
+    def _get_columns(self):
+        cols = [CheckboxColumn(name='status'),
+                ObjectColumn(name='runid', width=50, label='RunID'),
+                ObjectColumn(name='x', width=100),
+                ObjectColumn(name='x_err', width=100,
+                             label=PLUSMINUS_ONE_SIGMA),
+                ObjectColumn(name='y', width=100),
+                ObjectColumn(name='y_err', width=100,
+                             label=PLUSMINUS_ONE_SIGMA),
+                ObjectColumn(name='group'),
+                ObjectColumn(name='aliquot'),
+                ObjectColumn(name='sample'),
+                ObjectColumn(name='label_name', label='Label Name')]
+        return cols
+
+    def _load_test_data(self):
+        self.records = [self._record_klass(runid='foo-{}'.format(i), test=i + 1) for i in range(10)]
 
 
 if __name__ == '__main__':

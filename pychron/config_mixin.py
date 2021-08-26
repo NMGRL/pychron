@@ -17,10 +17,63 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import os
-# ============= local library imports  ==========================
 from configparser import ConfigParser, RawConfigParser
-
+import yaml
+# ============= local library imports  ==========================
+from pychron.core.codetools.inspection import caller
+from pychron.core.yaml import yload
 from pychron.paths import paths
+
+
+class YAMLParser:
+    def __init__(self, obj):
+        self._obj = obj
+
+    def write(self, fp):
+        yaml.dump(self._obj, fp)
+
+    def has_section(self, section):
+        return self._obj.get(section)
+
+    def has_option(self, section, option):
+        try:
+            return self._obj[section][option]
+        except KeyError:
+            pass
+
+    def options(self, section):
+        d = self._obj.get(section)
+        return d.keys()
+
+    def get(self, section, option):
+        s = self._obj.get(section)
+        return s.get(option)
+
+    def getfloat(self, *args, **kw):
+        return float(self.get(*args, **kw))
+
+    def getint(self, *args, **kw):
+        return int(self.get(*args, **kw))
+
+    def getboolean(self, *args, **kw):
+        return bool(self.get(*args, **kw))
+
+class ParserWrapper:
+    _parser = None
+
+    def read(self, path):
+        if path.endswith('.cfg'):
+            p = ConfigParser()
+            p.read(path)
+        else:
+            with open(path, 'r') as rfile:
+                p = yload(rfile)
+                p = YAMLParser(p)
+
+        self._parser = p
+
+    def __getattr__(self, item):
+        return getattr(self._parser, item)
 
 
 class ConfigMixin:
@@ -30,7 +83,7 @@ class ConfigMixin:
     config_path = None
 
     def configparser_factory(self):
-        return ConfigParser()
+        return ParserWrapper()
 
     def config_get_options(self, config, section):
         r = []
@@ -71,12 +124,7 @@ class ConfigMixin:
         with open(path, 'w') as f:
             config.write(f)
 
-    def get_configuration(
-            self,
-            path=None,
-            name=None,
-            warn=True,
-            set_path=True):
+    def get_configuration(self, path=None, name=None, warn=True, set_path=True):
 
         if path is None:
             path = self.config_path
@@ -95,10 +143,13 @@ class ConfigMixin:
                     if name is None:
                         name = self.name
 
-                path = os.path.join(base, '{}.cfg'.format(name))
+                path = os.path.join(base, '{}.yaml'.format(name))
+                if not os.path.isfile(path):
+                    path = os.path.join(base, '{}.yml'.format(name))
+                    if not os.path.isfile(path):
+                        path = os.path.join(base, '{}.cfg'.format(name))
 
         if path is not None and os.path.isfile(path):
-
             config = self.configparser_factory()
             self.debug('loading configuration from {}'.format(path))
             config.read(path)
@@ -111,13 +162,10 @@ class ConfigMixin:
             self.warning_dialog(msg)
 
     def get_configuration_writer(self, p=None):
-        config = RawConfigParser()
+        config = ParserWrapper()
         if p:
             config.read(p)
 
         return config
 
 # ============= EOF =============================================
-
-
-

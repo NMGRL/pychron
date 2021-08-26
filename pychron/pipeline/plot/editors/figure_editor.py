@@ -15,10 +15,9 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
-from __future__ import absolute_import
-
+from enable.component_editor import ComponentEditor
 from traits.api import Any, List
+from traitsui.api import UItem
 
 from pychron.pipeline.plot.editors.graph_editor import GraphEditor
 from pychron.pipeline.plot.figure_container import FigureContainer
@@ -112,16 +111,10 @@ class FigureEditor(GraphEditor):
 
         return model
 
-    # def _component_factory(self):
-    #     model = self._figure_model_factory()
-
-        # container = self.figure_container
-        # if not container:
-        #     container = FigureContainer()
-        #     self.figure_container = container
-        #
-        # container.model = model
-        # # container.refresh()
-        # return container.component
+    def get_component_view(self):
+        return UItem('component',
+                     style='custom',
+                     width=-self.plotter_options.layout.fixed_width,
+                     editor=ComponentEditor())
 
 # ============= EOF =============================================

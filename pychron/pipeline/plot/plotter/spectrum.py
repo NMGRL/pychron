@@ -18,7 +18,7 @@ from math import isnan
 
 from numpy import hstack, array
 # ============= standard library imports ========================
-from traits.api import Array, List, Instance
+from traits.api import Array, List, Instance, Dict
 from uncertainties import nominal_value, std_dev
 
 from pychron.pipeline.plot.overlays.label_overlay import SpectrumLabelOverlay, RelativePlotLabel
@@ -31,7 +31,7 @@ from pychron.pychron_constants import PLUSMINUS, SIGMA, MSEM
 
 class Spectrum(BaseArArFigure):
     xs = Array
-
+    spectrum_values = Dict
     _analysis_group_klass = StepHeatAnalysisGroup
     spectrum_overlays = List
     plateau_overlay = Instance(PlateauOverlay)
@@ -77,11 +77,16 @@ class Spectrum(BaseArArFigure):
     def mean_x(self, *args):
         return 50
 
-    def calculate_ylimits(self, po, s39, vs, pma=None):
+    def get_ybounds(self, plotid=None, vs=None, s39=None, pma=None):
+        if plotid is not None:
+            xs, ys, es, c39s, s39, vs = self.spectrum_values[plotid]
+
+        if s39 is None:
+            s39 = self.s39
+
         ps = s39 / s39.sum()
         ps = ps > 0.01
         vs = vs[ps]
-
         # filter ys,es if 39Ar < 1% of total
         try:
             vs, es = zip(*[(nominal_value(vi), std_dev(vi)) for vi in vs])
@@ -98,6 +103,29 @@ class Spectrum(BaseArArFigure):
             _mi = 0
             _ma = 1
 
+        return _ma, _mi
+
+    def calculate_ylimits(self, po, s39, vs, pma=None):
+        # ps = s39 / s39.sum()
+        # ps = ps > 0.01
+        # vs = vs[ps]
+        #
+        # # filter ys,es if 39Ar < 1% of total
+        # try:
+        #     vs, es = zip(*[(nominal_value(vi), std_dev(vi)) for vi in vs])
+        #     vs, es = array(vs), array(es)
+        #     nes = es * self.options.step_nsigma
+        #     yl = vs - nes
+        #     yu = vs + nes
+        #
+        #     _mi = min(yl)
+        #     _ma = max(yu)
+        #     if pma:
+        #         _ma = max(pma, _ma)
+        # except ValueError:
+        #     _mi = 0
+        #     _ma = 1
+        _ma, _mi = self.get_ybounds(vs=vs, s39=s39, pma=pma)
         if not po.has_ylimits():
             if po.calculated_ymin is None:
                 po.calculated_ymin = _mi
@@ -113,14 +141,16 @@ class Spectrum(BaseArArFigure):
     # plotters
     # ===============================================================================
 
-    def _plot_aux(self, title, vk, po, pid):
+    def _plot_aux(self, vk, po, pid):
         graph = self.graph
         # if '<sup>' in title or '<sub>' in title:
         #     self._set_ml_title(title, pid, 'y')
         # else:
 
+        title = po.get_ytitle(vk)
         graph.set_y_title(title, plotid=pid)
         xs, ys, es, c39s, s39, vs = self._calculate_spectrum(value_key=vk)
+        self.spectrum_values[pid] = xs, ys, es, c39s, s39, vs
         self.calculate_ylimits(po, s39, vs)
 
         s = self._add_plot(xs, ys, es, pid, po)
@@ -132,8 +162,9 @@ class Spectrum(BaseArArFigure):
         op = opt
 
         xs, ys, es, c39s, s39, vs = self._calculate_spectrum()
-
+        self.spectrum_values[pid] = xs, ys, es, c39s, s39, vs
         self.xs = c39s
+
         ref = self.analyses[0]
         au = ref.arar_constants.age_units
         graph.set_y_title('Apparent Age ({})'.format(au), plotid=pid)
@@ -431,10 +462,12 @@ class Spectrum(BaseArArFigure):
         mswd_args = ag.get_plateau_mswd_tuple()
         plateau_mswd, valid_mswd, nsteps, pvalue = mswd_args
 
-        e = plateau_age.std_dev * self.options.nsigma
+        op = self.options
+        e = plateau_age.std_dev * op.nsigma
         text = self._build_label_text(nominal_value(plateau_age), e, nsteps,
                                       mswd_args=mswd_args,
-                                      sig_figs=self.options.plateau_sig_figs)
+                                      mswd_sig_figs=op.mswd_sig_figs,
+                                      sig_figs=op.plateau_sig_figs)
 
         sample = ag.sample
         identifier = ag.identifier
@@ -446,12 +479,12 @@ class Spectrum(BaseArArFigure):
 
         text = '{}Plateau= {}'.format(fixed, text)
 
-        if self.options.include_plateau_sample:
-            if self.options.include_plateau_identifier:
+        if op.include_plateau_sample:
+            if op.include_plateau_identifier:
                 text = u'{}({}) {}'.format(sample, identifier, text)
             else:
                 text = u'{} {}'.format(sample, text)
-        elif self.options.include_plateau_identifier:
+        elif op.include_plateau_identifier:
             text = u'{} {}'.format(identifier, text)
 
         return text
@@ -467,8 +500,8 @@ class Spectrum(BaseArArFigure):
         text = self._build_label_text(nominal_value(a),
                                       std_dev(a) * op.nsigma, n,
                                       mswd_args=mswd_args,
-                                      sig_figs=op.weighted_mean_sig_figs,
-                                      total_n=ag.total_n)
+                                      mswd_sig_figs=op.mswd_sig_figs,
+                                      sig_figs=op.weighted_mean_sig_figs)
         text = u'Weighted Mean= {}'.format(text)
         return text
 
@@ -502,7 +535,8 @@ class Spectrum(BaseArArFigure):
             age, error = nominal_value(tga.nominal_value), std_dev(tga)
 
             error *= self.options.nsigma
-            txt = self._build_label_text(age, error, n, sig_figs=self.options.integrated_sig_figs)
+            txt = self._build_label_text(age, error, n,
+                                         sig_figs=self.options.integrated_sig_figs)
 
         return u'Integrated Age= {}'.format(txt)
 

@@ -36,7 +36,7 @@ from pychron.experiment.utilities.runid import make_aliquot_step, make_step
 from pychron.processing.analyses.analysis import Analysis
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import INTERFERENCE_KEYS, NULL_STR, ARAR_MAPPING, EXTRACTION_ATTRS, META_ATTRS, \
-    NO_BLANK_CORRECT
+    NO_BLANK_CORRECT, DATE_FORMAT, EXPONENTIAL
 
 
 class Blank:
@@ -122,7 +122,7 @@ class DVCAnalysis(Analysis):
             self.step = make_step(self.increment)
 
         ts = jd['timestamp']
-        for fmt in ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S'):
+        for fmt in ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f', DATE_FORMAT):
             try:
                 self.rundate = datetime.datetime.strptime(ts, fmt)
                 break
@@ -477,10 +477,10 @@ class DVCAnalysis(Analysis):
 
         self._dump(jd, path)
 
-    def dump_icfactors(self, dkeys, fits, refs=None, reviewed=False):
+    def dump_icfactors(self, dkeys, fits, refs=None, reviewed=False, standard_ratios=None):
         jd, path = self._get_json('icfactors')
 
-        for dk, fi in zip(dkeys, fits):
+        for i, (dk, fi) in enumerate(zip(dkeys, fits)):
             v = self.temporary_ic_factors.get(dk)
             if v is None:
                 v, e = 1, 0
@@ -491,18 +491,28 @@ class DVCAnalysis(Analysis):
             if ':' in dk:
                 _, dk = dk.split(':')
 
+            standard_ratio = None
+            if standard_ratios:
+                try:
+                    standard_ratio = standard_ratios[i]
+                except IndexError:
+                    standard_ratio = None
+
             jd[dk] = {'value': float(v), 'error': float(e),
                       'reviewed': reviewed,
                       'fit': fi,
+                      'standard_ratio': standard_ratio,
                       'references': make_ref_list(refs)}
         self._dump(jd, path)
 
-    def dump_source_correction_icfactors(self, refs=None):
+    def dump_source_correction_icfactors(self, refs=None, standard_ratio=None):
         jd, path = self._get_json(ICFACTORS)
         for det, value in self.temporary_ic_factors.items():
             v, e = nominal_value(value), std_dev(value)
             jd[det] = {'value': float(v), 'error': float(e), 'reviewed': True,
-                       'fit': 'exponential',
+                       'fit': EXPONENTIAL,
+                       'standard_ratio': standard_ratio,
+                       'source_correction': True,
                        'references': make_ref_list(refs)
                        }
         self._dump(jd, path)

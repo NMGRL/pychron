@@ -13,8 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import os
+
+import vlc
+from PyQt5.QtCore import QUrl, Qt
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+from PyQt5.QtMultimediaWidgets import QVideoWidget
 from pyface.qt import QtGui
-from pyface.qt.QtGui import QWidget, QImage, QPixmap
+from pyface.qt.QtGui import QWidget, QImage, QPixmap, QSlider, QVBoxLayout, QPushButton, QStyle, QFrame, QLabel
 from traits.has_traits import HasTraits
 from traits.trait_types import Str
 from traitsui.basic_editor_factory import BasicEditorFactory
@@ -22,55 +28,139 @@ from traitsui.item import UItem
 from traitsui.qt4.editor import Editor
 from traitsui.view import View
 
-from pychron.image.cv_wrapper import get_capture_device
+
+# from pychron.image.cv_wrapper import get_capture_device
 
 
 class VideoWidget(QWidget):
-    def __init__(self):
-        super(VideoWidget, self).__init__()
-        hbox = QtGui.QHBoxLayout(self)
+    path = Str
 
-        lbl = QtGui.QLabel(self)
-        self.label = lbl
-        self.cap = get_capture_device()
-        self.cap.open(0)
-        # lbl.setPixmap(image.create_image())
-        self.set_frame()
-        hbox.addWidget(lbl)
-        self.setLayout(hbox)
-        self.startTimer(100)
+    def __init__(self, *args, **kw):
+        super(VideoWidget, self).__init__(*args, **kw)
 
-    def timerEvent(self, *args, **kwargs):
-        self.set_frame()
+        self.playButton = QPushButton()
+        self.playButton.setEnabled(True)
+        self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
+        self.playButton.clicked.connect(self.play)
 
-    def set_frame(self):
-        ok, data = self.cap.read()
-        shape = data.shape
-        im = QImage(data, shape[1], shape[0], QImage.Format_RGB888)
-        pix = QPixmap.fromImage(QImage.rgbSwapped(im))
-        self.label.setPixmap(pix)
+        self.positionSlider = QSlider(Qt.Horizontal)
+        self.positionSlider.setRange(0, 100)
+
+        layout = QtGui.QVBoxLayout()
+
+        controlLayout = QtGui.QHBoxLayout()
+        controlLayout.setContentsMargins(0, 0, 0, 0)
+        controlLayout.addWidget(self.playButton)
+        controlLayout.addWidget(self.positionSlider)
+        self.path = '/Users/ross/Desktop/67900-83-0011.m4v'
+        #     # hbox = QtGui.QHBoxLayout(self)
+        #     # vbox = QtGui.QVBoxLayout(self)
+        #     # vbox.addLayout(controlLayout)
+        # lbl = QtGui.QLabel()
+        from PyQt5.QtWidgets import QMacCocoaViewContainer
+        # self.videoframe = QMacCocoaViewContainer(0)
+        self.videoframe = QFrame(self)
+        self.playlist = ['/Users/ross/Desktop/67900-83-001.avi']
+        # Define the VLC-specific variables we're going to use
+        self.vlc_instance = vlc.Instance('--quiet')
+        self.vlc_player = self.vlc_instance.media_list_player_new()
+        self.media_list = self.vlc_instance.media_list_new(self.playlist)
+
+        # Create the user interface, set up the player, and play the 2 videos
+        # self.create_user_interface()
+        self.video_player_setup()
+        #     self.mediaPlayer = QMediaPlayer(None, QMediaPlayer.VideoSurface)
+        #
+        #     videoWidget = QVideoWidget()
+        #
+        # self.resize(100, 100)
+        # self.videoframe.resize(100, 100)
+        self.videoframe.setGeometry(10, 50, 640, 480)
+        self.setGeometry(10, 50, 640, 480)
+        self.vlc_player.play()
+
+        # layout.addWidget(self.videoframe)
+        # layout.addLayout(controlLayout)
+        # self.setLayout(layout)
+
+        #     layout.addWidget(videoWidget)
+        #     # self.cap = get_capture_device()
+        #     # self.cap.open(0)
+        #     lbl.setPixmap(image.create_image())
+        #     self.set_frame()
+        #     # hbox.addWidget(videoWidget)
+        #     # vbox.addWidget(videoWidget)
+        #     # layout.addLayout()
+        #     # print('asdf', hbox)
+        #     # self.setLayout(vbox)
+        #
+        #     self.mediaPlayer.setVideoOutput(videoWidget)
+        #     self.mediaPlayer.error.connect(self.handleError)
+        #
+        #     print('osdf', os.path.isfile(self.path), self.path)
+        #     self.mediaPlayer.setMedia(
+        #         QMediaContent(QUrl.fromLocalFile(self.path)))
+        #     # self.mediaPlayer.play()
+        #     self.startTimer(100)
+        # self.setLayout(layout)
+
+    #
+    # def handleError(self):
+
+    #     print(self.mediaPlayer.errorString())
+
+    def video_player_setup(self):
+        """Sets media list for the VLC player and then sets VLC's output to the video frame"""
+        self.vlc_player.set_media_list(self.media_list)
+        self.vlc_player.get_media_player().set_nsobject(int(self.videoframe.winId()))
+
+    def create_user_interface(self):
+        """Create a 1280x720 UI consisting of a vertical layout, central widget, and QLabel"""
+        # self.setCentralWidget(self.central_widget)
+        # self.vertical_box_layout.addWidget(self.video_frame)
+        # self.central_widget.setLayout(self.vertical_box_layout)
+
+        # self.resize(1280, 720)
+
+    def play(self):
+        print('afafafafafa')
+        self.vlc_player.play()
+
+    #     if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
+    #         self.mediaPlayer.pause()
+    #     else:
+    #         print('plinasf')
+    #         self.mediaPlayer.play()
+
+    # def timerEvent(self, *args, **kwargs):
+    #     self.set_frame()
+    #
+    # def set_frame(self):
+    #     pass
+    #     # ok, data = self.cap.read()
+    #     # shape = data.shape
+    #     # im = QImage(data, shape[1], shape[0], QImage.Format_RGB888)
+    #     # pix = QPixmap.fromImage(QImage.rgbSwapped(im))
+    #     # self.label.setPixmap(pix)
 
 
 class _VideoEditor(Editor):
     def init(self, parent):
         self.control = self._create_control()
 
-        # anim = QtCore.QPropertyAnimation(self.control, "count")
-        #
-        # anim.setDuration(1000)
-        # anim.setStartValue(1)
-        # anim.setEndValue(32)
-        # anim.setLoopCount(-1)
-        # # anim.setEasingCurve(QtCore.QEasingCurve.InOutBack)
-        # QtCore.QObject.connect(anim, QtCore.SIGNAL("finished()"), anim, QtCore.SLOT("deleteLater()"))
-        # anim.start()
-        #
-        # self._animation = anim
-        # # QtCore.QTimer.singleShot(100, anim, QtCore.SLOT("start()"))
-
     def _create_control(self):
-        v = VideoWidget()
-        return v
+        videoframe = QLabel()
+        # videoframe.setGeometry(0, 0, 640, 480)
+        playlist = ['/Users/ross/Desktop/67900-83-001.avi']
+        # Define the VLC-specific variables we're going to use
+        vlc_instance = vlc.Instance()
+        vlc_player = vlc_instance.media_list_player_new()
+        media_list = vlc_instance.media_list_new(playlist)
+        vlc_player.set_media_list(media_list)
+        vlc_player.get_media_player().set_nsobject(int(videoframe.winId()))
+        vlc_player.play()
+
+        return videoframe
 
     def update_editor(self):
         pass
@@ -82,13 +172,18 @@ class VideoEditor(BasicEditorFactory):
 
 class Demo(HasTraits):
     a = Str('aa')
+
     # state = Button
 
     def traits_view(self):
-        v = View(UItem('a', editor=VideoEditor()),
+        v = View(UItem('a', editor=VideoEditor(),
+                       width=640,
+                       height=480),
                  # UItem('state'),
-                 width=1200,
-                 height=700)
+                 # width=700,
+                 # height=520,
+                 resizable=True
+                 )
         return v
 
 

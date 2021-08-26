@@ -18,7 +18,7 @@
 # ============= EOF =============================================
 from traits.has_traits import HasTraits
 from traits.trait_types import List, Str, Instance, Int, Bool, Enum
-from traitsui.editors import EnumEditor, TableEditor, InstanceEditor
+from traitsui.editors.api import EnumEditor, TableEditor, InstanceEditor
 from traitsui.group import VGroup, HGroup, Tabbed
 from traitsui.item import Item, UItem
 from traitsui.table_column import ObjectColumn

@@ -19,7 +19,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button, Event
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     Group, Spring, Label, VSplit, UReadonly, ListEditor, Readonly
-from traitsui.editors import TableEditor, EnumEditor
+from traitsui.editors.api import TableEditor, EnumEditor
 from traitsui.table_column import ObjectColumn
 
 from pychron.core.helpers.traitsui_shortcuts import VFold
@@ -272,7 +272,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                                                    label='Path'),
 
                                   icon_button_editor(run_factory_name('edit_conditionals_button'), 'table_edit',
-                                                     enabled_when=run_factory_name('conditionals_path'),
+                                                     # enabled_when=run_factory_name('conditionals_path_enabled'),
                                                      tooltip='Edit the selected conditionals file'),
                                   icon_button_editor(run_factory_name('new_conditionals_button'), 'table_add',
                                                      tooltip='Add a new conditionals file. Duplicated currently '

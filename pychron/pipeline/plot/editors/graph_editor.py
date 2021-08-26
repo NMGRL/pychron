@@ -135,7 +135,6 @@ class GraphEditor(BaseEditor):
     def get_component_view(self):
         return UItem('component',
                      style='custom',
-                     # width=650,
                      editor=EnableComponentEditor())
 
     def traits_view(self):

@@ -33,7 +33,7 @@ from pychron.entry.tasks.sample_prep.sample_locator import SampleLocator
 from pychron.image.camera import CameraViewer
 from pychron.image.viewer import ImageViewer
 from pychron.persistence_loggable import PersistenceMixin
-from pychron.pychron_constants import SAMPLE_PREP_STEPS
+from pychron.pychron_constants import SAMPLE_PREP_STEPS, DATE_FORMAT
 
 DEBUG = False
 
@@ -300,7 +300,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
         def factory(s):
             ts = s.timestamp
             if not isinstance(ts, datetime):
-                ts = datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
+                ts = datetime.strptime(ts, DATE_FORMAT)
 
             params = {}
             for k in SAMPLE_PREP_STEPS:

@@ -16,12 +16,15 @@
 
 
 import math
+from operator import attrgetter
 
 from numpy import array, nan, average
 # ============= enthought library imports =======================
-from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float, Any, Enum, on_trait_change
+from traits.api import List, Property, cached_property, Str, Bool, Int, Event, Float, Any, Enum, on_trait_change, \
+    Color, Dict
 from uncertainties import ufloat, nominal_value, std_dev
 
+from pychron.core.pychron_traits import StepStr
 from pychron.core.stats import calculate_mswd_probability
 from pychron.core.stats.core import calculate_mswd, calculate_weighted_mean, validate_mswd
 from pychron.core.utils import alphas
@@ -30,16 +33,17 @@ from pychron.processing.analyses.analysis import IdeogramPlotable
 from pychron.processing.analyses.preferred import Preferred
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.argon_calculations import calculate_plateau_age, age_equation, calculate_isochron
+from pychron.processing.sclf import schaen_2020_1, schaen_2020_2, schaen_2020_3, deino_filter, OUTLIER_FUNCS, \
+    shapiro_wilk_pvalue, skewness_value
 from pychron.pychron_constants import MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
     DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR, \
-    ISOCHRON, MSE, SE
+    ISOCHRON, MSE, SE, INTEGRATED, SCHAEN2020_1, SCHAEN2020_2, SCHAEN2020_3, DEINO
 
 
 def AGProperty(*depends):
     d = 'dirty,analyses:[temp_status]'
     if depends:
-        d = '{},{}'.format(','.join(depends), d)
-
+        d = '{},{}'.format(d, ','.join(depends))
     return Property(depends_on=d)
 
 
@@ -56,6 +60,10 @@ class AnalysisGroup(IdeogramPlotable):
     analyses = List
     nanalyses = AGProperty()
     age_span = AGProperty()
+    shapiro_wilk_pvalue = AGProperty()
+    skewness = AGProperty()
+    outlier_options = Dict
+
 
     weighted_age = AGProperty()
     arith_age = AGProperty()
@@ -99,6 +107,7 @@ class AnalysisGroup(IdeogramPlotable):
     longitude = Any
     reference = Any
     rlocation = Any
+    mass_spectrometer = Any
 
     arar_constants = Any
     production_ratios = Any
@@ -128,13 +137,16 @@ class AnalysisGroup(IdeogramPlotable):
     exclude_non_plateau = Bool(False)
     omit_by_tag = Bool(True)
 
+    color = Color('black')
+
     def __init__(self, *args, **kw):
         super(AnalysisGroup, self).__init__(make_arar_constants=False, *args, **kw)
 
     def _analyses_changed(self, new):
         if new:
             a = new[0]
-            for attr in ('identifier',
+            for attr in ('mass_spectrometer',
+                         'identifier',
                          'aliquot',
                          'repository_identifier',
                          'igsn',
@@ -171,6 +183,11 @@ class AnalysisGroup(IdeogramPlotable):
 
             self.age_units = self.arar_constants.age_units
 
+    def clear_temp_selected(self):
+        for a in self.analyses:
+            if a.temp_selected:
+                a.temp_status = 'ok'
+
     def attr_stats(self, attr):
         w, sd, sem, (vs, es) = self._calculate_weighted_mean(attr, error_kind='both')
         mi, ma, total_dev, mswd, valid_mswd = 0, 0, 0, 0, False
@@ -190,6 +207,27 @@ class AnalysisGroup(IdeogramPlotable):
                 'mswd': mswd,
                 'valid_mswd': valid_mswd,
                 'min': mi, 'max': ma, 'total_dev': total_dev}
+
+    def get_outliers(self, mck, **options):
+
+        func = OUTLIER_FUNCS.get(mck)
+        # if mck == SCHAEN2020_1:
+        #     func = schaen_2020_1
+        # elif mck == SCHAEN2020_2:
+        #     func = schaen_2020_2
+        # elif mck == SCHAEN2020_3:
+        #     func = schaen_2020_3
+        # elif mck == DEINO:
+        #     func = deino_filter
+        if not options:
+            options = self.outlier_options
+
+        _, ans = func(self.sorted_clean_analyses(), **options)
+
+        if ans is not None:
+            idx = [i for i, a in enumerate(self.analyses) if a not in ans]
+
+        return idx
 
     def get_mswd_tuple(self):
         mswd = self.mswd
@@ -221,6 +259,9 @@ class AnalysisGroup(IdeogramPlotable):
 
     def clean_analyses(self):
         return (ai for ai in self.analyses if not self._is_omitted(ai))
+
+    def sorted_clean_analyses(self, key='age'):
+        return sorted(self.clean_analyses(), key=attrgetter(key))
 
     def do_omit_non_plateau(self):
         self.calculate_plateau()
@@ -272,6 +313,17 @@ class AnalysisGroup(IdeogramPlotable):
 
         return mswd, v, n, p
 
+    def get_value(self, attr):
+        return getattr(self, attr)
+
+    @property
+    def age(self):
+        return self.weighted_age
+
+    @property
+    def uage(self):
+        return self.age
+
     @property
     def featuregroup_id(self):
         if self.analyses:
@@ -317,6 +369,14 @@ class AnalysisGroup(IdeogramPlotable):
                 attr = 'uage_w_position_err'
 
         return self._calculate_mswd(attr)
+
+    @cached_property
+    def _get_shapiro_wilk_pvalue(self):
+        return shapiro_wilk_pvalue(self.sorted_clean_analyses())
+
+    @cached_property
+    def _get_skewness(self):
+        return skewness_value(self.sorted_clean_analyses())
 
     @cached_property
     def _get_age_span(self):
@@ -627,7 +687,7 @@ class AnalysisGroup(IdeogramPlotable):
 
 
 class StepHeatAnalysisGroup(AnalysisGroup):
-    plateau_age = AGProperty()
+    plateau_age = AGProperty('fixed_step_low', 'fixed_step_high')
     integrated_age = AGProperty()
 
     integrated_include_omitted = Bool(True)
@@ -636,8 +696,8 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     plateau_steps = None
 
     nsteps = Int
-    fixed_step_low = Str
-    fixed_step_high = Str
+    fixed_step_low = StepStr
+    fixed_step_high = StepStr
     plateau_age_error_kind = Str
 
     plateau_nsteps = Int(3)
@@ -854,10 +914,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         return self.preferred_age
 
     @property
-    def uage(self):
-        return self.age
-
-    @property
     def uage_w_j_err(self):
         return self.age
 
@@ -917,6 +973,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
                 pv.kinds = [WEIGHTED_MEAN, ARITHMETIC_MEAN]
             else:
                 pv.kinds = SUBGROUPINGS
+
+    @on_trait_change('fixed_step_low, fixed_step_high')
+    def handle_fixed_step_change(self, obj, name, old, new):
+        pv = self.get_preferred_obj('age')
+        pv.dirty = True
 
     @on_trait_change('preferred_values:[kind, error_kind, dirty, weighting]')
     def handle_preferred_change(self, obj, name, old, new):
@@ -980,7 +1041,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
                     if naliquots > 1:
                         vk, ek = WEIGHTED_MEAN, MSEM
                     else:
-                        vk, ek = PLATEAU_ELSE_WEIGHTED_MEAN, MSEM
+                        vk, ek = DEFAULT_INTEGRATED, MSEM
                 else:
                     vk = default_vk
                     ek = default_ek
@@ -1044,6 +1105,18 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             if not self.plateau_steps:
                 pa = self.weighted_age
                 pv.computed_kind = WEIGHTED_MEAN
+        elif pak == 'plateau_else_valid_integrated':
+            pa = self.plateau_age
+            pv.computed_kind = 'Plateau'
+            if not self.plateau_steps:
+                pa = self.integrated_age
+                pv.computed_kind = INTEGRATED
+        # elif pak == 'schaen_2020_1':
+        #     pa = schaen_2020_1(self.sorted_clean_analyses())
+        # elif pak == 'schaen_2020_2':
+        #     pa = schaen_2020_2(self.sorted_clean_analyses())
+        # elif pak == 'schaen_2020_3':
+        #     pa = schaen_2020_3(self.sorted_clean_analyses())
 
         return pa
 

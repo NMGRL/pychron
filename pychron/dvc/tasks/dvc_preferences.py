@@ -30,9 +30,11 @@ class DVCConnectionItem(ConnectionFavoriteItem):
     organization = Str
     meta_repo_name = Str
     meta_repo_dir = Str
+    repository_root = Str
     attributes = ('name', 'kind', 'username', 'host',
                   'dbname', 'password', 'enabled', 'default', 'path',
-                  'organization', 'meta_repo_name', 'meta_repo_dir', 'timeout')
+                  'organization', 'meta_repo_name', 'meta_repo_dir', 'timeout',
+                  'repository_root')
 
     def __init__(self, schema_identifier='', attrs=None, load_names=False):
         super(ConnectionFavoriteItem, self).__init__()
@@ -50,10 +52,16 @@ class DVCConnectionItem(ConnectionFavoriteItem):
                      self.password, enabled, default, self.path, self.organization,
                      self.meta_repo_name, self.meta_repo_dir) = attrs
                 except ValueError:
-                    (self.name, self.kind, self.username, self.host, self.dbname,
-                     self.password, enabled, default, self.path, self.organization,
-                     self.meta_repo_name, self.meta_repo_dir, timeout) = attrs
-                    self.timeout = int(timeout)
+                    try:
+                        (self.name, self.kind, self.username, self.host, self.dbname,
+                         self.password, enabled, default, self.path, self.organization,
+                         self.meta_repo_name, self.meta_repo_dir, timeout) = attrs
+                        self.timeout = int(timeout)
+                    except ValueError:
+                        (self.name, self.kind, self.username, self.host, self.dbname,
+                         self.password, enabled, default, self.path, self.organization,
+                         self.meta_repo_name, self.meta_repo_dir, timeout, self.repository_root) = attrs
+                        self.timeout = int(timeout)
 
             self.enabled = to_bool(enabled)
             self.default = to_bool(default)
@@ -74,8 +82,9 @@ class DVCConnectionPreferencesPane(ConnectionPreferencesPane):
 
     def traits_view(self):
         ev = View(Item('organization'),
-                  Item('meta_repo_name'),
-                  Item('meta_repo_dir'))
+                  Item('meta_repo_name', label='MetaData Name'),
+                  Item('meta_repo_dir', label='MetaData Directory'),
+                  Item('repository_root', label='Repository Directory'))
         fav_grp = self.get_fav_group(edit_view=ev)
 
         return View(fav_grp)
@@ -88,6 +97,8 @@ class DVCPreferences(BasePreferencesHelper):
     max_cache_size = Int
     update_currents_enabled = Bool
     use_auto_pull = Bool(True)
+    use_auto_push = Bool(False)
+    use_default_commit_author = Bool(False)
 
 
 class DVCPreferencesPane(PreferencesPane):
@@ -103,7 +114,12 @@ class DVCPreferencesPane(PreferencesPane):
                                                                                       'update your version to the '
                                                                                       'latest version. Deselect if '
                                                                                       'you want to be asked to pull '
-                                                                                      'the official version.')),
+                                                                                      'the official version.'),
+                                     Item('use_auto_push', label='Auto Push',
+                                          tooltip='Push changes when a PushNode is used automatically without asking '
+                                                  'for confirmation.')),
+                        BorderVGroup(Item('use_default_commit_author', label='Use Default Commit Author'),
+                                     label='Commit'),
                         BorderVGroup(Item('update_currents_enabled', label='Enabled'),
                                      label='Current Values'),
                         BorderVGroup(HGroup(Item('use_cache', label='Enabled'),
@@ -130,6 +146,7 @@ class DVCExperimentPreferencesPane(PreferencesPane):
 class DVCRepositoryPreferences(BasePreferencesHelper):
     preferences_path = 'pychron.dvc.repository'
     check_for_changes = Bool
+    auto_fetch = Bool
 
 
 class DVCRepositoryPreferencesPane(PreferencesPane):
@@ -138,6 +155,9 @@ class DVCRepositoryPreferencesPane(PreferencesPane):
 
     def traits_view(self):
         v = View(BorderVGroup(Item('check_for_changes', label='Check for Changes'),
+                              Item('auto_fetch', label='Auto Fetch',
+                                   tooltip='Automatically "fetch" when a local repository is selected. Turn this off '
+                                           'if fetching speed is an issue'),
                               label=''))
         return v
 # ============= EOF =============================================

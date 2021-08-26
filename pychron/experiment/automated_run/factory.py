@@ -55,7 +55,7 @@ from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_
     FUSIONS_DIODE, CLEANUP, PRECLEANUP, POSTCLEANUP, EXTRACT_VALUE, EXTRACT_UNITS, DURATION, WEIGHT, POSITION, PATTERN, \
     BEAM_DIAMETER, LIGHT_VALUE, COMMENT, DELAY_AFTER, EXTRACT_DEVICE, MATERIAL, PROJECT, SAMPLE, MASS_SPECTROMETER, \
     COLLECTION_TIME_ZERO_OFFSET, USE_CDD_WARMING, SKIP, OVERLAP, REPOSITORY_IDENTIFIER, RAMP_DURATION, CRYO_TEMP, \
-    TEMPLATE, USERNAME
+    TEMPLATE, USERNAME, EDITABLE_RUN_CONDITIONALS
 
 
 class AutomatedRunFactory(DVCAble, PersistenceLoggable):
@@ -258,8 +258,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                    TEMPLATE,
                    'use_simple_truncation', 'conditionals_path',
                    'use_project_based_repository_identifier', 'delay_after')
-
-    suppress_meta = False
 
     use_name_prefix = Bool
     name_prefix = Str
@@ -509,6 +507,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 irrad_level = ''
 
             self._no_clear_labnumber = True
+            self.selected_irradiation = LINE_STR
             self.selected_irradiation = irradname
             self.selected_level = irrad_level
             self._no_clear_labnumber = False
@@ -747,8 +746,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 self.labnumber = self.labnumber.replace('##', str(mod))
 
     def _clear_labnumber(self):
-        self.debug('clear labnumber')
         if not self._no_clear_labnumber:
+            self.debug('clear labnumber')
             self.labnumber = ''
             self.display_irradiation = ''
             self.sample = ''
@@ -901,7 +900,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                             new_script_name = default_scripts.get(skey, 'pump_{}'.format(extract_device))
 
                     script = getattr(self, '{}_script'.format(skey))
-                    script.name = new_script_name
+                    script.name = new_script_name or ''
 
     def _load_default_file(self):
         # open the yaml config file
@@ -920,9 +919,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         if '-##-' in labnumber:
             return True
 
-        if self.suppress_meta:
-            return True
-
         if labnumber in self._meta_cache:
             self.debug('using cached meta values for {}'.format(labnumber))
             d = self._meta_cache[labnumber]
@@ -934,9 +930,12 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                     self.debug('cache={}'.format(d))
 
             if self.mode != SIMPLE:
+                self._no_clear_labnumber = True
+                self.selected_irradiation = LINE_STR
                 self.selected_irradiation = d['irradiation']
                 self.selected_level = d['irradiation_level']
                 self.irrad_hole = d['irradiation_position']
+                self._no_clear_labnumber = False
 
             if self.use_project_based_repository_identifier:
                 ipp = self.irradiation_project_prefix
@@ -1252,7 +1251,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
         identifier = self.labnumber
 
-        if not (self.suppress_meta or '-##-' in identifier):
+        if '-##-' not in identifier:
             if identifier and self.irrad_hole:
                 j = self.dvc.get_flux(self.selected_irradiation, self.selected_level, int(self.irrad_hole)) or 0
                 if attr == 'err':
@@ -1453,17 +1452,20 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                  root=paths.conditionals_dir,
                                  save_as=True,
                                  title='Edit Run Conditionals',
-                                 kinds=('actions', 'cancelations', 'terminations', 'truncations'))
+                                 kinds=EDITABLE_RUN_CONDITIONALS)
         if name:
             self.load_conditionals()
             self.conditionals_path = os.path.splitext(name)[0]
 
     def _edit_conditionals_button_fired(self):
-        edit_conditionals(self.conditionals_path,
-                          root=paths.conditionals_dir,
-                          title='Edit Run Conditionals',
-                          kinds=('actions', 'cancelations', 'terminations', 'truncations'))
-        self.load_conditionals()
+        if self.conditionals_path and self.conditionals_path!=NULL_STR:
+            edit_conditionals(self.conditionals_path,
+                              root=paths.conditionals_dir,
+                              title='Edit Run Conditionals',
+                              kinds=EDITABLE_RUN_CONDITIONALS)
+            self.load_conditionals()
+        else:
+            self.information_dialog('Please select conditionals to edit')
 
     @on_trait_change('trunc_+, conditionals_path, apply_conditionals_button')
     def _handle_conditionals(self, obj, name, old, new):
@@ -1563,13 +1565,16 @@ post_equilibration_script:name''')
             self.sample = ''
 
     def _project_changed(self):
+        self.debug('project changed')
         self._clear_labnumber()
 
     def _selected_irradiation_changed(self):
+        self.debug('irradiation changed')
         self._clear_labnumber()
         self.selected_level = 'Level'
 
     def _selected_level_changed(self):
+        self.debug('level changed')
         self._clear_labnumber()
 
     def _special_labnumber_changed(self):
@@ -1591,6 +1596,7 @@ post_equilibration_script:name''')
                             edname = ''.join([x[0].capitalize() for x in ed.split(' ')])
                         ln = make_special_identifier(ln, edname, msname)
 
+                self._labnumber_changed(self.labnumber, ln)
                 self.labnumber = ln
 
             self._frequency_enabled = True

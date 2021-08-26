@@ -43,9 +43,9 @@ def sigmaf(s):
 
 
 def handle_error(func):
-    def wrapper(self, *args, **kw):
+    def wrapper(self_args):
         try:
-            return func(self, *args, **kw)
+            return func(self_args)
         except ValueError:
             return ''
 
@@ -476,7 +476,11 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
                            Action(name='Show Equilibration',
                                   action='show_sniff'),
                            Action(name='Show All',
-                                  action='show_all'))
+                                  action='show_all'),
+                           Action(name='Show Inspection',
+                                  action='show_inspection'),
+                           Action(name='Show Residuals',
+                                  action='show_residuals'))
 
     def _get_ic_factor_text(self):
         ic = self.item.ic_factor
@@ -551,7 +555,7 @@ class IsotopeTabularAdapter(BaseTabularAdapter, ConfigurableMixin):
         return format_percent_error(b.value, b.error)
 
     @handle_error
-    def _get_value_percent_error_text(self, *args):
+    def _get_value_percent_error_text(self):
         cv = self.item.get_non_detector_corrected_value()
         return format_percent_error(cv.nominal_value, cv.std_dev)
 

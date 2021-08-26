@@ -24,7 +24,7 @@ from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import Str, Button, List
 from traitsui.api import View, UItem, VGroup
-from traitsui.editors import TabularEditor
+from traitsui.editors.api import TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.filetools import unique_path2, add_extension
@@ -122,9 +122,8 @@ class WorkOffline(Loggable):
 
         if apath:
             apath = add_extension(apath, '.pz')
-            with open(apath,  'wb') as wfile:
+            with open(apath, 'wb') as wfile:
                 with open(path, 'rb') as dbfile:
-
                     ctx = {'meta_repo_name': self.dvc.meta_repo_name,
                            'meta_repo_dirname': self.dvc.meta_repo_dirname,
                            'organization': self.dvc.organization,
@@ -190,18 +189,9 @@ class WorkOffline(Loggable):
                 self._copy_table(db, getattr(mod, table))
 
             with src.session_ctx(use_parent_session=False):
-                from pychron.dvc.dvc_orm import RepositoryTbl
-                from pychron.dvc.dvc_orm import AnalysisTbl
-                from pychron.dvc.dvc_orm import AnalysisChangeTbl
-                from pychron.dvc.dvc_orm import RepositoryAssociationTbl
-                from pychron.dvc.dvc_orm import AnalysisGroupTbl
-                from pychron.dvc.dvc_orm import AnalysisGroupSetTbl
-                from pychron.dvc.dvc_orm import MaterialTbl
-                from pychron.dvc.dvc_orm import SampleTbl
-                from pychron.dvc.dvc_orm import IrradiationTbl
-                from pychron.dvc.dvc_orm import LevelTbl
-                from pychron.dvc.dvc_orm import IrradiationPositionTbl
-                from pychron.dvc.dvc_orm import PrincipalInvestigatorTbl
+                from pychron.dvc.dvc_orm import RepositoryTbl, AnalysisTbl, AnalysisChangeTbl, RepositoryAssociationTbl, \
+                    AnalysisGroupTbl, AnalysisGroupSetTbl, MaterialTbl, SampleTbl, IrradiationTbl, LevelTbl, \
+                    IrradiationPositionTbl, PrincipalInvestigatorTbl, MeasuredPositionTbl, LoadTbl
 
                 repos = [src.db.get_repository(reponame) for reponame in repositories]
 
@@ -226,6 +216,12 @@ class WorkOffline(Loggable):
 
                 # at = time.time()
                 ans = [ai for ai in ans if ai is not None]
+                mps = [mp for ai in ans for mp in ai.measured_positions]
+
+                seen = set()
+                mps = [seen.add(mp.id) or mp for mp in mps if mp.id not in seen]
+                ls = {mp.load for mp in mps}
+
                 ans_c = [ai.change for ai in ans]
                 # self.debug('change time={}'.format(time.time()-at))
                 progress.change_message('Assembling Analyses 3/5')
@@ -240,7 +236,7 @@ class WorkOffline(Loggable):
                 # self.debug('ags time={}'.format(time.time()-at))
                 progress.change_message('Assembling Analyses 5/5')
 
-                self.debug('total analysis assembly time={}'.format(time.time()-st))
+                self.debug('total analysis assembly time={}'.format(time.time() - st))
 
                 self._copy_records(progress, db, RepositoryTbl, repos)
                 self._copy_records(progress, db, RepositoryAssociationTbl, ras)
@@ -248,6 +244,8 @@ class WorkOffline(Loggable):
                 self._copy_records(progress, db, AnalysisChangeTbl, ans_c)
                 self._copy_records(progress, db, AnalysisGroupTbl, ags)
                 self._copy_records(progress, db, AnalysisGroupSetTbl, agss)
+                self._copy_records(progress, db, LoadTbl, ls)
+                self._copy_records(progress, db, MeasuredPositionTbl, mps)
 
                 if principal_investigators:
                     pis = [src.get_principal_investigator(pp.name) for pp in principal_investigators]
@@ -296,7 +294,7 @@ class WorkOffline(Loggable):
             mappings = ({k: getattr(row, k) for k in keys} for row in records)
             dest_sess.bulk_insert_mappings(table, mappings)
             dest_sess.commit()
-        self.debug('copy finished et={:0.5f}'.format(time.time()-st))
+        self.debug('copy finished et={:0.5f}'.format(time.time() - st))
 
     def _copy_table(self, dest, table, filter_criterion=None):
         src = self.dvc

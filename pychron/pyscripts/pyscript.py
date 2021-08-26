@@ -182,13 +182,14 @@ class PyScript(Loggable):
 
     def test(self, argv=None):
         if not self.syntax_checked:
-            self.setup_context()
 
             self.debug('testing...')
             self._estimated_duration = 0
             self.syntax_checked = True
             self.testing_syntax = True
             self._syntax_error = True
+
+            self.setup_context()
 
             r = self._execute(argv=argv)
             if r is not None:
@@ -294,6 +295,7 @@ class PyScript(Loggable):
         if self._exp_obj is None:
             self._exp_obj = EXPObject()
 
+        kw['testing_syntax'] = self.testing_syntax
         self._exp_obj.update(kw)
         self._ctx['ex'] = self._exp_obj
 
@@ -397,6 +399,22 @@ class PyScript(Loggable):
     # ==============================================================================
     # commands
     # ==============================================================================
+    @command_register
+    def safe_while(self, func, timeout=60, period=1, calc_time=False):
+        if self.testing_syntax or calc_time:
+            return
+
+        if isinstance(func, callable):
+            st = time.time()
+            while 1:
+                ret = func()
+                if ret:
+                    break
+
+                if timeout and time.time() - st > timeout:
+                    break
+
+                time.sleep(period)
 
     @calculate_duration
     @command_register
@@ -707,11 +725,11 @@ class PyScript(Loggable):
     # ==============================================================================
     # Sleep/ Wait
     # ==============================================================================
-    def _sleep(self, v, message=None):
+    def _sleep(self, v, message=None, paused=False):
         v = float(v)
         self._estimated_duration += v
-        if v > 1:
-            self._block(v, message=message, dialog=True)
+        if v > 1 or paused:
+            self._block(v, message=message, dialog=True, paused=paused)
         else:
             time.sleep(v)
 
@@ -736,7 +754,7 @@ class PyScript(Loggable):
 
         return wd
 
-    def _block(self, timeout, message=None, dialog=False):
+    def _block(self, timeout, message=None, dialog=False, paused=False):
         self.debug('block started')
         st = time.time()
         if dialog:
@@ -757,7 +775,8 @@ class PyScript(Loggable):
             msg = 'WaitControl setup for {:03d}  {}'.format(int(timeout), message)
 
             self.debug(msg)
-            wd.start(duration=timeout, message=msg)
+
+            wd.start(duration=timeout, message=msg, paused=paused)
             # wd.join()
 
             if self.manager:
@@ -854,6 +873,10 @@ class PyScript(Loggable):
     # ===============================================================================
     # properties
     # ===============================================================================
+    def _get_property(self, key, default=None):
+        ctx = self.get_context()
+        return ctx.get(key, default)
+
     @property
     def filename(self):
         return os.path.join(self.root, self.name)

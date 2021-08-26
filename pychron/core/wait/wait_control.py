@@ -78,7 +78,7 @@ class WaitControl(Loggable):
 
         self.debug('Join finished')
 
-    def start(self, block=True, evt=None, duration=None, message=None):
+    def start(self, block=True, evt=None, duration=None, message=None, paused=False):
         if self.end_evt:
             self.end_evt.set()
 
@@ -103,6 +103,7 @@ class WaitControl(Loggable):
 
         self.timer = Timer(1000, self._update_time, delay=1000)
         self._continued = False
+        self._paused = paused
 
         if block:
             self.join(evt=evt)
@@ -123,6 +124,8 @@ class WaitControl(Loggable):
             self.current_time = self.duration
             self._paused = False
 
+    def pause(self):
+        self._paused = True
     # ===============================================================================
     # private
     # ===============================================================================

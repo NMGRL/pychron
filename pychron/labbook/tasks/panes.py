@@ -20,7 +20,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traitsui.api import View, Item, UItem, HGroup, VGroup, TreeEditor, TreeNode
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.editors import TabularEditor, InstanceEditor
+from traitsui.editors.api import TabularEditor, InstanceEditor
 from traitsui.group import VSplit
 from traitsui.item import spring
 from traitsui.tabular_adapter import TabularAdapter

@@ -101,7 +101,7 @@ class BaseSpectrometer(SpectrometerDevice):
         send configuration if self.send_config_on_startup set in Preferences
         :return:
         """
-
+        self.info('finish loading')
         if self.microcontroller:
             self.name = self.microcontroller.name
 
@@ -118,7 +118,7 @@ class BaseSpectrometer(SpectrometerDevice):
 
         :return: bool
         """
-        self.info('testing connnection')
+        self.info('testing connection')
         ret, err = False, ''
         if not self.simulation:
             if force:
@@ -508,6 +508,7 @@ class BaseSpectrometer(SpectrometerDevice):
                 pt = det.get('protection_threshold', 0)
                 serial_id = str(det.get('serial_id', '00000'))
                 index = float(det.get('index', i))
+                units = det.get('units', 'fA')
 
                 use_deflection = bool(det.get('use_deflection', True))
                 deflection_correction_sign = 1
@@ -529,6 +530,7 @@ class BaseSpectrometer(SpectrometerDevice):
                                    active=default_state,
                                    isotope=isotope,
                                    kind=kind,
+                                   units=units,
                                    ypadding=ypadding)
 
     def _load_detectors_cfg(self, path):
@@ -582,7 +584,7 @@ class BaseSpectrometer(SpectrometerDevice):
                                kind=kind,
                                ypadding=ypadding)
 
-    def get_intensities(self, tagged=True, trigger=False, **kw):
+    def get_intensities(self, tagged=True, trigger=False, integrated_intensity=False, **kw):
         """
         keys, list of strings
         signals, list of floats::
@@ -597,7 +599,13 @@ class BaseSpectrometer(SpectrometerDevice):
         signals = []
         t = None
         if self.microcontroller and not self.microcontroller.simulation:
-            keys, signals, t = self.read_intensities(trigger=trigger, **kw)
+            while 1:
+                keys, signals, t, inc = self.read_intensities(trigger=trigger, **kw)
+                if integrated_intensity:
+                    if inc:
+                        break
+                else:
+                    break
 
         if not keys and globalv.communication_simulation:
             keys, signals, t = self._get_simulation_data()
@@ -612,7 +620,7 @@ class BaseSpectrometer(SpectrometerDevice):
             det.set_intensity(v)
             gsignals.append(v * det.software_gain)
 
-        return keys, array(gsignals), t
+        return keys, array(gsignals), t, inc
 
     def _check_intensity_no_change(self, signals):
         if self.simulation:
@@ -652,13 +660,13 @@ class BaseSpectrometer(SpectrometerDevice):
         import time
         time.sleep(self.integration_time)
 
-    def get_intensity(self, dkeys, **kw):
+    def get_intensity(self, dkeys, integrated_intensity=True, **kw):
         """
             dkeys: str or tuple of strs
 
         """
         try:
-            keys, signals, t = self.get_intensities()
+            keys, signals, t, inc = self.get_intensities(integrated_intensity=integrated_intensity)
         except ValueError:
             self.debug('failed getting intensities')
             self.debug_exception()

@@ -15,7 +15,7 @@
 # ===============================================================================
 
 from traits.api import List, Str
-from traitsui.qt4.basic_editor_factory import BasicEditorFactory
+from traitsui.api import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
 from pychron.core.ui.qt.dag import DAGraphView

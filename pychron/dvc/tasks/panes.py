@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Property
+from traits.api import Property, Int
 from traitsui.api import View, UItem, VGroup, TabularEditor, EnumEditor, VSplit, Item, HSplit, HGroup, Tabbed
-from traitsui.editors import ListStrEditor
+from traitsui.editors.api import ListStrEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
@@ -27,6 +27,7 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.datetime_tools import ISO_FORMAT_STR
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.ui.dag_editor import GitDAGEditor
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.git_archive.views import GitTagAdapter, TopologyAdapter, DiffsAdapter
 from pychron.pychron_constants import NULL_STR
 
@@ -58,8 +59,13 @@ class RepoCentralPane(TraitsTaskPane):
                                                             editable=False))), label='Files')
         a_grp = VGroup(UItem('analyses', style='custom', editor=ListStrEditor(editable=False)), label='Analyses')
 
-        v = View(VGroup(UItem('branch',
-                              editor=EnumEditor(name='branches')),
+        v = View(VGroup(HGroup(UItem('branch',
+                                     tooltip='Active branch for this repository',
+                                     editor=EnumEditor(name='branches')),
+                               icon_button_editor('refresh_branch_button',
+                                                  'refresh',
+                                                  tooltip='Fetch the changes from remote to update the available '
+                                                          'branches')),
                         VSplit(commit_grp, HSplit(bookmark_grp, Tabbed(a_grp, file_grp)))))
         return v
 
@@ -68,6 +74,10 @@ class RepoAdapter(TabularAdapter):
     columns = [('Name', 'name'),
                ('Branch', 'active_branch'),
                ('Status (Ahead,Behind)', 'status')]
+
+    name_width = Int(180)
+    active_branch_width = Int(100)
+    status = Int(100)
 
     # name_text = Property
     # def _get_name_text(self):
@@ -125,6 +135,7 @@ class SelectionPane(TraitsDockPane):
                                                             selected='selected_local_repositories',
                                                             editable=False,
                                                             multi_select=True,
+                                                            stretch_last_section=False
                                                             )),
                                  label='Local')
 

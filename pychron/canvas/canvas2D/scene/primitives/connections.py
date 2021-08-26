@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Str, Enum
-from traitsui.api import View, Item, HGroup
+from traits.api import Str, Enum, Float
+from traitsui.api import View, Item, HGroup, Label, UItem
 
 from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive
 from pychron.canvas.canvas2D.scene.primitives.primitives import Point, Bordered, BorderLine
@@ -25,18 +25,39 @@ class ConnectionMixin:
     orientation = Enum(NULL_STR, 'vertical', 'horizontal')
     start = Str
     end = Str
-    start_offset = Str
-    end_offset = Str
+    start_offsetx = Float
+    start_offsety = Float
+
+    end_offsetx = Float
+    end_offsety = Float
+
+    @property
+    def end_offset(self):
+        return '{:0.2f},{:0.2f}'.format(self.end_offsetx, self.end_offsety)
+
+    @property
+    def start_offset(self):
+        return '{:0.2f},{:0.2f}'.format(self.start_offsetx, self.start_offsety)
 
     def edit_view(self):
         v = View(Item('orientation'),
-                 HGroup(Item('start'), Item('start_offset')),
-                 HGroup(Item('end'), Item('end_offset')))
+                 HGroup(Item('start'), Label('Offset'), UItem('start_offsetx'), UItem('start_offsety')),
+                 HGroup(Item('end'), Label('Offset'), UItem('end_offsetx'), UItem('end_offsety')))
         return v
 
 
-class Connection(BorderLine, ConnectionMixin):
+class Connection(ConnectionMixin, BorderLine):
     tag = 'connection'
+
+    def toyaml(self):
+        y = super(Connection, self).toyaml()
+        del y['dimension']
+        del y['translation']
+        del y['name']
+
+        y['start'] = {'name': str(self.start), 'offset': str(self.start_offset)}
+        y['end'] = {'name': str(self.end), 'offset': str(self.end_offset)}
+        return y
 
 
 def fork(gc, lx, ly, rx, ry, mx, my, h):
@@ -58,7 +79,7 @@ def fork(gc, lx, ly, rx, ry, mx, my, h):
     gc.draw_path()
 
 
-class Fork(QPrimitive, Bordered, ConnectionMixin):
+class Fork(ConnectionMixin, QPrimitive, Bordered):
     tag = 'fork'
     left = None
     right = None
@@ -222,7 +243,7 @@ def elbow(gc, sx, sy, ex, ey, corner='ul'):
     gc.stroke_path()
 
 
-class Elbow(BorderLine):
+class Elbow(ConnectionMixin, BorderLine):
     corner = 'ul'
     tag = 'elbow'
 

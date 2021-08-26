@@ -14,11 +14,9 @@
 # limitations under the License.
 # ===============================================================================
 # =============enthought library imports=======================
-from __future__ import absolute_import
-
 from datetime import datetime
 from traits.api import Str, Property, Bool, CStr, Button, HasTraits, Event
-from traitsui.api import View, Item, Group, VGroup
+from traitsui.api import View, Item, Group, VGroup, TextEditor, UItem, Tabbed
 # =============standard library imports ========================
 
 # =============local library imports  ==========================
@@ -54,6 +52,14 @@ class ViewableDevice(HasTraits):
 
     communicator = None
 
+    def __init__(self, *args, **kw):
+        super(ViewableDevice, self).__init__(*args, **kw)
+        self.doc = self._build_doc()
+        print('asdf', self, self.doc)
+
+    def _build_doc(self):
+        return self.__class__.__doc__
+
     def get_control_group(self):
         pass
 
@@ -65,9 +71,21 @@ class ViewableDevice(HasTraits):
                         Item('last_response', style='readonly'),
                         Item('current_scan_value', style='readonly'),
                         label='General')
-        v = View(gen_grp)
+        doc_grp = Group(
+            UItem('doc', style='custom', editor=TextEditor(read_only=True)),
+            label='Doc')
+
+        tabs = (gen_grp, doc_grp)
+        atabs = self.get_additional_tabs()
+        if atabs:
+            tabs +=atabs
+
+        v = View(Tabbed(*tabs))
 
         return v
+
+    def get_additional_tabs(self):
+        return
 
     def info_view(self):
 
@@ -117,6 +135,8 @@ class ViewableDevice(HasTraits):
         if hasattr(self.communicator, 'host'):
             return self.communicator.host
         elif hasattr(self, 'port'):
+            return self.port
+        elif hasattr(self.communicator, 'port'):
             return self.communicator.port
 
         return ''

@@ -24,7 +24,6 @@ from pychron.hardware.actuators.actuator import Actuator
 
 
 class SwitchController(Actuator):
-
     def get_state_checksum(self, *args, **kw):
         if self._cdevice:
             return self._cdevice.get_state_checksum(*args, **kw)

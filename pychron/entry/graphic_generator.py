@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
+from chaco.label import Label
 from six.moves import map
 
 from pychron.core.ui import set_qt
@@ -24,7 +25,7 @@ set_qt()
 
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
-from enable.base import str_to_font
+from kiva.fonttools import str_to_font
 from traits.api import HasTraits, Instance, Float, File, Property, Str, List
 from traitsui.api import View, Controller, UItem
 from chaco.api import OverlayPlotContainer
@@ -58,10 +59,13 @@ class LabelsOverlay(AbstractOverlay):
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
-            gc.set_font(str_to_font(None, None, '6'))
+            gc.set_font(str_to_font(None, None, '7'))
+
             for x, y, l in self.labels:
+                ll = Label(x=x, y=y, text=l, font='modern 7')
+                w, h = ll.get_bounding_box(gc)
                 x, y = other_component.map_screen([(x, y)])[0]
-                gc.set_text_position(x - 5, y - 10)
+                gc.set_text_position(x - w/2., y +5)
                 gc.show_text(l)
 
 
@@ -110,7 +114,7 @@ class GraphicModel(HasTraits):
         #        print self.container.bounds
 
         if path is None:
-            dlg = FileDialog(action='save as', default_directory=paths.data_dir)
+            dlg = FileDialog(action='save as', default_directory=paths.data_dir or '')
             if dlg.open() == OK:
                 path = dlg.path
 
@@ -324,9 +328,9 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
             e = Element('point')
             x, y, l = Element('x'), Element('y'), Element('label')
 
-            xx, yy = float(row[0]), float(row[1])
+            xx, yy = float(row[1]), float(row[2])
             try:
-                r = float(row[2])
+                r = float(row[4])
                 rr = Element('radius')
                 if convert_mm:
                     r *= 2.54
@@ -352,6 +356,8 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
                 xx = xx * 2.54
                 yy = yy * 2.54
 
+            xx*=1.1
+            yy*=1.1
             x.text = str(xx)
             y.text = str(yy)
 
@@ -383,6 +389,7 @@ def open_txt(p, bounds, radius,
              make=True, rotate=None):
     gm = GraphicModel(srcpath=p, rotation=rotate or 0)
     p = make_xml(p,
+                 offset=0,
                  default_radius=radius,
                  default_bounds=bounds,
                  convert_mm=convert_mm,
@@ -419,8 +426,10 @@ if __name__ == '__main__':
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes_rev2.txt'
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes-5.txt'
     p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/24_spokes.txt'
-    gcc, gm = open_txt(p, (2.54, 2.54), 0.03 * 2.54,
-                       convert_mm=True, make=True,
+    p = '/Users/ross/PychronDev/data/o2inch.txt'
+    p = '/Users/ross/PychronDev/data/421.txt'
+    gcc, gm = open_txt(p, (51, 51), 0.95,
+                       convert_mm=False, make=True,
                        rotate=0)
 
     #     p2 = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/newtrays/TX_6-Hole.txt'

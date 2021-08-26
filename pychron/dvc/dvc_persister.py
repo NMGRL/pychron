@@ -39,12 +39,12 @@ from pychron.pychron_constants import DVC_PROTOCOL, NULL_STR, ARGON_KEYS, ARAR_M
 
 
 def format_repository_identifier(project):
-    return project.replace('/', '_').replace('\\', '_')
+    return project.replace('/', '_').replace('\\', '_').replace(' ', '_')
 
 
 def spectrometer_sha(settings, src, defl, gains):
     sha = hashlib.sha1()
-    for d in settings + (src, defl, gains):
+    for d in (settings, src, defl, gains):
         for k, v in sorted(d.items()):
             sha.update(k.encode('utf-8'))
             sha.update(str(v).encode('utf-8'))
@@ -65,12 +65,13 @@ class DVCPersister(BasePersister):
     save_log_enabled = Bool(False)
     arar_mapping = None
 
-    def __init__(self, bind=True, *args, **kw):
+    def __init__(self, bind=True, load_mapping=True, *args, **kw):
         super(DVCPersister, self).__init__(*args, **kw)
         if bind:
             bind_preference(self, 'use_uuid_path_name', 'pychron.experiment.use_uuid_path_name')
 
-        self._load_arar_mapping()
+        if load_mapping:
+            self._load_arar_mapping()
 
     def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None, push=True):
         self.per_spec = pr
@@ -445,7 +446,7 @@ class DVCPersister(BasePersister):
         pos = db.get_identifier(rs.identifier)
         self.debug('setting analysis irradiation position={}'.format(pos))
         if pos is None:
-            an.simple_identifier=int(rs.identifier)
+            an.simple_identifier = int(rs.identifier)
         else:
             an.irradiation_position = pos
 
@@ -527,6 +528,7 @@ class DVCPersister(BasePersister):
             detector = next((d for d in per_spec.active_detectors if d.name == iso.detector), None)
 
             isod = {'detector': iso.detector, 'name': iso.name,
+                    'units': detector.units,
                     'serial_id': detector.serial_id if detector else '00000'}
 
             if clf is not None:
@@ -713,7 +715,7 @@ class DVCPersister(BasePersister):
         else:
             name = runid, runid
 
-        return analysis_path(name, repository_identifier, modifier, extension, mode='w')
+        return analysis_path(name, repository_identifier, modifier, extension, mode='w', force_sublen=2)
 
     def _make_analysis_dict(self, keys=None):
         if keys is None:

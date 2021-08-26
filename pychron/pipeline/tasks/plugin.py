@@ -30,7 +30,7 @@ from pychron.pipeline.tasks.actions import ConfigureRecallAction, IdeogramAction
     FluxAction, \
     FreezeProductionRatios, InverseIsochronAction, IsoEvolutionAction, ExtractionAction, RecallAction, \
     AnalysisTableAction, ClearAnalysisSetsAction, SubgroupIdeogramAction, HistoryIdeogramAction, HybridIdeogramAction, \
-    MassSpecReducedAction, InterpretedAgeRecallAction, IdentifyPeaksDemoAction
+    MassSpecReducedAction, InterpretedAgeRecallAction, IdentifyPeaksDemoAction, ImportOptionsActions
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
 
@@ -138,7 +138,8 @@ class PipelinePlugin(BaseTaskPlugin):
 
         extensions.append(TaskExtension(actions=additions))
 
-        debug_additions = [SchemaAddition(factory=IdentifyPeaksDemoAction, path='MenuBar/tools.menu')]
+        debug_additions = [SchemaAddition(factory=IdentifyPeaksDemoAction, path='MenuBar/tools.menu'),
+                           SchemaAddition(factory=ImportOptionsActions, path='MenuBar/tools.menu')]
         extensions.append(TaskExtension(actions=debug_additions, task_id='pychron.pipeline.task'))
         return extensions
 
@@ -156,7 +157,7 @@ class PipelinePlugin(BaseTaskPlugin):
                      (BlanksAction, 'blanks'),
                      (ICFactorAction, 'icfactor'),
                      (FluxAction, 'flux'),
-                     (AnalysisTableAction, 'analysis_table'),
+                     (AnalysisTableAction, 'table'),
                      (FreezeProductionRatios, 'freeze_production'),
                      (MassSpecReducedAction, 'mass_spec_reduced')):
             fit_actions.append(SchemaAddition(factory=f,

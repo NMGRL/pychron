@@ -15,12 +15,10 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Int, Property
-from traitsui.api import View, UItem, HGroup, VGroup, TabularEditor, EnumEditor, VSplit
+from traitsui.api import View, UItem, HGroup, VGroup, TabularEditor, EnumEditor, VSplit, Item
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -266,6 +264,10 @@ class SampleEditorPane(TraitsDockPane):
                              icon_button_editor('add_sample_button', 'add',
                                                 enabled_when='add_sample_enabled',
                                                 tooltip='Add a sample')),
+                      HGroup(Item('igsn', label='IGSN'), icon_button_editor('get_igsn_button',
+                                                                            'world',
+                                                                            tooltip='Fetch a new IGSN from SESAR for '
+                                                                                    'this sample')),
                       VGroup(UItem('note', style='custom'), label='Note', show_border=True),
                       enabled_when='sample_enabled',
                       label='Sample',

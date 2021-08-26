@@ -141,7 +141,7 @@ class SwitchManager(Manager):
             if dev is not None:
                 self.actuators.append(dev)
 
-            return dev
+        return dev
 
     def finish_loading(self, update=False):
         """
@@ -149,7 +149,8 @@ class SwitchManager(Manager):
         if self.actuators:
             for a in self.actuators:
                 self.info('setting actuator {}'.format(a.name))
-                self.info('comm. device = {} '.format(a.com_device_name))
+                if hasattr(a, 'com_device_name'):
+                    self.info('comm. device = {} '.format(a.com_device_name))
 
         # open config file
         # setup_file = os.path.join(paths.extraction_line_dir, add_extension(self.setup_name, '.xml'))
@@ -1040,7 +1041,7 @@ class SwitchManager(Manager):
             return name, hv
 
     def _make_switch_yaml_ctx(self, vobj, klass):
-        name = vobj.get('name')
+        name = str(vobj.get('name'))
         if not name:
             self.warning('Must specify a name for all switches.')
             return

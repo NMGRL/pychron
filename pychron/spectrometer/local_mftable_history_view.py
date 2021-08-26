@@ -17,7 +17,7 @@
 from __future__ import absolute_import
 from traits.api import HasTraits, Float, List
 from traitsui.api import View, UItem, VGroup, HSplit, TabularEditor
-from traitsui.editors import TextEditor
+from traitsui.editors.api import TextEditor
 from traitsui.group import HGroup
 from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================

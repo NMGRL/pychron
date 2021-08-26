@@ -24,18 +24,20 @@ from apptools.preferences.preference_binding import bind_preference
 from git import GitCommandError, InvalidGitRepositoryError
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
-from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int, Event, Date, Property
+from traits.api import List, Str, Any, HasTraits, Bool, Instance, Int, Event, Date, Property, Button
 
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.fuzzyfinder import fuzzyfinder
 from pychron.core.helpers.datetime_tools import format_iso_datetime
 from pychron.core.helpers.filetools import unique_dir
-from pychron.dvc import repository_path
+from pychron.dvc import repository_path, UUID_RE
 from pychron.dvc.tasks import list_local_repos
 from pychron.dvc.tasks.actions import CloneAction, AddBranchAction, CheckoutBranchAction, PushAction, PullAction, \
     FindChangesAction, LoadOriginAction, DeleteLocalChangesAction, ArchiveRepositoryAction, SyncSampleInfoAction, \
-    SyncRepoAction, RepoStatusAction, BookmarkAction, RebaseAction, DeleteChangesAction, SortLocalReposAction
+    SyncRepoAction, RepoStatusAction, BookmarkAction, RebaseAction, DeleteChangesAction, SortLocalReposAction, \
+    RevertCommitAction, MergeAction
+from pychron.dvc.tasks.branch_merge_view import BranchMergeView
 from pychron.dvc.tasks.panes import RepoCentralPane, SelectionPane
 from pychron.envisage.tasks.base_task import BaseTask
 # from pychron.git_archive.history import from_gitlog
@@ -44,7 +46,7 @@ from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.git_archive.utils import ahead_behind, get_tags
 from pychron.git_archive.views import CommitFactory
 from pychron.paths import paths
-from pychron.pychron_constants import NULL_STR
+from pychron.pychron_constants import NULL_STR, STARTUP_MESSAGE_POSITION
 from pychron.regex import RUNID_PATH_REGEX, TAG_PATH_REGEX
 
 
@@ -109,11 +111,13 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                           SyncRepoAction(),
                           PushAction(),
                           PullAction(),
-                          RebaseAction(),
+                          MergeAction(),
+                          # RebaseAction(),
                           FindChangesAction(),
                           DeleteLocalChangesAction(),
                           ArchiveRepositoryAction(),
                           DeleteChangesAction(),
+                          RevertCommitAction(),
                           RepoStatusAction(),
                           BookmarkAction(),
                           SortLocalReposAction()),
@@ -132,6 +136,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
     o_origin_repos = None
     check_for_changes = Bool(True)
     origin_column_clicked = Any
+    auto_fetch = Bool(False)
+    refresh_branch_button = Button
 
     files = List
     selected_file = Str
@@ -141,10 +147,10 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     def activated(self):
         bind_preference(self, 'check_for_changes', 'pychron.dvc.repository.check_for_changes')
-
+        bind_preference(self, 'auto_fetch', 'pychron.dvc.repository.auto_fetch')
         self.refresh_local_names()
         if self.check_for_changes:
-            if self.confirmation_dialog('Check all Repositories for changes'):
+            if self.confirmation_dialog('Check all Repositories for changes', position=STARTUP_MESSAGE_POSITION):
                 self.find_changes()
 
     def sort_repos(self):
@@ -159,16 +165,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
             self.local_names.insert(0, lr)
 
     def archive_repository(self):
-        self.debug('archive repository')
+        name, dst = self._archive_repository()
 
-        root = os.path.join(paths.dvc_dir, 'archived_repositories')
-        if not os.path.isdir(root):
-            os.mkdir(root)
-
-        src = self._repo.path
-        name = os.path.basename(src)
-        dst = unique_dir(root, name, make=False)
-        shutil.move(self._repo.path, dst)
         self.refresh_local_names()
         self.information_dialog('"{}" Successfully archived to {}'.format(name, dst))
 
@@ -177,30 +175,13 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         self.o_local_repos = None
 
     def find_changes(self, names=None, remote='origin', branch='master'):
-        self.debug('find changes')
-
-        # def func(item, prog, i, n):
-
-        # def func(item, prog, i, n):
-        #     name = item.name
-        #     if prog:
-        #         prog.change_message('Examining: {}({}/{})'.format(name, i, n))
-        #     self.debug('examining {}'.format(name))
-        #     r = Repo(repository_path(name))
-        #     try:
-        #         r.git.fetch()
-        #         line = r.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
-        #         item.dirty = bool(line)
-        #         item.update(fetch=False)
-        #     except GitCommandError as e:
-        #         self.warning('error examining {}. {}'.format(name, e))
+        self.debug('find changes. names={}'.format(names))
         if names:
             names = [n for n in self.local_names if n.name in names]
         else:
             names = self.selected_local_repositories
             if not names:
                 names = self.local_names
-
         self.dvc.find_changes(names, remote, branch)
 
         # progress_loader(names, func)
@@ -209,8 +190,23 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
     def rebase(self):
         self._repo.rebase()
 
+    def merge(self):
+        if self._repo.smart_pull(quiet=False):
+            bmv = BranchMergeView(repo=self._repo,
+                                  to_=self.branch,
+                                  branches=[b for b in self.branches if not b.startswith('origin')
+                                            and b != self.branch])
+
+            info = bmv.edit_traits()
+            if info.result and bmv.from_:
+                if self.confirmation_dialog('Are you sure you want to merge?'):
+                    self.debug('merge {} into {}'.format(bmv.from_, bmv.to_))
+                    self._repo.merge(bmv.from_)
+                    self.find_changes(names=[self.selected_local_repository_name])
+
     def pull(self):
         self._repo.smart_pull(quiet=False)
+        self.find_changes(names=[self.selected_local_repository_name.name])
 
     def push(self):
         if not self._repo.has_remote():
@@ -286,7 +282,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                 r.active_branch = branch
                 names.append(r.name)
             except BaseException:
-                pass
+                self.debug_exception()
+                self.warning('failed checking out {}, branch={}'.format(r.name, branch))
 
         self.information_dialog('{} now on branch "{}"'.format(','.join(names), branch))
 
@@ -349,12 +346,21 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                 else:
                     self.warning_dialog('A name is required to add a bookmark. Please try again')
 
+    def revert_selected_commit(self):
+        selected = self._has_selected_local()
+        if selected and self.selected_commit:
+            hexsha = self.selected_commit.hexsha
+            self._repo.revert_commit(hexsha)
+
     def delete_commits(self):
         selected = self._has_selected_local()
         if selected and self.selected_commit:
             hexsha = self.selected_commit.hexsha
-            msg = 'Are you sure you want to permanently delete your changes in "{}"'.format(selected.name)
+            msg = 'Are you sure you want to permanently delete your changes in "{}". This will delete all ' \
+                  'changes later than the selected row. ' \
+                  'To undo an individual commit use "Revert Selected Commit"'.format(selected.name)
             if self.confirmation_dialog(msg):
+                self._archive_repository()
                 self._repo.delete_commits(hexsha)
 
     # task
@@ -365,10 +371,28 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         return [SelectionPane(model=self)]
 
     # private
+    def _archive_repository(self, src=None):
+        if src is None:
+            src = self._repo.path
+        self.debug('archive repository')
+
+        root = os.path.join(paths.dvc_dir, 'archived_repositories')
+        if not os.path.isdir(root):
+            os.mkdir(root)
+
+        name = os.path.basename(src)
+        dst = unique_dir(root, name, make=False)
+        shutil.move(self._repo.path, dst)
+        return name, dst
+
     def _refresh_tags(self):
         self.git_tags = get_tags(self._repo.active_repo)
 
-    def _refresh_branches(self):
+    def _refresh_branches(self, fetch=False):
+        self.debug('refresh branches fetch={}'.format(fetch))
+        if self.auto_fetch or fetch:
+            self._repo.fetch()
+
         self.branches = [NULL_STR] + self._repo.get_branch_names()
         b = self._repo.get_active_branch()
 
@@ -443,9 +467,16 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                 uuids.append('{}{}'.format(head, tail))
                 continue
 
-        tag_ans = self.dvc.convert_uuid_runids(uuids)
         ans = list({an for an in (func(*a) for a in ans) if an})
-        self.analyses = ans + tag_ans
+
+        nans = []
+        for ai in ans:
+            if UUID_RE.match(ai):
+                uuids.append(ai)
+            else:
+                nans.append(ai)
+
+        self.analyses = sorted(nans + self.dvc.convert_uuid_runids(uuids))
 
     def _make_diff_changes(self, rev, d):
         rev = self._repo.get_commit(rev)
@@ -459,24 +490,28 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         # item = None
         # for line in txt.split('\n'):
         #     pass
-            # if line[:2] == '- ':
-            #     if item is None:
-            #         item = DiffItem()
-            #     item.subtraction = line[2:]
-            # elif line[:2] == '+ ':
-            #     if item is None:
-            #         item = DiffItem()
-            #     item.addition = line[2:]
-            #
-            # if item and item.complete:
-            #     ds.append(item)
-            #     item = None
+        # if line[:2] == '- ':
+        #     if item is None:
+        #         item = DiffItem()
+        #     item.subtraction = line[2:]
+        # elif line[:2] == '+ ':
+        #     if item is None:
+        #         item = DiffItem()
+        #     item.addition = line[2:]
+        #
+        # if item and item.complete:
+        #     ds.append(item)
+        #     item = None
 
         # ds = []
         # d = ''
         # ds.append(d)
         # self.diffs = ds
+
     # handlers
+    def _refresh_branch_button_changed(self):
+        self._refresh_branches(fetch=True)
+
     def _selected_file_changed(self, new):
         if new:
             oid = self.selected_commit.oid

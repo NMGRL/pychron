@@ -208,9 +208,13 @@ class YorkRegressor(OLSRegressor):
         a = self.intercept
         b = self.slope
         x, y, sx, sy = self.clean_xs, self.clean_ys, self.clean_xserr, self.clean_yserr
-        v = calculate_mswd2(x, y, sx, sy, a, b,
-                            corrcoeffs=self.calculate_correlation_coefficients())
-        self.valid_mswd = validate_mswd(v, len(x), k=2)
+
+        v = 0
+        if len(sx) and len(sy):
+            v = calculate_mswd2(x, y, sx, sy, a, b,
+                                corrcoeffs=self.calculate_correlation_coefficients())
+            self.valid_mswd = validate_mswd(v, len(x), k=2)
+
         return v
 
     def _calculate_W(self, b):
@@ -236,7 +240,7 @@ class YorkRegressor(OLSRegressor):
         self._slope = b
         self._intercept = a
 
-    def _calculate_slope_intercept(self, pb, b, cnt, total=1000, tol=1e-10):
+    def _calculate_slope_intercept(self, pb, b, cnt, total=500, tol=1e-10):
         """
             recursively calculate slope
             b=slope

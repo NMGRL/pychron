@@ -175,13 +175,18 @@ class MeasurementPyScript(ValvePyScript):
         :param integration_time: integration time in seconds
         :type integration_time: float
         """
+
+        if self.abbreviated_count_ratio:
+            ncounts *= self.abbreviated_count_ratio
+
         if calc_time:
             self._estimated_duration += (ncounts * integration_time * ESTIMATED_DURATION_FF)
             return
 
         self.ncounts = ncounts
-        if self.abbreviated_count_ratio:
-            ncounts *= self.abbreviated_count_ratio
+        # set self.ncounts before applying abbreviated_count_ratio
+        # if self.abbreviated_count_ratio:
+        #    ncounts *= self.abbreviated_count_ratio
 
         if not self._automated_run_call('py_data_collection',
                                         self,

@@ -23,7 +23,7 @@ from operator import itemgetter
 
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from git import Repo, GitCommandError, NoSuchPathError
+from git import Repo, GitCommandError, NoSuchPathError, Actor
 from traits.api import Instance, Str, Set, List, provides, Bool, Int
 from uncertainties import ufloat, std_dev, nominal_value
 
@@ -46,16 +46,17 @@ from pychron.envisage.browser.record_views import InterpretedAgeRecordView
 from pychron.experiment.utilities.runid import make_increment
 from pychron.git.hosts import IGitHost
 from pychron.git.hosts.local import LocalGitHostService
+from pychron.git_archive.author_view import GitCommitAuthorView
 from pychron.git_archive.repo_manager import GitRepoManager, format_date, get_repository_branch
 from pychron.git_archive.views import StatusView
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths, r_mkdir
 from pychron.processing.interpreted_age import InterpretedAge
-from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, STARTUP_MESSAGE_POSITION
+from pychron.pychron_constants import RATIO_KEYS, INTERFERENCE_KEYS, STARTUP_MESSAGE_POSITION, DATE_FORMAT
+from pychron.user.user import User
 
 HOST_WARNING_MESSAGE = 'GitLab or GitHub or LocalGit plugin is required'
-
 
 
 @provides(IDatastore)
@@ -75,6 +76,9 @@ class DVC(Loggable):
     current_repository = Instance(GitRepoManager)
     auto_add = True
     use_auto_pull = Bool(True)
+    use_auto_push = Bool(False)
+    use_default_commit_author = Bool(False)
+
     pulled_repositories = Set
     selected_repositories = List
 
@@ -89,11 +93,14 @@ class DVC(Loggable):
     irradiation_prefix = Str
 
     _cache = None
-    _uuid_runid_cache = {}
+    _uuid_runid_cache = None
+    _pull_cache = None
+    _author = None
 
     def __init__(self, bind=True, *args, **kw):
         super(DVC, self).__init__(*args, **kw)
-
+        self._uuid_runid_cache = {}
+        self._pull_cache = {}
         if bind:
             self._bind_preferences()
 
@@ -290,10 +297,11 @@ class DVC(Loggable):
                 mrepo.open_repo(root)
             else:
                 url = self.make_url(self.meta_repo_name)
-                if url:
-                    self.debug('cloning meta repo url={}'.format(url))
-                    path = os.path.join(paths.dvc_dir, name)
-                    self.meta_repo.clone(url, path)
+                if url is not None:
+                    if url:
+                        self.debug('cloning meta repo url={}'.format(url))
+                        path = os.path.join(paths.dvc_dir, name)
+                        self.meta_repo.clone(url, path)
                 else:
                     self.debug('no url returned for MetaData repository. You need to clone your MetaData repository '
                                'manually')
@@ -562,7 +570,7 @@ class DVC(Loggable):
         repo = self._get_repository(repo, as_current=False)
         repo.add_tag(name, message, hexsha)
 
-    def update_analysis_paths(self, items, msg):
+    def update_analysis_paths(self, items, msg, author=None):
         """
         items is a list of (analysis, path) tuples
         :param items:
@@ -574,15 +582,19 @@ class DVC(Loggable):
         def key(x):
             return x[0].repository_identifier
 
+        author = self.get_author(author)
         for expid, ais in groupby(sorted(items, key=key), key=key):
             ps = [p for _, p in ais]
             if self.repository_add_paths(expid, ps):
-                self.repository_commit(expid, msg)
+                self.repository_commit(expid, msg, author)
                 mod_repositories.append(expid)
 
         return mod_repositories
 
-    def update_analyses(self, ans, modifiers, msg):
+    def update_analyses(self, ans, modifiers, msg, author=None):
+
+        author = self.get_author(author)
+
         if not isinstance(modifiers, (list, tuple)):
             modifiers = (modifiers,)
 
@@ -590,7 +602,7 @@ class DVC(Loggable):
         for expid, ais in groupby_repo(ans):
             ps = [analysis_path(x, x.repository_identifier, modifier=modifier) for x in ais for modifier in modifiers]
             if self.repository_add_paths(expid, ps):
-                if self.repository_commit(expid, msg):
+                if self.repository_commit(expid, msg, author):
                     mod_repositories.append(expid)
                 else:
                     self.warning_dialog('There is an issue with your repository. {}. Please fix it before '
@@ -617,13 +629,13 @@ class DVC(Loggable):
 
             self._update_current_age(ai)
 
-    def save_icfactors(self, ai, dets, fits, refs, use_source_correction):
+    def save_icfactors(self, ai, dets, fits, refs, use_source_correction, standard_ratios):
         if use_source_correction:
             ai.dump_source_correction_icfactors(refs)
         else:
             if fits and dets:
                 self.info('Saving icfactors for {}'.format(ai))
-                ai.dump_icfactors(dets, fits, refs, reviewed=True)
+                ai.dump_icfactors(dets, fits, refs, reviewed=True, standard_ratios=standard_ratios)
 
         if self._cache:
             self._cache.remove(ai.uiid)
@@ -677,30 +689,44 @@ class DVC(Loggable):
                 self.meta_commit('User manual edited flux')
         self.meta_push()
 
-    def save_flux_position(self, flux_position, options, decay_constants, add=False):
-        """
-        save flux called from FluxPersistNode
+    # def save_flux_position(self, flux_position, options, decay_constants, add=False, save_predicted=True):
+    #     """
+    #     save flux called from FluxPersistNode
+    #
+    #     :param flux_position:
+    #     :param options:
+    #     :param decay_constants:
+    #     :param add:
+    #     :return:
+    #     """
+    #
+    #     irradiation = flux_position.irradiation
+    #     level = flux_position.level
+    #     pos = flux_position.hole_id
+    #     identifier = flux_position.identifier
+    #     j = flux_position.j
+    #     e = flux_position.jerr
+    #     mj = flux_position.mean_j
+    #     me = flux_position.mean_jerr
+    #     analyses = flux_position.analyses
+    #     position_jerr = flux_position.position_jerr
+    #
+    #     # self._save_j(irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
+    #     #              options, add, save_predicted)
+    #     self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
+    #                                                            pos, identifier, j, e))
+    #
+    #     self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me,
+    #                                decay=decay_constants,
+    #                                analyses=analyses,
+    #                                options=options, add=add,
+    #                                position_jerr=position_jerr,
+    #                                save_predicted=save_predicted)
 
-        :param flux_position:
-        :param options:
-        :param decay_constants:
-        :param add:
-        :return:
-        """
-
-        irradiation = flux_position.irradiation
-        level = flux_position.level
-        pos = flux_position.hole_id
-        identifier = flux_position.identifier
-        j = flux_position.j
-        e = flux_position.jerr
-        mj = flux_position.mean_j
-        me = flux_position.mean_jerr
-        analyses = flux_position.analyses
-        position_jerr = flux_position.position_jerr
-
-        self._save_j(irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
-                     options, add)
+    # if self.update_currents_enabled:
+    #     ans, _ = self.db.get_labnumber_analyses([identifier])
+    #     for ai in self.make_analyses(ans):
+    #         self._update_current_age(ai)
 
     def save_csv_dataset(self, name, repository, lines, local_path=False):
 
@@ -808,6 +834,11 @@ class DVC(Loggable):
 
         return progress_loader(ias, func, step=25)
 
+    def get_adjacent_analysis(self, uuid, ts, spectrometer, previous=True):
+        an = self.db.get_adjacent_analysis(uuid, ts, spectrometer, previous)
+        if an:
+            return self.make_analysis(an)
+
     def get_analysis(self, uuid):
         an = self.db.get_analysis_uuid(uuid)
         if an:
@@ -818,7 +849,9 @@ class DVC(Loggable):
         if a:
             return a[0]
 
-    def make_analyses(self, records, calculate_f_only=False, reload=False, quick=False, use_progress=True):
+    def make_analyses(self, records, calculate_f_only=False,
+                      reload=False, quick=False, use_progress=True,
+                      pull_frequency=None):
         if not records:
             return []
 
@@ -846,7 +879,7 @@ class DVC(Loggable):
             if prog:
                 prog.change_message('Syncing repository= {}'.format(xi))
             try:
-                self.sync_repo(xi, use_progress=False)
+                self.sync_repo(xi, use_progress=False, pull_frequency=pull_frequency)
             except BaseException:
                 pass
 
@@ -876,6 +909,7 @@ class DVC(Loggable):
         except NoSuchPathError:
             return []
 
+        flux_histories = {}
         fluxes = {}
         productions = {}
         chronos = {}
@@ -914,6 +948,12 @@ class DVC(Loggable):
                         fluxes[irrad] = flux_levels
                         productions[irrad] = prod_levels
 
+                    key = '{}{}'.format(irrad, level)
+                    c = meta_repo.get_flux_history(irrad, level, max_count=1)
+                    if c:
+                        c = c[0]
+                        flux_histories[key] = '{} ({})'.format(c.date.strftime(DATE_FORMAT), c.author)
+
                 if use_cocktail_irradiation and r.analysis_type == 'cocktail' and 'cocktail' not in chronos:
                     cirr = meta_repo.get_cocktail_irradiation()
                     chronos['cocktail'] = cirr.get('chronology')
@@ -926,12 +966,13 @@ class DVC(Loggable):
                 return self._make_record(branches=branches, chronos=chronos, productions=productions,
                                          fluxes=fluxes, calculate_f_only=calculate_f_only, sens=sens,
                                          frozen_fluxes=frozen_fluxes, frozen_productions=frozen_productions,
+                                         flux_histories=flux_histories,
                                          quick=quick,
                                          reload=reload, *args)
             except BaseException:
                 record = args[0]
-                self.debug('make analysis exception: repo={}, record_id={}'.format(record.repository_identifier,
-                                                                                   record.record_id))
+                self.warning('make analysis exception: repo={}, record_id={}'.format(record.repository_identifier,
+                                                                                     record.record_id))
                 self.debug_exception()
 
         if use_progress:
@@ -944,6 +985,12 @@ class DVC(Loggable):
         n = len(ret)
         if n:
             self.debug('Make analysis time, total: {}, n: {}, average: {}'.format(et, n, et / float(n)))
+
+        nn = len(records)
+        if len(records) != n:
+            if not self.confirmation_dialog('Failed making {} of {} analyses. '
+                                            'Are you sure you want to continue?'.format(nn-n, nn)):
+                return
 
         if self.use_cache:
             cache.clean()
@@ -999,10 +1046,30 @@ class DVC(Loggable):
         repo = self._get_repository(repository_identifier)
         return repo.add_paths(paths)
 
-    def repository_commit(self, repository, msg):
+    def get_author(self, author=None):
+        if not self.use_default_commit_author:
+            if author is None or not self._author:
+                db = self.db
+                with db.session_ctx():
+                    authors = [User(r) for r in db.get_users()]
+
+                    g = GitCommitAuthorView(authors=authors)
+
+                    info = g.edit_traits()
+                    if info.result:
+                        author = Actor(g.author, g.email)
+                        if not self.db.get_user(g.author):
+                            self.db.add_user(g.author, email=g.email)
+
+                        if g.remember_choice:
+                            self._author = author
+        return author
+
+    def repository_commit(self, repository, msg, author=None):
         self.debug('Repository commit: {} msg: {}'.format(repository, msg))
         repo = self._get_repository(repository)
-        return repo.commit(msg)
+        author = self.get_author(author)
+        return repo.commit(msg, author=author)
 
     def remote_repositories(self):
         rs = []
@@ -1038,16 +1105,31 @@ class DVC(Loggable):
     def git_session_ctx(self, repository_identifier, message):
         return GitSessionCTX(self, repository_identifier, message)
 
-    def sync_repo(self, name, use_progress=True):
+    def clear_pull_cache(self):
+        self._pull_cache = {}
+
+    def sync_repo(self, name, use_progress=True, pull_frequency=None):
         """
         pull or clone an repo
 
         """
         root = repository_path(name)
         exists = os.path.isdir(os.path.join(root, '.git'))
-        self.debug('sync repository {}. exists={}'.format(name, exists))
+        self.debug('sync repository {}. exists={} pull_frequency={}'.format(name, exists, pull_frequency))
 
         if exists:
+            if pull_frequency:
+                now = datetime.now()
+                last_pull = self._pull_cache.get(name)
+                self._pull_cache[name] = now
+                args = last_pull, (datetime.now() - last_pull).seconds, \
+                       (datetime.now() - last_pull).seconds < pull_frequency
+
+                self.debug(' '.join([str(a) for a in args]))
+
+                if last_pull and (datetime.now() - last_pull).seconds < pull_frequency:
+                    return True
+
             repo = self._get_repository(name)
             repo.pull(use_progress=use_progress, use_auto_pull=self.use_auto_pull)
             return True
@@ -1110,8 +1192,9 @@ class DVC(Loggable):
             repo.push(remote=gi.default_remote_name, **kw)
 
     def push_repositories(self, changes):
-        for gi in self.application.get_services(IGitHost):
-            push_repositories(changes, gi, quiet=False)
+        if self.use_auto_push or self.confirmation_dialog('Would you like to push (share) your changes?'):
+            for gi in self.application.get_services(IGitHost):
+                push_repositories(changes, gi, quiet=False)
 
     def delete_local_commits(self, repo, **kw):
         r = self._get_repository(repo)
@@ -1311,11 +1394,12 @@ class DVC(Loggable):
         self.meta_repo.update_level_production(irradiation, name, production_name)
         return added
 
-    def clone_repository(self, identifier):
+    def clone_repository(self, identifier, url=None):
         root = repository_path(identifier)
         if not os.path.isdir(root):
             self.debug('cloning {}'.format(root))
-            url = self.make_url(identifier)
+            if not url:
+                url = self.make_url(identifier)
             Repo.clone_from(url, root)
         else:
             self.debug('{} already exists'.format(identifier))
@@ -1340,6 +1424,10 @@ class DVC(Loggable):
 
         else:
             self.critical('Repository does not exist {}. {}'.format(identifier, root))
+
+    def branch_repo(self, repo, branch):
+        repo = self._get_repository(repo)
+        repo.create_branch(branch, inform=False)
 
     def add_repository(self, identifier, principal_investigator, inform=True):
         self.debug('trying to add repository identifier={}, pi={}'.format(identifier, principal_investigator))
@@ -1613,20 +1701,8 @@ class DVC(Loggable):
                 for ci in cs:
                     ci.refresh_view()
 
-    def _save_j(self, irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
-                options, add):
-        self.info('Saving j for {}{}:{} {}, j={} +/-{}'.format(irradiation, level,
-                                                               pos, identifier, j, e))
-        self.meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me,
-                                   decay=decay_constants,
-                                   analyses=analyses,
-                                   options=options, add=add,
-                                   position_jerr=position_jerr)
-
-        if self.update_currents_enabed:
-            ans = self.db.get_labnumber_analyses([identifier])
-            for ai in self.make_analyses(ans):
-                self._update_current_age(ai)
+    # def _save_j(self, irradiation, level, pos, identifier, j, e, mj, me, position_jerr, decay_constants, analyses,
+    #             options, add, save_predicted):
 
     def _add_interpreted_age(self, ia, d):
         rid = ia.repository_identifier
@@ -1650,7 +1726,7 @@ class DVC(Loggable):
         self.sync_repo(expid)
 
     def _make_record(self, record, prog, i, n, productions=None, chronos=None, branches=None, fluxes=None, sens=None,
-                     frozen_fluxes=None, frozen_productions=None,
+                     frozen_fluxes=None, frozen_productions=None, flux_histories=None,
                      calculate_f_only=False, reload=False, quick=False):
         meta_repo = self.meta_repo
         if prog:
@@ -1756,6 +1832,10 @@ class DVC(Loggable):
                             fd = meta_repo.get_flux(a.irradiation,
                                                     a.irradiation_level,
                                                     a.irradiation_position_position)
+
+                    if flux_histories:
+                        a.flux_history = flux_histories.get('{}{}'.format(a.irradiation, a.irradiation_level), '')
+
                     a.j = fd.get('j', ufloat(0, 0))
                     a.position_jerr = fd.get('position_jerr', 0)
 
@@ -1812,6 +1892,7 @@ class DVC(Loggable):
         bind_preference(self, 'favorites', '{}.favorites'.format(prefid))
         self._favorites_changed(self.favorites)
         self._set_meta_repo_name()
+        self._repository_root_changed()
 
         prefid = 'pychron.dvc'
         bind_preference(self, 'use_cocktail_irradiation', '{}.use_cocktail_irradiation'.format(prefid))
@@ -1819,6 +1900,9 @@ class DVC(Loggable):
         bind_preference(self, 'max_cache_size', '{}.max_cache_size'.format(prefid))
         bind_preference(self, 'update_currents_enabled', '{}.update_currents_enabled'.format(prefid))
         bind_preference(self, 'use_auto_pull', '{}.use_auto_pull'.format(prefid))
+        bind_preference(self, 'use_auto_push', '{}.use_auto_push'.format(prefid))
+        bind_preference(self, 'use_default_commit_author', '{}.use_default_commit_author'.format(prefid))
+
 
         prefid = 'pychron.entry'
         bind_preference(self, 'irradiation_prefix', '{}.irradiation_prefix'.format(prefid))
@@ -1861,10 +1945,15 @@ class DVC(Loggable):
             self.organization = new.organization
             self.meta_repo_name = new.meta_repo_name
             self.meta_repo_dirname = new.meta_repo_dir
+            self.repository_root = new.repository_root
             self.db.reset_connection()
             if old:
                 self.db.connect()
                 self.db.create_session()
+
+    def _repository_root_changed(self):
+        if self.repository_root:
+            paths.repository_dataset_dir = os.path.join(paths.dvc_dir, self.repository_root)
 
     def _meta_repo_dirname_changed(self):
         self._set_meta_repo_name()

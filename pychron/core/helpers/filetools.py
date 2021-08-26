@@ -92,6 +92,8 @@ def view_file(p, application='Preview', logger=None):
         app_path = '/Applications/{}.app'.format(application)
         if not os.path.exists(app_path):
             app_path = '/Applications/Preview.app'
+            if not os.path.exists(app_path):
+                app_path = '/System/Applications/Preview.app'
 
         try:
             subprocess.call(['open', '-a', app_path, p])
@@ -261,7 +263,7 @@ def max_file_cnt(root, excludes=None):
     return len(ps) + 1
 
 
-def max_path_cnt(root, base, delimiter='-', extension='.txt'):
+def max_path_cnt(root, base, delimiter='-', extension='.txt', ndigits=5):
     """
 
     :param root:
@@ -269,14 +271,15 @@ def max_path_cnt(root, base, delimiter='-', extension='.txt'):
     :param extension:
     :return: int max+1
     """
-    basename = '{}{}[0123456789][0123456789][0123456789]{}'.format(base, delimiter, extension)
+
+    ndigits = '[0-9]'*ndigits
+    basename = '{}{}{}{}'.format(base, delimiter, ndigits, extension)
     cnt = 0
-    for p in glob.iglob(os.path.join(root, basename)):
+    for p in glob.glob(os.path.join(root, basename)):
         p = os.path.basename(p)
         head, tail = os.path.splitext(p)
 
         cnt = max(int(head.split(delimiter)[-1]), cnt)
-
     cnt += 1
     return cnt
 

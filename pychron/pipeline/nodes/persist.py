@@ -15,15 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from pyface.message_dialog import information
 from traits.api import Str, Instance
 from traitsui.api import Item, HGroup, EnumEditor, View, VGroup, UItem
-from traitsui.editors import DirectoryEditor
+from traitsui.editors.api import DirectoryEditor
 from uncertainties import ufloat, std_dev, nominal_value
 
+from pychron.base_fs import BaseFS
 from pychron.core.confirmation import confirmation_dialog
-from pychron.core.helpers.filetools import unique_path2
+from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.progress import progress_iterator, progress_loader
+from pychron.dvc import dvc_dump
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options_manager import OptionsController
 from pychron.paths import paths
@@ -86,10 +89,12 @@ class DVCPersistNode(PersistNode):
         if not isinstance(mods, tuple):
             mods = (self.modifier,)
 
+
+
         modp = []
         for mi in mods:
             modpi = self.dvc.update_analyses(state.unknowns,
-                                             mi, '<{}> {}'.format(self.commit_tag, msg))
+                                             mi, '<{}>.{} {}'.format(self.commit_tag, mi, msg))
             modp.extend(modpi)
 
         if modp:
@@ -110,8 +115,10 @@ class DefineEquilibrationPersistNode(DVCPersistNode):
 
         msg = ','.join('{}({})'.format(*a) for a in zip(state.saveable_keys, state.saveable_fits))
         items = progress_loader(state.unknowns, wrapper, threshold=1, unpack=False)
-        modpis = self.dvc.update_analysis_paths(items, '<DEFINE EQUIL> {}'.format(msg))
-        modpps = self.dvc.update_analyses(state.unknowns, 'intercepts', '<ISOEVO> modified by DEFINE EQUIL')
+
+        author = self.dvc.get_author()
+        modpis = self.dvc.update_analysis_paths(items, '<DEFINE EQUIL> {}'.format(msg), author)
+        modpps = self.dvc.update_analyses(state.unknowns, 'intercepts', '<ISOEVO> modified by DEFINE EQUIL', author)
         modpis.extend(modpps)
 
         if modpis:
@@ -209,7 +216,7 @@ class ICFactorPersistNode(DVCPersistNode):
             self.dvc.delete_existing_icfactors(ai, state.saveable_keys)
 
         self.dvc.save_icfactors(ai, state.saveable_keys, state.saveable_fits,
-                                state.references, state.use_source_correction)
+                                state.references, state.use_source_correction, state.standard_ratios)
 
 
 class FluxPersistNode(DVCPersistNode):
@@ -217,56 +224,71 @@ class FluxPersistNode(DVCPersistNode):
     commit_tag = 'FLUX'
 
     def run(self, state):
-        if state.saveable_irradiation_positions:
-            xs = [x for x in state.saveable_irradiation_positions if x.save]
-            if xs:
+        if state.monitor_positions:
+            meta_repo = self.dvc.meta_repo
+            meta_repo.smart_pull()
+            xs = [xi for xi in state.monitor_positions + state.unknown_positions if xi.save]
+
+            level_obj, p = self.dvc.meta_repo.get_level_obj(state.irradiation, state.level)
+
+            po = state.flux_options
+            options = dict(model_kind=po.model_kind,
+                           predicted_j_error_type=po.predicted_j_error_type,
+                           use_weighted_fit=po.use_weighted_fit,
+                           monte_carlo_ntrials=po.monte_carlo_ntrials,
+                           use_monte_carlo=po.use_monte_carlo,
+                           monitor_name=po.monitor_name,
+                           monitor_age=po.monitor_age,
+                           monitor_material=po.monitor_name,
+                           monitor_reference=po.selected_monitor)
+
+            lk = po.lambda_k
+            decay_constants = {'lambda_k_total': nominal_value(lk), 'lambda_k_total_error': std_dev(lk)}
+
+            def update(irp, prog, i, n):
+                if prog:
+                    prog.change_message('Save J for {} {}/{}'.format(irp.identifier, i, n))
+
+                irradiation = irp.irradiation
+                level = irp.level
+                pos = irp.hole_id
+                identifier = irp.identifier
+                j = irp.j
+                e = irp.jerr
+                mj = irp.mean_j
+                me = irp.mean_jerr
+                analyses = irp.analyses
+                position_jerr = irp.position_jerr
+                mmswd = irp.mean_j_mswd
+
+                meta_repo.update_flux(irradiation, level, pos, identifier, j, e, mj, me, mmswd,
+                                      decay=decay_constants,
+                                      analyses=analyses,
+                                      options=options, add=False,
+                                      position_jerr=position_jerr,
+                                      save_predicted=irp.save_predicted,
+                                      jd=level_obj)
+
+                uj = ufloat(j, e, tag='j')
+                for i in state.unknowns:
+                    if i.identifier == irp.identifier:
+                        i.j = uj
+                        i.arar_constants.lambda_k = lk
+                        i.recalculate_age()
+
+            progress_iterator(xs,
+                              update,
+                              # lambda *args: self._save_j(state, level_obj, p, *args),
+                              threshold=1)
+
+            dvc_dump(level_obj, p)
+
+            meta_repo.add(p, commit=False)
+            self.dvc.meta_commit('fit flux for {}{}'.format(state.irradiation, state.level))
+
+            if confirmation_dialog('Would you like to share your changes?'):
                 self.dvc.meta_repo.smart_pull()
-
-                progress_iterator(xs,
-                                  lambda *args: self._save_j(state, *args),
-                                  threshold=1)
-
-                p = self.dvc.meta_repo.get_level_path(state.irradiation, state.level)
-                self.dvc.meta_repo.add(p, commit=False)
-                self.dvc.meta_commit('fit flux for {}{}'.format(state.irradiation, state.level))
-
-                if confirmation_dialog('Would you like to share your changes?'):
-                    self.dvc.meta_repo.smart_pull()
-                    self.dvc.meta_repo.push()
-
-    def _save_j(self, state, irp, prog, i, n):
-        if prog:
-            prog.change_message('Save J for {} {}/{}'.format(irp.identifier, i, n))
-
-        po = state.flux_options
-        lk = po.lambda_k
-
-        decay_constants = {'lambda_k_total': nominal_value(lk), 'lambda_k_total_error': std_dev(lk)}
-        options = dict(model_kind=po.model_kind,
-                       predicted_j_error_type=po.predicted_j_error_type,
-                       use_weighted_fit=po.use_weighted_fit,
-                       monte_carlo_ntrials=po.monte_carlo_ntrials,
-                       use_monte_carlo=po.use_monte_carlo,
-                       monitor_name=po.monitor_name,
-                       monitor_age=po.monitor_age,
-                       monitor_material=po.monitor_name,
-                       monitor_reference=po.selected_monitor)
-
-        self.dvc.save_flux_position(irp, options, decay_constants, add=False)
-        # self.dvc.save_j(irp.irradiation, irp.level, irp.hole_id, irp.identifier,
-        #                 irp.j, irp.jerr,
-        #                 irp.mean_j, irp.mean_jerr,irp.
-        #                 decay_constants,
-        #                 analyses=irp.analyses,
-        #                 options=options,
-        #                 add=False)
-
-        j = ufloat(irp.j, irp.jerr, tag='j')
-        for i in state.unknowns:
-            if i.identifier == irp.identifier:
-                i.j = j
-                i.arar_constants.lambda_k = lk
-                i.recalculate_age()
+                self.dvc.meta_repo.push()
 
 
 class XLSXAnalysisTablePersistNode(BaseDVCNode):
@@ -329,6 +351,7 @@ class XLSXAnalysisTablePersistNode(BaseDVCNode):
         return okcancel_view(VGroup(agrp, UItem('selected_options', style='custom')),
                              title='XLS Table Options',
                              height=0.75,
+                             width=0.75,
                              resizable=True)
 
 
@@ -350,6 +373,29 @@ class CosmogenicCorrectionPersistNode(DVCPersistNode):
 
     def run(self, state):
         self.dvc.save_cosmogenic_correction(state.unknowns)
+
+
+class FluxMonitorMeansPersistNode(BaseNode):
+    configurable = False
+    name = 'Save Flux CSV'
+
+    def run(self, state):
+        b = BaseFS()
+
+        p = b.save_file_dialog(default_filename='{}{}_flux.csv'.format(state.irradiation, state.level),
+                               default_directory=paths.data_dir)
+        if p:
+            p = add_extension(p, '.csv')
+            with open(p, 'w') as wfile:
+                header = 'identifier,irradiation,level,sample,hole_id,' \
+                         'saved_j,saved_jerr,mean_j,mean_jerr,mean_j_mswd,model_kind,x,y'
+                attrs = header.split(',')
+                wfile.write('{}\n'.format(header))
+                for mp in state.monitor_positions:
+                    line = ','.join([str(getattr(mp, attr)) for attr in attrs])
+                    wfile.write('{}\n'.format(line))
+
+            information(None, 'Flux saved to\n\n{}'.format(p))
 
 # class TablePersistNode(FileNode):
 #     pass

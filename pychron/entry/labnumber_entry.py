@@ -205,43 +205,43 @@ class LabnumberEntry(DVCIrradiationable):
             sv = IrradiationStatusView(model=sm)
             sv.edit_traits()
 
-    def get_igsns(self):
-        srv = self.application.get_service('pychron.igsn.igsn_service.IGSNService')
-        if srv is None:
-            self.warning_dialog('IGSN Plugin is required. Enable used "Help>Edit Initialization"')
-            return
-
-        self.info('get igsn')
-        items = self.selected
-        if not items:
-            items = self.irradiated_positions
-
-        def key(x):
-            return x.sample, x.material, x.project
-
-        items = [x for x in items if not x.igsn]
-
-        no_save = False
-        for (sample, material, project), poss in groupby_key(items):
-            if not sample:
-                continue
-
-            self.debug('Get IGSN for sample={}, material={}, project={}'.format(sample, material, project))
-            igsn = srv.get_new_igsn(sample)
-            if igsn:
-                for item in poss:
-                    item.igsn = igsn
-            else:
-                no_save = True
-                break
-                # need to check for existing IGSN for sample
-                # if igsn is not None:
-                #     item.igsn = igsn
-        if not no_save:
-            self.save()
-        self.refresh_table = True
-        # self.warning('IGSN Not fully implemented')
-        # raise NotImplementedError
+    # def get_igsns(self):
+    #     srv = self.application.get_service('pychron.igsn.igsn_service.IGSNService')
+    #     if srv is None:
+    #         self.warning_dialog('IGSN Plugin is required. Enable used "Help>Edit Initialization"')
+    #         return
+    #
+    #     self.info('get igsn')
+    #     items = self.selected
+    #     if not items:
+    #         items = self.irradiated_positions
+    #
+    #     def key(x):
+    #         return x.sample, x.material, x.project
+    #
+    #     items = [x for x in items if not x.igsn]
+    #
+    #     no_save = False
+    #     for (sample, material, project), poss in groupby_key(items, key):
+    #         if not sample:
+    #             continue
+    #
+    #         self.debug('Get IGSN for sample={}, material={}, project={}'.format(sample, material, project))
+    #         igsn = srv.get_new_igsn(sample)
+    #         if igsn:
+    #             for item in poss:
+    #                 item.igsn = igsn
+    #         else:
+    #             no_save = True
+    #             break
+    #             # need to check for existing IGSN for sample
+    #             # if igsn is not None:
+    #             #     item.igsn = igsn
+    #     if not no_save:
+    #         self.save()
+    #     self.refresh_table = True
+    #     # self.warning('IGSN Not fully implemented')
+    #     # raise NotImplementedError
 
     def transfer_j(self):
         items = self.selected
@@ -286,7 +286,7 @@ class LabnumberEntry(DVCIrradiationable):
             with db.session_ctx(use_parent_session=False):
                 dbirrad = db.get_irradiation(self.irradiation)
                 for level in dbirrad.levels:
-                    db.update_fluxes(self.irradiation, level.name, j, j * 1e-3)
+                    db.update_flux_simple(self.irradiation, level.name, j, j * 1e-3)
             self.save()
 
         self.refresh_table = True
@@ -504,11 +504,7 @@ class LabnumberEntry(DVCIrradiationable):
             self.information_dialog('No recover file for {}'.format(irradiation, level))
 
     def load_history(self, **kw):
-        repo = self.dvc.meta_repo
-
-        greps = ['fit flux for {}{}'.format(self.irradiation, self.level)]
-
-        cs = repo.get_commits_from_log(greps, **kw)
+        cs = self.dvc.meta_repo.get_flux_history(self.irradiation, self.level, **kw)
         self.flux_commits = cs
         if not cs:
             irradlabel = '{}{}'.format(self.irradiation, self.level)
@@ -657,7 +653,7 @@ class LabnumberEntry(DVCIrradiationable):
 
                 # add the flux file to the index only on the last iteration
                 self.dvc.meta_repo.update_flux(irradiation, level,
-                                               ir.hole, ir.identifier, ir.j, ir.j_err, 0, 0,
+                                               ir.hole, ir.identifier, ir.j, ir.j_err,
                                                add=i == n - 1)
 
                 dbpos.weight = float(ir.weight or 0)
@@ -790,14 +786,15 @@ THIS CHANGE CANNOT BE UNDONE')
 
         # self.level_note = level.note.decode('utf-8') or ''
         # self.level_production_name = level.production.name if level.production else ''
-        try:
-            pname, prod = meta_repo.get_production(self.irradiation, name)
-            self.level_production_name = prod.name
-            self.level_note = prod.note
-        except MetaObjectException:
-            self.warning_dialog('Failed loading the Irradiation Production values from file. Contact an expert.')
+        if self.mode == AR_AR:
+            try:
+                pname, prod = meta_repo.get_production(self.irradiation, name)
+                self.level_production_name = prod.name
+                self.level_note = prod.note
+            except MetaObjectException:
+                self.warning_dialog('Failed loading the Irradiation Production values from file. Contact an expert.')
 
-        self.monitor_age, self.monitor_decay_constant = meta_repo.get_monitor_info(self.irradiation, name)
+            self.monitor_age, self.monitor_decay_constant = meta_repo.get_monitor_info(self.irradiation, name)
 
         if level.holder:
             self.irradiation_tray = level.holder
@@ -968,7 +965,7 @@ THIS CHANGE CANNOT BE UNDONE')
         irrad = self._get_irradiation_editor(name=name)
         new_irrad = irrad.add()
         if new_irrad:
-            if self.mode == 'Ar/Ar':
+            if self.mode == AR_AR:
                 pname = '{}{}'.format(self.irradiation_project_prefix, new_irrad)
                 sname = self.monitor_name
 

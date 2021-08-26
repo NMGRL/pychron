@@ -164,11 +164,13 @@ class DataCollector(Consoleable):
 
                 evt.wait(period)
                 self.automated_run.plot_panel.counts = i
-                if not self._iter_hook(i):
+                inc = self._iter_hook(i)
+                if inc is None:
                     break
 
                 self._post_iter_hook(i)
-                i += 1
+                if inc:
+                    i += 1
             else:
                 if result == 'cancel':
                     self.canceled = True
@@ -198,21 +200,20 @@ class DataCollector(Consoleable):
     def _iteration(self, i, detectors=None):
         try:
             data = self._get_data(detectors)
-            
             if not data:
                 return
 
-            k, s, t = data
+            k, s, t, inc = data
         except (AttributeError, TypeError, ValueError) as e:
             self.debug('failed getting data {}'.format(e))
             return
-        
+
         if k is not None and s is not None:
             x = self._get_time(t)
             self._save_data(x, k, s)
             self._plot_data(i, x, k, s)
 
-        return True
+        return inc
 
     def _get_time(self, t):
         if t is None:
@@ -221,11 +222,11 @@ class DataCollector(Consoleable):
         else:
             # t is provided by the spectrometer. t should be a python datetime object
             # since t is in absolute time use self.starttime_abs
-            r = t-self.starttime_abs
+            r = t - self.starttime_abs
 
             # convert to seconds
             r = r.total_seconds()
-            
+
         return r
 
     def _get_data(self, detectors=None):
@@ -234,9 +235,8 @@ class DataCollector(Consoleable):
         except StopIteration:
             self.debug('data generator stopped')
             return
-
         if data:
-            keys, signals, ct = data
+            keys, signals, ct, inc = data
             if detectors:
                 # data = list(zip(*(d for d in zip(*data) if d[0] in detectors)))
                 nkeys, nsignals = [], []
@@ -245,7 +245,7 @@ class DataCollector(Consoleable):
                         nkeys.append(k)
                         nsignals.append(s)
 
-                data = (nkeys, nsignals, ct)
+                data = (nkeys, nsignals, ct, inc)
                 self._data = (nkeys, nsignals)
             else:
                 self._data = (keys, signals)
@@ -372,9 +372,18 @@ class DataCollector(Consoleable):
                 self.err_message = m
                 return ti
 
+    def _equilibration_func(self, tr):
+        if tr.use_truncation:
+            self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
+            return self._set_truncated()
+        elif tr.use_termination:
+            return 'terminate'
+
     def _modification_func(self, tr):
-        queue = self.automated_run.experiment_executor.experiment_queue
-        tr.do_modifications(queue, self.automated_run)
+        run = self.automated_run
+        ex = run.experiment_executor
+        queue = ex.experiment_queue
+        tr.do_modifications(run, ex, queue)
 
         self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
         if tr.use_truncation:
@@ -442,7 +451,12 @@ class DataCollector(Consoleable):
                                             ('truncation', self._truncation_func, self.truncation_conditionals),
                                             ('action', self._action_func, self.action_conditionals),
                                             ('termination', lambda x: 'terminate', self.termination_conditionals),
-                                            ('cancelation', lambda x: 'cancel', self.cancelation_conditionals)):
+                                            ('cancelation', lambda x: 'cancel', self.cancelation_conditionals),
+                                            ('equilibration', self._equilibration_func,
+                                             self.equilibration_conditionals)):
+
+                if tag == 'equilibration' and self.collection_kind != SNIFF:
+                    continue
 
                 tripped = self._check_conditionals(conditionals, i)
                 if tripped:
@@ -488,5 +502,10 @@ class DataCollector(Consoleable):
     def cancelation_conditionals(self):
         if self.automated_run:
             return self.automated_run.cancelation_conditionals
+
+    @property
+    def equilibration_conditionals(self):
+        if self.automated_run:
+            return self.automated_run.equilibration_conditionals
 
 # ============= EOF =============================================
