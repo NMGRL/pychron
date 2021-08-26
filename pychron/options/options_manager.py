@@ -391,8 +391,8 @@ class OptionsManager(BaseOptionsManager):
             yp = self._pname(name, '.json')
             if os.path.isfile(yp):
                 obj = options_load_json(yp)
-                obj.manager_id = self.id
                 if obj:
+                    obj.manager_id = self.id
                     p = self._pname(name)
                     if os.path.isfile(p):
                         dp = self._pname(name, '.p.bak')

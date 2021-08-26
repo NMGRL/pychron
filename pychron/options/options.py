@@ -276,7 +276,7 @@ class BaseOptions(HasTraits):
     manager_id = Str
     _subview_cache = None
 
-    def dump(self, wfile):
+    def make_state(self):
         def convert_color(ss):
             from pyface.qt.QtGui import QColor
             nd = {}
@@ -315,7 +315,18 @@ class BaseOptions(HasTraits):
                 pass
 
         convert_color(state)
+        self._get_state_hook(state)
+        return state
+
+    def dump(self, wfile):
+        state = self.make_state()
         json.dump(state, wfile, indent=4, sort_keys=True)
+
+    def _get_state_hook(self, state):
+        pass
+
+    def _load_state_hook(self, state):
+        pass
 
     def load(self, state):
         state.pop('klass')
@@ -345,6 +356,7 @@ class BaseOptions(HasTraits):
             if key in state:
                 state[key] = [inst(a, key) for a in state.pop(key)]
 
+        self._load_state_hook(state)
         try:
             self.__setstate__(state)
         except BaseException:

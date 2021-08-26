@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from traits.api import Instance, on_trait_change
+from traits.trait_errors import TraitError
 
 from pychron.options.isochron import InverseIsochronOptions
 from pychron.options.options import FigureOptions
@@ -26,6 +27,28 @@ class CompositeOptions(FigureOptions):
     spectrum_options = Instance(SpectrumOptions)
     isochron_options = Instance(InverseIsochronOptions)
     use_plotting = True
+
+    def _get_state_hook(self, state):
+        state['spectrum_options'] = self.spectrum_options.make_state()
+        state['isochron_options'] = self.isochron_options.make_state()
+
+    def _load_state_hook(self, state):
+
+        so = state.pop('isochron_options')
+        if so:
+            try:
+                self.isochron_options = InverseIsochronOptions()
+                self.isochron_options.load(so)
+            except TraitError as e:
+                print('iso', e)
+
+        so = state.pop('spectrum_options')
+        if so:
+            try:
+                self.spectrum_options = SpectrumOptions()
+                self.spectrum_options.load(so)
+            except TraitError as e:
+                print('spec', e)
 
     def setup(self):
         super(CompositeOptions, self).setup()
