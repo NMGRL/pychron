@@ -15,14 +15,17 @@
 # ===============================================================================
 from pychron.hardware.actuators.client_gp_actuator import ClientMixin
 from pychron.hardware.actuators.gp_actuator import GPActuator
-from pychron.hardware.core.modbus import ModbusMixin
 
 
 class MCCGPActuator(GPActuator, ClientMixin):
     def _actuate(self, obj, action):
-        pass
+        addr = obj.address
+        state = action.lower() == 'open'
+        self.debug('actuate. write digital out {} {}'.format(addr, state))
+        self.communicator.d_out(addr, state)
 
     def get_channel_state(self, address, *args, **kw):
-        pass
+        addr = obj.address
+        return self.communciator.d_in(addr)
 
 # ============= EOF =============================================

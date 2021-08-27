@@ -60,7 +60,7 @@ class MccCommunicator(Communicator):
         bit_num = self._get_bit_num(channel)
 
         bit_value = ul.d_bit_in(board_num, port.type, bit_num)
-        return bit_value
+        return bool(bit_value)
 
     def _get_bit_num(self, channel):
         channel = str(channel)
