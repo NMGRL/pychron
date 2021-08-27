@@ -27,7 +27,7 @@ class MccCommunicator(Communicator):
 
     def load(self, config, path):
         self.board_num = self.config_get(config, 'Communications', 'board_num')
-        return super(ModbustcpCommunicator, self).load(config, path)
+        return super(MccCommunicator, self).load(config, path)
 
     def open(self, *args, **kw):
         return True
