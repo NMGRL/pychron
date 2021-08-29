@@ -77,6 +77,7 @@ class BaseArArFigure(SelectionFigure):
 
     replot_needed = Event
     recalculate_event = Event
+    suppress_recalculate_event = False
 
     options = Any
 

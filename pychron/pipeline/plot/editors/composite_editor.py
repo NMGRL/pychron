@@ -30,10 +30,16 @@ class CompositeEditor(InterpretedAgeEditor):
 
     @on_trait_change('figure_model:panels:figures:recalculate_event')
     def _handle_recalculate(self, obj, name, old, new):
+        if obj.suppress_recalculate_event:
+            return
+
         for p in self.figure_model.panels:
             for f in p.figures:
-                if obj != f:
+                if obj != f and f.graph:
+                    f.suppress_recalculate_event = True
                     f.replot()
+                    f.suppress_recalculate_event = False
+
         # for p in self.figure_model.panels:
         #     p.make_figures()
 
