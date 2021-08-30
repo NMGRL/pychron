@@ -133,7 +133,7 @@ class AnalysisPointInspector(PointInspector):
                             if self.value_format:
                                 y = self.value_format(y)
 
-                            y = u'{} {}{} {}'.format(y, PLUSMINUS, ye, pe)
+                            y = u'{} {} {} {}'.format(y, PLUSMINUS, ye, pe)
                         except IndexError as e:
                             print('asdf', e)
 
@@ -156,7 +156,7 @@ class AnalysisPointInspector(PointInspector):
                                 xe = xerror[ind]
                                 pe = self.percent_error(x, xe)
 
-                                x = u'{} {}{} {}'.format(floatfmt(x), PLUSMINUS, xe, pe)
+                                x = u'{} {} {} {}'.format(floatfmt(x), PLUSMINUS, xe, pe)
                             except IndexError as e:
                                 print('asdf', e)
                         else:

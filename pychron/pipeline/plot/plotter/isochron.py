@@ -322,7 +322,7 @@ class InverseIsochron(Isochron):
             except ZeroDivisionError:
                 pe = '(Inf%)'
 
-            return u'39Ar/40Ar= {} {}{} {}'.format(floatfmt(v, n=6), PLUSMINUS, floatfmt(e, n=7), pe)
+            return u'39Ar/40Ar= {} {} {} {}'.format(floatfmt(v, n=6), PLUSMINUS, floatfmt(e, n=7), pe)
 
         self._add_scatter_inspector(scatter,
                                     additional_info=ad)
@@ -456,7 +456,7 @@ class InverseIsochron(Isochron):
         if opt.include_percent_error:
             ptext = ' ({}%)'.format(p)
 
-        ratio_line = '<sup>40</sup>Ar/<sup>36</sup>Ar= {} {}{}{}{}'.format(v, PLUSMINUS, e, ptext, mse_text)
+        ratio_line = '<sup>40</sup>Ar/<sup>36</sup>Ar= {} {} {}{}{}'.format(v, PLUSMINUS, e, ptext, mse_text)
 
         v = nominal_value(age)
         e = std_dev(age) * opt.nsigma
@@ -484,7 +484,7 @@ class InverseIsochron(Isochron):
             p = format_percent_error(v, e)
             pe = ' ({})%'.format(p)
 
-        age_line = u'Age={} {}{}{} {}{}'.format(floatfmt(v, n=af),
+        age_line = u'Age={} {} {}{} {}{}'.format(floatfmt(v, n=af),
                                                 PLUSMINUS,
                                                 floatfmt(e, n=af, s=3), pe, ag.age_units, mse_text)
         mswd_line = 'N={} MSWD={}'.format(n, mswd)

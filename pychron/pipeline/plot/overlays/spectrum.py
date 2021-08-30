@@ -112,7 +112,7 @@ class SpectrumTool(AnalysisPointInspector, BasePlateauOverlay):
             lines = ['RunID={}'.format(an.record_id),
                      'Tag={}'.format(an.tag),
                      'Status={}'.format(an.status_text),
-                     u'{}={} {}{} (1{})'.format(comp.container.y_axis.title, floatfmt(v), PLUSMINUS,
+                     u'{}={} {} {} (1{})'.format(comp.container.y_axis.title, floatfmt(v), PLUSMINUS,
                                                 floatfmt(e), SIGMA),
                      'Cumulative. Ar39={}-{}'.format(floatfmt(low_c), floatfmt(high_c))]
 

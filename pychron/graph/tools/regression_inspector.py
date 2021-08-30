@@ -44,7 +44,7 @@ def make_statistics(reg, x=None, options=None):
     if x is not None:
         vv, ee = reg.predict(x), reg.predict_error(x)
 
-        lines.append('x={:0.5f}, y={} {}{}'.format(x, floatfmt(vv, n=6), PLUSMINUS, errorfmt(vv, ee)))
+        lines.append('x={:0.5f}, y={} {} {}'.format(x, floatfmt(vv, n=6), PLUSMINUS, errorfmt(vv, ee)))
 
     if reg.mswd not in ('NaN', None):
         lines.append('Fit MSWD={}, N={}'.format(reg.format_mswd(), reg.n))

@@ -73,7 +73,7 @@ class FigureModel(HasTraits):
         p = self._panel_klass(*args, **kw)
         return p
 
-    def _make_panels(self):
+    def _make_panel_groups(self):
         if self.analysis_groups:
             gs = [self._panel_factory(analyses=ag, plot_options=self.plot_options, graph_id=gid) for gid, ag in
                   enumerate(self.analysis_groups)]
@@ -91,6 +91,10 @@ class FigureModel(HasTraits):
                 except StopIteration:
                     break
 
+        return gs
+
+    def _make_panels(self):
+        gs = self._make_panel_groups()
         for gi in gs:
             gi.make_figures()
 

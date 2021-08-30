@@ -226,10 +226,10 @@ class ReferencesSeries(BaseSeries):
             def af(i, x, y, analysis):
                 v, e = self._get_interpolated_value(po, analysis)
                 s, se = self._get_signal_intensity(po, analysis)
-                return (u'Interpolated: {}{}{}'.format(floatfmt(v), PLUSMINUS, floatfmt(e)),
+                return (u'Interpolated: {} {} {}'.format(floatfmt(v), PLUSMINUS, floatfmt(e)),
                         'Run Date: {}'.format(analysis.rundate.strftime('%m-%d-%Y %H:%M')),
                         'Rel. Time: {:0.4f}'.format(x),
-                        'Signal: {}{}{}'.format(floatfmt(s), PLUSMINUS, floatfmt(se)))
+                        'Signal: {} {} {}'.format(floatfmt(s), PLUSMINUS, floatfmt(se)))
 
             self._add_error_bars(scatter, ye, 'y', self.options.nsigma, True)
             self._add_scatter_inspector(scatter,

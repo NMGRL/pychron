@@ -77,7 +77,7 @@ class PointInspector(InfoInspector):
                         pe = self.percent_error(y, ye)
 
                         ye = floatfmt(ye, n=6, s=3)
-                        sy = u'{} {}{} ({})'.format(y, PLUSMINUS, ye, pe)
+                        sy = u'{} {} {} ({})'.format(y, PLUSMINUS, ye, pe)
                     else:
                         sy = floatfmt(y, n=6, s=3)
 
