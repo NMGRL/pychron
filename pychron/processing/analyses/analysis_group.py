@@ -376,7 +376,11 @@ class AnalysisGroup(IdeogramPlotable):
 
     @cached_property
     def _get_skewness(self):
-        return skewness_value(self.sorted_clean_analyses())
+        try:
+            s = skewness_value(self.sorted_clean_analyses())
+        except TypeError:
+            s = 0
+        return s
 
     @cached_property
     def _get_age_span(self):
