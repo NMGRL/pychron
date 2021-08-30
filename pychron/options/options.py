@@ -603,7 +603,6 @@ class FigureOptions(BaseOptions, GroupMixin):
                 rref = ref
                 ctx = d
 
-            print('sadfas', d)
             ts.append(self.title_formatter.format(**d))
 
         t = self.title_delimiter.join(ts)

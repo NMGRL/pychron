@@ -53,9 +53,18 @@ class FigureContainer(HasTraits):
     def model_changed(self, clear=True):
         layout = self.model.plot_options.layout
         self.model.refresh_panels()
-        n = self.model.npanels
+        if hasattr(self.model.plot_options, 'orientation_layout'):
+            if self.model.plot_options.orientation_layout == 'Vertical':
+                layout.fixed = 'column'
+                layout.columns = 1
+            else:
+                layout.fixed = 'row'
+                layout.rows = 1
 
-        comp, r, c = self._component_factory(n, layout)
+        n = self.model.npanels
+        r, c = layout.calculate(n)
+
+        comp, r, c = self._component_factory(r, c)
         self.component = comp
         self.rows, self.cols = r, c
 
@@ -64,8 +73,7 @@ class FigureContainer(HasTraits):
     def _model_changed(self):
         self.model_changed(True)
 
-    def _component_factory(self, ngraphs, layout):
-        r, c = layout.calculate(ngraphs)
+    def _component_factory(self, r, c):
 
         op = GridPlotContainer(shape=(r, c),
                                bgcolor='white',

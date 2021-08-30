@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Instance, on_trait_change
+from traits.api import Instance, on_trait_change, Enum
 from traits.trait_errors import TraitError
 
 from pychron.options.isochron import InverseIsochronOptions
@@ -27,6 +27,7 @@ class CompositeOptions(FigureOptions):
     spectrum_options = Instance(SpectrumOptions)
     isochron_options = Instance(InverseIsochronOptions)
     use_plotting = True
+    orientation_layout = Enum('Horizontal', 'Vertical')
 
     def _get_state_hook(self, state):
         state['spectrum_options'] = self.spectrum_options.make_state()
@@ -73,6 +74,8 @@ class CompositeOptions(FigureOptions):
             obj = klass(model=self.spectrum_options)
         elif name in ('isochron', 'appearance(iso.)'):
             obj = klass(model=self.isochron_options)
+        else:
+            obj = klass(model=self)
 
         return obj
 
@@ -81,9 +84,9 @@ class CompositeOptions(FigureOptions):
                               'Appearance(Spec.)',
                               'Display(Spec.)',
                               'Calculations(Spec.)',
-
                               'Isochron',
                               'Appearance(Iso.)',
+                              'Layout'
                               ]
 
     def _get_subview(self, name):
