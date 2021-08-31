@@ -24,7 +24,7 @@ from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 
 from pychron.entry.tasks.sample.actions import DumpAction, LoadAction, RecoverAction, SaveAction, ClearAction, \
-    ImportSamplesAction
+    ImportSamplesAction, MakeSampleTemplateAction
 from pychron.entry.tasks.sample.panes import SampleEntryPane, SampleEditorPane
 from pychron.entry.tasks.sample.sample_entry import SampleEntry
 from pychron.envisage.tasks.base_task import BaseManagerTask
@@ -38,8 +38,8 @@ class SampleEntryTask(BaseManagerTask):
     tool_bars = [SToolBar(SaveAction()),
                  SToolBar(DumpAction(), LoadAction(), RecoverAction()),
                  SToolBar(ClearAction()),
-                 SToolBar(ImportSamplesAction())]
-
+                 SToolBar(ImportSamplesAction(),
+                          MakeSampleTemplateAction())]
 
     def activated(self):
         self.manager.activated()
@@ -56,6 +56,9 @@ class SampleEntryTask(BaseManagerTask):
     # toolbar handlers
     def import_sample_from_file(self):
         self.manager.import_sample_from_file()
+
+    def make_sample_template_file(self):
+        self.manager.make_sample_template_file()
 
     def clear(self):
         self.manager.clear()

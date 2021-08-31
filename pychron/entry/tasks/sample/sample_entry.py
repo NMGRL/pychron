@@ -17,6 +17,7 @@
 import os
 import re
 
+import utm as utm
 import yaml
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
@@ -24,6 +25,7 @@ from traits.api import HasTraits, Str, Bool, Property, Event, cached_property, \
     Button, String, Instance, List, Float, on_trait_change, Int
 from traitsui.api import UItem, Item, VGroup, HGroup, EnumEditor
 
+from pychron.core.csv.csv_parser import CSVColumnParser
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import EmailStr
 from pychron.core.yaml import yload
@@ -182,6 +184,30 @@ class SampleSpec(Spec):
         return obj
 
 
+def extract_value(row, tags):
+    for tag in tags:
+        if tag in row:
+            return row[tag]
+
+
+def extract_fvalue(row, tags):
+    v = extract_value(row, tags)
+    if v is not None:
+        v = float(v)
+    return v
+
+
+def convert_utm(n, e, zone):
+    """
+    return lat, lon
+    """
+
+    zn = int(zone[:2])
+    zl = zone[-1:]
+    lat, lon = utm.to_latlon(e, n, zn, zl)
+    return float(lat), float(lon)
+
+
 class SampleEntry(DVCAble):
     principal_investigator = PIStr(enter_set=True, auto_set=False)
     principal_investigators = Property(depends_on='refresh_pis')
@@ -293,21 +319,24 @@ class SampleEntry(DVCAble):
         self._backup()
         self.dvc.close_session()
 
+    def make_sample_template_file(self):
+        self._make_sample_template()
+
     def import_sample_from_file(self):
 
         from pyface.file_dialog import FileDialog
-        from pyface.constant import OK
-
-        dlg = FileDialog(action='open', default_directory=paths.root_dir,
-                         wildcard=FileDialog.create_wildcard('Excel', ('*.xls', '*.xlsx')))
-        if dlg.open() == OK:
-            path = dlg.path
-
-            if path:
-                from pychron.entry.sample_loader import XLSSampleLoader
-                sample_loader = XLSSampleLoader(dvc=self.dvc)
-                sample_loader.load(path)
-                sample_loader.do_import()
+        path = self.open_file_dialog(default_directory=paths.root_dir,
+                                     wildcard=FileDialog.create_wildcard('Excel', ('*.xls', '*.xlsx', '*.csv')))
+        if path:
+            for d in self._sample_file_reader(path):
+                try:
+                    self._add_sample_from_dict(d)
+                except KeyError as e:
+                    self.warning_dialog('Required column missing.  {}'.format(e))
+            # from pychron.entry.sample_loader import XLSSampleLoader
+            # sample_loader = XLSSampleLoader(dvc=self.dvc)
+            # sample_loader.load(path)
+            # sample_loader.do_import()
 
     def clear(self):
         if self.selected_principal_investigators:
@@ -390,6 +419,49 @@ class SampleEntry(DVCAble):
                 yaml.dump(obj, wfile)
 
     # private
+    def _sample_file_reader(self, path):
+        p = CSVColumnParser()
+        p.load(path)
+        return p.values()
+
+    def _make_sample_template(self):
+        p = self.save_file_dialog()
+        if p:
+            keys = ('sample', 'material', 'grainsize', 'project', 'principal_investigator',
+                    'latitude', 'longitude', 'easting', 'northing', 'utm', 'unit')
+            with open(p, 'w') as wfile:
+                wfile.write(','.join(keys))
+
+    def _add_sample_from_dict(self, d):
+        self.material = d['material']
+        self.grainsize = d.get('grainsize', '')
+        m = self._get_material_spec()
+
+        self.principal_investigator = d['principal_investigator']
+        self.lab_contacts = []
+        self.affiliation = ''
+        self.email = ''
+
+        self.project = d['project']
+        p = self._get_project_spec()
+
+        kw = {'name': d['sample'], 'material': m, 'project': p}
+
+        northing = extract_value(d, ('n', 'northing', 'utm n', 'utm_n', 'n_utm', 'n utm'))
+        easting = extract_value(d, ('e', 'easting', 'utm e', 'utm_e', 'e_utm', 'e utm'))
+        zone = extract_value(d, ('zone', 'utm zone', 'utm_zone', 'zone_utm', 'zone utm'))
+        if northing and easting and zone:
+            lat, lon = convert_utm(northing, easting, zone)
+        else:
+            lat, lon = extract_fvalue(d, ('lat', 'latitude')), extract_fvalue(d, ('lon', 'longitude'))
+
+        kw['latitude'] = lat
+        kw['longitude'] = lon
+        kw['unit'] = extract_value(d, ('unit',))
+
+        spec = SampleSpec(**kw)
+        self._samples.append(spec)
+
     def _selected_db_samples_changed(self, new):
         if new:
             self.sample_edit_model.init()
@@ -495,7 +567,6 @@ class SampleEntry(DVCAble):
                                   elevation=s.elevation,
                                   lat=s.lat, lon=s.lon,
                                   note=s.note):
-
                     s.added = True
                     dvc.commit()
 
@@ -594,6 +665,7 @@ class SampleEntry(DVCAble):
                                  VGroup(Item('lat', label='Latitude'),
                                         Item('lon', label='Longitude'),
                                         Item('location'),
+                                        Item('unit'),
                                         Item('elevation'),
                                         label='Location', show_border=True),
                                  VGroup(Item('lithology', editor=EnumEditor(name='lithologies')),

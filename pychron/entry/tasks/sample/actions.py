@@ -84,4 +84,8 @@ class ImportSamplesAction(UITaskAction):
     method = 'import_sample_from_file'
 
 
+class MakeSampleTemplateAction(UITaskAction):
+    name = 'Make Sample Template'
+    method = 'make_sample_template_file'
+
 # ============= EOF =============================================
