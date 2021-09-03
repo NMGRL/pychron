@@ -48,27 +48,26 @@ from pychron.sparrow.sparrow import connect
 #                 self.enabled = to_bool(enabled)
 #             except ValueError:
 #                 pass
+from pychron.sparrow.sparrow_client import SparrowClient
 
 
 class SparrowPreferences(BasePreferencesHelper, ConnectionMixin):
     preferences_path = 'pychron.sparrow'
     host = Str
-    port = Int
     password = Password
-    dbname = Str
     username = Str
-    timeout = Int(3)
 
     def _get_connection_dict(self):
         return dict(username=self.username,
                     host=self.host,
                     password=self.password,
-                    name=self.dbname,
-                    port=self.port,
-                    timeout=self.timeout)
+                    )
 
     def _test_connection(self, kw):
-        return connect(**kw)
+        s = SparrowClient(bind=False)
+        s.trait_set(**kw)
+        ret = s.test_api()
+        return ret, None
 
 
 class SparrowPreferencesPane(ConnectionPreferencesPane):
@@ -88,17 +87,14 @@ class SparrowPreferencesPane(ConnectionPreferencesPane):
 
         massspec_grp = VGroup(
             # Item('enabled', label='Use MassSpec'),
-            VGroup(Item('dbname', label='Database'),
-                   Item('host', label='Host'),
-                   Item('port', label='Post'),
+            VGroup(Item('host', label='ROOT URL'),
                    Item('username', label='User'),
                    Item('password', label='Password'),
-                   Item('timeout', label='Timeout'),
                    cgrp,
                    enabled_when='enabled',
                    show_border=True,
                    label='Connection'),
-            label='Sparrow DB',
+            label='Sparrow API',
             show_border=True)
 
         return View(massspec_grp)

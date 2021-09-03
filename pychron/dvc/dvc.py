@@ -948,10 +948,13 @@ class DVC(Loggable):
                         productions[irrad] = prod_levels
 
                     key = '{}{}'.format(irrad, level)
-                    c = meta_repo.get_flux_history(irrad, level, max_count=1)
-                    if c:
-                        c = c[0]
-                        flux_histories[key] = '{} ({})'.format(c.date.strftime(DATE_FORMAT), c.author)
+                    if key not in flux_histories:
+                        c = meta_repo.get_flux_history(irrad, level, max_count=1)
+                        v = None
+                        if c:
+                            c = c[0]
+                            v = '{} ({})'.format(c.date.strftime(DATE_FORMAT), c.author)
+                        flux_histories[key] = v
 
                 if use_cocktail_irradiation and r.analysis_type == 'cocktail' and 'cocktail' not in chronos:
                     cirr = meta_repo.get_cocktail_irradiation()
@@ -1300,9 +1303,10 @@ class DVC(Loggable):
             ialabels.append('{} {} {}'.format(ia.name, ia.identifier, ia.sample))
 
         if self.repository_add_paths(rid, ps):
-            sparrow = self.application.get_service('pychron.sparrow.sparrow.Sparrow')
+            sparrow = self.application.get_service('pychron.sparrow.sparrow_client.SparrowClient')
+            print('asdfaf', sparrow)
             if sparrow:
-                if sparrow.connect():
+                if sparrow.login():
                     for p in ps:
                         sparrow.insert_ia(p)
                 else:

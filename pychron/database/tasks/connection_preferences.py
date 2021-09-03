@@ -125,7 +125,7 @@ class ConnectionMixin(HasTraits):
         self._connected_label = 'Not Connected'
 
         if kw is not None:
-            c,e = self._test_connection(kw)
+            c, e = self._test_connection(kw)
             if c:
                 self._connected_color = 'green'
                 self._connected_label = 'Connected'

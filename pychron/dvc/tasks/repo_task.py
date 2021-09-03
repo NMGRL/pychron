@@ -360,7 +360,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
                   'changes later than the selected row. ' \
                   'To undo an individual commit use "Revert Selected Commit"'.format(selected.name)
             if self.confirmation_dialog(msg):
-                self._archive_repository()
+                self._archive_repository(move=False)
                 self._repo.delete_commits(hexsha)
 
     # task
@@ -371,7 +371,7 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
         return [SelectionPane(model=self)]
 
     # private
-    def _archive_repository(self, src=None):
+    def _archive_repository(self, src=None, move=True):
         if src is None:
             src = self._repo.path
         self.debug('archive repository')
@@ -382,7 +382,8 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
         name = os.path.basename(src)
         dst = unique_dir(root, name, make=False)
-        shutil.move(self._repo.path, dst)
+        func = shutil.move if move else shutil.copytree
+        func(self._repo.path, dst)
         return name, dst
 
     def _refresh_tags(self):

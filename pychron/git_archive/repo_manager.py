@@ -153,12 +153,13 @@ class GitRepoManager(Loggable):
 
         self._repo.git.reset('--hard', '{}/{}'.format(remote, branch))
 
-    def delete_commits(self, hexsha, remote='origin', branch=None):
+    def delete_commits(self, hexsha, remote='origin', branch=None, push=True):
         if branch is None:
             branch = self._repo.active_branch.name
 
         self._repo.git.reset('--hard', hexsha)
-        self._repo.git.push(remote, branch, '--force')
+        if push:
+            self._repo.git.push(remote, branch, '--force')
 
     def add_paths_explicit(self, apaths):
         self.index.add(apaths)

@@ -61,7 +61,8 @@ ICON_MAP = {'Database': icon('database'),
             'Scripts': icon('scripts_text'),
             'Dashboard': icon('dashboard'),
             'NMGRL Furnace': icon('furnace'),
-            'Repositories': icon('git')
+            'Repositories': icon('git'),
+            'Sparrow': icon('sparrow')
             }
 
 

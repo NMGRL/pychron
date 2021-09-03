@@ -65,8 +65,11 @@ class InfoInspector(ScatterInspector):
         # if not event.handled:
         #     super(InfoInspector, self).normal_left_down(event)
 
+    def normal_left_down(self, event):
+        if not event.handled:
+            super(InfoInspector, self).normal_left_down(event)
+
     def normal_left_dclick(self, event):
-        print('asfdasfdafsd', event)
         for sel in self.component.index.metadata[self.selection_metadata_name]:
             self.inspector_event = ScatterInspectorEvent(event_type='deselect', event_index=sel)
         self.component.index.metadata[self.selection_metadata_name] = []

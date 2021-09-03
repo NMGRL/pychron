@@ -18,6 +18,7 @@ from traits.api import List
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.sparrow.sparrow import Sparrow
+from pychron.sparrow.sparrow_client import SparrowClient
 from pychron.sparrow.tasks.preferences import SparrowPreferencesPane
 
 
@@ -30,11 +31,11 @@ class SparrowPlugin(BaseTaskPlugin):
     nodes = List(contributes_to='pychron.pipeline.nodes')
     predefined_templates = List(contributes_to='pychron.pipeline.predefined_templates')
 
-    def test_database(self):
+    def test_api(self):
         ret, err = True, None
 
-        s = Sparrow()
-        ret = s.connect()
+        s = SparrowClient()
+        ret = s.test_api()
         if not ret:
             err = 'Failed to connect'
         return ret, err
@@ -46,8 +47,8 @@ class SparrowPlugin(BaseTaskPlugin):
     #     if new:
     #         paths.clovera_root = new
     def _service_offers_default(self):
-        so = self.service_offer_factory(protocol=Sparrow,
-                                        factory=Sparrow)
+        so = self.service_offer_factory(protocol=SparrowClient,
+                                        factory=SparrowClient)
         return [so]
 
     # def _predefined_templates_default(self):

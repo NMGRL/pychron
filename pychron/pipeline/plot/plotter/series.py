@@ -122,7 +122,7 @@ class BaseSeries(BaseArArFigure):
         omits = self.analysis_group.get_omitted_by_tag(self.sorted_analyses)
         for o in omits:
             self.sorted_analyses[o].set_temp_status('omit')
-        print('plot', plots)
+
         if plots:
             self.xs = self._get_xs(plots, self.sorted_analyses)
             for i, po in enumerate(plots):
@@ -165,7 +165,7 @@ class BaseSeries(BaseArArFigure):
 
             color = po.marker_color
             if self.group_id:
-                color =colornames[self.group_id+1]
+                color = colornames[self.group_id + 1]
 
             args = graph.new_series(x=self.xs,
                                     display_index=ArrayDataSource(data=n),
@@ -342,11 +342,16 @@ class Series(BaseSeries):
         return ys, yerr
 
     def update_graph_metadata(self, obj, name, old, new):
-        sorted_ans = self.sorted_analyses
+        if hasattr(obj, 'suppress_update') and obj.suppress_update:
+            return
+
         if obj:
+            sorted_ans = self.sorted_analyses
             sel = self._filter_metadata_changes(obj, sorted_ans)
+            obj.suppress_update = True
             for p in self.graph.plots:
                 p.default_index.metadata['selections'] = sel
+            obj.suppress_update = False
 
     # private
     def _unpack_attr(self, attr):
