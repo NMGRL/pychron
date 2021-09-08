@@ -208,7 +208,7 @@ class AnalysisTbl(Base, IDMixin):
     @property
     def material(self):
         try:
-            return self.irradiation_position.sample.material.name
+            return self.irradiation_position.sample.material.gname
         except AttributeError:
             return ''
 

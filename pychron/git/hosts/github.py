@@ -73,7 +73,7 @@ class GitHubService(GitHostService):
             self._get(API_URL)
         except BaseException as e:
             ret = False
-            err = e
+            err = str(e)
 
         return ret, err
 

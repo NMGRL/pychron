@@ -295,6 +295,23 @@ class _TableView(TableView):
         # print 'is_external', self._editor.factory.drag_external and not self._dragging
         return self._editor.factory.drag_external  # and not self._dragging
 
+    def columnResized(self, index, old, new):
+        """ Handle user-driven resizing of columns.
+
+        This affects the column widths when not using auto-sizing.
+        """
+        if not self._is_resizing:
+            if self._user_widths is None:
+                self._user_widths = [None] * len(self._editor.adapter.columns)
+            try:
+                self._user_widths[index] = new
+            except IndexError:
+                pass
+
+            if (self._editor.factory is not None
+                    and not self._editor.factory.auto_resize):
+                self.resizeColumnsToContents()
+
     def keyPressEvent(self, event):
         # print('asfd', event, event.key(), event.modifiers(), QtGui.QKeySequence('Cmd+N'))
         # print(int(event.modifiers() & QtCore.Qt.MetaModifier),

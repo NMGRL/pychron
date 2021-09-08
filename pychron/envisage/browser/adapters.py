@@ -122,6 +122,7 @@ class AnalysisAdapter(BrowserAdapter):
                    ('Run ID', 'record_id'),
                    ('UUID', 'uuid'),
                    ('Sample', 'sample'),
+                   ('Material', 'material'),
                    ('Project', 'project'),
                    ('Repository', 'repository_identifier'),
                    ('Packet', 'packet'),
@@ -173,6 +174,7 @@ class AnalysisAdapter(BrowserAdapter):
     extract_device_width = Int
     comment_width = Int
     load_name_width = Int
+    material_width = Int
 
     review_status_image = Property
     review_status_text = Str('')
