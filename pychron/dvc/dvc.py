@@ -123,27 +123,39 @@ class DVC(Loggable):
         if self.db.connect():
             return True
 
-    def fix_identifier(self, src_id, dest_id, repo_identifier, dest_identifier, dest_aliquot, dest_step):
+    def fix_identifier(self, src_uuid, src_id, dest_id, repo_identifier, dest_identifier, dest_aliquot, dest_step):
         self.info('converting {} to {}'.format(src_id, dest_id))
         err = self.db.map_runid(src_id, dest_id)
 
         if err:
             self.warning_dialog(err)
-            return
+            return []
 
         # fix git files
         root = paths.repository_dataset_dir
 
-        sp = analysis_path(src_id, repo_identifier, root=root)
-        dp = analysis_path(dest_id, repo_identifier, root=root, mode='w', is_temp=True)
-        temps = [dp]
+        # get via uuid  if it exists then no need to make a new dest
+        sp = analysis_path(src_uuid, repo_identifier, root=root)
+        dp = None
+        temps = []
+        if sp is None:
+            sp = analysis_path(src_id, repo_identifier, root=root)
+            dp = analysis_path(dest_id, repo_identifier, root=root, mode='w', is_temp=True)
+            temps = [dp]
 
-        if not os.path.isfile(sp):
+        if not sp or not os.path.isfile(sp):
             self.info('not a file. {}'.format(sp))
             return
 
         jd = dvc_load(sp)
         jd['identifier'] = dest_identifier
+
+        dbip = self.db.get_identifier(dest_identifier)
+
+        jd['irradiation'] = dbip.level.irradiation.name
+        jd['irradiation_level'] = dbip.level.name
+        jd['irradiation_position'] = dbip.position
+
         if dest_aliquot:
             jd['aliquot'] = dest_aliquot
         if dest_step:
@@ -151,20 +163,22 @@ class DVC(Loggable):
 
         self.debug('{}>>{}'.format(sp, dp))
 
-        dvc_dump(jd, dp)
+        if dp is None:
+            dvc_dump(jd, sp)
+        else:
+            dvc_dump(jd, dp)
+            os.remove(sp)
 
-        os.remove(sp)
+            for modifier in ('baselines', 'blanks', 'extraction',
+                             'intercepts', 'icfactors', 'peakcenter', '.data'):
+                sp = analysis_path(src_id, repo_identifier, modifier=modifier, root=root)
 
-        for modifier in ('baselines', 'blanks', 'extraction',
-                         'intercepts', 'icfactors', 'peakcenter', '.data'):
-            sp = analysis_path(src_id, repo_identifier, modifier=modifier, root=root)
+                dp = analysis_path(dest_id, repo_identifier, modifier=modifier, root=root, mode='w', is_temp=True)
 
-            dp = analysis_path(dest_id, repo_identifier, modifier=modifier, root=root, mode='w', is_temp=True)
-
-            if sp and os.path.isfile(sp):
-                self.debug('{}>>{}'.format(sp, dp))
-                shutil.move(sp, dp)
-                temps.append(dp)
+                if sp and os.path.isfile(sp):
+                    self.debug('{}>>{}'.format(sp, dp))
+                    shutil.move(sp, dp)
+                    temps.append(dp)
 
         return temps
 

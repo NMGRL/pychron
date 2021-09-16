@@ -35,6 +35,7 @@ class RunIDEditItem(HasTraits):
     dest_identifier = Str
     dest_aliquot = Int
     dest_step = Str
+    uuid = Str
 
     def __init__(self, a, *args, **kw):
         super(RunIDEditItem, self).__init__(*args, **kw)
@@ -43,6 +44,7 @@ class RunIDEditItem(HasTraits):
         self.dest_aliquot = a.aliquot
         self.dest_step = a.step
         self.repository_identifier = a.repository_identifier
+        self.uuid = a.uuid
 
     @property
     def dest_record_id(self):
@@ -76,7 +78,7 @@ class RunIDEditNode(BaseDVCNode):
         for repo, items in groupby_repo(self.items):
             pss = []
             for item in items:
-                ps = self.dvc.fix_identifier(item.src_record_id,  item.dest_record_id, repo,
+                ps = self.dvc.fix_identifier(item.uuid, item.src_record_id,  item.dest_record_id, repo,
                                         item.dest_identifier, item.dest_aliquot, item.dest_step)
                 pss.extend(ps)
 
