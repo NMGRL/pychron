@@ -89,7 +89,7 @@ def schaen_2020_2(ans, **kw):
     :param ans:
     :return: ufloat
     """
-
+    wm, we, ais = 0, 0, []
     for i in range(2, len(ans) - 1):
         ais = ans[:i]
         next_a = ans[i]

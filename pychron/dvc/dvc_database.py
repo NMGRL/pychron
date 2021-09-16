@@ -96,24 +96,32 @@ def compress_times(times, delta):
     yield low, high
 
 
-def principal_investigator_filter(q, principal_investigator):
-    if ',' in principal_investigator:
-        try:
-            ln, fi = principal_investigator.split(',')
-            q = q.filter(PrincipalInvestigatorTbl.last_name == ln.strip())
-            q = q.filter(PrincipalInvestigatorTbl.first_initial == fi.strip())
-        except ValueError:
-            pass
-    elif ' ' in principal_investigator:
-        try:
-            fn, ln = principal_investigator.split(' ')
-            q = q.filter(PrincipalInvestigatorTbl.last_name == ln.strip())
-            q = q.filter(PrincipalInvestigatorTbl.first_initial == fn.strip()[0])
-        except ValueError:
-            pass
-    else:
-        q = q.filter(PrincipalInvestigatorTbl.last_name == principal_investigator)
+def principal_investigator_filter(q, principal_investigators):
+    if not isinstance(principal_investigators, (list, type)):
+        principal_investigators = (principal_investigators, )
 
+    fs = []
+    for principal_investigator in principal_investigators:
+        if ',' in principal_investigator:
+            try:
+                ln, fi = principal_investigator.split(',')
+                nf = and_(PrincipalInvestigatorTbl.last_name == ln.strip(),
+                          PrincipalInvestigatorTbl.first_initial == fi.strip())
+            except ValueError:
+                pass
+        elif ' ' in principal_investigator:
+            try:
+                fn, ln = principal_investigator.split(' ')
+                nf = and_(PrincipalInvestigatorTbl.last_name == ln.strip(),
+                     PrincipalInvestigatorTbl.first_initial == fn.strip()[0])
+            except ValueError:
+                pass
+        else:
+            nf = PrincipalInvestigatorTbl.last_name == principal_investigator
+
+        fs.append(nf)
+
+    q = q.filter(or_(*fs))
     return q
 
 
@@ -1581,7 +1589,7 @@ class DVCDatabase(DatabaseAdapter):
 
             if samples or projects or project_ids or principal_investigators:
                 q = q.join(SampleTbl, ProjectTbl)
-                if principal_investigators:
+                if principal_investigators and not project_ids:
                     q = q.join(PrincipalInvestigatorTbl)
 
             if mass_spectrometers and not at:
@@ -1617,10 +1625,9 @@ class DVCDatabase(DatabaseAdapter):
                 has_filter = True
                 q = q.filter(RepositoryTbl.name.in_(repositories))
 
-            if principal_investigators:
+            if principal_investigators and not project_ids:
                 has_filter = True
-                for p in principal_investigators:
-                    q = principal_investigator_filter(q, p)
+                q = principal_investigator_filter(q, principal_investigators)
 
             if projects:
                 has_filter = True
@@ -2063,11 +2070,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = q.filter(ProjectTbl.name.like('{}%'.format(project_like)))
 
             if principal_investigators:
-                if not isinstance(principal_investigators, (list, tuple)):
-                    principal_investigators = (principal_investigators,)
-
-                for p in principal_investigators:
-                    q = principal_investigator_filter(q, p)
+                q = principal_investigator_filter(q, principal_investigators)
 
             if name_like:
                 if not isinstance(name_like, (list, tuple)):
@@ -2194,8 +2197,8 @@ class DVCDatabase(DatabaseAdapter):
 
                 # filters
                 if principal_investigators:
-                    for p in principal_investigators:
-                        q = principal_investigator_filter(q, p)
+                    q = principal_investigator_filter(q, principal_investigators)
+
 
                 if irradiation:
                     if level:

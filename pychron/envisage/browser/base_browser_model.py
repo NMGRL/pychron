@@ -574,7 +574,7 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
 
         db = self.db
         ps = db.get_projects(principal_investigators=pis,
-                             mass_spectrometers=ms)
+                             mass_spectrometers=ms, verbose_query=True)
 
         ps = self._make_project_records(ps, include_recent_first=True,
                                         include_recent=True and self.include_recent)
