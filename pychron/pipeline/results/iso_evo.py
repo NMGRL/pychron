@@ -13,17 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Str, Float
+from traits.api import Str, Float, Property, cached_property
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.pipeline.results.base import BaseResult
 
-GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature', 'rsquared', 'signal_to_blank')
-GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature', 'RSquared', 'Blank/Signal %')
+GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature', 'rsquared',
+                 'signal_to_blank', 'signal_to_baseline',
+                 'smart_filter')
+GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature', 'RSquared', 'Blank/Signal %',
+                  'Baseline/Signal %', 'Smart Filter')
 INVERTED_GOODNESS = ('rsquared',)
+
+ISO_EVO_RESULT_ARGS = ('intercept_value',
+                       'intercept_error',
+                       'normalized_error',
+                       'slope', 'outlier', 'curvature', 'rsquared')
 
 
 class IsoEvoResult(BaseResult):
+    isotope_obj = None
     n = Str
     fit = Str
     intercept_value = Float
@@ -36,6 +45,8 @@ class IsoEvoResult(BaseResult):
     curvature_goodness = None
     rsquared_goodness = None
     signal_to_blank_goodness = None
+    signal_to_baseline_goodness = None
+    smart_filter_goodness = None
 
     int_err_threshold = None
     slope_threshold = None
@@ -44,13 +55,26 @@ class IsoEvoResult(BaseResult):
     rsquared_threshold = None
     signal_to_blank_threshold = None
     signal_to_baseline_threshold = None
+    signal_to_baseline_percent_threshold = None
+    smart_filter_threshold = None
 
     int_err = None
     slope = None
     outlier = None
     curvature = None
     rsquared = None
+    normalized_err = None
     signal_to_blank = None
+    signal_to_baseline = None
+    smart_filter = None
+
+    hover_text = Property
+
+    @cached_property
+    def _get_hover_text(self):
+        a = 'RunID: {}'.format(self.record_id)
+        lines = [a]
+        return lines
 
     @property
     def goodness(self):

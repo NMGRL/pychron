@@ -227,6 +227,7 @@ class SampleEntry(DVCAble):
     approximate_age = Float
     elevation = Float
 
+    get_igsn_button = Button
     clear_sample_attributes_button = Button
     configure_sample_button = Button
     configure_pi_button = Button
@@ -494,6 +495,7 @@ class SampleEntry(DVCAble):
                                   elevation=s.elevation,
                                   lat=s.lat, lon=s.lon,
                                   note=s.note):
+
                     s.added = True
                     dvc.commit()
 
@@ -607,6 +609,16 @@ class SampleEntry(DVCAble):
                           title='Set Sample Attributes')
         self.edit_traits(view=v)
 
+    def _get_igsn_button_fired(self):
+        srv = self.application.get_service('pychron.igsn.igsn_service.IGSNService')
+        if srv is None:
+            self.warning_dialog('IGSN Plugin is required. Enable used "Help>Edit Initialization"')
+            return
+
+        igsn = srv.get_new_igsn(self.sample, self.material)
+        if igsn:
+            self.igsn = igsn
+
     def _add_sample_button_fired(self):
         if self.sample:
 
@@ -622,7 +634,8 @@ class SampleEntry(DVCAble):
 
             kw = {'project': project_spec, 'material': material_spec}
             for attr in (('name', 'sample'),
-                         'lat', 'lon', 'igsn', 'note', 'unit',
+                         'lat', 'lon', 'igsn',
+                         'note', 'unit',
                          'lithology', 'lithology_class', 'lithology_type', 'lithology_group'):
                 if isinstance(attr, tuple):
                     specattr, attr = attr

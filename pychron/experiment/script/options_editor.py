@@ -25,7 +25,7 @@ set_qt()
 from traits.api import HasTraits, Str, Any, List
 from traitsui.api import UItem, HGroup
 
-from traitsui.editors import TableEditor
+from traitsui.editors.api import TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 # ============= standard library imports ========================

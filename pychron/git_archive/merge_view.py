@@ -15,17 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import os
 
 from traits.api import HasTraits, Button, Str, Any, List
 from traitsui.api import View, UItem, HGroup, VGroup, Controller, TabularEditor
-
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.editors import TextEditor
+from traitsui.editors.api import TextEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 
@@ -68,12 +64,6 @@ class MergeModel(HasTraits):
         self.our_text = ''.join(ourtext)
         self.their_text = ''.join(theirtext)
 
-        # return
-        # cc = repo.rev_parse(ourhexsha)
-        # self.left_text = cc.data_stream.read()
-        # cc = repo.rev_parse(theirhexsha)
-        # self.right_text = cc.data_stream.read()
-
     def accept_their(self, fl=None):
         self._merge_accept(fl, 'theirs')
 
@@ -83,15 +73,17 @@ class MergeModel(HasTraits):
     def commit(self):
         self.repo.commit('merged {}/{} with local/{}'.format(self.remote, self.branch, self.branch))
 
-    def _merge_accept(self, fl, k):
+    def _merge_accept(self, fl, strategy):
         if fl is None:
             fl = self.conflicts
 
         repo = self.repo.active_repo
         for fi in fl:
-            repo.git.checkout('--{}'.format(k), fi.path)
+            repo.git.checkout('--{}'.format(strategy), fi.path)
             self.repo.add(fi.path, commit=False)
             self.conflicts.remove(fi)
+
+        self.repo.commit('merged {} with local/{}. strategy={}'.format(self.remote, self.branch, strategy))
 
 
 class ConflictAdapter(TabularAdapter):

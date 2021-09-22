@@ -175,6 +175,7 @@ if Canvas is not None:
             # self.stroke_rect((0,0,full_page_width-page_offset_x-2, full_page_height-page_offset_y-2))
             # self.stroke_rect((0,0,page_width, page_height))
 
+            print(page_width, page_height, width, height)
             aspect = float(width) / float(height)
             if aspect >= page_width / page_height:
                 # We are limited in width, so use widths to compute the scale

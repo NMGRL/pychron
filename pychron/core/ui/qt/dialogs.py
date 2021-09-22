@@ -16,20 +16,54 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import time
-from threading import Event, currentThread, _MainThread, Thread
+from threading import Event, currentThread, Thread
 
 from pyface.api import OK, YES
+from pyface.i_dialog import MDialog
 from pyface.message_dialog import MessageDialog
 from pyface.qt import QtGui
 from pyface.qt.QtCore import Qt
-from pyface.qt.QtGui import QMessageBox
+from pyface.qt.QtGui import QMessageBox, QPrintDialog, QPrinter
 from pyface.qt.QtGui import QSizePolicy, QCheckBox
 from pyface.ui.qt4.confirmation_dialog import ConfirmationDialog
-# ============= local library imports  ==========================
 from pyface.ui.qt4.dialog import Dialog
+from pyface.ui.qt4.window import Window
+
+# ============= local library imports  ==========================
 from traits.api import Str
 
 from pychron.core.ui.gui import invoke_in_main_thread
+
+
+class PrinterDialog(Dialog):
+    printer = None
+
+    def is_landscape(self):
+        layout = self.printer.pageLayout()
+        return bool(layout.orientation())
+
+    def pagesize(self):
+        r = self.printer.pageRect()
+        return r.width(), r.height()
+
+    def print_enabled(self):
+        return self.return_code == 10
+
+    def open(self):
+        super(PrinterDialog, self).open()
+        return self.print_enabled()
+
+    def _create_control(self, parent):
+        dlg = QPrintDialog(parent=parent)
+        self.control = dlg
+        return dlg
+
+    def _create_contents(self, control):
+        pass
+
+    def close(self, force=False):
+        self.printer = self.control.printer()
+        super(PrinterDialog, self).close(force=force)
 
 
 class myMessageMixin(object):
@@ -46,6 +80,7 @@ class myMessageMixin(object):
 
         evt = Event()
         ct = currentThread()
+        from threading import _MainThread
         if isinstance(ct, _MainThread):
             if timeout:
                 t = Thread(target=self._timeout_loop, args=(timeout, evt))

@@ -51,13 +51,16 @@ class MediaStorageManager(Loggable):
         return self.storage.get_base_url()
 
     def put(self, local_path, remote_path):
+        self.debug('put. local={} remote={}'.format(local_path, remote_path))
         self.storage.put(local_path, remote_path)
         return '{}:{}'.format(self.get_base_url(), remote_path)
 
     def get(self, remote_path, dest):
+        self.debug('get. remote={} dest={}'.format(remote_path, dest))
         self.storage.get(remote_path, dest)
 
     def exists(self, remote_path):
-        self.storage.exists(remote_path)
+        self.debug('exists. remote={}'.format(remote_path))
+        return self.storage.exists(remote_path)
 
 # ============= EOF =============================================

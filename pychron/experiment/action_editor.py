@@ -22,7 +22,7 @@ import yaml
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, List, Enum, Float, Int, Button, Any, Property, Str
 from traitsui.api import View, Item, Controller, UItem, HGroup, VGroup
-from traitsui.editors import ListEditor
+from traitsui.editors.api import ListEditor
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension

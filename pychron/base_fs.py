@@ -36,7 +36,7 @@ class BaseFS(HasTraits):
         return self._directory_dialog(False, **kw)
 
     def save_directory_dialog(self, **kw):
-        return self._directory_dialog(True)
+        return self._directory_dialog(True, **kw)
 
     # private
     def _directory_dialog(self, new_directory, **kw):

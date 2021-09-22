@@ -23,7 +23,7 @@ from traitsui.api import View, Item, UItem, HGroup, Group, VGroup, spring, Sprin
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.pdf_graphics_context import UNITS_MAP
 from pychron.core.persistence_options import BasePersistenceOptions
-from pychron.core.pychron_traits import BorderVGroup
+from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.persistence_loggable import dumpable
 from pychron.pychron_constants import SIG_FIGS
@@ -40,23 +40,28 @@ mgrp = BorderVGroup(HGroup(Spring(springy=False, width=100),
                     HGroup(Spring(springy=False, width=100), Item('bottom_margin', label='Bottom'),
                            spring),
                     label='Margins')
-cgrp = VGroup()
+# cgrp = VGroup()
 
 sgrp = BorderVGroup(Item('page_type'),
-                    Item('fit_to_page'),
+                    Item('fit_to_page', label='Stretch to Page'),
                     HGroup(Item('use_column_width', enabled_when='not fit_to_page'),
                            Item('columns', enabled_when='use_column_width')),
                     HGroup(Item('fixed_width', label='W', enabled_when='not use_column_width and not fit_to_page or '
                                                                        'page_type=="custom"'),
-                           Item('fixed_height', label='H', enabled_when='not fit_to_page or page_type=="custom"'),
-                           Item('units', enabled_when='not fit_to_page or page_type=="custom"')),
+                           Item('fixed_height', label='H', visible_when='not fit_to_page or page_type=="custom"'),
+                           Item('units', visible_when='not fit_to_page or page_type=="custom"')),
 
                     label='Size')
 
+agrp = BorderHGroup(Item('valign', label='Vertical'),
+                    Item('halign', label='Horizontal'),
+                    label='Align')
+
 PDFLayoutGroup = VGroup(Item('orientation'),
+                        agrp,
                         mgrp,
                         sgrp,
-                        cgrp,
+                        # cgrp,
                         label='Layout')
 
 PDFLayoutView = okcancel_view(PDFLayoutGroup,
@@ -83,6 +88,9 @@ class BasePDFOptions(BasePersistenceOptions):
     columns = dumpable(Enum('1', '2', '3', '2/3'))
     fit_to_page = dumpable(Bool)
 
+    valign = dumpable(Enum('center', 'top', 'bottom'))
+    halign = dumpable(Enum('center', 'left', 'right'))
+
     @property
     def bounds(self):
         units = UNITS_MAP[self.units]
@@ -91,30 +99,24 @@ class BasePDFOptions(BasePersistenceOptions):
         else:
             page = PAGE_MAP[self.page_type]
 
+        if self.orientation == 'landscape':
+            page = landscape(page)
+
         if self.fit_to_page:
-            if self.orientation == 'landscape':
-                b = [page[1], page[0]]
-            else:
-                b = [page[0], page[1]]
-
-            b[0] -= (self.left_margin + self.right_margin) * units
-            b[1] -= (self.top_margin + self.bottom_margin) * units
-
+            page[0] -= (self.left_margin + self.right_margin) * units
+            page[1] -= (self.top_margin + self.bottom_margin) * units
         elif self.use_column_width:
-            if self.orientation == 'landscape':
-                page = landscape(page)
-                width_margins = self.bottom_margin + self.top_margin
-            else:
-                width_margins = self.left_margin + self.right_margin
-            fw = page[0]
-            w = fw - width_margins * units
-            # print 'cw', w, fw, width_margins, width_margins * units, COLUMN_MAP[self.columns]
-            nw = w * COLUMN_MAP[self.columns]
-            b = [nw, nw]
-        else:
-            b = [self.fixed_width * units, self.fixed_height * units]
+            width_margins = (self.left_margin + self.right_margin) * units
+            height_margins = (self.top_margin + self.bottom_margin) * units
 
-        return b
+            w = page[0] - width_margins
+            nw = w * COLUMN_MAP[self.columns]
+
+            page = [nw, page[1] - height_margins]
+        else:
+            page = [self.fixed_width * units, self.fixed_height * units]
+
+        return page
 
     @property
     def page_size(self):

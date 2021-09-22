@@ -23,6 +23,7 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem, Splitter
 from traits.api import Instance, Bool, on_trait_change, Any
 
 from pychron.core.pdf.save_pdf_dialog import save_pdf
+from pychron.core.printer.printer import print_component
 from pychron.dvc import dvc_dump
 from pychron.dvc.func import repository_has_staged
 from pychron.dvc.util import DVCInterpretedAge
@@ -30,6 +31,7 @@ from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.recall_editor import RecallEditor
 from pychron.envisage.browser.view import InterpretedAgeBrowserView
 from pychron.globals import globalv
+from pychron.options.options_manager import options_load_json
 from pychron.paths import paths
 from pychron.pipeline.engine import PipelineEngine, Pipeline, NodeGroup
 from pychron.pipeline.nodes.figure import FigureNode
@@ -40,7 +42,8 @@ from pychron.pipeline.state import EngineState
 from pychron.pipeline.tasks.actions import RunAction, ResumeAction, ResetAction, \
     ConfigureRecallAction, TagAction, SetInterpretedAgeAction, ClearAction, SavePDFAction, SetInvalidAction, \
     SetFilteringTagAction, \
-    EditAnalysisAction, RunFromAction, PipelineRecallAction, LoadReviewStatusAction, DiffViewAction, SaveTableAction
+    EditAnalysisAction, RunFromAction, PipelineRecallAction, LoadReviewStatusAction, DiffViewAction, SaveTableAction, \
+    PrintFigureAction, PlayVideoAction
 from pychron.pipeline.tasks.interpreted_age_factory import set_interpreted_age
 from pychron.pipeline.tasks.panes import PipelinePane, AnalysesPane, RepositoryPane, EditorOptionsPane
 from pychron.pychron_constants import PLATEAU, ISOCHRON, WEIGHTED_MEAN, MSEM
@@ -57,6 +60,7 @@ class PipelineTask(BaseBrowserTask):
 
     tool_bars = [SToolBar(PipelineRecallAction(),
                           ConfigureRecallAction(),
+                          PlayVideoAction(),
                           name='Recall'
                           ),
                  SToolBar(RunAction(),
@@ -68,6 +72,7 @@ class PipelineTask(BaseBrowserTask):
                           name='Pipeline'),
                  SToolBar(SavePDFAction(),
                           # SaveFigureAction(),
+                          PrintFigureAction(),
                           name='Save'),
                  SToolBar(EditAnalysisAction(),
                           name='Edit'),
@@ -88,6 +93,7 @@ class PipelineTask(BaseBrowserTask):
     modified = False
     projects = None
     diff_enabled = Bool
+    is_figure_editor = Bool
 
     _browser_info = None
     _interpreted_age_browser_info = None
@@ -99,7 +105,7 @@ class PipelineTask(BaseBrowserTask):
 
         self.engine.dvc = self.dvc
         self.browser_model.dvc = self.dvc
-        self.browser_model.analysis_table.dvc = self.dvc
+        self.browser_model.table.dvc = self.dvc
 
         self.engine.browser_model = self.browser_model
         self.engine.interpreted_age_browser_model = self.interpreted_age_browser_model
@@ -270,8 +276,8 @@ class PipelineTask(BaseBrowserTask):
                     self.active_editor.figure_model = None
                     self.active_editor.refresh_needed = True
 
-                self.browser_model.analysis_table.set_tags(tag, items)
-                self.browser_model.analysis_table.remove_invalid()
+                self.browser_model.table.set_tags(tag, items)
+                self.browser_model.table.remove_invalid()
                 self.engine.remove_invalid()
 
     def set_invalid(self):
@@ -329,6 +335,14 @@ class PipelineTask(BaseBrowserTask):
                 run_groups = {'unknowns': ggs, 'machine_unknowns': ggs}
                 writer.build(run_groups, options=options)
 
+    def print_figure(self):
+        self.debug('print figure')
+        if not self.has_active_editor():
+            return
+        ed = self.active_editor
+        if isinstance(ed, FigureEditor):
+            print_component(ed.component)
+
     def save_figure_pdf(self):
         self.debug('save figure pdf')
         if not self.has_active_editor():
@@ -373,6 +387,27 @@ class PipelineTask(BaseBrowserTask):
         self.engine.save_pipeline_template()
 
     # action handlers
+    def import_options(self):
+        p = self.open_file_dialog(default_directory=os.path.join(paths.home, 'Desktop'),
+                                  wildcard_args=('JSON', '*.json'))
+        if p and os.path.isfile(p):
+            try:
+                obj = options_load_json(p)
+            except BaseException as e:
+                self.debug('invalid options json file. {}'.format(e))
+                self.information_dialog('Failed adding {}'.format(p))
+                return
+
+            if obj.manager_id:
+                op = os.path.join(paths.plotter_options_dir, globalv.username, obj.manager_id,
+                                  '{}.json'.format(obj.name))
+                self.debug('dumping to {}'.format(op))
+                with open(op, 'w') as wfile:
+                    obj.dump(wfile)
+                self.information_dialog('Options {} added successfully'.format(obj.name))
+            else:
+                self.information_dialog('Failed adding {}. Manager ID missing from file'.format(p))
+
     def edit_runid(self):
         self._set_action_template('Edit RunID')
 
@@ -581,9 +616,11 @@ class PipelineTask(BaseBrowserTask):
         self.reset()
 
     def _active_editor_changed(self, new):
+        self.is_figure_editor = False
         if new:
             self.engine.select_node_by_editor(new)
             if isinstance(new, FigureEditor):
+                self.is_figure_editor = True
                 if hasattr(new.plotter_options, 'get_group_colors'):
                     self.analyses_pane.unknowns_adapter.set_colors(new.plotter_options.get_group_colors())
                     self.engine.refresh_table_needed = True
@@ -652,7 +689,12 @@ class PipelineTask(BaseBrowserTask):
     @on_trait_change('engine:recall_analyses_needed')
     def _handle_recall(self, new):
         if not isinstance(new, DVCInterpretedAge):
-            self.recall(new)
+            self.recall(new, use_quick=False)
+
+    @on_trait_change('engine:play_analysis_video_needed')
+    def _handle_video(self, new):
+        if not isinstance(new, DVCInterpretedAge):
+            self.play_analysis_video(new)
 
     def _prompt_for_save(self):
         if globalv.ignore_shareable:

@@ -30,6 +30,7 @@ from pychron.git_archive.git_objects import GitSha, GitTag
 
 TAG_RE = re.compile(r'(?P<tag>^\<[\w ]+\>)')
 
+LOGFMT = '--pretty=%H|%cn|%ce|%ct|%s'
 
 def from_gitlog(obj, tag=None):
     hexsha, author, email, ct, message = obj.split('|')
@@ -51,7 +52,7 @@ def from_gitlog(obj, tag=None):
     return g
 
 
-def gitlog(repo, branch=None, args=None, path=None, limit=None):
+def gitlog(repo, branch=None, args=None, path=None, limit=None, greps=None):
     cmd = []
     if branch:
         cmd.append(branch)
@@ -64,8 +65,19 @@ def gitlog(repo, branch=None, args=None, path=None, limit=None):
     if args:
         cmd.extend(args)
 
+    if greps:
+        if isinstance(greps, str):
+            cmd.append('--grep={}'.format(greps))
+        else:
+            cmd.extend(greps)
+
     if path:
-        cmd.extend(['--', path])
+        cmd.append('--')
+        if isinstance(path, list):
+            cmd.extend(path)
+        else:
+            cmd.append(path)
+
     return repo.git.log(*cmd)
 
 
@@ -74,9 +86,9 @@ def get_head_commit(repo):
     return from_gitlog(txt.strip(), '')
 
 
-def get_commits(repo, branch, path, tag, *args, limit=None):
+def get_commits(repo, branch, path, tag, *args, limit=None, greps=None):
     repo = get_repo(repo)
-    txt = gitlog(repo, branch=branch, args=args, path=path, limit=limit)
+    txt = gitlog(repo, branch=branch, args=args, path=path, limit=limit, greps=greps)
 
     return [from_gitlog(l.strip(), tag) for l in txt.split('\n')] if txt else []
 

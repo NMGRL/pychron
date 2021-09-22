@@ -18,10 +18,13 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import os
+import platform
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.yaml import yload
 from pychron.paths import paths
+
+IS_WINDOWS = platform.system() == 'Windows'
 
 STARTUP_MESSAGE_POSITION = (100, 300)
 
@@ -83,7 +86,14 @@ MSE = 'SE but if MSWD>1 use SE * sqrt(MSWD)'
 ERROR_TYPES = [MSEM, SEM, SD]
 SIG_FIGS = range(0, 15)
 STD_SIG_FIGS = ['Std', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+SCHAEN2020_1 = 'Schaen 2020. (Low MSWD weighted mean)'
+SCHAEN2020_2 = 'Schaen 2020. (Weighted mean filter)'
+SCHAEN2020_3 = 'Schaen 2020. (Normality)'
+SCHAEN2020_3youngest = 'Schaen 2020. (Normality, youngest)'
+DEINO = 'Deino. Filter Extreme'
 
+CUMULATIVE = 'Cumulative'
+KERNEL = 'Kernel'
 WEIGHTED_MEAN = 'Weighted Mean'
 PLATEAU = 'Plateau'
 INTEGRATED = 'Total Integrated'
@@ -92,8 +102,9 @@ VALID_INTEGRATED = 'Valid Integrated'
 PLATEAU_INTEGRATED = '{} Integrated'.format(PLATEAU)
 AUTO_LINEAR_PARABOLIC = 'Auto Linear/Parabolic'
 AUTO_N = 'Auto N'
+EXPONENTIAL = 'exponential'
 FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
-             'Average', 'Exponential', WEIGHTED_MEAN, 'Custom', AUTO_LINEAR_PARABOLIC]
+             'Average', EXPONENTIAL.capitalize(), WEIGHTED_MEAN, 'Custom', AUTO_LINEAR_PARABOLIC]
 
 FIT_ERROR_TYPES = [SD, SEM, MSEM, 'CI', 'MonteCarlo']
 SERIES_FIT_TYPES = [NULL_STR] + FIT_TYPES

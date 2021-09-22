@@ -178,6 +178,12 @@ class BaseRegressor(HasTraits):
     def _get_rsquared_adj(self):
         return 0
 
+    def get_fit_dict(self):
+        return {'fit': self.fit, 'error_type': self.error_calc_type}
+
+    def determine_fit(self):
+        return self.fit
+
     def get_xsquared_coefficient(self):
         x = self.clean_xs
         y = self.clean_ys
@@ -219,6 +225,15 @@ class BaseRegressor(HasTraits):
                 excludes = list(exclude.nonzero()[0])
                 self.truncate_excluded = excludes
                 self.dirty = True
+            else:
+                try:
+                    trunc = int(trunc)
+                    excludes = [i for i, _ in enumerate(self.xs) if i>trunc]
+
+                    self.truncate_excluded = excludes
+                    self.dirty = True
+                except ValueError:
+                    pass
 
     def calculate(self, *args, **kw):
         pass
@@ -475,7 +490,10 @@ class BaseRegressor(HasTraits):
 
     def _clean_array(self, v):
         exc = self.get_excluded()
-        return delete(v, list(exc), 0)
+        try:
+            return delete(v, list(exc), 0)
+        except IndexError:
+            return v
 
     def _check_integrity(self, x, y, verbose=False):
         nx, ny = len(x), len(y)

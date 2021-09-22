@@ -33,6 +33,7 @@ from pychron.core.helpers.fits import natural_name_fit, fit_to_degree
 from pychron.core.regression.least_squares_regressor import ExponentialRegressor, FitError, LeastSquaresRegressor
 from pychron.core.regression.mean_regressor import MeanRegressor
 from pychron.core.regression.ols_regressor import PolynomialRegressor
+from pychron.pychron_constants import AUTO_N
 
 
 def fit_abbreviation(fit, ):
@@ -341,10 +342,12 @@ class IsotopicMeasurement(BaseMeasurement):
 
             if isinstance(fit, (int, str, six.text_type)):
                 self.attr_set(fit=fit)
+            elif isinstance(fit, dict):
+                self.attr_set(**fit)
             else:
 
                 fitname = fit.fit
-                if fitname == 'Auto':
+                if fitname == AUTO_N:
                     fitname = fit.auto_fit(self.n)
                 elif fitname == 'Custom':
                     fitname = 'custom:{}'.format(fit.fitfunc)
@@ -354,14 +357,14 @@ class IsotopicMeasurement(BaseMeasurement):
                               error_type=fit.error_type or 'SEM',
                               include_baseline_error=fit.include_baseline_error or False)
 
-                self._regressor = None
-
                 self.set_filter_outliers_dict(filter_outliers=bool(fit.filter_outliers),
                                               iterations=int(fit.filter_outlier_iterations or 0),
                                               std_devs=int(fit.filter_outlier_std_devs or 0),
                                               use_standard_deviation_filtering=fit.use_standard_deviation_filtering,
                                               use_iqr_filtering=fit.use_iqr_filtering)
                 self.truncate = fit.truncate
+
+            self._regressor = None
 
     def set_uvalue(self, v):
         if isinstance(v, tuple):
@@ -439,7 +442,6 @@ class IsotopicMeasurement(BaseMeasurement):
 
     def _regressor_factory(self, fit):
         lfit = fit.lower()
-
         reg = self._regressor
 
         if 'average' in lfit:
@@ -454,7 +456,7 @@ class IsotopicMeasurement(BaseMeasurement):
                 reg.construct_fitfunc(lfit)
         elif not isinstance(reg, PolynomialRegressor):
             reg = PolynomialRegressor()
-            reg.set_degree(fit_to_degree(fit), refresh=False)
+            reg.set_degree(fit, refresh=False)
 
         xs, ys = self.get_data()
         reg.trait_set(xs=xs, ys=ys,
@@ -465,6 +467,8 @@ class IsotopicMeasurement(BaseMeasurement):
         if self.truncate:
             reg.set_truncate(self.truncate)
         try:
+            fit = reg.determine_fit()
+            self.fit = fit
             reg.calculate()
         except FitError as e:
             reg = self._regressor_factory('average')

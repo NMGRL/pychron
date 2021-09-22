@@ -50,12 +50,6 @@ class BaseTasksApplication(TasksApplication, Loggable):
         if globalv.use_startup_tests:
             self.do_startup_tests()
 
-        if globalv.use_testbot:
-            from pychron.testbot.testbot import TestBot
-
-            testbot = TestBot(application=self)
-            testbot.run()
-
     def do_startup_tests(self, force_show_results=False, **kw):
         st = StartupTester()
         for plugin in iter(self.plugin_manager):
@@ -222,7 +216,10 @@ class BaseTasksApplication(TasksApplication, Loggable):
                         self._prepare_exit()
 
     def _on_window_closed(self, window, trait_name, event):
-        self.windows.remove(window)
+        try:
+            self.windows.remove(window)
+        except ValueError:
+            self.debug('window {} already removed'.format(window))
 
         # Event notification.
         self.window_closed = TaskWindowEvent(window=window)

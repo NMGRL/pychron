@@ -19,7 +19,7 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import Color, Instance, DelegatesTo, List, Any, Property, Button, Event
 from traitsui.api import View, Item, UItem, VGroup, HGroup, spring, \
     Group, Spring, Label, VSplit, UReadonly, ListEditor, Readonly
-from traitsui.editors import TableEditor, EnumEditor
+from traitsui.editors.api import TableEditor, EnumEditor
 from traitsui.table_column import ObjectColumn
 
 from pychron.core.helpers.traitsui_shortcuts import VFold

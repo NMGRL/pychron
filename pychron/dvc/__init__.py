@@ -155,6 +155,9 @@ UUID_RE = re.compile(r'^[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3
 
 def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None, is_temp=False,
                    force_sublen=False):
+
+    runid = runid.replace(':', '_')
+
     if root is None:
         root = paths.repository_dataset_dir
 
@@ -167,7 +170,7 @@ def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r'
     if force_sublen:
         sublen = force_sublen
     elif UUID_RE.match(runid):
-        sublen = 5, 2
+        sublen = 5, 3, 2
     elif WISCAR_ID_RE.match(runid):
         sublen = 3
     else:

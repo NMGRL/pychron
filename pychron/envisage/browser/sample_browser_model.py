@@ -44,7 +44,7 @@ class SampleBrowserModel(AnalysisBrowserModel):
 
         self.debug('reattach')
 
-        ans = sorted(self.analysis_table.oanalyses, key=attrgetter('uuid'))
+        ans = sorted(self.table.oanalyses, key=attrgetter('uuid'))
         uuids = [ai.uuid for ai in ans]
         nans = self.db.get_analyses_uuid(uuids)
 
@@ -56,11 +56,11 @@ class SampleBrowserModel(AnalysisBrowserModel):
 
     def dump_browser(self):
         super(SampleBrowserModel, self).dump_browser()
-        self.analysis_table.dump()
+        self.table.dump()
 
     def activated(self, force=False):
         self.reattach()
-        self.analysis_table.load()
+        self.table.load()
 
         if not self.is_activated or force:
             self.load_browser_options()
@@ -74,27 +74,27 @@ class SampleBrowserModel(AnalysisBrowserModel):
             self._top_level_filter = None
 
     def load_review_status(self):
-        self.analysis_table.load_review_status()
+        self.table.load_review_status()
 
     def get_analysis_records(self):
         # if not self.sample_view_active:
         #     return self.time_view_model.get_analysis_records()
         # else:
-        #     return self.analysis_table.get_analysis_records()
-        return self.analysis_table.get_analysis_records()
+        #     return self.table.get_analysis_records()
+        return self.table.get_analysis_records()
 
     def get_selection(self, low_post, high_post, unks=None, selection=None, make_records=True):
         ret = None
         if selection is None:
-            if self.analysis_table.selected:
-                ret = self.analysis_table.selected
+            if self.table.selected:
+                ret = self.table.selected
             # elif self.time_view_model.selected:
             #     ret = self.time_view_model.selected
             else:
                 selection = self.selected_samples
 
         if selection:
-            iv = not self.analysis_table.omit_invalid
+            iv = not self.table.omit_invalid
             uuids = [x.uuid for x in unks] if unks else None
             ret = [ai for ai in self._retrieve_analyses(samples=selection,
                                                         exclude_uuids=uuids,
@@ -144,7 +144,7 @@ class SampleBrowserModel(AnalysisBrowserModel):
                 return
             xx = self._get_analysis_series(pad.low_post, pad.high_post, ms)
 
-        self.analysis_table.set_analyses(xx)
+        self.table.set_analyses(xx)
 
     def delete_analysis_group(self):
         self.debug('delete analysis groups')
@@ -193,14 +193,14 @@ class SampleBrowserModel(AnalysisBrowserModel):
     #     self.dump()
 
     def _selected_samples_changed_hook(self, new):
-        self.analysis_table.selected = []
+        self.table.selected = []
 
         ans = []
         if new:
-            at = self.analysis_table
+            at = self.table
             lim = at.limit
 
-            uuids = [ai.uuid for ai in self.analysis_table.analyses]
+            uuids = [ai.uuid for ai in self.table.analyses]
 
             kw = dict(limit=lim,
                       include_invalid=not at.omit_invalid,
@@ -218,7 +218,7 @@ class SampleBrowserModel(AnalysisBrowserModel):
             self.debug('selected samples changed. loading analyses. '
                        'low={}, high={}, limit={} n={}'.format(lp, hp, lim, len(ans)))
 
-        self.analysis_table.set_analyses(ans, selected_identifiers={ai.identifier for ai in new})
+        self.table.set_analyses(ans, selected_identifiers={ai.identifier for ai in new})
 
     # private
     def _load_recent(self):
@@ -246,14 +246,14 @@ class SampleBrowserModel(AnalysisBrowserModel):
                 self.osamples = sams
 
                 xx = self._get_analysis_series(lp, now, v.mass_spectrometers, analysis_types=v.analysis_types)
-                self.analysis_table.set_analyses(xx)
+                self.table.set_analyses(xx)
             else:
                 self.samples = []
                 self.osamples = []
-                self.analysis_table.clear()
+                self.table.clear()
 
     def _find_references_hook(self):
-        ans = self.analysis_table.analyses
+        ans = self.table.analyses
         ms = list({a.mass_spectrometer.lower() for a in ans if a.mass_spectrometer})
         es = list({a.extract_device.lower() for a in ans if a.extract_device})
         irs = list({'{},{}'.format(a.irradiation, a.irradiation_level.upper()) for a in ans})
@@ -279,7 +279,7 @@ class SampleBrowserModel(AnalysisBrowserModel):
                                     'Spectrometers from the "Configure Find References" window')
                 return
             if m.replace:
-                self.analysis_table.clear()
+                self.table.clear()
 
             atypes = m.formatted_analysis_types
             if atypes:
@@ -288,7 +288,7 @@ class SampleBrowserModel(AnalysisBrowserModel):
                                                mass_spectrometers=m.mass_spectrometers,
                                                hours=m.threshold, make_records=False)
                 if refs:
-                    self.analysis_table.add_analyses(refs)
+                    self.table.add_analyses(refs)
                 else:
                     atypes = ','.join(atypes)
                     ms = ','.join(m.mass_spectrometers)
@@ -300,7 +300,7 @@ class SampleBrowserModel(AnalysisBrowserModel):
                 i, l = irstr.split(',')
                 r = self.db.get_flux_monitor_analyses(i, l, m.monitor_sample)
                 if r:
-                    self.analysis_table.add_analyses(r)
+                    self.table.add_analyses(r)
 
                 if atypes:
                     refs = self.db.find_references(r, atypes,
@@ -308,7 +308,7 @@ class SampleBrowserModel(AnalysisBrowserModel):
                                                    mass_spectrometers=m.mass_spectrometers,
                                                    hours=m.threshold, make_records=False)
                     if refs:
-                        self.analysis_table.add_analyses(refs)
+                        self.table.add_analyses(refs)
 
     def _project_date_bins(self, identifier):
         db = self.db
@@ -333,7 +333,7 @@ class SampleBrowserModel(AnalysisBrowserModel):
 
     def _selected_projects_change_hook(self, names):
         self.selected_samples = []
-        self.analysis_table.clear_non_frozen()
+        self.table.clear_non_frozen()
         #
         if not self._top_level_filter:
             self._top_level_filter = 'project'

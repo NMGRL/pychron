@@ -22,7 +22,7 @@ from traitsui.api import View, UItem, VGroup, HGroup, Group, VSplit
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.editors import TableEditor, InstanceEditor, ListEditor
+from traitsui.editors.api import TableEditor, InstanceEditor, ListEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from pychron.core.ui.custom_label_editor import CustomLabel

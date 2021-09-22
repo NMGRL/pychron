@@ -612,6 +612,18 @@ def install_setupfiles_only():
     return cfg
 
 
+def install_setupfiles_only():
+    info_header('Install Setupfiles only')
+    cfg = {}
+    vv = input('Install setup files only [n]')
+    if vv.lower() in ('y', 'yes'):
+        cfg['install_exp_setupfiles'] = True
+        cfg['pychron_data_dir'] = 'PychronUF'
+        cfg['include_hardware_plugins'] = True
+
+    return cfg
+
+
 def ask_config():
     info_header('Getting User Configuration')
     YES = ('y', 'yes', 'Y', 'Yes', 'YES')
@@ -702,7 +714,7 @@ def build_requirements(cfg):
                   'traits', 'traitsui', 'pyface',
                   'envisage', 'sqlalchemy', 'Reportlab', 'lxml', 'xlrd', 'xlwt', 'xlsxwriter', 'requests', 'keyring',
                   'pillow', 'gitpython', 'cython', 'pytables', 'pyproj', 'pymysql', 'certifi', 'jinja2', 'swig=3',
-                  cfg['qt_bindings']]
+                  'importlib_resources', cfg['qt_bindings']]
     conda_other_channels = [['-c', 'dbanas', 'chaco']]
     if IS_MAC:
         conda_reqs.append('python.app')

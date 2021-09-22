@@ -20,7 +20,7 @@ from traits.api import Str, List, Bool
 from traitsui.api import View, Item, UItem, VGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.editors import CheckListEditor
+from traitsui.editors.api import CheckListEditor
 
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
