@@ -915,7 +915,7 @@ class SwitchManager(Manager):
         if p and os.path.isfile(p):
             obj = yload(p)
 
-        return obj
+        return obj or {}
 
     def _load_valves_from_file(self, path):
         self.info('loading valve definitions file  {}'.format(path))
