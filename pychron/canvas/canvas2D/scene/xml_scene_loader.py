@@ -129,6 +129,7 @@ class XMLLoader(BaseLoader):
         if type_tag in ('turbo', 'laser'):
             scene.overlays.append(rect)
             rect.scene_visible = False
+            rect.use_symbol = to_bool(elem.get('use_symbol', key))
 
         if rect.name:
             scene.rects[rect.name] = rect

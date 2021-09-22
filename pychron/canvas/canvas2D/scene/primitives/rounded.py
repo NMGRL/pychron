@@ -64,6 +64,9 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
     def get_tooltip_text(self):
         return 'Stage={}\nVolume={}'.format(self.name, self.volume)
 
+    def _get_name_xy(self, x, y, w, h):
+        return x, y
+
     def _render(self, gc):
         corner_radius = self.corner_radius
         with gc:
@@ -76,12 +79,13 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
 
             gc.set_fill_color(self._convert_color(self.name_color))
             if self.display_name:
+                x, y = self._get_name_xy(x, y, width, height)
                 self._render_textbox(gc, x, y, width, height,
                                      self.display_name)
             elif not self.display_name == '':
                 self._render_name(gc, x, y, width, height)
 
-    def _render_border(self, gc, x, y, width, height):
+    def _render_border(self, gc, x, y, width, height, use_border_gaps=True):
         if self.use_border:
 
             corner_radius = self.corner_radius
@@ -97,7 +101,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                 gc.set_stroke_color(c)
                 rounded_rect(gc, x, y, width, height, corner_radius)
 
-            if self.use_border_gaps:
+            if self.use_border_gaps and use_border_gaps:
                 # from pychron.canvas.canvas2D.scene.primitives.connections import Fork, Tee
 
                 with gc:
