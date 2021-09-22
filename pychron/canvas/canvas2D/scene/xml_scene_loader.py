@@ -127,7 +127,7 @@ class XMLLoader(BaseLoader):
         if font is not None:
             rect.font = font.text.strip()
 
-        if type_tag in ('turbo', 'laser'):
+        if type_tag in ('turbo', 'laser', 'ionpump'):
             scene.overlays.append(rect)
             rect.scene_visible = False
             rect.use_symbol = to_bool(elem.get('use_symbol', key))
