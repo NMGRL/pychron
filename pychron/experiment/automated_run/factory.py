@@ -55,7 +55,7 @@ from pychron.pychron_constants import NULL_STR, SCRIPT_KEYS, SCRIPT_NAMES, LINE_
     FUSIONS_DIODE, CLEANUP, PRECLEANUP, POSTCLEANUP, EXTRACT_VALUE, EXTRACT_UNITS, DURATION, WEIGHT, POSITION, PATTERN, \
     BEAM_DIAMETER, LIGHT_VALUE, COMMENT, DELAY_AFTER, EXTRACT_DEVICE, MATERIAL, PROJECT, SAMPLE, MASS_SPECTROMETER, \
     COLLECTION_TIME_ZERO_OFFSET, USE_CDD_WARMING, SKIP, OVERLAP, REPOSITORY_IDENTIFIER, RAMP_DURATION, CRYO_TEMP, \
-    TEMPLATE, USERNAME
+    TEMPLATE, USERNAME, EDITABLE_RUN_CONDITIONALS
 
 
 class AutomatedRunFactory(DVCAble, PersistenceLoggable):
@@ -1452,7 +1452,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                  root=paths.conditionals_dir,
                                  save_as=True,
                                  title='Edit Run Conditionals',
-                                 kinds=('actions', 'cancelations', 'terminations', 'truncations'))
+                                 kinds=EDITABLE_RUN_CONDITIONALS)
         if name:
             self.load_conditionals()
             self.conditionals_path = os.path.splitext(name)[0]
@@ -1462,7 +1462,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             edit_conditionals(self.conditionals_path,
                               root=paths.conditionals_dir,
                               title='Edit Run Conditionals',
-                              kinds=('actions', 'cancelations', 'terminations', 'truncations'))
+                              kinds=EDITABLE_RUN_CONDITIONALS)
             self.load_conditionals()
         else:
             self.information_dialog('Please select conditionals to edit')

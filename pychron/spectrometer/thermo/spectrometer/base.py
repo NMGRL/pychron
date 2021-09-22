@@ -402,7 +402,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         data = self.get_intensities()
         if data is not None:
 
-            keys, signals, _ = data
+            keys, signals, _, _ = data
 
             def func(k):
                 return signals[keys.index(k)] if k in keys else 0

@@ -248,7 +248,7 @@ QTEGRA_INTEGRATION_TIMES = [0.065536, 0.131072, 0.262144, 0.524288,
 
 QTEGRA_DEFAULT_INTEGRATION_TIME = 1.048576
 ISOTOPX_INTEGRATION_TIMES = [1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 20.0, 100.0]
-QUADERA_INTEGRATION_TIMES = [1.0,]
+QUADERA_INTEGRATION_TIMES = [1.0, ]
 ISOTOPX_DEFAULT_INTEGRATION_TIME = 1
 ATONA = 'ATONA'
 QUADERA_DEFAULT_INTEGRATION_TIME = 1
@@ -401,7 +401,6 @@ META_ATTRS = ('analysis_type', 'uuid', 'identifier', ALIQUOT, INCREMENT,
               'data_reduction_software', INSTRUMENT_NAME, LABORATORY,
               'experiment_queue_name', EXPERIMENT_TYPE) + SAMPLE_METADATA
 
-
 FAILED = 'failed'
 TRUNCATED = 'truncated'
 CANCELED = 'canceled'
@@ -409,5 +408,19 @@ SUCCESS = 'success'
 END_AFTER = 'end_after'
 ABORTED = 'aborted'
 NOT_RUN = 'not run'
+
+EQUILIBRATION = 'equilibration'
+ACTION = 'action'
+TRUNCATION = 'truncation'
+TERMINATION = 'termination'
+CANCELATION = 'cancelation'
+MODIFICATION = 'modification'
+POST_RUN_TERMINATION = 'post_run_termination'
+PRE_RUN_TERMINATION = 'pre_run_termination'
+POST_RUN_ACTION = 'post_run_action'
+
+CONDITIONAL_GROUP_NAMES = ['{}s'.format(t) for t in (ACTION, EQUILIBRATION, TRUNCATION, CANCELATION, TERMINATION,
+                                                     POST_RUN_TERMINATION, PRE_RUN_TERMINATION, MODIFICATION)]
+EDITABLE_RUN_CONDITIONALS = ['{}s'.format(t) for t in (ACTION, CANCELATION, TERMINATION, TRUNCATION, EQUILIBRATION)]
 
 # ============= EOF =============================================

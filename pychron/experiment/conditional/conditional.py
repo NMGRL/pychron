@@ -25,6 +25,7 @@ from traits.trait_types import BaseStr
 from uncertainties import nominal_value, std_dev
 
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import ps
 from pychron.core.yaml import yload
 from pychron.experiment.conditional.regexes import MAPPER_KEY_REGEX, \
     STD_REGEX, INTERPOLATE_REGEX, EXTRACTION_STR_ABS_REGEX, EXTRACTION_STR_PERCENT_REGEX
@@ -32,6 +33,8 @@ from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_
 from pychron.experiment.utilities.conditionals import RUN, QUEUE, SYSTEM
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.pychron_constants import TRUNCATION, ACTION, TERMINATION, PRE_RUN_TERMINATION, POST_RUN_TERMINATION, \
+    CANCELATION, POST_RUN_ACTION
 
 
 def dictgetter(d, attrs, default=None):
@@ -49,16 +52,17 @@ def dictgetter(d, attrs, default=None):
 
 def conditionals_from_file(p, name=None, level=SYSTEM, **kw):
     yd = yload(p)
-    cs = (('TruncationConditional', 'truncation', 'truncations'),
-          ('ActionConditional', 'action', 'actions'),
-          ('ActionConditional', 'action', 'post_run_actions'),
-          ('TerminationConditional', 'termination', 'terminations'),
-          ('TerminationConditional', 'pre_run_termination', 'pre_run_terminations'),
-          ('TerminationConditional', 'post_run_termination', 'post_run_terminations'),
-          ('CancelationConditional', 'cancelation', 'cancelations'))
+    cs = ((TRUNCATION, ps(TRUNCATION)),
+          (ACTION, ps(ACTION)),
+          (ACTION, ps(POST_RUN_ACTION)),
+          (TERMINATION, ps(TERMINATION)),
+          (TERMINATION, ps(PRE_RUN_TERMINATION)),
+          (TERMINATION, ps(POST_RUN_TERMINATION)),
+          (CANCELATION, ps(CANCELATION)))
 
     conddict = {}
-    for klass, _, tag in cs:
+    for klass, tag in cs:
+        klass = '{}Conditional'.format(klass.capitalize())
         if name and tag != name:
             continue
 
@@ -378,6 +382,10 @@ class TruncationConditional(AutomatedRunConditional):
                 setattr(self, tag, cd[tag])
 
 
+class EquilibrationConditional(TruncationConditional):
+    pass
+
+
 class TerminationConditional(AutomatedRunConditional):
     """
     Stop the current analysis immediately. Don't save to database.
@@ -551,6 +559,8 @@ class QueueModificationConditional(AutomatedRunConditional):
                     r.extract_value += nstep
             except StopIteration:
                 break
+
+
 
 # ============= EOF =============================================
 # attr = extract_attr(token)

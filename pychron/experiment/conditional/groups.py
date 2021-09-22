@@ -487,6 +487,10 @@ class TruncationGroup(EConditionalGroup):
     help_str = 'Truncation: Stop current measurement and CONTINUE run'
 
 
+class EquilibrationGroup(EConditionalGroup):
+    help_str = 'Equilibration Truncation: truncate measurement of current run and CONTINUE to next run'
+
+
 class EPostRunGroup(PreRunGroup):
     tabular_adapter_klass = EPRConditionalsAdapter
     help_str = 'PostRunTermination: Checked after run is completed. Cancels experiment.'
