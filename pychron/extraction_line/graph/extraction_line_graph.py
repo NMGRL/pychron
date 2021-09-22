@@ -140,7 +140,7 @@ class ExtractionLineGraph(HasTraits):
         # =======================================================================
         # load edges
         # =======================================================================
-        for tag in ('connection', 'elbow', 'vconnection', 'hconnection'):
+        for tag in ('connection', 'elbow', 'vconnection', 'hconnection', 'rconnection'):
             for ei in self._get_elements(tag):
                 skey = self._findname(ei, 'start')
                 ekey = self._findname(ei, 'end')

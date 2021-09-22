@@ -46,6 +46,7 @@ class ExtractionLineInfoTool(InfoInspector):
                 self.active = False
                 self.current_position = None
                 self.metadata_changed = True
+            event.handled = True
 
     def normal_key_pressed(self, event):
         ok = event.character == self.volume_key and not self.active
@@ -65,9 +66,14 @@ class ExtractionLineInfoTool(InfoInspector):
                 self.active = True
                 self.metadata_changed = True
 
+    # def _get_selection_state(self, event):
+    #     try:
+    #         return super(ExtractionLineInfoTool, self)._get_selection_state(event)
+    #     except AttributeError:
+    #         return False, False
+
 
 class ExtractionLineInfoOverlay(InfoOverlay):
     tool = Instance(ExtractionLineInfoTool)
 
 # ============= EOF =============================================
-

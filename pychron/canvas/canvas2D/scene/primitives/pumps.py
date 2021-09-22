@@ -26,8 +26,8 @@ class IonPump(RoundedRectangle):
     pass
 
 
-class Turbo(RoundedRectangle, Animation):
-    animate = True
+class Turbo(RoundedRectangle):
+    use_symbol = False
 
     def _render(self, gc):
         corner_radius = self.corner_radius
@@ -39,12 +39,14 @@ class Turbo(RoundedRectangle, Animation):
 
             self._render_border(gc, x, y, width, height)
             # h = height
-            w = width * 0.75
-            h = w
-            xx = x + (width - w) / 2
-            yy = y - h
-            rounded_rect(gc, xx, yy, w, h, corner_radius)
-            self._render_border(gc, xx, yy, w, h, use_border_gaps=False)
+            if self.use_symbol:
+                w = width * 0.75
+                h = w
+                xx = x + (width - w) / 2
+                yy = y - h
+                rounded_rect(gc, xx, yy, w, h, corner_radius)
+                self._render_border(gc, xx, yy, w, h, use_border_gaps=False)
+                self._draw_impeller(gc, xx, yy, w, h)
 
             gc.set_fill_color(self._convert_color(self.name_color))
             if self.display_name:
@@ -53,7 +55,6 @@ class Turbo(RoundedRectangle, Animation):
             elif not self.display_name == '':
                 self._render_name(gc, x, y, width, height)
 
-            self._draw_impeller(gc, xx, yy, w, h)
         # super(Turbo, self)._render(gc)
         # if self.animate:
         #     self._draw_impeller(gc)
@@ -70,14 +71,13 @@ class Turbo(RoundedRectangle, Animation):
             cy = y + h / 2.
             gc.translate_ctm(cx, cy)
 
-
             # gc.set_fill_color((0, 0, 0))
 
             l = 20
             w = 6
-            gc.rotate_ctm(math.radians(self.cnt))
+            # gc.rotate_ctm(math.radians(self.cnt))
             n = 6.
-            step = 360/n
+            step = 360 / n
             for i in range(int(n)):
                 with gc:
                     gc.rotate_ctm(math.radians(i * step))

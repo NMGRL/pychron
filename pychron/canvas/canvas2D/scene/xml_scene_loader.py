@@ -22,7 +22,7 @@ from numpy import Inf
 
 from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser, get_volume
 from pychron.canvas.canvas2D.scene.base_scene_loader import BaseLoader, colorify, get_offset, make_color
-from pychron.canvas.canvas2D.scene.primitives.connections import Connection, Elbow, Tee, Fork
+from pychron.canvas.canvas2D.scene.primitives.connections import Connection, Elbow, Tee, Fork, RConnection
 from pychron.canvas.canvas2D.scene.primitives.primitives import Line, Label, Image, ValueLabel
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
 from pychron.canvas.canvas2D.scene.primitives.valves import Switch, Valve, RoughValve, ManualSwitch
@@ -122,6 +122,7 @@ class XMLLoader(BaseLoader):
                      default_color=c,
                      type_tag=type_tag,
                      fill=fill)
+
         font = elem.find('font')
         if font is not None:
             rect.font = font.text.strip()
@@ -225,8 +226,7 @@ class XMLLoader(BaseLoader):
 
         connection = klass((x, y), (x1, y1),
                            default_color=(204, 204, 204),
-                           name=key,
-                           width=10)
+                           name=key)
 
         if sanchor:
             sanchor.connections.append(('start', connection))
@@ -429,6 +429,9 @@ class XMLLoader(BaseLoader):
                         ('vconnection', 'vertical')):
             for conn in cp.get_elements(tag):
                 self._new_connection(scene, conn, orientation_default=od)
+
+        for i, conn in enumerate(cp.get_elements('rconnection')):
+            c = self._new_connection(scene, conn, RConnection)
 
         for i, conn in enumerate(cp.get_elements('elbow')):
             l = self._new_connection(scene, conn, Elbow)

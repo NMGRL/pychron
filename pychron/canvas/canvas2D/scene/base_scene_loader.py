@@ -91,9 +91,6 @@ class BaseLoader:
     def load_switchables(self, scene, valvepath):
         raise NotImplementedError
 
-    def load_rects(self, scene):
-        raise NotImplementedError
-
     def load_pipettes(self, scene):
         raise NotImplementedError
 

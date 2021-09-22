@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
-
 import math
+from numpy import array
+from traits.traits import Color
 
 from pychron.canvas.canvas2D.scene.primitives.base import Connectable
 from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow
@@ -46,6 +46,9 @@ def rounded_rect(gc, x, y, width, height, corner_radius):
         gc.arc_to(x, y, x + width + corner_radius, y, corner_radius)
         gc.draw_path()
 
+# class Stop:
+#     def __init__(self, idx, r,g,b,a):
+#         pass
 
 class RoundedRectangle(Rectangle, Connectable, Bordered):
     corner_radius = 8.0
@@ -72,11 +75,12 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
         with gc:
             width, height = self.get_wh()
             x, y = self.get_xy()
+
             if self.fill:
                 rounded_rect(gc, x, y, width, height, corner_radius)
 
             self._render_border(gc, x, y, width, height)
-
+            self._render_augmented_border(gc)
             gc.set_fill_color(self._convert_color(self.name_color))
             if self.display_name:
                 x, y = self._get_name_xy(x, y, width, height)
