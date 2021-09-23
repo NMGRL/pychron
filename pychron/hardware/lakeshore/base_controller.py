@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
-from traits.api import Enum, Float, Property, List, Int
+from traits.api import Enum, Float, Property, List, Int, Bool
 from traitsui.api import Item, UItem, HGroup, VGroup, Spring
 
 from pychron.core.pychron_traits import BorderVGroup
@@ -64,9 +64,11 @@ class BaseLakeShoreController(CoreDevice):
 
     graph_klass = StreamStackedGraph
 
+    verify_setpoint = Bool
+
     def load_additional_args(self, config):
         self.set_attribute(config, 'units', 'General', 'units', default='K')
-
+        self.set_attribute(config, 'verify_setpoint', 'General', 'verify_setpoint', cast='boolean', default=True)
         # [Range]
         # 1=v<10
         # 2=10<v<30
@@ -168,6 +170,9 @@ class BaseLakeShoreController(CoreDevice):
         self.set_range(v, output)
         for i in range(retries):
             self.tell('SETP {},{}'.format(output, v))
+            if not self.verify_setpoint:
+                break
+
             time.sleep(2)
             sp = self.read_setpoint(output, verbose=True)
             self.debug('setpoint set to={} target={}'.format(sp, v))
