@@ -136,6 +136,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                         gc.line_to(xx, p2y + 5)
 
                             elif isinstance(c, BorderLine):
+                                w2 = c.width/2
                                 p1, p2 = c.start_point, c.end_point
                                 p2x, p2y = p2.get_xy()
                                 if p1.x == p2.x:
@@ -145,15 +146,15 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                             yy = y + height
 
                                     p1x, p1y = p1.get_xy()
-                                    gc.move_to(p1x - 5, yy)
-                                    gc.line_to(p1x + 5, yy)
+                                    gc.move_to(p1x - w2, yy)
+                                    gc.line_to(p1x + w2, yy)
                                 else:
                                     xx = x
 
                                     if p1.x >= self.x:
                                         xx = x + width
-                                    gc.move_to(xx, p2y - 5)
-                                    gc.line_to(xx, p2y + 5)
+                                    gc.move_to(xx, p2y - w2)
+                                    gc.line_to(xx, p2y + w2)
 
                             elif isinstance(c, Tee):
                                 if t == 'mid':

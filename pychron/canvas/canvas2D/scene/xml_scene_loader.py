@@ -93,6 +93,9 @@ class XMLLoader(BaseLoader):
 
         display_name = elem.get('display_name', key)
         fill = to_bool(elem.get('fill', 'T'))
+        border_width = elem.get('border_width', bw)
+        if border_width:
+            border_width = int(border_width)
 
         x, y = self._get_translation(elem)
         w, h = self._get_floats(elem, 'dimension')
@@ -116,7 +119,7 @@ class XMLLoader(BaseLoader):
 
         rect = klass(x + ox, y + oy, width=w, height=h,
                      name=key,
-                     border_width=bw,
+                     border_width=border_width,
                      display_name=display_name,
                      volume=get_volume(elem),
                      default_color=c,

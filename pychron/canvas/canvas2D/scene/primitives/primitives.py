@@ -674,7 +674,7 @@ class BorderLine(Line, Bordered):
     clear_horientation = False
 
     def _render(self, gc):
-        gc.save_state()
+        #gc.save_state()
         with gc:
             gc.set_line_width(self.width+self.border_width)
 
