@@ -55,47 +55,63 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         return s
 
     def set_data_pump_mode(self, mode):
-        resp = self.microcontroller.ask('General.DataPump.Mode {}'.format(mode))
+        pass
 
-    def halted(self):
-        """
-        General.Cycle.Status
-        1= halt, 5=run multi
-        """
-        resp = self.microcontroller.ask('General.Cycle.Status')
-        if resp:
-            resp = resp.strip()
-            return int(resp) == 1
+    def sink_data(self, writer, n):
 
-    def sink_data(self):
-        packet = self.microcontroller.ask('General.DataPump.Data')
+        client = self.microcontroller.communicator
+        handle = client.get_handler()
 
-        def get_bytes(n):
-            i = 0
-            while 1:
-                yield packet[i:i+n]
-                i+=n
+        # get the data
+        for i in range(int(n)):
+            size = handle.recv(4)
+            size = struct.unpack('i', size)[0]
+            str_data = client.recv(size)
+            # r = (time.time(), str_data.decode('ascii'))
+            writer.writerow([time.time(), str_data.decode('ascii')])
 
-        channel = get_bytes(1)
-        datatype = get_bytes(1)
-        status = get_bytes(1)
-        ndata = get_bytes(1)
-
-        timestamp = get_bytes(8)
-        max_data_tuples = get_bytes(2)
-        first_mass = get_bytes(2)
-        last_mass = get_bytes(2)
-        dwell_speed = get_bytes(1)
-        measure_unit_mass_resol = get_bytes(1)
-        ndata_tuples = int(get_bytes(1), 16)
-
-        for j in range(ndata_tuples):
-            intensity = get_bytes(4)
-            mass = get_bytes(2)
-            status = get_bytes(1)
-            adjust_mode = get_bytes(1)
-
-        return timestamp, channel, intensity
+    # def set_data_pump_mode(self, mode):
+    #     resp = self.microcontroller.ask('General.DataPump.Mode {}'.format(mode))
+    #
+    # def halted(self):
+    #     """
+    #     General.Cycle.Status
+    #     1= halt, 5=run multi
+    #     """
+    #     resp = self.microcontroller.ask('General.Cycle.Status')
+    #     if resp:
+    #         resp = resp.strip()
+    #         return int(resp) == 1
+    #
+    # def sink_data(self):
+    #     packet = self.microcontroller.ask('General.DataPump.Data')
+    #
+    #     def get_bytes(n):
+    #         i = 0
+    #         while 1:
+    #             yield packet[i:i+n]
+    #             i+=n
+    #
+    #     channel = get_bytes(1)
+    #     datatype = get_bytes(1)
+    #     status = get_bytes(1)
+    #     ndata = get_bytes(1)
+    #
+    #     timestamp = get_bytes(8)
+    #     max_data_tuples = get_bytes(2)
+    #     first_mass = get_bytes(2)
+    #     last_mass = get_bytes(2)
+    #     dwell_speed = get_bytes(1)
+    #     measure_unit_mass_resol = get_bytes(1)
+    #     ndata_tuples = int(get_bytes(1), 16)
+    #
+    #     for j in range(ndata_tuples):
+    #         intensity = get_bytes(4)
+    #         mass = get_bytes(2)
+    #         status = get_bytes(1)
+    #         adjust_mode = get_bytes(1)
+    #
+    #     return timestamp, channel, intensity
 
     def make_configuration_dict(self):
         return {}

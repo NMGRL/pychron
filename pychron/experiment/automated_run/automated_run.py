@@ -235,7 +235,7 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
-    def py_data_sink(self):
+    def py_data_sink(self, n=100):
         """
 
         new measurement interface for just sinking the data from a ring buffer
@@ -244,27 +244,28 @@ class AutomatedRun(Loggable):
         spec = self.spectrometer_manager.spectrommeter
         spec.set_data_pump_mode(1)
         p = unique_path2(paths.isotope_dir, self.runid, extension='.csv')
-        channels = []
         with open(p, 'w') as rfile:
             writer = csv.writer(rfile)
-            while 1:
-                if spec.halted():
-                    break
-                else:
-                    timestamp, channel, intenisty = spec.sink_data()
-
-                    if channel in channels:
-                        self.debug('data sink: {}'.format(row))
-                        writer.writerow(row)
-                        channels = [channel]
-                        row = [timestamp, intenisty]
-                    else:
-                        if channels:
-                            channels.append(channel)
-                            row.extend((timestamp, intenisty))
-                        else:
-                            channels = [channel]
-                            row = [timestamp, intenisty]
+            spec.sink_data(writer, n)
+            # while 1:
+            #     if spec.halted():
+            #         break
+            #     else:
+            #
+            #         # timestamp, channel, intenisty = spec.sink_data()
+            #
+            #         if channel in channels:
+            #             self.debug('data sink: {}'.format(row))
+            #             writer.writerow(row)
+            #             channels = [channel]
+            #             row = [timestamp, intenisty]
+            #         else:
+            #             if channels:
+            #                 channels.append(channel)
+            #                 row.extend((timestamp, intenisty))
+            #             else:
+            #                 channels = [channel]
+            #                 row = [timestamp, intenisty]
 
 
         spec.set_data_pump_mode(0)
