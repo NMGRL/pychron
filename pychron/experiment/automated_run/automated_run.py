@@ -235,7 +235,7 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
-    def py_data_sink(self, n=100):
+    def py_sink_data(self, n=100):
         """
 
         new measurement interface for just sinking the data from a ring buffer
