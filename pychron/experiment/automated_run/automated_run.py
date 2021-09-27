@@ -241,7 +241,7 @@ class AutomatedRun(Loggable):
         new measurement interface for just sinking the data from a ring buffer
         """
         import csv
-        spec = self.spectrometer_manager.spectrommeter
+        spec = self.spectrometer_manager.spectrometer
         spec.set_data_pump_mode(1)
         p = unique_path2(paths.isotope_dir, self.runid, extension='.csv')
         with open(p, 'w') as rfile:
