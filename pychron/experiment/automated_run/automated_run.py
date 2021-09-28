@@ -243,7 +243,7 @@ class AutomatedRun(Loggable):
         import csv
         spec = self.spectrometer_manager.spectrometer
         spec.set_data_pump_mode(1)
-        p, _ = unique_path2(paths.isotope_dir, self.runid, extension='.csv')
+        p, _ = unique_path2(paths.csv_data_dir, self.runid, extension='.csv')
         with open(p, 'w') as rfile:
             writer = csv.writer(rfile)
             spec.sink_data(writer, n, delay)

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import json
 import struct
 import time
 from datetime import datetime
@@ -68,11 +69,21 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
             size = sock.recv(4)
             size = struct.unpack('i', size)[0]
             str_data = sock.recv(size)
-            writer.writerow([time.time(), str_data.decode('ascii')])
+
+            obj = json.loads(str_data.decode('ascii'))
+            if not i:
+                # construct and write the header
+                keys = obj.keys()
+                header = ['time', ] + keys()
+                writer.writerow(header)
+
+            row = [obj[h] for h in keys]
+            row = [time.time(), ] + row
+            writer.writerow(row)
 
             et = time.time() - st
             if et < delay:
-                time.sleep(delay-et)
+                time.sleep(delay - et)
 
     # def set_data_pump_mode(self, mode):
     #     resp = self.microcontroller.ask('General.DataPump.Mode {}'.format(mode))
