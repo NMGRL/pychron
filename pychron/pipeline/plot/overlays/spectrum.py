@@ -246,7 +246,6 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 gc.set_stroke_color(sc)
 
                 gc.rect(x, y, w, h)
-                gc.draw_path()
 
                 func()
                 if i > 0 and i <= n:

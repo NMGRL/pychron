@@ -100,10 +100,18 @@ class DisplaySubOptions(TitleSubOptions):
                            show_border=True,
                            label='Labels')
 
-        age_grp = HGroup(Item('nsigma', tooltip='NSigma to display for Plateau and Integrated ages'),
-                         Item('mswd_sig_figs', label='MSWD SigFIgs'),
+        mswd = HGroup(Item('include_age_mswd', label='Display MSWD'),
+                      Item('mswd_sig_figs', label='MSWD SigFIgs', enabled_when='include_age_mswd'))
+        n = HGroup(Item('include_age_n', label='Display N'))
+        age_grp = VGroup(Item('nsigma', tooltip='NSigma to display for Plateau and Integrated ages'),
+                         mswd,
+                         n,
                          show_border=True,
                          label='Age Info')
+
+        mswd = HGroup(Item('include_plateau_mswd', label='Display MSWD'),
+                      Item('plateau_mswd_sig_figs', label='MSWD SigFIgs', enabled_when='include_age_mswd'))
+        n = HGroup(Item('include_plateau_n', label='Display N'))
 
         plat_grp = VGroup(HGroup(UItem('display_plateau_info',
                                        tooltip='Display plateau info'),
@@ -118,6 +126,7 @@ class DisplaySubOptions(TitleSubOptions):
                                       label='Identifier')),
                           Item('plateau_arrow_visible'),
                           Item('dim_non_plateau', label='Dim Non Plateau'),
+                          mswd, n,
                           show_border=True,
                           label='Plateau')
 

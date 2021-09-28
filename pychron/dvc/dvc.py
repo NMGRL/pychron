@@ -1156,10 +1156,12 @@ class DVC(Loggable):
             if not service:
                 return True
             else:
-                names = self.remote_repository_names()
-                if name in names:
-                    service.clone_from(name, root, self.organization)
+                if service.clone_from(name, root, self.organization):
                     return True
+                # names = self.remote_repository_names()
+                # if name in names:
+                #     service.clone_from(name, root, self.organization)
+                #     return True
                 else:
                     if isinstance(service, LocalGitHostService):
                         service.create_empty_repo(name)
@@ -1423,9 +1425,12 @@ class DVC(Loggable):
 
     def check_remote_repository_exists(self, name):
         gs = self.application.get_services(IGitHost)
-        for gi in gs:
-            if gi.remote_exists(self.organization, name):
-                return True
+        if gs:
+            for gi in gs:
+                if gi.remote_exists(self.organization, name):
+                    return True
+        else:
+            self.warning_dialog(HOST_WARNING_MESSAGE)
 
     def add_readme(self, identifier):
         self.debug('adding readme to repository identifier={}'.format(identifier))
@@ -1457,8 +1462,9 @@ class DVC(Loggable):
                 self.warning_dialog('{} already exists.'.format(root))
             return True
 
-        names = self.remote_repository_names()
-        if identifier in names:
+        # names = self.remote_repository_names(ide)
+        # if identifier in names:
+        if not self.check_remote_repository_exists(identifier):
             # make sure also in the database
             self.db.add_repository(identifier, principal_investigator)
 

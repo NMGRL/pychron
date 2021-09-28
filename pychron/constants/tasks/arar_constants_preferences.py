@@ -335,7 +335,7 @@ class ArArConstantsPreferencesPane(PreferencesPane):
                    enabled_when='atm_constant_entry_deletable'),
             Item('_'),
             HGroup(
-                Item('ar37_ar39_mode', label='(37Ar/39Ar)K'),
+                Item('ar37_ar39_mode', label='Fixed 37Ar/39Ar'),
                 Item('ar37_ar39', show_label=False, enabled_when='ar37_ar39_mode=="Fixed"'),
                 Item('ar37_ar39_error', show_label=False, enabled_when='ar37_ar39_mode=="Fixed"')),
             label='Ratios')

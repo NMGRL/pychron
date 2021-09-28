@@ -192,12 +192,7 @@ class Spectrum(BaseArArFigure):
         selections = ag.get_omitted_by_tag(self.sorted_analyses)
 
         spec = self._add_plot(xs, ys, es, pid, po)
-        ls = grp.center_line_style
-        if not ls == 'No Line':
-            spec.line_style = ls
-            spec.line_width = grp.center_line_width
-        else:
-            spec.line_width = 0
+
 
         if plateau_age:
             platbounds = ag.plateau_steps
@@ -273,6 +268,13 @@ class Spectrum(BaseArArFigure):
                                  value_scale=po.scale,
                                  plotid=plotid)
 
+        ls = group.center_line_style
+        if not ls == 'No Line':
+            ds.line_style = ls
+            ds.line_width = group.center_line_width
+        else:
+            ds.line_width = 0
+
         ds.value_mapper.fill_value = 1e-20
         ds.index.on_trait_change(self.update_graph_metadata, 'metadata_changed')
 
@@ -319,6 +321,8 @@ class Spectrum(BaseArArFigure):
                                       display_step=self.options.display_step)
 
             ds.underlays.append(lo)
+
+
         return ds
 
     # ===============================================================================
@@ -465,6 +469,8 @@ class Spectrum(BaseArArFigure):
         op = self.options
         e = plateau_age.std_dev * op.nsigma
         text = self._build_label_text(nominal_value(plateau_age), e, nsteps,
+                                      display_mswd=op.include_plateau_mswd,
+                                      display_n=op.include_plateau_n,
                                       mswd_args=mswd_args,
                                       mswd_sig_figs=op.mswd_sig_figs,
                                       sig_figs=op.plateau_sig_figs)
@@ -499,6 +505,8 @@ class Spectrum(BaseArArFigure):
 
         text = self._build_label_text(nominal_value(a),
                                       std_dev(a) * op.nsigma, n,
+                                      display_mswd=op.include_age_mswd,
+                                      display_n=op.include_age_n,
                                       mswd_args=mswd_args,
                                       mswd_sig_figs=op.mswd_sig_figs,
                                       sig_figs=op.weighted_mean_sig_figs)
@@ -536,6 +544,7 @@ class Spectrum(BaseArArFigure):
 
             error *= self.options.nsigma
             txt = self._build_label_text(age, error, n,
+                                         display_n=self.options.include_age_n,
                                          sig_figs=self.options.integrated_sig_figs)
 
         return u'Integrated Age= {}'.format(txt)

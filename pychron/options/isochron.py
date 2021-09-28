@@ -78,6 +78,7 @@ class InverseIsochronOptions(IsochronOptions):
 
     results_info_spacing = Range(2, 20)
 
+    include_sample = Bool
     include_4036_mse = Bool
     include_age_mse = Bool
     include_age_percent_error = Bool

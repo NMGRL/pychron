@@ -39,6 +39,70 @@ from pychron.pychron_constants import PLUSMINUS, SIGMA, MSEM, SEM, SE, MSE
 
 
 class MLTextLabel(Label):
+    def _calc_line_positions(self, gc):
+        """
+        need to modify from Label so that the width is not
+        overestimated. since there can be tags that when rendered don't
+        take up any width
+
+        so replace <sub> </sub> <sup> </sup> with ''
+        then calculate bounding box
+
+        :param gc:
+        :return:
+        """
+        if not self._position_cache_valid:
+            with gc:
+                gc.set_font(self.font)
+                # The bottommost line starts at postion (0, 0).
+                x_pos = []
+                y_pos = []
+                self._bounding_box = [0, 0]
+                margin = self.margin
+                prev_y_pos = margin
+                prev_y_height = -self.line_spacing
+                max_width = 0
+
+                text = self.text
+                for a in ('sub', 'sup'):
+                    text = text.replace('<{}>'.format(a), '')
+                    text = text.replace('</{}>'.format(a), '')
+
+                for line in text.split("\n")[::-1]:
+                    if line != "":
+                        (width, height, descent, leading) = \
+                            gc.get_full_text_extent(line)
+                        ascent = height - abs(descent)
+                        if width > max_width:
+                            max_width = width
+                        new_y_pos = prev_y_pos + prev_y_height \
+                            + self.line_spacing
+                    else:
+                        # For blank lines, we use the height of the previous
+                        # line, if there is one.  The width is 0.
+                        leading = 0
+                        if prev_y_height != -self.line_spacing:
+                            new_y_pos = prev_y_pos + prev_y_height \
+                                + self.line_spacing
+                            ascent = prev_y_height
+                        else:
+                            new_y_pos = prev_y_pos
+                            ascent = 0
+                    x_pos.append(-leading + margin)
+                    y_pos.append(new_y_pos)
+                    prev_y_pos = new_y_pos
+                    prev_y_height = ascent
+
+            self._line_xpos = x_pos[::-1]
+            self._line_ypos = y_pos[::-1]
+            border_width = self.border_width if self.border_visible else 0
+
+            self._bounding_box[0] = max_width + 2*margin + 2*border_width
+            self._bounding_box[1] = prev_y_pos + prev_y_height + margin \
+                + 2*border_width
+            self._position_cache_valid = True
+        return
+
     def draw(self, gc):
         """ Draws the label.
 
@@ -91,11 +155,14 @@ class MLTextLabel(Label):
                     continue
                 x_offset = round(self._line_xpos[i])
                 y_offset = round(self._line_ypos[i])
-                with gc:
-                    gc.translate_ctm(x_offset, y_offset)
-                    self._draw_line(gc, line)
 
-    def _draw_line(self, gc, txt):
+                self._draw_line(gc, line, x_offset, y_offset)
+                # with gc:
+                    # gc.translate_ctm(x_offset, y_offset)
+
+                    # self._draw_line(gc, line)
+
+    def _draw_line(self, gc, txt, xo, yo):
         def gen():
             offset = 0
             for ti in tokenize(txt):
@@ -117,17 +184,20 @@ class MLTextLabel(Label):
         x = 0
         for offset, text in gen():
             with gc:
+                yoff = yo
                 if offset == 1:
-                    gc.translate_ctm(0, suph)
+                    # gc.translate_ctm(0, suph)
                     gc.set_font(sfont)
+                    yoff += suph
                 elif offset == -1:
+                    # gc.translate_ctm(0, subh)
                     gc.set_font(sfont)
-                    gc.translate_ctm(0, subh)
+                    yoff += subh
                 else:
                     gc.set_font(ofont)
 
                 w, h, _, _ = gc.get_full_text_extent(text)
-                gc.set_text_position(x, 0)
+                gc.set_text_position(x + xo, yoff)
                 gc.show_text(text)
                 x += w
 
@@ -188,7 +258,7 @@ class InverseIsochron(Isochron):
             l, h = self.ymis[i], self.ymas[i]
             g.set_y_limits(max(0, l), h, pad='0.1', pad_style='upper', plotid=i)
 
-        g.set_x_limits(0, self.xma*1.1)
+        g.set_x_limits(0, self.xma * 1.1)
         self._fix_log_axes()
 
     def plot(self, plots, legend=None):
@@ -485,8 +555,8 @@ class InverseIsochron(Isochron):
             pe = ' ({})%'.format(p)
 
         age_line = u'Age={} {} {}{} {}{}'.format(floatfmt(v, n=af),
-                                                PLUSMINUS,
-                                                floatfmt(e, n=af, s=3), pe, ag.age_units, mse_text)
+                                                 PLUSMINUS,
+                                                 floatfmt(e, n=af, s=3), pe, ag.age_units, mse_text)
         mswd_line = 'N={} MSWD={}'.format(n, mswd)
         if label is None:
             th = 0
@@ -500,14 +570,18 @@ class InverseIsochron(Isochron):
                 component=plot,
                 overlay_position='inside bottom',
                 hjustify='left',
-                bgcolor='white',
+                bgcolor='transparent',
                 font=opt.results_font,
                 color=text_color)
             plot.overlays.append(label)
             self._plot_label = label
 
-        lines = u'\n'.join((sample_line, ratio_line, age_line, mswd_line))
-        label.text = u'{}'.format(lines)
+        lines = [ratio_line, age_line, mswd_line]
+        if opt.include_sample:
+            lines.insert(0, sample_line)
+
+        lines = u'\n'.join(lines)
+        label.text = lines
         label.bgcolor = plot.bgcolor
         label.request_redraw()
 

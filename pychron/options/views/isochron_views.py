@@ -91,7 +91,8 @@ class InverseIsochronMainOptions(TitleSubOptions):
                                         label='Spacing')),
                       BorderHGroup(UItem('results_fontname'),
                                    UItem('results_fontsize')))
-        bgrp = HGroup(BorderHGroup(Item('include_4036_mse', label='MSE'),
+        bgrp = HGroup(BorderHGroup(Item('include_sample', label='Sample/Identifer')),
+                      BorderHGroup(Item('include_4036_mse', label='MSE'),
                                    Item('include_percent_error', label='%Err.'),
                                    Item('yintercept_sig_figs', label='SigFigs'),
                                    label='Ar40/Ar36'),

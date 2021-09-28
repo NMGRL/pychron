@@ -43,7 +43,7 @@ class ICFactorOptions(RatioSeriesOptions):
         self.subview_names = [MAIN, 'ICFactor', APPEARANCE]
 
     def set_detectors(self, dets):
-        dets = [NULL_STR, 'age'] + dets
+        dets = [NULL_STR, 'rad40'] + dets
         super(ICFactorOptions, self).set_detectors(dets)
 
     # def get_subview(self, name):

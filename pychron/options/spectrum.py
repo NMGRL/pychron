@@ -103,6 +103,12 @@ class SpectrumOptions(PlateauOptions):
     error_calc_method = Property
     use_error_envelope_fill = Bool
 
+    include_age_mswd = Bool
+    include_age_n = Bool
+
+    plateau_mswd_sig_figs = Int
+    include_plateau_mswd = Bool
+    include_plateau_n = Bool
     include_plateau_sample = Bool
     include_plateau_identifier = Bool
     use_isochron_trapped = Bool

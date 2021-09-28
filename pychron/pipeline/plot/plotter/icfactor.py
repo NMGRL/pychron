@@ -59,9 +59,14 @@ class ICFactor(ReferencesSeries):
         analysis = self.sorted_references[0]
 
         niso = analysis.get_isotope(detector=n)
-        diso = analysis.get_isotope(detector=d)
+        if niso:
+            n = niso.name
 
-        return '{}/{}'.format(niso.name, diso.name)
+        diso = analysis.get_isotope(detector=d)
+        if diso:
+            d = diso.name
+
+        return '{}/{}'.format(n, d)
 
     def _get_interpolated_value(self, po, analysis):
         n, d = po.name.split('/')
@@ -79,13 +84,13 @@ class ICFactor(ReferencesSeries):
         is_peak_hop = False
         for ai in self.references:
             dets = ai.detectors()
-            
-            print('dets', dets, len(dets) , len(set(dets)))
+
+            print('dets', dets, len(dets), len(set(dets)))
             # a detector is used more than once
             if len(dets) > len(set(dets)):
                 is_peak_hop = True
                 break
-                
+
         print('---------------- ispeakhop', is_peak_hop)
         for ui, v, e in zip(ans, p_uys, p_ues):
             if v is not None and e is not None:
@@ -99,6 +104,10 @@ class ICFactor(ReferencesSeries):
                     beta = umath.log(ic) / umath.log(m40 / m36)
                     ui.set_beta(beta, is_peak_hop)
                 else:
+                    if d == 'rad40':
+                        iso = ui.get_isotope(name='Ar40')
+                        d = iso.detector
+
                     ui.set_temporary_ic_factor(d, v, e)
 
     def _get_current_data(self, po):
@@ -113,12 +122,18 @@ class ICFactor(ReferencesSeries):
     def _get_reference_data(self, po):
         if '/' in po.name:
             n, d = po.name.split('/')
+            if n in ('rad40',):
+                nys = [ri.get_value(n) for ri in self.sorted_references]
+            else:
+                nys = [ri.get_isotope(detector=n) for ri in self.sorted_references]
+                nys = array([ni.get_decay_corrected_value() for ni in nys if ni is not None])
 
-            nys = [ri.get_isotope(detector=n) for ri in self.sorted_references]
-            dys = [ri.get_isotope(detector=d) for ri in self.sorted_references]
+            if d in ('rad40',):
+                dys = [ri.get_value(d) for ri in self.sorted_references]
+            else:
+                dys = [ri.get_isotope(detector=d) for ri in self.sorted_references]
+                dys = array([di.get_decay_corrected_value() for di in dys if di is not None])
 
-            nys = array([ni.get_decay_corrected_value() for ni in nys if ni is not None])
-            dys = array([di.get_decay_corrected_value() for di in dys if di is not None])
             try:
                 rys = nys / dys
             except ZeroDivisionError:

@@ -35,7 +35,7 @@ class SpectrumGroupOptions(BaseGroupOptions):
     center_line_width = Int(1)
 
     def traits_view(self):
-        envelope_grp = HGroup(HGroup(UItem('use_fill'),
+        envelope_grp = HGroup(HGroup(Item('use_fill', label='Use Fill'),
                                      Item('color')),
                               Item('alpha', label='Opacity'),
                               show_border=True,
