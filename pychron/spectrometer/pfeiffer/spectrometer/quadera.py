@@ -57,18 +57,22 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
     def set_data_pump_mode(self, mode):
         pass
 
-    def sink_data(self, writer, n):
+    def sink_data(self, writer, n, delay):
 
         client = self.microcontroller.communicator
         handle = client.get_handler()
         sock = handle.sock
         # get the data
         for i in range(int(n)):
+            st = time.time()
             size = sock.recv(4)
             size = struct.unpack('i', size)[0]
             str_data = sock.recv(size)
-            # r = (time.time(), str_data.decode('ascii'))
             writer.writerow([time.time(), str_data.decode('ascii')])
+
+            et = time.time() - st
+            if et < delay:
+                time.sleep(delay-et)
 
     # def set_data_pump_mode(self, mode):
     #     resp = self.microcontroller.ask('General.DataPump.Mode {}'.format(mode))

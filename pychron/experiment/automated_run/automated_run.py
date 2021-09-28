@@ -235,7 +235,7 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
-    def py_sink_data(self, n=100, is_syntax_testing=False):
+    def py_sink_data(self, n=100, delay=1):
         """
 
         new measurement interface for just sinking the data from a ring buffer
@@ -246,7 +246,7 @@ class AutomatedRun(Loggable):
         p, _ = unique_path2(paths.isotope_dir, self.runid, extension='.csv')
         with open(p, 'w') as rfile:
             writer = csv.writer(rfile)
-            spec.sink_data(writer, n)
+            spec.sink_data(writer, n, delay)
             # while 1:
             #     if spec.halted():
             #         break
@@ -268,8 +268,6 @@ class AutomatedRun(Loggable):
             #                 row = [timestamp, intenisty]
 
         spec.set_data_pump_mode(0)
-        if is_syntax_testing:
-            os.remove(p)
 
     def py_measure(self):
         return self.spectrometer_manager.measure()
