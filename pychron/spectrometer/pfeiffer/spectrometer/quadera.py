@@ -61,12 +61,12 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
 
         client = self.microcontroller.communicator
         handle = client.get_handler()
-
+        sock = handle.sock
         # get the data
         for i in range(int(n)):
-            size = handle.recv(4)
+            size = sock.recv(4)
             size = struct.unpack('i', size)[0]
-            str_data = client.recv(size)
+            str_data = sock.recv(size)
             # r = (time.time(), str_data.decode('ascii'))
             writer.writerow([time.time(), str_data.decode('ascii')])
 
