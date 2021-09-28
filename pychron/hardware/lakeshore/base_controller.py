@@ -14,9 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 
-from traits.api import Enum, Float, Property, List, Int
+from traits.api import Enum, Float, Property, List, Int, Bool
 from traitsui.api import Item, UItem, HGroup, VGroup, Spring
 
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.graph.plot_record import PlotRecord
 from pychron.graph.stream_graph import StreamStackedGraph
@@ -63,9 +64,11 @@ class BaseLakeShoreController(CoreDevice):
 
     graph_klass = StreamStackedGraph
 
+    verify_setpoint = Bool
+
     def load_additional_args(self, config):
         self.set_attribute(config, 'units', 'General', 'units', default='K')
-
+        self.set_attribute(config, 'verify_setpoint', 'General', 'verify_setpoint', cast='boolean', default=True)
         # [Range]
         # 1=v<10
         # 2=10<v<30
@@ -167,13 +170,16 @@ class BaseLakeShoreController(CoreDevice):
         self.set_range(v, output)
         for i in range(retries):
             self.tell('SETP {},{}'.format(output, v))
+            if not self.verify_setpoint:
+                break
+
             time.sleep(2)
             sp = self.read_setpoint(output, verbose=True)
             self.debug('setpoint set to={} target={}'.format(sp, v))
-            if sp==v:
+            if sp == v:
                 break
             time.sleep(1)
-            
+
         else:
             self.warning_dialog('Failed setting setpoint to {}. Got={}'.format(v, sp))
 
@@ -219,15 +225,16 @@ class BaseLakeShoreController(CoreDevice):
         return r
 
     def get_control_group(self):
-        grp = VGroup(Spring(height=10, springy=False),
-                     HGroup(Item('input_a', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
-                            Item('setpoint1'),
-                            UItem('setpoint1_readback', editor=LCDEditor(width=120, height=30),
-                                  style='readonly'), Spring(width=10, springy=False)),
-                     HGroup(Item('input_b', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
-                            Item('setpoint2'),
-                            UItem('setpoint2_readback', editor=LCDEditor(width=120, height=30),
-                                  style='readonly'), Spring(width=10, springy=False)))
+        grp = BorderVGroup(Spring(height=10, springy=False),
+                           HGroup(Item('input_a', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
+                                  Item('setpoint1'),
+                                  UItem('setpoint1_readback', editor=LCDEditor(width=120, height=30),
+                                        style='readonly'), Spring(width=10, springy=False)),
+                           HGroup(Item('input_b', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
+                                  Item('setpoint2'),
+                                  UItem('setpoint2_readback', editor=LCDEditor(width=120, height=30),
+                                        style='readonly'), Spring(width=10, springy=False)),
+                           label=self.name)
         return grp
 
     def graph_builder(self, g, **kw):

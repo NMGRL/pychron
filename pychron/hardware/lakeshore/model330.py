@@ -21,22 +21,23 @@ from pychron.hardware.lakeshore.base_controller import BaseLakeShoreController
 from pychron.hardware import get_float
 import time
 
+
 class Model330TemperatureController(BaseLakeShoreController):
 
-    def set_setpoint(self, v, output=1, retries=3):
-
-        self.set_range(v)
-        for i in range(retries):
-            self.tell('SETP {}'.format(v))
-            time.sleep(2)
-            sp = self.read_setpoint(output, verbose=True)
-            self.debug('setpoint set to={} target={}'.format(sp, v))
-            if sp == v:
-                break
-            time.sleep(1)
-
-        else:
-            self.warning_dialog('Failed setting setpoint to {}. Got={}'.format(v, sp))
+    # def set_setpoint(self, v, output=1, retries=3):
+    #
+    #     self.set_range(v)
+    #     for i in range(retries):
+    #         self.tell('SETP {}'.format(v))
+    #         time.sleep(2)
+    #         sp = self.read_setpoint(output, verbose=True)
+    #         self.debug('setpoint set to={} target={}'.format(sp, v))
+    #         if sp == v:
+    #             break
+    #         time.sleep(1)
+    #
+    #     else:
+    #         self.warning_dialog('Failed setting setpoint to {}. Got={}'.format(v, sp))
 
     def set_range(self, v):
         # if v <= 10:

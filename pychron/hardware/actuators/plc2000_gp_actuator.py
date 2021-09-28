@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pymodbus.exceptions import ModbusIOException
+
 from pychron.hardware.actuators.client_gp_actuator import ClientMixin
 from pychron.hardware.actuators.gp_actuator import GPActuator
 from pychron.hardware.core.modbus import ModbusMixin
@@ -34,6 +36,9 @@ class PLC2000GPActuator(GPActuator, ModbusMixin, ClientMixin):
             address = int(obj)
 
         resp = self._read_coils(int(address)-1, 1)
-        return bool(resp.bits[0])
+        try:
+            return bool(resp.bits[0])
+        except ModbusIOException:
+            self.debug_exception()
 
 # ============= EOF =============================================
