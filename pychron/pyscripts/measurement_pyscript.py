@@ -99,8 +99,9 @@ class MeasurementPyScript(ValvePyScript):
     # commands
     # ===============================================================================
     @command_register
-    def sink_data(self, n=100):
-        self._automated_run_call('py_sink_data', n=n)
+    def sink_data(self, n=100, calc_time=False):
+        self._automated_run_call('py_sink_data', n=n,
+                                 is_syntax_testing=self.testing_syntax or calc_time)
 
     @command_register
     def measurement_delay(self, duration=None, message=None):

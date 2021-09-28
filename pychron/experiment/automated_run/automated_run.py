@@ -235,7 +235,7 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
-    def py_sink_data(self, n=100):
+    def py_sink_data(self, n=100, is_syntax_testing=False):
         """
 
         new measurement interface for just sinking the data from a ring buffer
@@ -268,6 +268,8 @@ class AutomatedRun(Loggable):
             #                 row = [timestamp, intenisty]
 
         spec.set_data_pump_mode(0)
+        if is_syntax_testing:
+            os.remove(p)
 
     def py_measure(self):
         return self.spectrometer_manager.measure()
