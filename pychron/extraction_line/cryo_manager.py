@@ -125,7 +125,8 @@ class CryoManager(Manager):
             v = View(Item('devices', style='custom',
                           show_label=False,
                           editor=ListEditor(mutable=False,
-                                            columns=len(self.devices),
+                                            columns=1,
+                                            page_name='.name',
                                             style='custom',
                                             editor=InstanceEditor(view='control_view'))),
                      height=-100)
