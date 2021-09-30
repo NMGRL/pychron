@@ -282,8 +282,8 @@ class GitRepoManager(Loggable):
     @classmethod
     def clone_from(cls, url, path):
         repo = cls()
-        repo.clone(url, path)
-        return repo
+        if repo.clone(url, path):
+            return repo
         # # progress = open_progress(100)
         # #
         # # def func(op_code, cur_count, max_count=None, message=''):
@@ -328,6 +328,7 @@ class GitRepoManager(Loggable):
     def clone(self, url, path, reraise=False):
         try:
             self._repo = Repo.clone_from(url, path)
+            return True
         except GitCommandError as e:
             self.warning_dialog('Cloning error: {}, url={}, path={}'.format(e, url, path),
                                 position=(100, 100))

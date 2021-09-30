@@ -98,7 +98,7 @@ class GitHubService(GitHostService):
                 resp = self._post(cmd, name=name, **kw)
                 if resp:
                     self.debug('Create repo response {}'.format(resp.status_code))
-                    self._clear_cached_repo_names = True
+                    self._cached_repos = []
                     return resp.status_code == 201
             except SSLError as e:
                 self.warning('SSL Error. {}'.format(e))
@@ -124,13 +124,17 @@ class GitHubService(GitHostService):
 
     def get_repos(self, organization):
         if self._has_access:
-            try:
-                cmd = '{}/orgs/{}/repos'.format(API_URL, organization)
-                return self._get(cmd)
-            except SSLError as e:
-                self.warning('SSL Error. {}'.format(e))
-                self._has_access = False
-                return []
+            if self._cached_repos is None:
+                try:
+                    cmd = '{}/orgs/{}/repos'.format(API_URL, organization)
+                    repos = self._get(cmd)
+                    self._cached_repos = repos
+                except SSLError as e:
+                    self.warning('SSL Error. {}'.format(e))
+                    self._has_access = False
+                    return []
+            else:
+                return self._cached_repos
         else:
             return []
 

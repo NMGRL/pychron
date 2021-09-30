@@ -22,7 +22,7 @@ import subprocess
 import requests
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Str, Interface, Password, provides, Dict, Bool
+from traits.api import Str, Interface, Password, provides, Dict, Bool, List
 
 from pychron import json
 from pychron.git_archive.repo_manager import GitRepoManager
@@ -115,8 +115,7 @@ class GitHostService(BaseGitHostService):
     password = Password
     preference_path = ''
     oauth_token = Str
-    _cached_repo_names = Dict
-    _clear_cached_repo_names = False
+    _cached_repos = List
     _session = None
     organization = Str
     disable_authentication_message = Bool
@@ -190,7 +189,8 @@ class GitHostService(BaseGitHostService):
 
     def clone_from(self, name, root, organization):
         url = self.make_url(name, organization)
-        GitRepoManager.clone_from(url, root)
+        repo = GitRepoManager.clone_from(url, root)
+        return repo
 
     def get_repos(self, org):
         pass
