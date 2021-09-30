@@ -1172,6 +1172,7 @@ class DVC(Loggable):
                                             'from service={}, organization={}'.format(name,
                                                                                       service.remote_url,
                                                                                       self.organization))
+                        names = self.remote_repository_names()
                         for ni in names:
                             self.debug('available repo== {}'.format(ni))
 
