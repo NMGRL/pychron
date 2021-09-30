@@ -124,7 +124,7 @@ class GitHubService(GitHostService):
 
     def get_repos(self, organization):
         if self._has_access:
-            if self._cached_repos is None:
+            if not self._cached_repos:
                 try:
                     cmd = '{}/orgs/{}/repos'.format(API_URL, organization)
                     repos = self._get(cmd)
