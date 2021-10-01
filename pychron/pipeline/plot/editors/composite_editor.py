@@ -15,6 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+from chaco.plot_label import PlotLabel
 from traits.api import Instance, on_trait_change
 
 # ============= standard library imports ========================
@@ -27,6 +28,18 @@ from pychron.pipeline.plot.models.composite_model import CompositeModel
 class CompositeEditor(InterpretedAgeEditor):
     plotter_options_manager = Instance(CompositeOptionsManager, ())
     figure_model_klass = CompositeModel
+
+    def _get_component_hook(self, model, *args, **kw):
+        # comp = super(CompositeEditor, self)._component_factory()
+        comp = self.figure_container.component
+        if self.plotter_options.auto_generate_title:
+            l = PlotLabel(component=comp,
+                          padding_top=50,
+                          overlay_position='inside top',
+                          font=self.plotter_options.title_font,
+                          text=self.plotter_options.generate_title(model.analyses, 0))
+            comp.overlays.append(l)
+
 
     @on_trait_change('figure_model:panels:figures:recalculate_event')
     def _handle_recalculate(self, obj, name, old, new):

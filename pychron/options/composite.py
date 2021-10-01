@@ -86,7 +86,8 @@ class CompositeOptions(FigureOptions):
                               'Calculations(Spec.)',
                               'Isochron',
                               'Appearance(Iso.)',
-                              'Layout'
+                              'Layout',
+                              'Title',
                               ]
 
     def _get_subview(self, name):
