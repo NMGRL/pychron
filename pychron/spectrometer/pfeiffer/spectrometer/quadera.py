@@ -64,22 +64,40 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         handle = client.get_handler()
         sock = handle.sock
         # get the data
-        for i in range(int(n)):
+        header = None
+        cnt=1
+        while 1:
+            if cnt>n:
+                break
+            
             st = time.time()
             size = sock.recv(4)
             size = struct.unpack('i', size)[0]
             str_data = sock.recv(size)
+            self.debug(str_data)
+            s = str_data.decode('ascii')
 
-            obj = json.loads(str_data.decode('ascii'))
-            if not i:
+            self.debug(s)
+
+            s = s.replace('False', '"False"')
+            s = s.replace('True', '"True"')
+            obj = json.loads(s)
+            #if not i:
                 # construct and write the header
-                keys = obj.keys()
-                header = ['time', ] + keys()
-                writer.writerow(header)
+            keys = list(obj.keys())
 
+            
+            if 'amuNames' not in keys:
+                continue
+            
+            if not header:
+                header = ['count','time', ] + keys
+                writer.writerow(header)
             row = [obj[h] for h in keys]
-            row = [time.time(), ] + row
+            row = [cnt, time.time(), ] + row
+            self.debug('sinking row: {}'.format(row))
             writer.writerow(row)
+            cnt+=1
 
             et = time.time() - st
             if et < delay:
