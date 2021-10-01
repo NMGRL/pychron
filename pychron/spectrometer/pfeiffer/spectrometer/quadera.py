@@ -74,10 +74,10 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
             size = sock.recv(4)
             size = struct.unpack('i', size)[0]
             str_data = sock.recv(size)
-            self.debug(str_data)
+            #self.debug(str_data)
             s = str_data.decode('ascii')
 
-            self.debug(s)
+            #self.debug(s)
 
             s = s.replace('False', '"False"')
             s = s.replace('True', '"True"')
