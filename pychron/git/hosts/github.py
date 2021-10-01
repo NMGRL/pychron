@@ -129,6 +129,7 @@ class GitHubService(GitHostService):
                     cmd = '{}/orgs/{}/repos'.format(API_URL, organization)
                     repos = self._get(cmd)
                     self._cached_repos = repos
+                    return repos
                 except SSLError as e:
                     self.warning('SSL Error. {}'.format(e))
                     self._has_access = False
