@@ -103,7 +103,7 @@ class CryoManager(Manager):
                     self.warning('Invalid idx: {}. Valid indices: {}'.format(idx, list(range(len(self.devices)))))
 
             if dev:
-                self.devices[idx].set_setpoints(v1, v2, block=block, **kw)
+                dev.set_setpoints(v1, v2, block=block, **kw)
 
         self.debug('set_setpoint returning "{}","{}"'.format(v1, v2))
         return v1, v2
