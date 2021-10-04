@@ -16,7 +16,7 @@
 
 import six
 from traits.api import Bool
-from traitsui.editors import CheckListEditor as tCheckListEditor
+from traitsui.editors.api import CheckListEditor as tCheckListEditor
 from traitsui.qt4.check_list_editor import CustomEditor, parse_value
 
 

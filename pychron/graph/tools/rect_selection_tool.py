@@ -94,7 +94,6 @@ class RectSelectionTool(BaseTool):
             self.component.index.metadata[self.selection_metadata_name] = []
 
     def normal_left_down(self, event):
-
         if not event.handled:
             token = self._get_selection_token(event)
             if token is None:

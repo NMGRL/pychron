@@ -52,7 +52,7 @@ class ChromiumLaserManager(EthernetLaserManager):
         self.info('fire laser')
         self._ask('laser.fire')
 
-    def extract(self, value, units=None, tol=0.1, fire_laser=True):
+    def extract(self, value, units=None, tol=0.1, fire_laser=True, **kw):
         if units is None:
             units = 'watts'
 

@@ -54,6 +54,7 @@ PACKAGE_DICT = dict(
     MDDPlugin='pychron.mdd.tasks.plugin',
     AutoPlugin='pychron.pipeline.tasks.auto_plugin',
     MachineLearningPlugin='pychron.ml.tasks.plugin',
+    CaffeinePlugin='pychron.caffeine.tasks.plugin',
 
     # data mappers
     USGSVSCDataPlugin='pychron.data_mapper.tasks.usgs_vsc.plugin',

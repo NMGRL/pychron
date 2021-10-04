@@ -21,7 +21,7 @@ from operator import attrgetter
 
 from traits.api import HasTraits, Str, Property, List, Enum, Button, Bool, Float, Range
 from traitsui.api import View, UItem, HGroup, EnumEditor, InstanceEditor, Item, VGroup
-from traitsui.editors import ListEditor
+from traitsui.editors.api import ListEditor
 from uncertainties import std_dev, nominal_value
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view

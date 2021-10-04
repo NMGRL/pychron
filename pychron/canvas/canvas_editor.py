@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import os
 import shutil
 from operator import attrgetter
 
@@ -146,35 +147,42 @@ class CanvasEditor(Loggable):
         if self.canvas:
             self.canvas.edit_mode = new
 
+    def _save_yaml(self, p):
+        obj = {}
+
+        for klass, key in ((Switch, 'switch'),
+                           (Valve, 'valve'),
+                           (ManualSwitch, 'manual_valve'),
+                           (Turbo, 'turbo'),
+                           (IonPump, 'ionpump'),
+                           (Getter, 'getter'),
+                           (Laser, 'laser'),
+                           (Stage, 'stage'),
+                           (Spectrometer, 'spectrometer')):
+            items = [i.toyaml() for i in self.canvas.scene.get_items(klass)]
+            obj[key] = items
+
+        for tag, orientation in (('connection', NULL_STR),
+                                 ('hconnection', 'horizontal'),
+                                 ('vconnection', 'vertical')):
+            obj[tag] = [i.toyaml() for i in self.canvas.scene.get_items(Connection) if i.orientation == orientation]
+
+        shutil.copyfile(p, '{}.bak'.format(p))
+
+        with open(p, 'w') as wfile:
+            yaml.dump(obj, wfile)
+
     def _save_button_fired(self):
         p = self.path
         if p.endswith('.yaml') or p.endswith('.yml'):
-            obj = {}
-
-            for klass, key in ((Switch, 'switch'),
-                               (Valve, 'valve'),
-                               (ManualSwitch, 'manual_valve'),
-                               (Turbo, 'turbo'),
-                               (IonPump, 'ionpump'),
-                               (Getter, 'getter'),
-                               (Laser, 'laser'),
-                               (Stage, 'stage'),
-                               (Spectrometer, 'spectrometer')):
-                items = [i.toyaml() for i in self.canvas.scene.get_items(klass)]
-                obj[key] = items
-
-            for tag, orientation in (('connection', NULL_STR),
-                                     ('hconnection', 'horizontal'),
-                                     ('vconnection', 'vertical')):
-                obj[tag] = [i.toyaml() for i in self.canvas.scene.get_items(Connection) if i.orientation == orientation]
-
-            shutil.copyfile(p, '{}.bak'.format(p))
-
-            with open(p, 'w') as wfile:
-                yaml.dump(obj, wfile)
+            self._save_yaml(p)
         else:
-            self.warning_dialog('The xml canvas format is deprecated. Please consider switching to YAML')
+            yp = '{}.yaml'.format(os.path.splitext(p)[0])
 
+            self.warning_dialog('The xml canvas format is deprecated. Please consider switching to YAML. '
+                                'Pychron will attempt to create a yaml file automatically at {}'.format(yp))
+
+            self._save_yaml(yp)
             cp = CanvasParser(self.path)
             for o in self._valve_changes:
                 for t in SWITCH_TAGS:

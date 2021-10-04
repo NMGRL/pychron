@@ -46,7 +46,7 @@ class AnalysisTableConfigurer(TableConfigurer):
         widths_grp = self._get_column_width_group()
         v = okcancel_view(BorderVGroup(Tabbed(get_columns_group(),
                                               widths_grp),
-                                       Item('omit_invalid'),
+                                       Item('omit_invalid', label='Hide Invalid Analyses'),
                                        Item('limit',
                                             tooltip='Limit number of displayed analyses',
                                             label='Limit'),

@@ -132,10 +132,16 @@ class InterpretedAgeRecallEditor(BaseRecallEditor):
         vs.append(IAValue('N', int(getattr(item, 'nanalyses'))))
         self.values = vs
 
-        attrs = ('age', 'kca')
-        self.uvalues = [IAUValue(s, getattr(item, s),
-                                 getattr(item, '{}_err'.format(s)),
-                                 getattr(item, '{}_kind'.format(s))) for s in attrs]
+        # attrs = ('age', 'kca')
+        # for di in dir(item):
+        #     print(di)
+        # self.uvalues = [IAUValue(s, getattr(item, s, 0),
+        #                          getattr(item, '{}_err'.format(s), 0),
+        #                          getattr(item, '{}_kind'.format(s), '')) for s in attrs]
+        uv = [IAUValue('age', item.age, item.age_err, item.age_kind),
+              # IAValue('kca', item.kca, item.age_err, item.age_kind)
+              ]
+        self.uvalues = uv
         self.analyses = [IAAnalysis(d) for d in item.analyses]
 
     def traits_view(self):

@@ -19,7 +19,7 @@ from traits.api import Property
 from traitsui.api import UItem, Item, HGroup, VGroup, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.editors import TabularEditor
+from traitsui.editors.api import TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view

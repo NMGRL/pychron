@@ -17,6 +17,7 @@
 # # ============= enthought library imports =======================
 
 import ast
+import importlib
 import os
 import re
 import time
@@ -40,7 +41,7 @@ from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.conditional.conditional import TruncationConditional, \
     ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file, \
-    QueueModificationConditional
+    QueueModificationConditional, EquilibrationConditional
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, QUEUE, SYSTEM, RUN
 from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import convert_identifier
@@ -50,7 +51,7 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
     EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR, NO_BLANK_CORRECT, EXTRACTION, MEASUREMENT, EM_SCRIPT_KEYS, SCRIPT_NAMES, \
-    POST_MEASUREMENT, POST_EQUILIBRATION
+    POST_MEASUREMENT, POST_EQUILIBRATION, FAILED, TRUNCATED, SUCCESS, CANCELED
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
 from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
 from pychron.spectrometer.pfeiffer.manager.quadera import QuaderaSpectrometerManager
@@ -164,9 +165,12 @@ class AutomatedRun(Loggable):
 
     termination_conditionals = List
     truncation_conditionals = List
+    equilibration_conditionals = List
     action_conditionals = List
     cancelation_conditionals = List
     modification_conditionals = List
+    pre_run_termination_conditionals = List
+    post_run_termination_conditionals = List
 
     tripped_conditional = Instance('pychron.experiment.conditional.conditional.BaseConditional')
 
@@ -846,8 +850,8 @@ class AutomatedRun(Loggable):
             self.monitor.stop()
 
         if self.spec:
-            if self.spec.state not in ('not run', 'canceled', 'success', 'truncated', 'aborted'):
-                self.spec.state = 'failed'
+            if self.spec.state not in ('not run', CANCELED, SUCCESS, TRUNCATED, 'aborted'):
+                self.spec.state = FAILED
                 self.experiment_queue.refresh_table_needed = True
 
         self.spectrometer_manager.spectrometer.active_detectors = []
@@ -1021,15 +1025,16 @@ class AutomatedRun(Loggable):
             self._set_filtering()
 
             conds = (self.termination_conditionals, self.truncation_conditionals,
-                     self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals)
+                     self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals,
+                     self.equilibration_conditionals)
 
             env = self._get_environmentals()
             if env:
                 set_environmentals(self.spec, env)
 
             tag = 'ok'
-            if self.spec.state == 'canceled':
-                tag = 'canceled'
+            if self.spec.state in (CANCELED, FAILED):
+                tag = self.spec.state
 
             self._update_persister_spec(active_detectors=self._active_detectors,
                                         conditionals=[c for cond in conds for c in cond],
@@ -1641,9 +1646,9 @@ anaylsis_type={}
     def _add_conditionals_from_file(self, p, level=None):
         d = conditionals_from_file(p, level=level)
         for k, v in d.items():
-            if k in ('actions', 'truncations', 'terminations', 'cancelations'):
-                var = getattr(self, '{}_conditionals'.format(k[:-1]))
-                var.extend(v)
+            # if k in ('actions', 'truncations', 'terminations', 'cancelations'):
+            var = getattr(self, '{}_conditionals'.format(k[:-1]))
+            var.extend(v)
 
     def _conditional_appender(self, name, cd, klass, level=None, location=None):
         if not self.isotope_group:
@@ -1711,8 +1716,15 @@ anaylsis_type={}
         dfp = self._get_default_fits_file()
         if dfp:
             ys = yload(dfp)
-            extract_fit_dict(sfods, ys['signal'])
-            extract_fit_dict(bsfods, ys['baseline'])
+            for fod, key in ((sfods, 'signal'), (bsfods, 'baseline')):
+                try:
+                    extract_fit_dict(fod, ys[key])
+                except BaseException:
+                    self.debug_exception()
+                    try:
+                        yload(dfp, reraise=True)
+                    except BaseException as ye:
+                        self.warning('Failed getting signal from fits file. Please check the syntax. {}'.format(ye))
 
         return sfods, bsfods
 
@@ -1817,9 +1829,6 @@ anaylsis_type={}
             self.isotope_group.set_baseline(iso, v[0], v[1])
 
     def _add_conditionals(self):
-        klass_dict = {'actions': ActionConditional, 'truncations': TruncationConditional,
-                      'terminations': TerminationConditional, 'cancelations': CancelationConditional,
-                      'modifications': QueueModificationConditional}
 
         t = self.spec.conditionals
         self.debug('adding conditionals {}'.format(t))
@@ -1831,8 +1840,12 @@ anaylsis_type={}
                 failure = False
                 for kind, items in yd.items():
                     try:
-                        klass = klass_dict[kind]
-                    except KeyError:
+                        # klass = CONDITIONALS_KLASS[kind]
+                        mod = 'pychron.experiment.conditional.conditional'
+                        mod = importlib.import_module(mod)
+                        klass = getattr(mod, '{}sConditional'.format(kind.capitalize()))
+                    except (ImportError, AttributeError):
+
                         self.debug('Invalid conditional kind="{}"'.format(kind))
                         continue
 
@@ -2129,7 +2142,7 @@ anaylsis_type={}
                 except BaseException:
                     self.warning('Failed to save run')
 
-                self.cancel_run(state='failed')
+                self.cancel_run(state=FAILED)
                 yield None
 
             if not k:
@@ -2147,7 +2160,7 @@ anaylsis_type={}
 
                     # do we need to cancel the experiment or will the subsequent pre run
                     # checks sufficient to catch spectrometer communication errors.
-                    self.cancel_run(state='failed')
+                    self.cancel_run(state=FAILED)
                     yield None
                 else:
                     yield None, None, None, False
@@ -2225,7 +2238,7 @@ anaylsis_type={}
         self.persister.build_tables(gn, self._active_detectors, ncounts)
         # mem_log('build tables')
 
-        check_conditionals = False
+        check_conditionals = True
         writer = self.persister.get_data_writer(gn)
 
         result = self._measure(gn,

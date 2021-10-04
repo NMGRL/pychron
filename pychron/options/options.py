@@ -24,6 +24,7 @@ from enable.markers import marker_names
 from pyface.message_dialog import warning
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Enum, List, Range, \
     Color, Button, Instance
+from traits.trait_errors import TraitError
 from traitsui.api import View, Item, HGroup, VGroup, EnumEditor, Spring, Group, \
     spring, UItem, ListEditor, InstanceEditor, CheckListEditor, TextEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -41,7 +42,7 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.layout import FigureLayout
 from pychron.processing.j_error_mixin import JErrorMixin
-from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES
+from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES, SIG_FIGS
 
 
 def importklass(klass):
@@ -187,9 +188,11 @@ class MainOptions(SubOptions):
                 checkbox_column(name='show_labels', label='Labels'),
                 checkbox_column(name='x_error', label='X Err.'),
                 checkbox_column(name='y_error', label='Y Err.'),
+                object_column(name='ytitle', label='Y Title'),
                 checkbox_column(name='ytick_visible', label='Y Tick'),
-                checkbox_column(name='ytitle_visible', label='Y Title'),
+                checkbox_column(name='ytitle_visible', label='Y Title Visible'),
                 checkbox_column(name='y_axis_right', label='Y Right'),
+                checkbox_column(name='yticks_both_sides', label='Y Ticks Both'),
                 object_column(name='scalar', label='Multiplier',
                               format_func=lambda x: floatfmt(x, n=2, s=2, use_scientific=True)),
                 checkbox_column(name='has_filter', label='Filter', editable=False)
@@ -199,9 +202,10 @@ class MainOptions(SubOptions):
         return cols
 
     def _get_name_grp(self):
-        grp = HGroup(Item('name', editor=EnumEditor(name='names')),
-                     Item('scale', editor=EnumEditor(values=['linear', 'log'])),
-                     Item('height'))
+        grp = BorderVGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
+                                  Item('ytitle', label='Y Title')),
+                           HGroup(Item('scale', editor=EnumEditor(values=['linear', 'log'])),
+                                  Item('height')))
         return grp
 
     def _get_yticks_grp(self):
@@ -269,7 +273,7 @@ class BaseOptions(HasTraits):
     fontname = Enum(*FONTS)
     _main_options_klass = MainOptions
     subview_names = List(transient=True)
-
+    manager_id = Str
     _subview_cache = None
 
     def dump(self, wfile):
@@ -448,7 +452,10 @@ class BaseOptions(HasTraits):
     def _load_factory_defaults(self, yd):
         for k, v in yd.items():
             if hasattr(self, k):
-                setattr(self, k, v)
+                try:
+                    setattr(self, k, v)
+                except TraitError as e:
+                    print('failed setting factory default. {}, {}, {}'.format(k, v, e))
 
 
 class GroupMixin(HasTraits):
@@ -692,6 +699,7 @@ class AuxPlotFigureOptions(FigureOptions):
     x_end_caps = Bool(False)
     y_end_caps = Bool(False)
     error_bar_nsigma = Enum(1, 2, 3)
+    error_bar_line_width = Float(1.0)
 
     def setup(self):
         super(AuxPlotFigureOptions, self).setup()
@@ -779,6 +787,10 @@ class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
     inset_ymin = Float
     inset_ymax = Float
 
+    mswd_sig_figs = Enum(*SIG_FIGS)
+
+    edit_label_format_button = Button
+
     def make_legend_key(self, ident, sample):
         key = ident
         if self.include_sample_in_legend:
@@ -798,4 +810,15 @@ class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
     def _get_inset_y_bounds(self):
         mi, ma = self.inset_ymin, self.inset_ymax
         return mi, ma
+
+    def _edit_label_format_button_fired(self):
+        from pychron.options.label_maker import LabelTemplater, LabelTemplateView
+
+        lm = LabelTemplater(label=self.analysis_label_display)
+        lv = LabelTemplateView(model=lm)
+        info = lv.edit_traits()
+        if info.result:
+            self.analysis_label_format = lm.formatter
+            self.analysis_label_display = lm.label
+            # self.refresh_plot_needed = True
 # ============= EOF =============================================

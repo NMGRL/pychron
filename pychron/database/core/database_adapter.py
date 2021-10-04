@@ -671,7 +671,12 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
     def _query(self, q, func, reraise=False, verbose_query=False):
         if verbose_query:
-            self.debug(compile_query(q))
+            try:
+                cq = compile_query(q)
+                self.debug(cq)
+            except BaseException:
+                cq = 'Query failed to compile'
+                self.debug_exception()
 
         # print compile_query(q)
         f = getattr(q, func)
@@ -679,7 +684,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             return f()
         except NoResultFound:
             if verbose_query:
-                self.info('no results found for query -- {}'.format(compile_query(q)))
+                self.info('no results found for query -- {}'.format(cq))
         except OperationalError as e:
             self.debug('_query operation exception')
             self.debug_exception()

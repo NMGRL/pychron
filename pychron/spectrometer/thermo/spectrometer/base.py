@@ -109,7 +109,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         values = self.get_parameter_word(keys)
         d = dict(list(zip(keys, values)))
 
-        key = 'ElectronEnergy'
+        key = 'Electron Energy Set'
         if key in d:
             d[key] = float('{:0.2f}'.format(d[key]))
 
@@ -212,6 +212,8 @@ class ThermoSpectrometer(BaseSpectrometer):
         if not name.startswith('Set'):
             mk = self.hardware_names()
             cmd = 'SetParameter {},{}'.format(mk.get(name, name), v)
+        elif name == 'HV':
+            cmd = 'SetHV {}'.format(v)
         else:
             cmd = '{} {}'.format(name, v)
 
@@ -402,7 +404,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         data = self.get_intensities()
         if data is not None:
 
-            keys, signals, _ = data
+            keys, signals, _, _ = data
 
             def func(k):
                 return signals[keys.index(k)] if k in keys else 0
@@ -460,6 +462,8 @@ class ThermoSpectrometer(BaseSpectrometer):
                         mk = hardware_names[k]
                     except KeyError:
                         self.debug('--- Not checking {}. Not in hardware_names'.format(k))
+                        self.debug('hardware names: {}'.format(hardware_names))
+
                         continue
 
                     comp = readout_comp.get(k, {})
@@ -577,6 +581,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                         mk = hardware_names[k]
                     except KeyError:
                         self.debug('--- Not setting {}. Not in hardware_names'.format(k))
+                        self.debug('hardware names: {}'.format(hardware_names))
                         continue
 
                     if not self.force_send_configuration:

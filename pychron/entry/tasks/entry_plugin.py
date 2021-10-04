@@ -27,7 +27,7 @@ from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradi
     SensitivityEntryAction, AddFluxMonitorAction, \
     GenerateTrayAction, \
     ImportIrradiationGeometryAction, ExportIrradiationAction, ImportIrradiationAction, \
-    TransferJAction, ImportIrradiationFileAction, GetIGSNAction, GenerateIrradiationTableAction, \
+    TransferJAction, ImportIrradiationFileAction, GenerateIrradiationTableAction, \
     GenerateStatusReportAction, ImportAnalysesAction, CorrelationEllipsesAction
 from pychron.entry.tasks.basic.actions import BasicEntryAction
 from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
@@ -106,7 +106,7 @@ class EntryPlugin(BaseTaskPlugin):
                  'pychron.entry.irradiation.task',
                  'Entry Tools',
                  [SchemaAddition(id='pychron.entry2.transfer_j', factory=TransferJAction, path=g2path),
-                  SchemaAddition(id='pychron.entry2.get_igsns', factory=GetIGSNAction, path=g2path),
+                  # SchemaAddition(id='pychron.entry2.get_igsns', factory=GetIGSNAction, path=g2path),
                   SchemaAddition(id='pychron.entry2.export_irradiation', factory=ExportIrradiationAction, path=g2path),
                   SchemaAddition(id='pychron.entry2.import_irradiations_from_file', factory=ImportIrradiationFileAction,
                                  path=g2path),

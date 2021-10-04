@@ -116,7 +116,13 @@ class InverseIsochronMainOptions(TitleSubOptions):
                                  HGroup(Item('label_box'),
                                         UItem('label_fontname'),
                                         UItem('label_fontsize'),
+                                        icon_button_editor('edit_label_format_button', 'cog',
+                                                           tooltip='Open Label maker'),
                                         enabled_when='show_labels'),
+                                 Item('analysis_label_display',
+                                      label='Label Format',
+                                      width=100,
+                                      style='readonly'),
                                  label='Labels')
 
         marker_grp = BorderHGroup(Item('marker_size', label='Size'),

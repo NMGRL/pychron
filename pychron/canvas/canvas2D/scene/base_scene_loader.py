@@ -16,7 +16,7 @@
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser, CircleLaser
 from pychron.canvas.canvas2D.scene.primitives.primitives import Label
 from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo, IonPump
-from pychron.canvas.canvas2D.scene.primitives.rounded import CircleStage, Spectrometer, Getter, Stage
+from pychron.canvas.canvas2D.scene.primitives.rounded import CircleStage, Spectrometer, Getter, Stage, ColdFinger
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
 from pychron.core.helpers.strtools import to_bool
 
@@ -24,6 +24,7 @@ KLASS_MAP = {'turbo': Turbo,
              'laser': Laser,
              'ionpump': IonPump,
              'getter': Getter,
+             'coldfinger': ColdFinger,
              'spectrometer': Spectrometer,
              'circle_stage': CircleStage,
              'circle_laser': CircleLaser,
@@ -32,7 +33,7 @@ KLASS_MAP = {'turbo': Turbo,
 RECT_TAGS = ('stage', 'laser', 'spectrometer',
              'turbo', 'getter', 'tank',
              'ionpump', 'gauge', 'rectangle',
-             'circle_stage', 'circle_laser')
+             'circle_stage', 'circle_laser', 'coldfinger')
 
 SWITCH_TAGS = ('switch', 'valve', 'rough_valve', 'manual_valve')
 
@@ -89,9 +90,6 @@ class BaseLoader:
             self._new_image(scene, image)
 
     def load_switchables(self, scene, valvepath):
-        raise NotImplementedError
-
-    def load_rects(self, scene):
         raise NotImplementedError
 
     def load_pipettes(self, scene):

@@ -16,13 +16,8 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from uncertainties import ufloat, std_dev, nominal_value
 # ============= local library imports  ==========================
-# from pychron.pipeline.plot. import ReferencesSeries
-from __future__ import absolute_import
-
-from six.moves import zip
-from uncertainties import ufloat
-
 from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
 
 

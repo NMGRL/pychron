@@ -18,7 +18,7 @@ import os
 
 from traits.api import Str, Enum, Dict, File, Float, Range, List, HasTraits, Button, Int, Color, Bool, on_trait_change
 from traitsui.api import HGroup, Item, View, UItem
-from traitsui.editors import EnumEditor
+from traitsui.editors.api import EnumEditor
 from traitsui.item import spring
 
 from pychron.base_fs import BaseFS

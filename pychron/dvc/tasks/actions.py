@@ -83,6 +83,12 @@ class RebaseAction(LocalRepositoryAction):
     tooltip = 'Rebase commits from [master] onto current branch. git rebase'
 
 
+class MergeAction(LocalRepositoryAction):
+    name = 'Merge'
+    method = 'merge'
+    image = icon('git-merge')
+
+
 class FindChangesAction(LocalRepositoryAction):
     name = 'Find Changes'
     method = 'find_changes'
@@ -153,6 +159,7 @@ class SortLocalReposAction(TaskAction):
     name = 'Sort Repos'
     method = 'sort_repos'
     tooltip = 'Sort repos by most recently analyzed'
+
 
 # class SyncMetaDataAction(Action):
 #     name = 'Sync Repo/DB Metadata'

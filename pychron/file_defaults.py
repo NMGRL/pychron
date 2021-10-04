@@ -382,8 +382,8 @@ ISOCHRON_PRESENTATION = make_presentation(**iso_d)
 INVERSE_ISOCHRON_SCREEN = make_screen(**inv_iso_d)
 INVERSE_ISOCHRON_PRESENTATION = make_presentation(**inv_iso_d)
 
-ideo_d = dict(probability_curve_kind='cumulative',
-              mean_calculation_kind='weighted mean',
+ideo_d = dict(probability_curve_kind='Cumulative',
+              mean_calculation_kind='Weighted Mean',
               mean_sig_figs=2,
               index_attr='uage')
 

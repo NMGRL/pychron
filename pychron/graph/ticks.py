@@ -19,10 +19,15 @@ from chaco.ticks import DefaultTickGenerator
 from numpy import array
 from numpy.core.umath import log10
 from traits.api import Int
+import math
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.graph.graph import Graph
+
+
+def intfilter(ticks):
+    return [x for x in [x if x.is_integer() else math.ceil(x) for x in ticks] if x]
 
 
 class IntTickGenerator(DefaultTickGenerator):
@@ -33,7 +38,7 @@ class IntTickGenerator(DefaultTickGenerator):
                                                         bounds_high, interval, use_endpoints=use_endpoints,
                                                         scale=scale)
         # filter out non integer ticks
-        ticks = [x for x in ticks if x % 1 == 0]
+        ticks = intfilter(ticks)
         return ticks
 
 
@@ -52,6 +57,12 @@ class SparseTicks(DefaultTickGenerator):
                 return ticks
         except IndexError:
             return ticks
+
+
+class IntSparseTicks(SparseTicks):
+    def get_ticks(self, *args, **kw):
+        ticks = super(IntSparseTicks, self).get_ticks(*args, **kw)
+        return intfilter(ticks)
 
 
 class SparseLogTicks(DefaultTickGenerator):

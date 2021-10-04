@@ -35,6 +35,8 @@ class ReviewNode(BaseNode):
         if not self.auto_review:
             review = confirmation_dialog('Would you like to review before continuing?')
 
+        self.unknowns = state.unknowns
+
         if review:
             state.veto = self
 

@@ -82,11 +82,12 @@ class ExtractionLineScene(Scene):
         color_dict = dict()
         ox, oy = 0, 0
         valve_dimension = 2, 2
+        images = []
         if os.path.isfile(p):
             cp = self._get_canvas_parser(p)
-
             tree = cp.get_tree()
             if tree:
+                images = cp.get_elements('image')
                 xv, yv = self._get_canvas_view_range(cp)
 
                 canvas.view_x_range = xv
@@ -121,6 +122,6 @@ class ExtractionLineScene(Scene):
                 if o is not None:
                     ox, oy = floatify(o)
 
-        return (ox, oy), color_dict, valve_dimension, cp.get_elements('image')
+        return (ox, oy), color_dict, valve_dimension, images
 
 # ============= EOF =============================================

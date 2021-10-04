@@ -18,10 +18,13 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import os
+import platform
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.yaml import yload
 from pychron.paths import paths
+
+IS_WINDOWS = platform.system() == 'Windows'
 
 STARTUP_MESSAGE_POSITION = (100, 300)
 
@@ -83,7 +86,14 @@ MSE = 'SE but if MSWD>1 use SE * sqrt(MSWD)'
 ERROR_TYPES = [MSEM, SEM, SD]
 SIG_FIGS = range(0, 15)
 STD_SIG_FIGS = ['Std', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+SCHAEN2020_1 = 'Schaen 2020. (Low MSWD weighted mean)'
+SCHAEN2020_2 = 'Schaen 2020. (Weighted mean filter)'
+SCHAEN2020_3 = 'Schaen 2020. (Normality)'
+SCHAEN2020_3youngest = 'Schaen 2020. (Normality, youngest)'
+DEINO = 'Deino. Filter Extreme'
 
+CUMULATIVE = 'Cumulative'
+KERNEL = 'Kernel'
 WEIGHTED_MEAN = 'Weighted Mean'
 PLATEAU = 'Plateau'
 INTEGRATED = 'Total Integrated'
@@ -92,8 +102,9 @@ VALID_INTEGRATED = 'Valid Integrated'
 PLATEAU_INTEGRATED = '{} Integrated'.format(PLATEAU)
 AUTO_LINEAR_PARABOLIC = 'Auto Linear/Parabolic'
 AUTO_N = 'Auto N'
+EXPONENTIAL = 'exponential'
 FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
-             'Average', 'Exponential', WEIGHTED_MEAN, 'Custom', AUTO_LINEAR_PARABOLIC]
+             'Average', EXPONENTIAL.capitalize(), WEIGHTED_MEAN, 'Custom', AUTO_LINEAR_PARABOLIC]
 
 FIT_ERROR_TYPES = [SD, SEM, MSEM, 'CI', 'MonteCarlo']
 SERIES_FIT_TYPES = [NULL_STR] + FIT_TYPES
@@ -248,7 +259,7 @@ QTEGRA_INTEGRATION_TIMES = [0.065536, 0.131072, 0.262144, 0.524288,
 
 QTEGRA_DEFAULT_INTEGRATION_TIME = 1.048576
 ISOTOPX_INTEGRATION_TIMES = [1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 20.0, 100.0]
-QUADERA_INTEGRATION_TIMES = [1.0,]
+QUADERA_INTEGRATION_TIMES = [1.0, ]
 ISOTOPX_DEFAULT_INTEGRATION_TIME = 1
 ATONA = 'ATONA'
 QUADERA_DEFAULT_INTEGRATION_TIME = 1
@@ -400,5 +411,27 @@ META_ATTRS = ('analysis_type', 'uuid', 'identifier', ALIQUOT, INCREMENT,
               'acquisition_software',
               'data_reduction_software', INSTRUMENT_NAME, LABORATORY,
               'experiment_queue_name', EXPERIMENT_TYPE) + SAMPLE_METADATA
+
+FAILED = 'failed'
+TRUNCATED = 'truncated'
+CANCELED = 'canceled'
+SUCCESS = 'success'
+END_AFTER = 'end_after'
+ABORTED = 'aborted'
+NOT_RUN = 'not run'
+
+EQUILIBRATION = 'equilibration'
+ACTION = 'action'
+TRUNCATION = 'truncation'
+TERMINATION = 'termination'
+CANCELATION = 'cancelation'
+MODIFICATION = 'modification'
+POST_RUN_TERMINATION = 'post_run_termination'
+PRE_RUN_TERMINATION = 'pre_run_termination'
+POST_RUN_ACTION = 'post_run_action'
+
+CONDITIONAL_GROUP_NAMES = ['{}s'.format(t) for t in (ACTION, EQUILIBRATION, TRUNCATION, CANCELATION, TERMINATION,
+                                                     POST_RUN_TERMINATION, PRE_RUN_TERMINATION, MODIFICATION)]
+EDITABLE_RUN_CONDITIONALS = ['{}s'.format(t) for t in (ACTION, CANCELATION, TERMINATION, TRUNCATION, EQUILIBRATION)]
 
 # ============= EOF =============================================

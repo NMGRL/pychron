@@ -446,7 +446,7 @@ class DVCPersister(BasePersister):
         pos = db.get_identifier(rs.identifier)
         self.debug('setting analysis irradiation position={}'.format(pos))
         if pos is None:
-            an.simple_identifier=int(rs.identifier)
+            an.simple_identifier = int(rs.identifier)
         else:
             an.irradiation_position = pos
 

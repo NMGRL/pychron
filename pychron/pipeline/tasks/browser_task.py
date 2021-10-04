@@ -56,8 +56,8 @@
 #         self._activate_sample_browser()
 #
 #         if globalv.browser_debug:
-#             if self.browser_model.analysis_table.analyses:
-#                 r = self.browser_model.analysis_table.analyses[0]
+#             if self.browser_model.table.analyses:
+#                 r = self.browser_model.table.analyses[0]
 #                 self.recall(r)
 #
 #     # menu actions
@@ -96,9 +96,9 @@
 #         #
 #         #     records = progress_loader(ans, func)
 #         #
-#         # # set analysis_table.analyses
-#         # bm.analysis_table.set_analyses(records)
-#         # bm.analysis_table.scroll_to_row = len(records)
+#         # # set table.analyses
+#         # bm.table.set_analyses(records)
+#         # bm.table.scroll_to_row = len(records)
 #         if v.use_date_range:
 #             h, l = v.high_post, v.low_post
 #         else:
@@ -121,7 +121,7 @@
 #         bm.do_filter()
 #         bm.select_all()
 #
-#         at = bm.analysis_table
+#         at = bm.table
 #         end = len(at.analyses)
 #         at.scroll_to_row = end
 #
@@ -168,7 +168,7 @@
 #     def _searcher_default(self):
 #         db = self.application.get_service(DVC_PROTOCOL)
 #         s = Searcher(db=db,
-#                      analysis_table=self.browser_model.analysis_table)
+#                      table=self.browser_model.table)
 #         return s
 #
 #     def _default_layout_default(self):

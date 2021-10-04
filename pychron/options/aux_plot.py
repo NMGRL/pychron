@@ -28,6 +28,23 @@ def has_limits(lims):
     return lims is not None and lims[0] != lims[1]
 
 
+YTITLES = {'Ar36': '<sup>36</sup>Ar<sub>tot</sub>(fA)',
+           'Ar40': '<sup>40</sup>Ar<sub>tot</sub>(fA)',
+           'uAr40/Ar36': 'noncor. <sup>40</sup>Ar/<sup>36</sup>Ar',
+           'Ar40/Ar36': '<sup>40</sup>Ar/<sup>36</sup>Ar',
+           'icf_40_36': 'ifc <sup>40</sup>Ar/<sup>36</sup>Ar',
+           'radiogenic_yield': '%<sup>40</sup>Ar*',
+           'extract_value': 'Extract Value',
+           'kcl': 'K/Cl',
+           'clk': 'Cl/K',
+           'kca': 'K/Ca',
+           'k39': '<sup>39</sup>Ar<sub>K</sub>(fA)',
+           'moles_k39': '<sup>39</sup>Ar<sub>K</sub>(mol)',
+           'Analysis Number': 'Analysis #',
+           'Analysis Number Nonsorted': 'A# Nonsorted'
+           }
+
+
 class AuxPlot(HasTraits):
     names = List(transient=True)
     _plot_names = List(transient=True)
@@ -47,6 +64,8 @@ class AuxPlot(HasTraits):
     ytick_visible = Bool(True)
     show_labels = Bool(False)
     y_axis_right = Bool(False)
+    yticks_both_sides = Bool(True)
+    ytitle = Str
 
     use_sparse_yticks = Bool(True)
     sparse_yticks_step = Int(2)
@@ -80,6 +99,14 @@ class AuxPlot(HasTraits):
 
     calculated_ymax = Any(transient=True)
     calculated_ymin = Any(transient=True)
+
+    use_integer_ticks = False
+
+    def get_ytitle(self, k):
+        t = self.ytitle
+        if not t:
+            t = YTITLES.get(k, '***')
+        return t
 
     def to_dict(self):
         keys = [k for k in self.traits(transient=False)]

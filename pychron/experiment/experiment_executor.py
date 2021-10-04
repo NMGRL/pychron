@@ -62,7 +62,7 @@ from pychron.globals import globalv
 from pychron.paths import paths
 from pychron.pychron_constants import DEFAULT_INTEGRATION_TIME, AR_AR, DVC_PROTOCOL, DEFAULT_MONITOR_NAME, \
     SCRIPT_NAMES, EM_SCRIPT_KEYS, NULL_STR, NULL_EXTRACT_DEVICES, IPIPETTE_PROTOCOL, ILASER_PROTOCOL, IFURNACE_PROTOCOL, \
-    CRYO_PROTOCOL
+    CRYO_PROTOCOL, FAILED, CANCELED, TRUNCATED, SUCCESS
 
 
 def remove_backup(uuid_str):
@@ -172,6 +172,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     ratio_change_detection_enabled = Bool(False)
     execute_open_queues = Bool(True)
     use_preceding_blank = Bool(True)
+    save_all_runs = Bool(False)
 
     # dvc
     use_dvc_persistence = Bool(False)
@@ -254,7 +255,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                  'laboratory',
                  'ratio_change_detection_enabled',
                  'use_preceding_blank',
-                 'execute_open_queues')
+                 'execute_open_queues',
+                 'save_all_runs')
         self._preference_binder(prefid, attrs)
 
         # dvc
@@ -811,28 +813,29 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             if self.monitor and self.monitor.has_fatal_error():
                 run.cancel_run()
-                run.spec.state = 'failed'
+                run.spec.state = FAILED
                 break
 
             if not getattr(self, step)(run):
                 self.warning('{} did not complete successfully'.format(step[1:]))
                 if step != '_post_measurement':  # save data even if post measurement fails
-                    run.spec.state = 'failed'
+                    run.spec.state = FAILED
                 break
 
         else:
             self.debug('$$$$$$$$$$$$$$$$$$$$ state at run end {}'.format(run.spec.state))
-            if run.spec.state not in ('truncated', 'canceled', 'failed'):
-                run.spec.state = 'success'
+            if run.spec.state not in (TRUNCATED, CANCELED, FAILED):
+                run.spec.state = SUCCESS
 
-        if run.spec.state in ('success', 'truncated', 'terminated', 'canceled'):
+        if self.save_all_runs or run.spec.state in ('success', 'truncated'):
             run.save()
-            self.run_completed = run
+
+        self.run_completed = run
 
         remove_backup(run.uuid)
 
         # check to see if action should be taken
-        if run.spec.state not in ('canceled', 'failed'):
+        if run.spec.state not in (CANCELED, FAILED):
             if self._post_run_check(run):
                 self._err_message = 'Post Run Check Failed'
                 self.warning('post run check failed')
@@ -843,7 +846,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.info('Automated run {} {} duration: {:0.3f} s'.format(run.runid, run.spec.state, t))
 
         run.finish()
-        if self.experiment_type == AR_AR and run.spec.state in ('success', 'truncated'):
+        if self.experiment_type == AR_AR and run.spec.state in (SUCCESS, TRUNCATED):
             run.spec.uage = run.isotope_group.uage
             run.spec.k39 = run.isotope_group.get_computed_value('k39')
 
@@ -1066,7 +1069,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not run.start():
             self.alive = False
             ret = False
-            run.spec.state = 'failed'
+            run.spec.state = FAILED
 
             msg = 'Run {} did not start properly'.format(run.runid)
             self._err_message = msg
@@ -2282,6 +2285,8 @@ Use Last "blank_{}"= {}
 
     def _datahub_default(self):
         dh = Datahub()
+        dh.mainstore = self.application.get_service(DVC_PROTOCOL)
+        dh.bind_preferences()
         return dh
 
     def _pyscript_runner_default(self):

@@ -35,6 +35,7 @@ from pychron.dvc.func import get_review_status
 from pychron.envisage.browser import progress_bind_records
 from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.envisage.browser.analysis_table_configurer import AnalysisTableConfigurer
+from pychron.envisage.browser.recall_editor import RecallEditor
 from pychron.paths import paths
 from pychron.pychron_constants import AUTO_SCROLL_KINDS, BOTTOM, TOP
 
@@ -48,6 +49,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     oanalyses = List
     selected = Any
     dclicked = Any
+    key_pressed = Any
 
     context_menu_event = Event
 
@@ -124,6 +126,16 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         p = paths.hidden_path('selected_analysis_set')
         with open(p, 'w') as wfile:
             wfile.write(self.analysis_set or '')
+
+    def increment_selected(self, d):
+        n = len(self.analyses)
+        idx = self.analyses.index(self.selected[0])
+        idx += d
+        idx = max(0, idx)
+        idx = min(n, idx)
+        item = self.analyses[idx]
+        self.selected = [item]
+        return item
 
     def get_selected_analyses(self):
         if self.analyses:
@@ -293,6 +305,18 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         return ['identifier', 'aliquot', 'step', 'comment', 'tag']
 
     # handlers
+    # def _key_pressed_changed(self, new):
+    #     print('eq', new)
+    #
+    # def _selected_changed(self, new):
+    #     print('asfsadfasf', new)
+
+    # def _dclicked_changed(self):
+    #     if self.use_quick_recall:
+    #         print('casdc', self.selected)
+    #         from pychron.envisage.browser.recall_editor import RecallEditor
+    #         self.recall_editor = RecallEditor()
+
     def _refresh_analysis_set_button_fired(self):
         self._analysis_set_changed(self.analysis_set)
 

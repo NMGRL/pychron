@@ -531,7 +531,7 @@ def welcome():
 
 Developer: Jake Ross (NMT)
 Date: 10-02-2016
-Updated: 7-10-2019
+Updated: 6-11-2021
 ---*---*---*---*---*---*---*---*---*---*---*---*
 Welcome to the Pychron Installer.
 
@@ -590,6 +590,26 @@ def which(program):
             exe_file = os.path.join(path, program)
             if is_exe(exe_file):
                 return exe_file
+
+def install_conda_only():
+    info_header('Install Conda Env only')
+    cfg = {}
+    vv = input('Install conda env only [n]')
+    if vv.lower() in ('y', 'yes'):
+        build_requirements(cfg)
+        install_conda(cfg)
+    return cfg
+
+def install_setupfiles_only():
+    info_header('Install Setupfiles only')
+    cfg = {}
+    vv = input('Install setup files only [n]')
+    if vv.lower() in ('y', 'yes'):
+        cfg['install_exp_setupfiles'] = True
+        cfg['pychron_data_dir'] = 'PychronUF'
+        cfg['include_hardware_plugins'] = True
+
+    return cfg
 
 
 def install_setupfiles_only():
@@ -682,15 +702,20 @@ def ask_config():
 def build_requirements(cfg):
     pip_reqs = ['uncertainties',
                 'peakutils',
-                'qimage2ndarray']
-    pip_git_reqs = ['git+https://github.com/enthought/chaco.git#egg=chaco',
-                    'git+https://github.com/enthought/enable.git#egg=enable']
+                'qimage2ndarray',
+                ]
 
-    conda_reqs = ['numpy', 'statsmodels', 'scikit-learn', 'PyYAML', 'yaml', 'traits=5', 'traitsui=6', 'pyface=6',
+    pip_git_reqs = []
+    # pip_git_reqs = ['git+https://github.com/enthought/chaco.git#egg=chaco',
+    #                 'git+https://github.com/enthought/enable.git#egg=enable']
+
+    conda_reqs = ['numpy', 'statsmodels', 'scikit-learn', 'PyYAML', 'yaml',
+                  # 'traits=5', 'traitsui=6', 'pyface=6',
+                  'traits', 'traitsui', 'pyface',
                   'envisage', 'sqlalchemy', 'Reportlab', 'lxml', 'xlrd', 'xlwt', 'xlsxwriter', 'requests', 'keyring',
                   'pillow', 'gitpython', 'cython', 'pytables', 'pyproj', 'pymysql', 'certifi', 'jinja2', 'swig=3',
-                  cfg['qt_bindings']]
-
+                  'importlib_resources', cfg['qt_bindings']]
+    conda_other_channels = [['-c', 'dbanas', 'chaco']]
     if IS_MAC:
         conda_reqs.append('python.app')
 
@@ -700,8 +725,13 @@ def build_requirements(cfg):
     cfg['pip_requirements'] = pip_reqs
     cfg['pip_git_requirements'] = pip_git_reqs
     cfg['conda_requirements'] = conda_reqs
-
-
+    cfg['conda_other_channels'] = conda_other_channels
+    print('=========Conda Reqs==============')
+    print(' '.join(conda_reqs))
+    print('=================================')
+    print('=========PIP Reqs================')
+    print(' '.join(pip_reqs))
+    print('=================================')
 # config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray'
 # config['pip_git_requirements'] =
 #
@@ -759,7 +789,7 @@ def install_conda(cfg):
 
     # create env
     env_name = cfg['conda_env_name']
-    subprocess.call(['conda', 'create', '-n', env_name, '--yes', 'python=3.7'])
+    subprocess.call(['conda', 'create', '-n', env_name, '--yes', 'python=3.8'])
 
     # install deps
     subprocess.call(['conda', 'install', '--yes',
@@ -773,6 +803,9 @@ def install_conda(cfg):
         subprocess.call([pip_path, 'install'] + cfg['pip_requirements'])
         for r in cfg['pip_git_requirements']:
             subprocess.call([pip_path, 'install', '-e', r])
+
+        for c in cfg['conda_other_channels']:
+            subprocess.call(['conda', 'install']+c)
     else:
         print('WARNING!!!! Installing PIP dependencies on Windows currently not available. Please consult Pychron '
               'documentation or contact Pychron Labs for further instructions')
@@ -905,19 +938,25 @@ def main():
     cfg = install_setupfiles_only()
     if cfg:
         install_setupfiles(cfg)
-    else:
-        cfg = ask_config()
-        if cfg:
-            install_src(cfg)
-            install_setupfiles(cfg)
-            install_conda(cfg)
-            install_launcher_script(cfg)
-            install_app(cfg)
+        print('Setupfiles installed!')
+        return
 
-            print()
-            print('Installation Complete!')
-        else:
-            print('Failed getting configuration. Exiting')
+    cfg = install_conda_only()
+    if cfg:
+        install_conda(cfg)
+        print('Conda Install Complete!')
+        return
+
+    cfg = ask_config()
+    if cfg:
+        install_src(cfg)
+        install_setupfiles(cfg)
+        install_conda(cfg)
+        install_launcher_script(cfg)
+        install_app(cfg)
+        print('Installation Complete!')
+    else:
+        print('Failed getting configuration')
 
 
 if __name__ == '__main__':

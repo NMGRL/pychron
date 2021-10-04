@@ -22,7 +22,8 @@ from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.ideogram_views import VIEWS
-from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS, MAIN, APPEARANCE, DISPLAY, GROUPS, STD_SIG_FIGS
+from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS, MAIN, APPEARANCE, DISPLAY, GROUPS, STD_SIG_FIGS, \
+    CUMULATIVE, WEIGHTED_MEAN, KERNEL, SCHAEN2020_1, SCHAEN2020_2, SCHAEN2020_3, DEINO, SCHAEN2020_3youngest
 
 
 class IdeogramAuxPlot(AuxPlot):
@@ -38,12 +39,15 @@ class IdeogramAuxPlot(AuxPlot):
                         'moles_k39', 'signal_k39', 'relative_probability'],
                        transient=True)
 
+    @property
+    def use_integer_ticks(self):
+        return self.plot_name.startswith('analysis_number')
+
 
 class IdeogramOptions(AgeOptions):
     naux_plots = 8
     aux_plot_klass = IdeogramAuxPlot
 
-    edit_label_format_button = Button
     edit_mean_format_button = Button
 
     mean_label_format = Str
@@ -51,8 +55,20 @@ class IdeogramOptions(AgeOptions):
     # edit_label_format = Button
     # refresh_asymptotic_button = Button
     index_attrs = Dict(transient=True)
-    probability_curve_kind = Enum('cumulative', 'kernel')
-    mean_calculation_kind = Enum('weighted mean', 'kernel')
+    probability_curve_kind = Enum(CUMULATIVE, KERNEL)
+    mean_calculation_kind = Enum(WEIGHTED_MEAN,
+                                 KERNEL,
+                                 SCHAEN2020_1,
+                                 SCHAEN2020_2,
+                                 SCHAEN2020_3,
+                                 SCHAEN2020_3youngest,
+                                 DEINO)
+    skew_min = Float(-0.2)
+    skew_max = Float(0.2)
+    shapiro_wilk_alpha = Float(0.05)
+    age_normalize = Bool
+    age_normalize_value = Float(0)
+
     use_centered_range = Bool
     use_static_limits = Bool
     xlow = Float
@@ -62,12 +78,14 @@ class IdeogramOptions(AgeOptions):
 
     centered_range = Float(0.5)
 
+    display_group_marker = Bool(True)
     display_mean_indicator = Bool(True)
     display_mean = Bool(True)
     display_mean_mswd = Bool(True)
     display_mean_n = Bool(True)
     display_mswd_pvalue = Bool(True)
     display_percent_error = Bool(True)
+    display_mean_location = Enum('Mean', 'Upper Right', 'Upper Left', 'Lower Right', 'Lower Left')
     # display_identifier_on_mean = Bool(False)
     # display_sample_on_mean = Bool(False)
     label_all_peaks = Bool(True)
@@ -97,6 +115,7 @@ class IdeogramOptions(AgeOptions):
     show_results_table = Bool(False)
     show_ttest_table = Bool(False)
     show_rvalues = Bool(False)
+    show_subgroup_indicators = Bool(True)
 
     # correlation
     show_correlation_ellipses = Bool(False)
@@ -109,6 +128,12 @@ class IdeogramOptions(AgeOptions):
     _use_centered_range = Bool
     _use_asymptotic_limits = Bool
     _suppress_xlimits_clear = Bool
+
+    @property
+    def outlier_options(self):
+        return {'skew_min': self.skew_min,
+                'skew_max': self.skew_max,
+                'alpha': self.shapiro_wilk_alpha}
 
     def initialize(self):
         self.subview_names = [MAIN, 'Ideogram', APPEARANCE, 'Calculations', DISPLAY, GROUPS]
@@ -209,17 +234,6 @@ class IdeogramOptions(AgeOptions):
     def _index_attr_changed(self):
         for ap in self.aux_plots:
             ap.clear_ylimits()
-
-    def _edit_label_format_button_fired(self):
-        from pychron.options.label_maker import LabelTemplater, LabelTemplateView
-
-        lm = LabelTemplater(label=self.analysis_label_display)
-        lv = LabelTemplateView(model=lm)
-        info = lv.edit_traits()
-        if info.result:
-            self.analysis_label_format = lm.formatter
-            self.analysis_label_display = lm.label
-            # self.refresh_plot_needed = True
 
     def _edit_mean_format_button_fired(self):
         from pychron.options.label_maker import MeanLabelTemplater, MeanLabelTemplateView

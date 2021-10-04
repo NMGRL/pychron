@@ -21,6 +21,7 @@ from traits.api import HasTraits, Str
 # ============= standard library imports ========================
 from datetime import datetime
 # ============= local library imports  ==========================
+from pychron.pychron_constants import DATE_FORMAT
 
 
 class Alarm(HasTraits):
@@ -54,7 +55,7 @@ class Alarm(HasTraits):
 
     def get_message(self, value):
         cond, trigger = self.get_alarm_params()
-        tstamp = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
+        tstamp = datetime.strftime(datetime.now(), DATE_FORMAT)
 
         return '<<<<<<ALARM {}>>>>>> {} {} {}'.format(tstamp, value, cond, trigger)
 # ============= EOF =============================================

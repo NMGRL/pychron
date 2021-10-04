@@ -22,12 +22,14 @@ from numpy import Inf
 
 from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser, get_volume
 from pychron.canvas.canvas2D.scene.base_scene_loader import BaseLoader, colorify, get_offset, make_color
-from pychron.canvas.canvas2D.scene.primitives.connections import Connection, Elbow, Tee, Fork
+from pychron.canvas.canvas2D.scene.primitives.connections import Connection, Elbow, Tee, Fork, RConnection
 from pychron.canvas.canvas2D.scene.primitives.primitives import Line, Label, Image, ValueLabel
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
 from pychron.canvas.canvas2D.scene.primitives.valves import Switch, Valve, RoughValve, ManualSwitch
+from pychron.canvas.canvas2D.scene.primitives.widgets import Widget
 from pychron.core.helpers.strtools import to_bool
 from pychron.extraction_line.switch_parser import SwitchParser
+from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.paths import paths
 
 
@@ -91,6 +93,9 @@ class XMLLoader(BaseLoader):
 
         display_name = elem.get('display_name', key)
         fill = to_bool(elem.get('fill', 'T'))
+        border_width = elem.get('border_width', bw)
+        if border_width:
+            border_width = int(border_width)
 
         x, y = self._get_translation(elem)
         w, h = self._get_floats(elem, 'dimension')
@@ -114,19 +119,21 @@ class XMLLoader(BaseLoader):
 
         rect = klass(x + ox, y + oy, width=w, height=h,
                      name=key,
-                     border_width=bw,
+                     border_width=border_width,
                      display_name=display_name,
                      volume=get_volume(elem),
                      default_color=c,
                      type_tag=type_tag,
                      fill=fill)
+
         font = elem.find('font')
         if font is not None:
             rect.font = font.text.strip()
 
-        if type_tag in ('turbo', 'laser'):
+        if type_tag in ('turbo', 'laser', 'ionpump'):
             scene.overlays.append(rect)
             rect.scene_visible = False
+            rect.use_symbol = to_bool(elem.get('use_symbol', key))
 
         if rect.name:
             scene.rects[rect.name] = rect
@@ -222,8 +229,7 @@ class XMLLoader(BaseLoader):
 
         connection = klass((x, y), (x1, y1),
                            default_color=(204, 204, 204),
-                           name=key,
-                           width=10)
+                           name=key)
 
         if sanchor:
             sanchor.connections.append(('start', connection))
@@ -286,9 +292,6 @@ class XMLLoader(BaseLoader):
             label_dict['font'] = font.text.strip()
 
         return super(XMLLoader, self)._new_label(scene, label_dict, name, c, **kw)
-
-    def load_widgets(self, scene, canvas):
-        pass
 
     def load_widgets(self, scene, canvas):
         app = canvas.manager.application
@@ -414,7 +417,7 @@ class XMLLoader(BaseLoader):
             else:
                 c = (204, 204, 204)
             name = '{:03}'.format(i)
-            self._new_label(cp, l, name, c)
+            self._new_label(scene, l, name, c)
 
         for i, line in enumerate(cp.get_elements('line')):
             self._new_line(scene, line, 'l{}'.format(i))
@@ -429,6 +432,9 @@ class XMLLoader(BaseLoader):
                         ('vconnection', 'vertical')):
             for conn in cp.get_elements(tag):
                 self._new_connection(scene, conn, orientation_default=od)
+
+        for i, conn in enumerate(cp.get_elements('rconnection')):
+            c = self._new_connection(scene, conn, RConnection)
 
         for i, conn in enumerate(cp.get_elements('elbow')):
             l = self._new_connection(scene, conn, Elbow)

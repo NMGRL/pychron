@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 
 from pyface.qt import QtGui
-from pyface.qt.QtCore import Qt
+from pyface.qt.QtCore import Qt, QSize
 from pyface.qt.QtGui import QFont, QFontMetrics, QApplication
 from traits.api import Event, Callable, Bool
 from traitsui.editors.table_editor import TableEditor
@@ -65,6 +65,12 @@ class myTableView(TableView):
     def mouseDoubleClickEvent(self, QMouseEvent):
         if self.clear_selection_on_dclicked:
             self.clearSelection()
+
+    def sizeHintForColumn(self, column_index):
+        try:
+            return super(myTableView, self).sizeHintForColumn(column_index)
+        except AttributeError:
+            return 0
 
     def _paste(self):
         if self._editor.factory.paste_factory:

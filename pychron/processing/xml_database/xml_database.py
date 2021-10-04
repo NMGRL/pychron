@@ -25,7 +25,7 @@ from traits.api import Str, List, Instance
 # ============= local library imports  ==========================
 from pychron.core.xml.xml_parser import XMLParser
 from pychron.loggable import Loggable
-from pychron.processing.xml.primitives import XMLLabnumber, XMLProjectRecordView, \
+from pychron.processing.xml_database.primitives import XMLLabnumber, XMLProjectRecordView, \
     XMLSpectrometerRecord, XMLIrradiationRecordView, XMLAnalysis, XMLAnalysisRecord
 
 

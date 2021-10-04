@@ -97,6 +97,7 @@ class ExperimentPreferences(BasePreferencesHelper):
     use_preceding_blank = Bool(False)
     plot_panel_update_period = PositiveInteger(1)
     execute_open_queues = Bool
+    save_all_runs = Bool
 
     def _get_memory_threshold(self):
         return self._memory_threshold
@@ -225,6 +226,8 @@ class ExperimentPreferencesPane(PreferencesPane):
         persist_grp = Group(Item('use_xls_persistence', label='Save analyses to Excel workbook'),
                             Item('use_db_persistence', label='Save analyses to Database'),
                             Item('use_uuid_path_name', label='Use UUID Path Names'),
+                            Item('save_all_runs', label='Save All analyses',
+                                 tooltip='Save analysis even if run canceled or failed'),
                             label='Persist', show_border=True)
 
         pc_grp = Group(Item('use_peak_center_threshold', label='Use Peak Center Threshold',

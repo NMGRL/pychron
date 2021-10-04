@@ -24,13 +24,14 @@ from chaco.data_label import DataLabel
 from chaco.scatterplot import render_markers
 from chaco.tooltip import ToolTip
 from enable.colors import ColorTrait
-from numpy import array, arange, Inf, argmax
+from numpy import array, arange, Inf, argmax, asarray
 from pyface.message_dialog import warning
 from traits.api import Array
 from uncertainties import nominal_value, std_dev
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.stats import calculate_weighted_mean
 from pychron.core.stats.peak_detection import fast_find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability, kernel_density
 from pychron.graph.explicit_legend import ExplicitLegend
@@ -38,9 +39,13 @@ from pychron.graph.ticks import IntTickGenerator
 from pychron.pipeline.plot.overlays.correlation_ellipses_overlay import CorrelationEllipsesOverlay
 from pychron.pipeline.plot.overlays.ideogram_inset_overlay import IdeogramInset, IdeogramPointsInset
 from pychron.pipeline.plot.overlays.mean_indicator_overlay import MeanIndicatorOverlay
+from pychron.pipeline.plot.overlays.subgroup_overlay import SubGroupPointOverlay
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.pipeline.plot.point_move_tool import OverlayMoveTool
-from pychron.pychron_constants import PLUSMINUS, SIGMA
+from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
+from pychron.processing.interpreted_age import InterpretedAge
+from pychron.pychron_constants import PLUSMINUS, SIGMA, KERNEL, SCHAEN2020_3, SCHAEN2020_2, SCHAEN2020_1, DEINO, \
+    SCHAEN2020_3youngest
 from pychron.regex import ORDER_PREFIX_REGEX
 
 N = 500
@@ -138,7 +143,7 @@ class Ideogram(BaseArArFigure):
     xs = Array
     xes = Array
     ytitle = 'Relative Probability'
-    subgroup_id = 0
+
     subgroup = None
     peaks = None
 
@@ -159,9 +164,12 @@ class Ideogram(BaseArArFigure):
         graph = self.graph
 
         try:
-            self.xs, self.xes = array([(nominal_value(ai), std_dev(ai))
+            xs, es = array([(nominal_value(ai), std_dev(ai))
                                        for ai in self._get_xs(key=index_attr)]).T
 
+            xs = self.normalize(xs, es)
+            self.xs = xs
+            self.xes = es
         except (ValueError, AttributeError) as e:
             print('asdfasdf', e, index_attr)
             import traceback
@@ -169,14 +177,16 @@ class Ideogram(BaseArArFigure):
             return
 
         # if self.options.omit_by_tag:
-        selection = self.analysis_group.get_omitted_by_tag(self.sorted_analyses)
-        # else:
-        #     selection = []
-        for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
-            # plotobj.group_id = self.group_id
-            # print(id(plotobj), plotobj.group_id)
+        selection = []
+        mck = opt.mean_calculation_kind
+        if mck in [SCHAEN2020_1, SCHAEN2020_2, SCHAEN2020_3, SCHAEN2020_3youngest, DEINO]:
+            self.analysis_group.clear_temp_selected()
+            selection = self.analysis_group.get_outliers(mck, **opt.outlier_options)
 
-            if self.options.reverse_x_axis:
+        selection = list(set(selection + self.analysis_group.get_omitted_by_tag(self.sorted_analyses)))
+
+        for pid, (plotobj, po) in enumerate(zip(graph.plots, plots)):
+            if opt.reverse_x_axis:
                 plotobj.default_origin = 'bottom right'
 
             plot_name = po.plot_name
@@ -216,20 +226,27 @@ class Ideogram(BaseArArFigure):
         # todo: handle other attributes
         return nominal_value(self.analysis_group.weighted_age)
 
-    def max_x(self, attr, exclude_omit=False):
-        try:
-            return max([nominal_value(ai) + std_dev(ai) * 2
-                        for ai in self._unpack_attr(attr, exclude_omit=exclude_omit) if ai is not None])
-        except (AttributeError, ValueError) as e:
-            print('max', e, 'attr={}'.format(attr))
-            return 0
+    def max_x(self, *args, **kw):
+        # try:
+        #     return max([nominal_value(ai) + std_dev(ai) * 2
+        #                 for ai in self._unpack_attr(attr, exclude_omit=exclude_omit) if ai is not None])
+        # except (AttributeError, ValueError) as e:
+        #     print('max', e, 'attr={}'.format(attr))
+        #     return 0
+        return max(self._min_max(*args, **kw))
 
-    def min_x(self, attr, exclude_omit=False):
+    def min_x(self, *args, **kw):
+        return min(self._min_max(sign=-1, *args, **kw))
+
+    def _min_max(self, attr, sign=1, exclude_omit=False):
         try:
-            return min([nominal_value(ai) - std_dev(ai) * 2
-                        for ai in self._unpack_attr(attr, exclude_omit=exclude_omit) if ai is not None])
+            ans = [ai for ai in self._unpack_attr(attr, exclude_omit=exclude_omit) if ai is not None]
+            xs = [nominal_value(ai) + sign*std_dev(ai) * 2 for ai in ans]
+            es = [std_dev(ai) for ai in ans]
+            xs = self.normalize(xs, es)
+            return xs
         except (AttributeError, ValueError) as e:
-            print('min', e)
+            print('min max', e)
             return 0
 
     def get_valid_xbounds(self):
@@ -249,7 +266,6 @@ class Ideogram(BaseArArFigure):
         ans = self.sorted_analyses
         sel = obj.metadata.get('selections', [])
         self._set_selected(ans, sel)
-
         self._rebuild_ideo(sel)
         self.recalculate_event = True
 
@@ -269,6 +285,18 @@ class Ideogram(BaseArArFigure):
     def replot(self):
         self._rebuild_ideo()
 
+    def normalize(self, xs, es):
+        xs = asarray(xs)
+        opt = self.options
+        if opt.age_normalize:
+            offset = opt.age_normalize_value
+            if not offset:
+                offset, _ = calculate_weighted_mean(xs, es)
+            xs -= offset
+
+            print('asfd', offset)
+        print(xs)
+        return xs
     # ===============================================================================
     # plotters
     # ===============================================================================
@@ -279,7 +307,7 @@ class Ideogram(BaseArArFigure):
                 ais = list(ais)
                 xs, xes = zip(*[(nominal_value(vi), std_dev(vi)) for vi in
                                 self._unpack_attr(self.options.index_attr, ans=ais)])
-
+                xs = self.normalize(xs, xes)
                 ys, yes = zip(*[(nominal_value(vi), std_dev(vi)) for vi in
                                 self._unpack_attr(k, ans=ais, scalar=scalar)])
 
@@ -291,21 +319,27 @@ class Ideogram(BaseArArFigure):
 
         return gen()
 
-    def _plot_aux(self, title, vk, po, pid):
+    def _plot_aux(self, vk, po, pid):
+        title = po.get_ytitle(vk)
+
         for aux_id, items, xs, xes, ys, yes in self._get_aux_plot_data(vk, po.scalar):
             scatter = self._add_aux_plot(ys, title, po, pid, gid=self.group_id or aux_id, es=yes, xs=xs)
             nsigma = self.options.error_bar_nsigma
             if xes:
                 self._add_error_bars(scatter, xes, 'x', nsigma,
                                      end_caps=self.options.x_end_caps,
+                                     line_width=self.options.error_bar_line_width,
                                      visible=po.x_error)
             if yes:
                 self._add_error_bars(scatter, yes, 'y', nsigma,
                                      end_caps=self.options.y_end_caps,
+                                     line_width=self.options.error_bar_line_width,
                                      visible=po.y_error)
 
             if po.show_labels:
                 self._add_point_labels(scatter, ans=items)
+            if self.options.show_subgroup_indicators:
+                self._add_subgroup_overlay(scatter, items)
 
             func = self._get_index_attr_label_func()
             self._add_scatter_inspector(scatter,
@@ -328,15 +362,15 @@ class Ideogram(BaseArArFigure):
             index_attr = 'uage_w_position_err'
 
         if nonsorted:
-            name = 'A# Nonsorted'
+            # ytitle = 'A# Nonsorted'
             tag = 'Analysis Number Nonsorted'
             # xs = [nominal_value(x) for x in self._get_xs(key=index_attr, nonsorted=True)]
         else:
-            name = 'Analysis #'
+            # ytitle = 'Analysis #'
             tag = 'Analysis Number'
             # xs = self.xs
-
-        selection = []
+        ytitle = po.get_ytitle(tag)
+        # selection = []
 
         startidx = 1
         for p in self.graph.plots:
@@ -344,7 +378,7 @@ class Ideogram(BaseArArFigure):
             if p.y_axis.tag == tag:
                 for k, rend in p.plots.items():
                     # if title is not visible k == e.g '-1' instead of 'Analysis #-1'
-                    if k.startswith(name) or k.startswith('-'):
+                    if k.startswith(ytitle) or k.startswith('-'):
                         startidx += rend[0].index.get_size()
 
         items = self.sorted_analyses
@@ -396,6 +430,8 @@ class Ideogram(BaseArArFigure):
 
             xs, xes = zip(*((nominal_value(xi), std_dev(xi)) for xi in
                             self._unpack_attr(index_attr, ans=ais)))
+            xs = self.normalize(xs, xes)
+
             startidx += n + 1
             kw = {}
             if opt.use_cmap_analysis_number:
@@ -410,7 +446,7 @@ class Ideogram(BaseArArFigure):
                     data = sorted(zip(xs, ys), key=lambda x: x[0])
                     xs, ys = list(zip(*data))
 
-            scatter = self._add_aux_plot(ys, name, po, pid,
+            scatter = self._add_aux_plot(ys, ytitle, po, pid,
                                          gid=max(0, self.group_id or (aux_id - 1)), xs=xs, **kw)
 
             if opt.include_group_legend:
@@ -437,11 +473,15 @@ class Ideogram(BaseArArFigure):
                 scatter.overlays.append(LatestOverlay(component=scatter,
                                                       data_position=array([(dx, dy)])))
             self._add_error_bars(scatter, xes, 'x', opt.error_bar_nsigma,
+                                 line_width=self.options.error_bar_line_width,
                                  end_caps=opt.x_end_caps,
                                  visible=po.x_error)
 
             if po.show_labels:
                 self._add_point_labels(scatter, ans=ais)
+
+            if self.options.show_subgroup_indicators:
+                self._add_subgroup_overlay(scatter, ais)
 
             # set tick generator
             gen = IntTickGenerator()
@@ -465,6 +505,12 @@ class Ideogram(BaseArArFigure):
             # selection = omits + outliers
             # selection.extend(omits)
             # selection.extend(outliers)
+
+    def _add_subgroup_overlay(self, scatter, ans):
+        idx = [i for i, a in enumerate(ans) if isinstance(a, InterpretedAgeGroup)]
+        if idx:
+            o = SubGroupPointOverlay(component=scatter, indexes=idx)
+            scatter.overlays.append(o)
 
     def _get_index_attr_label_func(self):
         ia = self.options.index_attr
@@ -490,7 +536,7 @@ class Ideogram(BaseArArFigure):
         line, _ = graph.new_series(x=bins, y=probs, plotid=pid, **plotkw)
         line.history_id = self.group_id
 
-        self._add_peak_labels(line)
+        self._add_peak_labels(line, self.xs)
 
         graph.set_series_label('Current-{}'.format(gid), series=sgid, plotid=pid)
 
@@ -597,13 +643,18 @@ class Ideogram(BaseArArFigure):
 
         plot.overlays.append(legend)
 
-    def _add_peak_labels(self, line):
+    def _add_peak_labels(self, line, fxs):
         opt = self.options
 
         xs = line.index.get_data()
         ys = line.value.get_data()
         if xs.shape[0]:
-            xp, yp = fast_find_peaks(ys, xs)
+            xp, yp, xr = fast_find_peaks(ys, xs)
+            ntxt = ''
+            for xmin, xmax in xr:
+                ans = [a for a in fxs if xmin <= a <= xmax]
+                n = len(ans)
+                ntxt = ' n={}'.format(n)
 
             self.peaks = xp
 
@@ -614,9 +665,11 @@ class Ideogram(BaseArArFigure):
                 bgcolor = opt.peak_label_bgcolor if opt.peak_label_bgcolor_enabled else 'transparent'
 
                 for xi, yi in zip(xp, yp):
+                    p = floatfmt(xi, n=opt.peak_label_sigfigs)
+                    txt = '{}{}'.format(p, ntxt)
                     label = PeakLabel(line,
                                       data_point=(xi, yi),
-                                      label_text=floatfmt(xi, n=opt.peak_label_sigfigs),
+                                      label_text=txt,
                                       border_visible=bool(border),
                                       border_width=border,
                                       border_color=border_color,
@@ -646,13 +699,11 @@ class Ideogram(BaseArArFigure):
         opt = self.options
         text = ''
         if opt.display_mean:
-            total_n = self.xs.shape[0]
-
             mswd_args = None
             if opt.display_mean_mswd:
                 mswd_args = (mswd, valid_mswd, n, pvalue)
 
-            text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args)
+            text = self._make_mean_label(wm, we * opt.nsigma, n, mswd_args)
 
         plotkw = opt.get_plot_dict(ogid, self.subgroup_id)
 
@@ -662,6 +713,11 @@ class Ideogram(BaseArArFigure):
                                  error=we,
                                  nsigma=opt.nsigma,
                                  color=plotkw['color'],
+                                 group_marker=plotkw.get('marker', 'circle'),
+                                 group_marker_size=plotkw.get('marker_size', 1),
+                                 display_group_marker=opt.display_group_marker,
+                                 group_id=gid,
+                                 location=opt.display_mean_location,
                                  visible=opt.display_mean_indicator,
                                  id='mean_{}'.format(self.group_id))
 
@@ -731,7 +787,6 @@ class Ideogram(BaseArArFigure):
         lp.value.set_data(ys)
         lp.index.set_data(xs)
 
-        total_n = self.xs.shape[0]
         opt = self.options
         for ov in lp.overlays:
             if isinstance(ov, MeanIndicatorOverlay):
@@ -743,12 +798,12 @@ class Ideogram(BaseArArFigure):
                     if opt.display_mean_mswd:
                         mswd_args = (mswd, valid_mswd, n, pvalue)
 
-                    text = self._make_mean_label(wm, we * opt.nsigma, n, total_n, mswd_args)
+                    text = self._make_mean_label(wm, we * opt.nsigma, n, mswd_args)
                     ov.label.text = text
 
         lp.overlays = [o for o in lp.overlays if not isinstance(o, PeakLabel)]
 
-        self._add_peak_labels(lp)
+        self._add_peak_labels(lp, fxs)
 
         try:
             mi, ma = min(ys), max(ys)
@@ -771,9 +826,8 @@ class Ideogram(BaseArArFigure):
     # ===============================================================================
     # utils
     # ===============================================================================
-    def _make_mean_label(self, wm, we, n, total_n, mswd_args, **kw):
+    def _make_mean_label(self, wm, we, n, mswd_args, **kw):
         text = self._build_label_text(wm, we, n,
-                                      total_n=total_n,
                                       mswd_args=mswd_args,
                                       mswd_sig_figs=self.options.mswd_sig_figs,
                                       sig_figs=self.options.mean_sig_figs,
@@ -831,11 +885,11 @@ class Ideogram(BaseArArFigure):
                                 bind_id=self.group_id,
                                 plotid=pid, **kw)
 
-        if self.options.show_correlation_ellipses and title=='K/Ca':
-                o = CorrelationEllipsesOverlay(self.options._correlation_ellipses,
-                                               self.options.get_colors(),
-                                               component=s)
-                s.overlays.append(o)
+        if self.options.show_correlation_ellipses and title == 'K/Ca':
+            o = CorrelationEllipsesOverlay(self.options._correlation_ellipses,
+                                           self.options.get_colors(),
+                                           component=s)
+            s.overlays.append(o)
 
         if es is not None:
             s.yerror = array(es)
@@ -978,21 +1032,28 @@ class Ideogram(BaseArArFigure):
         ag.attribute = options.index_attr
         ag.age_error_kind = options.error_calc_method
         ag.weighted_age_error_kind = options.error_calc_method
-
+        ag.outlier_options = options.outlier_options
         ag.set_external_error(options.include_j_position_error,
                               options.include_j_error_in_mean,
                               options.include_decay_error, dirty=True)
 
         mswd, valid_mswd, n, pvalue = self.analysis_group.get_mswd_tuple()
-
-        if options.mean_calculation_kind == 'kernel':
+        mck = options.mean_calculation_kind
+        if mck == KERNEL:
             wm, we = 0, 0
-            peak_xs, peak_ys = fast_find_peaks(ys, xs)
+            peak_xs, peak_ys, xr = fast_find_peaks(ys, xs)
             wm = peak_xs[0]
             # wm = np_max(maxs, axis=1)[0]
+        # elif mck == SCHAEN2020_1:
+        #     wm, we, mswd, valid_mswd, n, pvalue = self.analysis_group.apply_outlier_filtering(SCHAEN2020_1)
+        # elif mck == SCHAEN2020_2:
+        #     wm, we, mswd, valid_mswd, n, pvalue = self.analysis_group.apply_outlier_filtering(SCHAEN2020_1)
+        # elif mck == SCHAEN2020_3:
+        #     wm, we, mswd, valid_mswd, n, pvalue = self.analysis_group.apply_outlier_filtering(SCHAEN2020_1)
         else:
             wage = self.analysis_group.weighted_age
             wm, we = nominal_value(wage), std_dev(wage)
+
         return wm, we, mswd, valid_mswd, n, pvalue
 
 # ============= EOF =============================================

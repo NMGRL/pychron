@@ -91,7 +91,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
         super(ExtractionLineCanvas2D, self).__init__(*args, **kw)
 
         tool = ExtractionLineInfoTool(scene=self.scene,
-                                      manager=self.manager)
+                                      manager=self.manager,
+                                      component=self)
         overlay = ExtractionLineInfoOverlay(tool=tool,
                                             component=self)
         self.tool = tool
@@ -149,7 +150,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
         return self.scene.get_is_in(x, y, exclude=[BorderLine, Elbow, Connection])
 
     def normal_left_down(self, event):
-        pass
+        event.handled = True
+
+    def normal_left_dclick(self, event):
+        event.handled = True
 
     def normal_mouse_move(self, event):
         item = self._over_item(event)
@@ -191,6 +195,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
     def select_left_down(self, event):
         """
         """
+        event.handled = True
+
         item = self.active_item
         if item is None:
             return
@@ -262,6 +268,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
         if change:
             self.invalidate_and_redraw()
+
+        event.handled = True
 
     def drag_mouse_move(self, event):
         si = self.active_item

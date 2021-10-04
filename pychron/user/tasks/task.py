@@ -24,7 +24,7 @@ import yaml
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.action.task_action import TaskAction
 from pyface.tasks.task_layout import TaskLayout
-from traits.api import HasTraits, List, Str, Bool, Enum, on_trait_change
+from traits.api import List, Str, Enum, on_trait_change
 from traits.api import Instance
 
 from pychron.core.pychron_traits import EmailStr
@@ -34,18 +34,7 @@ from pychron.envisage.tasks.base_task import BaseTask
 from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL
 from pychron.user.tasks.panes import UsersPane, NewUserView
-
-
-class User(HasTraits):
-    name = Str
-    email = Str
-    enabled = Bool
-    keys = ('name', 'email', 'enabled')
-
-    def __init__(self, dbrecord, *args, **kw):
-        super(User, self).__init__(*args, **kw)
-        self.name = dbrecord.name
-        self.email = dbrecord.email or ''
+from pychron.user.user import User
 
 
 class NewUserAction(TaskAction):

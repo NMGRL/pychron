@@ -58,20 +58,20 @@ class HelixSource(ThermoSource):
         self.read_verticaldeflections()
 
     def _set_parameter(self, param, v):
-        if self._set_value('SetParameter', '{} Set,{}'.format(param, v)):
+        if self._set_value('SetParameter', '{},{}'.format(param, v)):
             setattr(self, '_{}'.format('_'.join(param.lower().split(' '))), v)
 
     def _set_flatapole(self, v):
-        self._set_parameter('Flatapole', v)
+        self._set_parameter('DAC_1_0_(Flata-Pole)', v)
 
     def _set_rotation_quad(self, v):
         self._set_parameter('Rotation Quad', v)
 
     def _set_vertical_deflection_n(self, v):
-        self._set_parameter('Vertical Deflection N', v)
+        self._set_parameter('DAC_0_0_(Pole-N)', v)
 
     def _set_vertical_deflection_s(self, v):
-        self._set_parameter('Vertical Deflection S', v)
+        self._set_parameter('DAC_0_4_(Pole-S)', v)
 
     def _get_flatapole(self):
         return self._flatapole

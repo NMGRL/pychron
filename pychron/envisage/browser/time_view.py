@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from pyface.action.menu_manager import MenuManager
 from traits.api import HasTraits, Str, Int, Any, on_trait_change, List, Event, Button, Date
 from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, spring
-from traitsui.editors import DateEditor
+from traitsui.editors.api import DateEditor
 from traitsui.handler import Controller, Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter

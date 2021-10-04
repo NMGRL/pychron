@@ -915,7 +915,7 @@ class SwitchManager(Manager):
         if p and os.path.isfile(p):
             obj = yload(p)
 
-        return obj
+        return obj or {}
 
     def _load_valves_from_file(self, path):
         self.info('loading valve definitions file  {}'.format(path))
@@ -1138,8 +1138,13 @@ class SwitchManager(Manager):
 
         qs = True
         vqs = v_elem.find('query_state')
+        if vqs is None:
+            vqs = v_elem.get('query_state')
+        else:
+            vqs = vqs.text
+
         if vqs is not None:
-            qs = to_bool(vqs.text.strip())
+            qs = to_bool(vqs.strip())
 
         parent = v_elem.find('parent')
 

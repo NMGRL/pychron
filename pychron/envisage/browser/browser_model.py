@@ -278,7 +278,7 @@ class BrowserModel(BaseBrowserModel):
     # def _selected_projects_change_hook(self, names):
     #
     #     self.selected_samples = []
-    #     self.analysis_table.analyses = []
+    #     self.table.analyses = []
     #
     #     if not self._top_level_filter:
     #         self._top_level_filter = 'project'

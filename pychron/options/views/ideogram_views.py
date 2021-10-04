@@ -20,14 +20,15 @@ from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.options import SubOptions, AppearanceSubOptions, GroupSubOptions, MainOptions, TitleSubOptions
 from pychron.processing.j_error_mixin import J_ERROR_GROUP
-from pychron.pychron_constants import MAIN, APPEARANCE
+from pychron.pychron_constants import MAIN, APPEARANCE, SCHAEN2020_3, SCHAEN2020_3youngest
 
 
 class DisplaySubOptions(TitleSubOptions):
 
     def traits_view(self):
         errbar_grp = VGroup(HGroup(Item('x_end_caps', label='X End Caps'),
-                                   Item('y_end_caps', label='Y End Caps'),
+                                   Item('y_end_caps', label='Y End Caps')),
+                            HGroup(Item('error_bar_line_width', label='Line Width'),
                                    Item('error_bar_nsigma', label='NSigma')),
                             show_border=True,
                             label='Error Bars')
@@ -76,7 +77,8 @@ class DisplaySubOptions(TitleSubOptions):
                             icon_button_editor('edit_mean_format_button', 'cog',
                                                tooltip='Open Mean Label maker'))
 
-        submean = HGroup(VGroup(Item('display_mean', label='Value', ),
+        submean = HGroup(VGroup(Item('display_group_marker', label='Group Marker')),
+                         VGroup(Item('display_mean', label='Value', ),
                                 Item('display_percent_error', label='%Error', )),
                          VGroup(Item('display_mean_mswd', label='MSWD', ),
                                 Item('display_mean_n', label='N'),
@@ -113,24 +115,30 @@ class DisplaySubOptions(TitleSubOptions):
 
 class CalculationSubOptions(SubOptions):
     def traits_view(self):
-        calcgrp = Group(
-            Item('probability_curve_kind',
-                 width=-150,
-                 label='Probability Curve Method'),
-            Item('mean_calculation_kind',
-                 width=-150,
-                 label='Mean Calculation Method'),
-            Item('error_calc_method',
-                 width=-150,
-                 label='Error Calculation Method'),
-            Item('nsigma', label='Age Error NSigma'),
+        calcgrp = BorderVGroup(Item('probability_curve_kind',
+                                    width=-150,
+                                    label='Probability Curve Method'),
+                               Item('mean_calculation_kind',
+                                    width=-150,
+                                    label='Mean Calculation Method'),
+                               BorderVGroup(Item('shapiro_wilk_alpha', label='Shapiro-Wilk alpha'),
+                                            HGroup(Item('skew_min', label='Skew Min.'),
+                                                   Item('skew_max', label='Skew Max')),
+                                            visible_when='mean_calculation_kind =="{}" '
+                                                         'or mean_calculation_kind=="{}"'.format(SCHAEN2020_3,
+                                                                                                 SCHAEN2020_3youngest),
+                                            label='Normality Options'),
 
-            VGroup(J_ERROR_GROUP,
-                   HGroup(Item('include_irradiation_error'),
-                          Item('include_decay_error'), show_border=True),
-                   label='Uncertainty', show_border=True),
-            show_border=True,
-            label='Calculations')
+                               Item('error_calc_method',
+                                    width=-150,
+                                    label='Error Calculation Method'),
+                               Item('nsigma', label='Age Error NSigma'),
+
+                               BorderVGroup(J_ERROR_GROUP,
+                                            BorderHGroup(Item('include_irradiation_error'),
+                                                         Item('include_decay_error')),
+                                            label='Uncertainty'),
+                               label='Calculations')
 
         return self._make_view(calcgrp)
 
@@ -140,6 +148,8 @@ class IdeogramSubOptions(SubOptions):
         xgrp = VGroup(Item('index_attr',
                            editor=EnumEditor(name='index_attrs'),
                            label='X Value'),
+                      HGroup(Item('age_normalize', label='Normalize Age'),
+                             UItem('age_normalize_value')),
                       Item('reverse_x_axis', label='Reverse',
                            tooltip='Display decreasing left to right'),
                       HGroup(UItem('use_static_limits'),
@@ -192,14 +202,14 @@ class IdeogramSubOptions(SubOptions):
 
         cgrp = BorderVGroup(Item('show_correlation_ellipses'),
                             label='Correlation')
-
         return self._make_view(VGroup(xgrp, tgrp, rtgrp, cgrp))
 
 
 class IdeogramAppearance(AppearanceSubOptions):
     def traits_view(self):
-        mi = BorderHGroup(UItem('mean_indicator_fontname'),
-                          UItem('mean_indicator_fontsize'),
+        mi = BorderVGroup(HGroup(UItem('mean_indicator_fontname'),
+                                 UItem('mean_indicator_fontsize')),
+                          Item('display_mean_location', label='Location'),
                           label='Mean Indicator')
 
         ee = BorderHGroup(UItem('error_info_fontname'),
@@ -217,7 +227,10 @@ class IdeogramAppearance(AppearanceSubOptions):
                                    self._get_yfont_group()),
                             label='Fonts')
 
-        g = VGroup(self._get_nominal_group(),
+        subgroup = BorderVGroup(Item('show_subgroup_indicators'), label='Subgroup')
+
+        g = VGroup(subgroup,
+                   self._get_nominal_group(),
                    self._get_layout_group(),
                    self._get_padding_group(),
                    fgrp)

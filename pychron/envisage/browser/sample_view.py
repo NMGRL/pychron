@@ -16,11 +16,11 @@
 
 # ============= enthought library imports =======================
 from pyface.action.menu_manager import MenuManager
-from traits.api import Button
-from traits.api import Str, Instance, Any
+
+from traits.api import Str, Instance, Any, Button
 from traitsui.api import InstanceEditor, Controller
 from traitsui.api import View, UItem, VGroup, EnumEditor, \
-    HGroup, CheckListEditor, spring, Group, HSplit, Tabbed
+    HGroup, CheckListEditor, spring, Group, HSplit, Tabbed, Item, VSplit
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -49,7 +49,7 @@ class GroupView(Controller):
             traits.
         """
         return {'object': self.model, 'controller': self.controller,
-                'handler': self.controller, 'pane': self.pane, 'analysis_table': self.model.analysis_table}
+                'handler': self.controller, 'pane': self.pane, 'table': self.model.table}
         return ctx
 
 
@@ -77,11 +77,11 @@ irrad_grp = BorderVGroup(HGroup(UItem('irradiation_enabled',
                          label='Irradiations')
 
 project_grp = BorderVGroup(UItem('projects',
-                                 height=100,
                                  editor=FilterTabularEditor(editable=False,
                                                             enabled_cb='project_enabled',
                                                             use_fuzzy=True,
                                                             column_index=-1,
+                                                            stretch_last_section=False,
                                                             refresh='refresh_needed',
                                                             selected='selected_projects',
                                                             adapter=ProjectAdapter(),
@@ -111,9 +111,10 @@ simple_mass_spectrometer_grp = BorderHGroup(UItem('mass_spectrometers_enabled',
                                             label='Mass Spectrometer')
 
 pi_grp = Group(UItem('principal_investigators',
-                     height=100,
+                     height=-75,
                      editor=FilterTabularEditor(editable=False,
                                                 use_fuzzy=True,
+                                                stretch_last_section=False,
                                                 enabled_cb='principal_investigator_enabled',
                                                 refresh='refresh_needed',
                                                 selected='selected_principal_investigators',
@@ -184,41 +185,60 @@ class SampleGroupView(GroupView):
 class AnalysisGroupView(GroupView):
 
     def traits_view(self):
-        analysis_tools = VGroup(HGroup(UItem('analysis_table.analysis_set',
+        analysis_tools = VGroup(HGroup(UItem('table.analysis_set',
                                              width=250,
-                                             editor=EnumEditor(name='analysis_table.analysis_set_names')),
-                                       icon_button_editor('analysis_table.refresh_analysis_set_button', 'refresh',
-                                                          enabled_when='analysis_table.items',
+                                             editor=EnumEditor(name='table.analysis_set_names')),
+                                       icon_button_editor('table.refresh_analysis_set_button', 'refresh',
+                                                          enabled_when='table.items',
                                                           tooltip='Reload selected analysis set'),
-                                       icon_button_editor('analysis_table.add_analysis_set_button', 'add',
-                                                          enabled_when='analysis_table.items',
+                                       icon_button_editor('table.add_analysis_set_button', 'add',
+                                                          enabled_when='table.items',
                                                           tooltip='Add current analyses to an analysis set'),
                                        icon_button_editor('add_analysis_group_button', 'database_add',
-                                                          enabled_when='analysis_table.items',
+                                                          enabled_when='table.items',
                                                           tooltip='Add current analyses to an analysis group')),
-                                HGroup(UItem('analysis_table.analysis_filter_parameter',
+                                HGroup(UItem('table.analysis_filter_parameter',
                                              width=-90,
-                                             editor=EnumEditor(name='analysis_table.analysis_filter_parameters')),
-                                       UItem('analysis_table.analysis_filter'),
-                                       icon_button_editor('analysis_table.scroll_to_bottom', 'arrow_down',
+                                             editor=EnumEditor(name='table.analysis_filter_parameters')),
+                                       UItem('table.analysis_filter'),
+                                       icon_button_editor('table.scroll_to_bottom', 'arrow_down',
                                                           tooltip='Scroll to bottom'),
-                                       icon_button_editor('analysis_table.scroll_to_top', 'arrow_up',
-                                                          tooltip='Scroll to top')))
+                                       icon_button_editor('table.scroll_to_top', 'arrow_up',
+                                                          tooltip='Scroll to top'),
+                                       Item('use_quick_recall', label='Quick Recall')))
 
         agrp = Group(VGroup(analysis_tools,
-                            UItem('analysis_table.analyses',
+                            UItem('table.analyses',
                                   # width=0.75,
-                                  editor=myTabularEditor(adapter=self.model.analysis_table.tabular_adapter,
+                                  editor=myTabularEditor(adapter=self.model.table.tabular_adapter,
                                                          operations=['move', 'delete'],
-                                                         column_clicked='analysis_table.column_clicked',
-                                                         refresh='analysis_table.refresh_needed',
-                                                         selected='analysis_table.selected',
-                                                         dclicked='analysis_table.dclicked',
+                                                         column_clicked='table.column_clicked',
+                                                         refresh='table.refresh_needed',
+                                                         selected='table.selected',
+                                                         dclicked='table.dclicked',
                                                          multi_select=self.pane.multi_select,
-                                                         scroll_to_row='analysis_table.scroll_to_row',
-                                                         scroll_to_bottom='analysis_table.scroll_to_bottom',
-                                                         scroll_to_top='analysis_table.scroll_to_top',
-                                                         stretch_last_section=False)),
+                                                         scroll_to_row='table.scroll_to_row',
+                                                         scroll_to_bottom='table.scroll_to_bottom',
+                                                         scroll_to_top='table.scroll_to_top',
+                                                         stretch_last_section=False),
+                                  visible_when='not use_quick_recall'),
+                            VSplit(UItem('table.analyses',
+                                         height=0.75,
+                                         editor=myTabularEditor(adapter=self.model.table.tabular_adapter,
+                                                                operations=['move', 'delete'],
+                                                                column_clicked='table.column_clicked',
+                                                                refresh='table.refresh_needed',
+                                                                selected='table.selected',
+                                                                dclicked='table.dclicked',
+                                                                key_pressed='table.key_pressed',
+                                                                multi_select=self.pane.multi_select,
+                                                                scroll_to_row='table.scroll_to_row',
+                                                                scroll_to_bottom='table.scroll_to_bottom',
+                                                                scroll_to_top='table.scroll_to_top',
+                                                                stretch_last_section=False)),
+                                   UItem('recall_editor',
+                                         height=0.25, style='custom', visible_when='recall_editor'),
+                                   visible_when='use_quick_recall'),
                             defined_when=self.pane.analyses_defined,
                             show_border=True,
                             label='Analyses'))
@@ -231,7 +251,12 @@ class BaseBrowserSampleView(PaneModelView):
     configure_mass_spectrometer_filter_button = Button
 
     sample_grp = Instance(SampleGroupView)
-    analysis_grp = Instance(AnalysisGroupView)
+    selection_grp = Instance(GroupView)
+
+    def _selection_grp_default(self):
+        return self._selection_view_klass(model=self.model,
+                                          pane=self.pane,
+                                          controller=self)
 
     def _sample_grp_default(self):
         s = SampleGroupView(model=self.model,
@@ -239,15 +264,9 @@ class BaseBrowserSampleView(PaneModelView):
                             controller=self)
         return s
 
-    def _analysis_grp_default(self):
-        a = AnalysisGroupView(model=self.model,
-                              pane=self.pane,
-                              controller=self)
-        return a
-
     def traits_view(self):
         return View(HSplit(InstanceUItem('controller.sample_grp', width=0.5),
-                           InstanceUItem('controller.analysis_grp', width=0.5)))
+                           InstanceUItem('controller.selection_grp', width=0.5)))
 
     def _configure_date_filter_button_fired(self):
         grp = BorderHGroup(UItem('use_low_post'),
@@ -306,6 +325,15 @@ class BaseBrowserSampleView(PaneModelView):
 
 
 class BrowserSampleView(BaseBrowserSampleView):
+    _selection_view_klass = AnalysisGroupView
+
+    # analysis_grp = Instance(AnalysisGroupView)
+    #
+    # def _analysis_grp_default(self):
+    #     a = AnalysisGroupView(model=self.model,
+    #                           pane=self.pane,
+    #                           controller=self)
+    #     return a
 
     def unselect_projects(self, info, obj):
         obj.selected_projects = []
@@ -370,16 +398,18 @@ class BrowserSampleView(BaseBrowserSampleView):
     def _set_tags(self, obj, tag):
         items = obj.set_tags(tag)
         if items:
-            obj.analysis_table.set_tags(tag, items)
-            obj.analysis_table.remove_invalid()
-            obj.analysis_table.refresh_needed = True
+            obj.table.set_tags(tag, items)
+            obj.table.remove_invalid()
+            obj.table.refresh_needed = True
 
 
 class InterpretedGroupView(GroupView):
-    def trait_context(self):
-        ctx = super(BrowserInterpretedAgeView, self).trait_context()
-        ctx['table'] = self.model.table
-        return ctx
+    # def trait_context(self):
+    #     # ctx = super(BrowserInterpretedAgeView, self).trait_context()
+    #     ctx['table'] = self.model.table
+    #     ctx = {'object': self.model, 'controller': self.controller,
+    #      'handler': self.controller, 'pane': self.pane, 'table': self.model.table}
+    #     return ctx
 
     def traits_view(self):
         grp = VGroup(
@@ -399,16 +429,16 @@ class InterpretedGroupView(GroupView):
 
 
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
-    interpreted_grp = Instance(AnalysisGroupView, ())
-
-    def _interpretd_grp_default(self):
-        a = InterpretedGroupView(model=self.model,
-                                 pane=self.pane,
-                                 controller=self)
-        return a
+    _selection_view_klass = InterpretedGroupView
+    # interpreted_grp = Instance(InterpretedGroupView)
+    #
+    # def _interpretd_grp_default(self):
+    #     a = InterpretedGroupView(model=self.model,
+    #                              pane=self.pane,
+    #                              controller=self)
+    #     return a
 
     def delete(self, info, obj):
         obj.delete()
-
 
 # ============= EOF =============================================

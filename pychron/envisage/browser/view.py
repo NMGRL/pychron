@@ -116,7 +116,7 @@ class InterpretedAgeBrowserView(BrowserView):
                           show_border=True)
 
         v = okcancel_view(VGroup(tool_grp,
-                                 UItem('pane.sample_view', style='custom')),
+                                 UItem('pane._view', style='custom')),
                           title='Interpreted Age Browser',
                           width=900)
 
