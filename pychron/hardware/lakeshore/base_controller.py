@@ -125,13 +125,14 @@ class BaseLakeShoreController(CoreDevice):
             setattr(self, '{}_readback'.format(tag), v)
         return self._update_hook()
 
-    def setpoints_achieved(self, tol=1):
-        for i, (tag, key) in enumerate(zip(self.iomap, string.ascii_lowercase)):
+    def setpoints_achieved(self, setpoints, tol=1):
+        for i, (setpoint, tag, key) in enumerate(zip(setpoints, self.iomap, string.ascii_lowercase)):
+
             idx = i + 1
             v = self._read_input(key, self.units)
             if tag is not None:
                 try:
-                    setpoint = getattr(self, tag)
+                    # setpoint = getattr(self, tag)
                     self.debug('{}={}, v={}'.format(tag, setpoint, v))
                     if abs(v - setpoint) > tol:
                         return
@@ -161,7 +162,7 @@ class BaseLakeShoreController(CoreDevice):
                 tol = block
 
             while 1:
-                if self.setpoints_achieved(tol):
+                if self.setpoints_achieved(setpoints, tol):
                     break
                 time.sleep(delay)
 

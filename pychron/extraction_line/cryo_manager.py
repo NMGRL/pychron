@@ -76,7 +76,7 @@ class CryoManager(Manager):
         dev = self.devices[idx]
         return dev.read_input(iput)
 
-    def set_setpoint(self, v1, v2=None, idx=0, block=False, **kw):
+    def set_setpoint(self, v1, v2=None, idx=0, block=False, device_name=None, **kw):
         """
         v is either a float or a str
         if float interpret as degrees K
@@ -90,7 +90,20 @@ class CryoManager(Manager):
             v1, v2 = self._lookup_species_temp(v1)
 
         if v1 is not None:
-            self.devices[idx].set_setpoints(v1, v2, block=block, **kw)
+            dev = None
+            if device_name:
+                dev = next((d for d in self.devices if d.name == device_name), None)
+                if not dev:
+                    names = [d.name for d in self.devices]
+                    self.warning('Invalid device name: {}. Valid names: {}'.format(device_name, names))
+            else:
+                try:
+                    dev = self.devices[idx]
+                except IndexError:
+                    self.warning('Invalid idx: {}. Valid indices: {}'.format(idx, list(range(len(self.devices)))))
+
+            if dev:
+                dev.set_setpoints(v1, v2, block=block, **kw)
 
         self.debug('set_setpoint returning "{}","{}"'.format(v1, v2))
         return v1, v2
