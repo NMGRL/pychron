@@ -66,10 +66,15 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         # get the data
         header = None
         cnt=1
+        st = time.time()
         while 1:
             if cnt>n:
                 break
             
+            et = time.time() - st
+            if et < delay:
+                time.sleep(delay - et)
+
             st = time.time()
             size = sock.recv(4)
             size = struct.unpack('i', size)[0]
@@ -91,17 +96,18 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
                 continue
             
             if not header:
-                header = ['count','time', ] + keys
+                masses =['mass({})'.format(m) for m in obj['amuNames']]
+                header = ['count','time', ] + masses + keys
                 writer.writerow(header)
-            row = [obj[h] for h in keys]
-            row = [cnt, time.time(), ] + row
+
+            raw = [obj[h] for h in keys]
+            intensities = obj['intensity']
+            row = [cnt, time.time(), ] + intensities+raw
             self.debug('sinking row: {}'.format(row))
             writer.writerow(row)
             cnt+=1
 
-            et = time.time() - st
-            if et < delay:
-                time.sleep(delay - et)
+           
 
     # def set_data_pump_mode(self, mode):
     #     resp = self.microcontroller.ask('General.DataPump.Mode {}'.format(mode))
