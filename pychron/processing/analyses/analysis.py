@@ -464,6 +464,7 @@ class Analysis(ArArAge, IdeogramPlotable):
     mask_position = ''
     mask_name = ''
     reprate = ''
+    sample_prep_comment = ''
 
     # collection
     experiment_type = AR_AR

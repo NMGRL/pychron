@@ -20,7 +20,7 @@ from uncertainties import ufloat
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.pychron_constants import MSEM, ERROR_TYPES, SUBGROUPINGS, SD, AGE_SUBGROUPINGS, WEIGHTED_MEAN, \
-    PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS
+    PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, MSE, SE
 
 
 class PreferredValue(HasTraits):
@@ -48,6 +48,9 @@ class PreferredValue(HasTraits):
         if new in ('Plateau Integrated', 'Valid Integrated', 'Total Integrated', 'Arithmetic Mean'):
             self.error_kinds = [SD, ]
             self.error_kind = SD
+        elif new in ('Isochron',):
+            self.error_kinds = [SE, MSE]
+            self.error_kind = SE
         else:
             self.error_kinds = ERROR_TYPES
 

@@ -80,8 +80,10 @@ def progress_loader(xs, func, threshold=50, progress=None,
                     prog = progress
                 else:
                     prog = None if i % step else progress
-
-                r = func(x, prog, i, n)
+                try:
+                    r = func(x, prog, i, n)
+                except BaseException:
+                    r = None
                 if r:
                     if hasattr(r, '__iter__') and unpack:
                         for ri in r:
@@ -90,7 +92,10 @@ def progress_loader(xs, func, threshold=50, progress=None,
                         yield r
         else:
             for x in xs:
-                r = func(x, None, 0, 0)
+                try:
+                    r = func(x, None, 0, 0)
+                except BaseException:
+                    r = None
                 if r:
                     if hasattr(r, '__iter__') and unpack:
                         for ri in r:

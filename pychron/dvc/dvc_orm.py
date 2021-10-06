@@ -345,7 +345,7 @@ class SampleTbl(Base, NameMixin):
     update_date = deferred(Column(DateTime, onupdate=func.now(), default=func.now()))
 
     positions = relationship('IrradiationPositionTbl', backref='sample', lazy='joined')
-
+    preps = relationship('SamplePrepStepTbl', backref='sample')
 
 # class ProductionTbl(Base, NameMixin):
 #     levels = relationship('LevelTbl', backref='production')

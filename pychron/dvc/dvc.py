@@ -929,6 +929,7 @@ class DVC(Loggable):
         sens = {}
         frozen_fluxes = {}
         frozen_productions = {}
+        sample_prep = {}
         meta_repo = self.meta_repo
         use_cocktail_irradiation = self.use_cocktail_irradiation
         if not quick:
@@ -937,6 +938,13 @@ class DVC(Loggable):
                 frozen_productions.update(ps)
 
             for r in records:
+                # get sample notes
+
+                dbsam = r.irradiation_position.sample
+                sample_id = dbsam.id
+                if sample_id not in sample_prep:
+                    sample_prep[sample_id] = ','.join([p.comment or '' for p in dbsam.preps])
+
                 irrad = r.irradiation
                 if irrad != 'NoIrradiation':
                     if irrad not in frozen_fluxes:
@@ -983,6 +991,7 @@ class DVC(Loggable):
                                          fluxes=fluxes, calculate_f_only=calculate_f_only, sens=sens,
                                          frozen_fluxes=frozen_fluxes, frozen_productions=frozen_productions,
                                          flux_histories=flux_histories,
+                                         sample_prep=sample_prep,
                                          quick=quick,
                                          reload=reload, *args)
             except BaseException:
@@ -1750,7 +1759,7 @@ class DVC(Loggable):
         self.sync_repo(expid)
 
     def _make_record(self, record, prog, i, n, productions=None, chronos=None, branches=None, fluxes=None, sens=None,
-                     frozen_fluxes=None, frozen_productions=None, flux_histories=None,
+                     frozen_fluxes=None, frozen_productions=None, flux_histories=None, sample_prep=None,
                      calculate_f_only=False, reload=False, quick=False):
         meta_repo = self.meta_repo
         if prog:
@@ -1797,6 +1806,10 @@ class DVC(Loggable):
                 a.load_holder = record.load_holder
                 # get repository branch
                 a.branch = branches.get(expid, '')
+
+                # load sample_prep
+                if sample_prep:
+                    a.sample_prep_comment = sample_prep.get(record.irradiation_position.sample.id)
 
                 # load irradiation
                 if sens:

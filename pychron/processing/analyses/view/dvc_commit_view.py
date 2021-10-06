@@ -26,6 +26,7 @@ from traitsui.tabular_adapter import TabularAdapter
 
 from pychron import json
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.pychron_traits import BorderHGroup
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.dvc import analysis_path, HISTORY_TAGS, HISTORY_PATHS
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -339,7 +340,7 @@ class DVCCommitView(HasTraits):
 class HistoryView(DVCCommitView):
     name = 'History'
     _paths = None
-
+    sample_prep_comment = Str
     def _show_all_commits_changed(self):
         self._load_commits()
 
@@ -347,6 +348,7 @@ class HistoryView(DVCCommitView):
         self.repo = Repo(os.path.join(paths.repository_dataset_dir, an.repository_identifier))
         self.record_id = an.record_id
         self.repository_identifier = an.repository_identifier
+        self.sample_prep_comment = an.sample_prep_comment
 
         ps = [an.make_path(p) for p in HISTORY_PATHS]
         self._paths = ps
@@ -374,4 +376,19 @@ class HistoryView(DVCCommitView):
             cs = [from_gitlog(l.strip()) for l in txt.split('\n')]
 
         self.commits = cs
+
+    def traits_view(self):
+        v = View(VGroup(
+            BorderHGroup(UItem('sample_prep_comment'), label='Sample Prep'),
+            HGroup(icon_button_editor('do_diff', 'edit_diff', tooltip='Make Diff between two commits'),
+                   Item('show_all_commits', label='Show All Commits')),
+
+            VSplit(UItem('commits', editor=myTabularEditor(adapter=HistoryCommitAdapter(),
+                                                           multi_select=True,
+                                                           editable=False,
+                                                           selected='selected_commits'))),
+            UItem('selected_message', style='custom',
+                  height=-200,
+                  editor=TextEditor(read_only=True))))
+        return v
 # ============= EOF =============================================

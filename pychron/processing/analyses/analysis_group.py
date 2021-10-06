@@ -37,7 +37,7 @@ from pychron.processing.sclf import schaen_2020_1, schaen_2020_2, schaen_2020_3,
     shapiro_wilk_pvalue, skewness_value
 from pychron.pychron_constants import MSEM, SD, SUBGROUPING_ATTRS, ERROR_TYPES, WEIGHTED_MEAN, \
     DEFAULT_INTEGRATED, SUBGROUPINGS, ARITHMETIC_MEAN, PLATEAU_ELSE_WEIGHTED_MEAN, WEIGHTINGS, FLECK, NULL_STR, \
-    ISOCHRON, MSE, SE, INTEGRATED, SCHAEN2020_1, SCHAEN2020_2, SCHAEN2020_3, DEINO
+    ISOCHRON, MSE, SE, INTEGRATED, SCHAEN2020_1, SCHAEN2020_2, SCHAEN2020_3, DEINO, ISOCHRON_METHODS
 
 
 def AGProperty(*depends):
@@ -64,11 +64,10 @@ class AnalysisGroup(IdeogramPlotable):
     skewness = AGProperty()
     outlier_options = Dict
 
-
     weighted_age = AGProperty()
     arith_age = AGProperty()
     integrated_age = AGProperty()
-    isochron_age = AGProperty()
+    isochron_age = AGProperty('isochron_method')
     j_err = AGProperty()
     j = AGProperty()
     total_n = AGProperty()
@@ -87,7 +86,7 @@ class AnalysisGroup(IdeogramPlotable):
     mswd = Property
 
     isochron_age_error_kind = Str(SE)
-    isochron_method = Str('York')
+    isochron_method = Enum(ISOCHRON_METHODS)
 
     identifier = Any
     aliquot = Any
@@ -284,6 +283,7 @@ class AnalysisGroup(IdeogramPlotable):
 
         exclude = [i for i, x in enumerate(ans) if test(x)]
         if ans:
+            print('faadfs', self.isochron_method, self.isochron_age_error_kind)
             return calculate_isochron(ans, self.isochron_age_error_kind, reg=self.isochron_method, exclude=exclude)
 
     def calculate_isochron_age(self, exclude_non_plateau=False):
@@ -298,8 +298,8 @@ class AnalysisGroup(IdeogramPlotable):
             reg = args[2]
             self.isochron_regressor = reg
             v, e = nominal_value(age), std_dev(age)
+            print(v, e)
             e = self._modify_error(v, e, self.isochron_age_error_kind, mswd=reg.mswd)
-
             return ufloat(v, e)
 
     def isochron_mswd(self):
@@ -978,7 +978,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             else:
                 pv.kinds = SUBGROUPINGS
 
-    @on_trait_change('fixed_step_low, fixed_step_high')
+    @on_trait_change('fixed_step_low, fixed_step_high, isochron_method')
     def handle_fixed_step_change(self, obj, name, old, new):
         pv = self.get_preferred_obj('age')
         pv.dirty = True
@@ -990,6 +990,8 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
                 self.plateau_age_error_kind = obj.error_kind
                 if obj.kind != 'Plateau':
                     self.age_error_kind = obj.error_kind
+            elif 'Isochron' in obj.kind:
+                self.isochron_age_error_kind = obj.error_kind
             else:
                 self.age_error_kind = obj.error_kind
 
@@ -1056,6 +1058,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             self.set_preferred_kind(k, vk, ek)
 
     def set_preferred_kind(self, attr, k, ek):
+        print('set priea',attr, k, ek)
         pv = self._get_pv(attr)
         pv.error_kind = ek
         pv.kind = k

@@ -222,6 +222,11 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
     def _group_change(self, obj, name, old, new):
         gchange(obj, self.selected_group)
 
+    @on_trait_change('selected_group_item:isochron_method')
+    def _isochron_method_change(self, obj, name, old, new):
+        for gi in self.selected_group[1:]:
+            gi.isochron_method = new
+
     def _get_selected_group_item(self):
         if self.selected_group:
             ret = self.selected_group[0]
@@ -254,10 +259,12 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
                                                                          selected='selected_group')),
                             UItem('selected_group_item',
                                   style='custom', editor=InstanceEditor(view=View(
-                                    VGroup(BorderHGroup(Item('fixed_step_low', label='Start'),
-                                                        Item('fixed_step_high', label='End'),
-                                                        spring,
-                                                        label='Calculate Plateau'),
+                                    VGroup(HGroup(BorderHGroup(Item('fixed_step_low', label='Start'),
+                                                               Item('fixed_step_high', label='End'),
+                                                               spring,
+                                                               label='Calculate Plateau'),
+                                                  BorderHGroup(Item('isochron_method', label='Method'),
+                                                               label='Isochron')),
                                            get_preferred_grp())))),
                             label='Groups')
         return ggrp

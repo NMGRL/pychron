@@ -24,7 +24,7 @@ from pychron.options.group.inverse_isochron_group_options import InverseIsochron
 from pychron.options.spectrum import PlateauOptions
 from pychron.options.views.isochron_views import INVERSE_ISOCHRON_VIEWS, ISOCHRON_VIEWS
 from pychron.pychron_constants import ELLIPSE_KINDS, FONTS, SIZES, MAIN, APPEARANCE, GROUPS, \
-    CALCULATIONS, INSET, ISOCHRON_ERROR_TYPES
+    CALCULATIONS, INSET, ISOCHRON_ERROR_TYPES, ISOCHRON_METHODS
 
 
 class IsochronOptions(PlateauOptions):
@@ -65,7 +65,7 @@ class InverseIsochronOptions(IsochronOptions):
     inset_ellipse_kind = Enum(ELLIPSE_KINDS)
     inset_link_status = Bool(True)
 
-    regressor_kind = Enum('York', 'NewYork', 'Reed')
+    regressor_kind = Enum(ISOCHRON_METHODS)
     group_options_klass = InverseIsochronGroupOptions
 
     results_font = Property
