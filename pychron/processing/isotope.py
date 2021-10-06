@@ -24,7 +24,7 @@ from binascii import hexlify
 from math import isnan, isinf
 
 import six
-from numpy import array, Inf, polyfit, gradient, array_split, mean
+from numpy import array, Inf, polyfit, gradient, array_split, mean, isfinite
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.geometry.geometry import curvature_at
@@ -145,9 +145,13 @@ class BaseMeasurement(object):
             if n != -1:
                 xs = xs[-n:]
                 ys = ys[-n:]
+
+            xs = xs[isfinite(xs)]
+            ys = ys[isfinite(ys)]
             try:
                 return polyfit(xs, ys, 1)[0]
-            except BaseException:
+            except BaseException as e:
+                print('get slope exception', e)
                 return 0
         else:
             return 0
