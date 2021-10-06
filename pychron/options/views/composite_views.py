@@ -13,12 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.options.options import SubOptions, TitleSubOptions
+from pychron.options.options import SubOptions, TitleSubOptions, GroupSubOptions
 from pychron.options.views.isochron_views import InverseIsochronMainOptions, InverseIsochronAppearance
 from pychron.options.views.spectrum_views import SpectrumMainOptions, SpectrumAppearance, DisplaySubOptions, \
     CalculationSubOptions
 
 from traitsui.api import VGroup, Item
+
+from pychron.pychron_constants import GROUPS
 
 
 class LayoutSubOptions(SubOptions):
@@ -38,5 +40,6 @@ VIEWS = {'main': SpectrumMainOptions,
          'appearance(spec.)': SpectrumAppearance,
          'appearance(iso.)': InverseIsochronAppearance,
          'layout': LayoutSubOptions,
-         'title': TitleSubOptions}
+         'title': TitleSubOptions,
+         GROUPS.lower(): GroupSubOptions}
 # ============= EOF =============================================

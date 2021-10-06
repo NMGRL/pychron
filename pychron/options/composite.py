@@ -16,6 +16,7 @@
 from traits.api import Instance, on_trait_change, Enum
 from traits.trait_errors import TraitError
 
+from pychron.options.group.spectrum_group_options import SpectrumGroupOptions
 from pychron.options.isochron import InverseIsochronOptions
 from pychron.options.options import FigureOptions
 from pychron.options.spectrum import SpectrumOptions
@@ -28,6 +29,7 @@ class CompositeOptions(FigureOptions):
     isochron_options = Instance(InverseIsochronOptions)
     use_plotting = True
     orientation_layout = Enum('Horizontal', 'Vertical')
+    group_options_klass = SpectrumGroupOptions
 
     def _get_state_hook(self, state):
         state['spectrum_options'] = self.spectrum_options.make_state()
@@ -61,6 +63,11 @@ class CompositeOptions(FigureOptions):
         self.spectrum_options.setup()
         self.isochron_options.setup()
 
+    @on_trait_change('groups[]')
+    def handle_group_change(self):
+        self.spectrum_options.groups = self.groups
+        self.isochron_options.groups = self.groups
+
     @on_trait_change('spectrum_options:[bgcolor,plot_bgcolor]')
     def handle(self, obj, name, old, new):
         self.isochron_options.trait_set(**{name: new})
@@ -88,6 +95,7 @@ class CompositeOptions(FigureOptions):
                               'Appearance(Iso.)',
                               'Layout',
                               'Title',
+                              'Groups'
                               ]
 
     def _get_subview(self, name):
