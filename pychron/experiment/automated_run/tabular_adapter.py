@@ -78,6 +78,7 @@ group_e = MenuManager(Action(name='AAA,BBB,CCC', action='group_extractions'),
 randomize = MenuManager(Action(name='Randomize Unknowns', action='randomize_unknowns'),
                         Action(name='Randomize All', action='randomize_all'),
                         Action(name='Order From File', action='order_from_file'),
+                        Action(name='Motion Saver', action='motion_saver'),
                         name='Position Ordering')
 
 EDIT_MENU = MenuManager(move, copy, jump, blocks, selects, group_e,
@@ -96,6 +97,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ('Aliquot', 'aliquot'),
         ('Sample', SAMPLE),
         ('Project', PROJECT),
+        ('Irradiation', 'irradiation'),
+        ('Irrad. Level', 'irradiation_level'),
+        ('Irrad. Position', 'irradiation_position'),
         ('Material', MATERIAL),
         ('RepositoryID', REPOSITORY_IDENTIFIER),
         ('Position', POSITION),

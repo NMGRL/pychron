@@ -76,6 +76,9 @@ class ExperimentEditorHandler(TabularEditorHandler):
     def order_from_file(self, info, obj):
         obj.order_from_file()
 
+    def motion_saver(self, info, obj):
+        obj.motion_saver()
+
     def show_summary(self, info, obj):
         obj.show_summary()
 
