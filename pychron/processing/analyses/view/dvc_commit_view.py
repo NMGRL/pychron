@@ -340,7 +340,10 @@ class DVCCommitView(HasTraits):
 class HistoryView(DVCCommitView):
     name = 'History'
     _paths = None
+
     sample_prep_comment = Str
+    sample_note = Str
+
     def _show_all_commits_changed(self):
         self._load_commits()
 
@@ -349,6 +352,7 @@ class HistoryView(DVCCommitView):
         self.record_id = an.record_id
         self.repository_identifier = an.repository_identifier
         self.sample_prep_comment = an.sample_prep_comment
+        self.sample_note = an.sample_note
 
         ps = [an.make_path(p) for p in HISTORY_PATHS]
         self._paths = ps
@@ -379,6 +383,7 @@ class HistoryView(DVCCommitView):
 
     def traits_view(self):
         v = View(VGroup(
+            BorderHGroup(UItem('sample_note'), label='Sample Note'),
             BorderHGroup(UItem('sample_prep_comment'), label='Sample Prep'),
             HGroup(icon_button_editor('do_diff', 'edit_diff', tooltip='Make Diff between two commits'),
                    Item('show_all_commits', label='Show All Commits')),

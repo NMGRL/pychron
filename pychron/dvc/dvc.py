@@ -940,10 +940,10 @@ class DVC(Loggable):
             for r in records:
                 # get sample notes
 
-                dbsam = r.irradiation_position.sample
-                sample_id = dbsam.id
-                if sample_id not in sample_prep:
-                    sample_prep[sample_id] = ','.join([p.comment or '' for p in dbsam.preps])
+                # dbsam = r.irradiation_position.sample
+                # sample_id = dbsam.id
+                # if sample_id not in sample_prep:
+                #     sample_prep[sample_id] = ','.join([p.comment or '' for p in dbsam.preps])
 
                 irrad = r.irradiation
                 if irrad != 'NoIrradiation':
@@ -1801,6 +1801,11 @@ class DVC(Loggable):
             a.group_id = record.group_id
             a.set_tag(record.tag)
 
+            if sample_prep:
+                a.sample_prep_comment = sample_prep.get(record.irradiation_position.sample.id)
+
+            a.sample_note = record.irradiation_position.sample.note or ''
+
             if not quick:
                 a.load_name = record.load_name
                 a.load_holder = record.load_holder
@@ -1808,8 +1813,6 @@ class DVC(Loggable):
                 a.branch = branches.get(expid, '')
 
                 # load sample_prep
-                if sample_prep:
-                    a.sample_prep_comment = sample_prep.get(record.irradiation_position.sample.id)
 
                 # load irradiation
                 if sens:
