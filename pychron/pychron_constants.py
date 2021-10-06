@@ -109,7 +109,7 @@ FIT_TYPES = ['Linear', 'Parabolic', 'Cubic',
 FIT_ERROR_TYPES = [SD, SEM, MSEM, 'CI', 'MonteCarlo']
 SERIES_FIT_TYPES = [NULL_STR] + FIT_TYPES
 ISOCHRON_ERROR_TYPES = [SE, MSE]
-ISOCHRON_METHODS = ['York', 'NewYork', 'Reed']
+ISOCHRON_METHODS = ['NewYork', 'York', 'Reed']
 INTERPOLATE_TYPES = ['Preceding', 'Bracketing Interpolate', 'Bracketing Average', 'Succeeding']
 FIT_TYPES_INTERPOLATE = FIT_TYPES + INTERPOLATE_TYPES
 
