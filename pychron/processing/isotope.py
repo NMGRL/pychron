@@ -145,8 +145,10 @@ class BaseMeasurement(object):
             if n != -1:
                 xs = xs[-n:]
                 ys = ys[-n:]
-
-            return polyfit(xs, ys, 1)[0]
+            try:
+                return polyfit(xs, ys, 1)[0]
+            except BaseException:
+                return 0
         else:
             return 0
 
