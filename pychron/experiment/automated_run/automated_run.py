@@ -1840,21 +1840,26 @@ anaylsis_type={}
                 failure = False
                 for kind, items in yd.items():
                     try:
-                        # klass = CONDITIONALS_KLASS[kind]
+                        okind = kind
+                        if kind.endswith('s'):
+                            kind = kind[:-1]
+
+                        if kind == 'modification':
+                            klass_name = 'QueueModification'
+                        elif kind in ('pre_run_termination', 'post_run_termination'):
+                            continue
+                        else:
+                            klass_name = kind.capitalize()
+
                         mod = 'pychron.experiment.conditional.conditional'
                         mod = importlib.import_module(mod)
-                        klass = getattr(mod, '{}sConditional'.format(kind.capitalize()))
+                        klass = getattr(mod, '{}Conditional'.format(klass_name))
                     except (ImportError, AttributeError):
-
-                        self.debug('Invalid conditional kind="{}"'.format(kind))
+                        self.critical('Invalid conditional kind="{}", klass_name="{}"'.format(okind, klass_name))
                         continue
 
                     for cd in items:
                         try:
-                            # trim off s
-                            if kind.endswith('s'):
-                                kind = kind[:-1]
-
                             self._conditional_appender(kind, cd, klass, location=p)
                         except BaseException as e:
                             self.debug('Failed adding {}. excp="{}", cd={}'.format(kind, e, cd))

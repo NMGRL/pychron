@@ -192,9 +192,9 @@ class BaseConditional(Loggable):
 
         """
         if self._should_check(run, data, cnt):
-            return self._check(run, data)
+            return self._check(run, data, cnt)
 
-    def _check(self, run, data):
+    def _check(self, run, data, cnt):
         raise NotImplementedError
 
     def _should_check(self, run, data, cnt):
@@ -228,6 +228,7 @@ class AutomatedRunConditional(BaseConditional):
     # start_count=0,
     # frequency=1,
     # *args, **kw):
+    _analysis_types_logged = False
 
     def __init__(self, teststr,
                  start_count=0,
@@ -270,8 +271,10 @@ class AutomatedRunConditional(BaseConditional):
             if self.analysis_types:
                 # check if checking should be done on this run based on analysis_type
                 atype = run.spec.analysis_type.lower()
+                if not self._analysis_types_logged:
+                    self.debug('analysis_type={}, target_types={}'.format(atype, self.analysis_types))
+                    self._analysis_types_logged = True
 
-                self.debug('analysis_type={}, target_types={}'.format(atype, self.analysis_types))
                 should = False
                 for target_type in self.analysis_types:
                     if target_type.lower() == 'blank':
@@ -296,7 +299,7 @@ class AutomatedRunConditional(BaseConditional):
                 cnt_flag = b and c
                 return cnt_flag
 
-    def _check(self, run, data, verbose=False):
+    def _check(self, run, data, cnt, verbose=False):
         """
         make a teststr and context from the run and data
         evaluate the teststr with the context
@@ -307,7 +310,7 @@ class AutomatedRunConditional(BaseConditional):
 
         self.value_context = vc = pprint.pformat(ctx, width=1)
 
-        self.debug('testing {}'.format(teststr))
+        self.debug('Count: {} testing {}'.format(cnt, teststr))
         if verbose:
             self.debug('attribute context {}'.format(pprint.pformat(self._attr_dict(), width=1)))
         msg = 'evaluate ot="{}" t="{}", ctx="{}"'.format(self.teststr, teststr, vc)

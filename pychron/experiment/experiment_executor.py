@@ -1001,7 +1001,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         msg = '{} {}'.format(n, msg)
         self._set_message(msg, c)
 
-    def _show_conditionals(self, active_run=None, tripped=None, kind='live'):
+    def _show_conditionals(self, active_run=None, tripped=None, conditionals=None, kind='live'):
         try:
 
             v = ConditionalsView()
@@ -1010,8 +1010,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug('Show conditionals measuring run: {}'.format(self.measuring_run))
             self.debug('active_run same as measuring_run: {}'.format(self.measuring_run == active_run))
             if active_run:
-                v.add_conditionals({'{}s'.format(tag): getattr(active_run, '{}_conditionals'.format(tag))
-                                    for tag in CONDITIONAL_GROUP_TAGS}, level=RUN)
+                if conditionals:
+                    cd = conditionals
+                else:
+                    cd = {'{}s'.format(tag): getattr(active_run, '{}_conditionals'.format(tag))
+                          for tag in CONDITIONAL_GROUP_TAGS}
+
+                v.add_conditionals(cd, level=RUN)
                 v.title = '{} ({})'.format(v.title, active_run.runid)
             else:
                 run = self.selected_run
@@ -1999,13 +2004,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # check queue defined terminations
         conditionals = self._load_queue_conditionals('post_run_terminations')
         if self._test_conditionals(run, conditionals, 'Checking user defined post run terminations',
-                                   'Post Run Termination'):
+                                   'Post Run Termination', cgroup='terminations'):
             return True
 
         # check default terminations
         conditionals = self._load_system_conditionals('post_run_terminations')
         if self._test_conditionals(run, conditionals, 'Checking default post run terminations',
-                                   'Post Run Termination'):
+                                   'Post Run Termination', cgroup='terminations'):
             return True
 
     def _check_for_errors(self, inform):
@@ -2071,6 +2076,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     return True
 
     def _test_conditionals(self, run, conditionals, message1, message2,
+                           cgroup=None,
                            data=None, cnt=True):
         if not self.alive:
             return True
@@ -2083,8 +2089,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.warning('{}. {}'.format(message2, ci.to_string()))
 
                     self.cancel(confirm=False)
+                    kw = {}
+                    if cgroup:
+                        kw['conditionals'] = {cgroup: conditionals}
 
-                    self.show_conditionals(active_run=run, tripped=ci)
+                    self.show_conditionals(active_run=run, tripped=ci, **kw)
                     return True
 
     def _do_action(self, action):
@@ -2119,7 +2128,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         types = ['air', 'unknown', 'cocktail']
         # get first air, unknown or cocktail
         aruns = exp.cleaned_automated_runs
-        
+
         if aruns[0].analysis_type.startswith('blank'):
             return True
 
