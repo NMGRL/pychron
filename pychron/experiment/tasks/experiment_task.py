@@ -34,7 +34,7 @@ from pychron.experiment.experimentor import Experimentor
 from pychron.experiment.queue.base_queue import extract_meta
 from pychron.experiment.tasks.experiment_editor import ExperimentEditor, UVExperimentEditor
 from pychron.experiment.tasks.experiment_panes import ExperimentFactoryPane, StatsPane, \
-    ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane, LoggerPane, ExplanationPane
+    ControlsPane, IsotopeEvolutionPane, ConnectionStatusPane, LoggerPane, ExplanationPane, ConditionalsPane
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
 from pychron.globals import globalv
@@ -62,6 +62,7 @@ class ExperimentEditorTask(EditorTask):
 
     automated_runs_editable = Bool
 
+    conditionals_pane = Instance(ConditionalsPane)
     isotope_evolution_pane = Instance(IsotopeEvolutionPane)
     experiment_factory_pane = Instance(ExperimentFactoryPane)
 
@@ -192,6 +193,7 @@ class ExperimentEditorTask(EditorTask):
         if not man or man.simulation:
             name = '{}(Simulation)'.format(name)
 
+        ex = self.manager.executor
         self.isotope_evolution_pane = IsotopeEvolutionPane(name=name)
 
         self.experiment_factory_pane = ExperimentFactoryPane(model=self.manager.experiment_factory)
@@ -199,13 +201,14 @@ class ExperimentEditorTask(EditorTask):
 
         explanation_pane = ExplanationPane()
         explanation_pane.set_colors(self._assemble_state_colors())
+        self.conditionals_pane = ConditionalsPane(model=ex)
 
-        ex = self.manager.executor
         panes = [StatsPane(model=ex.stats, executor=ex),
                  ControlsPane(model=ex, task=self),
                  ConsolePane(model=ex),
                  LoggerPane(),
                  ConnectionStatusPane(model=ex),
+                 self.conditionals_pane,
                  self.experiment_factory_pane,
                  self.isotope_evolution_pane,
                  explanation_pane,
@@ -680,6 +683,10 @@ class ExperimentEditorTask(EditorTask):
 
         editor.last_update = time.time()
         return editor
+
+    @on_trait_change('manager:executor:show_conditionals_event')
+    def _handle_show_conditionals(self):
+        self._show_pane(self.conditionals_pane)
 
     @on_trait_change('manager:executor:[measuring,extracting]')
     def _handle_measuring(self, name, new):

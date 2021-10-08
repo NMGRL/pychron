@@ -124,7 +124,7 @@ class MeasurementPyScript(ValvePyScript):
         """
 
         if calc_time:
-            self._estimated_duration += (len(detectors) * 30)*n
+            self._estimated_duration += (len(detectors) * 30) * n
             return
 
         if not self._automated_run_call('py_generate_ic_mftable', detectors, refiso, peak_center_config, n):
@@ -454,18 +454,18 @@ class MeasurementPyScript(ValvePyScript):
         :param delay: int, delay in seconds between close of outlet and open of inlet
 
         """
-        evt = self._automated_run_call('py_equilibration', eqtime=eqtime,
-                                       inlet=inlet,
-                                       outlet=outlet,
-                                       do_post_equilibration=do_post_equilibration,
-                                       close_inlet=close_inlet,
-                                       delay=delay)
+        ok = self._automated_run_call('py_equilibration', eqtime=eqtime,
+                                      inlet=inlet,
+                                      outlet=outlet,
+                                      do_post_equilibration=do_post_equilibration,
+                                      close_inlet=close_inlet,
+                                      delay=delay)
 
-        if not evt:
+        if not ok:
             self.cancel()
-        else:
-            # wait for inlet to open
-            evt.wait()
+        # else:
+        # wait for inlet to open
+        # evt.wait()
 
     @verbose_skip
     @command_register
@@ -801,6 +801,5 @@ class MeasurementPyScript(ValvePyScript):
 
         self.abbreviated_count_ratio = None
         self.ncounts = 0
-
 
 # ============= EOF =============================================

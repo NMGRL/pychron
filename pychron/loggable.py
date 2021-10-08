@@ -215,9 +215,10 @@ class Loggable(BaseFS):
     def _log_(self, func, msg):
 
         def get_thread_name():
-            ct = current_thread()
-            name = ct.name
-            # from pychron.core.ui.thread import currentThreadName
+            name = 'foo'
+            # ct = current_thread()
+            # name = ct.name
+            from pychron.core.ui.thread import currentThreadName
             # if name.startswith('Dummy'):
             #     name = currentThreadName()
 

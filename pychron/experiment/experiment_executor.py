@@ -119,7 +119,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     wait_group = Instance(WaitGroup, ())
     stats = Instance(StatsGroup, ())
-
+    conditionals_view = Instance(ConditionalsView)
     spectrometer_manager = Any
     extraction_line_manager = Any
     ion_optics_manager = Any
@@ -201,6 +201,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     _cv_info = None
     _cached_runs = List
     _active_repository_identifier = Str
+    show_conditionals_event = Event
 
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
@@ -362,10 +363,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.warning('{} is not a valid file'.format(path))
 
     def show_conditionals(self, main_thread=True, *args, **kw):
-        if main_thread:
-            invoke_in_main_thread(self._show_conditionals, *args, **kw)
-        else:
-            self._show_conditionals(*args, **kw)
+        # if main_thread:
+        #     invoke_in_main_thread(self._show_conditionals, *args, **kw)
+        # else:
+        #     self._show_conditionals(*args, **kw)
+        self._show_conditionals(*args, **kw)
 
     def refresh_table(self, *args, **kw):
         self.experiment_queue.refresh_table_needed = True
@@ -757,7 +759,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         run.teardown()
 
-        self.measuring_run = None
+        # self.measuring_run = None
         self.debug('join run finished')
 
     def _set_prev(self, run):
@@ -868,7 +870,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._write_rem_ex_experiment_queues()
 
         # close conditionals view
-        self._close_cv()
+        # self._close_cv()
 
         self._do_event(events.END_RUN, run=run)
 
@@ -883,6 +885,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             try:
                 invoke_in_main_thread(self._cv_info.control.close)
             except (AttributeError, ValueError, TypeError) as e:
+                self._cv_info = None
                 self.critical('Failed closing conditionals view {}'.format(e))
                 # window could already be closed
 
@@ -1051,10 +1054,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if tripped:
                 v.select_conditional(tripped, tripped=True)
 
-            self._close_cv()
+            self.conditionals_view = v
 
-            self._cv_info = open_view(v, kind=kind)
-            self.debug('open view _cv_info={}'.format(self._cv_info))
+            self.show_conditionals_event = True
+            # self._close_cv()
+
+            # self._cv_info = open_view(v, kind=kind)
+            # self.debug('open view _cv_info={}'.format(self._cv_info))
 
         except BaseException:
             self.warning('******** Exception trying to open conditionals. Notify developer ********')

@@ -23,7 +23,7 @@ import re
 import time
 import weakref
 from pprint import pformat
-from threading import Thread, Event as TEvent
+from threading import Event as TEvent, Thread
 
 from numpy import Inf, polyfit, linspace, polyval
 from traits.api import Any, Str, List, Property, \
@@ -34,7 +34,9 @@ from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.preference_binding import set_preference
+# from pychron.core.ui.thread import Thread
 from pychron.core.yaml import yload
 from pychron.experiment import ExtractionException
 from pychron.experiment.automated_run.hop_util import parse_hops
@@ -42,6 +44,7 @@ from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.conditional.conditional import TruncationConditional, \
     ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file, \
     QueueModificationConditional, EquilibrationConditional
+from pychron.experiment.plot_panel import PlotPanel
 from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, QUEUE, SYSTEM, RUN
 from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import convert_identifier
@@ -403,27 +406,74 @@ class AutomatedRun(Loggable):
     def py_post_equilibration(self, **kw):
         self.do_post_equilibration(**kw)
 
+    _equilibration_thread = None
+    _equilibration_evt = None
+
     def py_equilibration(self, eqtime=None, inlet=None, outlet=None,
                          do_post_equilibration=True,
                          close_inlet=True,
                          delay=None):
-        evt = TEvent()
-        if not self._alive:
-            evt.set()
-            return evt
+        # evt = TEvent()
+        # if not self._alive:
+        #     evt.set()
+        #     return evt
 
         self.heading('Equilibration Started')
-        t = Thread(name='equilibration', target=self._equilibrate, args=(evt,),
-                   kwargs=dict(eqtime=eqtime,
-                               inlet=inlet,
-                               outlet=outlet,
-                               delay=delay,
-                               close_inlet=close_inlet,
-                               do_post_equilibration=do_post_equilibration))
-        t.setDaemon(True)
-        t.start()
 
-        return evt
+        inlet = self._convert_valve(inlet)
+        outlet = self._convert_valve(outlet)
+
+        elm = self.extraction_line_manager
+        if elm:
+            if outlet:
+                # close mass spec ion pump
+                for o in outlet:
+                    for i in range(3):
+                        ok, changed = elm.close_valve(o, mode='script')
+                        if ok:
+                            break
+                        else:
+                            time.sleep(0.1)
+                    else:
+                        from pychron.core.ui.gui import invoke_in_main_thread
+                        invoke_in_main_thread(self.warning_dialog, 'Equilibration: Failed to Close "{}"'.format(o))
+                        self.cancel_run(do_post_equilibration=False)
+                        return
+
+            if inlet:
+                self.debug('waiting {}s before opening inlet value {}'.format(delay, inlet))
+                # evt.wait(delay)
+                time.sleep(delay)
+                self.debug('delay completed')
+                # open inlet
+                for i in inlet:
+                    for j in range(3):
+                        ok, changed = elm.open_valve(i, mode='script')
+                        if ok:
+                            break
+                        else:
+                            time.sleep(0.5)
+                    else:
+                        from pychron.core.ui.gui import invoke_in_main_thread
+                        invoke_in_main_thread(self.warning_dialog, 'Equilibration: Failed to Open "{}"'.format(i))
+                        self.cancel_run(do_post_equilibration=False)
+                        return
+
+        # set the passed in event
+        # evt.set()
+
+        self._equilibration_thread = Thread(name='equilibration', target=self._equilibrate, args=(None,),
+                                            kwargs=dict(eqtime=eqtime,
+                                                        inlet=inlet,
+                                                        outlet=outlet,
+                                                        delay=delay,
+                                                        close_inlet=close_inlet,
+                                                        do_post_equilibration=do_post_equilibration))
+
+        self._equilibration_thread.start()
+        return True
+        # self._equilibration_evt = evt
+        # return evt
 
     def py_sniff(self, ncounts, starttime, starttime_offset, series=0, block=True):
         if block:
@@ -432,7 +482,7 @@ class AutomatedRun(Loggable):
             t = Thread(target=self._sniff,
                        name='sniff',
                        args=(ncounts, starttime, starttime_offset, series))
-            t.setDaemon(True)
+            # t.setDaemon(True)
             t.start()
             return True
 
@@ -838,8 +888,8 @@ class AutomatedRun(Loggable):
         if self.collector:
             self.collector.automated_run = None
 
-        if self.plot_panel:
-            self.plot_panel.automated_run = None
+        # if self.plot_panel:
+        #     self.plot_panel.automated_run = None
 
         self._persister_action('trait_set', persistence_spec=None, monitor=None)
 
@@ -1319,13 +1369,15 @@ class AutomatedRun(Loggable):
             self.heading('Post Measurement Finished unsuccessfully')
             return False
 
+    _post_equilibration_thread = None
     def do_post_equilibration(self, block=False):
         if block:
             self._post_equilibration()
         else:
             t = Thread(target=self._post_equilibration,
                        name='post_equil')
-            t.setDaemon(True)
+            # t.setDaemon(True)
+            self._post_equilibration_thread = t
             t.start()
 
     def do_post_termination(self, do_post_equilibration=True):
@@ -1776,15 +1828,15 @@ anaylsis_type={}
         """
         self.debug('activate detectors')
 
-        if self.plot_panel is None:
-            create = True
-        else:
-            cd = set([d.name for d in self.plot_panel.detectors])
-            ad = set(dets)
-            create = cd - ad or ad - cd
+        create = True
+        # if self.plot_panel is None:
+        #     create = True
+        # else:
+        #     cd = set([d.name for d in self.plot_panel.detectors])
+        #     ad = set(dets)
+        #     create = cd - ad or ad - cd
 
         p = self._new_plot_panel(self.plot_panel, stack_order='top_to_bottom')
-        self.plot_panel = p
 
         self._active_detectors = self._set_active_detectors(dets)
 
@@ -1808,8 +1860,9 @@ anaylsis_type={}
 
         self._load_previous()
 
-        self.debug('load analysis view')
-        p.analysis_view.load(self)
+        # self.debug('load analysis view')
+        # p.analysis_view.load(self)
+        self.plot_panel = p
 
     def _load_previous(self):
         if not self.spec.analysis_type.startswith('blank') and not self.spec.analysis_type.startswith('background'):
@@ -1900,13 +1953,13 @@ anaylsis_type={}
         if irradiation:
             title = '{}   {}'.format(title, irradiation)
 
-        if plot_panel is None:
-            from pychron.experiment.plot_panel import PlotPanel
+        # if plot_panel is None:
+        #     from pychron.experiment.plot_panel import PlotPanel
 
-            plot_panel = PlotPanel(
-                stack_order=stack_order,
-                info_func=self.info,
-                isotope_group=self.isotope_group)
+        plot_panel = PlotPanel(
+            stack_order=stack_order,
+            info_func=self.info,
+            isotope_group=self.isotope_group)
 
         self.debug('*************** Set Analysis View {}'.format(self.experiment_type))
         plot_panel.set_analysis_view(self.experiment_type,
@@ -1933,47 +1986,9 @@ anaylsis_type={}
     def _equilibrate(self, evt, eqtime=15, inlet=None, outlet=None,
                      delay=3,
                      do_post_equilibration=True, close_inlet=True):
-
         inlet = self._convert_valve(inlet)
-        outlet = self._convert_valve(outlet)
-
         elm = self.extraction_line_manager
-        if elm:
-            if outlet:
-                # close mass spec ion pump
-                for o in outlet:
-                    for i in range(3):
-                        ok, changed = elm.close_valve(o, mode='script')
-                        if ok:
-                            break
-                        else:
-                            time.sleep(0.1)
-                    else:
-                        from pychron.core.ui.gui import invoke_in_main_thread
-                        invoke_in_main_thread(self.warning_dialog, 'Equilibration: Failed to Close "{}"'.format(o))
-                        self.cancel_run(do_post_equilibration=False)
-                        return
 
-            if inlet:
-                self.info('waiting {}s before opening inlet value {}'.format(delay, inlet))
-                time.sleep(delay)
-
-                # open inlet
-                for i in inlet:
-                    for j in range(3):
-                        ok, changed = elm.open_valve(i, mode='script')
-                        if ok:
-                            break
-                        else:
-                            time.sleep(0.1)
-                    else:
-                        from pychron.core.ui.gui import invoke_in_main_thread
-                        invoke_in_main_thread(self.warning_dialog, 'Equilibration: Failed to Open "{}"'.format(i))
-                        self.cancel_run(do_post_equilibration=False)
-                        return
-
-        # set the passed in event
-        evt.set()
         # delay for eq time
         self.info('equilibrating for {}sec'.format(eqtime))
         time.sleep(eqtime)
