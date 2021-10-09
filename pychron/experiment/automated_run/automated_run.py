@@ -2140,7 +2140,8 @@ anaylsis_type={}
             if self.plot_panel:
                 self.debug('load analysis view')
                 self.plot_panel.analysis_view.load(self)
-                self.plot_panel.analysis_view.refresh_needed = True
+
+            #     self.plot_panel.analysis_view.refresh_needed = True
 
         return change
 
