@@ -759,7 +759,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         run.teardown()
 
-        # self.measuring_run = None
+        self.measuring_run = None
         self.debug('join run finished')
 
     def _set_prev(self, run):
