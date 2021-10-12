@@ -32,6 +32,7 @@ class PreferredValue(HasTraits):
     computed_kind = Str
     value = Float
     error = Float
+    unit = Str
 
     weighting = Str
     weightings = List(WEIGHTINGS)
@@ -42,7 +43,8 @@ class PreferredValue(HasTraits):
         return ufloat(self.value, self.error)
 
     def to_dict(self):
-        return {attr: getattr(self, attr) for attr in ('attr', 'error_kind', 'kind', 'value', 'error', 'weighting')}
+        return {attr: getattr(self, attr) for attr in ('attr', 'error_kind', 'kind',
+                                                       'value', 'error', 'weighting', 'unit')}
 
     def _kind_changed(self, new):
         if new in ('Plateau Integrated', 'Valid Integrated', 'Total Integrated', 'Arithmetic Mean'):

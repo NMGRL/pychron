@@ -592,6 +592,22 @@ def which(program):
                 return exe_file
 
 
+def install_conda_only():
+    info_header('Install conda env only')
+    cfg = {'qt_bindings': 'pyqt=5',
+           'qt_api': 'pyqt5',
+           'conda_distro': os.path.join(os.path.expanduser('~'), 'miniconda3'),
+           'conda_env_name': 'pychron3gis',
+           'python_version': '3.9'}
+    vv = input('Install conda env only [n]')
+    if vv.lower() in ('y', 'yes'):
+        ask(cfg, 'conda_distro', 'Conda Distro Path')
+        ask(cfg, 'conda_env_name', 'Conda environment name')
+        ask(cfg, 'install_gis_plugin', 'Install GIS Plugin')
+        build_requirements(cfg)
+        return cfg
+
+
 def install_setupfiles_only():
     info_header('Install Setupfiles only')
     cfg = {}
@@ -604,17 +620,18 @@ def install_setupfiles_only():
     return cfg
 
 
+def ask(cfg, key, msg):
+    default = cfg.get(key, '')
+    vv = input('{} [{}] >> '.format(msg, default))
+    if not vv:
+        vv = default
+    cfg[key] = vv
+
+
 def ask_config():
     info_header('Getting User Configuration')
     YES = ('y', 'yes', 'Y', 'Yes', 'YES')
-    distro = os.path.join(HOME, 'anaconda3')
-
-    def ask(cfg, key, msg):
-        default = cfg[key]
-        vv = input('{} [{}] >> '.format(msg, default))
-        if not vv:
-            vv = default
-        cfg[key] = vv
+    distro = os.path.join(HOME, 'opt', 'miniconda3')
 
     config = {'github_org': 'NMGRL',
               'github_token': '',
@@ -682,7 +699,8 @@ def ask_config():
 def build_requirements(cfg):
     pip_reqs = ['uncertainties',
                 'peakutils',
-                'qimage2ndarray']
+                'qimage2ndarray',
+                'chaco']
 
     # pip_git_reqs =  ['git+https://github.com/enthought/chaco.git#egg=chaco',
     #                 'git+https://github.com/enthought/enable.git#egg=enable']
@@ -690,7 +708,7 @@ def build_requirements(cfg):
 
     conda_reqs = ['numpy', 'statsmodels', 'scikit-learn', 'PyYAML', 'yaml', 'traits', 'traitsui', 'pyface',
                   'envisage', 'sqlalchemy', 'Reportlab', 'lxml', 'xlrd', 'xlwt', 'xlsxwriter', 'requests', 'keyring',
-                  'pillow', 'gitpython', 'cython', 'pytables', 'pyproj', 'pymysql', 'certifi', 'jinja2', 'swig=3',
+                  'pyparsing', 'pillow', 'gitpython', 'pytables', 'pyproj', 'pymysql', 'certifi', 'jinja2', 'swig=3',
                   'importlib_resources', cfg['qt_bindings']]
 
     if IS_MAC:
@@ -698,6 +716,7 @@ def build_requirements(cfg):
 
     if cfg['install_gis_plugin']:
         conda_reqs.append('qgis')
+        # conda_reqs.append('qtkeychain=0.11.1')
 
     cfg['pip_requirements'] = pip_reqs
     cfg['pip_git_requirements'] = pip_git_reqs
@@ -709,6 +728,8 @@ def build_requirements(cfg):
     print('=========PIP Reqs================')
     print(' '.join(pip_reqs))
     print('=================================')
+
+
 # config['pip_requirements'] = 'uncertainties peakutils qimage2ndarray'
 # config['pip_git_requirements'] =
 #
@@ -766,18 +787,19 @@ def install_conda(cfg):
 
     # create env
     env_name = cfg['conda_env_name']
-    subprocess.call(['conda', 'create', '-n', env_name, '--yes', 'python=3.7'])
+    subprocess.call(['conda', 'create', '-n', env_name, '--yes', 'python={}'.format(cfg['python_version'])])
 
     # install deps
-    subprocess.call(['conda', 'install', '--yes',
-                     '--name', env_name] + cfg['conda_requirements'])
-    subprocess.call(['conda', 'install', '--yes',
-                     '--name', env_name, '-c', 'dbanas', 'chaco'])
+    # subprocess.call(['conda', 'create','--name', env_name, '--yes',
+    #                  'python=3.8'] + cfg['conda_requirements'])
+    subprocess.call(['conda', 'install', '--yes', '--name', env_name]+cfg['conda_requirements'])
+    # subprocess.call(['conda', 'install', '--yes',
+    #                  '--name', env_name, '-c', 'dbanas', 'chaco'])
     if IS_MAC:
-        subprocess.call(['conda', 'activate', env_name])
+        # subprocess.call(['conda', 'activate', env_name])
         # install pip deps
-        # pip_path = os.path.join(cfg['conda_distro'], 'envs', env_name, 'bin', 'pip')
-        pip_path = 'pip'
+        pip_path = os.path.join(cfg['conda_distro'], 'envs', env_name, 'bin', 'pip')
+        # pip_path = 'pip'
         subprocess.call([pip_path, 'install'] + cfg['pip_requirements'])
         for r in cfg['pip_git_requirements']:
             subprocess.call([pip_path, 'install', '-e', r])
@@ -902,7 +924,7 @@ def install_setupfiles(cfg):
                                                valves_path=valves_path)
         d = os.path.join(root, 'preferences')
         make_dir(d)
-        p =os.path.join(d, 'extractionline.ini')
+        p = os.path.join(d, 'extractionline.ini')
         write(p, v)
 
 
@@ -914,18 +936,22 @@ def main():
     if cfg:
         install_setupfiles(cfg)
     else:
-        cfg = ask_config()
+        cfg = install_conda_only()
         if cfg:
-            install_src(cfg)
-            install_setupfiles(cfg)
             install_conda(cfg)
-            install_launcher_script(cfg)
-            install_app(cfg)
-
-            print()
-            print('Installation Complete!')
         else:
-            print('Failed getting configuration. Exiting')
+            cfg = ask_config()
+            if cfg:
+                install_src(cfg)
+                install_setupfiles(cfg)
+                install_conda(cfg)
+                install_launcher_script(cfg)
+                install_app(cfg)
+
+                print()
+                print('Installation Complete!')
+            else:
+                print('Failed getting configuration. Exiting')
 
 
 if __name__ == '__main__':

@@ -17,7 +17,6 @@
 from traits.api import List
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.sparrow.sparrow import Sparrow
 from pychron.sparrow.sparrow_client import SparrowClient
 from pychron.sparrow.tasks.preferences import SparrowPreferencesPane
 

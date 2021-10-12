@@ -144,8 +144,6 @@ def get_analysis_type(idn):
     return 'unknown'
 
 
-
-
 def strip_runid(r):
     l, x = r.split('-')
 
@@ -162,9 +160,6 @@ def strip_runid(r):
         s = ''
 
     return l, int(a), s
-
-
-
 
 
 def make_identifier(ln, ed, ms):
@@ -221,6 +216,13 @@ def is_special(ln):
     if '-' in ln:
         special = ln.split('-')[0] in ANALYSIS_MAPPING
     return special
+
+
+STEPHEATRE = re.compile(r'^\d+-\d+[A_Z]{1,2}$')
+
+
+def is_step_heat(runid):
+    return STEPHEATRE.match(runid)
 
 
 def convert_extract_device(name):

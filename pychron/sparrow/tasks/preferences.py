@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Str, Int, Password
+from traits.api import Str, Password
 from traitsui.api import View, Item, HGroup, Spring, VGroup, Label
 
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -21,8 +21,6 @@ from pychron.database.tasks.connection_preferences import ConnectionPreferencesP
     ConnectionMixin
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
-from pychron.sparrow.sparrow import connect
-
 
 # class SparrowConnectionFavoriteItem(ConnectionFavoriteItem):
 #     kind = 'postgres'

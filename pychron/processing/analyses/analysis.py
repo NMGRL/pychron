@@ -35,9 +35,6 @@ from pychron.core.helpers.logger_setup import new_logger
 from pychron.core.regression.ols_regressor import PolynomialRegressor
 from pychron.envisage.view_util import open_view
 from pychron.experiment.utilities.runid import make_runid, make_aliquot_step
-from pychron.graph.residuals_graph import ResidualsGraph
-from pychron.graph.stacked_graph import StackedGraph
-from pychron.graph.stacked_regression_graph import ColumnStackedRegressionGraph, StackedRegressionGraph
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope
@@ -74,6 +71,8 @@ class CloseHandler(Handler):
 
 
 def show_inspection_factory(record_id, isotopes):
+    from pychron.graph.stacked_graph import StackedGraph
+
     def calculate(dxs, dys, fit):
         reg = PolynomialRegressor(xs=dxs, ys=dys)
         reg.fit = fit
@@ -121,6 +120,8 @@ def show_inspection_factory(record_id, isotopes):
 
 
 def show_residuals_factory(record_id, isotopes):
+    from pychron.graph.residuals_graph import ResidualsGraph
+
     iso = isotopes[0]
 
     g = ResidualsGraph()
@@ -148,6 +149,8 @@ def show_residuals_factory(record_id, isotopes):
 
 def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibration=False, show_baseline=False,
                             show_statistics=False, ncols=1, scale_to_equilibration=False, **kw):
+    from pychron.graph.stacked_regression_graph import ColumnStackedRegressionGraph, StackedRegressionGraph
+
     if WINDOW_CNT > 20:
         information(None, 'You have too many Isotope Evolution windows open. Close some before proceeding')
         return

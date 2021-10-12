@@ -1041,6 +1041,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         default_vk = WEIGHTED_MEAN if naliquots > 1 else DEFAULT_INTEGRATED
 
         for k in SUBGROUPING_ATTRS:
+            unit = None
             if sg is None:
                 if k == 'age':
                     # if only 1 aliquot in group assume step heat
@@ -1048,6 +1049,7 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
                         vk, ek = WEIGHTED_MEAN, MSEM
                     else:
                         vk, ek = DEFAULT_INTEGRATED, MSEM
+                    unit = self.arar_constants.age_units
                 else:
                     vk = default_vk
                     ek = default_ek
@@ -1055,14 +1057,16 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
                 vk = sg.get('{}_kind'.format(k), default_vk)
                 ek = sg.get('{}_error_kind'.format(k), default_ek)
 
-            self.set_preferred_kind(k, vk, ek)
+            self.set_preferred_kind(k, vk, ek, unit)
 
-    def set_preferred_kind(self, attr, k, ek):
-        print('set priea',attr, k, ek)
+    def set_preferred_kind(self, attr, k, ek, unit=None):
+
         pv = self._get_pv(attr)
         pv.error_kind = ek
         pv.kind = k
         pv.dirty = True
+        if unit:
+            pv.unit = unit
 
     def get_preferred_kind(self, attr):
         pv = self.get_preferred_obj(attr)

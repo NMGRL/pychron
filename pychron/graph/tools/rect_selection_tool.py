@@ -17,8 +17,9 @@
 # =============enthought library imports=======================
 from __future__ import absolute_import
 
-from chaco.api import AbstractOverlay, BaseTool
+from chaco.api import AbstractOverlay
 # =============standard library imports ========================
+from enable.base_tool import BaseTool
 from numpy import vstack
 from traits.api import Any, Str
 

@@ -1329,12 +1329,14 @@ class DVC(Loggable):
             ialabels.append('{} {} {}'.format(ia.name, ia.identifier, ia.sample))
 
         if self.repository_add_paths(rid, ps):
+
             sparrow = self.application.get_service('pychron.sparrow.sparrow_client.SparrowClient')
-            print('asdfaf', sparrow)
-            if sparrow:
+            if sparrow and self.confirmation_dialog('Add to Sparrow?'):
                 if sparrow.login():
                     for p in ps:
                         sparrow.insert_ia(p)
+
+                    self.information_dialog('IA files successfully added')
                 else:
                     self.warning('Connection failed. Cannot add IAs to Sparrow')
 

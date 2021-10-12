@@ -168,6 +168,7 @@ def make_interpreted_age_dict(ia):
                     age=x.age,
                     age_err=x.age_err,
                     age_err_wo_j=x.age_err_wo_j,
+                    age_units=x.arar_constants.age_units,
                     radiogenic_yield=nominal_value(x.radiogenic_yield),
                     radiogenic_yield_err=std_dev(x.radiogenic_yield),
                     kca=float(nominal_value(x.kca)),
