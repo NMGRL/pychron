@@ -20,7 +20,9 @@ from datetime import datetime
 
 from traits.api import List
 
+from pychron.data_mapper.import_spec import Isotope
 from pychron.hardware.quadera_spectrometer_controller import QuaderaController
+from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR, \
     QUADERA_DEFAULT_INTEGRATION_TIME, QUADERA_INTEGRATION_TIMES
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
@@ -65,12 +67,13 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         sock = handle.sock
         # get the data
         header = None
-        cnt=1
+        cnt = 1
         st = time.time()
+        isotopes = {}
         while 1:
-            if cnt>n:
+            if cnt > n:
                 break
-            
+
             et = time.time() - st
             if et < delay:
                 time.sleep(delay - et)
@@ -79,35 +82,47 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
             size = sock.recv(4)
             size = struct.unpack('i', size)[0]
             str_data = sock.recv(size)
-            #self.debug(str_data)
+            # self.debug(str_data)
             s = str_data.decode('ascii')
 
-            #self.debug(s)
+            # self.debug(s)
 
             s = s.replace('False', '"False"')
             s = s.replace('True', '"True"')
             obj = json.loads(s)
-            #if not i:
-                # construct and write the header
+            # if not i:
+            # construct and write the header
             keys = list(obj.keys())
 
-            
             if 'amuNames' not in keys:
                 continue
-            
+
             if not header:
-                masses =['mass({})'.format(m) for m in obj['amuNames']]
-                header = ['count','time', ] + masses + keys
+                masses = ['mass({})'.format(m) for m in obj['amuNames']]
+                header = ['count', 'time', ] + masses + keys
                 writer.writerow(header)
 
             raw = [obj[h] for h in keys]
             intensities = obj['intensity']
-            row = [cnt, time.time(), ] + intensities+raw
+            ct = time.time()
+            for m, si in zip(obj['amuNames'], intensities):
+                if m not in isotopes:
+                    iso = Isotope()
+                    iso.name = m
+                    isotopes[m] = iso
+                    iso.xs = []
+                    iso.ys = []
+                else:
+                    iso = isotopes[m]
+
+                iso.xs.append(ct)
+                iso.ys.append(si)
+
+            row = [cnt, ct, ] + intensities + raw
             self.debug('sinking row: {}'.format(row))
             writer.writerow(row)
-            cnt+=1
-
-           
+            cnt += 1
+        return IsotopeGroup(isotopes=isotopes)
 
     # def set_data_pump_mode(self, mode):
     #     resp = self.microcontroller.ask('General.DataPump.Mode {}'.format(mode))

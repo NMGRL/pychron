@@ -17,6 +17,7 @@
 # # ============= enthought library imports =======================
 
 import ast
+import datetime
 import os
 import re
 import time
@@ -38,6 +39,7 @@ from pychron.core.yaml import yload
 from pychron.experiment import ExtractionException
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
+from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.experiment.conditional.conditional import TruncationConditional, \
     ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file, \
     QueueModificationConditional
@@ -246,26 +248,14 @@ class AutomatedRun(Loggable):
         p, _ = unique_path2(paths.csv_data_dir, self.runid, extension='.csv')
         with open(p, 'w') as rfile:
             writer = csv.writer(rfile)
-            spec.sink_data(writer, n, delay)
-            # while 1:
-            #     if spec.halted():
-            #         break
-            #     else:
-            #
-            #         # timestamp, channel, intenisty = spec.sink_data()
-            #
-            #         if channel in channels:
-            #             self.debug('data sink: {}'.format(row))
-            #             writer.writerow(row)
-            #             channels = [channel]
-            #             row = [timestamp, intenisty]
-            #         else:
-            #             if channels:
-            #                 channels.append(channel)
-            #                 row.extend((timestamp, intenisty))
-            #             else:
-            #                 channels = [channel]
-            #                 row = [timestamp, intenisty]
+            ig = spec.sink_data(writer, n, delay)
+
+            if self.use_dvc_persistence:
+                pspec = self.persistence_spec
+                pspec.isotope_group = ig
+
+                # self.save()
+                # self.dvc_persister.per_spec_save(pspec)
 
         spec.set_data_pump_mode(0)
 

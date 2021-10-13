@@ -31,6 +31,8 @@ from pychron.core.helpers.binpack import encode_blob, pack
 from pychron.core.yaml import yload
 from pychron.dvc import dvc_dump, analysis_path, repository_path, NPATH_MODIFIERS
 from pychron.experiment.automated_run.persistence import BasePersister
+from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
+from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL, NULL_STR, ARGON_KEYS, ARAR_MAPPING, EXTRACTION_ATTRS, \
@@ -72,6 +74,12 @@ class DVCPersister(BasePersister):
 
         if load_mapping:
             self._load_arar_mapping()
+
+    def new_spec(self, **kw):
+        pspec = PersistenceSpec(**kw)
+        rspec = AutomatedRunSpec()
+        pspec.run_spec = rspec
+        return pspec
 
     def per_spec_save(self, pr, repository_identifier=None, commit=False, commit_tag=None, push=True):
         self.per_spec = pr
