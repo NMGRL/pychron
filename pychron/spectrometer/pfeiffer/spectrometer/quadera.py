@@ -68,7 +68,7 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         # get the data
         header = None
         cnt = 1
-        st = time.time()
+        start_time=st = time.time()
         isotopes = {}
         while 1:
             if cnt > n:
@@ -85,7 +85,7 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
             # self.debug(str_data)
             s = str_data.decode('ascii')
 
-            # self.debug(s)
+            self.debug(s)
 
             s = s.replace('False', '"False"')
             s = s.replace('True', '"True"')
@@ -107,13 +107,13 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
             ct = time.time()
             for m, si in zip(obj['amuNames'], intensities):
                 if m not in isotopes:
-                    iso = Isotope()
+                    iso = Isotope(m, 'Detector')
                     iso.name = m
                     isotopes[m] = iso
                 else:
                     iso = isotopes[m]
 
-                iso.xs = npappend(iso.xs, ct)
+                iso.xs = npappend(iso.xs, ct-start_time)
                 iso.ys = npappend(iso.ys, si)
 
             row = [cnt, ct, ] + intensities + raw
