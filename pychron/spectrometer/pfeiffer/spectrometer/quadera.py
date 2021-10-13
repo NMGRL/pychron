@@ -20,8 +20,8 @@ from datetime import datetime
 
 from traits.api import List
 
-from pychron.data_mapper.import_spec import Isotope
 from pychron.hardware.quadera_spectrometer_controller import QuaderaController
+from pychron.processing.isotope import Isotope
 from pychron.processing.isotope_group import IsotopeGroup
 from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR, \
     QUADERA_DEFAULT_INTEGRATION_TIME, QUADERA_INTEGRATION_TIMES
