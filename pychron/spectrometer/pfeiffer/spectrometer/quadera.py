@@ -113,8 +113,8 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
                 else:
                     iso = isotopes[m]
 
-                npappend(iso.xs, ct)
-                npappend(iso.ys, si)
+                iso.xs = npappend(iso.xs, ct)
+                iso.ys = npappend(iso.ys, si)
 
             row = [cnt, ct, ] + intensities + raw
             self.debug('sinking row: {}'.format(row))
