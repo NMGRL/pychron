@@ -16,7 +16,7 @@
 import json
 import struct
 import time
-from datetime import datetime
+from numpy import append as npappend
 
 from traits.api import List
 
@@ -110,13 +110,11 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
                     iso = Isotope()
                     iso.name = m
                     isotopes[m] = iso
-                    iso.xs = []
-                    iso.ys = []
                 else:
                     iso = isotopes[m]
 
-                iso.xs.append(ct)
-                iso.ys.append(si)
+                npappend(iso.xs, ct)
+                npappend(iso.ys, si)
 
             row = [cnt, ct, ] + intensities + raw
             self.debug('sinking row: {}'.format(row))
