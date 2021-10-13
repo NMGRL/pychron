@@ -154,6 +154,7 @@ class GitSessionCTX(object):
 
 def make_interpreted_age_dict(ia):
     def ia_dict(keys):
+        print(keys)
         return {attr: getattr(ia, attr) for attr in keys}
 
     # make general

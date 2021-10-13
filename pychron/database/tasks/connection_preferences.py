@@ -290,7 +290,7 @@ class ConnectionPreferences(FavoritesPreferencesHelper, ConnectionMixin):
 
     @on_trait_change('_fav_items:+')
     def fav_item_changed(self, obj, name, old, new):
-        if name in ('username', 'host', 'password'):
+        if name in ('username', 'password'):
             obj.load_names()
         elif name == 'default':
             if not old:

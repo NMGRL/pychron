@@ -50,6 +50,7 @@ lithology_grp = VGroup(Item('lithology', editor=EnumEditor(name='lithologies')),
 metadata_grp = VGroup(HGroup(Item('sample'), Item('igsn')),
                       HGroup(Item('material'), UItem('grainsize', tooltip='Grainsize (optional)')),
                       Item('project'),
+                      Item('note', style='custom'),
                       Item('reference', label='Reference',
                            tooltip='Published reference/citation for this interpreted age'),
                       Item('rlocation', label='Relative Location', tooltip='Relative location of the sample '
@@ -117,6 +118,9 @@ class InterpretedAgeFactoryModel(HasTraits):
             for it in self.items:
                 self.dvc.sync_ia_metadata(it)
 
+        o = self.selected[:]
+        self.selected = []
+        self.selected = o
         information(None, 'Metadata sync complete')
 
 

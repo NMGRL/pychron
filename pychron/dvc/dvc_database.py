@@ -250,10 +250,13 @@ class DVCDatabase(DatabaseAdapter):
         if info:
             self.debug('metadata: {}'.format(info))
             for attr in SAMPLE_METADATA:
+                v = info.get(attr)
+                self.debug('setting {} to {}'.format(attr, v))
                 try:
-                    setattr(ia, attr, info.get(attr))
+                    setattr(ia, attr, v)
                 except TraitError:
-                    pass
+                    self.debug('sync ia metadata exception')
+                    self.debug_exception()
 
     def check_restricted_name(self, name, category, check_principal_investigator=False):
         """
@@ -892,6 +895,7 @@ class DVCDatabase(DatabaseAdapter):
                     info['grainsize'] = sample.material.grainsize or ''
 
                 info['sample'] = sample.name
+                info['note'] = sample.note
                 info['latitude'] = sample.lat
                 info['longitude'] = sample.lon
                 info['unit'] = sample.unit
@@ -899,7 +903,6 @@ class DVCDatabase(DatabaseAdapter):
                 info['lithology_class'] = sample.lithology_class
                 info['lithology_type'] = sample.lithology_type
                 info['lithology_group'] = sample.lithology_group
-
                 # todo: add rlocatiion/reference to database
                 info['rlocation'] = ''
                 info['reference'] = ''

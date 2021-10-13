@@ -21,10 +21,6 @@ from pychron.sparrow.sparrow_client import SparrowClient
 from pychron.sparrow.tasks.preferences import SparrowPreferencesPane
 
 
-# from pychron.sparrow.tasks.nodes import SparrowNode
-# from pychron.sparrow.tasks.predefined import IDEOGRAM, SPECTRUM
-
-
 class SparrowPlugin(BaseTaskPlugin):
     name = 'Sparrow'
     nodes = List(contributes_to='pychron.pipeline.nodes')
