@@ -38,6 +38,7 @@ jobs:
         run: |
           conda install -n test -c conda-forge pip numpy statsmodels scikit-learn PyYAML yaml traits traitsui pyface envisage sqlalchemy Reportlab lxml xlrd xlwt xlsxwriter requests keyring pyparsing pillow gitpython pytables pyproj pymysql certifi jinja2 swig=3 cython importlib_resources
           $CONDA/envs/test/bin/pip3 install --upgrade-strategy only-if-needed flake8 pytest
+          $CONDA/envs/test/bin/pip3 install -e git+https://github.com/enthought/enable.git#egg=enable
           $CONDA/envs/test/bin/pip3 install -e git+https://github.com/enthought/chaco.git#egg=chaco
       - name: Lint with flake8
         run: |
