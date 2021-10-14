@@ -115,7 +115,7 @@ class ConnectionMixin(HasTraits):
             db.test_func = self._test_func
 
         c = db.connect(warn=False)
-        e = db.connection_exception
+        e = db.connection_error
 
         return c, e
 
