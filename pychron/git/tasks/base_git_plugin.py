@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+import subprocess
+
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.git.hosts import IGitHost
 from pychron.pychron_constants import STARTUP_MESSAGE_POSITION
@@ -36,13 +38,18 @@ class BaseGitPlugin(BasePlugin):
             self.information_dialog("Please set the organization that contains your data (e.g. NMGRLData) "
                                     "in Pychron's {} preferences".format(self.name),
                                     position=STARTUP_MESSAGE_POSITION)
-
-        if not tok and not (usr and pwd):
-            self.information_dialog('Please set user name and password or token in {} preferences'.format(self.name),
-                                    position=STARTUP_MESSAGE_POSITION)
-        else:
-            service = self.application.get_service(IGitHost)
-            service.set_authentication()
+        try:
+            self.debug('checking for gh cli')
+            subprocess.call(['gh', '--version'])
+            self.debug('github authentication handled by gh')
+            return
+        except FileNotFoundError:
+            if not tok and not (usr and pwd):
+                self.information_dialog('Please set user name and password or token in {} preferences'.format(self.name),
+                                        position=STARTUP_MESSAGE_POSITION)
+            else:
+                service = self.application.get_service(IGitHost)
+                service.set_authentication()
 
     def test_api(self):
         service = self.application.get_service(IGitHost)

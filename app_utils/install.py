@@ -681,6 +681,7 @@ def ask_config():
 
     config = {'github_org': 'NMGRL',
               'github_token': '',
+              'install_gh': True,
               'massspec_db_version': 16,
               'fork': 'NMGRL',
               'branch': 'dev/dr',
@@ -855,7 +856,7 @@ def install_edm(cfg):
     # print(' '.join(cmdargs))
     # subprocess.call(cmdargs)
     # cmdargs = ['edm', 'install'] + cfg['edm_requirements'] + ['--environment', cfg['edm_env_name']]
-    cmdargs = ['edm', 'install']+cfg['edm_requirements']
+    cmdargs = ['edm', 'install'] + cfg['edm_requirements']
     print('edm install')
     print(' '.join(cmdargs))
     subprocess.call(cmdargs)
@@ -914,6 +915,11 @@ def install_launcher_script(cfg):
         wfile.write(txt)
 
     cfg['launcher'] = lpath
+
+
+def install_github(cfg):
+    if cfg['install_gh']:
+        subprocess.call(['gh', 'auth', 'login'])
 
 
 def install_app(cfg):
@@ -1042,7 +1048,8 @@ def main():
                              install_setupfiles,
                              install_edm,
                              install_conda,
-                             install_launcher_script, install_app):
+                             install_launcher_script, install_app,
+                             install_github):
                     try:
                         func(cfg)
                     except BaseException as e:
