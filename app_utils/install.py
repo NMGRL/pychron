@@ -782,7 +782,7 @@ def install_src(cfg):
 
 def install_conda(cfg):
     info_header('Install Conda Environment')
-
+    subprocess.call(['unset', 'PYTHONPATH'])
     # update base conda
     subprocess.call(['conda', 'update', '-n', 'base', '--yes', 'conda'])
 

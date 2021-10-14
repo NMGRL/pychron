@@ -37,8 +37,6 @@ jobs:
       - name: Install dependencies
         run: |
           unset PYTHONPATH
-#          conda init bash
-#          conda activate test
           $CONDA/envs/test/bin/python -m pip install --upgrade pip
           $CONDA/envs/test/bin/python -m pip install flake8 pytest uncertainties qimage2ndarray peakutils chaco
       - name: Lint with flake8
