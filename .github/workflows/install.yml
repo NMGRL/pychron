@@ -39,7 +39,7 @@ jobs:
           conda install -n test -c conda-forge pip numpy statsmodels scikit-learn PyYAML yaml traits traitsui pyface envisage sqlalchemy Reportlab lxml xlrd xlwt xlsxwriter requests keyring pyparsing pillow gitpython pytables pyproj pymysql certifi jinja2 swig=3 cython importlib_resources
           export SWIG_EXECUTABLE=$CONDA/evns/test/bin/swig
           set SWIG_EXECUTABLE=$CONDA/evns/test/bin/swig
-          $CONDA/envs/test/bin/pip3 install --upgrade-strategy only-if-needed flake8 pytest chaco
+          SWIG_EXECUTABLE=$CONDA/evns/test/bin/swig $CONDA/envs/test/bin/pip3 install --upgrade-strategy only-if-needed flake8 pytest chaco
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
