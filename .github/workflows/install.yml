@@ -16,7 +16,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ "ubuntu-latest", "macos-latest", "windows-latest" ]
+#        os: [ "ubuntu-latest", "macos-latest", "windows-latest" ]
+        os: [ "ubuntu-latest", ]
         python-version: [ "3.9",]
     steps:
       - uses: conda-incubator/setup-miniconda@v2
@@ -30,10 +31,11 @@ jobs:
 #          python-version: 3.9
       - name: Install Conda dependencies
         run: |
-          conda install -n test -c conda-forge gcc numpy statsmodels scikit-learn PyYAML yaml traits traitsui pyface envisage sqlalchemy Reportlab lxml xlrd xlwt xlsxwriter requests keyring pyparsing pillow gitpython pytables pyproj pymysql certifi jinja2 swig=3 cython importlib_resources
+          conda install -n test -c conda-forge numpy statsmodels scikit-learn PyYAML yaml traits traitsui pyface envisage sqlalchemy Reportlab lxml xlrd xlwt xlsxwriter requests keyring pyparsing pillow gitpython pytables pyproj pymysql certifi jinja2 swig=3 cython importlib_resources
       - name: Install dependencies
         run: |
           unset PYTHONPATH
+          conda init bash
           conda activate test
           $CONDA/envs/test/bin/python -m pip install --upgrade pip
           $CONDA/envs/test/bin/python -m pip install flake8 pytest uncertainties qimage2ndarray peakutils chaco
