@@ -33,7 +33,7 @@ jobs:
 #          python-version: 3.9
       - name: Install swig
         run: |
-          apt install swig
+          sudo apt-get install swig
       - name: Install Conda dependencies
         run: |
           conda install -n test -c conda-forge numpy statsmodels scikit-learn PyYAML yaml traits traitsui pyface envisage sqlalchemy Reportlab lxml xlrd xlwt xlsxwriter requests keyring pyparsing pillow gitpython pytables pyproj pymysql certifi jinja2 swig=3 cython importlib_resources
