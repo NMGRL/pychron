@@ -22,6 +22,8 @@ jobs:
     steps:
       - uses: conda-incubator/setup-miniconda@v2
         with:
+          activate-environment: test
+          auto-activate-base: false
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
       - uses: actions/checkout@v2
@@ -35,8 +37,8 @@ jobs:
       - name: Install dependencies
         run: |
           unset PYTHONPATH
-          conda init bash
-          conda activate test
+#          conda init bash
+#          conda activate test
           $CONDA/envs/test/bin/python -m pip install --upgrade pip
           $CONDA/envs/test/bin/python -m pip install flake8 pytest uncertainties qimage2ndarray peakutils chaco
       - name: Lint with flake8
