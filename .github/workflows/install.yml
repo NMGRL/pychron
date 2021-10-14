@@ -31,14 +31,17 @@ jobs:
 #        uses: actions/setup-python@v2
 #        with:
 #          python-version: 3.9
+      - name: Install swig 3
+        run: |
+          sudo apt-get install swig=3.0.\*
       - name: Install Conda dependencies
         run: |
           conda install -n test -c conda-forge pip numpy statsmodels scikit-learn PyYAML yaml traits traitsui pyface envisage sqlalchemy Reportlab lxml xlrd xlwt xlsxwriter requests keyring pyparsing pillow gitpython pytables pyproj pymysql certifi jinja2 swig=3 cython importlib_resources
       - name: Install dependencies
         run: |
           unset PYTHONPATH
-          $CONDA/envs/test/bin/pip3 install --upgrade pip
           $CONDA/envs/test/bin/pip3 install --upgrade-strategy only-if-needed flake8 pytest chaco
+#          $CONDA/envs/test/bin/pip3 install --upgrade pip
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
