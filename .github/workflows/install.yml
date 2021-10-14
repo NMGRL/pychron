@@ -37,8 +37,8 @@ jobs:
           certifi jinja2 swig=3 cython importlib_resources
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install flake8 pytest uncertainties qimage2ndarray peakutils chaco
+          $CONDA/envs/test/bin/python -m pip install --upgrade pip
+          $CONDA/envs/test/bin/python -m pip install flake8 pytest uncertainties qimage2ndarray peakutils chaco
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
