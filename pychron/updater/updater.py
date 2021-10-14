@@ -310,6 +310,9 @@ class Updater(Loggable):
                 repo.git.fetch()
 
             branchname = self.branch
+            if not branchname:
+                branchname = repo.head.name
+
             origin = repo.remotes.origin
             try:
                 oref = origin.refs[branchname]
