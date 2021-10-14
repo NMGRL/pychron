@@ -18,14 +18,17 @@
 from __future__ import absolute_import
 from traits.api import Instance, Button, Property, Bool, Int
 from traitsui.api import View, Item, ButtonEditor
+
 # ============= standard library imports ========================
 from threading import Thread, Event
 import time
 from numpy import array
+
 # ============= local library imports  ==========================
 from pychron.image.video import Video
 from pychron.loggable import Loggable
 import zmq
+
 
 class VideoServer(Loggable):
     video = Instance(Video)
@@ -34,10 +37,11 @@ class VideoServer(Loggable):
     _started = False
     use_color = True
     start_button = Button
-    start_label = Property(depends_on='_started')
+    start_label = Property(depends_on="_started")
     _started = Bool(False)
+
     def _get_start_label(self):
-        return 'Start' if not self._started else 'Stop'
+        return "Start" if not self._started else "Stop"
 
     def _start_button_fired(self):
         if self._started:
@@ -46,51 +50,52 @@ class VideoServer(Loggable):
             self.start()
 
     def traits_view(self):
-        v = View(Item('start_button', editor=ButtonEditor(label_value='start_label')))
+        v = View(Item("start_button", editor=ButtonEditor(label_value="start_label")))
         return v
 
     def _video_default(self):
         return Video(swap_rb=True)
 
     def stop(self):
-#        if self._started:
-        self.info('stopping video server')
+        #        if self._started:
+        self.info("stopping video server")
         self._stop_signal.set()
         self._started = False
 
     def start(self):
-        self.info('starting video server')
+        self.info("starting video server")
         self._new_frame_ready = Event()
         self._stop_signal = Event()
 
-        self.video.open(user='server')
-        bt = Thread(name='broadcast', target=self._broadcast)
+        self.video.open(user="server")
+        bt = Thread(name="broadcast", target=self._broadcast)
         bt.start()
 
-        self.info('video server started')
+        self.info("video server started")
         self._started = True
 
     def _broadcast(self):
-#        new_frame = self._new_frame_ready
-        self.info('video broadcast thread started')
+        #        new_frame = self._new_frame_ready
+        self.info("video broadcast thread started")
 
         context = zmq.Context()
-#         sock = context.socket(zmq.PUB)
+        #         sock = context.socket(zmq.PUB)
         sock = context.socket(zmq.REP)
-        sock.bind('tcp://*:{}'.format(self.port))
+        sock.bind("tcp://*:{}".format(self.port))
 
         poll = zmq.Poller()
         poll.register(sock, zmq.POLLIN)
 
         self.request_reply(sock, poll)
-#        if use_color:
-#            kw = dict(swap_rb=True)
-#            depth = 3
-#        else:
-#            kw = dict(gray=True)
-#            depth = 1
 
-#         pt = time.time()
+    #        if use_color:
+    #            kw = dict(swap_rb=True)
+    #            depth = 3
+    #        else:
+    #            kw = dict(gray=True)
+    #            depth = 1
+
+    #         pt = time.time()
 
     def request_reply(self, sock, poll):
         stop = self._stop_signal
@@ -98,29 +103,29 @@ class VideoServer(Loggable):
         fps = 10
         from . import Image
         from cStringIO import StringIO
+
         quality = self.quality
         while not stop.isSet():
 
             socks = dict(poll.poll(100))
             if socks.get(sock) == zmq.POLLIN:
                 resp = sock.recv()
-                if resp == 'FPS':
+                if resp == "FPS":
                     buf = str(fps)
-                elif resp.startswith('QUALITY'):
+                elif resp.startswith("QUALITY"):
                     quality = int(resp[7:])
-                    buf = ''
+                    buf = ""
                 else:
                     f = video.get_frame()
 
-        #            new_frame.clear()
+                    #            new_frame.clear()
 
                     im = Image.fromarray(array(f))
                     s = StringIO()
-                    im.save(s, 'JPEG', quality=quality)
+                    im.save(s, "JPEG", quality=quality)
                     buf = s.getvalue()
 
                 sock.send(buf)
-
 
     def publisher(self, sock):
         stop = self._stop_signal
@@ -129,18 +134,20 @@ class VideoServer(Loggable):
         fps = 10
         from . import Image
         from cStringIO import StringIO
+
         while not stop.isSet():
 
             f = video.get_frame(gray=False)
-#            new_frame.clear()
+            #            new_frame.clear()
             im = Image.fromarray(array(f))
             s = StringIO()
-            im.save(s, 'JPEG')
+            im.save(s, "JPEG")
 
             sock.send(str(fps))
             sock.send(s.getvalue())
 
             time.sleep(1.0 / fps)
+
 
 # class VideoServer2(Loggable):
 #    video = Instance(Video)
@@ -212,9 +219,10 @@ class VideoServer(Loggable):
 #            time.sleep(max(0.001, fp - (time.time() - t)))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
-    logging_setup('vs')
+
+    logging_setup("vs")
     s = VideoServer()
     s.configure_traits()
 #    s.video.open(user='server')

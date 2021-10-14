@@ -15,13 +15,10 @@
 # ===============================================================================
 
 
-
 # =============enthought library imports=======================
 from __future__ import absolute_import
-from traits.api import HasTraits, \
-    Str, Float, List, Any, Color, Property
-from traitsui.api import View, Item, Group, HGroup, \
-    TableEditor, Handler, RangeEditor
+from traits.api import HasTraits, Str, Float, List, Any, Color, Property
+from traitsui.api import View, Item, Group, HGroup, TableEditor, Handler, RangeEditor
 from traitsui.table_column import ObjectColumn
 
 # =============standard library imports ========================
@@ -29,18 +26,19 @@ import os
 import glob
 import six.moves.cPickle as pickle
 import copy
+
 # =============local library imports  ==========================
 
 from pychron.paths import paths
 
+
 def get_user_views():
-    return glob.glob(os.path.join(paths.hidden_dir, 'userview*'))
+    return glob.glob(os.path.join(paths.hidden_dir, "userview*"))
+
 
 class ViewControllerHandler(Handler):
     def closed(self, info, is_ok):
-        '''
-
-        '''
+        """ """
 
         # delete any previous view
         # if they exist they will be rewritten below
@@ -51,16 +49,16 @@ class ViewControllerHandler(Handler):
         obj = info.object.views
         for i, v in enumerate(obj):
 
-            name = 'userview{}'.format(i)
-            with open(os.path.join(paths.hidden_dir, name), 'w') as f:
+            name = "userview{}".format(i)
+            with open(os.path.join(paths.hidden_dir, name), "w") as f:
                 pickle.dump(v, f)
 
         super(ViewControllerHandler, self).closed(info, is_ok)
 
 
 class UserView(HasTraits):
-    '''
-    '''
+    """ """
+
     x = Float
     y = Float
     z = Float
@@ -76,7 +74,7 @@ class UserView(HasTraits):
     ymin = Float(-50)
     ymax = Float(10)
 
-    zoom = Property(depends_on='_zoom')
+    zoom = Property(depends_on="_zoom")
     _zoom = Float(1)
     zmin = Float(1)
     zmax = Float(100)
@@ -84,6 +82,7 @@ class UserView(HasTraits):
     key = Str
 
     background_color = Color
+
     def _get_zoom(self):
         return self._zoom / 0.02
 
@@ -91,9 +90,7 @@ class UserView(HasTraits):
         self._zoom = v * 0.02
 
     def _anytrait_changed(self, name, old, new):
-        '''
-
-        '''
+        """ """
         if self.scene_graph is not None:
             self.scene_graph.reset_view()
             self.scene_graph.root[0].translate = [self.x, self.y, self.z]
@@ -114,34 +111,33 @@ class UserView(HasTraits):
 
 
 class ViewController(HasTraits):
-    '''
-    '''
+    """ """
+
     views = List
 
     scene_graph = Any  # (transient = True)
-#    def __init__(self, *args, **kw):
-#        super(ViewController, self).__init__(*args, **kw)
+    #    def __init__(self, *args, **kw):
+    #        super(ViewController, self).__init__(*args, **kw)
     def _views_default(self):
         return self.views_factory()
 
-#    def _bu_fired(self):
-#        '''
-#        '''
-#        self.views.append(UserView(name = 'view1', key = 'v', scene_graph = self.scene_graph))
-#    def _views_default(self):
-#        '''
-#        '''
+    #    def _bu_fired(self):
+    #        '''
+    #        '''
+    #        self.views.append(UserView(name = 'view1', key = 'v', scene_graph = self.scene_graph))
+    #    def _views_default(self):
+    #        '''
+    #        '''
 
     def views_factory(self):
-        '''
-        '''
+        """ """
         # if os.path.exists(picklepath):
 
         uvfs = get_user_views()
         if uvfs:
             px = []
             for pa in uvfs:
-                with open(pa, 'r') as f:
+                with open(pa, "r") as f:
                     try:
                         pi = pickle.load(f)
                         pi.scene_graph = self.scene_graph
@@ -150,82 +146,107 @@ class ViewController(HasTraits):
                         pass
             return px
         else:
-            return []  # UserView(name = 'home', key = 'h', scene_graph = self.scene_graph)]
+            return (
+                []
+            )  # UserView(name = 'home', key = 'h', scene_graph = self.scene_graph)]
 
     def _scene_graph_changed(self):
         for v in self.views:
             v.scene_graph = self.scene_graph
 
     def row_factory(self):
-        '''
-        '''
+        """ """
         if len(self.views):
             v = copy.copy(self.views[-1])
             v.scene_graph = self.scene_graph
-            v.name = 'userview{}'.format(len(self.views) + 1)
+            v.name = "userview{}".format(len(self.views) + 1)
         else:
-            v = UserView(scene_graph=self.scene_graph, name='userview1')
+            v = UserView(scene_graph=self.scene_graph, name="userview1")
 
         self.scene_graph.canvas.user_views.append(v)
 
     def _table_editor_factory(self):
-        '''
-        '''
-        col = [ObjectColumn(name='name'),
-             ObjectColumn(name='key')]
-        return TableEditor(columns=col,
-                           auto_size=False,
-                           orientation='vertical',
-                           show_toolbar=True,
-                           row_factory=self.row_factory,
-                           deletable=True,
-                           edit_view=View(
-                                            Group(
-                                                HGroup('name', 'key'),
-                                                Item('x', editor=RangeEditor(low_name='xmin',
-                                                                            high_name='xmax',
-                                                                            mode='slider')),
-                                                Item('y', editor=RangeEditor(low_name='xmin',
-                                                                            high_name='xmax',
-                                                                            mode='slider')),
-                                                Item('z', editor=RangeEditor(low_name='xmin',
-                                                                            high_name='xmax',
-                                                                            mode='slider')),
-                                                Item('rx', editor=RangeEditor(low_name='rmin',
-                                                                             high_name='rmax',
-                                                                             mode='slider')),
-                                                Item('ry', editor=RangeEditor(low_name='rmin',
-                                                                             high_name='rmax',
-                                                                             mode='slider')),
-                                                Item('rz', editor=RangeEditor(low_name='rmin',
-                                                                             high_name='rmax',
-                                                                             mode='slider')),
-                                                Item('zoom', editor=RangeEditor(low_name='zmin',
-                                                                             high_name='zmax',
-                                                                             mode='slider')),
-                                                Group('background_color'
-                                                      # , style = 'custom'
-                                                      ),
-                                                show_border=True,
-                                                ),
-                                          resizable=True,
-                                          )
-                           )
+        """ """
+        col = [ObjectColumn(name="name"), ObjectColumn(name="key")]
+        return TableEditor(
+            columns=col,
+            auto_size=False,
+            orientation="vertical",
+            show_toolbar=True,
+            row_factory=self.row_factory,
+            deletable=True,
+            edit_view=View(
+                Group(
+                    HGroup("name", "key"),
+                    Item(
+                        "x",
+                        editor=RangeEditor(
+                            low_name="xmin", high_name="xmax", mode="slider"
+                        ),
+                    ),
+                    Item(
+                        "y",
+                        editor=RangeEditor(
+                            low_name="xmin", high_name="xmax", mode="slider"
+                        ),
+                    ),
+                    Item(
+                        "z",
+                        editor=RangeEditor(
+                            low_name="xmin", high_name="xmax", mode="slider"
+                        ),
+                    ),
+                    Item(
+                        "rx",
+                        editor=RangeEditor(
+                            low_name="rmin", high_name="rmax", mode="slider"
+                        ),
+                    ),
+                    Item(
+                        "ry",
+                        editor=RangeEditor(
+                            low_name="rmin", high_name="rmax", mode="slider"
+                        ),
+                    ),
+                    Item(
+                        "rz",
+                        editor=RangeEditor(
+                            low_name="rmin", high_name="rmax", mode="slider"
+                        ),
+                    ),
+                    Item(
+                        "zoom",
+                        editor=RangeEditor(
+                            low_name="zmin", high_name="zmax", mode="slider"
+                        ),
+                    ),
+                    Group(
+                        "background_color"
+                        # , style = 'custom'
+                    ),
+                    show_border=True,
+                ),
+                resizable=True,
+            ),
+        )
+
     def traits_view(self):
-        '''
-        '''
+        """ """
         return View(
-                    Item('views',
-                         height=75,
-                         editor=self._table_editor_factory(), show_label=False),
-                    resizable=True,
-                    width=375,
-                    height=675,
-                    handler=ViewControllerHandler,
-                    title='User Canvas Views'
-                    )
+            Item(
+                "views",
+                height=75,
+                editor=self._table_editor_factory(),
+                show_label=False,
+            ),
+            resizable=True,
+            width=375,
+            height=675,
+            handler=ViewControllerHandler,
+            title="User Canvas Views",
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     vm = ViewController()
     vm.configure_traits()

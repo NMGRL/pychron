@@ -44,7 +44,7 @@ class BaseIrradiatedPosition(HasTraits):
     pred_j_err = Float
     x = Float
     y = Float
-    residual = Property(depends_on='j,pred_j')
+    residual = Property(depends_on="j,pred_j")
 
     use = Bool
     save = Bool
@@ -75,35 +75,37 @@ class IrradiatedPosition(BaseIrradiatedPosition):
 
 class BaseIrradiatedPositionAdapter(TabularAdapter):
     columns = [
-        ('Hole', 'hole'),
-        ('Alt. Hole', 'alt_hole'),
-        ('Labnumber', 'labnumber'),
-        ('Sample', 'sample'),
-        ('Project', 'project'),
-        ('J', 'j'),
-        (u'{}J'.format(PLUSMINUS), 'j_err'),
-        ('Note', 'note')]
+        ("Hole", "hole"),
+        ("Alt. Hole", "alt_hole"),
+        ("Labnumber", "labnumber"),
+        ("Sample", "sample"),
+        ("Project", "project"),
+        ("J", "j"),
+        (u"{}J".format(PLUSMINUS), "j_err"),
+        ("Note", "note"),
+    ]
 
     hole_width = Int(45)
 
 
 class IrradiatedPositionAdapter(TabularAdapter):
     columns = [
-        ('', 'analyzed'),
-        ('Hole', 'hole'),
-        ('Packet', 'packet'),
-        ('Identifier', 'identifier'),
-        ('Sample', 'sample'),
-        ('IGSN', 'igsn'),
-        ('PI', 'principal_investigator'),
-        ('Project', 'project'),
-        ('Material', 'material'),
-        ('Grainsize', 'grainsize'),
+        ("", "analyzed"),
+        ("Hole", "hole"),
+        ("Packet", "packet"),
+        ("Identifier", "identifier"),
+        ("Sample", "sample"),
+        ("IGSN", "igsn"),
+        ("PI", "principal_investigator"),
+        ("Project", "project"),
+        ("Material", "material"),
+        ("Grainsize", "grainsize"),
         #               ('Size', 'size'),
-        ('Weight', 'weight'),
-        ('J', 'j'),
-        (u'{}J'.format(PLUSMINUS), 'j_err'),
-        ('Note', 'note')]
+        ("Weight", "weight"),
+        ("J", "j"),
+        (u"{}J".format(PLUSMINUS), "j_err"),
+        ("Note", "note"),
+    ]
 
     igsn_width = Int(70)
     identifier_width = Int(80)
@@ -122,7 +124,7 @@ class IrradiatedPositionAdapter(TabularAdapter):
     j_text = Property
     j_err_text = Property
 
-    font = 'arial 10'
+    font = "arial 10"
 
     #    hole_can_edit = False
 
@@ -132,12 +134,12 @@ class IrradiatedPositionAdapter(TabularAdapter):
     def get_tooltip(self, obj, trait, row, column):
         name = self.column_map[column]
 
-        if name == 'analyzed':
+        if name == "analyzed":
             item = getattr(obj, trait)[row]
-            return 'N Analyses: {}'.format(item.nanalyses)
+            return "N Analyses: {}".format(item.nanalyses)
 
     def _get_analyzed_text(self):
-        return 'X' if self.item.analyzed else ''
+        return "X" if self.item.analyzed else ""
 
     def _set_analyzed_text(self):
         pass
@@ -149,14 +151,15 @@ class IrradiatedPositionAdapter(TabularAdapter):
         self.item.j_err = t
 
     def _get_j_text(self):
-        return '{:0.6E}'.format(self.item.j)
+        return "{:0.6E}".format(self.item.j)
 
     def _get_j_err_text(self):
-        return '{:0.6E}'.format(self.item.j_err)
+        return "{:0.6E}".format(self.item.j_err)
 
     def get_bg_color(self, obj, trait, row, column):
         item = getattr(obj, trait)[row]
         if item.analyzed:
-            return '#B0C4DE'
+            return "#B0C4DE"
+
 
 # ============= EOF =============================================

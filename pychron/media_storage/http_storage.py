@@ -19,6 +19,7 @@
 
 
 class HTTPStorage:
-    url_name = 'HTTP'
+    url_name = "HTTP"
+
 
 # ============= EOF =============================================

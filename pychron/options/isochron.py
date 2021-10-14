@@ -20,11 +20,23 @@ from traits.api import Str, Bool, Float, Property, Enum, Range, Int
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.options.group.inverse_isochron_group_options import InverseIsochronGroupOptions
+from pychron.options.group.inverse_isochron_group_options import (
+    InverseIsochronGroupOptions,
+)
 from pychron.options.spectrum import PlateauOptions
 from pychron.options.views.isochron_views import INVERSE_ISOCHRON_VIEWS, ISOCHRON_VIEWS
-from pychron.pychron_constants import ELLIPSE_KINDS, FONTS, SIZES, MAIN, APPEARANCE, GROUPS, \
-    CALCULATIONS, INSET, ISOCHRON_ERROR_TYPES, ISOCHRON_METHODS
+from pychron.pychron_constants import (
+    ELLIPSE_KINDS,
+    FONTS,
+    SIZES,
+    MAIN,
+    APPEARANCE,
+    GROUPS,
+    CALCULATIONS,
+    INSET,
+    ISOCHRON_ERROR_TYPES,
+    ISOCHRON_METHODS,
+)
 
 
 class IsochronOptions(PlateauOptions):
@@ -44,7 +56,7 @@ class IsochronOptions(PlateauOptions):
         return ISOCHRON_VIEWS[name]
 
     def _aux_plots_default(self):
-        return [self.aux_plot_klass(plot_enabled=True, name='inverse_isochron')]
+        return [self.aux_plot_klass(plot_enabled=True, name="inverse_isochron")]
 
 
 class InverseIsochronOptions(IsochronOptions):
@@ -55,7 +67,7 @@ class InverseIsochronOptions(IsochronOptions):
     show_labels = Bool(True)
     show_results_info = Bool(True)
     show_nominal_intercept = Bool(False)
-    nominal_intercept_label = Str('Atm', enter_set=True, auto_set=False)
+    nominal_intercept_label = Str("Atm", enter_set=True, auto_set=False)
     nominal_intercept_value = Float(295.5)
 
     # inset
@@ -96,10 +108,10 @@ class InverseIsochronOptions(IsochronOptions):
         self.subview_names = [MAIN, CALCULATIONS, APPEARANCE, INSET, GROUPS]
 
     def _get_results_font(self):
-        return '{} {}'.format(self.results_fontname, self.results_fontsize)
+        return "{} {}".format(self.results_fontname, self.results_fontsize)
 
     def _get_info_font(self):
-        return '{} {}'.format(self.info_fontname, self.info_fontsize)
+        return "{} {}".format(self.info_fontname, self.info_fontsize)
 
     @property
     def inominal_intercept_value(self):
@@ -110,5 +122,6 @@ class InverseIsochronOptions(IsochronOptions):
 
     def _get_subview(self, name):
         return INVERSE_ISOCHRON_VIEWS[name]
+
 
 # ============= EOF =============================================

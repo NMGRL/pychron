@@ -25,12 +25,16 @@ from pychron.applications.pychron_application import PychronApplication
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-class PyValve(PychronApplication):
-    id = 'pychron.valve.application'
-    name = 'pyValve'
-    shortname = 'valve'
 
-    default_layout = [TaskWindowLayout('tasks.hardware'),
-                      TaskWindowLayout('pychron.extraction_line')]
+class PyValve(PychronApplication):
+    id = "pychron.valve.application"
+    name = "pyValve"
+    shortname = "valve"
+
+    default_layout = [
+        TaskWindowLayout("tasks.hardware"),
+        TaskWindowLayout("pychron.extraction_line"),
+    ]
+
 
 # ============= EOF =============================================

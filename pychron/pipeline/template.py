@@ -27,8 +27,14 @@ from pychron.core.ui.strings import PascalCase
 from pychron.core.yaml import yload
 from pychron.envisage.resources import icon
 from pychron.paths import paths
-from pychron.pipeline.nodes.data import DataNode, UnknownNode, DVCNode, InterpretedAgeNode, ListenUnknownNode, \
-    BaseDVCNode
+from pychron.pipeline.nodes.data import (
+    DataNode,
+    UnknownNode,
+    DVCNode,
+    InterpretedAgeNode,
+    ListenUnknownNode,
+    BaseDVCNode,
+)
 from pychron.pipeline.nodes.email_node import EmailNode
 from pychron.pipeline.nodes.find import FindNode
 from pychron.pipeline.nodes.mass_spec_reduced import BaseMassSpecNode
@@ -40,11 +46,11 @@ class PipelineTemplateSaveView(HasTraits):
     group = Enum(DEFAULT_PIPELINE_ROOTS)
 
     def _group_default(self):
-        return 'User'
+        return "User"
 
     @property
     def group_path(self):
-        if self.group != 'User':
+        if self.group != "User":
             return os.path.join(paths.user_pipeline_template_dir, self.group.lower())
 
     @property
@@ -56,9 +62,7 @@ class PipelineTemplateSaveView(HasTraits):
             return os.path.join(root, self.name)
 
     def traits_view(self):
-        v = okcancel_view(UItem('name'),
-                          UItem('group'),
-                          title='New Template Name')
+        v = okcancel_view(UItem("name"), UItem("group"), title="New Template Name")
         return v
 
 
@@ -97,11 +101,20 @@ class PipelineTemplate(HasTraits):
 
         self._yd = yload(self.path)
 
-        ico = self._yd.get('icon', 'large_tiles')
+        ico = self._yd.get("icon", "large_tiles")
         if ico:
             self.icon = icon(ico)
 
-    def render(self, application, pipeline, bmodel, iabmodel, dvc, clear=True, exclude_klass=None):
+    def render(
+        self,
+        application,
+        pipeline,
+        bmodel,
+        iabmodel,
+        dvc,
+        clear=True,
+        exclude_klass=None,
+    ):
         # if first node is an unknowns node
         # render into template
         datanode = None
@@ -126,28 +139,30 @@ class PipelineTemplate(HasTraits):
         #     yd = yaml.load(self.path)
 
         yd = self._yd
-        nodes = yd['nodes']
+        nodes = yd["nodes"]
 
         if exclude_klass is None:
             exclude_klass = []
 
         for i, ni in enumerate(nodes):
-            klass = ni['klass']
+            klass = ni["klass"]
             if klass in exclude_klass:
                 continue
 
-            if i == 0 and klass == 'UnknownNode':
+            if i == 0 and klass == "UnknownNode":
                 pipeline.add_node(datanode)
                 continue
 
-            if klass == 'NodeGroup':
-                group = pipeline.add_group(ni['name'])
-                for nii in ni['nodes']:
-                    klass = nii['klass']
+            if klass == "NodeGroup":
+                group = pipeline.add_group(ni["name"])
+                for nii in ni["nodes"]:
+                    klass = nii["klass"]
                     if klass in exclude_klass:
                         continue
 
-                    node = self._node_factory(klass, nii, application, bmodel, iabmodel, dvc)
+                    node = self._node_factory(
+                        klass, nii, application, bmodel, iabmodel, dvc
+                    )
                     if node:
                         node.finish_load()
                         group.add_node(node)
@@ -164,7 +179,7 @@ class PipelineTemplate(HasTraits):
         elif klass in self.node_factories:
             node = self.node_factories[klass]()
         else:
-            mod = __import__('pychron.pipeline.nodes', fromlist=[klass])
+            mod = __import__("pychron.pipeline.nodes", fromlist=[klass])
             node = getattr(mod, klass)()
 
         node.pre_load(ni)
@@ -174,9 +189,9 @@ class PipelineTemplate(HasTraits):
         elif isinstance(node, (DVCNode, FindNode)):
             node.trait_set(browser_model=bmodel)
         elif isinstance(node, EmailNode):
-            emailer = application.get_service('pychron.social.email.emailer.Emailer')
+            emailer = application.get_service("pychron.social.email.emailer.Emailer")
             if emailer is None:
-                warning(None, 'Cannot load an Email Node, the Email Plugin required.')
+                warning(None, "Cannot load an Email Node, the Email Plugin required.")
                 return
 
             node.trait_set(emailer=emailer)
@@ -185,11 +200,17 @@ class PipelineTemplate(HasTraits):
             node.trait_set(dvc=dvc)
 
         if isinstance(node, BaseMassSpecNode):
-            recaller = application.get_service('pychron.mass_spec.mass_spec_recaller.MassSpecRecaller')
+            recaller = application.get_service(
+                "pychron.mass_spec.mass_spec_recaller.MassSpecRecaller"
+            )
             if not recaller:
-                warning(None, 'Mass Spec Plugin not enabled. Enable with Help/Edit Initialization')
+                warning(
+                    None,
+                    "Mass Spec Plugin not enabled. Enable with Help/Edit Initialization",
+                )
 
             node.trait_set(recaller=recaller)
         return node
+
 
 # ============= EOF =============================================

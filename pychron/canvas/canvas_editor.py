@@ -16,7 +16,16 @@
 from operator import attrgetter
 
 from enable.colors import ColorTrait
-from traits.api import HasTraits, List, on_trait_change, Button, Float, Enum, Instance, Str
+from traits.api import (
+    HasTraits,
+    List,
+    on_trait_change,
+    Button,
+    Float,
+    Enum,
+    Instance,
+    Str,
+)
 from traitsui.api import View, UItem, TableEditor
 from traitsui.table_column import ObjectColumn
 
@@ -29,8 +38,12 @@ from pychron.canvas.canvas2D.scene.primitives.valves import BaseValve, Valve
 from pychron.loggable import Loggable
 from pychron.pychron_constants import NULL_STR
 
-ITEM_KLASS = {'Valve': Valve, 'Spectrometer': Spectrometer,
-              'Stage': Stage, 'Connection': Connection}
+ITEM_KLASS = {
+    "Valve": Valve,
+    "Spectrometer": Spectrometer,
+    "Stage": Stage,
+    "Connection": Connection,
+}
 
 
 class ItemGroup(HasTraits):
@@ -39,14 +52,20 @@ class ItemGroup(HasTraits):
     selected = List
 
     def traits_view(self):
-        cols = [ObjectColumn(name='name', editable=False),
-                ObjectColumn(name='x'),
-                ObjectColumn(name='y')]
+        cols = [
+            ObjectColumn(name="name", editable=False),
+            ObjectColumn(name="x"),
+            ObjectColumn(name="y"),
+        ]
 
-        v = View(UItem('items',
-                       editor=TableEditor(columns=cols,
-                                          selected='selected',
-                                          selection_mode='rows')), )
+        v = View(
+            UItem(
+                "items",
+                editor=TableEditor(
+                    columns=cols, selected="selected", selection_mode="rows"
+                ),
+            ),
+        )
         return v
 
 
@@ -61,7 +80,7 @@ class CanvasEditor(Loggable):
     increment_up_y = Button
     increment_down_y = Button
 
-    save_button = Button('Save')
+    save_button = Button("Save")
     x_magnitude = Enum(0.25, 0.5, 1, 2, 5, 10)
     y_magnitude = Enum(0.25, 0.5, 1, 2, 5, 10)
 
@@ -74,8 +93,8 @@ class CanvasEditor(Loggable):
     height_increment_minus_button = Button
 
     color = ColorTrait
-    add_item_button = Button('Add')
-    new_item_kind = Enum(NULL_STR, 'Valve', 'Spectrometer', 'Stage')
+    add_item_button = Button("Add")
+    new_item_kind = Enum(NULL_STR, "Valve", "Spectrometer", "Stage")
     new_item = Instance(Primitive)
 
     def load(self, canvas, path):
@@ -90,14 +109,24 @@ class CanvasEditor(Loggable):
         vs = canvas.scene.valves
         rs = canvas.scene.rects
 
-        self.groups = [ItemGroup(name='Valves',
-                                 items=sorted([v for v in vs.values() if v.name], key=attrgetter('name'))),
-                       ItemGroup(name='Rects',
-                                 items=sorted([v for v in rs.values() if v.name], key=attrgetter('name')))]
+        self.groups = [
+            ItemGroup(
+                name="Valves",
+                items=sorted(
+                    [v for v in vs.values() if v.name], key=attrgetter("name")
+                ),
+            ),
+            ItemGroup(
+                name="Rects",
+                items=sorted(
+                    [v for v in rs.values() if v.name], key=attrgetter("name")
+                ),
+            ),
+        ]
         self.selected_group = self.groups[0]
 
     def _increment(self, sign, axis):
-        inc = sign * getattr(self, '{}_magnitude'.format(axis))
+        inc = sign * getattr(self, "{}_magnitude".format(axis))
 
         g = self.selected_group
         for s in g.selected:
@@ -123,73 +152,77 @@ class CanvasEditor(Loggable):
             if item.name:
                 cp = CanvasParser(self.path)
                 elem = cp.add(item.tag, item.name)
-                cp.add('translation', '{},{}'.format(item.x, item.y), elem)
-                cp.add('dimension', '{},{}'.format(item.width, item.width), elem)
-                if item.tag in ('valve',):
+                cp.add("translation", "{},{}".format(item.x, item.y), elem)
+                cp.add("dimension", "{},{}".format(item.width, item.width), elem)
+                if item.tag in ("valve",):
                     self.canvas.scene.valves[item.name] = self.new_item
-                elif item.tag in ('stage', 'spectrometer'):
-                    cp.add('color', '100,100,100', elem)
+                elif item.tag in ("stage", "spectrometer"):
+                    cp.add("color", "100,100,100", elem)
                 self.canvas.scene.add_item(self.new_item)
                 self.canvas.scene.request_layout()
                 self.canvas.invalidate_and_redraw()
                 cp.save()
             else:
-                self.information_dialog('Please enter a name for the new item')
+                self.information_dialog("Please enter a name for the new item")
 
     def _save_button_fired(self):
         cp = CanvasParser(self.path)
 
         for o in self._valve_changes:
             for t in SWITCH_TAGS:
-                elem = next((s for s in cp.get_elements(t) if s.text.strip() == o.name), None)
+                elem = next(
+                    (s for s in cp.get_elements(t) if s.text.strip() == o.name), None
+                )
                 if elem:
-                    t = elem.find('translation')
-                    t.text = '{},{}'.format(o.x, o.y)
+                    t = elem.find("translation")
+                    t.text = "{},{}".format(o.x, o.y)
                     break
 
         for o in self._rect_changes:
             for t in RECT_TAGS:
-                elem = next((s for s in cp.get_elements(t) if s.text.strip() == o.name), None)
+                elem = next(
+                    (s for s in cp.get_elements(t) if s.text.strip() == o.name), None
+                )
                 if elem:
-                    t = elem.find('translation')
-                    t.text = '{},{}'.format(o.x, o.y)
-                    t = elem.find('dimension')
-                    t.text = '{},{}'.format(o.width, o.height)
-                    t = elem.find('color')
+                    t = elem.find("translation")
+                    t.text = "{},{}".format(o.x, o.y)
+                    t = elem.find("dimension")
+                    t.text = "{},{}".format(o.width, o.height)
+                    t = elem.find("color")
                     if t:
-                        t.text = '{},{},{}'.format(*o.default_color.getRgb())
+                        t.text = "{},{},{}".format(*o.default_color.getRgb())
                     break
 
         cp.save()
 
     def _increment_up_x_fired(self):
-        self._increment(1, 'x')
+        self._increment(1, "x")
 
     def _increment_down_x_fired(self):
-        self._increment(-1, 'x')
+        self._increment(-1, "x")
 
     def _increment_up_y_fired(self):
-        self._increment(1, 'y')
+        self._increment(1, "y")
 
     def _increment_down_y_fired(self):
-        self._increment(-1, 'y')
+        self._increment(-1, "y")
 
     def _width_increment_plus_button_fired(self):
-        self._dim_increment(1, 'width')
+        self._dim_increment(1, "width")
 
     def _width_increment_minus_button_fired(self):
-        self._dim_increment(-1, 'width')
+        self._dim_increment(-1, "width")
 
     def _height_increment_plus_button_fired(self):
-        self._dim_increment(1, 'height')
+        self._dim_increment(1, "height")
 
     def _height_increment_minus_button_fired(self):
-        self._dim_increment(-1, 'height')
+        self._dim_increment(-1, "height")
 
     def _color_changed(self, new):
         item = self.selected_group.selected[0]
-        item.default_color = tuple(255*i for i in new)
-        if self.selected_group.name == 'Rects':
+        item.default_color = tuple(255 * i for i in new)
+        if self.selected_group.name == "Rects":
             if item not in self._rect_changes:
                 self._rect_changes.append(item)
 
@@ -198,24 +231,24 @@ class CanvasEditor(Loggable):
     def _width_changed(self, new):
         item = self.selected_group.selected[0]
         item.width = new
-        if self.selected_group.name == 'Rects':
+        if self.selected_group.name == "Rects":
             self._rect_changes.append(item)
 
     def _height_changed(self, new):
         item = self.selected_group.selected[0]
         item.height = new
-        if self.selected_group.name == 'Rects':
+        if self.selected_group.name == "Rects":
             self._rect_changes.append(item)
 
-    @on_trait_change('groups:selected')
+    @on_trait_change("groups:selected")
     def _handle_selected(self, obj, name, old, new):
         if new:
-            if self.selected_group.name == 'Rects':
+            if self.selected_group.name == "Rects":
                 self.width = new[0].width
                 self.height = new[0].height
                 self.color = new[0].default_color
 
-    @on_trait_change('groups:items:[x,y,width,height]')
+    @on_trait_change("groups:items:[x,y,width,height]")
     def _handle(self, obj, name, old, new):
 
         if isinstance(obj, BaseValve):
@@ -227,4 +260,6 @@ class CanvasEditor(Loggable):
 
         obj.request_layout()
         self.canvas.invalidate_and_redraw()
+
+
 # ============= EOF =============================================

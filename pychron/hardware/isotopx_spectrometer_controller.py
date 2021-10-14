@@ -18,16 +18,18 @@
 # ============= enthought library imports =======================
 from traits.api import Str, HasTraits
 from apptools.preferences.preference_binding import bind_preference
+
 # ============= standard library imports ========================
 from threading import RLock, Lock
+
 # ============= local library imports  ==========================
 
 from pychron.hardware.core.core_device import CoreDevice
 
 
 class NGXController(CoreDevice):
-    username = Str('')
-    password = Str('')
+    username = Str("")
+    password = Str("")
     lock = None
 
     def set(self, *args, **kw):
@@ -41,12 +43,12 @@ class NGXController(CoreDevice):
         if ret:
             resp = self.read()
 
-            bind_preference(self, 'username', 'pychron.spectrometer.ngx.username')
-            bind_preference(self, 'password', 'pychron.spectrometer.ngx.password')
+            bind_preference(self, "username", "pychron.spectrometer.ngx.username")
+            bind_preference(self, "password", "pychron.spectrometer.ngx.password")
 
             if resp:
-                self.info('NGX-{}'.format(resp))
-                self.ask('Login {},{}'.format(self.username, self.password))
+                self.info("NGX-{}".format(resp))
+                self.ask("Login {},{}".format(self.username, self.password))
 
             return True
 

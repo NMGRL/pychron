@@ -19,6 +19,7 @@ import datetime
 
 from traits.api import HasTraits, Str, Any, Int, Property
 from traitsui.api import View, UItem, TextEditor, Item, VGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -26,16 +27,18 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 # logsep = chr(0x01)
-logsep = '$'
+logsep = "$"
+
 
 class StatusView(HasTraits):
     def traits_view(self):
-        v = View(UItem('status', style='custom',
-                       editor=TextEditor(read_only=True)),
-                 kind='modal',
-                 title='Repository Status',
-                 width=500,
-                 resizable=True)
+        v = View(
+            UItem("status", style="custom", editor=TextEditor(read_only=True)),
+            kind="modal",
+            title="Repository Status",
+            width=500,
+            resizable=True,
+        )
         return v
 
 
@@ -44,24 +47,27 @@ class NewTagView(HasTraits):
     name = Str
 
     def traits_view(self):
-        v = okcancel_view(VGroup(Item('name'),
-                                 VGroup(UItem('message', style='custom'),
-                                        show_border=True, label='Message')),
-                          width=400,
-                          title='New Tag')
+        v = okcancel_view(
+            VGroup(
+                Item("name"),
+                VGroup(
+                    UItem("message", style="custom"), show_border=True, label="Message"
+                ),
+            ),
+            width=400,
+            title="New Tag",
+        )
 
         return v
 
 
 class NewBranchView(HasTraits):
-    name = Property(depends_on='_name')
+    name = Property(depends_on="_name")
     branches = Any
     _name = Str
 
     def traits_view(self):
-        v = okcancel_view(UItem('name'),
-                          width=200,
-                          title='New Branch')
+        v = okcancel_view(UItem("name"), width=200, title="New Branch")
         return v
 
     def _get_name(self):
@@ -72,7 +78,7 @@ class NewBranchView(HasTraits):
 
     def _validate_name(self, v):
         if v not in self.branches:
-            if ' ' not in v:
+            if " " not in v:
                 return v
 
 
@@ -81,7 +87,7 @@ class GitObjectAdapter(TabularAdapter):
     message_width = Int(300)
     date_width = Int(120)
 
-    font = '10'
+    font = "10"
     hexsha_text = Property
     message_text = Property
 
@@ -93,16 +99,18 @@ class GitObjectAdapter(TabularAdapter):
 
     def _truncate_message(self, m):
         if len(m) > 200:
-            m = '{}...'.format(m[:200])
+            m = "{}...".format(m[:200])
         return m
 
 
 class GitTagAdapter(GitObjectAdapter):
-    columns = [('Name', 'name'),
-               ('Message', 'message'),
-               ('Date', 'date'),
-               ('Commit', 'hexsha'),
-               ('Commit Message', 'commit_message')]
+    columns = [
+        ("Name", "name"),
+        ("Message", "message"),
+        ("Date", "date"),
+        ("Commit", "hexsha"),
+        ("Commit Message", "commit_message"),
+    ]
     name_width = Int(60)
     commit_message_text = Property
 
@@ -111,37 +119,44 @@ class GitTagAdapter(GitObjectAdapter):
 
 
 class DiffsAdapter(TabularAdapter):
-    columns = [('Subtraction', 'subtraction'),
-               ('Addition', 'addition')]
+    columns = [("Subtraction", "subtraction"), ("Addition", "addition")]
 
 
-TAGS = 'TAG', 'BLANK', 'ISOEVO', 'ICFactor', 'COLLECTION, EDIT, MANUAL, IMPORT, SYNC'
-TAG_COLORS = {'TAG': '#f5f7c8', 'BLANKS': '#cac8f7',
-              'ISOEVO': '#c8f7e2', 'IMPORT': '#FAE8F0',
-              'ICFactor': '#D2D4A7', 'COLLECTION': 'lightyellow'}
+TAGS = "TAG", "BLANK", "ISOEVO", "ICFactor", "COLLECTION, EDIT, MANUAL, IMPORT, SYNC"
+TAG_COLORS = {
+    "TAG": "#f5f7c8",
+    "BLANKS": "#cac8f7",
+    "ISOEVO": "#c8f7e2",
+    "IMPORT": "#FAE8F0",
+    "ICFactor": "#D2D4A7",
+    "COLLECTION": "lightyellow",
+}
 
 
 class CommitAdapter(GitObjectAdapter):
-    columns = [('ID', 'hexsha'),
-               ('Date', 'date'),
-               ('Message', 'message'),
-               ('Author', 'author'),
-               ('Email', 'email'),
-               ]
+    columns = [
+        ("ID", "hexsha"),
+        ("Date", "date"),
+        ("Message", "message"),
+        ("Author", "author"),
+        ("Email", "email"),
+    ]
     author_width = Int(100)
 
     def get_bg_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
-        color = TAG_COLORS.get(item.tag, 'white')
+        color = TAG_COLORS.get(item.tag, "white")
 
         return color
 
 
 class TopologyAdapter(TabularAdapter):
-    columns = [('Date', 'authdate'),
-               ('ID', 'oid'),
-               ('Message', 'summary'),
-               ('Author', 'author')]
+    columns = [
+        ("Date", "authdate"),
+        ("ID", "oid"),
+        ("Message", "summary"),
+        ("Author", "author"),
+    ]
     oid_width = Int(80)
 
 
@@ -162,14 +177,12 @@ class CommitFactory(object):
             commit = cls.commits[oid]
             if log_entry and not commit.parsed:
                 commit.parse(log_entry)
-            cls.root_generation = max(commit.generation,
-                                      cls.root_generation)
+            cls.root_generation = max(commit.generation, cls.root_generation)
         except KeyError:
             commit = Commit(oid, log_entry=log_entry)
             if not log_entry:
                 cls.root_generation += 1
-                commit.generation = max(commit.generation,
-                                        cls.root_generation)
+                commit.generation = max(commit.generation, cls.root_generation)
             cls.commits[oid] = commit
         return commit
 
@@ -177,27 +190,29 @@ class CommitFactory(object):
 class Commit(object):
     root_generation = 0
 
-    __slots__ = ('oid',
-                 'hexsha',
-                 'summary',
-                 'parents',
-                 'children',
-                 'tags',
-                 'author',
-                 'authdate',
-                 'email',
-                 'generation',
-                 'column',
-                 'row',
-                 'parsed',
-                 'timestamp')
+    __slots__ = (
+        "oid",
+        "hexsha",
+        "summary",
+        "parents",
+        "children",
+        "tags",
+        "author",
+        "authdate",
+        "email",
+        "generation",
+        "column",
+        "row",
+        "parsed",
+        "timestamp",
+    )
 
     def __init__(self, oid=None, log_entry=None):
         super(Commit, self).__init__()
 
         self.oid = oid
         self.hexsha = oid
-        self.summary = ''
+        self.summary = ""
         self.parents = []
         self.children = []
         self.tags = set()
@@ -214,19 +229,30 @@ class Commit(object):
 
     def parse(self, log_entry, sep=logsep):
 
-        oid, authdate, rauthdate, summary, author, email, tags, parents = log_entry.split(sep)
+        (
+            oid,
+            authdate,
+            rauthdate,
+            summary,
+            author,
+            email,
+            tags,
+            parents,
+        ) = log_entry.split(sep)
         self.hexsha = oid
         self.oid = oid[:40]
-        self.summary = summary if summary else ''
-        self.author = author if author else ''
-        self.authdate = authdate if authdate else ''
-        self.email = email if email else ''
+        self.summary = summary if summary else ""
+        self.author = author if author else ""
+        self.authdate = authdate if authdate else ""
+        self.email = email if email else ""
         if self.authdate:
-            self.timestamp = datetime.datetime.strptime(self.authdate, '%Y-%m-%d %H:%M:%S %z')
+            self.timestamp = datetime.datetime.strptime(
+                self.authdate, "%Y-%m-%d %H:%M:%S %z"
+            )
 
         if parents:
             generation = None
-            for parent_oid in parents.split(' '):
+            for parent_oid in parents.split(" "):
                 parent = CommitFactory.new(oid=parent_oid)
                 parent.children.append(self)
                 if generation is None:
@@ -236,7 +262,7 @@ class Commit(object):
             self.generation = generation
 
         if tags:
-            for tag in tags[2:-1].split(', '):
+            for tag in tags[2:-1].split(", "):
                 self.add_label(tag)
 
         self.parsed = True
@@ -245,14 +271,14 @@ class Commit(object):
     def add_label(self, tag):
         """Add tag/branch labels from `git log --decorate ....`"""
 
-        if tag.startswith('tag: '):
+        if tag.startswith("tag: "):
             tag = tag[5:]  # strip off "tag: " leaving refs/tags/
 
-        if tag.startswith('refs/'):
+        if tag.startswith("refs/"):
             # strip off refs/ leaving just tags/XXX remotes/XXX heads/XXX
             tag = tag[5:]
 
-        if tag.endswith('/HEAD'):
+        if tag.endswith("/HEAD"):
             return
 
         # Git 2.4 Release Notes (draft)
@@ -284,18 +310,20 @@ class Commit(object):
         #
         # C.f. http://thread.gmane.org/gmane.linux.kernel/1931234
 
-        head_arrow = 'HEAD -> '
+        head_arrow = "HEAD -> "
         if tag.startswith(head_arrow):
-            self.tags.add('HEAD')
-            self.add_label(tag[len(head_arrow):])
+            self.tags.add("HEAD")
+            self.add_label(tag[len(head_arrow) :])
         else:
             self.tags.add(tag)
 
     def is_fork(self):
-        ''' Returns True if the node is a fork'''
+        """Returns True if the node is a fork"""
         return len(self.children) > 1
 
     def is_merge(self):
-        ''' Returns True if the node is a fork'''
+        """Returns True if the node is a fork"""
         return len(self.parents) > 1
+
+
 # ============= EOF =============================================

@@ -17,10 +17,12 @@
 # ============= standard library imports ========================
 from numpy import poly1d, polyval
 from scipy import optimize
+
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Property, List, String, Bool
 
 from pychron.core.helpers.formatting import floatfmt
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import csv_to_floats, to_csv_str
 
@@ -66,9 +68,9 @@ class MeterCalibration(HasTraits):
             self.coefficients = v
 
     def _get_coeff_string(self):
-        c = ''
+        c = ""
         if self.coefficients:
-            c = ', '.join([floatfmt(x, 3) for x in self.coefficients])
+            c = ", ".join([floatfmt(x, 3) for x in self.coefficients])
         return c
 
     def dump_coeffs(self):
@@ -76,7 +78,7 @@ class MeterCalibration(HasTraits):
 
     def get_input(self, response):
         """
-            return the input required to produce the requested response
+        return the input required to produce the requested response
         """
 
         if self.normal_mapping:
@@ -115,5 +117,9 @@ class MeterCalibration(HasTraits):
         return power
 
     def print_string(self):
-        return ','.join(['{}={:0.3e}'.format(*c) for c in zip('abcdefg', self.coefficients)])
+        return ",".join(
+            ["{}={:0.3e}".format(*c) for c in zip("abcdefg", self.coefficients)]
+        )
+
+
 # ============= EOF =============================================

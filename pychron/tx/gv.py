@@ -26,16 +26,17 @@ from gevent.server import StreamServer
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 def handle(socket, address):
     data = socket.recv(4096)
-    cmd = data.split(' ')[0]
+    cmd = data.split(" ")[0]
     print(socket)
-    if cmd == 'GetData':
+    if cmd == "GetData":
         gevent.sleep(1)
-        socket.sendall('Foo')
+        socket.sendall("Foo")
         # gevent.spawn(getdata, socket, data)
     else:
-        msg = 'Random {}'.format(random.random())
+        msg = "Random {}".format(random.random())
         socket.sendall(msg)
 
 
@@ -44,9 +45,9 @@ def getdata(socket, data):
     # for i in range(int(1e7)):
     # s += 1
     gevent.sleep(1)
-    socket.sendall('Foo')
+    socket.sendall("Foo")
 
 
-server = StreamServer(('127.0.0.1', 8007), handle)  # creates a new server
+server = StreamServer(("127.0.0.1", 8007), handle)  # creates a new server
 server.serve_forever()  # start accepting new connections
 # ============= EOF =============================================

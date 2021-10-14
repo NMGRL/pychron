@@ -27,18 +27,19 @@ from pychron.monitors.laser_monitor import LaserMonitor
 
 
 class MonitorSeries(HasTraits):
-    """
-    """
+    """ """
+
     name = Str
     show = Bool
     value = Float
 
 
 class FusionsUVLaserMonitor(LaserMonitor):
-    """
-    """
+    """ """
+
     def _fcheck_parameters(self):
         man = self.manager
         man.update_parameters()
+
 
 # ============= EOF ====================================

@@ -17,17 +17,19 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from chaco.plot_containers import HPlotContainer
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-
 
 
 # class GraphContainer(BasePlotContainer):
 #    def redraw(self):
 #        self.invalidate_and_redraw()
 
+
 class HGraphContainer(HPlotContainer):
     def redraw(self):
         self.invalidate_and_redraw()
+
 
 # ============= EOF =============================================

@@ -28,30 +28,30 @@ class CompositeOptions(FigureOptions):
     spectrum_options = Instance(SpectrumOptions)
     isochron_options = Instance(InverseIsochronOptions)
     use_plotting = True
-    orientation_layout = Enum('Horizontal', 'Vertical')
+    orientation_layout = Enum("Horizontal", "Vertical")
     group_options_klass = SpectrumGroupOptions
 
     def _get_state_hook(self, state):
-        state['spectrum_options'] = self.spectrum_options.make_state()
-        state['isochron_options'] = self.isochron_options.make_state()
+        state["spectrum_options"] = self.spectrum_options.make_state()
+        state["isochron_options"] = self.isochron_options.make_state()
 
     def _load_state_hook(self, state):
 
-        so = state.pop('isochron_options')
+        so = state.pop("isochron_options")
         if so:
             try:
                 self.isochron_options = InverseIsochronOptions()
                 self.isochron_options.load(so)
             except TraitError as e:
-                print('iso', e)
+                print("iso", e)
 
-        so = state.pop('spectrum_options')
+        so = state.pop("spectrum_options")
         if so:
             try:
                 self.spectrum_options = SpectrumOptions()
                 self.spectrum_options.load(so)
             except TraitError as e:
-                print('spec', e)
+                print("spec", e)
 
     def setup(self):
         super(CompositeOptions, self).setup()
@@ -63,12 +63,12 @@ class CompositeOptions(FigureOptions):
         self.spectrum_options.setup()
         self.isochron_options.setup()
 
-    @on_trait_change('groups[]')
+    @on_trait_change("groups[]")
     def handle_group_change(self):
         self.spectrum_options.groups = self.groups
         self.isochron_options.groups = self.groups
 
-    @on_trait_change('spectrum_options:[bgcolor,plot_bgcolor]')
+    @on_trait_change("spectrum_options:[bgcolor,plot_bgcolor]")
     def handle(self, obj, name, old, new):
         self.isochron_options.trait_set(**{name: new})
 
@@ -77,9 +77,15 @@ class CompositeOptions(FigureOptions):
 
         klass = self._get_subview(name)
 
-        if name in (MAIN.lower(), 'spectrum', 'appearance(spec.)', 'display(spec.)', 'calculations(spec.)'):
+        if name in (
+            MAIN.lower(),
+            "spectrum",
+            "appearance(spec.)",
+            "display(spec.)",
+            "calculations(spec.)",
+        ):
             obj = klass(model=self.spectrum_options)
-        elif name in ('isochron', 'appearance(iso.)'):
+        elif name in ("isochron", "appearance(iso.)"):
             obj = klass(model=self.isochron_options)
         else:
             obj = klass(model=self)
@@ -87,17 +93,20 @@ class CompositeOptions(FigureOptions):
         return obj
 
     def initialize(self):
-        self.subview_names = ['Spectrum',
-                              'Appearance(Spec.)',
-                              'Display(Spec.)',
-                              'Calculations(Spec.)',
-                              'Isochron',
-                              'Appearance(Iso.)',
-                              'Layout',
-                              'Title',
-                              'Groups'
-                              ]
+        self.subview_names = [
+            "Spectrum",
+            "Appearance(Spec.)",
+            "Display(Spec.)",
+            "Calculations(Spec.)",
+            "Isochron",
+            "Appearance(Iso.)",
+            "Layout",
+            "Title",
+            "Groups",
+        ]
 
     def _get_subview(self, name):
         return VIEWS[name]
+
+
 # ============= EOF =============================================

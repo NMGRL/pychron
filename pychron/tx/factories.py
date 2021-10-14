@@ -42,27 +42,29 @@ class LaserFactory(Factory):
 
 
 class FusionsCO2Factory(LaserFactory):
-    _name = 'FusionsCO2'
+    _name = "FusionsCO2"
 
 
 class FusionsDiodeFactory(LaserFactory):
-    _name = 'FusionsDiode'
+    _name = "FusionsDiode"
 
 
 class FusionsUVFactory(LaserFactory):
-    _name = 'FusionsUV'
-
-from pychron.paths import paths
-path = os.path.join(paths.log_dir, 'pps.log.json')
-
-logger = Logger(observer=jsonFileLogObserver(io.open(path, 'w')))
+    _name = "FusionsUV"
 
 
 from pychron.paths import paths
 
-path = os.path.join(paths.log_dir, 'pps.log.json')
+path = os.path.join(paths.log_dir, "pps.log.json")
 
-logger = Logger(observer=jsonFileLogObserver(io.open(path, 'w')))
+logger = Logger(observer=jsonFileLogObserver(io.open(path, "w")))
+
+
+from pychron.paths import paths
+
+path = os.path.join(paths.log_dir, "pps.log.json")
+
+logger = Logger(observer=jsonFileLogObserver(io.open(path, "w")))
 
 
 class BaseFactory(Factory):
@@ -84,5 +86,6 @@ class ValveFactory(BaseFactory):
 
 class FurnaceFactory(BaseFactory):
     protocol_klass = FurnaceProtocol
+
 
 # ============= EOF =============================================

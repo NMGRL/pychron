@@ -35,23 +35,25 @@ from pychron.paths import paths
 
 
 def database_path():
-    return os.path.join(paths.offline_db_dir, 'index.sqlite3')
+    return os.path.join(paths.offline_db_dir, "index.sqlite3")
 
 
 def switch_to_offline_database(preferences):
-    prefid = 'pychron.dvc.connection'
-    kind = '{}.kind'.format(prefid)
-    path = '{}.path'.format(prefid)
+    prefid = "pychron.dvc.connection"
+    kind = "{}.kind".format(prefid)
+    path = "{}.path".format(prefid)
 
-    preferences.set(kind, 'sqlite')
+    preferences.set(kind, "sqlite")
     preferences.set(path, database_path())
     preferences.save()
 
 
 class RepositoryTabularAdapter(TabularAdapter):
-    columns = [('Name', 'name'),
-               ('Create Date', 'created_at'),
-               ('Last Change', 'pushed_at')]
+    columns = [
+        ("Name", "name"),
+        ("Create Date", "created_at"),
+        ("Last Change", "pushed_at"),
+    ]
 
 
 class WorkOffline(Loggable):
@@ -62,13 +64,14 @@ class WorkOffline(Loggable):
     4. copy the central db to a sqlite db
     5. set DVC db preferences to sqlite
     """
+
     work_offline_user = Str
     work_offline_password = Str
 
     repositories = List
     selected_repositories = List
 
-    work_offline_button = Button('Work Offline')
+    work_offline_button = Button("Work Offline")
 
     def initialize(self):
         """
@@ -80,12 +83,19 @@ class WorkOffline(Loggable):
         if self._check_database_connection():
             if self._check_githost_connection():
                 repos = self.dvc.remote_repositories()
-                repos = [RepositoryRecordView(name=r['name'],
-                                              created_at=r.get('created_at', ''),
-                                              pushed_at=r.get('pushed_at', '')) for r in repos]
+                repos = [
+                    RepositoryRecordView(
+                        name=r["name"],
+                        created_at=r.get("created_at", ""),
+                        pushed_at=r.get("pushed_at", ""),
+                    )
+                    for r in repos
+                ]
 
                 metaname = os.path.basename(paths.meta_root)
-                repos = sorted([ri for ri in repos if ri.name != metaname], key=attrgetter('name'))
+                repos = sorted(
+                    [ri for ri in repos if ri.name != metaname], key=attrgetter("name")
+                )
                 self.repositories = repos
                 return True
 
@@ -97,7 +107,7 @@ class WorkOffline(Loggable):
         return self.dvc.check_githost_connection()
 
     def _work_offline(self):
-        self.debug('work offline')
+        self.debug("work offline")
 
         # clone repositories
         if not self._clone_repositories():
@@ -115,20 +125,22 @@ class WorkOffline(Loggable):
 
         apath = None
         # create dvc archive
-        if self.confirmation_dialog('Create shareable archive'):
-            dialog = FileDialog(action='save as', default_directory=paths.data_dir)
+        if self.confirmation_dialog("Create shareable archive"):
+            dialog = FileDialog(action="save as", default_directory=paths.data_dir)
             if dialog.open() == OK:
                 apath = dialog.path
 
         if apath:
-            apath = add_extension(apath, '.pz')
-            with open(apath, 'wb') as wfile:
-                with open(path, 'rb') as dbfile:
-                    ctx = {'meta_repo_name': self.dvc.meta_repo_name,
-                           'meta_repo_dirname': self.dvc.meta_repo_dirname,
-                           'organization': self.dvc.organization,
-                           'database': dbfile.read()}
-                yaml.dump(ctx, wfile, encoding='utf-8')
+            apath = add_extension(apath, ".pz")
+            with open(apath, "wb") as wfile:
+                with open(path, "rb") as dbfile:
+                    ctx = {
+                        "meta_repo_name": self.dvc.meta_repo_name,
+                        "meta_repo_dirname": self.dvc.meta_repo_dirname,
+                        "organization": self.dvc.organization,
+                        "database": dbfile.read(),
+                    }
+                yaml.dump(ctx, wfile, encoding="utf-8")
 
         # msg = 'Would you like to switch to the offline database?'
         # if self.confirmation_dialog(msg):
@@ -136,7 +148,7 @@ class WorkOffline(Loggable):
         #     self._update_preferences()
 
     def _clone_repositories(self):
-        self.debug('clone repositories')
+        self.debug("clone repositories")
 
         # check for selected repositories
         if not self.selected_repositories:
@@ -145,7 +157,7 @@ class WorkOffline(Loggable):
         # clone the repositories
         def func(x, prog, i, n):
             if prog is not None:
-                prog.change_message('Cloning {}'.format(x.name))
+                prog.change_message("Cloning {}".format(x.name))
             self.dvc.clone_repository(x.name)
 
         progress_iterator(self.selected_repositories, func, threshold=0)
@@ -153,20 +165,25 @@ class WorkOffline(Loggable):
         return True
 
     def _get_new_path(self):
-        return unique_path2(paths.dvc_dir, 'index', extension='.sqlite3')[0]
+        return unique_path2(paths.dvc_dir, "index", extension=".sqlite3")[0]
 
-    def _clone_central_db(self, repositories, analyses=None, principal_investigators=None, projects=None):
+    def _clone_central_db(
+        self, repositories, analyses=None, principal_investigators=None, projects=None
+    ):
 
-        self.info('--------- Clone DB -----------')
+        self.info("--------- Clone DB -----------")
         # create an a sqlite database
         from pychron.dvc.dvc_orm import Base
+
         metadata = Base.metadata
         from pychron.dvc.dvc_database import DVCDatabase
 
         path = database_path()
         if os.path.isfile(path):
-            if not self.confirmation_dialog('The database "{}" already exists. '
-                                            'Do you want to overwrite it'.format(os.path.basename(path))):
+            if not self.confirmation_dialog(
+                'The database "{}" already exists. '
+                "Do you want to overwrite it".format(os.path.basename(path))
+            ):
 
                 path = self._get_new_path()
             else:
@@ -174,45 +191,62 @@ class WorkOffline(Loggable):
 
         if path:
             progress = open_progress(n=20)
-            self.debug('--------- Starting db clone to {}'.format(path))
+            self.debug("--------- Starting db clone to {}".format(path))
             src = self.dvc
-            db = DVCDatabase(path=path, kind='sqlite')
+            db = DVCDatabase(path=path, kind="sqlite")
             db.connect()
             with db.session_ctx(use_parent_session=False) as sess:
                 metadata.create_all(sess.bind)
 
-            tables = ['MassSpectrometerTbl', 'ExtractDeviceTbl', 'VersionTbl', 'UserTbl']
+            tables = [
+                "MassSpectrometerTbl",
+                "ExtractDeviceTbl",
+                "VersionTbl",
+                "UserTbl",
+            ]
 
             for table in tables:
-                mod = __import__('pychron.dvc.dvc_orm', fromlist=[table])
-                progress.change_message('Cloning {}'.format(table))
+                mod = __import__("pychron.dvc.dvc_orm", fromlist=[table])
+                progress.change_message("Cloning {}".format(table))
                 self._copy_table(db, getattr(mod, table))
 
             with src.session_ctx(use_parent_session=False):
-                from pychron.dvc.dvc_orm import RepositoryTbl, AnalysisTbl, AnalysisChangeTbl, RepositoryAssociationTbl, \
-                    AnalysisGroupTbl, AnalysisGroupSetTbl, MaterialTbl, SampleTbl, IrradiationTbl, LevelTbl, \
-                    IrradiationPositionTbl, PrincipalInvestigatorTbl, MeasuredPositionTbl, LoadTbl
+                from pychron.dvc.dvc_orm import (
+                    RepositoryTbl,
+                    AnalysisTbl,
+                    AnalysisChangeTbl,
+                    RepositoryAssociationTbl,
+                    AnalysisGroupTbl,
+                    AnalysisGroupSetTbl,
+                    MaterialTbl,
+                    SampleTbl,
+                    IrradiationTbl,
+                    LevelTbl,
+                    IrradiationPositionTbl,
+                    PrincipalInvestigatorTbl,
+                    MeasuredPositionTbl,
+                    LoadTbl,
+                )
 
                 repos = [src.db.get_repository(reponame) for reponame in repositories]
 
-                progress.change_message('Assembling Analyses 0/5')
+                progress.change_message("Assembling Analyses 0/5")
                 st = time.time()
                 if analyses:
                     ans = analyses
-                    ras = [rai for ai in ans
-                           for rai in ai.repository_associations]
+                    ras = [rai for ai in ans for rai in ai.repository_associations]
                 else:
 
                     # at = time.time()
                     ras = [ra for repo in repos for ra in repo.repository_associations]
                     # self.debug('association time={}'.format(time.time()-at))
-                    progress.change_message('Assembling Analyses 1/5')
+                    progress.change_message("Assembling Analyses 1/5")
 
                     # at = time.time()
                     ans = [ri.analysis for ri in ras]
                     # self.debug('analysis time={}'.format(time.time()-at))
 
-                    progress.change_message('Assembling Analyses 2/5')
+                    progress.change_message("Assembling Analyses 2/5")
 
                 # at = time.time()
                 ans = [ai for ai in ans if ai is not None]
@@ -224,19 +258,19 @@ class WorkOffline(Loggable):
 
                 ans_c = [ai.change for ai in ans]
                 # self.debug('change time={}'.format(time.time()-at))
-                progress.change_message('Assembling Analyses 3/5')
+                progress.change_message("Assembling Analyses 3/5")
 
                 # at = time.time()
                 agss = [gi for ai in ans for gi in ai.group_sets]
                 # self.debug('agss time={}'.format(time.time()-at))
-                progress.change_message('Assembling Analyses 4/5')
+                progress.change_message("Assembling Analyses 4/5")
 
                 # at = time.time()
                 ags = {gi.group for gi in agss}
                 # self.debug('ags time={}'.format(time.time()-at))
-                progress.change_message('Assembling Analyses 5/5')
+                progress.change_message("Assembling Analyses 5/5")
 
-                self.debug('total analysis assembly time={}'.format(time.time() - st))
+                self.debug("total analysis assembly time={}".format(time.time() - st))
 
                 self._copy_records(progress, db, RepositoryTbl, repos)
                 self._copy_records(progress, db, RepositoryAssociationTbl, ras)
@@ -248,12 +282,16 @@ class WorkOffline(Loggable):
                 self._copy_records(progress, db, MeasuredPositionTbl, mps)
 
                 if principal_investigators:
-                    pis = [src.get_principal_investigator(pp.name) for pp in principal_investigators]
+                    pis = [
+                        src.get_principal_investigator(pp.name)
+                        for pp in principal_investigators
+                    ]
                 else:
                     pis = {repo.principal_investigator for repo in repos}
                 self._copy_records(progress, db, PrincipalInvestigatorTbl, pis)
 
                 from pychron.dvc.dvc_orm import ProjectTbl
+
                 if projects:
                     prjs = [src.get_project(pp) for pp in projects]
                 else:
@@ -277,7 +315,7 @@ class WorkOffline(Loggable):
 
                 self._copy_records(progress, db, IrradiationPositionTbl, ips)
 
-                self.debug('--------- db clone finished')
+                self.debug("--------- db clone finished")
                 progress.close()
                 self.information_dialog('Database saved to "{}"'.format(path))
                 return path
@@ -285,7 +323,7 @@ class WorkOffline(Loggable):
     def _copy_records(self, progress, dest, table, records):
 
         st = time.time()
-        msg = 'Copying records from {}. n={}'.format(table.__tablename__, len(records))
+        msg = "Copying records from {}. n={}".format(table.__tablename__, len(records))
         self.debug(msg)
         progress.change_message(msg)
 
@@ -294,7 +332,7 @@ class WorkOffline(Loggable):
             mappings = ({k: getattr(row, k) for k in keys} for row in records)
             dest_sess.bulk_insert_mappings(table, mappings)
             dest_sess.commit()
-        self.debug('copy finished et={:0.5f}'.format(time.time() - st))
+        self.debug("copy finished et={:0.5f}".format(time.time() - st))
 
     def _copy_table(self, dest, table, filter_criterion=None):
         src = self.dvc
@@ -310,25 +348,34 @@ class WorkOffline(Loggable):
                 dest_sess.commit()
 
     def _update_preferences(self):
-        self.debug('update dvc preferences')
+        self.debug("update dvc preferences")
 
         switch_to_offline_database(self.application.preferences)
 
     # handlers
     def _work_offline_button_fired(self):
-        self.debug('work offline fired')
+        self.debug("work offline fired")
         self._work_offline()
 
     def traits_view(self):
-        v = View(VGroup(UItem('repositories',
-                              editor=TabularEditor(adapter=RepositoryTabularAdapter(),
-                                                   selected='selected_repositories',
-                                                   multi_select=True)),
-                        UItem('work_offline_button',
-                              enabled_when='selected_repositories')),
-                 title='Work Offline',
-                 resizable=True,
-                 width=500, height=500)
+        v = View(
+            VGroup(
+                UItem(
+                    "repositories",
+                    editor=TabularEditor(
+                        adapter=RepositoryTabularAdapter(),
+                        selected="selected_repositories",
+                        multi_select=True,
+                    ),
+                ),
+                UItem("work_offline_button", enabled_when="selected_repositories"),
+            ),
+            title="Work Offline",
+            resizable=True,
+            width=500,
+            height=500,
+        )
         return v
+
 
 # ============= EOF =============================================

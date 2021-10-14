@@ -20,6 +20,7 @@ from __future__ import absolute_import
 from pyface.message_dialog import warning
 from traits.api import HasTraits, List
 from traitsui.api import UItem, ListStrEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from xlwt import Workbook, XFStyle
@@ -33,9 +34,13 @@ class IrradiationSelector(HasTraits):
     irradiations = List
 
     def traits_view(self):
-        v = okcancel_view(UItem('irradiations', editor=ListStrEditor(multi_select=True,
-                                                                     selected='selected')),
-                          title='Select Irradiations')
+        v = okcancel_view(
+            UItem(
+                "irradiations",
+                editor=ListStrEditor(multi_select=True, selected="selected"),
+            ),
+            title="Select Irradiations",
+        )
         return v
 
 
@@ -50,7 +55,7 @@ class IrradiationXLSTableWriter(HasTraits):
                 irradiations = irrad_selector.irradiations[1:4]
                 # irradiations = irrad_selector.selected
                 if not irradiations:
-                    warning('You must select one or more irradiations')
+                    warning("You must select one or more irradiations")
                 else:
                     self._make(irradiations)
                     break
@@ -59,18 +64,22 @@ class IrradiationXLSTableWriter(HasTraits):
 
     def _make(self, irrads):
         wb = Workbook()
-        sh = wb.add_sheet('Irradiations')
+        sh = wb.add_sheet("Irradiations")
 
-        gen_cols = [('Irradiation', '', ''),
-                    ('Duration (hrs)', 'duration', '0.#'), ]
+        gen_cols = [
+            ("Irradiation", "", ""),
+            ("Duration (hrs)", "duration", "0.#"),
+        ]
 
-        pr_cols = [('(40/39)K', 'K4039', '0.###'),
-                   ('(38/39)K', 'K3839', '0.###'),
-                   ('(37/39)K', 'K3739', '0.###'),
-                   ('(39/37)Ca', 'Ca3937', '0.###'),
-                   ('(38/37)Ca', 'Ca3837', '0.###'),
-                   ('(36/37)Ca', 'Ca3637', '0.###'),
-                   ('(36/38)Cl', 'Cl3638', '0.###')]
+        pr_cols = [
+            ("(40/39)K", "K4039", "0.###"),
+            ("(38/39)K", "K3839", "0.###"),
+            ("(37/39)K", "K3739", "0.###"),
+            ("(39/37)Ca", "Ca3937", "0.###"),
+            ("(38/37)Ca", "Ca3837", "0.###"),
+            ("(36/37)Ca", "Ca3637", "0.###"),
+            ("(36/38)Cl", "Cl3638", "0.###"),
+        ]
         cols = gen_cols + pr_cols
         row = 0
         for i, (label, key, fmt) in enumerate(cols):
@@ -78,22 +87,23 @@ class IrradiationXLSTableWriter(HasTraits):
 
         for j, irrad in enumerate(irrads):
             self._make_irradiation_line(sh, j + 1, irrad, cols)
-        wb.save('/Users/ross/Desktop/foo.xls')
+        wb.save("/Users/ross/Desktop/foo.xls")
 
     def _make_irradiation_line(self, sheet, row, irradname, cols):
         dvc = self.dvc
         chron = dvc.get_chronology(irradname)
-        _, prod = dvc.meta_repo.get_production(irradname, 'A')
+        _, prod = dvc.meta_repo.get_production(irradname, "A")
 
         sheet.write(row, 0, irradname)
         for i, (label, key, fmt) in enumerate(cols[1:]):
             style = XFStyle()
-            if key == 'duration':
+            if key == "duration":
                 v = chron.duration
             elif key in INTERFERENCE_KEYS:
                 v = getattr(prod, key)
 
             style.num_format_str = fmt
             sheet.write(row, i + 1, v, style)
+
 
 # ============= EOF =============================================

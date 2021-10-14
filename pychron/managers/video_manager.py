@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from traits.api import Instance, Float, Button, Int, Property, Event, Bool
@@ -23,6 +22,7 @@ from traitsui.api import View, Item, HGroup
 
 # =============standard library imports ========================
 from threading import Thread
+
 # =============local library imports  ==========================
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 from pychron.image.video import Video
@@ -34,18 +34,18 @@ from pychron.paths import paths
 
 
 class VideoManager(Manager):
-    """
-    """
+    """ """
+
     video = Instance(Video, ())
     image = Instance(Image, ())
 
     process = Button
-#    pause = Button
+    #    pause = Button
 
     record = Event
-    record_label = Property(depends_on='is_recording')
+    record_label = Property(depends_on="is_recording")
     is_recording = Bool
-#    record_button = Button('Record')
+    #    record_button = Button('Record')
 
     threshold = Float(99, auto_set=False, enter_set=True)
     angle = Float(0, auto_set=False, enter_set=True)
@@ -57,6 +57,7 @@ class VideoManager(Manager):
     canvas = Instance(VideoCanvas)
     width = Int(640)
     height = Int(480)
+
     def open_video(self, **kw):
         self.video.open(**kw)
 
@@ -67,16 +68,17 @@ class VideoManager(Manager):
         self.video.shutdown()
 
     def _get_record_label(self):
-        return 'Record' if not self.is_recording else 'Stop'
+        return "Record" if not self.is_recording else "Stop"
 
-#    def _pause_fired(self):
-#        self.canvas.pause = not self.canvas.pause
+    #    def _pause_fired(self):
+    #        self.canvas.pause = not self.canvas.pause
 
     def _record_fired(self):
         def _rec_():
             self.start_recording()
-#            time.sleep(4)
-#            self.stop_recording()
+
+        #            time.sleep(4)
+        #            self.stop_recording()
         if self.is_recording:
             self.is_recording = False
             self.stop_recording()
@@ -85,162 +87,156 @@ class VideoManager(Manager):
             t = Thread(target=_rec_)
             t.start()
 
-
     def start_recording(self, path=None, use_dialog=False):
-        '''
-        '''
-        self.info('start video recording ')
+        """ """
+        self.info("start video recording ")
         if path is None:
             if use_dialog:
                 path = self.save_file_dialog()
             else:
-                path, _ = unique_path(paths.video_dir,
-                                      'vm_recording',
-                                      extension='avi')
+                path, _ = unique_path(paths.video_dir, "vm_recording", extension="avi")
 
-        self.info('saving recording to path {}'.format(path))
+        self.info("saving recording to path {}".format(path))
 
         # self.start()
         self.video.start_recording(path)
-#        time.sleep(5)
-#        self.stop_recording()
+
+    #        time.sleep(5)
+    #        self.stop_recording()
 
     def stop_recording(self):
-        '''
-        '''
-        self.info('stop video recording')
-#        self.stop()
+        """ """
+        self.info("stop video recording")
+        #        self.stop()
         self.video.stop_recording()
         self.is_recording = False
 
     def start(self, user=None):
-        '''
-     
-        '''
-        self.info('opening video connection')
+        """ """
+        self.info("opening video connection")
         self.video.open(user=user)
 
     def stop(self, user=None):
-        '''
-   
-        '''
-        self.info('closing video connection')
+        """ """
+        self.info("closing video connection")
         self.video.close(user=user)
 
-#    def snapshot(self, identifier=None, path=None, root=None, crop=None):
-#        if path is None:
-#            if root is None:
-#                root = snapshot_dir
-#
-#            base = 'frame'
-#            if identifier is not None:
-#                base = 'frame_{}_'.format(identifier)
-#
-#
-#            path, _cnt = unique_path(root=root, base=base, filetype='jpg')
-#
-#        self.info('saving snapshot {}'.format(path))
-#        pychron = self.video.record_frame(path, crop=crop)
-#        return pychron, os.path.basename(path)
+    #    def snapshot(self, identifier=None, path=None, root=None, crop=None):
+    #        if path is None:
+    #            if root is None:
+    #                root = snapshot_dir
+    #
+    #            base = 'frame'
+    #            if identifier is not None:
+    #                base = 'frame_{}_'.format(identifier)
+    #
+    #
+    #            path, _cnt = unique_path(root=root, base=base, filetype='jpg')
+    #
+    #        self.info('saving snapshot {}'.format(path))
+    #        pychron = self.video.record_frame(path, crop=crop)
+    #        return pychron, os.path.basename(path)
 
-#        if kind is not None:
-#            self.image = globals()['{}Image'.format(kind.capitalize())]()
-#            self.image.source_frame = pychron
+    #        if kind is not None:
+    #            self.image = globals()['{}Image'.format(kind.capitalize())]()
+    #            self.image.source_frame = pychron
 
-#    def find_polygons(self, path = None, crop = None):
-#        if path:
-#            frame = load_image(path, swap = True)
-#            if crop:
-#                icrop(*((frame,) + crop))
-#
-#            self.image = CalibrationImage()
-#            self.image.source_frame = frame
-#
-#        return self.image.find_polygons(thresh = self.threshold,
-#                           erode_value = self.erosion,
-#                           dilate_value = self.dilation)
+    #    def find_polygons(self, path = None, crop = None):
+    #        if path:
+    #            frame = load_image(path, swap = True)
+    #            if crop:
+    #                icrop(*((frame,) + crop))
+    #
+    #            self.image = CalibrationImage()
+    #            self.image.source_frame = frame
+    #
+    #        return self.image.find_polygons(thresh = self.threshold,
+    #                           erode_value = self.erosion,
+    #                           dilate_value = self.dilation)
 
-#    def find_lines(self, path = None, crop = None):
-#        if path:
-#            frame = load_image(path, swap = True)
-#            if crop:
-#                icrop(*((frame,) + crop))
-#
-#            self.image = CalibrationImage()
-#            self.image.source_frame = frame
-#
-#        return self.image.process(thresh = self.threshold,
-#                           erode_value = self.erosion,
-#                           dilate_value = self.dilation)
-#
-#    def process_image(self, path = None, angle = None, thresh = None, crop = None, **kw):
-#        '''
-#        '''
-#        if path is None:
-#            if self.image is None:
-#                frame = self.video.get_frame(clone = True)
-#            else:
-#                frame = self.image.source_frame
-#        else:
-#            frame = load_image(path)
-#
-#        if thresh is None:
-#            thresh = self.threshold
-#        if angle is None:
-#            angle = self.angle
-#
-#        if self.image is None:
-#            self.image = TargetImage()
-#
-#        if crop:
-#            icrop(*((frame,) + crop))
-#
-#        self.image.source_frame = frame
-#
-#        #self.load_image(path = path)
-#        target = self.image.process(thresh, angle, **kw)
-#
-#        return target
+    #    def find_lines(self, path = None, crop = None):
+    #        if path:
+    #            frame = load_image(path, swap = True)
+    #            if crop:
+    #                icrop(*((frame,) + crop))
+    #
+    #            self.image = CalibrationImage()
+    #            self.image.source_frame = frame
+    #
+    #        return self.image.process(thresh = self.threshold,
+    #                           erode_value = self.erosion,
+    #                           dilate_value = self.dilation)
+    #
+    #    def process_image(self, path = None, angle = None, thresh = None, crop = None, **kw):
+    #        '''
+    #        '''
+    #        if path is None:
+    #            if self.image is None:
+    #                frame = self.video.get_frame(clone = True)
+    #            else:
+    #                frame = self.image.source_frame
+    #        else:
+    #            frame = load_image(path)
+    #
+    #        if thresh is None:
+    #            thresh = self.threshold
+    #        if angle is None:
+    #            angle = self.angle
+    #
+    #        if self.image is None:
+    #            self.image = TargetImage()
+    #
+    #        if crop:
+    #            icrop(*((frame,) + crop))
+    #
+    #        self.image.source_frame = frame
+    #
+    #        #self.load_image(path = path)
+    #        target = self.image.process(thresh, angle, **kw)
+    #
+    #        return target
 
     def _canvas_default(self):
         return VideoCanvas(video=self.video)
 
-#    def _video_default(self):
-#        '''
-#        '''
-#
-#        return Video()
+    #    def _video_default(self):
+    #        '''
+    #        '''
+    #
+    #        return Video()
 
-#    def _image_default(self):
-#        '''
-#        '''
-#        return TargetImage()
+    #    def _image_default(self):
+    #        '''
+    #        '''
+    #        return TargetImage()
 
-
-
-#    @on_trait_change('threshold,erosion,angle,dilation,x,y')
-#    def update(self):
-#        '''
-#        '''
-#        self.find_lines()
-# #        p = '/Users/fargo2/Desktop/laser_tray_75.tiff'
-#        av = self.process_image(#crop = (self.x, self.y, 250, 250),
-#                               # erode = self.erosion,
-#                                #dilate = self.dilation
-#                                )
-
+    #    @on_trait_change('threshold,erosion,angle,dilation,x,y')
+    #    def update(self):
+    #        '''
+    #        '''
+    #        self.find_lines()
+    # #        p = '/Users/fargo2/Desktop/laser_tray_75.tiff'
+    #        av = self.process_image(#crop = (self.x, self.y, 250, 250),
+    #                               # erode = self.erosion,
+    #                                #dilate = self.dilation
+    #                                )
 
     def traits_view(self):
         v = View(
-                 HGroup(
-                        self._button_factory('record', 'record_label', align='right'),
-#                        Item('pause')
-                        ),
-                 Item('canvas', show_label=False,
-                      resizable=False,
-                      editor=VideoComponentEditor(width=self.width,
-                                                    height=self.height)))
+            HGroup(
+                self._button_factory("record", "record_label", align="right"),
+                #                        Item('pause')
+            ),
+            Item(
+                "canvas",
+                show_label=False,
+                resizable=False,
+                editor=VideoComponentEditor(width=self.width, height=self.height),
+            ),
+        )
         return v
+
+
 #
 #    def image_view(self):
 #        '''
@@ -277,10 +273,10 @@ class VideoManager(Manager):
 #                         title=self.title
 #                         )
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
 
-    logging_setup('video')
+    logging_setup("video")
     vm = VideoManager()
 
     # p = '/Users/fargo2/Desktop/laser_tray_50.tiff'
@@ -288,7 +284,6 @@ if __name__ == '__main__':
     # vm.process_image(p, crop=(0, 0, 250, 250))
     vm.start()
     vm.configure_traits()  # view='image_view')
-
 
 
 # ================== EOF ========================

@@ -22,7 +22,7 @@ from pychron.loggable import Loggable
 
 
 class DVCAble(Loggable):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance("pychron.dvc.dvc.DVC")
 
     def get_database(self):
         if self.dvc:
@@ -32,16 +32,16 @@ class DVCAble(Loggable):
 class DVCIrradiationable(DVCAble):
 
     level = Str
-    levels = Property(depends_on='irradiation, updated')
+    levels = Property(depends_on="irradiation, updated")
     irradiation = Str
-    irradiations = Property(depends_on='updated')
+    irradiations = Property(depends_on="updated")
 
     updated = Event
     _suppress_auto_select_irradiation = False
 
     def verify_database_connection(self, inform=True):
         # return self.dvc.initialize(inform)
-        self.debug('Verify database connection')
+        self.debug("Verify database connection")
 
         ret = self.dvc.initialize(inform)
         if ret:
@@ -82,4 +82,6 @@ class DVCIrradiationable(DVCAble):
                         if not self.level:
                             self.level = levels[0]
         return levels
+
+
 # ============= EOF =============================================

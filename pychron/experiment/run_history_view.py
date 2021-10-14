@@ -16,8 +16,18 @@
 from __future__ import absolute_import
 
 from traits.api import HasTraits, List, Instance, Str, Int, on_trait_change, Any
-from traitsui.api import View, UItem, TabularEditor, Item, EnumEditor, HGroup, VGroup, InstanceEditor, Controller, \
-    VSplit
+from traitsui.api import (
+    View,
+    UItem,
+    TabularEditor,
+    Item,
+    EnumEditor,
+    HGroup,
+    VGroup,
+    InstanceEditor,
+    Controller,
+    VSplit,
+)
 
 from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.pychron_constants import NULL_STR
@@ -25,12 +35,14 @@ from pychron.pychron_constants import NULL_STR
 
 class RunHistoryModel(HasTraits):
     analyses = List
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance("pychron.dvc.dvc.DVC")
 
     mass_spectrometer = Str
     mass_spectrometers = List
     n = Int(10, auto_set=False, enter_set=True)
-    analysis_view = Instance('pychron.processing.analyses.view.analysis_view.AnalysisView')
+    analysis_view = Instance(
+        "pychron.processing.analyses.view.analysis_view.AnalysisView"
+    )
     selected = Any
     _cache = None
 
@@ -43,7 +55,7 @@ class RunHistoryModel(HasTraits):
         self.dvc.close_session()
         self._cache = None
 
-    @on_trait_change('mass_spectrometer, n')
+    @on_trait_change("mass_spectrometer, n")
     def _load_analyses(self):
         ms = self.mass_spectrometer
         if ms == NULL_STR:
@@ -72,24 +84,39 @@ class RunHistoryView(Controller):
         self.model.destroy()
 
     def traits_view(self):
-        agrp = HGroup(UItem('mass_spectrometer', editor=EnumEditor(name='mass_spectrometers')),
-                      Item('n', label='Limit'))
+        agrp = HGroup(
+            UItem("mass_spectrometer", editor=EnumEditor(name="mass_spectrometers")),
+            Item("n", label="Limit"),
+        )
 
         adapter = AnalysisAdapter()
         adapter.run_history_columns()
 
-        v = View(VSplit(VGroup(agrp,
-                               UItem('analyses', editor=TabularEditor(dclicked='selected',
-                                                                      editable=False,
-                                                                      adapter=adapter))),
-                        UItem('analysis_view',
-                              visible_when='analysis_view',
-                              style='custom', editor=InstanceEditor())),
-                 title='Run History',
-                 width=700,
-                 height=700,
-                 resizable=True,
-                 buttons=['OK'])
+        v = View(
+            VSplit(
+                VGroup(
+                    agrp,
+                    UItem(
+                        "analyses",
+                        editor=TabularEditor(
+                            dclicked="selected", editable=False, adapter=adapter
+                        ),
+                    ),
+                ),
+                UItem(
+                    "analysis_view",
+                    visible_when="analysis_view",
+                    style="custom",
+                    editor=InstanceEditor(),
+                ),
+            ),
+            title="Run History",
+            width=700,
+            height=700,
+            resizable=True,
+            buttons=["OK"],
+        )
         return v
+
 
 # ============= EOF =============================================

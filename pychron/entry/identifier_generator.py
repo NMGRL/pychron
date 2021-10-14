@@ -55,7 +55,7 @@ def group_runs(li, tolerance=1000):
 
 class IdentifierGenerator(Loggable, PersistenceMixin):
     db = Any
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance("pychron.dvc.dvc.DVC")
     # default_j = Float(1e-4)
     # default_j_err = Float(1e-7)
 
@@ -73,8 +73,8 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
     mon_start = CInt(5000)
     unk_start = CInt(1000)
 
-    pattributes = ('level_offset', 'offset')
-    persistence_name = 'identifier_generator.p'
+    pattributes = ("level_offset", "offset")
+    persistence_name = "identifier_generator.p"
     mon_maxs = List
     unk_maxs = List
 
@@ -97,17 +97,35 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
                 self.unk_maxs = list(map(str, get_maxs(unklns)))
             self.unk_start = self.unk_maxs[0] if self.unk_maxs else 0
 
-        start_grp = VGroup(Item('mon_start', label='Starting Monitor Identifier',
-                                editor=ComboboxEditor(name='mon_maxs'), defined_when='not use_consecutive_identifiers'),
-                           Item('unk_start', label='Starting Unknown Identifier',
-                                editor=ComboboxEditor(name='unk_maxs'), defined_when='not use_consecutive_identifiers'),
-                           Item('unk_start', label='Starting Identifier',
-                                editor=ComboboxEditor(name='unk_maxs'),
-                                defined_when='use_consecutive_identifiers'))
+        start_grp = VGroup(
+            Item(
+                "mon_start",
+                label="Starting Monitor Identifier",
+                editor=ComboboxEditor(name="mon_maxs"),
+                defined_when="not use_consecutive_identifiers",
+            ),
+            Item(
+                "unk_start",
+                label="Starting Unknown Identifier",
+                editor=ComboboxEditor(name="unk_maxs"),
+                defined_when="not use_consecutive_identifiers",
+            ),
+            Item(
+                "unk_start",
+                label="Starting Identifier",
+                editor=ComboboxEditor(name="unk_maxs"),
+                defined_when="use_consecutive_identifiers",
+            ),
+        )
 
-        info = self.edit_traits(view=okcancel_view(Item('offset'), Item('level_offset'),
-                                                   start_grp,
-                                                   title='Configure Identifier Generation'))
+        info = self.edit_traits(
+            view=okcancel_view(
+                Item("offset"),
+                Item("level_offset"),
+                start_grp,
+                title="Configure Identifier Generation",
+            )
+        )
         if info.result:
             self.dump()
             return True
@@ -123,15 +141,15 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         self._generate_labnumbers(*args)
 
         if not self.is_preview:
-            self.dvc.meta_commit('Generate identifiers')
+            self.dvc.meta_commit("Generate identifiers")
 
     def _generate_labnumbers(self, offset=None, level_offset=None):
         """
-            get last labnumber
+        get last labnumber
 
-            start numbering at 1+offset
+        start numbering at 1+offset
 
-            add level_offset between each level
+        add level_offset between each level
         """
         if offset is None:
             offset = self.offset
@@ -156,7 +174,9 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
                         self.dvc.set_identifier(irradiation, le, po, ident)
 
                     # self._add_default_flux(pos)
-                    msg = 'setting irrad. pos. {} {}-{} labnumber={}'.format(irradiation, le, po, ident)
+                    msg = "setting irrad. pos. {} {}-{} labnumber={}".format(
+                        irradiation, le, po, ident
+                    )
                     self.info(msg)
                     if prog:
                         prog.change_message(msg)
@@ -170,8 +190,10 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
 
     def _get_irradiated_position(self, dbpos):
         if dbpos.level.name == self.level:
-            ipos = next((po for po in self.irradiation_positions
-                         if po.hole == dbpos.position), None)
+            ipos = next(
+                (po for po in self.irradiation_positions if po.hole == dbpos.position),
+                None,
+            )
             return ipos
 
     # def _add_default_flux(self, pos):
@@ -195,16 +217,26 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
 
     def _position_generator(self, offset, level_offset):
         """
-            return 2 generators
-            monitors, unknowns
+        return 2 generators
+        monitors, unknowns
         """
         db = self.db
         irradiation = self.irradiation
         irrad = db.get_irradiation(irradiation)
         levels = irrad.levels
         overwrite = self.overwrite
-        n = sum([len([p for p in li.positions
-                      if overwrite or (p.sample and not p.identifier)]) for li in levels])
+        n = sum(
+            [
+                len(
+                    [
+                        p
+                        for p in li.positions
+                        if overwrite or (p.sample and not p.identifier)
+                    ]
+                )
+                for li in levels
+            ]
+        )
         args = (irradiation, levels, overwrite, offset, level_offset)
 
         if self.use_consecutive_identifiers:
@@ -254,18 +286,23 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
         if ipos:
             return ipos.sample
 
-    def _identifier_generator(self, start, is_monitor, irrad, levels, overwrite, offset, level_offset):
+    def _identifier_generator(
+        self, start, is_monitor, irrad, levels, overwrite, offset, level_offset
+    ):
         offset = max(1, offset)
         level_offset = max(1, level_offset)
         sln = start + offset
 
         if self.use_consecutive_identifiers:
+
             def monkey(*args, **kw):
                 def _monkey(*args, **kw):
                     return True
+
                 return _monkey
 
         else:
+
             def monkey(invert=False):
                 def _monkey(x):
                     r = None
@@ -306,9 +343,11 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
                 if not test(position):
                     continue
                 if position.identifier and not overwrite:
-                    le = '{}{}-{}'.format(irrad, position.level.name, position.position)
+                    le = "{}{}-{}".format(irrad, position.level.name, position.position)
                     ln = position.identifier
-                    self.warning('skipping position {} already has labnumber {}'.format(le, ln))
+                    self.warning(
+                        "skipping position {} already has labnumber {}".format(le, ln)
+                    )
                     continue
 
                 yield position, i + sln
@@ -317,113 +356,115 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
             sln = sln + i + level_offset - 1
 
 
-if __name__ == '__main__':
-    lns = [22923126,
-           22923083,
-           22923066,
-           22923051,
-           22923045,
-           22923034,
-           22923016,
-           22923001,
-           22922001,
-           22921003,
-           22921002,
-           22921001,
-           22191022,
-           22191021,
-           22191020,
-           22191019,
-           22191018,
-           22191017,
-           22191016,
-           22191015,
-           22191014,
-           22191013,
-           22191012,
-           22191011,
-           22191010,
-           22191009,
-           22191008,
-           22191007,
-           22191006,
-           22191005,
-           22191004,
-           623410,
-           623409,
-           623408,
-           623407,
-           623406,
-           623404,
-           623403,
-           623402,
-           623401,
-           92596,
-           92595,
-           69156,
-           63249,
-           63248,
-           63247,
-           63246,
-           63245,
-           63244,
-           63243,
-           63242,
-           63241,
-           63240,
-           63239,
-           63238,
-           63237,
-           63236,
-           63235,
-           63234,
-           63233,
-           63232,
-           63231,
-           63230,
-           63229,
-           63228,
-           63227,
-           63225,
-           63224,
-           63223,
-           63222,
-           63221,
-           63220,
-           63219,
-           63218,
-           63217,
-           63216,
-           63215,
-           63214,
-           63213,
-           63212,
-           63211,
-           63210,
-           63209,
-           63208,
-           63207,
-           63206,
-           63205,
-           63204,
-           63203,
-           63202,
-           63201,
-           63200,
-           63199,
-           63198,
-           63197,
-           63196,
-           63195,
-           63194,
-           63193,
-           63192,
-           63191,
-           63190,
-           63189,
-           63188,
-           63187,
-           63186]
+if __name__ == "__main__":
+    lns = [
+        22923126,
+        22923083,
+        22923066,
+        22923051,
+        22923045,
+        22923034,
+        22923016,
+        22923001,
+        22922001,
+        22921003,
+        22921002,
+        22921001,
+        22191022,
+        22191021,
+        22191020,
+        22191019,
+        22191018,
+        22191017,
+        22191016,
+        22191015,
+        22191014,
+        22191013,
+        22191012,
+        22191011,
+        22191010,
+        22191009,
+        22191008,
+        22191007,
+        22191006,
+        22191005,
+        22191004,
+        623410,
+        623409,
+        623408,
+        623407,
+        623406,
+        623404,
+        623403,
+        623402,
+        623401,
+        92596,
+        92595,
+        69156,
+        63249,
+        63248,
+        63247,
+        63246,
+        63245,
+        63244,
+        63243,
+        63242,
+        63241,
+        63240,
+        63239,
+        63238,
+        63237,
+        63236,
+        63235,
+        63234,
+        63233,
+        63232,
+        63231,
+        63230,
+        63229,
+        63228,
+        63227,
+        63225,
+        63224,
+        63223,
+        63222,
+        63221,
+        63220,
+        63219,
+        63218,
+        63217,
+        63216,
+        63215,
+        63214,
+        63213,
+        63212,
+        63211,
+        63210,
+        63209,
+        63208,
+        63207,
+        63206,
+        63205,
+        63204,
+        63203,
+        63202,
+        63201,
+        63200,
+        63199,
+        63198,
+        63197,
+        63196,
+        63195,
+        63194,
+        63193,
+        63192,
+        63191,
+        63190,
+        63189,
+        63188,
+        63187,
+        63186,
+    ]
     print(get_maxs(lns))
 
 # ============= EOF =============================================

@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Int, Enum, Property
 from traitsui.api import View, Item, HGroup, VGroup
+
 # ============= standard library imports ========================
 
 
@@ -72,21 +73,21 @@ def filled_grid(n):
 class FigureLayout(HasTraits):
     rows = Int(1)
     columns = Int(2)
-    fixed = Enum('column', 'row', 'filled_grid')
+    fixed = Enum("column", "row", "filled_grid")
     fixed_width = Int(0)
 
-    row_enabled = Property(depends_on='fixed')
-    column_enabled = Property(depends_on='fixed')
+    row_enabled = Property(depends_on="fixed")
+    column_enabled = Property(depends_on="fixed")
 
     # def __init__(self, *args, **kw):
     #     super(FigureLayout, self).__init__(*args, **kw)
     #     self._fixed_changed()
 
     def _get_row_enabled(self):
-        return self.fixed == 'row'
+        return self.fixed == "row"
 
     def _get_column_enabled(self):
-        return self.fixed == 'column'
+        return self.fixed == "column"
 
     def __call__(self, n):
         return self.calculate(n)
@@ -97,17 +98,17 @@ class FigureLayout(HasTraits):
 
         if n <= 1:
             r = c = 1
-        elif self.fixed == 'filled_grid':
+        elif self.fixed == "filled_grid":
             r, c = filled_grid(n)
         else:
             while n > r * c:
-                if self.fixed == 'column':
+                if self.fixed == "column":
                     r += 1
                 else:
                     c += 1
 
             while n < r or n < c:
-                if self.fixed == 'column':
+                if self.fixed == "column":
                     c -= 1
                     if c < 1:
                         c = 1
@@ -124,21 +125,26 @@ class FigureLayout(HasTraits):
         self.items.append(LayoutItem(kind=kind))
 
     def traits_view(self):
-        rc_grp = VGroup(Item('fixed_width', tooltip='You must remake the figure if you edit this value. The figure '
-                                                    'will not automatically resize'),
-                        HGroup(Item('rows',
-                                    enabled_when='row_enabled'),
-                               Item('columns',
-                                    enabled_when='column_enabled'
-                                    ),
-                               Item('fixed'),
-                               enabled_when='not fixed_width'),
-                        label='Layout', show_border=True)
+        rc_grp = VGroup(
+            Item(
+                "fixed_width",
+                tooltip="You must remake the figure if you edit this value. The figure "
+                "will not automatically resize",
+            ),
+            HGroup(
+                Item("rows", enabled_when="row_enabled"),
+                Item("columns", enabled_when="column_enabled"),
+                Item("fixed"),
+                enabled_when="not fixed_width",
+            ),
+            label="Layout",
+            show_border=True,
+        )
         v = View(rc_grp, resizable=True)
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # f = FigureLayout(rows=4, columns=1, fixed='square')
     # f.calculate(5)
     # for i in range(20):

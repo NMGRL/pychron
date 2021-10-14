@@ -29,29 +29,29 @@ from pychron.hardware.core.abstract_device import AbstractDevice
 
 
 class FiberLight(AbstractDevice):
-    """
-    """
-    intensity = Property(Range(0, 100.0, mode='slider'), depends_on='_intensity')
+    """ """
+
+    intensity = Property(Range(0, 100.0, mode="slider"), depends_on="_intensity")
     _intensity = Float
     power = Event
-    power_label = Property(depends_on='state')
+    power_label = Property(depends_on="state")
     state = Bool
     # auto_onoff = Bool(False)
-    name = 'fiber_light'
+    name = "fiber_light"
     timeout = Int(3000)
     timer = None
 
     def load_additional_args(self, config):
-        """
-        """
-        klass = self.config_get(config, 'General', 'control_module')
+        """ """
+        klass = self.config_get(config, "General", "control_module")
 
         self._cdevice = None
         if klass is not None:
-            package = 'pychron.hardware.arduino.arduino_fiber_light_module'
+            package = "pychron.hardware.arduino.arduino_fiber_light_module"
             factory = self.get_factory(package, klass)
-            self._cdevice = factory(name=klass,
-                                    configuration_dir_name=self.configuration_dir_name)
+            self._cdevice = factory(
+                name=klass, configuration_dir_name=self.configuration_dir_name
+            )
 
             return True
 
@@ -76,11 +76,10 @@ class FiberLight(AbstractDevice):
         if self._cdevice is not None:
             v = self._cdevice.read_intensity()
             if v is not None:
-                self._intensity = float('{:0.3n}'.format(v))
+                self._intensity = float("{:0.3n}".format(v))
 
     def power_on(self):
-        """
-        """
+        """ """
         self.state = True
         if self._cdevice is not None:
             self._cdevice.power_on()
@@ -89,7 +88,7 @@ class FiberLight(AbstractDevice):
                     self.timer.cancel()
 
                 def autooff():
-                    self.debug('auto power off timeout={}'.format(self.timeout))
+                    self.debug("auto power off timeout={}".format(self.timeout))
                     self.power_off()
 
                 self.timer = Timer(self.timeout, autooff)
@@ -97,8 +96,7 @@ class FiberLight(AbstractDevice):
                 self.timer.start()
 
     def power_off(self, *args):
-        """
-        """
+        """ """
         self.state = False
         if self._cdevice is not None:
             self._cdevice.power_off()
@@ -107,38 +105,46 @@ class FiberLight(AbstractDevice):
         return int(self._intensity)
 
     def _set_intensity(self, v):
-        """
-        """
+        """ """
         self._intensity = int(v)
         if self._cdevice is not None:
             self._write_intensity(self._intensity)
 
             # self._cdevice.add_consumable(self._intensity)
 
-    @on_trait_change('power')
+    @on_trait_change("power")
     def power_fired(self):
-        """
-        """
+        """ """
         if self.state:
             self.power_off()
         else:
             self.power_on()
 
     def _get_power_label(self):
-        """
-        """
-        return 'OFF' if self.state else 'ON'
+        """ """
+        return "OFF" if self.state else "ON"
 
     def get_control_group(self):
-        return Group(HGroup(Item('power', editor=ButtonEditor(label_value='power_label'),
-                                 show_label=False),
-                            Item('intensity', format_str='%0.2f',
-                                 show_label=False,
-                                 enabled_when='state')),
-                     # Item('auto_onoff'),
-                     Item('timeout'))
+        return Group(
+            HGroup(
+                Item(
+                    "power",
+                    editor=ButtonEditor(label_value="power_label"),
+                    show_label=False,
+                ),
+                Item(
+                    "intensity",
+                    format_str="%0.2f",
+                    show_label=False,
+                    enabled_when="state",
+                ),
+            ),
+            # Item('auto_onoff'),
+            Item("timeout"),
+        )
 
     def traits_view(self):
         return View(self.get_control_group())
+
 
 # ============= EOF ====================================

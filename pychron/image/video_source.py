@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import HasTraits, File, Str, Int
+
 # ============= standard library imports ========================
 import zmq
 from cStringIO import StringIO
@@ -30,15 +31,15 @@ from pychron.image.cv_wrapper import resize
 
 
 def parse_url(url):
-    if url.startswith('file://'):
+    if url.startswith("file://"):
         r = url[7:]
         islocal = True
     else:
         islocal = False
         # strip off 'lan://'
         url = url[6:]
-        if ':' in url:
-            host, port = url.split(':')
+        if ":" in url:
+            host, port = url.split(":")
         else:
             host = url
             port = 8080
@@ -47,10 +48,11 @@ def parse_url(url):
 
     return islocal, r
 
+
 class VideoSource(HasTraits):
 
     image_path = File
-    host = Str('localhost')
+    host = Str("localhost")
     port = Int(1080)
     quality = Int
 
@@ -63,9 +65,9 @@ class VideoSource(HasTraits):
         self.poller = zmq.Poller()
         self.reset_connection()
 
-# ===============================================================================
-# capture protocol
-# ===============================================================================
+    # ===============================================================================
+    # capture protocol
+    # ===============================================================================
     def release(self):
         pass
 
@@ -89,16 +91,14 @@ class VideoSource(HasTraits):
         context = zmq.Context()
         self._sock = context.socket(zmq.REQ)
 
-        self._sock.connect('tcp://{}:{}'.format(self.host,
-                                                  self.port))
-#         self._sock.setsockopt(zmq.SUBSCRIBE, '')
+        self._sock.connect("tcp://{}:{}".format(self.host, self.port))
+        #         self._sock.setsockopt(zmq.SUBSCRIBE, '')
         self.poller.register(self._sock, zmq.POLLIN)
         if clear_connection_count:
             self._no_connection_cnt = 0
         self._connected = True
         self._reset = True
         return self._sock
-
 
     def get_image_data(self, size=None):
         if self._sock is None:
@@ -116,7 +116,7 @@ class VideoSource(HasTraits):
             self._cached_image = Image.new_frame(self.image_path, swap_rb=True)
 
     def _quality_changed(self):
-        resp = self._get_reply('QUALITY{}'.format(self.quality))
+        resp = self._get_reply("QUALITY{}".format(self.quality))
 
     def _get_reply(self, request, timeout=100):
         if not self._connected:
@@ -142,32 +142,33 @@ class VideoSource(HasTraits):
             self._no_connection_cnt += 1
             if self._no_connection_cnt > 5:
                 self._connected = False
-                p = os.path.join(os.path.dirname(__file__), 'no_connection.jpg')
-                self._cached_image = Image.new_frame(p,
-                                                swap_rb=True)
+                p = os.path.join(os.path.dirname(__file__), "no_connection.jpg")
+                self._cached_image = Image.new_frame(p, swap_rb=True)
             else:
                 self.reset_connection(clear_connection_count=False)
                 return self._get_reply(request, timeout)
 
     def _get_video_data(self):
         if self._connected:
-            resp = self._get_reply('IMAGE')
+            resp = self._get_reply("IMAGE")
             if resp:
                 buf = StringIO(resp)
                 buf.seek(0)
                 img = PILImage.open(buf)
-                img = img.convert('RGB')
+                img = img.convert("RGB")
                 self._cached_image = array(img)
 
         return self._cached_image
 
     def _get_image_data(self):
-        '''
-            return ndarray
-        '''
+        """
+        return ndarray
+        """
         img = self._cached_image
         if img is None:
             self._image_path_changed()
 
         return self._cached_image
+
+
 # ============= EOF =============================================

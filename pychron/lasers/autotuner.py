@@ -17,25 +17,28 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from pychron.lasers.scanner import Scanner
+
 # ============= standard library imports ========================
 import time
+
 # ============= local library imports  ==========================
+
 
 class AutoTuner(Scanner):
     def _control(self, ydict):
         self.start_control_hook()
-        start_delay = ydict['start_delay']
-        end_delay = ydict['end_delay']
-        setpoints = ydict['setpoints']
+        start_delay = ydict["start_delay"]
+        end_delay = ydict["end_delay"]
+        setpoints = ydict["setpoints"]
 
-        self.set_static_value('Setpoint', 0)
+        self.set_static_value("Setpoint", 0)
         time.sleep(start_delay)
 
         tc = self.manager.temperature_controller
 
         # set autotune parameters
-        aggr = ydict['autotune_aggressiveness']
-        setpoint = ydict['autotune_setpoint']
+        aggr = ydict["autotune_aggressiveness"]
+        setpoint = ydict["autotune_setpoint"]
 
         if tc:
             tc.autotune_setpoint = setpoint
@@ -44,15 +47,15 @@ class AutoTuner(Scanner):
         for t, d in setpoints:
             if self._scanning:
                 self.setpoint = t
-                self.info('setting setpoint to {} for {}s'.format(t, d))
+                self.info("setting setpoint to {} for {}s".format(t, d))
 
                 if self.manager:
                     self.manager.set_laser_temperature(t)
 
-                self.set_static_value('Setpoint', t, plotid=0)
+                self.set_static_value("Setpoint", t, plotid=0)
                 st = time.time()
                 if tc:
-                    self.info('starting autotune')
+                    self.info("starting autotune")
                     tc.enable_tru_tune = False
                     tc.start_autotune()
 
@@ -60,7 +63,11 @@ class AutoTuner(Scanner):
                     time.sleep(1)
 
                 if not tc.autotune_finished():
-                    self.info('autotuning not completed after {}s. Waiting until finished'.format(d))
+                    self.info(
+                        "autotuning not completed after {}s. Waiting until finished".format(
+                            d
+                        )
+                    )
 
                     while not self.autotune_finished():
                         time.sleep(1)
@@ -70,7 +77,7 @@ class AutoTuner(Scanner):
 
         if self._scanning:
             self.setpoint = 0
-            self.set_static_value('Setpoint', 0)
+            self.set_static_value("Setpoint", 0)
             if self.manager:
                 self.manager.set_laser_temperature(0)
 
@@ -81,8 +88,10 @@ class AutoTuner(Scanner):
 
     def end_control_hook(self, ok):
         pass
+
     def start_control_hook(self):
         pass
+
 
 #    def _execute(self):
 #        self.info('start autotune scan')
@@ -105,9 +114,9 @@ class AutoTuner(Scanner):
 #        g.new_series()
 #        do_later(g.edit_traits)
 
-        # start a query thread
+# start a query thread
 #        self.autotune_timer = Timer(sp * 1000, self._autotune_update, g)
-        # self.autotune_timer.Start()
+# self.autotune_timer.Start()
 
 #    def _autotune_update(self, graph):
 #        if self.simulation:

@@ -1,4 +1,4 @@
-__author__ = 'ross'
+__author__ = "ross"
 """
     This package is used for running automated tests periodically/after program updates.
     use setupfiles/startup_test.yaml for configuration.

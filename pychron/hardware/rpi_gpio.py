@@ -23,6 +23,7 @@ from pychron.hardware.actuators.gp_actuator import GPActuator
 try:
     import RPi.GPIO as GPIO
 except ImportError:
+
     class DummyGPIO:
         OUT = 0
         IN = 0
@@ -46,7 +47,6 @@ except ImportError:
         def close(self):
             pass
 
-
     GPIO = DummyGPIO()
 
 # ============= standard library imports ========================
@@ -67,10 +67,9 @@ class RPiGPIO(GPActuator):
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
 
-        outpins = self.config_get(config, 'Pins', 'output')
-        inpins = self.config_get(config, 'Pins', 'input')
-        for pins, mode in ((outpins, GPIO.OUT),
-                           (inpins, GPIO.IN)):
+        outpins = self.config_get(config, "Pins", "output")
+        inpins = self.config_get(config, "Pins", "input")
+        for pins, mode in ((outpins, GPIO.OUT), (inpins, GPIO.IN)):
             for pin in pins:
                 GPIO.setup(pin, mode)
 
@@ -84,5 +83,6 @@ class RPiGPIO(GPActuator):
 
     def get_channel_state(self, channel, **kw):
         return GPIO.input(get_switch_address(channel))
+
 
 # ============= EOF =============================================

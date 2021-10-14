@@ -18,31 +18,33 @@
 from __future__ import absolute_import
 import os
 import shlex
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.paths import paths
 
 KEYWORDS = dict(
-              Message='info',
-              Gosub='gosub',
-              Delay='sleep',
-              Open='open',
-              Close='close',
-              BeginInterval='begin_interval',
-              CompleteInterval='complete_interval',
-              IF='if',
-              END='end'
-
-              )
+    Message="info",
+    Gosub="gosub",
+    Delay="sleep",
+    Open="open",
+    Close="close",
+    BeginInterval="begin_interval",
+    CompleteInterval="complete_interval",
+    IF="if",
+    END="end",
+)
 
 nindent = 1
-INDENT = '    '
+INDENT = "    "
+
+
 def as_pyscript_cmd(l, f):
     global nindent
 
     l = l.strip()
     if l.startswith("'"):
-        r = '#{}'.format(l)
+        r = "#{}".format(l)
         py_cmd = _build_py_cmd_line(r, nindent)
     else:
         try:
@@ -61,43 +63,46 @@ def as_pyscript_cmd(l, f):
                 for a in args:
                     try:
                         a = float(a)
-                        fmt = '{}'
+                        fmt = "{}"
                     except ValueError:
                         fmt = '"{}"'
 
-                    if nk == 'if':
-                        fmt = '{}'
+                    if nk == "if":
+                        fmt = "{}"
                     nargs.append(fmt.format(a))
 
-                sargs = ','.join(nargs)
-                if nk == 'if':
-                    r = '{} {}:'.format(nk, sargs)
+                sargs = ",".join(nargs)
+                if nk == "if":
+                    r = "{} {}:".format(nk, sargs)
                 else:
-                    r = '{}({})'.format(nk, sargs)
+                    r = "{}({})".format(nk, sargs)
             except KeyError:
-                r = '#{}'.format(l)
+                r = "#{}".format(l)
         else:
-            r = ''
-        if nk == 'end':
-            r = '#end\n'
+            r = ""
+        if nk == "end":
+            r = "#end\n"
             nindent = 1
 
         py_cmd = _build_py_cmd_line(r, nindent)
 
-        if nk == 'if':
+        if nk == "if":
             nindent = 2
 
-
     return py_cmd
+
+
 #    return nk, r
 
+
 def _build_py_cmd_line(r, nindent):
-    py_cmd = '{}{}\n'.format(INDENT * nindent, r)
+    py_cmd = "{}{}\n".format(INDENT * nindent, r)
     return py_cmd
 
+
 def to_pyscript(base, root, out, name):
-#    print root, out
-    n = root[len(base) + 1:]
+    #    print root, out
+    n = root[len(base) + 1 :]
     if n:
         out = os.path.join(out, n)
 
@@ -105,45 +110,47 @@ def to_pyscript(base, root, out, name):
         os.mkdir(out)
 
     ip = os.path.join(root, name)
-#    name = name.replace(' ', '_')
-    op = os.path.join(out, '{}.py'.format(name))
+    #    name = name.replace(' ', '_')
+    op = os.path.join(out, "{}.py".format(name))
 
-    with open(ip, 'r') as in_f:
-        with open(op, 'w') as out_f:
+    with open(ip, "r") as in_f:
+        with open(op, "w") as out_f:
 
-            out_f.write('''
+            out_f.write(
+                """
 def main():
-''')
+"""
+            )
 
-            for _, l in enumerate(in_f.read().split('\r')):
+            for _, l in enumerate(in_f.read().split("\r")):
                 cmd = as_pyscript_cmd(l, in_f)
-#                if k == 'end':
-#                    nindent = 1
-#                    cmd = '#end\n'
+                #                if k == 'end':
+                #                    nindent = 1
+                #                    cmd = '#end\n'
 
-#                py_cmd = '{}{}\n'.format(INDENT * nindent, cmd)
+                #                py_cmd = '{}{}\n'.format(INDENT * nindent, cmd)
                 out_f.write(cmd)
+
+
 #                if k == 'if':
 #                    nindent = 2
 
 
-if __name__ == '__main__':
-    rt = '/Users/ross/Sandbox/runscripts'
-    out = '/Users/ross/Sandbox/runscripts/out'
-    out = os.path.join(paths.scripts_dir, 'ms_runscripts')
-    name = 'Quick Air x1'
+if __name__ == "__main__":
+    rt = "/Users/ross/Sandbox/runscripts"
+    out = "/Users/ross/Sandbox/runscripts/out"
+    out = os.path.join(paths.scripts_dir, "ms_runscripts")
+    name = "Quick Air x1"
 
     for root, dirs, files in os.walk(rt):
-#        print root, files
+        #        print root, files
         for f in files:
-            if f.startswith('.'):
+            if f.startswith("."):
                 continue
-            if f.endswith('.py'):
+            if f.endswith(".py"):
                 continue
-#            print os.path.join(root, f)
+            #            print os.path.join(root, f)
             to_pyscript(rt, root, out, f)
-
-
 
 
 # ============= EOF =============================================

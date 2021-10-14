@@ -19,9 +19,19 @@ from __future__ import absolute_import
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, Str, Bool, Button
-from traitsui.api import UItem, Item, HGroup, VGroup, spring, Controller, DirectoryEditor
+from traitsui.api import (
+    UItem,
+    Item,
+    HGroup,
+    VGroup,
+    spring,
+    Controller,
+    DirectoryEditor,
+)
+
 # ============= standard library imports ========================
 import os
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.paths import paths
@@ -32,7 +42,7 @@ class SaveModel(HasTraits):
     name = Str
     path = Str
     use_manual_path = Bool(False)
-    extension = '.pdf'
+    extension = ".pdf"
 
     @property
     def default_root(self):
@@ -57,14 +67,14 @@ class SaveModel(HasTraits):
 
 
 class SaveController(Controller):
-    use_finder_button = Button('Use Finder')
+    use_finder_button = Button("Use Finder")
 
     def closed(self, info, is_ok):
         if is_ok:
             self.model.dump()
 
     def _use_finder_button_fired(self):
-        dlg = FileDialog(action='save as')
+        dlg = FileDialog(action="save as")
         if dlg.open() == OK:
             self.model.use_manual_path = True
             self.model.path = add_extension(dlg.path, self.model.extension)
@@ -81,16 +91,18 @@ class SaveController(Controller):
         self.model.path = path
 
     def _get_root_item(self):
-        return Item('root_directory',
-                    label='Directory',
-                    editor=DirectoryEditor())
+        return Item("root_directory", label="Directory", editor=DirectoryEditor())
 
-    def _get_path_group(self, label='File', **kw):
-        path_group = VGroup(self._get_root_item(),
-                            Item('name'),
-                            HGroup(UItem('controller.use_finder_button'), spring),
-                            Item('path', style='readonly'),
-                            label=label, **kw)
+    def _get_path_group(self, label="File", **kw):
+        path_group = VGroup(
+            self._get_root_item(),
+            Item("name"),
+            HGroup(UItem("controller.use_finder_button"), spring),
+            Item("path", style="readonly"),
+            label=label,
+            **kw
+        )
         return path_group
+
 
 # ============= EOF =============================================

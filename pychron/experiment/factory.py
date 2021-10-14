@@ -39,13 +39,13 @@ class ExperimentFactory(DVCAble):
 
     generate_queue_button = Button
     edit_queue_config_button = Button
-    loading_manager = Instance('pychron.loading.loading_manager.LoadingManager')
+    loading_manager = Instance("pychron.loading.loading_manager.LoadingManager")
 
-    add_button = Button('Add')
-    clear_button = Button('Clear')
-    save_button = Button('Save')
-    edit_mode_button = Button('Edit')
-    edit_enabled = DelegatesTo('run_factory')
+    add_button = Button("Add")
+    clear_button = Button("Clear")
+    save_button = Button("Save")
+    edit_mode_button = Button("Edit")
+    edit_enabled = DelegatesTo("run_factory")
 
     auto_increment_id = Bool(False)
     auto_increment_id_count = PositiveInteger(1)
@@ -53,13 +53,15 @@ class ExperimentFactory(DVCAble):
 
     queue = Instance(ExperimentQueue, ())
 
-    ok_add = Property(depends_on='mass_spectrometer, extract_device, labnumber, username, load_name')
+    ok_add = Property(
+        depends_on="mass_spectrometer, extract_device, labnumber, username, load_name"
+    )
 
-    labnumber = DelegatesTo('run_factory')
-    load_name = DelegatesTo('queue_factory')
-    username = DelegatesTo('queue_factory')
-    mass_spectrometer = DelegatesTo('queue_factory')
-    extract_device = DelegatesTo('queue_factory')
+    labnumber = DelegatesTo("run_factory")
+    load_name = DelegatesTo("queue_factory")
+    username = DelegatesTo("queue_factory")
+    mass_spectrometer = DelegatesTo("queue_factory")
+    extract_device = DelegatesTo("queue_factory")
 
     selected_positions = List
     default_mass_spectrometer = Str
@@ -84,26 +86,34 @@ class ExperimentFactory(DVCAble):
         self.queue_factory.deactivate()
 
     def undo(self):
-        self.info('undo')
+        self.info("undo")
         self.undoer.undo()
 
     def sync_queue_meta(self):
-        self.debug('syncing queue meta')
+        self.debug("syncing queue meta")
         eq = self.queue
         qf = self.queue_factory
-        for a in ('username',
-                  'mass_spectrometer', 'extract_device',
-                  'email', 'use_email', 'use_group_email',
-                  'load_name', 'tray',
-                  'delay_after_blank', 'delay_between_analyses', 'delay_after_air',
-                  'default_lighting',
-                  'queue_conditionals_name',
-                  'note'):
+        for a in (
+            "username",
+            "mass_spectrometer",
+            "extract_device",
+            "email",
+            "use_email",
+            "use_group_email",
+            "load_name",
+            "tray",
+            "delay_after_blank",
+            "delay_between_analyses",
+            "delay_after_air",
+            "default_lighting",
+            "queue_conditionals_name",
+            "note",
+        ):
 
             if not self._sync_queue_to_factory(eq, qf, a):
                 self._sync_factory_to_queue(eq, qf, a)
 
-        self.debug('run factory set mass spec {}'.format(self.mass_spectrometer))
+        self.debug("run factory set mass spec {}".format(self.mass_spectrometer))
         self.run_factory.set_mass_spectrometer(self.mass_spectrometer)
 
     def set_selected_runs(self, runs):
@@ -121,7 +131,7 @@ class ExperimentFactory(DVCAble):
             v = v.strip()
 
         if v:
-            self.debug('sync queue to factory {}>>{}'.format(a, v))
+            self.debug("sync queue to factory {}>>{}".format(a, v))
             setattr(qf, a, v)
             return True
 
@@ -130,7 +140,7 @@ class ExperimentFactory(DVCAble):
         if isinstance(v, str):
             v = v.strip()
             if v:
-                self.debug('sync factory to queue {}>>{}'.format(a, v))
+                self.debug("sync factory to queue {}>>{}".format(a, v))
                 setattr(eq, a, v)
 
     def _add_run(self, *args, **kw):
@@ -139,29 +149,34 @@ class ExperimentFactory(DVCAble):
             missing = []
             if not bool(self.username):
                 missing.append('"Username"')
-            if self.mass_spectrometer in ('', 'Spectrometer', LINE_STR):
+            if self.mass_spectrometer in ("", "Spectrometer", LINE_STR):
                 missing.append('"Spectrometer"')
-            if self.extract_device not in ('', 'Extact Device', LINE_STR):
+            if self.extract_device not in ("", "Extact Device", LINE_STR):
                 if not bool(self.queue_factory.load_name):
                     missing.append('"Load"')
-            if self.run_factory.run_block in ('RunBlock', LINE_STR):
+            if self.run_factory.run_block in ("RunBlock", LINE_STR):
                 if not self.labnumber:
                     missing.append('"Identifier"')
 
-            f = 'a value'
+            f = "a value"
             if len(missing) > 1:
-                f = 'values'
-            self.warning_dialog('Please set {} for {}'.format(f, ','.join(missing)))
+                f = "values"
+            self.warning_dialog("Please set {} for {}".format(f, ",".join(missing)))
             return
 
         positions = [str(pi.positions[0]) for pi in self.selected_positions]
-        self.debug('add run positions= {}'.format(positions))
+        self.debug("add run positions= {}".format(positions))
 
         q = self.queue
         rf = self.run_factory
-        new_runs, freq = rf.new_runs(q, positions=positions,
-                                     auto_increment_position=self.auto_increment_position,
-                                     auto_increment_id=self.auto_increment_id_count if self.auto_increment_id else 0)
+        new_runs, freq = rf.new_runs(
+            q,
+            positions=positions,
+            auto_increment_position=self.auto_increment_position,
+            auto_increment_id=self.auto_increment_id_count
+            if self.auto_increment_id
+            else 0,
+        )
 
         if new_runs:
             aruns = q.automated_runs
@@ -172,7 +187,7 @@ class ExperimentFactory(DVCAble):
 
             runs = q.add_runs(new_runs, freq, is_run_block=rf.run_block_enabled)
 
-            self.undoer.push('add runs', runs)
+            self.undoer.push("add runs", runs)
 
             idx += len(runs)
 
@@ -189,19 +204,19 @@ class ExperimentFactory(DVCAble):
         self.run_factory.set_end_after(new)
 
     def _update_queue(self, name, new):
-        self.debug('update queue {}={}'.format(name, new))
+        self.debug("update queue {}={}".format(name, new))
         if self.queue:
             self.queue.trait_set(**{name: new})
             self.queue.changed = True
-            if name == 'repository_identifier':
+            if name == "repository_identifier":
                 for a in self.queue.automated_runs:
                     a.repository_identifier = new
 
-        if name == 'mass_spectrometer':
+        if name == "mass_spectrometer":
             self.mass_spectrometer = new
             self.run_factory.set_mass_spectrometer(new)
 
-        elif name == 'extract_device':
+        elif name == "extract_device":
             self._set_extract_device(new)
 
         self._auto_save()
@@ -210,7 +225,9 @@ class ExperimentFactory(DVCAble):
         self.queue.auto_save()
 
     def _set_extract_device(self, ed):
-        self.debug('setting extract dev="{}" mass spec="{}"'.format(ed, self.mass_spectrometer))
+        self.debug(
+            'setting extract dev="{}" mass spec="{}"'.format(ed, self.mass_spectrometer)
+        )
         self.run_factory = self._run_factory_factory()
 
         self.run_factory.remote_patterns = patterns = self._get_patterns(ed)
@@ -228,11 +245,15 @@ class ExperimentFactory(DVCAble):
     def _get_patterns(self, ed):
         ps = []
         service_name = convert_extract_device(ed)
-        man = self.application.get_service(ILaserManager, 'name=="{}"'.format(service_name))
+        man = self.application.get_service(
+            ILaserManager, 'name=="{}"'.format(service_name)
+        )
         if man:
             ps = man.get_pattern_names()
         else:
-            self.debug('No remote patterns. {} ({}) not available'.format(ed, service_name))
+            self.debug(
+                "No remote patterns. {} ({}) not available".format(ed, service_name)
+            )
 
         return ps
 
@@ -254,17 +275,16 @@ class ExperimentFactory(DVCAble):
                     self.queue.changed = True
 
             else:
-                self.warning_dialog('Please set a load')
+                self.warning_dialog("Please set a load")
         else:
-            self.warning_dialog('Loading Plugin required to auto generate queues')
+            self.warning_dialog("Loading Plugin required to auto generate queues")
 
     def _clear_button_fired(self):
         self.queue.clear_frequency_runs()
 
     def _add_button_fired(self):
-        """
-        """
-        self.debug('add run fired')
+        """ """
+        self.debug("add run fired")
         self._add_run()
 
     def _edit_mode_button_fired(self):
@@ -286,7 +306,9 @@ class ExperimentFactory(DVCAble):
         self.queue_factory.application = self.application
 
     def _default_mass_spectrometer_changed(self):
-        self.debug('default mass spec changed "{}"'.format(self.default_mass_spectrometer))
+        self.debug(
+            'default mass spec changed "{}"'.format(self.default_mass_spectrometer)
+        )
         self.run_factory.set_mass_spectrometer(self.default_mass_spectrometer)
         self.queue_factory.mass_spectrometer = self.default_mass_spectrometer
         self.mass_spectrometer = self.default_mass_spectrometer
@@ -295,16 +317,15 @@ class ExperimentFactory(DVCAble):
     # property get/set
     # ===============================================================================
     def _get_ok_add(self):
-        """
-        """
+        """ """
         uflag = bool(self.username)
-        msflag = self.mass_spectrometer not in ('', 'Spectrometer', LINE_STR)
+        msflag = self.mass_spectrometer not in ("", "Spectrometer", LINE_STR)
         lflag = True
-        if self.extract_device not in ('', 'Extract Device', LINE_STR):
+        if self.extract_device not in ("", "Extract Device", LINE_STR):
             lflag = bool(self.queue_factory.load_name)
 
         ret = uflag and msflag and lflag
-        if self.run_factory.run_block in ('RunBlock', LINE_STR):
+        if self.run_factory.run_block in ("RunBlock", LINE_STR):
             ret = ret and self.labnumber
         return ret
 
@@ -319,14 +340,16 @@ class ExperimentFactory(DVCAble):
         else:
             klass = AutomatedRunFactory
 
-        rf = klass(dvc=self.dvc,
-                   application=self.application,
-                   extract_device=self.extract_device,
-                   mass_spectrometer=self.mass_spectrometer)
+        rf = klass(
+            dvc=self.dvc,
+            application=self.application,
+            extract_device=self.extract_device,
+            mass_spectrometer=self.mass_spectrometer,
+        )
 
-        rf.on_trait_change(self._update_end_after, 'end_after')
-        rf.on_trait_change(self._auto_save, 'auto_save_needed')
-        rf.on_trait_change(self._apply_stepheat, 'apply_stepheat')
+        rf.on_trait_change(self._update_end_after, "end_after")
+        rf.on_trait_change(self._auto_save, "auto_save_needed")
+        rf.on_trait_change(self._apply_stepheat, "apply_stepheat")
 
         return rf
 
@@ -342,11 +365,15 @@ class ExperimentFactory(DVCAble):
     def _queue_factory_default(self):
         eq = ExperimentQueueFactory(dvc=self.dvc, application=self.application)
 
-        eq.on_trait_change(self._update_queue, '''mass_spectrometer,
+        eq.on_trait_change(
+            self._update_queue,
+            """mass_spectrometer,
 extract_device, delay_+, tray, username, load_name, note,
 email, use_email, use_group_email,
-queue_conditionals_name, repository_identifier''')
+queue_conditionals_name, repository_identifier""",
+        )
         return eq
+
 
 # ============= EOF =============================================
 # def _gen_func(self, pd, ans):

@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import os
+
 # ============= standard library imports ========================
 import time
 
@@ -27,6 +28,7 @@ from traitsui.api import View, Item, UItem, ButtonEditor, Controller
 
 from pychron.core.helpers.timer import Timer
 from pychron.core.ui.thread import Thread
+
 # ============= local library imports  ==========================
 from pychron.envisage.view_util import open_view
 from pychron.graph.stream_graph import StreamStackedGraph
@@ -37,12 +39,16 @@ from pychron.managers.data_managers.csv_data_manager import CSVDataManager
 
 class ScannerController(Controller):
     execute_button = Event
-    execute_label = Property(depends_on='model._scanning')
+    execute_label = Property(depends_on="model._scanning")
 
     def traits_view(self):
-        v = View(UItem('controller.execute_button',
-                       editor=ButtonEditor(label_value='controller.execute_label')),
-                 Item('setpoint', enabled_when='_scanning'))
+        v = View(
+            UItem(
+                "controller.execute_button",
+                editor=ButtonEditor(label_value="controller.execute_label"),
+            ),
+            Item("setpoint", enabled_when="_scanning"),
+        )
         return v
 
     def controller_execute_button_changed(self, info):
@@ -52,25 +58,25 @@ class ScannerController(Controller):
             open_view(graph)
 
     def _get_execute_label(self):
-        return 'Stop' if self.model._scanning else 'Start'
+        return "Stop" if self.model._scanning else "Start"
 
 
 class Scanner(Loggable):
     """
-        Scanner is a base class for displaying a scan of device data
+    Scanner is a base class for displaying a scan of device data
 
-        ScanableDevices has this ability built in but more complicated scans are
-        best done here. ScanableDevice scan is best used from continuous long term recording
-        of a single or multiple values
+    ScanableDevices has this ability built in but more complicated scans are
+    best done here. ScanableDevice scan is best used from continuous long term recording
+    of a single or multiple values
     """
 
     _graph = Instance(StreamStackedGraph)
     manager = Instance(ILaserManager)
 
     data_manager = Instance(CSVDataManager, ())
-    '''
+    """
         list of callables. should return a signal value for graphing
-    '''
+    """
     functions = List
     static_values = List
 
@@ -91,7 +97,7 @@ class Scanner(Loggable):
 
     def set_static_value(self, name_or_idx, value, plotid=None):
         """
-            if the plotid is not None add a horizontal guide at value
+        if the plotid is not None add a horizontal guide at value
         """
         if isinstance(name_or_idx, str):
             name_or_idx = next((i for i, (e, a) in enumerate(self.static_values)), None)
@@ -121,17 +127,16 @@ class Scanner(Loggable):
         self.functions.append((function, name))
 
     def make_graph(self):
-        g = StreamStackedGraph(window_x=50,
-                               window_y=100)
+        g = StreamStackedGraph(window_x=50, window_y=100)
 
         for i, (_, name) in enumerate(self.functions):
-            kw = dict(ytitle=name, )
+            kw = dict(
+                ytitle=name,
+            )
             if i == 0:
-                kw['xtitle'] = 'Time'
+                kw["xtitle"] = "Time"
 
-            g.new_plot(
-                data_limit=3000,
-                **kw)
+            g.new_plot(data_limit=3000, **kw)
             g.new_series(plotid=i)
         self._graph = g
         return g
@@ -140,7 +145,7 @@ class Scanner(Loggable):
         self._timer.Stop()
         self._scanning = False
         self.stop_event = True
-        self.info('scan stopped')
+        self.info("scan stopped")
         if self.manager:
             self._stop_hook()
             self.manager.disable_device()
@@ -153,14 +158,16 @@ class Scanner(Loggable):
         if self._scanning:
             self.stop()
         else:
-            self.data_manager.new_frame(directory=self._directory,
-                                        base_frame_name=self._base_frame_name)
+            self.data_manager.new_frame(
+                directory=self._directory, base_frame_name=self._base_frame_name
+            )
             # write metadata if available
             self._write_metadata()
 
             # make header row
-            header = ['t'] + self._make_func_names() + \
-                     [n for n, _ in self.static_values]
+            header = (
+                ["t"] + self._make_func_names() + [n for n, _ in self.static_values]
+            )
             self.data_manager.write_to_frame(header)
 
             self._scanning = True
@@ -181,22 +188,20 @@ class Scanner(Loggable):
         if yd is None:
             sp = 1000
         else:
-            sp = yd['period']
+            sp = yd["period"]
 
         # starts automatically
-        self.debug('scan starting')
+        self.debug("scan starting")
         self._timer = Timer(sp, self._scan)
 
-        self.info('scan started')
+        self.info("scan started")
 
         #            yd = self._read_control_path()
         if yd is not None:
             # start a control thread
-            self._control_thread = Thread(target=self._control,
-                                          args=(yd,)
-                                          )
+            self._control_thread = Thread(target=self._control, args=(yd,))
             self._control_thread.start()
-            self.info('control started')
+            self.info("control started")
             #        if self.manager:
             #            if self.manager.enable_device():
             #
@@ -226,11 +231,11 @@ class Scanner(Loggable):
         #            if self.manager.temperature_controller:
         #                self.manager.temperature_controller.enable_tru_tune = True
 
-        start_delay = ydict['start_delay']
-        end_delay = ydict['end_delay']
-        setpoints = ydict['setpoints']
+        start_delay = ydict["start_delay"]
+        end_delay = ydict["end_delay"]
+        setpoints = ydict["setpoints"]
         print(setpoints)
-        self.set_static_value('Setpoint', 0)
+        self.set_static_value("Setpoint", 0)
         time.sleep(start_delay)
         for args in setpoints:
             t = args[0]
@@ -238,12 +243,12 @@ class Scanner(Loggable):
                 self.setpoint = t
                 self._set_power_hook(t)
 
-                self.set_static_value('Setpoint', t, plotid=0)
+                self.set_static_value("Setpoint", t, plotid=0)
                 self._maintain_setpoint(t, *args[1:])
 
         if self._scanning:
             self.setpoint = 0
-            self.set_static_value('Setpoint', 0)
+            self.set_static_value("Setpoint", 0)
             self._set_power_hook(0)
             # if self.manager:
             # self.manager.set_laser_temperature(0)
@@ -258,7 +263,7 @@ class Scanner(Loggable):
             self.manager.set_laser_temperature(t)
 
     def _maintain_setpoint(self, t, d, *args):
-        self.info('setting setpoint to {} for {}s'.format(t, d))
+        self.info("setting setpoint to {} for {}s".format(t, d))
         st = time.time()
         while time.time() - st < d and self._scanning:
             time.sleep(1)
@@ -284,7 +289,7 @@ class Scanner(Loggable):
         x = time.time() - self._starttime
         for i, (func, _) in enumerate(functions):
             try:
-                if hasattr(func, 'next'):
+                if hasattr(func, "next"):
                     func = func.next
 
                 v = float(func())
@@ -293,12 +298,12 @@ class Scanner(Loggable):
                 # do_after no longer necessary with Qt
                 record(v, plotid=i, x=x, do_after=None)
             except Exception as e:
-                print('exception', e)
+                print("exception", e)
 
         sv = []
         for _, v in self.static_values:
             if v is None:
-                v = ''
+                v = ""
             sv.append(v)
 
         data = [x] + data + sv
@@ -310,7 +315,9 @@ class Scanner(Loggable):
             return yaml.load(open(self.control_path).read())
         elif not self._warned:
 
-            self.warning_dialog('No Scanner Control file found at {}'.format(self.control_path))
+            self.warning_dialog(
+                "No Scanner Control file found at {}".format(self.control_path)
+            )
             self._warned = True
 
 
@@ -323,6 +330,7 @@ class Scanner(Loggable):
 #
 #        return g
 
+
 class PIDScanner(Scanner):
     pid = Tuple
     dead_band = Float(0)
@@ -331,14 +339,16 @@ class PIDScanner(Scanner):
         if self.control_path:
             yd = self._read_control_path()
             if yd:
-                self.pid = tuple(yd['pid'])
-                pid = ['pid= {}, {}, {}'.format(*self.pid)]
+                self.pid = tuple(yd["pid"])
+                pid = ["pid= {}, {}, {}".format(*self.pid)]
                 self.data_manager.write_to_frame(pid)
 
-                if 'dead_band' in yd:
-                    self.dead_band = yd['dead_band']
+                if "dead_band" in yd:
+                    self.dead_band = yd["dead_band"]
 
-                self.data_manager.write_to_frame(['dead_band={}'.format(self.dead_band)])
+                self.data_manager.write_to_frame(
+                    ["dead_band={}".format(self.dead_band)]
+                )
 
     def start_control_hook(self, ydict):
         if self.manager is not None:
@@ -355,13 +365,13 @@ class PIDScanner(Scanner):
                 tc.set_dead_band(self.dead_band)
 
             else:
-                self.debug('no manager temperature control available')
+                self.debug("no manager temperature control available")
 
         else:
-            self.debug('no manager available')
+            self.debug("no manager available")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import random
 
     def random_generator(scale=1):
@@ -369,7 +379,7 @@ if __name__ == '__main__':
             return random.random() * scale
 
         f = random_gen
-        f.__name__ = 'RScale{}'.format(scale)
+        f.__name__ = "RScale{}".format(scale)
         return random_gen
 
     def generator():
@@ -386,9 +396,9 @@ if __name__ == '__main__':
     #    s.new_function(random_generator(), ytitle='random', directory='random_scan')
     #    s.new_function(random_generator(scale=10), ytitle='random', directory='random_scan')
     gg = gen()
-    s.new_function(gg, name='random1', directory='random_scan')
-    s.new_function(gg, name='random2', directory='random_scan')
-    s.new_static_value('Setpoint', 10, plotid=1)
+    s.new_function(gg, name="random1", directory="random_scan")
+    s.new_function(gg, name="random2", directory="random_scan")
+    s.new_static_value("Setpoint", 10, plotid=1)
     sc = ScannerController(model=s)
     sc.configure_traits()
 # ============= EOF =============================================

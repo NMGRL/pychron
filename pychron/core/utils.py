@@ -25,8 +25,9 @@ def autodoc_helper(name, bases):
 
 
 def get_display_size():
-    size = namedtuple('Size', 'width height')
+    size = namedtuple("Size", "width height")
     from pyface.qt.QtGui import QApplication
+
     desktop = QApplication.desktop()
     rect = desktop.screenGeometry()
     w, h = rect.width(), rect.height()
@@ -59,12 +60,13 @@ def get_display_size():
 # adapted from https://codereview.stackexchange.com/questions/182733/base-26-letters-and-base-10-using-recursion
 
 BASE = 26
-A_UPPERCASE = ord('A')
+A_UPPERCASE = ord("A")
 
 
 def alphas(n):
-    a = ''
+    a = ""
     if n is not None:
+
         def decompose(n):
             while n >= 0:
                 nn, rem = divmod(n, BASE)
@@ -72,7 +74,7 @@ def alphas(n):
                 yield rem
 
         digits = reversed([chr(A_UPPERCASE + part) for part in decompose(n)])
-        a = ''.join(digits)
+        a = "".join(digits)
 
     return a
 
@@ -83,8 +85,11 @@ def alpha_to_int(l):
 
     # if l is digits just cast to int
     if all(li in string.digits for li in l):
-        return int(l)-1
+        return int(l) - 1
 
-    s = sum((ord(li) - A_UPPERCASE + 1) * BASE ** i for i, li in enumerate(reversed(l.upper())))
+    s = sum(
+        (ord(li) - A_UPPERCASE + 1) * BASE ** i
+        for i, li in enumerate(reversed(l.upper()))
+    )
 
-    return s-1
+    return s - 1

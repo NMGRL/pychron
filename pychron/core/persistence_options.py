@@ -21,6 +21,7 @@ from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 
 try:
+
     class BasePersistenceOptions(HasTraits, PersistenceMixin):
         def __init__(self, *args, **kw):
             self.set_persistence_path()
@@ -32,8 +33,11 @@ try:
 
             self.persistence_path = os.path.join(paths.appdata_dir, name)
 
+
 except TypeError:
     # documentation auto doc hack
     class BasePersistenceOptions:
         pass
+
+
 # ============= EOF =============================================

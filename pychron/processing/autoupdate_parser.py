@@ -40,6 +40,7 @@ from pychron.pychron_constants import IRRADIATION_KEYS, DECAY_KEYS
 #            n -= 1
 #        return '{:0.{}f}'.format(f, n)
 
+
 class Analysis(HasTraits):
     _params = Dict
 
@@ -68,8 +69,8 @@ class AutoupdateParser(Loggable):
     samples = Dict
 
     def parse(self, p):
-        with open(p, 'U') as f:
-            reader = csv.reader(f, delimiter='\t')
+        with open(p, "U") as f:
+            reader = csv.reader(f, delimiter="\t")
 
             header = next(reader)
 
@@ -80,7 +81,7 @@ class AutoupdateParser(Loggable):
             for line in reader:
                 get_value = lambda x, **kw: self._get_value(x, header, line, **kw)
 
-                sample = get_value('Sample', cast=str)
+                sample = get_value("Sample", cast=str)
 
                 if not sample:
                     break
@@ -92,77 +93,77 @@ class AutoupdateParser(Loggable):
                     sample_group += 1
 
                 params = dict()
-                params['sample'] = sample
-                params['material'] = get_value('Material', cast=str)
-                params['sample_group'] = sample_group
-                params['power'] = get_value('Pwr_Achieved')
+                params["sample"] = sample
+                params["material"] = get_value("Material", cast=str)
+                params["sample_group"] = sample_group
+                params["power"] = get_value("Pwr_Achieved")
 
-                params['run_id'] = get_value('Run_ID', cast=str)
-                params['age'] = get_value('Age')
-                params['age_err'] = get_value('Age_Er')
+                params["run_id"] = get_value("Run_ID", cast=str)
+                params["age"] = get_value("Age")
+                params["age_err"] = get_value("Age_Er")
 
-                params['j'] = get_value('J')
-                params['j_err'] = get_value('J_Er')
-                params['lambda_b_v'] = get_value('Lambda_40K_Beta')
-                params['lambda_b_e'] = get_value('Lambda_40K_epsilon')
-                params['ar39decayfactor'] = get_value('39_Decay')
-                params['ar37decayfactor'] = get_value('37_Decay')
+                params["j"] = get_value("J")
+                params["j_err"] = get_value("J_Er")
+                params["lambda_b_v"] = get_value("Lambda_40K_Beta")
+                params["lambda_b_e"] = get_value("Lambda_40K_epsilon")
+                params["ar39decayfactor"] = get_value("39_Decay")
+                params["ar37decayfactor"] = get_value("37_Decay")
 
-                params['ca3937'] = get_value('Ca_39_Over_37')
-                params['ca3837'] = get_value('Ca_38_Over_37')
-                params['ca3637'] = get_value('Ca_36_Over_37')
+                params["ca3937"] = get_value("Ca_39_Over_37")
+                params["ca3837"] = get_value("Ca_38_Over_37")
+                params["ca3637"] = get_value("Ca_36_Over_37")
 
-                params['k3839'] = get_value('K_38_Over_39')
-                params['k3739'] = get_value('K_37_Over_39')
-                params['k4039'] = get_value('K_40_Over_39')
-                params['cl3638'] = get_value('P36Cl_Over_38Cl')
+                params["k3839"] = get_value("K_38_Over_39")
+                params["k3739"] = get_value("K_37_Over_39")
+                params["k4039"] = get_value("K_40_Over_39")
+                params["cl3638"] = get_value("P36Cl_Over_38Cl")
 
                 try:
-                    params['k_ca'] = 1 / float(get_value('Ca_Over_K'))
+                    params["k_ca"] = 1 / float(get_value("Ca_Over_K"))
                 except ZeroDivisionError:
-                    params['k_ca'] = 0
+                    params["k_ca"] = 0
 
-                params['k_ca_err'] = get_value('Ca_Over_K_Er')
+                params["k_ca_err"] = get_value("Ca_Over_K_Er")
 
-                params['radiogenic_yield'] = get_value('PctAr40Rad')
-                params['radiogenic_yield_err'] = get_value('PctAr40Rad_Er')
-                params['rad40'] = get_value('Ar40Rad_Over_Ar39')
-                params['rad40_err'] = get_value('Ar40Rad_Over_Ar39_Er')
+                params["radiogenic_yield"] = get_value("PctAr40Rad")
+                params["radiogenic_yield_err"] = get_value("PctAr40Rad_Er")
+                params["rad40"] = get_value("Ar40Rad_Over_Ar39")
+                params["rad40_err"] = get_value("Ar40Rad_Over_Ar39_Er")
 
-                params['Isoch_39_40'] = get_value('Isoch_39_Over_40')
-                params['Isoch_36_40'] = get_value('Isoch_36_Over_40')
-                params['Isoch_39_40err'] = get_value('Pct_i39_Over_40_Er')
-                params['Isoch_36_40err'] = get_value('Pct_i36_Over_40_Er')
+                params["Isoch_39_40"] = get_value("Isoch_39_Over_40")
+                params["Isoch_36_40"] = get_value("Isoch_36_Over_40")
+                params["Isoch_39_40err"] = get_value("Pct_i39_Over_40_Er")
+                params["Isoch_36_40err"] = get_value("Pct_i36_Over_40_Er")
 
-                fts = get_value('Fit_Type', cast=str)
+                fts = get_value("Fit_Type", cast=str)
 
                 # mass spec measures 36 before 37
-                for i, si in enumerate(('Ar40', 'Ar39', 'Ar38', 'Ar36', 'Ar37')):
-                    params[si] = get_value('{}_'.format(si))
-                    bs_only = '{}_BslnCorOnly'.format(si)
-                    bs_only_err = '{}_Er_BslnCorOnly'.format(si)
-                    params['{}Er'.format(si)] = get_value('{}_Er'.format(si))
+                for i, si in enumerate(("Ar40", "Ar39", "Ar38", "Ar36", "Ar37")):
+                    params[si] = get_value("{}_".format(si))
+                    bs_only = "{}_BslnCorOnly".format(si)
+                    bs_only_err = "{}_Er_BslnCorOnly".format(si)
+                    params["{}Er".format(si)] = get_value("{}_Er".format(si))
 
                     params[bs_only] = get_value(bs_only)
                     params[bs_only_err] = get_value(bs_only_err)
 
-                    btag = '{}_Bkgd'.format(si)
-                    betag = '{}_BkgdEr'.format(si)
+                    btag = "{}_Bkgd".format(si)
+                    betag = "{}_BkgdEr".format(si)
                     params[btag] = get_value(btag)
                     params[betag] = get_value(betag)
 
-                    ctag = '{}_DecayCor'.format(si)
-                    cetag = '{}_DecayCor'.format(si)
+                    ctag = "{}_DecayCor".format(si)
+                    cetag = "{}_DecayCor".format(si)
                     params[ctag] = get_value(ctag)
                     params[cetag] = get_value(cetag)
-                    params['{}_fit'.format(si)] = fts[i]
+                    params["{}_fit".format(si)] = fts[i]
 
                 for attr, key in DECAY_KEYS:
                     params[attr] = float(get_value(key))
 
                 for attr, key in IRRADIATION_KEYS:
                     params[attr] = get_value(key)
-                    params['{}_err'.format(attr)] = get_value('{}_Er'.format(key))
+                    params["{}_err".format(attr)] = get_value("{}_Er".format(key))
 
                 sampleObj.add_analysis(Analysis(params))
 
@@ -182,9 +183,9 @@ class AutoupdateParser(Loggable):
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     p = AutoupdateParser()
-    pa = '/Users/ross/Antarctica/MinnaBluff/data/gm-06.csv'
+    pa = "/Users/ross/Antarctica/MinnaBluff/data/gm-06.csv"
     samples = p.parse(pa)
 
     print(samples[0].get_isotopic_recombination_age())

@@ -40,7 +40,7 @@ class PositionError(BaseException):
         self._x = x
 
     def __str__(self):
-        return 'PositionError. x={}, y={}'.format(self._x, self._y)
+        return "PositionError. x={}, y={}".format(self._x, self._y)
 
 
 class TargetPositionError(BaseException):
@@ -53,8 +53,11 @@ class TargetPositionError(BaseException):
     def __str__(self):
         dx = self._x - self._tx
         dy = self._y - self._ty
-        return 'PositionError. Dev:{},{} Current: x={}, y={}, Target: x={}, y={}'.format(dx, dy, self._x, self._y,
-                                                                                         self._tx, self._ty)
+        return (
+            "PositionError. Dev:{},{} Current: x={}, y={}, Target: x={}, y={}".format(
+                dx, dy, self._x, self._y, self._tx, self._ty
+            )
+        )
 
 
 class ZeroDisplacementException(BaseException):
@@ -62,8 +65,8 @@ class ZeroDisplacementException(BaseException):
 
 
 class MotionController(CoreDevice):
-    """
-    """
+    """ """
+
     axes = Dict
     xaxes_max = Property
     xaxes_min = Property
@@ -76,15 +79,12 @@ class MotionController(CoreDevice):
     timer = None
     parent = Any
 
-    x = Property(trait=Float(enter_set=True, auto_set=False),
-                 depends_on='_x_position')
+    x = Property(trait=Float(enter_set=True, auto_set=False), depends_on="_x_position")
     _x_position = Float
-    y = Property(trait=Float(enter_set=True, auto_set=False),
-                 depends_on='_y_position')
+    y = Property(trait=Float(enter_set=True, auto_set=False), depends_on="_y_position")
     _y_position = Float
 
-    z = Property(trait=Float(enter_set=True, auto_set=False),
-                 depends_on='_z_position')
+    z = Property(trait=Float(enter_set=True, auto_set=False), depends_on="_z_position")
 
     _z_position = Float
     z_progress = Float
@@ -101,20 +101,19 @@ class MotionController(CoreDevice):
         for a in self.axes:
             pos = self.get_current_position(a)
             if pos is not None:
-                setattr(self, '_{}_position'.format(a), pos)
+                setattr(self, "_{}_position".format(a), pos)
                 #            time.sleep(0.075)
         self.z_progress = self._z_position
 
         #        def _update():
         #        print self._x_position, self._y_position
-        self.parent.canvas.set_stage_position(self._x_position,
-                                              self._y_position)
+        self.parent.canvas.set_stage_position(self._x_position, self._y_position)
 
     @caller
     def timer_factory(self, func=None, period=150):
         """
 
-            reuse timer if func is the same
+        reuse timer if func is the same
 
         """
 
@@ -127,14 +126,14 @@ class MotionController(CoreDevice):
             timer = Timer(period, func, delay=250)
         elif timer.func == func:
             if timer.isActive():
-                self.debug('reusing old timer')
+                self.debug("reusing old timer")
             else:
                 self._not_moving_count = 0
                 timer = Timer(period, func, delay=250)
         else:
             timer.stop()
             self._not_moving_count = 0
-            time.sleep(period / 1000.)
+            time.sleep(period / 1000.0)
             timer = Timer(period, func)
 
         timer.set_interval(period)
@@ -143,10 +142,10 @@ class MotionController(CoreDevice):
     @caller
     def set_z(self, v, **kw):
         if v != self._z_position:
-            self.single_axis_move('z', v, **kw)
+            self.single_axis_move("z", v, **kw)
             #        setattr(self, '_{}_position'.format('z'), v)
             self._z_position = v
-            self.axes['z'].position = v
+            self.axes["z"].position = v
 
     def in_motion(self):
         if self.timer:
@@ -162,13 +161,13 @@ class MotionController(CoreDevice):
         if config is None:
             config = self.get_configuration(self.config_path)
 
-        mapping = self.config_get(config, 'General', 'mapping')
+        mapping = self.config_get(config, "General", "mapping")
         if mapping is not None:
-            mapping = mapping.split(',')
+            mapping = mapping.split(",")
         else:
-            mapping = 'x,y,z'
+            mapping = "x,y,z"
 
-        lp = self.config_get(config, 'General', 'loadposition')
+        lp = self.config_get(config, "General", "loadposition")
         if lp is not None:
             loadposition = csv_to_floats(lp)
         else:
@@ -176,16 +175,17 @@ class MotionController(CoreDevice):
 
         config_path = self.configuration_dir_path
         for i, a in enumerate(mapping):
-            self.info('loading axis {},{}'.format(i, a))
-            limits = csv_to_floats(config.get('Axes Limits', a))
+            self.info("loading axis {},{}".format(i, a))
+            limits = csv_to_floats(config.get("Axes Limits", a))
 
-            na = self._axis_factory(config_path,
-                                    name=a,
-                                    id=i + 1,
-                                    negative_limit=limits[0],
-                                    positive_limit=limits[1],
-                                    loadposition=loadposition[i]
-                                    )
+            na = self._axis_factory(
+                config_path,
+                name=a,
+                id=i + 1,
+                negative_limit=limits[0],
+                positive_limit=limits[1],
+                loadposition=loadposition[i],
+            )
 
             self.axes[a] = na
 
@@ -242,13 +242,13 @@ class MotionController(CoreDevice):
         if v is None:
             return
 
-        c = getattr(self, '_{}_position'.format(name))
+        c = getattr(self, "_{}_position".format(name))
 
         disp = abs(c - v)
         if c == v or disp < 0.001:
             return
 
-        self.debug('set axis {} to {}. current pos={}'.format(name, v, c))
+        self.debug("set axis {} to {}. current pos={}".format(name, v, c))
         self.single_axis_move(name, v, update=disp > 4, **kw)
 
         self.axes[name].position = v
@@ -260,18 +260,17 @@ class MotionController(CoreDevice):
         pass
 
     def _z_inprogress_update(self):
-        """
-        """
+        """ """
 
-        self._check_moving(axis='z', verbose=True)
+        self._check_moving(axis="z", verbose=True)
 
-        z = self.get_current_position('z')
+        z = self.get_current_position("z")
         self.z_progress = z
 
     def _check_moving(self, axis=None, verbose=True):
         m = self._moving(axis=axis, verbose=False)
         if verbose:
-            self.debug('is moving={}'.format(m))
+            self.debug("is moving={}".format(m))
 
         stopped = False
         if not m:
@@ -281,18 +280,17 @@ class MotionController(CoreDevice):
 
         if self._not_moving_count > 1:
             if verbose:
-                self.debug('not moving cnt={}'.format(self._not_moving_count))
+                self.debug("not moving cnt={}".format(self._not_moving_count))
             self._not_moving_count = 0
             if self.timer:
                 if verbose:
-                    self.debug('stop timer')
+                    self.debug("stop timer")
                 self.timer.Stop()
             stopped = True
         return stopped
 
     def _inprogress_update(self):
-        """
-        """
+        """ """
         stopped = self._check_moving()
         if stopped:
             self.parent.canvas.clear_desired_position()
@@ -316,8 +314,7 @@ class MotionController(CoreDevice):
             raise PositionError(x, y)
 
     def _sign_correct(self, val, key, ratio=True):
-        """
-        """
+        """ """
         if val is not None:
             axis = self.axes[key]
             r = 1
@@ -327,22 +324,22 @@ class MotionController(CoreDevice):
             return val * axis.sign * r
 
     def _block(self, axis=None, event=None):
-        """
-        """
-        self.debug('block')
+        """ """
+        self.debug("block")
         if event is not None:
             event.clear()
 
         timer = self.timer
 
         if timer is not None:
-            self.debug('using existing timer')
+            self.debug("using existing timer")
             period = 0.01
 
             def func():
                 return self.timer.isActive()
+
         else:
-            self.debug('check moving={}'.format(axis))
+            self.debug("check moving={}".format(axis))
             period = 0.25
 
             def func():
@@ -364,7 +361,7 @@ class MotionController(CoreDevice):
             p = max(0, period - (time.time() - st))
             time.sleep(p)
 
-        self.debug('block finished')
+        self.debug("block finished")
 
         if event is not None:
             event.set()
@@ -382,27 +379,26 @@ class MotionController(CoreDevice):
         return self._z_position
 
     def _set_x(self, v):
-        self._set_axis('x', v)
+        self._set_axis("x", v)
 
     def _set_y(self, v):
-        self._set_axis('y', v)
+        self._set_axis("y", v)
 
     def _set_z(self, v):
         if v is not None:
             self.set_z(v)
 
     def _validate_x(self, v):
-        return self._validate(v, 'x', self._x_position)
+        return self._validate(v, "x", self._x_position)
 
     def _validate_y(self, v):
-        return self._validate(v, 'y', self._y_position)
+        return self._validate(v, "y", self._y_position)
 
     def _validate_z(self, v):
-        return self._validate(v, 'z', self._z_position)
+        return self._validate(v, "z", self._z_position)
 
     def _validate(self, v, key, cur):
-        """
-        """
+        """ """
         try:
             ax = self.axes[key]
         except KeyError:
@@ -410,11 +406,11 @@ class MotionController(CoreDevice):
 
         mi = ax.negative_limit
         ma = ax.positive_limit
-        self.debug('validate axis={} value={} current={}'.format(key, v, cur))
+        self.debug("validate axis={} value={} current={}".format(key, v, cur))
         try:
             v = float(v)
             if not mi <= v <= ma:
-                self.debug('value not between {}, {}'.format(mi, ma))
+                self.debug("value not between {}, {}".format(mi, ma))
                 v = None
                 #
                 # if v is not None:
@@ -426,22 +422,22 @@ class MotionController(CoreDevice):
         return v
 
     def _get_xaxes_max(self):
-        return self._get_positive_limit('x')
+        return self._get_positive_limit("x")
 
     def _get_xaxes_min(self):
-        return self._get_negative_limit('x')
+        return self._get_negative_limit("x")
 
     def _get_yaxes_max(self):
-        return self._get_positive_limit('y')
+        return self._get_positive_limit("y")
 
     def _get_yaxes_min(self):
-        return self._get_negative_limit('y')
+        return self._get_negative_limit("y")
 
     def _get_zaxes_max(self):
-        return self._get_positive_limit('z')
+        return self._get_positive_limit("z")
 
     def _get_zaxes_min(self):
-        return self._get_negative_limit('z')
+        return self._get_negative_limit("z")
 
     def _get_positive_limit(self, key):
         return self.axes[key].positive_limit if key in self.axes else 0
@@ -454,28 +450,31 @@ class MotionController(CoreDevice):
     # ===============================================================================
     def traits_view(self):
         grp = self.get_control_group()
-        grp.label = ''
+        grp.label = ""
         grp.show_border = False
         return View(grp)
 
     def get_control_group(self):
-        g = VGroup(show_border=True,
-                   label='Axes')
+        g = VGroup(show_border=True, label="Axes")
 
         keys = list(self.axes.keys())
         keys.sort()
         for k in keys:
 
-            editor = RangeEditor(low_name='{}axes_min'.format(k),
-                                 high_name='{}axes_max'.format(k),
-                                 mode='slider',
-                                 format='%0.3f')
+            editor = RangeEditor(
+                low_name="{}axes_min".format(k),
+                high_name="{}axes_max".format(k),
+                mode="slider",
+                format="%0.3f",
+            )
 
             g.content.append(Item(k, editor=editor))
-            if k == 'z':
-                g.content.append(Item('z_progress', show_label=False,
-                                      editor=editor,
-                                      enabled_when='0'))
+            if k == "z":
+                g.content.append(
+                    Item(
+                        "z_progress", show_label=False, editor=editor, enabled_when="0"
+                    )
+                )
         return g
 
     # ===============================================================================
@@ -485,8 +484,9 @@ class MotionController(CoreDevice):
         mp = MotionProfiler()
 
         if self.configuration_dir_path:
-            p = os.path.join(self.configuration_dir_path, 'motion_profiler.cfg')
+            p = os.path.join(self.configuration_dir_path, "motion_profiler.cfg")
             mp.load(p)
         return mp
+
 
 # ============= EOF ====================================

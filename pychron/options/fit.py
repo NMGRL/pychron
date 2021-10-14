@@ -20,6 +20,7 @@ from __future__ import absolute_import
 from traits.api import Str, Int, Bool, List
 
 from pychron.core.fits.fit import Fit
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.aux_plot import AuxPlot
@@ -32,8 +33,8 @@ class FitAuxPlot(AuxPlot, Fit):
 
 
 class FitOptions(AuxPlotFigureOptions):
-    global_fit = Str('Fit')
-    global_error_type = Str('Error')
+    global_fit = Str("Fit")
+    global_error_type = Str("Error")
     nsigma = Int(1)
     use_time_axis = Bool(True)
     analysis_types = List(transient=True)
@@ -45,7 +46,7 @@ class FitOptions(AuxPlotFigureOptions):
             if clear_missing and ai.name not in names:
                 ai.plot_enabled = False
                 ai.save_enabled = False
-                ai.name = ''
+                ai.name = ""
             ai.names = names
 
     def set_detectors(self, dets):
@@ -76,5 +77,6 @@ class FitOptions(AuxPlotFigureOptions):
             fs = self._get_aux_plots()
             for fi in fs:
                 fi.error_type = self.global_error_type
+
 
 # ============= EOF =============================================

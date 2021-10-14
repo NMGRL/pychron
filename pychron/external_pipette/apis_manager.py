@@ -21,17 +21,18 @@ from traits.api import Instance, Button, Bool, Str, List, provides, Property
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.external_pipette.protocol import IPipetteManager
-#from pychron.hardware.apis_controller import ApisController
+
+# from pychron.hardware.apis_controller import ApisController
 from pychron.managers.manager import Manager
 
 
 class InvalidPipetteError(BaseException):
     def __init__(self, name, av):
-        self.available = '\n'.join(av)
+        self.available = "\n".join(av)
         self.name = name
 
     def __repr__(self):
-        return 'Invalid Pipette name={} av={}'.format(self.name, self.available)
+        return "Invalid Pipette name={} av={}".format(self.name, self.available)
 
     def __str__(self):
         return repr(self)
@@ -39,7 +40,7 @@ class InvalidPipetteError(BaseException):
 
 @provides(IPipetteManager)
 class SimpleApisManager(Manager):
-    controller = Instance('pychron.hardware.apis_controller.ApisController')
+    controller = Instance("pychron.hardware.apis_controller.ApisController")
 
     test_command = Str
     test_command_response = Str
@@ -53,9 +54,9 @@ class SimpleApisManager(Manager):
     available_pipettes = List
     available_blanks = List
 
-    mode = 'client'
+    mode = "client"
 
-    #for unittesting
+    # for unittesting
     _timeout_flag = False
 
     def test_connection(self):
@@ -68,19 +69,19 @@ class SimpleApisManager(Manager):
         blanks = self.controller.get_available_blanks()
         airs = self.controller.get_available_airs()
         if blanks:
-            self.available_blanks = blanks.split('\r')
+            self.available_blanks = blanks.split("\r")
         if airs:
-            self.available_pipettes = airs.split('\r')
+            self.available_pipettes = airs.split("\r")
 
-        #setup linking
-            # v = self.controller.isolation_valve
-            # elm = self.application.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
-            # print 'exception', elm
-            # print v
-            # if elm:
-            #     elm.link_valve_actuation(v, self.isolation_valve_state_change)
-            # else:
-            #     self.warning('could not find Extraction Line Manager. Needed for valve actuation linking')
+        # setup linking
+        # v = self.controller.isolation_valve
+        # elm = self.application.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+        # print 'exception', elm
+        # print v
+        # if elm:
+        #     elm.link_valve_actuation(v, self.isolation_valve_state_change)
+        # else:
+        #     self.warning('could not find Extraction Line Manager. Needed for valve actuation linking')
 
     # def isolation_valve_state_change(self, name, action):
     #     self.controller.set_external_pumping(action == 'open')
@@ -89,22 +90,24 @@ class SimpleApisManager(Manager):
         pass
 
     def load_pipette_non_blocking(self, *args, **kw):
-        func = 'load_pipette'
+        func = "load_pipette"
         # self.controller.set_external_pumping()
-        ret = self._load_pipette(self.available_pipettes, func, block=False, *args, **kw)
+        ret = self._load_pipette(
+            self.available_pipettes, func, block=False, *args, **kw
+        )
         # self.controller.set_external_pumping()
 
         return ret
 
     def load_blank_non_blocking(self, *args, **kw):
-        func = 'load_blank'
+        func = "load_blank"
         # self.controller.set_external_pumping()
         ret = self._load_pipette(self.available_blanks, func, block=False, *args, **kw)
         # self.controller.set_external_pumping()
         return ret
 
     def load_pipette(self, *args, **kw):
-        func = 'load_pipette'
+        func = "load_pipette"
         # self.controller.set_external_pumping()
         ret = self._load_pipette(self.available_pipettes, func, *args, **kw)
         # self.controller.set_external_pumping()
@@ -112,16 +115,18 @@ class SimpleApisManager(Manager):
         return ret
 
     def load_blank(self, *args, **kw):
-        func = 'load_blank'
+        func = "load_blank"
         # self.controller.set_external_pumping()
         ret = self._load_pipette(self.available_blanks, func, *args, **kw)
         # self.controller.set_external_pumping()
         return ret
 
-    #private
-    def _load_pipette(self, av, func, name, script=None, block=True, timeout=10, period=1):
+    # private
+    def _load_pipette(
+        self, av, func, name, script=None, block=True, timeout=10, period=1
+    ):
         if script is None:
-            self.debug('Script is none. check ExtractionPyScript.extract_pipette')
+            self.debug("Script is none. check ExtractionPyScript.extract_pipette")
             raise NotImplementedError
 
         name = str(name)
@@ -132,7 +137,7 @@ class SimpleApisManager(Manager):
         func(name)
 
         if block:
-            #wait for completion
+            # wait for completion
             return self._loading_complete(script, timeout=timeout, period=period)
         else:
             return True
@@ -148,10 +153,9 @@ class SimpleApisManager(Manager):
         from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 
         e = ExtractionPyScript(manager=self)
-        e.setup_context(extract_device='',
-                        analysis_type='blank')
+        e.setup_context(extract_device="", analysis_type="blank")
         # e.extract_pipette('Blank AC pt1 cc', timeout=120)
-        e.extract_pipette('Blank Air pt1 cc', timeout=120)
+        e.extract_pipette("Blank Air pt1 cc", timeout=120)
         # e.extract_pipette(self.available_pipettes[0], timeout=3)
         self.testing = False
 
@@ -166,27 +170,28 @@ class SimpleApisManager(Manager):
         if cmd:
             if self.controller.is_connected():
                 resp = self.controller.ask(cmd)
-                r = resp if resp else 'No Response'
+                r = resp if resp else "No Response"
             else:
-                resp = ''
-                r = 'No Connection'
+                resp = ""
+                r = "No Connection"
 
-            tcr = '{}\n{} >> {}'.format(self.test_command_response, cmd, r)
+            tcr = "{}\n{} >> {}".format(self.test_command_response, cmd, r)
             if self.display_response_info:
-                tcr = '{}\n\tresponse length={}'.format(tcr, len(resp))
+                tcr = "{}\n\tresponse length={}".format(tcr, len(resp))
 
             self.test_command_response = tcr
 
     def _assemble_command(self):
         cmd = self.test_command
-        if cmd.strip().endswith(','):
+        if cmd.strip().endswith(","):
             return
 
         return cmd
 
     def _controller_default(self):
         from pychron.hardware.apis_controller import ApisController
-        v = ApisController(name='apis_controller')
+
+        v = ApisController(name="apis_controller")
         return v
 
     def _get_test_enabled(self):
@@ -278,7 +283,6 @@ class SimpleApisManager(Manager):
         #         e.extract_pipette(1, timeout=3)
         #         self.testing = False
 
-
         # def _change_valve_state(self, name, mode, action):
         #     result, change = False, False
         #     func = getattr(self.valve_manager, '{}_by_name'.format(action))
@@ -316,5 +320,5 @@ class SimpleApisManager(Manager):
         #     self._load_canvas(c)
         #     return c
 
-# ============= EOF =============================================
 
+# ============= EOF =============================================

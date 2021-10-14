@@ -61,11 +61,15 @@ class SerialDeviceMixin(RemoteDeviceMixin):
     timeout = CInt
 
     def setup_communicator(self):
-        from pychron.hardware.core.communicators.serial_communicator import SerialCommunicator
-        self.communicator = ec = SerialCommunicator(port=self.port,
-                                                    baudrate=self.baudrate,
-                                                    read_delay=self.read_delay,
-                                                    )
+        from pychron.hardware.core.communicators.serial_communicator import (
+            SerialCommunicator,
+        )
+
+        self.communicator = ec = SerialCommunicator(
+            port=self.port,
+            baudrate=self.baudrate,
+            read_delay=self.read_delay,
+        )
         ec.set_parity(self.parity)
         ec.set_stopbits(self.stopbits)
         r = ec.open(timeout=self.timeout)
@@ -82,14 +86,19 @@ class EthernetDeviceMixin(RemoteDeviceMixin):
     timeout = CInt
 
     def setup_communicator(self):
-        from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
-        self.communicator = ec = EthernetCommunicator(host=self.host,
-                                                      port=self.port,
-                                                      kind=self.kind,
-                                                      use_end=self.use_end,
-                                                      message_frame=self.message_frame,
-                                                      write_terminator=self.write_terminator,
-                                                      timeout=self.timeout)
+        from pychron.hardware.core.communicators.ethernet_communicator import (
+            EthernetCommunicator,
+        )
+
+        self.communicator = ec = EthernetCommunicator(
+            host=self.host,
+            port=self.port,
+            kind=self.kind,
+            use_end=self.use_end,
+            message_frame=self.message_frame,
+            write_terminator=self.write_terminator,
+            timeout=self.timeout,
+        )
 
         r = ec.open()
         # if r:
@@ -97,5 +106,6 @@ class EthernetDeviceMixin(RemoteDeviceMixin):
         #     self.connected = bool(r)
 
         return r
+
 
 # ============= EOF =============================================

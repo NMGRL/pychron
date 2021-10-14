@@ -28,18 +28,18 @@ from pychron.paths import paths
 
 class FileStorage(Storage):
     root = Str
-    url_name = 'file'
+    url_name = "file"
 
     def __init__(self, *args, **kw):
         super(FileStorage, self).__init__(*args, **kw)
-        bind_preference(self, 'root', 'pychron.media_storage.root')
+        bind_preference(self, "root", "pychron.media_storage.root")
 
     @property
     def host(self):
         return socket.getfqdn()
 
     def get_base_url(self):
-        return 'file'
+        return "file"
 
     def put(self, src, dest):
         root = self.root
@@ -50,10 +50,11 @@ class FileStorage(Storage):
         shutil.copyfile(src, dest)
 
     def get(self, path, dest):
-        with open(path, 'rb') as rfile:
+        with open(path, "rb") as rfile:
             dest.write(rfile.read())
 
     def exists(self, path):
         return os.path.exists(path)
+
 
 # ============= EOF =============================================

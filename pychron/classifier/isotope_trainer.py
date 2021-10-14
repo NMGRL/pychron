@@ -21,14 +21,13 @@ from traitsui.api import View, UItem, HGroup, VGroup
 from traitsui.handler import Handler
 
 from pychron.classifier.isotope_classifier import IsotopeClassifier
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.loggable import Loggable
 
-UUIDS = (
-
-)
+UUIDS = ()
 
 
 class KlassHandler(Handler):
@@ -52,7 +51,7 @@ class IsotopeTrainer(Loggable):
     skip_button = Button
     test = Button
     klass = None
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance("pychron.dvc.dvc.DVC")
     pklass = Str
 
     def setup_graph(self, iso):
@@ -62,13 +61,16 @@ class IsotopeTrainer(Loggable):
         g = StackedRegressionGraph()
         g.new_plot(padding=[60, 10, 10, 40])
         if iso:
-            g.new_series(iso.xs, iso.ys,
-                         fit=iso.fit,
-                         filter_outliers_dict=iso.filter_outliers_dict)
+            g.new_series(
+                iso.xs,
+                iso.ys,
+                fit=iso.fit,
+                filter_outliers_dict=iso.filter_outliers_dict,
+            )
             g.set_x_limits(min_=0, max_=iso.xs[-1] * 1.1)
             g.set_y_title(iso.name)
 
-        g.set_x_title('Time (s)')
+        g.set_x_title("Time (s)")
 
         g.refresh()
         self.graph = g
@@ -82,13 +84,13 @@ class IsotopeTrainer(Loggable):
         #                  kind='mysql',
         #                  host=os.environ.get('ARGONSERVER_HOST'))
         # dvc.connect()
-        self.clf =clf= IsotopeClassifier()
+        self.clf = clf = IsotopeClassifier()
         isos = []
         klasses = []
         uuids = UUIDS
         dvc = self.dvc
         with dvc.session_ctx():
-            ans = dvc.get_last_nhours_analyses(200, mass_spectrometers='jan')
+            ans = dvc.get_last_nhours_analyses(200, mass_spectrometers="jan")
             if ans:
                 # records = [ri for ai in ans for ri in ai.record_views]
                 for ai in self.dvc.make_analyses(ans):
@@ -120,11 +122,19 @@ class IsotopeTrainer(Loggable):
 
     def _get_klass(self, iso):
         self.setup_graph(iso)
-        bgrp = HGroup(UItem('good_button'), UItem('bad_button'), UItem('skip_button'), UItem('pklass'))
-        self.edit_traits(view=View(VGroup(bgrp, UItem('graph', style='custom')),
-                                   buttons=['Cancel', 'OK']),
-                         kind='livemodal',
-                         handler=KlassHandler())
+        bgrp = HGroup(
+            UItem("good_button"),
+            UItem("bad_button"),
+            UItem("skip_button"),
+            UItem("pklass"),
+        )
+        self.edit_traits(
+            view=View(
+                VGroup(bgrp, UItem("graph", style="custom")), buttons=["Cancel", "OK"]
+            ),
+            kind="livemodal",
+            handler=KlassHandler(),
+        )
         return self.klass
 
     # def _test_fired(self):
@@ -132,8 +142,8 @@ class IsotopeTrainer(Loggable):
     #     self.train()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     t = IsotopeTrainer()
-    t.configure_traits(view=View('test'))
+    t.configure_traits(view=View("test"))
 
 # ============= EOF =============================================

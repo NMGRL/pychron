@@ -18,11 +18,13 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from traits.api import String, Str, Int
+
 # from traitsui.api import View, Item, TableEditor
 # ============= standard library imports ========================
 from six.moves.BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from cStringIO import StringIO
 import cgi
+
 # import string, cgi, time
 import os  # os. path
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
@@ -31,14 +33,13 @@ import sys
 import shutil
 import mimetypes
 from threading import Thread
+
 # ============= local library imports  ==========================
 # ===============================================================================
 # for debugging
 # ===============================================================================
-merc = os.path.join(os.path.expanduser('~'),
-                        'Programming',
-                        'mercurial')
-src = os.path.join(merc, 'pychron_uv')
+merc = os.path.join(os.path.expanduser("~"), "Programming", "mercurial")
+src = os.path.join(merc, "pychron_uv")
 sys.path.insert(0, src)
 # ===============================================================================
 #
@@ -49,15 +50,18 @@ from pychron.loggable import Loggable
 if not mimetypes.inited:
     mimetypes.init()  # try to read system mime.types
 
+
 class DirectoryHandler(BaseHTTPRequestHandler):
 
     extensions_map = mimetypes.types_map.copy()
-    extensions_map.update({
-        '': 'application/octet-stream',  # Default
-        '.py': 'text/plain',
-        '.c': 'text/plain',
-        '.h': 'text/plain',
-        })
+    extensions_map.update(
+        {
+            "": "application/octet-stream",  # Default
+            ".py": "text/plain",
+            ".c": "text/plain",
+            ".h": "text/plain",
+        }
+    )
 
     def do_GET(self):
         f = self.send_head()
@@ -85,7 +89,7 @@ class DirectoryHandler(BaseHTTPRequestHandler):
         path = self._translate_path(self.path)
         f = None
         if os.path.isdir(path):
-            if not self.path.endswith('/'):
+            if not self.path.endswith("/"):
                 # redirect browser - doing basically what apache does
                 self.send_response(301)
                 self.send_header("Location", self.path + "/")
@@ -103,7 +107,7 @@ class DirectoryHandler(BaseHTTPRequestHandler):
             # Always read in binary mode. Opening files in text mode may cause
             # newline translations, making the actual size of the content
             # transmitted *less* than the content-length!
-            f = open(path, 'rb')
+            f = open(path, "rb")
         except IOError:
             self.send_error(404, "File not found")
             return None
@@ -148,8 +152,10 @@ class DirectoryHandler(BaseHTTPRequestHandler):
             if os.path.islink(fullname):
                 displayname = name + "@"
                 # Note: a link to a directory displays with @ and links with /
-            f.write('<li><a href="%s">%s</a>\n'
-                    % (six.moves.urllib.parse.quote(linkname), cgi.escape(displayname)))
+            f.write(
+                '<li><a href="%s">%s</a>\n'
+                % (six.moves.urllib.parse.quote(linkname), cgi.escape(displayname))
+            )
         f.write("</ul>\n<hr>\n</body>\n</html>\n")
         length = f.tell()
         f.seek(0)
@@ -169,18 +175,19 @@ class DirectoryHandler(BaseHTTPRequestHandler):
 
         """
         # abandon query parameters
-        path = path.split('?', 1)[0]
-        path = path.split('#', 1)[0]
+        path = path.split("?", 1)[0]
+        path = path.split("#", 1)[0]
         path = posixpath.normpath(six.moves.urllib.parse.unquote(path))
-        words = path.split('/')
+        words = path.split("/")
         words = [_f for _f in words if _f]
 
         path = self.server.root
-#        path = os.getcwd()
+        #        path = os.getcwd()
         for word in words:
             _drive, word = os.path.splitdrive(word)
             _head, word = os.path.split(word)
-            if word in (os.curdir, os.pardir): continue
+            if word in (os.curdir, os.pardir):
+                continue
             path = os.path.join(path, word)
         return path
 
@@ -206,10 +213,12 @@ class DirectoryHandler(BaseHTTPRequestHandler):
         if ext in self.extensions_map:
             return self.extensions_map[ext]
         else:
-            return self.extensions_map['']
+            return self.extensions_map[""]
+
 
 class _DirectoryServer(HTTPServer):
-    root = ''
+    root = ""
+
 
 class DirectoryServer(Loggable):
     root = String
@@ -227,13 +236,13 @@ class DirectoryServer(Loggable):
         return t
 
     def _start(self):
-        self.info('Directory server started. {} {}'.format(self.host, self.port))
-        self.info('serving {}'.format(self.root))
+        self.info("Directory server started. {} {}".format(self.host, self.port))
+        self.info("serving {}".format(self.root))
 
         host = self.host
         port = self.port
         if not host:
-            host = 'localhost'
+            host = "localhost"
         if not port:
             port = 8080
 
@@ -244,25 +253,25 @@ class DirectoryServer(Loggable):
     def stop(self):
         self._server.shutdown()
 
+
 def serve():
     try:
-#        server = HTTPServer(('', 8080), MyHandler)
-        server = DirectoryServer(host='localhost', port=8080)
-        server.root = '/Users/ross/Sandbox/raster'
-        print('started httpserver...')
+        #        server = HTTPServer(('', 8080), MyHandler)
+        server = DirectoryServer(host="localhost", port=8080)
+        server.root = "/Users/ross/Sandbox/raster"
+        print("started httpserver...")
         server.start()
 
     except KeyboardInterrupt:
-        print('^C received, shutting down server')
+        print("^C received, shutting down server")
         server.socket.close()
+
 
 def main():
     serve()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 
 # ============= EOF =============================================
-
-

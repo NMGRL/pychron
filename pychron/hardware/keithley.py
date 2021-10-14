@@ -28,7 +28,7 @@ from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.scpi_device import SCPIDevice
 
 
-logging_setup('keithley')
+logging_setup("keithley")
 
 
 class KeithleyMeter(CoreDevice):
@@ -40,8 +40,8 @@ class SCPIKeithley(SCPIDevice):
         pass
 
 
-if __name__ == '__main__':
-    d = SCPIKeithley(name='keithley617b')
+if __name__ == "__main__":
+    d = SCPIKeithley(name="keithley617b")
     d.bootstrap()
 
     for i in range(10):
@@ -50,6 +50,3 @@ if __name__ == '__main__':
         time.sleep(0.5)
 
 # ============= EOF =============================================
-
-
-

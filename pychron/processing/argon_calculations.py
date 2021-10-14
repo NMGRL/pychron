@@ -30,10 +30,14 @@ from pychron.pychron_constants import FLECK
 
 
 def extract_isochron_xy(analyses):
-    ans = [(ai.get_interference_corrected_value('Ar39'),
-            ai.get_interference_corrected_value('Ar36'),
-            ai.get_interference_corrected_value('Ar40'))
-           for ai in analyses]
+    ans = [
+        (
+            ai.get_interference_corrected_value("Ar39"),
+            ai.get_interference_corrected_value("Ar36"),
+            ai.get_interference_corrected_value("Ar40"),
+        )
+        for ai in analyses
+    ]
     a39, a36, a40 = array(ans).T
 
     try:
@@ -49,7 +53,9 @@ def unpack_value_error(xx):
     return list(zip(*[(nominal_value(xi), std_dev(xi)) for xi in xx]))
 
 
-def calculate_isochron(analyses, error_calc_kind, exclude=None, reg='NewYork', include_j_err=True):
+def calculate_isochron(
+    analyses, error_calc_kind, exclude=None, reg="NewYork", include_j_err=True
+):
     if exclude is None:
         exclude = []
 
@@ -66,14 +72,12 @@ def calculate_isochron(analyses, error_calc_kind, exclude=None, reg='NewYork', i
     yns, ynes = unpack_value_error(a36)
     xns, xnes = unpack_value_error(a39)
 
-    regx = isochron_regressor(ys, yerrs, xs, xerrs,
-                              xds, xdes, yns, ynes, xns, xnes,
-                              reg)
+    regx = isochron_regressor(
+        ys, yerrs, xs, xerrs, xds, xdes, yns, ynes, xns, xnes, reg
+    )
     regx.user_excluded = exclude
 
-    reg = isochron_regressor(xs, xerrs, ys, yerrs,
-                             xds, xdes, xns, xnes, yns, ynes,
-                             reg)
+    reg = isochron_regressor(xs, xerrs, ys, yerrs, xds, xdes, xns, xnes, yns, ynes, reg)
     reg.user_excluded = exclude
 
     regx.error_calc_type = error_calc_kind
@@ -96,31 +100,50 @@ def calculate_isochron(analyses, error_calc_kind, exclude=None, reg='NewYork', i
     return age, yint, reg
 
 
-def isochron_regressor(xs, xes, ys, yes, xds, xdes, xns, xnes, yns, ynes, reg='NewYork'):
+def isochron_regressor(
+    xs, xes, ys, yes, xds, xdes, xns, xnes, yns, ynes, reg="NewYork"
+):
     reg = reg.lower()
-    if reg in ('newyork', 'new_york'):
+    if reg in ("newyork", "new_york"):
         from pychron.core.regression.new_york_regressor import NewYorkRegressor as klass
-    elif reg == 'york':
+    elif reg == "york":
         from pychron.core.regression.new_york_regressor import YorkRegressor as klass
     else:
-        from pychron.core.regression.new_york_regressor import ReedYorkRegressor as klass
+        from pychron.core.regression.new_york_regressor import (
+            ReedYorkRegressor as klass,
+        )
 
-    reg = klass(xs=xs, ys=ys,
-                xserr=xes, yserr=yes,
-                xds=xds, xdes=xdes,
-                xns=xns, xnes=xnes,
-                yns=yns, ynes=ynes)
+    reg = klass(
+        xs=xs,
+        ys=ys,
+        xserr=xes,
+        yserr=yes,
+        xds=xds,
+        xdes=xdes,
+        xns=xns,
+        xnes=xnes,
+        yns=yns,
+        ynes=ynes,
+    )
     reg.calculate()
     return reg
 
 
-def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method=FLECK, options=None, excludes=None):
+def calculate_plateau_age(
+    ages,
+    errors,
+    k39,
+    kind="inverse_variance",
+    method=FLECK,
+    options=None,
+    excludes=None,
+):
     """
-        ages: list of ages
-        errors: list of corresponding  1sigma errors
-        k39: list of 39ArK signals
+    ages: list of ages
+    errors: list of corresponding  1sigma errors
+    k39: list of 39ArK signals
 
-        return age, error
+    return age, error
     """
     if options is None:
         options = {}
@@ -129,7 +152,7 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method=FLE
     errors = asarray(errors)
     k39 = asarray(k39)
 
-    fixed_steps = options.get('fixed_steps', False)
+    fixed_steps = options.get("fixed_steps", False)
     if fixed_steps and (fixed_steps[0] or fixed_steps[1]):
         sstep, estep = fixed_steps
         sstep, estep = sstep.upper(), estep.upper()
@@ -151,20 +174,22 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method=FLE
 
         from pychron.processing.plateau import Plateau
 
-        p = Plateau(ages=ages,
-                    errors=errors,
-                    signals=k39,
-                    excludes=excludes,
-                    overlap_sigma=options.get('overlap_sigma', 2),
-                    nsteps=options.get('nsteps', 3),
-                    gas_fraction=options.get('gas_fraction', 50))
+        p = Plateau(
+            ages=ages,
+            errors=errors,
+            signals=k39,
+            excludes=excludes,
+            overlap_sigma=options.get("overlap_sigma", 2),
+            nsteps=options.get("nsteps", 3),
+            gas_fraction=options.get("gas_fraction", 50),
+        )
 
         pidx = p.find_plateaus(method)
 
     if pidx:
         sx = slice(pidx[0], pidx[1] + 1)
         plateau_ages = ages[sx]
-        if kind == 'vol_fraction':
+        if kind == "vol_fraction":
             weights = k39[sx]
             wm, we = average(plateau_ages, weights=weights)
         else:
@@ -176,12 +201,12 @@ def calculate_plateau_age(ages, errors, k39, kind='inverse_variance', method=FLE
 
 def calculate_flux(f, age, arar_constants=None, lambda_k=None):
     """
-        #rad40: radiogenic 40Ar
-        #k39: 39Ar from potassium
-        f: F value rad40Ar/39Ar
-        age: age of monitor in years
+    #rad40: radiogenic 40Ar
+    #k39: 39Ar from potassium
+    f: F value rad40Ar/39Ar
+    age: age of monitor in years
 
-        solve age equation for J
+    solve age equation for J
     """
     if isinstance(f, (list, tuple)):
         f = ufloat(*f)
@@ -211,8 +236,12 @@ def calculate_arar_decay_factors_dalrymple(dc37, dc39, segments):
         tpower = sum([pi * ti for pi, ti, _, _, _ in segments])
         for pi, ti, ti_p, _, _ in segments:
             pti = (pi * ti) / tpower
-            df37 += pti * (ti * dc37 * math.exp(dc37 * ti_p)) / (1 - math.exp(-dc37 * ti))
-            df39 += pti * (ti * dc39 * math.exp(dc39 * ti_p)) / (1 - math.exp(-dc39 * ti))
+            df37 += (
+                pti * (ti * dc37 * math.exp(dc37 * ti_p)) / (1 - math.exp(-dc37 * ti))
+            )
+            df39 += (
+                pti * (ti * dc39 * math.exp(dc39 * ti_p)) / (1 - math.exp(-dc39 * ti))
+            )
     except ZeroDivisionError:
         df37, df39 = 1.0, 1.0
 
@@ -221,20 +250,20 @@ def calculate_arar_decay_factors_dalrymple(dc37, dc39, segments):
 
 def calculate_arar_decay_factors(dc37, dc39, segments, use_mh=True):
     """
-        McDougall and Harrison
-        p.75 equation 3.22
+    McDougall and Harrison
+    p.75 equation 3.22
 
-        the book suggests using ti==analysis_time-end of irradiation segment_i (Wijbrans 1985)
+    the book suggests using ti==analysis_time-end of irradiation segment_i (Wijbrans 1985)
 
-        mass spec uses ti==analysis_time-start of irradiation segment_i
+    mass spec uses ti==analysis_time-start of irradiation segment_i
 
-        using start seems more appropriate.
+    using start seems more appropriate.
 
-        Note: 7/22/19
-        looking more carefully at Dalrymple etal 81 its clear that
-        using the end of the irradiation segment is actually the correct approach.
-        The decay that occurs during irradiation is handled by equation 39.
-        See page 34 Dalrymple etal 81
+    Note: 7/22/19
+    looking more carefully at Dalrymple etal 81 its clear that
+    using the end of the irradiation segment is actually the correct approach.
+    The decay that occurs during irradiation is handled by equation 39.
+    See page 34 Dalrymple etal 81
 
     """
     if segments is None:
@@ -242,11 +271,19 @@ def calculate_arar_decay_factors(dc37, dc39, segments, use_mh=True):
     else:
         tpower = sum([pi * ti for pi, ti, _, _, _ in segments])
         if use_mh:
-            b = sum([pi * ((1 - math.exp(-dc37 * ti)) / (dc37 * math.exp(dc37 * dti)))
-                     for pi, ti, dti, _, _ in segments])
+            b = sum(
+                [
+                    pi * ((1 - math.exp(-dc37 * ti)) / (dc37 * math.exp(dc37 * dti)))
+                    for pi, ti, dti, _, _ in segments
+                ]
+            )
 
-            c = sum([pi * ((1 - math.exp(-dc39 * ti)) / (dc39 * math.exp(dc39 * dti)))
-                     for pi, ti, dti, _, _ in segments])
+            c = sum(
+                [
+                    pi * ((1 - math.exp(-dc39 * ti)) / (dc39 * math.exp(dc39 * dti)))
+                    for pi, ti, dti, _, _ in segments
+                ]
+            )
             try:
                 df37 = tpower / b
             except ZeroDivisionError:
@@ -275,29 +312,31 @@ def abundance_sensitivity_correction(isos, abundance_sensitivity):
 
 def apply_fixed_k3739(a39, pr, fixed_k3739):
     """
-        x=ca37/k39
-        y=ca37/ca39
-        T=s39dec_cor
+    x=ca37/k39
+    y=ca37/ca39
+    T=s39dec_cor
 
-        T=ca39+k39
-        T=ca37/y+ca37/x
+    T=ca39+k39
+    T=ca37/y+ca37/x
 
-        ca37=(T*x*y)/(x+y)
+    ca37=(T*x*y)/(x+y)
     """
     x = fixed_k3739
     try:
-        y = 1 / pr.get('Ca3937', 1)
+        y = 1 / pr.get("Ca3937", 1)
     except ZeroDivisionError:
         y = 1
 
     ca37 = (a39 * x * y) / (x + y)
-    ca39 = pr.get('Ca3937', 0) * ca37
+    ca39 = pr.get("Ca3937", 0) * ca37
     k39 = a39 - ca39
     k37 = x * k39
     return ca37, ca39, k37, k39
 
 
-def interference_corrections(a39, a37, production_ratios, arar_constants=None, fixed_k3739=False):
+def interference_corrections(
+    a39, a37, production_ratios, arar_constants=None, fixed_k3739=False
+):
     if production_ratios is None:
         production_ratios = {}
 
@@ -305,58 +344,60 @@ def interference_corrections(a39, a37, production_ratios, arar_constants=None, f
         arar_constants = ArArConstants()
 
     pr = production_ratios
-    if arar_constants.k3739_mode.lower() == 'normal' and not fixed_k3739:
+    if arar_constants.k3739_mode.lower() == "normal" and not fixed_k3739:
 
-        ca3937 = pr.get('Ca3937', 0)
-        k3739 = pr.get('K3739', 0)
+        ca3937 = pr.get("Ca3937", 0)
+        k3739 = pr.get("K3739", 0)
         k39 = (a39 - ca3937 * a37) / (1 - k3739 * ca3937)
-        k37 = pr.get('K3739', 0) * k39
+        k37 = pr.get("K3739", 0) * k39
 
         ca37 = a37 - k37
-        ca39 = pr.get('Ca3937', 0) * ca37
+        ca39 = pr.get("Ca3937", 0) * ca37
     else:
         if not fixed_k3739:
             fixed_k3739 = arar_constants.fixed_k3739
 
         ca37, ca39, k37, k39 = apply_fixed_k3739(a39, pr, fixed_k3739)
 
-    k38 = pr.get('K3839', 0) * k39
+    k38 = pr.get("K3839", 0) * k39
 
     if not arar_constants.allow_negative_ca_correction:
         ca37 = max(ufloat(0, 0), ca37)
 
-    ca36 = pr.get('Ca3637', 0) * ca37
-    ca38 = pr.get('Ca3837', 0) * ca37
+    ca36 = pr.get("Ca3637", 0) * ca37
+    ca38 = pr.get("Ca3837", 0) * ca37
 
     return k37, k38, k39, ca36, ca37, ca38, ca39
 
 
-def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time, production_ratios=None, arar_constants=None):
+def calculate_atmospheric(
+    a38, a36, k38, ca38, ca36, decay_time, production_ratios=None, arar_constants=None
+):
     """
-        McDougall and Harrison
-        Roddick 1983
-        Foland 1993
+    McDougall and Harrison
+    Roddick 1983
+    Foland 1993
 
-        calculate atm36, cl36, cl38
+    calculate atm36, cl36, cl38
 
-        # starting with the following equations
-        atm36 = a36 - ca36 - cl36
+    # starting with the following equations
+    atm36 = a36 - ca36 - cl36
 
-        m = cl3638*lambda_cl36*decay_time
-        cl36 = cl38 * m
+    m = cl3638*lambda_cl36*decay_time
+    cl36 = cl38 * m
 
-        cl38 = a38 - k38 - ca38 - ar38atm
-        ar38atm = atm3836 * atm36
+    cl38 = a38 - k38 - ca38 - ar38atm
+    ar38atm = atm3836 * atm36
 
-        # rearranging to solve for atm36
-        cl38 = a38  - k38 - c38 - atm3836 * atm36
+    # rearranging to solve for atm36
+    cl38 = a38  - k38 - c38 - atm3836 * atm36
 
-        cl36 = m * (a38  - k38 - ca38 - atm3836 * atm36)
-             = m (a38  - k38 - ca38) - m * atm3836 * atm36
-        atm36 = a36 - ca36 - m (a38  - k38 - ca38) + m * atm3836 * atm36
-        atm36 - m * atm3836 * atm36 =  a36 - ca36 - m (a38  - k38 - ca38)
-        atm36 * (1 - m*atm3836) = a36 - ca36 - m (a38  - k38 - ca38)
-        atm36 = (a36 - ca36 - m (a38  - k38 - c38))/(1 - m*atm3836)
+    cl36 = m * (a38  - k38 - ca38 - atm3836 * atm36)
+         = m (a38  - k38 - ca38) - m * atm3836 * atm36
+    atm36 = a36 - ca36 - m (a38  - k38 - ca38) + m * atm3836 * atm36
+    atm36 - m * atm3836 * atm36 =  a36 - ca36 - m (a38  - k38 - ca38)
+    atm36 * (1 - m*atm3836) = a36 - ca36 - m (a38  - k38 - ca38)
+    atm36 = (a36 - ca36 - m (a38  - k38 - c38))/(1 - m*atm3836)
 
 
     """
@@ -368,7 +409,7 @@ def calculate_atmospheric(a38, a36, k38, ca38, ca36, decay_time, production_rati
 
     pr = production_ratios
 
-    m = pr.get('Cl3638', 0) * nominal_value(arar_constants.lambda_Cl36) * decay_time
+    m = pr.get("Cl3638", 0) * nominal_value(arar_constants.lambda_Cl36) * decay_time
     atm3836 = nominal_value(arar_constants.atm3836)
     atm36 = (a36 - ca36 - m * (a38 - k38 - ca38)) / (1 - m * atm3836)
     atm38 = atm3836 * atm36
@@ -394,33 +435,40 @@ def calculate_cosmogenic_components(c36, c38, arar_constants):
     return cosmo36, cosmo38, noncosmo36, noncosmo38
 
 
-def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, fixed_k3739=False):
+def calculate_f(
+    isotopes, decay_time, interferences=None, arar_constants=None, fixed_k3739=False
+):
     """
-        isotope values corrected for blank, baseline, (background)
-        ic_factor, (discrimination), ar37 and ar39 decay
+    isotope values corrected for blank, baseline, (background)
+    ic_factor, (discrimination), ar37 and ar39 decay
 
     """
     a40, a39, a38, a37, a36 = isotopes
 
     def calc_f(pr):
-        k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(a39, a37, pr, arar_constants, fixed_k3739)
+        k37, k38, k39, ca36, ca37, ca38, ca39 = interference_corrections(
+            a39, a37, pr, arar_constants, fixed_k3739
+        )
 
-        atm36, atm38, cl36, cl38 = calculate_atmospheric(a38, a36, k38, ca38, ca36,
-                                                         decay_time,
-                                                         pr,
-                                                         arar_constants)
+        atm36, atm38, cl36, cl38 = calculate_atmospheric(
+            a38, a36, k38, ca38, ca36, decay_time, pr, arar_constants
+        )
         cosmo38 = None
         cosmo36 = None
         if arar_constants.use_cosmogenic_correction:
             # calculate cosmogenic components
-            cosmo36, cosmo38, atm36, atm38 = calculate_cosmogenic_components(atm36, atm38, arar_constants)
+            cosmo36, cosmo38, atm36, atm38 = calculate_cosmogenic_components(
+                atm36, atm38, arar_constants
+            )
 
         # calculate radiogenic
-        trapped_4036 = ufloat(nominal_value(arar_constants.atm4036), std_dev(arar_constants.atm4036))
-        trapped_4036.tag = 'trapped_4036'
+        trapped_4036 = ufloat(
+            nominal_value(arar_constants.atm4036), std_dev(arar_constants.atm4036)
+        )
+        trapped_4036.tag = "trapped_4036"
         atm40 = atm36 * trapped_4036
 
-        k4039 = pr.get('K4039', 0)
+        k4039 = pr.get("K4039", 0)
         k40 = k39 * k4039
 
         rad40 = a40 - atm40 - k40
@@ -429,20 +477,36 @@ def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, f
         except ZeroDivisionError:
             ff = ufloat(1.0, 0)
 
-        nar = {'k40': k40, 'ca39': ca39, 'k38': k38, 'ca38': ca38,
-               'cl38': cl38, 'k37': k37, 'ca37': ca37, 'ca36': ca36,
-               'cl36': cl36,
-               'cosmo38': cosmo38, 'cosmo36': cosmo36}
+        nar = {
+            "k40": k40,
+            "ca39": ca39,
+            "k38": k38,
+            "ca38": ca38,
+            "cl38": cl38,
+            "k37": k37,
+            "ca37": ca37,
+            "ca36": ca36,
+            "cl36": cl36,
+            "cosmo38": cosmo38,
+            "cosmo36": cosmo36,
+        }
         try:
             rp = rad40 / a40 * 100
         except ZeroDivisionError:
             rp = ufloat(0, 0)
 
-        comp = {'rad40': rad40, 'a40': a40, 'radiogenic_yield': rp,
-                'ca37': ca37, 'ca39': ca39, 'ca36': ca36, 'k39': k39,
-                'atm40': atm40}
+        comp = {
+            "rad40": rad40,
+            "a40": a40,
+            "radiogenic_yield": rp,
+            "ca37": ca37,
+            "ca39": ca39,
+            "ca36": ca36,
+            "k39": k39,
+            "atm40": atm40,
+        }
 
-        ifc = {'Ar40': a40 - k40, 'Ar39': k39, 'Ar38': a38, 'Ar37': a37, 'Ar36': atm36}
+        ifc = {"Ar40": a40 - k40, "Ar39": k39, "Ar38": a38, "Ar37": a37, "Ar36": atm36}
         return ff, nar, comp, ifc
 
     if interferences is None:
@@ -452,7 +516,10 @@ def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, f
         arar_constants = ArArConstants()
 
     # make local copy of interferences
-    pr = {k: ufloat(nominal_value(v), std_dev=0, tag=v.tag) for k, v in interferences.items()}
+    pr = {
+        k: ufloat(nominal_value(v), std_dev=0, tag=v.tag)
+        for k, v in interferences.items()
+    }
 
     f_wo_irrad, _, _, _ = calc_f(pr)
     f, non_ar_isotopes, computed, interference_corrected = calc_f(interferences)
@@ -460,7 +527,9 @@ def calculate_f(isotopes, decay_time, interferences=None, arar_constants=None, f
     return f, f_wo_irrad, non_ar_isotopes, computed, interference_corrected
 
 
-def convert_age(uage, original_monitor_age, original_lambda_k, new_monitor_age, new_lambda_k):
+def convert_age(
+    uage, original_monitor_age, original_lambda_k, new_monitor_age, new_lambda_k
+):
     converter.setup(original_monitor_age, original_lambda_k)
     if new_monitor_age is None:
         age, err = converter.convert(nominal_value(uage), std_dev(uage))
@@ -495,7 +564,7 @@ def age_equation(j, f, include_decay_error=False, lambda_k=None, arar_constants=
         # lambda is defined in years, so age is in years
         age = lambda_k ** -1 * umath.log(1 + j * f)
 
-        return arar_constants.scale_age(age, current='a')
+        return arar_constants.scale_age(age, current="a")
     except (ValueError, TypeError):
         return ufloat(0, 0)
 
@@ -504,10 +573,11 @@ def age_equation(j, f, include_decay_error=False, lambda_k=None, arar_constants=
 # non-recursive
 # ===============================================================================
 
+
 def calculate_error_F(signals, F, k4039, ca3937, ca3637):
     """
-        McDougall and Harrison
-        p92 eq 3.43
+    McDougall and Harrison
+    p92 eq 3.43
 
     """
 
@@ -533,8 +603,8 @@ def calculate_error_F(signals, F, k4039, ca3937, ca3637):
 
 def calculate_error_t(F, ssF, j, ssJ):
     """
-        McDougall and Harrison
-        p92 eq. 3.43
+    McDougall and Harrison
+    p92 eq. 3.43
     """
     JJ = j * j
     FF = F * F
@@ -544,7 +614,7 @@ def calculate_error_t(F, ssF, j, ssJ):
     return sst ** 0.5
 
 
-def calculate_fractional_loss(t, temp, a, model='plane', material='kfeldspar'):
+def calculate_fractional_loss(t, temp, a, model="plane", material="kfeldspar"):
     """
 
     :param t: years
@@ -552,7 +622,7 @@ def calculate_fractional_loss(t, temp, a, model='plane', material='kfeldspar'):
     :return:
     """
 
-    r = 1.9872036E-3  # kcal/(K*mol)
+    r = 1.9872036e-3  # kcal/(K*mol)
 
     # convert a (mm) to cm
     a /= 10
@@ -562,13 +632,13 @@ def calculate_fractional_loss(t, temp, a, model='plane', material='kfeldspar'):
     # convert temp (C) to Kelvin
     temp += 273.15
 
-    if material == 'kfeldspar':
+    if material == "kfeldspar":
         d_0 = 0.0098  # cm/s**2
         ea = 43.8  # kcal/mol
 
     d = d_0 * math.exp(-ea / (r * temp))
 
-    if model == 'plane':
+    if model == "plane":
         f = 2 / math.pi ** 0.5 * (d * t / a ** 2) ** 0.5
         if 1 >= f >= 0.45:
             f = 1 - (8 / math.pi ** 2) * math.exp(-math.pi ** 2 * d * t / (4 * a ** 2))
@@ -576,7 +646,7 @@ def calculate_fractional_loss(t, temp, a, model='plane', material='kfeldspar'):
     return f
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -591,8 +661,8 @@ if __name__ == '__main__':
 
             # print(t, calculate_fractional_loss(t, temp, a))
 
-            plt.plot(ts, fs, label='{}C'.format(temp))
-        plt.title('Constant Diffusion Length Scale ({}mm)'.format(a))
+            plt.plot(ts, fs, label="{}C".format(temp))
+        plt.title("Constant Diffusion Length Scale ({}mm)".format(a))
     else:
         # constant temp
         temp = 475
@@ -603,13 +673,13 @@ if __name__ == '__main__':
 
             # print(t, calculate_fractional_loss(t, temp, a))
 
-            plt.plot(ts, fs, label='{}mm'.format(a))
+            plt.plot(ts, fs, label="{}mm".format(a))
 
-        plt.title('Constant Temp ({}C)'.format(temp))
+        plt.title("Constant Temp ({}C)".format(temp))
 
     plt.legend()
-    plt.xlabel('Time (a)')
-    plt.ylabel('fractional loss')
+    plt.xlabel("Time (a)")
+    plt.ylabel("fractional loss")
     plt.ylim(0, 1)
     plt.show()
 

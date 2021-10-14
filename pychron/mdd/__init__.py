@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-GEOMETRIES = ('Slab', 'Sphere', 'Cylinder')
+GEOMETRIES = ("Slab", "Sphere", "Cylinder")
 
 
 # ============= EOF =============================================

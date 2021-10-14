@@ -30,10 +30,9 @@ class NameEntry(HasTraits):
     name = Str
 
     def traits_view(self):
-        v = okcancel_view(UItem('name'),
-                          resizable=True,
-                          width=300,
-                          title='Enter Settings Name')
+        v = okcancel_view(
+            UItem("name"), resizable=True, width=300, title="Enter Settings Name"
+        )
         return v
 
 
@@ -46,17 +45,28 @@ class Selection(HasTraits):
     source = Str
 
     def traits_view(self):
-        return okcancel_view(VGroup(UItem('names', editor=ListStrEditor(selected='selected', editable=False)),
-                                    UItem('option_names',
-                                          style='custom',
-                                          editor=CheckListEditor(name='available_option_names',
-                                                                 cols=3))),
-                             title='Select Settings')
+        return okcancel_view(
+            VGroup(
+                UItem(
+                    "names", editor=ListStrEditor(selected="selected", editable=False)
+                ),
+                UItem(
+                    "option_names",
+                    style="custom",
+                    editor=CheckListEditor(name="available_option_names", cols=3),
+                ),
+            ),
+            title="Select Settings",
+        )
 
     def _selected_changed(self, new):
         if new:
-            self.source = src = os.path.join(self.path, 'settings', new, 'plotter_options')
-            self.option_names = [d for d in os.listdir(src) if os.path.isdir(os.path.join(src, d))]
+            self.source = src = os.path.join(
+                self.path, "settings", new, "plotter_options"
+            )
+            self.option_names = [
+                d for d in os.listdir(src) if os.path.isdir(os.path.join(src, d))
+            ]
             self.available_option_names = self.option_names[:]
 
 
@@ -78,8 +88,10 @@ class SettingsRepoManager(GitRepoManager):
             if name and selected_options:
                 dest = os.path.join(paths.plotter_options_dir, globalv.username)
                 if os.path.isdir(dest):
-                    if not self.confirmation_dialog('You are about to overwrite your existing settings\n'
-                                                    'Are you sure you want to continue?'):
+                    if not self.confirmation_dialog(
+                        "You are about to overwrite your existing settings\n"
+                        "Are you sure you want to continue?"
+                    ):
                         return
 
                     self._rmtree(dest, selected_options)
@@ -116,12 +128,12 @@ class SettingsRepoManager(GitRepoManager):
 
         :return:
         """
-        settings_root = os.path.join(self.path, 'settings')
+        settings_root = os.path.join(self.path, "settings")
 
         if not os.path.isdir(settings_root):
             os.mkdir(settings_root)
 
-        msg = 'Added'
+        msg = "Added"
         existing_settings_names = self._get_existing_settings_names()
         name_entry = NameEntry()
         while 1:
@@ -129,10 +141,12 @@ class SettingsRepoManager(GitRepoManager):
             if info.result:
                 name = name_entry.name
                 if name in existing_settings_names:
-                    resp = self.confirmation_dialog('Settings "{}" already exists. Would you like to '
-                                                    'overwrite?'.format(name))
+                    resp = self.confirmation_dialog(
+                        'Settings "{}" already exists. Would you like to '
+                        "overwrite?".format(name)
+                    )
                     if resp:
-                        msg = 'Overwrote'
+                        msg = "Overwrote"
                         shutil.rmtree(os.path.join(settings_root, name))
                         break
                     else:
@@ -146,7 +160,7 @@ class SettingsRepoManager(GitRepoManager):
         os.mkdir(working_root)
 
         srctree = os.path.join(paths.plotter_options_dir, globalv.username)
-        shutil.copytree(srctree, os.path.join(working_root, 'plotter_options'))
+        shutil.copytree(srctree, os.path.join(working_root, "plotter_options"))
 
         self.add_unstaged(add_all=True)
         self.commit('{} Settings "{}"'.format(msg, name))
@@ -154,10 +168,16 @@ class SettingsRepoManager(GitRepoManager):
 
     # private
     def _get_existing_settings_names(self):
-        settings_root = os.path.join(self.path, 'settings')
+        settings_root = os.path.join(self.path, "settings")
         if os.path.isdir(settings_root):
-            ret = [d for d in os.listdir(settings_root) if os.path.isdir(os.path.join(settings_root, d))]
+            ret = [
+                d
+                for d in os.listdir(settings_root)
+                if os.path.isdir(os.path.join(settings_root, d))
+            ]
         else:
             ret = []
         return ret
+
+
 # ============= EOF =============================================

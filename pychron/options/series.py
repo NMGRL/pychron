@@ -59,13 +59,20 @@ class SeriesOptions(FitOptions):
     display_min_max = Bool(False)
 
     def get_statistics_options(self):
-        return {k: getattr(self, k) for k in ('show_statistics_as_table', 'display_min_max', )}
+        return {
+            k: getattr(self, k)
+            for k in (
+                "show_statistics_as_table",
+                "display_min_max",
+            )
+        }
 
     # use_restricted_references = Bool
     def initialize(self):
-        self.subview_names = [MAIN, 'Series', APPEARANCE]
+        self.subview_names = [MAIN, "Series", APPEARANCE]
 
     def _get_subview(self, name):
         return VIEWS[name]
+
 
 # ============= EOF =============================================

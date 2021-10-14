@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import difflib
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -59,63 +60,66 @@ import difflib
 #
 #     return list(set(ls)), list(set(rs))
 
+
 def extract_bounds(line):
     """
-        @@ -1,4 +1,4 @@
+    @@ -1,4 +1,4 @@
     """
-    args = line.split('@@')
+    args = line.split("@@")
     line = args[1]
 
-    a, b = line.strip().split(' ')
+    a, b = line.strip().split(" ")
 
-    sa, ea = a.split(',')
-    sb, eb = b.split(',')
+    sa, ea = a.split(",")
+    sb, eb = b.split(",")
 
     bnds = (sa[1:], ea, sb, eb)
-    a,b,c,d = [int(x) for x in bnds]
+    a, b, c, d = [int(x) for x in bnds]
     print(line)
-    return a,b,c,d
+    return a, b, c, d
 
     # return (int(sa[1:]), int(ea)), (int(sb), int(eb))
 
+
 def extract_line_numbers(a, b):
     # diff_iter = difflib.unified_diff(a.split('\n'), b.split('\n'))
-    diff_iter = difflib.ndiff(a.split('\n'), b.split('\n'))
+    diff_iter = difflib.ndiff(a.split("\n"), b.split("\n"))
     ls, rs = [], []
-    llineno,rlineno=0,0
-    print('-----------------------')
+    llineno, rlineno = 0, 0
+    print("-----------------------")
     for di in diff_iter:
-        di=str(di).rstrip()
+        di = str(di).rstrip()
         if di:
-            d0=di[0]
-            if d0=='-':
+            d0 = di[0]
+            if d0 == "-":
                 ls.append(llineno)
-                llineno+=1
-            elif d0=='+':
+                llineno += 1
+            elif d0 == "+":
                 rs.append(rlineno)
-                rlineno+=1
-            elif d0==' ':
-                llineno+=1
-                rlineno+=1
-            elif d0=='?':
+                rlineno += 1
+            elif d0 == " ":
+                llineno += 1
+                rlineno += 1
+            elif d0 == "?":
                 pass
                 # if '+' in di:
                 #     rs.append(float(llineno))
                 # else:
                 #     ls.append(float(rlineno))
         else:
-            llineno+=1
-            rlineno+=1
+            llineno += 1
+            rlineno += 1
         print(di.rstrip())
 
     return ls, rs
 
+
 def extract_line_changes(a, b):
-    diff_iter = difflib.unified_diff(a.split('\n'), b.split('\n'))
+    diff_iter = difflib.unified_diff(a.split("\n"), b.split("\n"))
     ls, rs = [], []
     for di in diff_iter:
         print(di.rstrip())
-        if di.startswith('@@'):
+        if di.startswith("@@"):
             s1, e1, s2, e2 = extract_bounds(di)
             ls.append((s1, e1))
             rs.append((s2, e2))
@@ -123,15 +127,12 @@ def extract_line_changes(a, b):
     return ls, rs
 
 
-if __name__ == '__main__':
-    a = '''a=1
+if __name__ == "__main__":
+    a = """a=1
 b=1
 c=1
-d=1'''
-    b = '''a=12
-b=1'''
-    print('exception', extract_line_numbers(a, b))
+d=1"""
+    b = """a=12
+b=1"""
+    print("exception", extract_line_numbers(a, b))
 # ============= EOF =============================================
-
-
-

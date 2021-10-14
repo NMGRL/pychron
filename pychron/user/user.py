@@ -24,9 +24,9 @@ class User(HasTraits):
     name = Str
     email = Str
     enabled = Bool
-    keys = ('name', 'email', 'enabled')
+    keys = ("name", "email", "enabled")
 
     def __init__(self, dbrecord, *args, **kw):
         super(User, self).__init__(*args, **kw)
         self.name = dbrecord.name
-        self.email = dbrecord.email or ''
+        self.email = dbrecord.email or ""

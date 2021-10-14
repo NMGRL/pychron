@@ -23,12 +23,15 @@ from pychron.applications.pychron_application import PychronApplication
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class PyUV(PychronApplication):
-    id = 'pychron.uv.application'
-    name = 'pyUV'
-    shortname ='uv'
+    id = "pychron.uv.application"
+    name = "pyUV"
+    shortname = "uv"
     default_layout = [
-        TaskWindowLayout('tasks.hardware'),
-        TaskWindowLayout('pychron.fusions.uv')]
+        TaskWindowLayout("tasks.hardware"),
+        TaskWindowLayout("pychron.fusions.uv"),
+    ]
+
 
 # ============= EOF =============================================

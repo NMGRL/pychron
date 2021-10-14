@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 
@@ -29,15 +28,25 @@
 
 
 from __future__ import absolute_import
-from pychron.image.image_helper import grayspace, erode, dilate, \
-    threshold, colorspace, contour, clone, get_polygons, draw_polygons, lines
+from pychron.image.image_helper import (
+    grayspace,
+    erode,
+    dilate,
+    threshold,
+    colorspace,
+    contour,
+    clone,
+    get_polygons,
+    draw_polygons,
+    lines,
+)
 
 from .image import Image
 
 
 class CalibrationImage(Image):
-    '''
-    '''
+    """ """
+
     def find_polygons(self, thresh=0, erode_value=0, dilate_value=0, angle=0):
         self.frames = []
         frame = self.source_frame
@@ -57,7 +66,7 @@ class CalibrationImage(Image):
         if contours:
             # display the contours
             csrc = clone(colorspace(gsrc))
-#            draw_contour_list(csrc, contours)
+            #            draw_contour_list(csrc, contours)
 
             # approximate and draw polygons from contours
             polygons, br = get_polygons(contours)
@@ -70,9 +79,7 @@ class CalibrationImage(Image):
         # self.frames.append(lsrc)
 
     def process(self, thresh=0, erode_value=0, dilate_value=0, angle=0):
-        '''
-   
-        '''
+        """ """
 
         self.frames = []
         frame = self.source_frame
@@ -96,28 +103,41 @@ class CalibrationImage(Image):
             # find vert
             tol = 5
             if abs(li[0].x - li[1].x) < tol:
-#                print 'vert', ((li[0].x + li[1].x) ** 2 + (li[0].y + li[1].y) ** 2) ** 0.5
+                #                print 'vert', ((li[0].x + li[1].x) ** 2 + (li[0].y + li[1].y) ** 2) ** 0.5
                 vert.append(li)
             elif abs(li[0].y - li[1].y) < tol:
-#                print 'hor', ((li[0].x + li[1].x) ** 2 + (li[0].y + li[1].y) ** 2) ** 0.5
+                #                print 'hor', ((li[0].x + li[1].x) ** 2 + (li[0].y + li[1].y) ** 2) ** 0.5
                 horz.append(li)
 
         hdist = []
         for hi in horz:
             for hj in horz:
-                hdist.append(max([abs(hi[0].y - hj[0].y),
-                  abs(hi[0].y - hj[1].y),
-                  abs(hi[1].y - hj[1].y),
-                  abs(hi[1].y - hj[0].y)]))
+                hdist.append(
+                    max(
+                        [
+                            abs(hi[0].y - hj[0].y),
+                            abs(hi[0].y - hj[1].y),
+                            abs(hi[1].y - hj[1].y),
+                            abs(hi[1].y - hj[0].y),
+                        ]
+                    )
+                )
         vdist = []
         for vi in vert:
             for vj in vert:
-                vdist.append(max([abs(vi[0].x - vj[0].x),
-                  abs(vi[0].x - vj[1].x),
-                  abs(vi[1].x - vj[1].x),
-                  abs(vi[1].x - vj[0].x)]))
+                vdist.append(
+                    max(
+                        [
+                            abs(vi[0].x - vj[0].x),
+                            abs(vi[0].x - vj[1].x),
+                            abs(vi[1].x - vj[1].x),
+                            abs(vi[1].x - vj[0].x),
+                        ]
+                    )
+                )
 
         return hdist, vdist
+
 
 #    def preprocess(self, pychron, erode_value, dilate_value, thresh):
 #        '''
@@ -150,10 +170,6 @@ class CalibrationImage(Image):
 #        self.frames.append(colorspace(tsrc))
 #
 #        return tsrc
-
-
-
-
 
 
 # ============= EOF ====================================

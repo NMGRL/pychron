@@ -45,45 +45,45 @@ class Mapper:
     irradiation_project = None
 
     def material(self, m):
-        if m.lower() in ('san', 'sandine', 'sanidine'):
-            m = 'Sanidine'
-        elif m.lower() in ('wr',):
-            m = 'Whole Rock'
-        elif m.lower() in ('gm', 'groundmass'):
-            m = 'Groundmass'
-        elif m.lower() in ('gmc', 'groundmass concentrate'):
-            m = 'Groundmass Concentrate'
-        elif m.lower() in ('plag', 'plagioclase'):
-            m = 'Plagioclase'
-        elif m.lower() in ('hbl', 'hornblende'):
-            m = 'Hornblende'
-        elif m.lower() in ('phlogopite',):
-            m = 'Phlogopite'
-        elif m.lower() in ('bi', 'biotite'):
-            m = 'Biotite'
-        elif m.lower() in ('musc', 'muscovite'):
-            m = 'Muscovite'
-        elif m.lower() in ('kspar'):
-            m = 'K-Feldspar'
+        if m.lower() in ("san", "sandine", "sanidine"):
+            m = "Sanidine"
+        elif m.lower() in ("wr",):
+            m = "Whole Rock"
+        elif m.lower() in ("gm", "groundmass"):
+            m = "Groundmass"
+        elif m.lower() in ("gmc", "groundmass concentrate"):
+            m = "Groundmass Concentrate"
+        elif m.lower() in ("plag", "plagioclase"):
+            m = "Plagioclase"
+        elif m.lower() in ("hbl", "hornblende"):
+            m = "Hornblende"
+        elif m.lower() in ("phlogopite",):
+            m = "Phlogopite"
+        elif m.lower() in ("bi", "biotite"):
+            m = "Biotite"
+        elif m.lower() in ("musc", "muscovite"):
+            m = "Muscovite"
+        elif m.lower() in ("kspar"):
+            m = "K-Feldspar"
 
         return m
 
     def project(self, p):
-        if p == 'J-Curve':
-            p = 'Irradiation-{}'.format(self.irradiation_project)
+        if p == "J-Curve":
+            p = "Irradiation-{}".format(self.irradiation_project)
 
         return p
 
     def principal_investigator(self, p):
         p = p.strip()
         if not p:
-            p = 'NMGRL'
+            p = "NMGRL"
 
         return p
 
 
 class BaseDVCImporterModel(Loggable):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance("pychron.dvc.dvc.DVC")
     sources = Dict
 
     source = Any
@@ -107,18 +107,21 @@ class DVCIrradiationImporterModel(BaseDVCImporterModel):
         self.mapper = Mapper()
 
     def do_import(self):
-        self.debug('doing import')
+        self.debug("doing import")
 
         if self.source.selectable:
             if not self.selected:
-                self.information_dialog('Please select an Irradiation to import')
+                self.information_dialog("Please select an Irradiation to import")
                 return
 
-            self.debug('Selected Irradiations')
+            self.debug("Selected Irradiations")
             for irrad in self.selected:
                 self.debug(irrad.name)
 
-            specs = [(i.name, self.source.get_irradiation_import_spec(i.name)) for i in self.selected]
+            specs = [
+                (i.name, self.source.get_irradiation_import_spec(i.name))
+                for i in self.selected
+            ]
         else:
             spec = self.source.get_irradiation_import_spec()
             specs = [(spec.irradiation.name, spec)]
@@ -128,7 +131,7 @@ class DVCIrradiationImporterModel(BaseDVCImporterModel):
         for irradname, spec in specs:
             self.mapper.irradiation_project = irradname
             if not spec:
-                self.warning('Failed to make import spec for {}'.format(irradname))
+                self.warning("Failed to make import spec for {}".format(irradname))
                 continue
 
             self._import_irradiation(spec.irradiation)
@@ -137,8 +140,8 @@ class DVCIrradiationImporterModel(BaseDVCImporterModel):
 
     def _import_irradiation(self, irrad):
         name = irrad.name
-        self.debug('importing {}'.format(name))
-        self._progress.change_message('Importing {}'.format(name))
+        self.debug("importing {}".format(name))
+        self._progress.change_message("Importing {}".format(name))
         dvc = self.dvc
 
         dvc.add_irradiation(name, irrad.doses)
@@ -147,28 +150,37 @@ class DVCIrradiationImporterModel(BaseDVCImporterModel):
             self._import_level(name, level)
 
         dvc.meta_repo.add_unstaged()
-        dvc.meta_repo.commit('Imported {}'.format(name))
+        dvc.meta_repo.commit("Imported {}".format(name))
 
         self.imported_irradiations.append(self._active_import)
 
     def _import_level(self, irradname, level):
         name = level.name
-        self.debug('importing level {}'.format(name))
-        self._progress.change_message('Importing {} {}'.format(irradname, name))
+        self.debug("importing level {}".format(name))
+        self._progress.change_message("Importing {} {}".format(irradname, name))
         dvc = self.dvc
 
         dvc.add_production(irradname, level.production.name, level.production)
-        if dvc.add_irradiation_level(name, irradname, level.holder, level.production.name,
-                                     z=level.z,
-                                     note=level.note):
+        if dvc.add_irradiation_level(
+            name,
+            irradname,
+            level.holder,
+            level.production.name,
+            z=level.z,
+            note=level.note,
+        ):
             self._active_import.nlevels += 1
 
         for p in level.positions:
             self._import_position(irradname, level, p)
 
     def _import_position(self, irradname, level, p):
-        self.debug('importing position {} {}'.format(p.position, p.identifier))
-        self._progress.change_message('Importing {} {} {}({})'.format(irradname, level.name, p.position, p.identifier))
+        self.debug("importing position {} {}".format(p.position, p.identifier))
+        self._progress.change_message(
+            "Importing {} {} {}({})".format(
+                irradname, level.name, p.position, p.identifier
+            )
+        )
         dvc = self.dvc
         db = dvc.db
         sam = p.sample
@@ -180,7 +192,9 @@ class DVCIrradiationImporterModel(BaseDVCImporterModel):
                 self._active_import.nmaterials += 1
             db.commit()
 
-            principal_investigator = self.mapper.principal_investigator(sam.project.principal_investigator)
+            principal_investigator = self.mapper.principal_investigator(
+                sam.project.principal_investigator
+            )
             added = dvc.add_principal_investigator(principal_investigator)
             if added:
                 self._active_import.nprincipal_investigators += 1
@@ -198,14 +212,20 @@ class DVCIrradiationImporterModel(BaseDVCImporterModel):
             db.commit()
             dbsam = db.get_sample(sam.name, project, material)
 
-        added = dvc.add_irradiation_position(irradname, level.name, p.position,
-                                             identifier=p.identifier,
-                                             sample=dbsam,
-                                             note=p.note,
-                                             weight=p.weight)
+        added = dvc.add_irradiation_position(
+            irradname,
+            level.name,
+            p.position,
+            identifier=p.identifier,
+            sample=dbsam,
+            note=p.note,
+            weight=p.weight,
+        )
         if added:
             self._active_import.npositions += 1
-        dvc.update_flux(irradname, level.name, p.position, p.identifier, p.j, p.j_err, 0, 0)
+        dvc.update_flux(
+            irradname, level.name, p.position, p.identifier, p.j, p.j_err, 0, 0
+        )
 
     def _open_progress(self, specs):
         n = len(specs)
@@ -219,11 +239,11 @@ class DVCIrradiationImporterModel(BaseDVCImporterModel):
         return prog
 
     def _clear_filter_button_fired(self):
-        self.filter_str = ''
+        self.filter_str = ""
 
     def _filter_str_changed(self, new):
         if new:
-            items = fuzzyfinder(new, self.oavailable_irradiations, attr='name')
+            items = fuzzyfinder(new, self.oavailable_irradiations, attr="name")
         else:
             items = self.oavailable_irradiations
 
@@ -262,7 +282,7 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
             self.refresh_repository_identifiers()
 
     def do_import(self):
-        self.debug('doing import')
+        self.debug("doing import")
 
         aspecs = self.source.get_analysis_import_specs()
         dest = self.dvc
@@ -274,7 +294,9 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
 
         for irrad, iaspec in groupby_key(aspecs, key):
             if not dest.get_irradiation(irrad):
-                self.warning_dialog('No Irradiation "{}". Please import the irradiation'.format(irrad))
+                self.warning_dialog(
+                    'No Irradiation "{}". Please import the irradiation'.format(irrad)
+                )
                 continue
 
             for aspec in iaspec:
@@ -285,7 +307,7 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
                 rspec.principal_investigator = self.principal_investigator
 
                 if dest.get_analysis_runid(rspec.identifier, rspec.aliquot, rspec.step):
-                    self.warning('{} already exists'.format(rspec.runid))
+                    self.warning("{} already exists".format(rspec.runid))
                     continue
 
                 self._add_mass_spectrometer(aspec)
@@ -296,9 +318,12 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
                 self._add_sample(aspec)
                 self._add_position(aspec)
 
-                persister.per_spec_save(aspec, commit=True,
-                                        commit_tag='Transfer:{}'.format(self.source.url()),
-                                        push=False)
+                persister.per_spec_save(
+                    aspec,
+                    commit=True,
+                    commit_tag="Transfer:{}".format(self.source.url()),
+                    push=False,
+                )
 
             persister.push()
 
@@ -313,7 +338,12 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
                 pos = rspec.irradiation_position
 
                 ip = dest.db.add_irradiation_position(irrad, level, pos, idn)
-                sample = dest.get_sample(rspec.sample, rspec.project, rspec.principal_investigator, rspec.material)
+                sample = dest.get_sample(
+                    rspec.sample,
+                    rspec.project,
+                    rspec.principal_investigator,
+                    rspec.material,
+                )
                 ip.sample = sample
 
                 dest.update_flux(irrad, level, pos, idn, spec.j, spec.j_err, 0, 0)
@@ -322,18 +352,22 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
     def _add_sample(self, spec):
         spec = spec.run_spec
         dest = self.dvc
-        if not dest.get_sample(spec.sample, spec.project, spec.principal_investigator,
-                               spec.material):
-            self.debug('adding sample {}'.format(spec.sample))
-            dest.add_sample(spec.sample, spec.project, spec.principal_investigator,
-                            spec.material)
+        if not dest.get_sample(
+            spec.sample, spec.project, spec.principal_investigator, spec.material
+        ):
+            self.debug("adding sample {}".format(spec.sample))
+            dest.add_sample(
+                spec.sample, spec.project, spec.principal_investigator, spec.material
+            )
             dest.commit()
 
     def _add_project(self, spec):
         spec = spec.run_spec
         dest = self.dvc
         if not dest.get_project(spec.project, spec.principal_investigator):
-            self.debug('adding project {},{}'.format(spec.project, spec.principal_investigator))
+            self.debug(
+                "adding project {},{}".format(spec.project, spec.principal_investigator)
+            )
             dest.add_project(spec.project, spec.principal_investigator)
             dest.commit()
 
@@ -341,7 +375,7 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
         dest = self.dvc
         mat = spec.run_spec.material
         if not dest.get_material(mat):
-            self.debug('adding material {}'.format(mat))
+            self.debug("adding material {}".format(mat))
             dest.add_material(mat)
             dest.commit()
 
@@ -349,7 +383,7 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
         dest = self.dvc
         pi = spec.run_spec.principal_investigator
         if not dest.get_principal_investigator(pi):
-            self.debug('adding principal investigator {}'.format(pi))
+            self.debug("adding principal investigator {}".format(pi))
             dest.add_principal_investigator(pi)
             dest.commit()
 
@@ -357,19 +391,20 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
         dest = self.dvc
         ms = spec.run_spec.mass_spectrometer
         if not dest.get_mass_spectrometer(ms):
-            self.debug('adding mass spectrometer {}'.format(ms))
+            self.debug("adding mass spectrometer {}".format(ms))
             dest.add_mass_spectrometer(ms)
             dest.commit()
 
     def _add_extract_device(self, spec):
         ed = spec.run_spec.extract_device
         if not ed:
-            ed = 'No Extract Device'
+            ed = "No Extract Device"
 
         dest = self.dvc
         if not dest.get_extraction_device(ed):
-            self.debug('adding extract device {}'.format(ed))
+            self.debug("adding extract device {}".format(ed))
             dest.add_extraction_device(ed)
             dest.commit()
+
 
 # ============= EOF =============================================

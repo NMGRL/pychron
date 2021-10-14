@@ -22,8 +22,27 @@ import yaml
 from pyface.confirmation_dialog import ConfirmationDialog
 from pyface.constant import OK, CANCEL, YES
 from pyface.file_dialog import FileDialog
-from traits.api import HasTraits, Str, List, Int, Any, Button, Bool, on_trait_change, Instance
-from traitsui.api import View, Item, UItem, HGroup, InstanceEditor, HSplit, VGroup, EnumEditor
+from traits.api import (
+    HasTraits,
+    Str,
+    List,
+    Int,
+    Any,
+    Button,
+    Bool,
+    on_trait_change,
+    Instance,
+)
+from traitsui.api import (
+    View,
+    Item,
+    UItem,
+    HGroup,
+    InstanceEditor,
+    HSplit,
+    VGroup,
+    EnumEditor,
+)
 from traitsui.handler import Controller
 from traitsui.menu import Action
 from traitsui.table_column import ObjectColumn
@@ -42,6 +61,7 @@ from pychron.paths import paths
 # class NullInt(Int):
 #     default_value = None
 
+
 class Position(HasTraits):
     detector = Str
     isotope = Str
@@ -56,13 +76,19 @@ class Position(HasTraits):
     #     isos.remove(self.isotope)
     #     return isos
     def to_yaml(self):
-        return {'detector': self.detector, 'isotope': self.isotope,
-                'active': True, 'deflection': self.deflection, 'protect': False, 'is_baseline': False}
+        return {
+            "detector": self.detector,
+            "isotope": self.isotope,
+            "active": True,
+            "deflection": self.deflection,
+            "protect": False,
+            "is_baseline": False,
+        }
 
     def to_string(self):
-        s = '{}:{}'.format(self.isotope, self.detector)
+        s = "{}:{}".format(self.isotope, self.detector)
         if self.deflection:
-            s = '{}:{}'.format(s, self.deflection)
+            s = "{}:{}".format(s, self.deflection)
         return s
 
 
@@ -72,7 +98,7 @@ class Hop(HasTraits):
     settle = Int
     isotope_label = Str
     name = Str
-    detectors = List(['A', 'B'])
+    detectors = List(["A", "B"])
     add_position_button = Button
     remove_position_button = Button
     selected = Any
@@ -80,47 +106,48 @@ class Hop(HasTraits):
 
     def to_string(self):
         vs = [str(self.counts), str(self.settle)]
-        hs = "'{}'".format(', '.join([p.to_string() for p in self.positions
-                                      if p.isotope and p.detector]))
+        hs = "'{}'".format(
+            ", ".join(
+                [p.to_string() for p in self.positions if p.isotope and p.detector]
+            )
+        )
 
-        return '({}, {})'.format(hs, ', '.join(vs))
+        return "({}, {})".format(hs, ", ".join(vs))
 
     def to_yaml(self):
-        obj = {'counts': self.counts, 'settle': self.settle}
+        obj = {"counts": self.counts, "settle": self.settle}
         poss = [p for p in self.positions if p.isotope and p.detector]
         if poss:
-            obj['cup_configuration'] = [p.to_yaml() for p in poss]
+            obj["cup_configuration"] = [p.to_yaml() for p in poss]
             pp = poss[0]
-            obj['positioning'] = {'detector': pp.detector, 'isotope': pp.isotope}
+            obj["positioning"] = {"detector": pp.detector, "isotope": pp.isotope}
 
         return obj
 
     def parse_hopstr(self, hs):
         for is_baseline, iso, det, defl in split_hopstr(hs):
-            p = Position(isotope=iso,
-                         detector=det,
-                         deflection=int(defl) if defl else 0)
+            p = Position(isotope=iso, detector=det, deflection=int(defl) if defl else 0)
             self.positions.append(p)
 
         self._handle_position_change()
 
     def validate_hop(self):
         """
-            return true if no duplicates
+        return true if no duplicates
         """
-        self.error_message = ''
+        self.error_message = ""
         n = len(self.positions)
         ps = {p.isotope for p in self.positions}
         dup_iso = len(set(ps)) < n
         if dup_iso:
-            self.error_message = self._make_error_message('isotope')
+            self.error_message = self._make_error_message("isotope")
 
         ds = {p.detector for p in self.positions}
         dup_det = len(ds) < n
         if dup_det:
-            em = self._make_error_message('detector')
+            em = self._make_error_message("detector")
             if self.error_message:
-                self.error_message = '{}; {}'.format(self.error_message, em)
+                self.error_message = "{}; {}".format(self.error_message, em)
             else:
                 self.error_message = em
 
@@ -134,7 +161,7 @@ class Hop(HasTraits):
             if det in dets:
                 ps.append(det)
             dets.append(det)
-        return 'Multiple {}s: {}'.format(attr.capitalize(), ', '.join(ps))
+        return "Multiple {}s: {}".format(attr.capitalize(), ", ".join(ps))
 
     def _add_position_button_fired(self):
         self.positions.append(Position())
@@ -149,35 +176,56 @@ class Hop(HasTraits):
         else:
             self.selected = None
 
-    @on_trait_change('positions:isotope, positions[]')
+    @on_trait_change("positions:isotope, positions[]")
     def _handle_position_change(self):
-        self.isotopes_label = ','.join([i.isotope for i in self.positions])
+        self.isotopes_label = ",".join([i.isotope for i in self.positions])
 
     def traits_view(self):
         from pychron.pychron_constants import ISOTOPES
 
         cols = [
-            ObjectColumn(name='name', label='', width=20, editable=False),
-            ObjectColumn(name='isotope',
-                         editor=EnumEditor(values=ISOTOPES)),
-            ObjectColumn(name='detector',
-                         editor=EnumEditor(values=self.detectors)),
-            ObjectColumn(name='deflection', )]
+            ObjectColumn(name="name", label="", width=20, editable=False),
+            ObjectColumn(name="isotope", editor=EnumEditor(values=ISOTOPES)),
+            ObjectColumn(name="detector", editor=EnumEditor(values=self.detectors)),
+            ObjectColumn(
+                name="deflection",
+            ),
+        ]
 
-        v = View(VGroup(HGroup(Item('counts',
-                                    tooltip='Number of measurements at this position'),
-                               Item('settle', label='Settle (s)',
-                                    tooltip='Delay in seconds after magnet move and before measurement')),
-                        UItem('positions',
-                              editor=myTableEditor(columns=cols,
-                                                   sortable=False,
-                                                   clear_selection_on_dclicked=True,
-                                                   selected='selected')),
-                        HGroup(icon_button_editor('add_position_button', 'add',
-                                                  tooltip='Add isotope/detector to measure'),
-                               icon_button_editor('remove_position_button', 'delete',
-                                                  tooltip='Remove selected isotope/detector',
-                                                  enabled_when='selected'))))
+        v = View(
+            VGroup(
+                HGroup(
+                    Item("counts", tooltip="Number of measurements at this position"),
+                    Item(
+                        "settle",
+                        label="Settle (s)",
+                        tooltip="Delay in seconds after magnet move and before measurement",
+                    ),
+                ),
+                UItem(
+                    "positions",
+                    editor=myTableEditor(
+                        columns=cols,
+                        sortable=False,
+                        clear_selection_on_dclicked=True,
+                        selected="selected",
+                    ),
+                ),
+                HGroup(
+                    icon_button_editor(
+                        "add_position_button",
+                        "add",
+                        tooltip="Add isotope/detector to measure",
+                    ),
+                    icon_button_editor(
+                        "remove_position_button",
+                        "delete",
+                        tooltip="Remove selected isotope/detector",
+                        enabled_when="selected",
+                    ),
+                ),
+            )
+        )
         return v
 
 
@@ -185,7 +233,7 @@ class HopSequence(HasTraits):
     hops = List
 
     def to_string(self):
-        return '\n'.join([hi.to_string() for hi in self.hops])
+        return "\n".join([hi.to_string() for hi in self.hops])
 
     def to_yaml(self):
         return [hi.to_yaml() for hi in self.hops]
@@ -235,11 +283,11 @@ class HopEditorModel(Loggable):
 
     def open(self, p=None):
         if p is None:
-            p = '/Users/ross/Pychrondata_dev/scripts/measurement/hops/hop.txt'
+            p = "/Users/ross/Pychrondata_dev/scripts/measurement/hops/hop.txt"
 
         if not os.path.isfile(p):
-            p = ''
-            dialog = FileDialog(action='open', default_directory=paths.hops_dir)
+            p = ""
+            dialog = FileDialog(action="open", default_directory=paths.hops_dir)
             if dialog.open() == OK:
                 p = dialog.path
 
@@ -258,48 +306,56 @@ class HopEditorModel(Loggable):
 
     def save_as(self):
         if self._validate_sequence():
-            dialog = FileDialog(action='save as', default_directory=paths.hops_dir)
+            dialog = FileDialog(action="save as", default_directory=paths.hops_dir)
             if dialog.open() == OK:
                 p = dialog.path
-                p = add_extension(p, '.yaml' if self.use_yaml else '.txt')
+                p = add_extension(p, ".yaml" if self.use_yaml else ".txt")
                 self._save_file(p)
                 self.path = p
 
     def _load(self, p):
         self.hop_sequence = hs = HopSequence()
-        if p.endswith('.txt'):
+        if p.endswith(".txt"):
             self.use_yaml = False
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 hops = [eval(l) for l in fileiter(rfile)]
 
                 for i, (hopstr, cnt, settle) in enumerate(hops):
-                    h = Hop(name=str(i + 1),
-                            counts=cnt, settle=settle, detectors=self.detectors)
+                    h = Hop(
+                        name=str(i + 1),
+                        counts=cnt,
+                        settle=settle,
+                        detectors=self.detectors,
+                    )
                     h.parse_hopstr(hopstr)
                     hs.hops.append(h)
                 hs.label_hops()
 
             self.selected = hs.hops[0]
 
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 self.text = rfile.read()
         else:
             self.use_yaml = True
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 self.text = rfile.read()
                 try:
                     for i, hop in enumerate(yload(self.text)):
-                        h = Hop(name=str(i + 1),
-                                counts=hop.get('counts', 0),
-                                settle=hop.get('settle', 0),
-                                detectors=self.detectors)
-                        for p in hop.get('cup_configurations'):
-                            pos = Position(detector=p.get('detector', ''),
-                                           isotope=p.get('isotope', ''),
-                                           active=p.get('active', True),
-                                           is_baseline=p.get('is_baseline', False),
-                                           protect=p.get('protect', False),
-                                           deflection=p.get('deflection', ''))
+                        h = Hop(
+                            name=str(i + 1),
+                            counts=hop.get("counts", 0),
+                            settle=hop.get("settle", 0),
+                            detectors=self.detectors,
+                        )
+                        for p in hop.get("cup_configurations"):
+                            pos = Position(
+                                detector=p.get("detector", ""),
+                                isotope=p.get("isotope", ""),
+                                active=p.get("active", True),
+                                is_baseline=p.get("is_baseline", False),
+                                protect=p.get("protect", False),
+                                deflection=p.get("deflection", ""),
+                            )
                             h.positions.append(pos)
                         hs.hops.append(h)
 
@@ -312,15 +368,15 @@ class HopEditorModel(Loggable):
         hs = []
         for h in self.hop_sequence.hops:
             if not h.validate_hop():
-                hs.append('Invalid Hop {}. {}'.format(h.name, h.error_message))
+                hs.append("Invalid Hop {}. {}".format(h.name, h.error_message))
         if hs:
-            self.warning_dialog('\n'.join(hs))
+            self.warning_dialog("\n".join(hs))
         else:
             return True
 
     def _save_file(self, p):
-        self.info('saving hop to {}'.format(p))
-        with open(p, 'w') as wfile:
+        self.info("saving hop to {}".format(p))
+        with open(p, "w") as wfile:
             if self.use_yaml:
                 yaml.dump(self.to_yaml(), wfile, default_flow_style=False)
             else:
@@ -339,7 +395,7 @@ class HopEditorModel(Loggable):
         header1 = "#hopstr ('iso:det[:defl][,iso:det....]', count, settle)"
         header2 = "#e.g ('Ar40:H1, Ar41:H2, Ar38:L1, Ar37:L2, Ar36:CDD:110', 15, 3)"
 
-        return '\n'.join((header1, header2, self.hop_sequence.to_string()))
+        return "\n".join((header1, header2, self.hop_sequence.to_string()))
 
     def to_text(self):
         if self.use_yaml:
@@ -373,12 +429,16 @@ class HopEditorModel(Loggable):
 
 class HopEditorView(Controller):
     model = HopEditorModel
-    title = Str('Peak Hops Editor')
+    title = Str("Peak Hops Editor")
 
     def close(self, info, is_ok):
         if self.model.dirty:
-            dlg = ConfirmationDialog(message='Save changes to Hops file', cancel=True,
-                                     default=CANCEL, title='Save Changes?')
+            dlg = ConfirmationDialog(
+                message="Save changes to Hops file",
+                cancel=True,
+                default=CANCEL,
+                title="Save Changes?",
+            )
             ret = dlg.open()
             if ret == CANCEL:
                 return False
@@ -386,22 +446,24 @@ class HopEditorView(Controller):
                 self.model.save()
         return True
 
-    @on_trait_change('model:hop_sequence:hops:[counts,settle, positions:[isotope,detector,deflection]]')
+    @on_trait_change(
+        "model:hop_sequence:hops:[counts,settle, positions:[isotope,detector,deflection]]"
+    )
     def _handle_edit(self):
         self.model.dirty = True
         self.model.text = self.model.to_text()
 
-    @on_trait_change('model.[path,dirty]')
+    @on_trait_change("model.[path,dirty]")
     def _handle_path_change(self):
         p = self.model.path
 
         n = os.path.basename(p)
         if self.model.dirty:
-            n = '*{}'.format(n)
+            n = "*{}".format(n)
 
         d = os.path.dirname(p)
-        d = d.replace(os.path.expanduser('~'), '')
-        t = '{} - PeakHop Editor - {}'.format(n, d)
+        d = d.replace(os.path.expanduser("~"), "")
+        t = "{} - PeakHop Editor - {}".format(n, d)
         if not self.info:
             self.title = t
         else:
@@ -414,63 +476,80 @@ class HopEditorView(Controller):
         self.model.save_as()
 
     def traits_view(self):
-        cols = [ObjectColumn(name='name',
-                             label='',
-                             editable=False),
-                ObjectColumn(name='counts'),
-                ObjectColumn(name='settle', label='Settle (s)'),
-                ObjectColumn(name='isotopes_label',
-                             editable=False,
-                             width=175,
-                             label='Isotopes')]
+        cols = [
+            ObjectColumn(name="name", label="", editable=False),
+            ObjectColumn(name="counts"),
+            ObjectColumn(name="settle", label="Settle (s)"),
+            ObjectColumn(
+                name="isotopes_label", editable=False, width=175, label="Isotopes"
+            ),
+        ]
 
         hgrp = VGroup(
-            UItem('object.hop_sequence.hops',
-                  editor=myTableEditor(columns=cols,
-                                       clear_selection_on_dclicked=True,
-                                       sortable=False,
-                                       selected='selected')),
-
-            HGroup(icon_button_editor('add_hop_button', 'add',
-                                      tooltip='Add peak hop'),
-                   icon_button_editor('remove_hop_button', 'delete',
-                                      tooltip='Delete selected peak hop',
-                                      enabled_when='selected')))
-        sgrp = UItem('selected', style='custom', editor=InstanceEditor())
+            UItem(
+                "object.hop_sequence.hops",
+                editor=myTableEditor(
+                    columns=cols,
+                    clear_selection_on_dclicked=True,
+                    sortable=False,
+                    selected="selected",
+                ),
+            ),
+            HGroup(
+                icon_button_editor("add_hop_button", "add", tooltip="Add peak hop"),
+                icon_button_editor(
+                    "remove_hop_button",
+                    "delete",
+                    tooltip="Delete selected peak hop",
+                    enabled_when="selected",
+                ),
+            ),
+        )
+        sgrp = UItem("selected", style="custom", editor=InstanceEditor())
 
         grp = HSplit(hgrp, sgrp)
-        save_action = Action(name='Save',
-                             image=icon('document-save'),
-                             enabled_when='object.saveable',
-                             action='save')
-        save_as_acion = Action(name='Save As',
-                               image=icon('document-save-as'),
-                               action='save_as',
-                               enabled_when='object.saveasable', )
+        save_action = Action(
+            name="Save",
+            image=icon("document-save"),
+            enabled_when="object.saveable",
+            action="save",
+        )
+        save_as_acion = Action(
+            name="Save As",
+            image=icon("document-save-as"),
+            action="save_as",
+            enabled_when="object.saveasable",
+        )
 
-        teditor = myTextEditor(bgcolor='#F7F6D0',
-                               fontsize=12,
-                               fontsize_name='fontsize',
-                               wrap=False,
-                               tab_width=15)
+        teditor = myTextEditor(
+            bgcolor="#F7F6D0",
+            fontsize=12,
+            fontsize_name="fontsize",
+            wrap=False,
+            tab_width=15,
+        )
 
-        v = View(VGroup(VGroup(grp, label='Editor'),
-                        VGroup(UItem('object.text',
-                                     editor=teditor,
-                                     style='custom'), label='Text')),
-                 # toolbar=ToolBar(),
-                 width=690,
-                 title=self.title,
-                 buttons=['OK', save_action, save_as_acion],
-                 resizable=True)
+        v = View(
+            VGroup(
+                VGroup(grp, label="Editor"),
+                VGroup(
+                    UItem("object.text", editor=teditor, style="custom"), label="Text"
+                ),
+            ),
+            # toolbar=ToolBar(),
+            width=690,
+            title=self.title,
+            buttons=["OK", save_action, save_as_acion],
+            resizable=True,
+        )
         return v
 
 
-if __name__ == '__main__':
-    root = os.path.join(os.path.expanduser('~'), 'PychronDev')
+if __name__ == "__main__":
+    root = os.path.join(os.path.expanduser("~"), "PychronDev")
     paths.build(root)
     m = HopEditorModel()
-    m.detectors = ['H2', 'H1', 'CDD']
+    m.detectors = ["H2", "H1", "CDD"]
     # m.open()
     m.new()
     h = HopEditorView(model=m)

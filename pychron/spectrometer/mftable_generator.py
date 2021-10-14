@@ -48,16 +48,16 @@ from pychron.loggable import Loggable
 #             else:
 #                 return False
 
-    #     magnet = ion.spectrometer.magnet
-    #     if update_existing:
-    #         self._update_table(magnet, refiso, results)
-    #     else:
-    #         self._write_table(detectors, refiso, results)
-    #
-    #     return True
-    #
-    # def _update_table(self, magnet, refiso, results):
-    #     for det, apc in results:
-    #         magnet.update_field_table(det, refiso, apc, 'mftable_generator', update_others=False)
+#     magnet = ion.spectrometer.magnet
+#     if update_existing:
+#         self._update_table(magnet, refiso, results)
+#     else:
+#         self._write_table(detectors, refiso, results)
+#
+#     return True
+#
+# def _update_table(self, magnet, refiso, results):
+#     for det, apc in results:
+#         magnet.update_field_table(det, refiso, apc, 'mftable_generator', update_others=False)
 
 # ============= EOF =============================================

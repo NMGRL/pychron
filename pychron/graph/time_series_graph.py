@@ -15,29 +15,35 @@
 # ===============================================================================
 
 
-
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from chaco.api import PlotAxis as ScalesPlotAxis
 from chaco.scales.api import CalendarScaleSystem, TimeScale
 from chaco.scales_tick_generator import ScalesTickGenerator
+
 # =============standard library imports ========================
 import time
 from numpy import array
+
 # =============local library imports  ==========================
-from pychron.core.time_series.time_series import smooth, \
-    seasonal_subseries, autocorrelation, downsample_1d
+from pychron.core.time_series.time_series import (
+    smooth,
+    seasonal_subseries,
+    autocorrelation,
+    downsample_1d,
+)
 
 from .stacked_graph import StackedGraph
 from .stream_graph import StreamGraph, StreamStackedGraph
 from .graph import Graph
 
-HMSScales = [TimeScale(microseconds=100), TimeScale(milliseconds=10)] + \
-            [TimeScale(seconds=dt) for dt in (1, 5, 15, 30)] + \
-            [TimeScale(minutes=dt) for dt in (5, 15, 30)] + \
-            [TimeScale(hours=dt) for dt in (6, 12, 24)] + \
-            [TimeScale(days=dt) for dt in (1, 2, 7)
-             ]
+HMSScales = (
+    [TimeScale(microseconds=100), TimeScale(milliseconds=10)]
+    + [TimeScale(seconds=dt) for dt in (1, 5, 15, 30)]
+    + [TimeScale(minutes=dt) for dt in (5, 15, 30)]
+    + [TimeScale(hours=dt) for dt in (6, 12, 24)]
+    + [TimeScale(days=dt) for dt in (1, 2, 7)]
+)
 
 
 class TimeSeriesGraph(Graph):
@@ -75,17 +81,16 @@ class TimeSeriesGraph(Graph):
     #     super(TimeSeriesGraph, self).set_x_title(t, plotid=plotid)
 
     def set_axis_label_color(self, *args, **kw):
-        '''
-        '''
-        kw['attr'] = 'title'
-        if args[0] == 'x':
-            kw['axis'] = self._get_x_axis(kw['plotid'])
+        """ """
+        kw["attr"] = "title"
+        if args[0] == "x":
+            kw["axis"] = self._get_x_axis(kw["plotid"])
 
         self._set_axis_color(*args, **kw)
 
     def set_axis_tick_color(self, *args, **kw):
-        if args[0] == 'x':
-            kw['axis'] = self._get_x_axis(kw['plotid'])
+        if args[0] == "x":
+            kw["axis"] = self._get_x_axis(kw["plotid"])
         super(TimeSeriesGraph, self).set_axis_tick_color(*args, **kw)
 
     #        StackedGraph.set_axis_tick_color(self, *args, **kw)
@@ -102,20 +107,30 @@ class TimeSeriesGraph(Graph):
     #                return underlay
 
     def new_plot(self, *args, **kw):
-        '''
-        '''
+        """ """
 
-        kw['pan'] = 'x' if not 'pan' in kw else kw['pan']
+        kw["pan"] = "x" if not "pan" in kw else kw["pan"]
 
         return super(TimeSeriesGraph, self).new_plot(*args, **kw)
 
-    def new_series(self, x=None, y=None, plotid=0, normalize=False,
-                   time_series=True, timescale=False, downsample=None,
-                   use_smooth=False, scale=None, **kw):
-        '''
-        '''
+    def new_series(
+        self,
+        x=None,
+        y=None,
+        plotid=0,
+        normalize=False,
+        time_series=True,
+        timescale=False,
+        downsample=None,
+        use_smooth=False,
+        scale=None,
+        **kw
+    ):
+        """ """
         if not time_series:
-            return super(TimeSeriesGraph, self).new_series(x=x, y=y, plotid=plotid, **kw)
+            return super(TimeSeriesGraph, self).new_series(
+                x=x, y=y, plotid=plotid, **kw
+            )
 
         xd = x
         if x is not None:
@@ -124,14 +139,18 @@ class TimeSeriesGraph(Graph):
                 # Epoch = 12:00 am 1/1/1970
                 fmt = "%Y-%m-%d %H:%M:%S"
 
-                args = x[0].split(' +')
+                args = x[0].split(" +")
                 timefunc = lambda xi, fmt: time.mktime(time.strptime(xi, fmt))
 
                 if len(args) > 1:
 
-                    xd = [timefunc(xi.split(' +')[0], fmt) + float(xi.split(' +')[1]) / 1000.0 for xi in x]
+                    xd = [
+                        timefunc(xi.split(" +")[0], fmt)
+                        + float(xi.split(" +")[1]) / 1000.0
+                        for xi in x
+                    ]
                 else:
-                    fmt = '%a %b %d %H:%M:%S %Y'
+                    fmt = "%a %b %d %H:%M:%S %Y"
                     xd = [timefunc(xi, fmt) for xi in x]
 
         if downsample:
@@ -150,11 +169,10 @@ class TimeSeriesGraph(Graph):
                 xd = xd * scale
 
         plot, names, rd = self._series_factory(xd, y, plotid=plotid, **kw)
-        if 'type' in rd:
-            if rd['type'] == 'line_scatter':
-                plot.plot(names, type='scatter', marker_size=2,
-                          marker='circle')
-                rd['type'] = 'line'
+        if "type" in rd:
+            if rd["type"] == "line_scatter":
+                plot.plot(names, type="scatter", marker_size=2, marker="circle")
+                rd["type"] = "line"
 
         plota = plot.plot(names, **rd)[0]
 
@@ -167,10 +185,10 @@ class TimeSeriesGraph(Graph):
         return plota, plot
 
     def _remove_bottom(self, plot):
-        title, title_font, tick_font = '', '', ''
+        title, title_font, tick_font = "", "", ""
         for i, underlay in enumerate(plot.underlays):
             try:
-                if underlay.orientation == 'bottom':
+                if underlay.orientation == "bottom":
                     title = underlay.title
                     title_font = underlay.title_font
                     tick_font = underlay.tick_label_font
@@ -186,19 +204,22 @@ class TimeSeriesGraph(Graph):
         # we cant remove the default axis and set the x_axis to the scaled axis
         # also we cant remove the default axis because then we cant change the axis title
         title, title_font, tick_font = self._remove_bottom(plot)
-        bottom = self.plotcontainer.stack_order == 'bottom_to_top'
+        bottom = self.plotcontainer.stack_order == "bottom_to_top"
         if bottom:
             if plotid == 0 or timescale:
-                axis = ScalesPlotAxis(plota, orientation="bottom",
-                                      title=title,
-                                      title_font = title_font,
-                                      tick_label_font = tick_font,
-                                      tick_generator=ScalesTickGenerator(scale=CalendarScaleSystem(
-                                          # *HMSScales
-                                      )
-                                          # scale = TimeScale()
-                                      )
-                                      )
+                axis = ScalesPlotAxis(
+                    plota,
+                    orientation="bottom",
+                    title=title,
+                    title_font=title_font,
+                    tick_label_font=tick_font,
+                    tick_generator=ScalesTickGenerator(
+                        scale=CalendarScaleSystem(
+                            # *HMSScales
+                        )
+                        # scale = TimeScale()
+                    ),
+                )
 
                 plot.underlays.append(axis)
         else:
@@ -206,36 +227,40 @@ class TimeSeriesGraph(Graph):
                 title = self._remove_bottom(pi)
 
             if (plotid == 0 and len(self.plots) == 1) or plotid == len(self.plots) - 1:
-                axis = ScalesPlotAxis(plota, orientation="bottom",
-                                      title=title,
-                                      title_font=title_font,
-                                      tick_label_font=tick_font,
-                                      tick_generator=ScalesTickGenerator(scale=CalendarScaleSystem(
-                                          # *HMSScales
-                                      )
-                                          # scale = TimeScale()
-                                      )
-                                      )
+                axis = ScalesPlotAxis(
+                    plota,
+                    orientation="bottom",
+                    title=title,
+                    title_font=title_font,
+                    tick_label_font=tick_font,
+                    tick_generator=ScalesTickGenerator(
+                        scale=CalendarScaleSystem(
+                            # *HMSScales
+                        )
+                        # scale = TimeScale()
+                    ),
+                )
 
                 plot.underlays.append(axis)
 
 
 class TimeSeriesStackedGraph(TimeSeriesGraph, StackedGraph):
-    '''
-    '''
+    """ """
+
     pass
 
 
 class TimeSeriesStreamGraph(TimeSeriesGraph, StreamGraph):
-    '''
-    '''
+    """ """
+
     pass
 
 
 class TimeSeriesStreamStackedGraph(TimeSeriesGraph, StreamStackedGraph):
-    '''
-    '''
+    """ """
+
     pass
+
 
 # ============= EOF ============================================
 # def create_dates(numpoints, units = "days"):

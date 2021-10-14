@@ -46,7 +46,7 @@ class PacketStr(BaseStr):
 
 class URLStr(BaseStr):
     def validate(self, obj, name, value):
-        if value.startswith('http://') or value.startswith('https://'):
+        if value.startswith("http://") or value.startswith("https://"):
             return value
         else:
             self.error(obj, name, value)
@@ -54,10 +54,13 @@ class URLStr(BaseStr):
 
 class HostStr(BaseStr):
     def validate(self, obj, name, value):
-        if not value or value == 'localhost' \
-                or IPREGEX.match(value) \
-                or URLREGEX.match(value) \
-                or '\\' in value:
+        if (
+            not value
+            or value == "localhost"
+            or IPREGEX.match(value)
+            or URLREGEX.match(value)
+            or "\\" in value
+        ):
 
             return value
         else:
@@ -66,7 +69,7 @@ class HostStr(BaseStr):
 
 class IPAddress(BaseStr):
     def validate(self, obj, name, value):
-        if not value or value == 'localhost' or IPREGEX.match(value):
+        if not value or value == "localhost" or IPREGEX.match(value):
             return value
         else:
             self.error(obj, name, value)
@@ -99,7 +102,7 @@ class FilterPredicate(BaseStr):
         return validate_filter_predicate(value)
 
 
-EMAIL_REGEX = re.compile(r'(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)')
+EMAIL_REGEX = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)")
 
 
 class EmailStr(String):
@@ -115,7 +118,7 @@ class SingleStr(BaseStr):
 
 
 class RestrictedStr(BaseStr):
-    def __init__(self, name='names', *args, **kw):
+    def __init__(self, name="names", *args, **kw):
         self.name = name
         super(RestrictedStr, self).__init__(*args, **kw)
 
@@ -134,4 +137,6 @@ class BorderVGroup(VGroup):
 class BorderHGroup(HGroup):
     def _show_border_default(self):
         return True
+
+
 # ============= EOF =============================================

@@ -32,6 +32,7 @@ class PolynomialMapper(HasTraits):
     coefficient = 1,2,3
         ==> 1*x^2+2*x+3
     """
+
     _coefficients = List
 
     output_low = Float(0)
@@ -48,7 +49,7 @@ class PolynomialMapper(HasTraits):
 
     def map_measured(self, v):
         """
-            convert a measured value to an output value (Voltage -> Temp)
+        convert a measured value to an output value (Voltage -> Temp)
         """
         if self._polynomial:
             v = self._polynomial(v)
@@ -56,12 +57,11 @@ class PolynomialMapper(HasTraits):
 
     def map_output(self, v):
         """
-            convert an output value to measured value (Voltage <- Temp)
+        convert an output value to measured value (Voltage <- Temp)
         """
-        c=self._coefficients[:]
+        c = self._coefficients[:]
         c[-1] -= v
         return optimize.brentq(poly1d(c), self.output_low, self.output_high)
+
+
 # ============= EOF =============================================
-
-
-

@@ -18,20 +18,24 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from traits.api import HasTraits, Str, Instance
+
 # ============= standard library imports ========================
 import time
 import os
 from numpy import linspace, polyfit
+
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.core.helpers.parsers.learner_parser import LearnerParser
+
 
 class LearnerValve(HasTraits):
     name = Str
     _start_time = None
     _stop_time = None
     _duration = 0
+
     def startTime(self):
         self._start_time = time.time()
 
@@ -41,10 +45,12 @@ class LearnerValve(HasTraits):
             self._duration = self._stop_time - self._start_time
             self._start_time = None
 
-KINDDICT = {'None':0, 'GP50':1, 'D50':2, 'NP10':3}
-SPECDICT = {'obama':0, 'jan':1}
-HOTCOLDDICT = {'cold':0, 'hot':1}
-MATERIALDICT = {'sanidine':0, 'groundmass':1}
+
+KINDDICT = {"None": 0, "GP50": 1, "D50": 2, "NP10": 3}
+SPECDICT = {"obama": 0, "jan": 1}
+HOTCOLDDICT = {"cold": 0, "hot": 1}
+MATERIALDICT = {"sanidine": 0, "groundmass": 1}
+
 
 class LearnerGetter(HasTraits):
     valve = Instance(LearnerValve)
@@ -64,11 +70,11 @@ class LearnerGetter(HasTraits):
     def getkind(self):
         return KINDDICT[self._kind]
 
-#    def setspectrometer(self, v):
-#        self._spectrometer = v
-#
-#    def getspectrometer(self):
-#        return SPECDICT[self._spectrometer]
+    #    def setspectrometer(self, v):
+    #        self._spectrometer = v
+    #
+    #    def getspectrometer(self):
+    #        return SPECDICT[self._spectrometer]
 
     def sethotcold(self, v):
         self._hotcold = v
@@ -76,32 +82,32 @@ class LearnerGetter(HasTraits):
     def gethotcold(self):
         return HOTCOLDDICT[self._hotcold]
 
-    kind = property(fset=setkind,
-                  fget=getkind)
-#    spectrometer = property(fset=setspectrometer,
-#                          fget=getspectrometer)
-    hotcold = property(fset=sethotcold,
-                  fget=gethotcold)
+    kind = property(fset=setkind, fget=getkind)
+    #    spectrometer = property(fset=setspectrometer,
+    #                          fget=getspectrometer)
+    hotcold = property(fset=sethotcold, fget=gethotcold)
+
 
 #    @property
 #    def kind(self, v):
 #        self._kind = v
 #        return self._kind
 
+
 class ExtractionLineLearner(Loggable):
-#    def __init__(self, manager, *args, **kw):
-#        super(ExtractionLineSnooper, self).__init__(*args, **kw)
-#
-#        #register trait changes
-#        manager.on
-#    configuration = None
+    #    def __init__(self, manager, *args, **kw):
+    #        super(ExtractionLineSnooper, self).__init__(*args, **kw)
+    #
+    #        #register trait changes
+    #        manager.on
+    #    configuration = None
     getters = None
     valves = None
 
     def load_configuration(self):
         self.getters = dict()
         self.valves = dict()
-        p = os.path.join(paths.setup_dir, 'learner.xml')
+        p = os.path.join(paths.setup_dir, "learner.xml")
         if os.path.isfile(p):
             cp = LearnerParser(p)
             for gi in cp.get_getters():
@@ -109,18 +115,20 @@ class ExtractionLineLearner(Loggable):
                 self.getters[g.name] = g
 
     def _getter_factory(self, gi):
-        valve = gi.find('valve')
+        valve = gi.find("valve")
         vname = valve.text.strip()
         if vname in self.valves:
             v = self.valves[vname]
         else:
             v = self._valve_factory(valve)
 
-        g = LearnerGetter(name=gi.text.strip(),
-                          kind=gi.find('kind').text.strip(),
-#                          spectrometer=gi.find('spectrometer').text.strip(),
-                          hotcold=gi.find('hotcold').text.strip(),
-                          valve=v)
+        g = LearnerGetter(
+            name=gi.text.strip(),
+            kind=gi.find("kind").text.strip(),
+            #                          spectrometer=gi.find('spectrometer').text.strip(),
+            hotcold=gi.find("hotcold").text.strip(),
+            valve=v,
+        )
         return g
 
     def _valve_factory(self, valve):
@@ -132,21 +140,19 @@ class ExtractionLineLearner(Loggable):
         if self.getters:
             # find valve in configuration
             getter = self._get_getter_by_valve(name)
-#            print 'open', getter
+            #            print 'open', getter
             if getter:
                 v = getter.valve
-                if action == 'open' and result:
+                if action == "open" and result:
                     v.startTime()
                 else:
                     v.stopTime()
 
     def _get_getter_by_valve(self, n):
-        return next((c for c in self.getters.values()
-                            if c.valve.name == n), None)
+        return next((c for c in self.getters.values() if c.valve.name == n), None)
 
     def _get_getter(self, n):
-        return next((c for c in self.getters.values()
-                            if c.name == n), None)
+        return next((c for c in self.getters.values() if c.name == n), None)
 
     def get_duration(self, name):
         getter = self._get_getter(name)
@@ -167,7 +173,7 @@ class ExtractionLineLearner(Loggable):
         isos = []
         deltas = []
         for iso in [40, 39, 37, 36]:
-            key = 'ar{}'.format(iso)
+            key = "ar{}".format(iso)
             data = self._get_time_intensity_data(key)
             signal, delta = self._calculate_delta(*data)
             isos.append(signal)
@@ -176,11 +182,11 @@ class ExtractionLineLearner(Loggable):
         return isos, deltas
 
     def write_result(self):
-        getters = ['BoneGP50', 'BoneD50', 'BoneNP10' ]
+        getters = ["BoneGP50", "BoneD50", "BoneNP10"]
         data = []
-        spec = 'obama'
+        spec = "obama"
         mass = 25.32
-        material = 'groundmass'
+        material = "groundmass"
 
         # write the getter info
         for gi in getters:
@@ -202,6 +208,7 @@ class ExtractionLineLearner(Loggable):
 # ===============================================================================
 from unittest import TestCase
 
+
 class ELLearnerTestCase(TestCase):
     def setUp(self):
         self.learner = ExtractionLineLearner()
@@ -216,15 +223,15 @@ class ELLearnerTestCase(TestCase):
 
     def testOpen(self):
         n = 0.25
-        name = 'G'
+        name = "G"
         self._prep(n, name)
 
-        d = self.learner.get_duration('BoneGP50')
+        d = self.learner.get_duration("BoneGP50")
         self.assertGreaterEqual(d, n)
 
     def testWriting(self):
         n = 0.25
-        name = 'G'
+        name = "G"
         self._prep(n, name)
 
         r = self.learner.write_result()
@@ -232,9 +239,9 @@ class ELLearnerTestCase(TestCase):
         self.assertEqual(len(r), 20)
 
     def _prep(self, n, name):
-        self.learner.open_close_valve(name, 'open', True)
+        self.learner.open_close_valve(name, "open", True)
         time.sleep(n)
-        self.learner.open_close_valve(name, 'close', True)
+        self.learner.open_close_valve(name, "close", True)
 
 
 # ============= EOF =============================================

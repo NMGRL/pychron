@@ -29,23 +29,29 @@ class DAGViewer(HasTraits):
 
     def load(self):
         repo = GitRepoManager()
-        repo.open_repo('gitlogtest', '/Users/ross/Sandbox')
-        repo.open_repo('AdvancedArgonFall2018', '/Users/ross/PychronDev/data/.dvc/repositories')
-        cs = repo.get_dag(branch='master', simplify=False, limit=50)
+        repo.open_repo("gitlogtest", "/Users/ross/Sandbox")
+        repo.open_repo(
+            "AdvancedArgonFall2018", "/Users/ross/PychronDev/data/.dvc/repositories"
+        )
+        cs = repo.get_dag(branch="master", simplify=False, limit=50)
         CommitFactory.reset()
-        cs = [CommitFactory.new(log_entry=ci) for ci in cs.split('\n')]
-        self.commits = sorted(cs, reverse=True, key=attrgetter('authdate'))
+        cs = [CommitFactory.new(log_entry=ci) for ci in cs.split("\n")]
+        self.commits = sorted(cs, reverse=True, key=attrgetter("authdate"))
         # for ci in self.commits:
         #     print(ci.oid, id(ci), 'parents={}, children={}'.format(','.join([str(id(p)) for p in ci.parents]),
         #                                                    ','.join([str(id(p)) for p in ci.children])))
 
     def traits_view(self):
-        v = View(UItem('commits', editor=GitDAGEditor(selected='selected')),
-                 resizable=True, width=500, height=300)
+        v = View(
+            UItem("commits", editor=GitDAGEditor(selected="selected")),
+            resizable=True,
+            width=500,
+            height=300,
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     g = DAGViewer()
     g.load()
     g.configure_traits()

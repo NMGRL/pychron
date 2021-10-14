@@ -67,9 +67,9 @@ class InterpretedAge(IdeogramPlotable):
         self.uuid = str(uuid.uuid4())
 
     def _value_string(self, t):
-        if t == 'uF':
+        if t == "uF":
             a, e = self.f, self.f_err
-        elif t == 'uage':
+        elif t == "uage":
             a, e = nominal_value(self.uage), std_dev(self.uage)
         return a, e
 
@@ -90,19 +90,22 @@ class InterpretedAge(IdeogramPlotable):
     #     return a
 
 
-interpreted_age_view = View(HGroup(Item('age_kind',
-                                        style='readonly', show_label=False),
-                                   # Item('display_age', format_func=lambda x: floatfmt(x, 3),
-                                   #      label='Age',
-                                   #      style='readonly'),
-                                   # Item('display_age_err',
-                                   #      label=u'\u00b11\u03c3',
-                                   #      format_func=lambda x: floatfmt(x, 4),
-                                   #      style='readonly'),
-                                   # Item('display_age_units',
-                                   #      style='readonly', show_label=False),
-                                   Item('mswd',
-                                        format_func=lambda x: floatfmt(x, 2),
-                                        style='readonly', label='MSWD')))
+interpreted_age_view = View(
+    HGroup(
+        Item("age_kind", style="readonly", show_label=False),
+        # Item('display_age', format_func=lambda x: floatfmt(x, 3),
+        #      label='Age',
+        #      style='readonly'),
+        # Item('display_age_err',
+        #      label=u'\u00b11\u03c3',
+        #      format_func=lambda x: floatfmt(x, 4),
+        #      style='readonly'),
+        # Item('display_age_units',
+        #      style='readonly', show_label=False),
+        Item(
+            "mswd", format_func=lambda x: floatfmt(x, 2), style="readonly", label="MSWD"
+        ),
+    )
+)
 
 # ============= EOF =============================================

@@ -30,8 +30,8 @@ from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.pychron_constants import SAMPLE_METADATA
 
 
-def repository_has_staged(ps, remote='origin', branch='master'):
-    if not hasattr(ps, '__iter__'):
+def repository_has_staged(ps, remote="origin", branch="master"):
+    if not hasattr(ps, "__iter__"):
         ps = (ps,)
 
     changed = []
@@ -40,13 +40,13 @@ def repository_has_staged(ps, remote='origin', branch='master'):
         pp = repository_path(p)
         repo = Repo(pp)
 
-        if repo.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline'):
+        if repo.git.log("{}/{}..HEAD".format(remote, branch), "--oneline"):
             changed.append(p)
 
     return changed
 
 
-def push_repositories(ps, host=None, remote='origin', branch='master', quiet=True):
+def push_repositories(ps, host=None, remote="origin", branch="master", quiet=True):
     for p in ps:
         pp = repository_path(p)
 
@@ -65,20 +65,24 @@ def reviewed(items):
 
 
 def is_blank_reviewed(obj, date):
-    return make_rsd_items(obj, date, 'Bk')
+    return make_rsd_items(obj, date, "Bk")
 
 
 def is_icfactors_reviewed(obj, date):
-    return make_rsd_items(obj, date, 'IC')
+    return make_rsd_items(obj, date, "IC")
 
 
 def is_intercepts_reviewed(obj, date):
-    return make_rsd_items(obj, date, 'Iso Evo')
+    return make_rsd_items(obj, date, "Iso Evo")
 
 
 def make_rsd_items(obj, date, tag):
-    items = [RSDItem(process='{} {}'.format(k, tag), date=date, status=iso.get('reviewed', False)) for k,iso in
-             obj.items()]
+    items = [
+        RSDItem(
+            process="{} {}".format(k, tag), date=date, status=iso.get("reviewed", False)
+        )
+        for k, iso in obj.items()
+    ]
     return items
 
 
@@ -94,14 +98,16 @@ def get_review_status(record):
     root = repository_path(record.repository_identifier)
     if os.path.isdir(root):
         repo = Repo(root)
-        for m, func in (('blanks', is_blank_reviewed),
-                        ('intercepts', is_intercepts_reviewed),
-                        ('icfactors', is_icfactors_reviewed)):
+        for m, func in (
+            ("blanks", is_blank_reviewed),
+            ("intercepts", is_intercepts_reviewed),
+            ("icfactors", is_icfactors_reviewed),
+        ):
             p = analysis_path(record, record.repository_identifier, modifier=m)
             if os.path.isfile(p):
-                with open(p, 'r') as rfile:
+                with open(p, "r") as rfile:
                     obj = json.load(rfile)
-                    date = repo.git.log('-1', '--format=%cd', p)
+                    date = repo.git.log("-1", "--format=%cd", p)
                     items = func(obj, date)
                     if items:
                         if reviewed(items):
@@ -110,18 +116,18 @@ def get_review_status(record):
 
         # setattr(record, '{}_review_status'.format(m), (reviewed, date))
     record.review_items = ritems
-    ret = 'Intermediate'  # intermediate
+    ret = "Intermediate"  # intermediate
     if not ms:
-        ret = 'Default'  # default
+        ret = "Default"  # default
     elif ms == 3:
-        ret = 'All'  # all
+        ret = "All"  # all
 
     record.review_status = ret
 
 
 def find_interpreted_age_path(idn, repositories, prefixlen=3):
     prefix = idn[:prefixlen]
-    suffix = '{}*.ia.json'.format(idn[prefixlen:])
+    suffix = "{}*.ia.json".format(idn[prefixlen:])
     # ret = []
     # for e in repositories:
     #     pathname = os.path.join(paths.repository_dataset_dir,
@@ -130,8 +136,11 @@ def find_interpreted_age_path(idn, repositories, prefixlen=3):
     #     if ps:
     #         ret.extend(ps)
 
-    ret = [p for repo in repositories
-           for p in glob.glob(repository_path(repo, prefix, 'ia', suffix))]
+    ret = [
+        p
+        for repo in repositories
+        for p in glob.glob(repository_path(repo, prefix, "ia", suffix))
+    ]
     print(prefix, ret)
     return ret
 
@@ -158,57 +167,70 @@ def make_interpreted_age_dict(ia):
         return {attr: getattr(ia, attr) for attr in keys}
 
     # make general
-    d = ia_dict(('name', 'uuid'))
+    d = ia_dict(("name", "uuid"))
 
     # make analyses
     def analysis_factory(x):
-        return dict(uuid=x.uuid,
-                    rundate=x.rundate.isoformat(),
-                    record_id=x.record_id,
-                    extract_value=x.extract_value,
-                    age=x.age,
-                    age_err=x.age_err,
-                    age_err_wo_j=x.age_err_wo_j,
-                    age_units=x.arar_constants.age_units,
-                    radiogenic_yield=nominal_value(x.radiogenic_yield),
-                    radiogenic_yield_err=std_dev(x.radiogenic_yield),
-                    kca=float(nominal_value(x.kca)),
-                    kca_err=float(std_dev(x.kca)),
-                    kcl=float(nominal_value(x.kcl)),
-                    kcl_err=float(std_dev(x.kcl)),
-                    tag=x.tag,
-                    plateau_step=ia.get_is_plateau_step(x),
-                    baseline_corrected_intercepts=x.baseline_corrected_intercepts_to_dict(),
-                    blanks=x.blanks_to_dict(),
-                    icfactors=x.icfactors_to_dict(),
-                    ic_corrected_values=x.ic_corrected_values_to_dict(),
-                    interference_corrected_values=x.interference_corrected_values_to_dict())
+        return dict(
+            uuid=x.uuid,
+            rundate=x.rundate.isoformat(),
+            record_id=x.record_id,
+            extract_value=x.extract_value,
+            age=x.age,
+            age_err=x.age_err,
+            age_err_wo_j=x.age_err_wo_j,
+            age_units=x.arar_constants.age_units,
+            radiogenic_yield=nominal_value(x.radiogenic_yield),
+            radiogenic_yield_err=std_dev(x.radiogenic_yield),
+            kca=float(nominal_value(x.kca)),
+            kca_err=float(std_dev(x.kca)),
+            kcl=float(nominal_value(x.kcl)),
+            kcl_err=float(std_dev(x.kcl)),
+            tag=x.tag,
+            plateau_step=ia.get_is_plateau_step(x),
+            baseline_corrected_intercepts=x.baseline_corrected_intercepts_to_dict(),
+            blanks=x.blanks_to_dict(),
+            icfactors=x.icfactors_to_dict(),
+            ic_corrected_values=x.ic_corrected_values_to_dict(),
+            interference_corrected_values=x.interference_corrected_values_to_dict(),
+        )
 
-    d['analyses'] = [analysis_factory(xi) for xi in ia.analyses]
+    d["analyses"] = [analysis_factory(xi) for xi in ia.analyses]
 
     # make sample metadata
-    d['sample_metadata'] = ia_dict(SAMPLE_METADATA)
+    d["sample_metadata"] = ia_dict(SAMPLE_METADATA)
 
     # make preferred
-    pf = ia_dict(('nanalyses',
-                  'include_j_error_in_mean',
-                  'include_j_error_in_plateau',
-                  'include_j_position_error'))
+    pf = ia_dict(
+        (
+            "nanalyses",
+            "include_j_error_in_mean",
+            "include_j_error_in_plateau",
+            "include_j_position_error",
+        )
+    )
 
     a = ia.get_preferred_age()
     mswd = ia.get_preferred_mswd()
-    pf.update({'age': float(nominal_value(a)),
-               'age_err': float(std_dev(a)),
-               'display_age_units': ia.age_units,
-               'preferred_kinds': ia.preferred_values_to_dict(),
-               'mswd': float(0 if isnan(mswd) else mswd),
-               'arar_constants': ia.arar_constants.to_dict(),
-               'ages': ia.ages()})
-    d['preferred'] = pf
+    pf.update(
+        {
+            "age": float(nominal_value(a)),
+            "age_err": float(std_dev(a)),
+            "display_age_units": ia.age_units,
+            "preferred_kinds": ia.preferred_values_to_dict(),
+            "mswd": float(0 if isnan(mswd) else mswd),
+            "arar_constants": ia.arar_constants.to_dict(),
+            "ages": ia.ages(),
+        }
+    )
+    d["preferred"] = pf
 
-    d['collection_metadata'] = {'instrument': ia.mass_spectrometer,
-                                'technique': 'Ar/Ar'}
-    d['session_metadata'] = {'date': datetime.now().isoformat()}
+    d["collection_metadata"] = {
+        "instrument": ia.mass_spectrometer,
+        "technique": "Ar/Ar",
+    }
+    d["session_metadata"] = {"date": datetime.now().isoformat()}
     return d
+
 
 # ============= EOF =============================================

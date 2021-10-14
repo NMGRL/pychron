@@ -16,7 +16,14 @@
 from traits.api import Bool, Int, Enum, Float
 
 from pychron.options.options import BaseOptions
-from pychron.pychron_constants import ISOCHRON, SPECTRUM, IDEOGRAM, FLECK, MAHON, ERROR_TYPES
+from pychron.pychron_constants import (
+    ISOCHRON,
+    SPECTRUM,
+    IDEOGRAM,
+    FLECK,
+    MAHON,
+    ERROR_TYPES,
+)
 
 
 def clonable(klass, *args, **kw):
@@ -39,8 +46,8 @@ class ArArCalculationsOptions(BaseOptions):
 
     # ideogram
     error_calc_method = clonable(Enum(*ERROR_TYPES))
-    probability_curve_kind = clonable(Enum('cumulative', 'kernel'))
-    mean_calculation_kind = clonable(Enum('weighted mean', 'kernel'))
+    probability_curve_kind = clonable(Enum("cumulative", "kernel"))
+    mean_calculation_kind = clonable(Enum("weighted mean", "kernel"))
     include_irradiation_error = clonable(Bool(True))
     include_decay_error = clonable(Bool(False))
     include_j_position_error = clonable(Bool(False))
@@ -56,5 +63,8 @@ class ArArCalculationsOptions(BaseOptions):
 
     def _get_subview(self, name):
         from pychron.options.views.arar_calculation_views import VIEWS
+
         return VIEWS[name]
+
+
 # ============= EOF =============================================
