@@ -73,7 +73,7 @@ def analyses_payload(ans, preferred_kinds):
     perror = pref.get('error', 0)
     punit = pref.get('unit', 'Ma')
     preferred_age = {'analysis_name': 'PreferredAge',
-                     'anaylsis_type': 'Preferred',
+                     'analysis_type': 'Preferred',
                      'is_interpreted': True,
                      'datum': [{'type': {'parameter': 'age', 'unit': punit},
                                 'value': page,
