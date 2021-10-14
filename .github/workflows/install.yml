@@ -12,12 +12,12 @@ on:
 jobs:
   job-1:
     name: Pychron Install (${{ matrix.python-version }}, ${{ matrix.os }})
-      runs-on: ${{ matrix.os }}
-      strategy:
-        fail-fast: false
-        matrix:
-          os: [ "ubuntu-latest", "macos-latest", "windows-latest" ]
-          python-version: [ "3.9",]
+      runs-on: "macos-latest"
+#      strategy:
+#        fail-fast: false
+#        matrix:
+#          os: [ "ubuntu-latest", "macos-latest", "windows-latest" ]
+#          python-version: [ "3.9",]
       steps:
         - uses: conda-incubator/setup-miniconda@v2
           with:
