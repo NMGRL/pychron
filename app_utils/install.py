@@ -454,6 +454,20 @@ EXPERIMENT_DEFAULTS = """columns:
   - Comment
 
 """
+EDM_LAUNCHER_SH = """#!/bin/bash
+export GITHUB_ORGANIZATION={github_org:}
+export GITHUB_TOKEN={github_token:}
+export MassSpecDBVersion={massspec_db_version:}
+export APPLICATION_ID={app_id:}
+
+export PYCHRON_APPNAME={app_name:}
+export PYCHRON_DATABASE_UPDATE={update_db:}
+export PYCHRON_ALEMBIC_URL={alembic_url:}
+export PYCHRON_USE_LOGIN=0
+
+export PYTHONPATH={pychron_path:}
+
+{EDM_BIN:}/python {pychron_path:}/launchers/launcher.py"""
 
 LAUNCHER_SH = """#!/bin/bash
 export GITHUB_ORGANIZATION={github_org:}
@@ -509,6 +523,7 @@ else:
     GIT = 'git'
 
 HOME = os.path.expanduser('~')
+EDM_BIN = os.path.join(HOME, '.edm', 'envs', 'edm', 'bin')
 
 
 def info_header(msg):
@@ -592,6 +607,24 @@ def which(program):
                 return exe_file
 
 
+def install_edm_only():
+    info_header('Install edm env only')
+    cfg = {'qt_bindings': 'pyqt=5',
+           'qt_api': 'pyqt5',
+           'use_edm': True,
+           'install_gis_plugin': False,
+           # 'conda_distro': os.path.join(os.path.expanduser('~'), 'miniconda3'),
+           # 'edm_env_name': 'pychron-stable',
+           # 'python_version': '3.9'
+           }
+    if yes('Install edm env only [y]/n '):
+        # ask(cfg, 'conda_distro', 'Conda Distro Path')
+        # ask(cfg, 'conda_env_name', 'Conda environment name')
+        # ask(cfg, 'install_gis_plugin', 'Install GIS Plugin')
+        build_requirements(cfg)
+        return cfg
+
+
 def install_conda_only():
     info_header('Install conda env only')
     cfg = {'qt_bindings': 'pyqt=5',
@@ -611,8 +644,7 @@ def install_conda_only():
 def install_setupfiles_only():
     info_header('Install Setupfiles only')
     cfg = {}
-    vv = input('Install setup files only [n]')
-    if vv.lower() in ('y', 'yes'):
+    if no('Install setup files only y/[n]'):
         cfg['install_exp_setupfiles'] = True
         cfg['pychron_data_dir'] = 'PychronUF'
         cfg['include_hardware_plugins'] = True
@@ -626,6 +658,20 @@ def ask(cfg, key, msg):
     if not vv:
         vv = default
     cfg[key] = vv
+
+
+def yes(msg):
+    if not msg.endswith(' '):
+        msg = '{} '.format(msg)
+
+    return input(msg) in ('', 'y', 'yes', 'Yes', 'YES')
+
+
+def no(msg):
+    if not msg.endswith(' '):
+        msg = '{} '.format(msg)
+
+    return input(msg).lower() in ('y', 'yes')
 
 
 def ask_config():
@@ -652,7 +698,8 @@ def ask_config():
               'alembic_url': 'mysql+pymysql://<user>:<pwd>@<host>/<db>',
               'install_gis_plugin': False,
               'install_exp_setupfiles': False,
-              'include_hardware_plugins': False
+              'include_hardware_plugins': False,
+              'use_edm': True
               }
 
     ask(config, 'use_all_defaults', 'Use all defaults')
@@ -664,6 +711,10 @@ def ask_config():
         ask(config, 'branch', 'Pychron Branch')
         ask(config, 'app_name', 'Pychron Style')
         # ask(config, 'qt_bindings', 'Qt Bindings')
+        ask(config, 'use_edm', 'Use EDM instead of Conda')
+        if not config['use_edm']:
+            ask(config, 'conda_distro', 'Conda Distro Path')
+            ask(config, 'conda_env_name', 'Conda environment name')
 
         if IS_MAC:
             ask(config, 'mac_os_app', 'Make a Mac OS application')
@@ -673,8 +724,7 @@ def ask_config():
 
         ask(config, 'app_id', 'Application ID')
         ask(config, 'pychron_data_dir', 'Pychron directory')
-        ask(config, 'conda_distro', 'Conda Distro Path')
-        ask(config, 'conda_env_name', 'Conda environment name')
+
         ask(config, 'update_db', 'Update Database automatically')
         ask(config, 'install_gis_plugin', 'Install GIS Plugin')
         ask(config, 'install_exp_setupfiles', 'Install Experiment setupfiles')
@@ -708,9 +758,26 @@ def build_requirements(cfg):
                   'pyparsing', 'pillow', 'gitpython', 'pytables', 'pyproj', 'pymysql', 'certifi', 'jinja2', 'swig=3',
                   'cython', 'uncertainties', 'qimage2ndarray', 'peakutils', 'pip',
                   'importlib_resources', cfg['qt_bindings']]
-
+    edm_reqs = [
+        'chaco', 'certifi', 'cython',
+        'envisage',
+        'future',
+        'gitpython',
+        'keyring',
+        'jinja2',
+        'lxml',
+        'numpy',
+        'pandas', 'patsy', 'pillow', 'pip', 'pyface', 'pyparsing', 'pyproj', 'pymysql', 'pyqt5', 'pytables', 'pyyaml',
+        'pygments',
+        'qt',
+        'Reportlab', 'requests',
+        'scipy', 'sqlalchemy',
+        'traits',
+        'xlrd', 'xlsxwriter', 'xlwt',
+    ]
     if IS_MAC:
         conda_reqs.append('python.app')
+        # edm_reqs.append('python.app')
 
     if cfg['install_gis_plugin']:
         conda_reqs.append('qgis')
@@ -718,10 +785,15 @@ def build_requirements(cfg):
 
     cfg['pip_requirements'] = pip_reqs
     cfg['pip_git_requirements'] = pip_git_reqs
+
     cfg['conda_requirements'] = conda_reqs
+    cfg['edm_requirements'] = edm_reqs
 
     print('=========Conda Reqs==============')
     print(' '.join(conda_reqs))
+    print('=================================')
+    print('=========EDM Reqs==============')
+    print(' '.join(edm_reqs))
     print('=================================')
     print('=========PIP Reqs================')
     print(' '.join(pip_reqs))
@@ -742,9 +814,6 @@ def build_requirements(cfg):
 #     creq = '{} '.format('qgis')
 
 # config['conda_requirements'] = creq
-
-def yes(msg):
-    return input(msg) in ('', 'y', 'yes', 'Yes', 'YES')
 
 
 def install_src(cfg):
@@ -777,9 +846,29 @@ def install_src(cfg):
                          ppath])
 
 
+def install_edm(cfg):
+    if not cfg['use_edm']:
+        return
+
+    # cmdargs = ['edm', 'install', 'python', '--version=3.8']
+    # print('edm create env')
+    # print(' '.join(cmdargs))
+    # subprocess.call(cmdargs)
+    # cmdargs = ['edm', 'install'] + cfg['edm_requirements'] + ['--environment', cfg['edm_env_name']]
+    cmdargs = ['edm', 'install']+cfg['edm_requirements']
+    print('edm install')
+    print(' '.join(cmdargs))
+    subprocess.call(cmdargs)
+    subprocess.call([os.path.join(EDM_BIN, 'python'), '-m', 'pip', 'install', '--no-dependencies',
+                     'uncertainties', 'statsmodels', 'qimage2ndarray', 'peakutils'])
+
+
 def install_conda(cfg):
+    if cfg['use_edm']:
+        return
+
     info_header('Install Conda Environment')
-    subprocess.call(['unset', 'PYTHONPATH'])
+
     # update base conda
     subprocess.call(['conda', 'update', '-n', 'base', '--yes', 'conda'])
 
@@ -800,7 +889,7 @@ def install_conda(cfg):
         # pip_path = 'pip'
         subprocess.call([pip_path, 'install', '--upgrade-strategy', 'only-if-needed'] + cfg['pip_requirements'])
         for r in cfg['pip_git_requirements']:
-            subprocess.call([pip_path, 'install',  '--upgrade-strategy', 'only-if-needed', '-e', r])
+            subprocess.call([pip_path, 'install', '--upgrade-strategy', 'only-if-needed', '-e', r])
     else:
         print('WARNING!!!! Installing PIP dependencies on Windows currently not available. Please consult Pychron '
               'documentation or contact Pychron Labs for further instructions')
@@ -814,7 +903,12 @@ def install_launcher_script(cfg):
 
     else:
         lpath = 'pychron_launcher.sh'
-        txt = LAUNCHER_SH.format(**cfg)
+        base = LAUNCHER_SH
+        if cfg['use_edm']:
+            cfg['EDM_BIN'] = EDM_BIN
+            base = EDM_LAUNCHER_SH
+
+        txt = base.format(**cfg)
 
     with open(lpath, 'w') as wfile:
         wfile.write(txt)
@@ -934,17 +1028,29 @@ def main():
     if cfg:
         install_setupfiles(cfg)
     else:
-        cfg = install_conda_only()
+        # cfg = install_conda_only()
+        # if cfg:
+        #     install_conda(cfg)
+        cfg = install_edm_only()
         if cfg:
-            install_conda(cfg)
+            install_edm(cfg)
         else:
             cfg = ask_config()
             if cfg:
-                install_src(cfg)
-                install_setupfiles(cfg)
-                install_conda(cfg)
-                install_launcher_script(cfg)
-                install_app(cfg)
+
+                for func in (install_src,
+                             install_setupfiles,
+                             install_edm,
+                             install_conda,
+                             install_launcher_script, install_app):
+                    try:
+                        func(cfg)
+                    except BaseException as e:
+                        print('function failed: ', func)
+                        print(e)
+                        if yes('Continue? [y]/n'):
+                            print('installation stopped')
+                            break
 
                 print()
                 print('Installation Complete!')

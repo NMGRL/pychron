@@ -175,23 +175,23 @@ class Updater(Loggable):
                                 )
                                 return
 
-                            conda_env = os.environ.get("CONDA_ENV")
-                            conda_distro = os.environ.get("CONDA_DISTRO")
-
-                            if conda_env is not None and conda_distro is not None:
-                                try:
-                                    self._install_dependencies(conda_distro, conda_env)
-                                except BaseException as e:
-                                    self.debug(
-                                        "Install dependencies exception={}".format(e)
-                                    )
-                                    self.debug("CONDA_DISTRO={}".format(conda_distro))
-                                    self.debug("CONDA_ENV={}".format(conda_env))
-                                    self.warning_dialog(
-                                        "Automatic installation of dependencies failed. Manual updates "
-                                        "may be required. Set CONDA_ENV and CONDA_DISTRO environment "
-                                        "variables to resolve this issue"
-                                    )
+                            # conda_env = os.environ.get("CONDA_ENV")
+                            # conda_distro = os.environ.get("CONDA_DISTRO")
+                            #
+                            # if conda_env is not None and conda_distro is not None:
+                            #     try:
+                            #         self._install_dependencies(conda_distro, conda_env)
+                            #     except BaseException as e:
+                            #         self.debug(
+                            #             "Install dependencies exception={}".format(e)
+                            #         )
+                            #         self.debug("CONDA_DISTRO={}".format(conda_distro))
+                            #         self.debug("CONDA_ENV={}".format(conda_env))
+                            #         self.warning_dialog(
+                            #             "Automatic installation of dependencies failed. Manual updates "
+                            #             "may be required. Set CONDA_ENV and CONDA_DISTRO environment "
+                            #             "variables to resolve this issue"
+                            #         )
                             if os.getenv("PYCHRON_UPDATE_DATABASE", False):
                                 self._update_database()
 
