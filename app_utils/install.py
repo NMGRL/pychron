@@ -697,10 +697,7 @@ def ask_config():
 
 
 def build_requirements(cfg):
-    pip_reqs = ['uncertainties',
-                'peakutils',
-                'qimage2ndarray',
-                'chaco']
+    pip_reqs = ['chaco']
 
     # pip_git_reqs =  ['git+https://github.com/enthought/chaco.git#egg=chaco',
     #                 'git+https://github.com/enthought/enable.git#egg=enable']
@@ -709,7 +706,7 @@ def build_requirements(cfg):
     conda_reqs = ['numpy', 'statsmodels', 'scikit-learn', 'PyYAML', 'yaml', 'traits', 'traitsui', 'pyface',
                   'envisage', 'sqlalchemy', 'Reportlab', 'lxml', 'xlrd', 'xlwt', 'xlsxwriter', 'requests', 'keyring',
                   'pyparsing', 'pillow', 'gitpython', 'pytables', 'pyproj', 'pymysql', 'certifi', 'jinja2', 'swig=3',
-                  'cython',
+                  'cython', 'uncertainties', 'qimage2ndarray', 'peakutils',
                   'importlib_resources', cfg['qt_bindings']]
 
     if IS_MAC:
@@ -793,7 +790,7 @@ def install_conda(cfg):
     # install deps
     # subprocess.call(['conda', 'create','--name', env_name, '--yes',
     #                  'python=3.8'] + cfg['conda_requirements'])
-    subprocess.call(['conda', 'install', '--yes', '--name', env_name]+cfg['conda_requirements'])
+    subprocess.call(['conda', 'install', '--yes', '--name', env_name, '-c', 'conda-forge'] + cfg['conda_requirements'])
     # subprocess.call(['conda', 'install', '--yes',
     #                  '--name', env_name, '-c', 'dbanas', 'chaco'])
     if IS_MAC:
@@ -801,9 +798,9 @@ def install_conda(cfg):
         # install pip deps
         pip_path = os.path.join(cfg['conda_distro'], 'envs', env_name, 'bin', 'pip')
         # pip_path = 'pip'
-        subprocess.call([pip_path, 'install'] + cfg['pip_requirements'])
+        subprocess.call([pip_path, 'install', '--upgrade-strategy', 'only-if-needed'] + cfg['pip_requirements'])
         for r in cfg['pip_git_requirements']:
-            subprocess.call([pip_path, 'install', '-e', r])
+            subprocess.call([pip_path, 'install',  '--upgrade-strategy', 'only-if-needed', '-e', r])
     else:
         print('WARNING!!!! Installing PIP dependencies on Windows currently not available. Please consult Pychron '
               'documentation or contact Pychron Labs for further instructions')
