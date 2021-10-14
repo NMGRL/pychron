@@ -706,7 +706,7 @@ def build_requirements(cfg):
     conda_reqs = ['numpy', 'statsmodels', 'scikit-learn', 'PyYAML', 'yaml', 'traits', 'traitsui', 'pyface',
                   'envisage', 'sqlalchemy', 'Reportlab', 'lxml', 'xlrd', 'xlwt', 'xlsxwriter', 'requests', 'keyring',
                   'pyparsing', 'pillow', 'gitpython', 'pytables', 'pyproj', 'pymysql', 'certifi', 'jinja2', 'swig=3',
-                  'cython', 'uncertainties', 'qimage2ndarray', 'peakutils',
+                  'cython', 'uncertainties', 'qimage2ndarray', 'peakutils', 'pip',
                   'importlib_resources', cfg['qt_bindings']]
 
     if IS_MAC:
