@@ -39,8 +39,7 @@ jobs:
           conda install -n test -c conda-forge pip numpy statsmodels scikit-learn PyYAML yaml traits traitsui pyface envisage sqlalchemy Reportlab lxml xlrd xlwt xlsxwriter requests keyring pyparsing pillow gitpython pytables pyproj pymysql certifi jinja2 swig=3 cython importlib_resources
       - name: Install dependencies
         run: |
-          unset PYTHONPATH
-          set SWIG_PATH=$CONDA/evns/test/bin/swig
+          export SWIG_PATH=$CONDA/evns/test/bin/
           $CONDA/envs/test/bin/pip3 install --upgrade-strategy only-if-needed flake8 pytest chaco
 #          $CONDA/envs/test/bin/pip3 install --upgrade pip
       - name: Lint with flake8
