@@ -30,13 +30,14 @@ jobs:
 #          python-version: 3.9
       - name: Install Conda dependencies
         run: |
-          conda install numpy statsmodels scikit-learn PyYAML \
+          conda install -n test numpy statsmodels scikit-learn PyYAML \
           yaml traits traitsui pyface envisage sqlalchemy \
           Reportlab lxml xlrd xlwt xlsxwriter requests keyring \
           pyparsing pillow gitpython pytables pyproj pymysql \
           certifi jinja2 swig=3 cython importlib_resources
       - name: Install dependencies
         run: |
+          unset PYTHONPATH
           $CONDA/envs/test/bin/python -m pip install --upgrade pip
           $CONDA/envs/test/bin/python -m pip install flake8 pytest uncertainties qimage2ndarray peakutils chaco
       - name: Lint with flake8
