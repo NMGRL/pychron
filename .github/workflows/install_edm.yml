@@ -32,19 +32,23 @@ jobs:
         run: >
           edm install -y chaco certifi cython envisage future gitpython keyring jinja2 lxml numpy pandas patsy pillow
           pip pyface pyparsing pyproj pymysql pyqt5 pytables pyyaml pygments qt Reportlab requests
-          scipy sqlalchemy traits xlrd xlsxwriter xlwt
+          scipy sqlalchemy traits xlrd xlsxwriter xlwt flake8 pytest
       - name: Install PIP dependencies
         run: >
-          ~/.edm/envs/edm/bin/python -m pip install --no-dependencies uncertainties statsmodels qimage2ndarray peakutils
-#      - name: Lint with flake8
-#        run: |
+          python -m pip install --no-dependencies uncertainties statsmodels qimage2ndarray peakutils
+      - name: Lint with flake8
+        run: |
 #          # stop the build if there are Python syntax errors or undefined names
-#          $CONDA/envs/test/bin/flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-#          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-#          $CONDA/envs/test/bin/flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-#      - name: Test with pytest
-#        run: |
-#          $CONDA/envs/test/bin/pytest
+          flake8 . --extend-exclude=docs/,zobs/,sandbox/,test/,alembic_dvc --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Test with pytest
+        run: |
+          pytest pychron/test_suite.py
 
 
 #
