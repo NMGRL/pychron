@@ -113,6 +113,7 @@ def tx_register_functions(obj):
                         "Function register {} {}:{}".format(obj.name, k, fname)
                     )
 
+
 # if __name__ == '__main__':
 #     class Handler(object):
 #         __metaclass__ = MetaHandler

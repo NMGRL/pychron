@@ -57,6 +57,7 @@ class LaserPyScript(ExtractionPyScript):
         )
         self._task = task
 
+
 #     def _power_map(self, cx, cy, padding, bd, power):
 #         print cx, cy, padding
 #         task.execute_active_editor(block=True)

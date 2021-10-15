@@ -182,14 +182,13 @@ class GainsEditView(Controller):
 
 
 if __name__ == "__main__":
+
     class Detector(HasTraits):
         name = Str
         gain = Float
 
-
     class Spectrometer(HasTraits):
         detectors = List
-
 
     spec = Spectrometer()
     spec.detectors = [Detector(name="H1"), Detector(name="AX")]

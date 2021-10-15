@@ -91,7 +91,7 @@ class DVCPersister(BasePersister):
             self._load_arar_mapping()
 
     def per_spec_save(
-            self, pr, repository_identifier=None, commit=False, commit_tag=None, push=True
+        self, pr, repository_identifier=None, commit=False, commit_tag=None, push=True
     ):
         self.per_spec = pr
 
@@ -287,8 +287,8 @@ class DVCPersister(BasePersister):
                     ar.smart_pull(accept_their=True)
 
                     paths = [
-                                spec_path,
-                            ] + [self._make_path(modifier=m) for m in NPATH_MODIFIERS]
+                        spec_path,
+                    ] + [self._make_path(modifier=m) for m in NPATH_MODIFIERS]
 
                     for p in paths:
                         if os.path.isfile(p):
@@ -315,12 +315,12 @@ class DVCPersister(BasePersister):
                         ar.commit("<ISOEVO> default collection fits")
 
                     for pp, tag, msg in (
-                            (
-                                    "blanks",
-                                    "BLANKS",
-                                    "preceding {}".format(self.per_spec.previous_blank_runid),
-                            ),
-                            ("icfactors", "ICFactor", "default"),
+                        (
+                            "blanks",
+                            "BLANKS",
+                            "preceding {}".format(self.per_spec.previous_blank_runid),
+                        ),
+                        ("icfactors", "ICFactor", "default"),
                     ):
                         p = self._make_path(pp)
                         if os.path.isfile(p):
@@ -345,11 +345,11 @@ class DVCPersister(BasePersister):
                 except GitCommandError as e:
                     self.warning(e)
                     if self.confirmation_dialog(
-                            "NON FATAL\n\n"
-                            "DVC/Git upload of analysis not successful."
-                            "Do you want to CANCEL the experiment?\n",
-                            timeout_ret=False,
-                            timeout=30,
+                        "NON FATAL\n\n"
+                        "DVC/Git upload of analysis not successful."
+                        "Do you want to CANCEL the experiment?\n",
+                        timeout_ret=False,
+                        timeout=30,
                     ):
                         ret = False
 
@@ -701,11 +701,11 @@ class DVCPersister(BasePersister):
         # save the scripts
         ms = per_spec.run_spec.mass_spectrometer
         for si in (
-                "measurement",
-                "extraction",
-                "post_measurement",
-                "post_equilibration",
-                "hops",
+            "measurement",
+            "extraction",
+            "post_measurement",
+            "post_equilibration",
+            "hops",
         ):
             name = getattr(per_spec, "{}_name".format(si))
             blob = getattr(per_spec, "{}_blob".format(si))

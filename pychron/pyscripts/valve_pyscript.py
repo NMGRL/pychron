@@ -83,7 +83,7 @@ class ValvePyScript(PyScript):
     @verbose_skip
     @named_register("open")
     def _m_open(
-            self, name=None, description="", cancel_on_failed_actuation=True, ntries=100
+        self, name=None, description="", cancel_on_failed_actuation=True, ntries=100
     ):
         self._valve_actuation(
             "open", name, description, cancel_on_failed_actuation, ntries
@@ -92,14 +92,14 @@ class ValvePyScript(PyScript):
     @verbose_skip
     @command_register
     def close(
-            self, name=None, description="", cancel_on_failed_actuation=True, ntries=100
+        self, name=None, description="", cancel_on_failed_actuation=True, ntries=100
     ):
         self._valve_actuation(
             "close", name, description, cancel_on_failed_actuation, ntries
         )
 
     def _valve_actuation(
-            self, action, name, description, cancel_on_failed_actuation, ntries
+        self, action, name, description, cancel_on_failed_actuation, ntries
     ):
         self.console_info(
             "{} name={} desc={}".format(
@@ -125,7 +125,7 @@ class ValvePyScript(PyScript):
         )
         if result is not None:
             if not self._finish_valve_change(
-                    action, result, name, description, ntries=ntries
+                action, result, name, description, ntries=ntries
             ):
                 if not globalv.experiment_debug:
 
@@ -176,7 +176,7 @@ class ValvePyScript(PyScript):
         pass
 
     def _finish_valve_change(
-            self, action, result, name, description, retry=1, ntries=100
+        self, action, result, name, description, retry=1, ntries=100
     ):
         """
         :param action:
@@ -256,5 +256,6 @@ class ValvePyScript(PyScript):
             [("get_valve_state", (name,), dict(description=description))],
             protocol=EL_PROTOCOL,
         )
+
 
 # ============= EOF =============================================

@@ -86,4 +86,5 @@ class ValveFactory(BaseFactory):
 class FurnaceFactory(BaseFactory):
     protocol_klass = FurnaceProtocol
 
+
 # ============= EOF =============================================

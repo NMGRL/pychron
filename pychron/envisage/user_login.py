@@ -207,7 +207,7 @@ def get_user():
     """
     login = Login()
     if to_bool(os.getenv("PYCHRON_USE_LOGIN", True)) or not (
-            login.user and login.environment
+        login.user and login.environment
     ):
         while 1:
             info = login.edit_traits()
@@ -218,5 +218,6 @@ def get_user():
                 break
     else:
         return login.user, login.environment
+
 
 # ============= EOF =============================================

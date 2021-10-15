@@ -41,16 +41,16 @@ def open_progress(n, close_at_end=True, busy=False, **kw):
 
 
 def progress_loader(
-        xs,
-        func,
-        threshold=50,
-        progress=None,
-        use_progress=True,
-        reraise_cancel=False,
-        n=None,
-        busy=False,
-        step=1,
-        unpack=True,
+    xs,
+    func,
+    threshold=50,
+    progress=None,
+    use_progress=True,
+    reraise_cancel=False,
+    n=None,
+    busy=False,
+    step=1,
+    unpack=True,
 ):
     """
     xs: list or tuple
@@ -160,5 +160,6 @@ def progress_iterator(xs, func, threshold=50, progress=None, reraise_cancel=Fals
     except CancelLoadingError:
         if reraise_cancel:
             raise CancelLoadingError
+
 
 # ============= EOF =============================================

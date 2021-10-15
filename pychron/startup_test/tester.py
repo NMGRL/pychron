@@ -106,7 +106,7 @@ class StartupTester(Loggable):
                 ri
                 for ri in self.results
                 if "spectrometer" in ri.plugin.lower()
-                   and ri.name == "test_communication"
+                and ri.name == "test_communication"
             ),
             None,
         )

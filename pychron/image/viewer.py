@@ -227,4 +227,5 @@ class ImageViewer(HasTraits):
             buf.seek(0)
             return buf
 
+
 # ============= EOF =============================================

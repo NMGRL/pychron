@@ -48,7 +48,7 @@ class ContourGraph(Graph):
         return p
 
     def new_series(
-            self, x=None, y=None, z=None, colorbar=False, plotid=0, style="xy", **kw
+        self, x=None, y=None, z=None, colorbar=False, plotid=0, style="xy", **kw
     ):
         plot, names, rd = self._series_factory(x, y, plotid=plotid, **kw)
 
@@ -258,5 +258,6 @@ class FluxVisualizationGraph(ContourGraph):
                 self.set_data(v, plotid=2, series=1, axis=1)
                 self.set_data(v, plotid=2, series=1, axis=2)
                 self.plotcontainer.request_redraw()
+
 
 # ============= EOF =============================================

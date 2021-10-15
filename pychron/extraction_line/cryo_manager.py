@@ -143,4 +143,5 @@ class CryoManager(Manager):
     def _get_simulation(self):
         return any([dev.simulation for dev in self.devices])
 
+
 # ============= EOF =============================================

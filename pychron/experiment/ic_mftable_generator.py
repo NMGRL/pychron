@@ -26,7 +26,7 @@ ARGON_IC_MFTABLE = True
 
 class ICMFTableGenerator(Loggable):
     def make_mftable(
-            self, arun, detectors, refiso, peak_center_config="ic_peakhop", n=1
+        self, arun, detectors, refiso, peak_center_config="ic_peakhop", n=1
     ):
         """
             peak center `refiso` for each detector in detectors
@@ -125,5 +125,6 @@ class ICMFTableGenerator(Loggable):
         #             row.extend(results[1:])
         #
         #             w.writerow(row)
+
 
 # ============= EOF =============================================

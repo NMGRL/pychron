@@ -378,6 +378,7 @@ def edit_task_extensions(ts):
         e.dump()
         return confirm(None, "Restart?") == YES
 
+
 # if __name__ == '__main__':
 #     from traits.api import Button
 #     from pychron.processing.tasks.actions.processing_actions import RecallAction

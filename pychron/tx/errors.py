@@ -233,4 +233,5 @@ class PositionErrorCode(ErrorCode):
     def __init__(self, sh, *args, **kw):
         self.msg = self.msg.format(sh)
 
+
 # ============= EOF =====================================

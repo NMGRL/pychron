@@ -52,4 +52,5 @@ class NGXController(CoreDevice):
 
             return True
 
+
 # ============= EOF =============================================

@@ -94,4 +94,5 @@ class ImportSpec:
     analyses = None
     analysis = None
 
+
 # ============= EOF =============================================

@@ -222,10 +222,10 @@ class RegisteredImageViewer(Controller):
 
 
 if __name__ == "__main__":
+
     class SM:
         def linear_move(self, dx, dy):
             print("moving to {}, {}".format(dx, dy))
-
 
     r = RegisteredImage(stage_manager=SM())
     p = "/Users/ross/Programming/registered_image_rotate30.04-01.png"

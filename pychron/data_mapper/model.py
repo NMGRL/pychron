@@ -162,12 +162,12 @@ class DVCIrradiationImporterModel(BaseDVCImporterModel):
 
         dvc.add_production(irradname, level.production.name, level.production)
         if dvc.add_irradiation_level(
-                name,
-                irradname,
-                level.holder,
-                level.production.name,
-                z=level.z,
-                note=level.note,
+            name,
+            irradname,
+            level.holder,
+            level.production.name,
+            z=level.z,
+            note=level.note,
         ):
             self._active_import.nlevels += 1
 
@@ -353,7 +353,7 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
         spec = spec.run_spec
         dest = self.dvc
         if not dest.get_sample(
-                spec.sample, spec.project, spec.principal_investigator, spec.material
+            spec.sample, spec.project, spec.principal_investigator, spec.material
         ):
             self.debug("adding sample {}".format(spec.sample))
             dest.add_sample(
@@ -405,5 +405,6 @@ class DVCAnalysisImporterModel(BaseDVCImporterModel):
             self.debug("adding extract device {}".format(ed))
             dest.add_extraction_device(ed)
             dest.commit()
+
 
 # ============= EOF =============================================

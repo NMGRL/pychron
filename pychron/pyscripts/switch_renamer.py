@@ -180,7 +180,7 @@ class SwitchRenamer(Loggable):
                         "scan_button",
                         "foo",
                         tooltip="Scan pyscripts for occurences of the valve/switch "
-                                "description",
+                        "description",
                     ),
                     icon_button_editor(
                         "apply_button", "bar", enabled_when="new_description"

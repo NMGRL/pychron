@@ -28,4 +28,5 @@ class PyView(PychronApplication):
     name = "pyView"
     shortname = "view"
 
+
 # ============= EOF =============================================

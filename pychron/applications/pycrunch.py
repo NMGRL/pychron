@@ -27,4 +27,5 @@ class PyCrunch(PychronApplication):
     name = "PyCrunch"
     shortname = "crunch"
 
+
 # ============= EOF =============================================

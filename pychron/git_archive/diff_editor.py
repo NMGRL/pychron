@@ -300,4 +300,5 @@ class _DiffEditor(Editor):
 class DiffEditor(BasicEditorFactory):
     klass = _DiffEditor
 
+
 # ============= EOF =============================================

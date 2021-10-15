@@ -34,4 +34,5 @@ class PreferenceMixin(object):
         for attr in attrs:
             mod(obj, attr, "{}.{}".format(prefid, attr))
 
+
 # ============= EOF =============================================

@@ -137,4 +137,5 @@ class VerticalFluxOptions(FigureOptions, MonitorMixin):
 
         return VIEWS[name]
 
+
 # ============= EOF =============================================

@@ -93,6 +93,7 @@ class AutoTuner(Scanner):
     def start_control_hook(self):
         pass
 
+
 #    def _execute(self):
 #        self.info('start autotune scan')
 #        tc = self.manager.temperature_controller

@@ -68,4 +68,5 @@ class IrradiationStatusView(Controller):
         )
         return v
 
+
 # ============= EOF =============================================

@@ -53,4 +53,5 @@ class BaseSource(SpectrometerDevice, FieldMixin):
         if new is not None:
             self.set_hv(new)
 
+
 # ============= EOF =============================================

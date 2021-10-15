@@ -120,7 +120,7 @@ def main_coltest():
         return min(a, vs.min()), max(b, vs.max())
 
     def split(l, n):
-        return [l[i: i + n] for i in range(0, len(l), n)]
+        return [l[i : i + n] for i in range(0, len(l), n)]
 
     def reorder(l):
         nl = []

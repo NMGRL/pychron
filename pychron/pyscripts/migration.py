@@ -92,7 +92,7 @@ def migrate_file(p, srcroot, destroot, clean):
                     if new_method(dfp, li, "    set_fits", "set_fits()", clean):
                         continue
                     if new_method(
-                            dfp, li, "    set_baseline_fits", "set_baseline_fits()", clean
+                        dfp, li, "    set_baseline_fits", "set_baseline_fits()", clean
                     ):
                         continue
 

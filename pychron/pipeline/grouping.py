@@ -18,13 +18,13 @@ from operator import attrgetter
 
 
 def group_analyses_by_key(
-        items,
-        key,
-        attr="group_id",
-        id_func=None,
-        sorting_enabled=True,
-        parent_group=None,
-        as_int=True,
+    items,
+    key,
+    attr="group_id",
+    id_func=None,
+    sorting_enabled=True,
+    parent_group=None,
+    as_int=True,
 ):
     if isinstance(key, str):
         keyfunc = attrgetter(key)
@@ -56,5 +56,6 @@ def group_analyses_by_key(
                     setattr(it, attr, gid)
                     setattr(it, attr.replace("_id", "_name"), k)
     return items
+
 
 # ============= EOF =============================================

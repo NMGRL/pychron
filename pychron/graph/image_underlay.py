@@ -61,4 +61,5 @@ class ImageUnderlay(AbstractOverlay):
                 gc.scale_ctm(sw, sh)
                 gc.draw_image(self._cached_img)
 
+
 # ============= EOF =============================================

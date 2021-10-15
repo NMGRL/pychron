@@ -751,7 +751,7 @@ class SwitchManager(Manager):
                         d[key] = bool(int(state))
                 else:
                     for i in range(0, len(word), 2):
-                        packet = word[i: i + 2]
+                        packet = word[i : i + 2]
                         try:
                             key, state = packet[0], packet[1]
                             d[key] = bool(int(state))
@@ -970,8 +970,8 @@ class SwitchManager(Manager):
                 factory(v)
 
             for klass, func in (
-                    (Switch, parser.get_switches),
-                    (ManualSwitch, parser.get_manual_valves),
+                (Switch, parser.get_switches),
+                (ManualSwitch, parser.get_manual_valves),
             ):
                 for s in func():
                     factory(s, use_explanation=False, klass=klass)
@@ -1019,7 +1019,7 @@ class SwitchManager(Manager):
         header = ["{{:<{}s}}".format(w).format(v) for w, v in zip(widths, keys)]
         self.debug("".join(header))
         for klass, vs in groupby_key(
-                self.switches.values(), key=lambda v: str(type(v))
+            self.switches.values(), key=lambda v: str(type(v))
         ):
             for v in vs:
                 self.debug(v.summary(widths, keys))
@@ -1261,5 +1261,6 @@ class SwitchManager(Manager):
 
     def _get_simulation(self):
         return any([act.simulation for act in self.actuators])
+
 
 # ==================== EOF ==================================

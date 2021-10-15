@@ -50,4 +50,5 @@ def get_test_analysis(uuid=None, man=None, calculate_age=True, **kw):
     a = man.make_analysis(rec, calculate_age=calculate_age, **kw)
     return a, man
 
+
 # ============= EOF =============================================

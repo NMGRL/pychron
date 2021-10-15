@@ -63,4 +63,5 @@ class DashboardConditional(HasTraits):
         v = View(HGroup(Readonly("teststr", width=-200), Readonly("state"), spring))
         return v
 
+
 # ============= EOF =============================================

@@ -73,4 +73,5 @@ class Ratio(object):
         except ZeroDivisionError:
             return
 
+
 # ============= EOF =============================================

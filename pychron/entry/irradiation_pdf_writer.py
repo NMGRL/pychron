@@ -342,4 +342,5 @@ class LabbookPDFWriter(IrradiationPDFWriter):
 
         return p
 
+
 # ============= EOF =============================================

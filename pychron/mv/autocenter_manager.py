@@ -177,4 +177,5 @@ class DiodeAutocenterManager(AutoCenterManager):
 
         return DiodeLocator(pxpermm=self.pxpermm, pixel_depth=self.video.pixel_depth)
 
+
 # ============= EOF =============================================

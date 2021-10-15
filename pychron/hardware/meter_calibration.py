@@ -121,4 +121,5 @@ class MeterCalibration(HasTraits):
             ["{}={:0.3e}".format(*c) for c in zip("abcdefg", self.coefficients)]
         )
 
+
 # ============= EOF =============================================

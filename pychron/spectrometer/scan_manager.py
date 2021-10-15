@@ -153,9 +153,9 @@ class ScanManager(StreamGraphManager):
             p = os.path.join(paths.spectrometer_dir, "scan.yaml")
             if not os.path.isfile(p):
                 if self.confirmation_dialog(
-                        "No scan.yaml file found. "
-                        "Required to configure which valves trigger adding a marker.\n"
-                        "Would you like to add a blank scan.yaml file?"
+                    "No scan.yaml file found. "
+                    "Required to configure which valves trigger adding a marker.\n"
+                    "Would you like to add a blank scan.yaml file?"
                 ):
                     with open(p, "w") as wfile:
                         yaml.dump({"valves": []}, wfile, default_flow_style=False)
@@ -458,10 +458,10 @@ class ScanManager(StreamGraphManager):
                     abort = det.intensity > threshold
                     if abort:
                         if not self.confirmation_dialog(
-                                "Are you sure you want to make this move.\n"
-                                "This will place {} fA on {}".format(
-                                    det.intensity, self.detector
-                                )
+                            "Are you sure you want to make this move.\n"
+                            "This will place {} fA on {}".format(
+                                det.intensity, self.detector
+                            )
                         ):
 
                             self.debug(
@@ -691,5 +691,6 @@ class ScanManager(StreamGraphManager):
         ms = MassScanner(spectrometer=self.spectrometer)
         ms.load()
         return ms
+
 
 # ============= EOF =====================================

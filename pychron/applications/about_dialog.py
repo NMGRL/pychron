@@ -86,7 +86,7 @@ class myAboutDialog(AboutDialog):
         # additions = '<br />'.join(self.additions)
 
         # Get the version numbers.
-        py_version = sys.version[0: sys.version.find("(")]
+        py_version = sys.version[0 : sys.version.find("(")]
         qt_version = QtCore.__version__
 
         # Set the page contents.
@@ -137,5 +137,6 @@ class myAboutDialog(AboutDialog):
         c.setTextCursor(cur)
         c.ensureCursorVisible()
         return c
+
 
 # ============= EOF =============================================

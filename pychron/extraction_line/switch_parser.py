@@ -103,4 +103,5 @@ class SwitchParser(XMLParser):
                 group = self.get_root()
             return [v if element else v.text.strip() for v in group.findall(attr)]
 
+
 # ============= EOF =============================================

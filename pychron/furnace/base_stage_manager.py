@@ -31,4 +31,5 @@ class BaseFurnaceStageManager(BaseStageManager):
     def _root_default(self):
         return paths.furnace_map_dir
 
+
 # ============= EOF =============================================

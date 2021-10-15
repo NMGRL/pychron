@@ -162,14 +162,14 @@ UUID_RE = re.compile(
 
 
 def _analysis_path(
-        runid,
-        repository,
-        modifier=None,
-        extension=".json",
-        mode="r",
-        root=None,
-        is_temp=False,
-        force_sublen=False,
+    runid,
+    repository,
+    modifier=None,
+    extension=".json",
+    mode="r",
+    root=None,
+    is_temp=False,
+    force_sublen=False,
 ):
     runid = runid.replace(":", "_")
 
@@ -246,5 +246,6 @@ def list_frozen_productions(repo):
         name = "{}.{}".format(irrad, level)
         ps.append((name, prod))
     return ps
+
 
 # ============= EOF =============================================

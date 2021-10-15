@@ -48,4 +48,5 @@ class GitCommitAuthorView(HasTraits):
         )
         return v
 
+
 # ============= EOF =============================================

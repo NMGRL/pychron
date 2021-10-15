@@ -160,7 +160,7 @@ class BaseOptionsManager(Loggable):
 
     def delete_selected(self):
         if self.confirmation_dialog(
-                'Are you sure you want to delete "{}"'.format(self.selected)
+            'Are you sure you want to delete "{}"'.format(self.selected)
         ):
             for ext in (".p", ".json"):
                 p = self._pname(self.selected, ext)
@@ -618,6 +618,7 @@ class OptionsController(Controller):
 
     def controller_factory_default_changed(self, info):
         self.model.factory_default()
+
 
 # if __name__ == '__main__':
 #     paths.build('_dev')

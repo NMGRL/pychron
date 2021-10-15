@@ -244,4 +244,5 @@ class ELLearnerTestCase(TestCase):
         time.sleep(n)
         self.learner.open_close_valve(name, "close", True)
 
+
 # ============= EOF =============================================

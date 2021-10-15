@@ -267,4 +267,5 @@ class StreamGraphManager(Manager):
         # self.graphs.append(g)
         return g
 
+
 # ============= EOF =============================================

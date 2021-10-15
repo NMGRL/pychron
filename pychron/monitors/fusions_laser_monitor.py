@@ -147,6 +147,7 @@ class FusionsLaserMonitor(LaserMonitor):
 
     setpoint = property(fget=_get_setpoint, fset=_set_setpoint)
 
+
 # ============= EOF ====================================
 #    def _doublecheck_setpoint(self):
 #        if self.setpoint:

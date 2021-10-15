@@ -169,4 +169,5 @@ class VideoSource(HasTraits):
 
         return self._cached_image
 
+
 # ============= EOF =============================================

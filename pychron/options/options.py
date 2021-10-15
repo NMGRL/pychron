@@ -403,6 +403,7 @@ class BaseOptions(HasTraits):
             try:
                 items = state.pop(tag)
                 if items:
+
                     def func(gi):
                         s = gi.__getstate__()
                         convert_color(s)
@@ -503,8 +504,8 @@ class BaseOptions(HasTraits):
             trait
             for trait in self.traits()
             if not trait.startswith("trait")
-               and not trait.endswith("button")
-               and self.to_dict_test(trait)
+            and not trait.endswith("button")
+            and self.to_dict_test(trait)
         ]
 
         return {key: self.formatted_attr(key) for key in keys}
@@ -970,5 +971,6 @@ class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
             self.analysis_label_format = lm.formatter
             self.analysis_label_display = lm.label
             # self.refresh_plot_needed = True
+
 
 # ============= EOF =============================================

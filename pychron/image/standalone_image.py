@@ -82,4 +82,5 @@ class StandAloneImage(FrameImage):
         v = self.view_factory(VGroup(vv))
         return v
 
+
 # ============= EOF =============================================

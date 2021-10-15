@@ -122,4 +122,5 @@ class IdentifyPeakView(HasTraits):
         )
         return v
 
+
 # ============= EOF =============================================

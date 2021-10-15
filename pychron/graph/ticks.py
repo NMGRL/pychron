@@ -32,14 +32,14 @@ def intfilter(ticks):
 
 class IntTickGenerator(DefaultTickGenerator):
     def get_ticks(
-            self,
-            data_low,
-            data_high,
-            bounds_low,
-            bounds_high,
-            interval,
-            use_endpoints=False,
-            scale="linear",
+        self,
+        data_low,
+        data_high,
+        bounds_low,
+        bounds_high,
+        interval,
+        use_endpoints=False,
+        scale="linear",
     ):
         ticks = super(IntTickGenerator, self).get_ticks(
             data_low,
@@ -92,14 +92,14 @@ class SparseLogTicks(DefaultTickGenerator):
         return ticks, labels
 
     def get_ticks(
-            self,
-            data_low,
-            data_high,
-            bounds_low,
-            bounds_high,
-            interval,
-            use_endpoints=False,
-            scale="log",
+        self,
+        data_low,
+        data_high,
+        bounds_low,
+        bounds_high,
+        interval,
+        use_endpoints=False,
+        scale="log",
     ):
         i = 1
         while 1:

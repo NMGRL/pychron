@@ -229,6 +229,7 @@ class BaseStageManager(Manager):
                     # def traits_view(self):
                     # self.initialize_stage()
 
+
 # ============= EOF =============================================
 
 # self.stage_maps = []

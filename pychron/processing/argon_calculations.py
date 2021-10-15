@@ -54,7 +54,7 @@ def unpack_value_error(xx):
 
 
 def calculate_isochron(
-        analyses, error_calc_kind, exclude=None, reg="NewYork", include_j_err=True
+    analyses, error_calc_kind, exclude=None, reg="NewYork", include_j_err=True
 ):
     if exclude is None:
         exclude = []
@@ -101,7 +101,7 @@ def calculate_isochron(
 
 
 def isochron_regressor(
-        xs, xes, ys, yes, xds, xdes, xns, xnes, yns, ynes, reg="NewYork"
+    xs, xes, ys, yes, xds, xdes, xns, xnes, yns, ynes, reg="NewYork"
 ):
     reg = reg.lower()
     if reg in ("newyork", "new_york"):
@@ -130,13 +130,13 @@ def isochron_regressor(
 
 
 def calculate_plateau_age(
-        ages,
-        errors,
-        k39,
-        kind="inverse_variance",
-        method=FLECK,
-        options=None,
-        excludes=None,
+    ages,
+    errors,
+    k39,
+    kind="inverse_variance",
+    method=FLECK,
+    options=None,
+    excludes=None,
 ):
     """
     ages: list of ages
@@ -237,10 +237,10 @@ def calculate_arar_decay_factors_dalrymple(dc37, dc39, segments):
         for pi, ti, ti_p, _, _ in segments:
             pti = (pi * ti) / tpower
             df37 += (
-                    pti * (ti * dc37 * math.exp(dc37 * ti_p)) / (1 - math.exp(-dc37 * ti))
+                pti * (ti * dc37 * math.exp(dc37 * ti_p)) / (1 - math.exp(-dc37 * ti))
             )
             df39 += (
-                    pti * (ti * dc39 * math.exp(dc39 * ti_p)) / (1 - math.exp(-dc39 * ti))
+                pti * (ti * dc39 * math.exp(dc39 * ti_p)) / (1 - math.exp(-dc39 * ti))
             )
     except ZeroDivisionError:
         df37, df39 = 1.0, 1.0
@@ -335,7 +335,7 @@ def apply_fixed_k3739(a39, pr, fixed_k3739):
 
 
 def interference_corrections(
-        a39, a37, production_ratios, arar_constants=None, fixed_k3739=False
+    a39, a37, production_ratios, arar_constants=None, fixed_k3739=False
 ):
     if production_ratios is None:
         production_ratios = {}
@@ -371,7 +371,7 @@ def interference_corrections(
 
 
 def calculate_atmospheric(
-        a38, a36, k38, ca38, ca36, decay_time, production_ratios=None, arar_constants=None
+    a38, a36, k38, ca38, ca36, decay_time, production_ratios=None, arar_constants=None
 ):
     """
     McDougall and Harrison
@@ -436,7 +436,7 @@ def calculate_cosmogenic_components(c36, c38, arar_constants):
 
 
 def calculate_f(
-        isotopes, decay_time, interferences=None, arar_constants=None, fixed_k3739=False
+    isotopes, decay_time, interferences=None, arar_constants=None, fixed_k3739=False
 ):
     """
     isotope values corrected for blank, baseline, (background)
@@ -528,7 +528,7 @@ def calculate_f(
 
 
 def convert_age(
-        uage, original_monitor_age, original_lambda_k, new_monitor_age, new_lambda_k
+    uage, original_monitor_age, original_lambda_k, new_monitor_age, new_lambda_k
 ):
     converter.setup(original_monitor_age, original_lambda_k)
     if new_monitor_age is None:

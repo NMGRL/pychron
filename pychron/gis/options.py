@@ -282,4 +282,5 @@ class GISOptionsManager(OptionsManager):
     id = "gis"
     options_klass = GISOptions
 
+
 # ============= EOF =============================================

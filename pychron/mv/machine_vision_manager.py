@@ -88,4 +88,5 @@ class MachineVisionManager(Loggable):
         self.open_images.remove(obj)
         obj.on_trait_change(self._remove_image, "close_event", remove=True)
 
+
 # ============= EOF =============================================

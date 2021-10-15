@@ -87,6 +87,7 @@ USGS Denver= 1 MW TRIGA Reactor. U.S. Geological Survey, Lakewood, CO. http://pu
         p = self._new_paragraph(t)
         return p
 
+
 # ============= EOF =============================================
 # class IrradiationTableWriter(IsotopeDatabaseManager):
 #     def make(self):

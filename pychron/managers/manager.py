@@ -307,7 +307,7 @@ class Manager(Viewable, ConfigLoadable):
         return self._create_manager(klass, manager, params, **kw)
 
     def create_device(
-            self, device_name, gdict=None, dev_class=None, prefix=None, obj=None
+        self, device_name, gdict=None, dev_class=None, prefix=None, obj=None
     ):
         """ """
         device = None
@@ -361,7 +361,7 @@ class Manager(Viewable, ConfigLoadable):
         pass
 
     def _create_manager(
-            self, klass, manager, params, port=None, host=None, remote=False
+        self, klass, manager, params, port=None, host=None, remote=False
     ):
         raise NotImplementedError
         # from pychron.managers import manager_package_dict
@@ -420,5 +420,6 @@ class Manager(Viewable, ConfigLoadable):
                 HGroup(self._button_factory(name, label, enabled), springy=False)
             )
         return vg
+
 
 # =================== EOF =================================================

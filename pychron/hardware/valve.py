@@ -80,4 +80,5 @@ class HardwareValve(Switch):
             title="{} Properties".format(self.name),
         )
 
+
 # ============= EOF ====================================

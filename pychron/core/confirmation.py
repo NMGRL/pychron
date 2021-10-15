@@ -20,14 +20,14 @@
 
 
 def confirmation_dialog(
-        msg,
-        return_retval=False,
-        cancel=False,
-        title="",
-        timeout=None,
-        size=None,
-        timeout_ret=None,
-        **kw
+    msg,
+    return_retval=False,
+    cancel=False,
+    title="",
+    timeout=None,
+    size=None,
+    timeout_ret=None,
+    **kw
 ):
     if size is None:
         size = (-1, -1)
@@ -73,5 +73,6 @@ def remember_confirmation_dialog(msg, title="", size=None, **kw):
     from pyface.api import YES, OK
 
     return retval in (YES, OK), dlg.remember
+
 
 # ============= EOF =============================================

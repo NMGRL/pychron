@@ -129,7 +129,7 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
                 m = self.component.index_mapper
                 total_numpoints = r * c
                 if (total_numpoints < 400) or (
-                        total_numpoints < m.high_pos - m.low_pos
+                    total_numpoints < m.high_pos - m.low_pos
                 ):
                     return [self._cached_screen_pts_l], [self._cached_screen_pts_u]
 
@@ -152,5 +152,6 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
                     new_arrays.append(new_pts[:numpoints])
 
         return [self._cached_screen_pts_l], [self._cached_screen_pts_u]
+
 
 # ============= EOF =============================================

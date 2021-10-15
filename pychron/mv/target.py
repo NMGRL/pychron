@@ -60,4 +60,5 @@ class Target:
     def compactness(self):
         return 4 * math.pi * self.area / self.pactual ** 2
 
+
 # ============= EOF =============================================

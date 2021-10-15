@@ -31,4 +31,5 @@ class IFurnaceController(Interface):
     def set_setpoint(self, v):
         pass
 
+
 # ============= EOF =============================================

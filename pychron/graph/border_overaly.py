@@ -36,5 +36,6 @@ class BorderOverlay(AbstractOverlay):
 
         gc.stroke_path()
 
+
 # ============= views ===================================
 # ============= EOF ====================================

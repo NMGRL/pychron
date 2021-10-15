@@ -62,4 +62,5 @@ class RemoteStorage(AuthenticationStorage):
     def get_base_url(self):
         return "{}://{}".format(self.url_name, self.host)
 
+
 # ============= EOF =============================================

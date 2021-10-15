@@ -182,7 +182,7 @@ class FieldTable(Loggable):
         return self.mass_cal_func in ("linear", "parabolic", "cubic")
 
     def update_field_table(
-            self, det, isotope, dac, message="", save=True, report=False, update_others=True
+        self, det, isotope, dac, message="", save=True, report=False, update_others=True
     ):
         """
 
@@ -521,5 +521,6 @@ class FieldTable(Loggable):
         #     else:
         #         p = paths.mftable
         #     return p
+
 
 # ============= EOF =============================================

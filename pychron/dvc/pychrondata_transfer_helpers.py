@@ -235,13 +235,13 @@ def fix_a_steps(dest, repo_identifier, root):
                     os.remove(path)
 
                     for modifier in (
-                            "baselines",
-                            "blanks",
-                            "extraction",
-                            "intercepts",
-                            "icfactors",
-                            "peakcenter",
-                            ".data",
+                        "baselines",
+                        "blanks",
+                        "extraction",
+                        "intercepts",
+                        "icfactors",
+                        "peakcenter",
+                        ".data",
                     ):
                         npath = analysis_path(
                             an.record_id, repo_identifier, modifier=modifier
@@ -432,16 +432,16 @@ def experiment_id_modifier(root, expid):
 
         # print 'fff',r, os.path.basename(r)
         if os.path.basename(r) in (
-                "intercepts",
-                "blanks",
-                ".git",
-                "baselines",
-                "icfactors",
-                "extraction",
-                "tags",
-                ".data",
-                "monitor",
-                "peakcenter",
+            "intercepts",
+            "blanks",
+            ".git",
+            "baselines",
+            "icfactors",
+            "extraction",
+            "tags",
+            ".data",
+            "monitor",
+            "peakcenter",
         ):
             continue
         # dcnt+=1
@@ -520,5 +520,6 @@ def load_import_request():
             return runs, expid, creator
     finally:
         connection.close()
+
 
 # ============= EOF =============================================

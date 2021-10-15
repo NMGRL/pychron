@@ -170,4 +170,5 @@ class BasicEntryManager(Loggable):
         else:
             self.info("Skipping Extract Device")
 
+
 # ============= EOF =============================================

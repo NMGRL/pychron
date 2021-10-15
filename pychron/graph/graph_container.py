@@ -32,4 +32,5 @@ class HGraphContainer(HPlotContainer):
     def redraw(self):
         self.invalidate_and_redraw()
 
+
 # ============= EOF =============================================

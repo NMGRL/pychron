@@ -249,7 +249,7 @@ class IsoDBTransfer(Loggable):
         return oruns
 
     def bulk_import_project(
-            self, project, principal_investigator, source_name=None, dry=True
+        self, project, principal_investigator, source_name=None, dry=True
     ):
         src = self.processor.db
         tol_hrs = 6
@@ -362,7 +362,7 @@ class IsoDBTransfer(Loggable):
                         print(p, o, ai)
 
     def import_date_range(
-            self, low, high, spectrometer, repository_identifier, creator
+        self, low, high, spectrometer, repository_identifier, creator
     ):
         src = self.processor.db
         with src.session_ctx():
@@ -384,8 +384,8 @@ class IsoDBTransfer(Loggable):
             key=lambda x: x[1] if x[1] in ("Blank", "air", "cocktail", "FC-2") else "0",
         )
         for sample, rs in groupby(
-                runs,
-                key=lambda x: x[1] if x[1] in ("Blank", "air", "cocktail", "FC-2") else "0",
+            runs,
+            key=lambda x: x[1] if x[1] in ("Blank", "air", "cocktail", "FC-2") else "0",
         ):
             rs = [r[0] for r in rs]
             if sample in ("cocktail",):
@@ -403,12 +403,12 @@ class IsoDBTransfer(Loggable):
         # self.do_export(runs, '')
 
     def do_export(
-            self,
-            runs,
-            repository_identifier,
-            creator,
-            create_repo=False,
-            monitor_mapping=None,
+        self,
+        runs,
+        repository_identifier,
+        creator,
+        create_repo=False,
+        monitor_mapping=None,
     ):
 
         # self._init_src_dest()
@@ -437,9 +437,9 @@ class IsoDBTransfer(Loggable):
                         st = time.time()
                         try:
                             if self._transfer_analysis(
-                                    a,
-                                    repository_identifier,
-                                    monitor_mapping=monitor_mapping,
+                                a,
+                                repository_identifier,
+                                monitor_mapping=monitor_mapping,
                             ):
                                 j += 1
                                 self.debug(

@@ -162,4 +162,5 @@ class RPiCamera(HeadlessConfigLoadable):
         for attr in attrs:
             setattr(camera, attr, getattr(self, attr))
 
+
 # ============= EOF =============================================

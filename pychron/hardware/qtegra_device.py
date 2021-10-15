@@ -99,4 +99,5 @@ class QtegraDevice(CoreDevice):
         except (ValueError, TypeError):
             return self.get_random_value()
 
+
 # ============= EOF =============================================

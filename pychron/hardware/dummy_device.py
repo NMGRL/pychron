@@ -44,4 +44,5 @@ class DummyDevice(HasTraits):
     def __getattr__(self, item):
         pass
 
+
 # ============= EOF =============================================

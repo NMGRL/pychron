@@ -148,15 +148,15 @@ class LabnumberEntry(DVCIrradiationable):
         super(LabnumberEntry, self).__init__(*args, **kw)
 
         for key in (
-                "irradiation_prefix",
-                "irradiation_project_prefix",
-                "monitor_name",
-                "allow_multiple_null_identifiers",
-                "use_packet_for_default_identifier",
-                "monitor_material",
-                "j_multiplier",
-                "use_consecutive_identifiers",
-                "mode",
+            "irradiation_prefix",
+            "irradiation_project_prefix",
+            "monitor_name",
+            "allow_multiple_null_identifiers",
+            "use_packet_for_default_identifier",
+            "monitor_material",
+            "j_multiplier",
+            "use_consecutive_identifiers",
+            "mode",
         ):
             bind_preference(self, key, "pychron.entry.{}".format(key))
 
@@ -313,7 +313,7 @@ class LabnumberEntry(DVCIrradiationable):
                 ip.trait_set(j=j, j_err=j * 1e-3)
 
         if not self.selected and self.confirmation_dialog(
-                "Would you like to set default J for entire irradiation"
+            "Would you like to set default J for entire irradiation"
         ):
             db = self.dvc
             with db.session_ctx(use_parent_session=False):
@@ -487,8 +487,8 @@ class LabnumberEntry(DVCIrradiationable):
             for dbpos in l.positions:
                 if test_monitor_sample(dbpos):
                     if (
-                            not dbpos.sample.project
-                            or dbpos.sample.project.name != projectname
+                        not dbpos.sample.project
+                        or dbpos.sample.project.name != projectname
                     ):
                         incorrect_monitors.append(str(dbpos.position))
 
@@ -521,9 +521,9 @@ class LabnumberEntry(DVCIrradiationable):
 
         if error:
             if not self.confirmation_dialog(
-                    "There are issues with this irradiation.\n\n"
-                    "{}\n\n"
-                    "Are you sure you want to continue?".format(error)
+                "There are issues with this irradiation.\n\n"
+                "{}\n\n"
+                "Are you sure you want to continue?".format(error)
             ):
                 return True
 
@@ -542,7 +542,7 @@ class LabnumberEntry(DVCIrradiationable):
     def push_changes(self):
         if self.dvc.meta_repo.has_unpushed_commits():
             if self.confirmation_dialog(
-                    "You have non-pushed commits. Would you like to share them?"
+                "You have non-pushed commits. Would you like to share them?"
             ):
                 prog = open_progress(2)
                 self.info("Pushing changes to meta repo")
@@ -659,7 +659,7 @@ class LabnumberEntry(DVCIrradiationable):
                     )
             else:
                 if self.use_packet_for_default_identifier and (
-                        self.dvc.kind == "mssql" or not self.allow_multiple_null_identifiers
+                    self.dvc.kind == "mssql" or not self.allow_multiple_null_identifiers
                 ):
                     if irs.sample and not irs.packet:
                         no.append(
@@ -1069,9 +1069,9 @@ THIS CHANGE CANNOT BE UNDONE"
     def _add_irradiation_button_fired(self):
         if not self.default_principal_investigator:
             if not self.confirmation_dialog(
-                    "No default principal investigator set in preferences. "
-                    "Continuing without setting a PI in preferences "
-                    "could cause issues. Are you sure you want to continue?"
+                "No default principal investigator set in preferences. "
+                "Continuing without setting a PI in preferences "
+                "could cause issues. Are you sure you want to continue?"
             ):
                 return
 
@@ -1103,10 +1103,10 @@ THIS CHANGE CANNOT BE UNDONE"
                         )
 
                 if self.confirmation_dialog(
-                        "Add default project ({}) and "
-                        "flux monitor sample ({}) for this irradiation?".format(
-                            pname, sname
-                        )
+                    "Add default project ({}) and "
+                    "flux monitor sample ({}) for this irradiation?".format(
+                        pname, sname
+                    )
                 ):
                     add_default()
                 else:
@@ -1172,7 +1172,7 @@ THIS CHANGE CANNOT BE UNDONE"
     def _level_changed(self, old, new):
         if self.dirty:
             if self.confirmation_dialog(
-                    "You have unsaved changes. Do you want to save now?"
+                "You have unsaved changes. Do you want to save now?"
             ):
                 self.save(
                     level=old,

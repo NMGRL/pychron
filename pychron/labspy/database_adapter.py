@@ -225,4 +225,5 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
 
         return self._query_all(q)
 
+
 # ============= EOF =============================================

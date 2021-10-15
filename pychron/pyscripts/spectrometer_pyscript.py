@@ -50,7 +50,7 @@ class SpectrometerPyScript(PyScript):
     @count_verbose_skip
     @command_register
     def adjust_af_demag(
-            self, period="", frequency="", duration="", start_amplitude="", calc_time=False
+        self, period="", frequency="", duration="", start_amplitude="", calc_time=False
     ):
         if calc_time:
             return
@@ -67,5 +67,6 @@ class SpectrometerPyScript(PyScript):
 
         with open(paths.af_demagnetization, "w") as wfile:
             yaml.dump(yd, wfile)
+
 
 # ============= EOF =============================================

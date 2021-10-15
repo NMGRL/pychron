@@ -117,14 +117,14 @@ class Image(HasTraits):
     #         pass
 
     def modify_frame(
-            self,
-            frame,
-            vflip=None,
-            hflip=None,
-            gray=False,
-            swap_rb=None,
-            clone=False,
-            rotate=None,
+        self,
+        frame,
+        vflip=None,
+        hflip=None,
+        gray=False,
+        swap_rb=None,
+        clone=False,
+        rotate=None,
     ):
         if frame is not None:
 
@@ -170,7 +170,7 @@ class Image(HasTraits):
         x = int((w - cw) / 2.0 + ox)
         y = int((h - ch) / 2.0 + oy)
 
-        return src[y: y + ch, x: x + cw]
+        return src[y : y + ch, x : x + cw]
 
     def render(self):
         return self.frames[0]
@@ -200,5 +200,6 @@ class Image(HasTraits):
     #            [(w / 2 + r, h / 2), (w, h / 2)],
     #            ]
     #     draw_lines(src, pts, color=(0, 255, 255), thickness=1)
+
 
 # ======== EOF ================================

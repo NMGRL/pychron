@@ -34,4 +34,5 @@ class PyUV(PychronApplication):
         TaskWindowLayout("pychron.fusions.uv"),
     ]
 
+
 # ============= EOF =============================================

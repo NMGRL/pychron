@@ -30,4 +30,5 @@ class IPyScriptRunner(Interface):
     def reset_connection(self):
         pass
 
+
 # ============= EOF =============================================

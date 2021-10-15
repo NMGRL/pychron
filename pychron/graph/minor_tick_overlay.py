@@ -93,4 +93,5 @@ class MinorTicksOverlay(AbstractOverlay):
         finally:
             gc.restore_state()
 
+
 # ============= EOF =====================================

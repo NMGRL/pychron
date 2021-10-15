@@ -111,4 +111,5 @@ class BaseDetector(HasTraits):
     def __repr__(self):
         return "Detector({})".format(self.name)
 
+
 # ============= EOF =============================================

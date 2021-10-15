@@ -37,4 +37,5 @@ class PyCO2(PychronApplication):
         TaskWindowLayout("pychron.fusions.co2"),
     ]
 
+
 # ============= EOF =============================================

@@ -152,7 +152,7 @@ class MassSpecReverter(Loggable):
         sx, sy = list(
             zip(
                 *[
-                    struct.unpack("{}ff".format(endianness), blob[i: i + 8])
+                    struct.unpack("{}ff".format(endianness), blob[i : i + 8])
                     for i in range(0, len(blob), 8)
                 ]
             )

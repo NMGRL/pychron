@@ -313,7 +313,7 @@ class Commit(object):
         head_arrow = "HEAD -> "
         if tag.startswith(head_arrow):
             self.tags.add("HEAD")
-            self.add_label(tag[len(head_arrow):])
+            self.add_label(tag[len(head_arrow) :])
         else:
             self.tags.add(tag)
 
@@ -324,5 +324,6 @@ class Commit(object):
     def is_merge(self):
         """Returns True if the node is a fork"""
         return len(self.parents) > 1
+
 
 # ============= EOF =============================================

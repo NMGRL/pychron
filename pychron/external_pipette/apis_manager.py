@@ -123,7 +123,7 @@ class SimpleApisManager(Manager):
 
     # private
     def _load_pipette(
-            self, av, func, name, script=None, block=True, timeout=10, period=1
+        self, av, func, name, script=None, block=True, timeout=10, period=1
     ):
         if script is None:
             self.debug("Script is none. check ExtractionPyScript.extract_pipette")
@@ -319,5 +319,6 @@ class SimpleApisManager(Manager):
         #     c = ExtractionLineCanvas2D(manager=self)
         #     self._load_canvas(c)
         #     return c
+
 
 # ============= EOF =============================================

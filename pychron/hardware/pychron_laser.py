@@ -26,4 +26,5 @@ from pychron.hardware.fusions.fusions_logic_board import FusionsLogicBoard
 class PychronLaser(FusionsLogicBoard):
     pass
 
+
 # ============= EOF =============================================

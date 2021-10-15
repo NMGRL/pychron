@@ -58,6 +58,7 @@ class MessagingServer(object):
         """ """
         self.parent.warning(*args, **kw)
 
+
 # ============= views ===================================
 
 # ============= EOF ====================================

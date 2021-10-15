@@ -95,20 +95,20 @@ class ExperimentFactory(DVCAble):
         eq = self.queue
         qf = self.queue_factory
         for a in (
-                "username",
-                "mass_spectrometer",
-                "extract_device",
-                "email",
-                "use_email",
-                "use_group_email",
-                "load_name",
-                "tray",
-                "delay_after_blank",
-                "delay_between_analyses",
-                "delay_after_air",
-                "default_lighting",
-                "queue_conditionals_name",
-                "note",
+            "username",
+            "mass_spectrometer",
+            "extract_device",
+            "email",
+            "use_email",
+            "use_group_email",
+            "load_name",
+            "tray",
+            "delay_after_blank",
+            "delay_between_analyses",
+            "delay_after_air",
+            "default_lighting",
+            "queue_conditionals_name",
+            "note",
         ):
 
             if not self._sync_queue_to_factory(eq, qf, a):
@@ -374,6 +374,7 @@ email, use_email, use_group_email,
 queue_conditionals_name, repository_identifier""",
         )
         return eq
+
 
 # ============= EOF =============================================
 # def _gen_func(self, pd, ans):

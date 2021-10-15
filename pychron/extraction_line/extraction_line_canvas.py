@@ -105,4 +105,5 @@ class ExtractionLineCanvas(HasTraits):
         v = View(c)
         return v
 
+
 # ============= EOF ====================================

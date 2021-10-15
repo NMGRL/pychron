@@ -417,11 +417,11 @@ class BaseSpectrometer(SpectrometerDevice):
             section = "Trap"
             if config.has_section(section):
                 for attr in (
-                        "current",
-                        "ramp_step",
-                        "ramp_period",
-                        "ramp_tolerance",
-                        "voltage",
+                    "current",
+                    "ramp_step",
+                    "ramp_period",
+                    "ramp_tolerance",
+                    "voltage",
                 ):
                     if config.has_option(section, attr):
                         trap[attr] = config.getfloat(section, attr)
@@ -800,5 +800,6 @@ class BaseSpectrometer(SpectrometerDevice):
     @property
     def detector_names(self):
         return [di.name for di in self.detectors]
+
 
 # ============= EOF =============================================

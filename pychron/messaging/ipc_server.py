@@ -49,4 +49,5 @@ class IPCServer(ThreadingUnixStreamServer, MessagingServer):
             self.warning(e)
             self.connected = False
 
+
 # ============= EOF ====================================

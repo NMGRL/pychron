@@ -71,4 +71,5 @@ class BaseClassifier(object):
     def persistence_path(self):
         return os.path.join(paths.hidden_dir, self._persistence_name)
 
+
 # ============= EOF =============================================

@@ -77,4 +77,5 @@ class LinearAxis(AbstractDevice):
         if self._cdevice:
             self.set_position(v)
 
+
 # ============= EOF =============================================

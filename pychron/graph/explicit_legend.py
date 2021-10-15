@@ -93,18 +93,18 @@ class ExplicitLegend(Legend):
         if len(label_sizes) > 0:
             max_label_width = max(label_sizes[:, 0])
             total_label_height = (
-                    sum(label_sizes[:, 1]) + (len(label_sizes) - 1) * self.line_spacing
+                sum(label_sizes[:, 1]) + (len(label_sizes) - 1) * self.line_spacing
             )
         else:
             max_label_width = 0
             total_label_height = 0
 
         legend_width = (
-                max_label_width
-                + self.icon_spacing
-                + self.icon_bounds[0]
-                + self.hpadding
-                + 2 * self.border_padding
+            max_label_width
+            + self.icon_spacing
+            + self.icon_bounds[0]
+            + self.hpadding
+            + 2 * self.border_padding
         )
         legend_height = total_label_height + self.vpadding + 2 * self.border_padding
 
@@ -219,5 +219,6 @@ class ExplicitLegend(Legend):
                     gc.set_alpha(old_alpha)
 
         return
+
 
 # ============= EOF =============================================

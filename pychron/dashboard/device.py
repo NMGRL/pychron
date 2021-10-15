@@ -118,17 +118,17 @@ class DashboardDevice(Loggable):
             # value.use_pv = False
 
     def add_value(
-            self,
-            name,
-            tag,
-            func_name,
-            period,
-            enabled,
-            threshold,
-            units,
-            timeout,
-            record,
-            bindname,
+        self,
+        name,
+        tag,
+        func_name,
+        period,
+        enabled,
+        threshold,
+        units,
+        timeout,
+        record,
+        bindname,
     ):
         pv = ProcessValue(
             name=name,
@@ -241,13 +241,13 @@ class DashboardDevice(Loggable):
                 (
                     (a, getattr(pv, a))
                     for a in (
-                    "name",
-                    "tag",
-                    "enabled",
-                    "func_name",
-                    "period",
-                    "timeout",
-                )
+                        "name",
+                        "tag",
+                        "enabled",
+                        "func_name",
+                        "period",
+                        "timeout",
+                    )
                 )
             )
             d.append(dd)
@@ -265,7 +265,7 @@ class DashboardDevice(Loggable):
             step = 4 * fmt.count("f")
             args = zip(
                 *[
-                    struct.unpack(fmt, blob[i: i + step])
+                    struct.unpack(fmt, blob[i : i + step])
                     for i in range(0, len(blob), step)
                 ]
             )
@@ -296,5 +296,6 @@ class DashboardDevice(Loggable):
         ggrp = UItem("graph", style="custom")
         v = View(VGroup(hgrp, VSplit(dgrp, ggrp)))
         return v
+
 
 # ============= EOF =============================================

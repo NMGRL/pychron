@@ -111,8 +111,8 @@ class Client(HasTraits):
                 self._send(sock=None)
 
                 self.time_remain = (
-                        self.calculated_duration
-                        - self.periods_completed * self.period / 1000.0 / 3600.0
+                    self.calculated_duration
+                    - self.periods_completed * self.period / 1000.0 / 3600.0
                 )
                 self.periods_completed += 1
 

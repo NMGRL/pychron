@@ -78,7 +78,7 @@ class PychronApplication(BaseTasksApplication):
             set_environment(self.name.lower(), new)
             if old:
                 if self.confirmation_dialog(
-                        "Restart for changes to take effect. Restart now?"
+                    "Restart for changes to take effect. Restart now?"
                 ):
                     os.execl(sys.executable, *([sys.executable] + sys.argv))
 
@@ -133,5 +133,6 @@ class PychronApplication(BaseTasksApplication):
 
     def get_service_by_name(self, protocol, name):
         return self.get_service(protocol, 'name=="{}"'.format(name))
+
 
 # ============= EOF ====================================

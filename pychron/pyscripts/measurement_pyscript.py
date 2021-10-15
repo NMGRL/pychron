@@ -115,7 +115,7 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def generate_ic_mftable(
-            self, detectors, refiso="Ar40", peak_center_config="", n=1, calc_time=False
+        self, detectors, refiso="Ar40", peak_center_config="", n=1, calc_time=False
     ):
         """
         Generate an IC MFTable. Use this when doing a Detector Intercalibration.
@@ -134,7 +134,7 @@ class MeasurementPyScript(ValvePyScript):
             return
 
         if not self._automated_run_call(
-                "py_generate_ic_mftable", detectors, refiso, peak_center_config, n
+            "py_generate_ic_mftable", detectors, refiso, peak_center_config, n
         ):
             self.cancel()
 
@@ -165,17 +165,17 @@ class MeasurementPyScript(ValvePyScript):
 
         if calc_time:
             self._estimated_duration += (
-                    ncounts * integration_time * ESTIMATED_DURATION_FF
+                ncounts * integration_time * ESTIMATED_DURATION_FF
             )
             return
         self.ncounts = ncounts
         if not self._automated_run_call(
-                "py_sniff",
-                ncounts,
-                self._time_zero,
-                self._time_zero_offset,
-                series=self._series_count,
-                block=block,
+            "py_sniff",
+            ncounts,
+            self._time_zero,
+            self._time_zero_offset,
+            series=self._series_count,
+            block=block,
         ):
             self.cancel()
 
@@ -192,7 +192,7 @@ class MeasurementPyScript(ValvePyScript):
         """
         if calc_time:
             self._estimated_duration += (
-                    ncounts * integration_time * ESTIMATED_DURATION_FF
+                ncounts * integration_time * ESTIMATED_DURATION_FF
             )
             return
 
@@ -201,29 +201,29 @@ class MeasurementPyScript(ValvePyScript):
             ncounts *= self.abbreviated_count_ratio
 
         if not self._automated_run_call(
-                "py_data_collection",
-                self,
-                ncounts,
-                self._time_zero,
-                self._time_zero_offset,
-                fit_series=self._fit_series_count,
-                series=self._series_count,
-                integration_time=integration_time,
+            "py_data_collection",
+            self,
+            ncounts,
+            self._time_zero,
+            self._time_zero_offset,
+            fit_series=self._fit_series_count,
+            series=self._series_count,
+            integration_time=integration_time,
         ):
             self.cancel()
 
     @count_verbose_skip
     @command_register
     def baselines(
-            self,
-            ncounts=1,
-            mass=None,
-            detector="",
-            use_dac=False,
-            integration_time=1.04,
-            settling_time=4,
-            check_conditionals=True,
-            calc_time=False,
+        self,
+        ncounts=1,
+        mass=None,
+        detector="",
+        use_dac=False,
+        integration_time=1.04,
+        settling_time=4,
+        check_conditionals=True,
+        calc_time=False,
     ):
         """
         Measure the baseline for all detectors. Position ion beams using mass and detector
@@ -258,18 +258,18 @@ class MeasurementPyScript(ValvePyScript):
             series = self._series_count
 
         if not self._automated_run_call(
-                "py_baselines",
-                ncounts,
-                self._time_zero,
-                self._time_zero_offset,
-                mass,
-                detector,
-                check_conditionals=check_conditionals,
-                use_dac=use_dac,
-                fit_series=self._fit_series_count,
-                settling_time=settling_time,
-                series=series,
-                integration_time=integration_time,
+            "py_baselines",
+            ncounts,
+            self._time_zero,
+            self._time_zero_offset,
+            mass,
+            detector,
+            check_conditionals=check_conditionals,
+            use_dac=use_dac,
+            fit_series=self._fit_series_count,
+            settling_time=settling_time,
+            series=series,
+            integration_time=integration_time,
         ):
             self.cancel()
         self._baseline_series = series
@@ -371,7 +371,7 @@ class MeasurementPyScript(ValvePyScript):
         integration_time = 1.1
 
         counts = (
-                sum([h["counts"] * integration_time + h["settle"] for h in hops]) * ncycles
+            sum([h["counts"] * integration_time + h["settle"] for h in hops]) * ncycles
         )
         if calc_time:
             # counts = sum of counts for each hop
@@ -381,16 +381,16 @@ class MeasurementPyScript(ValvePyScript):
         group = "signal"
         self.ncounts = counts
         if not self._automated_run_call(
-                "py_peak_hop",
-                ncycles,
-                counts,
-                hops,
-                mftable,
-                self._time_zero,
-                self._time_zero_offset,
-                self._series_count,
-                fit_series=self._fit_series_count,
-                group=group,
+            "py_peak_hop",
+            ncycles,
+            counts,
+            hops,
+            mftable,
+            self._time_zero,
+            self._time_zero_offset,
+            self._series_count,
+            fit_series=self._fit_series_count,
+            group=group,
         ):
             self.cancel()
             # self._series_count += 2
@@ -399,14 +399,14 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def peak_center(
-            self,
-            detector="",
-            isotope="",
-            integration_time=1.04,
-            save=True,
-            calc_time=False,
-            directions="Increase",
-            config_name="default",
+        self,
+        detector="",
+        isotope="",
+        integration_time=1.04,
+        save=True,
+        calc_time=False,
+        directions="Increase",
+        config_name="default",
     ):
         """
         Calculate the peak center for ``isotope`` on ``detector``.
@@ -498,13 +498,13 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def equilibrate(
-            self,
-            eqtime=20,
-            inlet=None,
-            outlet=None,
-            do_post_equilibration=True,
-            close_inlet=True,
-            delay=3,
+        self,
+        eqtime=20,
+        inlet=None,
+        outlet=None,
+        do_post_equilibration=True,
+        close_inlet=True,
+        delay=3,
     ):
         """
         equilibrate the extraction line with the mass spectrometer
@@ -653,7 +653,7 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def add_termination(
-            self, attr, teststr, start_count=0, frequency=10, window=0, mapper="", ntrips=1
+        self, attr, teststr, start_count=0, frequency=10, window=0, mapper="", ntrips=1
     ):
         self._automated_run_call(
             "py_add_termination",
@@ -669,7 +669,7 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def add_cancelation(
-            self, attr, teststr, start_count=0, frequency=10, window=0, mapper="", ntrips=1
+        self, attr, teststr, start_count=0, frequency=10, window=0, mapper="", ntrips=1
     ):
         self._automated_run_call(
             "py_add_cancelation",
@@ -685,13 +685,13 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def add_truncation(
-            self,
-            attr,
-            teststr,
-            start_count=0,
-            frequency=10,
-            ntrips=1,
-            abbreviated_count_ratio=1.0,
+        self,
+        attr,
+        teststr,
+        start_count=0,
+        frequency=10,
+        ntrips=1,
+        abbreviated_count_ratio=1.0,
     ):
         self._automated_run_call(
             "py_add_truncation",
@@ -706,14 +706,14 @@ class MeasurementPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def add_action(
-            self,
-            attr,
-            teststr,
-            start_count=0,
-            frequency=10,
-            ntrips=1,
-            action=None,
-            resume=False,
+        self,
+        attr,
+        teststr,
+        start_count=0,
+        frequency=10,
+        ntrips=1,
+        action=None,
+        resume=False,
     ):
 
         self._automated_run_call(
@@ -788,8 +788,8 @@ class MeasurementPyScript(ValvePyScript):
         :return: bool
         """
         return (
-                self._automated_run_call(lambda: self.automated_run.truncated)
-                or self.is_truncated()
+            self._automated_run_call(lambda: self.automated_run.truncated)
+            or self.is_truncated()
         )
 
     @property
@@ -918,5 +918,6 @@ class MeasurementPyScript(ValvePyScript):
 
         self.abbreviated_count_ratio = None
         self.ncounts = 0
+
 
 # ============= EOF =============================================

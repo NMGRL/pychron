@@ -48,4 +48,5 @@ class Connectable(HasTraits):
 
             self.monitorable = True
 
+
 # ============= EOF =============================================

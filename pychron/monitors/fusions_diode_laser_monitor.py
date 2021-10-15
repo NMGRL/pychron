@@ -144,6 +144,7 @@ class FusionsDiodeLaserMonitor(FusionsLaserMonitor):
             manager.emergency_shutoff(reason="Over temp {}".format(lt))
             return True
 
+
 # ============= views ===================================
 #    def traits_view(self):
 #        '''

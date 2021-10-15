@@ -35,4 +35,5 @@ class PyDiode(PychronApplication):
         TaskWindowLayout("pychron.fusions.diode"),
     ]
 
+
 # ============= EOF =============================================

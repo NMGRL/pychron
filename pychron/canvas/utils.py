@@ -16,7 +16,7 @@ def load_holder_canvas(canvas, geom, **kw):
 
 def iter_geom(geom, fmt=">fff", width=12):
     def f(x):
-        return struct.unpack(fmt, geom[x: x + width])
+        return struct.unpack(fmt, geom[x : x + width])
 
     return ((i, f(gi)) for i, gi in enumerate(range(0, len(geom), width)))
 
@@ -65,5 +65,6 @@ def markup_canvas_position(canvas, dbpos, monitor_name):
 def markup_canvas(canvas, positions, monitor_name):
     for p in positions:
         markup_canvas_position(canvas, p, monitor_name)
+
 
 # ============= EOF =============================================

@@ -138,6 +138,7 @@ class CalibrationImage(Image):
 
         return hdist, vdist
 
+
 #    def preprocess(self, pychron, erode_value, dilate_value, thresh):
 #        '''
 #        '''

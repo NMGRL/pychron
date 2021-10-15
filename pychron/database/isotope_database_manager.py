@@ -54,14 +54,14 @@ class BaseIsotopeDatabaseManager(Loggable):
     precedence = Int(0)
 
     def __init__(
-            self,
-            bind=True,
-            connect=True,
-            warn=True,
-            version_warn=False,
-            attribute_warn=False,
-            *args,
-            **kw
+        self,
+        bind=True,
+        connect=True,
+        warn=True,
+        version_warn=False,
+        attribute_warn=False,
+        *args,
+        **kw
     ):
         super(BaseIsotopeDatabaseManager, self).__init__(*args, **kw)
 
@@ -303,17 +303,17 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         return progress
 
     def make_analyses(
-            self,
-            ans,
-            progress=None,
-            use_progress=True,
-            exclude=None,
-            use_cache=True,
-            unpack=False,
-            calculate_age=False,
-            calculate_F=False,
-            load_aux=False,
-            **kw
+        self,
+        ans,
+        progress=None,
+        use_progress=True,
+        exclude=None,
+        use_cache=True,
+        unpack=False,
+        calculate_age=False,
+        calculate_F=False,
+        load_aux=False,
+        **kw
     ):
         """
         loading the analysis' signals appears to be the most expensive operation.
@@ -447,16 +447,16 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     # private
     # ===============================================================================
     def _construct_analyses(
-            self,
-            no_db_ans,
-            db_ans,
-            progress,
-            calculate_age,
-            calculate_F,
-            unpack,
-            use_cache,
-            use_progress,
-            **kw
+        self,
+        no_db_ans,
+        db_ans,
+        progress,
+        calculate_age,
+        calculate_F,
+        unpack,
+        use_cache,
+        use_progress,
+        **kw
     ):
 
         uuids = [ri.uuid for ri in no_db_ans]
@@ -504,14 +504,14 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             return [], []
 
     def _construct_analysis(
-            self,
-            rec,
-            group,
-            prog,
-            calculate_age=True,
-            calculate_F=False,
-            unpack=False,
-            load_aux=False,
+        self,
+        rec,
+        group,
+        prog,
+        calculate_age=True,
+        calculate_F=False,
+        unpack=False,
+        load_aux=False,
     ):
         atype = None
         if isinstance(rec, meas_AnalysisTable):
@@ -645,5 +645,6 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     # ===============================================================================
     def _irradiation_changed(self):
         self.level = ""
+
 
 # ============= EOF =============================================

@@ -436,7 +436,7 @@ class GISFigureEditor(BaseEditor):
         feature_groups = []
         po = self.plotter_options
         for i, (feature_group, agis) in enumerate(
-                groupby_key(ags, key=attrgetter("featuregroup_id"))
+            groupby_key(ags, key=attrgetter("featuregroup_id"))
         ):
             features = [
                 Feature(
@@ -495,7 +495,6 @@ if __name__ == "__main__":
 
     paths.build("PychronDev")
 
-
     class Options:
         basemap_uri = (
             "type=xyz&url=http://tile.openstreetmap.org/{z}/{x}/{y}.png&zmax=19&zmin=5"
@@ -521,7 +520,6 @@ if __name__ == "__main__":
                 "color": colornames[i + 2],
             }
 
-
     class MockItem(NonDBAnalysis):
         def __init__(self, sample, gid, mid, lat, lon, age, omit=False):
             self.latitude = lat
@@ -535,7 +533,6 @@ if __name__ == "__main__":
             if omit:
                 self.set_tag("omit")
             super(MockItem, self).__init__()
-
 
     m.items = [
         MockItem("foo", 0, 0, 34, -106, 1.5),

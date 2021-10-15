@@ -56,4 +56,5 @@ class FileStorage(Storage):
     def exists(self, path):
         return os.path.exists(path)
 
+
 # ============= EOF =============================================

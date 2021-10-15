@@ -40,4 +40,5 @@ class FusionsUVLaserMonitor(LaserMonitor):
         man = self.manager
         man.update_parameters()
 
+
 # ============= EOF ====================================

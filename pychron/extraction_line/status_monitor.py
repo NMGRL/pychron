@@ -150,4 +150,5 @@ class StatusMonitor(Loggable):
         # if not self._stop_evt.is_set():
         #     do_after(self.update_period * 1000, self._iter, i + 1, vm)
 
+
 # ============= EOF =============================================

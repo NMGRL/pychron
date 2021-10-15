@@ -42,4 +42,5 @@ class IColumnParser(Interface):
     def _get_index(self, ks):
         pass
 
+
 # ============= EOF =============================================

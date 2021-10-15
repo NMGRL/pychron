@@ -163,14 +163,14 @@ class PyScript(Loggable):
         return self.traceit
 
     def execute(
-            self,
-            new_thread=False,
-            bootstrap=True,
-            delay_start=0,
-            on_completion=None,
-            trace=False,
-            argv=None,
-            test=True,
+        self,
+        new_thread=False,
+        bootstrap=True,
+        delay_start=0,
+        on_completion=None,
+        trace=False,
+        argv=None,
+        test=True,
     ):
         if bootstrap:
             self.bootstrap()
@@ -679,7 +679,7 @@ class PyScript(Loggable):
             return result[0]
 
     def _manager_actions(
-            self, func, name=None, protocol=None, protocols=None, *args, **kw
+        self, func, name=None, protocol=None, protocols=None, *args, **kw
     ):
         man = self.manager
 
@@ -918,5 +918,6 @@ class PyScript(Loggable):
             raise AttributeError
 
         return v
+
 
 # ============= EOF =============================================

@@ -71,6 +71,7 @@ class AnalogPowerMeter(ADCDevice):
     def check_saturation(self, n=3):
         return False
 
+
 #         if self._rvoltage > (self.max_volts_out + 0.1):
 #             self._saturation_count += 1
 #         else:

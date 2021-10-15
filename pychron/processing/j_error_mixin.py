@@ -57,4 +57,5 @@ class JErrorMixin(HasTraits):
     #         self.include_j_error_in_individual_analyses = False
     #         self._suppress = False
 
+
 # ============= EOF =============================================

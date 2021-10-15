@@ -258,4 +258,5 @@ class BaseLinearDrive(HasTraits, ConsumerMixin):
     def _set_velocity(self, v):
         self._velocity = v
 
+
 # ============= EOF =============================================

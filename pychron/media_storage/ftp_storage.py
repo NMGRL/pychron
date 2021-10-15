@@ -74,4 +74,5 @@ class SFTPStorage(FTPStorage):
     def _put(self, client, src, dest):
         client.put(src, dest)
 
+
 # ============= EOF =============================================

@@ -37,11 +37,11 @@ def get_all_temp_data(low="2017-06-14 12:00"):
         data = {}
         columns = []
         for device, process, name in (
-                ("EnvironmentalMonitor", "Lab Temp.", "lab"),
-                ("RPiWeather", "Lab Temp. 3", "air_in"),
-                ("RPiWeather", "Lab Temp. 4", "air_out"),
-                ("RPiWeather", "Lab Temp. 7", "south_window"),
-                ("NOAA", "Outside Temp", "outside"),
+            ("EnvironmentalMonitor", "Lab Temp.", "lab"),
+            ("RPiWeather", "Lab Temp. 3", "air_in"),
+            ("RPiWeather", "Lab Temp. 4", "air_out"),
+            ("RPiWeather", "Lab Temp. 7", "south_window"),
+            ("NOAA", "Outside Temp", "outside"),
         ):
             records = db.get_measurements(device, process, low=low)
             print(device, process)

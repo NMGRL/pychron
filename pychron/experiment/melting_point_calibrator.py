@@ -85,4 +85,5 @@ class MeltingPointCalibrator(Loggable, ExecuteMixin):
         v = View(VGroup(tgrp, ggrp), resizable=True, title="Melting Point Calibration")
         return v
 
+
 # ============= EOF =============================================

@@ -66,40 +66,40 @@ def clean(text):
 class MPlotAxis(PlotAxis):
     def clone(self, ax):
         for attr in (
-                "mapper",
-                "origin",
-                "title_font",
-                "title_spacing",
-                "title_color",
-                "tick_weight",
-                "tick_color",
-                "tick_label_font",
-                "tick_label_color",
-                "tick_label_rotate_angle",
-                "tick_label_alignment",
-                "tick_label_margin",
-                "tick_label_offset",
-                "tick_label_position",
-                "tick_label_formatter",
-                "tick_in",
-                "tick_out",
-                "tick_visible",
-                "tick_interval",
-                "tick_generator",
-                "orientation",
-                "axis_line_visible",
-                "axis_line_color",
-                "axis_line_weight",
-                "axis_line_style",
-                "small_haxis_style",
-                "ensure_labels_bounded",
-                "ensure_ticks_bounded",
-                "bgcolor",
-                "use_draw_order",
-                "component",
-                "resizable",
-                "tag",
-                "use",
+            "mapper",
+            "origin",
+            "title_font",
+            "title_spacing",
+            "title_color",
+            "tick_weight",
+            "tick_color",
+            "tick_label_font",
+            "tick_label_color",
+            "tick_label_rotate_angle",
+            "tick_label_alignment",
+            "tick_label_margin",
+            "tick_label_offset",
+            "tick_label_position",
+            "tick_label_formatter",
+            "tick_in",
+            "tick_out",
+            "tick_visible",
+            "tick_interval",
+            "tick_generator",
+            "orientation",
+            "axis_line_visible",
+            "axis_line_color",
+            "axis_line_weight",
+            "axis_line_style",
+            "small_haxis_style",
+            "ensure_labels_bounded",
+            "ensure_ticks_bounded",
+            "bgcolor",
+            "use_draw_order",
+            "component",
+            "resizable",
+            "tag",
+            "use",
         ):
             try:
                 setattr(self, attr, getattr(ax, attr))
@@ -132,8 +132,8 @@ class MPlotAxis(PlotAxis):
                 axis_offset = 25
             else:
                 axis_offset = (
-                        max([l._bounding_box[axis_index] for l in self.ticklabel_cache])
-                        * 1.3
+                    max([l._bounding_box[axis_index] for l in self.ticklabel_cache])
+                    * 1.3
                 )
 
         offset = (self._origin_point + self._end_axis_point) / 2

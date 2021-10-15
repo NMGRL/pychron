@@ -135,4 +135,5 @@ class CommitView(BaseCommitsView):
         #              resizable=True)
         #     return v
 
+
 # ============= EOF =============================================

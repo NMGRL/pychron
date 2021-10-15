@@ -41,23 +41,23 @@ def gitcommand(repo, name, tag, func):
         func()
     except GitCommandError as e:
         if e.stderr.startswith(
-                "error: Your local changes to the following files would be overwritten by "
-                "checkout"
+            "error: Your local changes to the following files would be overwritten by "
+            "checkout"
         ):
             if (
-                    confirm(
-                        None,
-                        "You have local changes to Pychron that would be overwritten by {} {}"
-                        "Would you like continue? If Yes you will be presented with a choice to stash "
-                        "or delete your changes".format(tag, name),
-                    )
-                    == YES
+                confirm(
+                    None,
+                    "You have local changes to Pychron that would be overwritten by {} {}"
+                    "Would you like continue? If Yes you will be presented with a choice to stash "
+                    "or delete your changes".format(tag, name),
+                )
+                == YES
             ):
                 if (
-                        confirm(
-                            None, "Would you like to maintain (i.e. stash) your changes?"
-                        )
-                        == YES
+                    confirm(
+                        None, "Would you like to maintain (i.e. stash) your changes?"
+                    )
+                    == YES
                 ):
                     repo.git.stash()
                     func()
@@ -90,13 +90,13 @@ class Updater(Loggable):
 
     def bind_preferences(self):
         for a in (
-                "check_on_startup",
-                "branch",
-                "remote",
-                "use_tag",
-                "version_tag",
-                "build_repo",
-                "check_on_quit",
+            "check_on_startup",
+            "branch",
+            "remote",
+            "use_tag",
+            "version_tag",
+            "build_repo",
+            "check_on_quit",
         ):
             bind_preference(self, a, "pychron.update.{}".format(a))
 
@@ -129,9 +129,9 @@ class Updater(Loggable):
             mrtag = sorted(tags, key=lambda x: x.tag.tagged_date)[-1]
             if mrtag.tag.tagged_date > ctag.tag.tagged_date:
                 if self.confirmation_dialog(
-                        "New release available Current:{} New: {}\nUpdate?".format(
-                            ctag.name, mrtag.name
-                        )
+                    "New release available Current:{} New: {}\nUpdate?".format(
+                        ctag.name, mrtag.name
+                    )
                 ):
                     repo.git.fetch()
                     repo.git.checkout("-b", mrtag.name, mrtag.name)
@@ -234,7 +234,7 @@ class Updater(Loggable):
                 self.info("database is up to date")
             else:
                 if self.confirmation_dialog(
-                        "Database is out of date. Would you like to attempt an update?"
+                    "Database is out of date. Would you like to attempt an update?"
                 ):
                     try:
                         subprocess.check_call(
@@ -299,10 +299,10 @@ class Updater(Loggable):
         if active_branch_name != name:
             self.warning("branches do not match")
             if self.confirmation_dialog(
-                    "The branch specified in Preferences does not match the branch in the build directory.\n"
-                    "Preferences branch: {}\n"
-                    "Build branch: {}\n"
-                    "Do you want to proceed?".format(name, active_branch_name)
+                "The branch specified in Preferences does not match the branch in the build directory.\n"
+                "Preferences branch: {}\n"
+                "Build branch: {}\n"
+                "Do you want to proceed?".format(name, active_branch_name)
             ):
                 self.info(
                     "switching from branch: {} to branch: {}".format(
@@ -405,7 +405,7 @@ class Updater(Loggable):
         return branch.commit
 
     def _get_selected_hexsha(
-            self, commits, lc, rc, view_klass=None, auto_select=True, tags=None, **kw
+        self, commits, lc, rc, view_klass=None, auto_select=True, tags=None, **kw
     ):
         if view_klass is None:
             view_klass = CommitView
@@ -468,5 +468,6 @@ class Updater(Loggable):
 
         # def _get_delete_enabled(self):
         #     return not (self.branch == self.edit_branch or self.edit_branch.startswith('origin'))
+
 
 # ============= EOF =============================================

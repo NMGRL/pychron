@@ -57,6 +57,7 @@ class FusionsCO2LaserMonitor(FusionsLaserMonitor, CO2LaserMonitor):
         self.internal_meter_buffer.append(n)
         self.internal_meter_buffer = self.internal_meter_buffer[-trim:]
 
+
 #            avg = sum(self.internal_meter_buffer) / len(self.internal_meter_buffer)
 #            if abs(avg - self.setpoint) > self._setpoint_tolerance:
 #                pass

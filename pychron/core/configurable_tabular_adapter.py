@@ -30,4 +30,5 @@ class ConfigurableMixin(HasTraits):
     def _get_all_columns_dict(self):
         return dict(self.all_columns)
 
+
 # ============= EOF =============================================

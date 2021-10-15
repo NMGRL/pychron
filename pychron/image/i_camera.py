@@ -39,4 +39,5 @@ class ICamera(Interface):
     def get_image_data(self, size):
         pass
 
+
 # ============= EOF =============================================

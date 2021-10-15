@@ -271,14 +271,14 @@ class GraphicModel(HasTraits):
 
 
 def make_xml(
-        path,
-        offset=100,
-        default_bounds=(50, 50),
-        default_radius=3.0,
-        convert_mm=False,
-        make=True,
-        use_label=True,
-        rotate=0,
+    path,
+    offset=100,
+    default_bounds=(50, 50),
+    default_radius=3.0,
+    convert_mm=False,
+    make=True,
+    use_label=True,
+    rotate=0,
 ):
     """
     convert a csv into an xml
@@ -390,7 +390,7 @@ def make_xml(
 
 
 def open_txt(
-        p, bounds, radius, use_label=True, convert_mm=False, make=True, rotate=None
+    p, bounds, radius, use_label=True, convert_mm=False, make=True, rotate=None
 ):
     gm = GraphicModel(srcpath=p, rotation=rotate or 0)
     p = make_xml(

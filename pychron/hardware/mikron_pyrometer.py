@@ -278,6 +278,7 @@ class MikronGA140Pyrometer(CoreDevice):
         )
         return cg
 
+
 # ============= EOF =============================================
 
 #    def scan(self, *args):

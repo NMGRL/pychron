@@ -433,4 +433,5 @@ class IsotopeGroup(HasTraits):
         else:
             raise AttributeError(attr)
 
+
 # ============= EOF =============================================

@@ -69,4 +69,5 @@ class SpectrometerDevice(ConfigLoadable):
     # def handle_response(self, cmd, resp):
     #     return resp
 
+
 # ============= EOF =============================================

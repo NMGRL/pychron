@@ -73,4 +73,5 @@ class BaseFurnaceManager(StreamGraphManager):
         self.info("testing connection")
         return self.test_furnace_api()
 
+
 # ============= EOF =============================================
