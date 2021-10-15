@@ -50,11 +50,13 @@ def instrument_payload(cm):
 
 def preferred_datum_factory(p):
     return {
-        "type": {"parameter": p["attr"],
-                 "unit": p.get("unit", ""),
-                 "error_metric": p.get("error_kind"),
-                 "is_computed": True,
-                 "description": p.get("kind")},
+        "type": {
+            "parameter": p["attr"],
+            "unit": p.get("unit", ""),
+            "error_metric": p.get("error_kind"),
+            "is_computed": True,
+            "description": p.get("kind"),
+        },
         "value": p["value"],
         "error": p["error"],
     }
