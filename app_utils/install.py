@@ -856,7 +856,7 @@ def install_edm(cfg):
     # print(' '.join(cmdargs))
     # subprocess.call(cmdargs)
     # cmdargs = ['edm', 'install'] + cfg['edm_requirements'] + ['--environment', cfg['edm_env_name']]
-    cmdargs = ['edm', 'install'] + cfg['edm_requirements']
+    cmdargs = ['edm', 'install', '-y'] + cfg['edm_requirements']
     print('edm install')
     print(' '.join(cmdargs))
     subprocess.call(cmdargs)

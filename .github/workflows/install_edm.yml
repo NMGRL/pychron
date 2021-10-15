@@ -30,7 +30,7 @@ jobs:
           edm-version: 3.1.1
       - name: Install EDM dependencies
         run: >
-          edm install chaco certifi cython envisage future gitpython keyring jinja2 lxml numpy pandas patsy pillow
+          edm install -y chaco certifi cython envisage future gitpython keyring jinja2 lxml numpy pandas patsy pillow
           pip pyface pyparsing pyproj pymysql pyqt5 pytables pyyaml pygments qt Reportlab requests
           scipy sqlalchemy traits xlrd xlsxwriter xlwt
       - name: Install PIP dependencies
