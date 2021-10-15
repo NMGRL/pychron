@@ -119,5 +119,4 @@ class BaseSpectrometerManager(Manager):
     def _spectrometer_default(self):
         return self.spectrometer_klass(application=self.application)
 
-
 # ============= EOF =============================================

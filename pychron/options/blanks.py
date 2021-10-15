@@ -51,6 +51,7 @@ class BlanksFitAuxPlot(SeriesFitAuxPlot, FilterFit):
 
 class BlanksOptions(SeriesOptions):
     aux_plot_klass = BlanksFitAuxPlot
+
     # _main_options_klass = BlanksMainOptions
 
     def initialize(self):
@@ -63,6 +64,5 @@ class BlanksOptions(SeriesOptions):
 
     def _get_subview(self, name):
         return VIEWS[name]
-
 
 # ============= EOF =============================================

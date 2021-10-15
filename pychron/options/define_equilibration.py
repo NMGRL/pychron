@@ -36,5 +36,4 @@ class DefineEquilibrationOptions(FitOptions):
     def _get_subview(self, name):
         return VIEWS[name]
 
-
 # ============= EOF =============================================

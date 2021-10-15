@@ -28,7 +28,6 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 class CanvasDesignerPlugin(BaseTaskPlugin):
     id = 'pychron.canvas_designer.plugin'
 
-
     def _task_extensions_default(self):
         return [TaskExtension(actions=[])]
 
@@ -37,7 +36,7 @@ class CanvasDesignerPlugin(BaseTaskPlugin):
                           name='Canvas Designer',
                           factory=self._task_factory,
                           accelerator='Ctrl+Shift+D',
-        )]
+                          )]
         return ts
 
     def _task_factory(self):

@@ -65,4 +65,3 @@ class StratCanvas(SceneCanvas):
             i.index_origin = io
 
 # ============= EOF =============================================
-

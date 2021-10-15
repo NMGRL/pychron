@@ -126,13 +126,13 @@ class ResultsView(Controller):
         else:
             if not self.model.ok_close():
                 if (
-                    confirm(
-                        info.ui.control,
-                        "Pychron is not communicating with a Spectrometer.\n"
-                        "Are you sure you want to enter "
-                        "Spectrometer Simulation mode?",
-                    )
-                    != YES
+                        confirm(
+                            info.ui.control,
+                            "Pychron is not communicating with a Spectrometer.\n"
+                            "Are you sure you want to enter "
+                            "Spectrometer Simulation mode?",
+                        )
+                        != YES
                 ):
                     sys.exit()
 
@@ -183,6 +183,5 @@ class ResultsView(Controller):
             width=650,
         )
         return v
-
 
 # ============= EOF =============================================

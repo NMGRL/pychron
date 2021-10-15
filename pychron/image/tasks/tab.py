@@ -56,6 +56,7 @@ class ImageModel(HasTraits):
 
 class ImageTabEditor(BaseTraitsEditor):
     record_id = Long
+
     # image = Any
 
     @on_trait_change('model:[note, name]')
@@ -78,8 +79,4 @@ class CameraTab(BaseTraitsEditor):
                        width=896, height=680))
         return v
 
-
 # ============= EOF =============================================
-
-
-

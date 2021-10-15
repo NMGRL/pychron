@@ -54,5 +54,7 @@ class BaseFileSourceTestCase(unittest.TestCase):
     def _test_count_ys(self, k, cnt):
         ys = self.spec.isotope_group.isotopes[k].ys
         self.assertEqual(len(ys), cnt)
+
+
 if __name__ == '__main__':
     unittest.main()

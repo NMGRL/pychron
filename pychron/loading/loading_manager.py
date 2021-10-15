@@ -771,7 +771,7 @@ class LoadingManager(DVCIrradiationable):
             return
 
         if self.confirmation_dialog(
-            "Are you sure you want to Archive the selected Loads?"
+                "Are you sure you want to Archive the selected Loads?"
         ):
             self.dvc.archive_loads([li.name for li in self.selected_instances])
             self._refresh_loads()
@@ -808,7 +808,7 @@ class LoadingManager(DVCIrradiationable):
         if self.load_instance:
             ln = self.load_instance.name
             if not self.confirmation_dialog(
-                "Are you sure you want to delete {}?".format(ln)
+                    "Are you sure you want to delete {}?".format(ln)
             ):
                 return
 
@@ -997,7 +997,6 @@ class LoadingManager(DVCIrradiationable):
         # self.refresh_table = True
         self.dirty = True
         self.canvas.request_redraw()
-
 
 # ============= EOF =============================================
 

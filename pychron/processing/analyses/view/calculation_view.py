@@ -21,7 +21,6 @@ from pychron.core.ui import set_qt
 from pychron.pychron_constants import ARGON_KEYS
 from six.moves import map
 
-
 set_qt()
 
 # ============= enthought library imports =======================
@@ -51,8 +50,8 @@ class CalculationView(HasTraits):
         lines.append('Ar40* = Ar40 - Ar40atm - K40')
 
         vs = list(map(floatfmt, list(map(nominal_value, (a.corrected_intensities['Ar40'],
-                                               a.computed['atm40'],
-                                               a.non_ar_isotopes['k40'])))))
+                                                         a.computed['atm40'],
+                                                         a.non_ar_isotopes['k40'])))))
         lines.append('Ar40* = {} - {} - {}'.format(*vs))
 
         self.text = '\n'.join(lines)
@@ -77,6 +76,3 @@ if __name__ == '__main__':
     cv.configure_traits()
 
 # ============= EOF =============================================
-
-
-

@@ -168,5 +168,4 @@ class AuxPlot(HasTraits):
     def _get_has_filter(self):
         return self.filter_str or self.sigma_filter_n
 
-
 # ============= EOF =============================================

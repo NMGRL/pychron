@@ -52,6 +52,3 @@ class SaveAction(TaskAction):
     image = icon('database_save')
     # enabled_name = 'save_enabled'
 # ============= EOF =============================================
-
-
-

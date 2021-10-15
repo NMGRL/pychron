@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from traits.api import Interface
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -36,4 +37,3 @@ class IActuator(Interface):
         pass
 
 # ============= EOF =============================================
-

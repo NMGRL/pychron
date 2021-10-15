@@ -37,7 +37,6 @@ def make_panel(p):
 
 
 class MDDFigureOptions(FigureOptions):
-
     panel_ul = Enum(*PANELS)
     panel_ur = Enum(*PANELS)
     panel_ll = Enum(*PANELS)

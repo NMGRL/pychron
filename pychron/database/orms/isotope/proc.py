@@ -451,7 +451,6 @@ class proc_IsotopeResultsTable(Base, BaseMixin):
 class proc_NotesTable(Base, HistoryMixin):
     note = Column(BLOB)
 
-
 # class proc_WorkspaceHistoryTable(Base, HistoryMixin):
 #    workspace_id = foreignkey('WorkspaceTable')
 #

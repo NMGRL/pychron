@@ -70,4 +70,3 @@ class ExtractionLineInfoOverlay(InfoOverlay):
     tool = Instance(ExtractionLineInfoTool)
 
 # ============= EOF =============================================
-

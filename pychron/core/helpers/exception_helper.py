@@ -99,7 +99,6 @@ def create_issue(issue):
 
 
 def git_post(cmd, return_json=True, **kw):
-
     tok = os.environ.get('GITHUB_TOKEN')
 
     if not tok:
@@ -220,9 +219,9 @@ def ignored_exceptions(exctype, value, tb):
         return True
 
     ret = str(value) in ("'NoneType' object has no attribute 'text'",
-                          "'NoneType' object has no attribute 'size'",
-                          "too many indices for array",
-                          "unsupported operand type(s) for +=: 'NoneType' and 'list'")
+                         "'NoneType' object has no attribute 'size'",
+                         "too many indices for array",
+                         "unsupported operand type(s) for +=: 'NoneType' and 'list'")
 
     if not ret:
         # if exception was not generated from pychron. This should obviate the subsequent if statements

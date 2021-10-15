@@ -162,11 +162,11 @@ if __name__ == '__main__':
 
         def _graph_default(self):
             g = Graph(container_dict={'padding_top': 15 * 4,
-                                     'bgcolor': 'purple',
-                                     # 'bounds': [500,500],
-                                     'spacing': 10,
-                                     'resizable': '',
-                                     'padding_bottom': 40})
+                                      'bgcolor': 'purple',
+                                      # 'bounds': [500,500],
+                                      'spacing': 10,
+                                      'resizable': '',
+                                      'padding_bottom': 40})
             p = g.new_plot(padding=[80, 10, 10, 40], resizable='',
                            bounds=(100, 100))
             txt = 'gooiooi \N{Plus-minus sign} \N{Greek Small Letter Sigma} \u03AE \u00ae \u00a3'
@@ -198,7 +198,6 @@ if __name__ == '__main__':
             self.graph.edit_traits()
             # self.graph.plotcontainer.bounds = [600, 600]
             # self.graph.plotcontainer.do_layout(force=True)
-
 
 
     d = Demo()

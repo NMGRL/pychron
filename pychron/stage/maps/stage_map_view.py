@@ -17,6 +17,8 @@
 from __future__ import absolute_import
 from traitsui.api import View, Item, TabularEditor, HGroup, Controller
 from traitsui.tabular_adapter import TabularAdapter
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -35,7 +37,6 @@ class SampleHoleAdapter(TabularAdapter):
                 txt = '0'
 
         setattr(getattr(obj, trait)[row], self.columns[column][1], txt)
-
 
 
 class StageMapView(Controller):

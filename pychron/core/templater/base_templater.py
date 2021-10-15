@@ -58,7 +58,7 @@ class BaseTemplater(HasTraits):
         super(BaseTemplater, self).__init__(*args, **kw)
         self.load()
 
-    #persistence
+    # persistence
     def load(self):
         p = os.path.join(paths.hidden_dir, self.persistence_name)
         if os.path.isfile(p):
@@ -95,7 +95,7 @@ class BaseTemplater(HasTraits):
                     try:
                         f = self.attribute_formats[k]
                     except KeyError:
-                        f='s'
+                        f = 's'
 
                     k = '{{{}:{}}}'.format(k, f)
             ns.append(k)
@@ -122,7 +122,7 @@ class BaseTemplater(HasTraits):
             self.load()
             self.label = ''
 
-    #handlers
+    # handlers
     def _add_label_button_fired(self):
         if self.label not in self.predefined_labels:
             self.user_predefined_labels.append(self.label)
@@ -145,6 +145,5 @@ class BaseTemplater(HasTraits):
 
     def _predefined_label_changed(self, new):
         self.label = new
-
 
 # ============= EOF =============================================

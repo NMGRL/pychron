@@ -168,10 +168,12 @@ if __name__ == "__main__":
     paths.build("~/PychronDev")
     af = BulkRunFixer()
 
+
     class Run:
         extraction_script = "Foo"
         measurement_script = "Bar"
         analysis_type = "unknown"
+
 
     a = Run()
     a.analysis_type = "air"

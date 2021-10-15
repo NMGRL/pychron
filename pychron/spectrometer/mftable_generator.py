@@ -18,7 +18,6 @@ import time
 
 from pychron.loggable import Loggable
 
-
 # class MFTableGenerator(Loggable):
 #     # def make_mftable(self, ion, detectors, refiso, peak_center_config='ic_peakhop'):
 #     def make_mftable(self, ion, cfg):

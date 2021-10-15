@@ -285,7 +285,6 @@ if __name__ == "__main__":
     vm.start()
     vm.configure_traits()  # view='image_view')
 
-
 # ================== EOF ========================
 # def process_image_dir(self, root):
 #        '''

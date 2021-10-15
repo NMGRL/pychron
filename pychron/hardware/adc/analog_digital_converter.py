@@ -104,6 +104,7 @@ class OmegaADC(M1000):
     D5141
 
     """
+
     @property
     def read_block(self):
         """

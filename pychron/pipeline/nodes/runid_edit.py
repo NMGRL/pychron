@@ -78,8 +78,8 @@ class RunIDEditNode(BaseDVCNode):
         for repo, items in groupby_repo(self.items):
             pss = []
             for item in items:
-                ps = self.dvc.fix_identifier(item.uuid, item.src_record_id,  item.dest_record_id, repo,
-                                        item.dest_identifier, item.dest_aliquot, item.dest_step)
+                ps = self.dvc.fix_identifier(item.uuid, item.src_record_id, item.dest_record_id, repo,
+                                             item.dest_identifier, item.dest_aliquot, item.dest_step)
                 pss.extend(ps)
 
             self.dvc.commit()

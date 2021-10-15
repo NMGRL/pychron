@@ -173,7 +173,7 @@ class IrradiationEditor(PackageEditor):
 
         return self.name
 
-    #def _add_irradiation(self):
+    # def _add_irradiation(self):
     #    self.debug('add irradiation={}'.format(self.name))
     #    self.dvc.add_irradiation(self.name, self.chronology.get_doses(), verbose=False)
     #    if self.selected_reactor_name:

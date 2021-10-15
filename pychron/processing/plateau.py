@@ -126,7 +126,7 @@ class Plateau(HasTraits):
     def check_percent_released(self, start, end):
         ss = sum(
             [(s if not i in self.excludes else 0) for i, s in enumerate(self.signals)][
-                start : end + 1
+            start: end + 1
             ]
         )
 
@@ -177,6 +177,5 @@ class Plateau(HasTraits):
 
     def check_nsteps(self, start, end):
         return (end - start) + 1 >= self.nsteps
-
 
 # ============= EOF =============================================

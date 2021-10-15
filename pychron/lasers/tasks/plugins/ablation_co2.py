@@ -23,5 +23,4 @@ class AblationCO2Plugin(RemoteLaserPlugin):
     task_name = 'Ablation CO2'
     task_klass = ('pychron.lasers.tasks.laser_task', 'AblationCO2Task')
 
-
 # ============= EOF =============================================

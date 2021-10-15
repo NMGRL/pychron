@@ -78,11 +78,11 @@ class CompositeOptions(FigureOptions):
         klass = self._get_subview(name)
 
         if name in (
-            MAIN.lower(),
-            "spectrum",
-            "appearance(spec.)",
-            "display(spec.)",
-            "calculations(spec.)",
+                MAIN.lower(),
+                "spectrum",
+                "appearance(spec.)",
+                "display(spec.)",
+                "calculations(spec.)",
         ):
             obj = klass(model=self.spectrum_options)
         elif name in ("isochron", "appearance(iso.)"):
@@ -107,6 +107,5 @@ class CompositeOptions(FigureOptions):
 
     def _get_subview(self, name):
         return VIEWS[name]
-
 
 # ============= EOF =============================================

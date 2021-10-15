@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # =============enthought library imports=======================
 
 # =============standard library imports ========================
@@ -23,12 +22,15 @@
 # =============local library imports  ==========================
 from __future__ import absolute_import
 from .kerr_device import KerrDevice
+
+
 class KerrMicrocontroller(KerrDevice):
     """
         Provides access to a `Kerr Controller board <http://www.jrkerr.com/boards.html>`_.
         Used for controlling stepper motors and servos.
     """
     address = '00'
+
     def initialize(self, *args, **kw):
         """
         """
@@ -48,12 +50,12 @@ class KerrMicrocontroller(KerrDevice):
 
         # verify number of modules found
         commands = [
-                   ('01', '0E', 50, 'no op'),
-                   ('02', '0E', 50, 'no op')
-                   ]
+            ('01', '0E', 50, 'no op'),
+            ('02', '0E', 50, 'no op')
+        ]
         self._execute_hex_commands(commands)
 
-#        addr = self.address
+        #        addr = self.address
         #         cmd = '0E'
         #         for addr in ('01', '02'):
         #             c = self._build_command(addr, cmd)

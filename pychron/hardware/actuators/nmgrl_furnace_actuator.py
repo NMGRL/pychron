@@ -96,12 +96,12 @@ class NMGRLFurnaceActuator(GPActuator):
             # elif action == 'open' and resp == 'closed':
             #     return False
 
-                # print 'bb', resp
-                # # # if close indicator is True and checking for closed return False
-                # if resp and action != 'open':
-                # #     resp = False
-                # # print 'cc', obj, resp
-                # return resp
+            # print 'bb', resp
+            # # # if close indicator is True and checking for closed return False
+            # if resp and action != 'open':
+            # #     resp = False
+            # # print 'cc', obj, resp
+            # return resp
 
     # def close_channel(self, obj, excl=False):
     #     """
@@ -136,6 +136,5 @@ class NMGRLFurnaceActuator(GPActuator):
 
         cmd = '{} {}'.format(action, get_switch_address(obj))
         return self.ask(cmd)
-
 
 # ============= EOF =============================================

@@ -73,5 +73,4 @@ def massspec_db_factory(path, remove=True):
     db.create_all(metadata)
     return db
 
-
 # ============= EOF =============================================

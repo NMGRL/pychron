@@ -188,9 +188,9 @@ class SelectionView(Viewable):
             return func
 
         for i, (name, color) in enumerate(zip(machines, colors)):
-            xxj = xs[i * 5 : i * 5 + 5]
-            yyj = ys[i * 5 : i * 5 + 5]
-            nnj = rids[i * 5 : i * 5 + 5]
+            xxj = xs[i * 5: i * 5 + 5]
+            yyj = ys[i * 5: i * 5 + 5]
+            nnj = rids[i * 5: i * 5 + 5]
             for at, xx, yy, nn, marker in zip(ats, xxj, yyj, nnj, markers):
                 s, _ = g.new_series(xx, yy, marker=marker, color=color, **skw)
                 g.set_series_label("{} {}".format(name, at))
@@ -286,6 +286,5 @@ class SelectionView(Viewable):
             resizable=True,
         )
         return v
-
 
 # ============= EOF =============================================

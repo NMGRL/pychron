@@ -165,7 +165,7 @@ class Ideogram(BaseArArFigure):
 
         try:
             xs, es = array([(nominal_value(ai), std_dev(ai))
-                                       for ai in self._get_xs(key=index_attr)]).T
+                            for ai in self._get_xs(key=index_attr)]).T
 
             xs = self.normalize(xs, es)
             self.xs = xs
@@ -241,7 +241,7 @@ class Ideogram(BaseArArFigure):
     def _min_max(self, attr, sign=1, exclude_omit=False):
         try:
             ans = [ai for ai in self._unpack_attr(attr, exclude_omit=exclude_omit) if ai is not None]
-            xs = [nominal_value(ai) + sign*std_dev(ai) * 2 for ai in ans]
+            xs = [nominal_value(ai) + sign * std_dev(ai) * 2 for ai in ans]
             es = [std_dev(ai) for ai in ans]
             xs = self.normalize(xs, es)
             return xs
@@ -297,6 +297,7 @@ class Ideogram(BaseArArFigure):
             print('asfd', offset)
         print(xs)
         return xs
+
     # ===============================================================================
     # plotters
     # ===============================================================================

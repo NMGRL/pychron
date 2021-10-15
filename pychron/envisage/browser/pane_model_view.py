@@ -24,14 +24,12 @@ from traitsui.handler import Controller
 
 class PaneModelView(Controller):
     pane = Any
-    def trait_context ( self ):
+
+    def trait_context(self):
         """ Returns the default context to use for editing or configuring
             traits.
         """
-        return { 'object': self.model, 'controller': self,
-                 'handler': self, 'pane':self.pane}
+        return {'object': self.model, 'controller': self,
+                'handler': self, 'pane': self.pane}
 
 # ============= EOF =============================================
-
-
-

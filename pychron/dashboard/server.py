@@ -306,7 +306,7 @@ class DashboardServer(Loggable):
 
     def _script_factory(self, script_name):
         if os.path.isfile(
-            os.path.join(paths.extraction_dir, add_extension(script_name, ".py"))
+                os.path.join(paths.extraction_dir, add_extension(script_name, ".py"))
         ):
             runner = self.application.get_service(
                 "pychron.extraction_line.ipyscript_runner.IPyScriptRunner"
@@ -383,7 +383,6 @@ class DashboardServer(Loggable):
         #         return
         #
         #     print obj, name, old, new
-
 
 # ============= EOF =============================================
 # def _load_devices(self):

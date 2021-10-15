@@ -95,7 +95,7 @@ class Communicator(HeadlessConfigLoadable):
     scheduler = None
     address = None
     _comms_report_attrs = None
-    
+
     def __init__(self, *args, **kw):
         """
         """

@@ -84,5 +84,4 @@ class ScriptTable(BaseMixin):
     script_blob = Column(TEXT)
     hash = Column(String(32))
 
-
 # ============= EOF =============================================

@@ -25,6 +25,3 @@ from pychron.hardware.mdrive.base import BaseMDrive
 class HeadlessMDrive(BaseMDrive, HeadlessCoreDevice):
     pass
 # ============= EOF =============================================
-
-
-

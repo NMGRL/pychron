@@ -430,6 +430,7 @@ class InterpretedGroupView(GroupView):
 
 class BrowserInterpretedAgeView(BaseBrowserSampleView):
     _selection_view_klass = InterpretedGroupView
+
     # interpreted_grp = Instance(InterpretedGroupView)
     #
     # def _interpretd_grp_default(self):

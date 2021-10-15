@@ -36,7 +36,7 @@ class MassCalibrationTablePane(TraitsDockPane):
             UItem('object.scanner.calibration_peaks',
                   editor=TableEditor(columns=cols,
                                      selected='object.scanner.selected')
-            )
+                  )
 
         )
 

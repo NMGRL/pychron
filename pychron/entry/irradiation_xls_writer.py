@@ -105,5 +105,4 @@ class IrradiationXLSTableWriter(HasTraits):
             style.num_format_str = fmt
             sheet.write(row, i + 1, v, style)
 
-
 # ============= EOF =============================================

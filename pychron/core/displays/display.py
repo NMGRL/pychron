@@ -175,5 +175,4 @@ class DisplayController(Controller):
 class ErrorDisplay(DisplayController):
     pass
 
-
 # ============= EOF =============================================

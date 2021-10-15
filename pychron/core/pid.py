@@ -32,7 +32,6 @@ ATTRS = ("kp", "ki", "kd", "kdt")
 
 
 class PID(HasTraits):
-
     kp = Range(0.0, 10.0, 1.25)
     ki = Range(0.0, 2.0, 0.25)
     kd = Range(0.0, 2.0, 0.25)
@@ -83,7 +82,7 @@ class PID(HasTraits):
         self._integral_err += error * dt
         derivative = (error - self._prev_err) / dt
         output = (
-            (self.kp * error) + (self.ki * self._integral_err) + (self.kd * derivative)
+                (self.kp * error) + (self.ki * self._integral_err) + (self.kd * derivative)
         )
         self._prev_err = error
         return min(self.max_output, max(self.min_output, output))
@@ -103,6 +102,5 @@ class PID(HasTraits):
             buttons=["OK", "Cancel"],
         )
         return v
-
 
 # ============= EOF =============================================

@@ -78,6 +78,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     convert_index_func = Callable
     grouping = Int
     show_grouping = Bool
+
     # def __init__(self, *args, **kw):
     #     super(RegressionGraph, self).__init__(*args, **kw)
     #     self._regression_lock = Lock()
@@ -190,30 +191,30 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
     #
     # ===============================================================================
     def new_series(
-        self,
-        x=None,
-        y=None,
-        ux=None,
-        uy=None,
-        lx=None,
-        ly=None,
-        fx=None,
-        fy=None,
-        fit="linear",
-        display_filter_bounds=False,
-        filter_outliers_dict=None,
-        use_error_envelope=True,
-        truncate="",
-        marker="circle",
-        marker_size=2,
-        add_tools=True,
-        add_inspector=True,
-        add_point_inspector=True,
-        add_selection=True,
-        convert_index=None,
-        plotid=None,
-        *args,
-        **kw
+            self,
+            x=None,
+            y=None,
+            ux=None,
+            uy=None,
+            lx=None,
+            ly=None,
+            fx=None,
+            fy=None,
+            fit="linear",
+            display_filter_bounds=False,
+            filter_outliers_dict=None,
+            use_error_envelope=True,
+            truncate="",
+            marker="circle",
+            marker_size=2,
+            add_tools=True,
+            add_inspector=True,
+            add_point_inspector=True,
+            add_selection=True,
+            convert_index=None,
+            plotid=None,
+            *args,
+            **kw
     ):
 
         kw["marker"] = marker
@@ -281,14 +282,14 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         return tool
 
     def add_tools(
-        self,
-        plot,
-        scatter,
-        line=None,
-        convert_index=None,
-        add_inspector=True,
-        add_point_inspector=True,
-        add_selection=True,
+            self,
+            plot,
+            scatter,
+            line=None,
+            convert_index=None,
+            add_inspector=True,
+            add_point_inspector=True,
+            add_selection=True,
     ):
 
         if add_inspector:
@@ -683,7 +684,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         return r
 
     def _new_scatter(
-        self, kw, marker, marker_size, plotid, x, y, fit, filter_outliers_dict, truncate
+            self, kw, marker, marker_size, plotid, x, y, fit, filter_outliers_dict, truncate
     ):
         kw["type"] = "scatter"
         plot, names, rd = self._series_factory(x, y, plotid=plotid, **kw)
@@ -767,6 +768,5 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             resizable=self.resizable,
         )
         return v
-
 
 # ============= EOF =============================================

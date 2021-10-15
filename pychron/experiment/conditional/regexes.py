@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 import re
+
 # ============= local library imports  ==========================
 # match .current_point
 CP_REGEX = re.compile(r'[\w]+[\w\d]+\({0,1}[\w\d]+\){0,1}\.(current|cur)')
@@ -26,10 +27,12 @@ STD_REGEX = re.compile(r'[\w]+[\w\d]+\({0,1}[\w\d]+\){0,1}\.(std_dev|sd|stddev)'
 # match .inactive
 ACTIVE_REGEX = re.compile(r'[\w]+[\w\d]+\({0,1}[\w\d]+\){0,1}\.inactive')
 
+
 # Functions
 def make_func_regex(r):
     reg = r'(not ){{0,1}}{}'.format(r)
     return re.compile(reg)
+
 
 # match average(ar##)
 AVG_REGEX = make_func_regex('average\([A-Za-z]+\d*\)')
@@ -46,7 +49,6 @@ SLOPE_REGEX = make_func_regex(r'slope\([A-Za-z]+\d*\)')
 # match between(age, 0,10)
 # BETWEEN_REGEX = make_func_regex(r'between\([\w\d\s]+(\.\w+)*\s*,\s*[-\d+]+(\.\d)*(\s*,\s*[-\d+]+(\.\d)*)\)')
 BETWEEN_REGEX = make_func_regex(r'between\([\w\d\s\(\)]+(\.\w+)*\s*,\s*[-\d+]+(\.\d)*(\s*,\s*[-\d+]+(\.\d)*)\)')
-
 
 # match x in x**2+3x+1
 MAPPER_KEY_REGEX = re.compile(r'[A-Za-z]+')
@@ -72,10 +74,6 @@ DEVICE_REGEX = re.compile(r'device\.\w+')
 
 INTERPOLATE_REGEX = re.compile(r'\$\w+')
 
-
 EXTRACTION_STR_PERCENT_REGEX = re.compile(r'\d+%(,\d+%)*$')
 EXTRACTION_STR_ABS_REGEX = re.compile(r'\d+(\.\d+)*(,\d+(\.\d+)*)*$')
 # ============= EOF =============================================
-
-
-

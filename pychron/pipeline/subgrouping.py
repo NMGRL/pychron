@@ -92,7 +92,7 @@ def make_interpreted_age_groups(ans, group_id=0):
     groups = []
     analyses = []
     for i, (subgroup, items) in enumerate(
-        groupby(sorted(ans, key=subgrouping_key), key=subgrouping_key)
+            groupby(sorted(ans, key=subgrouping_key), key=subgrouping_key)
     ):
         items = list(items)
         if subgroup:
@@ -113,6 +113,5 @@ def make_interpreted_age_groups(ans, group_id=0):
             analyses.extend(items)
 
     return groups, analyses
-
 
 # ============= EOF =============================================

@@ -80,7 +80,7 @@ def crop(src, x, y, w, h):
     if not isinstance(src, ndarray):
         src = asarray(src)
 
-    return src[y : y + h, x : x + w]
+    return src[y: y + h, x: x + w]
 
 
 def save_image(src, path):
@@ -240,12 +240,12 @@ def draw_rectangle(src, x, y, w, h, color=(255, 0, 0), thickness=1):
 
 
 def draw_contour_list(
-    src,
-    contours,
-    hierarchy,
-    external_color=(0, 255, 255),
-    hole_color=(255, 0, 255),
-    thickness=1,
+        src,
+        contours,
+        hierarchy,
+        external_color=(0, 255, 255),
+        hole_color=(255, 0, 255),
+        thickness=1,
 ):
     n = len(contours)
     for i, _ in enumerate(contours):
@@ -265,14 +265,14 @@ def contour(src):
 
 
 def get_polygons(
-    src,
-    contours,
-    hierarchy,
-    convextest=False,
-    nsides=3,
-    min_area=100,
-    perimeter_smooth_factor=0.001,
-    **kw
+        src,
+        contours,
+        hierarchy,
+        convextest=False,
+        nsides=3,
+        min_area=100,
+        perimeter_smooth_factor=0.001,
+        **kw
 ):
     polygons = []
     areas = []
@@ -324,6 +324,5 @@ def get_polygons(
     return list(
         zip(polygons, areas, min_enclose, centroids, pactuals, pconvex_hulls, masks)
     )
-
 
 # ============= EOF =============================================

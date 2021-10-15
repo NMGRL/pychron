@@ -211,5 +211,4 @@ class AutoMFTable(Loggable):
         # return to original deflections
         self._set_config_deflections()
 
-
 # ============= EOF =============================================

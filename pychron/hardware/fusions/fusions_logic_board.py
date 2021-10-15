@@ -74,7 +74,7 @@ class FusionsLogicBoard(CoreDevice):
         # no handle or response is none
         resp = True
         if self._test_comms:
-            resp =bool(self.ask(';LB.VER'))
+            resp = bool(self.ask(';LB.VER'))
 
         #        resp = self._disable_laser_()
         if self.communicator.handle is None or resp is not True:
@@ -336,7 +336,6 @@ class FusionsLogicBoard(CoreDevice):
 #
 #                                      show_label=False),
 #                     )
-
 
 
 #        be = RangeEditor(low_name='beammin',

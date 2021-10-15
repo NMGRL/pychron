@@ -18,6 +18,8 @@
 from __future__ import absolute_import
 from traits.api import HasTraits, Str
 from traitsui.api import View, UItem, Item, VGroup
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -38,6 +40,3 @@ class DBSaveView(HasTraits):
         return v
 
 # ============= EOF =============================================
-
-
-

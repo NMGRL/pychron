@@ -64,8 +64,4 @@ class ManageBranchAction(UIAction):
         up = app.get_service('pychron.updater.updater.Updater')
         up.manage_branches()
 
-
 # ============= EOF =============================================
-
-
-

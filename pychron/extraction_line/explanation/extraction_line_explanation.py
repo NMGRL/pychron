@@ -18,6 +18,8 @@
 from traits.api import HasTraits, Any, Event, List, Bool, Property, Int
 from traitsui.api import View, Item, Handler, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
+
+
 # =============standard library imports ========================
 
 # =============local library imports  ==========================

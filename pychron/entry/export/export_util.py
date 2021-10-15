@@ -30,6 +30,3 @@ def do_export(source, export_type, destination, irradiations):
     ex.do_export(irradiations)
 
 # ============= EOF =============================================
-
-
-

@@ -22,6 +22,7 @@ import sys
 from itertools import groupby
 from six.moves import filter
 from six.moves import map
+
 try:
     import psutil
 except ImportError:
@@ -104,7 +105,7 @@ def mem_dump(path):
                                                                                                        str(size),
                                                                                                        len(referents),
                                                                                                        )
-                        )
+                    )
                     if isinstance(obj, dict):
                         keys = ','.join(map(str, list(obj.keys())))
                         wfile.write('keys: {}'.format(keys))
@@ -183,7 +184,6 @@ class MemCTX(object):
 #                     filename=fn)
 # #
 #         subprocess.call(['open', fn])
-
 
 
 from collections import defaultdict
@@ -282,7 +282,6 @@ def calc_growth(before, cls=None, group=None, count=None, write=False, print_obj
                     #                 if id(o) not in ids:
                     #                     print o.keys()
             print('----------- {}'.format(cnt))
-
 
         #             obj = get_type(k).next()
         #             print 'referrers'

@@ -58,6 +58,3 @@ class NMGRLFurnaceFunnel(NMGRLFurnaceDrive):
         if block:
             self._block(delay=20, period=1)
 # ============= EOF =============================================
-
-
-

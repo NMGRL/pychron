@@ -51,7 +51,6 @@ class SynradCO2Manager(LaserManager):
         self.control_dac.set(v)
 
     def disable_laser(self):
-
         self.control_switch.close_channel(self.enable_address)
         super(SynradCO2Manager, self).disable_laser()
 

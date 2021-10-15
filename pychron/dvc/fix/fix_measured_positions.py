@@ -51,7 +51,6 @@ def fix_load(dvc, sess, load, ms):
             dvc.add_measured_position(a, load=load_name)
 
 
-
 def main():
     ms = 'jan'
     loads = ({'load': 'C0185', 'start': 'ba-02-J-1507', 'end': 'a-02-J-3080', 'holder': '221-hole'},

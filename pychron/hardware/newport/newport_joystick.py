@@ -15,12 +15,12 @@
 # ===============================================================================
 
 
-
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from traits.api import HasTraits, Any, Property, List
 from traitsui.api import View, Item, Group, VGroup
 from six.moves import range
+
 
 # =============standard library imports ========================
 
@@ -34,6 +34,7 @@ def validate(v):
         v = 0
 
     return v
+
 
 class Joystick(HasTraits):
     '''
@@ -68,22 +69,27 @@ class Joystick(HasTraits):
         '''
         '''
         return self.dio_bits[0][0]
+
     def _get_ynegative(self):
         '''
         '''
         return self.dio_bits[1][0]
+
     def _get_znegative(self):
         '''
         '''
         return self.dio_bits[2][0]
+
     def _get_xpositive(self):
         '''
         '''
         return self.dio_bits[0][1]
+
     def _get_ypositive(self):
         '''
         '''
         return self.dio_bits[1][1]
+
     def _get_zpositive(self):
         '''
         '''
@@ -95,30 +101,35 @@ class Joystick(HasTraits):
         '''
         self.dio_bits[0][0] = v
         self.enable()
+
     def _set_ynegative(self, v):
         '''
             
         '''
         self.dio_bits[1][0] = v
         self.enable()
+
     def _set_znegative(self, v):
         '''
             
         '''
         self.dio_bits[2][0] = v
         self.enable()
+
     def _set_xpositive(self, v):
         '''
             
         '''
         self.dio_bits[0][1] = v
         self.enable()
+
     def _set_ypositive(self, v):
         '''
             
         '''
         self.dio_bits[1][1] = v
         self.enable()
+
     def _set_zpositive(self, v):
         '''
             
@@ -133,7 +144,6 @@ class Joystick(HasTraits):
 
         for i in range(3):
             self.dio_bits.append([int(a) for a in lines[i].split(',')])
-
 
     def disable(self):
         '''
@@ -150,13 +160,13 @@ class Joystick(HasTraits):
 
         self.parent.ask('BO0')
         args = [
-               ('BP', None, 'assign dio bits'),
-           ('BQ', 1, 'enable dio bits'),
-         #  ('SI',100,'set update jog velocity interval (milliseconds)'),
-         #  ('SK',[0.5,0], 'set scaling coefficients'),
-           ('TJ', 3, 'set trajectory mode to jog')
-         ]
-#        bits=[[12,13],[14,15],[16,17]]
+            ('BP', None, 'assign dio bits'),
+            ('BQ', 1, 'enable dio bits'),
+            #  ('SI',100,'set update jog velocity interval (milliseconds)'),
+            #  ('SK',[0.5,0], 'set scaling coefficients'),
+            ('TJ', 3, 'set trajectory mode to jog')
+        ]
+        #        bits=[[12,13],[14,15],[16,17]]
 
         coms = []
         for a in self.parent.axes:
@@ -170,8 +180,6 @@ class Joystick(HasTraits):
 
         self.parent.ask(com)
 
-
-
     def traits_view(self):
         '''
         '''
@@ -182,4 +190,4 @@ class Joystick(HasTraits):
 
         dio_group.content.append(Item('high_low_bit'))
         return View(dio_group,
-                   resizable=True)
+                    resizable=True)

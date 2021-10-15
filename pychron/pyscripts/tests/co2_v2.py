@@ -1,7 +1,7 @@
 def main():
     info('Jan unknown laser analysis')
 
-    #gosub('jan:PrepareForCO2Analysis')
+    # gosub('jan:PrepareForCO2Analysis')
 
     if exp.analysis_type == 'blank':
         info('is blank. not heating')
@@ -20,8 +20,8 @@ def main():
             '''
             style 2.
             '''
-            #elapsed=ramp(setpoint=extract_value, rate=ramp_rate)
-            #sleep(min(0, duration-elapsed))
+            # elapsed=ramp(setpoint=extract_value, rate=ramp_rate)
+            # sleep(min(0, duration-elapsed))
             pass
 
         else:

@@ -53,9 +53,9 @@ DEVICES = {'controller': HeadlessEurotherm,
 
 def debug(func):
     def wrapper(obj, data):
- #       obj.debug('------ {}, data={}'.format(func.__name__, data))
+        #       obj.debug('------ {}, data={}'.format(func.__name__, data))
         r = func(obj, data)
-#        obj.debug('------ result={}'.format(r))
+        #        obj.debug('------ result={}'.format(r))
         return r
 
     return wrapper
@@ -68,7 +68,7 @@ class FirmwareManager(HeadlessLoggable):
     feeder = None
     temp_hum = None
     camera = None
-    rotary_dumper =None
+    rotary_dumper = None
 
     _switch_mapping = None
     _switch_indicator_mapping = None
@@ -162,7 +162,7 @@ class FirmwareManager(HeadlessLoggable):
         if isinstance(data, dict):
             h2o_channel = data.get('h2o_channel')
 
-        s={}
+        s = {}
         if h2o_channel is not None:
             s['h2o_state'] = self.switch_controller.get_channel_state(h2o_channel)
 
@@ -323,7 +323,6 @@ class FirmwareManager(HeadlessLoggable):
         if self.funnel:
             return self.funnel.move_absolute(self._funnel_down, block=False)
 
-
     @debug
     def rotary_dumper_moving(self, data):
         if self.rotary_dumper:
@@ -395,6 +394,7 @@ class FirmwareManager(HeadlessLoggable):
                     else:
                         nsteps = data
                 self.rotary_dumper.denergize(nsteps)
+
     @debug
     def move_absolute(self, data):
         drive = self._get_drive(data)
@@ -541,8 +541,8 @@ class FirmwareManager(HeadlessLoggable):
             alt_ch, inverted = self._get_switch_channel(alt_name)
 
             open_ch, close_ch, action = self._get_switch_indicator(data)
-            #print 'ffffffff {} {} {}'.format(data, open_ch, close_ch)
-            if open_ch=='inverted':
+            # print 'ffffffff {} {} {}'.format(data, open_ch, close_ch)
+            if open_ch == 'inverted':
                 oresult = self.switch_controller.get_channel_state(alt_ch)
                 oresult = not oresult
             else:
@@ -551,13 +551,13 @@ class FirmwareManager(HeadlessLoggable):
                     open_ch = open_ch[1:]
                     invert = True
                 oresult = self.switch_controller.get_channel_state(open_ch)
-                #print 'gggggg {} {} {}'.format(invert, open_ch, oresult)
+                # print 'gggggg {} {} {}'.format(invert, open_ch, oresult)
                 if invert:
                     oresult = not oresult
 
             if close_ch is None:
-                #cresult = self.get_channel_state(alt_ch)
-                #if inverted:
+                # cresult = self.get_channel_state(alt_ch)
+                # if inverted:
                 #    cresult = not cresult
                 cresult = None
             else:
@@ -574,11 +574,11 @@ class FirmwareManager(HeadlessLoggable):
             if oresult == cresult:
                 result = 'Error: OpenIndicator={}, CloseIndicator={}'.format(oresult, cresult)
             else:
-                #if inverted:
+                # if inverted:
                 #    result = not result
 
                 result = 'open' if result else 'closed'
-            #print 'result={}, oresult={}, cresult={}'.format(result, oresult, cresult)
+            # print 'result={}, oresult={}, cresult={}'.format(result, oresult, cresult)
             return result, oresult, cresult
 
             # oresult = None
@@ -637,7 +637,7 @@ class FirmwareManager(HeadlessLoggable):
             ch, inverted = ch.split(',')
             inverted = to_bool(inverted)
 
-        #self.debug('get switch channel {} {}'.format(name, ch))
+        # self.debug('get switch channel {} {}'.format(name, ch))
         return ch, inverted
 
     def _get_switch_indicator(self, data):
@@ -649,9 +649,9 @@ class FirmwareManager(HeadlessLoggable):
 
         close_ch = None
         open_ch = self._switch_indicator_mapping.get(name)
-        #self.debug('get switch indicator channel {} {}'.format(name, open_ch))
+        # self.debug('get switch indicator channel {} {}'.format(name, open_ch))
         if open_ch == 'inverted':
-            return open_ch, None, None 
+            return open_ch, None, None
 
         if ',' in str(open_ch):
             def prep(ch):

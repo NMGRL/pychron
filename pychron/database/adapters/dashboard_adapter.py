@@ -25,15 +25,14 @@ from pychron.database.orms.isotope.dash import dash_TimeTable, dash_DeviceTable
 
 class DashboardAdapter(DatabaseAdapter):
     def add_time_table(self, start):
-        obj=dash_TimeTable(start=start)
+        obj = dash_TimeTable(start=start)
         self._add_item(obj)
 
     def add_device(self, time_table, device_name):
-        obj=dash_DeviceTable(name=device_name, time_table=time_table)
+        obj = dash_DeviceTable(name=device_name, time_table=time_table)
         return obj
 
     def get_last_time_table(self):
         return self._retrieve_first(dash_TimeTable, order_by=dash_TimeTable.start.desc())
 
 # ============= EOF =============================================
-

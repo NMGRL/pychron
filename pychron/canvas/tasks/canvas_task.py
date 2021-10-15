@@ -23,7 +23,6 @@ from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.action.task_action import TaskAction
 from traits.api import Instance
 
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.tasks.designer import Designer
@@ -46,7 +45,7 @@ class CanvasDesignerTask(BaseTask):
     name = 'Canvas Designer'
     tool_bars = [SToolBar(OpenAction(),
                           SaveAction()
-    )]
+                          )]
 
     designer = Instance(Designer)
 
@@ -57,15 +56,14 @@ class CanvasDesignerTask(BaseTask):
         print('asfsfdsf open')
         p = os.path.join(paths.canvas2D_dir,
                          'canvas.xml'
-        )
+                         )
         self.designer.open_xml(p)
 
     def save(self):
         p = os.path.join(paths.canvas2D_dir,
                          'canvas.xml'
-        )
+                         )
         self.designer.save_xml(p)
-
 
     # ================================================================
     # Task interface
@@ -73,7 +71,7 @@ class CanvasDesignerTask(BaseTask):
     def create_central_pane(self):
         return CanvasDesignerPane(model=self.designer)
 
-        #def create_dock_panes(self):
+        # def create_dock_panes(self):
         #    panes = []
         #    return panes
 

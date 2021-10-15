@@ -57,6 +57,8 @@ from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 from pychron.paths import paths
 
 PORT = 8083
+
+
 # TEST_IMAGE = Image.open(open('/Users/ross/Sandbox/snapshot001.jpg'))
 # TEST_IMAGE = ImageData.fromfile('/Users/ross/Sandbox/foo.png')
 class ImageContainer(HasTraits):
@@ -109,6 +111,7 @@ class ImageEditor(HasTraits):
     image_specs = Dict
 
     db = Any
+
     # ===============================================================================
     # handlers
     # ===============================================================================
@@ -144,7 +147,6 @@ class ImageEditor(HasTraits):
 
 
 class ImageBrowser(IsotopeDatabaseManager):
-
     #    db = Instance(IsotopeAdapter)
 
     image_container = Instance(ImageContainer, ())

@@ -96,8 +96,4 @@ class ThermoSpectrometerManager(BaseSpectrometerManager):
         ion = self.application.get_service('pychron.spectrometer.ion_optics_manager.IonOpticsManager')
         return klass(spectrometer=self.spectrometer, ion_optics_manager=ion)
 
-
 # ============= EOF =============================================
-
-
-

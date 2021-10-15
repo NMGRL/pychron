@@ -44,5 +44,4 @@ class LinearMapper(HasTraits):
         step_range = self.high_step - self.low_step
         self._scale = step_range / data_range
 
-
 # ============= EOF =============================================

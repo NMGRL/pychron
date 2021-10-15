@@ -35,8 +35,4 @@ class ChannelSelect(CoreDevice):
         cmd = '{}{}{}'.format(self.prefix, ch, self.suffix)
         self.tell(cmd)
 
-
 # ============= EOF =============================================
-
-
-

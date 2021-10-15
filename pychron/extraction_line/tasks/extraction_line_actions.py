@@ -84,6 +84,7 @@ class LoadCanvasAction(ExtractionLineAction):
 class RefreshCanvasAction(ExtractionLineAction):
     description = 'reload the scene graph to reflect changes made to setupfiles'
     name = 'Refresh Canvas'
+
     #    enabled = False
 
     def perform(self, event):
@@ -100,6 +101,7 @@ class StopWatchAction(Action):
         from pychron.extraction_line.stop_watch import StopWatch
         sw = StopWatch()
         open_view(sw)
+
 
 # class OpenViewControllerAction(ExtractionLineAction):
 #    description = 'Open User views'

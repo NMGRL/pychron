@@ -49,13 +49,12 @@ class VerticalFlux(BaseArArFigure):
         g.set_y_limits(pad='0.1')
 
         # g.set_x_limits()
-        es2 = es*2
-        self.xma = max(js+es2)
-        self.xmi = min(js-es2)
+        es2 = es * 2
+        self.xma = max(js + es2)
+        self.xmi = min(js - es2)
         # self.xpad = '0.1'
 
     def _gather_data(self):
-
         return array([(i.j, i.j_err, i.z) for i in self.items]).T
 
         # js, es, zs = [], [], []

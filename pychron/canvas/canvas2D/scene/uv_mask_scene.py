@@ -29,6 +29,4 @@ class UVMaskScene(Scene):
         with open(p, 'r') as rfile:
             md = yaml.load(rfile)
 
-
 # ============= EOF =============================================
-

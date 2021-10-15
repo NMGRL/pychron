@@ -32,5 +32,4 @@ def cinformation(**kw):
     d = CustomizableDialog(**kw)
     d.open()
 
-
 # ============= EOF =============================================

@@ -120,8 +120,6 @@ class DBAnalysis(Analysis):
     source_parameters = List
     deflections = List
 
-
-
     def get_db_fit(self, meas_analysis, name, kind, selected_histories):
         try:
             if selected_histories is None:

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
@@ -25,6 +24,7 @@
 # ============= views ===================================
 from __future__ import absolute_import
 from pychron.hardware.gauges.base_gauge import BaseGauge
+
 
 class BaseMKSGauge(BaseGauge):
     def set_transducer_identify(self, value):
@@ -65,7 +65,6 @@ class BaseMKSGauge(BaseGauge):
             s = 'EN%i' % setpointindex
         rs = '@%s%s?;FF' % (addr, s)
         return rs
-
 
     def _build_command(self, addr, typetag, value, setpointindex=1):
         '''
@@ -124,6 +123,7 @@ class BaseMKSGauge(BaseGauge):
             tag = 'DG'
             s = '@%s%s!%s;FF' % (addr, tag, ('ON' if value else 'OFF'))
         return s
+
     def _parse_response(self, type_, raw):
         '''
         parse a serial response
@@ -137,7 +137,6 @@ class BaseMKSGauge(BaseGauge):
         '''
         if self.simulation:
             return float(self.get_random_value(0, 10))
-
 
         if raw == None:
             return

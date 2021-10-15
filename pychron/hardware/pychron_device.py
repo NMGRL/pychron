@@ -107,5 +107,4 @@ class EthernetDeviceMixin(RemoteDeviceMixin):
 
         return r
 
-
 # ============= EOF =============================================

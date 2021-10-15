@@ -21,7 +21,7 @@ from pychron.dvc import dvc_load, dvc_dump
 def fix_repo(d):
     for p in os.listdir(d):
         print('asdf', p)
-        if p =='.git':
+        if p == '.git':
             continue
 
         dd = os.path.join(d, p)
@@ -35,7 +35,7 @@ def fix_repo(d):
 
 def fix_repo_identifier(p, nid):
     obj = dvc_load(p)
-    if obj['repository_identifier'] !=nid:
+    if obj['repository_identifier'] != nid:
         obj['repository_identifier'] = nid
         dvc_dump(obj, p)
 

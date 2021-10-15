@@ -69,5 +69,4 @@ class NMGRLFurnacePlugin(BaseFurnacePlugin):
     def _preferences_panes_default(self):
         return [NMGRLFurnacePreferencesPane]
 
-
 # ============= EOF =============================================

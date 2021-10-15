@@ -279,7 +279,6 @@ class CommandRepeater(ConfigLoadable):
         )
         return v
 
-
 # ============= EOF ====================================
 
 #

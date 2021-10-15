@@ -68,7 +68,7 @@ class SynExtractionSpec(HasTraits):
     def _get_identifier(self):
         return self._get_value('identifier')
 
-    def _get_value(self,attr, default=None):
+    def _get_value(self, attr, default=None):
         if self.config:
             return self.config.get(attr, default)
         else:
@@ -81,14 +81,14 @@ class SynExtractionCollector(Loggable):
     _alive = Bool(False)
 
     extraction_duration = Float
-    persister=None
+    persister = None
 
     def start(self):
         yd = self._load_config()
         if yd:
             self.info('Start syn extraction {}'.format(self.path))
             self._alive = True
-            t = Thread(target=self._do_collection, args=(yd, ))
+            t = Thread(target=self._do_collection, args=(yd,))
             t.start()
         else:
             self.warning('No configuration available for SynExtraction data collection. '
@@ -96,15 +96,15 @@ class SynExtractionCollector(Loggable):
 
     def stop(self):
         self._alive = False
-        #return the persister to its original configuration
+        # return the persister to its original configuration
         if self.persister:
-            self.arun.persister=self.persister
+            self.arun.persister = self.persister
 
     def _do_collection(self, cfg):
         self.info('Starting syn extraction collection')
 
-        #clone the persister
-        self.persister=self.arun.persister.clone_traits()
+        # clone the persister
+        self.persister = self.arun.persister.clone_traits()
 
         gen = self._spec_generator(cfg)
         starttime = time.time()
@@ -115,11 +115,11 @@ class SynExtractionCollector(Loggable):
                 self.warning('Failed getting a syn extraction spec')
                 break
 
-            script=self._setup_script(spec)
+            script = self._setup_script(spec)
             if not script:
                 break
 
-            script, post_script=script
+            script, post_script = script
 
             if spec.mode == 'static':
                 rem = self.extraction_duration - spec.end_threshold - et
@@ -146,7 +146,7 @@ class SynExtractionCollector(Loggable):
                                                                                    et))
                     break
                 else:
-                    if not self._do_syn_extract(spec, script,post_script):
+                    if not self._do_syn_extract(spec, script, post_script):
                         self.debug('do syn extraction failed')
                         break
 
@@ -159,19 +159,19 @@ class SynExtractionCollector(Loggable):
             root = os.path.dirname(p)
             sname = os.path.basename(p)
 
-            #setup the script
+            # setup the script
             ms = MeasurementPyScript(root=root,
                                      name=sname,
                                      automated_run=self.arun)
             if ms.bootstrap():
                 if ms.syntax_ok(warn=False):
                     spec.duration = ms.get_estimated_duration()
-                    pms=None
-                    p=spec.post_measurement_script
+                    pms = None
+                    p = spec.post_measurement_script
                     if p and os.path.isfile(p):
                         self.debug('measurement script "{}"'.format(p))
-                        pms=ExtractionPyScript(root=os.path.dirname(p),
-                                               name=os.path.basename(p))
+                        pms = ExtractionPyScript(root=os.path.dirname(p),
+                                                 name=os.path.basename(p))
                     return ms, pms
                 else:
                     self.debug('invalid syntax {}'.format(ms.name))
@@ -181,15 +181,15 @@ class SynExtractionCollector(Loggable):
     def _do_syn_extract(self, spec, script, post_script):
         self.debug('Executing SynExtraction mode="{}"'.format(spec.mode))
 
-        #modify the persister. the original persister for the automated run is saved at self.persister
-        #arun.persister reset to original when syn extraction stops
-        identifier=spec.identifier
-        last_aq=self.arun.persister.get_last_aliquot(identifier)
+        # modify the persister. the original persister for the automated run is saved at self.persister
+        # arun.persister reset to original when syn extraction stops
+        identifier = spec.identifier
+        last_aq = self.arun.persister.get_last_aliquot(identifier)
         if last_aq is None:
             self.warning('invalid identifier "{}". Does not exist in database'.format(identifier))
 
         else:
-            runid=make_runid(identifier, last_aq+1)
+            runid = make_runid(identifier, last_aq + 1)
             self.arun.info('Starting SynExtraction run {}'.format(runid))
             self.arun.persister.trait_set(use_massspec_database=False,
                                           runid=runid,
@@ -243,4 +243,3 @@ class SynExtractionCollector(Loggable):
             self.debug('no dynamic in configuration file')
 
 # ============= EOF =============================================
-

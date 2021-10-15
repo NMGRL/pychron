@@ -20,10 +20,12 @@
 from __future__ import absolute_import
 from functools import partial
 
+
 # ============= local library imports  ==========================
 class memoized(object):
     def __init__(self, func):
         self.func = func
+
     def __get__(self, obj, objtype=None):
         if obj is None:
             return self.func

@@ -27,6 +27,3 @@ class CommitChangesAction(TaskAction):
     method = 'commit_changes'
 
 # ============= EOF =============================================
-
-
-

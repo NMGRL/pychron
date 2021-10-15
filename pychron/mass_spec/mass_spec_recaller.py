@@ -98,5 +98,4 @@ class MassSpecRecaller(Loggable):
 
                 return rec
 
-
 # ============= EOF =============================================

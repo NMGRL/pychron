@@ -47,7 +47,9 @@ except ImportError:
         def close(self):
             pass
 
+
     GPIO = DummyGPIO()
+
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -83,6 +85,5 @@ class RPiGPIO(GPActuator):
 
     def get_channel_state(self, channel, **kw):
         return GPIO.input(get_switch_address(channel))
-
 
 # ============= EOF =============================================

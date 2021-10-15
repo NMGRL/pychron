@@ -142,5 +142,4 @@ class Labeler(Loggable):
         ldb.build_database()
         return ldb
 
-
 # ============= EOF =============================================

@@ -74,6 +74,7 @@ class FusionsUVManager(FusionsLaserManager):
     reset_reference_marks_button = Button('Reset')
     reference_marks = Instance(ReferenceMarks, ())
     save_reference_marks_canvas_button = Button('Save')
+
     # dbname = paths.uvlaser_db
     # db_root = paths.uvlaser_db_root
 

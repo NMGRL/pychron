@@ -20,10 +20,13 @@
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 from pyface.qt.QtCore import QThread
+
+
 class Thread(QThread):
     _target = None
     _args = None
     _kwargs = None
+
     def __init__(self, name=None, target=None, args=None, kwargs=None):
         self._target = target
         if args is None:
@@ -52,6 +55,6 @@ def currentThreadName():
 
 
 def sleep(v):
-    QThread.msleep(int(v*1000))
+    QThread.msleep(int(v * 1000))
 
 # ============= EOF =============================================

@@ -102,8 +102,8 @@ class myEditorAreaWidget(EditorAreaWidget):
         for child in self.children():
             if (child.isWidgetType() and child.isVisible() and
                     ((isinstance(child, QtGui.QTabBar) and not visible_only) or
-                         (isinstance(child, QtGui.QDockWidget) and
-                              (visible_only or not self.tabifiedDockWidgets(child))))):
+                     (isinstance(child, QtGui.QDockWidget) and
+                      (visible_only or not self.tabifiedDockWidgets(child))))):
                 children.append(child)
         children = sorted(children, key=cmp_to_key(compare))
         # children.sort(cmp=compare)

@@ -24,6 +24,8 @@ from pychron.dvc.fix import get_dvc
 from pychron.paths import paths
 
 dvc = get_dvc()
+
+
 # dvc = None
 
 
@@ -40,7 +42,7 @@ def get_analyses():
 
 
 def main():
-    scalar = 293.5/295.5
+    scalar = 293.5 / 295.5
 
     if dvc:
         dvc.create_session()

@@ -133,7 +133,6 @@ class Monitor(ConfigLoadable):
             # sleep before running monitor again
             time.sleep(self.sample_delay)
 
-
 # ============= EOF ====================================
 #    def _monitor_(self, stop_signal):
 #        '''

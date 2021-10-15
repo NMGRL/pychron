@@ -25,6 +25,3 @@ from .factory import toolkit_factory
 GitDAGEditor = toolkit_factory('dag_editor', 'GitDAGEditor')
 
 # ============= EOF =============================================
-
-
-

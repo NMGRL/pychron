@@ -241,17 +241,17 @@ class ExtractionPyScript(ValvePyScript):
     @calculate_duration
     @command_register
     def begin_heating_interval(
-        self,
-        duration,
-        min_rise_rate=None,
-        check_time=60,
-        check_delay=60,
-        check_period=1,
-        temperature=None,
-        timeout=300,
-        tol=10,
-        name=None,
-        calc_time=False,
+            self,
+            duration,
+            min_rise_rate=None,
+            check_time=60,
+            check_delay=60,
+            check_period=1,
+            temperature=None,
+            timeout=300,
+            tol=10,
+            name=None,
+            calc_time=False,
     ):
         duration = float(duration)
         if calc_time:
@@ -373,13 +373,13 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def waitfor(
-        self,
-        func_or_tuple,
-        start_message="",
-        end_message="",
-        check_period=1,
-        timeout=0,
-        func_kw=None,
+            self,
+            func_or_tuple,
+            start_message="",
+            end_message="",
+            check_period=1,
+            timeout=0,
+            func_kw=None,
     ):
         """
 
@@ -1071,12 +1071,12 @@ class ExtractionPyScript(ValvePyScript):
             kw["protocols"] = ILaserManager, IFurnaceManager
 
         if kw["name"] in (
-            "Extract Device",
-            "ExtractDevice",
-            "extract device",
-            "extractdevice",
-            NULL_STR,
-            LINE_STR,
+                "Extract Device",
+                "ExtractDevice",
+                "extract device",
+                "extractdevice",
+                NULL_STR,
+                LINE_STR,
         ):
             self.debug("no extraction action")
             return
@@ -1090,12 +1090,12 @@ class ExtractionPyScript(ValvePyScript):
             kw["protocols"] = ILaserManager, IFurnaceManager
 
         if kw["name"] in (
-            "Extract Device",
-            "ExtractDevice",
-            "extract device",
-            "extractdevice",
-            NULL_STR,
-            LINE_STR,
+                "Extract Device",
+                "ExtractDevice",
+                "extract device",
+                "extractdevice",
+                NULL_STR,
+                LINE_STR,
         ):
             self.debug("no extraction action")
             return
@@ -1144,6 +1144,5 @@ class ExtractionPyScript(ValvePyScript):
             func = getattr(self.automated_run, func)
 
         return func(*args, **kw)
-
 
 # ============= EOF ====================================

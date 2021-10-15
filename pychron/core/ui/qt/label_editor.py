@@ -28,6 +28,7 @@ from traitsui.qt4.editor import Editor
 
 class mLabel(QLabel):
     color = ''
+
     # text = ''
     # def __init__(self, text):
     # super(mLabel, self).__init__()
@@ -114,8 +115,4 @@ class LabelEditor(BasicEditorFactory):
     klass = _LabelEditor
     refresh = Str
 
-
 # ============= EOF =============================================
-
-
-

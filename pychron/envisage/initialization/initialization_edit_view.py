@@ -27,7 +27,6 @@ from traitsui.tree_node import TreeNode
 import os
 import pickle
 
-
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.tree_editor import TreeEditor

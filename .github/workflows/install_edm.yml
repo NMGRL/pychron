@@ -38,14 +38,13 @@ jobs:
       - name: Install PIP dependencies
         run: >
           ~/.edm/envs/edm/bin/python -m pip install --no-dependencies uncertainties statsmodels qimage2ndarray peakutils
-      - name: Lint with flake8
-        run: |
-          ~/.edm/envs/edm/bin/flake8 . --extend-exclude=docs/,zobs/,sandbox/,test/,alembic_dvc --count
-          --select=E9,F63,F7,F82 --show-source --statistics
-          ~/.edm/envs/edm/bin/flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
         run: |
           ~/.edm/envs/edm/bin/pytest pychron/test_suite.py
+      - name: Lint with flake8
+        run: |
+          ~/.edm/envs/edm/bin/flake8 . --extend-exclude=docs/,zobs/,sandbox/,test/,alembic_dvc --count --select=E9,F63,F7,F82 --show-source --statistics
+          ~/.edm/envs/edm/bin/flake8 . --extend-exclude=docs/,zobs/,sandbox/,test/,alembic_dvc --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --ignore E501
 
 
 #

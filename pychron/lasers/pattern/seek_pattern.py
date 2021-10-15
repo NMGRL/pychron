@@ -308,7 +308,7 @@ class SeekPattern(Pattern):
         mag = (vx ** 2 + vy ** 2) ** 0.5
         px = vx * self.perimeter_radius / mag * scalar
         py = vy * self.perimeter_radius / mag * scalar
-        return px+self.cx, py+self.cy
+        return px + self.cx, py + self.cy
 
     @property
     def total_duration(self):

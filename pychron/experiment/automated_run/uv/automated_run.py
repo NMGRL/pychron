@@ -23,10 +23,10 @@ from pychron.pyscripts.uv_extraction_line_pyscript import UVExtractionPyScript
 
 
 class UVAutomatedRun(AutomatedRun):
-    #reprate = Int
-    #mask = Str
-    #attenuator = Str
-    #image = Str
+    # reprate = Int
+    # mask = Str
+    # attenuator = Str
+    # image = Str
 
     #    masks = Property
     #    extract_units_names = List([NULL_STR, 'burst', 'continuous'])
@@ -38,7 +38,6 @@ class UVAutomatedRun(AutomatedRun):
         script.setup_context(reprate=self.spec.reprate,
                              mask=self.spec.mask,
                              attenuator=self.spec.attenuator)
-
 
     # def _save_extraction(self, *args, **kw):
     #     ext = super(UVAutomatedRun, self)._save_extraction(*args, **kw)
@@ -88,7 +87,7 @@ class UVAutomatedRun(AutomatedRun):
 
     def _extraction_script_factory(self):
         obj = super(UVAutomatedRun, self)._extraction_script_factory(klass=UVExtractionPyScript)
-        #obj.setup_context(reprate=self.reprate,
+        # obj.setup_context(reprate=self.reprate,
         #                  mask=self.mask,
         #                  attenuator=self.attenuator)
         return obj

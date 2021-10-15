@@ -43,7 +43,7 @@ def intersperse(m, delim):
 
 
 class InfoInspector(ScatterInspector):
-# class InfoInspector(BaseTool):
+    # class InfoInspector(BaseTool):
     metadata_changed = Event
     current_position = None
     current_screen = None
@@ -57,13 +57,14 @@ class InfoInspector(ScatterInspector):
         super(InfoInspector, self).__init__(*args, **kw)
         self.selection_mode = 'multi'
         self.multiselect_modifier = KeySpec(None)
+
     # select_event = Event
 
     # def normal_left_down(self, event):
     #     pass
-        # print('infaso', event, id(event))
-        # if not event.handled:
-        #     super(InfoInspector, self).normal_left_down(event)
+    # print('infaso', event, id(event))
+    # if not event.handled:
+    #     super(InfoInspector, self).normal_left_down(event)
 
     def normal_left_down(self, event):
         if not event.handled:
@@ -171,7 +172,7 @@ class InfoOverlay(AbstractOverlay):
         lws, lhs = list(zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines]))
 
         rect_width = max(lws) + 12
-        rect_height = (max(lhs)+4) * len(lhs)+2
+        rect_height = (max(lhs) + 4) * len(lhs) + 2
 
         xoffset = 15
         yoffset = -15
@@ -188,13 +189,13 @@ class InfoOverlay(AbstractOverlay):
         multi_column = 0
         h = max(lhs) + 4
         cheight = self.component.height
-        if rect_height > cheight+5*h:
+        if rect_height > cheight + 5 * h:
             multi_column = 2
         else:
             # move up if too tall
 
             if y + yoffset - rect_height < self.component.y:
-                y = self.component.y+rect_height-yoffset
+                y = self.component.y + rect_height - yoffset
 
         # if current point within bounds of box, move box to left
         if x < sx:
@@ -226,7 +227,7 @@ class InfoOverlay(AbstractOverlay):
                     i += 1
         else:
             for i, mi in enumerate(lines[::-1]):
-                gc.set_text_position(5, h * i+5)
+                gc.set_text_position(5, h * i + 5)
                 gc.show_text(mi)
 
     def _tool_changed(self, old, new):

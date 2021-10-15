@@ -69,6 +69,7 @@ class FlagManager(Viewable):
 if __name__ == "__main__":
     from traits.api import Button
 
+
     class Demo(HasTraits):
         test = Button
 
@@ -85,6 +86,7 @@ if __name__ == "__main__":
 
             fm.timed_flags[0].set(100)
             fm.edit_traits()
+
 
     #    fm = FlagManager()
     #    fm.flags = [Flag('ObamaPipetteFlag'),

@@ -238,5 +238,4 @@ class FitSelector(HasTraits):
     def _update_command_key(self, new):
         self.command_key = new
 
-
 # ============= EOF =============================================

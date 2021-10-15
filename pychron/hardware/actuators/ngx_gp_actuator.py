@@ -47,15 +47,15 @@ class NGXGPActuator(ASCIIGPActuator):
         if delay:
             if not isinstance(delay, (float, int)):
                 delay = 0.25
-        if delay:      
+        if delay:
             time.sleep(delay)
-            
+
         with self._lock:
             self.debug(f'acquired lock {self._lock}')
             r = self._get_channel_state(obj, verbose=True, **kw)
         self.debug(f'lock released')
         return r
-    
+
     def _get_channel_state(self, obj, verbose=False, **kw):
 
         cmd = 'GetValveStatus {}'.format(get_switch_address(obj))

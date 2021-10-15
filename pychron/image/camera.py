@@ -68,6 +68,7 @@ class CameraViewer(HasTraits):
     _no_update = False
 
     extension = Enum("JPEG", "PNG", "TIFF")
+
     # @property
     # def persistence_path(self):
     #     try:

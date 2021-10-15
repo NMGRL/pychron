@@ -43,12 +43,11 @@ class MassCalibrationTask(BaseEditorTask):
     def _scanner_default(self):
         spec = self.spectrometer_manager.spectrometer
 
-
         s = MassCalibratorSweep(spectrometer=spec,
-                               db=IsotopeDatabaseManager())
+                                db=IsotopeDatabaseManager())
         if spec.simulation:
-            s.integration_time =0.065536
-        s.verbose=True
+            s.integration_time = 0.065536
+        s.verbose = True
 
         return s
 
@@ -66,6 +65,4 @@ class MassCalibrationTask(BaseEditorTask):
             PaneItem('pychron.mass_calibration.cal_points'),
             PaneItem('pychron.mass_calibration.controls')))
 
-
 # ============= EOF =============================================
-

@@ -51,7 +51,7 @@ class UVLaserControlsClient(Controller):
             icon_button_editor('stop', 'stop',
                                enabled_when='firing', tooltip='Stop firing'),
             UItem('fire_mode')),
-                 Item('nburst'))
+            Item('nburst'))
 
         return v
 

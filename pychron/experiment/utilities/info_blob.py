@@ -19,6 +19,8 @@
 from __future__ import absolute_import
 import struct
 from six.moves import range
+
+
 # ============= local library imports  ==========================
 
 class MemoryBlock(object):
@@ -63,6 +65,7 @@ class MemoryBlock(object):
 
     def tostring(self):
         return self._blob
+
 
 def decode_infoblob(blob):
     mb = MemoryBlock(blob)

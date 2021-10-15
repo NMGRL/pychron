@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
 import time
 from threading import Thread, Event
 
@@ -71,12 +72,12 @@ class Subscriber(Loggable):
             resp = self.request('ping', timeout, context)
 
             if resp is None or resp != 'echo':
-            #if not socks.get(alive_sock) == zmq.POLLIN or not alive_sock.recv()=='echo':
+                # if not socks.get(alive_sock) == zmq.POLLIN or not alive_sock.recv()=='echo':
                 if verbose:
                     self.warning('subscription server at {} not available'.format(url))
-                    #sock.setsockopt(zmq.LINGER, 0)
-                #alive_sock.close()
-                #poll.unregister(alive_sock)
+                    # sock.setsockopt(zmq.LINGER, 0)
+                # alive_sock.close()
+                # poll.unregister(alive_sock)
                 ret = False
 
         return ret

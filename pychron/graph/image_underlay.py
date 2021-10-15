@@ -23,6 +23,7 @@ from chaco.abstract_overlay import AbstractOverlay
 import Image
 from numpy import array
 
+
 # ============= local library imports  ==========================
 
 
@@ -59,6 +60,5 @@ class ImageUnderlay(AbstractOverlay):
                 #                print sw, sh
                 gc.scale_ctm(sw, sh)
                 gc.draw_image(self._cached_img)
-
 
 # ============= EOF =============================================

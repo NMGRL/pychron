@@ -21,6 +21,7 @@ from traits.api import Float, HasTraits
 # ============= standard library imports ========================
 from threading import Lock
 
+
 # ============= local library imports  ==========================
 
 

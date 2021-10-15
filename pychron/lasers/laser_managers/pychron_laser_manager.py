@@ -92,7 +92,6 @@ class PychronLaserManager(EthernetLaserManager):
         #
         #     return r
 
-
         # self.trait_set(**dict(zip(('_x', '_y', '_z'),
         #                           self.get_position())))
 
@@ -187,6 +186,7 @@ class PychronLaserManager(EthernetLaserManager):
     @get_float(default=0)
     def get_pyrometer_temperature(self):
         return self._ask('GetPyrometerTemperature')
+
     # def do_machine_vision_degas(self, lumens, duration):
     #     if lumens and duration:
     #         self.info('Doing machine vision degas. lumens={}'.format(lumens))
@@ -292,7 +292,7 @@ class PychronLaserManager(EthernetLaserManager):
         xyz = self._ask('GetPosition')
         if xyz:
             try:
-                x,y,z = csv_to_floats(xyz)
+                x, y, z = csv_to_floats(xyz)
                 return x, y, z
             except Exception as e:
                 print('pychron laser manager get_position', e)

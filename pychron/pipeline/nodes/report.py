@@ -109,5 +109,4 @@ class ReportNode(BaseNode):
             path = r.make_report(ans)
             state.report_path = path
 
-
 # ============= EOF =============================================

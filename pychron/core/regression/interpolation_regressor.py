@@ -76,7 +76,7 @@ class InterpolationRegressor(BaseRegressor):
                 try:
                     ti = where(xs >= timestamp)[0][0]
                 except IndexError:
-                    ti = n-1
+                    ti = n - 1
 
                 while ti in exc and ti < n:
                     ti += 1
@@ -94,7 +94,7 @@ class InterpolationRegressor(BaseRegressor):
             if attr == 'value':
                 v = (pb + ab) / 2.0
             else:
-                v = ((pb**2 + ab**2)**0.5)/2.0
+                v = ((pb ** 2 + ab ** 2) ** 0.5) / 2.0
 
         except TypeError:
             if attr == 'value':

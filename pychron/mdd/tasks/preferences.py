@@ -43,5 +43,4 @@ class MDDPreferencesPane(PreferencesPane):
                         show_border=True, label='MDD'))
         return v
 
-
 # ============= EOF =============================================

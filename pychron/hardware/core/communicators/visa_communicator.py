@@ -21,6 +21,7 @@ from pychron.hardware.core.communicators.communicator import Communicator
 from pychron.hardware.core.communicators.visa import resource_manager
 from pyvisa.constants import StatusCode
 
+
 class VisaCommunicator(Communicator):
     """
         uses PyVisa as main interface to USB.

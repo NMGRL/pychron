@@ -82,7 +82,7 @@ class PrinterGraphicsContext(GraphicsContext):
             self.scale_ctm(scale, scale)
 
             # if is_landscape:
-                # self.rotate_ctm(-math.pi/2)
+            # self.rotate_ctm(-math.pi/2)
 
         self.clip_to_rect(-x, -y, width, height)
 

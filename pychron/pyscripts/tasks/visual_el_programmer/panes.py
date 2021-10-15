@@ -70,7 +70,7 @@ class ControlPane(TraitsDockPane):
                                    UItem('info_str')),
                             HGroup(Item('record_valve_actions',
                                         tooltip='Should valve actuations be added to the action list. '
-                                                    'You can also hold down the "Shift" key to suppress addition',
+                                                'You can also hold down the "Shift" key to suppress addition',
                                         label='Record Actions')),
                             UItem('actions', editor=TabularEditor(adapter=ActionsAdapter(),
                                                                   operations=['move', 'delete'],
@@ -81,4 +81,3 @@ class ControlPane(TraitsDockPane):
         return v
 
 # ============= EOF =============================================
-

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Bool, Property
@@ -26,16 +25,19 @@ import time
 # ============= local library imports  ==========================
 from .base_mks_gauge import BaseMKSGauge
 
+
 class IonGauge(BaseMKSGauge):
     '''
         G{classtree}
     '''
     _degas = Bool(False)
     degas = Property(depends_on='_degas')
+
     def _get_degas(self):
         '''
         '''
         return self._degas
+
     def _set_degas(self, v):
         '''
             @type v: C{str}
@@ -44,33 +46,33 @@ class IonGauge(BaseMKSGauge):
         self._degas = v
         self.set_transducer_degas()
 
-#    def initialize(self, *args, **kw):
-#        '''
-#        '''
-#        super(IonGauge, self).initialize(*args, **kw)
-        # check filament status
-#        filon = self.get_transducer_filament_state()
-#        i = 0
+    #    def initialize(self, *args, **kw):
+    #        '''
+    #        '''
+    #        super(IonGauge, self).initialize(*args, **kw)
+    # check filament status
+    #        filon = self.get_transducer_filament_state()
+    #        i = 0
 
-#        while not filon:
-#
-#            self.logger.info('======current filament state %s===', filon)
-#            filon = self._parse_response('filament', self.set_filament_state(True))
-#
-#
-#            i += 1
-#            if i > 5 or self.simulation:
-#                filon = False
-#                break
-#            time.sleep(0.1)
-#
-#        if not filon:
-#            self.logger.warning('****** failed to turn on filament ******')
-#            self.error = 2
-#            #reset error flag
-#            self.error = 0
-#
-#        self.state = filon
+    #        while not filon:
+    #
+    #            self.logger.info('======current filament state %s===', filon)
+    #            filon = self._parse_response('filament', self.set_filament_state(True))
+    #
+    #
+    #            i += 1
+    #            if i > 5 or self.simulation:
+    #                filon = False
+    #                break
+    #            time.sleep(0.1)
+    #
+    #        if not filon:
+    #            self.logger.warning('****** failed to turn on filament ******')
+    #            self.error = 2
+    #            #reset error flag
+    #            self.error = 0
+    #
+    #        self.state = filon
 
     # @on_trait_change('degas')
 
@@ -126,10 +128,10 @@ class IonGauge(BaseMKSGauge):
         if onoff:
             self.delay_after_power_on = True
 
-#            #dont do anything if already on
-#            if self.get_transducer_filament_state():
-#                self.logger.info('======  filament already on ======')
-#                return
+        #            #dont do anything if already on
+        #            if self.get_transducer_filament_state():
+        #                self.logger.info('======  filament already on ======')
+        #                return
 
         q = self._build_command(self.address, 'power', onoff)
         return self.ask(q)

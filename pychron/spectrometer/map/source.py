@@ -18,6 +18,8 @@
 from __future__ import absolute_import
 from traits.api import Float, HasTraits
 from traitsui.api import View, Item
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

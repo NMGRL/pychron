@@ -15,6 +15,8 @@
 # ===============================================================================
 
 from __future__ import print_function
+
+
 def get_data_test():
     h = [20, 0]
     t = [2, 12]
@@ -107,7 +109,7 @@ def interpolate(y, t, e, yp):
     c = dt * dyp / dy ** 2
     ep2 = ((a * e[0]) ** 2 + (b * e[1]) ** 2 + (c * sy) ** 2 + (d * syp) ** 2) ** 0.5
     ep4 = ((a * e[1]) ** 2 + (b * e[0]) ** 2 + (c * sy) ** 2 + (d * syp) ** 2) ** 0.5
-    return tp, ep , ep3, ep2, ep4
+    return tp, ep, ep3, ep2, ep4
 
 
 y, t, e = get_data_test()

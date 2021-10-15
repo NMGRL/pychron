@@ -31,7 +31,6 @@ def clonable(klass, *args, **kw):
 
 
 class ArArCalculationsOptions(BaseOptions):
-
     # isochron
     isochron_omit_non_plateau = clonable(Bool)
     isochron_exclude_non_plateau = clonable(Bool)
@@ -65,6 +64,5 @@ class ArArCalculationsOptions(BaseOptions):
         from pychron.options.views.arar_calculation_views import VIEWS
 
         return VIEWS[name]
-
 
 # ============= EOF =============================================

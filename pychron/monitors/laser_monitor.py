@@ -85,5 +85,4 @@ class LaserMonitor(Monitor):
             manager.emergency_shutoff(reason=msg)
             return True
 
-
 # ============= EOF ====================================

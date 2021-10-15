@@ -25,6 +25,7 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 class ImagePlugin(BaseTaskPlugin):
     id = 'pychron.image.plugin'
     name = 'Image'
+
     # watcher = Instance('pychron.image.watcher.DirectoryWatcher')
 
     # def start(self):
@@ -86,6 +87,3 @@ class ImagePlugin(BaseTaskPlugin):
         return ts
 
 # ============= EOF =============================================
-
-
-

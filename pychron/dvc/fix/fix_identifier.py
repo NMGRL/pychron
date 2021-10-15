@@ -20,7 +20,6 @@ from pychron.dvc import analysis_path, dvc_load, dvc_dump
 
 
 def fix_identifier(source_id, destination_id, root, repo, aliquots, steps, dest_steps=None, dest_aliquots=None):
-
     if dest_aliquots is None:
         dest_aliquots = aliquots
     if dest_steps is None:
@@ -30,30 +29,31 @@ def fix_identifier(source_id, destination_id, root, repo, aliquots, steps, dest_
     #     src_id = '{}-{:02n}{}'.format(source_id, a, step)
     #     dest_id = '{}-{:02n}{}'.format(destination_id, da, dstep)
 
+
 def _fix_id(src_id, dest_id, identifier, root, repo, new_aliquot=None):
-        sp = analysis_path(src_id, repo, root=root)
-        dp = analysis_path(dest_id, repo, root=root, mode='w')
-        print(sp, dp)
-        if not os.path.isfile(sp):
-            print('not a file', sp)
-            return
+    sp = analysis_path(src_id, repo, root=root)
+    dp = analysis_path(dest_id, repo, root=root, mode='w')
+    print(sp, dp)
+    if not os.path.isfile(sp):
+        print('not a file', sp)
+        return
 
-        jd = dvc_load(sp)
-        jd['identifier'] = identifier
-        if new_aliquot:
-            jd['aliquot']= new_aliquot
+    jd = dvc_load(sp)
+    jd['identifier'] = identifier
+    if new_aliquot:
+        jd['aliquot'] = new_aliquot
 
-        dvc_dump(jd, dp)
+    dvc_dump(jd, dp)
 
+    print('{}>>{}'.format(sp, dp))
+    for modifier in ('baselines', 'blanks', 'extraction',
+                     'intercepts', 'icfactors', 'peakcenter', '.data'):
+        sp = analysis_path(src_id, repo, modifier=modifier, root=root)
+        dp = analysis_path(dest_id, repo, modifier=modifier, root=root, mode='w')
         print('{}>>{}'.format(sp, dp))
-        for modifier in ('baselines', 'blanks', 'extraction',
-                         'intercepts', 'icfactors', 'peakcenter', '.data'):
-            sp = analysis_path(src_id, repo, modifier=modifier, root=root)
-            dp = analysis_path(dest_id, repo, modifier=modifier, root=root, mode='w')
-            print('{}>>{}'.format(sp,dp))
-            if sp and os.path.isfile(sp):
-                # shutil.copy(sp, dp)
-                shutil.move(sp,dp)
+        if sp and os.path.isfile(sp):
+            # shutil.copy(sp, dp)
+            shutil.move(sp, dp)
 
 
 def swap_identifier(a, a_id, b, b_id, c_id, root, repo):
@@ -77,7 +77,6 @@ if __name__ == '__main__':
     _fix_id('66149-20', '66150-23', '66150', root, repo, new_aliquot=23)
 
     _fix_id('66150-06', '66149-29', '66149', root, repo, new_aliquot=29)
-
 
     # repo = 'FCTest'
     #

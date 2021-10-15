@@ -64,7 +64,6 @@ class ImageUploadTask(BaseManagerTask, BaseBrowserModel):
     def save(self):
         self.debug('save associations')
 
-
     def associate_sample(self):
         self.debug('associate sample')
         sample = self.selected_samples[0].name

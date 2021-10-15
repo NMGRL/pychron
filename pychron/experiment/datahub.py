@@ -315,5 +315,4 @@ class Datahub(Loggable):
         #     self._sorted_stores = r
         #     return r
 
-
 # ============= EOF =============================================

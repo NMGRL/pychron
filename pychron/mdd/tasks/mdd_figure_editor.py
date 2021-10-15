@@ -64,7 +64,7 @@ class MDDTree(HasTraits):
     def add_node(self, tag, name, plots):
         if plots is None:
             plots = []
-            
+
         graph = self._get_graph(tag)
         if graph is None:
             graph = MDDGraph(name=tag)

@@ -39,8 +39,8 @@ def make_statistics(reg, x=None, options=None):
 
     lines = [reg.make_equation(),
              'x=0, y={} {}{}'.format(floatfmt(v, n=6),
-                                          PLUSMINUS,
-                                          errorfmt(v, e))]
+                                     PLUSMINUS,
+                                     errorfmt(v, e))]
     if x is not None:
         vv, ee = reg.predict(x), reg.predict_error(x)
 

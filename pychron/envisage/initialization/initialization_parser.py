@@ -137,7 +137,7 @@ class InitializationParser(XMLParser):
     def get_plugin_group(self, name):
         return next((p for p in self.get_plugin_groups(elem=True)
                      if p.tag == name
-                    ), None)
+                     ), None)
 
     def get_groups(self):
         tree = self.get_root()
@@ -221,7 +221,7 @@ class InitializationParser(XMLParser):
         if plugin:
             man = self.get_plugin(plugin)
             nman = next((d for d in man.findall('manager')
-                    if d.text.strip() == manager), None)
+                         if d.text.strip() == manager), None)
             if nman is not None:
                 man = nman
 
@@ -310,7 +310,7 @@ class InitializationParser(XMLParser):
             category = self.get_categories()
 
         if not isinstance(category, (list, tuple)):
-            category = (category, )
+            category = (category,)
 
         for cat in category:
             elem = self._get_element(cat, name)
@@ -335,7 +335,7 @@ class InitializationParser(XMLParser):
         #
         # cats = map(s, [c for c in tree.iter(etree.Element)])
         # return list(set(cats))
-        #return map(s, set([c for c in tree.iter()]))
+        # return map(s, set([c for c in tree.iter()]))
 
     def _get_element(self, category, name, tag='plugin'):
         root = self.get_root()

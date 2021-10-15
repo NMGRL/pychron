@@ -19,6 +19,7 @@ from __future__ import absolute_import
 from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 from reportlab.platypus.flowables import Flowable
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -72,6 +73,5 @@ class ComponentFlowable(Flowable):
             gc.scale_ctm(scale, scale)
             gc.translate_ctm(-self.component.x, -self.component.y)
             self.component.draw(gc)
-
 
 # ============= EOF =============================================

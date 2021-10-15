@@ -20,6 +20,8 @@
 
 from __future__ import absolute_import
 from six.moves import zip
+
+
 def assemble_script_blob(scripts, kinds=None):
     """
         make one blob of all the script text
@@ -40,6 +42,3 @@ def assemble_script_blob(scripts, kinds=None):
     return 'Pychron Script', '\n'.join(ts)
 
 # ============= EOF =============================================
-
-
-

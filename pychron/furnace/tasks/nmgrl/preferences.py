@@ -61,7 +61,7 @@ class NMGRLFurnaceControlPreferencesPane(PreferencesPane):
                        Item('valves_path',
                             label='Valves Path',
                             editor=FileEditor(root_path=os.path.join(paths.extraction_line_dir,
-                                                                                    'valves.xml'))),
+                                                                     'valves.xml'))),
                        show_border=True,
                        label='Paths')
         v = View(p_grp)

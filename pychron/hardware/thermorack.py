@@ -180,5 +180,4 @@ class ThermoRack(CoreDevice):
 
         return resp
 
-
 # ============= EOF ====================================

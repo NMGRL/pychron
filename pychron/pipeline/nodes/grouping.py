@@ -35,9 +35,9 @@ from pychron.pychron_constants import SUBGROUPING_ATTRS, WEIGHTED_MEAN, \
 class GroupingNode(BaseNode):
     by_key = Str
     keys = Tuple('Aliquot', 'Comment', 'Identifier', 'Sample', 'Step', 'SubGroup',
-            'Group Name',
-            'Label Name',
-            'No Grouping')
+                 'Group Name',
+                 'Label Name',
+                 'No Grouping')
     analysis_kind = 'unknowns'
     name = 'Grouping'
     title = 'Edit Grouping'

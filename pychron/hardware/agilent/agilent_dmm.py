@@ -30,15 +30,14 @@ class AgilentDMM(SCPIDevice):
 
     """
 
-
     def configure_instrument(self):
         """
         configure instrument
         """
-        #configure
+        # configure
         self.tell('VOLT:DC:RES MAX')
 
-        #look into what these are for
+        # look into what these are for
         self.tell(':ZERO:AUTO OFF')
         self.tell(':INP:IMP:AUTO ON')
 
@@ -46,6 +45,3 @@ class AgilentDMM(SCPIDevice):
     #     pass
 
 # ============= EOF =============================================
-
-
-

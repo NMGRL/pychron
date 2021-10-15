@@ -19,6 +19,7 @@
 from __future__ import absolute_import
 from traits.etsconfig.etsconfig import ETSConfig
 from six.moves import range
+
 ETSConfig.toolkit = 'qt4'
 
 from traits.api import HasTraits, Instance, Float, on_trait_change, Int, Str, \
@@ -28,6 +29,8 @@ from numpy import linspace, polyfit, polyval, where, hstack, exp, ones_like
 # from pylab import *
 from pychron.processing.argon_calculations import age_equation, calculate_flux
 from pychron.graph.stacked_graph import StackedGraph
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class Iso(HasTraits):
@@ -35,24 +38,26 @@ class Iso(HasTraits):
     intensity = Float
     equil_rate = Float
     static_rate = Float
+
     def traits_view(self):
         v = View(HGroup(UItem('name', style='readonly'), Item('intensity'),
-                      Item('equil_rate'), Item('static_rate')))
+                        Item('equil_rate'), Item('static_rate')))
         return v
+
 
 class EquilibrationInspector(HasTraits):
     graph = Instance(StackedGraph, ())
 
-    Ar40 = Instance(Iso, {'name':'Ar40',
-                          'intensity':3000,
-                          'equil_rate':0.0001,
-                          'static_rate':0.0002
+    Ar40 = Instance(Iso, {'name': 'Ar40',
+                          'intensity': 3000,
+                          'equil_rate': 0.0001,
+                          'static_rate': 0.0002
                           }
                     )
-    Ar39 = Instance(Iso, {'name':'Ar39',
-                          'intensity':230,
-                          'equil_rate':0.0001,
-                          'static_rate':0.0002
+    Ar39 = Instance(Iso, {'name': 'Ar39',
+                          'intensity': 230,
+                          'equil_rate': 0.0001,
+                          'static_rate': 0.0002
                           }
                     )
 
@@ -61,22 +66,22 @@ class EquilibrationInspector(HasTraits):
 
     def traits_view(self):
         cntrl_grp = VGroup(
-                           UItem('Ar40', style='custom'),
-                           UItem('Ar39', style='custom'),
-#                            HGroup(Item('Ar40'),
-#                                Item('Ar39'),
-#                                ),
-                           HGroup(Item('max_time'), Item('vary_time_zero'))
-#                            Item('pump_rate')
-                           )
+            UItem('Ar40', style='custom'),
+            UItem('Ar39', style='custom'),
+            #                            HGroup(Item('Ar40'),
+            #                                Item('Ar39'),
+            #                                ),
+            HGroup(Item('max_time'), Item('vary_time_zero'))
+            #                            Item('pump_rate')
+        )
 
         v = View(
-                 VGroup(
-                        cntrl_grp,
-                        UItem('graph', style='custom')
-                        ),
-                 title='Equilibration Inspector'
-                 )
+            VGroup(
+                cntrl_grp,
+                UItem('graph', style='custom')
+            ),
+            title='Equilibration Inspector'
+        )
 
         return v
 
@@ -103,24 +108,23 @@ class EquilibrationInspector(HasTraits):
         I = func(ts)
 
         g = self.graph
-#         g.new_series(ts, I, plotid=plotid, color='black')
+        #         g.new_series(ts, I, plotid=plotid, color='black')
         fidx = where(ts > post)[0]
         b = 1
         if fidx.shape[0]:
             g.new_series(ts[:fidx[0]], I[:fidx[0]], plotid=plotid, color='black')
             g.new_series(ts[fidx[0]:], I[fidx[0]:], plotid=plotid, color='red')
-    #         plot(ts[:fidx[0]], I[:fidx[0]], 'black')
+            #         plot(ts[:fidx[0]], I[:fidx[0]], 'black')
             fI = I[fidx]
             ft = ts[fidx]
             m, b = polyfit(ft, fI, 1)
             vi = fI[0]
             b = vi - m * post
 
-#             g.new_series(ts, polyval((m, b), ts), plotid=plotid, color='red',
-#                         line_style='dash')
+        #             g.new_series(ts, polyval((m, b), ts), plotid=plotid, color='red',
+        #                         line_style='dash')
 
-#         plot(ts, polyval((m, b), ts), ls='--', c='r')
-
+        #         plot(ts, polyval((m, b), ts), ls='--', c='r')
 
         return polyval((m, b), time_zero)
 
@@ -172,14 +176,14 @@ class EquilibrationInspector(HasTraits):
 
         for pi in posts:
             for ti in xs:
-    #             subplot(311)
+                #             subplot(311)
                 n = self.calc_intercept(Ar40, pi,
                                         self.Ar40.equil_rate,
                                         self.Ar40.static_rate,
                                         xma, 2,
                                         time_zero=ti
                                         )
-    #             subplot(312)
+                #             subplot(312)
                 d = self.calc_intercept(Ar39, pi,
                                         self.Ar39.equil_rate,
                                         self.Ar39.static_rate,
@@ -188,18 +192,19 @@ class EquilibrationInspector(HasTraits):
 
                 ns.append(n)
                 ds.append(d)
-    #             rs.append(((n / d) - R) / R * 100)
+                #             rs.append(((n / d) - R) / R * 100)
                 rs.append((n / d))
 
-#         print ns
-#         g.new_series(xs, ns, plotid=2)
-#         g.new_series(xs, ds, plotid=1)
-#         g.new_series(to, rs, plotid=0)
+        #         print ns
+        #         g.new_series(xs, ns, plotid=2)
+        #         g.new_series(xs, ds, plotid=1)
+        #         g.new_series(to, rs, plotid=0)
 
         mon_age = 28
         j = calculate_flux((Ar40, 0), (Ar39, 0), mon_age)
         ages = [(age_equation(j[0], abs(ri)) - mon_age) * 1000 for ri in rs]
         g.new_series(index, ages, plotid=0)
+
 
 def EL_src(mag, t, post, rate=0.8):
     pre_t = where(t <= post)[0]
@@ -213,12 +218,14 @@ def EL_src(mag, t, post, rate=0.8):
 def MS_src(t, rate=0.0125):
     return rate * t
 
+
 def MS_pump(t, mag_t, post, eq_rate, static_rate):
     pre_t = where(t <= post)[0]
     post_t = where(t > post)[0]
     pre_v = eq_rate * t[pre_t] * mag_t[pre_t]
     post_v = static_rate * t[post_t] * mag_t[post_t]
     return hstack((pre_v, post_v))
+
 
 # def calc_intercept(intensity, post, pump_rate, xma):
 #     '''
@@ -293,9 +300,6 @@ def MS_pump(t, mag_t, post, eq_rate, static_rate):
 #     show()
 
 if __name__ == '__main__':
-
-
-
     eq = EquilibrationInspector()
     eq.Ar40.intensity = 300
     eq.Ar39.intensity = 25

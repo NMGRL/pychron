@@ -22,6 +22,8 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import six
+
+
 class Processor(object):
     def __init__(self, func):
         self._func = func
@@ -63,7 +65,7 @@ class DeviceProperty(object):
             self.get_processors.append(MapProcessor(values))
         if getprocs:
             if not isinstance(getprocs, (list, tuple)):
-                getprocs = (getprocs, )
+                getprocs = (getprocs,)
 
             for g in getprocs:
                 self.get_processors.append(Processor(g))
@@ -143,12 +145,10 @@ if __name__ == '__main__':
         def critical(self, msg):
             print(msg)
 
+
     a = A()
     print('voltage_onoff {} type={}'.format(a.voltage_onoff, type(a.voltage_onoff)))
     print('ambtemp {} type={}'.format(a.ambtemp, type(a.ambtemp)))
 
     # print a.voltage_in, type(a.voltage_in)
 # ============= EOF =============================================
-
-
-

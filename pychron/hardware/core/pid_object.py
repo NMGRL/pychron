@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 from __future__ import absolute_import
 import time
 
@@ -37,7 +36,6 @@ class PIDObject(HasTraits):
         return View('Kp', 'Ki', 'Kd', 'max_output')
 
     def iterate(self, error, dt):
-
         self._integral_err += (error * dt)
         derivative = (error - self._prev_err) / dt
         output = (self.Kp * error) + (self.Ki * self._integral_err) + (self.Kd * derivative)
@@ -56,4 +54,4 @@ class PIDObject(HasTraits):
 
         return self.iterate(err, dt)
 
-#======== EOF ================================================================
+# ======== EOF ================================================================

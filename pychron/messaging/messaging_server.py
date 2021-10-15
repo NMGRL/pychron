@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from pychron.globals import globalv
 
+
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
@@ -56,7 +57,6 @@ class MessagingServer(object):
     def warning(self, *args, **kw):
         """ """
         self.parent.warning(*args, **kw)
-
 
 # ============= views ===================================
 

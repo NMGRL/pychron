@@ -70,7 +70,7 @@ class ZoomCalibrationManager(HasTraits):
 
     def traits_view(self):
         v = View(VGroup(HGroup(UItem('start_button', enabled_when='not _alive'),
-                        UItem('stop_button', enabled_when='_alive')),
+                               UItem('stop_button', enabled_when='_alive')),
                         show_border=True, label='Zoom Calibration'))
         return v
 

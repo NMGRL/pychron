@@ -57,7 +57,6 @@ class Dial(Range):
                                  # width=width,
                                  # height=height,
                                  # view=view
-        )
-
+                                 )
 
 # ============= EOF =============================================

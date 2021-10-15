@@ -27,6 +27,7 @@ class NuBase:
             other = other.ys
 
         return self.__class__(self.xs, self.ys + other)
+
     __radd__ = __add__
 
     def __sub__(self, other):

@@ -144,6 +144,7 @@ class IsotopeEvolutionEditor(FigureEditor):
     # tool = Instance(IsoEvoFitSelector)
     figure_model_klass = IsoEvoModel
     basename = 'IsoEvo'
+
     # pickle_path = 'iso_fits'
     # unpack_peaktime = True
     # calculate_age = False

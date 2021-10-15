@@ -27,7 +27,7 @@ class UVAutomatedRunSpec(AutomatedRunSpec):
     mask = CStr
     attenuator = CStr
     reprate = CStr
-    #masks = Property
+    # masks = Property
     extract_units_names = List([NULL_STR, 'burst', 'continuous'])
     _default_extract_units = 'burst'
     browser_button = Button('Browse')
@@ -46,8 +46,8 @@ class UVAutomatedRunSpec(AutomatedRunSpec):
     def _get_mask_name(self):
         return self.mask
 
-    #@cached_property
-    #def _get_masks(self):
+    # @cached_property
+    # def _get_masks(self):
     #    p = os.path.join(paths.device_dir, 'fusions_uv', 'mask_names.txt')
     #    masks = []
     #    if os.path.isfile(p):

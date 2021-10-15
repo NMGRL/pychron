@@ -64,6 +64,3 @@ class BasePlugin(Plugin, Loggable):
         return True
 
 # ============= EOF =============================================
-
-
-

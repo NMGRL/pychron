@@ -15,11 +15,11 @@
 # ===============================================================================
 
 
-
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from traits.api import HasTraits, Property, Int, Float, Bool, Any
 from traitsui.api import View, Item
+
 
 # =============standard library imports ========================
 
@@ -37,6 +37,7 @@ class Setpoint(HasTraits):
 
     parent = Any
     index = Int(1)
+
     def load(self):
         '''
         '''
@@ -80,8 +81,6 @@ class Setpoint(HasTraits):
         cmd = p._build_command(p.address, 'setpoint', float(v), setpointindex=self.index)
         p.ask(cmd, delay=100)
 
-
-
     def _set_enabled(self, v):
         '''
             @type v: C{str}
@@ -93,7 +92,6 @@ class Setpoint(HasTraits):
         p = self.parent
         cmd = p._build_command(p.address, 'setpoint_enable', v, setpointindex=self.index)
         p.ask(cmd, delay=100)
-
 
     def traits_view(self):
         '''

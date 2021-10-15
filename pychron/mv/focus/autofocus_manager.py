@@ -109,7 +109,7 @@ class AutoFocusManager(Manager):
 
         self._evt_autofocusing = TEvent()
         self._evt_autofocusing.clear()
-#        manager = self.laser_manager
+        #        manager = self.laser_manager
         oper = self.parameters.operator
         self.info('passive focus. operator = {}'.format(oper))
 
@@ -144,10 +144,10 @@ class AutoFocusManager(Manager):
                                             )
         self._passive_focus_thread.start()
         if block:
-#             while 1:
-#                 if not self._passive_focus_thread.isRunning():
-#                     break
-#                 time.sleep(0.25)
+            #             while 1:
+            #                 if not self._passive_focus_thread.isRunning():
+            #                     break
+            #                 time.sleep(0.25)
             self._passive_focus_thread.join()
 
     def _open_graph(self):
@@ -182,7 +182,7 @@ class AutoFocusManager(Manager):
         prev_zoom = None
         if set_zoom and \
                 manager is not None and \
-                     zoom:
+                zoom:
             motor = manager.get_motor('zoom')
             if motor:
                 prev_zoom = motor.data_position
@@ -207,11 +207,11 @@ ImageGradmax={}, (z={})'''.format(operator, mi, fmi, ma, fma))
             focus_pos = fma
             self.graph.add_vertical_rule(focus_pos)
             self.graph.redraw()
-#            self.graph.add_vertical_rule(fma)
+            #            self.graph.add_vertical_rule(fma)
 
             self.info('calculated focus z= {}'.format(focus_pos))
 
-#            if set_z:
+            #            if set_z:
             controller = self.stage_controller
             if controller is not None:
                 if not stop_signal.isSet():
@@ -281,9 +281,9 @@ ImageGradmax={}, (z={})'''.format(operator, mi, fmi, ma, fma))
             if self._cancel_sweep(vo):
                 return
             nstart, nend = max(0, nfocal - nwin), nfocal + pwin
-#            mi = min(min(nstart, nend), min(start, end))
-#            ma = max(max(nstart, nend), max(start, end))
-#            self.graph.set_x_limits(mi, ma, pad=2)
+            #            mi = min(min(nstart, nend), min(start, end))
+            #            ma = max(max(nstart, nend), max(start, end))
+            #            self.graph.set_x_limits(mi, ma, pad=2)
             time.sleep(1)
             # do a slow tight sweep around the nominal focal point
             self._do_sweep(nstart, nend, velocity=self.parameters.velocity_scalar2)
@@ -297,21 +297,21 @@ ImageGradmax={}, (z={})'''.format(operator, mi, fmi, ma, fma))
 
         self.info('frames analyzed {}'.format(len(fms)))
 
-#        self.canvas.markupcontainer.pop('croprect')
+        #        self.canvas.markupcontainer.pop('croprect')
         return self._calculate_nominal_focal_point(fms, focussteps)
 
     def _do_sweep(self, start, end, velocity=None):
         controller = self.stage_controller
         controller.single_axis_move('z', start, block=True)
-#         time.sleep(0.1)
+        #         time.sleep(0.1)
         # explicitly check for motion
-#        controller.block(axis='z')
+        #        controller.block(axis='z')
 
         if velocity:
             vo = controller.axes['z'].velocity
 
             controller.set_single_axis_motion_parameters(pdict=dict(velocity=vo * velocity,
-                                                    key='z'))
+                                                                    key='z'))
 
         self.info('starting sweep from {}'.format(controller.z_progress))
         # pause before moving to end
@@ -346,14 +346,12 @@ ImageGradmax={}, (z={})'''.format(operator, mi, fmi, ma, fma))
 
             self.debug('sweep finished')
 
-
         return fms, focussteps
 
     def _calculate_nominal_focal_point(self, fms, focussteps):
         if fms:
             sfms = smooth(fms)
             if sfms is not None:
-
                 self.graph.new_series(focussteps, sfms)
                 self.graph.redraw()
 
@@ -376,11 +374,11 @@ ImageGradmax={}, (z={})'''.format(operator, mi, fmi, ma, fma))
         '''
 
         # need to resize to 640,480. this is the space the roi is in
-#        s = resize(grayspace(pychron), 640, 480)
+        #        s = resize(grayspace(pychron), 640, 480)
         src = grayspace(src)
         v = crop(src, *roi)
 
-        di = dict(var=lambda x:variance(x),
+        di = dict(var=lambda x: variance(x),
                   laplace=lambda x: get_focus_measure(x, 'laplace'),
                   sobel=lambda x: ndsum(generic_gradient_magnitude(x, sobel, mode='nearest'))
                   )
@@ -392,38 +390,39 @@ ImageGradmax={}, (z={})'''.format(operator, mi, fmi, ma, fma))
         v = View(Item('image', show_label=False, editor=ImageEditor(),
                       width=640,
                       height=480,
-                       style='custom'))
+                      style='custom'))
         return v
 
     def traits_view(self):
         v = View(
-               HGroup(self._button_factory('autofocus_button', 'autofocus_label'),
-                      Item('configure_button', show_label=False),
-                      show_border=True,
-                      label='Autofocus'
-                      )
-               )
+            HGroup(self._button_factory('autofocus_button', 'autofocus_label'),
+                   Item('configure_button', show_label=False),
+                   show_border=True,
+                   label='Autofocus'
+                   )
+        )
         return v
 
     def configure_view(self):
         v = View(Item('parameters', style='custom', show_label=False),
-               handler=ConfigureHandler,
-               buttons=['OK', 'Cancel'],
-               kind='livemodal',
-               title='Configure Autofocus',
-               x=0.80,
-               y=0.05
-               )
+                 handler=ConfigureHandler,
+                 buttons=['OK', 'Cancel'],
+                 kind='livemodal',
+                 title='Configure Autofocus',
+                 x=0.80,
+                 y=0.05
+                 )
         return v
 
     def _load_source(self):
         src = self.video.get_frame()
         return src
-#        if pychron:
-#            return Image.new_frame(pychron)
-#            self.image.load(pychron)
 
-#        return self.image.source_frame
+    #        if pychron:
+    #            return Image.new_frame(pychron)
+    #            self.image.load(pychron)
+
+    #        return self.image.source_frame
 
     def _get_roi(self):
         w = self.parameters.crop_width
@@ -431,22 +430,21 @@ ImageGradmax={}, (z={})'''.format(operator, mi, fmi, ma, fma))
 
         cx, cy = self.canvas.get_center_rect_position(w, h)
 
-
-#         cw, ch = self.canvas.outer_bounds
-#         print w, h, cw, ch
-#         cx = cw / 2. - w / 2.
-#         cy = ch / 2. - h / 2.
-#         cx = (cw - w) / 2.
-#         cy = (ch - h) / 2.
-#         cx = (640 * self.canvas.scaling - w) / 2
-#         cy = (480 * self.canvas.scaling - h) / 2
+        #         cw, ch = self.canvas.outer_bounds
+        #         print w, h, cw, ch
+        #         cx = cw / 2. - w / 2.
+        #         cy = ch / 2. - h / 2.
+        #         cx = (cw - w) / 2.
+        #         cy = (ch - h) / 2.
+        #         cx = (640 * self.canvas.scaling - w) / 2
+        #         cy = (480 * self.canvas.scaling - h) / 2
         roi = cx, cy, w, h
 
         return roi
 
     def _add_focus_area_rect(self, cx, cy, w, h):
-#         pl = self.canvas.padding_left
-#         pb = self.canvas.padding_bottom
+        #         pl = self.canvas.padding_left
+        #         pb = self.canvas.padding_bottom
 
         self.canvas.remove_item('croprect')
         self.canvas.add_markup_rect(cx, cy, w, h, identifier='croprect')
@@ -466,10 +464,11 @@ ImageGradmax={}, (z={})'''.format(operator, mi, fmi, ma, fma))
         self.edit_traits(view='configure_view', kind='livemodal')
 
         self.canvas.remove_item('croprect')
-#        try:
-#            self.canvas.markupcontainer.pop('croprect')
-#        except KeyError:
-#            pass
+
+    #        try:
+    #            self.canvas.markupcontainer.pop('croprect')
+    #        except KeyError:
+    #            pass
 
     @on_trait_change('parameters:[_crop_width,_crop_height]')
     def _crop_rect_update(self):
@@ -478,7 +477,6 @@ ImageGradmax={}, (z={})'''.format(operator, mi, fmi, ma, fma))
 
     def _get_autofocus_label(self):
         return 'Autofocus' if not self.autofocusing else 'Stop'
-
 
     def _parameters_default(self):
         return self.load_parameter()
@@ -490,4 +488,3 @@ ImageGradmax={}, (z={})'''.format(operator, mi, fmi, ma, fma))
 # Deprecated
 # ===============================================================================
 # ============= EOF =====================================
-

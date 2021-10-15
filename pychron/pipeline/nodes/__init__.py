@@ -57,6 +57,7 @@ from pychron.pipeline.nodes.runid_edit import RunIDEditNode
 from pychron.pipeline.nodes.scripting import PyScriptNode
 from pychron.pipeline.nodes.table import InterpretedAgeTableNode, GroupAnalysisTableNode, SubGroupAnalysisTableNode
 
+
 class NodeFactory:
     def __init__(self, name, factory):
         self.name = name

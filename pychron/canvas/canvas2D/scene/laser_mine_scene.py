@@ -51,8 +51,4 @@ class LaserMineScene(Scene):
     def _new_transect(self):
         pass
 
-
-
-
-
 # ============= EOF =============================================

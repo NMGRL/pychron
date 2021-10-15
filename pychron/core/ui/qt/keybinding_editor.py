@@ -41,7 +41,7 @@ class KeyBindingsEditor(Controller):
                  height=600,
                  title='Edit Key Bindings',
                  kind='livemodal',
-                 buttons=['OK','Cancel'],
+                 buttons=['OK', 'Cancel'],
                  resizable=True)
         return v
 
@@ -57,6 +57,7 @@ class KeyBindingControl(QtGui.QLabel):
 
 class _KeyBindingEditor(Editor):
     key = Event
+
     # clear = Event
     # refresh_needed = Event
     # dump_needed = Event
@@ -125,6 +126,3 @@ class KeyBindingEditor(BasicEditorFactory):
     # refresh_needed = Str
 
 # ============= EOF =============================================
-
-
-

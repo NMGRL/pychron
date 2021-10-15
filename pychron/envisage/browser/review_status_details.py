@@ -74,7 +74,6 @@ class ReviewStatusDetailsModel(HasTraits):
     #     return items
 
 
-
 class ReviewStatusDetailsView(Controller):
     def traits_view(self):
         v = View(UItem('items', editor=TabularEditor(editable=False,

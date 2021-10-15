@@ -18,6 +18,7 @@ from traits.etsconfig.etsconfig import ETSConfig
 from six.moves import map
 from six.moves import range
 from six.moves import zip
+
 ETSConfig.toolkit = 'qt4'
 
 # ============= enthought library imports =======================

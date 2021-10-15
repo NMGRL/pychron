@@ -7,6 +7,8 @@ from pychron.entry.loaders.xls_sample_loader import XLSSampleLoader
 __author__ = 'ross'
 
 import unittest
+
+
 def fget_data_dir():
     op = 'pychron/entry/tests/data'
     return get_data_dir(op)
@@ -15,7 +17,9 @@ def fget_data_dir():
     # return op
 
 
-DBNAME ='sample_load.db'
+DBNAME = 'sample_load.db'
+
+
 def db_factory():
     path = os.path.join(fget_data_dir(), DBNAME)
     db = isotope_db_factory(path)

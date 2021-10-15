@@ -45,6 +45,7 @@ class Command(HasTraits):
     description = Str
     example = Str
     name = Property
+
     #    implements(ICommand)
     def load_str(self, txt):
         pass
@@ -90,7 +91,7 @@ class Command(HasTraits):
     def get_text(self):
         ok = True
         if hasattr(self, '_get_view'):
-        #            pass
+            #            pass
             info = self.edit_traits(kind='modal')
         #            ok = info.result
 
@@ -144,7 +145,8 @@ class Info(Command):
         return self._keyword('message', self.message)
 
     def load_str(self, txt):
-        self.message=txt.replace("'",'').replace('"','')
+        self.message = txt.replace("'", '').replace('"', '')
+
 
 class Sleep(Command):
     duration = Float
@@ -161,7 +163,7 @@ class Sleep(Command):
 
     def load_str(self, txt):
         try:
-            self.duration=float(txt)
+            self.duration = float(txt)
         except (ValueError, TypeError):
             pass
 
@@ -199,7 +201,7 @@ MeasurementPyScripts live in ../scripts/measurement
             head, tail = os.path.split(self.path)
             words = [('name', tail),
                      ('root', head),
-            ]
+                     ]
             return self._keywords(words)
 
 
@@ -227,6 +229,5 @@ class Interval(Command):
 class Exit(Command):
     def get_text(self):
         return self.indent('exit()')
-
 
 # ============= EOF =============================================

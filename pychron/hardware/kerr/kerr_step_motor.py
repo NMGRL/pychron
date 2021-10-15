@@ -49,7 +49,6 @@ class DiscretePosition(HasTraits):
 
 
 class KerrStepMotor(KerrMotor):
-
     run_current = CInt
     hold_current = CInt
     speed_mode = Str('1x')

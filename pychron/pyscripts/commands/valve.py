@@ -27,10 +27,10 @@ from pychron.paths import paths
 from pychron.extraction_line.switch_parser import SwitchParser
 import six
 
+name_re = re.compile(r'''name\s*=\s*["']+\w+["']''')
+desc_re = re.compile(r'''description\s*=\s*["']+[\w\s]+["']''')
+attr_re = re.compile(r'''["']+[\w\s]+["']''')
 
-name_re=re.compile(r'''name\s*=\s*["']+\w+["']''')
-desc_re=re.compile(r'''description\s*=\s*["']+[\w\s]+["']''')
-attr_re=re.compile(r'''["']+[\w\s]+["']''')
 
 class ValveCommand(Command):
     valve = Str
@@ -72,9 +72,9 @@ class ValveCommand(Command):
             parser = SwitchParser(setup_file)
 
             valves = [(v.text.strip(),
-                          v.find('description').text.strip())
-                            for g in parser.get_groups() + [None]
-                                for v in parser.get_valves(group=g) ]
+                       v.find('description').text.strip())
+                      for g in parser.get_groups() + [None]
+                      for v in parser.get_valves(group=g)]
             self.valve = valves[0][0]
         else:
             valves = []

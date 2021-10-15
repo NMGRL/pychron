@@ -320,6 +320,7 @@ class FusionsLaserManager(LaserManager):
 
     def get_pyrometer_temperature(self):
         pass
+
     # ===============================================================================
     # pyscript interface
     # ===============================================================================

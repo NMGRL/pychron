@@ -287,7 +287,7 @@ class IdentifierGenerator(Loggable, PersistenceMixin):
             return ipos.sample
 
     def _identifier_generator(
-        self, start, is_monitor, irrad, levels, overwrite, offset, level_offset
+            self, start, is_monitor, irrad, levels, overwrite, offset, level_offset
     ):
         offset = max(1, offset)
         level_offset = max(1, level_offset)

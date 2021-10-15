@@ -62,9 +62,9 @@ class _KeywordEditor(SimpleEditor):
             f.setPointSize(self.factory.fontsize)
             ctrl.setFont(f)
 
-    #---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
     #  Handles the user changing the contents of the edit control:
-    #---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
 
     # def update_object(self):
     #     """ Handles the user changing the contents of the edit control.
@@ -94,4 +94,3 @@ class KeywordEditor(BasicEditorFactory):
 # ============= EOF =============================================
 
 # ============= EOF =============================================
-

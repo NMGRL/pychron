@@ -39,7 +39,7 @@ IFURNACE_PROTOCOL = 'pychron.furnace.ifurnace_manager.IFurnaceManager'
 IPIPETTE_PROTOCOL = 'pychron.external_pipette.protocol.IPipetteManager'
 CRYO_PROTOCOL = 'pychron.extraction_line.cryo_manager.CryoManager'
 
-TTF_FONTS = ['Andale Mono', 'Arial', 'Arial Black',
+TTF_FONTS = ['Andale Mono', 'Arial', 'Arial Black', 'Arial Unicode MS',
              'Calibri', 'Cambria', 'Comic Sans MS', 'Consolas', 'Courier New',
              'Georgia',
              'Helvetica',

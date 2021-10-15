@@ -29,7 +29,7 @@ class IsotopxMagnet(BaseMagnet, IsotopxMixin):
         from traitsui.api import View, Item, VGroup
         v = View(VGroup(Item('mass'), show_border=True, label='Control'))
         return v
-        
+
         # v = View(VGroup(VGroup(
         #                        Item('mass'),
         #                             # editor=RangeEditor(mode='slider', low_name='massmin',

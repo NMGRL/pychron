@@ -158,18 +158,18 @@ class Locator(Loggable):
         return dx, dy
 
     def _find_targets(
-        self,
-        image,
-        frame,
-        dim,
-        shape="circle",
-        search=None,
-        preprocess=True,
-        filter_targets=True,
-        convexity_filter=False,
-        mask=False,
-        set_image=True,
-        inverted=False,
+            self,
+            image,
+            frame,
+            dim,
+            shape="circle",
+            search=None,
+            preprocess=True,
+            filter_targets=True,
+            convexity_filter=False,
+            mask=False,
+            set_image=True,
+            inverted=False,
     ):
         """
         use a segmentor to segment the image
@@ -600,7 +600,7 @@ class Locator(Loggable):
                 draw_polygons(src, [ta.poly_points], color=(255, 255, 255))
 
     def _draw_center_indicator(
-        self, src, color=(0, 0, 255), shape="crosshairs", size=10, radius=1
+            self, src, color=(0, 0, 255), shape="crosshairs", size=10, radius=1
     ):
         """
         draw indicator at center of frame
@@ -618,7 +618,7 @@ class Locator(Loggable):
         # draw_circle_perimeter(src, cpt[0], cpt[1], radius, color=color)
 
     def _draw_indicator(
-        self, src, center, color=(255, 0, 0), shape="circle", size=4, thickness=-1
+            self, src, center, color=(255, 0, 0), shape="circle", size=4, thickness=-1
     ):
         """
         convenience function for drawing indicators
@@ -648,7 +648,6 @@ class Locator(Loggable):
             )
         else:
             draw_circle(src, center[0], center[1], r, color=color)
-
 
 # ============= EOF =============================================
 #  def _segment_polygon2(self, image, frame, target,

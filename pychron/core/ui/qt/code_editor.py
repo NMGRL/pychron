@@ -36,10 +36,9 @@ class PyScriptCodeEditor(BasicEditorFactory):
     fontname = Str('menlo regular')
     keywords = ''
 
-
-    #---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
     #  Trait definitions:
-    #---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
 
     # Object trait containing list of line numbers to mark (optional)
     mark_lines = Str

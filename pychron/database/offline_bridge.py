@@ -30,6 +30,7 @@ from pychron.core.helpers.logger_setup import wrap
 # from pychron.database.orms.isotope.util import Base
 from pychron.loggable import Loggable
 
+
 #
 #
 def quick_mapper(table):
@@ -401,6 +402,5 @@ class BaseDatabaseBridge(Loggable):
                 # # if __name__=='__main__':
                 # # o=OfflineBridge()
                 # # o.init('/Users/ross/Sandbox/data.db')
-
 
 # ============= EOF =============================================

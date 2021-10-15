@@ -80,7 +80,7 @@ class FusionsUVControlPane(TraitsDockPane):
         grp = VGroup(
             HGroup(
                 Item('enabled', show_label=False,
-                     style='custom', editor=LEDEditor(colors=['red','green'])),
+                     style='custom', editor=LEDEditor(colors=['red', 'green'])),
                 button_editor('enable', 'enable_label'),
                 spring),
             HGroup(

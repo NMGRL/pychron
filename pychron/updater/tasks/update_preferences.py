@@ -40,8 +40,8 @@ class Updater:
         repo = self._get_working_repo(inform)
         if repo is not None:
             gitcommand(repo, repo.head.name,
-                            'pull',
-                            lambda: repo.remote('origin').pull(branch))
+                       'pull',
+                       lambda: repo.remote('origin').pull(branch))
 
     def checkout_branch(self, name, inform=False):
         repo = self._get_working_repo(inform)

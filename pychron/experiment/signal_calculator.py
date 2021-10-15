@@ -69,20 +69,20 @@ class Index(HasTraits):
 
     def _calculate(self, w, age, sensitivity, k2o, c):
         moles_40k = (
-            w
-            / 1000.0
-            * k2o
-            / 100.0
-            * 1
-            / c.mK
-            * (2 * c.mK)
-            / (2 * c.mK + c.mO)
-            * c.abundance_40K
+                w
+                / 1000.0
+                * k2o
+                / 100.0
+                * 1
+                / c.mK
+                * (2 * c.mK)
+                / (2 * c.mK + c.mO)
+                * c.abundance_40K
         )
         moles_40Ar = (
-            moles_40k
-            * (math.exp(c.lambda_k.nominal_value * age * 1e6) - 1)
-            * (c.lambda_e_v / c.lambda_k.nominal_value)
+                moles_40k
+                * (math.exp(c.lambda_k.nominal_value * age * 1e6) - 1)
+                * (c.lambda_e_v / c.lambda_k.nominal_value)
         )
         return moles_40Ar / sensitivity
 

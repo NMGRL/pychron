@@ -66,12 +66,11 @@ class DVCCache(object):
             if oldest_entry is None:
                 oldest_entry = key
             elif (
-                self._cache[key]["date_accessed"]
-                < self._cache[oldest_entry]["date_accessed"]
+                    self._cache[key]["date_accessed"]
+                    < self._cache[oldest_entry]["date_accessed"]
             ):
                 oldest_entry = key
 
         self._cache.pop(oldest_entry)
-
 
 # ============= EOF =============================================

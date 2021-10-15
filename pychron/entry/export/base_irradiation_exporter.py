@@ -43,6 +43,3 @@ class BaseIrradiationExporter(Loggable):
         raise NotImplementedError
 
 # ============= EOF =============================================
-
-
-

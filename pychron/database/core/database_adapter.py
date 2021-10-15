@@ -518,6 +518,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
     def _version_warn_hook(self):
         pass
+
     # def test_version(self):
     #     ver = getattr(self, self.version_func)()
     #     ver = ver.version_num

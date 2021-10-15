@@ -47,7 +47,6 @@ class Result(HasTraits):
 
 
 class ResultsAdapter(TabularAdapter):
-
     columns = [
         ("Name", "name"),
         ("Key", "key"),
@@ -96,6 +95,5 @@ class ResultsReport(Loggable):
             title="Results",
         )
         return v
-
 
 # ============= EOF ===================================

@@ -284,10 +284,10 @@ class StatsGroup(Loggable):
                 si = ei.cleaned_automated_runs.index(sel)
 
                 st += (
-                    stats.calculate_duration(
-                        ei.executed_runs + ei.cleaned_automated_runs[:si]
-                    )
-                    + ei.delay_between_analyses
+                        stats.calculate_duration(
+                            ei.executed_runs + ei.cleaned_automated_runs[:si]
+                        )
+                        + ei.delay_between_analyses
                 )
 
                 rd = stats.get_run_duration(sel)
@@ -316,6 +316,5 @@ class StatsGroup(Loggable):
         else:
             dur = timedelta(seconds=round(self._total_time - self._elapsed))
         return str(dur)
-
 
 # ============= EOF =============================================

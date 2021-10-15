@@ -109,7 +109,7 @@ class YieldEditor(BaseTraitsEditor):
         r = self.options.ratio_str
         vs = [getattr(ai, r) for ai in self.analyses]
         if scalar:
-            vs = [vi/scalar for vi in vs]
+            vs = [vi / scalar for vi in vs]
         ys = list(map(nominal_value, vs))
         es = list(map(std_dev, vs))
 
@@ -165,7 +165,7 @@ class YieldEditor(BaseTraitsEditor):
 
     def traits_view(self):
         ctrl_grp = VGroup(Item('use_weighted_mean'),
-                          HGroup(Item('standard_ratio'),Item('current_yield')),
+                          HGroup(Item('standard_ratio'), Item('current_yield')),
                           HGroup(Item('current'), UItem('revert_button')),
                           HGroup(Item('new_yield'), UItem('set_yield_button')))
 

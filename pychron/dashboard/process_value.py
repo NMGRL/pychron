@@ -63,7 +63,7 @@ class ProcessValue(HasTraits):
         # even if the current value is the same as the last value
         threshold = self.change_threshold
         if abs(self.last_value - v) > threshold or (
-            self.last_time and ct - self.last_time > tt
+                self.last_time and ct - self.last_time > tt
         ):
             # a = abs(self.last_value - v) > threshold
             # b = (self.last_time and ct - self.last_time > tt)
@@ -109,6 +109,5 @@ class ProcessValue(HasTraits):
             r = convert_timestamp(self.last_time)
 
         return r
-
 
 # ============= EOF =============================================

@@ -58,7 +58,7 @@ def unpack(blob, fmt='>ff', step=8, decode=False):
             ret = []
             for i in range(0, len(blob), step):
                 try:
-                    args = struct.unpack(fmt, blob[i:i+step])
+                    args = struct.unpack(fmt, blob[i:i + step])
                 except struct.error:
                     break
                 ret.append(args)

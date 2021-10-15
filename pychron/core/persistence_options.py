@@ -39,5 +39,4 @@ except TypeError:
     class BasePersistenceOptions:
         pass
 
-
 # ============= EOF =============================================

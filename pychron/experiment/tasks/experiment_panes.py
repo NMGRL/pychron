@@ -71,7 +71,6 @@ def run_factory_uitem(name, **kw):
     return run_factory_item(name, **kw)
 
 
-
 class ExperimentFactoryPane(TraitsDockPane):
     id = 'pychron.experiment.factory'
     name = 'Experiment Editor'
@@ -211,13 +210,13 @@ class ExperimentFactoryPane(TraitsDockPane):
                                   spring),
 
                            HGroup(
-                                  run_factory_item('aliquot',
-                                                   width=50),
-                                  run_factory_item('delay_after',
-                                                   label='Delay After (s)',
-                                                   tooltip='Time (s) to delay after this analysis. This value supersedes '
-                                                           '"Delay Between Analyses" or "Delay After Blank"'),
-                                  spring),
+                               run_factory_item('aliquot',
+                                                width=50),
+                               run_factory_item('delay_after',
+                                                label='Delay After (s)',
+                                                tooltip='Time (s) to delay after this analysis. This value supersedes '
+                                                        '"Delay Between Analyses" or "Delay After Blank"'),
+                               spring),
                            HGroup(run_factory_item('repository_identifier',
                                                    label='Repository ID',
                                                    editor=myEnumEditor(

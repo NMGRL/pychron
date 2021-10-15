@@ -105,9 +105,9 @@ rsquared={rsquared:}
                         **kw)
         reg.calculate()
 
-        pad = (max(xs)-min(xs))*0.1
-        l = min(xs)-pad
-        u = max(xs)+pad
+        pad = (max(xs) - min(xs)) * 0.1
+        l = min(xs) - pad
+        u = max(xs) + pad
         fx = linspace(l, u)
         m, b = reg.get_slope(), reg.get_intercept()
         fy = fx * m + b

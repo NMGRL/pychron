@@ -123,7 +123,3 @@ class AnimatedPNGEditor(BasicEditorFactory):
     state = Str
 
 # ============= EOF =============================================
-
-
-
-

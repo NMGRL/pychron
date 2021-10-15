@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
@@ -31,32 +30,33 @@ from pychron.paths import paths
 class AerotechMotionControllerManager(MotionControllerManager):
     '''
     '''
-#    def traits_view(self):
-#        return
-#    _auto_enable_x = Bool
-#    _auto_enable_y = Bool
-#    _auto_enable_z = Bool
-#    _auto_enable_u = Bool
-#
-#    @on_trait_change('_auto_enable_+')
-#    def _auto_enable(self, n, value):
-#        '''
-#
-#        '''
-#        value = ' '.join([a for a in ['X', 'Y', 'Z', 'U'] if getattr(self, '_auto_enable_%s' % a.lower())])
-#        self.motion_controller.set_parameter(600, value)
-#
-## ============= views ===================================
-#    def traits_view(self):
-#        '''
-#        '''
-#        v = View()
-#        for a in self._get_axes():
-#
-#            a.load_parameters_from_device()
 
-#        v = super(AerotechMotionControllerManager, self).traits_view()
-#        return v
+    #    def traits_view(self):
+    #        return
+    #    _auto_enable_x = Bool
+    #    _auto_enable_y = Bool
+    #    _auto_enable_z = Bool
+    #    _auto_enable_u = Bool
+    #
+    #    @on_trait_change('_auto_enable_+')
+    #    def _auto_enable(self, n, value):
+    #        '''
+    #
+    #        '''
+    #        value = ' '.join([a for a in ['X', 'Y', 'Z', 'U'] if getattr(self, '_auto_enable_%s' % a.lower())])
+    #        self.motion_controller.set_parameter(600, value)
+    #
+    ## ============= views ===================================
+    #    def traits_view(self):
+    #        '''
+    #        '''
+    #        v = View()
+    #        for a in self._get_axes():
+    #
+    #            a.load_parameters_from_device()
+
+    #        v = super(AerotechMotionControllerManager, self).traits_view()
+    #        return v
 
     def _motion_controller_default(self):
         a = AerotechMotionController(name='unidex')
@@ -67,8 +67,10 @@ class AerotechMotionControllerManager(MotionControllerManager):
         self.motion_controller.bootstrap()
         return True
 
+
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
+
     logging_setup('amc')
     globalv.show_infos = False
     globalv.show_warnings = False

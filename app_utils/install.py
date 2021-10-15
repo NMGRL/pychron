@@ -925,17 +925,17 @@ def install_github(cfg):
 def install_app(cfg):
     if IS_MAC:
         info_header('Install App')
-        l = cfg['launcher']
+        launcher = cfg['launcher']
         if cfg['mac_os_app']:
             d = os.path.join('{}.app'.format(cfg['mac_app_name']), 'Contents', 'MacOS')
             subprocess.call(['mkdir', '-p', d])
             dst = os.path.join(d, cfg['mac_app_name'])
-            shutil.copy(l, dst)
+            shutil.copy(launcher, dst)
             subprocess.call(['chmod', '+x', dst])
 
         else:
-            subprocess.call(['chmod', '+x', l])
-            shutil.move(l, os.path.join(HOME, 'Desktop', l))
+            subprocess.call(['chmod', '+x', launcher])
+            shutil.move(launcher, os.path.join(HOME, 'Desktop', launcher))
 
 
 def get_hardware_plugins(cfg):

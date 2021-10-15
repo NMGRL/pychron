@@ -159,5 +159,4 @@ class JTransferer(Loggable):
     def _backward_transfer_func(self, irrad, level, position):
         pass
 
-
 # ============= EOF =============================================

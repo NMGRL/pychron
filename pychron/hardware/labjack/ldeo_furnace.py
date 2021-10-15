@@ -17,7 +17,6 @@ import struct
 import time
 from threading import Thread
 
-
 from pychron.hardware.core.core_device import CoreDevice
 
 try:
@@ -65,12 +64,16 @@ class LamontFurnaceControl(CoreDevice):
     def initialize(self, *args, **kw):
         self.scl_pin = self.dac_pin + 4
         self.sda_pin = self.scl_pin + 1
-        self._device.getFeedback(u3.BitStateWrite(4, 0))  # write both sleep lines low to prevent stepper from moving on load
-        self._device.getFeedback(u3.BitStateWrite(5, 0))  # write both sleep lines low to prevent stepper from moving on load
+        self._device.getFeedback(
+            u3.BitStateWrite(4, 0))  # write both sleep lines low to prevent stepper from moving on load
+        self._device.getFeedback(
+            u3.BitStateWrite(5, 0))  # write both sleep lines low to prevent stepper from moving on load
         self._device.configIO(FIOAnalog=15, NumberOfTimersEnabled=2, TimerCounterPinOffset=8)
         self._device.configTimerClock(TimerClockBase=3, TimerClockDivisor=50)  # 3 = 1 Mhz; 50 ==> 1/50 = 20 kHz
-        self._device.getFeedback(u3.Timer0Config(TimerMode=7, Value=100))  # FreqOut mode; Value 20 gives (20 kHz)/(2*100) = 100 Hz
-        self._device.getFeedback(u3.Timer1Config(TimerMode=7, Value=100))  # FreqOut mode; Value 20 gives (20 kHz)/(2*100) = 100 Hz
+        self._device.getFeedback(
+            u3.Timer0Config(TimerMode=7, Value=100))  # FreqOut mode; Value 20 gives (20 kHz)/(2*100) = 100 Hz
+        self._device.getFeedback(
+            u3.Timer1Config(TimerMode=7, Value=100))  # FreqOut mode; Value 20 gives (20 kHz)/(2*100) = 100 Hz
         print('device SN is ', self._device.serialNumber)
         data = self._i2c(0x50, [64], NumI2CBytesToReceive=36)
         response = data['I2CBytes']
@@ -169,10 +172,10 @@ class LamontFurnaceControl(CoreDevice):
     def drop_ball(self, position):
 
         def func():
-
             self.goto_ball(position)
             time.sleep(5)
             self.returnfrom_ball(position)
+
         t = Thread(target=func)
         t.start()
 
@@ -243,7 +246,8 @@ class LamontFurnaceControl(CoreDevice):
         return pv
 
     def get_summary(self):
-        summary = {"time": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), "OP1": self.read_analog_in(2), "TC1": self.readTC(1), "OP2": self.read_analog_in(3), "TC2": self.readTC(2)}
+        summary = {"time": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), "OP1": self.read_analog_in(2),
+                   "TC1": self.readTC(1), "OP2": self.read_analog_in(3), "TC2": self.readTC(2)}
         return summary
 
     def _run_stepper(self, runtime, direction, a_id, b_id):
@@ -262,6 +266,7 @@ class LamontFurnaceControl(CoreDevice):
             #     time.sleep(1)
 
             dev.getFeedback(u3.BitStateWrite(b_id, 0))
+
         t = Thread(target=func)
         t.start()
 

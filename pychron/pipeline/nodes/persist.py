@@ -89,8 +89,6 @@ class DVCPersistNode(PersistNode):
         if not isinstance(mods, tuple):
             mods = (self.modifier,)
 
-
-
         modp = []
         for mi in mods:
             modpi = self.dvc.update_analyses(state.unknowns,

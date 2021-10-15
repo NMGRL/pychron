@@ -72,6 +72,3 @@ class Laser(RoundedRectangle):
     #     self.increment_cnt()
 
 # ============= EOF =============================================
-
-
-

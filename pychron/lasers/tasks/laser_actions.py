@@ -87,6 +87,7 @@ class OpenScannerAction(LocalLaserAction):
 
 class OpenAutoTunerAction(LocalLaserAction):
     name = 'Open AutoTuner...'
+
     # accelerator = 'Ctrl+T'
 
     def perform(self, event):

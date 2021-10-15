@@ -27,6 +27,3 @@ class NMGRLFurnaceFeeder(NMGRLFurnaceDrive):
     pass
 
 # ============= EOF =============================================
-
-
-

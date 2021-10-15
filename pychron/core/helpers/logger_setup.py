@@ -168,7 +168,6 @@ def remove_root_handler(handler):
     root.removeHandler(handler)
 
 
-
 def new_logger(name):
     name = '{:<{}}'.format(name, NAME_WIDTH)
     l = logging.getLogger(name)

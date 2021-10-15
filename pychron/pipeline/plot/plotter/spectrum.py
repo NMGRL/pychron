@@ -193,7 +193,6 @@ class Spectrum(BaseArArFigure):
 
         spec = self._add_plot(xs, ys, es, pid, po)
 
-
         if plateau_age:
             platbounds = ag.plateau_steps
 
@@ -322,7 +321,6 @@ class Spectrum(BaseArArFigure):
 
             ds.underlays.append(lo)
 
-
         return ds
 
     # ===============================================================================
@@ -385,7 +383,7 @@ class Spectrum(BaseArArFigure):
                 self.plateau_overlay.plateau_bounds = ag.plateau_steps
                 text = self._make_plateau_text()
             else:
-                self.plateau_overlay.plateau_bounds = [0, len(self.analyses)-1]
+                self.plateau_overlay.plateau_bounds = [0, len(self.analyses) - 1]
                 text = self._make_weighted_mean_text()
 
             self.plateau_overlay.info_txt = text

@@ -19,6 +19,7 @@
 from __future__ import absolute_import
 from chaco.api import AbstractOverlay
 
+
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
@@ -34,7 +35,6 @@ class BorderOverlay(AbstractOverlay):
         gc.rect(x - 3, y - 3, w + 6, h + 6)
 
         gc.stroke_path()
-
 
 # ============= views ===================================
 # ============= EOF ====================================

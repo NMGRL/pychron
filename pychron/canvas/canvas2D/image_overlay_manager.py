@@ -30,9 +30,10 @@ from pychron.canvas.canvas2D.laser_tray_canvas import ImageOverlay
 class ImageOverlayManager(HasTraits):
     canvas = Any
     overlays = List
+
     def set_canvas(self, canvas):
         ov = [o for o in reversed(canvas.overlays)
-                         if isinstance(o, ImageOverlay)]
+              if isinstance(o, ImageOverlay)]
         self.overlays = ov
         self.canvas = canvas
 

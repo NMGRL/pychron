@@ -95,7 +95,7 @@ class StageVisualizer(Loggable):
         v = View(HGroup(UItem('canvas', editor=ComponentEditor(width=550,
                                                                height=550)),
                         UItem('results', editor=TabularEditor(
-                                adapter=ResultsAdapter()))),
+                            adapter=ResultsAdapter()))),
                  handler=StageVisualizerHandler(),
                  buttons=[Action(action='save', name='Save'), ],
                  title='Stage Visualizer',

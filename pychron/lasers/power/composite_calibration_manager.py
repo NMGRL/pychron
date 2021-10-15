@@ -35,8 +35,11 @@ from pychron.hardware.meter_calibration import MeterCalibration
 '''
 use a dbselector to select data
 '''
+
+
 class BoundsSelector(HasTraits):
     graph = Instance(Graph)
+
     def traits_view(self):
         v = View(Item('graph', show_label=False, style='custom'),
                  buttons=['OK', 'Cancel'],
@@ -67,7 +70,6 @@ class CompositeCalibrationManager(Manager):
 
     power = Float
     input = Float
-
 
     def _power_changed(self):
         pc = self._load_calibration()
@@ -139,9 +141,9 @@ class CompositeCalibrationManager(Manager):
 
         g = self.graph
         g.clear()
-#        g.new_plot(zoom=True, pan=True,
-#                   padding=[40, 10, 10, 40]
-#                   )
+        #        g.new_plot(zoom=True, pan=True,
+        #                   padding=[40, 10, 10, 40]
+        #                   )
         has_bounds = False
         for i, s in enumerate(self.selected_calibrations):
             if s.bounds:
@@ -161,11 +163,11 @@ class CompositeCalibrationManager(Manager):
     def traits_view(self):
         selector_grp = Group(Item('selector', style='custom', show_label=False))
         transfer_grp = VGroup(spring,
-                        VGroup(
-                           Item('append', show_label=False),
-                           Item('replace', show_label=False)
-                           ),
-                        spring)
+                              VGroup(
+                                  Item('append', show_label=False),
+                                  Item('replace', show_label=False)
+                              ),
+                              spring)
         editor = TabularEditor(adapter=self.selector.tabular_adapter(),
                                editable=False,
                                dclicked='object.dclicked',
@@ -173,48 +175,48 @@ class CompositeCalibrationManager(Manager):
                                )
         selected_grp = Item('selected_calibrations', editor=editor, show_label=False)
         data_tab = Group(
-                         HGroup(
-                            selector_grp,
-                            transfer_grp,
-                            selected_grp
-                            ),
-                         show_border=True,
-                         label='Data')
+            HGroup(
+                selector_grp,
+                transfer_grp,
+                selected_grp
+            ),
+            show_border=True,
+            label='Data')
 
         process_tab = Group(
-                            HGroup(Item('power'), Item('input',
-                                                       format_str='    %0.3f   ', style='readonly'),
-                                   spring, Item('save', show_label=False),
-                                   Item('load_graph', show_label=False)),
-                            Item('graph', style='custom', show_label=False),
-                            show_border=True,
-                            label='Process')
+            HGroup(Item('power'), Item('input',
+                                       format_str='    %0.3f   ', style='readonly'),
+                   spring, Item('save', show_label=False),
+                   Item('load_graph', show_label=False)),
+            Item('graph', style='custom', show_label=False),
+            show_border=True,
+            label='Process')
 
         v = View(
-                 VGroup(
-                     data_tab,
-                     process_tab
-                 ),
-                 resizable=True,
-                 title='Composite {} Power Calibration'.format(self.parent_name)
-                 )
+            VGroup(
+                data_tab,
+                process_tab
+            ),
+            resizable=True,
+            title='Composite {} Power Calibration'.format(self.parent_name)
+        )
         return v
 
     def _graph_default(self):
         g = Graph(container_dict={
-#                                  'fill_padding':True,
-#                                  'bgcolor':'red',
-                                  'padding':5
-                                  })
+            #                                  'fill_padding':True,
+            #                                  'bgcolor':'red',
+            'padding': 5
+        })
         self._plot_factory(g)
         return g
 
     def _plot_factory(self, graph):
         graph.new_plot(zoom=True, pan=True,
-                   padding=[50, 10, 10, 40],
-                   xtitle='Setpoint (%)',
-                    ytitle='Measured Power (W)'
-                   )
+                       padding=[50, 10, 10, 40],
+                       xtitle='Setpoint (%)',
+                       ytitle='Measured Power (W)'
+                       )
 
     def _db_default(self):
 
@@ -228,6 +230,8 @@ class CompositeCalibrationManager(Manager):
 
     def _selector_default(self):
         return self.db._selector_factory()
+
+
 if __name__ == '__main__':
     ccm = CompositeCalibrationManager()
     ccm.configure_traits()

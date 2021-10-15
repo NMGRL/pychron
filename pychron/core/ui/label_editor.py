@@ -23,6 +23,3 @@ from pychron.core.ui.factory import toolkit_factory
 LabelEditor = toolkit_factory('label_editor', 'LabelEditor')
 
 # ============= EOF =============================================
-
-
-

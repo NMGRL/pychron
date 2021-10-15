@@ -23,6 +23,7 @@ from traitsui.api import View, Item, VGroup, EnumEditor
 from pychron.pyscripts.commands.core import Command
 from traitsui.menu import OKCancelButtons
 
+
 class Ramp(Command):
     setpoint = Float(1)
     rate = Float(1)
@@ -32,15 +33,15 @@ class Ramp(Command):
 
     def traits_view(self):
         v = View(Item('setpoint', label='Setpoint (C)'),
-               Item('rate', label='Rate C/hr'),
-               VGroup(
-                      Item('start', label='Start Setpoint (C)'),
-                      Item('period', label='Update Period (s)'),
-                      show_border=True,
-                      label='Optional'
-                      ),
-                buttons=OKCancelButtons
-                )
+                 Item('rate', label='Rate C/hr'),
+                 VGroup(
+                     Item('start', label='Start Setpoint (C)'),
+                     Item('period', label='Update Period (s)'),
+                     show_border=True,
+                     label='Optional'
+                 ),
+                 buttons=OKCancelButtons
+                 )
         return v
 
     def _to_string(self):
@@ -50,10 +51,9 @@ class Ramp(Command):
         except (ValueError, TypeError):
             pass
 
-
         words = [('setpoint', self.setpoint, True),
                  ('rate', self.rate, True),
-               ]
+                 ]
         if start is not None:
             words.append(('start', start, True))
 
@@ -64,6 +64,8 @@ class Ramp(Command):
 
 
 time_dict = dict(h='hours', m='minutes', s='seconds')
+
+
 class Setpoint(Command):
     setpoint = Float
     duration = Float
@@ -74,16 +76,16 @@ class Setpoint(Command):
                    Item('duration', label='Duration (units)'),
                    Item('units', editor=EnumEditor(values=time_dict),
 
-                    ),
-               )
+                        ),
+                   )
 
         return v
+
     def _to_string(self):
         words = [('temperature', self.setpoint, True),
-               ('duration', self.duration, True),
-               ('units', self.units)
-               ]
+                 ('duration', self.duration, True),
+                 ('units', self.units)
+                 ]
         return self._keywords(words)
-
 
 # ============= EOF =============================================

@@ -77,5 +77,4 @@ class SelectAttrView(HasTraits):
         )
         return v
 
-
 # ============= EOF =============================================

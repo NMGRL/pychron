@@ -57,8 +57,4 @@ class Turbo(RoundedRectangle, Animation):
         self.increment_cnt(15)
         # if self.refresh_required():
 
-
 # ============= EOF =============================================
-
-
-

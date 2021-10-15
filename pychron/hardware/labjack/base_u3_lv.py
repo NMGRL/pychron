@@ -18,6 +18,8 @@
 # ============= standard library imports ========================
 import u3
 from LabJackPython import NullHandleException
+
+
 # ============= local library imports  ==========================
 
 
@@ -95,6 +97,3 @@ class BaseU3LV:
             self.warning('DIOMapping {}'.format(self._dio_mapping))
 
 # ============= EOF =============================================
-
-
-

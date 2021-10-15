@@ -71,7 +71,7 @@ class LoadingOverlay(AbstractOverlay):
                 gc.set_font(self.font)
                 lines = self.info_str.split('\n')
                 lws, lhs = list(zip(*[gc.get_full_text_extent(mi)[:2]
-                                 for mi in lines]))
+                                      for mi in lines]))
                 rect_width = max(lws) + 4
                 rect_height = (max(lhs) + 2) * len(lhs)
 

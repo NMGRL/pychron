@@ -98,7 +98,7 @@ class BaseScanner(PersistenceLoggable):
 
         limits = self._get_limits()
         graph.set_x_limits(*limits, pad='0.1')
-        
+
         self.debug('reference detector {}'.format(spec.reference_detector))
         refdet = spec.get_detector(spec.reference_detector)
 
@@ -123,9 +123,9 @@ class BaseScanner(PersistenceLoggable):
             else:
                 rys = hstack((rys, refsig))
                 xs = hstack((xs, si))
-            
-            #self.debug('dsfa {}, {}'.format(refsig, rys))
-            
+
+            # self.debug('dsfa {}, {}'.format(refsig, rys))
+
             plot.data.update_data({'x{}'.format(self.plotid): xs})
             plot.data.set_data(refk, rys)
 

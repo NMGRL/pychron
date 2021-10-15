@@ -20,6 +20,7 @@
 from __future__ import absolute_import
 from pychron.applications.pychron_application import PychronApplication
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -28,6 +29,5 @@ class PySamplePrep(PychronApplication):
     id = "pychron.sampleprep.application"
     name = "pySamplePrep"
     shortname = "sampleprep"
-
 
 # ============= EOF =============================================

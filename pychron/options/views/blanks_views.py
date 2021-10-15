@@ -92,7 +92,7 @@ class BlanksFitMatrix(SubOptions):
             label = ' '.join([ai.capitalize() for ai in a.split('_')])
             atypes.append((a.lower(), label))
         atypes = [checkbox_column(name='ref_{}'.format(atype), label=label) for atype, label in atypes]
-        return [object_column(name='name')]+atypes
+        return [object_column(name='name')] + atypes
 
     def traits_view(self):
         aux_plots_grp = UItem('aux_plots',

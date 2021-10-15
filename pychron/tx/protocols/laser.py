@@ -165,6 +165,7 @@ class LaserProtocol(ServiceProtocol):
 
     def _start_measure_grain_polygon(self, data):
         return self._manager.start_measure_grain_polygon()
+
     # ===============================================================================
     # Laser
     # ===============================================================================
@@ -237,6 +238,7 @@ class LaserProtocol(ServiceProtocol):
 
     def _get_pyrometer_temperature(self, data):
         return self._manager.get_pyrometer_temperature()
+
     # ===============================================================================
     # Motors
     # ===============================================================================

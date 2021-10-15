@@ -197,11 +197,11 @@ class Experimentor(DVCIrradiationable):
                         i -= 1
                         break
                     elif not self.confirmation_dialog(
-                        "Found analyses up to {}. "
-                        "position={}, extract={}. "
-                        "Continue searching?".format(
-                            ai.runid, ai.extract_value, ai.position
-                        )
+                            "Found analyses up to {}. "
+                            "position={}, extract={}. "
+                            "Continue searching?".format(
+                                ai.runid, ai.extract_value, ai.position
+                            )
                     ):
                         break
                     next_pos = queue.automated_runs[i + 1]
@@ -327,6 +327,5 @@ class Experimentor(DVCIrradiationable):
             application=self.application, dvc=self.dvc, default_mass_spectrometer=dms
         )
         return e
-
 
 # ============= EOF =============================================

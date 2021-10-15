@@ -33,7 +33,6 @@ from six.moves import map
 
 
 class RPiCamera(HeadlessConfigLoadable):
-
     sharpness = 0
     contrast = 0
     brightness = 50
@@ -162,6 +161,5 @@ class RPiCamera(HeadlessConfigLoadable):
         )
         for attr in attrs:
             setattr(camera, attr, getattr(self, attr))
-
 
 # ============= EOF =============================================

@@ -182,9 +182,9 @@ def fu(repo, text):
         # Make sure the mode is set if the path is set. Otherwise the resulting blob is invalid
         # We just use the one mode we should have parsed
         a_mode = (
-            old_mode
-            or deleted_file_mode
-            or (a_path and (b_mode or new_mode or new_file_mode))
+                old_mode
+                or deleted_file_mode
+                or (a_path and (b_mode or new_mode or new_file_mode))
         )
         b_mode = b_mode or new_mode or new_file_mode or (b_path and a_mode)
         ablob = Blob(repo, hex_to_bin(a_blob_id), mode=a_mode, path=a_path)

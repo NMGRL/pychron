@@ -165,9 +165,9 @@ class YorkRegressor(OLSRegressor):
         W = self._calculate_W(b)
         U, V = self._calculate_UV(W)
 
-        sigbsq = 1/sum(W*U**2)
+        sigbsq = 1 / sum(W * U ** 2)
 
-        sigasq = sigbsq*sum(W*self.clean_xs**2)/sum(W)
+        sigasq = sigbsq * sum(W * self.clean_xs ** 2) / sum(W)
 
         self._intercept_variance = sigasq
         return sigbsq
@@ -284,7 +284,6 @@ class NewYorkRegressor(YorkRegressor):
         mahon 1996
     """
 
-
     def get_slope_variance(self):
         """
         adapted from https://github.com/LLNL/MahonFitting/blob/master/mahon.py
@@ -389,7 +388,6 @@ class NewYorkRegressor(YorkRegressor):
         #
         # self._intercept_variance = var_a
         # return var_b
-
 
 
 class ReedYorkRegressor(YorkRegressor):

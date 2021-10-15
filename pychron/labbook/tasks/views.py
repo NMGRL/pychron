@@ -23,6 +23,8 @@ from traitsui.api import View, UItem
 
 # ============= standard library imports ========================
 import os
+
+
 # ============= local library imports  ==========================
 
 
@@ -89,6 +91,3 @@ def get_new_name(root, test, title, name=''):
             break
 
 # ============= EOF =============================================
-
-
-

@@ -55,11 +55,11 @@ class Radial(BaseArArFigure):
         zs = array([nominal_value(a.uage) for a in self.analyses])
         es = array([std_dev(a.uage) for a in self.analyses])
 
-        zm,_ = calculate_weighted_mean(zs, es)
-        zs = (zs - zm)/es
+        zm, _ = calculate_weighted_mean(zs, es)
+        zs = (zs - zm) / es
 
         yma = max(abs(zs))
-        es = 1/es
+        es = 1 / es
         # xs = array([1/std_dev(a.uage) for a in self.analyses])
         # ys = array([nominal_value(a.uage)/(std_dev(a.uage)) for a in self.analyses])
         try:

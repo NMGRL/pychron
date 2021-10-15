@@ -58,5 +58,4 @@ class AssociatedIdentifiersView(HasTraits):
         )
         return v
 
-
 # ============= EOF =============================================

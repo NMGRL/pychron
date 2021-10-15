@@ -42,8 +42,8 @@ class MinnaBluffMapper(BaseImportMapper):
         return project
 
     def map_material(self, mat):
-        #ml=mat.lower()
-        #if ml in ('gmc', 'groundmass', 'groundmass conc'):
+        # ml=mat.lower()
+        # if ml in ('gmc', 'groundmass', 'groundmass conc'):
         #    mat='Groundmass'
 
         return mat.capitalize()

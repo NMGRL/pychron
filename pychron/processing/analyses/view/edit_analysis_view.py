@@ -402,16 +402,16 @@ class AnalysisEditView(HasTraits):
                           defined_when='object.flux',
                           show_border=True)
         v = View(VGroup(Group(iso_grp, baseline_grp,
-                                       icgrp,
-                                       layout='tabbed'),
-                                 blank_grp,
-                                 flux_grp,
-                                 bgrp),
+                              icgrp,
+                              layout='tabbed'),
+                        blank_grp,
+                        flux_grp,
+                        bgrp),
                  buttons=['OK', 'Cancel'],
-                          handler=AnalysisEditViewHandler(),
-                          title=self.title,
-                          x=0.05,
-                          y=0.05)
+                 handler=AnalysisEditViewHandler(),
+                 title=self.title,
+                 x=0.05,
+                 y=0.05)
 
         return v
 

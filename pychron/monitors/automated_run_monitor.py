@@ -159,6 +159,7 @@ class AutomatedRunMonitor(Monitor):
 class RemoteAutomatedRunMonitor(AutomatedRunMonitor):
     handle = None
     handles = List
+
     # def __init__(self, host, port, kind, *args, **kw):
     # super(RemoteAutomatedRunMonitor, self).__init__(*args, **kw)
     #     self.handle = EthernetCommunicator()
@@ -211,6 +212,5 @@ class RemoteAutomatedRunMonitor(AutomatedRunMonitor):
         except (ValueError, TypeError):
             p = default
         return p
-
 
 # ============= EOF =============================================

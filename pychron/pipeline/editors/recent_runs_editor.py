@@ -54,7 +54,7 @@ class RecentRunsEditor(BaseTraitsEditor):
                 self.stack_hash.add(a.uuid)
 
             an = ans[-1]
-            self.stack_pointer = len(ans)-1
+            self.stack_pointer = len(ans) - 1
             self.analysis_view.load(an, quick=self.quick_load)
 
     def _activate_analysis(self, an):

@@ -49,5 +49,4 @@ class RatioSeriesOptions(SeriesOptions):
     def _get_subview(self, name):
         return VIEWS[name]
 
-
 # ============= EOF =============================================

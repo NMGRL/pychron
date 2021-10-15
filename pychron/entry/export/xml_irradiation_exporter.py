@@ -26,6 +26,3 @@ class XMLIrradiationExporter(BaseIrradiationExporter):
         export irradiations from pychron database to an XML file
     """
 # ============= EOF =============================================
-
-
-

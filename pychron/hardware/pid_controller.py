@@ -20,6 +20,7 @@ from traitsui.api import View, Item
 
 from pychron.hardware.core.abstract_device import AbstractDevice
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -54,6 +55,5 @@ class DevelopmentPidController(PidController):
         )
 
         return v
-
 
 # ============= EOF =============================================

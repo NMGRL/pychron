@@ -234,5 +234,4 @@ class ValveFlag(Flag):
     def _get_valves_str(self):
         return ",".join(self.valves)
 
-
 # ============= EOF =============================================

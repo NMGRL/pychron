@@ -38,6 +38,3 @@ class UploadPane(TraitsTaskPane):
         return v
 
 # ============= EOF =============================================
-
-
-

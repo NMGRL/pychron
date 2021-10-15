@@ -77,8 +77,8 @@ class NewportGroup(Axis):
         for key, value in MAPPING.items():
             if key is not 'axes':
                 cmds.append(
-                        '{}{}{:0.5f}'.format(self.id, value,
-                                             getattr(self, key)))
+                    '{}{}{:0.5f}'.format(self.id, value,
+                                         getattr(self, key)))
 
         if new_group:
             gid = '{:n}HN{}'.format(self.id, ','.join(map(str, self.axes)))

@@ -240,5 +240,4 @@ class ClientSwitchManager(SwitchManager):
             #         self.debug(tmpl.format(vi, state, lock, fail, statew, lockw, failw))
             #     self.debug('===============================================================')
 
-
 # ============= EOF =============================================

@@ -192,8 +192,6 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
             overlay = ScatterInspectorOverlay(scatter)
             scatter.overlays.append(overlay)
 
-
-
             # g.new_series(xx, yy, plotid=i)
             g.set_x_title(self.xarg, plotid=i)
             g.set_y_title(self.yarg, plotid=i)

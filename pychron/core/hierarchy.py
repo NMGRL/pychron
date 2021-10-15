@@ -104,5 +104,4 @@ class Hierarchy(FilePath):
     #     c=self._get_chronology()
     #     return c[-1]
 
-
 # ============= EOF =============================================

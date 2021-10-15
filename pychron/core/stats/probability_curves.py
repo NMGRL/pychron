@@ -33,7 +33,7 @@ def cumulative_probability(ages, errors, xmi, xma, n=100):
         # calculate probability curve for ai+/-ei
         # p=1/(2*pi*sigma2) *exp (-(x-u)**2)/(2*sigma2)
         # see http://en.wikipedia.org/wiki/Normal_distribution
-        ds = (x-full(n, ai)) ** 2
+        ds = (x - full(n, ai)) ** 2
         es2 = full(n, 2 * ei * ei)
         gs = (es2 * pi) ** -0.5 * exp(-ds / es2)
 

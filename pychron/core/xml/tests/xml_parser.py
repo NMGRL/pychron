@@ -291,7 +291,7 @@ class XMLParserTestCase(unittest.TestCase):
     def test_pprint1(self):
         intxt = '''<root><a>1234<b>xy</b></a></root>'''
         otxt = pprint_xml(intxt)
-        etxt='''<root>
+        etxt = '''<root>
     <a>1234
         <b>xy</b>
     </a>
@@ -301,7 +301,7 @@ class XMLParserTestCase(unittest.TestCase):
     def test_pprint(self):
         intxt = '''<root><a><b></b></a></root>'''
         otxt = pprint_xml(intxt)
-        etxt='''<root>
+        etxt = '''<root>
     <a>
         <b></b>
     </a>
@@ -311,7 +311,7 @@ class XMLParserTestCase(unittest.TestCase):
     def test_pprint2(self):
         intxt = '''<root><a><b></b><c></c></a></root>'''
         otxt = pprint_xml(intxt)
-        etxt='''<root>
+        etxt = '''<root>
     <a>
         <b></b>
         <c></c>
@@ -322,7 +322,7 @@ class XMLParserTestCase(unittest.TestCase):
     def test_pprint4(self):
         intxt = '''<root><a>12<b>123</b><c>1234</c></a></root>'''
         otxt = pprint_xml(intxt)
-        etxt='''<root>
+        etxt = '''<root>
     <a>12
         <b>123</b>
         <c>1234</c>
@@ -333,7 +333,7 @@ class XMLParserTestCase(unittest.TestCase):
     def test_pprint5(self):
         intxt = '''<root><a enabled="false">12<b>123</b><c>1234</c></a></root>'''
         otxt = pprint_xml(intxt)
-        etxt='''<root>
+        etxt = '''<root>
     <a enabled="false">12
         <b>123</b>
         <c>1234</c>

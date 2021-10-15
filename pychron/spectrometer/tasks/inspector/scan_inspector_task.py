@@ -36,8 +36,4 @@ class ScanInspectorTask(BaseManagerTask):
     def _manager_default(self):
         return ScanInspector()
 
-
 # ============= EOF =============================================
-
-
-

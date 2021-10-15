@@ -76,7 +76,7 @@ class FirmwareClient(HasTraits):
         pos = float(self.command)
         d = json.dumps({'command': 'MoveAbsolute', 'drive': 'funnel', 'position': pos, 'units': 'turns'})
         self._send(d)
-        self._cnt +=1
+        self._cnt += 1
 
         # v, a, d = self.command.split(',')
         # d = {'command': 'StartJitter', 'drive': 'feeder', 'turns': 0.125, 'p1': 0.1, 'p2': 0.25,

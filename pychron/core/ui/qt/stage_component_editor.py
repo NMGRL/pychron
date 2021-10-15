@@ -60,7 +60,6 @@ class _LaserComponentEditor(_ComponentEditor):
 
     def onKeyUp(self, event):
 
-
         '''
             key_released looking for text repr
             

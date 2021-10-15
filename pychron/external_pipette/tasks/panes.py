@@ -66,4 +66,3 @@ class ExternalPipettePane(TraitsTaskPane):
         return v
 
 # ============= EOF =============================================
-

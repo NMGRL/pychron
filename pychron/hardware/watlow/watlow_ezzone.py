@@ -118,8 +118,8 @@ class WatlowEZZone(BaseWatlowEZZone, CoreDevice):
             Item('control_mode', editor=EnumEditor(values=['closed', 'open'])),
             Item('max_output', label='Max Output %', format_str='%0.1f'),
             icon_button_editor('advanced_values_button', 'cog')),
-                    tune_grp,
-                    closed_grp, open_grp)
+            tune_grp,
+            closed_grp, open_grp)
         return cg
 
     def _advanced_values_button_fired(self):

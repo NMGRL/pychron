@@ -29,8 +29,8 @@ from pychron.core.yaml import yload
 
 
 def subdirize(root, name, sublen=2, mode='r'):
-    if not isinstance(sublen,  (tuple, list)):
-        sublen = (sublen, )
+    if not isinstance(sublen, (tuple, list)):
+        sublen = (sublen,)
 
     oroot = root
     for si in sublen:

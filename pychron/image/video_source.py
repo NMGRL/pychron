@@ -50,7 +50,6 @@ def parse_url(url):
 
 
 class VideoSource(HasTraits):
-
     image_path = File
     host = Str("localhost")
     port = Int(1080)
@@ -169,6 +168,5 @@ class VideoSource(HasTraits):
             self._image_path_changed()
 
         return self._cached_image
-
 
 # ============= EOF =============================================

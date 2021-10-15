@@ -161,5 +161,4 @@ class DVCAnalysisImporterView(BaseDVCImporterView):
 
         return v
 
-
 # ============= EOF =============================================

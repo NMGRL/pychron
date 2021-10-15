@@ -24,5 +24,4 @@ class ReportEditor(BaseTraitsEditor):
         v = View(Item(""))
         return v
 
-
 # ============= EOF =============================================

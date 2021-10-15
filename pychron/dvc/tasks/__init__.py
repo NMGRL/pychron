@@ -42,6 +42,3 @@ def list_local_repos():
                 if r.branches:
                     yield i, r.active_branch.name
 # ============= EOF =============================================
-
-
-

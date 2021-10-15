@@ -35,12 +35,15 @@ from pychron.graph.graph import Graph
 from chaco.plot_containers import HPlotContainer
 from pychron.paths import paths
 from six.moves import range
+
+
 # from pychron.core.ui.gui import invoke_in_main_thread
 
 
 def power_generator(nsteps):
     '''
     '''
+
     def gaussian(height, center_x, center_y, width_x, width_y):
         '''
         Returns a gaussian function with the given parameters
@@ -49,7 +52,7 @@ def power_generator(nsteps):
         width_x = float(width_x)
         width_y = float(width_y)
         return lambda x, y: height * exp(
- -(((center_x - x) / width_x) ** 2 + ((center_y - y) / width_y) ** 2) / 2)
+            -(((center_x - x) / width_x) ** 2 + ((center_y - y) / width_y) ** 2) / 2)
 
     x, y = mgrid[0:nsteps, 0:nsteps]
     data = gaussian(2, 5, 5, 5, 5)(x, y)  # +np.random.random(x.shape)
@@ -72,6 +75,7 @@ class PowerMapper(Loggable, ConsumerMixin):
 
     _alive = False
     completed = Event
+
     def make_component(self, padding):
         cg = ContourGraph()
 
@@ -83,11 +87,11 @@ class PowerMapper(Loggable, ConsumerMixin):
 
         g = Graph()
         g.new_plot(title='Motor Space',
-                     xtitle='X mm',
-                     ytitle='Power',
-                     )
+                   xtitle='X mm',
+                   ytitle='Power',
+                   )
         g.new_series(
-                     )
+        )
 
         self.graph = g
         self.contour_graph = cg
@@ -157,11 +161,10 @@ class PowerMapper(Loggable, ConsumerMixin):
 
     def _add_data(self, data):
 
-
-#        def _refresh_data(v):
+        #        def _refresh_data(v):
         tab, x, y, col, row, mag, sid = data
 
-#        self.debug('{} {} {} {} {}'.format(*v[1:]))
+        #        self.debug('{} {} {} {} {}'.format(*v[1:]))
         self._write_datum(tab, x, y, col, row, mag)
         self.graph.add_datum((x, mag), series=sid)
 
@@ -169,8 +172,8 @@ class PowerMapper(Loggable, ConsumerMixin):
         self._ys = hstack((self._ys, y))
         self._zs = hstack((self._zs, mag))
 
-#         xl, xh = self._bounds[:2]
-#         yl, yh = self._bounds[2:]
+        #         xl, xh = self._bounds[:2]
+        #         yl, yh = self._bounds[2:]
 
         if col % 10 == 0 and row:
             cg = self.contour_graph
@@ -178,26 +181,26 @@ class PowerMapper(Loggable, ConsumerMixin):
             yy = self._ys
             z = self._zs
 
-#             print 'xx-----', xx
-#             print 'yy-----', yy
+            #             print 'xx-----', xx
+            #             print 'yy-----', yy
             zd = griddata((xx, yy), z, self.area,
-#                        method='cubic',
-                        fill_value=0)
+                          #                        method='cubic',
+                          fill_value=0)
 
             zd = rot90(zd, k=2)
-#             zd = zd.T
-#             print zd
+            #             zd = zd.T
+            #             print zd
             if not list(cg.plots[0].plots.keys()):
                 cg.new_series(z=zd,
                               xbounds=(-self._padding, self._padding),
                               ybounds=(-self._padding, self._padding),
-#                              xbounds=(xl, xh),
-#                              ybounds=(yl, yh),
+                              #                              xbounds=(xl, xh),
+                              #                              ybounds=(yl, yh),
                               style='contour')
             else:
                 cg.plots[0].data.set_data('z0', zd)
 
-#        invoke_in_main_thread(_refresh_data, data)
+    #        invoke_in_main_thread(_refresh_data, data)
 
     def _continuous_scan(self, cx, cy, padding, step_len):
         self.info('doing continuous scan')
@@ -238,25 +241,25 @@ class PowerMapper(Loggable, ConsumerMixin):
             self.info('move to end {},{}'.format(ex, ny))
             sc.linear_move(ex, ny, block=False, velocity=0.1, immediate=True)
             time.sleep(0.1)
-#             if lm.simulation:
-#                 n = 21
-#                 r = random.random()
-#                 if r < 0.25:
-#                     n += 1
-#                 elif r > 0.75:
-#                     n -= 1
-#                 for i in range(n):
-#                     x, y = i * 0.1 - 1, ny
-#                     mag = row + random.random()
-#                     self.add_consumable((tab, x, y, i, row, mag, sid))
-#             else:
+            #             if lm.simulation:
+            #                 n = 21
+            #                 r = random.random()
+            #                 if r < 0.25:
+            #                     n += 1
+            #                 elif r > 0.75:
+            #                     n -= 1
+            #                 for i in range(n):
+            #                     x, y = i * 0.1 - 1, ny
+            #                     mag = row + random.random()
+            #                     self.add_consumable((tab, x, y, i, row, mag, sid))
+            #             else:
             xaxis = sc.axes['x']
             yaxis = sc.axes['y']
             col = 0
             p = sc.timer.get_interval()
             self.debug('power map timer {}'.format(p))
             while 1:
-#                self.debug('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ power map iteration {}'.format(p))
+                #                self.debug('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ power map iteration {}'.format(p))
                 time.sleep(p)
                 x, y = xaxis.position - cx, yaxis.position - cy
                 if apm:
@@ -264,7 +267,7 @@ class PowerMapper(Loggable, ConsumerMixin):
                 else:
                     mag = row + random.random()
 
-#                self.debug('x={}, y={}'.format(x, y))
+                #                self.debug('x={}, y={}'.format(x, y))
                 v = (tab, x, y, col, row, mag, sid)
                 if not sc.timer.isActive():
                     self.debug('%%%%%%%%%%%%%%%%%%%%%% timer not active')
@@ -289,14 +292,16 @@ class PowerMapper(Loggable, ConsumerMixin):
 
     def _row_generator(self, cx, cy, padding, step_len):
         nsteps = int(padding / step_len)
-#        ysteps = xrange(-nsteps, nsteps + 1)
+        #        ysteps = xrange(-nsteps, nsteps + 1)
         ysteps = range(nsteps + 1, -nsteps, -1)
 
         self.graph.set_x_limits(-padding, padding, pad='0.1')
+
         def gen():
             for j, yi in enumerate(ysteps):
                 ny = (yi * step_len) + cy
                 yield j, ny
+
         return nsteps, gen()
 
     def _step_generator(self, cx, cy, padding, step_len):
@@ -318,16 +323,17 @@ class PowerMapper(Loggable, ConsumerMixin):
 
     def _measure_properties(self):
         pass
-# ===============================================================================
-# data
-# ===============================================================================
+
+    # ===============================================================================
+    # data
+    # ===============================================================================
     def _new_data_table(self, padding):
         dm = self.data_manager
-#        root = '/usr/local/pychron/powermaps'
-#         dw = DataWarehouse(root=paths.powermap_db_root)
-#                           root=os.path.join(paths.co2laser_db_root, 'power_map'))
-#                           os.path.join(data_dir, base_dir))
-#         dw.build_warehouse()
+        #        root = '/usr/local/pychron/powermaps'
+        #         dw = DataWarehouse(root=paths.powermap_db_root)
+        #                           root=os.path.join(paths.co2laser_db_root, 'power_map'))
+        #                           os.path.join(data_dir, base_dir))
+        #         dw.build_warehouse()
         dm.new_frame(base_frame_name='powermap-{}'.format(generate_datestamp()),
                      directory=paths.power_map_dir
                      )
@@ -346,49 +352,49 @@ class PowerMapper(Loggable, ConsumerMixin):
         nr['power'] = mag
         nr.append()
         tab.flush()
+
+
 # ===============================================================================
 # discrete
 # ===============================================================================
 def _discrete_scan(self, cx, cy, padding, step_len):
-        self.info('doing discrete scan')
-        nsteps, step_gen = self._step_generator(cx, cy, padding, step_len)
+    self.info('doing discrete scan')
+    nsteps, step_gen = self._step_generator(cx, cy, padding, step_len)
 
-        lm = self.laser_manager
-        sm = lm.stage_manager
-        apm = lm.get_device('analog_power_meter')
+    lm = self.laser_manager
+    sm = lm.stage_manager
+    apm = lm.get_device('analog_power_meter')
+
+    if lm.simulation:
+        pgen = power_generator(nsteps)
+
+    tab = self._new_data_table(padding)
+
+    while 1:
+        if not self._alive:
+            break
+        try:
+            col, nx, row, ny = next(step_gen)
+        except StopIteration:
+            break
 
         if lm.simulation:
-            pgen = power_generator(nsteps)
+            mag = next(pgen)
+        else:
+            sm.linear_move(nx, ny)
+            if col == 0:
+                # sleep for 1.5 nsecs to let the detector cool off.
+                # usually gets blasted as the laser moves into position
+                time.sleep(1.5)
 
-        tab = self._new_data_table(padding)
+            mag = 0
+            for _ in range(self.nintegrations):
+                mag += apm.read_power_meter(verbose=False)
+                time.sleep(0.01)
 
-        while 1:
-            if not self._alive:
-                break
-            try:
-                col, nx, row, ny = next(step_gen)
-            except StopIteration:
-                break
+            mag /= self.integration
 
-            if lm.simulation:
-                mag = next(pgen)
-            else:
-                sm.linear_move(nx, ny)
-                if col == 0:
-                    # sleep for 1.5 nsecs to let the detector cool off.
-                    # usually gets blasted as the laser moves into position
-                    time.sleep(1.5)
-
-                mag = 0
-                for _ in range(self.nintegrations):
-                    mag += apm.read_power_meter(verbose=False)
-                    time.sleep(0.01)
-
-                mag /= self.integration
-
-            self._write_datum(tab, nx, ny, col, row, mag)
-            self.canvas.set_cell_value(col, row, mag)
+        self._write_datum(tab, nx, ny, col, row, mag)
+        self.canvas.set_cell_value(col, row, mag)
 
 # ============= EOF =============================================
-
-

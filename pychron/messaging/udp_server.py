@@ -46,5 +46,4 @@ class UDPServer(ThreadingUDPServer, MessagingServer):
             self.warning(e)
             self.connected = False
 
-
 # ============= EOF ====================================

@@ -22,6 +22,8 @@ set_qt()
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Color
 from traitsui.api import View, UItem, VGroup
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -53,6 +55,3 @@ if __name__ == '__main__':
     nv.configure_traits()
     print(nv.color_str)
 # ============= EOF =============================================
-
-
-

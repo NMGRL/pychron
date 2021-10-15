@@ -38,11 +38,11 @@ from .stream_graph import StreamGraph, StreamStackedGraph
 from .graph import Graph
 
 HMSScales = (
-    [TimeScale(microseconds=100), TimeScale(milliseconds=10)]
-    + [TimeScale(seconds=dt) for dt in (1, 5, 15, 30)]
-    + [TimeScale(minutes=dt) for dt in (5, 15, 30)]
-    + [TimeScale(hours=dt) for dt in (6, 12, 24)]
-    + [TimeScale(days=dt) for dt in (1, 2, 7)]
+        [TimeScale(microseconds=100), TimeScale(milliseconds=10)]
+        + [TimeScale(seconds=dt) for dt in (1, 5, 15, 30)]
+        + [TimeScale(minutes=dt) for dt in (5, 15, 30)]
+        + [TimeScale(hours=dt) for dt in (6, 12, 24)]
+        + [TimeScale(days=dt) for dt in (1, 2, 7)]
 )
 
 
@@ -114,17 +114,17 @@ class TimeSeriesGraph(Graph):
         return super(TimeSeriesGraph, self).new_plot(*args, **kw)
 
     def new_series(
-        self,
-        x=None,
-        y=None,
-        plotid=0,
-        normalize=False,
-        time_series=True,
-        timescale=False,
-        downsample=None,
-        use_smooth=False,
-        scale=None,
-        **kw
+            self,
+            x=None,
+            y=None,
+            plotid=0,
+            normalize=False,
+            time_series=True,
+            timescale=False,
+            downsample=None,
+            use_smooth=False,
+            scale=None,
+            **kw
     ):
         """ """
         if not time_series:
@@ -260,7 +260,6 @@ class TimeSeriesStreamStackedGraph(TimeSeriesGraph, StreamStackedGraph):
     """ """
 
     pass
-
 
 # ============= EOF ============================================
 # def create_dates(numpoints, units = "days"):

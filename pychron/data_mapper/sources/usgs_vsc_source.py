@@ -44,8 +44,6 @@ class USGSVSCSource(FileSource):
     irradiation_path = File
 
 
-
-
 class USGSVSCNuSource(USGSVSCSource):
     pass
 

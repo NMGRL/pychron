@@ -1,5 +1,7 @@
 from __future__ import absolute_import
+
 __author__ = 'ross'
+
 import os
 import unittest
 
@@ -130,7 +132,6 @@ class ProductionRatiosTestCase(unittest.TestCase):
         self.db = dest_factory('massspec_pr.db', remove=False)
 
     def test_production_id(self):
-
         oidn = -1578996229
         pr = self.db.get_production_ratio_by_id(oidn)
         vs = [getattr(pr, k) for k in PR_KEYS]

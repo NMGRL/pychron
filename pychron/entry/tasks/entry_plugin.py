@@ -117,7 +117,7 @@ class EntryPlugin(BaseTaskPlugin):
                  'pychron.entry.sample.task',
                  'Sample',
                  [SchemaAddition(id='pychron.entry2.import_samples_from_file', factory=ImportSamplesAction,
-                                 path=g2path),]),
+                                 path=g2path), ]),
                 (self.id, '', 'Entry',
                  [SchemaAddition(id='pychron.entry1.sample_entry', factory=SampleEntryAction,
                                  path=spath, absolute_position='first'),

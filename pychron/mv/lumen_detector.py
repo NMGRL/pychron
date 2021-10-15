@@ -246,7 +246,6 @@ class LumenDetector(Locator):
 
         return d
 
-
 # ============= EOF =============================================
 #
 # def _lum(self, src):

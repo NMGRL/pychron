@@ -51,7 +51,6 @@ class ICFactorMainOptions(RatioSeriesMainOptions):
 
 class ICFactorSubOptions(SubOptions):
     def traits_view(self):
-
         src = BorderVGroup(Item('use_source_correction', label='Use Source Correction'),
                            Item('source_correction_kind', label='Kind'),
                            label='Source')

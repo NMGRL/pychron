@@ -1458,7 +1458,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self.conditionals_path = os.path.splitext(name)[0]
 
     def _edit_conditionals_button_fired(self):
-        if self.conditionals_path and self.conditionals_path!=NULL_STR:
+        if self.conditionals_path and self.conditionals_path != NULL_STR:
             edit_conditionals(self.conditionals_path,
                               root=paths.conditionals_dir,
                               title='Edit Run Conditionals',

@@ -21,7 +21,6 @@ from pychron.spectrometer.thermo.source.base import ThermoSource
 
 
 class HelixSource(ThermoSource):
-
     _flatapole = Float
     _rotation_quad = Float
     _vertical_deflection_n = Float
@@ -93,8 +92,8 @@ class HelixSource(ThermoSource):
                     label='Multipole')
         v = View(Tabbed(self._get_default_group('General'), gg))
         return v
-    
-    
+
+
 class HelixSFTSource(HelixSource):
     def _nominal_hv_default(self):
         return 4500

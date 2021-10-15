@@ -27,7 +27,6 @@ from pychron.options.group.base_group_options import BaseGroupOptions
 
 
 class SpectrumGroupOptions(BaseGroupOptions):
-
     calculate_fixed_plateau = Bool(False)
     calculate_fixed_plateau_start = StepStr
     calculate_fixed_plateau_end = StepStr

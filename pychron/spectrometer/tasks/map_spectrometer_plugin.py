@@ -28,6 +28,3 @@ class MapSpectrometerPlugin(BaseSpectrometerPlugin):
     manager_name = 'map_spectrometer_manager'
 
 # ============= EOF =============================================
-
-
-

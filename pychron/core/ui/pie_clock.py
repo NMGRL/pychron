@@ -60,6 +60,4 @@ class PieClockModel(HasTraits):
     def finish_slice(self):
         self.finish_slice_event = True
 
-
 # ============= EOF =============================================
-

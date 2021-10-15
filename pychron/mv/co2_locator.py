@@ -24,5 +24,4 @@ from pychron.mv.locator import Locator
 class CO2Locator(Locator):
     pass
 
-
 # ============= EOF =============================================

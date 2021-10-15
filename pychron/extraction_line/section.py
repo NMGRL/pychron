@@ -269,7 +269,6 @@ class Section(object):
             else:
                 return false_outcome
 
-
 # class Section(object):
 #    tests=None
 #    components=None

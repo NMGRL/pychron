@@ -36,5 +36,4 @@ class NMGRLFurnaceTask(BaseFurnaceTask):
     def _default_layout_default(self):
         return TaskLayout(left=PaneItem('pychron.nmgrlfurnace.controls'))
 
-
 # ============= EOF =============================================

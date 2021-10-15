@@ -113,5 +113,4 @@ class UVExtractionPyScript(ExtractionPyScript):
         else:
             super(UVExtractionPyScript, self).extract(power=power, units=units)
 
-
 # ============= EOF =============================================

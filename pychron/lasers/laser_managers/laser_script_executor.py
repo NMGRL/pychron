@@ -146,7 +146,6 @@ class UVLaserScriptExecutor(LaserScriptExecutor):
 
             # ============= EOF =============================================
 
-
             # with open(name, 'r') as rfile:
             #     def shot(delay=3):
             #         if not self._cancel:

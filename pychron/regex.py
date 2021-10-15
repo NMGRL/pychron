@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 
 import re
+
 # ============= local library imports  ==========================
 
 ALIQUOT_REGEX = re.compile('\S+-+\d+$')
@@ -41,7 +42,6 @@ GITREFREGEX = re.compile(r'^[\w]{40}')
 MDD_PARAM_REGEX = re.compile(r'E= {3}(?P<E>\d+.\d+) {7}\+\- {4}(?P<Eerr>\d+.\d+) '
                              r'{11}Ordinate= {3}(?P<O>\d+.\d+) {7}\+\- {2}(?P<Oerr>\d+.\d+)')
 
-
 STEPREGEX = re.compile(r'^[a-zA-Z]+$|^[0-9]+$')
 
 DETREGEX = re.compile(r'^(H1|H2|L1|L2|CDD|AX)(\(CDD\))?$')
@@ -53,7 +53,6 @@ p = r'^.{{3,5}}\/(?P<tag>{})?[\w-]+\.({})?json$'.format(a, b)
 RUNID_PATH_REGEX = re.compile(p)
 
 TAG_PATH_REGEX = re.compile(r'^(?P<head>\w{5})\/tags\/(?P<tail>[\w-]*).tags.json$')
-
 
 ORDER_PREFIX_REGEX = re.compile(r'^(?P<prefix>\d+:)(?P<label>.*)$')
 

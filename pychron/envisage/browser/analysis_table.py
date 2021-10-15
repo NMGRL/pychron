@@ -342,7 +342,6 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
                 self.dump()
                 return
 
-
             ans = progress_bind_records(ans)
             self.set_analyses(ans)
         except StopIteration:

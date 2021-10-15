@@ -37,7 +37,7 @@ def acalc_fractional_error(*args):
 
 
 def calc_error_contrib(
-    ar40, ar39, ar38, ar37, ar36, s40, s39, s38, s37, s36, J, constants
+        ar40, ar39, ar38, ar37, ar36, s40, s39, s38, s37, s36, J, constants
 ):
     # fraction of ar36err from s36,ar37,ar38
     fe36_36, fe36_37, fe36_38 = acalc_fractional_error(
@@ -126,9 +126,9 @@ if __name__ == "__main__":
         ar40, ar39, ar38, ar37, ar36, s40, s39, s38, s37, s36, J, constants
     )
     for ni, ai, vi in zip(
-        ("ar40", "ar39", "ar38", "ar37", "ar36", "J   ", "LambdaK"),
-        args,
-        (s40, s39, s38, s37, s36, J, ufloat(1, 0)),
+            ("ar40", "ar39", "ar38", "ar37", "ar36", "J   ", "LambdaK"),
+            args,
+            (s40, s39, s38, s37, s36, J, ufloat(1, 0)),
     ):
         print(
             "{:<10s}".format(ni),

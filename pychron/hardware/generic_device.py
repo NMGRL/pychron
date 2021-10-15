@@ -19,5 +19,4 @@ from pychron.hardware.core.core_device import CoreDevice
 class GenericDevice(CoreDevice):
     pass
 
-
 # ============= EOF =============================================

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 from __future__ import absolute_import
 from __future__ import print_function
 
@@ -42,6 +41,7 @@ def computeBCC(data_str):
     #    print bcc
     return bcc
 
+
 #    return '%02X' % bcc
 
 
@@ -63,6 +63,7 @@ def __generate_crc16_table():
             byte >>= 1
         result.append(crc)
     return result
+
 
 # TABLE = __generate_crc16_table()
 TABLE = (0x0000, 0xC0C1, 0xC181, 0x0140, 0xC301, 0x03C0, 0x0280, 0xC241,
@@ -124,7 +125,6 @@ def computeCRC(data, start_crc=0xffff):
 
 
 def checkCRC(data, check):
-
     """ Checks if the data matches the passed in CRC
     @param data The data to create a crc16 of
     @param check The CRC to validate

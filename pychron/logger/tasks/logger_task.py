@@ -53,5 +53,4 @@ class LoggerTask(BaseTask):
                     evt.veto = True
                     break
 
-
 # ============= EOF =============================================

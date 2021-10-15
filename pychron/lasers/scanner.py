@@ -166,7 +166,7 @@ class Scanner(Loggable):
 
             # make header row
             header = (
-                ["t"] + self._make_func_names() + [n for n, _ in self.static_values]
+                    ["t"] + self._make_func_names() + [n for n, _ in self.static_values]
             )
             self.data_manager.write_to_frame(header)
 
@@ -374,6 +374,7 @@ class PIDScanner(Scanner):
 if __name__ == "__main__":
     import random
 
+
     def random_generator(scale=1):
         def random_gen():
             return random.random() * scale
@@ -382,6 +383,7 @@ if __name__ == "__main__":
         f.__name__ = "RScale{}".format(scale)
         return random_gen
 
+
     def generator():
         def gen():
             while 1:
@@ -389,6 +391,7 @@ if __name__ == "__main__":
                     yield random.random() * i
 
         return gen
+
 
     gen = generator()
 

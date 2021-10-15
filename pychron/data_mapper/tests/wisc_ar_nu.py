@@ -36,6 +36,7 @@ class WiscArMetaTxtTestCase(unittest.TestCase):
     def test_irradiation(self):
         self.assertEqual(self.expected['irradiation'], self.spec.run_spec.irradiation)
 
+
 #
 # class WiscArNuTestCase(BaseFileSourceTestCase):
 #     @classmethod

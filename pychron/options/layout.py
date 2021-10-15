@@ -18,6 +18,7 @@
 from traits.api import HasTraits, Str, Int, Enum, Property
 from traitsui.api import View, Item, HGroup, VGroup
 
+
 # ============= standard library imports ========================
 
 
@@ -129,7 +130,7 @@ class FigureLayout(HasTraits):
             Item(
                 "fixed_width",
                 tooltip="You must remake the figure if you edit this value. The figure "
-                "will not automatically resize",
+                        "will not automatically resize",
             ),
             HGroup(
                 Item("rows", enabled_when="row_enabled"),

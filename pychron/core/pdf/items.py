@@ -63,7 +63,7 @@ class BaseItem(HasTraits):
     value = Any
     fmt = Either(Str, Callable)
     fontsize = Int(10)
-    fontname = Str#'Helvetica'
+    fontname = Str  # 'Helvetica'
     italic = False
 
     def __init__(self, value=None, *args, **kw):

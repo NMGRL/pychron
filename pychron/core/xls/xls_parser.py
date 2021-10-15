@@ -108,4 +108,3 @@ class XLSParser(BaseColumnParser):
         return self.sheet.nrows
 
 # ============= EOF =============================================
-

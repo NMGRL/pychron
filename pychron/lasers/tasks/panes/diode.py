@@ -21,10 +21,12 @@ from traitsui.api import View, Item, VGroup, InstanceEditor
 from pychron.lasers.tasks.laser_panes import ClientPane, BaseLaserPane, \
     StageControlPane, ControlPane, AxesPane, SupplementalPane
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class FusionsDiodeClientPane(ClientPane):
     pass
+
 
 class FusionsDiodePane(BaseLaserPane):
     pass
@@ -45,30 +47,31 @@ class FusionsDiodeAxesPane(AxesPane):
 class FusionsDiodeSupplementalPane(SupplementalPane):
     id = 'pychron.fusions.diode.supplemental'
     name = 'Diode'
+
     def traits_view(self):
         v = View(
-               VGroup(Item('temperature_controller', style='custom',
-                               editor=InstanceEditor(view='control_view'),
-                               show_label=False,
-                               ),
-                      label='Watlow',
-#                      show_border = True,
-                      ),
-                 VGroup(Item('pyrometer', show_label=False, style='custom',
-                              ),
-#                      show_border = True,
-                      label='Pyrometer',
+            VGroup(Item('temperature_controller', style='custom',
+                        editor=InstanceEditor(view='control_view'),
+                        show_label=False,
+                        ),
+                   label='Watlow',
+                   #                      show_border = True,
+                   ),
+            VGroup(Item('pyrometer', show_label=False, style='custom',
+                        ),
+                   #                      show_border = True,
+                   label='Pyrometer',
 
-                      ),
-                 VGroup(Item('control_module_manager', show_label=False, style='custom',
-                             ),
-#                      show_border = True,
-                      label='ControlModule',
+                   ),
+            VGroup(Item('control_module_manager', show_label=False, style='custom',
+                        ),
+                   #                      show_border = True,
+                   label='ControlModule',
 
-                      ),
-                  VGroup(Item('fiber_light', style='custom', show_label=False),
-                         label='FiberLight'
-                         )
-               )
+                   ),
+            VGroup(Item('fiber_light', style='custom', show_label=False),
+                   label='FiberLight'
+                   )
+        )
         return v
 # ============= EOF =============================================

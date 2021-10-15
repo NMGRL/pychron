@@ -165,5 +165,4 @@ class RegressionContextMenuMixin(ContextMenuMixin):
         contents.append(fmenu)
         return contents
 
-
 # ============= EOF =============================================

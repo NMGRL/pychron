@@ -58,6 +58,7 @@ class LearnerGetter(HasTraits):
     _kind = None
     _spectrometer = None
     _hotcold = None
+
     # kind = Str
     @property
     def duration(self):
@@ -242,6 +243,5 @@ class ELLearnerTestCase(TestCase):
         self.learner.open_close_valve(name, "open", True)
         time.sleep(n)
         self.learner.open_close_valve(name, "close", True)
-
 
 # ============= EOF =============================================

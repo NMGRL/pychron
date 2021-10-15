@@ -1,4 +1,3 @@
-
 import numpy as np
 from numpy import random
 
@@ -61,14 +60,14 @@ def expo_data():
     xs = np.linspace(1, 100)
     a, b, c = 100, -0.05, 1
     ys = a * np.exp(-b * xs) + c
-    solution = {'coefficients': [a,b,c]}
+    solution = {'coefficients': [a, b, c]}
     return xs, ys, solution
 
 
 def expo_data_linear():
     xs = np.linspace(1, 20)
-    a,b,c = 0, 0.012, 80
-    ys = b*(xs-c)**2
+    a, b, c = 0, 0.012, 80
+    ys = b * (xs - c) ** 2
     solution = {'coefficients': [1.34633849e+02, 1.43805607e-02, -5.78015102e+01]}
     return xs, ys, solution
 

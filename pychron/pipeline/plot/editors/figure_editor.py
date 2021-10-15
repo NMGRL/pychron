@@ -31,6 +31,7 @@ class FigureEditor(GraphEditor):
     # plotter_options_manager = Any
     # associated_editors = List
     plotter_options = Any
+
     # tool = Any
 
     # annotation_tool = Any

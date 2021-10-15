@@ -55,7 +55,7 @@ class LabelAdapter(SQLiteDatabaseAdapter):
     def get_path(self, p):
         return self._retrieve_item(PathTable, p, key='relpath')
 
-    #deleters
+    # deleters
     def delete_label(self, text):
         self._delete_item(text, 'label')
 
@@ -65,6 +65,3 @@ if __name__ == '__main__':
     db.build_database()
 
 # ============= EOF =============================================
-
-
-

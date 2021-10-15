@@ -297,7 +297,7 @@ class ArArAge(IsotopeGroup):
             numkey, denkey = ratio.split("/")
 
             for name, isos in groupby_key(
-                self.isotopes.values(), key=attrgetter("name")
+                    self.isotopes.values(), key=attrgetter("name")
             ):
                 num, den = None, None
                 for iso in isos:
@@ -633,6 +633,5 @@ class ArArAge(IsotopeGroup):
     @property
     def moles_Ar40(self):
         return self.sensitivity * self.get_isotope("Ar40").get_intensity()
-
 
 # ============= EOF =============================================

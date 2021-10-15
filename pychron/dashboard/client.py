@@ -193,5 +193,4 @@ class DashboardClient(Subscriber):
         self.subscribe("error", self.set_error_flag, verbose=True)
         self.values = vs
 
-
 # ============= EOF =============================================

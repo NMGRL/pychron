@@ -108,5 +108,4 @@ class ReferencesGraph(AnalysisStackedRegressionGraph):
             (self.selected_plot, self.selected_plot.y_axis.title),
         )
 
-
 # ============= EOF =============================================

@@ -20,6 +20,7 @@
 from __future__ import absolute_import
 from .messaging_handler import MessagingHandler
 
+
 class TCPHandler(MessagingHandler):
     def get_packet(self):
         """
@@ -45,6 +46,5 @@ class TCPHandler(MessagingHandler):
     #     while totalsent < mlen:
     #         sent = sock.send(s[totalsent:])
     #         totalsent += sent
-
 
 # ============= EOF ====================================

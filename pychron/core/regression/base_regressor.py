@@ -228,7 +228,7 @@ class BaseRegressor(HasTraits):
             else:
                 try:
                     trunc = int(trunc)
-                    excludes = [i for i, _ in enumerate(self.xs) if i>trunc]
+                    excludes = [i for i, _ in enumerate(self.xs) if i > trunc]
 
                     self.truncate_excluded = excludes
                     self.dirty = True

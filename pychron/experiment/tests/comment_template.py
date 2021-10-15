@@ -1,5 +1,5 @@
-
 from __future__ import absolute_import
+
 __author__ = 'ross'
 
 import unittest
@@ -15,7 +15,7 @@ class MockFactory(object):
 class CommentTemplaterTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.obj=MockFactory()
+        cls.obj = MockFactory()
 
     def test_render1(self):
         self._test_render('irrad_level : irrad_hole', 'A:9')
@@ -28,7 +28,7 @@ class CommentTemplaterTestCase(unittest.TestCase):
 
     def _test_render(self, label, expected):
         ct = CommentTemplater()
-        ct.label=label
+        ct.label = label
         r = ct.render(self.obj)
         self.assertEqual(expected, r)
 

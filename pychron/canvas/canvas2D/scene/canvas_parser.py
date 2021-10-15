@@ -18,6 +18,8 @@
 
 # ============= standard library imports ========================
 from pychron.core.xml.xml_parser import XMLParser
+
+
 # ============= local library imports  ==========================
 
 
@@ -37,6 +39,5 @@ class CanvasParser(XMLParser):
     """
     """
     pass
-
 
 # ============= EOF ====================================

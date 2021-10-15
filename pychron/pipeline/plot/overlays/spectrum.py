@@ -61,6 +61,7 @@ class SpectrumTool(AnalysisPointInspector, BasePlateauOverlay):
     single_point = True
     _cached_lines = None
     current_idx = Int
+
     def get_selected_index(self):
         return [self.current_idx]
 
@@ -113,7 +114,7 @@ class SpectrumTool(AnalysisPointInspector, BasePlateauOverlay):
                      'Tag={}'.format(an.tag),
                      'Status={}'.format(an.status_text),
                      u'{}={} {} {} (1{})'.format(comp.container.y_axis.title, floatfmt(v), PLUSMINUS,
-                                                floatfmt(e), SIGMA),
+                                                 floatfmt(e), SIGMA),
                      'Cumulative. Ar39={}-{}'.format(floatfmt(low_c), floatfmt(high_c))]
 
             self._cached_lines = lines

@@ -68,6 +68,3 @@ class SlavePane(TraitsTaskPane):
         return v
 
 # ============= EOF =============================================
-
-
-

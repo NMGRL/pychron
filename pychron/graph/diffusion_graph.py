@@ -171,7 +171,6 @@ class DiffusionGraph(Graph):
                 plots.append(a)
             return plots
 
-
 # ============= EOF ====================================
 # def set_group_binding(self, pid, value):
 #     '''

@@ -22,17 +22,17 @@ from PySide import QtGui, QtCore
 from pyface.qt.QtGui import QPlainTextEdit, QColor, QTextCursor, QFont, QTextEdit, QTextFormat, QPen
 from pyface.ui.qt4.code_editor.gutters import LineNumberWidget
 
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
-class DiffGutter(LineNumberWidget):
-    start=0
 
-    anti_tag='-'
-    adjust_width=0
+class DiffGutter(LineNumberWidget):
+    start = 0
+
+    anti_tag = '-'
+    adjust_width = 0
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
@@ -41,12 +41,12 @@ class DiffGutter(LineNumberWidget):
         # painter.setPen(QColor(200, 0, 100))#light grey
         painter.fillRect(event.rect(), self.background_color)
 
-        p=QPen()
-        p.setColor(QColor(100,100,100))
+        p = QPen()
+        p.setColor(QColor(100, 100, 100))
         painter.setPen(p)
 
-        rect=event.rect()
-        rect.adjust(0,-1, self.adjust_width,1)
+        rect = event.rect()
+        rect.adjust(0, -1, self.adjust_width, 1)
         painter.drawRect(rect)
 
         cw = self.parent()
@@ -56,16 +56,16 @@ class DiffGutter(LineNumberWidget):
             cw.contentOffset()).top()
         bottom = top + int(cw.blockBoundingRect(block).height())
 
-        lineno=self.start
+        lineno = self.start
         while block.isValid() and top <= event.rect().bottom():
             if block.isVisible() and bottom >= event.rect().top():
-                if blocknum>0:
-                    text=block.text()
+                if blocknum > 0:
+                    text = block.text()
                     if not text.startswith(self.anti_tag):
                         painter.drawText(0, top, self.width() - 2,
                                          self.fontMetrics().height(),
                                          QtCore.Qt.AlignRight, str(lineno))
-                        lineno+=1
+                        lineno += 1
                 else:
                     painter.drawText(0, top, self.width() - 2,
                                      self.fontMetrics().height(),
@@ -83,13 +83,13 @@ class PatchWidget(QPlainTextEdit):
         super(PatchWidget, self).__init__(*args, **kw)
         self.aline_number_widget = DiffGutter(self)
         # self.aline_number_widget.min_char_width=3
-        self.aline_number_widget.anti_tag='+'
+        self.aline_number_widget.anti_tag = '+'
         self.bline_number_widget = DiffGutter(self)
         # self.bline_number_widget.min_char_width=3
-        self.bline_number_widget.anti_tag='-'
-        self.bline_number_widget.adjust_width=-1
+        self.bline_number_widget.anti_tag = '-'
+        self.bline_number_widget.adjust_width = -1
 
-        font =QFont()
+        font = QFont()
         self.set_font(font)
 
     def set_font(self, font):
@@ -101,8 +101,8 @@ class PatchWidget(QPlainTextEdit):
         self.update_line_number_width()
 
     def set_gutter_starts(self, a, b):
-        self.aline_number_widget.start=a
-        self.bline_number_widget.start=b
+        self.aline_number_widget.start = a
+        self.bline_number_widget.start = b
 
     def update_line_number_width(self, nblocks=0):
         """ Update the width of the line number widget.
@@ -119,18 +119,18 @@ class PatchWidget(QPlainTextEdit):
     def resizeEvent(self, event):
         QtGui.QPlainTextEdit.resizeEvent(self, event)
         contents = self.contentsRect()
-        awidth=self.aline_number_widget.digits_width()
+        awidth = self.aline_number_widget.digits_width()
         self.aline_number_widget.setGeometry(QtCore.QRect(contents.left(),
-                                                         contents.top(), awidth,
-                                                         contents.height()))
+                                                          contents.top(), awidth,
+                                                          contents.height()))
 
-        self.bline_number_widget.setGeometry(QtCore.QRect(contents.left()+awidth,
+        self.bline_number_widget.setGeometry(QtCore.QRect(contents.left() + awidth,
                                                           contents.top(), self.bline_number_widget.digits_width(),
                                                           contents.height()))
         # use the viewport width to determine the right edge. This allows for
         # the propper placement w/ and w/o the scrollbar
         # right_pos = self.viewport().width() + self.aline_number_widget.width() + 1
-                    # - self.status_widget.sizeHint().width()
+        # - self.status_widget.sizeHint().width()
         # self.status_widget.setGeometry(QtCore.QRect(right_pos,
         #                                             contents.top(), self.status_widget.sizeHint().width(),
         #                                             contents.height()))
@@ -147,12 +147,13 @@ class PatchWidget(QPlainTextEdit):
         height = font_metrics.height() * 40
         return QtCore.QSize(width, height)
 
+
 class _PatchEditor(Editor):
-    def init( self, parent ):
-        self.control=self._create_control(parent)
+    def init(self, parent):
+        self.control = self._create_control(parent)
 
     def _create_control(self, parent):
-        ctrl=PatchWidget()
+        ctrl = PatchWidget()
         ctrl.setReadOnly(True)
         return ctrl
 
@@ -161,24 +162,24 @@ class _PatchEditor(Editor):
             """
                 @@ -1,4 +1,4 @@
             """
-            args=line.split('@@')
-            line=args[1]
+            args = line.split('@@')
+            line = args[1]
 
-            a, b=line.strip().split(' ')
+            a, b = line.strip().split(' ')
 
-            sa,ea=a.split(',')
-            sb,eb=b.split(',')
+            sa, ea = a.split(',')
+            sb, eb = b.split(',')
 
             return (int(sa[1:]), int(ea)), (int(sb), int(eb))
 
         if self.value:
-            #remove first two lines of patch.
+            # remove first two lines of patch.
             # these display the file names
-            lines=self.value.split('\n')
-            a,b=extract_bounds(lines[2])
-            self.control.set_gutter_starts(a[0],b[0])
+            lines = self.value.split('\n')
+            a, b = extract_bounds(lines[2])
+            self.control.set_gutter_starts(a[0], b[0])
 
-            value='\n'.join(lines[2:])
+            value = '\n'.join(lines[2:])
             self.control.setPlainText(value)
 
             self._set_text_highlighting(lines[2:])
@@ -187,13 +188,13 @@ class _PatchEditor(Editor):
             self.control.setPlainText('')
 
     def _set_line_highlighting(self, lines):
-        ss=[]
+        ss = []
         for idx, li in enumerate(lines):
             if li.startswith('+'):
-                sel=self._highlight(idx, 'addition')
+                sel = self._highlight(idx, 'addition')
                 ss.append(sel)
             elif li.startswith('-'):
-                sel=self._highlight(idx, 'deletion')
+                sel = self._highlight(idx, 'deletion')
                 ss.append(sel)
             else:
                 self._fade(idx)
@@ -201,24 +202,24 @@ class _PatchEditor(Editor):
         self.control.setExtraSelections(ss)
 
     def _set_text_highlighting(self, lines):
-        has_deletion=False
+        has_deletion = False
         for idx, li in enumerate(lines):
             if li.startswith('-'):
-                has_deletion=True
-                a=li
+                has_deletion = True
+                a = li
             if has_deletion and li.startswith('+'):
-                #find diff
-                b=li
+                # find diff
+                b = li
 
-                for i, s in enumerate(ndiff(a,b)):
+                for i, s in enumerate(ndiff(a, b)):
                     if s[0] == ' ':
                         continue
                     elif s[0] == '-':
                         if not s[-1] in ('-', '+'):
-                            self._set_diff(idx - 2, i, QColor(200,0, 0))
+                            self._set_diff(idx - 2, i, QColor(200, 0, 0))
                     elif s[0] == '+':
-                        if not s[-1] in ('-','+'):
-                            self._set_diff(idx-1, i, QColor(0,200,0))
+                        if not s[-1] in ('-', '+'):
+                            self._set_diff(idx - 1, i, QColor(0, 200, 0))
 
     def _set_diff(self, lineno, start, color):
         cursor = self._get_line_cursor(lineno)
@@ -236,7 +237,7 @@ class _PatchEditor(Editor):
         cursor = self._get_line_cursor(lineno)
 
         fmt = cursor.charFormat()
-        color=QColor('black')
+        color = QColor('black')
         color.setAlphaF(0.5)
         fmt.setForeground(color)
         cursor.beginEditBlock()
@@ -245,10 +246,10 @@ class _PatchEditor(Editor):
 
     def _highlight(self, lineno, kind):
 
-        if kind=='addition':
-            color=QColor(225,254,229) #light green
-        elif kind=='deletion':
-            color=QColor(255, 228, 228) #light red
+        if kind == 'addition':
+            color = QColor(225, 254, 229)  # light green
+        elif kind == 'deletion':
+            color = QColor(255, 228, 228)  # light red
 
         selection = QTextEdit.ExtraSelection()
         selection.format.setBackground(color)
@@ -261,7 +262,7 @@ class _PatchEditor(Editor):
         pos = block.position()
         cursor = ctrl.textCursor()
         cursor.setPosition(pos)
-        selection.cursor=cursor
+        selection.cursor = cursor
 
         return selection
 
@@ -279,5 +280,5 @@ class _PatchEditor(Editor):
 
 
 class PatchEditor(BasicEditorFactory):
-    klass=_PatchEditor
+    klass = _PatchEditor
 # ============= EOF =============================================

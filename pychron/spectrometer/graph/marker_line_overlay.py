@@ -26,6 +26,7 @@ from pychron.spectrometer.graph.marker_line import MarkerLine
 class MarkerLineOverlay(AbstractOverlay):
     lines = List
     _cached_lines = List
+
     def add_marker_line(self, x, bgcolor='black'):
         l = MarkerLine(data_x=self.component.index_mapper.map_data(x),
                        x=x,

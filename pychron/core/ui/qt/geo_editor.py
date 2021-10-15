@@ -24,6 +24,7 @@
 """
 from __future__ import absolute_import
 from pychron.core.ui import set_toolkit
+
 set_toolkit('qt4')
 
 from traits.api import HasTraits, Int
@@ -38,28 +39,29 @@ from qgis.gui import QgsMapCanvas
 
 class _GeoEditor(Editor):
     def init(self, parent):
-        self.control=self._create_control(parent)
+        self.control = self._create_control(parent)
 
     def _create_control(self, parent):
-        self._canvas_ctrl=QgsMapCanvas()
+        self._canvas_ctrl = QgsMapCanvas()
         return self._canvas_ctrl
 
     def update_editor(self):
         pass
 
-class GeoEditor(BasicEditorFactory):
-    klass=_GeoEditor
 
+class GeoEditor(BasicEditorFactory):
+    klass = _GeoEditor
 
 
 class A(HasTraits):
-    a=Int
+    a = Int
+
     def traits_view(self):
-        v=View(Item('a', editor=GeoEditor()))
+        v = View(Item('a', editor=GeoEditor()))
         return v
 
-if __name__=='__main__':
-    a=A()
+
+if __name__ == '__main__':
+    a = A()
     a.configure_traits()
 # ============= EOF =============================================
-

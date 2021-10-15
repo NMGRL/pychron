@@ -33,7 +33,6 @@ class EasyImporter(IsotopeDatabaseManager):
         meta = ep.doc('import')
         self._import_irradiations(meta)
 
-
     def _import_irradiations(self, meta):
         im = ImporterModel(db=self.db)
         if self._set_source(meta, im):

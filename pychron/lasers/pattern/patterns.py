@@ -739,7 +739,7 @@ class PolygonPattern(Pattern):
     def _basename(self):
         nsides = self.nsides
         if nsides < 11:
-            bn = POLYGONS[nsides-3]
+            bn = POLYGONS[nsides - 3]
         else:
             bn = '{}gon'.format(nsides)
         return bn

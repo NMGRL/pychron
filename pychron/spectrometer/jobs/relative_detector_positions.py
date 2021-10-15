@@ -32,6 +32,7 @@ from pychron.spectrometer.jobs.spectrometer_task import SpectrometerTask
 
 class RelativeDetectorPositions(SpectrometerTask):
     ion_optics_manager = Any
+
     def _execute(self):
         self.info('starting relative positions calculation')
         ion = self.ion_optics_manager

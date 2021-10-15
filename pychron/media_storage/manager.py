@@ -68,5 +68,4 @@ class MediaStorageManager(Loggable):
         self.debug("exists. remote={}".format(remote_path))
         return self.storage.exists(remote_path)
 
-
 # ============= EOF =============================================

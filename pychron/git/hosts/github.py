@@ -35,9 +35,11 @@ class GitHubService(GitHostService):
 
     def _set_authentication_windows_hook(self):
         if not self.disable_authentication_message:
-            self.information_dialog('Please follow the directions at https://github.com/NMGRL/pychron/wiki/Windows-Setup '
-                                    'to ensure you can share your changes to github. Use Preferences/Github to hide '
-                                    'this message')
+            self.information_dialog(
+                'Please follow the directions at https://github.com/NMGRL/pychron/wiki/Windows-Setup '
+                'to ensure you can share your changes to github. Use Preferences/Github to hide '
+                'this message')
+
     @property
     def remote_url(self):
         return '{}://{}'.format(self.protocol, BASE_URL)

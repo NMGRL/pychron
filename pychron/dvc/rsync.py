@@ -83,7 +83,7 @@ def _rsync(lpath, rpath, push_pull, **kw):
 
 
 def _get_rsync_command(
-    lpath, rpath, push, remote=None, port=None, user=None, options=None
+        lpath, rpath, push, remote=None, port=None, user=None, options=None
 ):
     if remote:
         if port:

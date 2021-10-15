@@ -103,5 +103,4 @@ class MKSController(BaseGaugeController, CoreDevice):
         self._load_gauges(config)
         return True
 
-
 # ============= EOF =============================================

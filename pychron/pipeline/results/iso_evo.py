@@ -103,5 +103,4 @@ class IsoEvoResult(BaseResult):
 
         return '\n'.join([f(g, n) for g, n in zip(GOODNESS_TAGS, GOODNESS_NAMES)])
 
-
 # ============= EOF =============================================

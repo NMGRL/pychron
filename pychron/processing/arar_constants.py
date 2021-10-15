@@ -18,6 +18,7 @@
 from traits.api import HasTraits, Property, Float, Enum, Str, Bool, Any
 from uncertainties import ufloat, nominal_value, std_dev
 
+
 # from pychron.pychron_constants import AGE_SCALARS, AGE_MA_SCALARS
 
 
@@ -98,38 +99,38 @@ class ArArConstants(HasTraits):
             prefid = "pychron.arar.constants"
 
             for attr, prefattr in (
-                ("lambda_b_v", "lambda_b"),
-                ("lambda_b_e", "lambda_b_error"),
-                ("lambda_e_v", "lambda_e"),
-                ("lambda_e_e", "lambda_e_error"),
-                ("lambda_Cl36_v", "lambda_cl36"),
-                ("lambda_Cl36_e", "lambda_cl36_error"),
-                ("lambda_Ar37_v", "lambda_ar37"),
-                ("lambda_Ar37_e", "lambda_ar37_error"),
-                ("lambda_Ar39_v", "lambda_ar39"),
-                ("lambda_Ar39_e", "lambda_ar39_error"),
-                ("atm4036_v", "ar40_ar36_atm"),
-                ("atm4036_e", "ar40_ar36_atm_error"),
-                ("atm4038_v", "ar40_ar38_atm"),
-                ("atm4038_e", "ar40_ar38_atm_error"),
-                ("k3739_mode", "ar37_ar39_mode"),
-                ("k3739_v", "ar37_ar39"),
-                ("k3739_e", "ar37_ar39_error"),
-                ("atm4036_citation", "ar40_ar36_atm_citation"),
-                ("atm4038_citation", "ar40_ar39_atm_citation"),
-                ("lambda_b_citation", "lambda_b_citation"),
-                ("lambda_e_citation", "lambda_e_citation"),
-                ("lambda_Cl36_citation", "lambda_cl36_citation"),
-                ("lambda_Ar37_citation", "lambda_ar37_citation"),
-                ("lambda_Ar39_citation", "lambda_ar39_citation"),
+                    ("lambda_b_v", "lambda_b"),
+                    ("lambda_b_e", "lambda_b_error"),
+                    ("lambda_e_v", "lambda_e"),
+                    ("lambda_e_e", "lambda_e_error"),
+                    ("lambda_Cl36_v", "lambda_cl36"),
+                    ("lambda_Cl36_e", "lambda_cl36_error"),
+                    ("lambda_Ar37_v", "lambda_ar37"),
+                    ("lambda_Ar37_e", "lambda_ar37_error"),
+                    ("lambda_Ar39_v", "lambda_ar39"),
+                    ("lambda_Ar39_e", "lambda_ar39_error"),
+                    ("atm4036_v", "ar40_ar36_atm"),
+                    ("atm4036_e", "ar40_ar36_atm_error"),
+                    ("atm4038_v", "ar40_ar38_atm"),
+                    ("atm4038_e", "ar40_ar38_atm_error"),
+                    ("k3739_mode", "ar37_ar39_mode"),
+                    ("k3739_v", "ar37_ar39"),
+                    ("k3739_e", "ar37_ar39_error"),
+                    ("atm4036_citation", "ar40_ar36_atm_citation"),
+                    ("atm4038_citation", "ar40_ar39_atm_citation"),
+                    ("lambda_b_citation", "lambda_b_citation"),
+                    ("lambda_e_citation", "lambda_e_citation"),
+                    ("lambda_Cl36_citation", "lambda_cl36_citation"),
+                    ("lambda_Ar37_citation", "lambda_ar37_citation"),
+                    ("lambda_Ar39_citation", "lambda_ar39_citation"),
             ):
                 bind_preference(self, attr, "{}.{}".format(prefid, prefattr))
 
             for attr in (
-                "use_irradiation_endtime",
-                "age_units",
-                "abundance_sensitivity",
-                "allow_negative_ca_correction",
+                    "use_irradiation_endtime",
+                    "age_units",
+                    "abundance_sensitivity",
+                    "allow_negative_ca_correction",
             ):
                 bind_preference(self, attr, "{}.{}".format(prefid, attr))
 
@@ -170,13 +171,13 @@ class ArArConstants(HasTraits):
     def to_dict(self):
         d = dict()
         for ai in (
-            "fixed_k3739",
-            "atm4036",
-            "atm4038",
-            "lambda_Cl36",
-            "lambda_Ar37",
-            "lambda_Ar39",
-            "lambda_k",
+                "fixed_k3739",
+                "atm4036",
+                "atm4038",
+                "lambda_Cl36",
+                "lambda_Ar37",
+                "lambda_Ar39",
+                "lambda_k",
         ):
             v = getattr(self, ai)
             d[ai] = nominal_value(v)

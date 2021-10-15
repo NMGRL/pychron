@@ -45,7 +45,7 @@ class SimpleEditor(_SimpleEditor):
         self.sync_value(self.factory.expand_all, 'expand_all', 'from')
         self.sync_value(self.factory.update, 'update', 'from')
 
-    def _refresh_changed( self ):
+    def _refresh_changed(self):
         nids = self._tree.selectedItems()
         obj, node = self._node_for(self.selected)
         bg = node.get_background(obj)

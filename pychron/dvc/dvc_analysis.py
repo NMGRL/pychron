@@ -536,7 +536,7 @@ class DVCAnalysis(Analysis):
         self._dump(jd, path)
 
     def dump_icfactors(
-        self, dkeys, fits, refs=None, reviewed=False, standard_ratios=None
+            self, dkeys, fits, refs=None, reviewed=False, standard_ratios=None
     ):
         jd, path = self._get_json("icfactors")
 
@@ -610,13 +610,13 @@ class DVCAnalysis(Analysis):
                 k: unpack(pd["points"], jd["fmt"], decode=True)
                 for k, pd in jd.items()
                 if k
-                not in (
-                    refdet,
-                    "fmt",
-                    "interpolation",
-                    "reference_detector",
-                    "reference_isotope",
-                )
+                   not in (
+                       refdet,
+                       "fmt",
+                       "interpolation",
+                       "reference_detector",
+                       "reference_isotope",
+                   )
             }
 
         self.peak_center = pd["center_dac"]
@@ -777,6 +777,5 @@ class DVCAnalysis(Analysis):
     @property
     def tag_path(self):
         return self._analysis_path(modifier="tags")
-
 
 # ============= EOF ============================================

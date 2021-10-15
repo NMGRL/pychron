@@ -130,7 +130,6 @@ class myMessageDialog(myMessageMixin, MessageDialog):
 
 
 class myConfirmationDialog(myMessageMixin, ConfirmationDialog):
-
     default_button = 'yes'
 
     def _create_control(self, parent):

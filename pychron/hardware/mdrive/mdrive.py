@@ -25,6 +25,7 @@ from pychron.hardware.mdrive.base import BaseMDrive
 class MDriveMotor(CoreDevice, BaseMDrive):
     pass
 
+
 if __name__ == '__main__':
     from pychron.paths import paths
 

@@ -48,7 +48,6 @@ class ViewControllerHandler(Handler):
 
         obj = info.object.views
         for i, v in enumerate(obj):
-
             name = "userview{}".format(i)
             with open(os.path.join(paths.hidden_dir, name), "w") as f:
                 pickle.dump(v, f)
@@ -116,6 +115,7 @@ class ViewController(HasTraits):
     views = List
 
     scene_graph = Any  # (transient = True)
+
     #    def __init__(self, *args, **kw):
     #        super(ViewController, self).__init__(*args, **kw)
     def _views_default(self):

@@ -20,6 +20,7 @@
 from __future__ import absolute_import
 from uncertainties import ufloat
 
+
 # ============= local library imports  ==========================
 
 
@@ -71,6 +72,5 @@ class Ratio(object):
             return self.nom / self.den
         except ZeroDivisionError:
             return
-
 
 # ============= EOF =============================================

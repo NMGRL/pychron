@@ -77,7 +77,7 @@ class _LaserStatusEditor(Editor):
 
         self.animation = QSequentialAnimationGroup()
         self._add_laser_logo(scene, bounding_rect, ex, ey, cx, cy, w, h)
-        self._add_bullet(scene, bounding_rect,ex, ey, cx, cy)
+        self._add_bullet(scene, bounding_rect, ex, ey, cx, cy)
         self._add_fragments(scene, bounding_rect, ex, ey)
 
         self.animation.setLoopCount(-1)

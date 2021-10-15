@@ -116,8 +116,8 @@ class ThermoDetector(BaseDetector, SpectrometerDevice):
         self.debug('active changed {}'.format(new))
         if self.name == 'CDD':
             self.debug(
-                    '{} Ion Counter'.format(
-                            'Activate' if new else 'Deactivate'))
+                '{} Ion Counter'.format(
+                    'Activate' if new else 'Deactivate'))
             self.info('De/Activating CDD disabled')
             # self.ask('ActivateIonCounter' if new else 'DeactivateIonCounter')
 

@@ -24,6 +24,3 @@ from pychron.spectrometer.thermo.magnet.base import ThermoMagnet
 class ArgusMagnet(ThermoMagnet):
     pass
 # ============= EOF =============================================
-
-
-

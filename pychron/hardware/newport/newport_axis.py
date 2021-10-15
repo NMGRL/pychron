@@ -15,8 +15,6 @@
 # ===============================================================================
 
 
-
-
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from traits.api import Property, Str, Float, Int, Button
@@ -273,20 +271,20 @@ class NewportAxis(Axis):
     linear_compensation = Float(enter_set=True, auto_set=False)
 
     amplifier_io_configuration = Property(
-            depends_on='_amplifier_io_configuration')
+        depends_on='_amplifier_io_configuration')
     _amplifier_io_configuration = Int
     feedback_configuration = Property(depends_on='_feedback_configuration')
     _feedback_configuration = Int
     estop_configuration = Property(depends_on='_estop_configuration')
     _estop_configuration = Int
     following_error_configuration = Property(
-            depends_on='_following_error_configuration')
+        depends_on='_following_error_configuration')
     _following_error_configuration = Int
     hardware_limit_configuration = Property(
-            depends_on='_hardware_limit_configuration')
+        depends_on='_hardware_limit_configuration')
     _hardware_limit_configuration = Int
     software_limit_configuration = Property(
-            depends_on='_software_limit_configuration')
+        depends_on='_software_limit_configuration')
     _software_limit_configuration = Int
 
     read_parameters = Button
@@ -333,7 +331,7 @@ class NewportAxis(Axis):
             if isinstance(value, str):
 
                 name = '{}S'.format(key.upper()) if not key.endswith(
-                        's') else key.upper()
+                    's') else key.upper()
 
                 if cmd in ['ZA', 'ZB', 'ZE', 'ZF', 'ZH', 'ZS']:
                     value = '{:X}H'.format(binstr_int(value))
@@ -347,8 +345,8 @@ class NewportAxis(Axis):
             self.parent.read_error()
 
         value = '{:n},{:n}'.format(
-                self.reduce_motor_torque_time,
-                self.reduce_motor_torque_percent)
+            self.reduce_motor_torque_time,
+            self.reduce_motor_torque_percent)
         cmd = self.parent._build_command('QR', xx=self.id, nn=value)
         self.parent.tell(cmd)
 
@@ -661,7 +659,7 @@ class NewportAxis(Axis):
                                    Item('master_slave_reduction_ratio'),
                                    Item('master_slave_jog_velocity_update'),
                                    Item(
-                                           'master_slave_jog_velocity_scaling_coefficients'),
+                                       'master_slave_jog_velocity_scaling_coefficients'),
                                    label='Master-Slave')
         configuration_group = Group(Item('amplifier_io_configuration'),
                                     Item('feedback_configuration'),

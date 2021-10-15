@@ -54,6 +54,3 @@ class DashboardClientPreferencesPane(PreferencesPane):
                         label='Dashboard Server'))
         return v
 # ============= EOF =============================================
-
-
-

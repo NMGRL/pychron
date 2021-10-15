@@ -39,10 +39,10 @@ def to_list(a, delimiter=',', mapping=None):
 
 
 def to_terminator(t):
-    if t=='\n' or '\\n' or t=='chr(10)':
-        t=chr(10)
-    elif t=='\r' or t=='\\r' or t=='char(13)':
-        t=chr(13)
+    if t == '\n' or '\\n' or t == 'chr(10)':
+        t = chr(10)
+    elif t == '\r' or t == '\\r' or t == 'char(13)':
+        t = chr(13)
 
     return t
 
@@ -136,6 +136,7 @@ def to_int(i):
     except ValueError:
         pass
     return i
+
 
 if __name__ == '__main__':
     for ret in ratio('abc'):

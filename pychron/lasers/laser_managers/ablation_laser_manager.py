@@ -135,7 +135,7 @@ class AblationCO2Manager(SerialLaserManager):
         resp = super(AblationCO2Manager, self)._ask(cmd)
         if not resp or (resp and resp.strip().startswith('ERROR')):
             if retry:
-                resp = self._ask(cmd, retry-1)
+                resp = self._ask(cmd, retry - 1)
 
         return resp
 

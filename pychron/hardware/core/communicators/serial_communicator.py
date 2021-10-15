@@ -31,7 +31,7 @@ from .communicator import Communicator, process_response, prep_str, remove_eol_f
 
 def get_ports():
     if sys.platform == 'win32':
-        ports = ['COM{}'.format(i+1) for i in range(256)]
+        ports = ['COM{}'.format(i + 1) for i in range(256)]
     else:
         usb = glob.glob('/dev/tty.usb*')
         furpi = glob.glob('/dev/furpi.*')

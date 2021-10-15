@@ -146,5 +146,4 @@ class FiberLight(AbstractDevice):
     def traits_view(self):
         return View(self.get_control_group())
 
-
 # ============= EOF ====================================

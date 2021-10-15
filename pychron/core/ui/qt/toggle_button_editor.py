@@ -108,11 +108,9 @@ class ToggleButtonEditor(BasicEditorFactory):
     label = Str
     value = Property
 
-
     def __init__(self, **traits):
         self._value = 0
         super(ToggleButtonEditor, self).__init__(**traits)
-
 
     def _get_value(self):
         return self._value
@@ -128,6 +126,4 @@ class ToggleButtonEditor(BasicEditorFactory):
                 except:
                     pass
 
-
 # ============= EOF =============================================
-

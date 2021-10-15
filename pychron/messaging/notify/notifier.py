@@ -94,6 +94,4 @@ class Notifier(Broadcaster):
 
         poll.unregister(self._req_sock)
 
-
-
 # ============= EOF =============================================

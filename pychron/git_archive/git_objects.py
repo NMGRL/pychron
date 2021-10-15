@@ -58,5 +58,4 @@ class GitSha(HasTraits):
     def _get_summary(self):
         return "{} {}".format(self.date, self.message)
 
-
 # ============= EOF =============================================

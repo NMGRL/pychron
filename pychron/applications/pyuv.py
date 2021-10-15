@@ -20,6 +20,7 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 
 from pychron.applications.pychron_application import PychronApplication
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -32,6 +33,5 @@ class PyUV(PychronApplication):
         TaskWindowLayout("tasks.hardware"),
         TaskWindowLayout("pychron.fusions.uv"),
     ]
-
 
 # ============= EOF =============================================

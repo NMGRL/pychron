@@ -27,7 +27,6 @@ command_register = makeRegistry()
 
 
 class LaserPyScript(ExtractionPyScript):
-
     _task = None
 
     @verbose_skip
@@ -57,7 +56,6 @@ class LaserPyScript(ExtractionPyScript):
             step_length=step_length,
         )
         self._task = task
-
 
 #     def _power_map(self, cx, cy, padding, bd, power):
 #         print cx, cy, padding

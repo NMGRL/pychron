@@ -35,12 +35,12 @@ class Legend(HasTraits):
         r = 6
         gc.set_font(str_to_font('modern 10'))
         with gc:
-            gc.translate_ctm(component.x+20, component.y2-50)
+            gc.translate_ctm(component.x + 20, component.y2 - 50)
 
             # monitor
             with gc:
                 gc.set_line_width(1)
-                gc.set_fill_color((0,0,0))
+                gc.set_fill_color((0, 0, 0))
                 gc.arc(0, 30, r, 0, 360)
 
                 x = 0

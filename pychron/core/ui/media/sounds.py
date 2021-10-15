@@ -20,18 +20,18 @@ import os
 
 from pyface.qt.QtGui import QSound
 
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import add_extension
 from pychron.paths import paths
-__SOUNDS__={}
+
+__SOUNDS__ = {}
 
 
 def _get_sound(name):
-    so=None
+    so = None
     if name in __SOUNDS__:
-        so=__SOUNDS__[name]
+        so = __SOUNDS__[name]
     else:
         for r in paths.sound_search_path:
             if os.path.exists(r):
@@ -42,9 +42,8 @@ def _get_sound(name):
 
 
 def play_sound(name):
-    so=_get_sound(name)
+    so = _get_sound(name)
     if so:
         so.play()
 
 # ============= EOF =============================================
-

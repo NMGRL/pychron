@@ -124,10 +124,10 @@ class AgeConverter(object):
 
         # partial derivatives
         pd_el = -(1.0 / lambda_total) * (
-            age + (b * f * r / ((el ** 2) * umath.exp(lambda_total * age)))
+                age + (b * f * r / ((el ** 2) * umath.exp(lambda_total * age)))
         )
         pd_b = (1 / lambda_total) * (
-            (f * r / (el * umath.exp(lambda_total * age))) - age
+                (f * r / (el * umath.exp(lambda_total * age))) - age
         )
         pd_f = r / (el * umath.exp(lambda_total * age))
         pd_r = f / (el * umath.exp(lambda_total * age))

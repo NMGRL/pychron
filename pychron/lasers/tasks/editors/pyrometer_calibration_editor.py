@@ -56,8 +56,8 @@ class PyrometerCalibrationScanner(Scanner):
 
     def _equilibrate(self, ctemp):
 
-        #ctemp=self._current_setpoint
-        #ctemp = self.manager.map_temperature(temp)
+        # ctemp=self._current_setpoint
+        # ctemp = self.manager.map_temperature(temp)
 
         py = self.manager.get_device('pyrometer')
         tc = self.manager.get_device('temperature_monitor')
@@ -68,7 +68,7 @@ class PyrometerCalibrationScanner(Scanner):
 
         while self._scanning:
             sti = time.time()
-            #py_t = py.get()
+            # py_t = py.get()
             ref_t = py.temperature
             temps.append(ref_t)
             #            ttemps.append(tc_t)
@@ -126,7 +126,7 @@ class PyrometerCalibrationEditor(LaserEditor):
 
         s.new_function(self._scan_pyrometer, name='pyrometer')
         s.new_function(self._scan_thermocouple, name='thermocouple')
-        #s.new_static_value('Setpoint', 10, plotid=1)
+        # s.new_static_value('Setpoint', 10, plotid=1)
 
         g = s.make_graph()
         self.component = g.plotcontainer

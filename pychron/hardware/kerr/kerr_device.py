@@ -55,8 +55,8 @@ class KerrDevice(ConfigLoadable):
         self.set_attribute(config, 'address', 'General', 'address')
         self.load_additional_args(config)
 
-#    def load_additional_args(self, config):
-#        pass
+    #    def load_additional_args(self, config):
+    #        pass
 
     def _execute_hex_commands(self, commands, delay=None, **kw):
         """
@@ -79,7 +79,7 @@ class KerrDevice(ConfigLoadable):
                 self.info(desc)
             func = self.ask if not tell else self.tell
             r = func(cmd, is_hex=True, delay=delay, nbytes=nbytes, **kw)
-#            r = self.ask(cmd, is_hex=True, delay=delay, **kw)
+        #            r = self.ask(cmd, is_hex=True, delay=delay, **kw)
 
         return r
 
@@ -108,7 +108,7 @@ class KerrDevice(ConfigLoadable):
     def _calc_checksum(self, cmd):
         """
         """
-        s = sum([int(cmd[i:i+2], 16) for i in range(0, len(cmd), 2)])
+        s = sum([int(cmd[i:i + 2], 16) for i in range(0, len(cmd), 2)])
         r = '{:02X}'.format(s)
         return r[-2:]
         # r = '%02X' % s

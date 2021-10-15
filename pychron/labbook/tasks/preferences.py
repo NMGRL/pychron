@@ -37,6 +37,3 @@ class LabBookPreferencesPane(PreferencesPane):
         return v
 
 # ============= EOF =============================================
-
-
-

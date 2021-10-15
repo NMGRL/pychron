@@ -100,7 +100,7 @@ try:
         def _draw_marker(self, gc, height):
             marker = self.marker
             marker_size = self.marker_size
-            points = [(-10-self.marker_size/2, (height+marker_size)/2)]
+            points = [(-10 - self.marker_size / 2, (height + marker_size) / 2)]
             # points = [(0, 100)]
             color = self.color
             line_width = 1

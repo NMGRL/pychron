@@ -49,6 +49,3 @@ class LabelTable(Base):
         return len(self.paths)
 
 # ============= EOF =============================================
-
-
-

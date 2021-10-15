@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 __author__ = 'ross'
 
 import unittest
@@ -47,6 +48,7 @@ class HolesTestCase(unittest.TestCase):
     def test_fail5(self):
         s1 = '1-55-100'
         self.assertIsNone(parse_holestr(s1))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -57,6 +57,3 @@ class QtegraMicroIonController(MicroIonController):
             self._set_gauge_pressure(g.name, ig)
 
 # ============= EOF =============================================
-
-
-

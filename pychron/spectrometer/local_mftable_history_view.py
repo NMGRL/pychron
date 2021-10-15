@@ -115,7 +115,6 @@ class LocalMFTableHistory(GitArchiveHistory):
 class LocalMFTableHistoryView(GitArchiveHistoryView):
     pass
 
-
 # if __name__ == '__main__':
 #     r = '/Users/ross/Sandbox/gitarchive'
 #     gh = LocalMFTableHistory(r, '/Users/ross/Sandbox/ga_test.txt')

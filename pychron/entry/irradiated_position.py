@@ -161,5 +161,4 @@ class IrradiatedPositionAdapter(TabularAdapter):
         if item.analyzed:
             return "#B0C4DE"
 
-
 # ============= EOF =============================================

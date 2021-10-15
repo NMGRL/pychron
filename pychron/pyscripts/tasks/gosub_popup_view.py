@@ -44,8 +44,4 @@ class GosubPopupWidget(QWidget):
         self.setLayout(layout)
         self.resize(500, 300)
 
-
 # ============= EOF =============================================
-
-
-

@@ -322,6 +322,7 @@ RATIO_CHANGE_DETECTION = '''
 #   consecutive_failure: True
 '''
 
+
 def make_screen(**kw):
     obj = {'padding_left': 100,
            'padding_right': 100,
@@ -416,7 +417,6 @@ RADIAL_SCREEN = make_screen(**radial_d)
 regression_series_d = dict()
 REGRESSION_SERIES_SCREEN = make_screen(**regression_series_d)
 
-
 FLUX_CONSTANTS_DEFAULT = """
 # This is an example flux file. Add additional decay_constant and monitor_age pairs here
 "FC MIN":
@@ -444,6 +444,4 @@ REACTORS_DEFAULT = '''{
 }
 '''
 
-
 # ============= EOF =============================================
-

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
@@ -43,11 +42,11 @@ class AgilentDAC(CoreDevice, AgilentMixin):
     # configloadable interface
     # ===========================================================================
     def load_additional_args(self, config):
-
         self.min_value = self.config_get(config, 'General', 'min', cast='float', default=0.0, optional=True)
         self.max_value = self.config_get(config, 'General', 'max', cast='float', default=100.0, optional=True)
         self.slot_number = self.config_get(config, 'General', 'slot', default='1', optional=True)
-        self.channel_number = '{:02d}'.format(self.config_get(config, 'General', 'channel', cast='int', default='4', optional=True))
+        self.channel_number = '{:02d}'.format(
+            self.config_get(config, 'General', 'channel', cast='int', default='4', optional=True))
 
         if self.channel_number not in ['04', '05']:
             self.warning('Invalid channel number {} setting to default: 04'.format(self.channel_number))
@@ -56,6 +55,7 @@ class AgilentDAC(CoreDevice, AgilentMixin):
         self.dac_bits = 2 ** self.config_get(config, 'General', 'bits', cast='int', optional=True, default=10)
 
         return True
+
     # ===============================================================================
     # icore device interface
     # ===============================================================================
@@ -76,13 +76,13 @@ class AgilentDAC(CoreDevice, AgilentMixin):
     def set_dac_value(self, value):
         self.value = value
         # convert real world value to dac value
-#        value = value / self.max_value * self.dac_bits
+        #        value = value / self.max_value * self.dac_bits
 
         cmd = 'SOURCE:VOLTAGE {:n} (@{}{})'.format(value, self.slot_number, self.channel_number)
         resp = self.ask(self._build_command(cmd))
         return self._parse_response(resp)
 
-    def read_dac_value(self,):
+    def read_dac_value(self, ):
         cmd = 'SF'
         resp = self.ask(self._build_command(cmd))
         return self._parse_response(resp)

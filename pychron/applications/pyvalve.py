@@ -22,6 +22,7 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 
 from pychron.applications.pychron_application import PychronApplication
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -35,6 +36,5 @@ class PyValve(PychronApplication):
         TaskWindowLayout("tasks.hardware"),
         TaskWindowLayout("pychron.extraction_line"),
     ]
-
 
 # ============= EOF =============================================

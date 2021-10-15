@@ -94,6 +94,8 @@ class PlayVideoAction(UITaskAction):
     name = 'Video'
     method = 'play_analysis_video'
     # image = icon('cog')
+
+
 # class ConfigureAnalysesTableAction(TaskAction):
 #     name = 'Configure Analyses Table'
 #     dname = 'Configure Analyses Table'
@@ -317,6 +319,7 @@ class MassSpecReducedAction(PipelineAction):
 class ImportOptionsActions(PipelineAction):
     name = 'Import Options...'
     action = 'import_options'
+
 
 # ============= Quick Series ====================================
 # class LastNAnalysesSeriesAction(PipelineAction):

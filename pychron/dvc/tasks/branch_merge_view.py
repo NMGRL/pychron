@@ -58,8 +58,8 @@ class BranchMergeView(HasTraits):
 
     def traits_view(self):
         v = okcancel_view(VGroup(HGroup(Item('from_', editor=EnumEditor(name='branches')),
-                                 Label('Into'),
-                                 UReadonly('msg')),
+                                        Label('Into'),
+                                        UReadonly('msg')),
                                  BorderVGroup(
                                      UReadonly('from_label'),
                                      UItem('from_changes', editor=TabularEditor(adapter=CommitAdapter()))),

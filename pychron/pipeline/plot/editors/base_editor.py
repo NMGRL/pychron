@@ -36,5 +36,4 @@ class BaseEditor(BaseTraitsEditor):
         na = grouped_name(na)
         self.name = '{} {}'.format(na, self.basename)
 
-
 # ============= EOF =============================================

@@ -23,6 +23,7 @@ from pychron.hardware.kerr.kerr_step_motor import KerrStepMotor
 import time
 from pychron.hardware.core.data_helper import make_bitarray
 from six.moves import range
+
 '''
     status byte
     0 1 2 3 4 5 6 7
@@ -58,14 +59,14 @@ class KerrCircularStepMotor(KerrStepMotor):
         progress = self.progress
         if progress is not None:
             progress = kw['progress']
-#             progress.increase_max()
-#             progress.change_message('Homing {}'.format(self.name))
-#             progress.increment()
+        #             progress.increase_max()
+        #             progress.change_message('Homing {}'.format(self.name))
+        #             progress.increment()
 
-#         from threading import Event, Thread
-#         signal = Event()
-#         t = Thread(target=self.progress_update, args=(progress, signal))
-#         t.start()
+        #         from threading import Event, Thread
+        #         signal = Event()
+        #         t = Thread(target=self.progress_update, args=(progress, signal))
+        #         t.start()
 
         # ======================================================================
         # step 1. move positive until prox switch is on
@@ -94,7 +95,7 @@ class KerrCircularStepMotor(KerrStepMotor):
         # step 4. set current position as 0
         # ======================================================================
         self.reset_position(motor_off=False)
-#         signal.set()
+        #         signal.set()
         progress.change_message('{} homing complete'.format(self.name), auto_increment=False)
 
     def _proximity_move(self, onoff, n=2, progress=None):
@@ -109,7 +110,7 @@ class KerrCircularStepMotor(KerrStepMotor):
             time.sleep(period)
             lim = self._get_proximity_limit()
 
-            if (onoff and lim) or  (not onoff and not lim):
+            if (onoff and lim) or (not onoff and not lim):
                 cnt += 1
 
             if cnt % 10 == 0 and prog:
@@ -151,8 +152,6 @@ class KerrCircularStepMotor(KerrStepMotor):
         '''
 
         return int('00011000', 2)
-
-
 
 # ============= EOF =============================================
 #

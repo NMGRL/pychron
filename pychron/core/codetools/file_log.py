@@ -27,6 +27,7 @@ if not os.path.isdir(root):
     os.mkdir(root)
 p, _ = unique_path(root, 'mem')
 
+
 def file_log(msg):
     with open(os.path.join(root, p), 'a') as wfile:
         wfile.write('{}\n'.format(msg))

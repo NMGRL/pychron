@@ -78,6 +78,7 @@ class HardwarePlugin(BaseTaskPlugin):
     #    def _system_lock_manager_factory(self):
     #        return SystemLockManager(application=self.application)
     _remote_hardware_manager = None
+
     # _remote_hardware_manager = Instance('pychron.remote_hardware.remote_hardware_manager.RemoteHardwareManager')
     # _hardware_manager = Instance('pychron.managers.hardware_manager.HardwareManager')
 

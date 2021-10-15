@@ -43,5 +43,4 @@ class RegressionSeriesOptions(AgeOptions):
     def _get_subview(self, name):
         return VIEWS[name]
 
-
 # ============= EOF =============================================

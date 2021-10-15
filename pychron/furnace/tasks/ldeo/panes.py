@@ -93,29 +93,28 @@ class ControlPane(TraitsDockPane):
                 'manager': self.model}
 
     def traits_view(self):
-
         c_grp = VGroup(
-                       # HGroup(Item('setpoint'),
-                       #        UItem('water_flow_state', editor=LEDEditor(label='H2O Flow')),
-                       #        spring, icon_button_editor('pane.disable_button', 'cancel')),
-                       VGroup(UItem('output_percent_readback', editor=LCDEditor())),
-                       icon_button_editor('start_record_button', 'media-record',
-                                          tooltip='Start recording',
-                                          enabled_when='not _recording'),
-                       icon_button_editor('stop_record_button',
-                                          'media-playback-stop',
-                                          tooltip='Stop recording',
-                                          enabled_when='_recording'),
-                       label='Controller', show_border=True)
+            # HGroup(Item('setpoint'),
+            #        UItem('water_flow_state', editor=LEDEditor(label='H2O Flow')),
+            #        spring, icon_button_editor('pane.disable_button', 'cancel')),
+            VGroup(UItem('output_percent_readback', editor=LCDEditor())),
+            icon_button_editor('start_record_button', 'media-record',
+                               tooltip='Start recording',
+                               enabled_when='not _recording'),
+            icon_button_editor('stop_record_button',
+                               'media-playback-stop',
+                               tooltip='Stop recording',
+                               enabled_when='_recording'),
+            label='Controller', show_border=True)
 
         power_grp = HGroup(UItem('pane.extract_value',
-                                width=50,
-                                enabled_when='furnace_enabled',
-                                tooltip='Power setting for furnace (0-100%)'),
-                          UItem('pane.extract_button',
-                                enabled_when='furnace_enabled',
-                                tooltip='Send the value to the furnace'),
-                          show_border=True, label='Furnace Power')
+                                 width=50,
+                                 enabled_when='furnace_enabled',
+                                 tooltip='Power setting for furnace (0-100%)'),
+                           UItem('pane.extract_button',
+                                 enabled_when='furnace_enabled',
+                                 tooltip='Send the value to the furnace'),
+                           show_border=True, label='Furnace Power')
 
         # jitter_grp = HGroup(UItem('pane.jitter_button', editor=ButtonEditor(label_value='pane.jitter_label')),
         #                     icon_button_editor('pane.configure_jitter_button', 'cog', tooltip='Configure Jitter'),
@@ -132,7 +131,7 @@ class ControlPane(TraitsDockPane):
                           show_border=True, label='Dump')
         # status_grp = HGroup(CustomLabel('status_txt', size=14))
         d1 = VGroup(
-                    power_grp, dump_grp)
+            power_grp, dump_grp)
         d2 = VGroup(
             # UItem('pane.refresh_states_button'),
             UItem('dumper_canvas', editor=ComponentEditor()))
@@ -180,6 +179,5 @@ class FurnacePane(TraitsTaskPane):
 
         v = View(VGroup(UItem('graph', style='custom'), canvas_grp))
         return v
-
 
 # ============= EOF =============================================

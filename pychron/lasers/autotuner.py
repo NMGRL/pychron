@@ -21,6 +21,7 @@ from pychron.lasers.scanner import Scanner
 # ============= standard library imports ========================
 import time
 
+
 # ============= local library imports  ==========================
 
 
@@ -91,7 +92,6 @@ class AutoTuner(Scanner):
 
     def start_control_hook(self):
         pass
-
 
 #    def _execute(self):
 #        self.info('start autotune scan')

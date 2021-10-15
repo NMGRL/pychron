@@ -81,12 +81,12 @@ class ReplicationTask(BaseTask):
         return SlavePane(model=self)
 
     def _load(self):
-        p = os.path.join(paths.hidden_dir,'slave')
-        load_persistence_values(self, p, ('host','user','password'))
+        p = os.path.join(paths.hidden_dir, 'slave')
+        load_persistence_values(self, p, ('host', 'user', 'password'))
 
     def _dump(self):
-        p = os.path.join(paths.hidden_dir,'slave')
-        dump_persistence_values(self, p, ('host','user','password'))
+        p = os.path.join(paths.hidden_dir, 'slave')
+        dump_persistence_values(self, p, ('host', 'user', 'password'))
 
     def _get_connection(self):
         if not self._connection:
@@ -198,6 +198,7 @@ class ReplicationTask(BaseTask):
 
             self._check_status()
 
+
 if __name__ == '__main__':
     f = ReplicationTask()
     f.activated()
@@ -206,6 +207,3 @@ if __name__ == '__main__':
     f.prepare_destroy()
 
 # ============= EOF =============================================
-
-
-

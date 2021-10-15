@@ -50,8 +50,8 @@ class LoadingScene(Scene):
                               font='modern 10')
             self.add_item(v)
 
-        xd = (xma - xmi) / 2.+xmi
-        yd = (yma - ymi) / 2.+ymi
+        xd = (xma - xmi) / 2. + xmi
+        yd = (yma - ymi) / 2. + ymi
         w = (xma + mr - (xmi - mr)) * 1.2
         h = (yma + mr - (ymi - mr)) * 1.2
         w /= 2.0

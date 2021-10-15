@@ -65,6 +65,3 @@ class ClientExtractionLinePlugin(ExtractionLinePlugin):
         return [ClientExtractionLinePreferencesPane, ConsolePreferencesPane]
 
 # ============= EOF =============================================
-
-
-

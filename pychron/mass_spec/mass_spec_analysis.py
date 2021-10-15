@@ -263,5 +263,4 @@ class MassSpecBlank(MassSpecAnalysis):
     def _intercept_value(self, r):
         return r.Bkgd, r.BkgdEr
 
-
 # ============= EOF =============================================

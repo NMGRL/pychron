@@ -117,5 +117,4 @@ class ADCDevice(AbstractDevice, PolynomialMapperMixin):
 
         return self.poly_mapper.map_measured(v)
 
-
 # ============= EOF =====================================

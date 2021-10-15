@@ -117,8 +117,8 @@ class ReportOptions(BasePDFOptions):
     def traits_view(self):
         grps = []
         for at, name in (
-            ("blank_unknowns", "Blank Unknowns"),
-            ("airs", "Airs"),
+                ("blank_unknowns", "Blank Unknowns"),
+                ("airs", "Airs"),
         ):
             grp = VGroup(
                 Item("{}_enabled".format(at), label="Enabled"),
@@ -267,8 +267,8 @@ class ReportWriter(BasePDFTableWriter):
         return comp, pb
 
     def _make_time_series(
-        self,
-        analysis_type,
+            self,
+            analysis_type,
     ):
 
         opt = getattr(
@@ -352,6 +352,5 @@ class ReportWriter(BasePDFTableWriter):
         # return ans
         if ans:
             return AnalysisGroup(analyses=ans)
-
 
 # ============= EOF =============================================

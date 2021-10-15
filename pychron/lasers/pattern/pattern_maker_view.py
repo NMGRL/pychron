@@ -217,7 +217,7 @@ class PatternMakerView(Saveable, Patternable):
 if __name__ == '__main__':
     paths.build('_dev')
     pm = PatternMakerView()
-    pm.trays = ['a','b','c']
+    pm.trays = ['a', 'b', 'c']
     # pm.load_pattern()
     pm.configure_traits()
 # ============= EOF =============================================

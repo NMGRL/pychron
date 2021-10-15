@@ -116,7 +116,7 @@ class PeakCenterConfig(HasTraits):
                         degrp,
                         m_grp,
                         pp_grp),
-                resizable=True)
+                 resizable=True)
         return v
 
     def _get_post_process_grp(self, include_update_others=True):
@@ -143,19 +143,19 @@ class PeakCenterConfig(HasTraits):
 
     def _get_measure_grp(self):
         mass_grp = VGroup(HGroup(Item('use_current_dac',
-                                     label='Use Current DAC'),
-                                Item('use_mftable_dac',
-                                     label='Use DAC from MFTable')),
+                                      label='Use Current DAC'),
+                                 Item('use_mftable_dac',
+                                      label='Use DAC from MFTable')),
                           Item('dac', label='Center DAC', enabled_when='not use_current_dac and not use_mftable_dac'),
                           visible_when='dataspace=="dac"')
-                          
+
         dac_grp = VGroup(HGroup(Item('use_current_dac',
-                                    label='Use Current Mass'),
-                                Item('use_mftable_dac', 
+                                     label='Use Current Mass'),
+                                Item('use_mftable_dac',
                                      label='Use Mass from MFTable')),
-                        Item('dac', label='Center Mass', enabled_when='not use_current_dac and not use_mftable_dac'),
-                        visible_when='dataspace=="mass"')
-        
+                         Item('dac', label='Center Mass', enabled_when='not use_current_dac and not use_mftable_dac'),
+                         visible_when='dataspace=="mass"')
+
         center_grp = VGroup(mass_grp, dac_grp, show_border=True, label='Center')
         '''dac_grp = VGroup(HGroup(Item('use_current_dac',
                                      label='Use Current DAC',

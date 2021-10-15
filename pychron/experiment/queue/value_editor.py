@@ -50,7 +50,7 @@ class ValueEditor(Loggable):
         super(ValueEditor, self).__init__(*args, **kw)
 
     def _value_changed(self, new):
-        if new=='':
+        if new == '':
             return
 
         m = AUGEMENT_REGEX.match(new)

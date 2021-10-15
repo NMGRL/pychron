@@ -41,7 +41,7 @@ class FluxSubOptions(SubOptions):
                                             visible_when='model_kind in ("{}","{}")'.format(LEAST_SQUARES_1D,
                                                                                             WEIGHTED_MEAN_1D)),
                                        Item('n_neighbors', label='N. Neighbors',
-                                            visible_when = 'model_kind == "{}"'.format(NN)),
+                                            visible_when='model_kind == "{}"'.format(NN)),
                                        label='Model'),
 
                           VGroup(HGroup(Item('use_monte_carlo', label='Use'),

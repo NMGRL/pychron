@@ -43,5 +43,4 @@ def icon_button_editor(trait, name, label=None, editor_kw=None, **kw):
         trait, style="custom", editor=ButtonEditor(image=image, **editor_kw), **kw
     )
 
-
 # ============= EOF =============================================

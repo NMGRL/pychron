@@ -60,7 +60,7 @@ class CorrelationEllipsesOverlay(AbstractOverlay):
                 gc.stroke_path()
 
                 gc.set_fill_color(color)
-                gc.set_text_position(0, b+3)
+                gc.set_text_position(0, b + 3)
                 gc.show_text(k)
 
         # if self.fill:

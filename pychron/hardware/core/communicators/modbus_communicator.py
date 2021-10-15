@@ -152,8 +152,8 @@ class ModbusCommunicator(SerialCommunicator):
                     data = []
                     for i in range(ndata // 4):
                         s = 4 * i
-                        low_word = ''.join(['{:02X}'.format(d) for d in dataargs[s:s+2]])
-                        high_word = ''.join(['{:02X}'.format(d) for d in dataargs[s+2:s+4]])
+                        low_word = ''.join(['{:02X}'.format(d) for d in dataargs[s:s + 2]])
+                        high_word = ''.join(['{:02X}'.format(d) for d in dataargs[s + 2:s + 4]])
                         # low_word = ''.join(dataargs[s:s + 2])
                         # high_word = ''.join(dataargs[s + 2:s + 4])
 
@@ -172,7 +172,7 @@ class ModbusCommunicator(SerialCommunicator):
                     data = ''.join(data)
 
                 if response_type == 'float':
-                    fmt_str = '!' + 'f' * (ndata//4)
+                    fmt_str = '!' + 'f' * (ndata // 4)
                     resp = struct.unpack(fmt_str, bytes.fromhex(data))
                     # return a single value
                     if ndata == 4:

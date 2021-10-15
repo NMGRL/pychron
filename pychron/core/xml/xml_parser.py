@@ -109,14 +109,14 @@ def pprint_xml(txt):
 
 
 def indent(elem, level=0):
-    i = "\n" + level*"  "
+    i = "\n" + level * "  "
     if len(elem):
         if not elem.text or not elem.text.strip():
             elem.text = i + "  "
         if not elem.tail or not elem.tail.strip():
             elem.tail = i
         for ei in elem:
-            indent(ei, level+1)
+            indent(ei, level + 1)
         if not elem.tail or not elem.tail.strip():
             elem.tail = i
     else:

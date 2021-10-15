@@ -262,5 +262,4 @@ class LoadingPDFWriter(BasePDFTableWriter):
         t = self._new_table(ts, data, colWidths=cw, rowHeights=rh)
         return t
 
-
 # ============= EOF =============================================

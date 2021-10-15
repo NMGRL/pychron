@@ -219,12 +219,11 @@ if __name__ == '__main__':
     p = '/Users/ross/Pychron_dev/setupfiles/devices/apis_controller.cfg'
     dc._load_configuration(p)
 
+
     class A(HasTraits):
         device_configurer = dc
+
 
     pane = ConfigurationPane(model=A())
     pane.configure_traits()
 # ============= EOF =============================================
-
-
-

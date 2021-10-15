@@ -20,6 +20,7 @@ from __future__ import absolute_import
 from traits.api import HasTraits, Float
 from traitsui.api import View, Item
 
+
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
@@ -99,7 +100,6 @@ def play_macro():
 
 def recordable(target):
     def wrapper(*args, **kw):
-
         _Macro_.record_action((args, kw))
         return target(*args, **kw)
 

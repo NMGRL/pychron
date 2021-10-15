@@ -30,21 +30,22 @@ class RenumberAliquotTestCase(unittest.TestCase):
 
         renumber_aliquots(runs)
 
-        r=runs[0]
+        r = runs[0]
         self.assertTupleEqual((r.user_defined_aliquot, r.position),
-                              (1,2))
+                              (1, 2))
 
-        r=runs[1]
+        r = runs[1]
         self.assertTupleEqual((r.user_defined_aliquot, r.position),
-                              (1,2))
+                              (1, 2))
 
-        r=runs[5]
+        r = runs[5]
         self.assertTupleEqual((r.user_defined_aliquot, r.position),
-                              (2,1))
+                              (2, 1))
 
-        r=runs[7]
+        r = runs[7]
         self.assertTupleEqual((r.user_defined_aliquot, r.position),
-                              (3,3))
+                              (3, 3))
+
 
 if __name__ == '__main__':
     unittest.main()

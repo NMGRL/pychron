@@ -33,6 +33,7 @@ class PipetteTracker(Loggable):
     outer = Str
     counts = Int
     _shot_loaded = False
+
     #     def __init__(self, *args, **kw):
     #         super(PipetteTracker, self).__init__(*args, **kw)
     #         self.load()
@@ -97,7 +98,7 @@ class PipetteTracker(Loggable):
         return d
 
     def _get_path_id(self):
-        #handle legacy format
+        # handle legacy format
         p = os.path.join(paths.hidden_dir, 'pipette-{}_{}'.format(self.inner, self.outer))
         if not os.path.isfile(p):
             p = os.path.join(paths.hidden_dir, '{}_{}-{}'.format(self.name, self.inner, self.outer))

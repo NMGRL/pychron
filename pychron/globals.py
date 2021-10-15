@@ -191,4 +191,3 @@ globalv = Globals()
 #
 # global_obj = Globals()
 # use_ipc = global_obj.use_ipc
-

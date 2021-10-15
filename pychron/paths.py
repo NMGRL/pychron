@@ -76,7 +76,6 @@ sounds_search_path = [sounds]
 
 
 class Paths(object):
-
     root = None
     bundle_root = None
     home = path.expanduser('~')

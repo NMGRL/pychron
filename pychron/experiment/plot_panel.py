@@ -284,9 +284,9 @@ class PlotPanel(Loggable):
         # self.baseline_graph.clear()
         plots = {}
         for k, g, e in (
-            ("sniff", self.sniff_graph, not isotope_only),
-            ("isotope", self.isotope_graph, True),
-            ("baseline", self.baseline_graph, not isotope_only),
+                ("sniff", self.sniff_graph, not isotope_only),
+                ("isotope", self.isotope_graph, True),
+                ("baseline", self.baseline_graph, not isotope_only),
         ):
             if e:
                 plot = g.new_plot(
@@ -334,8 +334,8 @@ class PlotPanel(Loggable):
             # update ncounts
             integration_time = self.integration_time
             counts = (
-                sum([h["counts"] * integration_time + h["settle"] for h in self.hops])
-                * v
+                    sum([h["counts"] * integration_time + h["settle"] for h in self.hops])
+                    * v
             )
             # counts = sum([ci * integration_time + s for _h, ci, s in self.hops]) * v
             self._ncounts = counts
@@ -416,6 +416,5 @@ class PlotPanel(Loggable):
             self.baseline_graph,
             self.peak_center_graph,
         ]
-
 
 # ============= EOF =============================================

@@ -58,6 +58,3 @@ class NewLabelAction(TaskAction):
     image = icon('add')
 
 # ============= EOF =============================================
-
-
-

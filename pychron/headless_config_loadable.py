@@ -27,6 +27,4 @@ class HeadlessConfigLoadable(BaseConfigLoadable, HeadlessLoggable):
     """
     """
 
-
 # ============= EOF =============================================
-

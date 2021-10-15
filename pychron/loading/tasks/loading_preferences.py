@@ -31,9 +31,11 @@ class LoadingPreferences(BasePreferencesHelper):
     id = 'pychron.loading.preferences_page'
     save_directory = Directory
 
+
 class LoadingPreferencesPane(PreferencesPane):
     model_factory = LoadingPreferences
     category = 'Loading'
+
     def traits_view(self):
         v = View(Item('save_directory', label='Output Directory'))
         return v

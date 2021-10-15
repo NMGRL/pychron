@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 '''
 
 http://docs.cython.org/pychron/quickstart/build.html
@@ -31,11 +30,11 @@ import numpy
 from Cython.Distutils import build_ext
 
 ext_modules = [Extension("calculate_centroid", ["centroid.pyx"],
-               include_dirs=[numpy.get_include()])
+                         include_dirs=[numpy.get_include()])
                ]
 
 setup(
-  name='calculate_centroid',
-  cmdclass={'build_ext': build_ext},
-  ext_modules=ext_modules
+    name='calculate_centroid',
+    cmdclass={'build_ext': build_ext},
+    ext_modules=ext_modules
 )

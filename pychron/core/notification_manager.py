@@ -107,5 +107,4 @@ class NotificationManager(object):
                 mi.move(w - mi.width(), y2)
                 # mi.set_position(0, y2, w, h)
 
-
 # ============= EOF =============================================

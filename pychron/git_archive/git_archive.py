@@ -88,7 +88,6 @@ class GitArchive(GitRepoManager):
     #     repo = self._repo
     #     return repo.git.diff(a, b, )
 
-
 # if __name__ == '__main__':
 #     r = '/Users/ross/Sandbox/gitarchive'
 #     g = GitArchive(r)

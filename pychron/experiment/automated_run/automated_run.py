@@ -777,10 +777,10 @@ class AutomatedRun(Loggable):
         if self.peak_center:
             self.debug('cancel peak center')
             self.peak_center.cancel()
-            
+
         if self.spectrometer_manager:
             self.spectrometer_manager.spectrometer.cancel()
-            
+
         self.do_post_termination(do_post_equilibration=do_post_equilibration)
 
         self.finish()

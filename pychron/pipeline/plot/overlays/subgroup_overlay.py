@@ -37,7 +37,7 @@ class SubGroupPointOverlay(AbstractOverlay):
             marker_size = self.component.marker_size
             color = self.component.color
             line_width = 2
-            outline_color = [1.0-ci for ci in color[:3]]
+            outline_color = [1.0 - ci for ci in color[:3]]
             render_markers(gc, points, cmarker, marker_size,
                            color, line_width, outline_color)
 

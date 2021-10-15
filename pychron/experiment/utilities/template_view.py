@@ -25,6 +25,3 @@ class CommentTemplateView(BaseTemplateView):
     view_title = 'Comment Maker'
 
 # ============= EOF =============================================
-
-
-

@@ -44,7 +44,6 @@ class SubGroupAnalysisTableNode(GroupAgeNode):
     editor_klass = SubGroupAgeEditor
 
 
-
 # class XLSXAnalysisTableNode(AnalysisTableNode):
 #     name = 'Analysis Table'
 # options_klass = XLSXTableWriterOptions

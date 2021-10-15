@@ -132,5 +132,4 @@ class Axis(ConfigLoadable):
     def full_view(self):
         return self.simple_view()
 
-
 # ============= EOF ====================================

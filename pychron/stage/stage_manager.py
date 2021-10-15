@@ -69,6 +69,7 @@ class BaseStageManager(Manager):
     temp_position = None
     temp_hole = None
     root = Str
+
     # use_modified = Bool(True)  # set true to use modified affine calculation
     def motor_event_hook(self, name, value, *args, **kw):
         pass
@@ -227,7 +228,6 @@ class BaseStageManager(Manager):
                     pass
                     # def traits_view(self):
                     # self.initialize_stage()
-
 
 # ============= EOF =============================================
 

@@ -198,7 +198,7 @@ class DataCollector(Consoleable):
     def _iteration(self, i, detectors=None):
         try:
             data = self._get_data(detectors)
-            
+
             if not data:
                 return
 
@@ -206,7 +206,7 @@ class DataCollector(Consoleable):
         except (AttributeError, TypeError, ValueError) as e:
             self.debug('failed getting data {}'.format(e))
             return
-        
+
         if k is not None and s is not None:
             x = self._get_time(t)
             self._save_data(x, k, s)
@@ -221,11 +221,11 @@ class DataCollector(Consoleable):
         else:
             # t is provided by the spectrometer. t should be a python datetime object
             # since t is in absolute time use self.starttime_abs
-            r = t-self.starttime_abs
+            r = t - self.starttime_abs
 
             # convert to seconds
             r = r.total_seconds()
-            
+
         return r
 
     def _get_data(self, detectors=None):

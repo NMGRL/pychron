@@ -20,7 +20,6 @@ from traits.api import List, Str, HasTraits, Float, Int
 from numpy import random, char
 import time
 
-
 # =============local library imports  ==========================
 from pychron.hardware.gauges.base_controller import BaseGaugeController
 

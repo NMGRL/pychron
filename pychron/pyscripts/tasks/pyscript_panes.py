@@ -73,7 +73,7 @@ class ControlPane(TraitsDockPane):
     id = 'pychron.pyscript.control'
 
     def traits_view(self):
-        v = View(VGroup(UItem('execute',editor=ButtonEditor(label_value='execute_label'))))
+        v = View(VGroup(UItem('execute', editor=ButtonEditor(label_value='execute_label'))))
         return v
 
 

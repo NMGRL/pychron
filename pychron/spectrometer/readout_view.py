@@ -134,8 +134,8 @@ class BaseReadout(HasTraits):
                 self.display_tolerance = "{:0.2f}%".format(tolerance * 100)
                 try:
                     if (
-                        abs(self.value - self.config_value) / self.config_value
-                        > tolerance
+                            abs(self.value - self.config_value) / self.config_value
+                            > tolerance
                     ):
                         return self.name, self.value, self.config_value
                 except TypeError:
@@ -184,8 +184,8 @@ class Readout(BaseReadout):
     @property
     def query_needed(self):
         return (
-            not self._last_query
-            or (time.time() - self._last_query) > self.query_timeout
+                not self._last_query
+                or (time.time() - self._last_query) > self.query_timeout
         )
 
 
@@ -229,8 +229,8 @@ class ReadoutView(PersistenceLoggable):
                 self._load_cfg(path)
             else:
                 if self.confirmation_dialog(
-                    "no readout configuration file. \n"
-                    "Would you like to write a default file at {}".format(ypath)
+                        "no readout configuration file. \n"
+                        "Would you like to write a default file at {}".format(ypath)
                 ):
                     self._write_default(ypath)
                     self._load_yaml(ypath)
@@ -407,8 +407,8 @@ class ReadoutView(PersistenceLoggable):
                         "compare_to_config_enabled",
                         label="Comp. Config",
                         tooltip="If checked, compare the current values to the values in the "
-                        "configuration file. "
-                        "Warn user if there is a mismatch",
+                                "configuration file. "
+                                "Warn user if there is a mismatch",
                     ),
                     spring,
                     Item("refresh", show_label=False),
@@ -457,6 +457,5 @@ def new_readout_view(rv):
         resizable=True,
     )
     return v
-
 
 # ============= EOF =============================================

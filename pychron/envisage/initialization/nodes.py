@@ -109,7 +109,7 @@ class StartupTesterParser:
                 sti['tests'] = plugin.tests
                 break
         else:
-           self._st.append({'plugin': plugin.name, 'tests': plugin.tests})
+            self._st.append({'plugin': plugin.name, 'tests': plugin.tests})
 
     def disable_plugin(self, plugin):
         for sti in self._st[:]:

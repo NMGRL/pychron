@@ -63,5 +63,4 @@ class Broadcaster(HeadlessLoggable):
             else:
                 self.debug("notifier not setup")
 
-
 # ============= EOF =============================================

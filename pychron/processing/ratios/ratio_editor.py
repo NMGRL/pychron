@@ -35,6 +35,7 @@ class RatioEditor(BaseTraitsEditor):
     ratio_intercept = Float
 
     basename = ''
+
     def _time_zero_offset_changed(self):
         self.refresh_plot()
 
@@ -76,11 +77,11 @@ class RatioEditor(BaseTraitsEditor):
         g.new_plot()
         g.set_x_limits(min_=0, max_=100)
         g.set_y_title(niso.name)
-        _,_,nl = g.new_series(niso.offset_xs, niso.ys, filter_outliers_dict=fd)
+        _, _, nl = g.new_series(niso.offset_xs, niso.ys, filter_outliers_dict=fd)
 
         g.new_plot()
         g.set_y_title(diso.name)
-        _,_,dl = g.new_series(diso.offset_xs, diso.ys, filter_outliers_dict=fd)
+        _, _, dl = g.new_series(diso.offset_xs, diso.ys, filter_outliers_dict=fd)
 
         # g.new_plot()
         # nreg = nl.regressor
@@ -104,15 +105,14 @@ class RatioEditor(BaseTraitsEditor):
 
         fd = {'filter_outliers': True, 'std_devs': 2, 'iterations': 1}
 
-        fitfunc = lambda p, x: (p[0]*x+p[1])/(p[2]*x+p[3])
+        fitfunc = lambda p, x: (p[0] * x + p[1]) / (p[2] * x + p[3])
 
-        fit = ((fitfunc, [1,1,1,1]), None)
-        p,s,l = g.new_series(xs, rys, fit=fit,
-                             use_error_envelope=False,
-                             filter_outliers_dict=fd)
+        fit = ((fitfunc, [1, 1, 1, 1]), None)
+        p, s, l = g.new_series(xs, rys, fit=fit,
+                               use_error_envelope=False,
+                               filter_outliers_dict=fd)
         reg = l.regressor
         self.ratio_intercept = reg.predict(0)
-
 
     def traits_view(self):
         v = View(UItem('graph', style='custom'),
@@ -127,6 +127,3 @@ if __name__ == '__main__':
     re.setup()
     re.configure_traits()
 # ============= EOF =============================================
-
-
-

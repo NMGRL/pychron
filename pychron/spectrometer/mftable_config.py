@@ -61,9 +61,9 @@ class MFTableConfig(HasTraits, PersistenceMixin):
         self.available_detector_names = [di.name for di in self.detectors]
         for d in self.detectors:
             for (
-                name,
-                e,
-                defl,
+                    name,
+                    e,
+                    defl,
             ) in self.pdetectors:
                 if name == d.name:
                     d.enabled, d.deflection = e, defl
@@ -99,6 +99,5 @@ class MFTableConfig(HasTraits, PersistenceMixin):
             title="Populate Magnetic Field Table",
         )
         return v
-
 
 # ============= EOF =============================================

@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from pychron.applications.pychron_application import PychronApplication
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -25,6 +26,5 @@ class PyCrunch(PychronApplication):
     id = "pychron.crunch.application"
     name = "PyCrunch"
     shortname = "crunch"
-
 
 # ============= EOF =============================================

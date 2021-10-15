@@ -49,4 +49,3 @@ class MPLFigureEditor(BasicEditorFactory):
     klass = _MPLFigureEditor
 
 # ============= EOF =============================================
-

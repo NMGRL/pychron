@@ -22,11 +22,13 @@ from chaco.array_plot_data import ArrayPlotData
 from numpy import linspace, cos, pi
 import math
 
+
 # ============= local library imports  ==========================
 
 
 class RotatingContainer(OverlayPlotContainer):
     rotation = Float(45)
+
     #     use_backbuffer = True
     def draw(self, gc, *args, **kw):
         with gc:

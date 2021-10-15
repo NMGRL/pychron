@@ -83,4 +83,3 @@ class MagnitudeColumn(ObjectColumn):
         self.renderer = MagnitudeRenderer()
 
 # ============= EOF =============================================
-

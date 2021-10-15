@@ -15,10 +15,10 @@
 # ===============================================================================
 
 
-
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from chaco.tools.api import ScatterInspector
+
 
 # =============standard library imports ========================
 
@@ -26,15 +26,15 @@ from chaco.tools.api import ScatterInspector
 
 
 class ScatterTool(ScatterInspector):
-#    '''
-#    '''
-#    parent = Any
-#    plotid = Int(0)
-#
+    #    '''
+    #    '''
+    #    parent = Any
+    #    plotid = Int(0)
+    #
     def normal_mouse_move(self, event):
-#        '''
-#
-#        '''
-#        #self.parent.selected_plotid = self.plotid
+        #        '''
+        #
+        #        '''
+        #        #self.parent.selected_plotid = self.plotid
         super(ScatterTool, self).normal_mouse_move(event)
 #        ScatterInspector.normal_mouse_move(self, event)

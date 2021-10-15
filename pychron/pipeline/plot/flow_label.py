@@ -28,8 +28,8 @@ try:
     class FlowPlotLabel(PlotLabel, MovableMixin):
         def overlay(self, component, gc, *args, **kw):
             if self.ox:
-                self.x = self.ox-self.offset_x
-                self.y = self.oy-self.offset_y
+                self.x = self.ox - self.offset_x
+                self.y = self.oy - self.offset_y
 
             super(FlowPlotLabel, self).overlay(component, gc, *args, **kw)
 

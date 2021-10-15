@@ -119,7 +119,7 @@ class AbstractDevice(ScanableDevice, ConfigLoadable, HasCommunicator):
         self.debug('open device')
         if self._cdevice:
             return self._cdevice.open(*args, **kw)
-        
+
         return HasCommunicator.open(self, **kw)
 
     def __getattr__(self, attr):

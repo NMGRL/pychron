@@ -39,17 +39,17 @@ class CanvasDesignerPane(TraitsTaskPane):
                           children='layers',
                           label='=layers',
                           auto_open=True
-        ),
+                          ),
                  TreeNode(node_for=[Layer],
                           label='label',
                           children='components',
                           auto_open=True
-                 ),
+                          ),
                  PrimitiveNode(node_for=[Primitive],
                                children='primitives',
                                label='label',
-                 ),
-        ]
+                               ),
+                 ]
 
         editor = TreeEditor(nodes=nodes,
                             selected='selected',
@@ -59,16 +59,15 @@ class CanvasDesignerPane(TraitsTaskPane):
                 UItem('scene',
                       editor=editor,
                       width=0.4
-                ),
+                      ),
                 UItem('canvas',
                       style='custom',
                       editor=ComponentEditor(),
                       width=0.6
-                )
+                      )
             )
         )
 
         return v
-
 
 # ============= EOF =============================================

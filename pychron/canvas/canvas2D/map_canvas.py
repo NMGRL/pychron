@@ -134,8 +134,8 @@ class MapCanvas(SceneCanvas):
         if not isinstance(color, (list, tuple)):
             color = color.red(), color.green(), color.blue(), color.alpha()
 
-        if not all([0 <= c <=1 for c in color]):
-            color = [x/255 for x in  color]
+        if not all([0 <= c <= 1 for c in color]):
+            color = [x / 255 for x in color]
         return color
 
     def _draw_map(self, gc, *args, **kw):

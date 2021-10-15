@@ -76,14 +76,14 @@ class MLTextLabel(Label):
                         if width > max_width:
                             max_width = width
                         new_y_pos = prev_y_pos + prev_y_height \
-                            + self.line_spacing
+                                    + self.line_spacing
                     else:
                         # For blank lines, we use the height of the previous
                         # line, if there is one.  The width is 0.
                         leading = 0
                         if prev_y_height != -self.line_spacing:
                             new_y_pos = prev_y_pos + prev_y_height \
-                                + self.line_spacing
+                                        + self.line_spacing
                             ascent = prev_y_height
                         else:
                             new_y_pos = prev_y_pos
@@ -97,9 +97,9 @@ class MLTextLabel(Label):
             self._line_ypos = y_pos[::-1]
             border_width = self.border_width if self.border_visible else 0
 
-            self._bounding_box[0] = max_width + 2*margin + 2*border_width
+            self._bounding_box[0] = max_width + 2 * margin + 2 * border_width
             self._bounding_box[1] = prev_y_pos + prev_y_height + margin \
-                + 2*border_width
+                                    + 2 * border_width
             self._position_cache_valid = True
         return
 
@@ -158,9 +158,9 @@ class MLTextLabel(Label):
 
                 self._draw_line(gc, line, x_offset, y_offset)
                 # with gc:
-                    # gc.translate_ctm(x_offset, y_offset)
+                # gc.translate_ctm(x_offset, y_offset)
 
-                    # self._draw_line(gc, line)
+                # self._draw_line(gc, line)
 
     def _draw_line(self, gc, txt, xo, yo):
         def gen():

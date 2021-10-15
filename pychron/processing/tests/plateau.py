@@ -1,5 +1,7 @@
 from __future__ import absolute_import
+
 __author__ = 'ross'
+
 import unittest
 
 from pychron.processing.plateau import Plateau
@@ -50,7 +52,6 @@ class PlateauTestCase(unittest.TestCase):
 
         idx = []
         return ages, errors, k39, idx
-
 
     def test_find_plateaus_pass1(self):
         ages, errors, signals, idx = self._get_test_data_pass1()

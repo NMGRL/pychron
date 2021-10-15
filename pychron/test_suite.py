@@ -53,6 +53,7 @@ from pychron.spectrometer.tests.mftable import MFTableTestCase, DiscreteMFTableT
 from pychron.spectrometer.tests.integration_time import IntegrationTimeTestCase
 
 from pychron.stage.tests.stage_map import StageMapTestCase, TransformTestCase
+
 os.environ['MassSpecDBVersion'] = '16'
 
 from pychron.paths import paths

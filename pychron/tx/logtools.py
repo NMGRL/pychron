@@ -41,5 +41,4 @@ def print_log(path=None, output_stream=None):
     for event in eventsFromJSONLogFile(io.open(path)):
         output(event)
 
-
 # ============= EOF =============================================

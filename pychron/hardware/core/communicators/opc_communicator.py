@@ -41,7 +41,7 @@ class OpcCommunicator(Communicator):
 
     def open(self, *args, **kw):
         self.debug('opening OPC communicator')
-        
+
         try:
             self.handle = OpenOPC.open_client(self.address)
         except CommunicationError as e:

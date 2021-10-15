@@ -23,7 +23,7 @@ class ConfigureDump(Controller):
             Item(
                 "dump_funnel_safety_override",
                 tooltip="Override safety check that the funnel must be down to "
-                "actuate magnets",
+                        "actuate magnets",
             ),
             title="Configure Dump",
             resizable=True,
@@ -31,6 +31,5 @@ class ConfigureDump(Controller):
             kind="livemodal",
         )
         return v
-
 
 # ============= EOF =============================================

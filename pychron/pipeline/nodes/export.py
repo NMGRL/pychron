@@ -143,18 +143,18 @@ class CSVRawDataExportNode(CSVExportNode):
                 if kiso.intensity:
                     ys = iso.ys
                     data.append(ys)
-        
+
         newdata = []
-        n=0
+        n = 0
         for d in data:
             if d.size:
-                n=len(d)
+                n = len(d)
         if n:
             for d in data:
                 if not d.size:
                     d = zeros(n)
                 newdata.append(d)
-        
+
         return zip(*newdata)
 
     def _get_isotope(self, k):

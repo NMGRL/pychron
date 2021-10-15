@@ -31,7 +31,7 @@ from pychron.pyscripts.tasks.pyscript_lexer import PyScriptLexer
 class myCodeWidget(CodeWidget):
     dclicked = QtCore.Signal((str,))
     modified_select = QtCore.Signal((str,))
-    alt_select = QtCore.Signal((str,int, int))
+    alt_select = QtCore.Signal((str, int, int))
 
     _current_pos = None
     gotos = ['gosub']
@@ -116,11 +116,11 @@ class myCodeWidget(CodeWidget):
     #             self.popup = None
 
     def mousePressEvent(self, event):
-        if event.modifiers() & Qt.ControlModifier: # on Mac OSX "command"
+        if event.modifiers() & Qt.ControlModifier:  # on Mac OSX "command"
             cursor, line = self._get_line_cursor(event.pos())
             self.modified_select.emit(line.strip())
             self.clear_selected()
-        elif event.modifiers() & Qt.AltModifier: # On Mac OSX "option"
+        elif event.modifiers() & Qt.AltModifier:  # On Mac OSX "option"
             cursor, line = self._get_line_cursor(event.pos())
             pt = self.mapToGlobal(event.pos())
             self.alt_select.emit(line.strip(), pt.x(), pt.y())
@@ -167,12 +167,12 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
         self.commands = commands
         self.code = myCodeWidget(self, font=font)
 
-        #set lexer manually instead of by name
+        # set lexer manually instead of by name
         lexer = PyScriptLexer(commands)
         self.code.highlighter._lexer = lexer
         self.code.setMouseTracking(True)
 
-        #AdvanceCodeWidget
+        # AdvanceCodeWidget
         # =====================================
         self.find = FindWidget(self)
         self.find.hide()
@@ -271,4 +271,3 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
         self.code.setExtraSelections([selection])
 
 # ============= EOF =============================================
-

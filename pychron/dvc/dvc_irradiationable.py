@@ -30,7 +30,6 @@ class DVCAble(Loggable):
 
 
 class DVCIrradiationable(DVCAble):
-
     level = Str
     levels = Property(depends_on="irradiation, updated")
     irradiation = Str
@@ -82,6 +81,5 @@ class DVCIrradiationable(DVCAble):
                         if not self.level:
                             self.level = levels[0]
         return levels
-
 
 # ============= EOF =============================================

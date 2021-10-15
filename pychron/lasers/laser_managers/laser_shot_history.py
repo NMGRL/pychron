@@ -15,8 +15,7 @@
 # ===============================================================================
 
 
-
-#========== future imports ====================
+# ========== future imports ====================
 from __future__ import with_statement
 
 # ============= enthought library imports =======================
@@ -32,6 +31,7 @@ import shutil
 from pychron.paths import paths
 from pychron.core.helpers.filetools import unique_path
 from pychron.core.helpers.datetime_tools import generate_datetimestamp
+
 
 # ============= views ===================================
 class LaserShot(HasTraits):
@@ -87,12 +87,14 @@ class LaserShotHistory(HasTraits):
         '''
         with open(self.pickle_path, 'w') as f:
             pickle.dump(self.history, f)
+
     def load(self):
         '''
         '''
         if os.path.isfile(self.pickle_path):
             with open(self.pickle_path, 'r') as f:
                 self.history = pickle.load(f)
+
     def __clear(self):
         '''
         '''
@@ -111,8 +113,8 @@ class LaserShotHistory(HasTraits):
         n = len(self.history)
 
         shot = LaserShot(id=n,
-                       timestamp=generate_datetimestamp(),
-                       **kw)
+                         timestamp=generate_datetimestamp(),
+                         **kw)
         self.history.append(shot)
         self.__dump()
 
@@ -121,21 +123,20 @@ class LaserShotHistory(HasTraits):
         '''
 
         cols = [ObjectColumn(name='id'),
-              ObjectColumn(name='mode'),
-              ObjectColumn(name='timestamp')]
+                ObjectColumn(name='mode'),
+                ObjectColumn(name='timestamp')]
         table_editor = TableEditor(columns=cols,
-                                 editable=False)
+                                   editable=False)
         detail_view = Group(Item('dump', show_label=False),
-                          Item('clear', show_label=False),
-                          Item('history', editor=table_editor,
-                               show_label=False),
-                         visible_when='view_mode=="detail"',
-                         )
+                            Item('clear', show_label=False),
+                            Item('history', editor=table_editor,
+                                 show_label=False),
+                            visible_when='view_mode=="detail"',
+                            )
         simple_view = Group(Item('count'),
-                          visible_when='view_mode=="simple"')
+                            visible_when='view_mode=="simple"')
         v = View(detail_view,
-               simple_view)
-
+                 simple_view)
 
         return v
 # ============= EOF ====================================

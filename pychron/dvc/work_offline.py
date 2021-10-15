@@ -168,7 +168,7 @@ class WorkOffline(Loggable):
         return unique_path2(paths.dvc_dir, "index", extension=".sqlite3")[0]
 
     def _clone_central_db(
-        self, repositories, analyses=None, principal_investigators=None, projects=None
+            self, repositories, analyses=None, principal_investigators=None, projects=None
     ):
 
         self.info("--------- Clone DB -----------")
@@ -181,8 +181,8 @@ class WorkOffline(Loggable):
         path = database_path()
         if os.path.isfile(path):
             if not self.confirmation_dialog(
-                'The database "{}" already exists. '
-                "Do you want to overwrite it".format(os.path.basename(path))
+                    'The database "{}" already exists. '
+                    "Do you want to overwrite it".format(os.path.basename(path))
             ):
 
                 path = self._get_new_path()
@@ -376,6 +376,5 @@ class WorkOffline(Loggable):
             height=500,
         )
         return v
-
 
 # ============= EOF =============================================

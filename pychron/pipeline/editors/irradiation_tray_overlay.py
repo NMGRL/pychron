@@ -22,6 +22,8 @@ from traits.api import Bool, Dict
 from kiva.fonttools import str_to_font
 from numpy import linspace, hstack, vstack, array
 from six.moves import zip
+
+
 # ============= local library imports  ==========================
 
 

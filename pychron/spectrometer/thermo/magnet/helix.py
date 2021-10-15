@@ -25,6 +25,3 @@ class HelixMagnet(ThermoMagnet):
     pass
 
 # ============= EOF =============================================
-
-
-

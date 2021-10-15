@@ -30,6 +30,7 @@ def simulate(wrapper):
         if obj.simulation and r is not None:
             time.sleep(0.01)
         return r
+
     return wrapped
 
 

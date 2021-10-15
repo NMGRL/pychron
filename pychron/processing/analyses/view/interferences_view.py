@@ -106,4 +106,3 @@ class InterferencesView(HasTraits):
         return v
 
 # ============= EOF =============================================
-

@@ -220,7 +220,6 @@ class GitArchiveHistoryView(Controller):
         )
         return v
 
-
 # if __name__ == '__main__':
 # r = '/Users/ross/Sandbox/gitarchive'
 # gh = GitArchiveHistory(r, '/Users/ross/Sandbox/ga_test.txt')

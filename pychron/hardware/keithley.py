@@ -27,7 +27,6 @@ from pychron.core.helpers.logger_setup import logging_setup
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.scpi_device import SCPIDevice
 
-
 logging_setup("keithley")
 
 

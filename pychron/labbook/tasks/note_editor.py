@@ -120,6 +120,3 @@ class NoteEditor(BaseTraitsEditor):
         return v
 
 # ============= EOF =============================================
-
-
-

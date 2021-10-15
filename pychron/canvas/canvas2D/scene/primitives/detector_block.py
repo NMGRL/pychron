@@ -54,7 +54,7 @@ class Detector(Rectangle):
             gc.set_stroke_color((0, 1, 0))
             m = y + h / 2.
             y2 = m + h / 2. * self.deflection / (
-                self.max_deflection - self.min_deflection)
+                    self.max_deflection - self.min_deflection)
             gc.move_to(x - 25, m)
             gc.line_to(x, y2)
             gc.stroke_path()

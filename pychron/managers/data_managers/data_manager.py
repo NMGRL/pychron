@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Dict
@@ -37,6 +36,7 @@ class DataManager(Manager):
     frames = Dict
     _current_frame = ''
     time_gen = None
+
     def get_current_path(self):
         pass
 

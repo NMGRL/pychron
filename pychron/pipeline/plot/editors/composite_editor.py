@@ -40,7 +40,6 @@ class CompositeEditor(InterpretedAgeEditor):
                           text=self.plotter_options.generate_title(model.analyses, 0))
             comp.overlays.append(l)
 
-
     @on_trait_change('figure_model:panels:figures:recalculate_event')
     def _handle_recalculate(self, obj, name, old, new):
         if obj.suppress_recalculate_event:

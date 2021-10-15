@@ -25,5 +25,4 @@ from pychron.hardware.gauges.granville_phillips.base_micro_ion_controller import
 class HeadlessMicroIonController(BaseMicroIonController, HeadlessCoreDevice):
     pass
 
-
 # ============= EOF ====================================

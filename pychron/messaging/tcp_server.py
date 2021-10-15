@@ -28,6 +28,7 @@ from threading import Thread
 from .messaging_server import MessagingServer
 from pychron.messaging.handlers.tcp_handler import TCPHandler
 
+
 # class TCPServer(_TCPServer, MessagingServer):
 class TCPServer(ThreadingTCPServer, MessagingServer):
     """ """
@@ -112,6 +113,5 @@ class TCPServer(ThreadingTCPServer, MessagingServer):
         # start a listener thread
         t = Thread(target=listen)
         t.start()
-
 
 # ============= EOF ====================================

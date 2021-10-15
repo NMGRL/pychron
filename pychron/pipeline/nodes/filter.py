@@ -193,20 +193,20 @@ class FilterNode(BaseNode):
 
     def traits_view(self):
         v = okcancel_view(VGroup(VGroup(icon_button_editor('add_filter_button', 'add'),
-                               UItem('filters', editor=ListEditor(mutable=False,
-                                                                  style='custom',
-                                                                  editor=InstanceEditor())),
-                               show_border=True,
-                               label='Filters'),
-                        VGroup(Item('remove', label='Remove Analyses',
-                                    tooltip='Remove Analyses from the list if checked  otherwise '
-                                            'set temporary tag to "omit"'),
-                               show_border=True),
-                        VGroup(UItem('help_str', style='readonly'), label='Help', show_border=True)),
-                 height=400,
-                 width=600,
-                 kind='livemodal',
-                 title='Edit Filter')
+                                        UItem('filters', editor=ListEditor(mutable=False,
+                                                                           style='custom',
+                                                                           editor=InstanceEditor())),
+                                        show_border=True,
+                                        label='Filters'),
+                                 VGroup(Item('remove', label='Remove Analyses',
+                                             tooltip='Remove Analyses from the list if checked  otherwise '
+                                                     'set temporary tag to "omit"'),
+                                        show_border=True),
+                                 VGroup(UItem('help_str', style='readonly'), label='Help', show_border=True)),
+                          height=400,
+                          width=600,
+                          kind='livemodal',
+                          title='Edit Filter')
         return v
 
     def _generate_filter(self):
@@ -269,8 +269,9 @@ class MSWDFilterNode(BaseNode):
 
     def traits_view(self):
         v = okcancel_view(VGroup(HGroup(UItem('kind'), UItem('attr')),
-                          VGroup(Item('mswd_threshold', label='Threshold', visible_when='kind=="Threshold"'),
-                                 Item('plateau_threshold', label='% Threshold', visible_when='kind=="Plateau"'))),
+                                 VGroup(Item('mswd_threshold', label='Threshold', visible_when='kind=="Threshold"'),
+                                        Item('plateau_threshold', label='% Threshold',
+                                             visible_when='kind=="Plateau"'))),
                           title='Configure MSWD Filter',
                           width=300,
                           height=100,

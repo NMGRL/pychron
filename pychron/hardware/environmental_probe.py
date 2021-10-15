@@ -45,5 +45,4 @@ class TempHumMicroServer(CoreDevice):
         except (AttributeError, ValueError, TypeError):
             return self.get_random_value()
 
-
 # ============= EOF =============================================

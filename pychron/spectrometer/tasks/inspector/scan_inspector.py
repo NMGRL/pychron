@@ -57,6 +57,3 @@ class ScanInspector(HasTraits):
         return g
 
 # ============= EOF =============================================
-
-
-

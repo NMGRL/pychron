@@ -32,7 +32,7 @@ class ChromiumLaserManager(EthernetLaserManager):
     def setup_communicator(self):
         com = super(ChromiumLaserManager, self).setup_communicator()
         if self.communicator:
-            self.communicator.write_terminator='\n\r'
+            self.communicator.write_terminator = '\n\r'
         return com
 
     def set_tray(self, t):
@@ -264,7 +264,7 @@ class ChromiumUVManager(ChromiumLaserManager):
 
             if block:
                 def func(r):
-                    return r.lower() !='running: warming up laser...'
+                    return r.lower() != 'running: warming up laser...'
 
                 self._block(cmd=scans('Status?'), cmpfunc=func, timeout=120)
 
@@ -274,10 +274,10 @@ class ChromiumUVManager(ChromiumLaserManager):
                 self.ask_active_scan('Run')
 
             def func(r):
-                return str(r).strip().lower() !='idle: idle'
+                return str(r).strip().lower() != 'idle: idle'
 
             self._block(cmd=scans('Status?'), cmpfunc=func, timeout=kw.get('block', 300) or 300)
-            self._warmed=False
+            self._warmed = False
             return True
         else:
             return super(ChromiumUVManager, self).extract(*args, **kw)
@@ -293,6 +293,7 @@ class ChromiumUVManager(ChromiumLaserManager):
 
             def func(r):
                 return not bool(int(r))
+
             self._block(cmd=self.active_scan_cmd('InPos?'), cmpfunc=func)
 
         else:

@@ -27,7 +27,7 @@ from traits.api import Any, Bool, Enum, Event, Tuple
 # Enthought library imports
 
 # Chaco imports
-from chaco.api import  TextBoxOverlay
+from chaco.api import TextBoxOverlay
 
 
 class XYInspector(BaseTool):
@@ -77,14 +77,16 @@ class XYInspector(BaseTool):
         """
         plot = self.component
         if plot is not None:
-#            ndx = plot.map_index((event.x, event.y))
-#            if ndx == (None, None):
-#                self.new_value = None
-#                return
+            #            ndx = plot.map_index((event.x, event.y))
+            #            if ndx == (None, None):
+            #                self.new_value = None
+            #                return
 
             pos = plot.map_data((event.x, event.y), all_values=True)
-#            x_index, y_index = ndx
+            #            x_index, y_index = ndx
             self.new_value = dict(pos=pos)
+
+
 #            self.last_mouse_position = (event.x, event.y)
 
 
@@ -132,12 +134,12 @@ class XYInspectorOverlay(TextBoxOverlay):
 
         d = event
         newstring = ""
-#        if 'indices' in d:
-#            newstring += '(%d, %d)' % d['indices'] + '\n'
-#        if 'color_value' in d:
-#            newstring += "(%d, %d, %d)" % tuple(map(int, d['color_value'][:3])) + "\n"
-#        if 'data_value' in d:
-#            newstring += str(d['data_value'])
+        #        if 'indices' in d:
+        #            newstring += '(%d, %d)' % d['indices'] + '\n'
+        #        if 'color_value' in d:
+        #            newstring += "(%d, %d, %d)" % tuple(map(int, d['color_value'][:3])) + "\n"
+        #        if 'data_value' in d:
+        #            newstring += str(d['data_value'])
 
         if 'pos' in d:
             newstring += '({:0.2f},{:0.2f})'.format(*d['pos'])
@@ -152,6 +154,5 @@ class XYInspectorOverlay(TextBoxOverlay):
         self.visibility = self.inspector.visible
         if self.visibility != "auto":
             self.visible = self.visibility
-
 
 # ============= EOF =============================================

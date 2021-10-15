@@ -19,9 +19,7 @@
 # ============= local library imports  ==========================
 
 from .factory import toolkit_factory
+
 VideoEditor = toolkit_factory('video_editor', 'VideoEditor')
 
 # ============= EOF =============================================
-
-
-

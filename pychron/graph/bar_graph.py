@@ -28,5 +28,4 @@ class BarGraph(Graph):
     pass
     # def new_series(self,*args,**kw):
 
-
 # ============= EOF ====================================

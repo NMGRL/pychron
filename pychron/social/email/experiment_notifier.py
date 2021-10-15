@@ -98,4 +98,3 @@ class ExperimentNotifier(Loggable):
         return get_log_text(n) or 'No log available'
 
 # ============= EOF =============================================
-

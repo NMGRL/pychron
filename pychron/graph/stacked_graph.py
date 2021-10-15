@@ -179,10 +179,10 @@ class StackedGraph(Graph):
         padding_bottom = sum([getattr(p, "padding_bottom") for p in comps])
         #
         pt = (
-            self.plotcontainer.padding_top
-            + self.plotcontainer.padding_bottom
-            + padding_top
-            + padding_bottom
+                self.plotcontainer.padding_top
+                + self.plotcontainer.padding_bottom
+                + padding_top
+                + padding_bottom
         )
         n = len(self.plotcontainer.components)
         if self.equi_stack:
@@ -216,7 +216,6 @@ class StackedGraph(Graph):
 
     def _bind_index(self, scatter, bind_id=0, bind_selection=True, **kw):
         if bind_selection:
-
             def func(obj, name, old, new):
                 self._update_metadata(bind_id, obj, name, old, new)
 

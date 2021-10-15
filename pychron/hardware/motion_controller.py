@@ -488,5 +488,4 @@ class MotionController(CoreDevice):
             mp.load(p)
         return mp
 
-
 # ============= EOF ====================================

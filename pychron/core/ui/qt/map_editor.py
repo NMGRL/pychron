@@ -28,7 +28,6 @@ class QMapWidget(QFrame):
         # self._pix_map.fill(Qt.transparent)
 
     def set_tile(self, image):
-
         data = image.tobytes('raw', 'RGB')
 
         im = QImage(data, image.size[0], image.size[1], QImage.Format_RGB888)

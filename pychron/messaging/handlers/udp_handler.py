@@ -15,13 +15,13 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 from .messaging_handler import MessagingHandler
+
 
 class UDPHandler(MessagingHandler):
     def get_packet(self):
@@ -35,11 +35,8 @@ class UDPHandler(MessagingHandler):
 
         """
         sock = self.request[1]
-        send=lambda x: sock.sendto(x, self.client_address)
+        send = lambda x: sock.sendto(x, self.client_address)
 
         self._send_packet(response, send)
-
-
-
 
 # ============= EOF ====================================

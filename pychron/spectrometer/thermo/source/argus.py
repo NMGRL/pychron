@@ -25,6 +25,3 @@ class ArgusSource(ThermoSource):
     pass
 
 # ============= EOF =============================================
-
-
-

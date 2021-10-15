@@ -96,5 +96,4 @@ class ClientExtractionLineManager(ExtractionLineManager):
 
         return ClientSwitchManager
 
-
 # ============= EOF =============================================

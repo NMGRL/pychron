@@ -29,5 +29,4 @@ class CryoFactoryView(FactoryView):
         post_measurement_group = BorderVGroup(Item('delay_after'), label='Post Measurement')
         return post_measurement_group
 
-
 # ============= EOF =============================================

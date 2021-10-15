@@ -21,7 +21,6 @@ import six
 from six.moves import range
 from six.moves import zip
 
-
 set_qt()
 
 from itertools import groupby
@@ -165,6 +164,5 @@ if __name__ == "__main__":
     dtg = DeadTimeGrapher(deadtime_model=d)
     dtg.rebuild()
     dtg.configure_traits()
-
 
 # ============= EOF =============================================

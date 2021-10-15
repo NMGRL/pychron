@@ -17,6 +17,7 @@ import requests
 
 API_URL = 'https://geodeepdive.org/api'
 
+
 def get_snippet(term):
     s = requests.Session()
     url = '{}/snippets?term={}'.format(API_URL, term)

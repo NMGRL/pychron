@@ -17,7 +17,8 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from pyface.qt.QtCore import QRect, QSize
-from pyface.qt.QtGui import QRegion, QWidget, QVBoxLayout, QLabel, QFont, QFontMetrics, QSizePolicy, QHBoxLayout, QPalette, \
+from pyface.qt.QtGui import QRegion, QWidget, QVBoxLayout, QLabel, QFont, QFontMetrics, QSizePolicy, QHBoxLayout, \
+    QPalette, \
     QColor, QPainter, QPen
 from pyface.qt import QtCore
 
@@ -59,7 +60,6 @@ def mask(rect, r):
 #         color.setNamedColor('black')
 #
 #         pal.setColor(QPalette.Background, color)
-
 
 
 class NotificationWidget(QWidget):
@@ -184,8 +184,4 @@ class NotificationWidget(QWidget):
             ret = 1, (txt,)
         return ret
 
-
 # ============= EOF =============================================
-
-
-

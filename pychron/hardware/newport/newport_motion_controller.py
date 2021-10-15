@@ -249,10 +249,10 @@ class NewportMotionController(MotionController):
             # issue the first 10 points and wait
             cmd = ';'.join([self._build_command('HL', xx=gid,
                                                 nn='{:0.5f},{:0.5f}'.format(
-                                                        self._sign_correct(x,
-                                                                           'x'),
-                                                        self._sign_correct(y,
-                                                                           'y')))
+                                                    self._sign_correct(x,
+                                                                       'x'),
+                                                    self._sign_correct(y,
+                                                                       'y')))
                             for x, y in points[:avaliable_spaces]
                             ])
             self.tell(cmd, verbose=True)
@@ -551,8 +551,8 @@ class NewportMotionController(MotionController):
                 else:
                     error = error_code
                     self.warning(
-                            'Newport Motion Controller:{} {}'.format(self.name,
-                                                                     r))
+                        'Newport Motion Controller:{} {}'.format(self.name,
+                                                                 r))
                     #                    gWarningDisplay.add_text('%s - %s' % (self.name, error_msg))
             except:
                 pass
@@ -606,7 +606,7 @@ class NewportMotionController(MotionController):
     def at_velocity(self, axkey, event, tol=0.25):
         if not self.simulation:
             desired_velocity = float(
-                    self.ask(self._build_query('VA', xx=self.axes[axkey].id)))
+                self.ask(self._build_query('VA', xx=self.axes[axkey].id)))
             av = self.read_actual_velocity(axkey)
             while av is not None and abs(abs(av) - desired_velocity) > tol:
                 av = self.read_actual_velocity(axkey)
@@ -850,7 +850,6 @@ class NewportMotionController(MotionController):
         if update:
             func, update = update
             if update:
-
                 self.timer = self.timer_factory(func=func, period=update)
 
         if block:

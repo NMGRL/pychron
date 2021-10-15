@@ -149,7 +149,6 @@ class SensitivityEntry(DVCAble):
     def save(self):
         sens = {}
         for ms, ss in groupby_key(self.records, 'mass_spectrometer'):
-
             sens[ms] = [ri.to_dict() for ri in ss]
 
         self.dvc.save_sensitivities(sens)

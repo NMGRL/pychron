@@ -48,6 +48,7 @@ from pychron.pychron_constants import LEAST_SQUARES_1D, MATCHING, BRACKETING, WE
 HEADER_KEYS = ['hole_id', 'identifier', 'x', 'y', 'z', 'saved_j', 'saved_jerr',
                'mean_j', 'mean_jerr', 'mean_j_mswd', 'min_j', 'max_j', 'variation_percent_j']
 
+
 def make_grid(r, n):
     xi = linspace(-r, r, n)
     yi = linspace(-r, r, n)

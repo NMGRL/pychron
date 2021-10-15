@@ -89,8 +89,8 @@ class SettingsRepoManager(GitRepoManager):
                 dest = os.path.join(paths.plotter_options_dir, globalv.username)
                 if os.path.isdir(dest):
                     if not self.confirmation_dialog(
-                        "You are about to overwrite your existing settings\n"
-                        "Are you sure you want to continue?"
+                            "You are about to overwrite your existing settings\n"
+                            "Are you sure you want to continue?"
                     ):
                         return
 
@@ -178,6 +178,5 @@ class SettingsRepoManager(GitRepoManager):
         else:
             ret = []
         return ret
-
 
 # ============= EOF =============================================

@@ -69,5 +69,4 @@ class Icon(ImageResource):
     def _search_path_default(self):
         return icon_search_path
 
-
 # ============= EOF =============================================

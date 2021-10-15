@@ -30,6 +30,7 @@ class YieldOptions(HasTraits):
     denominators = Property(depends_on='numerator')
 
     use_weighted_mean = Bool(True)
+
     @property
     def ratio_str(self):
         return '{}/{}'.format(self.numerator, self.denominator)
@@ -41,7 +42,7 @@ class YieldOptions(HasTraits):
         v = View(Item('standard_ratio', label='Standard'),
                  Item('numerator'),
                  Item('denominator', editor=EnumEditor(name='denominators')),
-                 buttons=['OK','Cancel'],
+                 buttons=['OK', 'Cancel'],
                  title='Yield Options')
         return v
 

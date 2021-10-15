@@ -37,4 +37,3 @@ class SpectrumEditor(InterpretedAgeEditor):
                 ia.preferred_age_kind = 'Integrated'
 
 # ============= EOF =============================================
-

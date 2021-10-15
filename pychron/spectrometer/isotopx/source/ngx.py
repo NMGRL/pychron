@@ -18,7 +18,7 @@ from pychron.spectrometer.isotopx.source.base import IsotopxSource
 
 
 class NGXSource(IsotopxSource):
-    #def __init__(self, *args, **kw):
+    # def __init__(self, *args, **kw):
     #    super(NGXSource, self).__init__(*args, **kw)
 
     def finish_loading(self):

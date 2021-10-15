@@ -79,10 +79,9 @@ class PieClock(QWidget):
         # qp.translate(0,-ro)
         # qp.drawEllipse(-cr2, -cr2, cr, cr)
 
-
     def _get_geometry(self, event):
         rect = event.rect()
-        #print rect.width(), rect.height()
+        # print rect.width(), rect.height()
 
         w = rect.width() - 10
         r = w / 2.
@@ -102,7 +101,7 @@ class PieClock(QWidget):
 
     def _draw_slices(self, event, qp):
 
-        #qp.setPen(QColor(168, 34, 3))
+        # qp.setPen(QColor(168, 34, 3))
         self._set_pen(qp)
 
         cx, cy, w, r = self._get_geometry(event)
@@ -171,7 +170,6 @@ class _PieClockEditor(Editor):
     stop_event = Event
     finish_slice_event = Event
     _clock_thread = None
-
 
     def init(self, parent):
         self.control = self._create_control(parent)

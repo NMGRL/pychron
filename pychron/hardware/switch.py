@@ -261,5 +261,4 @@ class Switch(BaseSwitch):
         if self.actuator:
             return "{}({})".format(self.actuator.__class__.__name__, id(self.actuator))
 
-
 # ============= EOF =============================================

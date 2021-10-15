@@ -17,11 +17,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
-from pychron.core.ui import set_qt
 from pychron.envisage.icon_button_editor import icon_button_editor
-
-set_qt()
-
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Button, Str, Bool, List, String
 from traitsui.api import UItem, TableEditor, HGroup, VSplit, Handler, VGroup
@@ -122,6 +118,5 @@ class CommitDialog(HasTraits):
 
     def valid_paths(self):
         return [pp for pp in self.paths if pp.use]
-
 
 # ============= EOF =============================================

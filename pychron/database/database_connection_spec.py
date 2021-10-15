@@ -19,6 +19,7 @@ from __future__ import absolute_import
 from traits.api import HasTraits, Str, Password
 from traitsui.api import View, Item, VGroup
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -66,6 +67,5 @@ class DBConnectionSpec(HasTraits):
                 Item("password"),
             )
         )
-
 
 # ============= EOF =============================================

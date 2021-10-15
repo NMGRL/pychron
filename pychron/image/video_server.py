@@ -136,7 +136,6 @@ class VideoServer(Loggable):
         from cStringIO import StringIO
 
         while not stop.isSet():
-
             f = video.get_frame(gray=False)
             #            new_frame.clear()
             im = Image.fromarray(array(f))

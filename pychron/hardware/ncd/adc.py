@@ -147,7 +147,7 @@ if __name__ == '__main__':
     logging_setup('adc', use_archiver=False)
 
     # paths.build('_dev')
-    #[254][199][0]
+    # [254][199][0]
     a = ProXRADC(name='ProXRADC')
     # a = MultiBankADCExpansion(name='proxr_adc')
     # a.bootstrap()
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     for i in range(100):
         # for j in range(8):
         #     a.read_channel(j, nbits=8)
-            # time.sleep(0.5)
+        # time.sleep(0.5)
         a.read_bank(0, nbits=12)
         a.read_bank(1, nbits=12)
         a.read_bank(2, nbits=12)

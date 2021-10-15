@@ -23,6 +23,8 @@ from pychron.config_loadable import ConfigLoadable
 # ============= standard library imports ========================
 import math
 import os
+
+
 # ============= local library imports  ==========================
 
 
@@ -96,8 +98,8 @@ class MotionProfiler(ConfigLoadable):
         vel = min(self.max_velocity, vel)
 
         if cnt > 200 or \
-                        acc >= self.max_acceleration or \
-                        dec >= self.max_acceleration:
+                acc >= self.max_acceleration or \
+                dec >= self.max_acceleration:
             acc = min(acc, self.max_acceleration)
             dec = min(dec, self.max_acceleration)
             return vel, acc, dec
@@ -119,7 +121,6 @@ class MotionProfiler(ConfigLoadable):
                     move
                 '''
 
-
                 #                 print 'max transit', sum(times)
                 return self.calculate_corrected_parameters(cnt + 1,
                                                            displacement,
@@ -127,7 +128,7 @@ class MotionProfiler(ConfigLoadable):
 
             # # is ac time less than min
             if times[0] < self.min_acceleration_time or \
-                            times[1] < self.min_acceleration_time:
+                    times[1] < self.min_acceleration_time:
                 '''
                     acc is too fast. calculate new accel so that acctime=min
                 '''

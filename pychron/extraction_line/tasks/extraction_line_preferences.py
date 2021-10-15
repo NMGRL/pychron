@@ -76,7 +76,6 @@ class BaseExtractionLinePreferences(BasePreferencesHelper):
     logging_level = Enum(LOG_LEVEL_NAMES)
 
 
-
 class ExtractionLinePreferences(BaseExtractionLinePreferences):
     use_hardware_update = Bool
     hardware_update_period = Float

@@ -128,5 +128,4 @@ class myTextEditor(BasicEditorFactory):
     multiline = Bool(True)
     auto_set = Bool(True)
 
-
 # ============= EOF =============================================

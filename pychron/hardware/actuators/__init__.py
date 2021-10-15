@@ -77,7 +77,7 @@ def trim_affirmative(func):
 
 
 base = 'pychron.hardware'
-abase='{}.actuators'.format(base)
+abase = '{}.actuators'.format(base)
 
 PACKAGES = dict(AgilentGPActuator='{}.agilent.agilent_gp_actuator'.format(base),
                 AgilentMultifunction='{}.agilent.agilent_multifunction'.format(base),

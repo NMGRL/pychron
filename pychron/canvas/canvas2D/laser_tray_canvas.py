@@ -102,7 +102,6 @@ class ImageOverlay(AbstractOverlay):
         self.request_redraw()
 
 
-
 class LaserTrayCanvas(StageCanvas):
     """
     """
@@ -127,7 +126,6 @@ class LaserTrayCanvas(StageCanvas):
     crosshairs_radius = Range(0.0, 10.0, 1.0)
     crosshairs_offsetx = Float
     crosshairs_offsety = Float
-
 
     aux_show_laser_position = Bool(True)
     aux_show_desired_position = False

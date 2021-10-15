@@ -30,6 +30,7 @@ logging_setup('dcreator')
 from traits.api import HasTraits, Str
 from traitsui.api import View, Item
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -64,4 +65,3 @@ if __name__ == '__main__':
     # d = DeviceFactory(model=DeviceModel())
     # d.configure_traits()
 # ============= EOF =============================================
-

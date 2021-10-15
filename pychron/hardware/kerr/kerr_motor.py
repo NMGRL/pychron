@@ -32,7 +32,6 @@ from pychron.hardware.base_linear_drive import BaseLinearDrive
 from pychron.hardware.core.data_helper import make_bitarray
 from .kerr_device import KerrDevice
 
-
 SIGN = ['negative', 'positive']
 
 

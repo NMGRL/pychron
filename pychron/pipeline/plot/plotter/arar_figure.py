@@ -201,7 +201,6 @@ class BaseArArFigure(SelectionFigure):
     def _apply_aux_plot_options(self, pp, po):
         options = self.options
 
-
         # pp.x_axis.title_font = options.xtitle_font
         # pp.x_axis.tick_label_font = options.xtick_font
         # pp.x_axis.tick_in = options.xtick_in
@@ -227,7 +226,7 @@ class BaseArArFigure(SelectionFigure):
                     alt_axis = PlotAxis(pp, orientation='left' if po.y_axis_right else 'right')
                     alt_axis.tick_label_formatter = lambda x: ''
                     alt_axis.axis_line_visible = False
-                    alt_axis.tick_in = options.ytick_in-1
+                    alt_axis.tick_in = options.ytick_in - 1
                     alt_axis.tick_out = options.ytick_out
 
                     pp.underlays.append(alt_axis)

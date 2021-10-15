@@ -20,6 +20,8 @@ from chaco.abstract_overlay import AbstractOverlay
 from kiva.fonttools import str_to_font
 from traits.api import Str, Bool
 from six.moves import zip
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

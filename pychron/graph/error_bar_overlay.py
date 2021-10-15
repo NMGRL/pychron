@@ -152,5 +152,4 @@ class ErrorBarOverlay(AbstractOverlay):
         self._cache_valid = False
         self.invalidate_and_redraw()
 
-
 # ============= EOF =====================================

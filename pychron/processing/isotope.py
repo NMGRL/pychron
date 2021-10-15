@@ -41,7 +41,7 @@ from pychron.pychron_constants import AUTO_N
 
 
 def fit_abbreviation(
-    fit,
+        fit,
 ):
     f = ""
     if fit:
@@ -146,9 +146,9 @@ class BaseMeasurement(object):
 
     def get_slope(self, n=-1):
         if (
-            self.xs.shape[0]
-            and self.ys.shape[0]
-            and self.xs.shape[0] == self.ys.shape[0]
+                self.xs.shape[0]
+                and self.ys.shape[0]
+                and self.xs.shape[0] == self.ys.shape[0]
         ):
             xs = self.offset_xs
             ys = self.ys
@@ -332,12 +332,12 @@ class IsotopicMeasurement(BaseMeasurement):
                         return f
 
     def set_filter_outliers_dict(
-        self,
-        filter_outliers=True,
-        iterations=1,
-        std_devs=2,
-        use_standard_deviation_filtering=False,
-        use_iqr_filtering=False,
+            self,
+            filter_outliers=True,
+            iterations=1,
+            std_devs=2,
+            use_standard_deviation_filtering=False,
+            use_iqr_filtering=False,
     ):
 
         self.filter_outliers_dict = {
@@ -419,9 +419,9 @@ class IsotopicMeasurement(BaseMeasurement):
         #     return self._value
 
         if (
-            not self.use_stored_value
-            and not self.user_defined_value
-            and self.xs.shape[0] > 1
+                not self.use_stored_value
+                and not self.user_defined_value
+                and self.xs.shape[0] > 1
         ):
             v = self.regressor.predict(0)
 
@@ -439,9 +439,9 @@ class IsotopicMeasurement(BaseMeasurement):
         #     return self._error
 
         if (
-            not self.use_stored_value
-            and not self.user_defined_error
-            and self.xs.shape[0] > 1
+                not self.use_stored_value
+                and not self.user_defined_error
+                and self.xs.shape[0] > 1
         ):
             v = self.regressor.predict_error(0)
             if isnan(v) or isinf(v):
@@ -816,6 +816,5 @@ class Isotope(BaseIsotope):
             return "{} {}".format(self.name, self.get_baseline_corrected_value())
         except (OverflowError, ValueError, AttributeError, TypeError) as e:
             return "{} {}".format(self.name, e)
-
 
 # ============= EOF =============================================

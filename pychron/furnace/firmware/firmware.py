@@ -68,6 +68,7 @@ def run():
     fm = Firmware()
     fm.bootstrap(**vars(parser.parse_args()))
 
+
 if __name__ == '__main__':
     run()
 

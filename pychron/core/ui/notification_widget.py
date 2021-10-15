@@ -22,6 +22,3 @@ from pychron.core.ui.factory import toolkit_factory
 
 NotificationWidget = toolkit_factory('notification_widget', 'NotificationWidget')
 # ============= EOF =============================================
-
-
-

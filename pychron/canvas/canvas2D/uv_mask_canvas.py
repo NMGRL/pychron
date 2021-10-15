@@ -32,4 +32,3 @@ class UVMaskCanvas(SceneCanvas):
         self.scene.load(p)
 
 # ============= EOF =============================================
-

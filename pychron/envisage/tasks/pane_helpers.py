@@ -39,4 +39,3 @@ class ConsolePane(TraitsDockPane):
         return v
 
 # ============= EOF =============================================
-

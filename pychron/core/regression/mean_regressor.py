@@ -25,7 +25,6 @@ from .base_regressor import BaseRegressor
 
 
 class MeanRegressor(BaseRegressor):
-
     _fit = 'average'
 
     def get_exog(self, pts):

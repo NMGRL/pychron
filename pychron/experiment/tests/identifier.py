@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import
 from pychron.experiment.utilities.identifier import get_analysis_type
 

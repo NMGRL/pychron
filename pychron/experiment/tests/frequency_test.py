@@ -112,7 +112,7 @@ class FrequencyTemplateTestCase(unittest.TestCase):
                             runs=self._get_runs())
 
     def test_template_start_idx3(self):
-        self._test_template('s,2,10', ['blank', 'unknown', 'unknown', 'blank', 'unknown','blank'])
+        self._test_template('s,2,10', ['blank', 'unknown', 'unknown', 'blank', 'unknown', 'blank'])
 
     def test_template_start2(self):
         self._test_template('s', ['blank', 'unknown', 'unknown', 'unknown',
@@ -158,15 +158,15 @@ class FrequencyTemplateTestCase(unittest.TestCase):
 
     def test_template_start_idx3(self):
         runs = [Run() for i in range(4)]
-        runs[1].skip=True
+        runs[1].skip = True
         self._test_template('s,2',
                             ['blank', 'unknown', 'unknown', 'unknown', 'blank', 'unknown'],
                             runs=runs)
 
     def test_template_start_idx4(self):
-        runs = [Run() for i in range(4)]+[Run(aliquot=1) for i in range(4)]
-        runs[1].skip=True
-        runs[5].skip=True
+        runs = [Run() for i in range(4)] + [Run(aliquot=1) for i in range(4)]
+        runs[1].skip = True
+        runs[5].skip = True
         self._test_template('s,2',
                             ['blank', 'unknown', 'unknown', 'unknown', 'blank', 'unknown',
                              'blank', 'unknown', 'unknown', 'unknown', 'blank', 'unknown'],
@@ -181,18 +181,19 @@ class FrequencyTemplateTestCase(unittest.TestCase):
 
     def _get_runs3(self):
         return [Run() for i in range(3)] + [Run(analysis_type='air')] + \
-               [Run(aliquot=1) for i in range(3)]+[Run(analysis_type='air')]+\
+               [Run(aliquot=1) for i in range(3)] + [Run(analysis_type='air')] + \
                [Run(aliquot=2) for i in range(3)]
+
     def _get_runs4(self):
         return [Run() for i in range(3)] + \
-               [Run(aliquot=1) for i in range(3)]+\
+               [Run(aliquot=1) for i in range(3)] + \
                [Run(aliquot=2) for i in range(3)]
 
     def _test_template(self, temp, exp, runs=None):
         if runs is None:
             runs = [Run() for i in range(3)]
 
-        for i in reversed(list(frequency_index_gen(runs, temp, ('unknown', ), False, False))):
+        for i in reversed(list(frequency_index_gen(runs, temp, ('unknown',), False, False))):
             r = Run()
             r.analysis_type = 'blank'
             runs.insert(i, r)
@@ -206,6 +207,7 @@ class Run(object):
     analysis_type = 'unknown'
     aliquot = 0
     skip = False
+
     def __init__(self, aliquot=0, analysis_type='unknown'):
         self.aliquot = aliquot
         self.analysis_type = analysis_type
@@ -213,11 +215,11 @@ class Run(object):
 
 class FrequencyTestCase(unittest.TestCase):
     def setUp(self):
-        self.runs=[Run() for i in range(10)]
+        self.runs = [Run() for i in range(10)]
 
     def test_before(self):
         runs = self.runs
-        for i in reversed(list(frequency_index_gen(runs, 2, ('unknown', ), True, False))):
+        for i in reversed(list(frequency_index_gen(runs, 2, ('unknown',), True, False))):
             r = Run()
             r.analysis_type = 'blank'
             runs.insert(i, r)
@@ -231,7 +233,7 @@ class FrequencyTestCase(unittest.TestCase):
 
     def test_after(self):
         runs = self.runs
-        for i in reversed(list(frequency_index_gen(runs, 2, ('unknown', ), False, True))):
+        for i in reversed(list(frequency_index_gen(runs, 2, ('unknown',), False, True))):
             r = Run()
             r.analysis_type = 'blank'
             runs.insert(i, r)
@@ -245,7 +247,7 @@ class FrequencyTestCase(unittest.TestCase):
 
     def test_before_and_after(self):
         runs = self.runs
-        for i in reversed(list(frequency_index_gen(runs, 2, ('unknown', ), True, True))):
+        for i in reversed(list(frequency_index_gen(runs, 2, ('unknown',), True, True))):
             r = Run()
             r.analysis_type = 'blank'
             runs.insert(i, r)
@@ -259,7 +261,7 @@ class FrequencyTestCase(unittest.TestCase):
 
     def test_not_before_or_after(self):
         runs = self.runs
-        for i in reversed(list(frequency_index_gen(runs, 2, ('unknown', ), False, False))):
+        for i in reversed(list(frequency_index_gen(runs, 2, ('unknown',), False, False))):
             r = Run()
             r.analysis_type = 'blank'
             runs.insert(i, r)
@@ -273,7 +275,7 @@ class FrequencyTestCase(unittest.TestCase):
 
     def test_not_before_or_after3(self):
         runs = self.runs
-        for i in reversed(list(frequency_index_gen(runs, 3, ('unknown', ), False, False))):
+        for i in reversed(list(frequency_index_gen(runs, 3, ('unknown',), False, False))):
             r = Run()
             r.analysis_type = 'blank'
             runs.insert(i, r)
@@ -287,7 +289,7 @@ class FrequencyTestCase(unittest.TestCase):
     def test_after_subset1(self):
         runs = self.runs
 
-        for i in reversed(list(frequency_index_gen(runs[:7], 3, ('unknown', ), False, False))):
+        for i in reversed(list(frequency_index_gen(runs[:7], 3, ('unknown',), False, False))):
             r = Run()
             r.analysis_type = 'blank'
             runs.insert(i, r)
@@ -301,7 +303,7 @@ class FrequencyTestCase(unittest.TestCase):
     def test_after_subset2(self):
         runs = self.runs
         sidx = 3
-        for i in reversed(list(frequency_index_gen(runs[sidx:], 3, ('unknown', ), False, True, sidx=sidx))):
+        for i in reversed(list(frequency_index_gen(runs[sidx:], 3, ('unknown',), False, True, sidx=sidx))):
             r = Run()
             r.analysis_type = 'blank'
             runs.insert(i, r)
@@ -314,7 +316,7 @@ class FrequencyTestCase(unittest.TestCase):
     def test_after_subset3(self):
         runs = self.runs
         sidx = 3
-        for i in reversed(list(frequency_index_gen(runs[sidx:], 3, ('unknown', ), False, False, sidx=sidx))):
+        for i in reversed(list(frequency_index_gen(runs[sidx:], 3, ('unknown',), False, False, sidx=sidx))):
             r = Run()
             r.analysis_type = 'blank'
             runs.insert(i, r)

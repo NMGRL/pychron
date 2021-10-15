@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 '''
 Vue Metrix Vue-TEC controller 
 see http://www.vuemetrix.com/support/tech/tec_commands.html
@@ -119,7 +118,6 @@ class VueDiodeControlModule(CoreDevice):
         cmd = 'pa?'
         return self._parse_response(self.ask(cmd, **kw), type_='float')
 
-
     def read_adc(self, _id, **kw):
         '''
 
@@ -208,8 +206,8 @@ class VueDiodeControlModule(CoreDevice):
         v = self.read_laser_voltage_adc(verbose=False)
         if v is not None:
             self.laser_voltage = v
-            
-        return any((a,t,p,v))
+
+        return any((a, t, p, v))
 
     def get_control_group(self):
         g = VGroup(

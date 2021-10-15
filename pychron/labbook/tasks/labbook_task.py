@@ -65,6 +65,7 @@ class LabBookTask(BaseEditorTask):
     date_filter = Enum('Modified', 'Created')
 
     labeler = Instance(Labeler, ())
+
     # tasks protocol
     def activated(self):
         repo = GitRepoManager()
@@ -157,7 +158,7 @@ class LabBookTask(BaseEditorTask):
         names = self.get_editor_names()
 
         if isinstance(self.selected_root, Hierarchy) and \
-                        self.selected_root.path != paths.labbook_dir:
+                self.selected_root.path != paths.labbook_dir:
             root = self.selected_root.path
             # offset = max_path_cnt(root, 'Note ', delimiter=' ', extension='')
             # name = 'Note {:03n}'.format(len(names) + offset)
@@ -222,7 +223,6 @@ class LabBookTask(BaseEditorTask):
         if posts:
             lp, hp = posts
             self.make_hierarchy(lpost=lp, hpost=hp)
-
 
     @on_trait_change('history_model:checkout_event')
     def _handle_checkout(self):
@@ -321,6 +321,3 @@ class LabBookTask(BaseEditorTask):
                                        PaneItem('pychron.labbook.file_history')))
 
 # ============= EOF =============================================
-
-
-

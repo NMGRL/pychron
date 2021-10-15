@@ -52,7 +52,6 @@ if not mimetypes.inited:
 
 
 class DirectoryHandler(BaseHTTPRequestHandler):
-
     extensions_map = mimetypes.types_map.copy()
     extensions_map.update(
         {

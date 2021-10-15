@@ -28,7 +28,7 @@ from traitsui.api import View, UItem, VGroup
 class BasicEntryPane(TraitsTaskPane):
     def traits_view(self):
         return View(VGroup(UItem('ms', style='custom'),
-                          UItem('ed', style='custom')))
+                           UItem('ed', style='custom')))
 
 
 class BasicEntryEditorPane(TraitsDockPane):

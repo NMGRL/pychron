@@ -30,13 +30,15 @@ from pychron.graph.graph import Graph
 from pychron.core.ui.gui import invoke_in_main_thread
 from six.moves import range
 from six.moves import zip
+
+
 class DeflectionCalibraiton(HasTraits):
     def do_calibration(self):
         self.info('Deflection Calibration')
         self._alive = True
-#        for det , mass in [('H2', 'Ar38'), ('H1', 'Ar39'), ('AX', 'Ar40'), ('L1', 41), ('L2', 42)]:
-#        for det , mass in [('H2', 'Ar38'), ('H1', 'Ar39'), ('AX', 'Ar40'), ('L1', 41), ('L2', 42)]:
-#        for det , mass in [('L1', 'PM41'), ('H2', 'Ar38')]:#, ('L1', 40.9), ('L2', 41.8)]:
+        #        for det , mass in [('H2', 'Ar38'), ('H1', 'Ar39'), ('AX', 'Ar40'), ('L1', 41), ('L2', 42)]:
+        #        for det , mass in [('H2', 'Ar38'), ('H1', 'Ar39'), ('AX', 'Ar40'), ('L1', 41), ('L2', 42)]:
+        #        for det , mass in [('L1', 'PM41'), ('H2', 'Ar38')]:#, ('L1', 40.9), ('L2', 41.8)]:
         # for det, mass in [('H2', 'Ar38')]:
         for det, mass in [('CDD', 'Ar39')]:
             '''
@@ -58,13 +60,14 @@ class DeflectionCalibraiton(HasTraits):
         self.info('{} deflection calibration'.format(self.reference_detector))
 
         rgraph = RegressionGraph(window_x=100,
-                                window_y=50)
+                                 window_y=50)
         rgraph.new_plot()
         rgraph.new_series(yer=[])
 
-        root_dir = unique_dir(os.path.join(paths.data_dir, 'magfield'), '{}_def_calibration'.format(self.reference_detector))
-#        if not os.path.exists(root_dir):
-#            os.mkdir(root_dir)
+        root_dir = unique_dir(os.path.join(paths.data_dir, 'magfield'),
+                              '{}_def_calibration'.format(self.reference_detector))
+        #        if not os.path.exists(root_dir):
+        #            os.mkdir(root_dir)
 
         dm = self.data_manager
 
@@ -80,7 +83,8 @@ class DeflectionCalibraiton(HasTraits):
         nstep = (stop - start) / width + 1
 
         npeak_centers = self.dc_npeak_centers
-        self.info('Deflection scan parameters start={}, stop={}, stepwidth={}, nstep={}'.format(start, stop, width, nstep))
+        self.info(
+            'Deflection scan parameters start={}, stop={}, stepwidth={}, nstep={}'.format(start, stop, width, nstep))
         self.info('Reference detector {}'.format(self.reference_detector))
         self.info('Peak centers per step n={}'.format(npeak_centers))
 
@@ -105,10 +109,10 @@ class DeflectionCalibraiton(HasTraits):
                               )
 
                 self.peak_center(graph=graph,
-                                  update_mftable=True,
-                                  update_pos=False,
-                                  center_pos=mass
-                                  )
+                                 update_mftable=True,
+                                 update_pos=False,
+                                 center_pos=mass
+                                 )
 
                 if self.isAlive():
                     # write scan to file
@@ -124,7 +128,8 @@ class DeflectionCalibraiton(HasTraits):
                         dm.write_to_frame(list(d), frame_key=deflection_frame_key)
 
                         # write the centering results to the centering file
-                        dm.write_to_frame([('#{}'.format(x), y) for x, y in  zip(graph.get_data(series=1), graph.get_data(series=1, axis=1))])
+                        dm.write_to_frame([('#{}'.format(x), y) for x, y in
+                                           zip(graph.get_data(series=1), graph.get_data(series=1, axis=1))])
 
             if self.peak_center_results:
                 rgraph.add_datum((ni, np.mean(ds), np.std(ds)))

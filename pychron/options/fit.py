@@ -78,5 +78,4 @@ class FitOptions(AuxPlotFigureOptions):
             for fi in fs:
                 fi.error_type = self.global_error_type
 
-
 # ============= EOF =============================================

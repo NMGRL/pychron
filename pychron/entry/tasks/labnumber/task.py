@@ -44,7 +44,6 @@ ATTRS = (('sample', ''),
          ('j', 0,),
          ('j_err', 0))
 
-
 MANUAL_EDIT_VIEW = okcancel_view(Item('edit_identifier_entry', label='Identifier'), title='Manual Edit Identifier')
 
 

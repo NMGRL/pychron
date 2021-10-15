@@ -21,6 +21,8 @@ from traitsui.basic_editor_factory import BasicEditorFactory
 from pyface.qt.QtGui import QLabel
 # ============= standard library imports ========================
 import random
+
+
 # ============= local library imports  ==========================
 
 
@@ -133,6 +135,7 @@ class CustomLabel(UItem):
     def _bgcolor_name_changed(self):
         self.editor.bgcolor = self.bgcolor_name
 
+
 # ===============================================================================
 # demo
 # ===============================================================================
@@ -167,7 +170,7 @@ class Demo(HasTraits):
                         left_padding=10,
                         color_name='color',
                         bgcolor_name='bgcolor'
-            ),
+                        ),
             resizable=True,
             width=400,
             height=100)
@@ -181,7 +184,6 @@ if __name__ == '__main__':
     #        css = '''QLabel {{ color:{}; font-size:{}px; font-weight:{};}}
     # # '''.format(self.item.color.name(), self.item.size, self.item.weight)
     #        control.setStyleSheet(css)
-
 
     #        control.setAlignment(Qt.AlignCenter)
     #        control.setGeometry(0, 0, self.item.width, self.item.height)

@@ -286,7 +286,7 @@ class GeometryMixin(HasTraits):
         if self.geometry in GEOMETRIES:
             idx = GEOMETRIES.index(self.geometry)
 
-        return idx+1
+        return idx + 1
 
 
 class ArrMeNode(MDDNode, GeometryMixin):

@@ -22,6 +22,8 @@ from traitsui.api import View, Item, HGroup, ListEditor, InstanceEditor
 from numpy import polyval
 from pychron.hardware.agilent.agilent_unit import AgilentUnit
 from six.moves import map
+
+
 # =============local library imports  ==========================
 # from pychron.hardware.adc.analog_digital_converter import AnalogDigitalConverter
 
@@ -223,6 +225,7 @@ class AgilentMultiplexer(AgilentUnit):
 class AgilentSingleADC(AgilentUnit):
     '''
     '''
+
     #    def __init__(self, *args, **kw):
     # super(AgilentADC, self).__init__(*args, **kw)
     #    address = None
@@ -274,16 +277,16 @@ class AgilentSingleADC(AgilentUnit):
             return resp
 
         #        resp = self.ask('DATA:POINTS?')
-            # if resp is not None:
-            #            n = float(resp)
-            #            resp = 0
-            #            if n > 0:
-            #                resp = self.ask('DATA:REMOVE? {}'.format(float(n)))
-            #                resp = self._parse_response_(resp)
+        # if resp is not None:
+        #            n = float(resp)
+        #            resp = 0
+        #            if n > 0:
+        #                resp = self.ask('DATA:REMOVE? {}'.format(float(n)))
+        #                resp = self._parse_response_(resp)
 
-            # self.current_value = resp
-            #            self.read_voltage = resp
-            # return resp
+        # self.current_value = resp
+        #            self.read_voltage = resp
+        # return resp
 
     def _parse_response_(self, r):
         '''
@@ -298,7 +301,6 @@ class AgilentSingleADC(AgilentUnit):
 #        data = args[:-1]
 
 #        return sum([float(d) for d in data]) / self.trigger_count
-
 
 
 # ============= EOF =====================================

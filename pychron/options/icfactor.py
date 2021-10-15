@@ -73,5 +73,4 @@ class ICFactorOptions(RatioSeriesOptions):
         self.aux_plots = pp
         self.selected = []
 
-
 # ============= EOF =============================================

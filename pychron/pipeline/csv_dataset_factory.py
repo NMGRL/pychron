@@ -144,13 +144,13 @@ class CSVIsochronRecord(CSVRecord):
 
     def valid(self):
         return (
-            self.runid
-            and self.ar40
-            and self.a40_err
-            and self.ar39
-            and self.ar39_err
-            and self.ar36
-            and self.ar36_err
+                self.runid
+                and self.ar40
+                and self.a40_err
+                and self.ar39
+                and self.ar39_err
+                and self.ar36
+                and self.ar36_err
         )
 
 
@@ -233,10 +233,10 @@ class CSVDataSetFactoryHandler(Handler):
     def close(self, info, is_ok):
         if info.object.dirty:
             if (
-                not confirm(
-                    None, "You have unsaved changes. Are you sure you want to continue"
-                )
-                == YES
+                    not confirm(
+                        None, "You have unsaved changes. Are you sure you want to continue"
+                    )
+                        == YES
             ):
                 return False
 
@@ -311,10 +311,10 @@ e.g.
         local_path = False
         if not self.repository:
             if YES == confirm(
-                None,
-                "Would you like to save the file locally?\n"
-                "Otherwise please select a repository to save the data "
-                "file",
+                    None,
+                    "Would you like to save the file locally?\n"
+                    "Otherwise please select a repository to save the data "
+                    "file",
             ):
 
                 dlg = FileDialog(action="save as", default_directory=paths.csv_data_dir)
@@ -797,7 +797,6 @@ class CSVRegressionDataSetFactory(CSVDataSetFactory):
 
 
 if __name__ == "__main__":
-
     class DVC:
         def save_csv_dataset(self, name, repo, lines):
             p = "csv_dataset_test.csv"
@@ -809,6 +808,7 @@ if __name__ == "__main__":
 
         def get_csv_datasets(self, repo):
             return ["1", "2", "3", repo]
+
 
     c = CSVDataSetFactory()
     c.dvc = DVC()

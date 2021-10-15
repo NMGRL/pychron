@@ -27,6 +27,7 @@ try:
 except ImportError:
     Sensor = None
 
+
     def read_retry(sensor, pin):
         return None, None
 
@@ -69,6 +70,5 @@ class DHT11(HeadlessConfigLoadable):
     @property
     def temperature(self):
         return self._temperature
-
 
 # ============= EOF =============================================

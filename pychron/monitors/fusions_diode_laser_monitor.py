@@ -19,7 +19,6 @@
 from __future__ import absolute_import
 from traits.api import HasTraits, Bool, Float, Int, Str
 
-
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
@@ -40,6 +39,7 @@ class FusionsDiodeLaserMonitor(FusionsLaserMonitor):
     max_temp = Float(800)
     max_tempmin = Int(0)
     max_tempmax = Int(800)
+
     #    update_max_temp = Property(depends_on = '_update_max_temp')
     #    _update_max_temp = Float(0)
 
@@ -143,7 +143,6 @@ class FusionsDiodeLaserMonitor(FusionsLaserMonitor):
             self.warning("Laser over temperature {:0.2f}".format(lt))
             manager.emergency_shutoff(reason="Over temp {}".format(lt))
             return True
-
 
 # ============= views ===================================
 #    def traits_view(self):

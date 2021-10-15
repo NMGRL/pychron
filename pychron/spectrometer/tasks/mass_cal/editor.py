@@ -40,8 +40,6 @@ class MassCalibrationEditor(BaseTraitsEditor):
         return Graph(container_dict=dict(stack_order='top_to_bottom',
                                          padding=5,
                                          spacing=0
-        ))
-
+                                         ))
 
 # ============= EOF =============================================
-

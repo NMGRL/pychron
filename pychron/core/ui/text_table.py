@@ -50,6 +50,7 @@ class TextCell(HasTraits):
             else:
                 self.text = u'{}'.format(text)
 
+
 #             if self.width:
 #                 self.text='{{:<{}s}}'.format(self.width).format(self.text)
 
@@ -63,6 +64,7 @@ class HtmlCell(TextCell):
         return html
 
         #        for k in kw:
+
 
 #            setattr(self, k, kw[k])
 class BoldCell(TextCell):
@@ -101,8 +103,8 @@ class TextTable(HasTraits):
 
 
 class TextTableAdapter(HasTraits):
-#    def __getattr__(self, attr):
-#        pass
+    #    def __getattr__(self, attr):
+    #        pass
     columns = List
     _cached_table = None
 
@@ -153,10 +155,10 @@ class TextTableAdapter(HasTraits):
                         format=fmt)
 
     def _header_cell_factory(self, args):
-    #        if len(args) == 3:
-    #            ci, _, _ = args
-    #        else:
-    #            ci, _ = args
+        #        if len(args) == 3:
+        #            ci, _, _ = args
+        #        else:
+        #            ci, _ = args
 
         if len(args) == 4:
             ci, _, _, width = args
@@ -180,7 +182,7 @@ class SimpleTextTableAdapter(TextTableAdapter):
         )
         tt = TextTable(border=True,
                        *rs
-        )
+                       )
         return tt
 
 
@@ -192,9 +194,10 @@ class MultiTextTableAdapter(SimpleTextTableAdapter):
     def _make_tables(self, value):
         return [self._make_signal_table(value,
                                         ci
-        )
+                                        )
                 for ci in self.columns
-        ]
+                ]
+
 
 #    def _make_signal_table(self, sg, columns):
 #        rs = [self._make_header_row()]
@@ -217,7 +220,7 @@ class ValueErrorAdapter(TextTableAdapter):
 
     def _make_tables(self, value):
         rs = [self._make_header_row(),
-        ]
+              ]
         #        for vi in value:
         # #            ri = TextRow(
         # #                         self._cell_factory(vi, (None, 'name', str, 10)),
@@ -239,6 +242,5 @@ class RatiosAdapter(ValueErrorAdapter):
         ('Value', 'value', None, 20),
         (u'{}1s'.format(PLUSMINUS), 'error', None, 20),
     ]
-
 
 # ============= EOF =============================================

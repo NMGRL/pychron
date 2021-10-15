@@ -26,4 +26,3 @@ from pychron.loggable import Loggable
 class BaseTagModel(Loggable):
     items = List
 # ============= EOF =============================================
-

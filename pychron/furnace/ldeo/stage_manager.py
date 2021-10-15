@@ -86,7 +86,7 @@ class LDEOFurnaceStageManager(BaseFurnaceStageManager):
         pos = self.stage_map.get_hole_pos(key)
 
         if pos:
-            do_hystersis = self.temp_position and self.temp_position>pos
+            do_hystersis = self.temp_position and self.temp_position > pos
 
             self.temp_hole = key
             self.temp_position = pos

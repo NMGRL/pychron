@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+
+
 def set_toolkit(name):
     from traits.etsconfig.etsconfig import ETSConfig
 

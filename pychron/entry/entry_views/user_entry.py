@@ -113,50 +113,50 @@ class UserEntry(BaseEntry):
 
 # ============= EOF =============================================
 #             # db = self.db
-    #             # name = self.user
-    #             # with db.session_ctx():
-    #             # user = db.get_user(self.original_user)
-    #             # if user:
-    #             #     user.na
+#             # name = self.user
+#             # with db.session_ctx():
+#             # user = db.get_user(self.original_user)
+#             # if user:
+#             #     user.na
 
-    # def add_user(self, user):
-    #     db = self.db
-    #     with db.session_ctx():
-    #         dbuser = db.get_user(user)
-    #         print dbuser
-    #         if dbuser:
-    #             self._edit_user(dbuser)
-    #         else:
-    #             self.user = user
-    #
-    #             self._add_user()
-    #
-    #         return self.user
-    #
-    # def _add_user(self, ):
-    #     self.info('adding user')
-    #     db = self.db
-    #     name = self.user
-    #     if not self._add_user_db(db, name):
-    #         while 1:
-    #             info = self.edit_traits()
-    #             if info.result:
-    #
-    #                 name = self.user
-    #                 if self._add_user_db(db, name):
-    #                     break
-    #                 else:
-    #                     self.warning_dialog('{} already exists'.format(name))
-    #                     # with db.session_ctx():
-    #                     #     if not db.get_user(name):
-    #                     #         c = make_categories(self.categories, self.available_categories)
-    #                     #
-    #                     #         db.add_user(name, email=self.email,
-    #                     #                     category=c,
-    #                     #                     affiliation=self.affiliation)
-    #                     #         break
-    #                     #     else:
-    #                     #         self.warning_dialog('{} already exists'.format(name))
-    #             else:
-    #                 break
-    #
+# def add_user(self, user):
+#     db = self.db
+#     with db.session_ctx():
+#         dbuser = db.get_user(user)
+#         print dbuser
+#         if dbuser:
+#             self._edit_user(dbuser)
+#         else:
+#             self.user = user
+#
+#             self._add_user()
+#
+#         return self.user
+#
+# def _add_user(self, ):
+#     self.info('adding user')
+#     db = self.db
+#     name = self.user
+#     if not self._add_user_db(db, name):
+#         while 1:
+#             info = self.edit_traits()
+#             if info.result:
+#
+#                 name = self.user
+#                 if self._add_user_db(db, name):
+#                     break
+#                 else:
+#                     self.warning_dialog('{} already exists'.format(name))
+#                     # with db.session_ctx():
+#                     #     if not db.get_user(name):
+#                     #         c = make_categories(self.categories, self.available_categories)
+#                     #
+#                     #         db.add_user(name, email=self.email,
+#                     #                     category=c,
+#                     #                     affiliation=self.affiliation)
+#                     #         break
+#                     #     else:
+#                     #         self.warning_dialog('{} already exists'.format(name))
+#             else:
+#                 break
+#

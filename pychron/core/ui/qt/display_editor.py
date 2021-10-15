@@ -56,7 +56,7 @@ class _DisplayEditor(Editor):
         if self.factory.font_name:
             fmt.setFont(QFont(self.factory.font_name))
 
-        #if self.factory.font_size:
+        # if self.factory.font_size:
         #    fmt.setFontPointSize(self.factory.font_size)
         self.control.setCurrentCharFormat(fmt)
 
@@ -67,9 +67,9 @@ class _DisplayEditor(Editor):
 
     # def _font_size_changed(self):
     #     print 'asdfasdf', self.font_size
-        # fmt = self.control.currentCharFormat()
-        # fmt.setFontPointSize(self.font_size)
-        # self.control.setCurrentCharFormat(fmt)
+    # fmt = self.control.currentCharFormat()
+    # fmt.setFontPointSize(self.font_size)
+    # self.control.setCurrentCharFormat(fmt)
 
     def _refresh_fired(self):
         self.update_editor()
@@ -129,7 +129,7 @@ class DisplayEditor(BasicEditorFactory):
     font_name = Str
     max_blocks = Int(50)
 
-    #extended trait names
+    # extended trait names
     bgcolor = Str
     font_size = Str
     clear = Str

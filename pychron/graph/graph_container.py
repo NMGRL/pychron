@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from chaco.plot_containers import HPlotContainer
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -30,6 +31,5 @@ from chaco.plot_containers import HPlotContainer
 class HGraphContainer(HPlotContainer):
     def redraw(self):
         self.invalidate_and_redraw()
-
 
 # ============= EOF =============================================

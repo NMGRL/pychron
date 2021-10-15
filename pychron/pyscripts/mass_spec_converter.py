@@ -102,7 +102,7 @@ def _build_py_cmd_line(r, nindent):
 
 def to_pyscript(base, root, out, name):
     #    print root, out
-    n = root[len(base) + 1 :]
+    n = root[len(base) + 1:]
     if n:
         out = os.path.join(out, n)
 
@@ -115,7 +115,6 @@ def to_pyscript(base, root, out, name):
 
     with open(ip, "r") as in_f:
         with open(op, "w") as out_f:
-
             out_f.write(
                 """
 def main():
@@ -151,6 +150,5 @@ if __name__ == "__main__":
                 continue
             #            print os.path.join(root, f)
             to_pyscript(rt, root, out, f)
-
 
 # ============= EOF =============================================

@@ -18,12 +18,12 @@
 from __future__ import absolute_import
 from pychron.hardware.fusions.fusions_logic_board import FusionsLogicBoard
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 
 class PychronLaser(FusionsLogicBoard):
     pass
-
 
 # ============= EOF =============================================

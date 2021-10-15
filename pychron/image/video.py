@@ -33,7 +33,7 @@ from .cv_wrapper import get_capture_device
 
 
 def convert_to_video(
-    path, fps, name_filter="snapshot%03d.jpg", ffmpeg=None, output=None
+        path, fps, name_filter="snapshot%03d.jpg", ffmpeg=None, output=None
 ):
     """
     path: path to directory containing list of images
@@ -345,6 +345,5 @@ class Video(Image):
     def _convert_to_video(self, path, name_filter="snapshot%03d.jpg", output=None):
         ffmpeg = self.ffmpeg_path
         convert_to_video(path, self.fps, name_filter, ffmpeg, output)
-
 
 # =================== EOF =================================================

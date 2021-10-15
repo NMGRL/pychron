@@ -35,16 +35,16 @@ class VideoTask(BaseManagerTask):
 
     def _default_layout_default(self):
         return TaskLayout(
-#                           top=PaneItem('pychron.extraction_line.gauges'),
-                        left=Splitter(
-                                      PaneItem('pychron.video.source'),
-                                      PaneItem('pychron.video.controls'),
-                                      orientation='vertical'
-                                      ),
+            #                           top=PaneItem('pychron.extraction_line.gauges'),
+            left=Splitter(
+                PaneItem('pychron.video.source'),
+                PaneItem('pychron.video.controls'),
+                orientation='vertical'
+            ),
 
-#                          width=500,
-#                          height=500
-                          )
+            #                          width=500,
+            #                          height=500
+        )
 
     def new_video_dock_pane(self, video=None):
         from pychron.image.tasks.video_pane import VideoDockPane
@@ -58,23 +58,23 @@ class VideoTask(BaseManagerTask):
 
     def create_central_pane(self):
         self.video_pane = VideoPane(
-                                    video=self.video_source,
+            video=self.video_source,
 
-                                    )
+        )
 
         return self.video_pane
 
     def create_dock_panes(self):
         self.source_pane = SourcePane(
-                                      connections=dict(self.available_connections)
-                                      )
+            connections=dict(self.available_connections)
+        )
 
         self.controls_pane = ControlsPane()
         self.video_source.set_url(self.source_pane.source.url())
         panes = [
-                 self.source_pane,
-                 self.controls_pane
-                 ]
+            self.source_pane,
+            self.controls_pane
+        ]
         return panes
 
     @on_trait_change('controls_pane:[show_grids,fps, quality]')

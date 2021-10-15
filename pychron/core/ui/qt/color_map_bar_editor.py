@@ -24,6 +24,7 @@ from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 from numpy import array
 
+
 # ============= local library imports  ==========================
 # from matplotlib.cm import get_cmap
 
@@ -64,7 +65,7 @@ class Bar(QFrame):
         else:
             nv = min(1, max(0, (v - self.low) / (self.high - self.low)))
 
-        vs = self.cmap.map_screen(array([nv,]))[0][:3]
+        vs = self.cmap.map_screen(array([nv, ]))[0][:3]
         self.value = [x * 255 for x in vs]
         self.update()
 

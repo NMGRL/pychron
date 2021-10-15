@@ -43,14 +43,14 @@ class UVAutomatedRunFactory(AutomatedRunFactory):
     factory_view_klass = UVFactoryView
 
     def _get_run_attr(self):
-        #r = super(UVAutomatedRunFactory, self)._get_run_attr()
-        #r.extend(['mask', 'attenuator', ])
-        r=['position',
-                'extract_value', 'extract_units', 'cleanup',
-                'mask','attenuator','reprate',
-                'weight', 'comment',
-                'sample', 'irradiation',
-                'skip', 'mass_spectrometer', 'extract_device']
+        # r = super(UVAutomatedRunFactory, self)._get_run_attr()
+        # r.extend(['mask', 'attenuator', ])
+        r = ['position',
+             'extract_value', 'extract_units', 'cleanup',
+             'mask', 'attenuator', 'reprate',
+             'weight', 'comment',
+             'sample', 'irradiation',
+             'skip', 'mass_spectrometer', 'extract_device']
 
         return r
 

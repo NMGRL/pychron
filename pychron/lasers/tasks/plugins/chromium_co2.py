@@ -27,5 +27,4 @@ class ChromiumCO2Plugin(ChromiumPlugin):
     accelerator = 'Ctrl+Shift+]'
     task_klass = ('pychron.lasers.tasks.laser_task', 'ChromiumCO2Task')
 
-
 # ============= EOF =============================================

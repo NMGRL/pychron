@@ -25,6 +25,7 @@ from six.moves.socketserver import BaseRequestHandler
 
 class MessagingHandler(BaseRequestHandler):
     _verbose = False
+
     def handle(self):
         """
         """
@@ -46,7 +47,7 @@ class MessagingHandler(BaseRequestHandler):
 
             if 'ERROR 6' in response:
                 self.server.increment_repeater_fails()
-#
+            #
             if self._verbose:
                 self.server.info('Sent: %s' % response.strip())
 
@@ -90,7 +91,7 @@ class MessagingHandler(BaseRequestHandler):
             try:
                 totalsent += send(msg)
                 # totalsent += sock.sendto(msg, self.client_address)
-                #print 'totalsent={} total={}'.format(totalsent, mlen)
+                # print 'totalsent={} total={}'.format(totalsent, mlen)
             except socket.error as e:
                 print('exception', e)
                 continue

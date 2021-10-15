@@ -28,7 +28,6 @@ from pychron.envisage.browser.view import SampleBrowserView
 
 
 class SampleBrowserModel(AnalysisBrowserModel):
-
     # time_view_model = Instance(TimeViewModel)
     monitor_sample_name = Str
 

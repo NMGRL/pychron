@@ -50,7 +50,7 @@ class GoogleCalendarPreferencesPane(PreferencesPane):
 
     def traits_view(self):
         v = View(VGroup(Item('client_secret_path'),
-                        Item('calendar', editor=EnumEditor(name='_calendar_names')),))
+                        Item('calendar', editor=EnumEditor(name='_calendar_names')), ))
         return v
 
 

@@ -74,7 +74,6 @@ class DragonFlyPeakPattern(SeekPattern):
         g = self.execution_graph
 
         def new_plot():
-
             imgplot = g.new_plot(padding_right=5, padding_left=5, padding_top=5, padding_bottom=5)
             imgplot.aspect_ratio = 1.0
             imgplot.x_axis.visible = False

@@ -23,7 +23,6 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.envisage.resources import icon
 from pychron.experiment.utilities.conditionals import level_text, level_color
 
-
 GREENBALL = icon('green_ball')
 
 

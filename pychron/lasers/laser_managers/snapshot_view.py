@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from pychron.core.ui import set_qt
+
 set_qt()
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Any, Str
@@ -33,8 +34,8 @@ class SnapshotView(HasTraits):
     remote_path = Str
 
     def set_image(self, l, r, im):
-        self.local_path=l
-        self.remote_path=r
+        self.local_path = l
+        self.remote_path = r
         if im:
             buf = cStringIO.StringIO(im)
             buf.seek(0)
@@ -46,19 +47,16 @@ class SnapshotView(HasTraits):
                 pass
 
     def traits_view(self):
-        v=View(VGroup(VGroup(Readonly('local_path'),
-                      Readonly('remote_path')),
-               VGroup(UItem('image', editor=ImageEditor()))),
-               title='Snapshot')
+        v = View(VGroup(VGroup(Readonly('local_path'),
+                               Readonly('remote_path')),
+                        VGroup(UItem('image', editor=ImageEditor()))),
+                 title='Snapshot')
         return v
 
 
 if __name__ == '__main__':
-    sv=SnapshotView()
+    sv = SnapshotView()
     with open('/Users/ross/Pychrondata_dev/data/snapshots/snapshot-001.jpg', 'rb') as rfile:
-        sv.set_image('a','b', rfile.read())
+        sv.set_image('a', 'b', rfile.read())
     sv.configure_traits()
 # ============= EOF =============================================
-
-
-

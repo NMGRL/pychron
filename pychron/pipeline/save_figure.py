@@ -83,14 +83,17 @@ if __name__ == "__main__":
 
     paths.build("_dev")
 
+
     class A(object):
         def __init__(self):
             self.repository_identifier = random.choice(["Foo", "Bar", "Bat"])
             self.identifier = "1000"
 
+
     ans = [A() for i in range(5)]
     sfm = SaveFigureModel(ans)
     sfv = SaveFigureView(model=sfm)
+
 
     class Demo(HasTraits):
         test = Button
@@ -102,6 +105,7 @@ if __name__ == "__main__":
             sfv.edit_traits()
             # sfv.configure_traits()
             print("fff", sfm.prepare_path())
+
 
     Demo().configure_traits()
 # ============= EOF =============================================

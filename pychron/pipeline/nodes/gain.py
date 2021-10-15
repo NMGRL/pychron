@@ -31,6 +31,7 @@ class GainCalibrationOption(HasTraits):
 class GainCalibrationNode(BaseDVCNode):
     options_klass = GainCalibrationOption
     name = 'Gain Calibration'
+
     # def configure(self):
     #     ms = ['jan', 'obama']
     #     self.options.set_mass_spectrometers(ms)

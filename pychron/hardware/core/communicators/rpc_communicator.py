@@ -25,12 +25,14 @@
 from __future__ import absolute_import
 from pychron.hardware.core.communicators.communicator import Communicator
 
+
 # return to xml-rpc ?
 
 class RpcCommunicator(Communicator):
     '''
     '''
     test_func = None
+
     def load(self, config, path):
         '''
         '''

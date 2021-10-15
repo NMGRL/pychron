@@ -53,7 +53,7 @@ class Designer(HasTraits):
         cp = CanvasParser(p)
 
         for tag in ('laser', 'stage', 'turbo', 'getter',
-                    'ionpump','gauge',
+                    'ionpump', 'gauge',
                     'spectrometer', 'tank', 'pipette'):
             for ei in cp.get_elements(tag):
                 self._set_element_color(ei)

@@ -54,7 +54,7 @@ class PersistenceSpec(HasTraits):
 
     hops_name = Str
     hops_blob = Str
-    
+
     positions = List  # list of position names
     extraction_positions = List  # list of x,y or x,y,z tuples
 

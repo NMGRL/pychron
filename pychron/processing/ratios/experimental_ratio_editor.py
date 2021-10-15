@@ -18,7 +18,6 @@ from pychron.core.ui import set_qt
 
 set_qt()
 
-
 # ============= enthought library imports =======================
 from traits.api import Float, on_trait_change, Property
 from traitsui.api import View, Item, UItem, VGroup, HGroup
@@ -108,6 +107,3 @@ if __name__ == '__main__':
     re.setup()
     re.configure_traits()
 # ============= EOF =============================================
-
-
-

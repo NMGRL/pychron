@@ -29,5 +29,4 @@ class IFurnaceManager(IExtractionDevice):
     def read_setpoint(self, force=False):
         pass
 
-
 # ============= EOF =============================================

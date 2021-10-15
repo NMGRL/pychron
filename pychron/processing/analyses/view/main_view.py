@@ -531,16 +531,16 @@ class MainView(HasTraits):
     def _get_editors(self):
 
         ceditor = myTabularEditor(adapter=self.computed_adapter,
-                                editable=False,
-                                refresh='refresh_needed')
+                                  editable=False,
+                                  refresh='refresh_needed')
 
         eeditor = myTabularEditor(adapter=self.extraction_adapter,
-                                editable=False,
-                                refresh='refresh_needed')
+                                  editable=False,
+                                  refresh='refresh_needed')
 
         meditor = myTabularEditor(adapter=self.measurement_adapter,
-                                editable=False,
-                                refresh='refresh_needed')
+                                  editable=False,
+                                  refresh='refresh_needed')
 
         return ceditor, eeditor, meditor
 

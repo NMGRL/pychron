@@ -52,10 +52,10 @@ def correct(word, possibles):
     lpossibles = [p.lower() for p in possibles]
 
     candidates = (
-        known([word], lpossibles)
-        or known(edits1(word), lpossibles)
-        or known_edits2(word, lpossibles)
-        or [word]
+            known([word], lpossibles)
+            or known(edits1(word), lpossibles)
+            or known_edits2(word, lpossibles)
+            or [word]
     )
 
     result = list(candidates)[0]
@@ -67,6 +67,5 @@ def correct(word, possibles):
     return result
     # print candidates
     # return max(candidates, key=possibles.get)
-
 
 # ============= EOF =============================================

@@ -62,7 +62,7 @@ class MassSpecDestination(BaseExportDestination):
     password = Password
 
     def to_dict(self):
-        return {attr:getattr(self, attr) for attr in ('name','host','username','password')}
+        return {attr: getattr(self, attr) for attr in ('name', 'host', 'username', 'password')}
 
     def traits_view(self):
         v = View(VGroup(Item('name'),
@@ -104,7 +104,7 @@ class ExportSelectionView(HasTraits):
                         UItem('irradiations',
                               editor=ListStrEditor(selected='selected',
                                                    multi_select=True))),
-                 buttons=['OK','Cancel'],
+                 buttons=['OK', 'Cancel'],
                  resizable=True)
         return v
 
@@ -113,6 +113,3 @@ if __name__ == '__main__':
     esv = ExportSelectionView()
     esv.configure_traits()
 # ============= EOF =============================================
-
-
-

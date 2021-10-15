@@ -18,6 +18,8 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 from collections import Counter
+
+
 # ============= local library imports  ==========================
 
 
@@ -40,6 +42,3 @@ cnt = CondCounter()
 reset_conditional_results = cnt.reset_counter
 check_conditional_results = cnt.check_counter
 # ============= EOF =============================================
-
-
-

@@ -30,5 +30,4 @@ class ManometerManager(Manager):
             )
             return 0
 
-
 # ============= EOF =============================================

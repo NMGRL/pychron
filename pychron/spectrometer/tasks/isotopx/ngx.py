@@ -49,7 +49,7 @@ class NGXSpectrometerPlugin(IsotopxSpectrometerPlugin):
         sos = super(NGXSpectrometerPlugin, self)._service_offers_default()
         if sos:
             so = self.service_offer_factory(factory=self._controller_factory,
-                                        protocol=NGXController)
+                                            protocol=NGXController)
             sos.append(so)
 
         return sos

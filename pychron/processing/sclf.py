@@ -146,7 +146,7 @@ def schaen_2020_3youngest(*args, **kw):
 
 
 def schaen_2020_3(
-    ans, alpha=0.05, skew_min=-0.2, skew_max=0.2, find_youngest=False, **kw
+        ans, alpha=0.05, skew_min=-0.2, skew_max=0.2, find_youngest=False, **kw
 ):
     """
         normality and goodness-of-fit parameter
@@ -238,10 +238,12 @@ if __name__ == "__main__":
     xs = normal(size=400)
     es = normal(size=400) * 3
 
+
     class A:
         def __init__(self, x, e):
             self.age = x
             self.age_err = e
+
 
     ans = [A(xi, ei) for xi, ei in zip(xs, es)]
     ans = sorted(ans, key=attrgetter("age"))

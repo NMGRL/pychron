@@ -17,7 +17,6 @@
 http://www.scipy.org/Cookbook/Finding_Convex_Hull
 '''
 
-
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================

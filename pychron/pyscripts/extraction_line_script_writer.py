@@ -23,7 +23,6 @@ from pychron.core.ui import set_qt
 
 set_qt()
 
-
 # ============= enthought library imports =======================
 from traits.api import (
     HasTraits,
@@ -205,7 +204,7 @@ class ExtractionLineScriptWriter(Loggable):
             ds = []
             for li in fileiter(rfile):
                 if not has__docstring and (
-                    li.startswith('"""') or li.startswith("'''")
+                        li.startswith('"""') or li.startswith("'''")
                 ):
                     if _docstring_started:
                         has__docstring = True
@@ -333,6 +332,7 @@ if __name__ == "__main__":
     from traitsui.menu import Action
     from pychron.core.ui.code_editor import PyScriptCodeEditor
 
+
     class ActionsAdapter(TabularAdapter):
         columns = [("Name", "name"), ("Value", "value")]
 
@@ -343,6 +343,7 @@ if __name__ == "__main__":
             elif self.item.name == "close":
                 color = "lightcoral"
             return color
+
 
     class ExtractionLineScriptWriterView(Controller):
         model = ExtractionLineScriptWriter
@@ -361,7 +362,7 @@ if __name__ == "__main__":
                     Item(
                         "record_valve_actions",
                         tooltip="Should valve actuations be added to the action list. "
-                        'You can also hold down the "Shift" key to suppress addition',
+                                'You can also hold down the "Shift" key to suppress addition',
                         label="Record Actions",
                     )
                 ),
@@ -398,6 +399,7 @@ if __name__ == "__main__":
                 height=700,
             )
             return v
+
 
     # paths.build('_dev')
     ew = ExtractionLineScriptWriter()

@@ -110,5 +110,4 @@ class Status(Base, BaseMixin):
     Message = Column(BLOB)
     LastUpdate = Column(DateTime, default=func.now())
 
-
 # ============= EOF =============================================

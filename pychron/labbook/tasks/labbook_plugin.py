@@ -43,6 +43,3 @@ class LabBookPlugin(BaseTaskPlugin):
         return [LabBookPreferencesPane]
 
 # ============= EOF =============================================
-
-
-

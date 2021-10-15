@@ -24,6 +24,8 @@ import math
 """
     http://stackoverflow.com/questions/10991991/pyside-easier-way-of-updating-gui-from-another-thread
 """
+
+
 #
 #
 # class InvokeEvent(QtCore.QEvent):
@@ -65,7 +67,7 @@ def convert_color(color, output='rgbF'):
         args = rgb[:3]
     elif output == 'rgbaF':
         args = rgb
-    return [x/255. for x in args]
+    return [x / 255. for x in args]
 
 
 def wake_screen():
@@ -93,6 +95,5 @@ def wake_screen():
         q.setPos(x, y)
         time.sleep(0.1)
     q.setPos(ox, oy)
-
 
 # ============= EOF =============================================

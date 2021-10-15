@@ -106,14 +106,14 @@ class PipelineTemplate(HasTraits):
             self.icon = icon(ico)
 
     def render(
-        self,
-        application,
-        pipeline,
-        bmodel,
-        iabmodel,
-        dvc,
-        clear=True,
-        exclude_klass=None,
+            self,
+            application,
+            pipeline,
+            bmodel,
+            iabmodel,
+            dvc,
+            clear=True,
+            exclude_klass=None,
     ):
         # if first node is an unknowns node
         # render into template
@@ -211,6 +211,5 @@ class PipelineTemplate(HasTraits):
 
             node.trait_set(recaller=recaller)
         return node
-
 
 # ============= EOF =============================================

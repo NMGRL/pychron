@@ -132,7 +132,9 @@ if __name__ == "__main__":
                 # for ci in runs:
                 #     print ci.identifier, ci.experiment_identifier
 
+
     from traits.api import Button
+
 
     class Demo(HasTraits):
         test = Button
@@ -142,6 +144,7 @@ if __name__ == "__main__":
 
         def _test_fired(self):
             main()
+
 
     d = Demo()
     d.configure_traits()

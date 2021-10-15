@@ -22,10 +22,12 @@ from pyface.qt.QtGui import QDoubleSpinBox
 from PySide import QtCore
 from traitsui.qt4.range_editor import SimpleSpinEditor
 from traitsui.basic_editor_factory import BasicEditorFactory
+
+
 # ============= local library imports  ==========================
 
 class _DoubleSpinnerEditor(SimpleSpinEditor):
-    def init (self, parent):
+    def init(self, parent):
         """ Finishes initializing the editor by creating the underlying toolkit
             widget.
         """
@@ -49,8 +51,9 @@ class _DoubleSpinnerEditor(SimpleSpinEditor):
         self.control.setMaximum(high)
         self.control.setValue(self.value)
         QtCore.QObject.connect(self.control,
-                QtCore.SIGNAL('valueChanged(int)'), self.update_object)
+                               QtCore.SIGNAL('valueChanged(int)'), self.update_object)
         self.set_tooltip()
+
 
 class DoubleSpinnerEditor(BasicEditorFactory):
     low = Float

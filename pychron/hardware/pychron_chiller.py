@@ -47,5 +47,4 @@ class PychronChiller(CoreDevice):
     def set_setpoint(self, v):
         pass
 
-
 # ============= EOF =============================================

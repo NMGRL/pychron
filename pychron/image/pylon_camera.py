@@ -112,5 +112,4 @@ class PylonCamera(Loggable):
             self.load_configuration(yd)
         self._setting_config = False
 
-
 # ============= EOF =============================================

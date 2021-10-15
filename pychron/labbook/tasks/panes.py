@@ -132,6 +132,3 @@ class NotesBrowserPane(TraitsDockPane):
         return v
 
 # ============= EOF =============================================
-
-
-

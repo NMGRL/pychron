@@ -178,7 +178,8 @@ def xy_func(p):
 # XY_REGEX = (re.compile('[-,\d+].*\d*,[-,\d+].*\d*'), None, None)
 # XY_REGEX = (re.compile('([-\d+]+.\d+(,[-\d+]+.\d+){1,3})(;([-\d+]+.\d+(,[-\d+]+.\d+){1,3}))*$'), xy_func, None, 'XY')
 XY_REGEX = (
-re.compile(r'([-\d+]+(\.\d)+(,[-\d+]+(\.\d)+){1,2})(;([-\d+]+(\.\d)+(,[-\d+]+(\.\d+)){1,2}))*$'), xy_func, None, 'XY')
+    re.compile(r'([-\d+]+(\.\d)+(,[-\d+]+(\.\d)+){1,2})(;([-\d+]+(\.\d)+(,[-\d+]+(\.\d+)){1,2}))*$'), xy_func, None,
+    'XY')
 
 DRILL_REGEX = re.compile(r'^(?P<id>[dD]\d+)$')
 POINT_REGEX = re.compile(r'^(?P<id>[pP]\d+)$')

@@ -52,7 +52,6 @@ class LaserCalibrationTask(BaseLaserTask):
 
     tool_bars = [SToolBar(PyrometerCalibrationAction(), image_size=(16, 16))]
 
-
     def _get_execute_label(self):
         return 'Stop' if self.executing else 'Start'
 
@@ -61,10 +60,10 @@ class LaserCalibrationTask(BaseLaserTask):
             left=Splitter(
                 PaneItem('pychron.laser_calibration.execute',
                          width=200
-                ),
+                         ),
                 PaneItem('pychron.laser_calibration.control',
                          width=200
-                ),
+                         ),
                 orientation='vertical'
             )
         )
@@ -81,24 +80,24 @@ class LaserCalibrationTask(BaseLaserTask):
     def get_power_maps(self):
         ps = self.open_file_dialog(action='open files',
                                    default_directory=paths.power_map_dir
-        )
+                                   )
         return ps
 
     def open_power_maps(self, ps):
 
-    #         ps = self.open_file_dialog(action='open files',
-    #                                       default_directory=paths.power_map_dir
-    #                                       )
-    #         p = '/Users/ross/Pychrondata_demo/data/scans/powermap-2013-07-17001.hdf5'
-    #        p = '/Users/ross/Sandbox/powermap/powermap-2013-07-26005.hdf5'
-    #         p = '/Users/ross/Sandbox/powermap/powermap-2013-07-27008.hdf5'
-    #        p = '/Users/ross/Sandbox/powermap/Archive 2/powermap-2013-07-31001.hdf5'
-    #         p = '/Users/ross/Sandbox/powermap/Archive 2/powermap-2013-07-31002.hdf5'
-    #         p = '/Users/ross/Sandbox/powermap-2013-07-26005.hdf5'
+        #         ps = self.open_file_dialog(action='open files',
+        #                                       default_directory=paths.power_map_dir
+        #                                       )
+        #         p = '/Users/ross/Pychrondata_demo/data/scans/powermap-2013-07-17001.hdf5'
+        #        p = '/Users/ross/Sandbox/powermap/powermap-2013-07-26005.hdf5'
+        #         p = '/Users/ross/Sandbox/powermap/powermap-2013-07-27008.hdf5'
+        #        p = '/Users/ross/Sandbox/powermap/Archive 2/powermap-2013-07-31001.hdf5'
+        #         p = '/Users/ross/Sandbox/powermap/Archive 2/powermap-2013-07-31002.hdf5'
+        #         p = '/Users/ross/Sandbox/powermap-2013-07-26005.hdf5'
         if ps:
             for p in ps:
                 try:
-                #                p = '/Users/ross/Sandbox/powermap/Archive 2/powermap-2013-07-31{:03n}.hdf5'.format(i)
+                    #                p = '/Users/ross/Sandbox/powermap/Archive 2/powermap-2013-07-31{:03n}.hdf5'.format(i)
                     editor = PowerMapEditor(
                         #                                     name='Power Map {:03n}'.format(n + 1),
                         name='Power Map {}'.format(os.path.basename(p))
@@ -131,8 +130,9 @@ class LaserCalibrationTask(BaseLaserTask):
         self._open_editor(editor)
 
     def new_pid_tuner(self):
-        editor=PIDTuningEditor(name='PID Tuning')
+        editor = PIDTuningEditor(name='PID Tuning')
         self._open_editor(editor)
+
     # ===============================================================================
     # handlers
     # ===============================================================================
@@ -165,7 +165,6 @@ class LaserCalibrationTask(BaseLaserTask):
             self.new_power_map()
             self.execute_active_editor()
 
-
     def _active_editor_changed(self):
         if self.active_editor:
             if hasattr(self.active_editor, 'editor'):
@@ -178,11 +177,9 @@ class LaserCalibrationTask(BaseLaserTask):
             self.executing = False
             self.active_editor.was_executed = True
 
-
 # ===============================================================================
 # action handlers
 # ===============================================================================
-
 
 
 # class FusionsCO2Task(FusionsTask):

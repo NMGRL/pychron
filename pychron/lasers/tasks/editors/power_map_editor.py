@@ -34,6 +34,8 @@ from pychron.managers.data_managers.h5_data_manager import H5DataManager
 # from pychron.graph.contour_graph import ContourGraph
 # from chaco.plot_containers import HPlotContainer
 from pychron.lasers.tasks.editors.laser_editor import LaserEditor
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -74,7 +76,7 @@ class PowerMapEditor(LaserEditor):
     editor = Instance(PowerMapControls, ())
     mapper = Instance(PowerMapper, ())
     completed = DelegatesTo('mapper')
-    #was_executed = False
+    # was_executed = False
 
     processor = Instance(PowerMapProcessor)
 
@@ -132,7 +134,7 @@ class PowerMapEditor(LaserEditor):
                    Item('power', style='readonly'),
                    Item('percent_threshold', label='% Threshold'),
                    visible_when='was_executed'
-            ),
+                   ),
             UItem('component', editor=ComponentEditor()),
             resizable=True
         )

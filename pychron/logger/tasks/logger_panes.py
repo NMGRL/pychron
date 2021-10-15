@@ -19,6 +19,8 @@ from __future__ import absolute_import
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import List, Any
 from traitsui.api import View, UItem, ListEditor
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 

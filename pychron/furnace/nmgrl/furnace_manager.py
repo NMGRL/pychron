@@ -109,6 +109,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         if self.camera:
             ret = self.camera.get_image_data() is not None
         return ret, err
+
     #
     # def test_furnace_api(self):
     #     self.info('testing furnace api')
@@ -727,6 +728,5 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         # m = NMGRLMagnetDumper(name='magnets', configuration_dir_name='furnace')
         m = NMGRLRotaryDumper(name='dumper', configuration_dir_name='furnace')
         return m
-
 
 # ============= EOF =============================================

@@ -58,7 +58,7 @@ class DetectorICView(HasTraits):
         save_csv(self.record_id, self.items)
 
     def traits_view(self):
-        v = View(VGroup(HGroup(spring,UItem('export_button')),
+        v = View(VGroup(HGroup(spring, UItem('export_button')),
                         UItem('items', editor=TabularEditor(adapter=self.tabular_adapter)),
                         VGroup(
                             UItem('helpstr', style='readonly'), show_border=True, label='Info.')),
@@ -76,6 +76,7 @@ if __name__ == '__main__':
         def get_corrected_value(self):
             return ufloat(self.value, 0.1)
 
+
     class MockAnalysis():
         isotopes = {k: MockIsotope(k, d, i + 1.0) for i, (k, d) in
                     enumerate([('Ar40H1', 'H1'), ('Ar40AX', 'AX'), ('Ar40L1', 'L1'), ('Ar39', 'CDD')])}
@@ -83,6 +84,7 @@ if __name__ == '__main__':
         @property
         def isotope_keys(self):
             return [i for i in self.isotopes]
+
 
     an = MockAnalysis()
 

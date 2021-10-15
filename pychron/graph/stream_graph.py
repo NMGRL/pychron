@@ -188,7 +188,7 @@ class StreamGraph(Graph):
         dl = self.data_limits[plotid]
 
         if self.force_track_x_flag or (
-            track_x and (self.track_x_min or self.track_x_max)
+                track_x and (self.track_x_min or self.track_x_max)
         ):
             self._set_xlimits(nx, plotid)
 
@@ -252,6 +252,7 @@ if __name__ == "__main__":
     import random
     from traitsui.view import View
 
+
     class Demo(HasTraits):
         test = Button
 
@@ -277,6 +278,7 @@ if __name__ == "__main__":
         def traits_view(self):
             v = View("test")
             return v
+
 
     d = Demo()
 

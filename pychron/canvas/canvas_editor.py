@@ -261,5 +261,4 @@ class CanvasEditor(Loggable):
         obj.request_layout()
         self.canvas.invalidate_and_redraw()
 
-
 # ============= EOF =============================================

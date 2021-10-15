@@ -54,5 +54,4 @@ class GISNode(FigureNode):
         state.editors.append(editor)
         self.editor = editor
 
-
 # ============= EOF =============================================

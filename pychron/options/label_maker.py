@@ -183,7 +183,6 @@ class TitleTemplateView(BaseTemplateView):
             HGroup(Item("delimiter", editor=EnumEditor(name="delimiters"))),
         )
 
-
 # if __name__ == '__main__':
 #     # lm = TitleMaker()
 #     lm = LabelTemplater()

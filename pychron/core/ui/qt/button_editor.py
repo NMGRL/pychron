@@ -22,6 +22,8 @@ from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.button_editor import CustomEditor
 from traitsui.ui_traits import AView, Image
 import six
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -85,6 +87,7 @@ class ButtonEditor(BasicEditorFactory):
     traits_view = View(['label', 'value', '|[]'])
 
     flat = Bool(False)
+
     # ---------------------------------------------------------------------------
     #  Implementation of the 'value' property:
     # ---------------------------------------------------------------------------
@@ -104,6 +107,3 @@ class ButtonEditor(BasicEditorFactory):
                     pass
 
 # ============= EOF =============================================
-
-
-

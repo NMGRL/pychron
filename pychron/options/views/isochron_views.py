@@ -147,7 +147,6 @@ class InverseIsochronMainOptions(TitleSubOptions):
 
 class InverseIsochronInset(SubOptions):
     def traits_view(self):
-
         xbounds = BorderHGroup(Item('inset_xmin', label='Min.'),
                                Item('inset_xmax', label='Max.'),
                                label='X Limits')

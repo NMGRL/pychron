@@ -825,7 +825,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 sample_project_name = sample.project.name if sample.project else None
                 #            print sample_material_name, sample_project_name, materialname, projectname
                 if sample_material_name != materialname and \
-                                sample_project_name != projectname:
+                        sample_project_name != projectname:
                     sample = self._add_sample(name, project, material)
             return sample
 

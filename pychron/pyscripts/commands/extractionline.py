@@ -23,6 +23,7 @@ from traitsui.api import Item
 from pychron.pyscripts.commands.core import Command
 from pychron.pyscripts.commands.valve import ValveCommand
 
+
 class Lock(Command):
     pass
 

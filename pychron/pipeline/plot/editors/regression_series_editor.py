@@ -43,15 +43,15 @@ class RegressionSeriesEditor(FigureEditor):
     #
     #     self._set_name()
 
-        # def get_component(self, ans, plotter_options):
-        # if plotter_options is None:
-        #         pom = self.plotter_options_manager_klass()
-        #         plotter_options = pom.plotter_options
-        #
-        #     model = self.model_klass(plot_options=plotter_options)
-        #     model.analyses = ans
-        #     iv = FigureContainer(model=model)
-        #
-        #     return model, iv.component
+    # def get_component(self, ans, plotter_options):
+    # if plotter_options is None:
+    #         pom = self.plotter_options_manager_klass()
+    #         plotter_options = pom.plotter_options
+    #
+    #     model = self.model_klass(plot_options=plotter_options)
+    #     model.analyses = ans
+    #     iv = FigureContainer(model=model)
+    #
+    #     return model, iv.component
 
 # ============= EOF =============================================

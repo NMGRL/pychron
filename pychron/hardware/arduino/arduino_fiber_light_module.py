@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
@@ -25,6 +24,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from pychron.hardware.core.arduino_core_device import ArduinoCoreDevice
+
 '''
 Arduino Sketch fiberlightbox
 
@@ -83,7 +83,7 @@ class ArduinoFiberLightModule(ArduinoCoreDevice):
 
     def _build_command(self, cmd, value=None):
         if value is not None:
-            return'{},{};'.format(cmd, value)
+            return '{},{};'.format(cmd, value)
         else:
             return '{};'.format(cmd)
 

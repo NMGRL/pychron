@@ -39,6 +39,3 @@ class UsersPlugin(BaseTaskPlugin):
         return t
 
 # ============= EOF =============================================
-
-
-

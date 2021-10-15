@@ -21,7 +21,6 @@ from pychron.lasers.tasks.panes.client import NonPychronClientPane
 
 
 class AblationCO2ClientPane(NonPychronClientPane):
-
     pass
 
 # ============= EOF =============================================

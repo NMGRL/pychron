@@ -23,6 +23,3 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup
 
 
 # ============= EOF =============================================
-
-
-

@@ -167,7 +167,7 @@ class DACScanner(BaseScanner):
 
     pattributes = ('step', 'scan_min_dac', 'scan_max_dac', 'min_dac', 'max_dac')
     tool = None
-    
+
     def __init__(self, *args, **kw):
         super(DACScanner, self).__init__(*args, **kw)
         # graph = Graph()
@@ -238,7 +238,7 @@ class DACScanner(BaseScanner):
             isos, mws, dacs, coeffs = mft[self.spectrometer.reference_detector]
         except KeyError:
             return
-        
+
         d = (dacs[1] - dacs[0]) / (mws[1] - mws[0])
 
         o = MFTableOverlay(dacs=list(dacs),

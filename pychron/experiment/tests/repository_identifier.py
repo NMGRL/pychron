@@ -88,12 +88,14 @@ class ExperimentIdentifierTestCase(unittest.TestCase):
         d.retroactive_repository_identifiers(spec)
 
         self.assertListEqual(d.associations, [
-                                              ('foo','10000-00'),
-                                              ('foo', 'bu-FD-j-01'),
-                                              ('foo','bu-FD-j-02'),
-                                              ('bar', '20000-00'),
-                                              ('bar','20000-01'),
-                                              ('bar','bu-FD-j-03'),
-                                              ])
+            ('foo', '10000-00'),
+            ('foo', 'bu-FD-j-01'),
+            ('foo', 'bu-FD-j-02'),
+            ('bar', '20000-00'),
+            ('bar', '20000-01'),
+            ('bar', 'bu-FD-j-03'),
+        ])
+
+
 if __name__ == '__main__':
     unittest.main()

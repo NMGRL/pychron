@@ -176,7 +176,7 @@ class ScanableDevice(ViewableDevice):
         self._scanning = True
         self.info('Starting scan')
 
-        d = self.scan_width * 60 #* 1000/self.scan_period
+        d = self.scan_width * 60  # * 1000/self.scan_period
         # print self.scan_width, self.scan_period
         if self.graph_scan_data:
             self.info('Graph recording enabled')

@@ -142,7 +142,6 @@ class Archiver(HasTraits):
             self.warning('Archiving failed')
             self.warning(e)
 
-
 # if __name__ == '__main__':
 # # from pychron.core.helpers.logger_setup import logging_setup, simple_logger, new_logger
 #
@@ -151,5 +150,3 @@ class Archiver(HasTraits):
 #     )
 #     c.root = '/Users/ross/Sandbox/video_test'
 #     c.clean()
-
-

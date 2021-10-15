@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from __future__ import print_function
@@ -58,7 +57,7 @@ class ATLLaserControlUnit(CoreDevice):
     _reprate = Int
     _was_fired = False
 
-    energies=Array
+    energies = Array
     stablization_mode = None
 
     #    _timer = None
@@ -135,7 +134,7 @@ class ATLLaserControlUnit(CoreDevice):
 
         self._burst_shot = self.get_nburst()
 
-        #reading reprate not working correctly. check for a new ATL API
+        # reading reprate not working correctly. check for a new ATL API
         self._reprate = self.get_reprate()
 
         v = 55
@@ -161,7 +160,7 @@ class ATLLaserControlUnit(CoreDevice):
             cmd = self._build_command(1000, int(p, 2))
             self._send_command(cmd, lock=False)
 
-            #v=make_bitarray(v, width=16)
+            # v=make_bitarray(v, width=16)
             cmd = self._build_command(1003, v)
             self._send_command(cmd, lock=False)
 
@@ -215,7 +214,7 @@ class ATLLaserControlUnit(CoreDevice):
         self.debug('get reprate')
         resp = self._send_query(1001, 1, verbose=verbose)
         v = -1
-        if resp is not None:# and len(resp) == 4:
+        if resp is not None:  # and len(resp) == 4:
             print(resp, len(resp))
             v = int(resp, 16)
 
@@ -249,7 +248,7 @@ class ATLLaserControlUnit(CoreDevice):
             return int(ps[16 - (bit + 1)])
 
     def get_process_status(self):
-        #ps = '0000000000000000'
+        # ps = '0000000000000000'
         r = self._send_query(1000, 1)
         self.debug('get process status {}'.format(r))
         if r is not None:
@@ -304,14 +303,14 @@ class ATLLaserControlUnit(CoreDevice):
     # gas handling
     # ===============================================================================
     def do_auto_vac(self):
-    #        self.start_auto_vac()
+        #        self.start_auto_vac()
         # wait until idle
         self.wait_for_idle()
 
     #        self.wait_for_gwr()
 
     def do_auto_gas_exchange(self):
-    #        self.start_auto_gas_exchange()
+        #        self.start_auto_gas_exchange()
         self.wait_for_idle()
 
     #        self.wait_for_gwr()
@@ -383,7 +382,7 @@ class ATLLaserControlUnit(CoreDevice):
             vs = self._parse_response(vs, 4)
             if vs is not None:
                 self.energy_readback = vs[0] / 10.
-                self.energies=hstack((self.energies[:-5], [self.energy_readback]))
+                self.energies = hstack((self.energies[:-5], [self.energy_readback]))
 
                 self.pressure_readback = vs[1]
                 self.status_readback = STATUS[vs[2]]
@@ -466,20 +465,20 @@ class ATLLaserControlUnit(CoreDevice):
         self.tell(cmd, verbose=verbose)
 
     def _clean_response(self, r):
-    #        print len(r)
+        #        print len(r)
         handshake = r[:4]
 
-        #print handshake,handshake=='a'+DLE+'0'+STX
+        # print handshake,handshake=='a'+DLE+'0'+STX
         if handshake == 'a' + DLE + '0' + STX:
 
             chksum = computeBCC(r[4:-1])
 
-            #print 'a={} b={} c={} d={}'.format(chksum, ord(r[-1]), chr(chksum),chr(chksum) == r[-1])
+            # print 'a={} b={} c={} d={}'.format(chksum, ord(r[-1]), chr(chksum),chr(chksum) == r[-1])
             if chr(chksum) == r[-1]:
                 return r[8:-2]
 
     def _parse_response(self, resp, l):
-    #        print resp, l, len(resp),l*4
+        #        print resp, l, len(resp),l*4
         if resp is not None and len(resp) == l * 4:
             return [int(resp[i:i + 4], 16) for i in range(0, len(resp) - 3, 4)]
 
@@ -494,6 +493,7 @@ class ATLLaserControlUnit(CoreDevice):
 
     def _set_reprate(self, v):
         self.set_reprate(v)
+
 
 #    def _parse_parameter_answers(self, resp, rstartaddr, answer_len):
 #        '''

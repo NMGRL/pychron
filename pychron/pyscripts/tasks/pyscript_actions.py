@@ -54,6 +54,7 @@ class OpenHopsEditorAction(HopsEditorAction):
 class NewHopsEditorAction(HopsEditorAction):
     description = 'Open new peak hop editor'
     name = 'New Peak Hops'
+
     # image = icon('document-new')
 
     def _perform(self, m):

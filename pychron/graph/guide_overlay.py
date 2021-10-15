@@ -110,5 +110,4 @@ class GuideOverlay(AbstractOverlay):
                     l.position = self.label_position
                     l.draw(gc)
 
-
 # ============= EOF =====================================

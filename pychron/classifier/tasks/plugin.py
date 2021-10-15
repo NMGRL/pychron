@@ -38,7 +38,7 @@ class ClassifierPlugin(BaseTaskPlugin):
         # self.debug('DDDDD {}'.format(p))
         so = self.service_offer_factory(protocol=IsotopeClassifier,
                                         factory=IsotopeClassifier,
-                                        properties={'dvc':  DVC(application=self.application)})
+                                        properties={'dvc': DVC(application=self.application)})
 
         return [so, ]
 

@@ -647,5 +647,4 @@ class ParameterTbl(Base, IDMixin):
 class UnitsTbl(Base, IDMixin):
     name = stringcolumn(40)
 
-
 # ============= EOF =============================================

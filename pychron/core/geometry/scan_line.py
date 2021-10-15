@@ -31,15 +31,17 @@ from six.moves import map
 from six.moves import range
 from six.moves import zip
 
+
 # from pylab import plot, show, text
 
 def slope(p1, p2):
     dx = float((p2[0] - p1[0]))
     dy = float((p2[1] - p1[1]))
     if dx and dy:
-        return  dx / dy  # 1/m
+        return dx / dy  # 1/m
     else:
         return 0
+
 
 def make_ET(points):
     '''
@@ -54,6 +56,7 @@ def make_ET(points):
         exmin = p1[0] if p1[1] < p2[1] else p2[0]
         ET.append((m, eymin, exmin, eymax, i / 2))
     return ET
+
 
 def split_vertices(points):
     '''
@@ -86,12 +89,14 @@ def split_vertices(points):
     npts = npts[1:] + npts[:1]
     return npts
 
+
 def get_yminmax(points):
     poly = np.asarray(points)
     ys = poly[:, 1]
     ymin = np.min(ys)
     ymax = np.max(ys)
     return list(map(int, (ymin, ymax)))
+
 
 def make_scan_lines(points, step=1):
     '''
@@ -107,8 +112,7 @@ def make_scan_lines(points, step=1):
 
     # make points with replicates
     npts = points[:1] + [px for pi in points[1:]
-                                for px in (pi, pi)] + points[:1]
-
+                         for px in (pi, pi)] + points[:1]
 
     ymin, ymax = get_yminmax(points)
     scanlines = np.arange(ymin, ymax, step)
@@ -130,7 +134,7 @@ def make_scan_lines(points, step=1):
 
     # make blank xintersections table
     xintersections = [[None for _ in range(len(MET))]
-                        for _ in range(len(scanlines))]
+                      for _ in range(len(scanlines))]
 
     for m, eymin, exmin, eymax, ei in MET:
         for xint, si in zip(xintersections, scanlines):
@@ -140,9 +144,9 @@ def make_scan_lines(points, step=1):
     xs = [sorted([ii for ii in xi if ii is not None]) for xi in xintersections]
     return list(zip(scanlines, xs))
 
+
 def make_raster_polygon(points, step=1,
                         zigzag=False):
-
     lines = make_scan_lines(points, step)
 
     npoints = []
@@ -151,9 +155,9 @@ def make_raster_polygon(points, step=1,
     # loop thru each scan line
     for yi, xs in lines:
         # traverse each x-intersection pair
-#        n = len(xs)
-#        if n % 2 != 0:
-#            xs = sorted(list(set(xs)))
+        #        n = len(xs)
+        #        if n % 2 != 0:
+        #            xs = sorted(list(set(xs)))
 
         n = len(xs)
         if n <= 1:
@@ -161,7 +165,7 @@ def make_raster_polygon(points, step=1,
 
         if not zigzag and direction == -1:
             xs = xs[::-1]
-#            xs = list(reversed(xs))
+        #            xs = list(reversed(xs))
 
         for i in range(0, n, 2):
             try:
@@ -178,16 +182,17 @@ def make_raster_polygon(points, step=1,
 
     return npoints
 
+
 def find_minimum_orientation(poly, step=1):
     P = poly.T
-#    cx = np.mean(P[0])
-#    cy = np.mean(P[1])
+    #    cx = np.mean(P[0])
+    #    cy = np.mean(P[1])
 
     cx, cy = get_center(poly)
     mlines = np.Inf
-#    minlines = None
+    #    minlines = None
     lens = []
-#    ms = []
+    #    ms = []
     for ti in range(-90, 90, 1):
         P_prime = rotate_poly(P, ti, loc=(cx, cy))
         lines = make_raster_polygon(P_prime.T, step)
@@ -195,17 +200,18 @@ def find_minimum_orientation(poly, step=1):
         if ll and ll < mlines:
             mlines = ll
             mintheta = ti
-#            minlines = lines
+        #            minlines = lines
 
-#        ms.append(lines)
+        #        ms.append(lines)
         lens.append((ti, ll))
-#        print ti, 'len  ', len(lines), 'mlines  ', mlines, 'theta  ', mintheta
+    #        print ti, 'len  ', len(lines), 'mlines  ', mlines, 'theta  ', mintheta
     o = -1
     P_prime = rotate_poly(P, mintheta - o, loc=(cx, cy))
     lines = make_raster_polygon(P_prime.T, step)
-#    npoints = rotate_lines(minlines, mintheta - o, cx, cy)
+    #    npoints = rotate_lines(minlines, mintheta - o, cx, cy)
     npoints = rotate_lines(lines, mintheta - o, cx, cy)
     return npoints, mintheta, lens
+
 
 def rotate_lines(lines, theta, cx, cy):
     npoints = []
@@ -215,12 +221,13 @@ def rotate_lines(lines, theta, cx, cy):
         po = np.array([ys, xs])
         pts = rotate_poly(po, theta,
                           loc=(cy, cx)
-                         )
+                          )
         ys, xs = pts
         p1, p2 = (xs[0], ys[0]), (xs[1], ys[1])
 
         npoints.append((p1, p2))
     return npoints
+
 
 def rotate_poly(pts, theta, loc=None):
     theta = math.radians(theta)
@@ -236,17 +243,18 @@ def rotate_poly(pts, theta, loc=None):
     P_prime = P_prime + T
     return P_prime
 
+
 def get_center(pts):
     P = pts.T
     cx = np.mean(P[0])
     cy = np.mean(P[1])
     return cx, cy
 
+
 def raster(poly, use_convex_hull=False,
            offset=0,
            step=1,
            find_min=False, theta=None):
-
     poly = np.array(poly)
     poly = sort_clockwise(poly, poly)
     if use_convex_hull:
@@ -292,29 +300,32 @@ if __name__ == '__main__':
             ys = np.hstack((ys, ys[0]))
             g.new_series(xs, ys)
 
-    #    for i, (p1, p2) in enumerate(lines):
-    #        xi, yi = (p1[0], p2[0]), (p1[1], p2[1])
-    #        g.new_series(xi, yi, color='black')
+        #    for i, (p1, p2) in enumerate(lines):
+        #        xi, yi = (p1[0], p2[0]), (p1[1], p2[1])
+        #        g.new_series(xi, yi, color='black')
         return g
-#    t = Timer('d()', setup='from __main__ import d')
-#    print t.timeit(1)
+
+
+    #    t = Timer('d()', setup='from __main__ import d')
+    #    print t.timeit(1)
     poly = [(2, 7), (4, 12), (8, 15), (16, 9), (11, 5), (8, 7), (5, 5)]
     poly = sort_clockwise(poly, poly)
     poly = np.array(poly)
     poly *= 1000
 
-#    xs, ys = poly.T
-#    cx, cy = xs.mean(), ys.mean()
-#    poly = rotate_poly(poly.T, 45, loc=(cx, cy))
-#    poly = poly.T
+    #    xs, ys = poly.T
+    #    cx, cy = xs.mean(), ys.mean()
+    #    poly = rotate_poly(poly.T, 45, loc=(cx, cy))
+    #    poly = poly.T
 
     use_convex_hull = False
     npoints, lens = raster(poly,
-                     step=750,
-                     offset=-500,
-                     use_convex_hull=use_convex_hull, find_min=True)
+                           step=750,
+                           offset=-500,
+                           use_convex_hull=use_convex_hull, find_min=True)
 
     from pychron.graph.graph import Graph
+
     g = Graph(window_height=700)
     g.plotcontainer.padding = 5
     g.new_plot(padding=[60, 30, 30, 50],
@@ -349,7 +360,7 @@ if __name__ == '__main__':
 
     # plot offset polygon
 
-#    poly = sort_clockwise(poly, poly)
+    #    poly = sort_clockwise(poly, poly)
     opoly = polygon_offset(poly, -500)
     if use_convex_hull:
         opoly = convex_hull(opoly)
@@ -360,9 +371,9 @@ if __name__ == '__main__':
         opoly = np.array(opoly, dtype=int)
         xs, ys, _ = opoly.T
 
-#    opoly = opoly[:, (0, 1)]
-#    rpoly = rotate_poly(opoly.T, 145, loc=(cx, cy))
-#    xs, ys = rpoly[0], rpoly[1]
+    #    opoly = opoly[:, (0, 1)]
+    #    rpoly = rotate_poly(opoly.T, 145, loc=(cx, cy))
+    #    xs, ys = rpoly[0], rpoly[1]
 
     g.new_series(xs, ys)
     g.new_plot(padding=[50, 30, 30, 30],

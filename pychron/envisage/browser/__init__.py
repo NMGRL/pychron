@@ -1,6 +1,5 @@
 __author__ = 'ross'
 
-
 from pychron.core.progress import progress_loader
 
 

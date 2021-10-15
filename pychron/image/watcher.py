@@ -62,5 +62,4 @@ class DirectoryWatcher(Loggable):
 
             time.sleep(period)
 
-
 # ============= EOF =============================================

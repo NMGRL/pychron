@@ -61,5 +61,4 @@ def set_application_home(appname, env=None):
         if not os.path.exists(ETSConfig.application_home):
             os.makedirs(ETSConfig.application_home)
 
-
 # ============= EOF =============================================

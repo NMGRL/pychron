@@ -33,4 +33,3 @@ class ExternalPipetteTask(BaseManagerTask):
         #     return TaskLayout()
 
 # ============= EOF =============================================
-

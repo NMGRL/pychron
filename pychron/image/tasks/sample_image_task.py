@@ -124,7 +124,6 @@ class SampleImageTask(BaseEditorTask, BaseBrowserModel):
 
             db.add_sample_image(sample.name, v.name, blob, v.note, identifier=sample.identifier)
 
-
     # task interface
     def activated(self):
         self.camera.open()
@@ -208,12 +207,8 @@ class SampleImageTask(BaseEditorTask, BaseBrowserModel):
         self.samples = samples
         self.osamples = samples
 
-
     def _default_layout_default(self):
         return TaskLayout(left=PaneItem(id='pychron.image.browser'),
                           right=PaneItem(id='pychron.image.info'))
 
 # ============= EOF =============================================
-
-
-

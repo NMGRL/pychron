@@ -271,11 +271,11 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
                 )
             )
             if self.confirmation_dialog(
-                "Requested magnet move is greater than threshold.\n"
-                "Current Mass={}\n"
-                "Requested Mass={}\n"
-                "Threshold={}\n"
-                "Are you sure you want to continue?".format(cm, m, ct)
+                    "Requested magnet move is greater than threshold.\n"
+                    "Current Mass={}\n"
+                    "Requested Mass={}\n"
+                    "Threshold={}\n"
+                    "Are you sure you want to continue?".format(cm, m, ct)
             ):
                 move_ok = True
         return move_ok
@@ -379,6 +379,5 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
         )
 
         return v
-
 
 # ============= EOF =============================================

@@ -39,5 +39,4 @@ class UIAction(Action, metaclass=NameMeta):
 class UITaskAction(TaskAction, metaclass=NameMeta):
     pass
 
-
 # ============= EOF =============================================

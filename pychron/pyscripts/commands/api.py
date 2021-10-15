@@ -32,4 +32,3 @@ __all__ = (Wait, Info, Sleep, Gosub, BeginInterval, CompleteInterval, Interval, 
            IsLastRun, LoadHops, SetBaselineFits, SetFits, SetIntegrationTime, SetAcceleratingVoltage,
 
            SetExtractionFocus, SetExtractionSymmetry)
-

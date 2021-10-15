@@ -49,10 +49,9 @@ class IsoEvoMainOptions(MainOptions):
     signal_to_blank_goodness = Float
     global_goodness_visible = Bool
 
-
     def _get_edit_view(self):
         main = VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
-                             Item('fit', editor=EnumEditor(values=FIT_TYPES+[AUTO_N,])),
+                             Item('fit', editor=EnumEditor(values=FIT_TYPES + [AUTO_N, ])),
                              UItem('error_type', editor=EnumEditor(values=FIT_ERROR_TYPES)),
                              ),
                       Item('fitfunc', visible_when='fit=="Custom"'),
@@ -117,7 +116,7 @@ class IsoEvoMainOptions(MainOptions):
                           HGroup(Item('controller.rsquared_goodness',
                                       tooltip='If R-squared is less than threshold mark regression as "Bad"')),
                           HGroup(Item('controller.signal_to_blank_goodness',
-                                 tooltip='If Blank/Signal*100 greater than threshold mark regression as "Bad"')))
+                                      tooltip='If Blank/Signal*100 greater than threshold mark regression as "Bad"')))
 
         agrp = self._get_analysis_group()
         return VGroup(agrp,

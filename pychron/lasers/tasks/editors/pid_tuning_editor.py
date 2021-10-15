@@ -35,7 +35,7 @@ class PIDTuningScanner(Scanner):
     _eq_tol = 1.5
     _eq_std = 5
 
-    #def _write_calibration(self, data):
+    # def _write_calibration(self, data):
     #    dm = self.csv_data_manager
     #    dm.write_to_frame(data)
     def _stop_hook(self):
@@ -60,14 +60,14 @@ class PIDTuningScanner(Scanner):
             tc.autotune_aggressiveness = aggr
 
     def _write_pid_parameters(self, setpoint, max_output):
-        dm=self.csv_data_manager
+        dm = self.csv_data_manager
 
         tc = self.manager.get_device('temperature_controller')
         if tc:
-            args=tc.report_pid()
+            args = tc.report_pid()
             if args:
-                ph, pc, i, d=args
-                d=(setpoint, ph, 0, i, d, max_output)
+                ph, pc, i, d = args
+                d = (setpoint, ph, 0, i, d, max_output)
                 dm.write_to_frame(d)
 
     def _maintain_setpoint(self, t, d, max_output):
@@ -76,8 +76,8 @@ class PIDTuningScanner(Scanner):
             self._autotune(t)
             self._write_pid_parameters(t, max_output)
             self._cool_down()
-            #py, tc = self._equilibrate(t)
-            #self._write_calibration((t, py, tc))
+            # py, tc = self._equilibrate(t)
+            # self._write_calibration((t, py, tc))
 
         else:
             super(PIDTuningScanner, self)._maintain_setpoint(t, d)
@@ -85,42 +85,42 @@ class PIDTuningScanner(Scanner):
     def _set_max_output(self, v):
         tc = self.manager.get_device('temperature_controller')
         if tc:
-            tc.max_output=v
+            tc.max_output = v
 
     def _cool_down(self):
         """
             wait until temp is below threshold
         """
         self._set_power_hook(0)
-        threshold=300
+        threshold = 300
 
-        func=None
-        tm=self.manager.get_device('temperature_monitor')
+        func = None
+        tm = self.manager.get_device('temperature_monitor')
         if tm is not None:
-            func=tm.get_process_value
+            func = tm.get_process_value
             # ct=tm.get_process_value()
         else:
-            tc=self.manager.get_device('temperature_controller')
+            tc = self.manager.get_device('temperature_controller')
             if tc:
-                func=tc.get_temperature
+                func = tc.get_temperature
 
         if func:
-            ct=func()
+            ct = func()
 
-            while ct>threshold:
+            while ct > threshold:
                 time.sleep(0.5)
                 # ct=tm.get_process_value()
-                ct=func()
+                ct = func()
 
     def _autotune(self, ctemp):
-        tc=self.manager.get_device('temperature_controller')
+        tc = self.manager.get_device('temperature_controller')
 
         self.info('starting autotune')
-        ott=tc.enable_tru_tune
+        ott = tc.enable_tru_tune
         tc.enable_tru_tune = False
         tc.start_autotune()
 
-        st=time.time()
+        st = time.time()
         while self._scanning:
             sti = time.time()
             if tc.autotune_finished():
@@ -128,8 +128,8 @@ class PIDTuningScanner(Scanner):
             elapsed = time.time() - sti
             time.sleep(max(0.0001, min(1, 1 - elapsed)))
 
-        tc.enable_tru_tune=ott
-        tt=time.time()-st
+        tc.enable_tru_tune = ott
+        tt = time.time() - st
         self.info('total tuning time for {}C ={:0.1f}s'.format(ctemp, tt))
 
 
@@ -138,7 +138,7 @@ class PIDTuningEditor(LaserEditor):
 
     def stop(self):
         self.scanner.stop()
-        self.completed=True
+        self.completed = True
 
     def _scan_pyrometer(self):
         d = self._pyrometer
@@ -149,8 +149,8 @@ class PIDTuningEditor(LaserEditor):
         return d.read_temperature(verbose=False)
 
     def _scan_power(self):
-        d=self._controller
-        t,p=d.get_temp_and_power()
+        d = self._controller
+        t, p = d.get_temp_and_power()
         return p
         # return d.read_heat_power(verbose=True)
 
@@ -163,16 +163,16 @@ class PIDTuningEditor(LaserEditor):
 
         self._pyrometer = self._laser_manager.get_device('pyrometer')
         self._thermocouple = self._laser_manager.get_device('temperature_monitor')
-        self._controller=self._laser_manager.get_device('temperature_controller')
+        self._controller = self._laser_manager.get_device('temperature_controller')
 
-        self._controller.use_calibrated_temperature=False
+        self._controller.use_calibrated_temperature = False
         if self._pyrometer:
             s.new_function(self._scan_pyrometer, name='pyrometer')
         if self._thermocouple:
             s.new_function(self._scan_thermocouple, name='thermocouple')
 
         s.new_function(self._scan_power, name='power')
-        #s.new_static_value('Setpoint', 10, plotid=1)
+        # s.new_static_value('Setpoint', 10, plotid=1)
 
         g = s.make_graph()
         self.component = g.plotcontainer

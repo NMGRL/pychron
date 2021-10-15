@@ -48,5 +48,4 @@ class FieldMixin(HasTraits):
     def update_field_table(self, *args, **kw):
         self.field_table.update_field_table(*args, **kw)
 
-
 # ============= EOF =============================================

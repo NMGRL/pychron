@@ -19,6 +19,7 @@ from __future__ import absolute_import
 from chaco.text_box_overlay import TextBoxOverlay
 from traits.api import Enum, Any, Bool
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -69,4 +70,3 @@ class CursorToolOverlay(TextBoxOverlay):
             self.visible = self.visibility
 
 # ============= EOF =============================================
-

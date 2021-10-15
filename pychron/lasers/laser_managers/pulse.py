@@ -111,38 +111,37 @@ class Pulse(HasTraits):
     def traits_view(self):
         v = View(
             VGroup(
-            VGroup(
-                HGroup(Item('power', tooltip='Hit Enter for change to take effect'),
-                       Item('units', style='readonly', show_label=False),
-                       spring,
-                       Item('pulse_button',
-                            editor=ButtonEditor(label_value='pulse_label'),
-                            show_label=False,
-                            enabled_when='object.enabled')),
-                Item('duration', label='Duration (s)', tooltip='Set the laser pulse duration in seconds')),
-            VGroup(
-                CustomLabel('object.wait_control.message',
-                            size=14,
-                            weight='bold',
-                            color_name='object.wait_control.message_color'),
+                VGroup(
+                    HGroup(Item('power', tooltip='Hit Enter for change to take effect'),
+                           Item('units', style='readonly', show_label=False),
+                           spring,
+                           Item('pulse_button',
+                                editor=ButtonEditor(label_value='pulse_label'),
+                                show_label=False,
+                                enabled_when='object.enabled')),
+                    Item('duration', label='Duration (s)', tooltip='Set the laser pulse duration in seconds')),
+                VGroup(
+                    CustomLabel('object.wait_control.message',
+                                size=14,
+                                weight='bold',
+                                color_name='object.wait_control.message_color'),
 
-                HGroup(Spring(width=-5, springy=False),
-                       Item('object.wait_control.high', label='Set Max. Seconds'),
-                       spring, UItem('object.wait_control.continue_button')),
-                HGroup(Spring(width=-5, springy=False),
-                       Item('object.wait_control.current_time', show_label=False,
-                            editor=RangeEditor(mode='slider',
-                                               low=1,
-                                               # low_name='low_name',
-                                               high_name='object.wait_control.duration')),
-                       CustomLabel('object.wait_control.current_time',
-                                   size=14,
-                                   weight='bold')))),
+                    HGroup(Spring(width=-5, springy=False),
+                           Item('object.wait_control.high', label='Set Max. Seconds'),
+                           spring, UItem('object.wait_control.continue_button')),
+                    HGroup(Spring(width=-5, springy=False),
+                           Item('object.wait_control.current_time', show_label=False,
+                                editor=RangeEditor(mode='slider',
+                                                   low=1,
+                                                   # low_name='low_name',
+                                                   high_name='object.wait_control.duration')),
+                           CustomLabel('object.wait_control.current_time',
+                                       size=14,
+                                       weight='bold')))),
             # Item('wait_control', show_label=False, style='custom'),
             id='pulse',
             handler=PulseHandler())
         return v
-
 
 # class LaserPulseManager(Manager):
 # #    pulse_button = Event

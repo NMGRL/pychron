@@ -206,13 +206,13 @@ class BaseMaker(Loggable):
 
     def traits_view(self):
         g = VGroup(
-                HGroup(Item('accept_point', show_label=False),
-                       Item('clear'), Item('clear_mode'), show_labels=False),
-                Item('use_simple_render', label='Display Labels',
-                     tooltip='Display labels or only a small spot'),
-                Item('spot_color', label='Spot Color',
-                     tooltip='Color for the point indicator spot'),
-                Item('spot_size', label='Spot Size'))
+            HGroup(Item('accept_point', show_label=False),
+                   Item('clear'), Item('clear_mode'), show_labels=False),
+            Item('use_simple_render', label='Display Labels',
+                 tooltip='Display labels or only a small spot'),
+            Item('spot_color', label='Spot Color',
+                 tooltip='Color for the point indicator spot'),
+            Item('spot_size', label='Spot Size'))
 
         cg = self._get_controls()
         if cg:
@@ -240,11 +240,11 @@ class FinishableMaker(BaseMaker):
 
     def traits_view(self):
         g = VGroup(
-                Item('accept_point',
-                     #                      enabled_when='accept_enabled',
-                     show_label=False),
-                HGroup(Item('clear'), Item('clear_mode'), show_labels=False),
-                Item('finish', show_label=False))
+            Item('accept_point',
+                 #                      enabled_when='accept_enabled',
+                 show_label=False),
+            HGroup(Item('clear'), Item('clear_mode'), show_labels=False),
+            Item('finish', show_label=False))
 
         cg = self._get_controls()
         if cg:

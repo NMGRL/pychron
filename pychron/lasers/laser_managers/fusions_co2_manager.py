@@ -89,6 +89,7 @@ class FusionsCO2Manager(FusionsLaserManager):
                              output_device=self.laser_controller)
         return r
 
+
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
     from pychron.envisage.initialization.initializer import Initializer

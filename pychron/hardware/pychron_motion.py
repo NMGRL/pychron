@@ -18,12 +18,12 @@
 from __future__ import absolute_import
 from pychron.hardware.motion_controller import MotionController
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 
 class PychronMotion(MotionController):
     pass
-
 
 # ============= EOF =============================================

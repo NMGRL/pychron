@@ -123,5 +123,4 @@ class InverseIsochronOptions(IsochronOptions):
     def _get_subview(self, name):
         return INVERSE_ISOCHRON_VIEWS[name]
 
-
 # ============= EOF =============================================

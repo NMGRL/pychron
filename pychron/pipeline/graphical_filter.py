@@ -414,5 +414,4 @@ class GraphicalFilterView(Controller):
 
         return v
 
-
 # ============= EOF =============================================

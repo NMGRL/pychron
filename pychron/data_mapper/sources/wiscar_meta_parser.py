@@ -101,5 +101,4 @@ class WiscArMetaParser(Loggable):
         spec.run_spec.material = row[MATERIAL_COL].value
         spec.run_spec.project = 'NoProject'
 
-
 # ============= EOF =============================================

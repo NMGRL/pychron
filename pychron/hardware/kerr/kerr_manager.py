@@ -26,14 +26,14 @@ from pychron.hardware.kerr.kerr_motor import KerrMotor
 from pychron.loggable import Loggable
 from six.moves import zip
 
-class KerrManager(Loggable):
 
+class KerrManager(Loggable):
     motor = Instance(KerrMotor)
     read_status = Button
     result = Str
+
     def _read_status_fired(self):
         motor = self.motor
-
 
         controlbyte = '00111111'
         cb = list(controlbyte)
@@ -53,19 +53,19 @@ class KerrManager(Loggable):
             print(n, result[pi:pi + l])
             pi = pi + l
 
-#        sb = result[2:]
-#
-#        ba = make_bitarray(int(sb, 16))
-#
-#        try:
-#            n = 8
-#            bh = ' '.join([str(n - i) for i in range(n)])
-#            ba = ' '.join([str(bi) for bi in ba])
-#            self.result = '{}\n{}\n{}'.format(str(result), bh, ba)
-#        except Exception, e:
-#            import traceback
-#            traceback.print_tb()
-#            self.result = str(e)
+    #        sb = result[2:]
+    #
+    #        ba = make_bitarray(int(sb, 16))
+    #
+    #        try:
+    #            n = 8
+    #            bh = ' '.join([str(n - i) for i in range(n)])
+    #            ba = ' '.join([str(bi) for bi in ba])
+    #            self.result = '{}\n{}\n{}'.format(str(result), bh, ba)
+    #        except Exception, e:
+    #            import traceback
+    #            traceback.print_tb()
+    #            self.result = str(e)
 
     def traits_view(self):
         v = View(Item('read_status', show_label=False),

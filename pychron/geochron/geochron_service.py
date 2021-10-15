@@ -178,10 +178,10 @@ class GeochronService(Loggable):
         constants = analysis.arar_constants
         for attr, iattr, required in PRODUCTION_ATTRS:
             if attr in (
-                "correction40Ar36ArAtmospheric",
-                "correction40Ar36ArAtmosphericSigma",
-                "correction38Ar36ArAtmospheric",
-                "correction38Ar36ArAtmosphericSigma",
+                    "correction40Ar36ArAtmospheric",
+                    "correction40Ar36ArAtmosphericSigma",
+                    "correction38Ar36ArAtmospheric",
+                    "correction38Ar36ArAtmosphericSigma",
             ):
                 val = self._get_value(constants, attr, iattr, required)
             else:
@@ -220,7 +220,6 @@ class GeochronService(Loggable):
 
 
 if __name__ == "__main__":
-
     class PreferredAgeSpec:
         preferredAge = "64.05"
         preferredAgeSigma = "0.116406054716396"
@@ -231,6 +230,7 @@ if __name__ == "__main__":
         preferredAgeReference = "Koppers, A.A.P., Yamazaki, T., Geldmacher, J., Gee, J.S., Pressling, N., Hoshi, H. and the IODP Expedition 330 Science Party (2012). Limited latitudinal mantle plume motion for the Louisville hotspot. Nature Geoscience: doi: 10.1038/NGEO1638."
         preferredAgeDescription = "Classical groundmass age spectrum with high apparent ages for the low temperature steps due to remaining alteration in this submarine basaltic material and 39Ar recoil effects. The middle section reflects the primary argon being released from the groundmass giving the eruption age of the sample, mostly free of alteration and recoil effects. The high temparature steps give lower apparent ages due to recoil effect on 37Ar when outgassing the Calcium-rich clinopyroxene and plagioclase groundmass phases. The fact that the plateau age is concordant with both isochron ages and the total fusion age provides confidence in this interpretation."
 
+
     class SampleSpec:
         sampleID = "330-U1376A-23R-3 33-37 cm"
         igsn = "MY_IGSN_HERE"
@@ -238,13 +238,16 @@ if __name__ == "__main__":
         latitude = "-32.2165"
         analystName = "Anthony Koppers"
 
+
     class AnalysisSpec:
         runid = "12313-01A"
+
 
     class AnalysisGroup:
         sample = SampleSpec()
         analyses = [AnalysisSpec()]
         preferred_age = PreferredAgeSpec()
+
 
     paths.build("_dev")
     ag = AnalysisGroup()

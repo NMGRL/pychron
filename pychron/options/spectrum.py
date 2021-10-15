@@ -198,5 +198,4 @@ class SpectrumOptions(PlateauOptions):
     def _get_integrated_font(self):
         return "{} {}".format(self.integrated_fontname, self.integrated_fontsize)
 
-
 # ============= EOF =============================================

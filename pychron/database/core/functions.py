@@ -16,7 +16,7 @@
 from __future__ import absolute_import
 import sqlalchemy
 
-from pychron.deprecate import  deprecated_message
+from pychron.deprecate import deprecated_message
 import six
 
 
@@ -34,7 +34,6 @@ def add(func):
             if key in kwargs:
                 kwargs.pop(key)
 
-
         sess = obj.get_session()
         dbr = None
         if sess:
@@ -51,23 +50,28 @@ def add(func):
 
     return _add
 
+
 def get_first(func):
     def _get_first(obj, name, *args, **kw):
         return _getter('first', func, obj, name, *args, **kw)
+
     return _get_first
+
 
 @deprecated_message('use DatabaseAdapter._retrieve_item instead')
 def get_one(func):
     def __get_one(obj, name, *args, **kw):
         return _get_one(func, obj, name, *args, **kw)
+
     return __get_one
+
 
 def _get_one(*args, **kw):
     return _getter('one', *args, **kw)
 
+
 def _getter(getfunc, func, obj, name,
             *args, **kw):
-
     if name is not None and not isinstance(name, (str, int, six.text_type, int, float)):
         return name
 
@@ -90,16 +94,18 @@ def _getter(getfunc, func, obj, name,
     if order_by is not None:
         q = q.order_by(order_by)
 
-#    return getattr(q, getfunc)()
+    #    return getattr(q, getfunc)()
     try:
         return getattr(q, getfunc)()
     except sqlalchemy.exc.SQLAlchemyError as e:
-#        print 'get_one, e1', e
+        #        print 'get_one, e1', e
         try:
             q = q.order_by(table.id.desc())
             return q.limit(1).all()[-1]
         except (sqlalchemy.exc.SQLAlchemyError, IndexError, AttributeError) as e:
             pass
+
+
 #            print 'get_one, e2', e
 #            pass
 
@@ -111,6 +117,7 @@ def delete_one(func):
         sess.commit()
 
     return _delete_one
+
 
 def sql_retrieve(func):
     try:

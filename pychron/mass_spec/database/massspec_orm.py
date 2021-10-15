@@ -423,7 +423,7 @@ class PeakTimeTable(Base):
 class PreferencesTable(Base):
     __tablename__ = 'PreferencesTable'
     PreferencesSetID = Column(Integer, primary_key=True)
-    DelOutliersAfterFit = Column(Enum('false','true'))
+    DelOutliersAfterFit = Column(Enum('false', 'true'))
     NFilterIter = Column(Integer)
     OutlierSigmaFactor = Column(Float)
 

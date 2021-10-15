@@ -39,7 +39,6 @@ class FusionsDiodePlugin(FusionsPlugin):
     accelerator = 'Ctrl+Shift+['
 
     def _task_extensions_default(self):
-
         exts = super(FusionsDiodePlugin, self)._task_extensions_default()
 
         ext1 = TaskExtension(
@@ -78,13 +77,13 @@ class FusionsDiodePlugin(FusionsPlugin):
 #                                                   factory=lambda: Group(),
 #                                                   path='MenuBar/Extraction'
 #                                                   ),
-#SchemaAddition(id='open_scan',
+# SchemaAddition(id='open_scan',
 #               factory=factory_scan,
 #               path='MenuBar/Laser'
 #               #                                                 path='MenuBar/Extraction/FusionsDiodeGroup'
-#),
-#SchemaAddition(id='open_autotune',
+# ),
+# SchemaAddition(id='open_autotune',
 #               factory=factory_tune,
 #               path='MenuBar/Laser'
 #               #                                                 path='MenuBar/Extraction/FusionsDiodeGroup'
-#),
+# ),

@@ -30,6 +30,7 @@ from pychron.managers.manager import Manager
 from pychron.lasers.points.maker import BaseMaker, LineMaker, PointMaker, \
     PolygonMaker, TransectMaker, GridMaker
 import six
+
 # from pychron.canvas.scene_viewer import LaserMineViewer
 # from pychron.regex import TRANSECT_REGEX
 maker_dict = dict(polygon=PolygonMaker,

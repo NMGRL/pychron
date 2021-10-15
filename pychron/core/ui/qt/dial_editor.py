@@ -89,4 +89,3 @@ class DialEditor(BasicEditorFactory):
     notches_visible = Bool(False)
 
 # ============= EOF =============================================
-

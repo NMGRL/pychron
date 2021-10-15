@@ -40,10 +40,10 @@ class InfoPane(TraitsDockPane):
     name = 'Image Info'
 
     def traits_view(self):
-        v=View(VGroup(Item('object.selected_info_model.create_date', style='readonly'),
-                      Item('object.selected_info_model.name'),
-                      VGroup(UItem('object.selected_info_model.note', style='custom',
-                                   editor=TextEditor(read_only=False)))))
+        v = View(VGroup(Item('object.selected_info_model.create_date', style='readonly'),
+                        Item('object.selected_info_model.name'),
+                        VGroup(UItem('object.selected_info_model.note', style='custom',
+                                     editor=TextEditor(read_only=False)))))
         return v
 
 
@@ -86,5 +86,3 @@ class SampleBrowserPane(TraitsDockPane):
         return v
 
 # ============= EOF =============================================
-
-

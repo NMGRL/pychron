@@ -116,7 +116,6 @@ class IsotopeTrainer(Loggable):
                         break
 
         if isos:
-
             clf.add_isotopes(isos, klasses)
             clf.dump()
 
