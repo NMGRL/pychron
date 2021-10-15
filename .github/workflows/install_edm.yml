@@ -40,6 +40,7 @@ jobs:
           ~/.edm/envs/edm/bin/python -m pip install --no-dependencies uncertainties statsmodels qimage2ndarray peakutils
       - name: Test with pytest
         run: |
+          set PYTHONPATH=~/pychron
           ~/.edm/envs/edm/bin/pytest ./pychron/test_suite.py
       - name: Lint with flake8
         run: |
