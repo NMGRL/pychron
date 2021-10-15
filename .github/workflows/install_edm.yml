@@ -37,14 +37,15 @@ jobs:
           scipy sqlalchemy traits xlrd xlsxwriter xlwt flake8 pytest
       - name: Install PIP dependencies
         run: >
-          python -m pip install --no-dependencies uncertainties statsmodels qimage2ndarray peakutils
+          ~/.edm/envs/edm/bin/python -m pip install --no-dependencies uncertainties statsmodels qimage2ndarray peakutils
       - name: Lint with flake8
         run: |
-          flake8 . --extend-exclude=docs/,zobs/,sandbox/,test/,alembic_dvc --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          ~/.edm/envs/edm/bin/flake8 . --extend-exclude=docs/,zobs/,sandbox/,test/,alembic_dvc --count
+          --select=E9,F63,F7,F82 --show-source --statistics
+          ~/.edm/envs/edm/bin/flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test with pytest
         run: |
-          pytest pychron/test_suite.py
+          ~/.edm/envs/edm/bin/pytest pychron/test_suite.py
 
 
 #
