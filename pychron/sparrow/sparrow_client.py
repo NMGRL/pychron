@@ -48,9 +48,13 @@ def instrument_payload(cm):
     return {"name": cm.get("instrument", "NoInstrument")}
 
 
-def datum_factory(p):
+def preferred_datum_factory(p):
     return {
-        "type": {"parameter": p["kind"], "unit": p.get("unit", "")},
+        "type": {"parameter": p["attr"],
+                 "unit": p.get("unit", ""),
+                 "error_metric": p.get("error_kind"),
+                 "is_computed": True,
+                 "description": p.get("kind")},
         "value": p["value"],
         "error": p["error"],
     }
@@ -85,7 +89,7 @@ def analyses_payload(ans, preferred_kinds):
         {
             "analysis_name": "preferred",
             "analysis_type": "Preferred",
-            "datum": [datum_factory(p) for p in preferred_kinds],
+            "datum": [preferred_datum_factory(p) for p in preferred_kinds],
         }
     ]
 
