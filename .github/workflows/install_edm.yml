@@ -38,9 +38,7 @@ jobs:
       - name: Install PIP dependencies
         run: >
           ~/.edm/envs/edm/bin/python -m pip install --no-dependencies uncertainties statsmodels qimage2ndarray peakutils
-      - name: Set ENV
-        run: |
-          echo "PYTHONPATH=/home/runner/work/pychron/pychron" >> $GITHUB_ENV
+
       - name: Test with pytest
         run: |
           ~/.edm/envs/edm/bin/pytest test_suite.py
