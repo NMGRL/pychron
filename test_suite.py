@@ -1,5 +1,8 @@
 import os
 import unittest
+import sys
+d = os.path.abspath(os.path.dirname('__file__'))
+sys.path.append(d)
 
 from pychron.core.helpers.tests.floatfmt import SigFigStdFmtTestCase
 from pychron.core.stats.tests.mswd_tests import MSWDTestCase
