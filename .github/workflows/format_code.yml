@@ -19,7 +19,7 @@ jobs:
         with:
           ignore: "F401,E501"
           args: "--exit-zero"
-          exclude: "docs,sandbox,test,alembic_dvc,zobs
+          exclude: "docs,sandbox,test,alembic_dvc,zobs"
 
   format:
     runs-on: ubuntu-latest
