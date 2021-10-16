@@ -6,12 +6,8 @@ name: Pychron Install via EDM with pytest suite
 on:
   push:
     branches: [ dev/dr ]
-    paths:
-      - '*.py, *.yml'
   pull_request:
     branches: [ dev/dr ]
-    paths:
-      - '*.py, *.yml'
 
 jobs:
   flake8_py3:
