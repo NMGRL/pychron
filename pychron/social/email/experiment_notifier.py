@@ -86,7 +86,7 @@ class ExperimentNotifier(Loggable):
     def _assemble_ctx(self, **kw):
         log = ""
         if self.include_log:
-            log = self._get_log(100)
+            log = self._get_log(500)
 
         shorthost = socket.gethostname()
         ip4host = socket.gethostbyname(shorthost).split(".")[-1]

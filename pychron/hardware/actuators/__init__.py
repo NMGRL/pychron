@@ -65,11 +65,12 @@ def trim_affirmative(func):
             if isinstance(r, tuple):
                 r, cmd = r
 
-            r = r.strip()
-            if callable(obj.affirmative):
-                r = obj.affirmative(r, cmd)
-            else:
-                r = r == obj.affirmative
+            if r is not None:
+                r = r.strip()
+                if callable(obj.affirmative):
+                    r = obj.affirmative(r, cmd)
+                else:
+                    r = r == obj.affirmative
 
         return r
 

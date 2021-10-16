@@ -33,7 +33,8 @@ class HeaterMixin(HasTraits):
     use_pid = Bool
     graph = Instance(StreamGraph)
 
-    def initialize(self):
+    def load_from_device(self):
+        self.debug('finish loading heater. initialize with values from device')
         self.setpoint = self.read_setpoint()
         self.readback = self.read_readback()
         self.use_pid = self.read_use_pid()
@@ -42,7 +43,7 @@ class HeaterMixin(HasTraits):
 
     # heater interface
     def _setpoint_changed(self, new):
-        self.set_sepoint(new)
+        self.set_setpoint(new)
 
     def set_setpoint(self, v):
         raise NotImplementedError
@@ -171,7 +172,7 @@ class PLC2000Heater(CoreDevice, ModbusMixin, HeaterMixin):
     @get_boolean()
     def read_use_pid(self):
         if self.use_pid_address:
-            rr = self._read_coils([self.use_pid_address])
+            rr = self._read_coils(self.use_pid_address)
             return rr.bits[0]
         else:
             self.debug("use_pid address not set")

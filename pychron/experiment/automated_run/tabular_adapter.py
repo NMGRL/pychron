@@ -24,171 +24,112 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.envisage.resources import icon
 from pychron.experiment.utilities.runid import make_aliquot_step
-from pychron.pychron_constants import (
-    EXTRACTION_COLOR,
-    MEASUREMENT_COLOR,
-    SUCCESS_COLOR,
-    SKIP_COLOR,
-    NOT_EXECUTABLE_COLOR,
-    CANCELED_COLOR,
-    TRUNCATED_COLOR,
-    FAILED_COLOR,
-    END_AFTER_COLOR,
-    BLANK_UNKNOWN,
-    DEGAS,
-    UNKNOWN,
-    PRECLEANUP,
-    WEIGHT,
-    POSTCLEANUP,
-    CLEANUP,
-    DURATION,
-    BEAM_DIAMETER,
-    EXTRACT_VALUE,
-    RAMP_DURATION,
-    EXTRACT_UNITS,
-    POSITION,
-    REPOSITORY_IDENTIFIER,
-    MATERIAL,
-    PROJECT,
-    SAMPLE,
-    OVERLAP,
-    PATTERN,
-    USE_CDD_WARMING,
-    DELAY_AFTER,
-    COMMENT,
-    CRYO_TEMP,
-    FAILED,
-    CANCELED,
-    TRUNCATED,
-    SUCCESS,
-    EXTRACTION,
-    MEASUREMENT,
-    INVALID,
-    END_AFTER,
-    ABORTED,
-)
+from pychron.pychron_constants import EXTRACTION_COLOR, MEASUREMENT_COLOR, SUCCESS_COLOR, \
+    SKIP_COLOR, NOT_EXECUTABLE_COLOR, CANCELED_COLOR, TRUNCATED_COLOR, \
+    FAILED_COLOR, END_AFTER_COLOR, BLANK_UNKNOWN, DEGAS, UNKNOWN, PRECLEANUP, WEIGHT, POSTCLEANUP, CLEANUP, DURATION, \
+    BEAM_DIAMETER, EXTRACT_VALUE, RAMP_DURATION, EXTRACT_UNITS, POSITION, REPOSITORY_IDENTIFIER, MATERIAL, PROJECT, \
+    SAMPLE, OVERLAP, PATTERN, USE_CDD_WARMING, DELAY_AFTER, COMMENT, CRYO_TEMP, FAILED, CANCELED, TRUNCATED, SUCCESS, \
+    EXTRACTION, MEASUREMENT, INVALID, END_AFTER, ABORTED
 
 # ============= local library imports  ==========================
-COLORS = {
-    SUCCESS: SUCCESS_COLOR,
-    EXTRACTION: EXTRACTION_COLOR,
-    MEASUREMENT: MEASUREMENT_COLOR,
-    CANCELED: CANCELED_COLOR,
-    TRUNCATED: TRUNCATED_COLOR,
-    FAILED: FAILED_COLOR,
-    END_AFTER: END_AFTER_COLOR,
-    INVALID: "red",
-    ABORTED: "orange",
-}
+COLORS = {SUCCESS: SUCCESS_COLOR,
+          EXTRACTION: EXTRACTION_COLOR,
+          MEASUREMENT: MEASUREMENT_COLOR,
+          CANCELED: CANCELED_COLOR,
+          TRUNCATED: TRUNCATED_COLOR,
+          FAILED: FAILED_COLOR,
+          END_AFTER: END_AFTER_COLOR,
+          INVALID: 'red',
+          ABORTED: 'orange'}
 
-GRAY_BALL = icon("gray_ball")
-GREEN_BALL = icon("green_ball")
-ORANGE_BALL = icon("orange_ball")
+GRAY_BALL = icon('gray_ball')
+GREEN_BALL = icon('green_ball')
+ORANGE_BALL = icon('orange_ball')
 
-jump = MenuManager(
-    Action(name="Jump to Start", action="jump_to_start"),
-    Action(name="Jump to End", action="jump_to_end"),
-    name="Jump",
-)
+jump = MenuManager(Action(name='Jump to Start', action='jump_to_start'),
+                   Action(name='Jump to End', action='jump_to_end'),
+                   name='Jump')
 
-move = MenuManager(
-    Action(name="Move to Start", action="move_to_start"),
-    Action(name="Move to End", action="move_to_end"),
-    Action(name="Move Up", action="move_up"),
-    Action(name="Move Down", action="move_down"),
-    Action(name="Move to ...", action="move_to_row"),
-    name="Move",
-)
+move = MenuManager(Action(name='Move to Start', action='move_to_start'),
+                   Action(name='Move to End', action='move_to_end'),
+                   Action(name='Move Up', action='move_up'),
+                   Action(name='Move Down', action='move_down'),
+                   Action(name='Move to ...', action='move_to_row'),
+                   name='Move')
 
-copy = MenuManager(
-    Action(name="Copy to Start", action="copy_to_start"),
-    Action(name="Copy to End", action="copy_to_end"),
-    name="Copy",
-)
+copy = MenuManager(Action(name='Copy to Start', action='copy_to_start'),
+                   Action(name='Copy to End', action='copy_to_end'),
+                   name='Copy')
 
-blocks = MenuManager(
-    Action(name="Make Block", action="make_block"),
-    Action(name="Repeat Block", action="repeat_block"),
-    name="Blocks",
-)
+blocks = MenuManager(Action(name='Make Block', action='make_block'),
+                     Action(name='Repeat Block', action='repeat_block'),
+                     name='Blocks')
 
-selects = MenuManager(
-    Action(name="Select Unknowns", action="select_unknowns"),
-    Action(name="Select Special", action="select_special"),
-    Action(name="Select Same Identifier", action="select_same"),
-    Action(name="Select Same Attributes...", action="select_same_attr"),
-    name="Select",
-)
+selects = MenuManager(Action(name='Select Unknowns', action='select_unknowns'),
+                      Action(name='Select Special', action='select_special'),
+                      Action(name='Select Same Identifier', action='select_same'),
+                      Action(name='Select Same Attributes...', action='select_same_attr'),
+                      name='Select')
 
-group_e = MenuManager(
-    Action(name="AAA,BBB,CCC", action="group_extractions"),
-    Action(name="ABC,ABC,ABC", action="group_extractions2"),
-    name="Group Extractions",
-)
+group_e = MenuManager(Action(name='AAA,BBB,CCC', action='group_extractions'),
+                      Action(name='ABC,ABC,ABC', action='group_extractions2'),
+                      name='Group Extractions')
 
-randomize = MenuManager(
-    Action(name="Randomize Unknowns", action="randomize_unknowns"),
-    Action(name="Randomize All", action="randomize_all"),
-    Action(name="Order From File", action="order_from_file"),
-    name="Position Ordering",
-)
+randomize = MenuManager(Action(name='Randomize Unknowns', action='randomize_unknowns'),
+                        Action(name='Randomize All', action='randomize_all'),
+                        Action(name='Order From File', action='order_from_file'),
+                        Action(name='Motion Saver', action='motion_saver'),
+                        name='Position Ordering')
 
-EDIT_MENU = MenuManager(
-    move,
-    copy,
-    jump,
-    blocks,
-    selects,
-    group_e,
-    randomize,
-    Action(name="Value Editor", action="open_value_editor"),
-    Action(name="Configure", action="configure_table"),
-    Action(name="Unselect", action="unselect"),
-    Action(name="Toggle End After", action="toggle_end_after"),
-    Action(name="Toggle Skip", action="toggle_skip"),
-)
+EDIT_MENU = MenuManager(move, copy, jump, blocks, selects, group_e,
+                        randomize,
+                        Action(name='Value Editor', action='open_value_editor'),
+                        Action(name='Configure', action='configure_table'),
+                        Action(name='Unselect', action='unselect'),
+                        Action(name='Toggle End After', action='toggle_end_after'),
+                        Action(name='Toggle Skip', action='toggle_skip'))
 
 
 class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     all_columns = [
-        ("-", "result_str"),
-        ("Identifier", "labnumber"),
-        ("Aliquot", "aliquot"),
-        ("Sample", SAMPLE),
-        ("Project", PROJECT),
-        ("Material", MATERIAL),
-        ("RepositoryID", REPOSITORY_IDENTIFIER),
-        ("Position", POSITION),
-        ("Extract", EXTRACT_VALUE),
-        ("Units", EXTRACT_UNITS),
-        ("Ramp (s)", RAMP_DURATION),
-        ("Duration (s)", DURATION),
-        ("Cleanup (s)", CLEANUP),
-        ("Pre Cleanup (s)", PRECLEANUP),
-        ("Post Cleanup (s)", POSTCLEANUP),
-        ("Cryo Temp. (K)", CRYO_TEMP),
-        ("Overlap (s)", OVERLAP),
-        ("Beam (mm)", BEAM_DIAMETER),
-        ("Pattern", PATTERN),
-        ("Extraction", "extraction_script"),
-        ("T_o Offset", "collection_time_zero_offset"),
-        ("Measurement", "measurement_script"),
-        ("Conditionals", "conditionals"),
-        ("SynExtraction", "syn_extraction"),
-        ("CDDWarm", USE_CDD_WARMING),
-        ("Post Eq.", "post_equilibration_script"),
-        ("Post Meas.", "post_measurement_script"),
-        ("Options", "script_options"),
-        ("Comment", COMMENT),
-        ("Weight", WEIGHT),
-        ("Delay After", DELAY_AFTER),
-    ]
+        ('-', 'result_str'),
+        ('Identifier', 'labnumber'),
+        ('Aliquot', 'aliquot'),
+        ('Sample', SAMPLE),
+        ('Project', PROJECT),
+        ('Irradiation', 'irradiation'),
+        ('Irrad. Level', 'irradiation_level'),
+        ('Irrad. Position', 'irradiation_position'),
+        ('Material', MATERIAL),
+        ('RepositoryID', REPOSITORY_IDENTIFIER),
+        ('Position', POSITION),
+        ('Extract', EXTRACT_VALUE),
+        ('Units', EXTRACT_UNITS),
+        ('Ramp (s)', RAMP_DURATION),
+        ('Duration (s)', DURATION),
+        ('Cleanup (s)', CLEANUP),
+        ('Pre Cleanup (s)', PRECLEANUP),
+        ('Post Cleanup (s)', POSTCLEANUP),
+        ('Cryo Temp. (K)', CRYO_TEMP),
+        ('Overlap (s)', OVERLAP),
+        ('Beam (mm)', BEAM_DIAMETER),
+        ('Pattern', PATTERN),
+        ('Extraction', 'extraction_script'),
+        ('T_o Offset', 'collection_time_zero_offset'),
+        ('Measurement', 'measurement_script'),
+        ('Conditionals', 'conditionals'),
+        ('SynExtraction', 'syn_extraction'),
+        ('CDDWarm', USE_CDD_WARMING),
+        ('Post Eq.', 'post_equilibration_script'),
+        ('Post Meas.', 'post_measurement_script'),
+        ('Options', 'script_options'),
+        ('Comment', COMMENT),
+        ('Weight', WEIGHT),
+        ('Delay After', DELAY_AFTER)]
 
-    columns = [
-        ("Identifier", "labnumber"),
-        ("Aliquot", "aliquot"),
-    ]
-    font = "arial 10"
+    columns = [('Identifier', 'labnumber'),
+               ('Aliquot', 'aliquot'), ]
+    font = 'arial 10'
     # all_columns = List
     # all_columns_dict = Dict
     # ===========================================================================
@@ -263,11 +204,11 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def _get_AutomatedRunSpec_tooltip(self):
         name = self.column_id
         item = self.item
-        if name == "result_str":
-            if item.state in ("success", "truncated"):
+        if name == 'result_str':
+            if item.state in ('success', 'truncated'):
                 return item.result.summary
         else:
-            return "{}= {}\nstate= {}".format(name, getattr(item, name), item.state)
+            return '{}= {}\nstate= {}'.format(name, getattr(item, name), item.state)
 
     def _get_AutomatedRunSpec_bg_color(self):
         item = self.item
@@ -284,8 +225,8 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
             elif self.use_analysis_type_colors:
 
                 atype = item.analysis_type
-                if atype.startswith("blank"):
-                    atype = "blank"
+                if atype.startswith('blank'):
+                    atype = 'blank'
                 color = self.analysis_type_colors.get(atype)
 
             if color is None:
@@ -298,45 +239,31 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
 
     def _get_AutomatedRunSpec_menu(self):
         item = self.item
-        if item.state in ("success", "truncated"):
+        if item.state in ('success', 'truncated'):
 
-            evo_actions = [
-                Action(name="Show All", action="show_evolutions"),
-                Action(name="Show All w/Equilibration", action="show_evolutions_w_eq"),
-                Action(
-                    name="Show All w/Equilibration+Baseline",
-                    action="show_evolutions_w_eq_bs",
-                ),
-                Action(name="Show All w/Baseline", action="show_evolutions_w_bs"),
-            ]
+            evo_actions = [Action(name='Show All', action='show_evolutions'),
+                           Action(name='Show All w/Equilibration', action='show_evolutions_w_eq'),
+                           Action(name='Show All w/Equilibration+Baseline', action='show_evolutions_w_eq_bs'),
+                           Action(name='Show All w/Baseline', action='show_evolutions_w_bs')]
             for iso in item.result.isotope_group.iter_isotopes():
-                actions = [
-                    Action(name="Signal", action="show_evolution_{}".format(iso.name)),
-                    Action(
-                        name="Equilibration/Signal",
-                        action="show_evolution_eq_{}".format(iso.name),
-                    ),
-                    Action(
-                        name="Equilibration/Signal/Baseline",
-                        action="show_evolution_eq_bs_{}".format(iso.name),
-                    ),
-                    Action(
-                        name="Signal/Baseline",
-                        action="show_evolution_bs_{}".format(iso.name),
-                    ),
-                ]
+                actions = [Action(name='Signal', action='show_evolution_{}'.format(iso.name)),
+                           Action(name='Equilibration/Signal', action='show_evolution_eq_{}'.format(iso.name)),
+                           Action(name='Equilibration/Signal/Baseline',
+                                  action='show_evolution_eq_bs_{}'.format(iso.name)),
+                           Action(name='Signal/Baseline', action='show_evolution_bs_{}'.format(iso.name))]
                 m = MenuManager(*actions, name=iso.name)
                 evo_actions.append(m)
 
-            evo = MenuManager(*evo_actions, name="Evolutions")
+            evo = MenuManager(*evo_actions, name='Evolutions')
 
-            success = MenuManager(Action(name="Summary", action="show_summary"), evo)
+            success = MenuManager(Action(name='Summary', action='show_summary'),
+                                  evo)
             return success
 
     def _get_result_str_image(self):
-        if self.item.state == "success":
+        if self.item.state == 'success':
             return GREEN_BALL
-        elif self.item.state == "truncated":
+        elif self.item.state == 'truncated':
             return ORANGE_BALL
 
     # ============ non cell editable ============
@@ -345,11 +272,11 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         p = self.item.position
 
         if at == BLANK_UNKNOWN:
-            if "," not in p:
-                p = ""
+            if ',' not in p:
+                p = ''
 
         elif at not in (UNKNOWN, DEGAS):
-            p = ""
+            p = ''
 
         return p
 
@@ -358,14 +285,14 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def _get_overlap_text(self):
         o, m = self.item.overlap
         if m:
-            return "{},{}".format(o, m)
+            return '{},{}'.format(o, m)
         else:
             if int(o):
-                return "{}".format(o)
-        return ""
+                return '{}'.format(o)
+        return ''
 
     def _get_aliquot_text(self):
-        al = ""
+        al = ''
         it = self.item
         if it.aliquot != 0:
             al = make_aliquot_step(it.aliquot, it.step)
@@ -373,7 +300,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         return al
 
     def _get_ramp_duration_text(self):
-        return self._get_number(RAMP_DURATION, fmt="{:n}")
+        return self._get_number(RAMP_DURATION, fmt='{:n}')
 
     def _get_beam_diameter_text(self):
         return self._get_number(BEAM_DIAMETER)
@@ -400,11 +327,11 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         return self._get_number(WEIGHT)
 
     def _get_use_cdd_warming_text(self):
-        return "Yes" if self.item.use_cdd_warming else "No"
+        return 'Yes' if self.item.use_cdd_warming else 'No'
 
-    def _get_number(self, attr, fmt="{:0.2f}"):
+    def _get_number(self, attr, fmt='{:0.2f}'):
         """
-        dont display 0.0's
+            dont display 0.0's
         """
         v = getattr(self.item, attr)
         if v:
@@ -413,7 +340,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
 
             return fmt.format(v)
         else:
-            return ""
+            return ''
 
 
 class AutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
@@ -423,26 +350,28 @@ class AutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
 
 class RunBlockAdapter(AutomatedRunSpecAdapter):
     columns = [
-        ("Identifier", "labnumber"),
+        ('Identifier', 'labnumber'),
         # ('Aliquot', 'aliquot'),
-        ("Sample", "sample"),
-        ("Position", "position"),
-        ("Extract", "extract_value"),
-        ("Units", "extract_units"),
-        ("Ramp (s)", "ramp_duration"),
-        ("Duration (s)", "duration"),
-        ("Cleanup (s)", "cleanup"),
+        ('Sample', 'sample'),
+        ('Position', 'position'),
+        ('Extract', 'extract_value'),
+        ('Units', 'extract_units'),
+
+        ('Ramp (s)', 'ramp_duration'),
+        ('Duration (s)', 'duration'),
+        ('Cleanup (s)', 'cleanup'),
         # ('Overlap (s)', 'overlap'),
-        ("Beam (mm)", "beam_diameter"),
-        ("Pattern", "pattern"),
-        ("Extraction", "extraction_script"),
+
+        ('Beam (mm)', 'beam_diameter'),
+        ('Pattern', 'pattern'),
+        ('Extraction', 'extraction_script'),
         # ('T_o Offset', 'collection_time_zero_offset'),
-        ("Measurement", "measurement_script"),
-        ("Conditionals", "conditionals"),
+        ('Measurement', 'measurement_script'),
+        ('Conditionals', 'conditionals'),
         # ('SynExtraction', 'syn_extraction'),
-        ("CDDWarm", "use_cdd_warming"),
-        ("Post Eq.", "post_equilibration_script"),
-        ("Post Meas.", "post_measurement_script"),
+        ('CDDWarm', 'use_cdd_warming'),
+        ('Post Eq.', 'post_equilibration_script'),
+        ('Post Meas.', 'post_measurement_script'),
         # ('Options', 'script_options'),
         # ('Comment', 'comment')
     ]
@@ -451,30 +380,29 @@ class RunBlockAdapter(AutomatedRunSpecAdapter):
 class ExecutedUVAutomatedRunSpecAdapter(ExecutedAutomatedRunSpecAdapter):
     columns = [
         # ('', 'state'),
-        ("Identifier", "labnumber"),
-        ("Aliquot", "aliquot"),
-        ("Sample", "sample"),
-        ("Position", "position"),
-        ("Extract", "extract_value"),
-        ("Units", "extract_units"),
-        ("Rep. Rate", "reprate"),
-        ("Mask", "mask"),
-        ("Attenuator", "attenuator"),
-        ("Cleanup (s)", "cleanup"),
-        ("Extraction", "extraction_script"),
-        ("Measurement", "measurement_script"),
-        ("Conditionals", "conditionals"),
-        ("SynExtraction", "syn_extraction"),
-        ("CDDWarm", "use_cdd_warming"),
-        ("Post Eq.", "post_equilibration_script"),
-        ("Post Meas.", "post_measurement_script"),
-        ("Comment", "comment"),
-    ]
+        ('Identifier', 'labnumber'),
+        ('Aliquot', 'aliquot'),
+        ('Sample', 'sample'),
+        ('Position', 'position'),
+
+        ('Extract', 'extract_value'),
+        ('Units', 'extract_units'),
+        ('Rep. Rate', 'reprate'),
+        ('Mask', 'mask'),
+        ('Attenuator', 'attenuator'),
+        ('Cleanup (s)', 'cleanup'),
+        ('Extraction', 'extraction_script'),
+        ('Measurement', 'measurement_script'),
+        ('Conditionals', 'conditionals'),
+        ('SynExtraction', 'syn_extraction'),
+        ('CDDWarm', 'use_cdd_warming'),
+        ('Post Eq.', 'post_equilibration_script'),
+        ('Post Meas.', 'post_measurement_script'),
+        ('Comment', 'comment')]
 
 
 class UVAutomatedRunSpecAdapter(ExecutedUVAutomatedRunSpecAdapter):
     pass
-
 
 # ============= EOF =============================================
 

@@ -661,6 +661,7 @@ class BaseSpectrometer(SpectrometerDevice):
         keys = []
         signals = []
         t = None
+        inc = True
         if self.microcontroller and not self.microcontroller.simulation:
             while 1:
                 keys, signals, t, inc = self.read_intensities(trigger=trigger, **kw)

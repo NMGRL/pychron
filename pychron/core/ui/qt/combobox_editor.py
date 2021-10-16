@@ -206,4 +206,5 @@ class ComboboxEditor(BasicEditorFactory):
     completion_mode = Enum(("popup", "inline"))
 
 
+
 # ============= EOF =============================================

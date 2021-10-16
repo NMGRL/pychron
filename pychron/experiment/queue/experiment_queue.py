@@ -37,6 +37,7 @@ from traits.trait_types import Date
 from traitsui.api import View, Item, UItem
 
 from pychron.core.helpers.ctx_managers import no_update
+from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.iterfuncs import groupby_key, partition
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.select_same import SelectSameMixin
@@ -50,6 +51,7 @@ from pychron.experiment.utilities.runid import make_runid
 from pychron.experiment.utilities.uv_human_error_checker import UVHumanErrorChecker
 from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL
+from pychron.stage.maps.laser_stage_map import LaserStageMap
 
 
 class RepeatRunBlockView(HasTraits):
@@ -144,6 +146,25 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     def open_value_editor(self):
         ve = ValueEditor(self)
         open_view(ve)
+
+    def motion_saver(self):
+        stage_map_klass = LaserStageMap
+
+        t = self.tray
+        path = os.path.join(paths.map_dir, add_extension(t, '.txt'))
+        sm = stage_map_klass(file_path=path)
+        if sm.load():
+            new_pos = []
+            ans = self.automated_runs[:]
+            for holes in sm.motion_saver_holes():
+                for hi in holes:
+                    a = next((ai for ai in ans if ai.position == hi.id), None)
+                    if a:
+                        new_pos.append(a)
+                        ans.remove(a)
+
+            self.automated_runs = ans
+            self.refresh_table_needed = True
 
     def order_from_file(self):
         """

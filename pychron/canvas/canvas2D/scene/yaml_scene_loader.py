@@ -266,6 +266,9 @@ class YAMLLoader(BaseLoader):
 
         return rect
 
+    def _new_image(self, scene, image):
+        pass
+
     def _new_connection(self, scene, conn, klass=None, orientation_default=None):
         if klass is None:
             klass = Connection

@@ -237,6 +237,14 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
     def clear_correction_file(self):
         pass
 
+    def motion_saver_holes(self):
+        for i, rs in self._grouped_rows():
+            rs = list(rs)
+            if i % 2:
+                rs = list(reversed(rs))
+            yield rs
+            # print(rs[0].id, rs[-1].id)
+
     # private
     def _grouped_rows(self, reverse=True):
         # def func(x):
