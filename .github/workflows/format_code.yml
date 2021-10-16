@@ -18,6 +18,8 @@ jobs:
         uses: py-actions/flake8@v1
         with:
           ignore: "F401,E501"
+          args: "--exit-zero"
+          exclude: "docs,sandbox,test,alembic_dvc,zobs
 
   format:
     runs-on: ubuntu-latest
@@ -26,8 +28,8 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
       - uses: psf/black@stable
-#        with:
-#          options: "--verbose --extend-exclude [sandbox|docs|dist|zobs|test|alembic_dvc]"
+        with:
+          options: "--verbose"
 #          src: "pychron/"
 #      - uses: rickstaa/action-black@v1
 #        with:
