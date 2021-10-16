@@ -18,7 +18,17 @@ from operator import attrgetter
 
 import yaml
 from enable.colors import ColorTrait
-from traits.api import HasTraits, List, on_trait_change, Button, Float, Enum, Instance, Str, Bool
+from traits.api import (
+    HasTraits,
+    List,
+    on_trait_change,
+    Button,
+    Float,
+    Enum,
+    Instance,
+    Str,
+    Bool,
+)
 from traitsui.api import View, UItem, TableEditor
 from traitsui.table_column import ObjectColumn
 
@@ -29,7 +39,12 @@ from pychron.canvas.canvas2D.scene.primitives.connections import Connection
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
 from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo, IonPump
 from pychron.canvas.canvas2D.scene.primitives.rounded import Spectrometer, Stage, Getter
-from pychron.canvas.canvas2D.scene.primitives.valves import BaseValve, Valve, Switch, ManualSwitch
+from pychron.canvas.canvas2D.scene.primitives.valves import (
+    BaseValve,
+    Valve,
+    Switch,
+    ManualSwitch,
+)
 from pychron.loggable import Loggable
 from pychron.pychron_constants import NULL_STR
 
@@ -168,53 +183,69 @@ class CanvasEditor(Loggable):
 
     def _save_button_fired(self):
         p = self.path
-        if p.endswith('.yaml') or p.endswith('.yml'):
+        if p.endswith(".yaml") or p.endswith(".yml"):
             obj = {}
 
-            for klass, key in ((Switch, 'switch'),
-                               (Valve, 'valve'),
-                               (ManualSwitch, 'manual_valve'),
-                               (Turbo, 'turbo'),
-                               (IonPump, 'ionpump'),
-                               (Getter, 'getter'),
-                               (Laser, 'laser'),
-                               (Stage, 'stage'),
-                               (Spectrometer, 'spectrometer')):
+            for klass, key in (
+                (Switch, "switch"),
+                (Valve, "valve"),
+                (ManualSwitch, "manual_valve"),
+                (Turbo, "turbo"),
+                (IonPump, "ionpump"),
+                (Getter, "getter"),
+                (Laser, "laser"),
+                (Stage, "stage"),
+                (Spectrometer, "spectrometer"),
+            ):
                 items = [i.toyaml() for i in self.canvas.scene.get_items(klass)]
                 obj[key] = items
 
-            for tag, orientation in (('connection', NULL_STR),
-                                     ('hconnection', 'horizontal'),
-                                     ('vconnection', 'vertical')):
-                obj[tag] = [i.toyaml() for i in self.canvas.scene.get_items(Connection) if i.orientation == orientation]
+            for tag, orientation in (
+                ("connection", NULL_STR),
+                ("hconnection", "horizontal"),
+                ("vconnection", "vertical"),
+            ):
+                obj[tag] = [
+                    i.toyaml()
+                    for i in self.canvas.scene.get_items(Connection)
+                    if i.orientation == orientation
+                ]
 
-            shutil.copyfile(p, '{}.bak'.format(p))
+            shutil.copyfile(p, "{}.bak".format(p))
 
-            with open(p, 'w') as wfile:
+            with open(p, "w") as wfile:
                 yaml.dump(obj, wfile)
         else:
-            self.warning_dialog('The xml canvas format is deprecated. Please consider switching to YAML')
+            self.warning_dialog(
+                "The xml canvas format is deprecated. Please consider switching to YAML"
+            )
 
             cp = CanvasParser(self.path)
             for o in self._valve_changes:
                 for t in SWITCH_TAGS:
-                    elem = next((s for s in cp.get_elements(t) if s.text.strip() == o.name), None)
+                    elem = next(
+                        (s for s in cp.get_elements(t) if s.text.strip() == o.name),
+                        None,
+                    )
                     if elem:
-                        t = elem.find('translation')
-                        t.text = '{},{}'.format(o.x, o.y)
+                        t = elem.find("translation")
+                        t.text = "{},{}".format(o.x, o.y)
                         break
 
             for o in self._rect_changes:
                 for t in RECT_TAGS:
-                    elem = next((s for s in cp.get_elements(t) if s.text.strip() == o.name), None)
+                    elem = next(
+                        (s for s in cp.get_elements(t) if s.text.strip() == o.name),
+                        None,
+                    )
                     if elem:
-                        t = elem.find('translation')
-                        t.text = '{},{}'.format(o.x, o.y)
-                        t = elem.find('dimension')
-                        t.text = '{},{}'.format(o.width, o.height)
-                        t = elem.find('color')
+                        t = elem.find("translation")
+                        t.text = "{},{}".format(o.x, o.y)
+                        t = elem.find("dimension")
+                        t.text = "{},{}".format(o.width, o.height)
+                        t = elem.find("color")
                         if t:
-                            t.text = '{},{},{}'.format(*o.default_color.getRgb())
+                            t.text = "{},{},{}".format(*o.default_color.getRgb())
                         break
             cp.save()
 
@@ -245,7 +276,7 @@ class CanvasEditor(Loggable):
     def _color_changed(self, new):
         item = self.selected_group.selected[0]
         item.default_color = tuple(255 * i for i in new)
-        if self.selected_group.name == 'Rects':
+        if self.selected_group.name == "Rects":
             if item not in self._rect_changes:
                 self._rect_changes.append(item)
 

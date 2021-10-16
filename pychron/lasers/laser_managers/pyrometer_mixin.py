@@ -26,7 +26,10 @@ class PyrometerMixin(HasTraits):
             return self.pyrometer.read_temperature()
 
     def _pyrometer_default(self):
-        p = self.pyrometer_klass(name='pyrometer',
-                                 configuration_dir_name=self.configuration_dir_name)
+        p = self.pyrometer_klass(
+            name="pyrometer", configuration_dir_name=self.configuration_dir_name
+        )
         return p
+
+
 # ============= EOF =============================================

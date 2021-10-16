@@ -45,6 +45,7 @@ class CanvasParser(XMLParser):
 
     pass
 
+
 # ============= EOF ====================================
 #
 # class Text(object):

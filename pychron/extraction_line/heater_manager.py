@@ -41,13 +41,20 @@ class HeaterManager(Manager):
         self.is_alive = False
 
     def traits_view(self):
-        v = View(Item('devices', style='custom',
-                          show_label=False,
-                          editor=ListEditor(mutable=False,
-                                            style='custom',
-                                            editor=InstanceEditor(view='heater_view'))),
-                     )
+        v = View(
+            Item(
+                "devices",
+                style="custom",
+                show_label=False,
+                editor=ListEditor(
+                    mutable=False,
+                    style="custom",
+                    editor=InstanceEditor(view="heater_view"),
+                ),
+            ),
+        )
 
         return v
+
 
 # ============= EOF =============================================

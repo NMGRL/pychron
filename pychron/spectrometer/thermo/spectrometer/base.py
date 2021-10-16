@@ -140,7 +140,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         all four measurements same then test fails
         :return:
         """
-        ret, err = True, ''
+        ret, err = True, ""
         keys, one, _, _ = self.get_intensities()
         it = 0.1 if self.simulation else self.integration_time
 

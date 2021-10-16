@@ -338,17 +338,19 @@ class LoadingManager(DVCIrradiationable):
                     item.nxtals = pi.nxtals
                     item.weight = pi.weight
 
-                    p = LoadPosition(identifier=ln,
-                                     sample=sample,
-                                     material=material,
-                                     weight=pi.weight or 0.0,
-                                     nxtals=pi.nxtals or 0,
-                                     project=project,
-                                     irradiation=irrad,
-                                     level=level,
-                                     irrad_position=int(irradpos),
-                                     position=pi.position,
-                                     packet=packet or '')
+                    p = LoadPosition(
+                        identifier=ln,
+                        sample=sample,
+                        material=material,
+                        weight=pi.weight or 0.0,
+                        nxtals=pi.nxtals or 0,
+                        project=project,
+                        irradiation=irrad,
+                        level=level,
+                        irrad_position=int(irradpos),
+                        position=pi.position,
+                        packet=packet or "",
+                    )
                     pos.append(p)
 
         self.positions = pos
@@ -942,7 +944,10 @@ class LoadingManager(DVCIrradiationable):
                 pp = []
                 ps = self.canvas.get_selection()
                 for p in ps:
-                    po = next((ppp for ppp in self.positions if int(p.name) == ppp.position), None)
+                    po = next(
+                        (ppp for ppp in self.positions if int(p.name) == ppp.position),
+                        None,
+                    )
                     if po:
                         pp.append(po)
 

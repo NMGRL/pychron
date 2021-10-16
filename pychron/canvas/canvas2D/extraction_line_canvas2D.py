@@ -85,7 +85,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     force_actuate_enabled = True
 
-    drag_pointer = Pointer('bullseye')
+    drag_pointer = Pointer("bullseye")
     snap_to_grid = True
     grid_interval = 0.5
     edit_mode = Bool(False)
@@ -206,7 +206,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             return
 
         if self.edit_mode:
-            self.event_state = 'drag'
+            self.event_state = "drag"
             event.window.set_pointer(self.drag_pointer)
             return
 
@@ -283,8 +283,8 @@ class ExtractionLineCanvas2D(SceneCanvas):
         dx, dy = self.map_data((x, y))
         w, h = si.width, si.height
 
-        dx -= w / 2.
-        dy -= h / 2.
+        dx -= w / 2.0
+        dy -= h / 2.0
 
         if self.snap_to_grid:
             dx, dy = snap_to_grid(dx, dy, interval=self.grid_interval)
@@ -293,7 +293,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
             if self._px is not None and not self._constrain:
                 xx = abs(x - self._px)
                 yy = abs(y - self._py)
-                self._constrain = 'v' if yy > xx else 'h'
+                self._constrain = "v" if yy > xx else "h"
             else:
                 self._px = x
                 self._py = y
@@ -301,9 +301,9 @@ class ExtractionLineCanvas2D(SceneCanvas):
             self._constrain = False
             self._px, self._py = None, None
 
-        if self._constrain == 'h':
+        if self._constrain == "h":
             si.x = dx
-        elif self._constrain == 'v':
+        elif self._constrain == "v":
             si.y = dy
         else:
             si.x, si.y = dx, dy
@@ -349,7 +349,7 @@ class ExtractionLineCanvas2D(SceneCanvas):
                 self.invalidate_and_redraw()
 
     def _set_normal_state(self, event):
-        self.event_state = 'normal'
+        self.event_state = "normal"
         event.window.set_pointer(self.normal_pointer)
 
     def _select_hook(self, item):

@@ -28,7 +28,7 @@ class HeaterMixin(HasTraits):
     readback = Float
     onoff_button = Event
     onoff_state = Bool
-    onoff_label = Property(depends_on='onoff_state')
+    onoff_label = Property(depends_on="onoff_state")
 
     use_pid = Bool
     graph = Instance(StreamGraph)
@@ -73,32 +73,40 @@ class HeaterMixin(HasTraits):
                 self.graph.record(v)
 
     def _use_pid_changed(self, v):
-        self.debug('set use_pid={}'.format(v))
+        self.debug("set use_pid={}".format(v))
         self.set_use_pid(v)
 
     def _onoff_button_fired(self):
         self.onoff_state = not self.onoff_state
-        self.debug('set state = {}'.format(self.onoff_state))
+        self.debug("set state = {}".format(self.onoff_state))
         self.set_active(self.onoff_state)
 
     def _get_onoff_label(self):
-        return 'Off' if self.onoff_state else 'On'
+        return "Off" if self.onoff_state else "On"
 
     def _graph_default(self):
         g = StreamGraph()
-        g.new_plot(ytitle='Readback', xtitle='Time (s)')
+        g.new_plot(ytitle="Readback", xtitle="Time (s)")
         g.new_series()
         return g
 
     def heater_view(self):
-        v = View(VGroup(HGroup(UItem('name', style='readonly'),
-                               Item('use_pid', label='Use PID'),
-                               UItem('onoff_button',
-                                     editor=ButtonEditor(label_value='onoff_label'))),
-                        HGroup(Item('setpoint'),
-                               UItem('readback', editor=LCDEditor(width=100, height=30))),
-                        UItem('graph',
-                              style='custom')))
+        v = View(
+            VGroup(
+                HGroup(
+                    UItem("name", style="readonly"),
+                    Item("use_pid", label="Use PID"),
+                    UItem(
+                        "onoff_button", editor=ButtonEditor(label_value="onoff_label")
+                    ),
+                ),
+                HGroup(
+                    Item("setpoint"),
+                    UItem("readback", editor=LCDEditor(width=100, height=30)),
+                ),
+                UItem("graph", style="custom"),
+            )
+        )
         return v
 
 
@@ -109,48 +117,56 @@ class PLC2000Heater(CoreDevice, ModbusMixin, HeaterMixin):
     enable_address = Int
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'setpoint_address', 'Register', 'setpoint', cast='int')
-        self.set_attribute(config, 'readback_address', 'Register', 'readback', cast='int')
-        self.set_attribute(config, 'use_pid_address', 'Register', 'use_pid', cast='int')
-        self.set_attribute(config, 'enable_address', 'Register', 'enable', cast='int')
-        self.debug('Automatically do coil_address = address-1')
+        self.set_attribute(
+            config, "setpoint_address", "Register", "setpoint", cast="int"
+        )
+        self.set_attribute(
+            config, "readback_address", "Register", "readback", cast="int"
+        )
+        self.set_attribute(config, "use_pid_address", "Register", "use_pid", cast="int")
+        self.set_attribute(config, "enable_address", "Register", "enable", cast="int")
+        self.debug("Automatically do coil_address = address-1")
 
-        for attr in ('setpoint', 'readback', 'use_pid', 'enable'):
-            attr = '{}_address'.format(attr)
+        for attr in ("setpoint", "readback", "use_pid", "enable"):
+            attr = "{}_address".format(attr)
             v = getattr(self, attr)
-            setattr(self, attr, v-1)
+            setattr(self, attr, v - 1)
 
         return True
 
     def set_setpoint(self, v):
         if self.setpoint_address is not None:
-            self.debug('set setpoint addr={}, {}'.format(self.setpoint_address, v))
+            self.debug("set setpoint addr={}, {}".format(self.setpoint_address, v))
             self._write_int(self.setpoint_address, v)
         else:
-            self.debug('setpoint_address not set')
+            self.debug("setpoint_address not set")
 
     def set_active(self, state):
         if self.enable_address is not None:
-            self.debug('set active addr={}, {}'.format(self.enable_address, bool(state)))
+            self.debug(
+                "set active addr={}, {}".format(self.enable_address, bool(state))
+            )
             self._write_coil(self.enable_address, bool(state))
         else:
-            self.debug('enable_address not set')
+            self.debug("enable_address not set")
 
     def set_use_pid(self, state):
         if self.use_pid_address is not None:
-            self.debug('set use pid addr={}, {}'.format(self.use_pid_address, bool(state)))
+            self.debug(
+                "set use pid addr={}, {}".format(self.use_pid_address, bool(state))
+            )
             self._write_coil(self.use_pid_address, bool(state))
         else:
-            self.debug('use_pid_address not set')
+            self.debug("use_pid_address not set")
 
     @get_float()
     def read_readback(self):
         if self.readback_address is not None:
             v = self._read_input_float(self.readback_address)
-            self.debug('read readback addr={}, {}'.format(self.readback_address, v))
+            self.debug("read readback addr={}, {}".format(self.readback_address, v))
             return v
         else:
-            self.debug('readback address not set')
+            self.debug("readback address not set")
 
     @get_boolean()
     def read_use_pid(self):
@@ -158,7 +174,7 @@ class PLC2000Heater(CoreDevice, ModbusMixin, HeaterMixin):
             rr = self._read_coils([self.use_pid_address])
             return rr.bits[0]
         else:
-            self.debug('use_pid address not set')
+            self.debug("use_pid address not set")
 
     @get_boolean()
     def read_onoff_state(self):
@@ -166,12 +182,14 @@ class PLC2000Heater(CoreDevice, ModbusMixin, HeaterMixin):
             rr = self._read_coils(self.enable_address)
             return rr.bits[0]
         else:
-            self.debug('enable address not set')
+            self.debug("enable address not set")
 
     @get_float()
     def read_setpoint(self):
         if self.setpoint_address is not None:
             return self._read_input_float(self.setpoint_address)
         else:
-            self.debug('setpoint address not set')
+            self.debug("setpoint address not set")
+
+
 # ============= EOF =============================================

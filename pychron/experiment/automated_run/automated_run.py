@@ -52,19 +52,46 @@ from pychron.core.yaml import yload
 from pychron.experiment import ExtractionException
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
-from pychron.experiment.conditional.conditional import TruncationConditional, \
-    ActionConditional, TerminationConditional, conditional_from_dict, CancelationConditional, conditionals_from_file, \
-    QueueModificationConditional, EquilibrationConditional
-from pychron.experiment.utilities.conditionals import test_queue_conditionals_name, QUEUE, SYSTEM, RUN
+from pychron.experiment.conditional.conditional import (
+    TruncationConditional,
+    ActionConditional,
+    TerminationConditional,
+    conditional_from_dict,
+    CancelationConditional,
+    conditionals_from_file,
+    QueueModificationConditional,
+    EquilibrationConditional,
+)
+from pychron.experiment.utilities.conditionals import (
+    test_queue_conditionals_name,
+    QUEUE,
+    SYSTEM,
+    RUN,
+)
 from pychron.experiment.utilities.environmentals import set_environmentals
 from pychron.experiment.utilities.identifier import convert_identifier
 from pychron.experiment.utilities.script import assemble_script_blob
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.pychron_constants import NULL_STR, MEASUREMENT_COLOR, \
-    EXTRACTION_COLOR, SCRIPT_KEYS, AR_AR, NO_BLANK_CORRECT, EXTRACTION, MEASUREMENT, EM_SCRIPT_KEYS, SCRIPT_NAMES, \
-    POST_MEASUREMENT, POST_EQUILIBRATION, FAILED, TRUNCATED, SUCCESS, CANCELED
+from pychron.pychron_constants import (
+    NULL_STR,
+    MEASUREMENT_COLOR,
+    EXTRACTION_COLOR,
+    SCRIPT_KEYS,
+    AR_AR,
+    NO_BLANK_CORRECT,
+    EXTRACTION,
+    MEASUREMENT,
+    EM_SCRIPT_KEYS,
+    SCRIPT_NAMES,
+    POST_MEASUREMENT,
+    POST_EQUILIBRATION,
+    FAILED,
+    TRUNCATED,
+    SUCCESS,
+    CANCELED,
+)
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
 from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
 from pychron.spectrometer.pfeiffer.manager.quadera import QuaderaSpectrometerManager
@@ -1009,7 +1036,13 @@ class AutomatedRun(Loggable):
             self.monitor.stop()
 
         if self.spec:
-            if self.spec.state not in ('not run', CANCELED, SUCCESS, TRUNCATED, 'aborted'):
+            if self.spec.state not in (
+                "not run",
+                CANCELED,
+                SUCCESS,
+                TRUNCATED,
+                "aborted",
+            ):
                 self.spec.state = FAILED
                 self.experiment_queue.refresh_table_needed = True
 
@@ -1205,22 +1238,30 @@ class AutomatedRun(Loggable):
             # set filtering
             self._set_filtering()
 
-            conds = (self.termination_conditionals, self.truncation_conditionals,
-                     self.action_conditionals, self.cancelation_conditionals, self.modification_conditionals,
-                     self.equilibration_conditionals)
+            conds = (
+                self.termination_conditionals,
+                self.truncation_conditionals,
+                self.action_conditionals,
+                self.cancelation_conditionals,
+                self.modification_conditionals,
+                self.equilibration_conditionals,
+            )
 
             env = self._get_environmentals()
             if env:
                 set_environmentals(self.spec, env)
 
-            tag = 'ok'
+            tag = "ok"
             if self.spec.state in (CANCELED, FAILED):
                 tag = self.spec.state
 
-            self._update_persister_spec(active_detectors=self._active_detectors,
-                                        conditionals=[c for cond in conds for c in cond],
-                                        tag=tag,
-                                        tripped_conditional=self.tripped_conditional, **env)
+            self._update_persister_spec(
+                active_detectors=self._active_detectors,
+                conditionals=[c for cond in conds for c in cond],
+                tag=tag,
+                tripped_conditional=self.tripped_conditional,
+                **env
+            )
 
             # save to database
             self._persister_save_action("post_measurement_save")
@@ -1584,7 +1625,10 @@ anaylsis_type={}
 
     def get_baselines(self):
         if self.isotope_group:
-            return {iso.name: (iso.detector, iso.baseline.uvalue) for iso in self.isotope_group.values()}
+            return {
+                iso.name: (iso.detector, iso.baseline.uvalue)
+                for iso in self.isotope_group.values()
+            }
             # return dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
             #              self.isotope_group.values()])
 
@@ -1882,7 +1926,7 @@ anaylsis_type={}
         d = conditionals_from_file(p, level=level)
         for k, v in d.items():
             # if k in ('actions', 'truncations', 'terminations', 'cancelations'):
-            var = getattr(self, '{}_conditionals'.format(k[:-1]))
+            var = getattr(self, "{}_conditionals".format(k[:-1]))
             var.extend(v)
 
     def _conditional_appender(self, name, cd, klass, level=None, location=None):
@@ -1957,7 +2001,7 @@ anaylsis_type={}
         dfp = self._get_default_fits_file()
         if dfp:
             ys = yload(dfp)
-            for fod, key in ((sfods, 'signal'), (bsfods, 'baseline')):
+            for fod, key in ((sfods, "signal"), (bsfods, "baseline")):
                 try:
                     extract_fit_dict(fod, ys[key])
                 except BaseException:
@@ -1965,7 +2009,11 @@ anaylsis_type={}
                     try:
                         yload(dfp, reraise=True)
                     except BaseException as ye:
-                        self.warning('Failed getting signal from fits file. Please check the syntax. {}'.format(ye))
+                        self.warning(
+                            "Failed getting signal from fits file. Please check the syntax. {}".format(
+                                ye
+                            )
+                        )
 
         return sfods, bsfods
 
@@ -2059,15 +2107,18 @@ anaylsis_type={}
         p.analysis_view.load(self)
 
     def _load_previous(self):
-        if not self.spec.analysis_type.startswith('blank') and not self.spec.analysis_type.startswith('background'):
+        if not self.spec.analysis_type.startswith(
+            "blank"
+        ) and not self.spec.analysis_type.startswith("background"):
             runid, blanks = self.previous_blanks
 
             self.debug("setting previous blanks")
             for iso, v in blanks.items():
                 self.isotope_group.set_blank(iso, v[0], v[1])
 
-            self._update_persister_spec(previous_blanks=blanks,
-                                        previous_blank_runid=runid)
+            self._update_persister_spec(
+                previous_blanks=blanks, previous_blank_runid=runid
+            )
 
         self.isotope_group.clear_baselines()
 
@@ -2088,9 +2139,9 @@ anaylsis_type={}
                 for kind, items in yd.items():
                     try:
                         # klass = CONDITIONALS_KLASS[kind]
-                        mod = 'pychron.experiment.conditional.conditional'
+                        mod = "pychron.experiment.conditional.conditional"
                         mod = importlib.import_module(mod)
-                        klass = getattr(mod, '{}sConditional'.format(kind.capitalize()))
+                        klass = getattr(mod, "{}sConditional".format(kind.capitalize()))
                     except (ImportError, AttributeError):
 
                         self.debug('Invalid conditional kind="{}"'.format(kind))
@@ -2892,13 +2943,22 @@ anaylsis_type={}
 
         klass = MeasurementPyScript
         if isinstance(self.spectrometer_manager, ThermoSpectrometerManager):
-            from pychron.pyscripts.measurement.thermo_measurement_pyscript import ThermoMeasurementPyScript
+            from pychron.pyscripts.measurement.thermo_measurement_pyscript import (
+                ThermoMeasurementPyScript,
+            )
+
             klass = ThermoMeasurementPyScript
         elif isinstance(self.spectrometer_manager, NGXSpectrometerManager):
-            from pychron.pyscripts.measurement.ngx_measurement_pyscript import NGXMeasurementPyScript
+            from pychron.pyscripts.measurement.ngx_measurement_pyscript import (
+                NGXMeasurementPyScript,
+            )
+
             klass = NGXMeasurementPyScript
         elif isinstance(self.spectrometer_manager, QuaderaSpectrometerManager):
-            from pychron.pyscripts.measurement.quadera_measurement_pyscript import QuaderaMeasurementPyScript
+            from pychron.pyscripts.measurement.quadera_measurement_pyscript import (
+                QuaderaMeasurementPyScript,
+            )
+
             klass = QuaderaMeasurementPyScript
 
         ms = klass(

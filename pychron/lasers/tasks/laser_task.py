@@ -24,7 +24,10 @@ from pychron.lasers.pattern.pattern_maker_view import PatternMakerView
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.lasers.tasks.panes.ostech import OsTechDiodeSupplementalPane, OsTechDiodeControlPane
+from pychron.lasers.tasks.panes.ostech import (
+    OsTechDiodeSupplementalPane,
+    OsTechDiodeControlPane,
+)
 from pychron.pychron_constants import FUSIONS_CO2, FUSIONS_DIODE, OSTECH_DIODE
 
 
@@ -113,22 +116,25 @@ class FusionsTask(BaseLaserTask):
 
 
 class OsTechDiodeTask(BaseLaserTask):
-    id = 'pychron.ostech.diode'
+    id = "pychron.ostech.diode"
     name = OSTECH_DIODE
 
     def create_central_pane(self):
-        if self.manager.mode == 'client':
+        if self.manager.mode == "client":
             from pychron.lasers.tasks.panes.ostech import OsTechDiodeClientPane
+
             return OsTechDiodeClientPane(model=self.manager)
         else:
             from pychron.lasers.tasks.panes.ostech import OsTechDiodePane
+
             return OsTechDiodePane(model=self.manager)
 
     def create_dock_panes(self):
-        if self.manager.mode == 'client':
+        if self.manager.mode == "client":
             return []
         else:
             from pychron.lasers.tasks.panes.ostech import OsTechDiodeStagePane
+
             # from pychron.lasers.tasks.panes.diode import FusionsDiodeControlPane
             # from pychron.lasers.tasks.panes.diode import FusionsDiodeSupplementalPane
             # from pychron.lasers.tasks.laser_panes import PulsePane
@@ -139,7 +145,6 @@ class OsTechDiodeTask(BaseLaserTask):
                 OsTechDiodeStagePane(model=self.manager),
                 OsTechDiodeControlPane(model=self.manager),
                 OsTechDiodeSupplementalPane(model=self.manager),
-
                 # PulsePane(model=self.manager),
                 # OpticsPane(model=self.manager),
                 # AuxilaryGraphPane(model=self.manager)

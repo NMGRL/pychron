@@ -19,6 +19,7 @@ from traits.api import Bool
 
 # ============= standard library imports ========================
 from numpy import zeros_like, invert, uint8
+
 try:
     from skimage.filters import threshold_adaptive
 except ImportError:

@@ -19,7 +19,10 @@
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.action.group import Group
 from pyface.tasks.action.schema_addition import SchemaAddition
-from pychron.lasers.tasks.laser_preferences import FusionsDiodePreferencesPane, OsTechDiodePreferencesPane
+from pychron.lasers.tasks.laser_preferences import (
+    FusionsDiodePreferencesPane,
+    OsTechDiodePreferencesPane,
+)
 from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin, BaseLaserPlugin
 from pychron.lasers.tasks.laser_task import OsTechDiodeTask
 
@@ -29,12 +32,12 @@ from pychron.pychron_constants import FUSIONS_DIODE, OSTECH_DIODE
 
 
 class OsTechDiodePlugin(BaseLaserPlugin):
-    id = 'pychron.ostech.diode'
-    name = OSTECH_DIODE.replace(' ', '')
+    id = "pychron.ostech.diode"
+    name = OSTECH_DIODE.replace(" ", "")
 
-    klass = ('pychron.lasers.laser_managers.ostech_laser_manager', 'OsTechDiodeManager')
+    klass = ("pychron.lasers.laser_managers.ostech_laser_manager", "OsTechDiodeManager")
     task_name = OSTECH_DIODE
-    accelerator = 'Ctrl+Shift+['
+    accelerator = "Ctrl+Shift+["
 
     # def _task_extensions_default(self):
     #
@@ -66,6 +69,7 @@ class OsTechDiodePlugin(BaseLaserPlugin):
         t = OsTechDiodeTask(manager=self._get_manager(), application=self.application)
         return t
 
+
 # ============= EOF =============================================
 # SchemaAddition(id='fusions_diode_group',
 #                                                    factory=lambda: GroupSchema(id='FusionsDiodeGroup'),
@@ -75,13 +79,13 @@ class OsTechDiodePlugin(BaseLaserPlugin):
 #                                                   factory=lambda: Group(),
 #                                                   path='MenuBar/Extraction'
 #                                                   ),
-#SchemaAddition(id='open_scan',
+# SchemaAddition(id='open_scan',
 #               factory=factory_scan,
 #               path='MenuBar/Laser'
 #               #                                                 path='MenuBar/Extraction/FusionsDiodeGroup'
-#),
-#SchemaAddition(id='open_autotune',
+# ),
+# SchemaAddition(id='open_autotune',
 #               factory=factory_tune,
 #               path='MenuBar/Laser'
 #               #                                                 path='MenuBar/Extraction/FusionsDiodeGroup'
-#),
+# ),

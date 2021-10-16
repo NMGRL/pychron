@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import Button, Bool, Any, List
 from traitsui.api import Item, HGroup
+
 # from pychron.core.ui.custom_label_editor import CustomLabel
 # from pychron.core.geometry.geometry import calculate_reference_frame_center, calc_length
 from traitsui.view import View
@@ -43,17 +44,18 @@ class FreeCalibrator(TrayCalibrator):
     # def get_controls(self):
     #
     def traits_view(self):
-        cg = HGroup(Item('accept_point',
-                         enabled_when='calibrating',
-                         show_label=False),
-                    Item('append_current_calibration',
-                         label='Append Points',
-                         tooltip='Should points be appended to the current calibration or a new calibration started?'
-                         ))
+        cg = HGroup(
+            Item("accept_point", enabled_when="calibrating", show_label=False),
+            Item(
+                "append_current_calibration",
+                label="Append Points",
+                tooltip="Should points be appended to the current calibration or a new calibration started?",
+            ),
+        )
         return View(cg)
 
     def handle(self, step, x, y, canvas):
-        if step == 'Calibrate':
+        if step == "Calibrate":
             self.calibrating = True
             if self.append_current_calibration:
                 if not self.points:
@@ -63,23 +65,25 @@ class FreeCalibrator(TrayCalibrator):
                 canvas.new_calibration_item()
                 self.points = []
 
-            return dict(calibration_step='End Calibrate', reload=False)
+            return dict(calibration_step="End Calibrate", reload=False)
         # return 'End Calibrate', None, None, None, None, None
 
-        elif step == 'End Calibrate':
+        elif step == "End Calibrate":
             n = 0
             if self.points:
                 n = len(self.points)
 
             if n < 3:
                 d = None
-                if self.confirmation_dialog('Need to enter at least 3 calibration points. Current NPoints: {}\n\n'
-                                            'Are you sure you want to End calibration'.format(n)):
+                if self.confirmation_dialog(
+                    "Need to enter at least 3 calibration points. Current NPoints: {}\n\n"
+                    "Are you sure you want to End calibration".format(n)
+                ):
                     self.calibrating = False
-                    d = dict(calibration_step='Calibrate')
+                    d = dict(calibration_step="Calibrate")
                 return d
 
-            d = dict(calibration_step='Calibrate')
+            d = dict(calibration_step="Calibrate")
             self.calibrating = False
 
             return self._handle_end_calibrate(d, x, y, canvas)
@@ -89,8 +93,7 @@ class FreeCalibrator(TrayCalibrator):
 
         # scale, theta, (tx, ty), err = calculate_rigid_transform(refpoints,
         #                                                         points)
-        scale, theta, tx, ty, err = calculate_rigid_itransform(refpoints,
-                                                               points)
+        scale, theta, tx, ty, err = calculate_rigid_itransform(refpoints, points)
 
         # set canvas calibration
         ca = canvas.calibration_item
@@ -107,7 +110,7 @@ class FreeCalibrator(TrayCalibrator):
             if npt:
                 self.points.append(npt)
         else:
-            self.warning_dialog('Position not retrieved correctly. Point not accepted')
+            self.warning_dialog("Position not retrieved correctly. Point not accepted")
 
     def _get_current_position(self):
         sp = self.manager.get_current_position()
@@ -120,9 +123,9 @@ class FreeCalibrator(TrayCalibrator):
             refp = rp.x, rp.y
             return refp, sp
 
-# ===============================================================================
-# handlers
-# ===============================================================================
+    # ===============================================================================
+    # handlers
+    # ===============================================================================
     def _accept_point_fired(self):
         self._accept_point()
 

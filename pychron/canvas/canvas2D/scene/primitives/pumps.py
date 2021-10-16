@@ -22,8 +22,10 @@ import math
 from pychron.canvas.canvas2D.scene.primitives.primitives import Animation
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
 
+
 class IonPump(RoundedRectangle):
     pass
+
 
 class Turbo(RoundedRectangle, Animation):
     animate = False
@@ -62,5 +64,6 @@ class Turbo(RoundedRectangle, Animation):
 
 class IonPump(RoundedRectangle):
     pass
+
 
 # ============= EOF =============================================

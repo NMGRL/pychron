@@ -30,22 +30,26 @@ class PolynomialMapperMixin(HasTraits):
     mapped_name = Str
 
     def load_mapping(self, config):
-        conv = 'Conversion'
+        conv = "Conversion"
         if config.has_section(conv):
             pmapper = self.factory(config, conv)
             self.poly_mapper = pmapper
-            self.set_attribute(config, 'mapped_name', conv, 'name')
+            self.set_attribute(config, "mapped_name", conv, "name")
 
             if self.mapped_name:
-                u = self.config_get(config, conv, 'units', default='')
-                self.graph_ytitle = '{} ({})'.format(self.mapped_name.capitalize(), u)
+                u = self.config_get(config, conv, "units", default="")
+                self.graph_ytitle = "{} ({})".format(self.mapped_name.capitalize(), u)
 
     def factory(self, config, section):
         pmapper = PolynomialMapper()
-        coeffs = self.config_get(config, section, 'coefficients')
+        coeffs = self.config_get(config, section, "coefficients")
         pmapper.parse_coefficient_string(coeffs)
-        pmapper.output_low = self.config_get(config, section, 'output_low', cast='float')
-        pmapper.output_high = self.config_get(config, section, 'output_high', cast='float')
+        pmapper.output_low = self.config_get(
+            config, section, "output_low", cast="float"
+        )
+        pmapper.output_high = self.config_get(
+            config, section, "output_high", cast="float"
+        )
 
         return pmapper
 
@@ -56,7 +60,6 @@ class BaseMapper(HasTraits):
 
     def map_output(self, v):
         raise NotImplementedError
-
 
 
 class PolynomialMapper(BaseMapper):

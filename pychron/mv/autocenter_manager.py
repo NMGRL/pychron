@@ -18,7 +18,18 @@
 import os
 
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Float, Button, Bool, Any, Instance, Event, Int, HasTraits, Str, List
+from traits.api import (
+    Float,
+    Button,
+    Bool,
+    Any,
+    Instance,
+    Event,
+    Int,
+    HasTraits,
+    Str,
+    List,
+)
 from traitsui.api import View, Item, HGroup, RangeEditor
 from math import ceil
 
@@ -29,7 +40,7 @@ from pychron.paths import paths
 
 
 class AutoCenterConfig(HasTraits):
-    name = 'Default'
+    name = "Default"
     use_adaptive_threshold = Bool(False)
     blur = Int
     stretch_intensity = Bool(False)
@@ -47,13 +58,18 @@ class AutoCenterConfig(HasTraits):
 
     @property
     def preprop(self):
-        return {'stretch_intensity': self.stretch_intensity,
-                'blur': self.blur}
+        return {"stretch_intensity": self.stretch_intensity, "blur": self.blur}
 
     @property
     def search(self):
-        return {'n': self.search_n, 'step': self.search_step, 'width': self.search_width, 'blocksize': self.blocksize,
-                'blocksize_step': self.blocksize_step, 'use_adaptive_threshold': self.use_adaptive_threshold}
+        return {
+            "n": self.search_n,
+            "step": self.search_step,
+            "width": self.search_width,
+            "blocksize": self.blocksize,
+            "blocksize_step": self.blocksize_step,
+            "use_adaptive_threshold": self.use_adaptive_threshold,
+        }
 
 
 class AutoCenterManager(MachineVisionManager):
@@ -99,7 +115,7 @@ class AutoCenterManager(MachineVisionManager):
         # bind_preference(self, 'blocksize_step', '{}.autocenter_blocksize_step'.format(pref_id))
 
     def cancel(self):
-        self.debug('canceling')
+        self.debug("canceling")
         if self.locator:
             self.locator.cancel()
 
@@ -118,7 +134,9 @@ class AutoCenterManager(MachineVisionManager):
 
         config = self.selected_configuration
 
-        dx, dy = loc.find(im, frame, dim=dim, preprocess=config.preprop, search=config.search)
+        dx, dy = loc.find(
+            im, frame, dim=dim, preprocess=config.preprop, search=config.search
+        )
 
         if dx is None and dy is None:
             return
@@ -134,7 +152,7 @@ class AutoCenterManager(MachineVisionManager):
 
     # private
     def _load_configuration(self):
-        p = os.path.join(paths.setup_dir, 'autocenter_configuration.yaml')
+        p = os.path.join(paths.setup_dir, "autocenter_configuration.yaml")
 
         # list of configurations
         yl = yload(p)

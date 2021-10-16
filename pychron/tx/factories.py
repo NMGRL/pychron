@@ -53,9 +53,8 @@ class FusionsUVFactory(LaserFactory):
     _name = "FusionsUV"
 
 
-
 class OsTechDiodeFactory(LaserFactory):
-    _name = 'OsTechDiode'
+    _name = "OsTechDiode"
 
 
 from pychron.paths import paths

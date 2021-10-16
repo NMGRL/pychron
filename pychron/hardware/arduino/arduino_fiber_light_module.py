@@ -17,6 +17,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import provides
+
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
@@ -35,6 +36,7 @@ FiberLight Protocol ver 0.2
 9; get version        return 1,0.2
 
 """
+
 
 @provides(IFiberLight)
 class ArduinoFiberLightModule(ArduinoCoreDevice):

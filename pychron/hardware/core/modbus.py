@@ -21,6 +21,7 @@ class ModbusMixin:
     """
     simple mapper of the Modbus commands
     """
+
     def _read_float(self, register, *args, **kw):
         result = self._read_holding_registers(int(register), 2, *args, **kw)
         return self._decode_float(result)
@@ -30,7 +31,9 @@ class ModbusMixin:
         return self._decode_float(result)
 
     def _decode_float(self, result):
-        decoder = BinaryPayloadDecoder.fromRegisters(result.registers, Endian.Big, wordorder=Endian.Little)
+        decoder = BinaryPayloadDecoder.fromRegisters(
+            result.registers, Endian.Big, wordorder=Endian.Little
+        )
         return decoder.decode_32bit_float()
 
     def _get_payload(self, value, is_float=True):
@@ -44,35 +47,44 @@ class ModbusMixin:
 
     def _write_int(self, register, value, *args, **kw):
         payload = self._get_payload(value, is_float=False)
-        self.debug('writing int register={} payload={} value={}'.format(register, payload, value))
+        self.debug(
+            "writing int register={} payload={} value={}".format(
+                register, payload, value
+            )
+        )
         self._write_registers(register, payload, skip_encode=True)
 
     def _write_float(self, register, value, *args, **kw):
         payload = self._get_payload(value)
-        self.debug('writing float register={} payload={} value={}'.format(register, payload, value))
+        self.debug(
+            "writing float register={} payload={} value={}".format(
+                register, payload, value
+            )
+        )
         self._write_registers(register, payload, skip_encode=True)
 
     def _func(self, funcname, *args, **kw):
         if self.communicator:
-            self.debug('ModbusMixin: {} {} {}'.format(funcname, args, kw))
+            self.debug("ModbusMixin: {} {} {}".format(funcname, args, kw))
             return getattr(self.communicator, funcname)(*args, **kw)
 
     def _read_coils(self, *args, **kw):
-        return self._func('read_coils', *args, **kw)
+        return self._func("read_coils", *args, **kw)
 
     def _write_coil(self, *args, **kw):
-        return self._func('write_coil', *args, **kw)
+        return self._func("write_coil", *args, **kw)
 
     def _read_holding_registers(self, *args, **kw):
-        return self._func('read_holding_registers', *args, **kw)
+        return self._func("read_holding_registers", *args, **kw)
 
     def _read_input_registers(self, *args, **kw):
-        return self._func('read_input_registers', *args, **kw)
+        return self._func("read_input_registers", *args, **kw)
 
     def _write_register(self, *args, **kw):
-        return self._func('write_register', *args, **kw)
+        return self._func("write_register", *args, **kw)
 
     def _write_registers(self, *args, **kw):
-        return self._func('write_registers', *args, **kw)
+        return self._func("write_registers", *args, **kw)
+
 
 # ============= EOF =============================================

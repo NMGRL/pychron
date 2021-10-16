@@ -85,9 +85,9 @@ class BaslerPylonCamera(Loggable):
                     except IOError as e:
                         self.warning("IOError: {}, k={}, v={}".format(e, k, v))
                     except genicam.AccessException as e:
-                        self.warning('Access Exception {}'.format(e))
+                        self.warning("Access Exception {}".format(e))
                     except genicam.LogicalErrorException as e:
-                        self.warning('Logical Error Exception {}'.format(e))
+                        self.warning("Logical Error Exception {}".format(e))
 
             self.pixel_depth = self._cam.PixelDynamicRangeMax.Value
             self._cam.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)

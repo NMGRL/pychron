@@ -1,9 +1,9 @@
 name: Format code
 on:
   pull_request:
-    branches: [dev/dr, dev/dc]
+    branches: [develop, dev/dr, dev/dc]
   push:
-    branches: [dev/dr, dev/dc]
+    branches: [develop, dev/dr, dev/dc]
 jobs:
   flake8_py3:
     runs-on: ubuntu-latest

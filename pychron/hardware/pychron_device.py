@@ -60,7 +60,6 @@ class SerialDeviceMixin(RemoteDeviceMixin):
     stopbits = Str
     read_delay = CInt
 
-
     def setup_communicator(self):
         from pychron.hardware.core.communicators.serial_communicator import (
             SerialCommunicator,

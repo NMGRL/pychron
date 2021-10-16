@@ -63,7 +63,7 @@ from pychron.dvc.dvc_orm import (
     CurrentTbl,
     ParameterTbl,
     UnitsTbl,
-    MediaTbl
+    MediaTbl,
 )
 from pychron.experiment.utilities.identifier import strip_runid
 from pychron.globals import globalv

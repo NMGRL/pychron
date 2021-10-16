@@ -557,11 +557,13 @@ class GitRepoManager(Loggable):
         return self._repo.git.diff("HEAD", "--name-only")
         # return self._repo.is_dirty()
 
-    def has_unpushed_commits(self, remote='origin', branch='master'):
+    def has_unpushed_commits(self, remote="origin", branch="master"):
         if self._repo:
             # return self._repo.git.log('--not', '--remotes', '--oneline')
             if remote in self._repo.remotes:
-                return self._repo.git.log('{}/{}..HEAD'.format(remote, branch), '--oneline')
+                return self._repo.git.log(
+                    "{}/{}..HEAD".format(remote, branch), "--oneline"
+                )
 
     def add_unstaged(self, root=None, add_all=False, extension=None, use_diff=False):
         if root is None:
@@ -835,9 +837,14 @@ class GitRepoManager(Loggable):
 
             repo.git.rebase(onto_branch, branch)
 
-    def smart_pull(self, branch='master', remote='origin',
-                   quiet=True,
-                   accept_our=False, accept_their=False):
+    def smart_pull(
+        self,
+        branch="master",
+        remote="origin",
+        quiet=True,
+        accept_our=False,
+        accept_their=False,
+    ):
 
         if remote not in self._repo.remotes:
             return True

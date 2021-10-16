@@ -85,10 +85,10 @@ class BaseValve(Connectable):
 
     def toyaml(self):
         y = super(BaseValve, self).toyaml()
-        del y['color']
-        del y['display_name']
-        del y['border_width']
-        del y['fill']
+        del y["color"]
+        del y["display_name"]
+        del y["border_width"]
+        del y["fill"]
 
         return y
 

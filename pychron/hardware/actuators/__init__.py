@@ -91,8 +91,7 @@ PACKAGES = dict(
     DummyGPActuator="{}.dummy_gp_actuator".format(abase),
     RPiGPIO="{}.rpi_gpio".format(base),
     T4Actuator="{}.t4_actuator".format(abase),
-    U3Actuator='{}.u3_actuator'.format(abase),
-    ProXRActuator='{}.proxr_actuator'.format(abase),
-    PLC2000GPActuator='{}.plc2000_gp_actuator'.format(abase)
-
+    U3Actuator="{}.u3_actuator".format(abase),
+    ProXRActuator="{}.proxr_actuator".format(abase),
+    PLC2000GPActuator="{}.plc2000_gp_actuator".format(abase),
 )

@@ -21,8 +21,8 @@ from pychron.hardware.core.modbus import ModbusMixin
 class PLC2000GPActuator(GPActuator, ModbusMixin, ClientMixin):
     def _actuate(self, obj, action):
         addr = int(obj.address) - 1
-        state = action.lower() == 'open'
-        self.debug('actuate. write coil {} {}'.format(addr, state))
+        state = action.lower() == "open"
+        self.debug("actuate. write coil {} {}".format(addr, state))
 
         self._write_coil(addr, state)
         return True
@@ -33,7 +33,8 @@ class PLC2000GPActuator(GPActuator, ModbusMixin, ClientMixin):
         except (ValueError, AttributeError):
             address = int(obj)
 
-        resp = self._read_coils(int(address)-1, 1)
+        resp = self._read_coils(int(address) - 1, 1)
         return bool(resp.bits[0])
+
 
 # ============= EOF =============================================

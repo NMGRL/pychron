@@ -20,7 +20,10 @@
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.core.communicators.communicator import Communicator, remove_eol_func
+from pychron.hardware.core.communicators.communicator import (
+    Communicator,
+    remove_eol_func,
+)
 from pychron.hardware.core.communicators.visa import resource_manager
 
 

@@ -129,11 +129,11 @@ class BaseLakeShoreController(CoreDevice):
             if tag is not None:
                 try:
                     setpoint = getattr(self, tag)
-                    self.debug('{}={}, v={}'.format(tag, setpoint, v))
+                    self.debug("{}={}, v={}".format(tag, setpoint, v))
                     if abs(v - setpoint) > tol:
                         return
                     else:
-                        self.debug('setpoint {} achieved'.format(idx))
+                        self.debug("setpoint {} achieved".format(idx))
                 except AttributeError:
                     pass
         return True
@@ -142,8 +142,8 @@ class BaseLakeShoreController(CoreDevice):
     def read_setpoint(self, output, verbose=False):
         if output is not None:
             if isinstance(output, str):
-                output = re.sub('[^0-9]', '', output)
-            return self.ask('SETP? {}'.format(output), verbose=verbose)
+                output = re.sub("[^0-9]", "", output)
+            return self.ask("SETP? {}".format(output), verbose=verbose)
 
     def set_setpoints(self, *setpoints, block=False, delay=1):
         for i, v in enumerate(setpoints):
@@ -166,16 +166,16 @@ class BaseLakeShoreController(CoreDevice):
 
         self.set_range(v, output)
         for i in range(retries):
-            self.tell('SETP {},{}'.format(output, v))
+            self.tell("SETP {},{}".format(output, v))
             time.sleep(2)
             sp = self.read_setpoint(output, verbose=True)
-            self.debug('setpoint set to={} target={}'.format(sp, v))
-            if sp==v:
+            self.debug("setpoint set to={} target={}".format(sp, v))
+            if sp == v:
                 break
             time.sleep(1)
 
         else:
-            self.warning_dialog('Failed setting setpoint to {}. Got={}'.format(v, sp))
+            self.warning_dialog("Failed setting setpoint to {}. Got={}".format(v, sp))
 
     def set_range(self, v, output):
         # if v <= 10:
@@ -215,28 +215,50 @@ class BaseLakeShoreController(CoreDevice):
         self.set_setpoint(self.setpoint2, 2)
 
     def _update_hook(self):
-        r = PlotRecord((self.input_a, self.input_b), (0, 1), ('a', 'b'))
+        r = PlotRecord((self.input_a, self.input_b), (0, 1), ("a", "b"))
         return r
 
     def get_control_group(self):
-        grp = VGroup(Spring(height=10, springy=False),
-                     HGroup(Item('input_a', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
-                            Item('setpoint1'),
-                            UItem('setpoint1_readback', editor=LCDEditor(width=120, height=30),
-                                  style='readonly'), Spring(width=10, springy=False)),
-                     HGroup(Item('input_b', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
-                            Item('setpoint2'),
-                            UItem('setpoint2_readback', editor=LCDEditor(width=120, height=30),
-                                  style='readonly'), Spring(width=10, springy=False)))
+        grp = VGroup(
+            Spring(height=10, springy=False),
+            HGroup(
+                Item(
+                    "input_a",
+                    style="readonly",
+                    editor=LCDEditor(width=120, ndigits=6, height=30),
+                ),
+                Item("setpoint1"),
+                UItem(
+                    "setpoint1_readback",
+                    editor=LCDEditor(width=120, height=30),
+                    style="readonly",
+                ),
+                Spring(width=10, springy=False),
+            ),
+            HGroup(
+                Item(
+                    "input_b",
+                    style="readonly",
+                    editor=LCDEditor(width=120, ndigits=6, height=30),
+                ),
+                Item("setpoint2"),
+                UItem(
+                    "setpoint2_readback",
+                    editor=LCDEditor(width=120, height=30),
+                    style="readonly",
+                ),
+                Spring(width=10, springy=False),
+            ),
+        )
         return grp
 
     def graph_builder(self, g, **kw):
         g.plotcontainer.spacing = 10
-        g.new_plot(xtitle='Time f(s)', ytitle='InputA',
-                   padding=[100, 10, 0, 60])
+        g.new_plot(xtitle="Time f(s)", ytitle="InputA", padding=[100, 10, 0, 60])
         g.new_series()
 
-        g.new_plot(ytitle='InputB',
-                   padding=[100, 10, 60, 0])
+        g.new_plot(ytitle="InputB", padding=[100, 10, 60, 0])
         g.new_series(plotid=1)
+
+
 # ============= EOF =============================================

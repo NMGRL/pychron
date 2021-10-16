@@ -19,4 +19,5 @@ from pychron.spectrometer.pfeiffer.detector.base import PfeifferDetector
 class QuaderaDetector(PfeifferDetector):
     pass
 
+
 # ============= EOF =============================================

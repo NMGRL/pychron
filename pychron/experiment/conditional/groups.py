@@ -617,7 +617,7 @@ class TruncationGroup(EConditionalGroup):
 
 
 class EquilibrationGroup(EConditionalGroup):
-    help_str = 'Equilibration Truncation: truncate measurement of current run and CONTINUE to next run'
+    help_str = "Equilibration Truncation: truncate measurement of current run and CONTINUE to next run"
 
 
 class EPostRunGroup(PreRunGroup):

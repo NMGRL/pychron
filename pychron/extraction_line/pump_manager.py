@@ -21,21 +21,35 @@ class PumpManager(Manager):
     def get_pressure(self, idx=0):
         try:
             d = self.devices[idx]
-            self.debug('get pressure, idx={}, device={}'.format(idx, d))
+            self.debug("get pressure, idx={}, device={}".format(idx, d))
             return d.get_pressure()
         except IndexError:
-            self.warning('Invalid device index={}, totals devices={}'.format(idx, len(self.devices)))
+            self.warning(
+                "Invalid device index={}, totals devices={}".format(
+                    idx, len(self.devices)
+                )
+            )
             return 0
 
     def traits_view(self):
         if self.devices:
-            v = View(VGroup(UCustom('devices',
-                                    editor=ListEditor(mutable=False,
-                                                      columns=len(self.devices),
-                                                      style='custom',
-                                                      editor=InstanceEditor(view='pump_view')))),
-                     height=-100)
+            v = View(
+                VGroup(
+                    UCustom(
+                        "devices",
+                        editor=ListEditor(
+                            mutable=False,
+                            columns=len(self.devices),
+                            style="custom",
+                            editor=InstanceEditor(view="pump_view"),
+                        ),
+                    )
+                ),
+                height=-100,
+            )
         else:
             v = View()
         return v
+
+
 # ============= EOF =============================================

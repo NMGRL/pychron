@@ -112,7 +112,7 @@ class BaseScanner(PersistenceLoggable):
             time.sleep(max(0, period))
             if i == 0:
                 time.sleep(3)
-            
+
             ks, ss, t, inc = spec.get_intensities(integrated_intensity=True)
 
             refsig = float(refdet.intensity)

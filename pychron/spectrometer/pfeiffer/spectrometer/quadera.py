@@ -19,9 +19,15 @@ from datetime import datetime
 from traits.api import List
 
 from pychron.hardware.quadera_spectrometer_controller import QuaderaController
-from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR, \
-    QUADERA_DEFAULT_INTEGRATION_TIME, QUADERA_INTEGRATION_TIMES
+from pychron.pychron_constants import (
+    ISOTOPX_DEFAULT_INTEGRATION_TIME,
+    ISOTOPX_INTEGRATION_TIMES,
+    NULL_STR,
+    QUADERA_DEFAULT_INTEGRATION_TIME,
+    QUADERA_INTEGRATION_TIMES,
+)
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
+
 # from pychron.spectrometer.isotopx import SOURCE_CONTROL_PARAMETERS, IsotopxMixin
 
 from pychron.spectrometer.pfeiffer import PfeifferMixin
@@ -45,10 +51,10 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
     use_hv_correction = False
 
     def _microcontroller_default(self):
-        #service = 'pychron.hardware.quadera_spectrometer_controller.QuaderaController'
-        #s = self.application.get_service(service)
+        # service = 'pychron.hardware.quadera_spectrometer_controller.QuaderaController'
+        # s = self.application.get_service(service)
 
-        s = QuaderaController(name='spectrometer_microcontroller')
+        s = QuaderaController(name="spectrometer_microcontroller")
         s.bootstrap()
         s.communicator.simulation = True
         return s
@@ -63,19 +69,19 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         return {}
 
     # def start(self):
-        # self.set_integration_time(1, force=True)
+    # self.set_integration_time(1, force=True)
 
     # def finish_loading(self):
     #     super(QuaderaSpectrometer, self).finish_loading()
-        # config = self._get_cached_config()
-        # if config is not None:
-        #     magnet = config['magnet']
-        #     # specparams, defl, trap, magnet = ret
-        #     mftable_name = magnet.get('mftable')
-        #     if mftable_name:
-        #         self.debug('updating mftable name {}'.format(mftable_name))
-        #         self.magnet.field_table.path = mftable_name
-        #         self.magnet.field_table.load_table(load_items=True)
+    # config = self._get_cached_config()
+    # if config is not None:
+    #     magnet = config['magnet']
+    #     # specparams, defl, trap, magnet = ret
+    #     mftable_name = magnet.get('mftable')
+    #     if mftable_name:
+    #         self.debug('updating mftable name {}'.format(mftable_name))
+    #         self.magnet.field_table.path = mftable_name
+    #         self.magnet.field_table.load_table(load_items=True)
 
     def _send_configuration(self, **kw):
         pass
@@ -155,7 +161,9 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         :param force: set integration even if "it" is not different than self.integration_time
         :return: float, integration time
         """
-        self.debug('acquisition period set to 1 second.  integration time set to {}'.format(it))
+        self.debug(
+            "acquisition period set to 1 second.  integration time set to {}".format(it)
+        )
         # self.ask('SetAcqPeriod 1000')
         self.integration_time = it
 
@@ -189,11 +197,12 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
 
     def _get_simulation_data(self):
         signals = [1, 100, 3, 0.01, 0.01, 0.01]  # + random(6)
-        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+        keys = ["H2", "H1", "AX", "L1", "L2", "CDD"]
         return keys, signals, None
 
     def _integration_time_default(self):
         self.default_integration_time = QUADERA_DEFAULT_INTEGRATION_TIME
         return QUADERA_DEFAULT_INTEGRATION_TIME
+
 
 # ============= EOF =============================================

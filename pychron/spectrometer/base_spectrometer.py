@@ -104,7 +104,7 @@ class BaseSpectrometer(SpectrometerDevice):
         send configuration if self.send_config_on_startup set in Preferences
         :return:
         """
-        self.info('finish loading')
+        self.info("finish loading")
         if self.microcontroller:
             self.name = self.microcontroller.name
 
@@ -532,14 +532,14 @@ class BaseSpectrometer(SpectrometerDevice):
                 name = det.get("name")
                 software_gain = float(det.get("software_gain", 1.0))
 
-                color = det.get('color', 'black')
-                default_state =bool(det.get('default_state',True))
-                isotope = det.get('isotope', '')
-                kind = det.get('kind', 'Faraday')
-                pt = det.get('protection_threshold', 0)
-                serial_id = str(det.get('serial_id', '00000'))
-                index = float(det.get('index', i))
-                units = det.get('units', 'fA')
+                color = det.get("color", "black")
+                default_state = bool(det.get("default_state", True))
+                isotope = det.get("isotope", "")
+                kind = det.get("kind", "Faraday")
+                pt = det.get("protection_threshold", 0)
+                serial_id = str(det.get("serial_id", "00000"))
+                index = float(det.get("index", i))
+                units = det.get("units", "fA")
 
                 use_deflection = bool(det.get("use_deflection", True))
                 deflection_correction_sign = 1
@@ -551,20 +551,22 @@ class BaseSpectrometer(SpectrometerDevice):
                 deflection_name = det.get("deflection_name", name)
                 ypadding = str(det.get("ypadding", "0.1"))
 
-                self._add_detector(name=name,
-                                   index=index,
-                                   software_gain=software_gain,
-                                   serial_id=serial_id,
-                                   use_deflection=use_deflection,
-                                   protection_threshold=pt,
-                                   deflection_correction_sign=deflection_correction_sign,
-                                   deflection_name=deflection_name,
-                                   color=color,
-                                   active=default_state,
-                                   isotope=isotope,
-                                   kind=kind,
-                                   units=units,
-                                   ypadding=ypadding)
+                self._add_detector(
+                    name=name,
+                    index=index,
+                    software_gain=software_gain,
+                    serial_id=serial_id,
+                    use_deflection=use_deflection,
+                    protection_threshold=pt,
+                    deflection_correction_sign=deflection_correction_sign,
+                    deflection_name=deflection_name,
+                    color=color,
+                    active=default_state,
+                    isotope=isotope,
+                    kind=kind,
+                    units=units,
+                    ypadding=ypadding,
+                )
 
     def _load_detectors_cfg(self, path):
         try:
@@ -643,7 +645,9 @@ class BaseSpectrometer(SpectrometerDevice):
                 ypadding=ypadding,
             )
 
-    def get_intensities(self, tagged=True, trigger=False, integrated_intensity=False, **kw):
+    def get_intensities(
+        self, tagged=True, trigger=False, integrated_intensity=False, **kw
+    ):
         """
         keys, list of strings
         signals, list of floats::
@@ -728,7 +732,9 @@ class BaseSpectrometer(SpectrometerDevice):
 
         """
         try:
-            keys, signals, t, inc = self.get_intensities(integrated_intensity=integrated_intensity)
+            keys, signals, t, inc = self.get_intensities(
+                integrated_intensity=integrated_intensity
+            )
         except ValueError:
             self.debug("failed getting intensities")
             self.debug_exception()
