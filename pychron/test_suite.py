@@ -4,7 +4,7 @@ import unittest
 from pychron.core.helpers.tests.floatfmt import SigFigStdFmtTestCase
 from pychron.core.stats.tests.mswd_tests import MSWDTestCase
 from pychron.pyscripts.tests.extraction_script import WaitForTestCase
-from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
+# from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
 #
 # # Core
 # from pychron.core.tests.spell_correct import SpellCorrectTestCase
@@ -70,16 +70,16 @@ def suite():
     from pychron.paths import paths
     paths.build('_dev')
 
-    if use_logger:
-        from pychron.core.helpers.logger_setup import logging_setup
-        logging_setup('unittests')
+    # if use_logger:
+    #     from pychron.core.helpers.logger_setup import logging_setup
+    #     logging_setup('unittests')
 
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
     tests = (
         # Canvas
-        CalibrationObjectTestCase,
+        # CalibrationObjectTestCase,
 
         # Core
         # AlphaTestCase,
