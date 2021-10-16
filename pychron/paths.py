@@ -624,9 +624,9 @@ def build_directories():
     # global paths
     # verify paths
     # import copy
-    for l in dir(paths):
-        if l.endswith("_dir"):
-            r_mkdir(getattr(paths, l))
+    for di in dir(paths):
+        if di.endswith("_dir"):
+            r_mkdir(getattr(paths, di))
 
 
 def migrate_pyview():

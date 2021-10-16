@@ -44,7 +44,7 @@ def load_persistence_values(obj, p, attrs):
     for ai in attrs:
         try:
             setattr(obj, ai, d[ai])
-        except:
+        except BaseException:
             pass
 
 
