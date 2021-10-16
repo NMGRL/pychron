@@ -23,9 +23,11 @@ from traitsui.api import View, UItem
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class ScanInspectorCentralPane(TraitsTaskPane):
     def traits_view(self):
-        v = View(UItem('graph', style='custom'))
+        v = View(UItem("graph", style="custom"))
         return v
+
 
 # ============= EOF =============================================

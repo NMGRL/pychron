@@ -29,15 +29,14 @@ from pychron.paths import paths
 
 
 class BasePlugin(Plugin, Loggable):
-    actions = List(contributes_to='pychron.actions')
-    file_defaults = List(contributes_to='pychron.plugin.file_defaults')
-    help_tips = List(contributes_to='pychron.plugin.help_tips')
-    service_offers = List(contributes_to='envisage.service_offers')
-    preferences = List(contributes_to='envisage.preferences')
-    preferences_panes = List(
-        contributes_to='envisage.ui.tasks.preferences_panes')
+    actions = List(contributes_to="pychron.actions")
+    file_defaults = List(contributes_to="pychron.plugin.file_defaults")
+    help_tips = List(contributes_to="pychron.plugin.help_tips")
+    service_offers = List(contributes_to="envisage.service_offers")
+    preferences = List(contributes_to="envisage.preferences")
+    preferences_panes = List(contributes_to="envisage.ui.tasks.preferences_panes")
 
-    managers = List(contributes_to='pychron.hardware.managers')
+    managers = List(contributes_to="pychron.hardware.managers")
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
@@ -53,14 +52,15 @@ class BasePlugin(Plugin, Loggable):
         return ps
 
     def _make_preferences_path(self, name):
-        p = os.path.join(paths.preferences_dir, add_extension(name, '.ini'))
+        p = os.path.join(paths.preferences_dir, add_extension(name, ".ini"))
         if os.path.isfile(p):
-            return 'file://{}'.format(p)
+            return "file://{}".format(p)
 
     def service_offer_factory(self, **kw):
         return ServiceOffer(**kw)
 
     def check(self):
         return True
+
 
 # ============= EOF =============================================

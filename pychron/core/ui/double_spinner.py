@@ -21,5 +21,5 @@ from pychron.core.ui.factory import toolkit_factory
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-DoubleSpinnerEditor = toolkit_factory('double_spinner', 'DoubleSpinnerEditor')
+DoubleSpinnerEditor = toolkit_factory("double_spinner", "DoubleSpinnerEditor")
 # ============= EOF =============================================

@@ -45,10 +45,10 @@ class _DisplayEditor(Editor):
         if self.factory.max_blocks:
             self.control.setMaximumBlockCount(self.factory.max_blocks)
 
-        self.sync_value(self.factory.clear, 'clear', mode='from')
-        self.sync_value(self.factory.refresh, 'refresh', mode='from')
-        self.sync_value(self.factory.font_size, 'font_size', mode='from')
-        self.sync_value(self.factory.bgcolor, 'bgcolor', mode='from')
+        self.sync_value(self.factory.clear, "clear", mode="from")
+        self.sync_value(self.factory.refresh, "refresh", mode="from")
+        self.sync_value(self.factory.font_size, "font_size", mode="from")
+        self.sync_value(self.factory.bgcolor, "bgcolor", mode="from")
 
         # self.sync_value(self.factory.text_width, 'text_width', mode='to')
 
@@ -139,5 +139,6 @@ class DisplayEditor(BasicEditorFactory):
 
 class LoggerEditor(DisplayEditor):
     pass
+
 
 # ============= EOF =============================================

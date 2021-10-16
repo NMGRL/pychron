@@ -25,34 +25,31 @@ from .fusions_logic_board import FusionsLogicBoard
 
 
 class FusionsDiodeLogicBoard(FusionsLogicBoard):
-    '''
-    '''
+    """ """
 
     def _set_laser_power(self, p, m):
-        '''
-        '''
+        """ """
         self.parent.set_laser_power(p, m)
 
     def set_enable_onoff(self, onoff):
-        '''
-        '''
+        """ """
         #        if onoff:
         #            cmd = self.prefix + 'DRV0 1'
         #        else:
         #            cmd = self.prefix + 'DRV0 0'
 
-        cmd = self._build_command('DRV0', '1' if onoff else '0')
+        cmd = self._build_command("DRV0", "1" if onoff else "0")
         self.ask(cmd)
 
     def set_interlock_onoff(self, onoff):
-        '''
-        '''
+        """ """
         #        if onoff:
         #            cmd = self.prefix + 'IOWR1 1'
         #        else:
         #            cmd = self.prefix + 'IOWR1 0'
-        cmd = self._build_command('IOWR1', '1' if onoff else '0')
+        cmd = self._build_command("IOWR1", "1" if onoff else "0")
         self.ask(cmd)
+
 
 #    def _beam_motor_default(self):
 #        '''

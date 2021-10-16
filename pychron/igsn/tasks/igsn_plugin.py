@@ -21,26 +21,27 @@
 
 from __future__ import absolute_import
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+
 # from zobs.repo.tasks.preferences import IGSNPreferencesPane
 from pychron.igsn.igsn_service import IGSNService
 from pychron.igsn.tasks.preferences import IGSNPreferencesPane
 
 
 class IGSNPlugin(BaseTaskPlugin):
-    id = 'pychron.igsn.plugin'
+    id = "pychron.igsn.plugin"
 
     def _help_tips_default(self):
-        return ['More information about IGSN is located at http://www.geosamples.org/']
+        return ["More information about IGSN is located at http://www.geosamples.org/"]
 
     def _service_offers_default(self):
-        so1 = self.service_offer_factory(factory=IGSNService,
-                                         protocol=IGSNService)
+        so1 = self.service_offer_factory(factory=IGSNService, protocol=IGSNService)
         return [so1]
 
     def _preferences_panes_default(self):
         return [IGSNPreferencesPane]
 
     def _prefereneces_default(self):
-        return self._preferences_factory('igsn')
+        return self._preferences_factory("igsn")
+
 
 # ============= EOF =============================================

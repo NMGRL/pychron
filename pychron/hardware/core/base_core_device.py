@@ -21,6 +21,7 @@ from __future__ import print_function
 
 # from threading import Lock
 import inspect
+
 # from pyface.timer.api import Timer
 # =============standard library imports ========================
 import random
@@ -33,6 +34,7 @@ from pychron.globals import globalv
 from pychron.hardware.core.communicators.scheduler import CommunicationScheduler
 from pychron.hardware.core.exceptions import TimeoutError, CRCError
 from pychron.has_communicator import HasCommunicator
+
 # =============local library imports  ==========================
 from .i_core_device import ICoreDevice
 
@@ -43,15 +45,14 @@ def crc_caller(func):
             return func(*args, **kw)
         except CRCError:
             stack = inspect.stack()
-            print('{} called by {}'.format(func.__name__, stack[1][3]))
+            print("{} called by {}".format(func.__name__, stack[1][3]))
 
     return d
 
 
 @provides(ICoreDevice)
 class BaseCoreDevice(HasCommunicator, ConsumerMixin):
-    """
-    """
+    """ """
 
     _auto_started = False
     _no_response_counter = 0
@@ -59,11 +60,11 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
 
     def send_email_notification(self, message):
         if self.application:
-            tm = self.application.get_service('pychron.social.emailer.Emailer')
+            tm = self.application.get_service("pychron.social.emailer.Emailer")
             if tm:
                 tm.broadcast(message)
             else:
-                self.warning('No emailer available')
+                self.warning("No emailer available")
 
     # ICoreDevice protocol
     def close(self):
@@ -90,23 +91,29 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
 
     def load(self, *args, **kw):
         """
-            Load a configuration file.
-            Get Communications info to make a new communicator
+        Load a configuration file.
+        Get Communications info to make a new communicator
         """
         config = self.get_configuration()
         if config:
 
-            if config.has_section('General'):
-                name = self.config_get(config, 'General', 'name', optional=True)
+            if config.has_section("General"):
+                name = self.config_get(config, "General", "name", optional=True)
                 if name is not None:
                     self.name = name
 
-            if config.has_section('Communications'):
-                comtype = self.config_get(config, 'Communications', 'type')
+            if config.has_section("Communications"):
+                comtype = self.config_get(config, "Communications", "type")
                 if not self._load_communicator(config, comtype):
                     return False
 
-                self.set_attribute(config, '_scheduler_name', 'Communications', 'scheduler', optional=True)
+                self.set_attribute(
+                    config,
+                    "_scheduler_name",
+                    "Communications",
+                    "scheduler",
+                    optional=True,
+                )
 
             self._load_hook(config)
 
@@ -117,7 +124,7 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
             return r
 
     def open(self, *args, **kw):
-        self.debug('open device')
+        self.debug("open device")
         return HasCommunicator.open(self, **kw)
 
     def initialize(self, *args, **kw):
@@ -130,16 +137,18 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
 
     def load_additional_args(self, config):
         """
-            remember to return a boolean in any subclass that overrides this method.
-            if True bootstraping of this device will continue. otherwise device will not fully initialize
+        remember to return a boolean in any subclass that overrides this method.
+        if True bootstraping of this device will continue. otherwise device will not fully initialize
         """
         return True
 
-    def blocking_poll(self, func, args=None, kwargs=None, period=1, timeout=None, script=None):
+    def blocking_poll(
+        self, func, args=None, kwargs=None, period=1, timeout=None, script=None
+    ):
         """
-            repeatedly ask func at 1/period rate
-            if func returns true return True
-            if timeout return False
+        repeatedly ask func at 1/period rate
+        if func returns true return True
+        if timeout return False
         """
         if isinstance(func, str):
             func = getattr(self, func)
@@ -157,49 +166,48 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
             elif timeout:
                 et = time.time() - st
                 if et > timeout:
-                    self.warning('blocking poll of "{}" timed out after {}s'.format(func.__name__, timeout))
+                    self.warning(
+                        'blocking poll of "{}" timed out after {}s'.format(
+                            func.__name__, timeout
+                        )
+                    )
                     raise TimeoutError(func.__name__, timeout)
             time.sleep(period)
 
     @crc_caller
     def ask(self, cmd, **kw):
-        """
-        """
+        """ """
 
         comm = self.communicator
         if comm is not None:
             if comm.scheduler:
-                r = comm.scheduler.schedule(comm.ask, args=(cmd,),
-                                            kwargs=kw)
+                r = comm.scheduler.schedule(comm.ask, args=(cmd,), kwargs=kw)
             else:
                 r = comm.ask(cmd, **kw)
 
-            if hasattr(self, '_communicate_hook'):
+            if hasattr(self, "_communicate_hook"):
                 self._communicate_hook(cmd, r)
             return r
         else:
-            self.info('no communicator for this device {}'.format(self.name))
+            self.info("no communicator for this device {}".format(self.name))
 
     @crc_caller
     def write(self, *args, **kw):
-        """
-        """
+        """ """
         self.tell(*args, **kw)
 
     @crc_caller
     def tell(self, *args, **kw):
-        """
-        """
+        """ """
         if self.communicator is not None:
-            cmd = ' '.join([str(a) for a in args] + [str(a) for a in kw.items()])
+            cmd = " ".join([str(a) for a in args] + [str(a) for a in kw.items()])
 
-            self._communicate_hook(cmd, '-')
+            self._communicate_hook(cmd, "-")
             return self.communicator.tell(*args, **kw)
 
     @crc_caller
     def read(self, *args, **kw):
-        """
-        """
+        """ """
         if self.communicator is not None:
             return self.communicator.read(*args, **kw)
 
@@ -223,11 +231,11 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
 
     def get_random_value(self, mi=0, ma=10):
         """
-            convienent method for getting a random integer between min and max
+        convienent method for getting a random integer between min and max
 
-            Defaults:
-                min=0
-                max=10
+        Defaults:
+            min=0
+            max=10
 
         """
         return random.randint(mi, ma) if globalv.communication_simulation else None
@@ -238,7 +246,9 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
             if name is None:
                 name = self._scheduler_name
             if name is not None:
-                sc = self.application.get_service(CommunicationScheduler, 'name=="{}"'.format(name))
+                sc = self.application.get_service(
+                    CommunicationScheduler, 'name=="{}"'.format(name)
+                )
                 if sc is None:
                     sc = CommunicationScheduler(name=name)
                     self.application.register_service(type(sc), sc)
@@ -248,9 +258,16 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         if self.communicator is not None:
             self.communicator.scheduler = s
 
-    def repeat_command(self, cmd, ntries=2, check_val=None, check_type=None,
-                       break_val=None,
-                       verbose=True, **kw):
+    def repeat_command(
+        self,
+        cmd,
+        ntries=2,
+        check_val=None,
+        check_type=None,
+        break_val=None,
+        verbose=True,
+        **kw
+    ):
 
         if isinstance(cmd, tuple):
             cmd = self._build_command(*cmd)
@@ -261,9 +278,9 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         for i in range(ntries + 1):
             resp = self._parse_response(self.ask(cmd, verbose=verbose))
             if verbose:
-                m = 'repeat command {} response = {} len={} '.format(i + 1,
-                                                                     resp,
-                                                                     len(str(resp)) if resp is not None else None)
+                m = "repeat command {} response = {} len={} ".format(
+                    i + 1, resp, len(str(resp)) if resp is not None else None
+                )
                 self.debug(m)
 
             if break_val and resp == break_val:
@@ -310,5 +327,6 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
 
     def _load_hook(self, config):
         pass
+
 
 # ========================= EOF ============================================

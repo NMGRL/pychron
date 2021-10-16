@@ -26,23 +26,23 @@ from traitsui.menu import OKButton
 
 class TipView(HasTraits):
     text = Str
-    message = Str('<h1><font color=orange>Did you know?</font></h1>')
+    message = Str("<h1><font color=orange>Did you know?</font></h1>")
 
     def traits_view(self):
-        v = View(UItem('message', style='readonly'),
-                 UItem('text',
-                       style='custom',
-                       editor=TextEditor(read_only=True)),
-                 buttons=['OK'],
-                 default_button=OKButton,
-                 height=400,
-                 width=400,
-                 title='Random Tip',
-                 kind='livemodal')
+        v = View(
+            UItem("message", style="readonly"),
+            UItem("text", style="custom", editor=TextEditor(read_only=True)),
+            buttons=["OK"],
+            default_button=OKButton,
+            height=400,
+            width=400,
+            title="Random Tip",
+            kind="livemodal",
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     t = TipView()
     t.configure_traits()
 # ============= EOF =============================================

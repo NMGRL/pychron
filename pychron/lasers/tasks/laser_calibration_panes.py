@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from traits.api import Any
 from traitsui.api import View, UItem, InstanceEditor, ButtonEditor
+
 # from pyface.tasks.traits_task_pane import TraitsTaskPane
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 
@@ -27,29 +28,22 @@ from pyface.tasks.traits_dock_pane import TraitsDockPane
 
 
 class LaserCalibrationExecutePane(TraitsDockPane):
-    name = 'Execute'
-    id = 'pychron.laser_calibration.execute'
+    name = "Execute"
+    id = "pychron.laser_calibration.execute"
 
     def traits_view(self):
-        v = View(
-            UItem('execute',
-                  editor=ButtonEditor(label_value='execute_label')
-                  )
-        )
+        v = View(UItem("execute", editor=ButtonEditor(label_value="execute_label")))
         return v
 
 
 class LaserCalibrationControlPane(TraitsDockPane):
-    name = 'Control'
-    id = 'pychron.laser_calibration.control'
+    name = "Control"
+    id = "pychron.laser_calibration.control"
     editor = Any
 
     def traits_view(self):
-        v = View(
-            UItem('editor', style='custom',
-                  editor=InstanceEditor()
-                  )
-        )
+        v = View(UItem("editor", style="custom", editor=InstanceEditor()))
         return v
+
 
 # ============= EOF =============================================

@@ -32,11 +32,13 @@ dvc = get_dvc()
 def get_analyses():
     # get low post and high post of A-02-J and A-02-Få
 
-    hpost = '2020-11-04 17:39:19'
+    hpost = "2020-11-04 17:39:19"
     # hpost = '2018-11-04 17:39:19'
-    lpost = '2017-12-05 14:05:48'
+    lpost = "2017-12-05 14:05:48"
 
-    ans = dvc.get_analyses_by_date_range(lpost, hpost, analysis_types=('unknown',), verbose=True)
+    ans = dvc.get_analyses_by_date_range(
+        lpost, hpost, analysis_types=("unknown",), verbose=True
+    )
 
     return groupby_repo(ans)
 
@@ -53,42 +55,48 @@ def main():
         if os.path.isdir(repo_root):
             continue
 
-        print('repository={}'.format(repo))
+        print("repository={}".format(repo))
         if dvc:
-            dvc.clone_repository(repo, 'https://github.com/NMGRLData/{}'.format(repo))
+            dvc.clone_repository(repo, "https://github.com/NMGRLData/{}".format(repo))
 
-        dvc.branch_repo(repo, 'ic_factor_fix')
+        dvc.branch_repo(repo, "ic_factor_fix")
         ans = list(ans)
         for a in ans:
-            set_ic_factor(repo, a, ('CDD', 'L2(CDD)'), scalar)
+            set_ic_factor(repo, a, ("CDD", "L2(CDD)"), scalar)
 
         if dvc:
-            dvc.update_analyses(ans, 'icfactors', '<ICFactor> bulk edit scaled icfactor by {}'.format(scalar))
+            dvc.update_analyses(
+                ans,
+                "icfactors",
+                "<ICFactor> bulk edit scaled icfactor by {}".format(scalar),
+            )
 
     if dvc:
         dvc.close_session()
 
 
 def set_ic_factor(repo, analysis, target_det, scalar):
-    p = analysis_path((analysis.uuid, analysis.record_id), repo, modifier='icfactors')
+    p = analysis_path((analysis.uuid, analysis.record_id), repo, modifier="icfactors")
     if p:
         jd = dvc_load(p)
 
         for key, v in jd.items():
             if isinstance(v, dict):
-                vv, ee = v['value'] or 0, v['error'] or 0
+                vv, ee = v["value"] or 0, v["error"] or 0
                 if key in target_det:
                     nv = ufloat(vv, ee) * scalar
-                    jd[key] = {'value': nominal_value(nv),
-                               'error': std_dev(nv),
-                               'scalar': scalar,
-                               'reviewed': True,
-                               'fit': 'bulk_edit',
-                               'references': ''}
+                    jd[key] = {
+                        "value": nominal_value(nv),
+                        "error": std_dev(nv),
+                        "scalar": scalar,
+                        "reviewed": True,
+                        "fit": "bulk_edit",
+                        "references": "",
+                    }
 
         dvc_dump(jd, p)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 # ============= EOF =============================================

@@ -26,18 +26,19 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class LoadingPreferences(BasePreferencesHelper):
-    name = 'Loading'
-    preferences_path = 'pychron.loading'
-    id = 'pychron.loading.preferences_page'
+    name = "Loading"
+    preferences_path = "pychron.loading"
+    id = "pychron.loading.preferences_page"
     save_directory = Directory
 
 
 class LoadingPreferencesPane(PreferencesPane):
     model_factory = LoadingPreferences
-    category = 'Loading'
+    category = "Loading"
 
     def traits_view(self):
-        v = View(Item('save_directory', label='Output Directory'))
+        v = View(Item("save_directory", label="Output Directory"))
         return v
+
 
 # ============= EOF =============================================

@@ -101,4 +101,5 @@ class ContextualMenuTool(Interactor):
         menu_manager.destroy()
         event.handled = True
 
+
 # ============= EOF ====================================

@@ -19,6 +19,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import time
+
 # ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.labjack.base_u3_lv import BaseU3LV
@@ -29,17 +30,17 @@ class U3LV(BaseU3LV, CoreDevice):
     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
     from pychron.paths import paths
 
-    paths.build('_dev')
+    paths.build("_dev")
 
-    logging_setup('adc', use_archiver=False)
+    logging_setup("adc", use_archiver=False)
 
     # paths.build('_dev')
 
-    a = U3LV(name='u3lv', configuration_dir_name='furnace')
+    a = U3LV(name="u3lv", configuration_dir_name="furnace")
     a.bootstrap()
     # print a.read_dac_channel(1)
     # print a.read_temperature()
@@ -63,7 +64,7 @@ if __name__ == '__main__':
     #     a.set_channel_state(ch, int(state))
 
     for i in range(30):
-        print(i, a.get_channel_state('13'))
+        print(i, a.get_channel_state("13"))
         time.sleep(1)
     a.close()
 

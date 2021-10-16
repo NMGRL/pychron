@@ -36,22 +36,25 @@ class Emailee(HasTraits):
 
 
 class EmailNode(BaseNode):
-    name = 'Email'
+    name = "Email"
     emailer = Instance(Emailer)
     addresses = List
 
     def traits_view(self):
-        cols = [CheckboxColumn(name='enabled'),
-                ObjectColumn(name='name'),
-                ObjectColumn(name='email', label='Address')]
+        cols = [
+            CheckboxColumn(name="enabled"),
+            ObjectColumn(name="name"),
+            ObjectColumn(name="email", label="Address"),
+        ]
 
-        v = okcancel_view(UItem('addresses',
-                                editor=TableEditor(columns=cols)),
-                          title='Configure Email')
+        v = okcancel_view(
+            UItem("addresses", editor=TableEditor(columns=cols)),
+            title="Configure Email",
+        )
         return v
 
     def configure(self, *args, **kw):
-        path = os.path.join(paths.setup_dir, 'users.yaml')
+        path = os.path.join(paths.setup_dir, "users.yaml")
         self.addresses = [Emailee(**d) for d in yload(path)]
 
         return super(EmailNode, self).configure(*args, **kw)
@@ -60,12 +63,20 @@ class EmailNode(BaseNode):
         p = state.report_path
         if p:
             addrs = [e.email for e in self.addresses if e.enabled and e.email]
-            sub = 'DailyReport'
+            sub = "DailyReport"
 
-            msg = 'No Report Available'
+            msg = "No Report Available"
             if os.path.isfile(p):
-                msg = 'Daily Report from pychron. See attachment'
+                msg = "Daily Report from pychron. See attachment"
 
-            self.emailer.send(addrs, sub, msg, paths=[p, ])
+            self.emailer.send(
+                addrs,
+                sub,
+                msg,
+                paths=[
+                    p,
+                ],
+            )
+
 
 # ============= EOF =============================================

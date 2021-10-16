@@ -50,9 +50,9 @@ class PointInspector(InfoInspector):
             return where(distances <= threshold)[0]
 
     def percent_error(self, s, e):
-        v = '(Inf%)'
+        v = "(Inf%)"
         try:
-            return '({:0.2f}%)'.format(abs(e / s) * 100)
+            return "({:0.2f}%)".format(abs(e / s) * 100)
         except ZeroDivisionError:
             pass
         return v
@@ -67,7 +67,7 @@ class PointInspector(InfoInspector):
             lines = []
             convert_index = self.convert_index
             if inds is not None and len(inds):
-                he = hasattr(self.component, 'yerror')
+                he = hasattr(self.component, "yerror")
                 ys = comp.value.get_data()[inds]
                 xs = comp.index.get_data()[inds]
 
@@ -77,19 +77,19 @@ class PointInspector(InfoInspector):
                         pe = self.percent_error(y, ye)
 
                         ye = floatfmt(ye, n=6, s=3)
-                        sy = u'{} {} {} ({})'.format(y, PLUSMINUS, ye, pe)
+                        sy = u"{} {} {} ({})".format(y, PLUSMINUS, ye, pe)
                     else:
                         sy = floatfmt(y, n=6, s=3)
 
                     if convert_index:
                         x = convert_index(x)
                     else:
-                        x = '{:0.5f}'.format(x)
+                        x = "{:0.5f}".format(x)
 
-                    lines.extend([u'pt={:03d}, x= {}, y= {}'.format(i + 1, x, sy)])
-                    if hasattr(comp, 'display_index'):
+                    lines.extend([u"pt={:03d}, x= {}, y= {}".format(i + 1, x, sy)])
+                    if hasattr(comp, "display_index"):
                         x = comp.display_index.get_data()[i]
-                        lines.append('{}'.format(x))
+                        lines.append("{}".format(x))
 
                     if self.additional_info is not None:
                         try:
@@ -110,6 +110,7 @@ class PointInspector(InfoInspector):
 
 class PointInspectorOverlay(InfoOverlay):
     pass
+
 
 # print comp
 # ============= EOF =============================================

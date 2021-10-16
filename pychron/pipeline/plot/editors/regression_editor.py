@@ -33,12 +33,12 @@ from pychron.graph.tools.point_inspector import PointInspectorOverlay
 class RegressionEditor(BaseTraitsEditor):
     graph = Instance(Graph)
     result_str = Str
-    result_template = '''
+    result_template = """
 mswd={mswd:}
 slope={slope:}
 intercept={intercept:}
 rsquared={rsquared:}
-'''
+"""
 
     def set_items(self, items):
         xs = [r.x for r in items]
@@ -47,62 +47,68 @@ rsquared={rsquared:}
         ye = [r.y_err for r in items]
 
         g = Graph()
-        g.new_plot(ytitle='Y', xtitle='X')
-        scatter, plot = g.new_series(xs, ys, type='scatter')
+        g.new_plot(ytitle="Y", xtitle="X")
+        scatter, plot = g.new_series(xs, ys, type="scatter")
 
-        inspector = AnalysisPointInspector(scatter,
-                                           use_pane=False,
-                                           analyses=items,
-                                           include_x=True
-                                           # convert_index=convert_index,
-                                           # index_tag=index_tag,
-                                           # index_attr=index_attr,
-                                           # value_format=value_format,
-                                           # additional_info=additional_info
-                                           )
+        inspector = AnalysisPointInspector(
+            scatter,
+            use_pane=False,
+            analyses=items,
+            include_x=True
+            # convert_index=convert_index,
+            # index_tag=index_tag,
+            # index_attr=index_attr,
+            # value_format=value_format,
+            # additional_info=additional_info
+        )
 
-        pinspector_overlay = PointInspectorOverlay(component=scatter,
-                                                   tool=inspector)
+        pinspector_overlay = PointInspectorOverlay(component=scatter, tool=inspector)
         scatter.overlays.append(pinspector_overlay)
         # broadcaster.tools.append(inspector)
         scatter.tools.append(inspector)
 
         kw = {}
         if any(xe):
-            kw['xserr'] = xe
+            kw["xserr"] = xe
             # kw['xnes'] = xe
-            ebo = ErrorBarOverlay(component=scatter,
-                                  orientation='x',
-                                  # nsigma=nsigma,
-                                  # visible=visible,
-                                  # line_width=line_width,
-                                  # use_end_caps=end_caps
-                                  )
+            ebo = ErrorBarOverlay(
+                component=scatter,
+                orientation="x",
+                # nsigma=nsigma,
+                # visible=visible,
+                # line_width=line_width,
+                # use_end_caps=end_caps
+            )
             scatter.underlays.append(ebo)
-            setattr(scatter, 'xerror', ArrayDataSource(xe))
+            setattr(scatter, "xerror", ArrayDataSource(xe))
 
         if any(ye):
-            kw['yserr'] = ye
+            kw["yserr"] = ye
             # kw['ynes'] = ye
-            ebo = ErrorBarOverlay(component=scatter,
-                                  orientation='y',
-                                  # nsigma=nsigma,
-                                  # visible=visible,
-                                  # line_width=line_width,
-                                  # use_end_caps=end_caps
-                                  )
+            ebo = ErrorBarOverlay(
+                component=scatter,
+                orientation="y",
+                # nsigma=nsigma,
+                # visible=visible,
+                # line_width=line_width,
+                # use_end_caps=end_caps
+            )
             scatter.underlays.append(ebo)
-            setattr(scatter, 'yerror', ArrayDataSource(ye))
+            setattr(scatter, "yerror", ArrayDataSource(ye))
 
         reg_klass = NewYorkRegressor
-        reg = reg_klass(xns=xs, yns=ys,
-                        xs=xs, ys=ys,
-                        # xds=ones_like(xs),
-                        # yds=ones_like(xs),
-                        # xdes=ones_like(xs),
-                        # ydes=ones_like(xs),
-                        degree=1,
-                        **kw)
+        reg = reg_klass(
+            xns=xs,
+            yns=ys,
+            xs=xs,
+            ys=ys,
+            # xds=ones_like(xs),
+            # yds=ones_like(xs),
+            # xdes=ones_like(xs),
+            # ydes=ones_like(xs),
+            degree=1,
+            **kw
+        )
         reg.calculate()
 
         pad = (max(xs) - min(xs)) * 0.1
@@ -117,13 +123,19 @@ rsquared={rsquared:}
         # g.new_plot()
         # g.new_series()
 
-        self.result_str = self.result_template.format(mswd=reg.mswd, slope=reg.slope,
-                                                      intercept=reg.intercept,
-                                                      rsquared=reg.rsquared)
+        self.result_str = self.result_template.format(
+            mswd=reg.mswd,
+            slope=reg.slope,
+            intercept=reg.intercept,
+            rsquared=reg.rsquared,
+        )
         self.graph = g
 
     def traits_view(self):
-        return View(UItem('graph', style='custom'),
-                    UItem('result_str', style='custom', editor=TextEditor(read_only=True)))
+        return View(
+            UItem("graph", style="custom"),
+            UItem("result_str", style="custom", editor=TextEditor(read_only=True)),
+        )
+
 
 # ============= EOF =============================================

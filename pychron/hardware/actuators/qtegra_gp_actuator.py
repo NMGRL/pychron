@@ -18,10 +18,9 @@ from pychron.hardware.actuators.ascii_gp_actuator import ASCIIGPActuator
 
 
 class QtegraGPActuator(ASCIIGPActuator):
-    """
-
-    """
+    """ """
 
     pass
+
 
 # ============= EOF =====================================

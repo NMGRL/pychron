@@ -27,31 +27,34 @@ from pychron.image.tasks.video_task import VideoTask
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class VideoPlugin(BaseTaskPlugin):
-    '''
-        a list of name, url (file:///abs/path or pvs://host[:port=8080]) tuples
-        
-        if file then should be a path to an image
-        if pvs than should be address to a Pychron Video Server
-    '''
-    id = 'pychron.video'
-    sources = ExtensionPoint(List,
-                             id='pychron.video.sources'
-                             )
+    """
+    a list of name, url (file:///abs/path or pvs://host[:port=8080]) tuples
+
+    if file then should be a path to an image
+    if pvs than should be address to a Pychron Video Server
+    """
+
+    id = "pychron.video"
+    sources = ExtensionPoint(List, id="pychron.video.sources")
 
     def _tasks_default(self):
-        ts = [TaskFactory(id='pychron.video',
-                          name='Video Display',
-                          factory=self._video_task_factory,
-                          task_group='hardware'
-                          )]
+        ts = [
+            TaskFactory(
+                id="pychron.video",
+                name="Video Display",
+                factory=self._video_task_factory,
+                task_group="hardware",
+            )
+        ]
         return ts
 
     def _video_task_factory(self):
-        t = VideoTask(
-            available_connections=self.sources
-        )
+        t = VideoTask(available_connections=self.sources)
         return t
+
+
 #         elm = self.application.get_service(ExtractionLineManager)
 #         t = ExtractionLineTask(manager=elm)
 #         return t

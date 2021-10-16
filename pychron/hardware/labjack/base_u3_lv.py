@@ -44,7 +44,7 @@ class BaseU3LV:
 
     def load_additional_args(self, config):
         mapping = {}
-        section = 'DIOMapping'
+        section = "DIOMapping"
         if config.has_section(section):
             for option in config.options(section):
                 u3channel = config.get(section, option)
@@ -55,7 +55,11 @@ class BaseU3LV:
 
     def initialize(self, *args, **kw):
 
-        chs = [v for v in self._dio_mapping.values() if v not in (u3.CIO0, u3.CIO1, u3.CIO2, u3.CIO3)]
+        chs = [
+            v
+            for v in self._dio_mapping.values()
+            if v not in (u3.CIO0, u3.CIO1, u3.CIO2, u3.CIO3)
+        ]
         self._device.configDigital(*chs)
 
         return True
@@ -93,7 +97,8 @@ class BaseU3LV:
         try:
             return self._dio_mapping[str(ch)]
         except KeyError:
-            self.warning('Invalid channel {}'.format(ch))
-            self.warning('DIOMapping {}'.format(self._dio_mapping))
+            self.warning("Invalid channel {}".format(ch))
+            self.warning("DIOMapping {}".format(self._dio_mapping))
+
 
 # ============= EOF =============================================

@@ -27,8 +27,8 @@ class RegressionSeriesEditor(FigureEditor):
     # plotter_options_manager = Instance(PlotterOptionsManager)
     # plotter_options_manager_klass = SeriesOptionsManager
     figure_model_klass = RegressionSeriesModel
-    pickle_path = 'regression_series'
-    basename = 'RegressionSeries'
+    pickle_path = "regression_series"
+    basename = "RegressionSeries"
     # model_klass = SeriesModel
     # auto_group = False
 
@@ -53,5 +53,6 @@ class RegressionSeriesEditor(FigureEditor):
     #     iv = FigureContainer(model=model)
     #
     #     return model, iv.component
+
 
 # ============= EOF =============================================

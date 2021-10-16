@@ -28,32 +28,33 @@ class NuFileSourceUnittest(BaseFileSourceTestCase):
     @classmethod
     def setUpClass(cls):
         cls.src = NuFileSource()
-        p = os.path.join(fget_data_dir(), 'Data_NAG1072.RUN')
-        pnice = os.path.join(fget_data_dir(), 'wiscar.nice')
+        p = os.path.join(fget_data_dir(), "Data_NAG1072.RUN")
+        pnice = os.path.join(fget_data_dir(), "wiscar.nice")
         cls.src.path = p
         cls.src.nice_path = pnice
         cls.spec = cls.src.get_analysis_import_spec()
 
-        cls.expected = {'runid': 'Data_NAG1072',
-                        # 'irradiation': 'IRR347',
-                        # 'irradiation_level': 'A',
-                        # 'sample': 'GA1550',
-                        # 'material': 'Bio',
-                        # 'project': 'Std',
-                        # 'j': 0.0045,
-                        # 'j_err': 1e-7,
-                        'timestamp_month': 6,
-                        'cnt40': 200,
-                        'cnt39': 200,
-                        'cnt38': 200,
-                        'cnt37': 200,
-                        'cnt36': 200,
-                        'discrimination': 1.0462399093612802,
-                        'uuid': 'Data_NAG1072'
-                        }
+        cls.expected = {
+            "runid": "Data_NAG1072",
+            # 'irradiation': 'IRR347',
+            # 'irradiation_level': 'A',
+            # 'sample': 'GA1550',
+            # 'material': 'Bio',
+            # 'project': 'Std',
+            # 'j': 0.0045,
+            # 'j_err': 1e-7,
+            "timestamp_month": 6,
+            "cnt40": 200,
+            "cnt39": 200,
+            "cnt38": 200,
+            "cnt37": 200,
+            "cnt36": 200,
+            "discrimination": 1.0462399093612802,
+            "uuid": "Data_NAG1072",
+        }
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 
 # ============= EOF =============================================

@@ -19,6 +19,7 @@ from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
 from traits.has_traits import on_trait_change
 from traits.trait_types import List
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.spectrometer.graph.marker_label import MarkerLabel
@@ -30,20 +31,24 @@ class MarkerOverlay(AbstractOverlay):
     indicator_height = 10
     use_vertical_markers = False
 
-    @on_trait_change('_cached_labels:[text, visible]')
+    @on_trait_change("_cached_labels:[text, visible]")
     def _handle_text_change(self):
         self.request_redraw()
 
-    def add_marker(self, x, y, text, bgcolor='white',
-                   vertical_marker=False, **kw):
-        m = MarkerLabel(data_x=self.component.index_mapper.map_data(x),
-                        data_y=self.component.value_mapper.map_data(y),
-                        indicator_height=self.indicator_height,
-                        zero_y=self.component.y - self.indicator_height / 2.0,
-                        zero_y_vert=self.component.padding_bottom,
-                        bgcolor=bgcolor,
-                        x=x, y=y, text=text,
-                        vertical=vertical_marker, **kw)
+    def add_marker(self, x, y, text, bgcolor="white", vertical_marker=False, **kw):
+        m = MarkerLabel(
+            data_x=self.component.index_mapper.map_data(x),
+            data_y=self.component.value_mapper.map_data(y),
+            indicator_height=self.indicator_height,
+            zero_y=self.component.y - self.indicator_height / 2.0,
+            zero_y_vert=self.component.padding_bottom,
+            bgcolor=bgcolor,
+            x=x,
+            y=y,
+            text=text,
+            vertical=vertical_marker,
+            **kw
+        )
         self.labels.append(m)
         self._layout_needed = True
         self.do_layout()
@@ -55,11 +60,14 @@ class MarkerOverlay(AbstractOverlay):
             h = other_component.height + self.indicator_height
             y = other_component.y - self.indicator_height / 2.0
             if self.use_vertical_markers:
-                h = other_component.height + self.indicator_height + other_component.padding_bottom
+                h = (
+                    other_component.height
+                    + self.indicator_height
+                    + other_component.padding_bottom
+                )
                 y = other_component.y - other_component.padding_bottom
 
-            gc.clip_to_rect(other_component.x, y,
-                            other_component.width, h)
+            gc.clip_to_rect(other_component.x, y, other_component.width, h)
 
             # self._load_cached_labels()
             self._draw_labels(gc)
@@ -80,4 +88,6 @@ class MarkerOverlay(AbstractOverlay):
             if ci.visible:
                 with gc:
                     ci.draw(gc, self.component.height)
+
+
 # ============= EOF =============================================

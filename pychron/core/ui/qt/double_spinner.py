@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Float, Str
+
 # ============= standard library imports ========================
 from pyface.qt.QtGui import QDoubleSpinBox
 from PySide import QtCore
@@ -26,10 +27,11 @@ from traitsui.basic_editor_factory import BasicEditorFactory
 
 # ============= local library imports  ==========================
 
+
 class _DoubleSpinnerEditor(SimpleSpinEditor):
     def init(self, parent):
-        """ Finishes initializing the editor by creating the underlying toolkit
-            widget.
+        """Finishes initializing the editor by creating the underlying toolkit
+        widget.
         """
         factory = self.factory
         if not factory.low_name:
@@ -38,8 +40,8 @@ class _DoubleSpinnerEditor(SimpleSpinEditor):
         if not factory.high_name:
             self.high = factory.high
 
-        self.sync_value(factory.low_name, 'low', 'from')
-        self.sync_value(factory.high_name, 'high', 'from')
+        self.sync_value(factory.low_name, "low", "from")
+        self.sync_value(factory.high_name, "high", "from")
         low = self.low
         high = self.high
 
@@ -50,8 +52,9 @@ class _DoubleSpinnerEditor(SimpleSpinEditor):
         self.control.setMinimum(low)
         self.control.setMaximum(high)
         self.control.setValue(self.value)
-        QtCore.QObject.connect(self.control,
-                               QtCore.SIGNAL('valueChanged(int)'), self.update_object)
+        QtCore.QObject.connect(
+            self.control, QtCore.SIGNAL("valueChanged(int)"), self.update_object
+        )
         self.set_tooltip()
 
 
@@ -62,4 +65,6 @@ class DoubleSpinnerEditor(BasicEditorFactory):
     high_name = Str
     step = Float
     klass = _DoubleSpinnerEditor
+
+
 # ============= EOF =============================================

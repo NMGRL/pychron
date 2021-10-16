@@ -18,22 +18,27 @@
 from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traitsui.api import View
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, remote_status_item
+from pychron.envisage.tasks.base_preferences_helper import (
+    GitRepoPreferencesHelper,
+    remote_status_item,
+)
 
 
 class LabBookPreferences(GitRepoPreferencesHelper):
-    preferences_path = 'pychron.labbook'
+    preferences_path = "pychron.labbook"
 
 
 class LabBookPreferencesPane(PreferencesPane):
     model_factory = LabBookPreferences
-    category = 'General'
+    category = "General"
 
     def traits_view(self):
-        v = View(remote_status_item('LabBook Repo'))
+        v = View(remote_status_item("LabBook Repo"))
 
         return v
+
 
 # ============= EOF =============================================

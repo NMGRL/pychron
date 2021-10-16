@@ -32,7 +32,7 @@ def iterdir(d, exclude=None):
         p = os.path.join(d, t)
         # print os.path.isfile(p), p
 
-        if t.startswith('.'):
+        if t.startswith("."):
             continue
 
         if exclude:
@@ -123,16 +123,16 @@ def _load_tray_map(db, p, name):
 
 def parse_irradiation_tray_map(p):
     """
-        return list of  x,y,r tuples or None if exception
+    return list of  x,y,r tuples or None if exception
     """
     try:
-        with open(p, 'r') as rfile:
+        with open(p, "r") as rfile:
             h = rfile.readline()
-            _, diam = list(map(str.strip, h.split(',')))
+            _, diam = list(map(str.strip, h.split(",")))
             holes = []
             for i, l in enumerate(rfile):
                 try:
-                    args = list(map(float, l.strip().split(',')))
+                    args = list(map(float, l.strip().split(",")))
                     if len(args) == 2:
                         r = diam
                     else:
@@ -147,6 +147,7 @@ def parse_irradiation_tray_map(p):
     except Exception as e:
         traceback.print_exc()
         return
+
 
 # def load_irradiation_map(db, p, name, overwrite_geometry=False):
 #     holes = parse_irradiation_tray_map(p)

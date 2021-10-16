@@ -55,13 +55,13 @@ class FrequencyModel(HasTraits):
 
     def _validate_template(self, v):
         if not v.strip():
-            return ''
+            return ""
 
         if validate_frequency_template(v):
             return v
 
 
-TEMPLATE_HELP = '''use s to place run before group
+TEMPLATE_HELP = """use s to place run before group
 use e to place run at the end of the group
 use a list of numbers to place runs after the i-th run
 use E to eliminate duplicate runs after one block and before the next block
@@ -71,11 +71,11 @@ Examples:
 2. s,e        place before first run and after last (B,-,-,B)
 3. s,2,4      place before first run, after third and fifth runs (B,-,-,B,-,-,B,-,-,-)
 4. 3,5,e      place after third, fifth and last runs (-,-,B,-,-,B,-,-,-,B)
-5. s,E        place before first run and after last exclusive (B,-,-,B,+,+,B)'''
+5. s,E        place before first run and after last exclusive (B,-,-,B,+,+,B)"""
 
 
 class FrequencyEditView(Controller):
-    templates = List(['', 's,e', 's,3,e'])
+    templates = List(["", "s,e", "s,3,e"])
 
     def __init__(self, *args, **kw):
         super(FrequencyEditView, self).__init__(*args, **kw)
@@ -86,26 +86,30 @@ class FrequencyEditView(Controller):
             self._dump()
 
     def _dump(self):
-        p = os.path.join(paths.hidden_dir, 'frequency_edit_view')
-        with open(p, 'w') as wfile:
+        p = os.path.join(paths.hidden_dir, "frequency_edit_view")
+        with open(p, "w") as wfile:
             pickle.dump(self.templates, wfile)
 
     def _load(self):
-        p = os.path.join(paths.hidden_dir, 'frequency_edit_view')
+        p = os.path.join(paths.hidden_dir, "frequency_edit_view")
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 self.templates = pickle.load(rfile)
 
     def traits_view(self):
-        v = okcancel_view(Item('frequency_int'),
-                          Item('template', tooltip=TEMPLATE_HELP,
-                               editor=ComboboxEditor(name='controller.templates',
-                                                     addable=False)),
-                          title='Edit Frequency Options')
+        v = okcancel_view(
+            Item("frequency_int"),
+            Item(
+                "template",
+                tooltip=TEMPLATE_HELP,
+                editor=ComboboxEditor(name="controller.templates", addable=False),
+            ),
+            title="Edit Frequency Options",
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     fm = FrequencyModel()
     fev = FrequencyEditView(model=fm)
     fev.configure_traits()

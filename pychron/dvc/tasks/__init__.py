@@ -29,16 +29,18 @@ from pychron.paths import paths
 
 def list_local_repos():
     for i in os.listdir(paths.repository_dataset_dir):
-        if i.startswith('.'):
+        if i.startswith("."):
             continue
-        elif i.startswith('~'):
+        elif i.startswith("~"):
             continue
 
         d = repository_path(i)
         if os.path.isdir(d):
-            gd = os.path.join(d, '.git')
+            gd = os.path.join(d, ".git")
             if os.path.isdir(gd):
                 r = Repo(d)
                 if r.branches:
                     yield i, r.active_branch.name
+
+
 # ============= EOF =============================================

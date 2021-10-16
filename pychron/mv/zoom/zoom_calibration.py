@@ -19,6 +19,7 @@
 from __future__ import absolute_import
 from traits.api import HasTraits, Button, Bool
 from traitsui.api import View, UItem, HGroup, VGroup
+
 # ============= standard library imports ========================
 import os
 from threading import Thread
@@ -32,8 +33,8 @@ from six.moves import range
 class ZoomCalibrationManager(HasTraits):
     _alive = Bool(False)
 
-    start_button = Button('Start')
-    stop_button = Button('Stop')
+    start_button = Button("Start")
+    stop_button = Button("Stop")
 
     def do_collection(self):
         t = Thread(target=self._do_collection)
@@ -41,8 +42,8 @@ class ZoomCalibrationManager(HasTraits):
 
     def _do_collection(self):
         self._alive = True
-        p = os.path.join(paths.data_dir, 'zoom_calibration.txt')
-        with open(p, 'w') as wfile:
+        p = os.path.join(paths.data_dir, "zoom_calibration.txt")
+        with open(p, "w") as wfile:
             for steps in (range(5, 105, 5), range(100, 0, -5)):
                 if not self._alive:
                     break
@@ -56,11 +57,11 @@ class ZoomCalibrationManager(HasTraits):
         # set zoom
         self.laser_manager.set_zoom(z, block=True)
         time.sleep(3)
-        p, up = self.laser_manager.stage_manager.snapshot(name='zoom_cal',
-                                                          inform=False,
-                                                          auto=True)
-        zm = self.laser_manager.get_motor('zoom')
-        wfile.write('{},{},{}\n'.format(p, z, zm.update_position))
+        p, up = self.laser_manager.stage_manager.snapshot(
+            name="zoom_cal", inform=False, auto=True
+        )
+        zm = self.laser_manager.get_motor("zoom")
+        wfile.write("{},{},{}\n".format(p, z, zm.update_position))
 
     def _start_button_fired(self):
         self.do_collection()
@@ -69,9 +70,17 @@ class ZoomCalibrationManager(HasTraits):
         self._alive = False
 
     def traits_view(self):
-        v = View(VGroup(HGroup(UItem('start_button', enabled_when='not _alive'),
-                               UItem('stop_button', enabled_when='_alive')),
-                        show_border=True, label='Zoom Calibration'))
+        v = View(
+            VGroup(
+                HGroup(
+                    UItem("start_button", enabled_when="not _alive"),
+                    UItem("stop_button", enabled_when="_alive"),
+                ),
+                show_border=True,
+                label="Zoom Calibration",
+            )
+        )
         return v
+
 
 # ============= EOF =============================================

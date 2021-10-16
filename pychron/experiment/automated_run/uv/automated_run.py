@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from pychron.experiment.automated_run.automated_run import AutomatedRun
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pyscripts.uv_extraction_line_pyscript import UVExtractionPyScript
@@ -35,9 +36,11 @@ class UVAutomatedRun(AutomatedRun):
     #    run_klass = UVAutomatedRun
     def _setup_context(self, script):
         super(UVAutomatedRun, self)._setup_context(script)
-        script.setup_context(reprate=self.spec.reprate,
-                             mask=self.spec.mask,
-                             attenuator=self.spec.attenuator)
+        script.setup_context(
+            reprate=self.spec.reprate,
+            mask=self.spec.mask,
+            attenuator=self.spec.attenuator,
+        )
 
     # def _save_extraction(self, *args, **kw):
     #     ext = super(UVAutomatedRun, self)._save_extraction(*args, **kw)
@@ -86,17 +89,22 @@ class UVAutomatedRun(AutomatedRun):
     #        return g
 
     def _extraction_script_factory(self):
-        obj = super(UVAutomatedRun, self)._extraction_script_factory(klass=UVExtractionPyScript)
+        obj = super(UVAutomatedRun, self)._extraction_script_factory(
+            klass=UVExtractionPyScript
+        )
         # obj.setup_context(reprate=self.reprate,
         #                  mask=self.mask,
         #                  attenuator=self.attenuator)
         return obj
 
     def _assemble_extraction_parameters(self, edict):
-        edict.update(reprate=self.spec.reprate,
-                     mask_name=self.spec.mask_name,
-                     mask_position=self.spec.mask_position,
-                     attenuator=self.spec.attenuator)
+        edict.update(
+            reprate=self.spec.reprate,
+            mask_name=self.spec.mask_name,
+            mask_position=self.spec.mask_position,
+            attenuator=self.spec.attenuator,
+        )
+
 
 #    def _image_browser_factory(self):
 #        b = self.application.get_service('pychron.media_server.browser.MediaBrowser')

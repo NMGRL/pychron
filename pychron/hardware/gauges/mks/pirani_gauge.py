@@ -27,15 +27,17 @@ from .base_mks_gauge import BaseMKSGauge
 
 
 class MicroPirani1S(BaseMKSGauge):
-    '''
-        G{classtree}
-    '''
+    """
+    G{classtree}
+    """
+
     nsetpoints = 1
 
 
 class MicroPirani3S(BaseMKSGauge):
-    '''
-        G{classtree}
-    '''
+    """
+    G{classtree}
+    """
+
 
 # ============= EOF ====================================

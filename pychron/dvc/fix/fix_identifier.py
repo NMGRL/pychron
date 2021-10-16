@@ -19,7 +19,16 @@ import shutil
 from pychron.dvc import analysis_path, dvc_load, dvc_dump
 
 
-def fix_identifier(source_id, destination_id, root, repo, aliquots, steps, dest_steps=None, dest_aliquots=None):
+def fix_identifier(
+    source_id,
+    destination_id,
+    root,
+    repo,
+    aliquots,
+    steps,
+    dest_steps=None,
+    dest_aliquots=None,
+):
     if dest_aliquots is None:
         dest_aliquots = aliquots
     if dest_steps is None:
@@ -32,51 +41,58 @@ def fix_identifier(source_id, destination_id, root, repo, aliquots, steps, dest_
 
 def _fix_id(src_id, dest_id, identifier, root, repo, new_aliquot=None):
     sp = analysis_path(src_id, repo, root=root)
-    dp = analysis_path(dest_id, repo, root=root, mode='w')
+    dp = analysis_path(dest_id, repo, root=root, mode="w")
     print(sp, dp)
     if not os.path.isfile(sp):
-        print('not a file', sp)
+        print("not a file", sp)
         return
 
     jd = dvc_load(sp)
-    jd['identifier'] = identifier
+    jd["identifier"] = identifier
     if new_aliquot:
-        jd['aliquot'] = new_aliquot
+        jd["aliquot"] = new_aliquot
 
     dvc_dump(jd, dp)
 
-    print('{}>>{}'.format(sp, dp))
-    for modifier in ('baselines', 'blanks', 'extraction',
-                     'intercepts', 'icfactors', 'peakcenter', '.data'):
+    print("{}>>{}".format(sp, dp))
+    for modifier in (
+        "baselines",
+        "blanks",
+        "extraction",
+        "intercepts",
+        "icfactors",
+        "peakcenter",
+        ".data",
+    ):
         sp = analysis_path(src_id, repo, modifier=modifier, root=root)
-        dp = analysis_path(dest_id, repo, modifier=modifier, root=root, mode='w')
-        print('{}>>{}'.format(sp, dp))
+        dp = analysis_path(dest_id, repo, modifier=modifier, root=root, mode="w")
+        print("{}>>{}".format(sp, dp))
         if sp and os.path.isfile(sp):
             # shutil.copy(sp, dp)
             shutil.move(sp, dp)
 
 
 def swap_identifier(a, a_id, b, b_id, c_id, root, repo):
-    '''
-        a -> c
-        replace a with b
-        replace b with c
-    '''
+    """
+    a -> c
+    replace a with b
+    replace b with c
+    """
 
     _fix_id(a_id, c_id, a, root, repo)
     _fix_id(b_id, a_id, a, root, repo)
     _fix_id(c_id, b_id, b, root, repo)
 
 
-if __name__ == '__main__':
-    root = '/Users/ross/PychronDev/data/.dvc/repositories/'
-    repo = 'Henry01104'
+if __name__ == "__main__":
+    root = "/Users/ross/PychronDev/data/.dvc/repositories/"
+    repo = "Henry01104"
 
-    _fix_id('66151-01', '66150-21', '66150', root, repo, new_aliquot=21)
-    _fix_id('66151-12', '66150-22', '66150', root, repo, new_aliquot=22)
-    _fix_id('66149-20', '66150-23', '66150', root, repo, new_aliquot=23)
+    _fix_id("66151-01", "66150-21", "66150", root, repo, new_aliquot=21)
+    _fix_id("66151-12", "66150-22", "66150", root, repo, new_aliquot=22)
+    _fix_id("66149-20", "66150-23", "66150", root, repo, new_aliquot=23)
 
-    _fix_id('66150-06', '66149-29', '66149', root, repo, new_aliquot=29)
+    _fix_id("66150-06", "66149-29", "66149", root, repo, new_aliquot=29)
 
     # repo = 'FCTest'
     #

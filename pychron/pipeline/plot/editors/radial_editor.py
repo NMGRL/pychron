@@ -20,6 +20,7 @@ from pychron.pipeline.plot.models.radial_model import RadialModel
 
 class RadialEditor(FigureEditor):
     figure_model_klass = RadialModel
-    basename = 'radial'
+    basename = "radial"
+
 
 # ============= EOF =============================================

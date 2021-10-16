@@ -27,7 +27,6 @@ from pychron.pychron_constants import DATE_FORMAT
 
 
 class AutomatedRunAnalysisView(MainView):
-
     def load(self, automated_run):
         isotope_group = automated_run.isotope_group
         self.experiment_type = automated_run.experiment_type
@@ -43,24 +42,32 @@ class AutomatedRunAnalysisView(MainView):
         pass
 
     def traits_view(self):
-        teditor = TabularEditor(adapter=IsotopeTabularAdapter(),
-                                stretch_last_section=False,
-                                editable=False,
-                                multi_select=False,
-                                selected='selected',
-                                refresh='refresh_needed')
+        teditor = TabularEditor(
+            adapter=IsotopeTabularAdapter(),
+            stretch_last_section=False,
+            editable=False,
+            multi_select=False,
+            selected="selected",
+            refresh="refresh_needed",
+        )
 
         ceditor, eeditor, meditor = es = self._get_editors()
         for ei in es:
-            ei.adapter.font = 'modern 10'
+            ei.adapter.font = "modern 10"
 
-        isotopes = UItem('isotopes', editor=teditor, label='Isotopes', width=300)
-        ratios = UItem('computed_values', editor=ceditor, label='Ratios', width=300)
-        meas = UItem('measurement_values', editor=meditor, label='General', width=300)
-        extract = UItem('extraction_values', editor=eeditor, label='Extraction', width=300)
+        isotopes = UItem("isotopes", editor=teditor, label="Isotopes", width=300)
+        ratios = UItem("computed_values", editor=ceditor, label="Ratios", width=300)
+        meas = UItem("measurement_values", editor=meditor, label="General", width=300)
+        extract = UItem(
+            "extraction_values", editor=eeditor, label="Extraction", width=300
+        )
 
-        v = View(VGroup(HGroup(spring, UItem('summary_str', style='readonly'), spring),
-                        Tabbed(isotopes, ratios, extract, meas)))
+        v = View(
+            VGroup(
+                HGroup(spring, UItem("summary_str", style="readonly"), spring),
+                Tabbed(isotopes, ratios, extract, meas),
+            )
+        )
         return v
 
 
@@ -84,26 +91,19 @@ class GenericAutomatedRunAnalysisView(AutomatedRunAnalysisView):
 
     def load_measurement(self, an, ar):
         ms = [
-            MeasurementValue(name='DR Version',
-                             value=an.data_reduction_tag),
-            MeasurementValue(name='DAQ Version',
-                             value=an.collection_version),
-            MeasurementValue(name='AnalysisID',
-                             value=self.analysis_id),
-            MeasurementValue(name='Spectrometer',
-                             value=an.mass_spectrometer),
-            MeasurementValue(name='Run Date',
-                             value=an.rundate.strftime(DATE_FORMAT)),
-            MeasurementValue(name='Project',
-                             value=an.project),
-            MeasurementValue(name='Sample',
-                             value=an.sample),
-            MeasurementValue(name='Material',
-                             value=an.material),
-            MeasurementValue(name='Comment',
-                             value=an.comment),
-            MeasurementValue(name='Sens.',
-                             value=floatfmt(an.sensitivity))]
+            MeasurementValue(name="DR Version", value=an.data_reduction_tag),
+            MeasurementValue(name="DAQ Version", value=an.collection_version),
+            MeasurementValue(name="AnalysisID", value=self.analysis_id),
+            MeasurementValue(name="Spectrometer", value=an.mass_spectrometer),
+            MeasurementValue(name="Run Date", value=an.rundate.strftime(DATE_FORMAT)),
+            MeasurementValue(name="Project", value=an.project),
+            MeasurementValue(name="Sample", value=an.sample),
+            MeasurementValue(name="Material", value=an.material),
+            MeasurementValue(name="Comment", value=an.comment),
+            MeasurementValue(name="Sens.", value=floatfmt(an.sensitivity)),
+        ]
 
         self.measurement_values = ms
+
+
 # ============= EOF =============================================

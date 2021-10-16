@@ -23,6 +23,8 @@ from pychron.entry.export.base_irradiation_exporter import BaseIrradiationExport
 
 class XLSIrradiationExporter(BaseIrradiationExporter):
     """
-        export irradiations from pychron database to an xls file
+    export irradiations from pychron database to an xls file
     """
+
+
 # ============= EOF =============================================

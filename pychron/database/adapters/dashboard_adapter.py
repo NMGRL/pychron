@@ -33,6 +33,9 @@ class DashboardAdapter(DatabaseAdapter):
         return obj
 
     def get_last_time_table(self):
-        return self._retrieve_first(dash_TimeTable, order_by=dash_TimeTable.start.desc())
+        return self._retrieve_first(
+            dash_TimeTable, order_by=dash_TimeTable.start.desc()
+        )
+
 
 # ============= EOF =============================================

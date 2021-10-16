@@ -28,7 +28,7 @@ class QMapWidget(QFrame):
         # self._pix_map.fill(Qt.transparent)
 
     def set_tile(self, image):
-        data = image.tobytes('raw', 'RGB')
+        data = image.tobytes("raw", "RGB")
 
         im = QImage(data, image.size[0], image.size[1], QImage.Format_RGB888)
         pix = QPixmap.fromImage(im)
@@ -91,8 +91,8 @@ class _MapEditor(Editor):
         # lat_max = 34.08
         # lon_max = -106.83
         rect = (lat_min, lon_min, lat_max, lon_max)
-        server = 'https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png'
-        server = 'http://c.tile.stamen.com/watercolor/{z}/{x}/{y}.png'
+        server = "https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png"
+        server = "http://c.tile.stamen.com/watercolor/{z}/{x}/{y}.png"
         # server = 'https://c.tiles.wmflabs.org/hillshading/{z}/{x}{y}.png'
         # server = 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'  # satelite
         # server = 'https://mt1.google.com/vt/lyrs=t&x={x}&y={y}&z={z}'  # terrain
@@ -106,13 +106,13 @@ class _MapEditor(Editor):
         # m.show_ipython()
         # control.set_tile(m.img)
         base = m.img
-        base = base.convert('RGBA')
+        base = base.convert("RGBA")
         base.putalpha(200)
         control.set_tile(base)
 
         # return control
 
-        server = 'https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png'
+        server = "https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png"
         # server = 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'  # satelite
 
         smopy.TILE_SERVER = server
@@ -122,7 +122,7 @@ class _MapEditor(Editor):
         # img.putalpha(128)
         # img = img.convert('RGB')
 
-        img = m.img.convert('RGBA')
+        img = m.img.convert("RGBA")
         img.putalpha(128)
 
         img = Image.alpha_composite(base, img)
@@ -139,4 +139,6 @@ class _MapEditor(Editor):
 
 class MapViewEditor(BasicEditorFactory):
     klass = _MapEditor
+
+
 # ============= EOF =============================================

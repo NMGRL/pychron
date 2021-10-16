@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-__author__ = 'ross'
+__author__ = "ross"
 
 import unittest
 
@@ -8,8 +8,8 @@ from pychron.experiment.utilities.comment_template import CommentTemplater
 
 
 class MockFactory(object):
-    irrad_level = 'A'
-    irrad_hole = '9'
+    irrad_level = "A"
+    irrad_hole = "9"
 
 
 class CommentTemplaterTestCase(unittest.TestCase):
@@ -18,13 +18,13 @@ class CommentTemplaterTestCase(unittest.TestCase):
         cls.obj = MockFactory()
 
     def test_render1(self):
-        self._test_render('irrad_level : irrad_hole', 'A:9')
+        self._test_render("irrad_level : irrad_hole", "A:9")
 
     def test_render2(self):
-        self._test_render('irrad_level : irrad_hole SCLF', 'A:9SCLF')
+        self._test_render("irrad_level : irrad_hole SCLF", "A:9SCLF")
 
     def test_render3(self):
-        self._test_render('irrad_level : irrad_hole <SPACE> SCLF', 'A:9 SCLF')
+        self._test_render("irrad_level : irrad_hole <SPACE> SCLF", "A:9 SCLF")
 
     def _test_render(self, label, expected):
         ct = CommentTemplater()
@@ -33,5 +33,5 @@ class CommentTemplaterTestCase(unittest.TestCase):
         self.assertEqual(expected, r)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

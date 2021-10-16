@@ -30,7 +30,7 @@ from six.moves import map
 class EasyImporter(IsotopeDatabaseManager):
     def do_import(self):
         ep = EasyParser()
-        meta = ep.doc('import')
+        meta = ep.doc("import")
         self._import_irradiations(meta)
 
     def _import_irradiations(self, meta):
@@ -40,50 +40,53 @@ class EasyImporter(IsotopeDatabaseManager):
                 self._set_importer(meta, im)
 
                 if im.do_import(new_thread=False):
-                    self.debug('import finished')
+                    self.debug("import finished")
                 else:
-                    self.warning('import failed')
+                    self.warning("import failed")
 
     def _set_importer(self, meta, im):
-        imports = meta['imports']
+        imports = meta["imports"]
 
-        im.include_analyses = imports['atype'] == 'unknown'
-        im.include_blanks = imports['blanks']
-        im.include_airs = imports['airs']
-        im.include_cocktails = imports['cocktails']
+        im.include_analyses = imports["atype"] == "unknown"
+        im.include_blanks = imports["blanks"]
+        im.include_airs = imports["airs"]
+        im.include_cocktails = imports["cocktails"]
 
-        im.import_kind = 'irradiation'
+        im.import_kind = "irradiation"
 
         im.selected = self._make_import_selection(meta)
-        im.dry_run = imports['dry_run']
+        im.dry_run = imports["dry_run"]
 
         im.extractor.mapper = MinnaBluffMapper()
 
     def _set_destination(self, meta):
         try:
-            dest = meta['destination']
+            dest = meta["destination"]
         except KeyError:
             return
 
         db = self.db
-        db.name = dest['database']
-        db.username = dest['username']
-        db.password = dest['password']
-        db.host = dest['host']
+        db.name = dest["database"]
+        db.username = dest["username"]
+        db.password = dest["password"]
+        db.host = dest["host"]
         return db.connect()
 
     def _set_source(self, meta, im):
-        source = meta['source']
+        source = meta["source"]
         dbconn_spec = im.extractor.dbconn_spec
-        dbconn_spec.database = source['database']
-        dbconn_spec.username = source['username']
-        dbconn_spec.password = source['password']
-        dbconn_spec.host = source['host']
+        dbconn_spec.database = source["database"]
+        dbconn_spec.username = source["username"]
+        dbconn_spec.password = source["password"]
+        dbconn_spec.host = source["host"]
         return im.db.connect()
 
     def _make_import_selection(self, meta):
-        s = [(irrad['name'], list(map(str.strip, irrad['levels'].split(','))))
-             for irrad in meta['irradiations']]
+        s = [
+            (irrad["name"], list(map(str.strip, irrad["levels"].split(","))))
+            for irrad in meta["irradiations"]
+        ]
         return s
+
 
 # ============= EOF =============================================

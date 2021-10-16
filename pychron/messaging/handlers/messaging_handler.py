@@ -19,6 +19,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import socket
+
 # ============= local library imports  ==========================
 from six.moves.socketserver import BaseRequestHandler
 
@@ -27,13 +28,12 @@ class MessagingHandler(BaseRequestHandler):
     _verbose = False
 
     def handle(self):
-        """
-        """
+        """ """
         data = self.get_packet()
 
         if data is not None:
             if self._verbose:
-                self.server.info('Received: %s' % data.strip())
+                self.server.info("Received: %s" % data.strip())
 
             try:
                 addr = self.client_address[0]
@@ -45,15 +45,15 @@ class MessagingHandler(BaseRequestHandler):
             if response is not None:
                 self.send_packet(response)
 
-            if 'ERROR 6' in response:
+            if "ERROR 6" in response:
                 self.server.increment_repeater_fails()
             #
             if self._verbose:
-                self.server.info('Sent: %s' % response.strip())
+                self.server.info("Sent: %s" % response.strip())
 
             self.server.parent.cur_rpacket = data
             if len(response) > 20:
-                response = '{}...'.format(response[:20])
+                response = "{}...".format(response[:20])
 
             self.server.parent.cur_spacket = response
 
@@ -61,24 +61,22 @@ class MessagingHandler(BaseRequestHandler):
             self.server.increment_packets_sent()
 
     def get_packet(self):
-        """
-        """
+        """ """
         raise NotImplementedError
 
     def send_packet(self, resp):
-        """
-        """
+        """ """
         raise NotImplementedError
 
     def _response_blocks(self, resp, blocksize=1024):
         s = 0
         n = len(resp)
         while s < n:
-            yield resp[s:s + blocksize]
+            yield resp[s : s + blocksize]
             s += blocksize
 
     def _send_packet(self, response, send):
-        response = '{}\n'.format(response)
+        response = "{}\n".format(response)
         mlen = len(response)
         totalsent = 0
         gen = self._response_blocks(response)
@@ -93,6 +91,8 @@ class MessagingHandler(BaseRequestHandler):
                 # totalsent += sock.sendto(msg, self.client_address)
                 # print 'totalsent={} total={}'.format(totalsent, mlen)
             except socket.error as e:
-                print('exception', e)
+                print("exception", e)
                 continue
+
+
 # ============= EOF ====================================

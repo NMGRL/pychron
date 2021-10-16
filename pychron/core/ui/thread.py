@@ -21,8 +21,8 @@ from pychron.core.ui.factory import toolkit_factory
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-Thread = toolkit_factory('thread', 'Thread')
-currentThreadName = toolkit_factory('thread', 'currentThreadName')
-sleep = toolkit_factory('thread', 'sleep')
+Thread = toolkit_factory("thread", "Thread")
+currentThreadName = toolkit_factory("thread", "currentThreadName")
+sleep = toolkit_factory("thread", "sleep")
 
 # ============= EOF =============================================

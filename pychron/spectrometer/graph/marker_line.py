@@ -43,4 +43,6 @@ class MarkerLine(HasTraits):
 
     def set_x(self, new):
         self.x = new
+
+
 # ============= EOF =============================================

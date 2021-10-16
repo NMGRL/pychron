@@ -29,14 +29,17 @@ class DBSaveView(HasTraits):
     note = Str
 
     def traits_view(self):
-        v = View(VGroup(Item('name'),
-                        VGroup(UItem('note', style='custom'),
-                               show_border=True,
-                               label='Note')),
-                 title='DB Save',
-                 buttons=['OK', 'Cancel'],
-                 resizable=True,
-                 kind='livemodal')
+        v = View(
+            VGroup(
+                Item("name"),
+                VGroup(UItem("note", style="custom"), show_border=True, label="Note"),
+            ),
+            title="DB Save",
+            buttons=["OK", "Cancel"],
+            resizable=True,
+            kind="livemodal",
+        )
         return v
+
 
 # ============= EOF =============================================

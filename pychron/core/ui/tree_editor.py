@@ -21,6 +21,6 @@
 from __future__ import absolute_import
 from .factory import toolkit_factory
 
-TreeEditor = toolkit_factory('tree_editor', 'TreeEditor')
+TreeEditor = toolkit_factory("tree_editor", "TreeEditor")
 
 # ============= EOF =============================================

@@ -7,6 +7,7 @@ import time
 
 def get_profile_stats(fn, *args, **kw):
     import cProfile, pstats
+
     prof = cProfile.Profile()
 
     # out = 'analysis_opt.prof'
@@ -30,7 +31,7 @@ def profile2(fn):
         pr.enable()
         fn(*args, **kw)
         pr.disable()
-        pr.print_stats(sort='cumulative')
+        pr.print_stats(sort="cumulative")
 
     #         s = io.StringIO()
     #         ps = pstats.Stats(pr, stream=s)
@@ -43,7 +44,7 @@ def profile(fn):
         p = "{}_profile.txt".format(fn.__name__())
         _elapsed, stat_loader, result = _profile(p, fn, *args, **kw)
         stats = stat_loader()
-        stats.sort_stats('cumulative')
+        stats.sort_stats("cumulative")
         stats.print_stats()
         # uncomment this to see who's calling what
         # stats.print_callers()
@@ -57,8 +58,7 @@ def _profile(filename, fn, *args, **kw):
     gc.collect()
 
     began = time.time()
-    profiler.runctx('result = fn(*args, **kw)', globals(), locals(),
-                    filename=filename)
+    profiler.runctx("result = fn(*args, **kw)", globals(), locals(), filename=filename)
     ended = time.time()
 
-    return ended - began, load_stats, locals()['result']
+    return ended - began, load_stats, locals()["result"]

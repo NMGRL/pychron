@@ -24,29 +24,29 @@ from pychron.dvc.dvc_irradiationable import DVCAble
 
 
 class OKButton(Action):
-    name = 'OK'
-    enabled_when = 'ok_enabled'
+    name = "OK"
+    enabled_when = "ok_enabled"
 
 
-STYLESHEET = 'QLabel {font-size: 14px; color: red}'
+STYLESHEET = "QLabel {font-size: 14px; color: red}"
 
 
 class BaseEntry(DVCAble):
     value = Str
     available = List
     error_message = Str
-    ok_enabled = Property(depends_on='value')
-    tag = ''
+    ok_enabled = Property(depends_on="value")
+    tag = ""
 
     def do(self):
         return self._add_loop()
 
     def _get_ok_enabled(self):
         if self.value not in self.available:
-            self.error_message = ''
+            self.error_message = ""
             return True
         else:
-            self.error_message = '{} already exists. Choose another'.format(self.tag)
+            self.error_message = "{} already exists. Choose another".format(self.tag)
             return False
 
     def _add_loop(self):
@@ -66,9 +66,11 @@ class BaseEntry(DVCAble):
         raise NotImplementedError
 
     def _new_view(self, *args, **kw):
-        for a, v in (('buttons', ['OK', 'Cancel']),
-                     ('resizable', True),
-                     ('kind', 'livemodal')):
+        for a, v in (
+            ("buttons", ["OK", "Cancel"]),
+            ("resizable", True),
+            ("kind", "livemodal"),
+        ):
             if a not in kw:
                 kw[a] = v
 
@@ -78,12 +80,14 @@ class BaseEntry(DVCAble):
     def traits_view(self):
         # style_sheet='QLabel {font-size: 10px} QLineEdit {font-size: 10px}'
 
-        a = VGroup(UItem('value'),
-                   UItem('error_message', style='readonly', style_sheet=STYLESHEET))
-        buttons = [OKButton(), 'Cancel']
-        return self._new_view(a,
-                              width=400,
-                              title='Add {}'.format(self.tag),
-                              buttons=buttons)
+        a = VGroup(
+            UItem("value"),
+            UItem("error_message", style="readonly", style_sheet=STYLESHEET),
+        )
+        buttons = [OKButton(), "Cancel"]
+        return self._new_view(
+            a, width=400, title="Add {}".format(self.tag), buttons=buttons
+        )
+
 
 # ============= EOF =============================================

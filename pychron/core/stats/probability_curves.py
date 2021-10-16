@@ -22,6 +22,7 @@ from numpy import linspace, zeros, exp, pi, full
 
 # ============= local library imports  ==========================
 
+
 def cumulative_probability(ages, errors, xmi, xma, n=100):
     x = linspace(xmi, xma, n)
     probs = zeros(n)
@@ -52,5 +53,6 @@ def kernel_density(ages, errors, xmi, xma, n=100):
     y = pdf(x)
 
     return x, y
+
 
 # ============= EOF =============================================

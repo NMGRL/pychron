@@ -68,19 +68,21 @@ class PrinterDialog(Dialog):
 
 class myMessageMixin(object):
     """
-        makes  message dialogs thread save.
+    makes  message dialogs thread save.
     """
+
     timeout_return_code = YES
     _closed_evt = None
 
     def open(self, timeout=0):
         """
-            open the confirmation dialog on the GUI thread but wait for return
+        open the confirmation dialog on the GUI thread but wait for return
         """
 
         evt = Event()
         ct = currentThread()
         from threading import _MainThread
+
         if isinstance(ct, _MainThread):
             if timeout:
                 t = Thread(target=self._timeout_loop, args=(timeout, evt))
@@ -102,14 +104,14 @@ class myMessageMixin(object):
                     invoke_in_main_thread(self.destroy)
                     return self.timeout_return_code
                 if self.control:
-                    t = '{}\n\nTimeout in {:n}s'.format(self.message, int(timeout - et))
+                    t = "{}\n\nTimeout in {:n}s".format(self.message, int(timeout - et))
                     invoke_in_main_thread(self.control.setText, t)
 
     def _open(self, evt):
         if self.control is None:
             self._create()
 
-        if self.style == 'modal':
+        if self.style == "modal":
             try:
                 self.return_code = self._show_modal()
             except AttributeError:
@@ -130,7 +132,7 @@ class myMessageDialog(myMessageMixin, MessageDialog):
 
 
 class myConfirmationDialog(myMessageMixin, ConfirmationDialog):
-    default_button = 'yes'
+    default_button = "yes"
 
     def _create_control(self, parent):
         dlg = super(myConfirmationDialog, self)._create_control(parent)
@@ -139,7 +141,7 @@ class myConfirmationDialog(myMessageMixin, ConfirmationDialog):
             dlg.resize(*self.size)
 
         dlg.buttonClicked.connect(self._handle_button)
-        if self.default_button == 'yes':
+        if self.default_button == "yes":
             dlg.setDefaultButton(QMessageBox.Yes)
         else:
             dlg.setDefaultButton(QMessageBox.No)
@@ -163,7 +165,7 @@ class RememberConfirmationDialog(myConfirmationDialog):
 
         # dlg.buttonClicked.connect(self._handle_button)
 
-        cb = QCheckBox('Remember this choice')
+        cb = QCheckBox("Remember this choice")
         lay = dlg.layout()
         lay.addWidget(cb)
         self.cb = cb
@@ -182,8 +184,7 @@ class CustomizableDialog(Dialog):
 
         # 'OK' button.
         if self.ok_label:
-            btn = buttons.addButton(self.ok_label,
-                                    QtGui.QDialogButtonBox.AcceptRole)
+            btn = buttons.addButton(self.ok_label, QtGui.QDialogButtonBox.AcceptRole)
         else:
             btn = buttons.addButton(QtGui.QDialogButtonBox.Ok)
 
@@ -198,4 +199,6 @@ class CustomizableDialog(Dialog):
         label.setTextFormat(Qt.RichText)
         label.setText(self.message)
         return label
+
+
 # ============= EOF =============================================

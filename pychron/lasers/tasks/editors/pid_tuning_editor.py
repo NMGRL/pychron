@@ -47,14 +47,14 @@ class PIDTuningScanner(Scanner):
 
     def start_control_hook(self, ydict):
         self.csv_data_manager = dm = CSVDataManager()
-        p = os.path.join(paths.data_dir, 'pid_tune')
+        p = os.path.join(paths.data_dir, "pid_tune")
 
         dm.new_frame(directory=p)
-        self.debug('Save autotuned pid to {}'.format(dm.get_current_path()))
+        self.debug("Save autotuned pid to {}".format(dm.get_current_path()))
 
-        aggr = ydict['autotune_aggressiveness']
-        setpoint = ydict['autotune_setpoint']
-        tc = self.manager.get_device('temperature_controller')
+        aggr = ydict["autotune_aggressiveness"]
+        setpoint = ydict["autotune_setpoint"]
+        tc = self.manager.get_device("temperature_controller")
         if tc:
             tc.autotune_setpoint = setpoint
             tc.autotune_aggressiveness = aggr
@@ -62,7 +62,7 @@ class PIDTuningScanner(Scanner):
     def _write_pid_parameters(self, setpoint, max_output):
         dm = self.csv_data_manager
 
-        tc = self.manager.get_device('temperature_controller')
+        tc = self.manager.get_device("temperature_controller")
         if tc:
             args = tc.report_pid()
             if args:
@@ -71,7 +71,7 @@ class PIDTuningScanner(Scanner):
                 dm.write_to_frame(d)
 
     def _maintain_setpoint(self, t, d, max_output):
-        if d == 'autotune':
+        if d == "autotune":
             self._set_max_output(max_output)
             self._autotune(t)
             self._write_pid_parameters(t, max_output)
@@ -83,24 +83,24 @@ class PIDTuningScanner(Scanner):
             super(PIDTuningScanner, self)._maintain_setpoint(t, d)
 
     def _set_max_output(self, v):
-        tc = self.manager.get_device('temperature_controller')
+        tc = self.manager.get_device("temperature_controller")
         if tc:
             tc.max_output = v
 
     def _cool_down(self):
         """
-            wait until temp is below threshold
+        wait until temp is below threshold
         """
         self._set_power_hook(0)
         threshold = 300
 
         func = None
-        tm = self.manager.get_device('temperature_monitor')
+        tm = self.manager.get_device("temperature_monitor")
         if tm is not None:
             func = tm.get_process_value
             # ct=tm.get_process_value()
         else:
-            tc = self.manager.get_device('temperature_controller')
+            tc = self.manager.get_device("temperature_controller")
             if tc:
                 func = tc.get_temperature
 
@@ -113,9 +113,9 @@ class PIDTuningScanner(Scanner):
                 ct = func()
 
     def _autotune(self, ctemp):
-        tc = self.manager.get_device('temperature_controller')
+        tc = self.manager.get_device("temperature_controller")
 
-        self.info('starting autotune')
+        self.info("starting autotune")
         ott = tc.enable_tru_tune
         tc.enable_tru_tune = False
         tc.start_autotune()
@@ -130,7 +130,7 @@ class PIDTuningScanner(Scanner):
 
         tc.enable_tru_tune = ott
         tt = time.time() - st
-        self.info('total tuning time for {}C ={:0.1f}s'.format(ctemp, tt))
+        self.info("total tuning time for {}C ={:0.1f}s".format(ctemp, tt))
 
 
 class PIDTuningEditor(LaserEditor):
@@ -155,23 +155,22 @@ class PIDTuningEditor(LaserEditor):
         # return d.read_heat_power(verbose=True)
 
     def _do_execute(self):
-        p = os.path.join(paths.scripts_dir, 'pid_tuning.yaml')
-        s = PIDTuningScanner(control_path=p,
-                             manager=self._laser_manager)
+        p = os.path.join(paths.scripts_dir, "pid_tuning.yaml")
+        s = PIDTuningScanner(control_path=p, manager=self._laser_manager)
 
-        s.setup('pid_tuning', 'scan')
+        s.setup("pid_tuning", "scan")
 
-        self._pyrometer = self._laser_manager.get_device('pyrometer')
-        self._thermocouple = self._laser_manager.get_device('temperature_monitor')
-        self._controller = self._laser_manager.get_device('temperature_controller')
+        self._pyrometer = self._laser_manager.get_device("pyrometer")
+        self._thermocouple = self._laser_manager.get_device("temperature_monitor")
+        self._controller = self._laser_manager.get_device("temperature_controller")
 
         self._controller.use_calibrated_temperature = False
         if self._pyrometer:
-            s.new_function(self._scan_pyrometer, name='pyrometer')
+            s.new_function(self._scan_pyrometer, name="pyrometer")
         if self._thermocouple:
-            s.new_function(self._scan_thermocouple, name='thermocouple')
+            s.new_function(self._scan_thermocouple, name="thermocouple")
 
-        s.new_function(self._scan_power, name='power')
+        s.new_function(self._scan_power, name="power")
         # s.new_static_value('Setpoint', 10, plotid=1)
 
         g = s.make_graph()
@@ -182,8 +181,8 @@ class PIDTuningEditor(LaserEditor):
             return True
 
     def traits_view(self):
-        v = View(UItem('component',
-                       editor=ComponentEditor()))
+        v = View(UItem("component", editor=ComponentEditor()))
         return v
+
 
 # ============= EOF =============================================

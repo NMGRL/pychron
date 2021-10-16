@@ -51,4 +51,6 @@ class _VideoEditor(Editor):
 
 class VideoEditor(BasicEditorFactory):
     klass = _VideoEditor
+
+
 # ============= EOF =============================================

@@ -18,8 +18,14 @@
 from __future__ import absolute_import
 from traitsui.api import View, Item, VGroup, InstanceEditor
 
-from pychron.lasers.tasks.laser_panes import ClientPane, BaseLaserPane, \
-    StageControlPane, ControlPane, AxesPane, SupplementalPane
+from pychron.lasers.tasks.laser_panes import (
+    ClientPane,
+    BaseLaserPane,
+    StageControlPane,
+    ControlPane,
+    AxesPane,
+    SupplementalPane,
+)
 
 
 # ============= standard library imports ========================
@@ -33,45 +39,57 @@ class FusionsDiodePane(BaseLaserPane):
 
 
 class FusionsDiodeStagePane(StageControlPane):
-    id = 'pychron.fusions.diode.stage'
+    id = "pychron.fusions.diode.stage"
 
 
 class FusionsDiodeControlPane(ControlPane):
-    id = 'pychron.fusions.diode.control'
+    id = "pychron.fusions.diode.control"
 
 
 class FusionsDiodeAxesPane(AxesPane):
-    id = 'pychron.fusions.diode.axes'
+    id = "pychron.fusions.diode.axes"
 
 
 class FusionsDiodeSupplementalPane(SupplementalPane):
-    id = 'pychron.fusions.diode.supplemental'
-    name = 'Diode'
+    id = "pychron.fusions.diode.supplemental"
+    name = "Diode"
 
     def traits_view(self):
         v = View(
-            VGroup(Item('temperature_controller', style='custom',
-                        editor=InstanceEditor(view='control_view'),
-                        show_label=False,
-                        ),
-                   label='Watlow',
-                   #                      show_border = True,
-                   ),
-            VGroup(Item('pyrometer', show_label=False, style='custom',
-                        ),
-                   #                      show_border = True,
-                   label='Pyrometer',
-
-                   ),
-            VGroup(Item('control_module_manager', show_label=False, style='custom',
-                        ),
-                   #                      show_border = True,
-                   label='ControlModule',
-
-                   ),
-            VGroup(Item('fiber_light', style='custom', show_label=False),
-                   label='FiberLight'
-                   )
+            VGroup(
+                Item(
+                    "temperature_controller",
+                    style="custom",
+                    editor=InstanceEditor(view="control_view"),
+                    show_label=False,
+                ),
+                label="Watlow",
+                #                      show_border = True,
+            ),
+            VGroup(
+                Item(
+                    "pyrometer",
+                    show_label=False,
+                    style="custom",
+                ),
+                #                      show_border = True,
+                label="Pyrometer",
+            ),
+            VGroup(
+                Item(
+                    "control_module_manager",
+                    show_label=False,
+                    style="custom",
+                ),
+                #                      show_border = True,
+                label="ControlModule",
+            ),
+            VGroup(
+                Item("fiber_light", style="custom", show_label=False),
+                label="FiberLight",
+            ),
         )
         return v
+
+
 # ============= EOF =============================================

@@ -24,7 +24,9 @@ from .core_device import CoreDevice
 
 
 class ArduinoCoreDevice(CoreDevice):
-    '''
-    '''
+    """ """
+
     pass
+
+
 # ============= EOF ====================================

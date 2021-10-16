@@ -20,4 +20,6 @@ from pychron.pipeline.plot.plotter.radial import Radial
 
 class RadialPanel(FigurePanel):
     _figure_klass = Radial
+
+
 # ============= EOF =============================================

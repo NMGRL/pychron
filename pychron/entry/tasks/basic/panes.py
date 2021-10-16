@@ -25,18 +25,19 @@ from traitsui.api import View, UItem, VGroup
 #                ('PI', 'principal_investigator_name')]
 #
 
+
 class BasicEntryPane(TraitsTaskPane):
     def traits_view(self):
-        return View(VGroup(UItem('ms', style='custom'),
-                           UItem('ed', style='custom')))
+        return View(VGroup(UItem("ms", style="custom"), UItem("ed", style="custom")))
 
 
 class BasicEntryEditorPane(TraitsDockPane):
-    name = 'Editor'
-    id = 'pychron.basic.editor'
+    name = "Editor"
+    id = "pychron.basic.editor"
 
     def traits_view(self):
         return View()
+
     # set_identifier_button = Button('Set Identifier')
     #
     # def _set_identifier_button_fired(self):
@@ -48,5 +49,6 @@ class BasicEntryEditorPane(TraitsDockPane):
     #              Item('selected_sample', label='Sample', editor=EnumEditor(name='samples')),
     #              UItem('pane.set_identifier_button'))
     #     return v
+
 
 # ============= EOF =============================================

@@ -29,6 +29,7 @@ from pychron.loggable import Loggable
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class Subscriber(Loggable):
     host = Str
     port = Int
@@ -49,7 +50,7 @@ class Subscriber(Loggable):
         sock = context.socket(zmq.SUB)
 
         url = self._get_url()
-        self.info('Connecting to {}'.format(url))
+        self.info("Connecting to {}".format(url))
 
         sock.connect(url)
         self._sock = sock
@@ -59,7 +60,7 @@ class Subscriber(Loggable):
 
     def _get_url(self, offset=0):
         h, p = self.host, self.port + offset
-        return 'tcp://{}:{}'.format(h, p)
+        return "tcp://{}:{}".format(h, p)
 
     def check_server_availability(self, timeout=1, verbose=True):
         url = self._get_url(1)
@@ -69,12 +70,12 @@ class Subscriber(Loggable):
         ret = True
         if timeout:
 
-            resp = self.request('ping', timeout, context)
+            resp = self.request("ping", timeout, context)
 
-            if resp is None or resp != 'echo':
+            if resp is None or resp != "echo":
                 # if not socks.get(alive_sock) == zmq.POLLIN or not alive_sock.recv()=='echo':
                 if verbose:
-                    self.warning('subscription server at {} not available'.format(url))
+                    self.warning("subscription server at {} not available".format(url))
                     # sock.setsockopt(zmq.LINGER, 0)
                 # alive_sock.close()
                 # poll.unregister(alive_sock)
@@ -115,7 +116,7 @@ class Subscriber(Loggable):
 
     def subscribe(self, tag, cb, verbose=False):
         if self._sock:
-            self.info('subscribing to {}'.format(tag))
+            self.info("subscribing to {}".format(tag))
             sock = self._sock
             sock.setsockopt(zmq.SUBSCRIBE, tag)
             self._subscriptions.append((tag, cb, verbose))
@@ -124,7 +125,7 @@ class Subscriber(Loggable):
         return self._stop_signal and not self._stop_signal.is_set()
 
     def listen(self):
-        self.info('starting subscriptions')
+        self.info("starting subscriptions")
         self.was_listening = True
 
         self._stop_signal = Event()
@@ -133,7 +134,7 @@ class Subscriber(Loggable):
         t.start()
 
     def stop(self):
-        self.debug('stopping')
+        self.debug("stopping")
         if self._stop_signal:
             self._stop_signal.set()
             self.was_listening = False
@@ -143,17 +144,18 @@ class Subscriber(Loggable):
         while not self._stop_signal.is_set():
             resp = sock.recv()
             if self.verbose:
-                self.debug('raw notification {}'.format(resp))
+                self.debug("raw notification {}".format(resp))
 
             for si, cb, verbose in self._subscriptions:
                 if resp.startswith(si):
                     resp = resp.split(si)[-1].strip()
                     if verbose:
-                        self.info('received notification {}'.format(resp))
+                        self.info("received notification {}".format(resp))
                     cb(resp)
                     self.last_message_time = time.time()
                     break
 
-        self.debug('no longer listening {}'.format(self._stop_signal.is_set()))
+        self.debug("no longer listening {}".format(self._stop_signal.is_set()))
+
 
 # ============= EOF =============================================

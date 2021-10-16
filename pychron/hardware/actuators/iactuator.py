@@ -36,4 +36,5 @@ class IActuator(Interface):
     def get_lock_state(self, obj):
         pass
 
+
 # ============= EOF =============================================

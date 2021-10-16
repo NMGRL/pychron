@@ -32,14 +32,14 @@ from pychron.hardware.core.motion.motion_profiler import MotionProfiler
 class MotionDesigner(HasTraits):
     canvas = Instance(Graph)
 
-    acceleration = Property(Range(0, 8., 7.62), depends_on='_acceleration')
-    _acceleration = Range(0, 8., 7.62)
+    acceleration = Property(Range(0, 8.0, 7.62), depends_on="_acceleration")
+    _acceleration = Range(0, 8.0, 7.62)
     # deceleration = Range(0, 8., 7.62)
-    velocity = Property(Range(0, 8., 3.81), depends_on='_velocity')
-    _velocity = Range(0, 8., 3.81)
+    velocity = Property(Range(0, 8.0, 3.81), depends_on="_velocity")
+    _velocity = Range(0, 8.0, 3.81)
 
-    distance = Property(Range(0, 10., 5), depends_on='_distance')
-    _distance = Range(0, 10., 5)
+    distance = Property(Range(0, 10.0, 5), depends_on="_distance")
+    _distance = Range(0, 10.0, 5)
 
     #    beam_radius = Range(0, 1.5, 1)
 
@@ -49,8 +49,9 @@ class MotionDesigner(HasTraits):
     def _set_distance(self, d):
         self._distance = d
         mp = MotionProfiler()
-        cv, ac, dc = mp.calculate_corrected_parameters(self.distance, self.velocity, self.acceleration,
-                                                       self.acceleration)
+        cv, ac, dc = mp.calculate_corrected_parameters(
+            self.distance, self.velocity, self.acceleration, self.acceleration
+        )
         times, dist = mp.calculate_transit_parameters(self.distance, cv, ac, dc)
         self._acceleration = ac
         self._velocity = cv
@@ -87,8 +88,8 @@ class MotionDesigner(HasTraits):
         g = self.canvas
 
         g.clear()
-        g.new_plot(title='Velocity')
-        g.new_plot(title='Position')
+        g.new_plot(title="Velocity")
+        g.new_plot(title="Position")
 
         atime, dtime, vtime = self.velocity_profile(0)
 
@@ -115,7 +116,7 @@ class MotionDesigner(HasTraits):
             #            p = yo + self.velocity * i - 0.5 * self.deceleration * i ** 2
             p = yo + self.velocity * i - 0.5 * self.acceleration * i ** 2
             y.append(p)
-        g.new_series(x, y, render_style='connectedpoints')
+        g.new_series(x, y, render_style="connectedpoints")
 
         # plot beam center
 
@@ -139,9 +140,9 @@ class MotionDesigner(HasTraits):
         d = self.distance
         m = MotionProfiler()
 
-        times, dists = m.calculate_transit_parameters(d, self.velocity,
-                                                      self.acceleration,
-                                                      self.acceleration)
+        times, dists = m.calculate_transit_parameters(
+            d, self.velocity, self.acceleration, self.acceleration
+        )
         self.plot_velocity_profile(times, self.velocity, plotid)
         return times
 
@@ -173,7 +174,7 @@ class MotionDesigner(HasTraits):
         totaltime = atime + dtime + vtime
         x.append(totaltime)
         y.append(0)
-        g.new_series(x, y, plotid=plotid, render_style='connectedpoints')
+        g.new_series(x, y, plotid=plotid, render_style="connectedpoints")
         g.set_y_limits(plotid=plotid, max_=self.velocity + 5)
 
         return atime, dtime, vtime
@@ -181,19 +182,18 @@ class MotionDesigner(HasTraits):
     # ============= views ===================================
     def traits_view(self):
         cgrp = Group(
-            Item('acceleration'),
+            Item("acceleration"),
             #  Item('deceleration'),
-            Item('velocity'),
-            Item('distance'),
+            Item("velocity"),
+            Item("distance"),
             # Item('beam_radius')
         )
         v = View(
             cgrp,
-            Item('canvas', show_label=False,
-                 style='custom'),
+            Item("canvas", show_label=False, style="custom"),
             resizable=True,
             width=800,
-            height=700
+            height=700,
         )
         return v
 
@@ -203,10 +203,10 @@ class MotionDesigner(HasTraits):
         return g
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
 
-    logging_setup('motionprofiler')
+    logging_setup("motionprofiler")
     m = MotionDesigner()
     m.replot()
     m.configure_traits()

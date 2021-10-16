@@ -17,8 +17,10 @@ from traits.api import Str, Password
 from traitsui.api import View, Item, HGroup, Spring, VGroup, Label
 
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.database.tasks.connection_preferences import ConnectionPreferencesPane, \
-    ConnectionMixin
+from pychron.database.tasks.connection_preferences import (
+    ConnectionPreferencesPane,
+    ConnectionMixin,
+)
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
@@ -50,16 +52,17 @@ from pychron.sparrow.sparrow_client import SparrowClient
 
 
 class SparrowPreferences(BasePreferencesHelper, ConnectionMixin):
-    preferences_path = 'pychron.sparrow'
+    preferences_path = "pychron.sparrow"
     host = Str
     password = Password
     username = Str
 
     def _get_connection_dict(self):
-        return dict(username=self.username,
-                    host=self.host,
-                    password=self.password,
-                    )
+        return dict(
+            username=self.username,
+            host=self.host,
+            password=self.password,
+        )
 
     def _test_connection(self, kw):
         s = SparrowClient(bind=False)
@@ -70,30 +73,40 @@ class SparrowPreferences(BasePreferencesHelper, ConnectionMixin):
 
 class SparrowPreferencesPane(ConnectionPreferencesPane):
     model_factory = SparrowPreferences
-    category = 'Sparrow'
+    category = "Sparrow"
 
     def traits_view(self):
-        cgrp = HGroup(Spring(width=10, springy=False),
-                      icon_button_editor('test_connection_button', 'database_connect',
-                                         tooltip='Test connection'),
-                      Spring(width=10, springy=False),
-                      Label('Status:'),
-                      CustomLabel('_connected_label',
-                                  label='Status',
-                                  weight='bold',
-                                  color_name='_connected_color'))
+        cgrp = HGroup(
+            Spring(width=10, springy=False),
+            icon_button_editor(
+                "test_connection_button", "database_connect", tooltip="Test connection"
+            ),
+            Spring(width=10, springy=False),
+            Label("Status:"),
+            CustomLabel(
+                "_connected_label",
+                label="Status",
+                weight="bold",
+                color_name="_connected_color",
+            ),
+        )
 
         massspec_grp = VGroup(
             # Item('enabled', label='Use MassSpec'),
-            VGroup(Item('host', label='ROOT URL'),
-                   Item('username', label='User'),
-                   Item('password', label='Password'),
-                   cgrp,
-                   enabled_when='enabled',
-                   show_border=True,
-                   label='Connection'),
-            label='Sparrow API',
-            show_border=True)
+            VGroup(
+                Item("host", label="ROOT URL"),
+                Item("username", label="User"),
+                Item("password", label="Password"),
+                cgrp,
+                enabled_when="enabled",
+                show_border=True,
+                label="Connection",
+            ),
+            label="Sparrow API",
+            show_border=True,
+        )
 
         return View(massspec_grp)
+
+
 # ============= EOF =============================================

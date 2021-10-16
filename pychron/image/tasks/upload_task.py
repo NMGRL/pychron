@@ -40,10 +40,9 @@ class UploadItem(HasTraits):
 
 
 class ImageUploadTask(BaseManagerTask, BaseBrowserModel):
-    id = 'pychron.image.upload'
-    name = 'Image Uploader'
-    tool_bars = [SToolBar(AssociateAction(),
-                          SaveAction())]
+    id = "pychron.image.upload"
+    name = "Image Uploader"
+    tool_bars = [SToolBar(AssociateAction(), SaveAction())]
     items = List
     selected_items = List
 
@@ -54,7 +53,7 @@ class ImageUploadTask(BaseManagerTask, BaseBrowserModel):
         if new:
             for ni in new:
                 name = os.path.basename(ni)
-                self.debug('Adding {} to database'.format(name))
+                self.debug("Adding {} to database".format(name))
                 self.items.append(UploadItem(name=name))
 
                 # move file out of staging area
@@ -62,10 +61,10 @@ class ImageUploadTask(BaseManagerTask, BaseBrowserModel):
 
     # actions
     def save(self):
-        self.debug('save associations')
+        self.debug("save associations")
 
     def associate_sample(self):
-        self.debug('associate sample')
+        self.debug("associate sample")
         sample = self.selected_samples[0].name
         print(type(self.selected_samples[0]))
         for si in self.selected_items:
@@ -86,7 +85,7 @@ class ImageUploadTask(BaseManagerTask, BaseBrowserModel):
         return [SampleBrowserPane(model=self)]
 
     def _default_layout_default(self):
-        return TaskLayout(left=PaneItem(id='pychron.image.browser'))
+        return TaskLayout(left=PaneItem(id="pychron.image.browser"))
 
     def _selected_samples_changed(self):
         self._set_association_enabled()
@@ -96,8 +95,11 @@ class ImageUploadTask(BaseManagerTask, BaseBrowserModel):
 
     def _set_association_enabled(self):
 
-        self.association_enabled = bool(self.selected_items and
-                                        len(self.selected_samples) == 1
-                                        if self.selected_samples else False)
+        self.association_enabled = bool(
+            self.selected_items and len(self.selected_samples) == 1
+            if self.selected_samples
+            else False
+        )
+
 
 # ============= EOF =============================================

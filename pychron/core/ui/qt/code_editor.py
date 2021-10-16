@@ -33,8 +33,8 @@ class PyScriptCodeEditor(BasicEditorFactory):
     klass = _CodeEditor
 
     fontsize = Int(12)
-    fontname = Str('menlo regular')
-    keywords = ''
+    fontname = Str("menlo regular")
+    keywords = ""
 
     # ---------------------------------------------------------------------------
     #  Trait definitions:
@@ -62,7 +62,7 @@ class PyScriptCodeEditor(BasicEditorFactory):
     selected_color = Color(0xA4FFFF)
 
     # Where should the search toolbar be placed?
-    search = Enum('top', 'bottom', 'none')
+    search = Enum("top", "bottom", "none")
 
     # Background color for lines that match the current search
     search_color = Color(0xFFFF94)
@@ -86,13 +86,13 @@ class PyScriptCodeEditor(BasicEditorFactory):
     auto_scroll = Bool(True)
 
     # Optional key bindings associated with the editor
-    key_bindings = Instance('traitsui.key_bindings.KeyBindings')
+    key_bindings = Instance("traitsui.key_bindings.KeyBindings")
 
     # Calltip clicked event
     calltip_clicked = Str
 
     # The lexer to use. Default is 'python'; 'null' indicates no lexing.
-    lexer = Str('python')
+    lexer = Str("python")
 
     # Object trait containing the list of line numbers to dim (optional)
     dim_lines = Str
@@ -107,4 +107,6 @@ class PyScriptCodeEditor(BasicEditorFactory):
 
     # Object trait for the color of squiggles. If not specified, red is used.
     squiggle_color = Str
+
+
 # ============= EOF =============================================

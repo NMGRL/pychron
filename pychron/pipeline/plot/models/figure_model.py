@@ -23,11 +23,11 @@ from pychron.core.helpers.iterfuncs import groupby_key
 
 class FigureModel(HasTraits):
     panels = List
-    npanels = Property(depends_on='panels[]')
+    npanels = Property(depends_on="panels[]")
     analyses = List
     references = List
     plot_options = Any
-    _panel_klass = Instance('pychron.pipeline.plotters.figure_panel.FigurePanel')
+    _panel_klass = Instance("pychron.pipeline.plotters.figure_panel.FigurePanel")
     titles = List
 
     # layout = Instance(FigureLayout, ())
@@ -75,15 +75,21 @@ class FigureModel(HasTraits):
 
     def _make_panel_groups(self):
         if self.analysis_groups:
-            gs = [self._panel_factory(analyses=ag, plot_options=self.plot_options, graph_id=gid) for gid, ag in
-                  enumerate(self.analysis_groups)]
+            gs = [
+                self._panel_factory(
+                    analyses=ag, plot_options=self.plot_options, graph_id=gid
+                )
+                for gid, ag in enumerate(self.analysis_groups)
+            ]
         else:
-            gs = [self._panel_factory(analyses=list(ais),
-                                      plot_options=self.plot_options,
-                                      graph_id=gid)
-                  for gid, ais in groupby_key(self.analyses, 'graph_id')]
+            gs = [
+                self._panel_factory(
+                    analyses=list(ais), plot_options=self.plot_options, graph_id=gid
+                )
+                for gid, ais in groupby_key(self.analyses, "graph_id")
+            ]
             # if hasattr(self, 'references'):
-            gg = groupby_key(self.references, 'graph_id')
+            gg = groupby_key(self.references, "graph_id")
             for gi in gs:
                 try:
                     gid, ais = next(gg)

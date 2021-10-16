@@ -26,28 +26,50 @@ class Model335TemperatureController(BaseLakeShoreController):
     graph_klass = StreamStackedGraph
 
     def _update_hook(self):
-        r = PlotRecord((self.input_a, self.input_b), (0, 1), ('a', 'b'))
+        r = PlotRecord((self.input_a, self.input_b), (0, 1), ("a", "b"))
         return r
 
     def get_control_group(self):
-        grp = VGroup(Spring(height=10, springy=False),
-                     HGroup(Item('input_a', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
-                            Item('setpoint1'),
-                            UItem('setpoint1_readback', editor=LCDEditor(width=120, height=30),
-                                  style='readonly'), Spring(width=10, springy=False)),
-                     HGroup(Item('input_b', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
-                            Item('setpoint2'),
-                            UItem('setpoint2_readback', editor=LCDEditor(width=120, height=30),
-                                  style='readonly'), Spring(width=10, springy=False)))
+        grp = VGroup(
+            Spring(height=10, springy=False),
+            HGroup(
+                Item(
+                    "input_a",
+                    style="readonly",
+                    editor=LCDEditor(width=120, ndigits=6, height=30),
+                ),
+                Item("setpoint1"),
+                UItem(
+                    "setpoint1_readback",
+                    editor=LCDEditor(width=120, height=30),
+                    style="readonly",
+                ),
+                Spring(width=10, springy=False),
+            ),
+            HGroup(
+                Item(
+                    "input_b",
+                    style="readonly",
+                    editor=LCDEditor(width=120, ndigits=6, height=30),
+                ),
+                Item("setpoint2"),
+                UItem(
+                    "setpoint2_readback",
+                    editor=LCDEditor(width=120, height=30),
+                    style="readonly",
+                ),
+                Spring(width=10, springy=False),
+            ),
+        )
         return grp
 
     def graph_builder(self, g, **kw):
         g.plotcontainer.spacing = 10
-        g.new_plot(xtitle='Time (s)', ytitle='InputA',
-                   padding=[100, 10, 0, 60])
+        g.new_plot(xtitle="Time (s)", ytitle="InputA", padding=[100, 10, 0, 60])
         g.new_series()
 
-        g.new_plot(ytitle='InputB',
-                   padding=[100, 10, 60, 0])
+        g.new_plot(ytitle="InputB", padding=[100, 10, 60, 0])
         g.new_series(plotid=1)
+
+
 # ============= EOF =============================================

@@ -24,16 +24,14 @@ from .messaging_handler import MessagingHandler
 
 class IPCHandler(MessagingHandler):
     def get_packet(self):
-        '''
-        '''
+        """ """
         data = self.request.recv(1024).strip()
         return data
 
     def send_packet(self, response):
-        '''
-
-        '''
+        """ """
         sock = self.request
-        sock.sendall(response + '\n')
+        sock.sendall(response + "\n")
+
 
 # ============= EOF ====================================

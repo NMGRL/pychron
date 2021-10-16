@@ -27,7 +27,7 @@ class MockSpec:
 
 class DurationTrackerTestCase(unittest.TestCase):
     def setUp(self):
-        paths.build('_dt')
+        paths.build("_dt")
         self.dt = AutomatedRunDurationTracker()
 
     def tearDown(self):
@@ -35,25 +35,25 @@ class DurationTrackerTestCase(unittest.TestCase):
         os.remove(paths.duration_tracker_frequencies)
 
     def test_prob(self):
-        run = MockRun('1000-01', 'a', 'a')
+        run = MockRun("1000-01", "a", "a")
         self.dt.update(run, 10)
-        run = MockRun('1000-01', 'a', 'b')
+        run = MockRun("1000-01", "a", "b")
         self.dt.update(run, 1)
         self.dt.update(run, 1)
 
-        prob = self.dt._frequencies['a']
-        self.assertEqual(prob, 2 / 3.)
+        prob = self.dt._frequencies["a"]
+        self.assertEqual(prob, 2 / 3.0)
 
     def test_prob2(self):
-        run = MockRun('1000-01', 'a', 'a')
+        run = MockRun("1000-01", "a", "a")
         self.dt.update(run, 10)
-        run = MockRun('1000-01', 'a', 'b')
+        run = MockRun("1000-01", "a", "b")
         self.dt.update(run, 1)
         self.dt.update(run, 1)
         self.dt.update(run, 1)
 
-        prob = self.dt._frequencies['a']
-        self.assertEqual(prob, 3 / 4.)
+        prob = self.dt._frequencies["a"]
+        self.assertEqual(prob, 3 / 4.0)
 
     # def test_pm(self):
     #     run = MockRun('1000-01', 'a', 'a')
@@ -69,5 +69,5 @@ class DurationTrackerTestCase(unittest.TestCase):
     #     self.assertAlmostEqual(nt / float(n), 0.75, 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

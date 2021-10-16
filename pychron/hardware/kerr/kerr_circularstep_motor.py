@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import CInt
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.kerr.kerr_step_motor import KerrStepMotor
@@ -24,7 +25,7 @@ import time
 from pychron.hardware.core.data_helper import make_bitarray
 from six.moves import range
 
-'''
+"""
     status byte
     0 1 2 3 4 5 6 7
   1 0 0 0 0 0 0 0 1
@@ -40,7 +41,7 @@ from six.moves import range
  6= trap prof mode
  7= home in progress
 
-'''
+"""
 
 
 class KerrCircularStepMotor(KerrStepMotor):
@@ -48,17 +49,13 @@ class KerrCircularStepMotor(KerrStepMotor):
     max = CInt
 
     def _get_io_bits(self):
-        return ['1',  # bit 4
-                '1',
-                '1',
-                '1',
-                '0']  # bit 0
+        return ["1", "1", "1", "1", "0"]  # bit 4  # bit 0
 
     def _home_motor(self, *args, **kw):
         # start moving
         progress = self.progress
         if progress is not None:
-            progress = kw['progress']
+            progress = kw["progress"]
         #             progress.increase_max()
         #             progress.change_message('Homing {}'.format(self.name))
         #             progress.increment()
@@ -96,7 +93,9 @@ class KerrCircularStepMotor(KerrStepMotor):
         # ======================================================================
         self.reset_position(motor_off=False)
         #         signal.set()
-        progress.change_message('{} homing complete'.format(self.name), auto_increment=False)
+        progress.change_message(
+            "{} homing complete".format(self.name), auto_increment=False
+        )
 
     def _proximity_move(self, onoff, n=2, progress=None):
         addr = self.address
@@ -114,19 +113,23 @@ class KerrCircularStepMotor(KerrStepMotor):
                 cnt += 1
 
             if cnt % 10 == 0 and prog:
-                prog.change_message('Limit={}, cnt={}'.format(lim, tc), auto_increment=False)
+                prog.change_message(
+                    "Limit={}, cnt={}".format(lim, tc), auto_increment=False
+                )
 
             tc += 1
 
         # stop moving when proximity limit set
-        cmds = [(addr, '1707', 100, 'Stop motor'),  # leave amp on
-                (addr, '00', 100, 'Reset Position')]
+        cmds = [
+            (addr, "1707", 100, "Stop motor"),  # leave amp on
+            (addr, "00", 100, "Reset Position"),
+        ]
         self._execute_hex_commands(cmds)
         if tc >= totalcnts:
-            self.warning_dialog('Failed Homing motor')
+            self.warning_dialog("Failed Homing motor")
 
     def _read_limits(self, verbose=False):
-        cb = '00001000'
+        cb = "00001000"
         inb = self.read_status(cb, verbose=False)
         if inb:
             # resp_byte consists of input_byte
@@ -138,20 +141,21 @@ class KerrCircularStepMotor(KerrStepMotor):
         return int(ba[4])
 
     def _load_home_control_byte(self):
-        '''
-           control byte
-                7 6 5 4 3 2 1 0
-            97- 1 0 0 1 0 1 1 1
-            0=capture home on limit1
-            1=capture home on limit2
-            2=turn motor off on home
-            3=capture home on home
-            4=stop abruptly
-            5=stop smoothly
-            6,7=not used- clear to 0
-        '''
+        """
+        control byte
+             7 6 5 4 3 2 1 0
+         97- 1 0 0 1 0 1 1 1
+         0=capture home on limit1
+         1=capture home on limit2
+         2=turn motor off on home
+         3=capture home on home
+         4=stop abruptly
+         5=stop smoothly
+         6,7=not used- clear to 0
+        """
 
-        return int('00011000', 2)
+        return int("00011000", 2)
+
 
 # ============= EOF =============================================
 #

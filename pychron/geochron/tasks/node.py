@@ -22,7 +22,7 @@ from pychron.pipeline.nodes.base import BaseNode
 
 
 class GeochronNode(BaseNode):
-    service = Instance('pychron.geochron.geochron_service.GeochronService')
+    service = Instance("pychron.geochron.geochron_service.GeochronService")
 
     def configure(self):
         return True
@@ -30,5 +30,6 @@ class GeochronNode(BaseNode):
     def run(self, state):
         if state.unknowns:
             pass
+
 
 # ============= EOF =============================================

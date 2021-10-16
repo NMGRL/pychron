@@ -16,10 +16,12 @@
 # ============= enthought library imports =======================
 from traits.api import Event, Property, Any, Bool, Float, Str, Instance, List
 from traitsui.api import HGroup, VGroup, Item, spring, ButtonEditor
+
 # ============= standard library imports ========================
 import os
 import time
 from threading import Lock
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import generate_datetimestamp
 from pychron.database.data_warehouse import DataWarehouse
@@ -32,7 +34,7 @@ from pychron.paths import paths
 
 class ScanableDevice(ViewableDevice):
     scan_button = Event
-    scan_label = Property(depends_on='_scanning')
+    scan_label = Property(depends_on="_scanning")
 
     alarms = List(Alarm)
 
@@ -42,7 +44,7 @@ class ScanableDevice(ViewableDevice):
     timer = None
     scan_period = Float(1000, enter_set=True, auto_set=False)
     scan_width = Float(5, enter_set=True, auto_set=False)
-    scan_units = 'ms'
+    scan_units = "ms"
     record_scan_data = Bool(False)
     graph_scan_data = Bool(False)
     scan_path = Str
@@ -50,7 +52,7 @@ class ScanableDevice(ViewableDevice):
     scan_root = Str
     scan_name = Str
 
-    graph = Instance('pychron.graph.graph.Graph')
+    graph = Instance("pychron.graph.graph.Graph")
     graph_ytitle = Str
     graph_klass = None
 
@@ -73,28 +75,41 @@ class ScanableDevice(ViewableDevice):
     def setup_scan(self):
         # should get scan settings from the config file not the initialization.xml
         config = self.get_configuration()
-        if config.has_section('Scan'):
-            enabled = self.config_get(config, 'Scan', 'enabled', cast='boolean', optional=True, default=True)
+        if config.has_section("Scan"):
+            enabled = self.config_get(
+                config, "Scan", "enabled", cast="boolean", optional=True, default=True
+            )
             self.is_scanable = enabled
             if enabled:
-                self.set_attribute(config, 'auto_start', 'Scan', 'auto_start', cast='boolean', default=False)
-                self.set_attribute(config, 'scan_period', 'Scan', 'period', cast='float')
-                self.set_attribute(config, 'scan_width', 'Scan', 'width', cast='float')
-                self.set_attribute(config, 'scan_units', 'Scan', 'units')
-                self.set_attribute(config, 'record_scan_data', 'Scan', 'record', cast='boolean')
-                self.set_attribute(config, 'graph_scan_data', 'Scan', 'graph', cast='boolean')
+                self.set_attribute(
+                    config,
+                    "auto_start",
+                    "Scan",
+                    "auto_start",
+                    cast="boolean",
+                    default=False,
+                )
+                self.set_attribute(
+                    config, "scan_period", "Scan", "period", cast="float"
+                )
+                self.set_attribute(config, "scan_width", "Scan", "width", cast="float")
+                self.set_attribute(config, "scan_units", "Scan", "units")
+                self.set_attribute(
+                    config, "record_scan_data", "Scan", "record", cast="boolean"
+                )
+                self.set_attribute(
+                    config, "graph_scan_data", "Scan", "graph", cast="boolean"
+                )
 
-                func = self.config_get(config, 'Scan', 'function', optional=True)
+                func = self.config_get(config, "Scan", "function", optional=True)
                 if func:
                     self.scan_func = func
 
     def setup_alarms(self):
         config = self.get_configuration()
-        if config.has_section('Alarms'):
-            for opt in config.options('Alarms'):
-                self.alarms.append(Alarm(
-                    name=opt,
-                    alarm_str=config.get('Alarms', opt)))
+        if config.has_section("Alarms"):
+            for opt in config.options("Alarms"):
+                self.alarms.append(Alarm(name=opt, alarm_str=config.get("Alarms", opt)))
 
     def _scan_hook(self, *args, **kw):
         pass
@@ -105,7 +120,7 @@ class ScanableDevice(ViewableDevice):
             try:
                 v = getattr(self, self.scan_func)(verbose=False)
             except AttributeError as e:
-                print('exception', e)
+                print("exception", e)
                 return
 
             if v is not None:
@@ -132,24 +147,28 @@ class ScanableDevice(ViewableDevice):
                         v = (v,)
 
                 if self.record_scan_data:
-                    self.debug('recording scan data')
+                    self.debug("recording scan data")
                     if x is None:
                         x = time.time()
 
                     ts = generate_datetimestamp()
-                    self.data_manager.write_to_frame((ts, '{:<8s}'.format('{:0.2f}'.format(x))) + v)
+                    self.data_manager.write_to_frame(
+                        (ts, "{:<8s}".format("{:0.2f}".format(x))) + v
+                    )
 
                 self._scan_hook(v)
 
             else:
-                '''
-                    scan func must return a value or we will stop the scan
-                    since the timer runs on the main thread any long comms timeouts
-                    slow user interaction
-                '''
+                """
+                scan func must return a value or we will stop the scan
+                since the timer runs on the main thread any long comms timeouts
+                slow user interaction
+                """
                 if self._no_response_counter > 3:
                     self.timer.Stop()
-                    self.info('no response. stopping scan func={}'.format(self.scan_func))
+                    self.info(
+                        "no response. stopping scan func={}".format(self.scan_func)
+                    )
                     self._scanning = False
                     self._no_response_counter = 0
 
@@ -174,19 +193,19 @@ class ScanableDevice(ViewableDevice):
             self.timer.wait_for_completion()
 
         self._scanning = True
-        self.info('Starting scan')
+        self.info("Starting scan")
 
         d = self.scan_width * 60  # * 1000/self.scan_period
         # print self.scan_width, self.scan_period
         if self.graph_scan_data:
-            self.info('Graph recording enabled')
-            self.debug('scan width ={}'.format(d))
+            self.info("Graph recording enabled")
+            self.debug("scan width ={}".format(d))
             self.graph.set_scan_widths(d)
 
         if self.record_scan_data:
-            self.info('Recording scan enabled')
+            self.info("Recording scan enabled")
 
-            dm.delimiter = '\t'
+            dm.delimiter = "\t"
 
             dw = DataWarehouse(root=paths.device_scan_dir)
             dw.build_warehouse()
@@ -198,11 +217,12 @@ class ScanableDevice(ViewableDevice):
             period = self.scan_period * self.time_dict[self.scan_units]
 
         from pychron.core.helpers.timer import Timer
+
         self.timer = Timer(period, self.scan)
-        self.info('Scan started func={} period={}'.format(self.scan_func, period))
+        self.info("Scan started func={} period={}".format(self.scan_func, period))
 
     def stop_scan(self):
-        self.info('Stoppiing scan')
+        self.info("Stoppiing scan")
 
         self._scanning = False
         if self.timer is not None:
@@ -211,13 +231,13 @@ class ScanableDevice(ViewableDevice):
         if self.data_manager:
             self.data_manager.close_file()
         self._auto_started = False
-        self.info('Scan stopped')
+        self.info("Scan stopped")
 
     def _get_scan_label(self):
-        return 'Start' if not self._scanning else 'Stop'
+        return "Start" if not self._scanning else "Stop"
 
     def _scan_button_fired(self):
-        self.debug('scan button fired. scanning {}'.format(self._scanning))
+        self.debug("scan button fired. scanning {}".format(self._scanning))
         if self._scanning:
             self.stop_scan()
         else:
@@ -244,35 +264,48 @@ class ScanableDevice(ViewableDevice):
         return g
 
     def graph_builder(self, g, **kw):
-        g.new_plot(padding=[50, 5, 5, 35],
-                   zoom=True,
-                   pan=True,
-                   **kw)
+        g.new_plot(padding=[50, 5, 5, 35], zoom=True, pan=True, **kw)
 
         g.set_y_title(self.graph_ytitle)
-        g.set_x_title('Time')
+        g.set_x_title("Time")
         g.new_series()
 
     def current_state_view(self):
-        g = VGroup(Item('graph', show_label=False, style='custom'),
-                   VGroup(Item('scan_func', label='Function', style='readonly'),
-
-                          HGroup(Item('scan_period', label='Period ({})'.format(self.scan_units)), spring),
-                          Item('current_scan_value', style='readonly')),
-                   VGroup(
-                       HGroup(Item('scan_button', editor=ButtonEditor(label_value='scan_label'),
-                                   show_label=False),
-                              spring),
-                       Item('scan_root',
-                            style='readonly',
-                            label='Scan directory',
-                            visible_when='object.record_scan_data'),
-                       Item('scan_name', label='Scan name',
-                            style='readonly',
-                            visible_when='object.record_scan_data'),
-                       visible_when='object.is_scanable'),
-
-                   label='Scan')
+        g = VGroup(
+            Item("graph", show_label=False, style="custom"),
+            VGroup(
+                Item("scan_func", label="Function", style="readonly"),
+                HGroup(
+                    Item("scan_period", label="Period ({})".format(self.scan_units)),
+                    spring,
+                ),
+                Item("current_scan_value", style="readonly"),
+            ),
+            VGroup(
+                HGroup(
+                    Item(
+                        "scan_button",
+                        editor=ButtonEditor(label_value="scan_label"),
+                        show_label=False,
+                    ),
+                    spring,
+                ),
+                Item(
+                    "scan_root",
+                    style="readonly",
+                    label="Scan directory",
+                    visible_when="object.record_scan_data",
+                ),
+                Item(
+                    "scan_name",
+                    label="Scan name",
+                    style="readonly",
+                    visible_when="object.record_scan_data",
+                ),
+                visible_when="object.is_scanable",
+            ),
+            label="Scan",
+        )
         v = super(ScanableDevice, self).current_state_view()
         v.content.content.append(g)
         return v

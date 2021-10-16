@@ -37,4 +37,6 @@ class ScatterTool(ScatterInspector):
         #        '''
         #        #self.parent.selected_plotid = self.plotid
         super(ScatterTool, self).normal_mouse_move(event)
+
+
 #        ScatterInspector.normal_mouse_move(self, event)

@@ -23,6 +23,7 @@ from traitsui.api import View
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class SceneBrowser(HasTraits):
     layers = List
 
@@ -39,5 +40,6 @@ class SceneBrowser(HasTraits):
     def traits_view(self):
         v = View()
         return v
+
 
 # ============= EOF =============================================

@@ -17,18 +17,16 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-__version__ = '1.0'
+__version__ = "1.0"
 
-PARAMETER_REGISTRY = {'furnace_env_humidity': '001',
-                      'furnace_env_temperature': '002',
-                      'furnace_setpoint': '003',
-                      'furnace_process_value': '004',
-
-                      'feeder_position': '021',
-
-                      'funnel_position': '031',
-
-                      'switch_status': '041',
-                      }
+PARAMETER_REGISTRY = {
+    "furnace_env_humidity": "001",
+    "furnace_env_temperature": "002",
+    "furnace_setpoint": "003",
+    "furnace_process_value": "004",
+    "feeder_position": "021",
+    "funnel_position": "031",
+    "switch_status": "041",
+}
 
 # ============= EOF =============================================

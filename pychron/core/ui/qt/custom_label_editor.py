@@ -14,11 +14,22 @@
 # limitations under the License.
 # ===============================================================================
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Color, Button, Any, Instance, on_trait_change, Bool
+from traits.api import (
+    HasTraits,
+    Str,
+    Int,
+    Color,
+    Button,
+    Any,
+    Instance,
+    on_trait_change,
+    Bool,
+)
 from traitsui.api import View, UItem
 from traitsui.qt4.editor import Editor
 from traitsui.basic_editor_factory import BasicEditorFactory
 from pyface.qt.QtGui import QLabel
+
 # ============= standard library imports ========================
 import random
 
@@ -35,18 +46,18 @@ class _CustomLabelEditor(Editor):
     def init(self, parent):
         self.control = self._create_control(parent)
         #        self.item.on_trait_change(self._set_color, 'color')
-        self.sync_value(self.factory.color, 'color', mode='from')
-        self.sync_value(self.factory.bgcolor, 'bgcolor', mode='from')
-        self.sync_value(self.factory.weight, 'weight', mode='from')
-        self.sync_value(self.factory.text_size, 'text_size', mode='from')
+        self.sync_value(self.factory.color, "color", mode="from")
+        self.sync_value(self.factory.bgcolor, "bgcolor", mode="from")
+        self.sync_value(self.factory.weight, "weight", mode="from")
+        self.sync_value(self.factory.text_size, "text_size", mode="from")
 
-    @on_trait_change('color, bgcolor, weight, text_size')
+    @on_trait_change("color, bgcolor, weight, text_size")
     def _update_style(self):
         self._set_style()
 
-    def _set_style(self, control=None,
-                   color=None, bgcolor=None,
-                   size=None, weight=None):
+    def _set_style(
+        self, control=None, color=None, bgcolor=None, size=None, weight=None
+    ):
         if control is None:
             control = self.control
 
@@ -55,7 +66,7 @@ class _CustomLabelEditor(Editor):
 
         if bgcolor is None:
             if self.bgcolor is None:
-                bgcolor = 'transparent'
+                bgcolor = "transparent"
             else:
                 bgcolor = self.bgcolor.name()
 
@@ -69,14 +80,13 @@ class _CustomLabelEditor(Editor):
             if not weight:
                 weight = self.item.weight
 
-        css = '''QLabel {{color:{};
+        css = """QLabel {{color:{};
         background-color:{};
         font-size:{}px;
         font-weight:{};}}
-        '''.format(color,
-                   bgcolor,
-                   size,
-                   weight)
+        """.format(
+            color, bgcolor, size, weight
+        )
 
         control.setStyleSheet(css)
 
@@ -90,9 +100,7 @@ class _CustomLabelEditor(Editor):
         bgcolor = None
         if self.item.use_color_background:
             bgcolor = self.item.bgcolor.name()
-        self._set_style(color=self.item.color.name(),
-                        bgcolor=bgcolor,
-                        control=control)
+        self._set_style(color=self.item.color.name(), bgcolor=bgcolor, control=control)
 
         control.setMargin(5)
         parent.setSpacing(0)
@@ -113,13 +121,13 @@ class CustomLabel(UItem):
     size = Int(12)
     size_name = Str
 
-    color = Color('black')
+    color = Color("black")
     color_name = Str
 
-    bgcolor = Color('transparent')
+    bgcolor = Color("transparent")
     bgcolor_name = Str
     use_color_background = Bool(False)
-    weight = Str('normal')
+    weight = Str("normal")
 
     # top_padding = Int(5)
     # bottom_padding = Int(5)
@@ -140,44 +148,46 @@ class CustomLabel(UItem):
 # demo
 # ===============================================================================
 class Demo(HasTraits):
-    a = Str('asdfsdf')
+    a = Str("asdfsdf")
     foo = Button
-    color = Color('blue')
-    bgcolor = Color('green')
+    color = Color("blue")
+    bgcolor = Color("green")
     cnt = 0
     size = Int(12)
 
     def _foo_fired(self):
-        self.a = 'fffff {}'.format(random.random())
+        self.a = "fffff {}".format(random.random())
         if self.cnt % 2 == 0:
-            self.color = 'red'
-            self.bgcolor = 'blue'
+            self.color = "red"
+            self.bgcolor = "blue"
         else:
-            self.bgcolor = 'red'
-            self.color = 'blue'
+            self.bgcolor = "red"
+            self.color = "blue"
         self.cnt += 1
 
     def traits_view(self):
 
         v = View(
-            UItem('size'),
-            'foo',
-            CustomLabel('a',
-                        #                             color='blue',
-                        size=24,
-                        size_name='size',
-                        top_padding=10,
-                        left_padding=10,
-                        color_name='color',
-                        bgcolor_name='bgcolor'
-                        ),
+            UItem("size"),
+            "foo",
+            CustomLabel(
+                "a",
+                #                             color='blue',
+                size=24,
+                size_name="size",
+                top_padding=10,
+                left_padding=10,
+                color_name="color",
+                bgcolor_name="bgcolor",
+            ),
             resizable=True,
             width=400,
-            height=100)
+            height=100,
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     d = Demo()
     d.configure_traits()
     # ============= EOF =============================================

@@ -60,7 +60,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     magnets_firing = Bool
 
-    mode = 'normal'
+    mode = "normal"
 
     # water_flow_led = Instance(LED, ())
     water_flow_state = Int
@@ -71,10 +71,12 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     funnel_down_enabled = Bool(True)
     funnel_up_enabled = Bool(False)
-    settings_name = 'furnace_settings'
+    settings_name = "furnace_settings"
     status_txt = Str
 
-    dump_sample_enabled = Property(depends_on='dump_funnel_safety_override, funnel_up_enabled')
+    dump_sample_enabled = Property(
+        depends_on="dump_funnel_safety_override, funnel_up_enabled"
+    )
     dump_funnel_safety_override = Bool
 
     _alive = False
@@ -96,16 +98,16 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.loader_logic.manager = self
 
     def start_update(self):
-        self.info('Start update')
+        self.info("Start update")
         self.reset_scan_timer(func=self._update_scan)
 
     def stop_update(self):
-        self.info('Stop update')
+        self.info("Stop update")
         self._stop_update()
 
     def test_furnace_cam(self):
-        self.info('testing furnace cam')
-        ret, err = False, ''
+        self.info("testing furnace cam")
+        ret, err = False, ""
         if self.camera:
             ret = self.camera.get_image_data() is not None
         return ret, err
@@ -129,11 +131,11 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.switch_manager.load_indicator_states()
 
         if self.funnel_down():
-            self.dumper_canvas.set_item_state('Funnel', True)
+            self.dumper_canvas.set_item_state("Funnel", True)
             self.funnel_down_enabled = False
             self.funnel_up_enabled = True
         elif self.funnel_up():
-            self.dumper_canvas.set_item_state('Funnel', False)
+            self.dumper_canvas.set_item_state("Funnel", False)
             self.funnel_down_enabled = True
             self.funnel_up_enabled = False
         else:
@@ -143,37 +145,37 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.dumper_canvas.invalidate_and_redraw()
 
     def prepare_destroy(self):
-        self.debug('prepare destroy')
+        self.debug("prepare destroy")
         self._stop_update()
         self.loader_logic.manager = None
         if self.timer:
             self.timer.stop()
 
     def get_setpoint_blob(self):
-        self.debug('get setpoint blob')
+        self.debug("get setpoint blob")
         blob = self.response_recorder.get_setpoint_blob()
         return blob
 
     def get_response_blob(self):
-        self.debug('get response blob')
+        self.debug("get response blob")
         blob = self.response_recorder.get_response_blob()
         return blob
 
     def get_output_blob(self):
-        self.debug('get output blob')
+        self.debug("get output blob")
         blob = self.response_recorder.get_output_blob()
         return blob
 
     def get_achieved_output(self):
-        self.debug('get achieved output')
+        self.debug("get achieved output")
         return self.response_recorder.max_response
 
     def set_response_recorder_period(self, p):
-        self.debug('set response recorder period={}'.format(p))
+        self.debug("set response recorder period={}".format(p))
         self.response_recorder.period = p
 
     def enable(self):
-        self.debug('enable')
+        self.debug("enable")
         if not self.controller.get_water_flow_state(verbose=False):
             raise ExtractionException()
         else:
@@ -183,13 +185,13 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return self.controller.get_process_value()
 
     def extract(self, v, **kw):
-        self.debug('extract')
+        self.debug("extract")
         # self.response_recorder.start()
-        self.debug('set setpoint to {}'.format(v))
+        self.debug("set setpoint to {}".format(v))
         self.setpoint = v
 
     def disable(self):
-        self.debug('disable')
+        self.debug("disable")
         # self.response_recorder.stop()
         self.setpoint = 0
 
@@ -205,45 +207,51 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.response_recorder.stop()
 
     def move_to_position(self, pos, *args, **kw):
-        self.debug('move to position {}'.format(pos))
+        self.debug("move to position {}".format(pos))
         self.stage_manager.goto_position(pos)
 
     def dump_sample(self, block=False):
-        self.debug('dump sample')
+        self.debug("dump sample")
         if self._dumper_thread is None:
             progress = open_progress(n=100)
 
             if block:
                 return self._dump_sample(progress)
             else:
-                self._dumper_thread = Thread(name='DumpSample', target=self._dump_sample, args=(progress,))
+                self._dumper_thread = Thread(
+                    name="DumpSample", target=self._dump_sample, args=(progress,)
+                )
                 self._dumper_thread.setDaemon(True)
                 self._dumper_thread.start()
         else:
-            self.warning_dialog('dump already in progress')
+            self.warning_dialog("dump already in progress")
 
     def fire_magnets(self):
-        self.debug('fire magnets')
+        self.debug("fire magnets")
         if self._magnets_thread is None:
             self.magnets_firing = True
-            self._magnets_thread = Thread(name='Magnets', target=self.actuate_magnets, kwargs={'check_logic': False})
+            self._magnets_thread = Thread(
+                name="Magnets",
+                target=self.actuate_magnets,
+                kwargs={"check_logic": False},
+            )
             self._magnets_thread.setDaemon(True)
             self._magnets_thread.start()
 
     def start_jitter_feeder(self):
-        self.debug('jitter feeder')
+        self.debug("jitter feeder")
         self.stage_manager.feeder.start_jitter(turns=0.5, p1=0.1, p2=0.25)
 
     def stop_jitter_feeder(self):
-        self.debug('stop jitter')
+        self.debug("stop jitter")
         self.stage_manager.feeder.stop_jitter()
 
     def configure_jitter_feeder(self):
-        self.debug('configure jitter')
+        self.debug("configure jitter")
         self.stage_manager.feeder.configure()
 
     def configure_dump(self):
-        self.debug('configure dump')
+        self.debug("configure dump")
         v = ConfigureDump(model=self)
         v.edit_traits()
 
@@ -252,13 +260,13 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return ret
 
     def actuate_magnets(self, check_logic=True):
-        self.debug('actuate magnets check_logic={}'.format(check_logic))
+        self.debug("actuate magnets check_logic={}".format(check_logic))
         check = True
         if check_logic and not self.dump_funnel_safety_override:
-            check = self.loader_logic.check('AM')
+            check = self.loader_logic.check("AM")
 
         if check:
-            self.status_txt = 'Actuating Magnets'
+            self.status_txt = "Actuating Magnets"
 
             self.stage_manager.feeder.start_jitter()
             self.dumper.energize()
@@ -267,7 +275,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             timeout = 60
             st = time.time()
             success = False
-            self.debug('starting dump progress poll')
+            self.debug("starting dump progress poll")
             while time.time() - st < timeout:
                 if not self.dumper.dump_in_progress():
                     success = True
@@ -275,7 +283,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
                 time.sleep(3)
 
             if not success:
-                self.debug('actuate magnets timeout, {}'.format(timeout))
+                self.debug("actuate magnets timeout, {}".format(timeout))
 
             self.stage_manager.set_sample_dumped()
             self._dump_sample_states()
@@ -284,50 +292,51 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             # time.sleep(5)
 
             self.stage_manager.feeder.stop_jitter()
-            self.status_txt = ''
+            self.status_txt = ""
         else:
             cm = self.loader_logic.get_check_message()
-            self.warning_dialog('Actuating magnets not enabled\n\n{}'.format(cm))
+            self.warning_dialog("Actuating magnets not enabled\n\n{}".format(cm))
 
         self._magnets_thread = None
         self.magnets_firing = False
 
     def lower_funnel(self):
-        self.debug('lower funnel')
-        if self.loader_logic.check('FD'):
-            self.status_txt = 'Lowering Funnel'
+        self.debug("lower funnel")
+        if self.loader_logic.check("FD"):
+            self.status_txt = "Lowering Funnel"
             self.funnel_down_enabled = False
             self.funnel.lower()
             self.funnel_up_enabled = True
-            self.dumper_canvas.set_item_state('Funnel', True)
-            self.status_txt = ''
+            self.dumper_canvas.set_item_state("Funnel", True)
+            self.status_txt = ""
             return True
         else:
             cm = self.loader_logic.get_check_message()
-            self.warning_dialog('Lowering funnel not enabled\n\n{}'.format(cm))
+            self.warning_dialog("Lowering funnel not enabled\n\n{}".format(cm))
 
     def raise_funnel(self, force=False):
-        self.debug('raise funnel. force={}'.format(force))
-        if self.loader_logic.check('FU') or force:
-            self.status_txt = 'Raising Funnel'
+        self.debug("raise funnel. force={}".format(force))
+        if self.loader_logic.check("FU") or force:
+            self.status_txt = "Raising Funnel"
             self.funnel_up_enabled = False
             self.funnel.raise_()
             self.funnel_down_enabled = True
-            self.dumper_canvas.set_item_state('Funnel', False)
-            self.status_txt = ''
+            self.dumper_canvas.set_item_state("Funnel", False)
+            self.status_txt = ""
             return True
         else:
             cm = self.loader_logic.get_check_message()
-            self.warning_dialog('Raising funnel not enabled\n\n{}'.format(cm))
+            self.warning_dialog("Raising funnel not enabled\n\n{}".format(cm))
 
     def get_active_pid_parameters(self):
-        result = self._pid_str or ''
-        self.debug('active pid ={}'.format(result))
+        result = self._pid_str or ""
+        self.debug("active pid ={}".format(result))
         return result
 
     def set_pid_parameters(self, v):
-        self.debug('setting pid parameters for {}'.format(v))
+        self.debug("setting pid parameters for {}".format(v))
         from pychron.hardware.eurotherm.base import get_pid_parameters
+
         params = get_pid_parameters(v)
         if params:
             _, param_str = params
@@ -335,7 +344,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             self.controller.set_pid(param_str)
 
     def set_setpoint(self, v):
-        self.debug('set setpoint={}'.format(v))
+        self.debug("set setpoint={}".format(v))
         self.set_pid_parameters(v)
         self.graph.record(v)
         self.graph.record(v)
@@ -344,7 +353,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             d = self.graph.get_data(axis=1)
 
             if not self.graph_y_auto:
-                self.graph.set_y_limits(min_=min(d.min(), v) * 0.9, max_=max(d.max(), v) * 1.1)
+                self.graph.set_y_limits(
+                    min_=min(d.min(), v) * 0.9, max_=max(d.max(), v) * 1.1
+                )
 
             self.graph.redraw()
 
@@ -382,8 +393,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def open_valve(self, name, **kw):
         if not self._open_logic(name):
-            self.debug('logic failed')
-            do_later(self.warning_dialog, 'Open Valve Failed. Prevented by safety logic')
+            self.debug("logic failed")
+            do_later(
+                self.warning_dialog, "Open Valve Failed. Prevented by safety logic"
+            )
             return False, False
 
         if self.switch_manager:
@@ -391,8 +404,10 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def close_valve(self, name, **kw):
         if not self._close_logic(name):
-            self.debug('logic failed')
-            do_later(self.warning_dialog, 'Close Valve Failed. Prevented by safety logic')
+            self.debug("logic failed")
+            do_later(
+                self.warning_dialog, "Close Valve Failed. Prevented by safety logic"
+            )
             return False, False
 
         if self.switch_manager:
@@ -407,9 +422,9 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
             return self.switch_manager.get_indicator_state(name)
 
     def get_flag_state(self, flag):
-        self.debug('get_flag_state {}'.format(flag))
+        self.debug("get_flag_state {}".format(flag))
 
-        if flag in ('no_motion', 'no_dump', 'funnel_up', 'funnel_down'):
+        if flag in ("no_motion", "no_dump", "funnel_up", "funnel_down"):
             return getattr(self, flag)()
         return False
 
@@ -421,30 +436,30 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def no_motion(self):
         v = not self.stage_manager.in_motion()
-        self.debug('no motion {}'.format(v))
+        self.debug("no motion {}".format(v))
         return v
 
     def no_dump(self):
         v = not self.dumper.dump_in_progress()
-        self.debug('no dump {}'.format(v))
+        self.debug("no dump {}".format(v))
         return v
 
     # private
     def _clear_sample_states(self):
-        self.debug('clear sample states')
+        self.debug("clear sample states")
         self._backup_sample_states()
         self._dump_sample_states(states=[])
 
     def _load_sample_states(self):
-        self.debug('load sample states')
+        self.debug("load sample states")
         p = paths.furnace_sample_states
         if os.path.isfile(p):
             # with open(p, 'r') as rfile:
             states = yload(p)
-            self.debug('states={}'.format(states))
+            self.debug("states={}".format(states))
             for si in states:
                 hole = self.stage_manager.stage_map.get_hole(si)
-                self.debug('si={} hole={}'.format(si, hole))
+                self.debug("si={} hole={}".format(si, hole))
                 if hole:
                     hole.analyzed = True
 
@@ -452,16 +467,16 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         if states is None:
             states = self.stage_manager.get_sample_states()
 
-        self.debug('dump sample states')
+        self.debug("dump sample states")
         p = paths.furnace_sample_states
-        with open(p, 'w') as wfile:
+        with open(p, "w") as wfile:
             yaml.dump(states, wfile)
 
     def _backup_sample_states(self):
         if os.path.isfile(paths.furnace_sample_states):
             root, base = os.path.split(paths.furnace_sample_states)
-            bp = os.path.join(root, '~{}'.format(base))
-            self.debug('backing up furnace sample states to {}'.format(bp))
+            bp = os.path.join(root, "~{}".format(base))
+            self.debug("backing up furnace sample states to {}".format(bp))
 
             shutil.copyfile(paths.furnace_sample_states, bp)
 
@@ -497,11 +512,14 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         else:
             self.water_flow_state = 1
 
-        write_water_state = self._recorded_flow_state is None or self._recorded_flow_state != self.water_flow_state
+        write_water_state = (
+            self._recorded_flow_state is None
+            or self._recorded_flow_state != self.water_flow_state
+        )
 
         if write_water_state:
-            with open(os.path.join(paths.data_dir, 'furnace_water.txt'), 'a') as wfile:
-                wfile.write('{},{}\n'.format(time.time(), state))
+            with open(os.path.join(paths.data_dir, "furnace_water.txt"), "a") as wfile:
+                wfile.write("{},{}\n".format(time.time(), state))
                 self._recorded_flow_state = self.water_flow_state
 
         response = self.controller.get_process_value(verbose=False)
@@ -516,31 +534,36 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     def _update_scan_old(self):
         d = self.controller.get_summary(verbose=self.verbose_scan)
         if d:
-            state = d.get('h2o_state')
+            state = d.get("h2o_state")
             if state in (0, 1):
                 # self.water_flow_led.state = 2 if state else 0
                 self.water_flow_state = 2 if state else 0
             else:
                 self.water_flow_state = 1
 
-            write_water_state = self._recorded_flow_state is None or self._recorded_flow_state != self.water_flow_state
+            write_water_state = (
+                self._recorded_flow_state is None
+                or self._recorded_flow_state != self.water_flow_state
+            )
 
             if write_water_state:
-                with open(os.path.join(paths.data_dir, 'furnace_water.txt'), 'a') as wfile:
-                    wfile.write('{},{}\n'.format(time.time(), state))
+                with open(
+                    os.path.join(paths.data_dir, "furnace_water.txt"), "a"
+                ) as wfile:
+                    wfile.write("{},{}\n".format(time.time(), state))
                     self._recorded_flow_state = self.water_flow_state
 
-            response = d.get('response')
-            output = d.get('output')
+            response = d.get("response")
+            output = d.get("output")
             if response is not None:
                 self.temperature_readback = response
             if output is not None:
                 self.output_percent_readback = output
 
-            self._update_scan_graph(response, output, d['setpoint'])
+            self._update_scan_graph(response, output, d["setpoint"])
 
     def _stop_update(self):
-        self.debug('stop update')
+        self.debug("stop update")
         self._alive = False
         self.timer.stop()
 
@@ -565,8 +588,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
                 self.graph.record(setpoint, x=x, track_y=False)
 
             if self.graph_y_auto:
-                temp_plot = self.graph.plots[0].plots['plot0'][0]
-                setpoint_plot = self.graph.plots[0].plots['plot1'][0]
+                temp_plot = self.graph.plots[0].plots["plot0"][0]
+                setpoint_plot = self.graph.plots[0].plots["plot1"][0]
 
                 temp_data = temp_plot.value.get_data()
                 setpoint_data = setpoint_plot.value.get_data()
@@ -577,7 +600,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
                 else:
                     mi = min(setpoint_data.min(), temp_data.min())
 
-                self.graph.set_y_limits(min_=mi, max_=ma, pad='0.1', plotid=0)
+                self.graph.set_y_limits(min_=mi, max_=ma, pad="0.1", plotid=0)
 
             if self._recording:
                 self.record_data_manager.write_to_frame((x, response or 0, output or 0))
@@ -586,7 +609,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self._recording = True
         self.record_data_manager = dm = self._record_data_manager_factory()
         dm.new_frame(directory=paths.furnace_scans_dir)
-        dm.write_to_frame(('time', 'temperature', 'output'))
+        dm.write_to_frame(("time", "temperature", "output"))
         self._start_time = time.time()
 
     def _stop_recording(self):
@@ -596,17 +619,22 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         g = TimeSeriesStreamStackedGraph()
         # g.plotcontainer.padding_top = 5
         # g.plotcontainer.padding_right = 5
-        g.new_plot(xtitle='Time (s)', ytitle='Temp. (C)', padding_top=5, padding_left=75, padding_right=5)
+        g.new_plot(
+            xtitle="Time (s)",
+            ytitle="Temp. (C)",
+            padding_top=5,
+            padding_left=75,
+            padding_right=5,
+        )
         g.set_scan_width(600, plotid=0)
         g.set_data_limits(1.8 * 600, plotid=0)
 
         # setpoint
-        g.new_series(plotid=0, line_width=2,
-                     render_style='connectedhold')
+        g.new_series(plotid=0, line_width=2, render_style="connectedhold")
         # response
         g.new_series(plotid=0)
 
-        g.new_plot(ytitle='Output (%)', padding_top=5, padding_left=75, padding_right=5)
+        g.new_plot(ytitle="Output (%)", padding_top=5, padding_left=75, padding_right=5)
         g.set_scan_width(600, plotid=1)
         g.set_data_limits(1.8 * 600, plotid=1)
         g.new_series(plotid=1)
@@ -627,57 +655,59 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         """
 
         ret = True
-        self.debug('dump sample started')
+        self.debug("dump sample started")
         lines = self._load_dump_script()
         progress.max = len(lines)
         for i, line in enumerate(lines):
 
             self.debug(line)
             if not self._execute_script_line(line, progress):
-                self.debug('FAILED: {}'.format(line))
+                self.debug("FAILED: {}".format(line))
                 ret = False
                 break
 
         if not ret:
-            self.warning_dialog('Sample dump failed at line {}: {}'.format(i, line))
+            self.warning_dialog("Sample dump failed at line {}: {}".format(i, line))
         else:
-            self.information_dialog('Dump Successful')
+            self.information_dialog("Dump Successful")
 
         progress.close()
         self._dumper_thread = None
         return ret
 
     def _load_dump_script(self):
-        p = os.path.join(paths.device_dir, 'furnace', 'dump_sequence.txt')
+        p = os.path.join(paths.device_dir, "furnace", "dump_sequence.txt")
         return pathtolist(p)
 
     def _execute_script_line(self, line, progress):
-        if ' ' in line:
-            cmd, args = line.split(' ')
+        if " " in line:
+            cmd, args = line.split(" ")
         else:
             cmd, args = line, None
 
-        progress.change_message('Dump Sequence: Command={}, Parameters={}'.format(cmd, args))
+        progress.change_message(
+            "Dump Sequence: Command={}, Parameters={}".format(cmd, args)
+        )
         time.sleep(0.5)
 
         success = True
-        if cmd == 'sleep':
+        if cmd == "sleep":
             time.sleep(float(args))
-        elif cmd == 'open':
+        elif cmd == "open":
             success, change = self.open_valve(args)
             if success:
                 self.dumper_canvas.set_item_state(args, True)
-        elif cmd == 'close':
+        elif cmd == "close":
             success, change = self.close_valve(args)
             if success:
                 self.dumper_canvas.set_item_state(args, False)
-        elif cmd == 'lower_funnel':
+        elif cmd == "lower_funnel":
             if self.lower_funnel():
                 self.dumper_canvas.set_item_state(args, True)
-        elif cmd == 'raise_funnel':
+        elif cmd == "raise_funnel":
             if self.raise_funnel():
                 self.dumper_canvas.set_item_state(args, False)
-        elif cmd == 'actuate_magnets':
+        elif cmd == "actuate_magnets":
             self.actuate_magnets()
 
         self.dumper_canvas.request_redraw()
@@ -691,20 +721,20 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         self.set_setpoint(new)
 
     def _stage_manager_default(self):
-        sm = NMGRLFurnaceStageManager(stage_manager_id='nmgrl.furnace.stage_map')
+        sm = NMGRLFurnaceStageManager(stage_manager_id="nmgrl.furnace.stage_map")
         return sm
 
     def _dumper_canvas_default(self):
         dc = DumperCanvas(manager=self)
 
-        pathname = os.path.join(paths.canvas2D_dir, 'dumper.xml')
-        configpath = os.path.join(paths.canvas2D_dir, 'dumper_config.xml')
-        valvepath = os.path.join(paths.extraction_line_dir, 'valves.xml')
+        pathname = os.path.join(paths.canvas2D_dir, "dumper.xml")
+        configpath = os.path.join(paths.canvas2D_dir, "dumper_config.xml")
+        valvepath = os.path.join(paths.extraction_line_dir, "valves.xml")
         dc.load_canvas_file(pathname, configpath, valvepath, dc)
         return dc
 
     def _camera_default(self):
-        c = NMGRLCamera(name='camera', configuration_dir_name='furnace')
+        c = NMGRLCamera(name="camera", configuration_dir_name="furnace")
         return c
 
     def _video_canvas_default(self):
@@ -715,7 +745,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         return vc
 
     def _funnel_default(self):
-        f = Funnel(name='funnel', configuration_dir_name='furnace')
+        f = Funnel(name="funnel", configuration_dir_name="furnace")
         return f
 
     def _loader_logic_default(self):
@@ -726,7 +756,8 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def _dumper_default(self):
         # m = NMGRLMagnetDumper(name='magnets', configuration_dir_name='furnace')
-        m = NMGRLRotaryDumper(name='dumper', configuration_dir_name='furnace')
+        m = NMGRLRotaryDumper(name="dumper", configuration_dir_name="furnace")
         return m
+
 
 # ============= EOF =============================================

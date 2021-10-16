@@ -23,7 +23,7 @@ from pychron.headless_config_loadable import HeadlessConfigLoadable
 
 
 class HeadlessCoreDevice(BaseCoreDevice, HeadlessConfigLoadable):
-    """
-    """
+    """ """
+
 
 # ========================= EOF ============================================

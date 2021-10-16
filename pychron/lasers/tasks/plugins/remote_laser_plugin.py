@@ -34,15 +34,21 @@ class RemoteLaserPlugin(BaseLaserPlugin):
         return t
 
     def _tasks_default(self):
-        return [TaskFactory(id=self.id,
-                            task_group='hardware',
-                            factory=self._task_factory,
-                            name=self.task_name,
-                            image='laser')]
+        return [
+            TaskFactory(
+                id=self.id,
+                task_group="hardware",
+                factory=self._task_factory,
+                name=self.task_name,
+                image="laser",
+            )
+        ]
 
     def _task_extensions_default(self):
         exts = self._create_task_extensions()
         self._setup_pattern_extensions(exts)
 
         return exts
+
+
 # ============= EOF =============================================

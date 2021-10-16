@@ -24,7 +24,7 @@ from pychron.pipeline.tagging.base_tags import BaseTagModel
 
 
 class AnalysisTagModel(BaseTagModel):
-    tag = Enum(('Ok', 'Omit', 'Outlier', 'Invalid', 'Skip'))
+    tag = Enum(("Ok", "Omit", "Outlier", "Invalid", "Skip"))
     selected = Any
     items = List
     use_filter = Bool(True)
@@ -36,5 +36,6 @@ class AnalysisTagModel(BaseTagModel):
         else:
             it = self.items
         return it
+
 
 # ============= EOF =============================================

@@ -26,6 +26,7 @@ from numpy.core.umath import exp
 import random
 import time
 from threading import Event
+
 # ============= local library imports  ==========================
 from .spectrometer_task import SpectrometerTask
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -46,7 +47,7 @@ def multi_peak_generator(values):
 
 def psuedo_peak(center, start, stop, step, magnitude=500, peak_width=0.008):
     x = linspace(start, stop, step)
-    gaussian = lambda x: magnitude * exp(-((center - x) / peak_width) ** 2)
+    gaussian = lambda x: magnitude * exp(-(((center - x) / peak_width) ** 2))
 
     for i, d in enumerate(gaussian(x)):
         if abs(center - x[i]) < peak_width:
@@ -57,8 +58,8 @@ def psuedo_peak(center, start, stop, step, magnitude=500, peak_width=0.008):
 
 class MagnetScan(SpectrometerTask):
     #    graph = Any
-    detectors = DelegatesTo('spectrometer')
-    integration_time = DelegatesTo('spectrometer')
+    detectors = DelegatesTo("spectrometer")
+    integration_time = DelegatesTo("spectrometer")
 
     reference_detector = Any
     additional_detectors = List
@@ -75,7 +76,9 @@ class MagnetScan(SpectrometerTask):
 
         self.graph.set_x_limits(values[0], values[-1])
         if self.spectrometer.simulation:
-            self._peak_generator = psuedo_peak(values[len(values) / 2] + 0.001, values[0], values[-1], len(values))
+            self._peak_generator = psuedo_peak(
+                values[len(values) / 2] + 0.001, values[0], values[-1], len(values)
+            )
             # self._peak_generator = multi_peak_generator(values)
             self.integration_time = 0.065536
 
@@ -83,8 +86,7 @@ class MagnetScan(SpectrometerTask):
         evt = Event()
         intensities = []
 
-        invoke_in_main_thread(self._iter_dac, next(gen),
-                              gen, evt, intensities)
+        invoke_in_main_thread(self._iter_dac, next(gen), gen, evt, intensities)
 
         while not evt.isSet():
             time.sleep(0.01)
@@ -118,7 +120,7 @@ class MagnetScan(SpectrometerTask):
 
     def _update_graph_data(self, plot, di, intensity, **kw):
         """
-            add and scale scans
+        add and scale scans
         """
 
         def set_data(k, v):
@@ -132,7 +134,7 @@ class MagnetScan(SpectrometerTask):
         mi, ma = Inf, -Inf
         for i, v in enumerate(intensity):
             oys = None
-            k = 'odata{}'.format(i)
+            k = "odata{}".format(i)
             if hasattr(plot, k):
                 oys = getattr(plot, k)
 
@@ -153,14 +155,13 @@ class MagnetScan(SpectrometerTask):
                 if r and R:
                     oys = (oys - mir) * R / r + miR
 
-            xs = get_data('x{}'.format(i))
+            xs = get_data("x{}".format(i))
             xs = hstack((xs, di))
-            set_data('x{}'.format(i), xs)
-            set_data('y{}'.format(i), oys)
+            set_data("x{}".format(i), xs)
+            set_data("y{}".format(i), oys)
             mi, ma = min(mi, min(oys)), max(ma, max(oys))
 
-        self.graph.set_y_limits(min_=mi, max_=ma, pad='0.05',
-                                pad_style='upper')
+        self.graph.set_y_limits(min_=mi, max_=ma, pad="0.05", pad_style="upper")
 
     def _graph_hook(self, di, intensity, **kw):
         graph = self.graph
@@ -212,14 +213,15 @@ class MagnetScan(SpectrometerTask):
         self.verbose = False
 
     def _do_scan(self, sm, em, stm, directions=None, map_mass=True):
-        self.debug('_do_scan')
+        self.debug("_do_scan")
         # default to forward scan
         if directions is None:
             directions = [1]
         elif isinstance(directions, str):
-            if directions == 'Decrease':
+            if directions == "Decrease":
                 directions = [-1]
-            elif directions == 'Oscillate':
+            elif directions == "Oscillate":
+
                 def oscillate():
                     i = 0
                     while 1:
@@ -237,10 +239,12 @@ class MagnetScan(SpectrometerTask):
         mag = spec.magnet
         if map_mass:
             detname = self.reference_detector.name
-            ds = spec.correct_dac(self.reference_detector,
-                                  mag.map_mass_to_dac(sm, detname))
-            de = spec.correct_dac(self.reference_detector,
-                                  mag.map_mass_to_dac(em, detname))
+            ds = spec.correct_dac(
+                self.reference_detector, mag.map_mass_to_dac(sm, detname)
+            )
+            de = spec.correct_dac(
+                self.reference_detector, mag.map_mass_to_dac(em, detname)
+            )
 
             massdev = abs(sm - em)
             dacdev = abs(ds - de)
@@ -261,7 +265,7 @@ class MagnetScan(SpectrometerTask):
         return True
 
     def _post_execute(self):
-        self.debug('scan finished')
+        self.debug("scan finished")
 
     def _reference_detector_default(self):
         return self.detectors[0]
@@ -270,27 +274,47 @@ class MagnetScan(SpectrometerTask):
         # v = self.traits_view()
         v = View(
             Group(
-                Item('reference_detector', editor=EnumEditor(name='detectors')),
-                Item('integration_time', label='Integration (s)'),
-                label='Magnet Scan',
-                show_border=True))
+                Item("reference_detector", editor=EnumEditor(name="detectors")),
+                Item("integration_time", label="Integration (s)"),
+                label="Magnet Scan",
+                show_border=True,
+            )
+        )
 
         v.title = self.title
-        v.buttons = ['OK', 'Cancel']
+        v.buttons = ["OK", "Cancel"]
         return v
 
     def traits_view(self):
         v = View(
             Group(
-                Item('reference_detector', editor=EnumEditor(name='detectors')),
-                Item('start_value', label='Start Mass', tooltip='Start scan at this mass'),
-                Item('stop_value', label='Stop Mass', tooltip='Stop scan when magnet reaches this mass'),
-                Item('step_value', label='Step Mass', tooltip='Step from Start to Stop by this amount'),
-                Item('integration_time', label='Integration (s)'),
-                HGroup(spring, Item('execute_button', editor=ButtonEditor(label_value='execute_label'),
-                                    show_label=False)),
-                label='Magnet Scan',
-                show_border=True))
+                Item("reference_detector", editor=EnumEditor(name="detectors")),
+                Item(
+                    "start_value", label="Start Mass", tooltip="Start scan at this mass"
+                ),
+                Item(
+                    "stop_value",
+                    label="Stop Mass",
+                    tooltip="Stop scan when magnet reaches this mass",
+                ),
+                Item(
+                    "step_value",
+                    label="Step Mass",
+                    tooltip="Step from Start to Stop by this amount",
+                ),
+                Item("integration_time", label="Integration (s)"),
+                HGroup(
+                    spring,
+                    Item(
+                        "execute_button",
+                        editor=ButtonEditor(label_value="execute_label"),
+                        show_label=False,
+                    ),
+                ),
+                label="Magnet Scan",
+                show_border=True,
+            )
+        )
 
         return v
         # ============= EOF =============================================

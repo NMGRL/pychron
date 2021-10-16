@@ -51,19 +51,19 @@ class Column(HasTraits):
         if isinstance(label, tuple):
             w = 0
             for i in label:
-                for r in ('sub', 'sup'):
-                    for rr in ('<{}>'.format(r), '</{}>'.format(r)):
-                        i = i.replace(rr, '')
+                for r in ("sub", "sup"):
+                    for rr in ("<{}>".format(r), "</{}>".format(r)):
+                        i = i.replace(rr, "")
                 w += len(i)
         else:
             w = len(label)
         return w + 5
 
     def _label_default(self):
-        return ''
+        return ""
 
     def _units_default(self):
-        return ''
+        return ""
 
     def _enabled_default(self):
         return True
@@ -96,4 +96,6 @@ class AEColumn(Column):
     def __init__(self, nsigma, *args, **kw):
         self.label = PLUSMINUS_NSIGMA.format(nsigma)
         super(AEColumn, self).__init__(*args, **kw)
+
+
 # ============= EOF =============================================

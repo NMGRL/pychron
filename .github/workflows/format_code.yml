@@ -5,15 +5,33 @@ on:
   push:
     branches: [dev/dr, dev/dc]
 jobs:
+  flake8_py3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Set up Python environment
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.8"
+      - name: Run flake8
+        uses: py-actions/flake8@v1
+        with:
+          ignore: "F401,E501"
+
   format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
           ref: ${{ github.head_ref }}
-      - uses: rickstaa/action-black@v1
+      - uses: psf/black@stable
         with:
-          black_args: "--extend-exclude [sandbox|docs|dist|zobs|test|alembic_dvc] pychron/**/*.py "
+          options: " --verbose --extend-exclude [sandbox|docs|dist|zobs|test|alembic_dvc]"
+          src: "pychron/**/*.py"
+#      - uses: rickstaa/action-black@v1
+#        with:
+#          black_args: " pychron/**/*.py "
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v4.1.2
         with:

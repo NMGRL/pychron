@@ -30,41 +30,64 @@ class SpectrumGroupOptions(BaseGroupOptions):
     calculate_fixed_plateau = Bool(False)
     calculate_fixed_plateau_start = StepStr
     calculate_fixed_plateau_end = StepStr
-    center_line_style = Enum('No Line', 'solid', 'dash', 'dot dash', 'dot', 'long dash')
+    center_line_style = Enum("No Line", "solid", "dash", "dot dash", "dot", "long dash")
     center_line_width = Int(1)
 
     def traits_view(self):
-        envelope_grp = HGroup(HGroup(Item('use_fill', label='Use Fill'),
-                                     Item('color')),
-                              Item('alpha', label='Opacity'),
-                              show_border=True,
-                              label='Error Envelope')
+        envelope_grp = HGroup(
+            HGroup(Item("use_fill", label="Use Fill"), Item("color")),
+            Item("alpha", label="Opacity"),
+            show_border=True,
+            label="Error Envelope",
+        )
 
-        line_grp = HGroup(UItem('line_color'),
-                          Item('line_width',
-                               label='Width'),
-                          show_border=True,
-                          label='Plateau Line')
+        line_grp = HGroup(
+            UItem("line_color"),
+            Item("line_width", label="Width"),
+            show_border=True,
+            label="Plateau Line",
+        )
 
-        center_line_grp = HGroup(UItem('center_line_style'),
-                                 Item('center_line_width', enabled_when='center_line_style!="No Line"'),
-                                 show_border=True,
-                                 label='Center Line')
+        center_line_grp = HGroup(
+            UItem("center_line_style"),
+            Item("center_line_width", enabled_when='center_line_style!="No Line"'),
+            show_border=True,
+            label="Center Line",
+        )
 
-        plat_grp = HGroup(Item('calculate_fixed_plateau',
-                               label='Fixed',
-                               tooltip='Calculate a plateau over provided steps'),
-                          Item('calculate_fixed_plateau_start', label='Start', enabled_when='calculate_fixed_plateau'),
-                          Item('calculate_fixed_plateau_end', label='End', enabled_when='calculate_fixed_plateau'),
-                          show_border=True, label='Calculate Plateau')
+        plat_grp = HGroup(
+            Item(
+                "calculate_fixed_plateau",
+                label="Fixed",
+                tooltip="Calculate a plateau over provided steps",
+            ),
+            Item(
+                "calculate_fixed_plateau_start",
+                label="Start",
+                enabled_when="calculate_fixed_plateau",
+            ),
+            Item(
+                "calculate_fixed_plateau_end",
+                label="End",
+                enabled_when="calculate_fixed_plateau",
+            ),
+            show_border=True,
+            label="Calculate Plateau",
+        )
 
-        g = VGroup(Item('bind_colors'),
-                   envelope_grp, line_grp, plat_grp, center_line_grp,
-                   show_border=True,
-                   label='Group {}'.format(self.group_id + 1))
+        g = VGroup(
+            Item("bind_colors"),
+            envelope_grp,
+            line_grp,
+            plat_grp,
+            center_line_grp,
+            show_border=True,
+            label="Group {}".format(self.group_id + 1),
+        )
 
         v = View(g)
         return v
+
 
 # def simple_view(self):
 #         grps = self._get_groups()

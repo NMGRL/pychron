@@ -22,46 +22,47 @@ from pychron.envisage.ui_actions import UIAction
 
 
 class BuildApplicationAction(UIAction):
-    name = 'Build'
-    image = icon('bricks')
+    name = "Build"
+    image = icon("bricks")
 
     def perform(self, event):
         app = event.task.window.application
-        up = app.get_service('pychron.updater.updater.Updater')
+        up = app.get_service("pychron.updater.updater.Updater")
         up.build()
 
 
 class CheckForUpdatesAction(UIAction):
-    name = 'Check For Updates'
-    image = icon('update-product')
+    name = "Check For Updates"
+    image = icon("update-product")
 
-    description = 'Check for updates to Pychron by examining the public Github.'
+    description = "Check for updates to Pychron by examining the public Github."
 
     def perform(self, event):
         app = event.task.window.application
-        up = app.get_service('pychron.updater.updater.Updater')
+        up = app.get_service("pychron.updater.updater.Updater")
         up.check_for_updates(inform=True)
 
 
 class ManageVersionAction(UIAction):
-    name = 'Manage Version'
-    image = icon('update-product')
-    accelerator = 'Ctrl+;'
+    name = "Manage Version"
+    image = icon("update-product")
+    accelerator = "Ctrl+;"
 
     def perform(self, event):
         app = event.task.window.application
-        up = app.get_service('pychron.updater.updater.Updater')
+        up = app.get_service("pychron.updater.updater.Updater")
         up.manage_version()
 
 
 class ManageBranchAction(UIAction):
-    name = 'Manage Branch'
-    image = icon('update-product')
-    accelerator = 'Ctrl+.'
+    name = "Manage Branch"
+    image = icon("update-product")
+    accelerator = "Ctrl+."
 
     def perform(self, event):
         app = event.task.window.application
-        up = app.get_service('pychron.updater.updater.Updater')
+        up = app.get_service("pychron.updater.updater.Updater")
         up.manage_branches()
+
 
 # ============= EOF =============================================

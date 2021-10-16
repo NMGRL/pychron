@@ -22,7 +22,6 @@ from pychron.paths import paths
 
 
 class LocalGitHostService(BaseGitHostService):
-
     def make_url(self):
         return
 
@@ -44,7 +43,8 @@ class LocalGitHostService(BaseGitHostService):
 
     def get_repos(self, organization):
         names = self.get_repository_names(organization)
-        repos = [{'name': n} for n in names]
+        repos = [{"name": n} for n in names]
         return repos
+
 
 # ============= EOF =============================================

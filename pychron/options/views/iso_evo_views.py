@@ -19,8 +19,19 @@ from traits.api import Bool, Enum, on_trait_change, Float, Int, Range, Str
 from traitsui.api import EnumEditor, Item, HGroup, UItem, View, VGroup, Tabbed
 
 from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
-from pychron.options.options import AppearanceSubOptions, SubOptions, MainOptions, object_column, checkbox_column
-from pychron.pychron_constants import FIT_TYPES, FIT_ERROR_TYPES, AUTO_N, AUTO_LINEAR_PARABOLIC
+from pychron.options.options import (
+    AppearanceSubOptions,
+    SubOptions,
+    MainOptions,
+    object_column,
+    checkbox_column,
+)
+from pychron.pychron_constants import (
+    FIT_TYPES,
+    FIT_ERROR_TYPES,
+    AUTO_N,
+    AUTO_LINEAR_PARABOLIC,
+)
 
 
 class IsoEvoSubOptions(SubOptions):
@@ -50,83 +61,154 @@ class IsoEvoMainOptions(MainOptions):
     global_goodness_visible = Bool
 
     def _get_edit_view(self):
-        main = VGroup(HGroup(Item('name', editor=EnumEditor(name='names')),
-                             Item('fit', editor=EnumEditor(values=FIT_TYPES + [AUTO_N, ])),
-                             UItem('error_type', editor=EnumEditor(values=FIT_ERROR_TYPES)),
-                             ),
-                      Item('fitfunc', visible_when='fit=="Custom"'),
-                      label='Fits')
+        main = VGroup(
+            HGroup(
+                Item("name", editor=EnumEditor(name="names")),
+                Item(
+                    "fit",
+                    editor=EnumEditor(
+                        values=FIT_TYPES
+                        + [
+                            AUTO_N,
+                        ]
+                    ),
+                ),
+                UItem("error_type", editor=EnumEditor(values=FIT_ERROR_TYPES)),
+            ),
+            Item("fitfunc", visible_when='fit=="Custom"'),
+            label="Fits",
+        )
 
-        goodness = VGroup(Item('filter_coefficients', label='Smart Filter'),
-                          Item('goodness_threshold', label='Intercept Error',
-                               tooltip='If % error is greater than "Intercept Error" '
-                                       'mark regression as "Bad"'),
-                          HGroup(Item('signal_to_baseline_goodness',
-                                      label='Bs Error/Signal %',
-                                      tooltip='Check intercept error only if baseline_error/signal*100 > "Bs '
-                                              'Error/Signal %"'
-                                      ),
-                                 Item('signal_to_baseline_percent_goodness',
-                                      label='Intercept Error',
-                                      tooltip='If % error is greater than "Intercept Error" '
-                                              'mark regression as "Bad"')),
-                          HGroup(Item('slope_goodness', label='Slope',
-                                      tooltip='If slope of regression is positive and the isotope '
-                                              'intensity is greater than "Slope Goodness Intensity" '
-                                              'then mark regression as "Bad"'),
-                                 Item('slope_goodness_intensity', label='Intensity')),
-                          Item('outlier_goodness', label='Outlier',
-                               tooltip='If more than "Outlier Goodness" points are identified as outliers'
-                                       'then mark regression as "Bad"'),
-                          HGroup(Item('curvature_goodness', label='Curvature'),
-                                 Item('curvature_goodness_at', label='Curvature At')),
-                          HGroup(Item('rsquared_goodness', label='R-Squared Adj')),
-                          HGroup(Item('signal_to_blank_goodness',
-                                      tooltip='If Blank/Signal*100 greater than threshold mark regression as "Bad"')),
-                          label='Goodness')
+        goodness = VGroup(
+            Item("filter_coefficients", label="Smart Filter"),
+            Item(
+                "goodness_threshold",
+                label="Intercept Error",
+                tooltip='If % error is greater than "Intercept Error" '
+                'mark regression as "Bad"',
+            ),
+            HGroup(
+                Item(
+                    "signal_to_baseline_goodness",
+                    label="Bs Error/Signal %",
+                    tooltip='Check intercept error only if baseline_error/signal*100 > "Bs '
+                    'Error/Signal %"',
+                ),
+                Item(
+                    "signal_to_baseline_percent_goodness",
+                    label="Intercept Error",
+                    tooltip='If % error is greater than "Intercept Error" '
+                    'mark regression as "Bad"',
+                ),
+            ),
+            HGroup(
+                Item(
+                    "slope_goodness",
+                    label="Slope",
+                    tooltip="If slope of regression is positive and the isotope "
+                    'intensity is greater than "Slope Goodness Intensity" '
+                    'then mark regression as "Bad"',
+                ),
+                Item("slope_goodness_intensity", label="Intensity"),
+            ),
+            Item(
+                "outlier_goodness",
+                label="Outlier",
+                tooltip='If more than "Outlier Goodness" points are identified as outliers'
+                'then mark regression as "Bad"',
+            ),
+            HGroup(
+                Item("curvature_goodness", label="Curvature"),
+                Item("curvature_goodness_at", label="Curvature At"),
+            ),
+            HGroup(Item("rsquared_goodness", label="R-Squared Adj")),
+            HGroup(
+                Item(
+                    "signal_to_blank_goodness",
+                    tooltip='If Blank/Signal*100 greater than threshold mark regression as "Bad"',
+                )
+            ),
+            label="Goodness",
+        )
 
-        auto = VGroup(VGroup(Item('n_threshold', label='Threshold'),
-                             Item('n_true', label='N>=', tooltip='Fit when ncounts > Threshold'),
-                             Item('n_false', label='N<', tooltip='Fit when ncounts < Threshold'),
-                             label='N'),
-                      label=AUTO_N, enabled_when='fit=="{}"'.format(AUTO_N))
+        auto = VGroup(
+            VGroup(
+                Item("n_threshold", label="Threshold"),
+                Item("n_true", label="N>=", tooltip="Fit when ncounts > Threshold"),
+                Item("n_false", label="N<", tooltip="Fit when ncounts < Threshold"),
+                label="N",
+            ),
+            label=AUTO_N,
+            enabled_when='fit=="{}"'.format(AUTO_N),
+        )
         v = View(Tabbed(main, goodness, auto))
         return v
 
     def _get_global_group(self):
-        g = BorderHGroup(Item('controller.save_enabled', label='Enabled'),
-                         Item('controller.fit'),
-                         UItem('controller.error_type', width=-75),
-                         Item('controller.filter_outliers', label='Filter Outliers'),
-                         Item('show_sniff'))
+        g = BorderHGroup(
+            Item("controller.save_enabled", label="Enabled"),
+            Item("controller.fit"),
+            UItem("controller.error_type", width=-75),
+            Item("controller.filter_outliers", label="Filter Outliers"),
+            Item("show_sniff"),
+        )
 
-        gg = BorderVGroup(Item('controller.goodness_threshold', label='Intercept Goodness',
-                               tooltip='If % error is greater than "Goodness Threshold" '
-                                       'mark regression as "Bad"'),
-                          HGroup(Item('controller.slope_goodness', label='Slope Goodness',
-                                      tooltip='If slope of regression is positive and the isotope '
-                                              'intensity is greater than "Slope Goodness Intensity" '
-                                              'then mark regression as "Bad"'),
-                                 Item('controller.slope_goodness_intensity', label='Intensity')),
-                          Item('controller.outlier_goodness', label='Outlier Goodness',
-                               tooltip='If more than "Outlier Goodness" points are identified as outliers'
-                                       'then mark regression as "Bad"'),
-                          HGroup(Item('controller.curvature_goodness'),
-                                 Item('controller.curvature_goodness_at')),
-                          HGroup(Item('controller.rsquared_goodness',
-                                      tooltip='If R-squared is less than threshold mark regression as "Bad"')),
-                          HGroup(Item('controller.signal_to_blank_goodness',
-                                      tooltip='If Blank/Signal*100 greater than threshold mark regression as "Bad"')))
+        gg = BorderVGroup(
+            Item(
+                "controller.goodness_threshold",
+                label="Intercept Goodness",
+                tooltip='If % error is greater than "Goodness Threshold" '
+                'mark regression as "Bad"',
+            ),
+            HGroup(
+                Item(
+                    "controller.slope_goodness",
+                    label="Slope Goodness",
+                    tooltip="If slope of regression is positive and the isotope "
+                    'intensity is greater than "Slope Goodness Intensity" '
+                    'then mark regression as "Bad"',
+                ),
+                Item("controller.slope_goodness_intensity", label="Intensity"),
+            ),
+            Item(
+                "controller.outlier_goodness",
+                label="Outlier Goodness",
+                tooltip='If more than "Outlier Goodness" points are identified as outliers'
+                'then mark regression as "Bad"',
+            ),
+            HGroup(
+                Item("controller.curvature_goodness"),
+                Item("controller.curvature_goodness_at"),
+            ),
+            HGroup(
+                Item(
+                    "controller.rsquared_goodness",
+                    tooltip='If R-squared is less than threshold mark regression as "Bad"',
+                )
+            ),
+            HGroup(
+                Item(
+                    "controller.signal_to_blank_goodness",
+                    tooltip='If Blank/Signal*100 greater than threshold mark regression as "Bad"',
+                )
+            ),
+        )
 
         agrp = self._get_analysis_group()
-        return VGroup(agrp,
-                      Item('controller.global_goodness_visible', label='Global Edit Visible'),
-                      BorderVGroup(g, gg, label='Global', visible_when='controller.global_goodness_visible'))
+        return VGroup(
+            agrp,
+            Item("controller.global_goodness_visible", label="Global Edit Visible"),
+            BorderVGroup(
+                g, gg, label="Global", visible_when="controller.global_goodness_visible"
+            ),
+        )
 
-    @on_trait_change('plot_enabled, save_enabled, fit, error_type, filter_outliers,'
-                     'goodness_threshold, slope_goodness, slope_goodness_intensity,'
-                     'outlier_goodness, curvature_goodness, curvature_goodness_at,'
-                     'rsquared_goodness, signal_to_blank_goodness')
+    @on_trait_change(
+        "plot_enabled, save_enabled, fit, error_type, filter_outliers,"
+        "goodness_threshold, slope_goodness, slope_goodness_intensity,"
+        "outlier_goodness, curvature_goodness, curvature_goodness_at,"
+        "rsquared_goodness, signal_to_blank_goodness"
+    )
     def _handle_global(self, name, new):
         self._toggle_attr(name, new)
 
@@ -139,26 +221,31 @@ class IsoEvoMainOptions(MainOptions):
             setattr(a, attr, new)
 
     def _get_columns(self):
-        cols = [object_column(name='name', editable=False),
-                # checkbox_column(name='plot_enabled', label='Plot'),
-                checkbox_column(name='save_enabled', label='Enabled'),
-                object_column(name='fit',
-                              editor=EnumEditor(name='fit_types'),
-                              width=75),
-                object_column(name='error_type',
-                              editor=EnumEditor(name='error_types'),
-                              width=75, label='Error'),
-                checkbox_column(name='filter_outliers', label='Out.'),
-                object_column(name='filter_outlier_iterations', label='Iter.'),
-                object_column(name='filter_outlier_std_devs', label='NSigma'),
-                checkbox_column(name='use_standard_deviation_filtering', label='Use SD'),
-                checkbox_column(name='use_iqr_filtering', label='Use IQR'),
-                object_column(name='truncate', label='Trunc.'),
-                checkbox_column(name='include_baseline_error', label='Inc. BsErr')]
+        cols = [
+            object_column(name="name", editable=False),
+            # checkbox_column(name='plot_enabled', label='Plot'),
+            checkbox_column(name="save_enabled", label="Enabled"),
+            object_column(name="fit", editor=EnumEditor(name="fit_types"), width=75),
+            object_column(
+                name="error_type",
+                editor=EnumEditor(name="error_types"),
+                width=75,
+                label="Error",
+            ),
+            checkbox_column(name="filter_outliers", label="Out."),
+            object_column(name="filter_outlier_iterations", label="Iter."),
+            object_column(name="filter_outlier_std_devs", label="NSigma"),
+            checkbox_column(name="use_standard_deviation_filtering", label="Use SD"),
+            checkbox_column(name="use_iqr_filtering", label="Use IQR"),
+            object_column(name="truncate", label="Trunc."),
+            checkbox_column(name="include_baseline_error", label="Inc. BsErr"),
+        ]
         return cols
 
 
-VIEWS = {'main': IsoEvoMainOptions,
-         'isoevo': IsoEvoSubOptions,
-         'appearance': IsoEvoAppearanceOptions}
+VIEWS = {
+    "main": IsoEvoMainOptions,
+    "isoevo": IsoEvoSubOptions,
+    "appearance": IsoEvoAppearanceOptions,
+}
 # ============= EOF =============================================

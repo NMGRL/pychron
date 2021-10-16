@@ -22,7 +22,11 @@ from datetime import datetime
 from traits.api import List
 
 from pychron.hardware.isotopx_spectrometer_controller import NGXController
-from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR
+from pychron.pychron_constants import (
+    ISOTOPX_DEFAULT_INTEGRATION_TIME,
+    ISOTOPX_INTEGRATION_TIMES,
+    NULL_STR,
+)
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
 from pychron.spectrometer.isotopx import SOURCE_CONTROL_PARAMETERS, IsotopxMixin
 from pychron.spectrometer.isotopx.detector.ngx import NGXDetector
@@ -39,17 +43,17 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     source_klass = NGXSource
     microcontroller_klass = NGXController
 
-    rcs_id = 'NOM'
+    rcs_id = "NOM"
     # username = Str('')
     # password = Str('')
 
-    _test_connect_command = 'GETMASS'
+    _test_connect_command = "GETMASS"
     _read_enabled = True
     use_deflection_correction = False
     use_hv_correction = False
 
     def _microcontroller_default(self):
-        service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
+        service = "pychron.hardware.isotopx_spectrometer_controller.NGXController"
         s = self.application.get_service(service)
         return s
 
@@ -63,7 +67,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         return {}
 
     def convert_to_axial(self, det, v):
-        print('asdfsadf', det, det.index, v)
+        print("asdfsadf", det, det.index, v)
         v = v - (det.index - 2)
         return v
 
@@ -74,11 +78,11 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         super(NGXSpectrometer, self).finish_loading()
         config = self._get_cached_config()
         if config is not None:
-            magnet = config['magnet']
+            magnet = config["magnet"]
             # specparams, defl, trap, magnet = ret
-            mftable_name = magnet.get('mftable')
+            mftable_name = magnet.get("mftable")
             if mftable_name:
-                self.debug('updating mftable name {}'.format(mftable_name))
+                self.debug("updating mftable name {}".format(mftable_name))
                 self.magnet.field_table.path = mftable_name
                 self.magnet.field_table.load_table(load_items=True)
 
@@ -109,42 +113,46 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         # while self.microcontroller.lock.locked():
         #    time.sleep(0.25)
 
-        self.ask('StopAcq', verbose=verbose)
+        self.ask("StopAcq", verbose=verbose)
         # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
-        return self.ask('StartAcq {},{}'.format(int(self.integration_time), self.rcs_id))
+        return self.ask(
+            "StartAcq {},{}".format(int(self.integration_time), self.rcs_id)
+        )
 
     def readline(self, verbose=False):
         if verbose:
-            self.debug('readline')
+            self.debug("readline")
         st = time.time()
-        ds = ''
+        ds = ""
         while 1:
             if time.time() - st > (1.25 * self.integration_time):
                 if verbose:
-                    self.debug('readline timeout')
+                    self.debug("readline timeout")
                 return
 
             if not self._read_enabled:
-                self.debug('readline canceled')
+                self.debug("readline canceled")
                 return
 
             try:
                 ds += self.read(16)
             except BaseException:
                 self.debug_exception()
-                self.debug('data left: {}'.format(ds))
+                self.debug("data left: {}".format(ds))
 
-            if ds.endswith('\r\n'):
+            if ds.endswith("\r\n"):
                 return ds.strip()
 
     def cancel(self):
-        self.debug('canceling')
+        self.debug("canceling")
         self._read_enabled = False
 
-    def read_intensities(self, timeout=60, trigger=False, target='ACQ.B', verbose=False):
+    def read_intensities(
+        self, timeout=60, trigger=False, target="ACQ.B", verbose=False
+    ):
         self._read_enabled = True
         if verbose:
-            self.debug('read intensities')
+            self.debug("read intensities")
         resp = True
         if trigger:
             resp = self.trigger_acq()
@@ -162,7 +170,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
         # self.microcontroller.lock.acquire()
         # self.debug(f'acquired mcir lock {self.microcontroller.lock}')
-        target = '#EVENT:{},{}'.format(target, self.rcs_id)
+        target = "#EVENT:{},{}".format(target, self.rcs_id)
         if resp is not None:
             keys = self.detector_names[::-1]
             while 1:
@@ -171,23 +179,27 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     break
 
                 if verbose:
-                    self.debug('raw: {}'.format(line))
+                    self.debug("raw: {}".format(line))
                 if line and line.startswith(target):
-                    args = line[:-1].split(',')
-                    ct = datetime.strptime(args[4], '%H:%M:%S.%f')
+                    args = line[:-1].split(",")
+                    ct = datetime.strptime(args[4], "%H:%M:%S.%f")
 
                     collection_time = datetime.now()
 
                     # copy to collection time
-                    collection_time.replace(hour=ct.hour, minute=ct.minute, second=ct.second,
-                                            microsecond=ct.microsecond)
+                    collection_time.replace(
+                        hour=ct.hour,
+                        minute=ct.minute,
+                        second=ct.second,
+                        microsecond=ct.microsecond,
+                    )
                     try:
                         signals = [float(i) for i in args[5:]]
                     except ValueError as e:
-                        self.warning('Failed getting data. error={}'.format(e))
+                        self.warning("Failed getting data. error={}".format(e))
 
                     if verbose:
-                        self.debug('line: {}'.format(line[:15]))
+                        self.debug("line: {}".format(line[:15]))
                     break
 
         # self.microcontroller.lock.release()
@@ -205,8 +217,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         :param force: set integration even if "it" is not different than self.integration_time
         :return: float, integration time
         """
-        self.debug('acquisition period set to 1 second.  integration time set to {}'.format(it))
-        self.ask('SetAcqPeriod 1000')
+        self.debug(
+            "acquisition period set to 1 second.  integration time set to {}".format(it)
+        )
+        self.ask("SetAcqPeriod 1000")
         self.integration_time = it
 
         # if self.integration_time != it or force:
@@ -219,7 +233,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         return it
 
     def read_parameter_word(self, keys):
-        self.debug('read parameter word. keys={}'.format(keys))
+        self.debug("read parameter word. keys={}".format(keys))
         values = []
         for kk in keys:
             try:
@@ -228,10 +242,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                 values.append(NULL_STR)
                 continue
 
-            resp = self.ask('GetSourceOutput {}'.format(key))
+            resp = self.ask("GetSourceOutput {}".format(key))
             if resp is not None:
                 try:
-                    last_set, readback = resp.split(',')
+                    last_set, readback = resp.split(",")
                     values.append(float(readback))
                 except ValueError:
                     values.append(NULL_STR)
@@ -239,11 +253,12 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
     def _get_simulation_data(self):
         signals = [1, 100, 3, 0.01, 0.01, 0.01]  # + random(6)
-        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+        keys = ["H2", "H1", "AX", "L1", "L2", "CDD"]
         return keys, signals, None
 
     def _integration_time_default(self):
         self.default_integration_time = ISOTOPX_DEFAULT_INTEGRATION_TIME
         return ISOTOPX_DEFAULT_INTEGRATION_TIME
+
 
 # ============= EOF =============================================

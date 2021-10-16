@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 import six
+
 # ============= standard library imports ========================
 import xlrd
 
@@ -106,5 +107,6 @@ class XLSParser(BaseColumnParser):
     @property
     def nrows(self):
         return self.sheet.nrows
+
 
 # ============= EOF =============================================

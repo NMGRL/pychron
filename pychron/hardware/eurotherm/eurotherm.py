@@ -32,8 +32,8 @@ from pychron.hardware.eurotherm.base import BaseEurotherm
 
 
 class Eurotherm(BaseEurotherm, CoreDevice):
-    """
-    """
+    """ """
+
 
 # ============= EOF ====================================
 # def __init__(self, *args, **kw):

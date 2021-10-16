@@ -21,4 +21,5 @@ class SerialLaserManager(RemoteLaserManager, SerialDeviceMixin):
     def open(self, *args, **kw):
         return SerialDeviceMixin.open(self)
 
+
 # ============= EOF =============================================

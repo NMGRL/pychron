@@ -23,8 +23,9 @@ from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometer
 
 
 class MapSpectrometerPlugin(BaseSpectrometerPlugin):
-    id = 'pychron.spectrometer.map'
+    id = "pychron.spectrometer.map"
     spectrometer_manager_klass = MapSpectrometerManager
-    manager_name = 'map_spectrometer_manager'
+    manager_name = "map_spectrometer_manager"
+
 
 # ============= EOF =============================================

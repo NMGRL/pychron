@@ -18,7 +18,14 @@
 from __future__ import absolute_import
 from pyface.qt import QtGui, QtCore
 from pyface.qt.QtCore import Qt
-from pyface.qt.QtGui import QTextCursor, QTextEdit, QTextFormat, QCursor, QApplication, QTextCharFormat
+from pyface.qt.QtGui import (
+    QTextCursor,
+    QTextEdit,
+    QTextFormat,
+    QCursor,
+    QApplication,
+    QTextCharFormat,
+)
 from pyface.ui.qt4.code_editor.code_widget import AdvancedCodeWidget, CodeWidget
 from pyface.ui.qt4.code_editor.find_widget import FindWidget
 from pyface.ui.qt4.code_editor.replace_widget import ReplaceWidget
@@ -34,7 +41,7 @@ class myCodeWidget(CodeWidget):
     alt_select = QtCore.Signal((str, int, int))
 
     _current_pos = None
-    gotos = ['gosub']
+    gotos = ["gosub"]
 
     popup = None
 
@@ -96,7 +103,7 @@ class myCodeWidget(CodeWidget):
                     fmt = QTextCharFormat()
                     fmt.setFontUnderline(True)
                     fmt.setUnderlineStyle(QTextCharFormat.WaveUnderline)
-                    fmt.setUnderlineColor(QtGui.QColor('blue'))
+                    fmt.setUnderlineColor(QtGui.QColor("blue"))
                     # cursor.clearSelection()
                     cursor.select(QTextCursor.BlockUnderCursor)
 
@@ -153,7 +160,7 @@ class myCodeWidget(CodeWidget):
             lead = len(line) - len(line.lstrip())
             cursor.beginEditBlock()
             cursor.removeSelectedText()
-            cursor.insertText('{}{}'.format(' ' * lead, cmd))
+            cursor.insertText("{}{}".format(" " * lead, cmd))
             cursor.endEditBlock()
 
 
@@ -191,8 +198,7 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
         self.find.prev_button.clicked.connect(self.find_prev)
 
         self.replace.line_edit.returnPressed.connect(self.find_next)
-        self.replace.line_edit.textChanged.connect(
-            self._update_replace_all_enabled)
+        self.replace.line_edit.textChanged.connect(self._update_replace_all_enabled)
         self.replace.next_button.clicked.connect(self.find_next)
         self.replace.prev_button.clicked.connect(self.find_prev)
         self.replace.replace_button.clicked.connect(self.replace_next)
@@ -207,7 +213,7 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
 
         self.setLayout(layout)
 
-        self.edit_color = QtGui.QColor('blue').lighter(175)
+        self.edit_color = QtGui.QColor("blue").lighter(175)
         # =====================================
 
     def insert_command(self, cmd):
@@ -224,26 +230,26 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
             line = block.text()
             indent = max(4, self.code._get_indent_position(line))
             line = line.strip()
-            token = line.split(' ')[0]
+            token = line.split(" ")[0]
             token = token.strip()
 
-            if token in ('if', 'for', 'while', 'with', 'def', 'class'):
+            if token in ("if", "for", "while", "with", "def", "class"):
                 indent += 4
 
-            indent = ' ' * indent
+            indent = " " * indent
             cur.movePosition(QTextCursor.EndOfLine)
-            cur.insertText('\n{}{}'.format(indent, text))
+            cur.insertText("\n{}{}".format(indent, text))
 
     def dragEnterEvent(self, e):
-        if e.mimeData().hasFormat('traits-ui-tabular-editor'):
+        if e.mimeData().hasFormat("traits-ui-tabular-editor"):
             e.accept()
         else:
             e.ignore()
 
     def dropEvent(self, e):
         mime = e.mimeData()
-        data = mime.data('traits-ui-tabular-editor')
-        idx = int(data.split(' ')[1])
+        data = mime.data("traits-ui-tabular-editor")
+        idx = int(data.split(" ")[1])
         #        cmd = ''
         cmd = self.commands.command_objects[idx]
         if cmd:
@@ -258,8 +264,7 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
 
         selection = QTextEdit.ExtraSelection()
         selection.format.setBackground(color)
-        selection.format.setProperty(
-            QTextFormat.FullWidthSelection, True)
+        selection.format.setProperty(QTextFormat.FullWidthSelection, True)
 
         selection.cursor = self.code.textCursor()
         if lineno is not None:
@@ -269,5 +274,6 @@ class myAdvancedCodeWidget(AdvancedCodeWidget):
             selection.cursor.setPosition(pos)
             selection.cursor.clearSelection()
         self.code.setExtraSelections([selection])
+
 
 # ============= EOF =============================================

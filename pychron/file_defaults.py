@@ -227,16 +227,16 @@ TASK_EXTENSION_DEFAULT = """
   - pychron.entry1.flux_monitor, False
 """
 actions = []
-for line in TASK_EXTENSION_DEFAULT.split('\n'):
+for line in TASK_EXTENSION_DEFAULT.split("\n"):
     line = line.strip()
-    if line.startswith('- pychron.'):
-        a, b = line.split(',')
+    if line.startswith("- pychron."):
+        a, b = line.split(",")
         if to_bool(b):
             actions.append(a)
 
-SIMPLE_UI_DEFAULT = '\n'.join(actions)
+SIMPLE_UI_DEFAULT = "\n".join(actions)
 
-DEFAULT_INITIALIZATION = '''<root>
+DEFAULT_INITIALIZATION = """<root>
     <globals>
     </globals>
     <plugins>
@@ -259,9 +259,9 @@ DEFAULT_INITIALIZATION = '''<root>
         </social>
     </plugins>
 </root>
-'''
+"""
 
-DEFAULT_STARTUP_TESTS = '''
+DEFAULT_STARTUP_TESTS = """
 - plugin: Database
   tests:
     - test_pychron
@@ -281,9 +281,9 @@ DEFAULT_STARTUP_TESTS = '''
   tests:
     - test_valve_communication
     - test_gauge_communication
-'''
+"""
 
-EXPERIMENT_DEFAULTS = '''
+EXPERIMENT_DEFAULTS = """
 columns:
   - Labnumber
   - Aliquot
@@ -299,9 +299,9 @@ columns:
   - Measurement
   - Conditionals
   - Comment
-'''
+"""
 
-RATIO_CHANGE_DETECTION = '''
+RATIO_CHANGE_DETECTION = """
 # - ratio: Ar40/Ar36
 #   nanalyses: 5
 #   threshold: 1
@@ -320,41 +320,44 @@ RATIO_CHANGE_DETECTION = '''
 #   analysis_type: cocktail
 #   failure_count: 2
 #   consecutive_failure: True
-'''
+"""
 
 
 def make_screen(**kw):
-    obj = {'padding_left': 100,
-           'padding_right': 100,
-           'padding_top': 100,
-           'padding_bottom': 100,
-           'bgcolor': 'white',
-           'plot_bgcolor': 'white',
-           'xtick_in': 1,
-           'xtick_out': 5,
-           'ytick_in': 1,
-           'ytick_out': 5,
-           'use_xgrid': True,
-           'use_ygrid': True,
-           }
+    obj = {
+        "padding_left": 100,
+        "padding_right": 100,
+        "padding_top": 100,
+        "padding_bottom": 100,
+        "bgcolor": "white",
+        "plot_bgcolor": "white",
+        "xtick_in": 1,
+        "xtick_out": 5,
+        "ytick_in": 1,
+        "ytick_out": 5,
+        "use_xgrid": True,
+        "use_ygrid": True,
+    }
 
     obj.update(kw)
     return yaml.dump(obj, default_flow_style=False)
 
 
 def make_presentation(**kw):
-    obj = {'padding_left': 40,
-           'padding_right': 40,
-           'padding_top': 40,
-           'padding_bottom': 40,
-           'bgcolor': (239, 238, 185),
-           'plot_bgcolor': (208, 243, 241),
-           'xtick_in': 1,
-           'xtick_out': 5,
-           'ytick_in': 1,
-           'ytick_out': 5,
-           'use_xgrid': True,
-           'use_ygrid': True, }
+    obj = {
+        "padding_left": 40,
+        "padding_right": 40,
+        "padding_top": 40,
+        "padding_bottom": 40,
+        "bgcolor": (239, 238, 185),
+        "plot_bgcolor": (208, 243, 241),
+        "xtick_in": 1,
+        "xtick_out": 5,
+        "ytick_in": 1,
+        "ytick_out": 5,
+        "use_xgrid": True,
+        "use_ygrid": True,
+    }
 
     obj.update(kw)
     return yaml.dump(obj, default_flow_style=False)
@@ -369,13 +372,16 @@ ICFACTOR_SCREEN = make_screen()
 BLANKS_PRESENTATION = make_presentation()
 
 iso_d = dict(use_xgrid=False, use_ygrid=False)
-inv_iso_d = dict(use_xgrid=False, use_ygrid=False,
-                 nominal_intercept_label='Atm',
-                 nominal_intercept_value=295.5,
-                 show_nominal_intercept=True,
-                 invert_nominal_intercept=True,
-                 inset_marker_size=2.5,
-                 inset_marker_color='black')
+inv_iso_d = dict(
+    use_xgrid=False,
+    use_ygrid=False,
+    nominal_intercept_label="Atm",
+    nominal_intercept_value=295.5,
+    show_nominal_intercept=True,
+    invert_nominal_intercept=True,
+    inset_marker_size=2.5,
+    inset_marker_color="black",
+)
 
 ISOCHRON_SCREEN = make_screen(**iso_d)
 ISOCHRON_PRESENTATION = make_presentation(**iso_d)
@@ -383,30 +389,32 @@ ISOCHRON_PRESENTATION = make_presentation(**iso_d)
 INVERSE_ISOCHRON_SCREEN = make_screen(**inv_iso_d)
 INVERSE_ISOCHRON_PRESENTATION = make_presentation(**inv_iso_d)
 
-ideo_d = dict(probability_curve_kind='Cumulative',
-              mean_calculation_kind='Weighted Mean',
-              mean_sig_figs=2,
-              index_attr='uage')
+ideo_d = dict(
+    probability_curve_kind="Cumulative",
+    mean_calculation_kind="Weighted Mean",
+    mean_sig_figs=2,
+    index_attr="uage",
+)
 
-IDEOGRAM_SCREEN = make_screen(mean_indicator_fontsize=12,
-                              **ideo_d)
-IDEOGRAM_PRESENTATION = make_presentation(mean_indicator_fontsize=24,
-                                          **ideo_d)
+IDEOGRAM_SCREEN = make_screen(mean_indicator_fontsize=12, **ideo_d)
+IDEOGRAM_PRESENTATION = make_presentation(mean_indicator_fontsize=24, **ideo_d)
 
-spec_d = dict(plateau_line_width=1,
-              plateau_line_color='black',
-              plateau_sig_figs=2,
-              # calculate_fixed_plateau= False,
-              # calculate_fixed_plateau_start= '',
-              # calculate_fixed_plateau_end= '',
-              pc_nsteps=3,
-              pc_gas_fraction=50,
-              integrated_sig_figs=2,
-              legend_location='Upper Right',
-              include_legend=False,
-              include_sample_in_legend=False,
-              display_step=True,
-              display_extract_value=False)
+spec_d = dict(
+    plateau_line_width=1,
+    plateau_line_color="black",
+    plateau_sig_figs=2,
+    # calculate_fixed_plateau= False,
+    # calculate_fixed_plateau_start= '',
+    # calculate_fixed_plateau_end= '',
+    pc_nsteps=3,
+    pc_gas_fraction=50,
+    integrated_sig_figs=2,
+    legend_location="Upper Right",
+    include_legend=False,
+    include_sample_in_legend=False,
+    display_step=True,
+    display_extract_value=False,
+)
 
 SPECTRUM_PRESENTATION = make_presentation(**spec_d)
 SPECTRUM_SCREEN = make_screen(**spec_d)
@@ -429,7 +437,7 @@ FLUX_CONSTANTS_DEFAULT = """
   monitor_age: 28.02
 """
 
-REACTORS_DEFAULT = '''{
+REACTORS_DEFAULT = """{
     "Triga": {
             "K4039": [0.007614,0.000105],
             "K3839": [0.013,0.0],
@@ -442,6 +450,6 @@ REACTORS_DEFAULT = '''{
             "Cl_K": [0.227,0.0]
             }
 }
-'''
+"""
 
 # ============= EOF =============================================

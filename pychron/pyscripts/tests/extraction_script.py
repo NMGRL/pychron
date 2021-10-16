@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-__author__ = 'ross'
+__author__ = "ross"
 
 import time
 import unittest
@@ -60,37 +60,38 @@ class WaitForTestCase(unittest.TestCase):
         # self.s.root = '.'
         # self.s.name = 'waitfor_test.py'
         # self.s.bootstrap()
-        self.s.setup_context(analysis_type='blank',
-                             cleanup=1, extract_value=1, duration=1)
+        self.s.setup_context(
+            analysis_type="blank", cleanup=1, extract_value=1, duration=1
+        )
 
     def test_waitfor_dev(self):
-        self.s.text = '''
+        self.s.text = """
 def main():
     waitfor(('dummy', 'get_value', 'x>2'))
-'''
+"""
         ret = self.s.execute()
         self.assertEqual(ret, True)
 
     def test_waitfor_timing(self):
-        self.s.text = '''
+        self.s.text = """
 def main():
     waitfor(('dummy', 'get_value', 'x>2'))
-'''
+"""
         st = time.time()
         self.s.execute()
         et = time.time() - st
         self.assertGreaterEqual(2, et)
 
     def test_waitfor_timeout(self):
-        self.s.text = '''
+        self.s.text = """
 def main():
     waitfor(('dummy', 'get_value', 'x>10'), timeout=3)
-'''
+"""
         ret = self.s.execute()
         self.assertEqual(ret, True)
 
     def test_waitfor_func(self):
-        self.s.text = '''
+        self.s.text = """
 def func():
     def f(ti, c):
         return c>2
@@ -98,10 +99,10 @@ def func():
 
 def main():
     waitfor(func())
-'''
+"""
         ret = self.s.execute()
         self.assertEqual(ret, True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

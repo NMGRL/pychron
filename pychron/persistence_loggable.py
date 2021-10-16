@@ -27,7 +27,7 @@ from pychron.paths import paths
 
 def load_persistence_dict(p):
     if os.path.isfile(p):
-        with open(p, 'r') as rfile:
+        with open(p, "r") as rfile:
             try:
                 return pickle.load(rfile)
             except (pickle.PickleError, EOFError):
@@ -35,7 +35,7 @@ def load_persistence_dict(p):
 
 
 def dump_persistence_dict(p, d):
-    with open(p, 'w') as wfile:
+    with open(p, "w") as wfile:
         pickle.dump(d, wfile)
 
 
@@ -70,7 +70,7 @@ class PersistenceMixin(object):
             else:
                 attrs = dattrs
         except AttributeError as e:
-            print('ddddd', e)
+            print("ddddd", e)
             pass
 
         return attrs
@@ -87,7 +87,7 @@ class PersistenceMixin(object):
             return self._make_persistence_path(self.persistence_path)
         except (AttributeError, NotImplementedError) as e:
             print(e)
-            self.warning('persistence path not implemented')
+            self.warning("persistence path not implemented")
 
     def load(self, verbose=True):
         attrs = self.get_attributes()
@@ -95,27 +95,27 @@ class PersistenceMixin(object):
             raise NotImplementedError
 
         if verbose:
-            self.debug('***************** loading')
+            self.debug("***************** loading")
 
         p = self.get_persistence_path()
         self.debug(p)
         if p and os.path.isfile(p):
-            self.debug('loading {}'.format(p))
+            self.debug("loading {}".format(p))
             d = None
-            with open(p, 'rb') as rfile:
+            with open(p, "rb") as rfile:
                 try:
                     d = pickle.load(rfile)
                 except (pickle.PickleError, EOFError, BaseException):
-                    self.warning('Invalid pickle file {}'.format(p))
+                    self.warning("Invalid pickle file {}".format(p))
             if d:
                 if verbose:
-                    self.debug('***************** loading pickled object')
+                    self.debug("***************** loading pickled object")
 
                 for k in attrs:
                     try:
                         v = d[k]
                         if verbose:
-                            self.debug('setting {} to {}'.format(k, v))
+                            self.debug("setting {} to {}".format(k, v))
                         setattr(self, k, v)
                     except KeyError:
                         pass
@@ -129,7 +129,7 @@ class PersistenceMixin(object):
         if p:
 
             if verbose:
-                self.debug('***************** dumping')
+                self.debug("***************** dumping")
                 d = {}
                 for a in attrs:
                     v = getattr(self, a)
@@ -137,7 +137,7 @@ class PersistenceMixin(object):
                     d[a] = v
             else:
                 d = {a: getattr(self, a) for a in attrs}
-            with open(p, 'wb') as wfile:
+            with open(p, "wb") as wfile:
                 pickle.dump(d, wfile)
 
     def _make_persistence_path(self, p):
@@ -156,5 +156,6 @@ class PersistenceMixin(object):
 
 class PersistenceLoggable(Loggable, PersistenceMixin):
     pass
+
 
 # ============= EOF =============================================

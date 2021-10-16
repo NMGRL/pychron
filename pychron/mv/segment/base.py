@@ -23,4 +23,6 @@ from traits.api import HasTraits
 # ============= local library imports  ==========================
 class BaseSegmenter(HasTraits):
     pass
+
+
 # ============= EOF =============================================

@@ -25,18 +25,16 @@ from .messaging_handler import MessagingHandler
 
 class UDPHandler(MessagingHandler):
     def get_packet(self):
-        """
-        """
+        """ """
         data = self.request[0].strip()
         return data
 
     def send_packet(self, response):
-        """
-
-        """
+        """ """
         sock = self.request[1]
         send = lambda x: sock.sendto(x, self.client_address)
 
         self._send_packet(response, send)
+
 
 # ============= EOF ====================================

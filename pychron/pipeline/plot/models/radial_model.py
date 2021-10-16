@@ -20,4 +20,6 @@ from pychron.pipeline.plot.panels.radial_panel import RadialPanel
 
 class RadialModel(FigureModel):
     _panel_klass = RadialPanel
+
+
 # ============= EOF =============================================

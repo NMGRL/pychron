@@ -35,39 +35,29 @@ class PrimitiveNode(TreeNode):
 
 class CanvasDesignerPane(TraitsTaskPane):
     def traits_view(self):
-        nodes = [TreeNode(node_for=[Scene],
-                          children='layers',
-                          label='=layers',
-                          auto_open=True
-                          ),
-                 TreeNode(node_for=[Layer],
-                          label='label',
-                          children='components',
-                          auto_open=True
-                          ),
-                 PrimitiveNode(node_for=[Primitive],
-                               children='primitives',
-                               label='label',
-                               ),
-                 ]
+        nodes = [
+            TreeNode(
+                node_for=[Scene], children="layers", label="=layers", auto_open=True
+            ),
+            TreeNode(
+                node_for=[Layer], label="label", children="components", auto_open=True
+            ),
+            PrimitiveNode(
+                node_for=[Primitive],
+                children="primitives",
+                label="label",
+            ),
+        ]
 
-        editor = TreeEditor(nodes=nodes,
-                            selected='selected',
-                            orientation='vertical')
+        editor = TreeEditor(nodes=nodes, selected="selected", orientation="vertical")
         v = View(
             HSplit(
-                UItem('scene',
-                      editor=editor,
-                      width=0.4
-                      ),
-                UItem('canvas',
-                      style='custom',
-                      editor=ComponentEditor(),
-                      width=0.6
-                      )
+                UItem("scene", editor=editor, width=0.4),
+                UItem("canvas", style="custom", editor=ComponentEditor(), width=0.6),
             )
         )
 
         return v
+
 
 # ============= EOF =============================================

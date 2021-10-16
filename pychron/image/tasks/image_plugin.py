@@ -17,14 +17,15 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from envisage.ui.tasks.task_factory import TaskFactory
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
 
 class ImagePlugin(BaseTaskPlugin):
-    id = 'pychron.image.plugin'
-    name = 'Image'
+    id = "pychron.image.plugin"
+    name = "Image"
 
     # watcher = Instance('pychron.image.watcher.DirectoryWatcher')
 
@@ -63,7 +64,9 @@ class ImagePlugin(BaseTaskPlugin):
     def _sample_image_factory(self):
         from pychron.image.tasks.sample_image_task import SampleImageTask
 
-        man = self.application.get_service('pychron.database.isotope_database_manager.IsotopeDatabaseManager')
+        man = self.application.get_service(
+            "pychron.database.isotope_database_manager.IsotopeDatabaseManager"
+        )
         s = SampleImageTask(manager=man)
         return s
 
@@ -75,9 +78,13 @@ class ImagePlugin(BaseTaskPlugin):
     #     return s
 
     def _tasks_default(self):
-        ts = [TaskFactory(factory=self._sample_image_factory,
-                          id='pychron.image.sample_imager',
-                          name='Sample Imager')]
+        ts = [
+            TaskFactory(
+                factory=self._sample_image_factory,
+                id="pychron.image.sample_imager",
+                name="Sample Imager",
+            )
+        ]
 
         # if self.application.get_plugin('pychron.database'):
         #     ts.append(TaskFactory(factory=self._upload_image_factory,
@@ -85,5 +92,6 @@ class ImagePlugin(BaseTaskPlugin):
         #                           name='Image Uploader'))
 
         return ts
+
 
 # ============= EOF =============================================

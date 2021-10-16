@@ -27,8 +27,9 @@ from pychron.paths import paths
 
 class UVMaskCanvas(SceneCanvas):
     def load_scene(self):
-        p = os.path.join(paths.canvas2D_dir, 'uv_mask_canvas.txt')
+        p = os.path.join(paths.canvas2D_dir, "uv_mask_canvas.txt")
         self.scene = UVMaskScene()
         self.scene.load(p)
+
 
 # ============= EOF =============================================

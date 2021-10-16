@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 
 from chaco.api import AbstractOverlay
+
 # =============standard library imports ========================
 from enable.base_tool import BaseTool
 from numpy import vstack
@@ -25,6 +26,7 @@ from traits.api import Any, Str
 
 
 # =============local library imports  ==========================
+
 
 class RectSelectionOverlay(AbstractOverlay):
     tool = Any
@@ -43,15 +45,14 @@ class RectSelectionOverlay(AbstractOverlay):
 
 
 class RectSelectionTool(BaseTool):
-    """
-    """
+    """ """
 
     filter_near_edge = False
 
     threshold = 5
-    hover_metadata_name = Str('hover')
+    hover_metadata_name = Str("hover")
     persistent_hover = False
-    selection_metadata_name = Str('selections')
+    selection_metadata_name = Str("selections")
     group_id = 0
 
     _start_pos = None
@@ -59,14 +60,14 @@ class RectSelectionTool(BaseTool):
     _cached_data = None
 
     def select_key_pressed(self, event):
-        if event.character == 'Esc':
+        if event.character == "Esc":
             self._end_select(event)
 
     def normal_mouse_enter(self, event):
-        event.window.set_pointer('arrow')
+        event.window.set_pointer("arrow")
 
     def normal_mouse_leave(self, event):
-        event.window.set_pointer('arrow')
+        event.window.set_pointer("arrow")
 
     def _get_selection_token(self, event):
         return self.component.map_index((event.x, event.y), threshold=self.threshold)
@@ -74,7 +75,7 @@ class RectSelectionTool(BaseTool):
     def _already_selected(self, token):
         already = False
         plot = self.component
-        for name in ('index', 'value'):
+        for name in ("index", "value"):
             if not hasattr(plot, name):
                 continue
             md = getattr(plot, name).metadata
@@ -90,8 +91,10 @@ class RectSelectionTool(BaseTool):
     def normal_left_dclick(self, event):
         if self._end_pos is None:
             self.component.index.metadata[self.selection_metadata_name] = []
-        elif abs(self._end_pos[0] - self._start_pos[0]) < 2 and \
-                abs(self._end_pos[1] - self._start_pos[1]) < 2:
+        elif (
+            abs(self._end_pos[0] - self._start_pos[0]) < 2
+            and abs(self._end_pos[1] - self._start_pos[1]) < 2
+        ):
             self.component.index.metadata[self.selection_metadata_name] = []
 
     def normal_left_down(self, event):
@@ -125,7 +128,7 @@ class RectSelectionTool(BaseTool):
 
     def _deselect_token(self, token):
         plot = self.component
-        for name in ('index', 'value'):
+        for name in ("index", "value"):
             if not hasattr(plot, name):
                 continue
             md = getattr(plot, name).metadata
@@ -138,7 +141,7 @@ class RectSelectionTool(BaseTool):
 
     def _select_token(self, token, append=True):
         plot = self.component
-        for name in ('index',):
+        for name in ("index",):
             if not hasattr(plot, name):
                 continue
             md = getattr(plot, name).metadata
@@ -188,15 +191,19 @@ class RectSelectionTool(BaseTool):
                     data = vstack([datax, datay]).transpose()
                     self._cached_data = data
 
-                ind = [i for i, (xi, yi) in enumerate(data) if dx <= xi <= dx2 and dy2 <= yi <= dy]
+                ind = [
+                    i
+                    for i, (xi, yi) in enumerate(data)
+                    if dx <= xi <= dx2 and dy2 <= yi <= dy
+                ]
 
         selection = index.metadata[self.selection_metadata_name]
         nind = list(set(ind) ^ set(selection))
         index.metadata[self.selection_metadata_name] = nind
 
     def _end_select(self, event):
-        self.event_state = 'normal'
-        event.window.set_pointer('arrow')
+        self.event_state = "normal"
+        event.window.set_pointer("arrow")
 
         self._end_pos = None
         self.component.request_redraw()
@@ -204,7 +211,8 @@ class RectSelectionTool(BaseTool):
     def _start_select(self, event):
         self._start_pos = (event.x, event.y)
         #        self._end_pos = (event.x, event.y)
-        self.event_state = 'select'
-        event.window.set_pointer('cross')
+        self.event_state = "select"
+        event.window.set_pointer("cross")
+
 
 # ============= EOF =====================================

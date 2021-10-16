@@ -34,11 +34,13 @@ class NewNameView(HasTraits):
     title = Str
 
     def traits_view(self):
-        v = View(UItem('message', style='readonly', width=1.0),
-                 UItem('name'),
-                 title=self.title,
-                 width=300,
-                 buttons=['OK', 'Cancel'])
+        v = View(
+            UItem("message", style="readonly", width=1.0),
+            UItem("name"),
+            title=self.title,
+            width=300,
+            buttons=["OK", "Cancel"],
+        )
         return v
 
 
@@ -51,11 +53,13 @@ class PostView(HasTraits):
         return self.low_post, self.high_post
 
     def traits_view(self):
-        v = View(UItem('low_post', style='custom'),
-                 UItem('high_post', style='custom'),
-                 title='Select Date Range',
-                 width=500,
-                 buttons=['OK', 'Cancel'])
+        v = View(
+            UItem("low_post", style="custom"),
+            UItem("high_post", style="custom"),
+            title="Select Date Range",
+            width=500,
+            buttons=["OK", "Cancel"],
+        )
         return v
 
 
@@ -63,22 +67,22 @@ def get_posts(post_view, chron):
     if not post_view:
         pv = PostView()
         l, h = chron[-1], chron[0]
-        fmt = '%m-%d-%Y %H:%M:%S'
+        fmt = "%m-%d-%Y %H:%M:%S"
         pv.low_post = datetime.strptime(l.create_date, fmt)
         pv.high_post = datetime.strptime(h.create_date, fmt)
         post_view = pv
 
-    info = post_view.edit_traits(kind='livemodal')
+    info = post_view.edit_traits(kind="livemodal")
     if info.result:
         return post_view, post_view.posts
     else:
         return post_view, None
 
 
-def get_new_name(root, test, title, name=''):
+def get_new_name(root, test, title, name=""):
     e = NewNameView(title=title, name=name)
     while 1:
-        info = e.edit_traits(kind='livemodal')
+        info = e.edit_traits(kind="livemodal")
         if info.result:
             # e=e.name.replace(' ','_')
             en = e.name
@@ -86,8 +90,9 @@ def get_new_name(root, test, title, name=''):
             if not test(p):
                 return p
             else:
-                e.message = '{} already exists'.format(en)
+                e.message = "{} already exists".format(en)
         else:
             break
+
 
 # ============= EOF =============================================

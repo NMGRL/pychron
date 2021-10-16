@@ -20,8 +20,27 @@ import os
 
 from git import Repo
 from pyface.message_dialog import information
-from traits.api import HasTraits, Str, Int, Bool, List, Event, Either, Float, on_trait_change
-from traitsui.api import View, UItem, VGroup, TabularEditor, HGroup, Item, TextEditor, VSplit
+from traits.api import (
+    HasTraits,
+    Str,
+    Int,
+    Bool,
+    List,
+    Event,
+    Either,
+    Float,
+    on_trait_change,
+)
+from traitsui.api import (
+    View,
+    UItem,
+    VGroup,
+    TabularEditor,
+    HGroup,
+    Item,
+    TextEditor,
+    VSplit,
+)
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron import json
@@ -43,7 +62,7 @@ class HistoryCommitAdapter(CommitAdapter):
 
 
 class DiffAdapter(TabularAdapter):
-    columns = [('Name', 'name'), ('First', 'lhs'), ('Second', 'rhs'), ('Dev %', 'dev')]
+    columns = [("Name", "name"), ("First", "lhs"), ("Second", "rhs"), ("Dev %", "dev")]
     name_width = Int(50)
     lhs_width = Int(150)
     rhs_width = Int(150)
@@ -55,9 +74,9 @@ class DiffAdapter(TabularAdapter):
 
         if not obj.only_show_diff:
             item = getattr(obj, trait)[row]
-            return LIGHT_RED if not item.match else 'white'
+            return LIGHT_RED if not item.match else "white"
         else:
-            return 'white'
+            return "white"
 
 
 class DiffValue(HasTraits):
@@ -79,7 +98,7 @@ class DiffValue(HasTraits):
                     dev = (rhs - lhs) / lhs * 100
                     dev = floatfmt(dev)
                 except ZeroDivisionError:
-                    dev = 'NaN'
+                    dev = "NaN"
                 self.dev = dev
             else:
                 self.match = lhs == rhs
@@ -102,7 +121,7 @@ class BaseDiffView(HasTraits):
         # self._load_values(lh, rh, ld, rd, aj, bj)
         self._filter_values()
 
-    @on_trait_change('only_show_diff')
+    @on_trait_change("only_show_diff")
     def _handle_filter_values(self):
         self._filter_values()
 
@@ -118,18 +137,22 @@ class BaseDiffView(HasTraits):
 
     def _filter_values(self):
         if self.only_show_diff:
-            self.values = [v for v in self.ovalues if not v.match or v.name in ('ID', 'Date')]
+            self.values = [
+                v for v in self.ovalues if not v.match or v.name in ("ID", "Date")
+            ]
         else:
             self.values = self.ovalues[:]
 
     def traits_view(self):
-        v = View(VGroup(HGroup(Item('only_show_diff'))),
-
-                 UItem('values', editor=TabularEditor(adapter=DiffAdapter(),
-                                                      editable=False)),
-                 title='{} Diff {}'.format(self.base_title, self.record_id),
-                 resizable=True,
-                 width=500)
+        v = View(
+            VGroup(HGroup(Item("only_show_diff"))),
+            UItem(
+                "values", editor=TabularEditor(adapter=DiffAdapter(), editable=False)
+            ),
+            title="{} Diff {}".format(self.base_title, self.record_id),
+            resizable=True,
+            width=500,
+        )
         return v
 
 
@@ -183,8 +206,10 @@ class DiffView(BaseDiffView):
 
         # self._filter_values()
 
-        vs = [DiffValue('ID', lh, rh, matchable=False),
-              DiffValue('Date', ld, rd, matchable=False)]
+        vs = [
+            DiffValue("ID", lh, rh, matchable=False),
+            DiffValue("Date", ld, rd, matchable=False),
+        ]
         self.ovalues = vs
 
     def finish(self):
@@ -192,7 +217,9 @@ class DiffView(BaseDiffView):
 
     def _filter_values(self):
         if self.only_show_diff:
-            self.values = [v for v in self.ovalues if not v.match or v.name in ('ID', 'Date')]
+            self.values = [
+                v for v in self.ovalues if not v.match or v.name in ("ID", "Date")
+            ]
             self.blanks = [v for v in self.oblanks if not v.match]
             self.icfactors = [v for v in self.oicfactors if not v.match]
             self.tags = [v for v in self.otags if not v.match]
@@ -205,56 +232,112 @@ class DiffView(BaseDiffView):
             self.isoevos = self.oisoevos[:]
 
     def set_intercepts(self, aj, bj):
-        self.oisoevos = [DiffValue(t, aj[name][k], bj[name][k])
-                         for name in aj.keys() if name != 'reviewed'
-                         for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
+        self.oisoevos = [
+            DiffValue(t, aj[name][k], bj[name][k])
+            for name in aj.keys()
+            if name != "reviewed"
+            for t, k in (
+                (name, "value"),
+                (PLUSMINUS_ONE_SIGMA, "error"),
+                ("Fit", "fit"),
+            )
+        ]
 
     def set_blanks(self, aj, bj):
         keys = list(aj.keys())
-        self.oblanks = [DiffValue(t, aj[name][k], bj[name][k])
-                        for name in aj.keys() if name != 'reviewed'
-                        for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
+        self.oblanks = [
+            DiffValue(t, aj[name][k], bj[name][k])
+            for name in aj.keys()
+            if name != "reviewed"
+            for t, k in (
+                (name, "value"),
+                (PLUSMINUS_ONE_SIGMA, "error"),
+                ("Fit", "fit"),
+            )
+        ]
 
     def set_icfactors(self, aj, bj):
-        self.oicfactors = [DiffValue(t, aj[name][k], bj[name][k])
-                           for name in aj.keys() if name != 'reviewed'
-                           for t, k in ((name, 'value'), (PLUSMINUS_ONE_SIGMA, 'error'), ('Fit', 'fit'))]
+        self.oicfactors = [
+            DiffValue(t, aj[name][k], bj[name][k])
+            for name in aj.keys()
+            if name != "reviewed"
+            for t, k in (
+                (name, "value"),
+                (PLUSMINUS_ONE_SIGMA, "error"),
+                ("Fit", "fit"),
+            )
+        ]
 
     def set_tags(self, aj, bj):
-        print('a', aj)
-        print('b', bj)
-        self.otags = [DiffValue(name, aj[name], bj[name]) for name in ('name',)]
+        print("a", aj)
+        print("b", bj)
+        self.otags = [DiffValue(name, aj[name], bj[name]) for name in ("name",)]
 
     def traits_view(self):
-        v = View(VGroup(HGroup(Item('only_show_diff')),
-                        VGroup(UItem('values', editor=TabularEditor(adapter=DiffAdapter(),
-                                                                    editable=False),
-                                     height=-100)),
-                        VGroup(UItem('isoevos', editor=TabularEditor(adapter=DiffAdapter(color_first=False),
-                                                                     editable=False),
-                                     height=-100),
-                               show_border=True, label='Iso Evo',
-                               visible_when='isoevos'),
-                        VGroup(UItem('blanks', editor=TabularEditor(adapter=DiffAdapter(color_first=False),
-                                                                    editable=False),
-                                     height=-100),
-                               show_border=True, label='Blanks',
-                               visible_when='blanks'),
-                        VGroup(UItem('icfactors', editor=TabularEditor(adapter=DiffAdapter(color_first=False),
-                                                                       editable=False),
-                                     height=-100),
-                               show_border=True, label='ICFactors',
-                               visible_when='icfactors'),
-                        VGroup(UItem('tags', editor=TabularEditor(adapter=DiffAdapter(color_first=False),
-                                                                  editable=False),
-                                     height=-100),
-                               show_border=True, label='Tags',
-                               visible_when='tags')),
-
-                 title='Diff {}'.format(self.record_id),
-                 # title='{} Diff {}'.format(self.base_title, self.record_id),
-                 resizable=True,
-                 width=500)
+        v = View(
+            VGroup(
+                HGroup(Item("only_show_diff")),
+                VGroup(
+                    UItem(
+                        "values",
+                        editor=TabularEditor(adapter=DiffAdapter(), editable=False),
+                        height=-100,
+                    )
+                ),
+                VGroup(
+                    UItem(
+                        "isoevos",
+                        editor=TabularEditor(
+                            adapter=DiffAdapter(color_first=False), editable=False
+                        ),
+                        height=-100,
+                    ),
+                    show_border=True,
+                    label="Iso Evo",
+                    visible_when="isoevos",
+                ),
+                VGroup(
+                    UItem(
+                        "blanks",
+                        editor=TabularEditor(
+                            adapter=DiffAdapter(color_first=False), editable=False
+                        ),
+                        height=-100,
+                    ),
+                    show_border=True,
+                    label="Blanks",
+                    visible_when="blanks",
+                ),
+                VGroup(
+                    UItem(
+                        "icfactors",
+                        editor=TabularEditor(
+                            adapter=DiffAdapter(color_first=False), editable=False
+                        ),
+                        height=-100,
+                    ),
+                    show_border=True,
+                    label="ICFactors",
+                    visible_when="icfactors",
+                ),
+                VGroup(
+                    UItem(
+                        "tags",
+                        editor=TabularEditor(
+                            adapter=DiffAdapter(color_first=False), editable=False
+                        ),
+                        height=-100,
+                    ),
+                    show_border=True,
+                    label="Tags",
+                    visible_when="tags",
+                ),
+            ),
+            title="Diff {}".format(self.record_id),
+            # title='{} Diff {}'.format(self.base_title, self.record_id),
+            resizable=True,
+            width=500,
+        )
         return v
 
 
@@ -285,7 +368,7 @@ class DVCCommitView(HasTraits):
                 a, b = new
                 self.selected_rhs = a if b == self.selected_lhs else b
         else:
-            self.selected_message = ''
+            self.selected_message = ""
 
     def _make_path(self, an):
         return an.make_path(self.modifier)
@@ -303,8 +386,10 @@ class DVCCommitView(HasTraits):
             rhsdate = rhs.date.isoformat()
 
             diffs = []
-            for a in ('blanks', 'icfactors', 'intercepts'):
-                p = analysis_path((self.uuid, self.record_id), self.repository_identifier, modifier=a)
+            for a in ("blanks", "icfactors", "intercepts"):
+                p = analysis_path(
+                    (self.uuid, self.record_id), self.repository_identifier, modifier=a
+                )
                 dd = get_diff(self.repo, lhs.hexsha, rhs.hexsha, p)
                 if dd:
                     diffs.append((a, dd))
@@ -312,33 +397,51 @@ class DVCCommitView(HasTraits):
             if diffs:
                 v = DiffView(self.record_id, lhsid, rhsid, lhsdate, rhsdate)
                 for a, (aa, bb) in diffs:
-                    func = getattr(v, 'set_{}'.format(a))
+                    func = getattr(v, "set_{}".format(a))
 
-                    a = aa.data_stream.read().decode('utf-8')
-                    b = bb.data_stream.read().decode('utf-8')
+                    a = aa.data_stream.read().decode("utf-8")
+                    b = bb.data_stream.read().decode("utf-8")
                     func(json.loads(a), json.loads(b))
                 v.finish()
                 open_view(v)
             else:
-                information(None, 'No Differences between {} and {}'.format(lhsid, rhsid))
+                information(
+                    None, "No Differences between {} and {}".format(lhsid, rhsid)
+                )
 
     def traits_view(self):
-        v = View(VGroup(
-            HGroup(icon_button_editor('do_diff', 'edit_diff', tooltip='Make Diff between two commits'),
-                   Item('show_all_commits', label='Show All Commits')),
-
-            VSplit(UItem('commits', editor=myTabularEditor(adapter=HistoryCommitAdapter(),
-                                                           multi_select=True,
-                                                           editable=False,
-                                                           selected='selected_commits'))),
-            UItem('selected_message', style='custom',
-                  height=-200,
-                  editor=TextEditor(read_only=True))))
+        v = View(
+            VGroup(
+                HGroup(
+                    icon_button_editor(
+                        "do_diff", "edit_diff", tooltip="Make Diff between two commits"
+                    ),
+                    Item("show_all_commits", label="Show All Commits"),
+                ),
+                VSplit(
+                    UItem(
+                        "commits",
+                        editor=myTabularEditor(
+                            adapter=HistoryCommitAdapter(),
+                            multi_select=True,
+                            editable=False,
+                            selected="selected_commits",
+                        ),
+                    )
+                ),
+                UItem(
+                    "selected_message",
+                    style="custom",
+                    height=-200,
+                    editor=TextEditor(read_only=True),
+                ),
+            )
+        )
         return v
 
 
 class HistoryView(DVCCommitView):
-    name = 'History'
+    name = "History"
     _paths = None
 
     sample_prep_comment = Str
@@ -348,7 +451,9 @@ class HistoryView(DVCCommitView):
         self._load_commits()
 
     def initialize(self, an, force=False):
-        self.repo = Repo(os.path.join(paths.repository_dataset_dir, an.repository_identifier))
+        self.repo = Repo(
+            os.path.join(paths.repository_dataset_dir, an.repository_identifier)
+        )
         self.record_id = an.record_id
         self.repository_identifier = an.repository_identifier
         self.sample_prep_comment = an.sample_prep_comment
@@ -362,38 +467,56 @@ class HistoryView(DVCCommitView):
     def _load_commits(self):
         repo = self.repo
 
-        args = [repo.active_branch.name, '--remove-empty', '--simplify-merges']
+        args = [repo.active_branch.name, "--remove-empty", "--simplify-merges"]
 
         if not self.show_all_commits:
-            greps = ['<{}>'.format(t) for t in HISTORY_TAGS]
-            greps = '\|'.join(greps)
-            args.append('--grep=^{}'.format(greps))
+            greps = ["<{}>".format(t) for t in HISTORY_TAGS]
+            greps = "\|".join(greps)
+            args.append("--grep=^{}".format(greps))
 
-        args.append('--pretty=%H|%cn|%ce|%ct|%s')
-        args.append('--')
+        args.append("--pretty=%H|%cn|%ce|%ct|%s")
+        args.append("--")
         args.extend(self._paths)
 
         txt = repo.git.log(*args)
 
         cs = []
         if txt:
-            cs = [from_gitlog(l.strip()) for l in txt.split('\n')]
+            cs = [from_gitlog(l.strip()) for l in txt.split("\n")]
 
         self.commits = cs
 
     def traits_view(self):
-        v = View(VGroup(
-            BorderHGroup(UItem('sample_note'), label='Sample Note'),
-            BorderHGroup(UItem('sample_prep_comment'), label='Sample Prep'),
-            HGroup(icon_button_editor('do_diff', 'edit_diff', tooltip='Make Diff between two commits'),
-                   Item('show_all_commits', label='Show All Commits')),
-
-            VSplit(UItem('commits', editor=myTabularEditor(adapter=HistoryCommitAdapter(),
-                                                           multi_select=True,
-                                                           editable=False,
-                                                           selected='selected_commits'))),
-            UItem('selected_message', style='custom',
-                  height=-200,
-                  editor=TextEditor(read_only=True))))
+        v = View(
+            VGroup(
+                BorderHGroup(UItem("sample_note"), label="Sample Note"),
+                BorderHGroup(UItem("sample_prep_comment"), label="Sample Prep"),
+                HGroup(
+                    icon_button_editor(
+                        "do_diff", "edit_diff", tooltip="Make Diff between two commits"
+                    ),
+                    Item("show_all_commits", label="Show All Commits"),
+                ),
+                VSplit(
+                    UItem(
+                        "commits",
+                        editor=myTabularEditor(
+                            adapter=HistoryCommitAdapter(),
+                            multi_select=True,
+                            editable=False,
+                            selected="selected_commits",
+                        ),
+                    )
+                ),
+                UItem(
+                    "selected_message",
+                    style="custom",
+                    height=-200,
+                    editor=TextEditor(read_only=True),
+                ),
+            )
+        )
         return v
+
+
 # ============= EOF =============================================

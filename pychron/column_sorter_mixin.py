@@ -47,14 +47,14 @@ class ColumnSorterMixin(HasTraits):
     def _column_clicked_changed(self, event):
         self._column_clicked_handled(event)
 
-    def _sort_columns(self, values, name='', field=None):
+    def _sort_columns(self, values, name="", field=None):
         # get the field to sort on
         if field is None:
             field = self._sort_field
             if field is None:
                 return
 
-        skey = '_{}_{}_sort_key'.format(name.lower(), field.lower())
+        skey = "_{}_{}_sort_key".format(name.lower(), field.lower())
         if hasattr(self, skey):
             key = getattr(self, skey)
         else:
@@ -70,8 +70,10 @@ class ColumnSorterMixin(HasTraits):
             self._sorted_hook(vs)
             return vs
         except AttributeError as e:
-            print('sorting exception: {}'.format(e))
+            print("sorting exception: {}".format(e))
 
     def _sorted_hook(self, vs):
         pass
+
+
 # ============= EOF =============================================

@@ -23,8 +23,7 @@ from pychron.config_mixin import ConfigMixin
 
 
 class BaseConfigLoadable(ConfigMixin):
-    """
-    """
+    """ """
 
     def update_configuration(self, **kw):
         config = self.get_configuration()
@@ -37,31 +36,28 @@ class BaseConfigLoadable(ConfigMixin):
         self.write_configuration(config)
 
     def bootstrap(self, *args, **kw):
-        """
-        """
+        """ """
 
-        self.info('load')
+        self.info("load")
         if self.load(*args, **kw):
-            self.info('open')
+            self.info("open")
             if self.open(*args, **kw):
-                self.info('initialize')
+                self.info("initialize")
                 self.initialize(*args, **kw)
                 return True
             else:
                 self.initialize(*args, **kw)
-                self.warning('failed opening')
+                self.warning("failed opening")
         else:
-            self.warning('failed loading')
+            self.warning("failed loading")
 
     def open(self, *args, **kw):
-        """
-        """
+        """ """
 
         return True
 
     def load(self, *args, **kw):
-        """
-        """
+        """ """
         return True
 
     def load_additional_args(self, *args, **kw):
@@ -71,8 +67,7 @@ class BaseConfigLoadable(ConfigMixin):
         pass
 
     def initialize(self, *args, **kw):
-        """
-        """
+        """ """
 
         return True
 
@@ -80,18 +75,18 @@ class BaseConfigLoadable(ConfigMixin):
         return True
 
     def convert_config_name(self, name):
-        """
-        """
-        nname = ''
-        if '_' in name:
-            for s in name.split('_'):
-                if s == 'co2':
-                    s = 'CO2'
+        """ """
+        nname = ""
+        if "_" in name:
+            for s in name.split("_"):
+                if s == "co2":
+                    s = "CO2"
                 else:
                     s = s.capitalize()
                 nname += s
         else:
             nname = name
         return nname
+
 
 # ============= EOF =============================================

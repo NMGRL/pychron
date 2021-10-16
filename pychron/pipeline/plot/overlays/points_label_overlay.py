@@ -27,7 +27,7 @@ from six.moves import zip
 
 
 class PointsLabelOverlay(AbstractOverlay):
-    font = Str('modern 10')
+    font = Str("modern 10")
 
     width = 0
     height = 0
@@ -51,7 +51,7 @@ class PointsLabelOverlay(AbstractOverlay):
             ys = self.component.value_mapper.map_screen(dd)
 
             gc.set_font(self.gfont)
-            w, h, _, _ = gc.get_full_text_extent('ff')
+            w, h, _, _ = gc.get_full_text_extent("ff")
             ys += yoffset - h / 2.0
 
             show_bound_box = self.label_box
@@ -70,5 +70,6 @@ class PointsLabelOverlay(AbstractOverlay):
                     gc.set_fill_color((0, 0, 0))
                     gc.set_text_position(0, 0)
                     gc.show_text(li)
+
 
 # ============= EOF =============================================

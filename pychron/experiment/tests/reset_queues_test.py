@@ -4,7 +4,7 @@ from traits.has_traits import HasTraits
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
 from pychron.experiment.utilities.identifier import is_special
 
-__author__ = 'ross'
+__author__ = "ross"
 
 import unittest
 
@@ -34,8 +34,7 @@ class MockRun(HasTraits):
 class ResetQueuesTestCase(unittest.TestCase):
     def setUp(self):
         self.queue = ExperimentQueue()
-        eruns = [MockRun('12345', 5, 1),
-                 MockRun('12346', 10, 2)]
+        eruns = [MockRun("12345", 5, 1), MockRun("12346", 10, 2)]
         self.queue.executed_runs = eruns
 
     def test_an(self):
@@ -52,5 +51,5 @@ class ResetQueuesTestCase(unittest.TestCase):
         self.assertEqual(a.aliquot, 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

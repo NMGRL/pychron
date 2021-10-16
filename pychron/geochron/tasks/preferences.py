@@ -43,7 +43,7 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class GeochronPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.geochron'
+    preferences_path = "pychron.geochron"
     url = Str
     username = Str
     password = Password
@@ -51,14 +51,14 @@ class GeochronPreferences(BasePreferencesHelper):
 
 class GeochronPreferencesPane(PreferencesPane):
     model_factory = GeochronPreferences
-    category = 'Geochron'
+    category = "Geochron"
 
     def traits_view(self):
-        auth_grp = VGroup(Item('username'),
-                          Item('password'),
-                          show_border=True,
-                          label='Authentication')
+        auth_grp = VGroup(
+            Item("username"), Item("password"), show_border=True, label="Authentication"
+        )
         v = View(auth_grp)
         return v
+
 
 # ============= EOF =============================================

@@ -13,53 +13,52 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-SOURCE_CONTROL_PARAMETERS = {'IonEnergy': 'IE',
-                             'YFocus': 'YF',
-                             'YBias': 'YB',
-                             'ZFocus': 'ZF',
-                             'ZBias': 'ZB',
-                             'ElectronEnergy': 'EE',
-                             'IonRepeller': 'IR',
-                             'TrapVoltage': 'TV',
-                             'FilamentCurrent': 'FC',
-                             'FilamentVoltage': 'FV',
-                             'TrapCurrent': 'TC',
-                             'EmissionCurrent': 'EC',
-                             'ConfinementVoltage': 'CV',
-                             'ESA+Plate': 'ESA+',
-                             'ESA-Plate': 'ESA-'
-                             }
+SOURCE_CONTROL_PARAMETERS = {
+    "IonEnergy": "IE",
+    "YFocus": "YF",
+    "YBias": "YB",
+    "ZFocus": "ZF",
+    "ZBias": "ZB",
+    "ElectronEnergy": "EE",
+    "IonRepeller": "IR",
+    "TrapVoltage": "TV",
+    "FilamentCurrent": "FC",
+    "FilamentVoltage": "FV",
+    "TrapCurrent": "TC",
+    "EmissionCurrent": "EC",
+    "ConfinementVoltage": "CV",
+    "ESA+Plate": "ESA+",
+    "ESA-Plate": "ESA-",
+}
 
 ERRORS = {
-    'E01': 'ERR_INVALID_COMMAND',
-    'E02': 'ERR_INVALID_PARAM',
-    'E03': 'ERR_OUT_OF_RANGE',
-    'E04': 'ERR_INVALID_MNEMONIC',
-    'E05': 'ERR_MISSING_PARAMS',
-
-    'E20': 'ERR_ABORTEDBY_SYSTEM',
-    'E21': 'ERR_ABORTEDBY_USER',
-
-    'E30': 'ERR_HARDWARE_MISSING',
-    'E31': 'ERR_HARDWARE_FAULT',
-    'E32': 'ERR_TIMEOUT',
-
-    'E40': 'ERR_AVAILABLE',
-    'E41': 'ERR_BUSY',
-    'E42': 'ERR_ACCESS_DENIED',
-    'E43': 'ERR_NOT_AVAILABLE',
-    'E44': 'ERR_NO_RESULTS_AVAILABLE',
-    'E45': 'ERR_UNIT_NOT_IN_TRIP_STATE',
-
-    'E99': 'ERR_UNKNOWN'}
+    "E01": "ERR_INVALID_COMMAND",
+    "E02": "ERR_INVALID_PARAM",
+    "E03": "ERR_OUT_OF_RANGE",
+    "E04": "ERR_INVALID_MNEMONIC",
+    "E05": "ERR_MISSING_PARAMS",
+    "E20": "ERR_ABORTEDBY_SYSTEM",
+    "E21": "ERR_ABORTEDBY_USER",
+    "E30": "ERR_HARDWARE_MISSING",
+    "E31": "ERR_HARDWARE_FAULT",
+    "E32": "ERR_TIMEOUT",
+    "E40": "ERR_AVAILABLE",
+    "E41": "ERR_BUSY",
+    "E42": "ERR_ACCESS_DENIED",
+    "E43": "ERR_NOT_AVAILABLE",
+    "E44": "ERR_NO_RESULTS_AVAILABLE",
+    "E45": "ERR_UNIT_NOT_IN_TRIP_STATE",
+    "E99": "ERR_UNKNOWN",
+}
 
 
 class IsotopxMixin(object):
     def handle_response(self, cmd, resp, *args, **kw):
         if resp in ERRORS:
-            if hasattr(self, 'warning'):
-                self.warning('Command {}==>{},{}'.format(cmd, resp, ERRORS[resp]))
+            if hasattr(self, "warning"):
+                self.warning("Command {}==>{},{}".format(cmd, resp, ERRORS[resp]))
             resp = None
         return resp
+
 
 # ============= EOF =============================================

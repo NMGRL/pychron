@@ -22,11 +22,15 @@ from pychron.lasers.tasks.plugins.laser_plugin import BaseLaserPlugin
 
 
 class ChromiumDiodePlugin(BaseLaserPlugin):
-    id = 'pychron.chromium.diode'
-    name = 'ChromiumDiode'
-    klass = ('pychron.lasers.laser_managers.chromium_laser_manager', 'ChromiumDiodeManager')
-    task_name = 'Chromium Diode'
-    accelerator = 'Ctrl+Shift+]'
-    task_klass = ('pychron.lasers.tasks.laser_task', 'ChromiumDiodeTask')
+    id = "pychron.chromium.diode"
+    name = "ChromiumDiode"
+    klass = (
+        "pychron.lasers.laser_managers.chromium_laser_manager",
+        "ChromiumDiodeManager",
+    )
+    task_name = "Chromium Diode"
+    accelerator = "Ctrl+Shift+]"
+    task_klass = ("pychron.lasers.tasks.laser_task", "ChromiumDiodeTask")
+
 
 # ============= EOF =============================================

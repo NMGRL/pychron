@@ -21,6 +21,6 @@
 from __future__ import absolute_import
 from .factory import toolkit_factory
 
-KeyBindingEditor = toolkit_factory('keybinding_editor', 'KeyBindingEditor')
+KeyBindingEditor = toolkit_factory("keybinding_editor", "KeyBindingEditor")
 
 # ============= EOF =============================================

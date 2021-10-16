@@ -40,23 +40,26 @@ class TextView(HasTraits):
             pass
 
     def traits_view(self):
-        editor = myTextEditor(bgcolor='#F7F6D0',
-                              fontsize=10,
-                              fontsize_name='fontsize',
-                              wrap=False,
-                              tab_width=15)
-        v = View(UItem('text', style='custom', editor=editor))
+        editor = myTextEditor(
+            bgcolor="#F7F6D0",
+            fontsize=10,
+            fontsize_name="fontsize",
+            wrap=False,
+            tab_width=15,
+        )
+        v = View(UItem("text", style="custom", editor=editor))
         return v
 
 
 class ExperimentView(TextView):
-    name = 'Experiment'
-    attribute = 'experiment_txt'
+    name = "Experiment"
+    attribute = "experiment_txt"
 
 
 class MeasurementView(TextView):
-    name = 'Measurement'
-    attribute = 'measurement_script_blob'
+    name = "Measurement"
+    attribute = "measurement_script_blob"
+
 
 # class ExtractionView(TextView):
 #     name = 'Extraction'

@@ -18,31 +18,33 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Bool, Property
+
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 
 # ============= standard library imports ========================
 import time
+
 # ============= local library imports  ==========================
 from .base_mks_gauge import BaseMKSGauge
 
 
 class IonGauge(BaseMKSGauge):
-    '''
-        G{classtree}
-    '''
+    """
+    G{classtree}
+    """
+
     _degas = Bool(False)
-    degas = Property(depends_on='_degas')
+    degas = Property(depends_on="_degas")
 
     def _get_degas(self):
-        '''
-        '''
+        """ """
         return self._degas
 
     def _set_degas(self, v):
-        '''
-            @type v: C{str}
-            @param v:
-        '''
+        """
+        @type v: C{str}
+        @param v:
+        """
         self._degas = v
         self.set_transducer_degas()
 
@@ -77,13 +79,13 @@ class IonGauge(BaseMKSGauge):
     # @on_trait_change('degas')
 
     def set_transducer_degas(self):
-        '''
-        '''
+        """ """
 
-        q = self._build_command(self.address, 'degas', self._degas)
+        q = self._build_command(self.address, "degas", self._degas)
         self.ask(q)
 
         import threading
+
         def degas_shutdown():
             start_time = time.time()
             # 30 min
@@ -95,11 +97,13 @@ class IonGauge(BaseMKSGauge):
             # interm just check _degas
             while self._degas:
                 time.sleep(1)
-                elapse_time = (time.time() - start_time)
+                elapse_time = time.time() - start_time
                 if elapse_time >= timeout:
                     break
 
-            self.logger.info('====== degas shutdown after %0.2f min======' % elapse_time / 60.)
+            self.logger.info(
+                "====== degas shutdown after %0.2f min======" % elapse_time / 60.0
+            )
             self._degas = False
 
         if self._degas:
@@ -107,11 +111,10 @@ class IonGauge(BaseMKSGauge):
             t.start()
 
     def get_transducer_filament_state(self, **kw):
-        '''
-        '''
+        """ """
 
         if not self.simulation:
-            t = 'filament'
+            t = "filament"
             q = self._build_query(self.address, t)
             state = self._parse_response(t, self.ask(q, **kw))
 
@@ -120,10 +123,10 @@ class IonGauge(BaseMKSGauge):
         return state
 
     def set_filament_state(self, onoff):
-        '''
-            @type of: C{str}
-            @param of:
-        '''
+        """
+        @type of: C{str}
+        @param of:
+        """
         # turn filament on
         if onoff:
             self.delay_after_power_on = True
@@ -133,14 +136,15 @@ class IonGauge(BaseMKSGauge):
         #                self.logger.info('======  filament already on ======')
         #                return
 
-        q = self._build_command(self.address, 'power', onoff)
+        q = self._build_command(self.address, "power", onoff)
         return self.ask(q)
 
     def set_state(self):
-        '''
-        '''
+        """ """
 
         self.set_filament_state(self.state)
+
+
 # ============= views ===================================
 
 # ============= EOF ====================================

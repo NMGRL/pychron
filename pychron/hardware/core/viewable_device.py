@@ -27,15 +27,14 @@ from traitsui.api import View, Item, Group, VGroup
 
 
 class ViewableDevice(HasTraits):
-    """
-    """
+    """ """
 
     simulation = Property
 
-    connected = Property(depends_on='simulation')
+    connected = Property(depends_on="simulation")
     com_class = Property
 
-    loaded = Property(depends_on='_loaded')
+    loaded = Property(depends_on="_loaded")
     _loaded = Bool
 
     klass = Property
@@ -50,7 +49,7 @@ class ViewableDevice(HasTraits):
 
     current_scan_value = CStr
 
-    reinitialize_button = Button('Reinitialize')
+    reinitialize_button = Button("Reinitialize")
 
     display_address = Property
 
@@ -63,35 +62,39 @@ class ViewableDevice(HasTraits):
         pass
 
     def current_state_view(self):
-        gen_grp = Group(Item('last_command', style='readonly'),
-                        Item('last_response', style='readonly'),
-                        Item('current_scan_value', style='readonly'),
-                        label='General')
+        gen_grp = Group(
+            Item("last_command", style="readonly"),
+            Item("last_response", style="readonly"),
+            Item("current_scan_value", style="readonly"),
+            label="General",
+        )
         v = View(gen_grp)
 
         return v
 
     def info_view(self):
 
-        info_grp = VGroup(Item('reinitialize_button', show_label=False),
-                          Item('name', style='readonly'),
-                          Item('display_address', style='readonly'),
-                          Item('klass', style='readonly', label='Class'),
-                          Item('connected', style='readonly'),
-                          Item('com_class', style='readonly', label='Com. Class'),
-                          Item('config_short_path', style='readonly'),
-                          Item('loaded', style='readonly'),
-                          label='Info')
+        info_grp = VGroup(
+            Item("reinitialize_button", show_label=False),
+            Item("name", style="readonly"),
+            Item("display_address", style="readonly"),
+            Item("klass", style="readonly", label="Class"),
+            Item("connected", style="readonly"),
+            Item("com_class", style="readonly", label="Com. Class"),
+            Item("config_short_path", style="readonly"),
+            Item("loaded", style="readonly"),
+            label="Info",
+        )
 
-        grp = Group(layout='tabbed')
+        grp = Group(layout="tabbed")
         cg = self.get_control_group()
         if cg:
-            cg.label = 'Control'
+            cg.label = "Control"
             grp.content.append(cg)
 
         config_group = self.get_configure_group()
         if config_group:
-            config_group.label = 'Configure'
+            config_group.label = "Configure"
             grp.content.append(config_group)
 
         grp.content.append(info_grp)
@@ -116,22 +119,22 @@ class ViewableDevice(HasTraits):
         self._reinitialize()
 
     def _get_display_address(self):
-        if hasattr(self.communicator, 'host'):
+        if hasattr(self.communicator, "host"):
             return self.communicator.host
-        elif hasattr(self, 'port'):
+        elif hasattr(self, "port"):
             return self.communicator.port
 
-        return ''
+        return ""
 
     def _get_config_short_path(self):
         """
-            config_path is an attribute of
+        config_path is an attribute of
         """
-        items = self.config_path.split('/')
-        return '/'.join(items[6:])
+        items = self.config_path.split("/")
+        return "/".join(items[6:])
 
     def _get_loaded(self):
-        return 'Yes' if self._loaded else 'No'
+        return "Yes" if self._loaded else "No"
 
     def _get_klass(self):
         return self.__class__.__name__
@@ -141,7 +144,7 @@ class ViewableDevice(HasTraits):
             return self.communicator.__class__.__name__
 
     def _get_connected(self):
-        return 'Yes' if not self._get_simulation() else 'No'
+        return "Yes" if not self._get_simulation() else "No"
 
     def _get_simulation(self):
         if self.communicator is not None:
@@ -151,20 +154,22 @@ class ViewableDevice(HasTraits):
 
     def _communicate_hook(self, cmd, r):
         if isinstance(cmd, bytes):
-            cmd = ''.join(('[{}]'.format(str(b)) for b in cmd))
+            cmd = "".join(("[{}]".format(str(b)) for b in cmd))
 
         now = datetime.now()
-        fmt = '%H:%M:%S'
+        fmt = "%H:%M:%S"
         if self._last_timestamp:
             if now.day != self._last_timestamp.day:
-                fmt = '%m/%d %H:%M:%S'
+                fmt = "%m/%d %H:%M:%S"
 
         self.timestamp = now.strftime(fmt)
         self._last_timestamp = now
 
         # print(self, cmd, r)
         self.last_command = str(cmd)
-        self.last_response = str(r) if r else ''
+        self.last_response = str(r) if r else ""
         # if self.auto_handle_response:
         #     self.response_updated = {'value': self.last_response, 'command': self.last_command}
+
+
 # ============= EOF =====================================

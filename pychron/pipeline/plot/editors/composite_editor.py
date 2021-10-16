@@ -33,14 +33,16 @@ class CompositeEditor(InterpretedAgeEditor):
         # comp = super(CompositeEditor, self)._component_factory()
         comp = self.figure_container.component
         if self.plotter_options.auto_generate_title:
-            l = PlotLabel(component=comp,
-                          padding_top=50,
-                          overlay_position='inside top',
-                          font=self.plotter_options.title_font,
-                          text=self.plotter_options.generate_title(model.analyses, 0))
+            l = PlotLabel(
+                component=comp,
+                padding_top=50,
+                overlay_position="inside top",
+                font=self.plotter_options.title_font,
+                text=self.plotter_options.generate_title(model.analyses, 0),
+            )
             comp.overlays.append(l)
 
-    @on_trait_change('figure_model:panels:figures:recalculate_event')
+    @on_trait_change("figure_model:panels:figures:recalculate_event")
     def _handle_recalculate(self, obj, name, old, new):
         if obj.suppress_recalculate_event:
             return
@@ -82,5 +84,6 @@ class CompositeEditor(InterpretedAgeEditor):
     #     component = iv.component
     #
     #     return model, component
+
 
 # ============= EOF =============================================

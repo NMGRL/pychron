@@ -28,12 +28,12 @@ from pychron.canvas.canvas2D.scene.irradiation_scene import IrradiationScene
 
 
 class Legend(HasTraits):
-    measured_color = ColorTrait('purple')
-    loaded_color = ColorTrait('green')
+    measured_color = ColorTrait("purple")
+    loaded_color = ColorTrait("green")
 
     def draw(self, component, gc):
         r = 6
-        gc.set_font(str_to_font('modern 10'))
+        gc.set_font(str_to_font("modern 10"))
         with gc:
             gc.translate_ctm(component.x + 20, component.y2 - 50)
 
@@ -54,7 +54,7 @@ class Legend(HasTraits):
                 gc.stroke_path()
 
             gc.set_text_position(10, 26)
-            gc.show_text('Monitor')
+            gc.show_text("Monitor")
 
             # irradiated
             with gc:
@@ -64,7 +64,7 @@ class Legend(HasTraits):
                 gc.fill_path()
 
             gc.set_text_position(10, 12)
-            gc.show_text('Irradiated')
+            gc.show_text("Irradiated")
 
             # measured
             with gc:
@@ -80,7 +80,7 @@ class Legend(HasTraits):
                 gc.stroke_path()
 
             gc.set_text_position(10, -5)
-            gc.show_text('Measured')
+            gc.show_text("Measured")
 
 
 class IrradiationCanvas(LoadingCanvas):
@@ -90,5 +90,6 @@ class IrradiationCanvas(LoadingCanvas):
     def __init__(self, *args, **kw):
         self.legend = Legend()
         super(IrradiationCanvas, self).__init__(*args, **kw)
+
 
 # ============= EOF =============================================

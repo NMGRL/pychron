@@ -24,7 +24,7 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
 
 class ClassifierPlugin(BaseTaskPlugin):
-    name = 'Classifier'
+    name = "Classifier"
 
     # def start(self):
     #     super(ClassifierPlugin, self).start()
@@ -36,11 +36,15 @@ class ClassifierPlugin(BaseTaskPlugin):
     def _service_offers_default(self):
         # p = {'dvc': self.dvc_factory()}
         # self.debug('DDDDD {}'.format(p))
-        so = self.service_offer_factory(protocol=IsotopeClassifier,
-                                        factory=IsotopeClassifier,
-                                        properties={'dvc': DVC(application=self.application)})
+        so = self.service_offer_factory(
+            protocol=IsotopeClassifier,
+            factory=IsotopeClassifier,
+            properties={"dvc": DVC(application=self.application)},
+        )
 
-        return [so, ]
+        return [
+            so,
+        ]
 
     # def _preferences_default(self):
     #     return self._preferences_factory('dvc')
@@ -54,9 +58,15 @@ class ClassifierPlugin(BaseTaskPlugin):
     #                         factory=self._repo_factory)]
 
     def _task_extensions_default(self):
-        actions = [SchemaAddition(factory=TrainIsotopeClassifierAction,
-                                  path='MenuBar/tools.menu'),
-                   ]
+        actions = [
+            SchemaAddition(
+                factory=TrainIsotopeClassifierAction, path="MenuBar/tools.menu"
+            ),
+        ]
 
-        return [TaskExtension(actions=actions), ]
+        return [
+            TaskExtension(actions=actions),
+        ]
+
+
 # ============= EOF =============================================

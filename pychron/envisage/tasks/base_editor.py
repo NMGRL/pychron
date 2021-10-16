@@ -23,7 +23,7 @@ from traits.api import Bool
 from pychron.loggable import Loggable
 
 
-def grouped_name(names, delimiter='-'):
+def grouped_name(names, delimiter="-"):
     s = names[0]
     e = names[-1]
     if s != e:
@@ -40,12 +40,13 @@ def grouped_name(names, delimiter='-'):
                 s = names[0]
                 e = names[-1].split(delimiter)[-1]
 
-        s = '{} - {}'.format(s, e)
+        s = "{} - {}".format(s, e)
 
     return s
 
 
 try:
+
     class BaseTraitsEditor(TraitsEditor, Loggable):
         dirty = Bool(False)
         _destroyed = False
@@ -62,8 +63,11 @@ try:
             self.prepare_destroy()
             super().destroy()
 
+
 except TypeError:
     # documentation auto doc hack
     class BaseTraitsEditor:
         pass
+
+
 # ============= EOF =============================================

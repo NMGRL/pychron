@@ -20,15 +20,25 @@ import os
 import pprint
 
 from traits.api import Str, Either, Int, Callable, Bool, Float, Enum, List
+
 # ============= standard library imports ========================
 from traits.trait_types import BaseStr
 from uncertainties import nominal_value, std_dev
 
 # ============= local library imports  ==========================
 from pychron.core.yaml import yload
-from pychron.experiment.conditional.regexes import MAPPER_KEY_REGEX, \
-    STD_REGEX, INTERPOLATE_REGEX, EXTRACTION_STR_ABS_REGEX, EXTRACTION_STR_PERCENT_REGEX
-from pychron.experiment.conditional.utilities import tokenize, get_teststr_attr_func, extract_attr
+from pychron.experiment.conditional.regexes import (
+    MAPPER_KEY_REGEX,
+    STD_REGEX,
+    INTERPOLATE_REGEX,
+    EXTRACTION_STR_ABS_REGEX,
+    EXTRACTION_STR_PERCENT_REGEX,
+)
+from pychron.experiment.conditional.utilities import (
+    tokenize,
+    get_teststr_attr_func,
+    extract_attr,
+)
 from pychron.experiment.utilities.conditionals import RUN, QUEUE, SYSTEM
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -49,13 +59,15 @@ def dictgetter(d, attrs, default=None):
 
 def conditionals_from_file(p, name=None, level=SYSTEM, **kw):
     yd = yload(p)
-    cs = (('TruncationConditional', 'truncation', 'truncations'),
-          ('ActionConditional', 'action', 'actions'),
-          ('ActionConditional', 'action', 'post_run_actions'),
-          ('TerminationConditional', 'termination', 'terminations'),
-          ('TerminationConditional', 'pre_run_termination', 'pre_run_terminations'),
-          ('TerminationConditional', 'post_run_termination', 'post_run_terminations'),
-          ('CancelationConditional', 'cancelation', 'cancelations'))
+    cs = (
+        ("TruncationConditional", "truncation", "truncations"),
+        ("ActionConditional", "action", "actions"),
+        ("ActionConditional", "action", "post_run_actions"),
+        ("TerminationConditional", "termination", "terminations"),
+        ("TerminationConditional", "pre_run_termination", "pre_run_terminations"),
+        ("TerminationConditional", "post_run_termination", "post_run_terminations"),
+        ("CancelationConditional", "cancelation", "cancelations"),
+    )
 
     conddict = {}
     for klass, _, tag in cs:
@@ -68,7 +80,9 @@ def conditionals_from_file(p, name=None, level=SYSTEM, **kw):
 
         # print 'yyyy', yl
         # var = getattr(self, '{}_conditionals'.format(var))
-        conds = [conditional_from_dict(ti, klass, level=level, location=p, **kw) for ti in yl]
+        conds = [
+            conditional_from_dict(ti, klass, level=level, location=p, **kw) for ti in yl
+        ]
         # print 'ffff', conds
         conds = [c for c in conds if c is not None]
         if conds:
@@ -100,7 +114,7 @@ def conditional_from_dict(cd, klass, level=None, location=None, **kw):
     # attr = cd.get('attr')
     # if not attr:
     # return
-    teststr = dictgetter(cd, ('teststr', 'comp', 'check'))
+    teststr = dictgetter(cd, ("teststr", "comp", "check"))
     if not teststr:
         return
 
@@ -143,27 +157,31 @@ class BaseConditional(Loggable):
     location = Str
 
     def from_dict(self, teststr, cd, kw):
-        start = dictgetter(cd, ('start', 'start_count'), default=50)
-        freq = cd.get('frequency', 1)
-        win = cd.get('window', 0)
-        mapper = cd.get('mapper', '')
+        start = dictgetter(cd, ("start", "start_count"), default=50)
+        freq = cd.get("frequency", 1)
+        win = cd.get("window", 0)
+        mapper = cd.get("mapper", "")
 
-        ntrips = cd.get('ntrips', 1)
+        ntrips = cd.get("ntrips", 1)
 
-        analysis_types = cd.get('analysis_types', [])
+        analysis_types = cd.get("analysis_types", [])
         if analysis_types:
-            analysis_types = [a.lower().replace(' ', '_') for a in analysis_types]
+            analysis_types = [a.lower().replace(" ", "_") for a in analysis_types]
         else:
             analysis_types = []
 
         attr = extract_attr(teststr)
 
-        self.trait_set(start_count=start, frequency=freq,
-                       attr=attr,
-                       window=win, mapper=mapper,
-                       ntrips=ntrips,
-                       analysis_types=analysis_types,
-                       **kw)
+        self.trait_set(
+            start_count=start,
+            frequency=freq,
+            attr=attr,
+            window=win,
+            mapper=mapper,
+            ntrips=ntrips,
+            analysis_types=analysis_types,
+            **kw
+        )
         self._from_dict_hook(cd)
 
     def _from_dict_hook(self, cd):
@@ -209,7 +227,7 @@ class AutomatedRunConditional(BaseConditional):
     mapper = Str
     analysis_types = List
 
-    _mapper_key = ''
+    _mapper_key = ""
 
     active = True
     value = Float
@@ -225,10 +243,7 @@ class AutomatedRunConditional(BaseConditional):
     # frequency=1,
     # *args, **kw):
 
-    def __init__(self, teststr,
-                 start_count=0,
-                 frequency=1,
-                 *args, **kw):
+    def __init__(self, teststr, start_count=0, frequency=1, *args, **kw):
 
         self.active = True
         # self.attr = attr
@@ -238,12 +253,12 @@ class AutomatedRunConditional(BaseConditional):
         super(AutomatedRunConditional, self).__init__(*args, **kw)
 
     def to_string(self):
-        s = '{} {}'.format(self.teststr, self.message)
+        s = "{} {}".format(self.teststr, self.message)
         return s
 
     def to_dict(self):
         d = self._attr_dict()
-        d['hash_id'] = self._hash_id(d)
+        d["hash_id"] = self._hash_id(d)
         return d
 
     def _hash_id(self, d=None):
@@ -252,14 +267,23 @@ class AutomatedRunConditional(BaseConditional):
         return hash(frozenset(list(d.items())))
 
     def _attr_dict(self):
-        return {'teststr': self.teststr, 'start_count': self.start_count,
-                'frequency': self.frequency, 'ntrips': self.ntrips,
-                'level': self.level,
-                'analysis_types': tuple(self.analysis_types), 'location': self.location}
+        return {
+            "teststr": self.teststr,
+            "start_count": self.start_count,
+            "frequency": self.frequency,
+            "ntrips": self.ntrips,
+            "level": self.level,
+            "analysis_types": tuple(self.analysis_types),
+            "location": self.location,
+        }
 
     def result_dict(self):
         hash_id = self._hash_id()
-        return {'teststr': self._teststr, 'context': self.value_context, 'hash_id': hash_id}
+        return {
+            "teststr": self._teststr,
+            "context": self.value_context,
+            "hash_id": hash_id,
+        }
 
     def _should_check(self, run, data, cnt):
         if self.active:
@@ -267,11 +291,15 @@ class AutomatedRunConditional(BaseConditional):
                 # check if checking should be done on this run based on analysis_type
                 atype = run.spec.analysis_type.lower()
 
-                self.debug('analysis_type={}, target_types={}'.format(atype, self.analysis_types))
+                self.debug(
+                    "analysis_type={}, target_types={}".format(
+                        atype, self.analysis_types
+                    )
+                )
                 should = False
                 for target_type in self.analysis_types:
-                    if target_type.lower() == 'blank':
-                        if atype.startswith('blank'):
+                    if target_type.lower() == "blank":
+                        if atype.startswith("blank"):
                             should = True
                             break
 
@@ -303,19 +331,26 @@ class AutomatedRunConditional(BaseConditional):
 
         self.value_context = vc = pprint.pformat(ctx, width=1)
 
-        self.debug('testing {}'.format(teststr))
+        self.debug("testing {}".format(teststr))
         if verbose:
-            self.debug('attribute context {}'.format(pprint.pformat(self._attr_dict(), width=1)))
+            self.debug(
+                "attribute context {}".format(
+                    pprint.pformat(self._attr_dict(), width=1)
+                )
+            )
         msg = 'evaluate ot="{}" t="{}", ctx="{}"'.format(self.teststr, teststr, vc)
         self.debug(msg)
         if teststr and ctx:
             if eval(teststr, ctx):
                 self.trips += 1
-                self.debug('condition {} is true trips={}/{}'.format(teststr, self.trips,
-                                                                     self.ntrips))
+                self.debug(
+                    "condition {} is true trips={}/{}".format(
+                        teststr, self.trips, self.ntrips
+                    )
+                )
                 if self.trips >= self.ntrips:
                     self.tripped = True
-                    self.message = 'condition {} is True'.format(teststr)
+                    self.message = "condition {} is True".format(teststr)
                     self.trips = 0
                     return True
             else:
@@ -328,8 +363,8 @@ class AutomatedRunConditional(BaseConditional):
         for ti, oper in tokenize(teststr):
             ts, attr, func = get_teststr_attr_func(ti)
 
-            attr = attr.replace('(', '_').replace(')', '_')
-            ts = ts.replace('(', '_').replace(')', '_')
+            attr = attr.replace("(", "_").replace(")", "_")
+            ts = ts.replace("(", "_").replace(")", "_")
 
             v = func(obj, data, self.window)
             if v is not None:
@@ -342,7 +377,7 @@ class AutomatedRunConditional(BaseConditional):
                 if oper:
                     tt.append(oper)
 
-        return ' '.join(tt), ctx
+        return " ".join(tt), ctx
 
     def _map_value(self, vv):
         if self.mapper:
@@ -370,10 +405,11 @@ class TruncationConditional(AutomatedRunConditional):
     run.
 
     """
+
     abbreviated_count_ratio = 1.0
 
     def _from_dict_hook(self, cd):
-        for tag in ('abbreviated_count_ratio',):
+        for tag in ("abbreviated_count_ratio",):
             if tag in cd:
                 setattr(self, tag, cd[tag])
 
@@ -403,11 +439,12 @@ class ActionConditional(AutomatedRunConditional):
         open("V")
 
     """
+
     action = Either(Str, Callable)
     resume = Bool  # resume==True the script continues execution else break out of measure_iteration
 
     def _from_dict_hook(self, cd):
-        for tag in ('action', 'resume'):
+        for tag in ("action", "resume"):
             if tag in cd:
                 setattr(self, tag, cd[tag])
 
@@ -426,16 +463,22 @@ class ActionConditional(AutomatedRunConditional):
             except BaseException:
                 self.warning('Invalid action: "{}"'.format(action))
 
-        elif hasattr(action, '__call__'):
+        elif hasattr(action, "__call__"):
             action()
 
 
-MODIFICATION_ACTIONS = ('Skip Next Run', 'Skip N Runs', 'Skip Aliquot', 'Skip to Last in Aliquot', 'Set Extract')
+MODIFICATION_ACTIONS = (
+    "Skip Next Run",
+    "Skip N Runs",
+    "Skip Aliquot",
+    "Skip to Last in Aliquot",
+    "Set Extract",
+)
 
 
 class ExtractionStr(BaseStr):
     def validate(self, obj, name, value):
-        if value == '':
+        if value == "":
             return value
 
         for r in (EXTRACTION_STR_ABS_REGEX, EXTRACTION_STR_PERCENT_REGEX):
@@ -449,9 +492,9 @@ def get_extraction_steps(s):
     use_percent = bool(EXTRACTION_STR_PERCENT_REGEX.match(s))
 
     def gen():
-        for si in s.split(','):
+        for si in s.split(","):
             si = si.strip()
-            if si.endswith('%'):
+            if si.endswith("%"):
                 si = si[:-1]
             yield float(si)
         raise StopIteration
@@ -473,12 +516,12 @@ class QueueModificationConditional(AutomatedRunConditional):
 
     def do_modifications(self, queue, current_run):
         runs = queue.cleaned_automated_runs
-        func = getattr(self, self.action.lower().replace(' ', '_'))
+        func = getattr(self, self.action.lower().replace(" ", "_"))
         func(runs, current_run)
         queue.refresh_table_needed = True
 
     def _from_dict_hook(self, cd):
-        for tag in ('action', 'nskip', 'use_truncation', 'use_termination'):
+        for tag in ("action", "nskip", "use_truncation", "use_termination"):
             if tag in cd:
                 setattr(self, tag, cd[tag])
 
@@ -538,11 +581,12 @@ class QueueModificationConditional(AutomatedRunConditional):
             try:
                 nstep = next(steps_gen)
                 if use_percent:
-                    r.extract_value *= (1 + nstep / 100.)
+                    r.extract_value *= 1 + nstep / 100.0
                 else:
                     r.extract_value += nstep
             except StopIteration:
                 break
+
 
 # ============= EOF =============================================
 # attr = extract_attr(token)

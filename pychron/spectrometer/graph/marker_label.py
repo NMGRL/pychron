@@ -42,7 +42,7 @@ class MarkerLabel(Label):
     horizontal_line_visible = False
     label_with_intensity = False
 
-    text = Property(depends_on='_text, label_with_intensity')
+    text = Property(depends_on="_text, label_with_intensity")
     _text = Str
 
     def _set_text(self, text):
@@ -50,13 +50,13 @@ class MarkerLabel(Label):
 
     def _get_text(self):
         if self.label_with_intensity:
-            return '{:0.4f}'.format(self.data_y)
+            return "{:0.4f}".format(self.data_y)
         else:
             return self._text
 
     def draw(self, gc, component_height):
         if not self.text:
-            self.text = ''
+            self.text = ""
 
         if self.bgcolor != "transparent":
             gc.set_fill_color(self.bgcolor_)
@@ -107,12 +107,18 @@ class MarkerLabel(Label):
 
         offset = 2
         xoffset = self.xoffset
-        gc.lines([(-xoffset, (bb_height + offset) / 2.0),
-                  (0, bb_height + 2 * offset),
-                  (bb_width + offset, bb_height + 2 * offset),
-                  (bb_width + offset, -offset),
-                  (0, -offset),
-                  (-xoffset, (bb_height + offset) / 2.0)])
+        gc.lines(
+            [
+                (-xoffset, (bb_height + offset) / 2.0),
+                (0, bb_height + 2 * offset),
+                (bb_width + offset, bb_height + 2 * offset),
+                (bb_width + offset, -offset),
+                (0, -offset),
+                (-xoffset, (bb_height + offset) / 2.0),
+            ]
+        )
 
         gc.draw_path()
+
+
 # ============= EOF =============================================

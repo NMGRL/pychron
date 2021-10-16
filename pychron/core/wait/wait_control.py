@@ -28,23 +28,23 @@ from pychron.loggable import Loggable
 
 
 class WaitControl(Loggable):
-    page_name = Str('Wait')
+    page_name = Str("Wait")
     message = Str
-    message_color = Color('black')
+    message_color = Color("black")
 
     high = Int(auto_set=False, enter_set=True)
     duration = Float(10)
 
     current_time = Float
-    current_display_time = Property(depends_on='current_time')
+    current_display_time = Property(depends_on="current_time")
 
     auto_start = Bool(False)
     timer = None
     end_evt = None
 
-    continue_button = Button('Continue')
+    continue_button = Button("Continue")
     pause_button = TEvent
-    pause_label = Property(depends_on='_paused')
+    pause_label = Property(depends_on="_paused")
     _paused = Bool
     _continued = Bool
     _canceled = Bool
@@ -76,7 +76,7 @@ class WaitControl(Loggable):
         while not evt.wait(timeout=0.25):
             time.sleep(0.25)
 
-        self.debug('Join finished')
+        self.debug("Join finished")
 
     def start(self, block=True, evt=None, duration=None, message=None):
         if self.end_evt:
@@ -111,10 +111,10 @@ class WaitControl(Loggable):
 
     def stop(self):
         self._end()
-        self.debug('wait dialog stopped')
+        self.debug("wait dialog stopped")
         if self.current_time > 1:
-            self.message = 'Stopped'
-            self.message_color = 'red'
+            self.message = "Stopped"
+            self.message_color = "red"
             # self.current_time = 0
 
     def reset(self):
@@ -134,7 +134,7 @@ class WaitControl(Loggable):
         self.current_time = 0
 
     def _end(self):
-        self.message = ''
+        self.message = ""
 
         if self.timer is not None:
             self.timer.Stop()
@@ -162,16 +162,16 @@ class WaitControl(Loggable):
                 # self._canceled = False
 
     def _get_current_display_time(self):
-        return '{:03d}'.format(int(self.current_time))
+        return "{:03d}".format(int(self.current_time))
 
     def _get_pause_label(self):
-        return 'Unpause' if self._paused else 'Pause'
+        return "Unpause" if self._paused else "Pause"
 
     # ===============================================================================
     # handlers
     # ===============================================================================
     def _pause_button_fired(self):
-        print('asdfas', self._paused)
+        print("asdfas", self._paused)
         self._paused = not self._paused
 
     def _continue_button_fired(self):
@@ -204,5 +204,6 @@ class WaitControl(Loggable):
         #                            size=14,
         #                            weight='bold'))))
         #     return v
+
 
 # ============= EOF =============================================

@@ -74,9 +74,9 @@ class BinGroup(HasTraits):
 
 
 class InterpolationEditor(FigureEditor):
-
     def set_references(self, refs):
         self.clear_aux_plot_limits()
         self.references = refs
+
 
 # ============= EOF =============================================

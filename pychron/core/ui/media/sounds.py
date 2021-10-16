@@ -35,7 +35,7 @@ def _get_sound(name):
     else:
         for r in paths.sound_search_path:
             if os.path.exists(r):
-                so = QSound(os.path.join(r, add_extension(name, '.wav')))
+                so = QSound(os.path.join(r, add_extension(name, ".wav")))
                 __SOUNDS__[name] = so
                 break
     return so
@@ -45,5 +45,6 @@ def play_sound(name):
     so = _get_sound(name)
     if so:
         so.play()
+
 
 # ============= EOF =============================================

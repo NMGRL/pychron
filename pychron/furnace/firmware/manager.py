@@ -29,7 +29,9 @@ from pychron.furnace.firmware import PARAMETER_REGISTRY, __version__
 from pychron.hardware.arduino.rotary_dumper import RotaryDumper
 from pychron.hardware.dht11 import DHT11
 from pychron.hardware.eurotherm.headless import HeadlessEurotherm
-from pychron.hardware.gauges.granville_phillips.headless_micro_ion_controller import HeadlessMicroIonController
+from pychron.hardware.gauges.granville_phillips.headless_micro_ion_controller import (
+    HeadlessMicroIonController,
+)
 from pychron.hardware.labjack.headless_u3_lv import HeadlessU3LV
 from pychron.hardware.mdrive.headless import HeadlessMDrive
 from pychron.hardware.watlow.headless_ezzone import HeadlessWatlowEZZone
@@ -38,17 +40,19 @@ from pychron.image.rpi_camera import RPiCamera
 from pychron.messaging.broadcaster import Broadcaster
 from pychron.paths import paths
 
-DEVICES = {'controller': HeadlessEurotherm,
-           'switch_controller': HeadlessU3LV,
-           'funnel': HeadlessMDrive,
-           'feeder': HeadlessMDrive,
-           'temp_hum': DHT11,
-           'camera': RPiCamera,
-           'first_stage_gauge': HeadlessMicroIonController,
-           'backside_furnace_gauge': HeadlessMicroIonController,
-           'bakeout1': HeadlessWatlowEZZone,
-           'bakeout2': HeadlessWatlowEZZone,
-           'rotary_dumper': RotaryDumper}
+DEVICES = {
+    "controller": HeadlessEurotherm,
+    "switch_controller": HeadlessU3LV,
+    "funnel": HeadlessMDrive,
+    "feeder": HeadlessMDrive,
+    "temp_hum": DHT11,
+    "camera": RPiCamera,
+    "first_stage_gauge": HeadlessMicroIonController,
+    "backside_furnace_gauge": HeadlessMicroIonController,
+    "bakeout1": HeadlessWatlowEZZone,
+    "bakeout2": HeadlessWatlowEZZone,
+    "rotary_dumper": RotaryDumper,
+}
 
 
 def debug(func):
@@ -86,19 +90,22 @@ class FirmwareManager(HeadlessLoggable):
         p = paths.furnace_firmware
         yd = yload(p)
 
-        self._load_config(yd['config'])
-        self._load_devices(yd['devices'])
-        self._load_switch_mapping(yd['switch_mapping'])
-        self._load_switch_indicator_mapping(yd['switch_indicator_mapping'])
-        self._load_funnel(yd['funnel'])
-        self._load_magnets(yd['magnets'])
+        self._load_config(yd["config"])
+        self._load_devices(yd["devices"])
+        self._load_switch_mapping(yd["switch_mapping"])
+        self._load_switch_indicator_mapping(yd["switch_indicator_mapping"])
+        self._load_funnel(yd["funnel"])
+        self._load_magnets(yd["magnets"])
         self._load_rotary_dumper()
 
         if self._use_broadcast_service:
             self._broadcaster = Broadcaster()
             self._broadcaster.setup(self._broadcaster_port)
             self._broadcast_stop_event = Event()
-            t = Thread(target=self._broadcast, args=(self._broadcaster, self._broadcast_stop_event))
+            t = Thread(
+                target=self._broadcast,
+                args=(self._broadcaster, self._broadcast_stop_event),
+            )
             t.start()
 
         if self._use_video_service:
@@ -155,20 +162,20 @@ class FirmwareManager(HeadlessLoggable):
     #             return '{:08X}{}'.format(len(imstr), imstr)
 
     def get_heartbeat(self, data):
-        return '{},{}'.format(time.time(), self._start_time)
+        return "{},{}".format(time.time(), self._start_time)
 
     def get_furnace_summary(self, data):
         h2o_channel = None
         if isinstance(data, dict):
-            h2o_channel = data.get('h2o_channel')
+            h2o_channel = data.get("h2o_channel")
 
         s = {}
         if h2o_channel is not None:
-            s['h2o_state'] = self.switch_controller.get_channel_state(h2o_channel)
+            s["h2o_state"] = self.switch_controller.get_channel_state(h2o_channel)
 
-        s['setpoint'] = self.get_setpoint(None)
-        s['response'] = self.get_temperature(None)
-        s['output'] = self.get_percent_output(None)
+        s["setpoint"] = self.get_setpoint(None)
+        s["response"] = self.get_temperature(None)
+        s["output"] = self.get_percent_output(None)
         return json.dumps(s)
 
     def get_percent_output(self, data):
@@ -176,10 +183,15 @@ class FirmwareManager(HeadlessLoggable):
             return self.controller.get_output()
 
     def get_full_summary(self):
-        s = {'version': __version__}
-        for attr in ('furnace_env_humidity', 'furnace_env_temperature',
-                     'furnace_setpoint', 'furnace_process_value',
-                     'feeder_position', 'funnel_position'):
+        s = {"version": __version__}
+        for attr in (
+            "furnace_env_humidity",
+            "furnace_env_temperature",
+            "furnace_setpoint",
+            "furnace_process_value",
+            "feeder_position",
+            "funnel_position",
+        ):
             addr = PARAMETER_REGISTRY.get(attr)
             if addr:
                 v = getattr(self, attr)
@@ -189,9 +201,9 @@ class FirmwareManager(HeadlessLoggable):
         for k in self._switch_mapping:
             _, o, c = self.get_indicator_component_states(k)
             rs = self.get_channel_state(k)
-            ss.append('{},s{},o{},c{}'.format(k, rs, o, c))
+            ss.append("{},s{},o{},c{}".format(k, rs, o, c))
 
-        s[PARAMETER_REGISTRY.get('switch_status')] = ';'.join(ss)
+        s[PARAMETER_REGISTRY.get("switch_status")] = ";".join(ss)
         return json.dumps(s)
 
     @debug
@@ -265,13 +277,13 @@ class FirmwareManager(HeadlessLoggable):
     def get_indicator_component_states(self, data):
         if self.switch_controller:
             args = self._get_indicator_info(data)
-            return ','.join(args)
+            return ",".join(args)
 
     @debug
     def get_di_state(self, data):
         if self.switch_controller:
             if isinstance(data, dict):
-                di = data['name']
+                di = data["name"]
             else:
                 di = data
             return self.switch_controller.get_channel_state(di)
@@ -290,28 +302,32 @@ class FirmwareManager(HeadlessLoggable):
     def set_setpoint(self, data):
         if self.controller:
             if isinstance(data, dict):
-                sp = data.get('setpoint', 0)
+                sp = data.get("setpoint", 0)
             else:
                 sp = float(data)
 
             self.controller.process_setpoint = sp
-            return 'OK'
+            return "OK"
 
     @debug
     def open_switch(self, data):
         if self.switch_controller:
             ch, inverted = self._get_switch_channel(data)
             if ch:
-                self.switch_controller.set_channel_state(ch, False if inverted else True)
-                return 'OK'
+                self.switch_controller.set_channel_state(
+                    ch, False if inverted else True
+                )
+                return "OK"
 
     @debug
     def close_switch(self, data):
         if self.switch_controller:
             ch, inverted = self._get_switch_channel(data)
             if ch:
-                self.switch_controller.set_channel_state(ch, True if inverted else False)
-                return 'OK'
+                self.switch_controller.set_channel_state(
+                    ch, True if inverted else False
+                )
+                return "OK"
 
     @debug
     def raise_funnel(self, data):
@@ -336,7 +352,7 @@ class FirmwareManager(HeadlessLoggable):
                 if data:
                     if isinstance(data, dict):
 
-                        period = data.get('period', 3)
+                        period = data.get("period", 3)
                     else:
                         period = data
 
@@ -362,8 +378,8 @@ class FirmwareManager(HeadlessLoggable):
                 rpm = None
                 if data:
                     if isinstance(data, dict):
-                        nsteps = data.get('nsteps', 3)
-                        rpm = data.get('rpm')
+                        nsteps = data.get("nsteps", 3)
+                        rpm = data.get("rpm")
                     else:
                         nsteps = data
 
@@ -390,7 +406,7 @@ class FirmwareManager(HeadlessLoggable):
                 nsteps = None
                 if data:
                     if isinstance(data, dict):
-                        nsteps = data.get('nsteps')
+                        nsteps = data.get("nsteps")
                     else:
                         nsteps = data
                 self.rotary_dumper.denergize(nsteps)
@@ -399,16 +415,18 @@ class FirmwareManager(HeadlessLoggable):
     def move_absolute(self, data):
         drive = self._get_drive(data)
         if drive:
-            units = data.get('units', 'steps')
-            velocity = data.get('velocity')
-            return drive.move_absolute(data['position'], velocity=velocity, block=False, units=units)
+            units = data.get("units", "steps")
+            velocity = data.get("velocity")
+            return drive.move_absolute(
+                data["position"], velocity=velocity, block=False, units=units
+            )
 
     @debug
     def move_relative(self, data):
         drive = self._get_drive(data)
         if drive:
-            units = data.get('units', 'steps')
-            return drive.move_relative(data['position'], block=False, units=units)
+            units = data.get("units", "steps")
+            return drive.move_relative(data["position"], block=False, units=units)
 
     @debug
     def stop_drive(self, data):
@@ -432,20 +450,22 @@ class FirmwareManager(HeadlessLoggable):
     def slew(self, data):
         drive = self._get_drive(data)
         if drive:
-            scalar = data.get('scalar', 1.0)
+            scalar = data.get("scalar", 1.0)
             return drive.slew(scalar)
 
     @debug
     def start_jitter(self, data):
         drive = self._get_drive(data)
         if drive:
-            turns = data.get('turns', 10)
-            p1 = data.get('p1', 0.1)
-            p2 = data.get('p2', 0.1)
-            velocity = data.get('velocity', None)
-            acceleration = data.get('acceleration', None)
-            deceleration = data.get('deceleration', None)
-            return drive.start_jitter(turns, p1, p2, velocity, acceleration, deceleration)
+            turns = data.get("turns", 10)
+            p1 = data.get("p1", 0.1)
+            p2 = data.get("p2", 0.1)
+            velocity = data.get("velocity", None)
+            acceleration = data.get("acceleration", None)
+            deceleration = data.get("deceleration", None)
+            return drive.start_jitter(
+                turns, p1, p2, velocity, acceleration, deceleration
+            )
 
     @debug
     def stop_jitter(self, data):
@@ -456,7 +476,7 @@ class FirmwareManager(HeadlessLoggable):
     @debug
     def set_pid(self, data):
         if isinstance(data, dict):
-            data = data['pid']
+            data = data["pid"]
 
         controller = self.controller
         if controller:
@@ -466,13 +486,13 @@ class FirmwareManager(HeadlessLoggable):
     def set_bakeout_setpoint(self, data):
         controller = self._get_bakeout_controller(data)
         if controller:
-            value = data['setpoint']
+            value = data["setpoint"]
             ret = controller.set_closed_loop_setpoint(value)
 
             # set_closed_loop_setpoint returns true if request and actual setpoints are greater than 0.01 different,
             # True == Failed to set setpoint
             # None == Succeeded to setpoint
-            return 'OK' if not ret else 'Fail'
+            return "OK" if not ret else "Fail"
 
     @debug
     def get_bakeout_setpoint(self, data):
@@ -491,7 +511,7 @@ class FirmwareManager(HeadlessLoggable):
         controller = self._get_bakeout_controller(data)
         if controller:
             if isinstance(data, dict):
-                mode = data['mode']
+                mode = data["mode"]
             else:
                 mode = data
             return controller.set_control_mode(mode)
@@ -513,7 +533,7 @@ class FirmwareManager(HeadlessLoggable):
         controller, channel = None, None
 
         if isinstance(data, dict):
-            name = data['name']
+            name = data["name"]
         else:
             name, channel = data
 
@@ -525,29 +545,29 @@ class FirmwareManager(HeadlessLoggable):
         return controller, channel
 
     def _get_bakeout_controller(self, data):
-        channel = data['channel']
+        channel = data["channel"]
         try:
-            controller = getattr(self, 'bakeout_controller{}'.format(channel))
+            controller = getattr(self, "bakeout_controller{}".format(channel))
         except AttributeError:
-            return 'Invalid bakeout channel {}, data={}'.format(channel, data)
+            return "Invalid bakeout channel {}, data={}".format(channel, data)
         return controller
 
     def _get_indicator_info(self, data):
         if self.switch_controller:
             if isinstance(data, dict):
-                alt_name = data['name']
+                alt_name = data["name"]
             else:
                 alt_name, _ = data
             alt_ch, inverted = self._get_switch_channel(alt_name)
 
             open_ch, close_ch, action = self._get_switch_indicator(data)
             # print 'ffffffff {} {} {}'.format(data, open_ch, close_ch)
-            if open_ch == 'inverted':
+            if open_ch == "inverted":
                 oresult = self.switch_controller.get_channel_state(alt_ch)
                 oresult = not oresult
             else:
                 invert = False
-                if open_ch.startswith('i'):
+                if open_ch.startswith("i"):
                     open_ch = open_ch[1:]
                     invert = True
                 oresult = self.switch_controller.get_channel_state(open_ch)
@@ -562,7 +582,7 @@ class FirmwareManager(HeadlessLoggable):
                 cresult = None
             else:
                 invert = False
-                if close_ch.startswith('i'):
+                if close_ch.startswith("i"):
                     close_ch = close_ch[1:]
                     invert = True
 
@@ -572,12 +592,14 @@ class FirmwareManager(HeadlessLoggable):
 
             result = oresult
             if oresult == cresult:
-                result = 'Error: OpenIndicator={}, CloseIndicator={}'.format(oresult, cresult)
+                result = "Error: OpenIndicator={}, CloseIndicator={}".format(
+                    oresult, cresult
+                )
             else:
                 # if inverted:
                 #    result = not result
 
-                result = 'open' if result else 'closed'
+                result = "open" if result else "closed"
             # print 'result={}, oresult={}, cresult={}'.format(result, oresult, cresult)
             return result, oresult, cresult
 
@@ -618,7 +640,7 @@ class FirmwareManager(HeadlessLoggable):
             # return result, oresult, cresult
 
     def _get_drive(self, data):
-        drive = data.get('drive')
+        drive = data.get("drive")
         if drive:
             try:
                 return getattr(self, drive)
@@ -627,14 +649,14 @@ class FirmwareManager(HeadlessLoggable):
 
     def _get_switch_channel(self, data):
         if isinstance(data, dict):
-            name = data['name']
+            name = data["name"]
         else:
             name = data
         name = str(name)
-        ch = self._switch_mapping.get(name, '')
+        ch = self._switch_mapping.get(name, "")
         inverted = False
-        if ',' in str(ch):
-            ch, inverted = ch.split(',')
+        if "," in str(ch):
+            ch, inverted = ch.split(",")
             inverted = to_bool(inverted)
 
         # self.debug('get switch channel {} {}'.format(name, ch))
@@ -642,26 +664,27 @@ class FirmwareManager(HeadlessLoggable):
 
     def _get_switch_indicator(self, data):
         if isinstance(data, dict):
-            name = data['name']
-            action = data['action']
+            name = data["name"]
+            action = data["action"]
         else:
             name, action = data
 
         close_ch = None
         open_ch = self._switch_indicator_mapping.get(name)
         # self.debug('get switch indicator channel {} {}'.format(name, open_ch))
-        if open_ch == 'inverted':
+        if open_ch == "inverted":
             return open_ch, None, None
 
-        if ',' in str(open_ch):
+        if "," in str(open_ch):
+
             def prep(ch):
                 ch = ch.strip()
-                if not ch or ch == '-':
+                if not ch or ch == "-":
                     ch = None
                 return ch
 
             # open_ch, close_ch = list(map(prep, open_ch.split(',')))
-            open_ch, close_ch = [prep(ci) for ci in open_ch.split(',')]
+            open_ch, close_ch = [prep(ci) for ci in open_ch.split(",")]
 
         return open_ch, close_ch, action
 
@@ -672,18 +695,18 @@ class FirmwareManager(HeadlessLoggable):
                 bs.send_message(self.get_full_summary())
                 i = -1
             else:
-                bs.send_message('HeartBeat {}'.format(time.time()))
+                bs.send_message("HeartBeat {}".format(time.time()))
             i += 1
             time.sleep(2)
 
     # bootstrapping
     def _load_config(self, cd):
-        self._use_video_service = cd.get('use_video_service', False)
+        self._use_video_service = cd.get("use_video_service", False)
 
-        bs = cd.get('broadcast', None)
+        bs = cd.get("broadcast", None)
         if bs:
-            self._use_broadcast_service = bs.get('enabled')
-            self._broadcast_port = bs.get('port', 9000)
+            self._use_broadcast_service = bs.get("enabled")
+            self._broadcast_port = bs.get("port", 9000)
 
     def _load_rotary_dumper(self):
         pass
@@ -693,9 +716,9 @@ class FirmwareManager(HeadlessLoggable):
 
     def _load_funnel(self, f):
         if self.funnel:
-            self._funnel_down = self.funnel.tosteps(f['down'])
-            self._funnel_up = self.funnel.tosteps(f['up'])
-            self._funnel_tolerance = f['tolerance']
+            self._funnel_down = self.funnel.tosteps(f["down"])
+            self._funnel_up = self.funnel.tosteps(f["up"])
+            self._funnel_tolerance = f["tolerance"]
 
     def _load_switch_mapping(self, m):
         self._switch_mapping = m
@@ -708,14 +731,15 @@ class FirmwareManager(HeadlessLoggable):
             self._load_device(dev)
 
     def _load_device(self, devname):
-        self.debug('load device name={}'.format(devname))
+        self.debug("load device name={}".format(devname))
         klass = DEVICES.get(devname)
         if klass:
-            dev = klass(name=devname, configuration_dir_name='furnace')
+            dev = klass(name=devname, configuration_dir_name="furnace")
             dev.bootstrap()
 
             setattr(self, devname, dev)
         else:
-            self.warning('Invalid device {}'.format(devname))
+            self.warning("Invalid device {}".format(devname))
+
 
 # ============= EOF =============================================

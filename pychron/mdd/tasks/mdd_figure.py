@@ -18,19 +18,20 @@
 from traits.api import Enum
 
 from pychron.mdd.tasks.mdd_views import VIEWS
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.options.options import FigureOptions
 from pychron.pychron_constants import NULL_STR, MAIN, APPEARANCE
 
-PANELS = [NULL_STR, 'Arrhenius', 'LogR Ro', 'Spectrum', 'Cooling History']
+PANELS = [NULL_STR, "Arrhenius", "LogR Ro", "Spectrum", "Cooling History"]
 
 
 def make_panel(p):
-    if p == 'Arrhenius':
-        ret = ('Arrhenius', 'Model Arrhenius')
-    elif p == 'Spectrum':
-        ret = ('Spectrum', 'Model Spectrum')
+    if p == "Arrhenius":
+        ret = ("Arrhenius", "Model Arrhenius")
+    elif p == "Spectrum":
+        ret = ("Spectrum", "Model Spectrum")
     else:
         ret = (p,)
     return ret
@@ -50,19 +51,25 @@ class MDDFigureOptions(FigureOptions):
         return [(i, make_panel(p)) for i, p in enumerate(ps) if not p == NULL_STR]
 
     def rc(self):
-        kind, n, r, c = 'g', 4, 2, 2
+        kind, n, r, c = "g", 4, 2, 2
 
-        if (self.panel_ul == NULL_STR and self.panel_ur == NULL_STR) or \
-                (self.panel_ll == NULL_STR and self.panel_lr == NULL_STR):
+        if (self.panel_ul == NULL_STR and self.panel_ur == NULL_STR) or (
+            self.panel_ll == NULL_STR and self.panel_lr == NULL_STR
+        ):
             r = 1
-            kind = 'h'
+            kind = "h"
             n = 2
 
-        if self.panel_ul == NULL_STR and self.panel_ll == NULL_STR or \
-                self.panel_ur == NULL_STR and self.panel_lr == NULL_STR or \
-                self.panel_ur == NULL_STR and self.panel_ll == NULL_STR:
+        if (
+            self.panel_ul == NULL_STR
+            and self.panel_ll == NULL_STR
+            or self.panel_ur == NULL_STR
+            and self.panel_lr == NULL_STR
+            or self.panel_ur == NULL_STR
+            and self.panel_ll == NULL_STR
+        ):
             c = 1
-            kind = 'v'
+            kind = "v"
             n = 2
 
         return kind, n, r, c
@@ -71,15 +78,16 @@ class MDDFigureOptions(FigureOptions):
         return VIEWS[name]
 
     def _panel_ul_default(self):
-        return 'Spectrum'
+        return "Spectrum"
 
     def _panel_ur_default(self):
-        return 'LogR Ro'
+        return "LogR Ro"
 
     def _panel_ll_default(self):
-        return 'Arrhenius'
+        return "Arrhenius"
 
     def _panel_lr_default(self):
-        return 'Cooling History'
+        return "Cooling History"
+
 
 # ============= EOF =============================================

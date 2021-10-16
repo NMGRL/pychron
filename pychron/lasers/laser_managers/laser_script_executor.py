@@ -32,7 +32,7 @@ from six.moves import range
 class LaserScriptExecutor(Loggable):
     laser_manager = Instance(ILaserManager)
     execute_button = Button
-    execute_label = Property(depends_on='_executing')
+    execute_label = Property(depends_on="_executing")
     message = Str
 
     _executing = Bool(False)
@@ -56,36 +56,41 @@ class LaserScriptExecutor(Loggable):
         self.execute()
 
     def _get_execute_label(self):
-        return 'Stop' if self._executing else 'Execute'
+        return "Stop" if self._executing else "Execute"
 
     def traits_view(self):
-        v = View(Item('execute_button', show_label=False,
-                      editor=ButtonEditor(label_value='execute_label')),
-                 UItem('message', style='readonly'),
-                 width=400,
-                 title='Laser Script Executor')
+        v = View(
+            Item(
+                "execute_button",
+                show_label=False,
+                editor=ButtonEditor(label_value="execute_label"),
+            ),
+            UItem("message", style="readonly"),
+            width=400,
+            title="Laser Script Executor",
+        )
         return v
 
 
 class UVLaserScriptExecutor(LaserScriptExecutor):
     def _get_script_lines(self):
-        with open(self._script_path, 'r') as rfile:
+        with open(self._script_path, "r") as rfile:
             return rfile.readlines()
 
     def _execute(self):
-        path = os.path.join(paths.scripts_dir, 'uvlaser.txt')
-        self.info('starting LaserScript')
+        path = os.path.join(paths.scripts_dir, "uvlaser.txt")
+        self.info("starting LaserScript")
 
         for i, line in enumerate(pathtolist(path)):
             if self._cancel:
-                self.debug('Script Canceled')
+                self.debug("Script Canceled")
                 break
 
             line = line.strip()
-            self.debug('execute {:02n}:'.format(i))
+            self.debug("execute {:02n}:".format(i))
             self._execute_line(line)
         else:
-            self.info('Script completed')
+            self.info("Script completed")
 
     def _execute_line(self, line):
         """
@@ -93,9 +98,9 @@ class UVLaserScriptExecutor(LaserScriptExecutor):
         :param line:
         :return:
         """
-        cmd, args = line.split(':')
+        cmd, args = line.split(":")
         try:
-            func = getattr(self, '_cmd_{}'.format(cmd))
+            func = getattr(self, "_cmd_{}".format(cmd))
         except AttributeError:
             self.warning('Invalid command: "{}". line={}'.format(cmd, line))
             return
@@ -104,15 +109,15 @@ class UVLaserScriptExecutor(LaserScriptExecutor):
             self.message = line
             func(*args)
         except BaseException as e:
-            self.warning('Failed to execute err:{}, line={}'.format(e, line))
-            self.message = ''
+            self.warning("Failed to execute err:{}, line={}".format(e, line))
+            self.message = ""
 
     # commands
     def _cmd_line_y(self, x, y, step, n, nburst):
-        self._line(x, y, step, n, 'vertical', nburst)
+        self._line(x, y, step, n, "vertical", nburst)
 
     def _cmd_line_x(self, x, y, step, n, nburst):
-        self._line(x, y, step, n, 'horizontal', nburst)
+        self._line(x, y, step, n, "horizontal", nburst)
 
     def _cmd_move_z(self, z):
         z = float(z)
@@ -138,7 +143,7 @@ class UVLaserScriptExecutor(LaserScriptExecutor):
     def _gen_line(self, x, y, step, n, orientation):
         xi, yi = x, y
         for i in range(n):
-            if orientation == 'vertical':
+            if orientation == "vertical":
                 yi = y + step * i
             else:
                 xi = x + step * i
@@ -248,6 +253,7 @@ class UVLaserScriptExecutor(LaserScriptExecutor):
             #
             #     self._executing = False
             #     self.info('LaserScript finished'.format(name))
+
 
 # import os
 # import time

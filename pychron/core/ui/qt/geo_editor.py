@@ -25,7 +25,7 @@
 from __future__ import absolute_import
 from pychron.core.ui import set_toolkit
 
-set_toolkit('qt4')
+set_toolkit("qt4")
 
 from traits.api import HasTraits, Int
 from traitsui.api import View, Item
@@ -57,11 +57,11 @@ class A(HasTraits):
     a = Int
 
     def traits_view(self):
-        v = View(Item('a', editor=GeoEditor()))
+        v = View(Item("a", editor=GeoEditor()))
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     a = A()
     a.configure_traits()
 # ============= EOF =============================================

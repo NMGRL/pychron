@@ -26,7 +26,8 @@ from pychron.canvas.canvas2D.scene.scene import Scene
 
 class UVMaskScene(Scene):
     def load(self, p):
-        with open(p, 'r') as rfile:
+        with open(p, "r") as rfile:
             md = yaml.load(rfile)
+
 
 # ============= EOF =============================================

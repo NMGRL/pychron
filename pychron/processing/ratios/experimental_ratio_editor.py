@@ -21,10 +21,12 @@ set_qt()
 # ============= enthought library imports =======================
 from traits.api import Float, on_trait_change, Property
 from traitsui.api import View, Item, UItem, VGroup, HGroup
+
 # ============= standard library imports ========================
 from numpy import linspace
 from numpy.random.mtrand import normal
 from numpy import random
+
 # ============= local library imports  ==========================
 from pychron.processing.isotope import Isotope
 from pychron.processing.ratios.ratio_editor import RatioEditor
@@ -43,10 +45,10 @@ def gen_data(b, m, e, n=50):
 def generate_test_data(nslope, nintercept, nnoise, dslope, dintercept, dnoise):
     random.seed(123456789)
     xs, ys = gen_data(nintercept, nslope, nnoise)
-    a40 = Isotope(name='Ar40', xs=xs, ys=ys)
+    a40 = Isotope(name="Ar40", xs=xs, ys=ys)
 
     xs, ys = gen_data(dintercept, dslope, dnoise)
-    a39 = Isotope(name='Ar39', xs=xs, ys=ys)
+    a39 = Isotope(name="Ar39", xs=xs, ys=ys)
 
     return dict(Ar40=a40, Ar39=a39)
 
@@ -61,48 +63,55 @@ class ExperimentalRatioEditor(RatioEditor):
     nnoise = Float(0, enter_set=True, auto_set=False)
     dnoise = Float(0, enter_set=True, auto_set=False)
 
-    percent_diff = Property(depends_on='ratio_intercept, intercept_ratio')
+    percent_diff = Property(depends_on="ratio_intercept, intercept_ratio")
 
     def _get_percent_diff(self):
         try:
-            r = (self.ratio_intercept - self.intercept_ratio) / self.intercept_ratio * 100
+            r = (
+                (self.ratio_intercept - self.intercept_ratio)
+                / self.intercept_ratio
+                * 100
+            )
         except ZeroDivisionError:
-            r = 'NaN'
+            r = "NaN"
 
         return r
 
-    @on_trait_change('nslope, nintercept, nnoise, dslope, dintercept, dnoise')
+    @on_trait_change("nslope, nintercept, nnoise, dslope, dintercept, dnoise")
     def update(self):
         self._gen_data()
         self.refresh_plot()
 
     def _gen_data(self):
-        self.data = generate_test_data(self.nslope,
-                                       self.nintercept,
-                                       self.nnoise,
-                                       self.dslope,
-                                       self.dintercept,
-                                       self.dnoise)
+        self.data = generate_test_data(
+            self.nslope,
+            self.nintercept,
+            self.nnoise,
+            self.dslope,
+            self.dintercept,
+            self.dnoise,
+        )
 
     def setup(self):
         self._gen_data()
         self.setup_graph()
 
     def traits_view(self):
-        v = View(UItem('graph', style='custom'),
-                 VGroup(
-
-                     HGroup(Item('nslope'), Item('nintercept'), Item('nnoise')),
-                     HGroup(Item('dslope'), Item('dintercept'), Item('dnoise')),
-
-                     Item('time_zero_offset'),
-                     Item('intercept_ratio', style='readonly'),
-                     Item('ratio_intercept', style='readonly'),
-                     Item('percent_diff', style='readonly')))
+        v = View(
+            UItem("graph", style="custom"),
+            VGroup(
+                HGroup(Item("nslope"), Item("nintercept"), Item("nnoise")),
+                HGroup(Item("dslope"), Item("dintercept"), Item("dnoise")),
+                Item("time_zero_offset"),
+                Item("intercept_ratio", style="readonly"),
+                Item("ratio_intercept", style="readonly"),
+                Item("percent_diff", style="readonly"),
+            ),
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     re = ExperimentalRatioEditor()
     re.setup()
     re.configure_traits()

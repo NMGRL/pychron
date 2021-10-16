@@ -66,28 +66,30 @@ class NMGRLRotaryDumper(BaseDumper):
     rpm = Int
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'nsteps', 'Motion', 'nsteps', cast='int')
-        self.set_attribute(config, 'rpm', 'Motion', 'rpm', cast='int')
+        self.set_attribute(config, "nsteps", "Motion", "nsteps", cast="int")
+        self.set_attribute(config, "rpm", "Motion", "rpm", cast="int")
         return super(NMGRLRotaryDumper, self).load_additional_args(config)
 
     def energize(self):
-        d = json.dumps({'command': 'EnergizeMagnets', 'nsteps': self.nsteps, 'rpm': self.rpm})
+        d = json.dumps(
+            {"command": "EnergizeMagnets", "nsteps": self.nsteps, "rpm": self.rpm}
+        )
         self.ask(d)
         self._dump_in_progress = True
 
     def denergize(self):
-        d = json.dumps({'command': 'DenergizeMagnets', 'nsteps': self.nsteps})
+        d = json.dumps({"command": "DenergizeMagnets", "nsteps": self.nsteps})
         self.ask(d)
         self._dump_in_progress = False
 
     def is_energized(self):
-        d = json.dumps({'command': 'IsEnergized'})
-        ret = self.ask(d, verbose=True) == 'OK'
+        d = json.dumps({"command": "IsEnergized"})
+        ret = self.ask(d, verbose=True) == "OK"
         return ret
 
     def is_moving(self):
-        d = json.dumps({'command': 'RotaryDumperMoving'})
-        ret = self.ask(d, verbose=True, retries=1) == 'OK'
+        d = json.dumps({"command": "RotaryDumperMoving"})
+        ret = self.ask(d, verbose=True, retries=1) == "OK"
         return ret
 
     def _get_dump_state(self):
@@ -96,16 +98,17 @@ class NMGRLRotaryDumper(BaseDumper):
 
 class NMGRLMagnetDumper(BaseDumper):
     def energize(self):
-        d = json.dumps({'command': 'EnergizeMagnets', 'period': 3})
+        d = json.dumps({"command": "EnergizeMagnets", "period": 3})
         self.ask(d)
 
     def denergize(self):
-        self.ask('DenergizeMagnets')
+        self.ask("DenergizeMagnets")
 
     def is_energized(self):
-        ret = self.ask('IsEnergized', verbose=True) == 'OK'
+        ret = self.ask("IsEnergized", verbose=True) == "OK"
         self._dump_in_progress = ret
         return ret
+
 
 # ============= EOF =============================================
 

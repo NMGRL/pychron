@@ -34,4 +34,5 @@ class PyScriptLexer(PythonLexer):
             else:
                 yield index, token, value
 
+
 # ============= EOF =============================================

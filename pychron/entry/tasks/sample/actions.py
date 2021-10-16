@@ -40,52 +40,53 @@ from pychron.envisage.ui_actions import UIAction, UITaskAction
 
 
 class SampleEntryAction(UIAction):
-    name = 'Sample'
-    id = 'pychron.sample_entry'
+    name = "Sample"
+    id = "pychron.sample_entry"
 
     def perform(self, event):
-        pid = 'pychron.entry.sample.task'
+        pid = "pychron.entry.sample.task"
         app = event.task.window.application
         app.get_task(pid)
 
 
 class SaveAction(TaskAction):
-    name = 'Save'
-    image = icon('database_save')
-    method = 'save'
+    name = "Save"
+    image = icon("database_save")
+    method = "save"
 
 
 class LoadAction(TaskAction):
-    name = 'Load'
-    image = icon('document-open')
-    method = 'load'
+    name = "Load"
+    image = icon("document-open")
+    method = "load"
 
 
 class DumpAction(TaskAction):
-    name = 'Dump'
-    image = icon('document-save')
-    method = 'dump'
+    name = "Dump"
+    image = icon("document-save")
+    method = "dump"
 
 
 class RecoverAction(TaskAction):
-    name = 'Recover'
-    image = icon('document-revert-3')
-    method = 'recover'
+    name = "Recover"
+    image = icon("document-revert-3")
+    method = "recover"
 
 
 class ClearAction(TaskAction):
-    name = 'Clear'
-    image = icon('clear')
-    method = 'clear'
+    name = "Clear"
+    image = icon("clear")
+    method = "clear"
 
 
 class ImportSamplesAction(UITaskAction):
-    name = 'Import Sample File'
-    method = 'import_sample_from_file'
+    name = "Import Sample File"
+    method = "import_sample_from_file"
 
 
 class MakeSampleTemplateAction(UITaskAction):
-    name = 'Make Sample Template'
-    method = 'make_sample_template_file'
+    name = "Make Sample Template"
+    method = "make_sample_template_file"
+
 
 # ============= EOF =============================================

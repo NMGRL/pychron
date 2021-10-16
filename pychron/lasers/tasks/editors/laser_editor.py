@@ -46,4 +46,5 @@ class LaserEditor(BaseTraitsEditor):
             self._execute_thread.join()
             self.completed = True
 
+
 # ============= EOF =============================================

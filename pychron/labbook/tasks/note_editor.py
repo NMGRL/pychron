@@ -33,7 +33,7 @@ class NoteEditor(BaseTraitsEditor):
     note = String
     # use_commit = Bool
     # commit = String
-    name = Property(depends_on='dirty, default_name')
+    name = Property(depends_on="dirty, default_name")
     # _name = Str
     dirty = Bool
     # root = Str
@@ -82,14 +82,14 @@ class NoteEditor(BaseTraitsEditor):
 
         self.path = path
         # self.root, name = os.path.split(path)
-        with open(path, 'r') as rfile:
+        with open(path, "r") as rfile:
             note = rfile.read()
             self.reset_hash(note)
             self.note = note
             self.name_editable = False
 
     def save(self, p):
-        with open(p, 'w') as wfile:
+        with open(p, "w") as wfile:
             wfile.write(self.note)
 
         self.path = p
@@ -115,8 +115,10 @@ class NoteEditor(BaseTraitsEditor):
         # v = View(VGroup(HGroup(Item('new_name', label='Name', visible_when='name_editable')),
         # VGroup(UItem('note', style='custom'),
         #                        cgrp)))
-        v = View(VGroup(UItem('note', style='custom'),
-                        UItem('labels', editor=LabelEditor())))
+        v = View(
+            VGroup(UItem("note", style="custom"), UItem("labels", editor=LabelEditor()))
+        )
         return v
+
 
 # ============= EOF =============================================

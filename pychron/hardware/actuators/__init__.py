@@ -28,7 +28,7 @@ def get_valve_name(obj):
     if isinstance(obj, (str, int)):
         name = obj
     else:
-        name = obj.name.split('-')[1]
+        name = obj.name.split("-")[1]
     return name
 
 
@@ -47,7 +47,7 @@ def word(func):
         r = func(*args, **kw)
         d = {}
         if not isinstance(r, bool):
-            args = r.split(',')
+            args = r.split(",")
             d = {args[i]: args[i + 1] for i in range(0, len(args), 2)}
 
         return d
@@ -76,17 +76,19 @@ def trim_affirmative(func):
     return wrapper
 
 
-base = 'pychron.hardware'
-abase = '{}.actuators'.format(base)
+base = "pychron.hardware"
+abase = "{}.actuators".format(base)
 
-PACKAGES = dict(AgilentGPActuator='{}.agilent.agilent_gp_actuator'.format(base),
-                AgilentMultifunction='{}.agilent.agilent_multifunction'.format(base),
-                ArduinoGPActuator='{}.arduino.arduino_gp_actuator'.format(base),
-                QtegraGPActuator='{}.qtegra_gp_actuator'.format(abase),
-                PychronGPActuator='{}.pychron_gp_actuator'.format(abase),
-                NGXGPActuator='{}.ngx_gp_actuator'.format(abase),
-                WiscArGPActuator='{}.wiscar_actuator'.format(abase),
-                NMGRLFurnaceActuator='{}.nmgrl_furnace_actuator'.format(abase),
-                DummyGPActuator='{}.dummy_gp_actuator'.format(abase),
-                RPiGPIO='{}.rpi_gpio'.format(base),
-                T4Actuator='{}.t4_actuator'.format(abase))
+PACKAGES = dict(
+    AgilentGPActuator="{}.agilent.agilent_gp_actuator".format(base),
+    AgilentMultifunction="{}.agilent.agilent_multifunction".format(base),
+    ArduinoGPActuator="{}.arduino.arduino_gp_actuator".format(base),
+    QtegraGPActuator="{}.qtegra_gp_actuator".format(abase),
+    PychronGPActuator="{}.pychron_gp_actuator".format(abase),
+    NGXGPActuator="{}.ngx_gp_actuator".format(abase),
+    WiscArGPActuator="{}.wiscar_actuator".format(abase),
+    NMGRLFurnaceActuator="{}.nmgrl_furnace_actuator".format(abase),
+    DummyGPActuator="{}.dummy_gp_actuator".format(abase),
+    RPiGPIO="{}.rpi_gpio".format(base),
+    T4Actuator="{}.t4_actuator".format(abase),
+)

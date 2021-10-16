@@ -24,18 +24,22 @@ from pychron.user.tasks.task import UsersTask
 
 
 class UsersPlugin(BaseTaskPlugin):
-    name = 'Users'
-    id = 'pychron.users.plugin'
+    name = "Users"
+    id = "pychron.users.plugin"
 
     def _tasks_default(self):
-        return [TaskFactory(id='pychron.users',
-                            factory=self._users_task_factory,
-                            name='Users',
-                            accelerator='Ctrl+Shift+U',
-                            )]
+        return [
+            TaskFactory(
+                id="pychron.users",
+                factory=self._users_task_factory,
+                name="Users",
+                accelerator="Ctrl+Shift+U",
+            )
+        ]
 
     def _users_task_factory(self):
         t = UsersTask(application=self.application)
         return t
+
 
 # ============= EOF =============================================

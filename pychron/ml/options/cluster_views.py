@@ -20,7 +20,7 @@ from pychron.pychron_constants import MAIN
 
 class MainView(SubOptions):
     def traits_view(self):
-        v = View(Item('cluster_kind'))
+        v = View(Item("cluster_kind"))
         return v
 
 

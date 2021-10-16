@@ -46,16 +46,15 @@ class Scene(HasTraits):
         for li in self.layers:
             li.destroy()
 
-        self.layers = [Layer(name='0'), Layer(name='1')]
+        self.layers = [Layer(name="0"), Layer(name="1")]
 
     def load(self, pathname):
-        """
-        """
+        """ """
         pass
 
     def render_overlays(self, gc, canvas):
-        x1, x2 = canvas.get_mapper_limits('index')
-        y1, y2 = canvas.get_mapper_limits('value')
+        x1, x2 = canvas.get_mapper_limits("index")
+        y1, y2 = canvas.get_mapper_limits("value")
 
         bounds = x1, x2, y1, y2
         self._render(gc, canvas, self.overlays, bounds)
@@ -63,13 +62,22 @@ class Scene(HasTraits):
     def render_components(self, gc, canvas):
         # only render components within the current bounds.
 
-        x1, x2 = canvas.get_mapper_limits('index')
-        y1, y2 = canvas.get_mapper_limits('value')
+        x1, x2 = canvas.get_mapper_limits("index")
+        y1, y2 = canvas.get_mapper_limits("value")
 
         bounds = x1, x2, y1, y2
-        self._render(gc, canvas, (ci for li in self.layers if li.visible
-                                  for ci in li.components
-                                  if ci.scene_visible and ci.visible), bounds)
+        self._render(
+            gc,
+            canvas,
+            (
+                ci
+                for li in self.layers
+                if li.visible
+                for ci in li.components
+                if ci.scene_visible and ci.visible
+            ),
+            bounds,
+        )
 
     def request_layout(self):
         for i in self.iteritems():
@@ -86,6 +94,7 @@ class Scene(HasTraits):
             return type(cc) not in exclude
 
         if klass:
+
             def btest(cc):
                 return isinstance(cc, klass) and _test(cc)
 
@@ -93,17 +102,14 @@ class Scene(HasTraits):
         else:
             test = _test
 
-        return (ci for li in self.layers
-                for ci in li.components
-                if test(ci))
+        return (ci for li in self.layers for ci in li.components if test(ci))
 
     def get_items(self, klass=None):
         #         return [ci for li in self.layers
         #                 for ci in li.components
         #                     if isinstance(ci, klass)]
         #
-        comps = (ci for li in self.layers
-                 for ci in li.components)
+        comps = (ci for li in self.layers for ci in li.components)
         if klass:
             return [ci for ci in comps if isinstance(ci, klass)]
         else:
@@ -120,7 +126,7 @@ class Scene(HasTraits):
 
         layers = self.layers
         if layer is not None:
-            layers = layers[layer:layer + 1]
+            layers = layers[layer : layer + 1]
 
         for li in layers:
             nn = next((ll for ll in li.components if test(ll)), None)
@@ -145,7 +151,7 @@ class Scene(HasTraits):
 
             n = len(self.layers)
             if layer > n - 1:
-                self.layers.append(Layer(name='{}'.format(n)))
+                self.layers.append(Layer(name="{}".format(n)))
 
             layer = self.layers[layer]
 
@@ -199,7 +205,7 @@ class Scene(HasTraits):
 
         self.layout_needed = True
 
-    @on_trait_change('layers:visible')
+    @on_trait_change("layers:visible")
     def _refresh(self):
         self.layout_needed = True
 
@@ -213,10 +219,10 @@ class Scene(HasTraits):
                 ci.render(gc)
 
     def _get_floats(self, elem, name):
-        return [float(i) for i in elem.find(name).text.split(',')]
+        return [float(i) for i in elem.find(name).text.split(",")]
 
-    def _get_translation(self, cp, elem, name='translation'):
-        x, y = elem.find(name).text.split(',')
+    def _get_translation(self, cp, elem, name="translation"):
+        x, y = elem.find(name).text.split(",")
         try:
             x = float(x)
         except ValueError:
@@ -232,23 +238,23 @@ class Scene(HasTraits):
     def _get_parameteric_translation(self, cp, tag):
         v = 0
         offset = 0
-        if '+' in tag:
-            tag, offset = tag.split('+')
-        elif '-' in tag:
-            tag, offset = tag.split('-')
+        if "+" in tag:
+            tag, offset = tag.split("+")
+        elif "-" in tag:
+            tag, offset = tag.split("-")
 
         offset = int(offset)
-        for p in cp.get_elements('param'):
+        for p in cp.get_elements("param"):
             if p.text.strip() == tag:
-                e = p.find('value')
+                e = p.find("value")
                 v = e.text.strip()
 
         return float(v) + offset
 
     def _make_color(self, c):
         if not isinstance(c, str):
-            c = ','.join(map(str, list(map(int, c))))
-            c = '({})'.format(c)
+            c = ",".join(map(str, list(map(int, c))))
+            c = "({})".format(c)
         return c
 
     def _get_canvas_parser(self, p=None):
@@ -266,14 +272,15 @@ class Scene(HasTraits):
         #         cp = self._get_canvas_parser()
         tree = cp.get_tree()
         if tree:
-            elm = tree.find('xview')
+            elm = tree.find("xview")
             if elm is not None:
-                xv = list(map(float, elm.text.split(',')))
+                xv = list(map(float, elm.text.split(",")))
 
-            elm = tree.find('yview')
+            elm = tree.find("yview")
             if elm is not None:
-                yv = list(map(float, elm.text.split(',')))
+                yv = list(map(float, elm.text.split(",")))
 
         return xv, yv
+
 
 # ============= EOF =============================================

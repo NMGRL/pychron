@@ -66,17 +66,16 @@ class VueMetrixManager(Manager):
     #            self.start_scan()
 
     def _control_default(self):
-        """
-        """
-        b = VueDiodeControlModule(name='vue_metrix_controlmodule',
-                                  configuration_dir_name='fusions_diode'
-                                  )
+        """ """
+        b = VueDiodeControlModule(
+            name="vue_metrix_controlmodule", configuration_dir_name="fusions_diode"
+        )
         return b
 
     # ============= views ===================================
     def traits_view(self):
         v = View(
-            Item('control', show_label=False, style='custom'),
+            Item("control", show_label=False, style="custom"),
             #                 VGroup(
             #                        Item('laser_amps', format_str = '%0.2f', style = 'readonly'),
             #                        Item('laser_temperature', format_str = '%0.2f', style = 'readonly'),
@@ -86,15 +85,15 @@ class VueMetrixManager(Manager):
             #                    handler = self.handler_klass,
             width=500,
             height=500,
-            resizable=True
+            resizable=True,
         )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
 
-    logging_setup('vue_metrix')
+    logging_setup("vue_metrix")
     v = VueMetrixManager()
     v.control.bootstrap()
     v.configure_traits()

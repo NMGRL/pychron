@@ -23,7 +23,11 @@ import math
 
 from pychron.canvas.canvas2D.scene.primitives.base import Connectable
 from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow
-from pychron.canvas.canvas2D.scene.primitives.primitives import Rectangle, Bordered, BorderLine
+from pychron.canvas.canvas2D.scene.primitives.primitives import (
+    Rectangle,
+    Bordered,
+    BorderLine,
+)
 
 
 def rounded_rect(gc, x, y, width, height, corner_radius):
@@ -41,7 +45,9 @@ def rounded_rect(gc, x, y, width, height, corner_radius):
 
         gc.move_to(x + corner_radius, y)
         gc.arc_to(x + width, y, x + width, y + corner_radius, corner_radius)
-        gc.arc_to(x + width, y + height, x + width - corner_radius, y + height, corner_radius)
+        gc.arc_to(
+            x + width, y + height, x + width - corner_radius, y + height, corner_radius
+        )
         gc.arc_to(x, y + height, x, y, corner_radius)
         gc.arc_to(x, y, x + width + corner_radius, y, corner_radius)
         gc.draw_path()
@@ -54,7 +60,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
     use_border_gaps = True
 
     def get_tooltip_text(self):
-        return 'Stage={}\nVolume={}'.format(self.name, self.volume)
+        return "Stage={}\nVolume={}".format(self.name, self.volume)
 
     def _render(self, gc):
         corner_radius = self.corner_radius
@@ -68,9 +74,8 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
 
             gc.set_fill_color(self._convert_color(self.name_color))
             if self.display_name:
-                self._render_textbox(gc, x, y, width, height,
-                                     self.display_name)
-            elif not self.display_name == '':
+                self._render_textbox(gc, x, y, width, height, self.display_name)
+            elif not self.display_name == "":
                 self._render_name(gc, x, y, width, height)
 
     def _render_border(self, gc, x, y, width, height):
@@ -105,7 +110,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                     gc.line_to(p1x + 5, y + height)
 
                                 else:
-                                    if c.corner == 'll':
+                                    if c.corner == "ll":
                                         p1x, p1y = p1.get_xy()
                                         gc.move_to(p1x - 5, p1y)
                                         gc.line_to(p1x + 5, p1y)
@@ -140,7 +145,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                     gc.line_to(xx, p2y + 5)
 
                             elif isinstance(c, Tee):
-                                if t == 'mid':
+                                if t == "mid":
                                     yy = y if c.left.y < self.y else y + height
                                     mx = c.get_midx()
                                     gc.move_to(mx - 5, yy)
@@ -148,7 +153,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                 else:
                                     gc.set_line_width(self.border_width + 2)
                                     # gc.set_stroke_color((1,0,0))
-                                    if t == 'left':
+                                    if t == "left":
                                         xx, yy = c.left.get_xy()
                                         xx += 2.5
                                     else:
@@ -166,7 +171,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
 
 
 class Spectrometer(RoundedRectangle):
-    tag = 'spectrometer'
+    tag = "spectrometer"
 
     def __init__(self, *args, **kw):
         super(Spectrometer, self).__init__(*args, **kw)
@@ -175,7 +180,7 @@ class Spectrometer(RoundedRectangle):
 
 
 class Stage(RoundedRectangle):
-    tag = 'stage'
+    tag = "stage"
 
     def __init__(self, *args, **kw):
         super(Spectrometer, self).__init__(*args, **kw)
@@ -184,10 +189,10 @@ class Stage(RoundedRectangle):
 
 
 class CircleStage(Connectable, Bordered):
-    tag = 'cirle_stage'
+    tag = "cirle_stage"
 
     def get_tooltip_text(self):
-        return 'Circle Stage={}\nVolume={}'.format(self.name, self.volume)
+        return "Circle Stage={}\nVolume={}".format(self.name, self.volume)
 
     def _render(self, gc):
         with gc:
@@ -200,16 +205,15 @@ class CircleStage(Connectable, Bordered):
 
             gc.set_fill_color(self._convert_color(self.name_color))
             if self.display_name:
-                self._render_textbox(gc, x, y, width, height,
-                                     self.display_name)
-            elif not self.display_name == '':
+                self._render_textbox(gc, x, y, width, height, self.display_name)
+            elif not self.display_name == "":
                 self._render_name(gc, x, y, width, height)
 
     def _render_textbox(self, gc, x, y, w, h, txt):
 
         tw, th, _, _ = gc.get_full_text_extent(txt)
-        x = x - tw / 2.
-        y = y - th / 2.
+        x = x - tw / 2.0
+        y = y - th / 2.0
 
         self._render_text(gc, txt, x, y)
 
@@ -260,8 +264,8 @@ class CircleStage(Connectable, Bordered):
                     plus_x = D * dy + sgn(dy) * dx * ss
                     minus_x = D * dy - sgn(dy) * dx * ss
 
-                    plus_y = (-D * dx + abs(dy) * ss)
-                    minus_y = (-D * dx - abs(dy) * ss)
+                    plus_y = -D * dx + abs(dy) * ss
+                    minus_y = -D * dx - abs(dy) * ss
                     plus_x /= dr ** 2
                     plus_y /= dr ** 2
                     minus_x /= dr ** 2
@@ -280,5 +284,6 @@ class CircleStage(Connectable, Bordered):
 
                     gc.arc(cx, cy, r, theta - dw, theta + dw)
                     gc.stroke_path()
+
 
 # ============= EOF =============================================

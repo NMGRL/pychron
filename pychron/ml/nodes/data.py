@@ -20,15 +20,19 @@ from pychron.pipeline.nodes import CSVNode
 class CSVClusterNode(CSVNode):
     def _analysis_factory(self, d):
         from pychron.processing.analyses.file_analysis import FileAnalysis
-        fa = FileAnalysis(age=float(get_case_insensitive(d, 'age')),
-                          age_err=float(get_case_insensitive(d, 'age_err')),
-                          kca=float(get_case_insensitive(d, 'kca')),
-                          kca_err=float(get_case_insensitive(d, 'kca_err')),
-                          record_id=get_case_insensitive(d, 'runid'),
-                          sample=get_case_insensitive(d, 'sample', ''),
-                          label_name=get_case_insensitive(d, 'label_name', ''),
-                          group=to_int(get_case_insensitive(d, 'group', '')),
-                          aliquot=to_int(get_case_insensitive(d, 'aliquot', 0)))
+
+        fa = FileAnalysis(
+            age=float(get_case_insensitive(d, "age")),
+            age_err=float(get_case_insensitive(d, "age_err")),
+            kca=float(get_case_insensitive(d, "kca")),
+            kca_err=float(get_case_insensitive(d, "kca_err")),
+            record_id=get_case_insensitive(d, "runid"),
+            sample=get_case_insensitive(d, "sample", ""),
+            label_name=get_case_insensitive(d, "label_name", ""),
+            group=to_int(get_case_insensitive(d, "group", "")),
+            aliquot=to_int(get_case_insensitive(d, "aliquot", 0)),
+        )
         return fa
+
 
 # ============= EOF =============================================

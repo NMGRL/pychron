@@ -17,44 +17,46 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from pyface.tasks.action.task_action import TaskAction
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 
 
 class AddNoteAction(TaskAction):
-    name = 'Add Note'
-    method = 'add_note'
-    image = icon('note-add')
+    name = "Add Note"
+    method = "add_note"
+    image = icon("note-add")
 
 
 class SaveNoteAction(TaskAction):
-    name = 'Save Note'
-    method = 'save_note'
-    image = icon('document-save')
+    name = "Save Note"
+    method = "save_note"
+    image = icon("document-save")
 
 
 class AddFolderAction(TaskAction):
-    name = 'Add Folder'
-    method = 'add_folder'
-    image = icon('folder-new')
+    name = "Add Folder"
+    method = "add_folder"
+    image = icon("folder-new")
 
 
 class PushAction(TaskAction):
-    name = 'Push'
-    method = 'push'
-    image = icon('arrow_up')
+    name = "Push"
+    method = "push"
+    image = icon("arrow_up")
 
 
 class PullAction(TaskAction):
-    name = 'Pull'
-    method = 'pull'
-    image = icon('arrow_down')
+    name = "Pull"
+    method = "pull"
+    image = icon("arrow_down")
 
 
 class NewLabelAction(TaskAction):
-    name = 'New Label'
-    method = 'new_label'
-    image = icon('add')
+    name = "New Label"
+    method = "new_label"
+    image = icon("add")
+
 
 # ============= EOF =============================================

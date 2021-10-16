@@ -31,7 +31,7 @@ class FocusParameters(HasTraits):
     fend = Float(10)
     step_scalar = Float(1)
     #    style = Enum('laplace', '2step-laplace', '2step-sobel', 'var', 'sobel')
-    operator = Enum('laplace', 'var', 'sobel')
+    operator = Enum("laplace", "var", "sobel")
 
     #    discrete = Bool(False)
 
@@ -42,8 +42,8 @@ class FocusParameters(HasTraits):
     velocity_scalar2 = Float(1)
 
     crop_bind = Bool(True)
-    crop_width = Property(depends_on='_crop_width')
-    crop_height = Property(depends_on='_crop_height')
+    crop_width = Property(depends_on="_crop_width")
+    crop_height = Property(depends_on="_crop_height")
     _crop_width = Int(300)
     _crop_height = Int(300)
 
@@ -80,24 +80,22 @@ class FocusParameters(HasTraits):
 
     def traits_view(self):
         v = View(
-            Item('fstart'),
-            Item('fend'),
-            Item('operator'),
+            Item("fstart"),
+            Item("fend"),
+            Item("operator"),
             #               Item('discrete'),
-            Item('step_scalar', visible_when='discrete'),
-            Item('zoom'),
+            Item("step_scalar", visible_when="discrete"),
+            Item("zoom"),
             Group(
-                Item('velocity_scalar1'),
-                Item('negative_window'),
-                Item('positive_window'),
-                Item('velocity_scalar2'),
-                VGroup(Item('crop_width'),
-                       Item('crop_height'),
-                       Item('crop_bind'))
-
+                Item("velocity_scalar1"),
+                Item("negative_window"),
+                Item("positive_window"),
+                Item("velocity_scalar2"),
+                VGroup(Item("crop_width"), Item("crop_height"), Item("crop_bind"))
                 #                     enabled_when='style=="2step"'
             ),
         )
         return v
+
 
 # ============= EOF =====================================

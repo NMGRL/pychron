@@ -23,19 +23,22 @@ from pychron.pipeline.plot.panels.spectrum_panel import SpectrumPanel
 
 
 class CompositeModel(FigureModel):
-
     def _make_panel_groups(self):
-        gs = [SpectrumPanel(analyses=self.analyses,
-                            plot_options=self.plot_options.spectrum_options),
-              InverseIsochronPanel(analyses=self.analyses,
-                                   plot_options=self.plot_options.isochron_options)]
+        gs = [
+            SpectrumPanel(
+                analyses=self.analyses, plot_options=self.plot_options.spectrum_options
+            ),
+            InverseIsochronPanel(
+                analyses=self.analyses, plot_options=self.plot_options.isochron_options
+            ),
+        ]
         return gs
 
     def _make_panels(self):
         gs = super(CompositeModel, self)._make_panels()
         if self.plot_options.auto_generate_title:
             for gi in gs:
-                gi.title = ''
+                gi.title = ""
 
         else:
             for i, gi in enumerate(gs):
@@ -43,4 +46,6 @@ class CompositeModel(FigureModel):
                     gi.title = gi.plot_options.generate_title(gi.analyses, i)
 
         return gs
+
+
 # ============= EOF =============================================

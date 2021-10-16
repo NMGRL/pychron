@@ -20,6 +20,7 @@ from __future__ import print_function
 from pyface.qt.QtCore import QTimer
 from pyface.qt.QtGui import QLabel, QImage, QPixmap, QSizePolicy
 from traits.api import Int, Instance
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
@@ -45,7 +46,7 @@ class _CameraEditor(Editor):
         # if self.value is not None:
         self.timer = QTimer(self.control)
         self.timer.timeout.connect(self._update)
-        print('fps', self.factory.fps)
+        print("fps", self.factory.fps)
         if self.factory.fps:
             self.timer.setInterval(1000 / self.factory.fps)
         self.timer.start()
@@ -79,5 +80,6 @@ class _CameraEditor(Editor):
 class CameraEditor(BasicEditorFactory):
     klass = _CameraEditor
     fps = Int(24)
+
 
 # ============= EOF =============================================

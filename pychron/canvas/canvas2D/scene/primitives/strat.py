@@ -63,4 +63,5 @@ class StratItem(Label):
             gc.set_text_position(x, y + self.label_offsety)
             gc.show_text(t)
 
+
 # ============= EOF =============================================

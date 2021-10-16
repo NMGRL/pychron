@@ -31,53 +31,61 @@ from pychron.core.ui.code_editor import PyScriptCodeEditor
 class CentralPane(TraitsTaskPane):
     def traits_view(self):
         canvas_group = HGroup(
-            UItem('canvas', style='custom',
-                  editor=ComponentEditor()),
-            label='Canvas')
+            UItem("canvas", style="custom", editor=ComponentEditor()), label="Canvas"
+        )
 
-        script_group = VGroup(UItem('script_text',
-                                    editor=PyScriptCodeEditor(),
-                                    style='custom'),
-                              label='script')
+        script_group = VGroup(
+            UItem("script_text", editor=PyScriptCodeEditor(), style="custom"),
+            label="script",
+        )
 
-        tgrp = Group(canvas_group, script_group, layout='tabbed')
+        tgrp = Group(canvas_group, script_group, layout="tabbed")
         v = View(tgrp)
         return v
 
 
 class ActionsAdapter(TabularAdapter):
-    columns = [('Name', 'name'),
-               ('Value', 'value')]
+    columns = [("Name", "name"), ("Value", "value")]
 
     def get_bg_color(self, *args, **kw):
-        color = 'white'
-        if self.item.name == 'open':
-            color = 'lightgreen'
-        elif self.item.name == 'close':
-            color = 'lightcoral'
+        color = "white"
+        if self.item.name == "open":
+            color = "lightgreen"
+        elif self.item.name == "close":
+            color = "lightcoral"
         return color
 
 
 class ControlPane(TraitsDockPane):
-    id = 'pychron.pyscript.visual.control'
-    name = 'Controls'
+    id = "pychron.pyscript.visual.control"
+    name = "Controls"
     closable = False
 
     def traits_view(self):
-        action_grp = VGroup(HGroup(UItem('add_sleep_button', width=-60),
-                                   UItem('duration')),
-                            HGroup(UItem('add_info_button', width=-60),
-                                   UItem('info_str')),
-                            HGroup(Item('record_valve_actions',
-                                        tooltip='Should valve actuations be added to the action list. '
-                                                'You can also hold down the "Shift" key to suppress addition',
-                                        label='Record Actions')),
-                            UItem('actions', editor=TabularEditor(adapter=ActionsAdapter(),
-                                                                  operations=['move', 'delete'],
-                                                                  selected='selected',
-                                                                  refresh='refresh_needed',
-                                                                  multi_select=True)))
+        action_grp = VGroup(
+            HGroup(UItem("add_sleep_button", width=-60), UItem("duration")),
+            HGroup(UItem("add_info_button", width=-60), UItem("info_str")),
+            HGroup(
+                Item(
+                    "record_valve_actions",
+                    tooltip="Should valve actuations be added to the action list. "
+                    'You can also hold down the "Shift" key to suppress addition',
+                    label="Record Actions",
+                )
+            ),
+            UItem(
+                "actions",
+                editor=TabularEditor(
+                    adapter=ActionsAdapter(),
+                    operations=["move", "delete"],
+                    selected="selected",
+                    refresh="refresh_needed",
+                    multi_select=True,
+                ),
+            ),
+        )
         v = View(action_grp)
         return v
+
 
 # ============= EOF =============================================

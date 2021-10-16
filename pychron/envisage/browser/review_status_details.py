@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from traits.api import HasTraits, Str, Int, Bool, Property, List
 from traitsui.api import View, UItem, Controller, TabularEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -25,16 +26,14 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.dvc.func import get_review_status
 from pychron.envisage.resources import icon
 
-GREENBALL = icon('green_ball')
+GREENBALL = icon("green_ball")
 
 
 class RSDAdapter(TabularAdapter):
-    columns = [('Status', 'status'),
-               ('Process', 'process'),
-               ('Date', 'date')]
+    columns = [("Status", "status"), ("Process", "process"), ("Date", "date")]
 
     status_image = Property
-    status_text = Str('')
+    status_text = Str("")
     status_width = Int(50)
 
     def _get_status_image(self):
@@ -76,12 +75,14 @@ class ReviewStatusDetailsModel(HasTraits):
 
 class ReviewStatusDetailsView(Controller):
     def traits_view(self):
-        v = View(UItem('items', editor=TabularEditor(editable=False,
-                                                     adapter=RSDAdapter())),
-                 title='Review Status Details ({})'.format(self.model.record_id),
-                 kind='livemodal',
-                 buttons=['OK'],
-                 width=500)
+        v = View(
+            UItem("items", editor=TabularEditor(editable=False, adapter=RSDAdapter())),
+            title="Review Status Details ({})".format(self.model.record_id),
+            kind="livemodal",
+            buttons=["OK"],
+            width=500,
+        )
         return v
+
 
 # ============= EOF =============================================

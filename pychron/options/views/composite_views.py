@@ -14,9 +14,16 @@
 # limitations under the License.
 # ===============================================================================
 from pychron.options.options import SubOptions, TitleSubOptions, GroupSubOptions
-from pychron.options.views.isochron_views import InverseIsochronMainOptions, InverseIsochronAppearance
-from pychron.options.views.spectrum_views import SpectrumMainOptions, SpectrumAppearance, DisplaySubOptions, \
-    CalculationSubOptions
+from pychron.options.views.isochron_views import (
+    InverseIsochronMainOptions,
+    InverseIsochronAppearance,
+)
+from pychron.options.views.spectrum_views import (
+    SpectrumMainOptions,
+    SpectrumAppearance,
+    DisplaySubOptions,
+    CalculationSubOptions,
+)
 
 from traitsui.api import VGroup, Item
 
@@ -25,21 +32,23 @@ from pychron.pychron_constants import GROUPS
 
 class LayoutSubOptions(SubOptions):
     def traits_view(self):
-        g = VGroup(Item('orientation_layout'))
+        g = VGroup(Item("orientation_layout"))
         return self._make_view(g)
 
 
 # class TitleSubOptions(SubOptions):
 #     pass
 
-VIEWS = {'main': SpectrumMainOptions,
-         'spectrum': SpectrumMainOptions,
-         'isochron': InverseIsochronMainOptions,
-         'display(spec.)': DisplaySubOptions,
-         'calculations(spec.)': CalculationSubOptions,
-         'appearance(spec.)': SpectrumAppearance,
-         'appearance(iso.)': InverseIsochronAppearance,
-         'layout': LayoutSubOptions,
-         'title': TitleSubOptions,
-         GROUPS.lower(): GroupSubOptions}
+VIEWS = {
+    "main": SpectrumMainOptions,
+    "spectrum": SpectrumMainOptions,
+    "isochron": InverseIsochronMainOptions,
+    "display(spec.)": DisplaySubOptions,
+    "calculations(spec.)": CalculationSubOptions,
+    "appearance(spec.)": SpectrumAppearance,
+    "appearance(iso.)": InverseIsochronAppearance,
+    "layout": LayoutSubOptions,
+    "title": TitleSubOptions,
+    GROUPS.lower(): GroupSubOptions,
+}
 # ============= EOF =============================================

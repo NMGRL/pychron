@@ -23,9 +23,9 @@ from pychron.core.xml.xml_parser import XMLParser
 # ============= local library imports  ==========================
 
 
-def get_volume(elem, tag='volume', default=0):
+def get_volume(elem, tag="volume", default=0):
     """
-        get volume tag from xml
+    get volume tag from xml
     """
     vol = elem.find(tag)
     if vol is not None:
@@ -36,8 +36,9 @@ def get_volume(elem, tag='volume', default=0):
 
 
 class CanvasParser(XMLParser):
-    """
-    """
+    """ """
+
     pass
+
 
 # ============= EOF ====================================

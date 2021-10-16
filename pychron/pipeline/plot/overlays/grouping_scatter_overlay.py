@@ -17,7 +17,7 @@ from chaco.abstract_overlay import AbstractOverlay
 
 
 class GroupingScatterOverlay(AbstractOverlay):
-    def overlay(self, other_component, gc, view_bounds=None, mode='normal'):
+    def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         raise NotImplementedError
 
         # ans = self.analyses
@@ -33,4 +33,6 @@ class GroupingScatterOverlay(AbstractOverlay):
         #         outline_color = color
         #         idxs, _ = zip(*ais)
         #         render_markers(gc, points[idxs, :], marker, marker_size, color, line_width, outline_color)
+
+
 # ============= EOF =============================================

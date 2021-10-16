@@ -60,7 +60,7 @@ class DisplayController(Controller):
     height = Int(500)
     title = Str
 
-    default_color = Color('black')
+    default_color = Color("black")
     # default_size = Int
     bgcolor = Color
     font_name = Str
@@ -76,8 +76,7 @@ class DisplayController(Controller):
     text_added = Event
 
     def __init__(self, *args, **kw):
-        super(DisplayController, self).__init__(model=DisplayModel(),
-                                                *args, **kw)
+        super(DisplayController, self).__init__(model=DisplayModel(), *args, **kw)
         self._lock = Lock()
         self.model.font_size = self.font_size
         self.model.bgcolor = self.bgcolor
@@ -109,13 +108,13 @@ class DisplayController(Controller):
         self.add_text(txt, is_marker=True, **kw)
 
     def add_text(self, txt, **kw):
-        if 'color' not in kw or kw['color'] is None:
-            kw['color'] = self.default_color
+        if "color" not in kw or kw["color"] is None:
+            kw["color"] = self.default_color
 
         tol = 5
-        if isinstance(kw['color'], str):
-            q = QColor(kw['color'])
-            kw['color'] = q
+        if isinstance(kw["color"], str):
+            q = QColor(kw["color"])
+            kw["color"] = q
 
         # rgba = kw['color'].toTuple()
         # b_rgba = self.bgcolor.toTuple()
@@ -134,17 +133,22 @@ class DisplayController(Controller):
     def traits_view(self):
         self.visible = True
         editor = self.editor_klass(
-            clear='clear_event',
-            refresh='refresh',
-            font_size='font_size',
-            bgcolor='bgcolor',
-            text_width='text_width',
-            max_blocks=self.max_blocks)
+            clear="clear_event",
+            refresh="refresh",
+            font_size="font_size",
+            bgcolor="bgcolor",
+            text_width="text_width",
+            max_blocks=self.max_blocks,
+        )
 
-        v = View(UItem('qmessage', editor=editor),
-                 x=self.x, y=self.y, width=self.width,
-                 height=self.height,
-                 title=self.title)
+        v = View(
+            UItem("qmessage", editor=editor),
+            x=self.x,
+            y=self.y,
+            width=self.width,
+            height=self.height,
+            title=self.title,
+        )
         return v
 
     def close_ui(self):
@@ -174,5 +178,6 @@ class DisplayController(Controller):
 
 class ErrorDisplay(DisplayController):
     pass
+
 
 # ============= EOF =============================================

@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Str, Any
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
@@ -26,14 +27,16 @@ class AutoQueue(Loggable):
     db = Any
     load_name = Str
 
-    def generate(self, ):
+    def generate(
+        self,
+    ):
         def gen():
             load_name = self.load_name
             dbload = self.db.get_loadtable(load_name)
             for poss in dbload.loaded_positions:
                 # print poss
                 ln_id = poss.lab_identifier
-                dbln = self.db.get_labnumber(ln_id, key='id')
+                dbln = self.db.get_labnumber(ln_id, key="id")
                 yield dbln.identifier, str(poss.position)
 
         return gen
@@ -77,5 +80,6 @@ class AutoQueue(Loggable):
         # else:
         #     for pi in pos:
         #         self._add_position(ln, [pi])
+
 
 # ============= EOF =============================================

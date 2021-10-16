@@ -25,12 +25,13 @@ import six
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-@deprecated_message('use DatabaseAdapter._add_item instead')
+
+@deprecated_message("use DatabaseAdapter._add_item instead")
 def add(func):
     def _add(obj, *args, **kw):
 
         kwargs = kw.copy()
-        for key in ('unique', 'commit', 'flush'):
+        for key in ("unique", "commit", "flush"):
             if key in kwargs:
                 kwargs.pop(key)
 
@@ -41,9 +42,9 @@ def add(func):
             if dbr and add:
                 sess.add(dbr)
 
-                if 'flush' in kw:
+                if "flush" in kw:
                     sess.flush()
-                elif 'commit' in kw:
+                elif "commit" in kw:
                     sess.commit()
 
         return dbr
@@ -53,12 +54,12 @@ def add(func):
 
 def get_first(func):
     def _get_first(obj, name, *args, **kw):
-        return _getter('first', func, obj, name, *args, **kw)
+        return _getter("first", func, obj, name, *args, **kw)
 
     return _get_first
 
 
-@deprecated_message('use DatabaseAdapter._retrieve_item instead')
+@deprecated_message("use DatabaseAdapter._retrieve_item instead")
 def get_one(func):
     def __get_one(obj, name, *args, **kw):
         return _get_one(func, obj, name, *args, **kw)
@@ -67,11 +68,10 @@ def get_one(func):
 
 
 def _get_one(*args, **kw):
-    return _getter('one', *args, **kw)
+    return _getter("one", *args, **kw)
 
 
-def _getter(getfunc, func, obj, name,
-            *args, **kw):
+def _getter(getfunc, func, obj, name, *args, **kw):
     if name is not None and not isinstance(name, (str, int, six.text_type, int, float)):
         return name
 
@@ -85,7 +85,7 @@ def _getter(getfunc, func, obj, name,
 
     else:
         table = params
-        attr = 'name'
+        attr = "name"
 
     sess = obj.get_session()
     q = sess.query(table)
@@ -109,6 +109,7 @@ def _getter(getfunc, func, obj, name,
 #            print 'get_one, e2', e
 #            pass
 
+
 def delete_one(func):
     def _delete_one(obj, name, *args, **kw):
         sess = obj.get_session()
@@ -124,4 +125,6 @@ def sql_retrieve(func):
         return func()
     except sqlalchemy.exc.SQLAlchemyError as e:
         pass
+
+
 # ============= EOF =============================================

@@ -25,7 +25,7 @@ from xml_parser import XMLParser
 class LearnerParser(XMLParser):
     def get_getters(self, element=True):
         group = self._tree
-        return [v if element else v.text.strip()
-                for v in group.findall('getter')]
+        return [v if element else v.text.strip() for v in group.findall("getter")]
+
 
 # ============= EOF =============================================

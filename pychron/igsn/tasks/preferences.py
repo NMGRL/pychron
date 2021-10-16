@@ -32,7 +32,7 @@ class UserCodeStr(BaseStr):
 
 
 class IGSNPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.igsn'
+    preferences_path = "pychron.igsn"
     username = Str
     password = Password
     user_code = UserCodeStr
@@ -40,16 +40,23 @@ class IGSNPreferences(BasePreferencesHelper):
 
 class IGSNPreferencesPane(PreferencesPane):
     model_factory = IGSNPreferences
-    category = 'IGSN'
+    category = "IGSN"
 
     def traits_view(self):
-        auth_grp = VGroup(Item('username'),
-                          Item('password'),
-                          show_border=True,
-                          label='Authentication')
+        auth_grp = VGroup(
+            Item("username"), Item("password"), show_border=True, label="Authentication"
+        )
 
-        v = View(VGroup(Item('user_code', tooltip='Three+ alphanumeric characters used as a sample prefix'),
-                        auth_grp))
+        v = View(
+            VGroup(
+                Item(
+                    "user_code",
+                    tooltip="Three+ alphanumeric characters used as a sample prefix",
+                ),
+                auth_grp,
+            )
+        )
         return v
+
 
 # ============= EOF =============================================

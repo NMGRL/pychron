@@ -34,9 +34,9 @@ class Bar(QFrame):
     low = 0
     high = 1
     color_scalar = 1
-    colormap = 'jet'
+    colormap = "jet"
     bar_width = 100
-    scale = 'power'
+    scale = "power"
 
     # def __init__(self, parent, ident=-1):
     #     super(Bar, self).__init__()
@@ -51,21 +51,23 @@ class Bar(QFrame):
 
     def set_value(self, v):
         """
-            map v to users color scale
-            use power law v=A*x**(1/cs)
-            increase cs increases the rate of change at low values
-            increase cs will make it easier to see small pertubations (more color change) at
-            the low end.
+        map v to users color scale
+        use power law v=A*x**(1/cs)
+        increase cs increases the rate of change at low values
+        increase cs will make it easier to see small pertubations (more color change) at
+        the low end.
 
         """
-        if self.scale == 'power':
+        if self.scale == "power":
             N = 1 / float(self.color_scalar)
             A = 1 / self.high ** N
             nv = A * v ** N
         else:
             nv = min(1, max(0, (v - self.low) / (self.high - self.low)))
 
-        vs = self.cmap.map_screen(array([nv, ]))[0][:3]
+        vs = self.cmap.map_screen(array([nv,]))[
+            0
+        ][:3]
         self.value = [x * 255 for x in vs]
         self.update()
 
@@ -82,7 +84,9 @@ class _BarGaugeEditor(Editor):
         # if self.factory.scale == 'power':
         #     high = N = 1 / float(self.color_scalar)
         #     A = 1 / self.high ** N
-        self.control.cmap = color_map_name_dict[self.factory.colormap](DataRange1D(low_setting=0, high_setting=1))
+        self.control.cmap = color_map_name_dict[self.factory.colormap](
+            DataRange1D(low_setting=0, high_setting=1)
+        )
 
     def update_editor(self):
         if self.control:
@@ -94,8 +98,9 @@ class BarGaugeEditor(BasicEditorFactory):
     low = Float
     high = Float
     color_scalar = Int(1)
-    scale = Str('power')
-    colormap = Str('jet')
+    scale = Str("power")
+    colormap = Str("jet")
     width = Int(100)
+
 
 # ============= EOF =============================================

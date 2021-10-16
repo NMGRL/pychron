@@ -20,6 +20,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import inspect
+
 # ============= standard library imports ========================
 import os
 import sys
@@ -42,7 +43,7 @@ def handle_uncaught_exception(func):
             import traceback
 
             traceback.print_exc()
-            warning(None, 'There is a problem in your initialization file {}'.format(e))
+            warning(None, "There is a problem in your initialization file {}".format(e))
             sys.exit()
 
     return _handle
@@ -50,7 +51,7 @@ def handle_uncaught_exception(func):
 
 def decorate_all(cls):
     """
-         adds the handle_uncaught_exception decorator to all methods of the class
+    adds the handle_uncaught_exception decorator to all methods of the class
     """
 
     for name, m in inspect.getmembers(cls, inspect.ismethod):
@@ -60,13 +61,12 @@ def decorate_all(cls):
 
 @decorate_all
 class InitializationParser(XMLParser):
-    """
-    """
+    """ """
 
     def __init__(self, *args, **kw):
-        p = os.path.join(paths.setup_dir, 'initialization.xml')
+        p = os.path.join(paths.setup_dir, "initialization.xml")
         if not os.path.isfile(p):
-            warning(None, 'No initialization file.\n{} is not a valid file'.format(p))
+            warning(None, "No initialization file.\n{} is not a valid file".format(p))
             sys.exit()
 
         super(InitializationParser, self).__init__(p, *args, **kw)
@@ -76,46 +76,49 @@ class InitializationParser(XMLParser):
 
     def get_globals(self):
         tree = self.get_root()
-        tree = tree.find('globals')
+        tree = tree.find("globals")
         return tree.iter()
 
     def set_bool_tag(self, tag, v):
         tree = self.get_root()
-        tree = tree.find('globals')
+        tree = tree.find("globals")
         elem = tree.find(tag)
         if elem is not None:
             elem.text = v
         else:
             tree.append(self.new_element(tag, v))
 
-    def add_plugin(self, category, name, save=True, enabled='false'):
+    def add_plugin(self, category, name, save=True, enabled="false"):
         tree = self.get_root()
-        tree = tree.find('plugins')
+        tree = tree.find("plugins")
         cat = tree.find(category)
         if not cat:
             tree.append(self.new_element(category, None))
             cat = tree.find(category)
 
-        cat.append(self.new_element('plugin', name, enabled=enabled))
+        cat.append(self.new_element("plugin", name, enabled=enabled))
         if save:
             self.save()
 
     def get_plugins(self, category=None, all_=False, element=False):
         tree = self.get_root()
-        tree = tree.find('plugins')
+        tree = tree.find("plugins")
         if category:
             cat = tree.find(category)
             if cat is not None:
-                plugins = cat.findall('plugin')
+                plugins = cat.findall("plugin")
         else:
             try:
-                plugins = tree.iter(tag='plugin')
+                plugins = tree.iter(tag="plugin")
             except AttributeError:
-                plugins = tree.getiterator(tag='plugin')
+                plugins = tree.getiterator(tag="plugin")
 
         if plugins:
-            return [p if element else p.text.strip()
-                    for p in plugins if all_ or to_bool(p.get('enabled'))]
+            return [
+                p if element else p.text.strip()
+                for p in plugins
+                if all_ or to_bool(p.get("enabled"))
+            ]
 
     #    def get_plugins_as_elements(self, category):
     #        tree = self._tree.find('plugins')
@@ -124,20 +127,20 @@ class InitializationParser(XMLParser):
     #            return cat.findall('plugin')
     def get_global(self, tag):
         root = self.get_root()
-        elem = root.find('globals')
+        elem = root.find("globals")
         if elem is not None:
             g = elem.find(tag)
             if g is not None:
                 return g.text.strip()
 
     def get_plugin_groups(self, elem=False):
-        plugin = self.get_root().find('plugins')
+        plugin = self.get_root().find("plugins")
         return [t if elem else t.tag for t in list(plugin)]
 
     def get_plugin_group(self, name):
-        return next((p for p in self.get_plugin_groups(elem=True)
-                     if p.tag == name
-                     ), None)
+        return next(
+            (p for p in self.get_plugin_groups(elem=True) if p.tag == name), None
+        )
 
     def get_groups(self):
         tree = self.get_root()
@@ -154,32 +157,36 @@ class InitializationParser(XMLParser):
 
     def enable_manager(self, name, parent):
         plugin = self.get_plugin(parent)
-        man = next((m for m in plugin.findall('manager') if m.text.strip() == name), None)
-        man.set('enabled', 'true')
+        man = next(
+            (m for m in plugin.findall("manager") if m.text.strip() == name), None
+        )
+        man.set("enabled", "true")
         self.save()
 
     def disable_manager(self, name, parent):
         plugin = self.get_plugin(parent)
-        man = next((m for m in plugin.findall('manager') if m.text.strip() == name), None)
-        man.set('enabled', 'false')
+        man = next(
+            (m for m in plugin.findall("manager") if m.text.strip() == name), None
+        )
+        man.set("enabled", "false")
         self.save()
 
     def enable_device(self, name, plugin):
         dev = self.get_device(plugin, name, None, element=True)
-        dev.set('enabled', 'true')
+        dev.set("enabled", "true")
         self.save()
 
     def disable_device(self, name, plugin):
         dev = self.get_device(plugin, name, None, element=True)
-        dev.set('enabled', 'false')
+        dev.set("enabled", "false")
         self.save()
 
     def enable_plugin(self, name, category=None, save=True):
         plugin = self.get_plugin(name, category)
         if plugin is None:
-            self.add_plugin(category, name, save=save, enabled='true')
+            self.add_plugin(category, name, save=save, enabled="true")
         else:
-            plugin.set('enabled', 'true')
+            plugin.set("enabled", "true")
 
         if save:
             self.save()
@@ -188,18 +195,18 @@ class InitializationParser(XMLParser):
         plugin = self.get_plugin(name, category)
 
         if plugin is not None:
-            plugin.set('enabled', 'false')
+            plugin.set("enabled", "false")
             if save:
                 self.save()
 
     def get_flags(self, manager, **kw):
-        return self._get_parameters(manager, 'flag', **kw)
+        return self._get_parameters(manager, "flag", **kw)
 
     def get_timed_flags(self, manager, **kw):
-        return self._get_parameters(manager, 'timed_flag', **kw)
+        return self._get_parameters(manager, "timed_flag", **kw)
 
     def get_valve_flags(self, manager, **kw):
-        return self._get_parameters(manager, 'valve_flag', **kw)
+        return self._get_parameters(manager, "valve_flag", **kw)
 
     def get_rpc_params(self, manager):
         if isinstance(manager, tuple):
@@ -207,11 +214,15 @@ class InitializationParser(XMLParser):
 
         text = lambda x: x.text.strip() if x is not None else None
         try:
-            rpc = manager.find('rpc')
-            mode = rpc.get('mode')
-            port = text(rpc.find('port'))
-            host = text(rpc.find('host'))
-            return mode, host, int(port),
+            rpc = manager.find("rpc")
+            mode = rpc.get("mode")
+            port = text(rpc.find("port"))
+            host = text(rpc.find("host"))
+            return (
+                mode,
+                host,
+                int(port),
+            )
         except Exception as e:
             pass
 
@@ -220,8 +231,9 @@ class InitializationParser(XMLParser):
     def get_device(self, manager, devname, plugin, element=False):
         if plugin:
             man = self.get_plugin(plugin)
-            nman = next((d for d in man.findall('manager')
-                         if d.text.strip() == manager), None)
+            nman = next(
+                (d for d in man.findall("manager") if d.text.strip() == manager), None
+            )
             if nman is not None:
                 man = nman
 
@@ -239,17 +251,18 @@ class InitializationParser(XMLParser):
         # if man is None:
         #     man = self.get_plugin_group(manager)
 
-        dev = next((d for d in man.findall('device')
-                    if d.text.strip() == devname), None)
+        dev = next(
+            (d for d in man.findall("device") if d.text.strip() == devname), None
+        )
         if not element and dev:
             dev = dev.text.strip()
         return dev
 
     def get_devices(self, manager, **kw):
-        return self._get_parameters(manager, 'device', **kw)
+        return self._get_parameters(manager, "device", **kw)
 
     def get_processor(self, manager, **kw):
-        p = self._get_parameters(manager, 'processor', **kw)
+        p = self._get_parameters(manager, "processor", **kw)
         if p:
             return p[0]
 
@@ -259,25 +272,36 @@ class InitializationParser(XMLParser):
         #            pp = self.get_processor(p)
         #            if pp:
         #                ps.append(pp)
-        pl = self.get_plugin_group('hardware')
-        ps = [pi for pi in [self.get_processor(p)
-                            for p in self.get_plugins('hardware', element=True)] if pi]
-        nps = self._get_parameters(pl, 'processor')
+        pl = self.get_plugin_group("hardware")
+        ps = [
+            pi
+            for pi in [
+                self.get_processor(p)
+                for p in self.get_plugins("hardware", element=True)
+            ]
+            if pi
+        ]
+        nps = self._get_parameters(pl, "processor")
         if nps:
             ps += nps
         return ps
 
     def get_server(self, manager, **kw):
-        p = self._get_parameters(manager, 'server', **kw)
+        p = self._get_parameters(manager, "server", **kw)
         if p:
             return p[0]
 
     def get_servers(self):
-        servers = [pi for pi in [self.get_server(p)
-                                 for p in self.get_plugins('hardware', element=True)] if pi]
-        h = self.get_plugin_group('hardware')
+        servers = [
+            pi
+            for pi in [
+                self.get_server(p) for p in self.get_plugins("hardware", element=True)
+            ]
+            if pi
+        ]
+        h = self.get_plugin_group("hardware")
         if h is not None:
-            hs = self._get_parameters(h, 'server')
+            hs = self._get_parameters(h, "server")
             if hs:
                 servers += hs
         return servers
@@ -285,24 +309,28 @@ class InitializationParser(XMLParser):
     def _get_parameters(self, subtree, tag, all_=False, element=False):
         if subtree is None:
             print(subtree)
-        return [d if element else d.text.strip()
-                for d in subtree.findall(tag)
-                if all_ or to_bool(d.get('enabled'))]
+        return [
+            d if element else d.text.strip()
+            for d in subtree.findall(tag)
+            if all_ or to_bool(d.get("enabled"))
+        ]
 
     def get_managers(self, elem, all_=False, element=False):
-        return [m if element else m.text.strip()
-                for m in elem.findall('manager')
-                if all_ or to_bool(m.get('enabled'))]
+        return [
+            m if element else m.text.strip()
+            for m in elem.findall("manager")
+            if all_ or to_bool(m.get("enabled"))
+        ]
 
     def get_plugin(self, name, category=None):
-        if '_' in name:
+        if "_" in name:
 
-            if 'co2' in name:
-                name = name.split('_')[0].capitalize() + 'CO2'
-            elif 'uv' in name:
-                name = name.split('_')[0].capitalize() + 'UV'
+            if "co2" in name:
+                name = name.split("_")[0].capitalize() + "CO2"
+            elif "uv" in name:
+                name = name.split("_")[0].capitalize() + "UV"
             else:
-                name = ''.join([a.capitalize() for a in name.split('_')])
+                name = "".join([a.capitalize() for a in name.split("_")])
         else:
             name = name[0].upper() + name[1:]
 
@@ -319,16 +347,16 @@ class InitializationParser(XMLParser):
 
     def get_manager(self, name, plugin):
 
-        if 'Manager' in plugin:
-            plugin = plugin.replace('Manager', '')
+        if "Manager" in plugin:
+            plugin = plugin.replace("Manager", "")
 
         p = self.get_plugin(plugin)
 
-        man = next((pi for pi in p.findall('manager') if pi.text.strip() == name), None)
+        man = next((pi for pi in p.findall("manager") if pi.text.strip() == name), None)
         return man
 
     def get_categories(self):
-        return ['general', 'data', 'hardware', 'social']
+        return ["general", "data", "hardware", "social"]
         # root = self.get_root()
         # tree = root.find('plugins')
         # s = lambda x: x.tag
@@ -337,9 +365,9 @@ class InitializationParser(XMLParser):
         # return list(set(cats))
         # return map(s, set([c for c in tree.iter()]))
 
-    def _get_element(self, category, name, tag='plugin'):
+    def _get_element(self, category, name, tag="plugin"):
         root = self.get_root()
-        tree = root.find('plugins')
+        tree = root.find("plugins")
 
         if category is None:
             iterator = lambda: tree.iter(tag=tag)
@@ -353,7 +381,7 @@ class InitializationParser(XMLParser):
             if cat is not None:
                 iterator = lambda: cat.findall(tag)
             else:
-                iterator = lambda: ''
+                iterator = lambda: ""
                 #            for plugin in cat.findall(tag):
                 #                if plugin.text.strip() == name:
                 #                    return plugin
@@ -367,12 +395,13 @@ class InitializationParser(XMLParser):
         return next((p for p in iterator() if p.text.strip().lower() == name), None)
 
     def get_systems(self):
-        p = self.get_plugin('ExtractionLine')
+        p = self.get_plugin("ExtractionLine")
         if p is not None:
-            return [(s.text.strip(), s.get('master_host')) for s in p.findall('system')]
+            return [(s.text.strip(), s.get("master_host")) for s in p.findall("system")]
         return []
 
         #    def get_processors(self):
+
 
 #
 #        cat = self._tree.find('remotehardware')

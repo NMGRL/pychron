@@ -17,17 +17,27 @@
 from numpy import inf, hstack, invert
 from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
+
 # ============= enthought library imports =======================
 from traits.api import Bool, List
 
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.progress import progress_loader
-from pychron.options.options_manager import BlanksOptionsManager, ICFactorOptionsManager, \
-    IsotopeEvolutionOptionsManager, \
-    FluxOptionsManager, DefineEquilibrationOptionsManager
+from pychron.options.options_manager import (
+    BlanksOptionsManager,
+    ICFactorOptionsManager,
+    IsotopeEvolutionOptionsManager,
+    FluxOptionsManager,
+    DefineEquilibrationOptionsManager,
+)
 from pychron.options.views.views import view
-from pychron.pipeline.editors.define_equilibration_editor import DefineEquilibrationResultsEditor
-from pychron.pipeline.editors.flux_results_editor import FluxResultsEditor, BracketingFluxResultsEditor
+from pychron.pipeline.editors.define_equilibration_editor import (
+    DefineEquilibrationResultsEditor,
+)
+from pychron.pipeline.editors.flux_results_editor import (
+    FluxResultsEditor,
+    BracketingFluxResultsEditor,
+)
 from pychron.pipeline.editors.results_editor import IsoEvolutionResultsEditor
 from pychron.pipeline.nodes.figure import FigureNode
 from pychron.pipeline.results.define_equilibration import DefineEquilibrationResult
@@ -56,7 +66,12 @@ class FitNode(FigureNode):
 
     def _get_valid_unknowns(self, unks):
         if self.plotter_options.analysis_types:
-            unks = [u for u in unks if not u.is_omitted() and u.analysis_type in self.plotter_options.analysis_types]
+            unks = [
+                u
+                for u in unks
+                if not u.is_omitted()
+                and u.analysis_type in self.plotter_options.analysis_types
+            ]
         return unks
 
     def check_refit(self, unks):
@@ -122,10 +137,10 @@ class FitReferencesNode(FitNode):
 
 
 class FitBlanksNode(FitReferencesNode):
-    editor_klass = 'pychron.pipeline.plot.editors.blanks_editor,BlanksEditor'
+    editor_klass = "pychron.pipeline.plot.editors.blanks_editor,BlanksEditor"
     plotter_options_manager_klass = BlanksOptionsManager
-    name = 'Fit Blanks'
-    _refit_message = 'The selected Isotopes have already been fit for blanks. Would you like to skip refitting?'
+    name = "Fit Blanks"
+    _refit_message = "The selected Isotopes have already been fit for blanks. Would you like to skip refitting?"
 
     def _check_refit(self, ai):
         for k in self._keys:
@@ -134,10 +149,10 @@ class FitBlanksNode(FitReferencesNode):
                 return True
 
     def _get_reference_analysis_types(self):
-        return ['blank_{}'.format(a) for a in self.plotter_options.analysis_types]
+        return ["blank_{}".format(a) for a in self.plotter_options.analysis_types]
 
     def _options_view_default(self):
-        return view('Blanks Options')
+        return view("Blanks Options")
 
     def _configure_hook(self):
         pom = self.plotter_options_manager
@@ -156,17 +171,19 @@ class FitBlanksNode(FitReferencesNode):
             pom.set_reference_types(atypes)
 
 
-ATTRS = ('numerator', 'denominator', 'standard_ratio', 'analysis_type')
+ATTRS = ("numerator", "denominator", "standard_ratio", "analysis_type")
 
 
 class FitICFactorNode(FitReferencesNode):
-    editor_klass = 'pychron.pipeline.plot.editors.intercalibration_factor_editor,' \
-                   'IntercalibrationFactorEditor'
+    editor_klass = (
+        "pychron.pipeline.plot.editors.intercalibration_factor_editor,"
+        "IntercalibrationFactorEditor"
+    )
     plotter_options_manager_klass = ICFactorOptionsManager
-    name = 'Fit ICFactor'
+    name = "Fit ICFactor"
 
     predefined = List
-    _refit_message = 'The selected IC Factors have already been fit. Would you like to skip refitting?'
+    _refit_message = "The selected IC Factors have already been fit. Would you like to skip refitting?"
 
     def _editor_factory(self):
         e = super(FitICFactorNode, self)._editor_factory()
@@ -175,10 +192,10 @@ class FitICFactorNode(FitReferencesNode):
         return e
 
     def _get_reference_analysis_types(self):
-        return ['air', 'cocktail']
+        return ["air", "cocktail"]
 
     def _options_view_default(self):
-        return view('ICFactor Options')
+        return view("ICFactor Options")
 
     def _configure_hook(self):
         udets = get_isotope_pairs_set(self.unknowns)
@@ -204,22 +221,26 @@ class FitICFactorNode(FitReferencesNode):
 
     def _check_refit(self, ai):
         for k in self._keys:
-            num, dem = k.split('/')
+            num, dem = k.split("/")
             i = ai.get_isotope(detector=dem)
             if i is not None:
                 if not i.ic_factor_reviewed:
                     return True
             else:
                 from pyface.message_dialog import warning
-                warning(None, 'Data for detector {} is missing from {}'.format(dem, ai.record_id))
+
+                warning(
+                    None,
+                    "Data for detector {} is missing from {}".format(dem, ai.record_id),
+                )
                 raise RefitException()
 
     def load(self, nodedict):
 
         pom = self.plotter_options_manager
-        if pom.selected_options.name == 'Default':
+        if pom.selected_options.name == "Default":
             try:
-                fits = nodedict['fits']
+                fits = nodedict["fits"]
             except KeyError as e:
                 return
 
@@ -227,20 +248,26 @@ class FitICFactorNode(FitReferencesNode):
             self.plotter_options.set_aux_plots(fits)
 
     def _to_template(self, d):
-        d['fits'] = [{'numerator': a.numerator,
-                      'denominator': a.denominatior,
-                      'standard_ratio': a.standard_ratio,
-                      'analysis_type': a.analysis_type}
-                     for a in self.plotter_options.aux_plots]
+        d["fits"] = [
+            {
+                "numerator": a.numerator,
+                "denominator": a.denominatior,
+                "standard_ratio": a.standard_ratio,
+                "analysis_type": a.analysis_type,
+            }
+            for a in self.plotter_options.aux_plots
+        ]
 
 
 class FitIsotopeEvolutionNode(FitNode):
-    editor_klass = 'pychron.pipeline.plot.editors.isotope_evolution_editor,' \
-                   'IsotopeEvolutionEditor'
+    editor_klass = (
+        "pychron.pipeline.plot.editors.isotope_evolution_editor,"
+        "IsotopeEvolutionEditor"
+    )
     plotter_options_manager_klass = IsotopeEvolutionOptionsManager
-    name = 'Fit IsoEvo'
+    name = "Fit IsoEvo"
     use_plotting = False
-    _refit_message = 'The selected Isotope Evolutions have already been fit. Would you like to skip refitting?'
+    _refit_message = "The selected Isotope Evolutions have already been fit. Would you like to skip refitting?"
 
     def _check_refit(self, analysis):
         for k in self._keys:
@@ -257,7 +284,7 @@ class FitIsotopeEvolutionNode(FitNode):
                 return True
 
     def _options_view_default(self):
-        return view('Iso Evo Options')
+        return view("Iso Evo Options")
 
     def _configure_hook(self):
         pom = self.plotter_options_manager
@@ -300,7 +327,7 @@ class FitIsotopeEvolutionNode(FitNode):
 
     def _assemble_result(self, xi, prog, i, n):
         if prog:
-            prog.change_message('Load raw data {}'.format(xi.record_id))
+            prog.change_message("Load raw data {}".format(xi.record_id))
 
         fits = self._fits
         xi.load_raw_data(self._keys)
@@ -312,7 +339,7 @@ class FitIsotopeEvolutionNode(FitNode):
             if k in isotopes:
                 iso = isotopes[k]
             else:
-                iso = xi.get_isotope(detector=k, kind='baseline')
+                iso = xi.get_isotope(detector=k, kind="baseline")
 
             if iso:
                 i, e = iso.value, iso.error
@@ -332,15 +359,22 @@ class FitIsotopeEvolutionNode(FitNode):
                     int_err_goodness = bool(pe < goodness_threshold)
 
                 signal_to_baseline_threshold = f.signal_to_baseline_goodness
-                signal_to_baseline_percent_threshold = f.signal_to_baseline_percent_goodness
+                signal_to_baseline_percent_threshold = (
+                    f.signal_to_baseline_percent_goodness
+                )
                 signal_to_baseline_goodness = None
                 signal_to_baseline = 0
-                if hasattr(iso, 'baseline'):
+                if hasattr(iso, "baseline"):
                     bs = iso.baseline.error
                     signal_to_baseline = abs(bs / i * 100)
-                    if signal_to_baseline_threshold and signal_to_baseline_percent_threshold:
+                    if (
+                        signal_to_baseline_threshold
+                        and signal_to_baseline_percent_threshold
+                    ):
                         if signal_to_baseline > signal_to_baseline_threshold:
-                            signal_to_baseline_goodness = bool(pe < signal_to_baseline_percent_threshold)
+                            signal_to_baseline_goodness = bool(
+                                pe < signal_to_baseline_percent_threshold
+                            )
 
                 slope = iso.get_slope()
                 slope_goodness = None
@@ -367,7 +401,7 @@ class FitIsotopeEvolutionNode(FitNode):
 
                 nstr = str(iso.n)
                 if iso.noutliers():
-                    nstr = '{}({})'.format(iso.n - iso.noutliers(), nstr)
+                    nstr = "{}({})".format(iso.n - iso.noutliers(), nstr)
 
                 rsquared = iso.rsquared_adj
                 rsquared_goodness = None
@@ -376,7 +410,7 @@ class FitIsotopeEvolutionNode(FitNode):
                     rsquared_threshold = f.rsquared_goodness
                     rsquared_goodness = rsquared > rsquared_threshold
 
-                if hasattr(iso, 'blank'):
+                if hasattr(iso, "blank"):
                     signal_to_blank = iso.blank.value / iso.value * 100
                 else:
                     signal_to_blank = 0
@@ -385,58 +419,55 @@ class FitIsotopeEvolutionNode(FitNode):
                 signal_to_blank_threshold = 0
                 if f.signal_to_blank_goodness:
                     signal_to_blank_threshold = f.signal_to_blank_goodness
-                    signal_to_blank_goodness = signal_to_blank < signal_to_blank_threshold
+                    signal_to_blank_goodness = (
+                        signal_to_blank < signal_to_blank_threshold
+                    )
 
-                yield IsoEvoResult(analysis=xi,
-                                   isotope_obj=iso,
-                                   nstr=nstr,
-                                   intercept_value=i,
-                                   intercept_error=e,
-                                   normalized_error=e * iso.n ** 0.5,
-                                   percent_error=pe,
-                                   int_err=pe,
-                                   int_err_threshold=goodness_threshold,
-                                   int_err_goodness=int_err_goodness,
-
-                                   slope=slope,
-                                   slope_threshold=slope_threshold,
-                                   slope_goodness=slope_goodness,
-
-                                   outlier=outliers,
-                                   outlier_threshold=outliers_threshold,
-                                   outlier_goodness=outlier_goodness,
-
-                                   curvature=curvature,
-                                   curvature_threshold=curvature_threshold,
-                                   curvature_goodness=curvature_goodness,
-
-                                   rsquared=rsquared,
-                                   rsquared_threshold=rsquared_threshold,
-                                   rsquared_goodness=rsquared_goodness,
-
-                                   signal_to_blank=signal_to_blank,
-                                   signal_to_blank_threshold=signal_to_blank_threshold,
-                                   signal_to_blank_goodness=signal_to_blank_goodness,
-
-                                   signal_to_baseline=signal_to_baseline,
-                                   signal_to_baseline_goodness=signal_to_baseline_goodness,
-                                   signal_to_baseline_threshold=signal_to_baseline_threshold,
-                                   signal_to_baseline_percent_threshold=signal_to_baseline_percent_threshold,
-
-                                   smart_filter_goodness=smart_filter_goodness,
-                                   smart_filter_threshold=smart_filter_threshold,
-                                   smart_filter=e,
-                                   regression_str=iso.regressor.tostring(),
-                                   fit=iso.fit,
-                                   isotope=k)
+                yield IsoEvoResult(
+                    analysis=xi,
+                    isotope_obj=iso,
+                    nstr=nstr,
+                    intercept_value=i,
+                    intercept_error=e,
+                    normalized_error=e * iso.n ** 0.5,
+                    percent_error=pe,
+                    int_err=pe,
+                    int_err_threshold=goodness_threshold,
+                    int_err_goodness=int_err_goodness,
+                    slope=slope,
+                    slope_threshold=slope_threshold,
+                    slope_goodness=slope_goodness,
+                    outlier=outliers,
+                    outlier_threshold=outliers_threshold,
+                    outlier_goodness=outlier_goodness,
+                    curvature=curvature,
+                    curvature_threshold=curvature_threshold,
+                    curvature_goodness=curvature_goodness,
+                    rsquared=rsquared,
+                    rsquared_threshold=rsquared_threshold,
+                    rsquared_goodness=rsquared_goodness,
+                    signal_to_blank=signal_to_blank,
+                    signal_to_blank_threshold=signal_to_blank_threshold,
+                    signal_to_blank_goodness=signal_to_blank_goodness,
+                    signal_to_baseline=signal_to_baseline,
+                    signal_to_baseline_goodness=signal_to_baseline_goodness,
+                    signal_to_baseline_threshold=signal_to_baseline_threshold,
+                    signal_to_baseline_percent_threshold=signal_to_baseline_percent_threshold,
+                    smart_filter_goodness=smart_filter_goodness,
+                    smart_filter_threshold=smart_filter_threshold,
+                    smart_filter=e,
+                    regression_str=iso.regressor.tostring(),
+                    fit=iso.fit,
+                    isotope=k,
+                )
 
 
 class DefineEquilibrationNode(FitNode):
-    name = 'Define Equilibration'
+    name = "Define Equilibration"
 
     plotter_options_manager_klass = DefineEquilibrationOptionsManager
     use_plotting = False
-    _refit_message = 'The selected Equilibrations have already been fit. Would you like to skip refitting?'
+    _refit_message = "The selected Equilibrations have already been fit. Would you like to skip refitting?"
 
     def _configure_hook(self):
         pom = self.plotter_options_manager
@@ -503,20 +534,20 @@ class DefineEquilibrationNode(FitNode):
                 iso.xs = iso_xs
                 iso.ys = iso_ys
                 ks.append(k)
-                eqs.append('{}({})'.format(k, fi.equilibration_time))
+                eqs.append("{}({})".format(k, fi.equilibration_time))
         if ks:
-            yield DefineEquilibrationResult(analysis=xi,
-                                            isotopes=ks,
-                                            equilibration_times=','.join(eqs))
+            yield DefineEquilibrationResult(
+                analysis=xi, isotopes=ks, equilibration_times=",".join(eqs)
+            )
 
 
 class FitFluxNode(FitNode):
-    name = 'Fit Flux'
+    name = "Fit Flux"
     editor_klass = FluxResultsEditor
     plotter_options_manager_klass = FluxOptionsManager
 
     def _editor_factory(self):
-        if self.plotter_options.model_kind == 'Bracketing':
+        if self.plotter_options.model_kind == "Bracketing":
             klass = BracketingFluxResultsEditor
         else:
             klass = FluxResultsEditor
@@ -526,7 +557,7 @@ class FitFluxNode(FitNode):
         return editor
 
     def _options_view_default(self):
-        return view('Flux Options')
+        return view("Flux Options")
 
     def run(self, state):
         super(FitFluxNode, self).run(state)
@@ -535,7 +566,7 @@ class FitFluxNode(FitNode):
             state.canceled = True
             return
 
-        self.name = 'Fit Flux {}'.format(state.irradiation, state.level)
+        self.name = "Fit Flux {}".format(state.irradiation, state.level)
         geom = state.geometry
         monitors = state.unknowns
 
@@ -557,6 +588,7 @@ class FitFluxNode(FitNode):
             # state.saveable_irradiation_positions = editor.monitor_positions + state.unknown_positions
             state.monitor_positions = editor.monitor_positions
             editor.predict_values()
-            editor.name = 'Flux: {}{}'.format(state.irradiation, state.level)
+            editor.name = "Flux: {}{}".format(state.irradiation, state.level)
+
 
 # ============= EOF =============================================

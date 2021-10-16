@@ -21,6 +21,6 @@ from __future__ import absolute_import
 
 from pychron.core.ui.factory import toolkit_factory
 
-MapViewEditor = toolkit_factory('map_editor', 'MapViewEditor')
+MapViewEditor = toolkit_factory("map_editor", "MapViewEditor")
 
 # ============= EOF =============================================

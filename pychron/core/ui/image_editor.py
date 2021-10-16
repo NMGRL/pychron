@@ -22,5 +22,5 @@ from pychron.core.ui.factory import toolkit_factory
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-ImageEditor = toolkit_factory('image_editor', 'ImageEditor')
+ImageEditor = toolkit_factory("image_editor", "ImageEditor")
 # ============= EOF =============================================

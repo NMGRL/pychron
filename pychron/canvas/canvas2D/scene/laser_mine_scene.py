@@ -22,6 +22,7 @@ import six
 # from pychron.canvas.canvas2D.scene.primitives.primitives import Polygon, RasterPolygon
 from pychron.canvas.canvas2D.scene.primitives.laser_primitives import RasterPolygon
 from pychron.canvas.canvas2D.scene.scene import Scene
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.yaml import yload
@@ -30,7 +31,7 @@ from pychron.core.yaml import yload
 class LaserMineScene(Scene):
     def load(self, path):
         self.reset_layers()
-        if path.endswith('.yaml'):
+        if path.endswith(".yaml"):
             self.load_yaml(path)
         else:
             pass
@@ -39,16 +40,17 @@ class LaserMineScene(Scene):
         # txt = open(path, 'r').read()
         # yobj = yaml.load(txt)
         yobj = yload(path)
-        if 'polygons' in yobj:
-            for k, po in six.iteritems(yobj['polygons']):
+        if "polygons" in yobj:
+            for k, po in six.iteritems(yobj["polygons"]):
                 self._new_polygon(po, k)
 
     def _new_polygon(self, po, key):
-        pts = [pi['xy'] for pi in po['points']]
+        pts = [pi["xy"] for pi in po["points"]]
         item = RasterPolygon(pts, name=key, identifier=key)
         self.add_item(item)
 
     def _new_transect(self):
         pass
+
 
 # ============= EOF =============================================

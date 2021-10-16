@@ -17,10 +17,14 @@ from pychron.lasers.tasks.plugins.remote_laser_plugin import RemoteLaserPlugin
 
 
 class AblationCO2Plugin(RemoteLaserPlugin):
-    id = 'pychron.ablation.co2'
-    name = 'AblationCO2'
-    klass = ('pychron.lasers.laser_managers.ablation_laser_manager', 'AblationCO2Manager')
-    task_name = 'Ablation CO2'
-    task_klass = ('pychron.lasers.tasks.laser_task', 'AblationCO2Task')
+    id = "pychron.ablation.co2"
+    name = "AblationCO2"
+    klass = (
+        "pychron.lasers.laser_managers.ablation_laser_manager",
+        "AblationCO2Manager",
+    )
+    task_name = "Ablation CO2"
+    task_klass = ("pychron.lasers.tasks.laser_task", "AblationCO2Task")
+
 
 # ============= EOF =============================================

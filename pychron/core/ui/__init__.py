@@ -8,4 +8,4 @@ def set_toolkit(name):
 
 
 def set_qt():
-    set_toolkit('qt4')
+    set_toolkit("qt4")

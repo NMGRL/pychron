@@ -16,6 +16,7 @@
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from traits.api import Str, HasTraits
+
 # =============standard library imports ========================
 # =============local library imports  ==========================
 
@@ -28,26 +29,30 @@ class PolynomialMapperMixin(HasTraits):
     mapped_name = Str
 
     def load_mapping(self, config):
-        conv = 'Conversion'
+        conv = "Conversion"
         if config.has_section(conv):
             pmapper = PolynomialMapper()
-            coeffs = self.config_get(config, conv, 'coefficients')
+            coeffs = self.config_get(config, conv, "coefficients")
             pmapper.parse_coefficient_string(coeffs)
-            pmapper.output_low = self.config_get(config, conv, 'output_low', cast='float')
-            pmapper.output_high = self.config_get(config, conv, 'output_high', cast='float')
+            pmapper.output_low = self.config_get(
+                config, conv, "output_low", cast="float"
+            )
+            pmapper.output_high = self.config_get(
+                config, conv, "output_high", cast="float"
+            )
 
             self.poly_mapper = pmapper
-            self.set_attribute(config, 'mapped_name', conv, 'name')
+            self.set_attribute(config, "mapped_name", conv, "name")
 
             if self.mapped_name:
-                u = self.config_get(config, conv, 'units', default='')
-                self.graph_ytitle = '{} ({})'.format(self.mapped_name.capitalize(), u)
+                u = self.config_get(config, conv, "units", default="")
+                self.graph_ytitle = "{} ({})".format(self.mapped_name.capitalize(), u)
 
 
 class ADCDevice(AbstractDevice, PolynomialMapperMixin):
     _rvoltage = None
     channel = None
-    scan_func = 'read_voltage'
+    scan_func = "read_voltage"
 
     # def __init__(self, *args, **kw):
     # """
@@ -60,31 +65,34 @@ class ADCDevice(AbstractDevice, PolynomialMapperMixin):
     #     self.poly_mapper = PolynomialMapper()
 
     def load_additional_args(self, config):
-        adc = 'ADC'
+        adc = "ADC"
         if config.has_section(adc):
-            klass = self.config_get(config, adc, 'klass')
-            name = self.config_get(config, adc, 'name', default=klass)
+            klass = self.config_get(config, adc, "klass")
+            name = self.config_get(config, adc, "name", default=klass)
 
-            pkgs = ('pychron.hardware.adc.analog_digital_converter',
-                    'pychron.hardware.agilent.agilent_multiplexer',
-                    'pychron.hardware.remote.agilent_multiplexer',
-                    'pychron.hardware.ncd.adc')
+            pkgs = (
+                "pychron.hardware.adc.analog_digital_converter",
+                "pychron.hardware.agilent.agilent_multiplexer",
+                "pychron.hardware.remote.agilent_multiplexer",
+                "pychron.hardware.ncd.adc",
+            )
 
             for pi in pkgs:
                 factory = self.get_factory(pi, klass)
                 if factory:
                     break
 
-            self.set_attribute(config, 'channel', adc, 'channel')
-            self._cdevice = factory(name=name,
-                                    configuration_dir_name=self.configuration_dir_name)
+            self.set_attribute(config, "channel", adc, "channel")
+            self._cdevice = factory(
+                name=name, configuration_dir_name=self.configuration_dir_name
+            )
 
             self.load_mapping(config)
             return True
 
     def read_voltage(self, **kw):
         """
-            red the voltage from the actual device
+        red the voltage from the actual device
         """
         if self._cdevice is not None:
             if self.channel:
@@ -105,10 +113,10 @@ class ADCDevice(AbstractDevice, PolynomialMapperMixin):
 
     def get_output(self, force=False):
         """
-            get a mapped output value e.g Temperature
+        get a mapped output value e.g Temperature
 
-            if force is True, force a query to the device, otherwise
-            use the stored value
+        if force is True, force a query to the device, otherwise
+        use the stored value
         """
         if force or self._rvoltage is None:
             v = self.read_voltage()
@@ -116,5 +124,6 @@ class ADCDevice(AbstractDevice, PolynomialMapperMixin):
             v = self._rvoltage
 
         return self.poly_mapper.map_measured(v)
+
 
 # ============= EOF =====================================

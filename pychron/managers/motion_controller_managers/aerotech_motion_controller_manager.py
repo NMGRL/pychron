@@ -22,14 +22,17 @@
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 from pychron.globals import globalv
-from pychron.hardware.aerotech.aerotech_motion_controller import AerotechMotionController
-from pychron.managers.motion_controller_managers.motion_controller_manager import MotionControllerManager
+from pychron.hardware.aerotech.aerotech_motion_controller import (
+    AerotechMotionController,
+)
+from pychron.managers.motion_controller_managers.motion_controller_manager import (
+    MotionControllerManager,
+)
 from pychron.paths import paths
 
 
 class AerotechMotionControllerManager(MotionControllerManager):
-    '''
-    '''
+    """ """
 
     #    def traits_view(self):
     #        return
@@ -59,7 +62,7 @@ class AerotechMotionControllerManager(MotionControllerManager):
     #        return v
 
     def _motion_controller_default(self):
-        a = AerotechMotionController(name='unidex')
+        a = AerotechMotionController(name="unidex")
 
         return a
 
@@ -68,13 +71,13 @@ class AerotechMotionControllerManager(MotionControllerManager):
         return True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
 
-    logging_setup('amc')
+    logging_setup("amc")
     globalv.show_infos = False
     globalv.show_warnings = False
-    paths.build('_experiment')
+    paths.build("_experiment")
 
     amc = AerotechMotionControllerManager()
     amc.bootstrap()

@@ -28,18 +28,20 @@ class CorrelationEllipsesOverlay(AbstractOverlay):
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         for ((k, ci), color) in zip(self.correlation_ellipses, self.colors):
             with gc:
-                age = ci['age']
-                kca = ci['kca']
+                age = ci["age"]
+                kca = ci["kca"]
 
-                a = age['max'] - age['min']
-                b = kca['max'] - kca['min']
-                cx = a / 2. + age['min']
-                cy = b / 2. + kca['min']
+                a = age["max"] - age["min"]
+                b = kca["max"] - kca["min"]
+                cx = a / 2.0 + age["min"]
+                cy = b / 2.0 + kca["min"]
 
-                (cx, cy), (a, oy), (ox, b) = other_component.map_screen([(cx, cy), (a, 0), (0, b)])
+                (cx, cy), (a, oy), (ox, b) = other_component.map_screen(
+                    [(cx, cy), (a, 0), (0, b)]
+                )
 
                 w, h = a - ox, b - oy
-                a, b = w / 2., h / 2.
+                a, b = w / 2.0, h / 2.0
 
                 x1 = linspace(-a, a, 200)
                 y1 = b * sqrt((1 - (x1 / a) ** 2))
@@ -70,4 +72,6 @@ class CorrelationEllipsesOverlay(AbstractOverlay):
         #     gc.draw_path()
         # else:
         #     gc.stroke_path()
+
+
 # ============= EOF =============================================

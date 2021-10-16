@@ -34,46 +34,55 @@ class EmailPreferences(BasePreferencesHelper):
     server_host = Str
     server_port = Int
 
-    preferences_path = 'pychron.email'
+    preferences_path = "pychron.email"
     _test_connection_button = Button
-    _status = Str('Not Tested')
-    _status_color = Color('orange')
+    _status = Str("Not Tested")
+    _status_color = Color("orange")
 
-    @on_trait_change('server+')
+    @on_trait_change("server+")
     def _server_trait_changed(self):
-        self._status = 'Not Tested'
-        self._status_color = 'orange'
+        self._status = "Not Tested"
+        self._status_color = "orange"
 
     def __test_connection_button_fired(self):
         from pychron.social.email.emailer import Emailer
 
         em = Emailer()
-        em.trait_set(server_host=self.server_host, server_port=self.server_port,
-                     server_username=self.server_username, server_password=self.server_password)
+        em.trait_set(
+            server_host=self.server_host,
+            server_port=self.server_port,
+            server_username=self.server_username,
+            server_password=self.server_password,
+        )
 
         if em.connect(warn=False):
-            self._status = 'Connected'
-            self._status_color = 'green'
+            self._status = "Connected"
+            self._status_color = "green"
         else:
-            self._status = 'Failed'
-            self._status_color = 'red'
+            self._status = "Failed"
+            self._status_color = "red"
 
 
 class EmailPreferencesPane(PreferencesPane):
     model_factory = EmailPreferences
-    category = 'Social'
+    category = "Social"
 
     def traits_view(self):
-        grp = VGroup(Item('server_host', label='Host'),
-                     Item('server_username', label='User'),
-                     Item('server_password', label='Password', resizable=True),
-                     Item('server_port', label='Port'),
-                     HGroup(icon_button_editor('_test_connection_button', 'server-connect'),
-                            CustomLabel('_status', color_name='_status_color')),
-                     show_border=True,
-                     springy=True,
-                     label='Email')
+        grp = VGroup(
+            Item("server_host", label="Host"),
+            Item("server_username", label="User"),
+            Item("server_password", label="Password", resizable=True),
+            Item("server_port", label="Port"),
+            HGroup(
+                icon_button_editor("_test_connection_button", "server-connect"),
+                CustomLabel("_status", color_name="_status_color"),
+            ),
+            show_border=True,
+            springy=True,
+            label="Email",
+        )
         v = View(grp)
         return v
+
 
 # ============= EOF =============================================

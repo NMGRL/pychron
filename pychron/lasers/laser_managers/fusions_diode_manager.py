@@ -34,13 +34,13 @@ from pychron.response_recorder import ResponseRecorder
 
 
 class FusionsDiodeManager(FusionsLaserManager):
-    """
-    """
-    stage_manager_id = 'fusions.diode'
-    id = 'pychron.fusions.diode'
+    """ """
+
+    stage_manager_id = "fusions.diode"
+    id = "pychron.fusions.diode"
     # name = 'fusions_diode'
-    name = 'FusionsDiode'
-    configuration_dir_name = 'fusions_diode'
+    name = "FusionsDiode"
+    configuration_dir_name = "fusions_diode"
 
     pyrometer = Instance(MikronGA140Pyrometer)
     temperature_controller = Instance(WatlowEZZone)
@@ -58,7 +58,7 @@ class FusionsDiodeManager(FusionsLaserManager):
     #    thermocouple_temp = Float
 
     #    update_timers = List
-    monitor_name = 'diode_laser_monitor'
+    monitor_name = "diode_laser_monitor"
     monitor_klass = FusionsDiodeLaserMonitor
 
     use_power_slider = Bool(True)
@@ -82,16 +82,12 @@ class FusionsDiodeManager(FusionsLaserManager):
         return v
 
     def get_pyrometer_temperature(self, **kw):
-        """
-        """
-        return self._try('pyrometer',
-                         'read_temperature', kw)
+        """ """
+        return self._try("pyrometer", "read_temperature", kw)
 
     def get_laser_internal_temperature(self, **kw):
-        """
-        """
-        return self._try('control_module_manager',
-                         'get_internal_temperature', kw)
+        """ """
+        return self._try("control_module_manager", "get_internal_temperature", kw)
 
     def get_power_slider(self):
         return None
@@ -107,43 +103,45 @@ class FusionsDiodeManager(FusionsLaserManager):
         super(FusionsDiodeManager, self).emergency_shutoff(*args, **kw)
         self.control_module_manager.disable()
 
-        self.temperature_controller.set_control_mode('open')
+        self.temperature_controller.set_control_mode("open")
         self.temperature_controller.set_open_loop_setpoint(0.0)
 
     def set_laser_output(self, value, units):
-        self.debug('set laser output value={} units={}'.format(value, units))
-        if units == 'temp':
+        self.debug("set laser output value={} units={}".format(value, units))
+        if units == "temp":
             self.set_laser_temperature(value)
         else:
             self.set_laser_power(value, units)
 
     def set_laser_temperature(self, temp, set_pid=True):
-        return self._set_laser_power_hook(temp, mode='closed', set_pid=set_pid)
+        return self._set_laser_power_hook(temp, mode="closed", set_pid=set_pid)
         # use_calibration=self.use_calibrated_temperature)
 
     # ===============================================================================
     # private
     # ===============================================================================
-    def _set_laser_power_hook(self, power, mode='open', set_pid=True, **kw):
+    def _set_laser_power_hook(self, power, mode="open", set_pid=True, **kw):
         tc = self.temperature_controller
         if tc.control_mode != mode:
             tc.set_control_mode(mode)
 
         power = float(power)
-        if mode == 'closed' and set_pid and power:
+        if mode == "closed" and set_pid and power:
             tc.set_pid(power)
 
-        func = getattr(tc, 'set_{}_loop_setpoint'.format(mode))
+        func = getattr(tc, "set_{}_loop_setpoint".format(mode))
         func(power, set_pid=set_pid, **kw)
 
     def _enable_hook(self, clear_setpoint=True):
-        if super(FusionsDiodeManager, self)._enable_hook():  # logic board sucessfully enabled
+        if super(
+            FusionsDiodeManager, self
+        )._enable_hook():  # logic board sucessfully enabled
 
             if clear_setpoint:
                 # disable the temperature_controller unit a value is set
                 self.temperature_controller.disable()
 
-            self.response_recorder.start('diode_response_tc_control')
+            self.response_recorder.start("diode_response_tc_control")
             if self.pyrometer:
                 self.pyrometer.start_scan()
             return self.control_module_manager.enable()
@@ -174,16 +172,28 @@ class FusionsDiodeManager(FusionsLaserManager):
     # ===============================================================================
     def get_additional_controls(self):
         #        v = Group(
-        gs = [VGroup(Item('temperature_controller', style='custom',
-                          editor=InstanceEditor(view='control_view'),
-                          show_label=False, ),
-                     label='Watlow'),
-              VGroup(Item('pyrometer', show_label=False, style='custom'),
-                     label='Pyrometer'),
-              VGroup(Item('control_module_manager', show_label=False, style='custom'),
-                     label='ControlModule'),
-              VGroup(Item('fiber_light', style='custom', show_label=False),
-                     label='FiberLight')]
+        gs = [
+            VGroup(
+                Item(
+                    "temperature_controller",
+                    style="custom",
+                    editor=InstanceEditor(view="control_view"),
+                    show_label=False,
+                ),
+                label="Watlow",
+            ),
+            VGroup(
+                Item("pyrometer", show_label=False, style="custom"), label="Pyrometer"
+            ),
+            VGroup(
+                Item("control_module_manager", show_label=False, style="custom"),
+                label="ControlModule",
+            ),
+            VGroup(
+                Item("fiber_light", style="custom", show_label=False),
+                label="FiberLight",
+            ),
+        ]
         return gs
 
     # ===============================================================================
@@ -191,65 +201,77 @@ class FusionsDiodeManager(FusionsLaserManager):
     # ===============================================================================
 
     def _response_recorder_default(self):
-        r = ResponseRecorder(response_device=self.temperature_controller,
-                             # response_device_secondary = self.temperature_monitor,
-                             response_device_secondary=self.pyrometer,
-                             output_device=self.temperature_controller)
+        r = ResponseRecorder(
+            response_device=self.temperature_controller,
+            # response_device_secondary = self.temperature_monitor,
+            response_device_secondary=self.pyrometer,
+            output_device=self.temperature_controller,
+        )
         return r
 
     def _temperature_monitor_default(self):
-        tm = DPi32TemperatureMonitor(name='temperature_monitor',
-                                     configuration_dir_name=self.configuration_dir_name)
+        tm = DPi32TemperatureMonitor(
+            name="temperature_monitor",
+            configuration_dir_name=self.configuration_dir_name,
+        )
         return tm
 
     def _pyrometer_default(self):
-        p = MikronGA140Pyrometer(name='pyrometer',
-                                 configuration_dir_name=self.configuration_dir_name)
+        p = MikronGA140Pyrometer(
+            name="pyrometer", configuration_dir_name=self.configuration_dir_name
+        )
         return p
 
     def _laser_controller_default(self):
-        b = FusionsDiodeLogicBoard(name='laser_controller',
-                                   configuration_name='laser_controller',
-                                   configuration_dir_name=self.configuration_dir_name)
+        b = FusionsDiodeLogicBoard(
+            name="laser_controller",
+            configuration_name="laser_controller",
+            configuration_dir_name=self.configuration_dir_name,
+        )
         return b
 
     def _stage_manager_default(self):
-        args = dict(name='stage',
-                    configuration_name='stage',
-                    configuration_dir_name=self.configuration_dir_name,
-                    parent=self)
+        args = dict(
+            name="stage",
+            configuration_name="stage",
+            configuration_dir_name=self.configuration_dir_name,
+            parent=self,
+        )
         return self._stage_manager_factory(args)
 
     def _temperature_controller_default(self):
-        w = WatlowEZZone(name='temperature_controller',
-                         use_calibrated_temperature=self.use_calibrated_temperature,
-                         configuration_dir_name=self.configuration_dir_name)
+        w = WatlowEZZone(
+            name="temperature_controller",
+            use_calibrated_temperature=self.use_calibrated_temperature,
+            configuration_dir_name=self.configuration_dir_name,
+        )
         return w
 
     def _pyrometer_temperature_monitor_default(self):
-        py = PyrometerTemperatureMonitor(name='pyrometer_tm',
-                                         configuration_dir_name=self.configuration_dir_name)
+        py = PyrometerTemperatureMonitor(
+            name="pyrometer_tm", configuration_dir_name=self.configuration_dir_name
+        )
         return py
 
     def _title_default(self):
-        return 'Diode Manager'
+        return "Diode Manager"
 
     def _control_module_manager_default(self):
         v = VueMetrixManager()  # control = self.control_module)
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
     from pychron.envisage.initialization.initializer import Initializer
 
-    logging_setup('fusions diode')
+    logging_setup("fusions diode")
     f = FusionsDiodeManager()
     f.use_video = True
     f.record_brightness = True
     ini = Initializer()
 
-    a = dict(manager=f, name='FusionsDiode')
+    a = dict(manager=f, name="FusionsDiode")
     ini.add_initialization(a)
     ini.run()
     #    f.bootstrap()

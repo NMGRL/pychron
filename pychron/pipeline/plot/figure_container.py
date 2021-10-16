@@ -45,7 +45,7 @@ class FigureContainer(HasTraits):
                     break
 
                 comp.add(p.make_graph())
-                if clear and hasattr(p.plot_options, 'aux_plots'):
+                if clear and hasattr(p.plot_options, "aux_plots"):
                     for ap in p.plot_options.aux_plots:
                         ap.clear_ylimits()
                         ap.clear_xlimits()
@@ -53,12 +53,12 @@ class FigureContainer(HasTraits):
     def model_changed(self, clear=True):
         layout = self.model.plot_options.layout
         self.model.refresh_panels()
-        if hasattr(self.model.plot_options, 'orientation_layout'):
-            if self.model.plot_options.orientation_layout == 'Vertical':
-                layout.fixed = 'column'
+        if hasattr(self.model.plot_options, "orientation_layout"):
+            if self.model.plot_options.orientation_layout == "Vertical":
+                layout.fixed = "column"
                 layout.columns = 1
             else:
-                layout.fixed = 'row'
+                layout.fixed = "row"
                 layout.rows = 1
 
         n = self.model.npanels
@@ -75,14 +75,17 @@ class FigureContainer(HasTraits):
 
     def _component_factory(self, r, c):
 
-        op = GridPlotContainer(shape=(r, c),
-                               bgcolor='white',
-                               fill_padding=True,
-                               use_backbuffer=True,
-                               padding_top=0)
+        op = GridPlotContainer(
+            shape=(r, c),
+            bgcolor="white",
+            fill_padding=True,
+            use_backbuffer=True,
+            padding_top=0,
+        )
         return op, r, c
 
     def _component_default(self):
         return VPlotContainer()
+
 
 # ============= EOF =============================================

@@ -24,6 +24,7 @@ from traitsui.api import View, UItem, VGroup
 # ============= standard library imports ========================
 import Image
 import cStringIO
+
 # ============= local library imports  ==========================
 from pychron.core.ui.image_editor import ImageEditor
 from pychron.core.ui.qt.camera_editor import CameraEditor
@@ -45,9 +46,9 @@ class ImageModel(HasTraits):
             buf.seek(0)
             try:
                 img = Image.open(buf)
-                self.image = img.convert('RGBA')
+                self.image = img.convert("RGBA")
             except IOError as e:
-                print('snapshot view {}'.format(e))
+                print("snapshot view {}".format(e))
                 pass
 
         self.original_note = self.note
@@ -59,24 +60,26 @@ class ImageTabEditor(BaseTraitsEditor):
 
     # image = Any
 
-    @on_trait_change('model:[note, name]')
+    @on_trait_change("model:[note, name]")
     def _handle_note_change(self):
-        self.dirty = self.model.note != self.model.original_note or self.model.name != self.model.original_name
+        self.dirty = (
+            self.model.note != self.model.original_note
+            or self.model.name != self.model.original_name
+        )
         if self.model.name != self.name:
             self.name = self.model.name
 
     def traits_view(self):
-        v = View(VGroup(UItem('image', editor=ImageEditor(),
-                              width=896, height=680)))
+        v = View(VGroup(UItem("image", editor=ImageEditor(), width=896, height=680)))
         return v
 
 
 class CameraTab(BaseTraitsEditor):
-    record_id = 'camera'
+    record_id = "camera"
 
     def traits_view(self):
-        v = View(UItem('camera', editor=CameraEditor(),
-                       width=896, height=680))
+        v = View(UItem("camera", editor=CameraEditor(), width=896, height=680))
         return v
+
 
 # ============= EOF =============================================

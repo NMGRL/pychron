@@ -31,11 +31,11 @@ class CommunicationScheduler(HasTraits):
     """
 
 
-        this class should be used when working with multiple rs485 devices on the same port.
+    this class should be used when working with multiple rs485 devices on the same port.
 
-        it uses a simple lock and sleep cycle to avoid collision on the data lines
+    it uses a simple lock and sleep cycle to avoid collision on the data lines
 
-        when setting up the devices use device.set_scheduler to set the shared scheduler
+    when setting up the devices use device.set_scheduler to set the shared scheduler
 
     """
 
@@ -76,6 +76,7 @@ class CommunicationScheduler(HasTraits):
             r = func(*args, **kwargs)
 
         return r
+
 
 # class Consumer(Thread):
 #

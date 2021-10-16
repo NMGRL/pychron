@@ -23,13 +23,15 @@ from pychron.lasers.tasks.editors.laser_editor import LaserEditor
 
 class PixelCalibrationEditor(LaserEditor):
     def _do_execute(self):
-        '''
-            zoom to 0
-            focus
-            take picture
-            
-            zoom to i 
-            take picute
-            
-        '''
+        """
+        zoom to 0
+        focus
+        take picture
+
+        zoom to i
+        take picute
+
+        """
+
+
 # ============= EOF =============================================

@@ -33,12 +33,14 @@ class PIDObject(HasTraits):
     _prev_err = Float(0, transiet=True)
 
     def traits_view(self):
-        return View('Kp', 'Ki', 'Kd', 'max_output')
+        return View("Kp", "Ki", "Kd", "max_output")
 
     def iterate(self, error, dt):
-        self._integral_err += (error * dt)
+        self._integral_err += error * dt
         derivative = (error - self._prev_err) / dt
-        output = (self.Kp * error) + (self.Ki * self._integral_err) + (self.Kd * derivative)
+        output = (
+            (self.Kp * error) + (self.Ki * self._integral_err) + (self.Kd * derivative)
+        )
         self._prev_err = error
         # limit the output to
         output = max(0, min(self.max_output, output))
@@ -53,5 +55,6 @@ class PIDObject(HasTraits):
         self._prev_time = ct
 
         return self.iterate(err, dt)
+
 
 # ======== EOF ================================================================

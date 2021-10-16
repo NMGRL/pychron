@@ -26,6 +26,7 @@ set_qt()
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str
 from traitsui.api import View, UItem
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.text_editor import myTextEditor
@@ -38,36 +39,47 @@ class CalculationView(HasTraits):
         lines = []
 
         lines.append(a.record_id)
-        lines.append('age={}'.format(a.uage))
+        lines.append("age={}".format(a.uage))
         isos = a.isotopes
         for isok in ARGON_KEYS:
             iso = isos[isok]
 
-            vs = list(map(floatfmt, (isok, iso.value, iso.blank.value, iso.baseline.value)))
-            lines.append('{} = {} - {} - {}'.format(*vs))
+            vs = list(
+                map(floatfmt, (isok, iso.value, iso.blank.value, iso.baseline.value))
+            )
+            lines.append("{} = {} - {} - {}".format(*vs))
 
-        lines.append(' ')
-        lines.append('Ar40* = Ar40 - Ar40atm - K40')
+        lines.append(" ")
+        lines.append("Ar40* = Ar40 - Ar40atm - K40")
 
-        vs = list(map(floatfmt, list(map(nominal_value, (a.corrected_intensities['Ar40'],
-                                                         a.computed['atm40'],
-                                                         a.non_ar_isotopes['k40'])))))
-        lines.append('Ar40* = {} - {} - {}'.format(*vs))
+        vs = list(
+            map(
+                floatfmt,
+                list(
+                    map(
+                        nominal_value,
+                        (
+                            a.corrected_intensities["Ar40"],
+                            a.computed["atm40"],
+                            a.non_ar_isotopes["k40"],
+                        ),
+                    )
+                ),
+            )
+        )
+        lines.append("Ar40* = {} - {} - {}".format(*vs))
 
-        self.text = '\n'.join(lines)
+        self.text = "\n".join(lines)
 
     def traits_view(self):
-        editor = myTextEditor(bgcolor='#F7F6D0',
-                              fontsize=10,
-                              wrap=False,
-                              tab_width=15)
-        v = View(UItem('text', style='custom', editor=editor),
-                 width=500,
-                 resizable=True)
+        editor = myTextEditor(bgcolor="#F7F6D0", fontsize=10, wrap=False, tab_width=15)
+        v = View(
+            UItem("text", style="custom", editor=editor), width=500, resizable=True
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.database.test_database import get_test_analysis
 
     a, man = get_test_analysis()

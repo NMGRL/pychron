@@ -20,8 +20,7 @@ from __future__ import absolute_import
 import os
 
 import six.moves.configparser
-from traits.api import HasTraits, Button, Instance, List, Str, \
-    Enum, Int, Float
+from traits.api import HasTraits, Button, Instance, List, Str, Enum, Int, Float
 from traits.trait_types import Bool
 from traitsui.api import View, Item, VGroup
 
@@ -41,7 +40,7 @@ class ConfigGroup(HasTraits):
 
     def _anytrait_changed(self, name, new):
         """
-            update the config object with the current user value
+        update the config object with the current user value
         """
         if self.config_obj:
             if self.config_obj.has_option(self.tag, name):
@@ -49,7 +48,7 @@ class ConfigGroup(HasTraits):
 
 
 class ScanGroup(ConfigGroup):
-    tag = 'Scan'
+    tag = "Scan"
     enabled = Bool
     graph = Bool
     record = Bool
@@ -58,42 +57,43 @@ class ScanGroup(ConfigGroup):
 
 
 class CommunicationGroup(ConfigGroup):
-    tag = 'Communications'
+    tag = "Communications"
 
 
 class SerialCommunicationGroup(CommunicationGroup):
     port = Str
-    baudrate = Enum(300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400)
+    baudrate = Enum(
+        300, 1200, 2400, 4800, 9600, 14400, 19200, 28800, 38400, 57600, 115200, 230400
+    )
 
     def load_from_config(self, cfg):
-        self.port = cfg('port')
-        self.baudrate = cfg('baudrate', cast='int')
+        self.port = cfg("port")
+        self.baudrate = cfg("baudrate", cast="int")
 
     def traits_view(self):
-        v = View(VGroup(Item('port'),
-                        Item('baudrate')))
+        v = View(VGroup(Item("port"), Item("baudrate")))
         return v
 
 
 class EthernetCommunicationGroup(CommunicationGroup):
     host = IPAddress
     port = Int
-    kind = Enum('TCP', 'UDP')
+    kind = Enum("TCP", "UDP")
 
     def load_from_config(self, cfg):
-        self.port = cfg('port', cast='int')
-        self.host = cfg('host', default='localhost')
-        self.kind = cfg('kind', default='UDP')
+        self.port = cfg("port", cast="int")
+        self.host = cfg("host", default="localhost")
+        self.kind = cfg("kind", default="UDP")
 
     def traits_view(self):
-        v = View(Item('host'),
-                 Item('port'),
-                 Item('kind'))
+        v = View(Item("host"), Item("port"), Item("kind"))
         return v
 
 
-CKLASS_DICT = {'ethernet': EthernetCommunicationGroup,
-               'serial': SerialCommunicationGroup}
+CKLASS_DICT = {
+    "ethernet": EthernetCommunicationGroup,
+    "serial": SerialCommunicationGroup,
+}
 
 
 class DeviceConfigurer(Loggable):
@@ -102,7 +102,7 @@ class DeviceConfigurer(Loggable):
     save_button = Button
     _config = None
 
-    kind = Enum('ethernet', 'serial')
+    kind = Enum("ethernet", "serial")
     communication_grp = Instance(CommunicationGroup)
     scan_grp = Instance(ScanGroup, ())
     comms_visible = Bool(False)
@@ -118,23 +118,23 @@ class DeviceConfigurer(Loggable):
 
         cfg.read(path)
 
-        section = 'Communications'
+        section = "Communications"
         if cfg.has_section(section):
-            kind = cfg.get(section, 'type')
+            kind = cfg.get(section, "type")
             klass = CKLASS_DICT.get(kind)
             if klass:
                 self.communication_grp = klass()
 
                 def func(option, cast=None, default=None, **kw):
-                    f = getattr(cfg, 'get{}'.format(cast if cast else ''))
+                    f = getattr(cfg, "get{}".format(cast if cast else ""))
                     try:
                         v = f(section, option, **kw)
                     except six.moves.configparser.NoOptionError:
                         v = default
                         if v is None:
-                            if cast == 'boolean':
+                            if cast == "boolean":
                                 v = False
-                            elif cast in ('float', 'int'):
+                            elif cast in ("float", "int"):
                                 v = 0
                     return v
 
@@ -145,7 +145,7 @@ class DeviceConfigurer(Loggable):
             self.comms_visible = False
             self.communication_grp = CommunicationGroup()
 
-        section = 'Scan'
+        section = "Scan"
         if cfg.has_section(section):
             bfunc = lambda *args: cfg.getboolean(*args)
             ffunc = lambda *args: cfg.getfloat(*args)
@@ -154,14 +154,14 @@ class DeviceConfigurer(Loggable):
             ffunc = lambda *args: 0
 
         sgrp = self.scan_grp
-        for attr in ('enabled', 'graph', 'record', 'auto_start'):
+        for attr in ("enabled", "graph", "record", "auto_start"):
             try:
                 v = bfunc(section, attr)
             except six.moves.configparser.NoOptionError:
                 v = False
             setattr(sgrp, attr, v)
 
-        for attr in ('period',):
+        for attr in ("period",):
             try:
                 v = ffunc(section, attr)
             except six.moves.configparser.NoOptionError:
@@ -176,12 +176,12 @@ class DeviceConfigurer(Loggable):
         # putting the device dir under git control is a good idea
 
         self._backup()
-        with open(self.config_path, 'w') as wfile:
+        with open(self.config_path, "w") as wfile:
             self._config.write(wfile)
 
     def _backup(self):
-        bp, pp = backup(self.config_path, paths.backup_device_dir, extension='.cfg')
-        self.info('{} - saving a backup copy to {}'.format(bp, pp))
+        bp, pp = backup(self.config_path, paths.backup_device_dir, extension=".cfg")
+        self.info("{} - saving a backup copy to {}".format(bp, pp))
 
 
 class CommandResponse(HasTraits):
@@ -211,18 +211,16 @@ class Hardwarer(Loggable):
             self.device_configurer.set_device(new)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.hardware.tasks.hardware_pane import ConfigurationPane
 
     dc = DeviceConfigurer()
-    p = '/Users/ross/Pychron_dev/setupfiles/devices/bone_micro_ion_controller.cfg'
-    p = '/Users/ross/Pychron_dev/setupfiles/devices/apis_controller.cfg'
+    p = "/Users/ross/Pychron_dev/setupfiles/devices/bone_micro_ion_controller.cfg"
+    p = "/Users/ross/Pychron_dev/setupfiles/devices/apis_controller.cfg"
     dc._load_configuration(p)
-
 
     class A(HasTraits):
         device_configurer = dc
-
 
     pane = ConfigurationPane(model=A())
     pane.configure_traits()

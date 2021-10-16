@@ -28,26 +28,28 @@ from pychron.hardware.core.communicators.communicator import Communicator
 
 # return to xml-rpc ?
 
+
 class RpcCommunicator(Communicator):
-    '''
-    '''
+    """ """
+
     test_func = None
 
     def load(self, config, path):
-        '''
-        '''
+        """ """
         self._backend_load_hook(config)
         return True
 
     def initialize(self, **kw):
         if self.test_func is None:
-            self.info('not testing rpc communicator {}'.format(self.name))
+            self.info("not testing rpc communicator {}".format(self.name))
             self.simulation = False
             return True
 
-        self.info('testing rpc communicator - {} test_func={}'.format(self.name,
-                                                                      self.test_func
-                                                                      ))
+        self.info(
+            "testing rpc communicator - {} test_func={}".format(
+                self.name, self.test_func
+            )
+        )
         try:
             getattr(self.handle, self.test_func)()
             self.simulation = False
@@ -62,20 +64,24 @@ class RpcCommunicator(Communicator):
             except KeyError:
                 pass
         else:
-            return super(RpcCommunicator, self).config_get(config, section, option, **kw)
+            return super(RpcCommunicator, self).config_get(
+                config, section, option, **kw
+            )
 
     def _backend_load_hook(self, config):
-        backend = self.config_get(config, 'Communications', 'backend', optional=True)
-        self.set_attribute(config, 'test_func', 'Communications', 'test_func')
-        if backend == 'pyro':
+        backend = self.config_get(config, "Communications", "backend", optional=True)
+        self.set_attribute(config, "test_func", "Communications", "test_func")
+        if backend == "pyro":
             from pychron.rpc.backends import PyroBackend
+
             bk = PyroBackend()
-            bk.name = self.config_get(config, 'Communications', 'name')
+            bk.name = self.config_get(config, "Communications", "name")
         else:
             from pychron.rpc.backends import XMLBackend
+
             bk = XMLBackend()
-            bk.port = self.config_get(config, 'Communications', 'port')
-            bk.host = self.config_get(config, 'Communications', 'host')
+            bk.port = self.config_get(config, "Communications", "port")
+            bk.host = self.config_get(config, "Communications", "host")
 
         self._rpc_backend = bk
 
@@ -83,4 +89,6 @@ class RpcCommunicator(Communicator):
         return self._rpc_backend.handle
 
     handle = property(fget=_get_handle)
+
+
 # ============= EOF =============================================

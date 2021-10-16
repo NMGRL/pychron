@@ -19,6 +19,7 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 import json
+
 # ============= local library imports  ==========================
 from pychron.hardware.furnace.nmgrl.nmgrl_furnace_drive import NMGRLFurnaceDrive
 
@@ -28,33 +29,35 @@ class NMGRLFurnaceFunnel(NMGRLFurnaceDrive):
 
     def in_up_position(self):
         if not self.simulation:
-            return self.ask('InUpPosition') == 'OK'
+            return self.ask("InUpPosition") == "OK"
         else:
             return self._simulation_funnel_up
 
     def in_down_position(self):
         if not self.simulation:
-            return self.ask('InDownPosition') == 'OK'
+            return self.ask("InDownPosition") == "OK"
         else:
             return not self._simulation_funnel_up
 
     def read_position(self):
-        pos = self.ask(self._build_command('GetPosition'))
+        pos = self.ask(self._build_command("GetPosition"))
         try:
             return float(pos)
         except (TypeError, ValueError):
             pass
 
     def set_value(self, pos):
-        self.ask(self._build_command('SetPosition', position=pos))
+        self.ask(self._build_command("SetPosition", position=pos))
 
     def lower(self, block=True):
-        self.ask(self._build_command('LowerFunnel'))
+        self.ask(self._build_command("LowerFunnel"))
         if block:
             self._block(delay=20, period=1)
 
     def raise_(self, block=True):
-        self.ask(self._build_command('RaiseFunnel'))
+        self.ask(self._build_command("RaiseFunnel"))
         if block:
             self._block(delay=20, period=1)
+
+
 # ============= EOF =============================================

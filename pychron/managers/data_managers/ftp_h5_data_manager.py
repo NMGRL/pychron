@@ -23,12 +23,10 @@ from zobs.repo.repository import SFTPRepository
 
 
 class FTPH5DataManager(H5DataManager):
-
     def connect(self, host, usr, pwd, remote):
-        self.repository = SFTPRepository(host=host,
-                                         username=usr,
-                                         password=pwd,
-                                         root=remote)
+        self.repository = SFTPRepository(
+            host=host, username=usr, password=pwd, root=remote
+        )
 
     #    def open_data(self, path, **kw):
     #        if self.repository:
@@ -44,5 +42,6 @@ class FTPH5DataManager(H5DataManager):
 
     def isfile(self, path):
         return self.repository.isfile(path)
+
 
 # ============= EOF =============================================

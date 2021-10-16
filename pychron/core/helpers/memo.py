@@ -45,4 +45,6 @@ class memoized(object):
         except KeyError:
             res = cache[key] = self.func(*args, **kw)
         return res
+
+
 # ============= EOF =============================================

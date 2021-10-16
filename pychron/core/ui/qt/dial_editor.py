@@ -51,13 +51,13 @@ class _DialEditor(Editor):
             hbox.addWidget(self.label)
 
             if self.factory.value_format:
-                if hasattr(self.factory.value_format, '__call__'):
+                if hasattr(self.factory.value_format, "__call__"):
                     func = self.factory.value_format
                 else:
                     func = lambda x: self.factory.value_format.format(x)
 
             else:
-                func = lambda x: '{}'.format(x)
+                func = lambda x: "{}".format(x)
 
             self.label.setText(func(self.value))
             self._format_func = func
@@ -87,5 +87,6 @@ class DialEditor(BasicEditorFactory):
     height = Float
     width = Float
     notches_visible = Bool(False)
+
 
 # ============= EOF =============================================

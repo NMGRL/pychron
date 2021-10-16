@@ -37,8 +37,8 @@ class WarningLabel(PlotLabel):
 class GraphEditor(BaseEditor):
     refresh_needed = Event
     save_needed = Event
-    component = Property(depends_on='refresh_needed')
-    basename = ''
+    component = Property(depends_on="refresh_needed")
+    basename = ""
     figure_model = Any
     figure_container = Any
 
@@ -48,26 +48,25 @@ class GraphEditor(BaseEditor):
 
     def save_file(self, path, force_layout=True, dest_box=None):
         _, tail = os.path.splitext(path)
-        if tail not in ('.pdf', '.png'):
-            path = '{}.pdf'.format(path)
+        if tail not in (".pdf", ".png"):
+            path = "{}.pdf".format(path)
 
         c = self.component
 
-        '''
+        """
             chaco becomes less responsive after saving if
             use_backbuffer is false and using pdf
-        '''
+        """
         from reportlab.lib.pagesizes import letter
 
         c.do_layout(size=letter, force=force_layout)
 
         _, tail = os.path.splitext(path)
-        if tail == '.pdf':
+        if tail == ".pdf":
             from pychron.core.pdf.save_pdf_dialog import myPdfPlotGraphicsContext
 
-            gc = myPdfPlotGraphicsContext(filename=path,
-                                          dest_box=dest_box)
-            gc.render_component(c, valign='center')
+            gc = myPdfPlotGraphicsContext(filename=path, dest_box=dest_box)
+            gc.render_component(c, valign="center")
             gc.save()
 
         else:
@@ -88,7 +87,7 @@ class GraphEditor(BaseEditor):
             if compress:
                 self._compress_groups()
             if refresh:
-                print('set items refresh')
+                print("set items refresh")
                 self.refresh_needed = True
 
     def _compress_groups(self):
@@ -122,9 +121,7 @@ class GraphEditor(BaseEditor):
             self.figure_container = container
 
         component = self.figure_container.component
-        w = WarningLabel(text='No Analyses',
-                         font='Helvetica 36',
-                         component=component)
+        w = WarningLabel(text="No Analyses", font="Helvetica 36", component=component)
         component.overlays.append(w)
 
         return component
@@ -133,13 +130,11 @@ class GraphEditor(BaseEditor):
         raise NotImplementedError
 
     def get_component_view(self):
-        return UItem('component',
-                     style='custom',
-                     editor=EnableComponentEditor())
+        return UItem("component", style="custom", editor=EnableComponentEditor())
 
     def traits_view(self):
-        v = View(self.get_component_view(),
-                 resizable=True)
+        v = View(self.get_component_view(), resizable=True)
         return v
+
 
 # ============= EOF =============================================

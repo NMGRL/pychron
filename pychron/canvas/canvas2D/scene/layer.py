@@ -26,7 +26,7 @@ class Layer(HasTraits):
     name = Str
     color = Color
     components = List
-    label = Property(depends_on='name')
+    label = Property(depends_on="name")
     visible = Bool(True)
 
     def destroy(self):
@@ -54,12 +54,11 @@ class Layer(HasTraits):
         self.components.append(v)
 
     def _get_label(self):
-        return 'Layer {}'.format(self.name)
+        return "Layer {}".format(self.name)
 
     def traits_view(self):
-        v = View(Item('name'),
-                 Item('color'),
-                 Item('visible')
-                 )
+        v = View(Item("name"), Item("color"), Item("visible"))
         return v
+
+
 # ============= EOF =============================================

@@ -24,25 +24,28 @@ from pyvisa.constants import StatusCode
 
 class VisaCommunicator(Communicator):
     """
-        uses PyVisa as main interface to USB.
+    uses PyVisa as main interface to USB.
     """
+
     board = 0
     manufacture_id = 0
     model_code = 0
     serial_number = 0
     usb_interface_number = None
 
-    _comms_report_attrs = ('board', 'model_code', 'serial_number')
+    _comms_report_attrs = ("board", "model_code", "serial_number")
 
     def _make_address(self):
-        base = 'USB{}::{}::{}::{}'.format(self.board, self.manufacture_id, self.model_code, self.serial_number)
+        base = "USB{}::{}::{}::{}".format(
+            self.board, self.manufacture_id, self.model_code, self.serial_number
+        )
         if self.usb_interface_number:
-            base = '{}::{}'.format(base, self.usb_interface_number)
+            base = "{}::{}".format(base, self.usb_interface_number)
 
-        return '{}::INSTR'.format(base)
+        return "{}::INSTR".format(base)
 
     def open(self, *args, **kw):
-        self.debug('opening visa usb communicator')
+        self.debug("opening visa usb communicator")
 
         address = self._make_address()
         self.handle = resource_manager.get_instrument(address)
@@ -51,11 +54,17 @@ class VisaCommunicator(Communicator):
             return True
 
     def load(self, config, path, **kw):
-        self.set_attribute(config, 'board', 'Communications', 'board')
-        self.set_attribute(config, 'manufacture_id', 'Communications', 'manufacture_id')
-        self.set_attribute(config, 'model_code', 'Communications', 'model_code')
-        self.set_attribute(config, 'serial_number', 'Communications', 'serial_number')
-        self.set_attribute(config, 'usb_interface_number', 'Communications', 'usb_interface_number', optional=True)
+        self.set_attribute(config, "board", "Communications", "board")
+        self.set_attribute(config, "manufacture_id", "Communications", "manufacture_id")
+        self.set_attribute(config, "model_code", "Communications", "model_code")
+        self.set_attribute(config, "serial_number", "Communications", "serial_number")
+        self.set_attribute(
+            config,
+            "usb_interface_number",
+            "Communications",
+            "usb_interface_number",
+            optional=True,
+        )
         return True
 
     def trigger(self):
@@ -63,10 +72,11 @@ class VisaCommunicator(Communicator):
 
     def ask(self, cmd, *args, **kw):
         resp = self.handle.query(cmd)
-        self.debug('cmd==>{}'.format(resp))
+        self.debug("cmd==>{}".format(resp))
         return resp
 
     def tell(self, cmd, *args, **kw):
         self.handle.write(cmd)
+
 
 # ============= EOF =============================================

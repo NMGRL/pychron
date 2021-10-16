@@ -17,9 +17,20 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from pyface.qt.QtCore import QRect, QSize
-from pyface.qt.QtGui import QRegion, QWidget, QVBoxLayout, QLabel, QFont, QFontMetrics, QSizePolicy, QHBoxLayout, \
-    QPalette, \
-    QColor, QPainter, QPen
+from pyface.qt.QtGui import (
+    QRegion,
+    QWidget,
+    QVBoxLayout,
+    QLabel,
+    QFont,
+    QFontMetrics,
+    QSizePolicy,
+    QHBoxLayout,
+    QPalette,
+    QColor,
+    QPainter,
+    QPen,
+)
 from pyface.qt import QtCore
 
 
@@ -65,10 +76,18 @@ def mask(rect, r):
 class NotificationWidget(QWidget):
     on_close = None
 
-    def __init__(self, txt,
-                 parent=None, color='black',
-                 font='arial', fontsize=18,
-                 opacity=0.75, window_bgcolor='red', *args, **kw):
+    def __init__(
+        self,
+        txt,
+        parent=None,
+        color="black",
+        font="arial",
+        fontsize=18,
+        opacity=0.75,
+        window_bgcolor="red",
+        *args,
+        **kw
+    ):
         super(NotificationWidget, self).__init__(*args, **kw)
 
         self._font = font
@@ -105,7 +124,9 @@ class NotificationWidget(QWidget):
             self.on_close(self)
 
     def _init_ui(self, txt):
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint)
+        self.setWindowFlags(
+            QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint
+        )
 
         pal = QPalette()
         color = QColor()
@@ -124,16 +145,16 @@ class NotificationWidget(QWidget):
 
         nlines, ts = self._generate_text(txt)
 
-        qlabel = QLabel('\n'.join(ts))
+        qlabel = QLabel("\n".join(ts))
 
-        ss = 'QLabel {{color: {}; font-family:{}, sans-serif; font-size: {}px}}'.format(self._color,
-                                                                                        self._font,
-                                                                                        self._fontsize)
+        ss = "QLabel {{color: {}; font-family:{}, sans-serif; font-size: {}px}}".format(
+            self._color, self._font, self._fontsize
+        )
         qlabel.setStyleSheet(ss)
         layout.addWidget(qlabel)
 
-        hlabel = QLabel('double click to dismiss')
-        hlabel.setStyleSheet('QLabel {font-size: 10px}')
+        hlabel = QLabel("double click to dismiss")
+        hlabel.setStyleSheet("QLabel {font-size: 10px}")
 
         hlayout = QHBoxLayout()
 
@@ -162,8 +183,9 @@ class NotificationWidget(QWidget):
 
     def _generate_text(self, txt, n=20):
         if len(txt) > n:
+
             def tokenize(t):
-                return t.split(' ')
+                return t.split(" ")
 
             def linize(ts):
                 s = 0
@@ -172,16 +194,17 @@ class NotificationWidget(QWidget):
                     s += len(ti)
                     tt.append(ti)
                     if s > n:
-                        yield ' '.join(tt)
+                        yield " ".join(tt)
                         tt = []
                         s = 0
                 if tt:
-                    yield ' '.join(tt)
+                    yield " ".join(tt)
 
             lines = list(linize(tokenize(txt)))
             ret = len(lines), lines
         else:
             ret = 1, (txt,)
         return ret
+
 
 # ============= EOF =============================================

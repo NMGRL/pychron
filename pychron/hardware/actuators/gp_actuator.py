@@ -29,7 +29,7 @@ class GPActuator(CoreDevice):
     invert = Bool(False)
 
     def load_additional_args(self, config, **kw):
-        self.set_attribute(config, 'invert', 'General', 'invert', cast='boolean')
+        self.set_attribute(config, "invert", "General", "invert", cast="boolean")
         return True
 
     def get_lock_state(self, *args, **kw):
@@ -42,27 +42,26 @@ class GPActuator(CoreDevice):
         return
 
     def get_channel_state(self, *args, **kw):
-        """
-        """
+        """ """
         raise NotImplementedError
 
     def close_channel(self, obj, excl=False):
         """
-            Close the channel
-            obj: valve object
+        Close the channel
+        obj: valve object
 
-            return True if actuation completed successfully
+        return True if actuation completed successfully
         """
-        return self.actuate(obj, 'Close')
+        return self.actuate(obj, "Close")
 
     def open_channel(self, obj):
         """
-            Open the channel
-            obj: valve object
+        Open the channel
+        obj: valve object
 
-            return True if actuation completed successfully
+        return True if actuation completed successfully
         """
-        return self.actuate(obj, 'Open')
+        return self.actuate(obj, "Open")
 
     def actuate(self, obj, action):
         if self._actuate(obj, action):
@@ -77,13 +76,15 @@ class GPActuator(CoreDevice):
 
         # state = action == 'Open'
         result = self.get_indicator_state(obj, action)
-        self.debug('check actuate action={}, result={}'.format(action, result))
+        self.debug("check actuate action={}, result={}".format(action, result))
 
-        if action == 'Close':
+        if action == "Close":
             result = not result
 
         return result
 
     def _actuate(self, obj, action):
         raise NotImplementedError
+
+
 # ============= EOF ====================================

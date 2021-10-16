@@ -34,4 +34,6 @@ class ChromiumDiodeClientPane(ChromiumClientPane):
 
 class ChromiumUVClientPane(ChromiumClientPane):
     pass
+
+
 # ============= EOF =============================================

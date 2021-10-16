@@ -15,20 +15,20 @@
 # ===============================================================================
 import requests
 
-API_URL = 'https://geodeepdive.org/api'
+API_URL = "https://geodeepdive.org/api"
 
 
 def get_snippet(term):
     s = requests.Session()
-    url = '{}/snippets?term={}'.format(API_URL, term)
+    url = "{}/snippets?term={}".format(API_URL, term)
     r = s.get(url)
     obj = r.json()
 
-    return obj['success']['data']
+    return obj["success"]["data"]
 
 
-if __name__ == '__main__':
-    g = get_snippet('Fish Canyon')
+if __name__ == "__main__":
+    g = get_snippet("Fish Canyon")
     for o in g:
         print(o)
 

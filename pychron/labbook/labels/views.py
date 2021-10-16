@@ -34,23 +34,25 @@ class NewLabelView(HasTraits):
 
     @property
     def color_str(self):
-        f = lambda x: '{:X}'.format(x).zfill(2)
+        f = lambda x: "{:X}".format(x).zfill(2)
         color = self.color
         args = list(map(f, (color.red(), color.green(), color.blue(), color.alpha())))
-        return ''.join(args)
+        return "".join(args)
 
     def traits_view(self):
-        v = View(VGroup(UItem('text'),
-                        UItem('color')),
-                 buttons=['OK', 'Cancel'],
-                 kind='livemodal',
-                 width=500, height=500,
-                 resizable=True,
-                 title='New Label')
+        v = View(
+            VGroup(UItem("text"), UItem("color")),
+            buttons=["OK", "Cancel"],
+            kind="livemodal",
+            width=500,
+            height=500,
+            resizable=True,
+            title="New Label",
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     nv = NewLabelView()
     nv.configure_traits()
     print(nv.color_str)

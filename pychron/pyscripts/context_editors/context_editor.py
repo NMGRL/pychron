@@ -22,7 +22,9 @@ from traits.api import HasTraits, Event
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class ContextEditor(HasTraits):
     update_event = Event
+
 
 # ============= EOF =============================================

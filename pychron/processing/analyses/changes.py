@@ -72,27 +72,43 @@ class BlankChange(Change):
         return IsotopeBlankRecord()
 
     def _make_summary(self, dbrecord):
-        s = ', '.join([bi.make_summary() for bi in dbrecord.blanks])
+        s = ", ".join([bi.make_summary() for bi in dbrecord.blanks])
         self.summary = s
 
         def afactory(b):
-            return [AnalysisRecord(id=ai.analysis.id,
-                                   record_id=ai.analysis.record_id) for ai in b.analysis_set]
+            return [
+                AnalysisRecord(id=ai.analysis.id, record_id=ai.analysis.record_id)
+                for ai in b.analysis_set
+            ]
 
         def vfactory(b):
-            return [ValueRecord(value=ai.value, error=ai.error,
-                                timestamp=ai.analysis.timestamp) for ai in b.value_set]
+            return [
+                ValueRecord(
+                    value=ai.value, error=ai.error, timestamp=ai.analysis.timestamp
+                )
+                for ai in b.value_set
+            ]
 
-        self.isotopes = [IsotopeBlankRecord(id=bi.id, isotope=bi.isotope,
-                                            # analyses=afactory(bi),
-                                            value=bi.user_value,
-                                            error=bi.user_error,
-                                            values=vfactory(bi),
-                                            fit=bi.fit or 'Pr') for bi in dbrecord.blanks]
+        self.isotopes = [
+            IsotopeBlankRecord(
+                id=bi.id,
+                isotope=bi.isotope,
+                # analyses=afactory(bi),
+                value=bi.user_value,
+                error=bi.user_error,
+                values=vfactory(bi),
+                fit=bi.fit or "Pr",
+            )
+            for bi in dbrecord.blanks
+        ]
 
-        self.selected = next((hi for hi in self.isotopes if hi.isotope == 'Ar40'), self.isotopes[-1])
+        self.selected = next(
+            (hi for hi in self.isotopes if hi.isotope == "Ar40"), self.isotopes[-1]
+        )
 
-        b = next((bi for bi in dbrecord.blanks if bi.isotope == 'Ar40'), dbrecord.blanks[-1])
+        b = next(
+            (bi for bi in dbrecord.blanks if bi.isotope == "Ar40"), dbrecord.blanks[-1]
+        )
         self.selected.analyses = afactory(b)
 
     def _selected_changed(self):
@@ -103,8 +119,11 @@ class FitChange(Change):
     fits = List
 
     def _make_summary(self, dbrecord):
-        s = ', '.join([fi.make_summary() for fi in dbrecord.fits])
+        s = ", ".join([fi.make_summary() for fi in dbrecord.fits])
         self.summary = s
-        self.fits = [FitRecord(isotope=fi.isotope_label, fit=fi.fit) for fi in dbrecord.fits]
+        self.fits = [
+            FitRecord(isotope=fi.isotope_label, fit=fi.fit) for fi in dbrecord.fits
+        ]
+
 
 # ============= EOF =============================================

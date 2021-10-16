@@ -34,21 +34,21 @@ class RelativeDetectorPositions(SpectrometerTask):
     ion_optics_manager = Any
 
     def _execute(self):
-        self.info('starting relative positions calculation')
+        self.info("starting relative positions calculation")
         ion = self.ion_optics_manager
         spec = self.spectrometer
 
         # set deflection to 0
-        det = spec.get_detector('AX')
+        det = spec.get_detector("AX")
         det.deflection = 0
         # peak center on the axial detector
-        isotope = 'Ar40'
-        ion.setup_peak_center(detector='AX', isotope=isotope)
+        isotope = "Ar40"
+        ion.setup_peak_center(detector="AX", isotope=isotope)
         t = ion.do_peak_center(save=False)
         if t is not None:
             t.join()
         else:
-            self.info('canceling relative detector position calculation')
+            self.info("canceling relative detector position calculation")
             return
 
         axial_dac = ion.peak_center_result
@@ -58,15 +58,15 @@ class RelativeDetectorPositions(SpectrometerTask):
             # peak center on all detectors
             for d in self.spectrometer.detectors:
                 if not self.isAlive():
-                    self.info('canceling relative detector position calculation')
+                    self.info("canceling relative detector position calculation")
                     break
 
                 # skip this for now
-                if d.name == 'CDD':
+                if d.name == "CDD":
                     continue
-                if d.name == 'H2':
+                if d.name == "H2":
                     continue
-                if d.name == 'AX':
+                if d.name == "AX":
                     continue
 
                 # set deflection to 0
@@ -75,32 +75,37 @@ class RelativeDetectorPositions(SpectrometerTask):
                 t = ion.do_peak_center(save=False)
                 t.join()
                 if ion.peak_center_result is None:
-                    self.info('canceling relative detector position calculation')
+                    self.info("canceling relative detector position calculation")
                     break
 
                 rp = ion.peak_center_result / axial_dac
                 d.relative_position = rp
                 rps.append((d.name, rp))
-                self.info('calculated relative position {} to AX = {}'.format(d.name, rp))
+                self.info(
+                    "calculated relative position {} to AX = {}".format(d.name, rp)
+                )
 
             else:
-                self.info('finished calculating relative detector positions')
+                self.info("finished calculating relative detector positions")
 
                 config = six.moves.configparser.ConfigParser()
-                p = os.path.join(paths.spectrometer_dir, 'detectors.cfg')
+                p = os.path.join(paths.spectrometer_dir, "detectors.cfg")
                 config.read(p)
                 for name, rp in rps:
-                    self.info('{}={:0.6f}'.format(name, rp))
-                    config.set(name, 'relative_position', rp)
+                    self.info("{}={:0.6f}".format(name, rp))
+                    config.set(name, "relative_position", rp)
 
-                with open(p, 'w') as f:
+                with open(p, "w") as f:
                     config.write(f)
 
     def _end(self):
         self.ion_optics_manager.cancel_peak_center()
 
     def traits_view(self):
-        return View(Item('execute', editor=ButtonEditor(label_value='execute_label')),
-                    resizable=True
-                    )
+        return View(
+            Item("execute", editor=ButtonEditor(label_value="execute_label")),
+            resizable=True,
+        )
+
+
 # ============= EOF =============================================

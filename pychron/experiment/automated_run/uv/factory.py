@@ -16,10 +16,20 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import Str, Property, Int, List, Button, \
-    cached_property, on_trait_change, Instance
+from traits.api import (
+    Str,
+    Property,
+    Int,
+    List,
+    Button,
+    cached_property,
+    on_trait_change,
+    Instance,
+)
+
 # ============= standard library imports ========================
 import os
+
 # ============= local library imports  ==========================
 from pychron.experiment.automated_run.factory import AutomatedRunFactory
 from pychron.pychron_constants import NULL_STR
@@ -35,9 +45,9 @@ class UVAutomatedRunFactory(AutomatedRunFactory):
     image = Str
 
     masks = Property
-    extract_units_names = List([NULL_STR, 'burst', 'continuous'])
-    _default_extract_units = 'burst'
-    browser_button = Button('Browse')
+    extract_units_names = List([NULL_STR, "burst", "continuous"])
+    _default_extract_units = "burst"
+    browser_button = Button("Browse")
 
     _spec_klass = UVAutomatedRunSpec
     factory_view_klass = UVFactoryView
@@ -45,30 +55,40 @@ class UVAutomatedRunFactory(AutomatedRunFactory):
     def _get_run_attr(self):
         # r = super(UVAutomatedRunFactory, self)._get_run_attr()
         # r.extend(['mask', 'attenuator', ])
-        r = ['position',
-             'extract_value', 'extract_units', 'cleanup',
-             'mask', 'attenuator', 'reprate',
-             'weight', 'comment',
-             'sample', 'irradiation',
-             'skip', 'mass_spectrometer', 'extract_device']
+        r = [
+            "position",
+            "extract_value",
+            "extract_units",
+            "cleanup",
+            "mask",
+            "attenuator",
+            "reprate",
+            "weight",
+            "comment",
+            "sample",
+            "irradiation",
+            "skip",
+            "mass_spectrometer",
+            "extract_device",
+        ]
 
         return r
 
     @cached_property
     def _get_masks(self):
-        p = os.path.join(paths.device_dir, 'fusions_uv', 'mask_names.txt')
+        p = os.path.join(paths.device_dir, "fusions_uv", "mask_names.txt")
         masks = []
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 for lin in rfile:
                     lin = lin.strip()
-                    if not lin or lin.startswith('#'):
+                    if not lin or lin.startswith("#"):
                         continue
                     masks.append(lin)
 
         return masks
 
-    @on_trait_change('mask, attenuator, reprate')
+    @on_trait_change("mask, attenuator, reprate")
     def _uv_edit_handler(self, name, new):
         self._update_run_values(name, new)
 

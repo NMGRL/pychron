@@ -24,11 +24,11 @@ from traitsui.api import View, HGroup, Item
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
 
-HELP_TAG_POINT = '''Enter the x, y for this point {:0.3f},{:0.3f}
+HELP_TAG_POINT = """Enter the x, y for this point {:0.3f},{:0.3f}
 in data space i.e mm
-'''
+"""
 
-HELP_TAG_HOLE = '''Enter the hole for this point {:0.3f},{:0.3f}'''
+HELP_TAG_HOLE = """Enter the hole for this point {:0.3f},{:0.3f}"""
 
 
 class ReferencePoint(HasTraits):
@@ -41,14 +41,18 @@ class ReferencePoint(HasTraits):
         super(ReferencePoint, self).__init__(*args, **kw)
 
     def traits_view(self):
-        v = View(CustomLabel('help_tag',
-                             # top_padding=10,
-                             # left_padding=10,
-                             color='maroon'),
-                 HGroup('x', 'y'),
-                 buttons=['OK', 'Cancel'],
-                 kind='modal',
-                 title='Reference Point')
+        v = View(
+            CustomLabel(
+                "help_tag",
+                # top_padding=10,
+                # left_padding=10,
+                color="maroon",
+            ),
+            HGroup("x", "y"),
+            buttons=["OK", "Cancel"],
+            kind="modal",
+            title="Reference Point",
+        )
         return v
 
 
@@ -70,14 +74,18 @@ class ReferenceHole(ReferencePoint):
 
     def traits_view(self):
         v = View(
-            CustomLabel('help_tag',
-                        # top_padding=10,
-                        # left_padding=10,
-                        color='maroon'),
-            Item('hole'),
-            buttons=['OK', 'Cancel'],
-            kind='modal',
-            title='Reference Hole')
+            CustomLabel(
+                "help_tag",
+                # top_padding=10,
+                # left_padding=10,
+                color="maroon",
+            ),
+            Item("hole"),
+            buttons=["OK", "Cancel"],
+            kind="modal",
+            title="Reference Hole",
+        )
         return v
+
 
 # ============= EOF =============================================

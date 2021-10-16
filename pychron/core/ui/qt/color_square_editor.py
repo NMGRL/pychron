@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Int
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pyface.qt.QtGui import QFrame, QPainter, QColor
@@ -61,4 +62,6 @@ class _ColorSquareEditor(Editor):
 class ColorSquareEditor(BasicEditorFactory):
     klass = _ColorSquareEditor
     width = Int(100)
+
+
 # ============= EOF =============================================

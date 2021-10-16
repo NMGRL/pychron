@@ -18,10 +18,9 @@ from pychron.core.ui import set_qt
 
 set_qt()
 # ============= enthought library imports =======================
-from traits.api import HasTraits, \
-    Instance, Float, Int, Bool, DelegatesTo, Range
-from traitsui.api import View, Item, UItem, VGroup, \
-    HGroup, spring
+from traits.api import HasTraits, Instance, Float, Int, Bool, DelegatesTo, Range
+from traitsui.api import View, Item, UItem, VGroup, HGroup, spring
+
 # from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 # from pychron.loggable import Loggable
 # from pychron.canvas.canvas2D.raster_canvas import RasterCanvas
@@ -30,6 +29,7 @@ from pychron.lasers.power.power_mapper import PowerMapper
 from pychron.core.ui.thread import Thread
 from pychron.lasers.power.power_map_processor import PowerMapProcessor
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
+
 # from pychron.graph.graph import Graph
 # from pychron.graph.contour_graph import ContourGraph
 # from chaco.plot_containers import HPlotContainer
@@ -51,17 +51,16 @@ class PowerMapControls(HasTraits):
     discrete_scan = Bool(False)
 
     def traits_view(self):
-        v = View(VGroup(
-
-            Item('discrete_scan'),
-            Item('beam_diameter'),
-            Item('request_power'),
-            Item('padding'),
-            Item('step_length'),
-            Item('center_x'),
-            Item('center_y'),
-
-        )
+        v = View(
+            VGroup(
+                Item("discrete_scan"),
+                Item("beam_diameter"),
+                Item("request_power"),
+                Item("padding"),
+                Item("step_length"),
+                Item("center_x"),
+                Item("center_y"),
+            )
         )
         return v
 
@@ -75,7 +74,7 @@ class PowerMapEditor(LaserEditor):
     #     canvas = Instance(RasterCanvas, ())
     editor = Instance(PowerMapControls, ())
     mapper = Instance(PowerMapper, ())
-    completed = DelegatesTo('mapper')
+    completed = DelegatesTo("mapper")
     # was_executed = False
 
     processor = Instance(PowerMapProcessor)
@@ -91,7 +90,7 @@ class PowerMapEditor(LaserEditor):
         reader.open_data(path)
         cg = pmp.load_graph(reader)
 
-        self.beam_diameter, self.power = pmp.extract_attrs(['beam_diameter', 'power'])
+        self.beam_diameter, self.power = pmp.extract_attrs(["beam_diameter", "power"])
         self.component = cg.plotcontainer
         self.was_executed = True
         self.processor = pmp
@@ -117,8 +116,9 @@ class PowerMapEditor(LaserEditor):
         cy = editor.center_y
         step_len = editor.step_length
 
-        t = Thread(target=mapper.do_power_mapping,
-                   args=(bd, rp, cx, cy, padding, step_len))
+        t = Thread(
+            target=mapper.do_power_mapping, args=(bd, rp, cx, cy, padding, step_len)
+        )
         t.start()
         self._execute_thread = t
 
@@ -129,22 +129,23 @@ class PowerMapEditor(LaserEditor):
 
     def traits_view(self):
         v = View(
-            HGroup(spring,
-                   Item('beam_diameter', style='readonly'),
-                   Item('power', style='readonly'),
-                   Item('percent_threshold', label='% Threshold'),
-                   visible_when='was_executed'
-                   ),
-            UItem('component', editor=ComponentEditor()),
-            resizable=True
+            HGroup(
+                spring,
+                Item("beam_diameter", style="readonly"),
+                Item("power", style="readonly"),
+                Item("percent_threshold", label="% Threshold"),
+                visible_when="was_executed",
+            ),
+            UItem("component", editor=ComponentEditor()),
+            resizable=True,
         )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     e = PowerMapEditor()
-    p = '/Users/ross/Sandbox/powermap/powermap-2013-07-26005.hdf5'
-    p = '/Users/ross/Sandbox/powermap/powermap-2013-07-27008.hdf5'
+    p = "/Users/ross/Sandbox/powermap/powermap-2013-07-26005.hdf5"
+    p = "/Users/ross/Sandbox/powermap/powermap-2013-07-27008.hdf5"
     e.load(p)
     e.configure_traits()
 # ============= EOF =============================================

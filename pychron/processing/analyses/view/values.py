@@ -48,7 +48,7 @@ class DetectorRatio(ComputedValue):
     detectors = Str
     noncorrected_value = Float
     noncorrected_error = Float
-    calc_ic = Property(depends_on='value')
+    calc_ic = Property(depends_on="value")
     ref_ratio = Float
 
     def _get_calc_ic(self):
@@ -61,5 +61,6 @@ class ExtractionValue(NamedValue):
 
 class MeasurementValue(NamedValue):
     pass
+
 
 # ============= EOF =============================================

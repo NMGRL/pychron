@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from chaco.data_label import DataLabel
 from chaco.plot_label import PlotLabel
+
 # ============= standard library imports ========================
 from numpy import max
 from traits.api import Bool, Str
@@ -25,6 +26,7 @@ from traits.api import Bool, Str
 from pychron.pipeline.plot.overlays.mean_indicator_overlay import MovableMixin
 
 try:
+
     class FlowPlotLabel(PlotLabel, MovableMixin):
         def overlay(self, component, gc, *args, **kw):
             if self.ox:
@@ -37,6 +39,8 @@ try:
             x, y = pt
             w, h = self.get_preferred_size()
             return abs(x - self.x) < w and abs(y - self.y) < h
+
+
 except TypeError:
     # documentation auto doc hack
     class FlowPlotLabel:
@@ -45,11 +49,12 @@ except TypeError:
 
 class FlowDataLabel(DataLabel):
     """
-        this label repositions itself if doesn't fit within the
-        its component bounds.
+    this label repositions itself if doesn't fit within the
+    its component bounds.
 
 
     """
+
     constrain_x = Bool(True)
     constrain_y = Bool(True)
     # position_event=Event
@@ -79,7 +84,7 @@ class FlowDataLabel(DataLabel):
 
         # face name was getting set to "Helvetica" by reportlab during pdf generation
         # set face_name back to "" to prevent font display issue. see issue #72
-        self.font.face_name = ''
+        self.font.face_name = ""
 
         super(FlowDataLabel, self).overlay(component, gc, *args, **kw)
 
@@ -100,5 +105,6 @@ class FlowDataLabel(DataLabel):
 
             yd = self.component.y2 - h - 2 * self.border_padding - self.line_spacing
             self.y = min((self.y, yd))
+
 
 # ============= EOF =============================================

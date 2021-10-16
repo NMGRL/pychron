@@ -22,7 +22,15 @@ import os
 import re
 
 import six
-from lxml.etree import ElementTree, Element, ParseError, XML, XMLSyntaxError, tostring, XMLParser as LXMLParser
+from lxml.etree import (
+    ElementTree,
+    Element,
+    ParseError,
+    XML,
+    XMLSyntaxError,
+    tostring,
+    XMLParser as LXMLParser,
+)
 
 # ============= local library imports  ==========================
 
@@ -55,7 +63,7 @@ def scan(txt, target):
 def pprint_xml(txt):
     line = []
     lines = []
-    indent = '    '
+    indent = "    "
     stack = []
     skip_next = False
     for c, t in scan(txt, None):
@@ -74,38 +82,40 @@ def pprint_xml(txt):
             continue
 
         if c == 1:
-            if t.startswith('/'):
+            if t.startswith("/"):
                 stack.pop()
-                line.append('<{}>'.format(t))
-                lines.append('{}{}'.format(indent * len(stack), ''.join(line).strip()))
+                line.append("<{}>".format(t))
+                lines.append("{}{}".format(indent * len(stack), "".join(line).strip()))
                 line = []
                 skip_next = True
                 continue
             else:
-                lines.append('{}{}'.format(indent * (len(stack) - 1), ''.join(line).strip()))
+                lines.append(
+                    "{}{}".format(indent * (len(stack) - 1), "".join(line).strip())
+                )
                 line = []
-                if not t.startswith('?xml'):
+                if not t.startswith("?xml"):
                     stack.append(t)
 
-            line.append('<{}'.format(t))
+            line.append("<{}".format(t))
 
         # if not line and c == 1:
         #     line.append('<{}'.format(t))
         #     continue
         else:
             if c == 4:
-                t = ' '
+                t = " "
             line.append(t)
 
     if line:
-        lines.append(''.join(line).strip())
+        lines.append("".join(line).strip())
 
     # print '-------------------'
     # for li in lines:
     #     print li
 
     # lines[0]=lines[0].lstrip()
-    return '\n'.join([li for li in lines if li.strip()])
+    return "\n".join([li for li in lines if li.strip()])
 
 
 def indent(elem, level=0):
@@ -139,14 +149,14 @@ class XMLParser(object):
 
                 warning(None, str(e))
         else:
-            self._root = Element('root')
+            self._root = Element("root")
 
     def _parse_file(self, p):
         txt = None
         if isinstance(p, (str, six.text_type)):
-            txt = ''
+            txt = ""
             if os.path.isfile(p):
-                with open(p, 'rb') as rfile:
+                with open(p, "rb") as rfile:
                     txt = rfile.read()
 
         if txt is None:
@@ -169,7 +179,7 @@ class XMLParser(object):
 
     def new_element(self, tag, value, **kw):
         e = Element(tag, attrib=kw)
-        if value not in ('', None):
+        if value not in ("", None):
             e.text = str(value)
         return e
 
@@ -185,7 +195,7 @@ class XMLParser(object):
         if p and os.path.isdir(os.path.dirname(p)):
             indent(self._root)
             tree = self.get_tree()
-            tree.write(p, xml_declaration=True, method='xml', pretty_print=pretty_print)
+            tree.write(p, xml_declaration=True, method="xml", pretty_print=pretty_print)
 
     def tostring(self, pretty_print=True):
         tree = self.get_tree()
@@ -194,7 +204,7 @@ class XMLParser(object):
 
     def get_elements(self, name=None):
         root = self.get_root()
-        path = '//{}'.format(name)
+        path = "//{}".format(name)
         return root.xpath(path)
 
     #         return self._get_elements(None, True, name)
@@ -202,8 +212,7 @@ class XMLParser(object):
     def _get_elements(self, group, element, name):
         if group is None:
             group = self.get_root()
-        return [v if element else v.text.strip()
-                for v in group.findall(name)]
+        return [v if element else v.text.strip() for v in group.findall(name)]
 
         # class XMLParser2(object):
         # '''

@@ -19,9 +19,20 @@ import math
 import re
 
 from numpy import where, delete, polyfit, percentile
+
 # ============= enthought library imports =======================
-from traits.api import Array, List, Event, Property, Any, \
-    Dict, Str, Bool, cached_property, HasTraits
+from traits.api import (
+    Array,
+    List,
+    Event,
+    Property,
+    Any,
+    Dict,
+    Str,
+    Bool,
+    cached_property,
+    HasTraits,
+)
 
 from pychron.core.regression.tinv import tinv
 from pychron.core.stats import calculate_mswd_probability
@@ -30,7 +41,7 @@ from pychron.core.stats.monte_carlo import RegressionEstimator
 from pychron.core.utils import alphas
 from pychron.pychron_constants import PLUSMINUS, format_mswd
 
-logger = logging.getLogger('BaseRegressor')
+logger = logging.getLogger("BaseRegressor")
 
 
 class BaseRegressor(HasTraits):
@@ -41,8 +52,8 @@ class BaseRegressor(HasTraits):
     yserr = Array
 
     dirty = Event
-    coefficients = Property(depends_on='dirty, xs, ys')
-    coefficient_errors = Property(depends_on='coefficients, xs, ys')
+    coefficients = Property(depends_on="dirty, xs, ys")
+    coefficient_errors = Property(depends_on="coefficients, xs, ys")
     _coefficients = List
     _coefficient_errors = List
     _result = Any
@@ -50,7 +61,7 @@ class BaseRegressor(HasTraits):
     fit = Property
     _fit = Any
 
-    n = Property(depends_on='dirty, xs, ys')
+    n = Property(depends_on="dirty, xs, ys")
 
     user_excluded = List
     ouser_excluded = List
@@ -65,20 +76,20 @@ class BaseRegressor(HasTraits):
     # filter_ys = Array
     # _filtering = Bool(False)
 
-    error_calc_type = 'CI'
+    error_calc_type = "CI"
 
-    delta = Property(depends_on='dirty, xs, ys')
-    mswd = Property(depends_on='dirty, xs, ys')
+    delta = Property(depends_on="dirty, xs, ys")
+    mswd = Property(depends_on="dirty, xs, ys")
     valid_mswd = Bool
 
-    pre_clean_xs = Property(depends_on='dirty, xs, ys')
-    pre_clean_ys = Property(depends_on='dirty, xs, ys')
+    pre_clean_xs = Property(depends_on="dirty, xs, ys")
+    pre_clean_ys = Property(depends_on="dirty, xs, ys")
 
-    clean_xs = Property(depends_on='dirty, xs, ys')
-    clean_ys = Property(depends_on='dirty, xs, ys')
-    clean_xserr = Property(depends_on='dirty, xs, ys')
-    clean_yserr = Property(depends_on='dirty, xs, ys')
-    clean_yserr = Property(depends_on='dirty, xs, ys')
+    clean_xs = Property(depends_on="dirty, xs, ys")
+    clean_ys = Property(depends_on="dirty, xs, ys")
+    clean_xserr = Property(depends_on="dirty, xs, ys")
+    clean_yserr = Property(depends_on="dirty, xs, ys")
+    clean_yserr = Property(depends_on="dirty, xs, ys")
 
     degrees_of_freedom = Property
     integrity_warning = False
@@ -131,9 +142,9 @@ class BaseRegressor(HasTraits):
     @property
     def std(self):
         """
-            mass spec uses ddof=1
-            ddof=0 provides a maximum likelihood estimate of the variance for normally distributed variables
-            ddof=1 unbiased estimator of the variance of the infinite population
+        mass spec uses ddof=1
+        ddof=0 provides a maximum likelihood estimate of the variance for normally distributed variables
+        ddof=1 unbiased estimator of the variance of the infinite population
         """
         ys = self.clean_ys
         if len(ys) > self.ddof:
@@ -179,7 +190,7 @@ class BaseRegressor(HasTraits):
         return 0
 
     def get_fit_dict(self):
-        return {'fit': self.fit, 'error_type': self.error_calc_type}
+        return {"fit": self.fit, "error_type": self.error_calc_type}
 
     def determine_fit(self):
         return self.fit
@@ -199,26 +210,35 @@ class BaseRegressor(HasTraits):
 
         self.outlier_excluded = []
         self.dirty = True
-        if fod.get('filter_outliers', False):
-            for _ in range(fod.get('iterations', 1)):
+        if fod.get("filter_outliers", False):
+            for _ in range(fod.get("iterations", 1)):
                 self.calculate(filtering=True)
 
                 self.dirty = True
                 outliers = self.calculate_outliers()
 
-                self.outlier_excluded = list(set(self.outlier_excluded + list(outliers)))
+                self.outlier_excluded = list(
+                    set(self.outlier_excluded + list(outliers))
+                )
                 self.dirty = True
 
         # self.dirty = True
         return self.clean_xs, self.clean_ys
 
     def get_excluded(self):
-        return list(set(self.user_excluded + self.outlier_excluded + self.truncate_excluded + self.ouser_excluded))
+        return list(
+            set(
+                self.user_excluded
+                + self.outlier_excluded
+                + self.truncate_excluded
+                + self.ouser_excluded
+            )
+        )
 
     def set_truncate(self, trunc):
-        self.truncate = trunc or ''
+        self.truncate = trunc or ""
         if self.truncate:
-            m = re.match(r'[A-Za-z]+', self.truncate)
+            m = re.match(r"[A-Za-z]+", self.truncate)
             if m:
                 k = m.group(0)
                 exclude = eval(self.truncate, {k: self.xs})
@@ -240,9 +260,9 @@ class BaseRegressor(HasTraits):
 
     def format_percent_error(self, s, e):
         try:
-            return '{:0.2}%'.format(abs(e / s * 100))
+            return "{:0.2}%".format(abs(e / s * 100))
         except ZeroDivisionError:
-            return 'Inf'
+            return "Inf"
 
     def predict(self, x):
         raise NotImplementedError
@@ -269,12 +289,12 @@ class BaseRegressor(HasTraits):
         if bound is None:
             bound = self.filter_bound_value
             if not bound:
-                if self.filter_outliers_dict.get('use_standard_deviation_filtering'):
+                if self.filter_outliers_dict.get("use_standard_deviation_filtering"):
                     bound = self.std
                 else:
                     bound = self.calculate_standard_error_fit()
 
-                bound *= self.filter_outliers_dict.get('std_devs', 2)
+                bound *= self.filter_outliers_dict.get("std_devs", 2)
 
         if model is None:
             model = self.predict(self.xs)
@@ -284,18 +304,18 @@ class BaseRegressor(HasTraits):
         return lower, upper
 
     def calculate_outliers(self):
-        if self.filter_outliers_dict.get('use_iqr_filtering'):
+        if self.filter_outliers_dict.get("use_iqr_filtering"):
             q1 = percentile(self.ys, 25)
             q3 = percentile(self.ys, 75)
             iqr = q3 - q1
             os = where(self.ys < (q1 - 1.5 * iqr) | self.ys > (q3 + 1.5 * iqr))[0]
         else:
-            if self.filter_outliers_dict.get('use_standard_deviation_filtering'):
+            if self.filter_outliers_dict.get("use_standard_deviation_filtering"):
                 s = self.std
             else:
                 s = self.calculate_standard_error_fit()
 
-            nsigma = self.filter_outliers_dict.get('std_devs', 2)
+            nsigma = self.filter_outliers_dict.get("std_devs", 2)
 
             # calculate residuals for every point not just cleaned arrays
             residuals = abs(self.ys - self.predict(self.xs))
@@ -307,13 +327,13 @@ class BaseRegressor(HasTraits):
 
     def calculate_standard_error_fit(self, residuals=None):
         """
-            mass spec calculates error in fit as
-            see LeastSquares.CalcResidualsAndFitError
+        mass spec calculates error in fit as
+        see LeastSquares.CalcResidualsAndFitError
 
-            SigmaFit=Sqrt(SumSqResid/((NP-1)-(q-1)))
+        SigmaFit=Sqrt(SumSqResid/((NP-1)-(q-1)))
 
-            NP = number of points
-            q= number of fit params... parabolic =3
+        NP = number of points
+        q= number of fit params... parabolic =3
         """
         if residuals is None:
             residuals = self.calculate_residuals()
@@ -365,7 +385,7 @@ class BaseRegressor(HasTraits):
         obs = self.clean_ys
         model = self.predict(self.clean_xs)
         if model is not None:
-            return (1. / (n - 2) * ((obs - model) ** 2).sum()) ** 0.5
+            return (1.0 / (n - 2) * ((obs - model) ** 2).sum()) ** 0.5
         else:
             return 0
 
@@ -382,23 +402,23 @@ class BaseRegressor(HasTraits):
 
         coeffs = []
         for i, (ci, ei) in enumerate(zip(cs, ce)):
-            pp = '({})'.format(self.format_percent_error(ci, ei))
-            fmt = '{{:0.{}e}}' if abs(ci) < math.pow(10, -sig_figs) else '{{:0.{}f}}'
+            pp = "({})".format(self.format_percent_error(ci, ei))
+            fmt = "{{:0.{}e}}" if abs(ci) < math.pow(10, -sig_figs) else "{{:0.{}f}}"
             ci = fmt.format(sig_figs).format(ci)
 
-            fmt = '{{:0.{}e}}' if abs(ei) < math.pow(10, -sig_figs) else '{{:0.{}f}}'
+            fmt = "{{:0.{}e}}" if abs(ei) < math.pow(10, -sig_figs) else "{{:0.{}f}}"
             ei = fmt.format(sig_figs).format(ei)
 
-            vfmt = u'{{}}= {{}} {} {{}} {{}}'.format(PLUSMINUS)
+            vfmt = u"{{}}= {{}} {} {{}} {{}}".format(PLUSMINUS)
             coeffs.append(vfmt.format(alphas(i), ci, ei, pp))
 
-        s = u', '.join(coeffs)
+        s = u", ".join(coeffs)
         return s
 
     def make_equation(self):
         """
-            y=Ax+B
-            y=Ax2+Bx+C
+        y=Ax+B
+        y=Ax2+Bx+C
         """
         n = len(self.coefficients) - 1
         constant = alphas(n)
@@ -408,21 +428,25 @@ class BaseRegressor(HasTraits):
 
             e = n - i
             if e > 1:
-                a = '{}x{}'.format(a, e)
+                a = "{}x{}".format(a, e)
             else:
-                a = '{}x'.format(a)
+                a = "{}x".format(a)
             ps.append(a)
 
         fit = self.fit
-        eq = '+'.join(ps)
-        s = '{}({})    y={}+{}'.format(fit, self.error_calc_type or 'CI', eq, constant)
+        eq = "+".join(ps)
+        s = "{}({})    y={}+{}".format(fit, self.error_calc_type or "CI", eq, constant)
         return s
 
     def get_exog(self, x):
         return x
 
     def format_mswd(self, mean=False):
-        m, v = (self.mean_mswd, self.valid_mean_mswd) if mean else (self.mswd, self.valid_mswd)
+        m, v = (
+            (self.mean_mswd, self.valid_mean_mswd)
+            if mean
+            else (self.mswd, self.valid_mswd)
+        )
         return format_mswd(m, v)
 
     # private
@@ -435,11 +459,7 @@ class BaseRegressor(HasTraits):
         cors = self._calculate_confidence_interval(X, Y, rx)
         return cors
 
-    def _calculate_confidence_interval(self,
-                                       x,
-                                       observations,
-                                       rx,
-                                       confidence=95):
+    def _calculate_confidence_interval(self, x, observations, rx, confidence=95):
 
         alpha = 1.0 - confidence / 100.0
 
@@ -453,7 +473,7 @@ class BaseRegressor(HasTraits):
             d = n ** -1 + (rx - xm) ** 2 / ssx
             cors = ti * syx * d ** 0.5
 
-            return cors / 2.
+            return cors / 2.0
 
     def _delete_filtered_hook(self, outliers):
         pass
@@ -499,16 +519,16 @@ class BaseRegressor(HasTraits):
         nx, ny = len(x), len(y)
         if not nx or not ny:
             if self.integrity_warning or verbose:
-                logger.warning('not x={} y={}'.format(nx, ny))
+                logger.warning("not x={} y={}".format(nx, ny))
             return
         if nx != ny:
             if self.integrity_warning or verbose:
-                logger.warning('x!=y x={} y={}'.format(nx, ny))
+                logger.warning("x!=y x={} y={}".format(nx, ny))
             return
 
         if nx == 1 or ny == 1:
             if self.integrity_warning or verbose:
-                logger.warning('==1 x={} y={}'.format(nx, ny))
+                logger.warning("==1 x={} y={}".format(nx, ny))
             return
 
         return True
@@ -526,7 +546,9 @@ class BaseRegressor(HasTraits):
 
         if self._check_integrity(ys, yserr):
             mswd = calculate_mswd(ys, yserr, k=self.degrees_of_freedom)
-            self.valid_mswd = validate_mswd(mswd, len(ys), k=self.degrees_of_freedom) or False
+            self.valid_mswd = (
+                validate_mswd(mswd, len(ys), k=self.degrees_of_freedom) or False
+            )
             return mswd
 
     def _get_n(self):
@@ -557,6 +579,8 @@ class BaseRegressor(HasTraits):
         fn = len(self.clean_ys)
 
         if tn != fn:
-            tn = '{}/{}'.format(fn, tn)
+            tn = "{}/{}".format(fn, tn)
         return tn
+
+
 # ============= EOF =============================================

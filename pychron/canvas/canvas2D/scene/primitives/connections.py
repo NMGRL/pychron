@@ -17,26 +17,32 @@ from traits.api import Str, Enum
 from traitsui.api import View, Item, HGroup
 
 from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive
-from pychron.canvas.canvas2D.scene.primitives.primitives import Point, Bordered, BorderLine
+from pychron.canvas.canvas2D.scene.primitives.primitives import (
+    Point,
+    Bordered,
+    BorderLine,
+)
 from pychron.pychron_constants import NULL_STR
 
 
 class ConnectionMixin:
-    orientation = Enum(NULL_STR, 'vertical', 'horizontal')
+    orientation = Enum(NULL_STR, "vertical", "horizontal")
     start = Str
     end = Str
     start_offset = Str
     end_offset = Str
 
     def edit_view(self):
-        v = View(Item('orientation'),
-                 HGroup(Item('start'), Item('start_offset')),
-                 HGroup(Item('end'), Item('end_offset')))
+        v = View(
+            Item("orientation"),
+            HGroup(Item("start"), Item("start_offset")),
+            HGroup(Item("end"), Item("end_offset")),
+        )
         return v
 
 
 class Connection(BorderLine, ConnectionMixin):
-    tag = 'connection'
+    tag = "connection"
 
 
 def fork(gc, lx, ly, rx, ry, mx, my, h):
@@ -59,7 +65,7 @@ def fork(gc, lx, ly, rx, ry, mx, my, h):
 
 
 class Fork(QPrimitive, Bordered, ConnectionMixin):
-    tag = 'fork'
+    tag = "fork"
     left = None
     right = None
     mid = None
@@ -84,7 +90,7 @@ class Fork(QPrimitive, Bordered, ConnectionMixin):
     def get_midx(self):
         lx, ly = self.left.get_xy()
         rx, ry = self.right.get_xy()
-        return lx + (rx - lx) / 2.
+        return lx + (rx - lx) / 2.0
 
     def set_points(self, lx, ly, rx, ry, mx, my):
         self.left = Point(lx, ly)
@@ -104,7 +110,7 @@ class Fork(QPrimitive, Bordered, ConnectionMixin):
         rx, ry = self.right.get_xy()
         mx, my = self.mid.get_xy()
         # ly, ry = ly - 30, ry - 30
-        mx = lx + (rx - lx) / 2.
+        mx = lx + (rx - lx) / 2.0
 
         w, h = self.get_wh()
         # print self.height, h, self.canvas
@@ -150,7 +156,7 @@ def tee_v(gc, x1, y1, x2, mx, y2):
 
 
 class Tee(Fork):
-    tag = 'tee'
+    tag = "tee"
 
     def _render(self, gc):
         lx, ly = self.left.get_xy()
@@ -163,13 +169,13 @@ class Tee(Fork):
             self._render_horizontal(gc, lx, ly, rx, ry, mx, my)
 
     def _render_vertical(self, gc, lx, ly, rx, ry, mx, my):
-        """     M       L _____ R
-                |           |
-             L__|__R  or    |
-                            M
+        """M       L _____ R
+           |           |
+        L__|__R  or    |
+                       M
 
         """
-        mx = lx + (rx - lx) / 2.
+        mx = lx + (rx - lx) / 2.0
         with gc:
             gc.set_line_width(20)
             gc.set_stroke_color(self._get_border_color())
@@ -197,18 +203,18 @@ class Tee(Fork):
         tee_h(gc, lx, ly, mx, my, ry)
 
 
-def elbow(gc, sx, sy, ex, ey, corner='ul'):
+def elbow(gc, sx, sy, ex, ey, corner="ul"):
     x1 = sx
     y1 = sy
     x3 = ex
     y3 = ey
-    if corner == 'ul':
+    if corner == "ul":
         x2 = sx
         y2 = ey
-    elif corner == 'lr':
+    elif corner == "lr":
         x2 = ex
         y2 = sy
-    elif corner == 'll':
+    elif corner == "ll":
         x2 = sx
         y2 = ey
     else:
@@ -223,8 +229,8 @@ def elbow(gc, sx, sy, ex, ey, corner='ul'):
 
 
 class Elbow(BorderLine):
-    corner = 'ul'
-    tag = 'elbow'
+    corner = "ul"
+    tag = "elbow"
 
     def _render(self, gc):
         sx, sy = self.start_point.get_xy()
@@ -237,5 +243,6 @@ class Elbow(BorderLine):
         gc.set_line_width(10)
         self.set_fill_color(gc)
         elbow(gc, sx, sy, ex, ey, self.corner)
+
 
 # ============= EOF =============================================

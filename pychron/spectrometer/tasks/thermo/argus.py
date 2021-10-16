@@ -23,7 +23,7 @@ from pychron.spectrometer.thermo.manager.argus import ArgusSpectrometerManager
 
 
 class ArgusSpectrometerPlugin(ThermoSpectrometerPlugin):
-    id = 'pychron.spectrometer.argus'
+    id = "pychron.spectrometer.argus"
     spectrometer_manager_klass = ArgusSpectrometerManager
-    manager_name = 'argus_spectrometer_manager'
-    name = 'ArgusSpectrometer'
+    manager_name = "argus_spectrometer_manager"
+    name = "ArgusSpectrometer"

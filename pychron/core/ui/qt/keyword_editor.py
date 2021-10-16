@@ -31,22 +31,25 @@ from traitsui.qt4.text_editor import SimpleEditor
 
 class _KeywordEditor(SimpleEditor):
     def init(self, parent):
-        """ Finishes initializing the editor by creating the underlying toolkit
-            widget.
+        """Finishes initializing the editor by creating the underlying toolkit
+        widget.
         """
         self.control = QtGui.QTextEdit(self.str_value)
         # self.control = QtGui.TextEdit(self.str_value)
         # self.control= QtGui.QLineEdit(self.str_value)
-        QtCore.QObject.connect(self.control,
-                               QtCore.SIGNAL('editingFinished()'), self.update_object)
+        QtCore.QObject.connect(
+            self.control, QtCore.SIGNAL("editingFinished()"), self.update_object
+        )
 
-        QtCore.QObject.connect(self.control,
-                               QtCore.SIGNAL('cursorPositionChanged()'), self.update_cursor_position)
+        QtCore.QObject.connect(
+            self.control,
+            QtCore.SIGNAL("cursorPositionChanged()"),
+            self.update_cursor_position,
+        )
         self.set_tooltip()
 
         ctrl = self.control
-        ctrl.setSizePolicy(QtGui.QSizePolicy.Expanding,
-                           QtGui.QSizePolicy.Fixed)
+        ctrl.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
         ctrl.setFixedHeight(20)
         if not self.factory.editable:
             ctrl.setReadOnly(True)
@@ -80,7 +83,7 @@ class _KeywordEditor(SimpleEditor):
 
     def update_cursor_position(self):
         user_object = self.context_object
-        print('uasdf', user_object)
+        print("uasdf", user_object)
 
 
 class KeywordEditor(BasicEditorFactory):
@@ -90,6 +93,7 @@ class KeywordEditor(BasicEditorFactory):
     fontsize = Int
     mapping = Dict
     evaluate = None
+
 
 # ============= EOF =============================================
 

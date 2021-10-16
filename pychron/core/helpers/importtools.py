@@ -28,10 +28,11 @@ def import_klass(k):
     :param importstr:
     :return: classobj
     """
-    args = k.split('.')
-    pkg, klass = '.'.join(args[:-1]), args[-1]
+    args = k.split(".")
+    pkg, klass = ".".join(args[:-1]), args[-1]
     mod = __import__(pkg, fromlist=[klass])
 
     return getattr(mod, klass)
+
 
 # ============= EOF =============================================

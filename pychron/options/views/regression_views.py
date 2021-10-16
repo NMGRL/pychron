@@ -20,7 +20,7 @@ from traitsui.api import View, Item
 
 class RegressionMainOptions(SubOptions):
     def traits_view(self):
-        v = View(Item('regressor'))
+        v = View(Item("regressor"))
         return v
 
 
@@ -35,10 +35,11 @@ class RegressionSubOptions(SubOptions):
     #     return v
 
 
-VIEWS = {MAIN.lower(): RegressionMainOptions,
-         # 'regression series': RegressionSeriesSubOptions,
-         APPEARANCE.lower(): RegressionAppearance,
-         # 'display': DisplaySubOptions,
-         # 'groups': GroupSubOptions
-         }
+VIEWS = {
+    MAIN.lower(): RegressionMainOptions,
+    # 'regression series': RegressionSeriesSubOptions,
+    APPEARANCE.lower(): RegressionAppearance,
+    # 'display': DisplaySubOptions,
+    # 'groups': GroupSubOptions
+}
 # ============= EOF =============================================

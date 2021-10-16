@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import provides
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.furnace.ifurnace_controller import IFurnaceController
@@ -62,12 +63,13 @@ class NMGRLFurnaceController(AbstractDevice):
 
     def test_connection(self):
         if self._cdevice:
-            return self._cdevice.test_connection(), ''
+            return self._cdevice.test_connection(), ""
         else:
-            return False, 'No Device'
+            return False, "No Device"
 
     def set_pid(self, pstr):
         if self._cdevice:
             return self._cdevice.set_pid(pstr)
+
 
 # ============= EOF =============================================

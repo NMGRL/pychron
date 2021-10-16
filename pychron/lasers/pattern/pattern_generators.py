@@ -130,7 +130,7 @@ def polygon_pattern(cx, cy, radius, nsides, rotation=0):
 
 def arc_pattern(cx, cy, degrees, radius):
     """
-         only used for drawing
+    only used for drawing
     """
 
     rs = radians(linspace(0, degrees, degrees / 10.0))
@@ -148,22 +148,22 @@ def arc_pattern(cx, cy, degrees, radius):
         yield pt
 
 
-def random_pattern(cx, cy, walk_x, walk_y, ns, shape='circle', **kw):
-    '''
-        this method generates a more even distribution around the center than 
-        method 1.
-        
-        method 1.
-        ra = math.radians(random.random()*360)
-        x = cx + walk_x * random.random()*math.cos(ra)
-        y = cx + walk_y * random.random()*math.sin(ra)
-        
-        method 2. preferred
-        generate random x and y point in square centered on cx, cy
-        if shape is circle check if displacement of point from center is greater than radius
-        
-        
-    '''
+def random_pattern(cx, cy, walk_x, walk_y, ns, shape="circle", **kw):
+    """
+    this method generates a more even distribution around the center than
+    method 1.
+
+    method 1.
+    ra = math.radians(random.random()*360)
+    x = cx + walk_x * random.random()*math.cos(ra)
+    y = cx + walk_y * random.random()*math.sin(ra)
+
+    method 2. preferred
+    generate random x and y point in square centered on cx, cy
+    if shape is circle check if displacement of point from center is greater than radius
+
+
+    """
 
     for _ni in range(ns):
         # gen random point in a square
@@ -174,53 +174,56 @@ def random_pattern(cx, cy, walk_x, walk_y, ns, shape='circle', **kw):
 
             # check if in circle
             disp = math.sqrt((cx - x) ** 2 + (cy - y) ** 2)
-            if disp <= walk_x or shape != 'circle':
+            if disp <= walk_x or shape != "circle":
                 break
 
         yield x, y
 
 
 def diamond_pattern(cx, cy, width, height, **kw):
-    '''
+    """
          2
-        
+
      3   0,6   1,5
-         
+
          4
-    
-    @deprecated: use polygon pattern instead 
-         
-    '''
+
+    @deprecated: use polygon pattern instead
+
+    """
     half_width = width / 2.0
     half_height = height / 2.0
-    pts = [(cx + half_width, cy),
-           (cx, cy + half_height),
-           (cx - half_width, cy),
-           (cx, cy - half_height),
-           (cx + half_width, cy),
-           (cx, cy)
-           ]
+    pts = [
+        (cx + half_width, cy),
+        (cx, cy + half_height),
+        (cx - half_width, cy),
+        (cx, cy - half_height),
+        (cx + half_width, cy),
+        (cx, cy),
+    ]
     for pt in pts:
         yield pt
 
 
-def square_spiral_pattern(cx, cy, R, ns, p, direction='out', ox=None, oy=None, **kw):
-    '''
-        cx,cy= center point to spiral around
-        R = nominal spiral diameter
-        ns= number of spirals
-        p= percent change in radius of spiral
-    '''
+def square_spiral_pattern(cx, cy, R, ns, p, direction="out", ox=None, oy=None, **kw):
+    """
+    cx,cy= center point to spiral around
+    R = nominal spiral diameter
+    ns= number of spirals
+    p= percent change in radius of spiral
+    """
 
     rfunc = lambda i: R * (1 + (i) * p)
     ns = 4 * ns + 1
     steps = range(ns)
-    funclist = [lambda x, y, r: (x + r, y),
-                lambda x, y, r: (x, y + r),
-                lambda x, y, r: (x - r, y),
-                lambda x, y, r: (x, y - r)]
+    funclist = [
+        lambda x, y, r: (x + r, y),
+        lambda x, y, r: (x, y + r),
+        lambda x, y, r: (x - r, y),
+        lambda x, y, r: (x, y - r),
+    ]
 
-    if direction == 'in':
+    if direction == "in":
         rfunc = lambda i: R * (1 + (ns - i) * p)
         funclist = funclist[1:] + funclist[:1]
 
@@ -232,7 +235,7 @@ def square_spiral_pattern(cx, cy, R, ns, p, direction='out', ox=None, oy=None, *
 
     for i in steps:
         r = rfunc(i)
-        if direction == 'in' and i == 0:
+        if direction == "in" and i == 0:
             yield x, y
 
         func = funclist[i % 4]
@@ -242,19 +245,19 @@ def square_spiral_pattern(cx, cy, R, ns, p, direction='out', ox=None, oy=None, *
         yield x, y
 
 
-def line_spiral_pattern(cx, cy, R, ns, p, ss, direction='out', **kw):
+def line_spiral_pattern(cx, cy, R, ns, p, ss, direction="out", **kw):
     """
-        cx,cy= center point to spiral around
-        R = nominal spiral
-        ns= number of spirals
-        p= percent change in radius of spiral
-        ss= step scalar ie min number of steps per rotation
+    cx,cy= center point to spiral around
+    R = nominal spiral
+    ns= number of spirals
+    p= percent change in radius of spiral
+    ss= step scalar ie min number of steps per rotation
     """
     stepfunc = lambda i: 2 * i + ss
-    rfunc = lambda i, j: R * (1 + (i + j / 360.) * p)
-    if direction == 'in':
+    rfunc = lambda i, j: R * (1 + (i + j / 360.0) * p)
+    if direction == "in":
         stepfunc = lambda i: 2 * (ns - i) + ss
-        rfunc = lambda i, j: R * (1 + ((ns - i - 1) + (360 - j) / 360.) * p)
+        rfunc = lambda i, j: R * (1 + ((ns - i - 1) + (360 - j) / 360.0) * p)
 
     for ni in range(ns):
         nstep = stepfunc(ni)
@@ -268,5 +271,6 @@ def line_spiral_pattern(cx, cy, R, ns, p, ss, direction='out', **kw):
             y = cy + r * math.sin(theta)
 
             yield x, y
+
 
 # ============= EOF ====================================

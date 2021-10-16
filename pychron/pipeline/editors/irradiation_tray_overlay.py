@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
 from traits.api import Bool, Dict
+
 # ============= standard library imports ========================
 from kiva.fonttools import str_to_font
 from numpy import linspace, hstack, vstack, array
@@ -39,7 +40,7 @@ class IrradiationTrayOverlay(AbstractOverlay):
             # gc.set_fill_color((1, 0, 1))
             if self._cached_pts is None:
                 self._cached_pts = self._gather_points()
-            gc.set_font(str_to_font('modern 10'))
+            gc.set_font(str_to_font("modern 10"))
             for i, (x, y, pts) in enumerate(self._cached_pts):
                 self._render_hole(gc, str(i + 1), x, y, pts)
 
@@ -65,7 +66,10 @@ class IrradiationTrayOverlay(AbstractOverlay):
     def _gather_points(self):
         xy = [(x, y) for x, y, r, _ in self.geometry]
         xy = self.component.map_screen(xy)
-        pts = [(x, y, self._make_point(r)) for (x, y), (_, _, r, _) in zip(xy, self.geometry)]
+        pts = [
+            (x, y, self._make_point(r))
+            for (x, y), (_, _, r, _) in zip(xy, self.geometry)
+        ]
         return pts
 
     def _make_point(self, r):
@@ -87,5 +91,6 @@ class IrradiationTrayOverlay(AbstractOverlay):
             pt = vstack((xs, ys)).T
             self._cached_point_xy[r] = pt
         return pt
+
 
 # ============= EOF =============================================

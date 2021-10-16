@@ -34,8 +34,8 @@ class Protocol(HasTraits):
 
 
 class HardwarePreferences(BasePreferencesHelper):
-    name = 'Hardware'
-    preferences_path = 'pychron.hardware'
+    name = "Hardware"
+    preferences_path = "pychron.hardware"
     enable_hardware_server = Bool
 
     auto_find_handle = Bool
@@ -56,16 +56,24 @@ class HardwarePreferences(BasePreferencesHelper):
 
     def _initialize(self, *args, **kw):
         super(HardwarePreferences, self)._initialize(*args, **kw)
-        ap = (('ValveProtocol', 'pychron.tx.factories.ValveFactory'),
-              ('FusionsCO2Protocol', 'pychron.tx.factories.FusionsCO2Factory'),
-              ('FusionsDiodeProtocol', 'pychron.tx.factories.FusionsDiodeFactory'),
-              ('FusionsUVProtocol', 'pychron.tx.factories.FusionsUVFactory'),
-              ('FurnaceProtocol', 'pychron.tx.factories.FurnaceFactory'))
-        self._protocols = [Protocol(name=n, factory=f,
-                                    port=self.ports.get(n, 8000),
-                                    enabled=n in self.pnames) for n, f in ap]
+        ap = (
+            ("ValveProtocol", "pychron.tx.factories.ValveFactory"),
+            ("FusionsCO2Protocol", "pychron.tx.factories.FusionsCO2Factory"),
+            ("FusionsDiodeProtocol", "pychron.tx.factories.FusionsDiodeFactory"),
+            ("FusionsUVProtocol", "pychron.tx.factories.FusionsUVFactory"),
+            ("FurnaceProtocol", "pychron.tx.factories.FurnaceFactory"),
+        )
+        self._protocols = [
+            Protocol(
+                name=n,
+                factory=f,
+                port=self.ports.get(n, 8000),
+                enabled=n in self.pnames,
+            )
+            for n, f in ap
+        ]
 
-    @on_trait_change('_protocols:[port,enabled]')
+    @on_trait_change("_protocols:[port,enabled]")
     def _handle_protocol(self, new):
         ps = (p for p in self._protocols if p.enabled)
 
@@ -73,7 +81,7 @@ class HardwarePreferences(BasePreferencesHelper):
         self.ports = {p.name: p.port for p in self._protocols}
         self.factories = {p.name: p.factory for p in self._protocols}
 
-    @on_trait_change('system_lock_name,enable_system_lock')
+    @on_trait_change("system_lock_name,enable_system_lock")
     def _update(self, obj, name, new):
         try:
             addr = self.system_lock_addresses[self.system_lock_name]
@@ -85,24 +93,30 @@ class HardwarePreferences(BasePreferencesHelper):
 
 class HardwarePreferencesPane(PreferencesPane):
     model_factory = HardwarePreferences
-    category = 'Hardware'
+    category = "Hardware"
 
     def traits_view(self):
-        cols = [CheckboxColumn(name='enabled'),
-                ObjectColumn(name='name', editable=False),
-                ObjectColumn(name='port')]
+        cols = [
+            CheckboxColumn(name="enabled"),
+            ObjectColumn(name="name", editable=False),
+            ObjectColumn(name="port"),
+        ]
 
-        txgrp = VGroup(UItem('_protocols',
-                             editor=TableEditor(columns=cols)),
-                       enabled_when='enable_hardware_server')
+        txgrp = VGroup(
+            UItem("_protocols", editor=TableEditor(columns=cols)),
+            enabled_when="enable_hardware_server",
+        )
 
-        ehs_grp = VGroup(Item('enable_hardware_server', label='Enabled'),
-                         txgrp,
-                         # VGroup(Item('use_twisted'),
-                         #        txgrp,
-                         #        # Item('enable_system_lock'),
-                         #        enabled_when='enable_hardware_server'),
-                         show_border=True, label='Pychron Proxy Server')
+        ehs_grp = VGroup(
+            Item("enable_hardware_server", label="Enabled"),
+            txgrp,
+            # VGroup(Item('use_twisted'),
+            #        txgrp,
+            #        # Item('enable_system_lock'),
+            #        enabled_when='enable_hardware_server'),
+            show_border=True,
+            label="Pychron Proxy Server",
+        )
 
         # sgrp = VGroup(Item('auto_find_handle'),
         #               Item('auto_write_handle', enabled_when='auto_find_handle'),
@@ -110,5 +124,6 @@ class HardwarePreferencesPane(PreferencesPane):
         # v = View(VGroup(ehs_grp, sgrp))
         v = View(ehs_grp)
         return v
+
 
 # ============= EOF =============================================

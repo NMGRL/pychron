@@ -17,13 +17,14 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Instance
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
 
 class BaseIrradiationExporter(Loggable):
-    source = Instance('pychron.dvc.dvc.DVC')
+    source = Instance("pychron.dvc.dvc.DVC")
 
     def do_export(self, irradiations):
         """
@@ -33,7 +34,7 @@ class BaseIrradiationExporter(Loggable):
             db = self.source
             for irr in irradiations:
                 dbirr = db.get_irradiation(irr)
-                self.info('exporting irradiation {}'.format(dbirr.name))
+                self.info("exporting irradiation {}".format(dbirr.name))
                 self._export(dbirr)
 
     def setup(self):
@@ -41,5 +42,6 @@ class BaseIrradiationExporter(Loggable):
 
     def _export(self, dbirr):
         raise NotImplementedError
+
 
 # ============= EOF =============================================

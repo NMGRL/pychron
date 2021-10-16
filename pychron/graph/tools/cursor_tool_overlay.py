@@ -23,10 +23,11 @@ from traits.api import Enum, Any, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class CursorToolOverlay(TextBoxOverlay):
     border_visible = True
-    bgcolor = 'lightgreen'
-    border_color = 'darkgreen'
+    bgcolor = "lightgreen"
+    border_color = "darkgreen"
     tool = Any
     visibility = Enum("auto", True, False)
     visible = False
@@ -34,10 +35,10 @@ class CursorToolOverlay(TextBoxOverlay):
 
     def _tool_changed(self, old, new):
         if old:
-            old.on_trait_event(self._new_value_updated, 'current_position', remove=True)
+            old.on_trait_event(self._new_value_updated, "current_position", remove=True)
             old.on_trait_change(self._tool_visible_changed, "visible", remove=True)
         if new:
-            new.on_trait_event(self._new_value_updated, 'current_position')
+            new.on_trait_event(self._new_value_updated, "current_position")
             new.on_trait_change(self._tool_visible_changed, "visible")
             self._tool_visible_changed()
 
@@ -55,10 +56,9 @@ class CursorToolOverlay(TextBoxOverlay):
         else:
             self.alternate_position = None
 
-        ns = ['DAC      ={:0.5f}'.format(new[0]),
-              'Intensity={:0.5f}'.format(new[1])]
+        ns = ["DAC      ={:0.5f}".format(new[0]), "Intensity={:0.5f}".format(new[1])]
 
-        self.text = '\n'.join(ns)
+        self.text = "\n".join(ns)
         self.component.request_redraw()
 
     def _visible_changed(self):
@@ -68,5 +68,6 @@ class CursorToolOverlay(TextBoxOverlay):
         self.visibility = self.tool.visible
         if self.visibility != "auto":
             self.visible = self.visibility
+
 
 # ============= EOF =============================================

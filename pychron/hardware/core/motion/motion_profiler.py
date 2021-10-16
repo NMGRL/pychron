@@ -44,22 +44,27 @@ class MotionProfiler(ConfigLoadable):
     max_acceleration = Float(50)
 
     def load(self, p):
-        attrs = ['max_velocity', 'max_transit_time',
-                 'min_acceleration_time', 'velocity_tol',
-                 'acceleration_tol', 'deceleration_tol',
-                 'max_acceleration']
+        attrs = [
+            "max_velocity",
+            "max_transit_time",
+            "min_acceleration_time",
+            "velocity_tol",
+            "acceleration_tol",
+            "deceleration_tol",
+            "max_acceleration",
+        ]
         self.config_path = p
         if os.path.isfile(p):
             config = self.get_configuration(self.config_path)
             for attr in attrs:
-                self.set_attribute(config, attr, 'General', attr, cast='float')
-                self.debug('setting {}. {}'.format(attr, getattr(self, attr)))
+                self.set_attribute(config, attr, "General", attr, cast="float")
+                self.debug("setting {}. {}".format(attr, getattr(self, attr)))
         else:
             # create a new config file with default values
             config = self.configparser_factory()
-            config.add_section('General')
+            config.add_section("General")
             for attr in attrs:
-                config.set('General', attr, getattr(self, attr))
+                config.set("General", attr, getattr(self, attr))
             self.write_configuration(config)
 
     def check_motion(self, displacement, obj, force=False):
@@ -69,44 +74,48 @@ class MotionProfiler(ConfigLoadable):
         mdc = obj.deceleration
 
         try:
-            nv, nac, ndc = self.calculate_corrected_parameters(0,
-                                                               displacement, mac, mdc)
+            nv, nac, ndc = self.calculate_corrected_parameters(
+                0, displacement, mac, mdc
+            )
         except Exception:
-            '''
-                max recusion.
-                
-                max velocity prevents move of this displacement
-                from taking less than max transit time
-                
-                use max velocity and nominal acc. 
-            '''
-            nv, nac, ndc = self.max_velocity, obj.nominal_acceleration, obj.nominal_deceleration
+            """
+            max recusion.
+
+            max velocity prevents move of this displacement
+            from taking less than max transit time
+
+            use max velocity and nominal acc.
+            """
+            nv, nac, ndc = (
+                self.max_velocity,
+                obj.nominal_acceleration,
+                obj.nominal_deceleration,
+            )
 
         dv = abs(nv - mv)
         dac = abs(nac - mac)
         ddc = abs(ndc - mdc)
 
-        change = force or (dv / mv > self.velocity_tol or
-                           dac / mac > self.acceleration_tol or
-                           ddc / mdc > self.deceleration_tol)
+        change = force or (
+            dv / mv > self.velocity_tol
+            or dac / mac > self.acceleration_tol
+            or ddc / mdc > self.deceleration_tol
+        )
 
         return change, nv, max(0.1, nac), max(0.1, ndc)
 
     def calculate_corrected_parameters(self, cnt, displacement, acc, dec):
 
-        vel = (displacement * 2 * acc / 3.) ** 0.5
+        vel = (displacement * 2 * acc / 3.0) ** 0.5
         vel = min(self.max_velocity, vel)
 
-        if cnt > 200 or \
-                acc >= self.max_acceleration or \
-                dec >= self.max_acceleration:
+        if cnt > 200 or acc >= self.max_acceleration or dec >= self.max_acceleration:
             acc = min(acc, self.max_acceleration)
             dec = min(dec, self.max_acceleration)
             return vel, acc, dec
 
         # do current parameters define trapezoidal move
-        times, _ = self.calculate_transit_parameters(displacement,
-                                                     vel, acc, dec)
+        times, _ = self.calculate_transit_parameters(displacement, vel, acc, dec)
         #         print cnt, '---------------------------'
         #         print 'times', times
 
@@ -115,44 +124,45 @@ class MotionProfiler(ConfigLoadable):
             #             print 'is trapezoid'
             # is time greater than max transit time
             if sum(times) > self.max_transit_time:
-                '''
-                    this move takes too long. 
-                    use max velocity and increase acc until this is a trapezoidal 
-                    move
-                '''
+                """
+                this move takes too long.
+                use max velocity and increase acc until this is a trapezoidal
+                move
+                """
 
                 #                 print 'max transit', sum(times)
-                return self.calculate_corrected_parameters(cnt + 1,
-                                                           displacement,
-                                                           acc * 1.01, dec * 1.01)
+                return self.calculate_corrected_parameters(
+                    cnt + 1, displacement, acc * 1.01, dec * 1.01
+                )
 
             # # is ac time less than min
-            if times[0] < self.min_acceleration_time or \
-                    times[1] < self.min_acceleration_time:
-                '''
-                    acc is too fast. calculate new accel so that acctime=min
-                '''
+            if (
+                times[0] < self.min_acceleration_time
+                or times[1] < self.min_acceleration_time
+            ):
+                """
+                acc is too fast. calculate new accel so that acctime=min
+                """
                 ac = vel / (2 * self.min_acceleration_time)
-                return self.calculate_corrected_parameters(cnt + 1,
-                                                           displacement,
-                                                           ac, ac
-                                                           )
+                return self.calculate_corrected_parameters(
+                    cnt + 1, displacement, ac, ac
+                )
             return vel, acc, dec
 
         else:  # not a trapezoid
-            '''
-                velocity time is negative. 
-                increace acc and dec. this reduces acctime, increasing veltime
-            '''
-            return self.calculate_corrected_parameters(cnt + 1,
-                                                       displacement,
-                                                       acc * 1.01, dec * 1.01)
+            """
+            velocity time is negative.
+            increace acc and dec. this reduces acctime, increasing veltime
+            """
+            return self.calculate_corrected_parameters(
+                cnt + 1, displacement, acc * 1.01, dec * 1.01
+            )
 
     def calculate_transit_parameters(self, displacement, v, ac, dc):
-        '''
-            return the time spent accelerating, decelerating, and at speed
-            and respective displacements
-        '''
+        """
+        return the time spent accelerating, decelerating, and at speed
+        and respective displacements
+        """
         # time to velocity
         atime = v / ac
         dtime = v / dc
@@ -177,6 +187,7 @@ class MotionProfiler(ConfigLoadable):
         self.cvdisp = cvd
 
         return (atime, dtime, cvtime), (acd, dcd, cvd)
+
 
 # def _new_velocity(self, displacement, oac, odc):
 #         ac, dc = float(oac), float(odc)

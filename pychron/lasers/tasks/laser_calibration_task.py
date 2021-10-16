@@ -19,6 +19,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from pyface.tasks.action.schema import SToolBar
 from traits.api import Property, Bool, Event, on_trait_change
+
 # from traitsui.api import View, Item, TextEditor
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter
 
@@ -28,10 +29,14 @@ from pychron.envisage.tasks.editor_task import EditorTask
 from pychron.lasers.tasks.editors.pid_tuning_editor import PIDTuningEditor
 from pychron.lasers.tasks.editors.power_map_editor import PowerMapEditor
 from pychron.lasers.tasks.editors.power_calibration_editor import PowerCalibrationEditor
-from pychron.lasers.tasks.editors.pyrometer_calibration_editor import PyrometerCalibrationEditor
+from pychron.lasers.tasks.editors.pyrometer_calibration_editor import (
+    PyrometerCalibrationEditor,
+)
 from pychron.lasers.tasks.laser_actions import PyrometerCalibrationAction
-from pychron.lasers.tasks.laser_calibration_panes import LaserCalibrationControlPane, \
-    LaserCalibrationExecutePane
+from pychron.lasers.tasks.laser_calibration_panes import (
+    LaserCalibrationControlPane,
+    LaserCalibrationExecutePane,
+)
 import os
 from pychron.paths import paths
 
@@ -45,26 +50,22 @@ class BaseLaserTask(EditorTask):
 
 
 class LaserCalibrationTask(BaseLaserTask):
-    id = 'pychron.laser.calibration'
+    id = "pychron.laser.calibration"
     execute = Event
-    execute_label = Property(depends_on='executing')
+    execute_label = Property(depends_on="executing")
     executing = Bool
 
     tool_bars = [SToolBar(PyrometerCalibrationAction(), image_size=(16, 16))]
 
     def _get_execute_label(self):
-        return 'Stop' if self.executing else 'Start'
+        return "Stop" if self.executing else "Start"
 
     def _default_layout_default(self):
         return TaskLayout(
             left=Splitter(
-                PaneItem('pychron.laser_calibration.execute',
-                         width=200
-                         ),
-                PaneItem('pychron.laser_calibration.control',
-                         width=200
-                         ),
-                orientation='vertical'
+                PaneItem("pychron.laser_calibration.execute", width=200),
+                PaneItem("pychron.laser_calibration.control", width=200),
+                orientation="vertical",
             )
         )
 
@@ -78,9 +79,9 @@ class LaserCalibrationTask(BaseLaserTask):
         return [lp, ep]
 
     def get_power_maps(self):
-        ps = self.open_file_dialog(action='open files',
-                                   default_directory=paths.power_map_dir
-                                   )
+        ps = self.open_file_dialog(
+            action="open files", default_directory=paths.power_map_dir
+        )
         return ps
 
     def open_power_maps(self, ps):
@@ -100,37 +101,43 @@ class LaserCalibrationTask(BaseLaserTask):
                     #                p = '/Users/ross/Sandbox/powermap/Archive 2/powermap-2013-07-31{:03n}.hdf5'.format(i)
                     editor = PowerMapEditor(
                         #                                     name='Power Map {:03n}'.format(n + 1),
-                        name='Power Map {}'.format(os.path.basename(p))
+                        name="Power Map {}".format(os.path.basename(p))
                     )
                     editor.load(p)
                     self._open_editor(editor)
                 except Exception:
-                    self.debug('invalid power map file {}'.format(p))
+                    self.debug("invalid power map file {}".format(p))
 
     def new_power_map(self):
 
-        n = len([ed for ed in self.editor_area.editors
-                 if isinstance(ed, PowerMapEditor)])
+        n = len(
+            [ed for ed in self.editor_area.editors if isinstance(ed, PowerMapEditor)]
+        )
 
-        editor = PowerMapEditor(name='Power Map {:03d}'.format(n + 1))
+        editor = PowerMapEditor(name="Power Map {:03d}".format(n + 1))
         if self.active_editor:
             editor.editor = self.control_pane.editor
 
         self._open_editor(editor)
 
     def new_power_calibration(self):
-        n = len([ed for ed in self.editor_area.editors
-                 if isinstance(ed, PowerCalibrationEditor)])
+        n = len(
+            [
+                ed
+                for ed in self.editor_area.editors
+                if isinstance(ed, PowerCalibrationEditor)
+            ]
+        )
 
-        editor = PowerCalibrationEditor(name='Power Calibration {:03d}'.format(n + 1))
+        editor = PowerCalibrationEditor(name="Power Calibration {:03d}".format(n + 1))
         self._open_editor(editor)
 
     def new_pyrometer_calibration(self):
-        editor = PyrometerCalibrationEditor(name='Pyrometer Calibration')
+        editor = PyrometerCalibrationEditor(name="Pyrometer Calibration")
         self._open_editor(editor)
 
     def new_pid_tuner(self):
-        editor = PIDTuningEditor(name='PID Tuning')
+        editor = PIDTuningEditor(name="PID Tuning")
         self._open_editor(editor)
 
     # ===============================================================================
@@ -167,15 +174,16 @@ class LaserCalibrationTask(BaseLaserTask):
 
     def _active_editor_changed(self):
         if self.active_editor:
-            if hasattr(self.active_editor, 'editor'):
+            if hasattr(self.active_editor, "editor"):
                 self.control_pane.editor = self.active_editor.editor
 
-    @on_trait_change('active_editor:completed')
+    @on_trait_change("active_editor:completed")
     def _update_completed(self, new):
-        print('asdf', new)
+        print("asdf", new)
         if new:
             self.executing = False
             self.active_editor.was_executed = True
+
 
 # ===============================================================================
 # action handlers

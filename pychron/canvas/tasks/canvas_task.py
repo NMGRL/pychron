@@ -32,20 +32,18 @@ from pychron.envisage.tasks.base_task import BaseTask
 
 
 class OpenAction(TaskAction):
-    name = 'Open'
-    method = 'open'
+    name = "Open"
+    method = "open"
 
 
 class SaveAction(TaskAction):
-    name = 'Save'
-    method = 'save'
+    name = "Save"
+    method = "save"
 
 
 class CanvasDesignerTask(BaseTask):
-    name = 'Canvas Designer'
-    tool_bars = [SToolBar(OpenAction(),
-                          SaveAction()
-                          )]
+    name = "Canvas Designer"
+    tool_bars = [SToolBar(OpenAction(), SaveAction())]
 
     designer = Instance(Designer)
 
@@ -53,16 +51,12 @@ class CanvasDesignerTask(BaseTask):
         return Designer()
 
     def open(self):
-        print('asfsfdsf open')
-        p = os.path.join(paths.canvas2D_dir,
-                         'canvas.xml'
-                         )
+        print("asfsfdsf open")
+        p = os.path.join(paths.canvas2D_dir, "canvas.xml")
         self.designer.open_xml(p)
 
     def save(self):
-        p = os.path.join(paths.canvas2D_dir,
-                         'canvas.xml'
-                         )
+        p = os.path.join(paths.canvas2D_dir, "canvas.xml")
         self.designer.save_xml(p)
 
     # ================================================================
@@ -74,5 +68,6 @@ class CanvasDesignerTask(BaseTask):
         # def create_dock_panes(self):
         #    panes = []
         #    return panes
+
 
 # ============= EOF =============================================

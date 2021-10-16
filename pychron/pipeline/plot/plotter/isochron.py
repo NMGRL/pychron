@@ -27,12 +27,19 @@ from six.moves import zip
 from traits.api import Float, Str, Instance
 from uncertainties import std_dev, nominal_value
 
-from pychron.core.helpers.formatting import floatfmt, calc_percent_error, format_percent_error
+from pychron.core.helpers.formatting import (
+    floatfmt,
+    calc_percent_error,
+    format_percent_error,
+)
 from pychron.core.stats import validate_mswd
 from pychron.graph.error_ellipse_overlay import ErrorEllipseOverlay
 from pychron.graph.error_envelope_overlay import ErrorEnvelopeOverlay
 from pychron.graph.ml_label import tokenize
-from pychron.pipeline.plot.overlays.isochron_inset import InverseIsochronPointsInset, InverseIsochronLineInset
+from pychron.pipeline.plot.overlays.isochron_inset import (
+    InverseIsochronPointsInset,
+    InverseIsochronLineInset,
+)
 from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 from pychron.processing.analyses.analysis_group import StepHeatAnalysisGroup
 from pychron.pychron_constants import PLUSMINUS, SIGMA, MSEM, SEM, SE, MSE
@@ -64,26 +71,25 @@ class MLTextLabel(Label):
                 max_width = 0
 
                 text = self.text
-                for a in ('sub', 'sup'):
-                    text = text.replace('<{}>'.format(a), '')
-                    text = text.replace('</{}>'.format(a), '')
+                for a in ("sub", "sup"):
+                    text = text.replace("<{}>".format(a), "")
+                    text = text.replace("</{}>".format(a), "")
 
                 for line in text.split("\n")[::-1]:
                     if line != "":
-                        (width, height, descent, leading) = \
-                            gc.get_full_text_extent(line)
+                        (width, height, descent, leading) = gc.get_full_text_extent(
+                            line
+                        )
                         ascent = height - abs(descent)
                         if width > max_width:
                             max_width = width
-                        new_y_pos = prev_y_pos + prev_y_height \
-                                    + self.line_spacing
+                        new_y_pos = prev_y_pos + prev_y_height + self.line_spacing
                     else:
                         # For blank lines, we use the height of the previous
                         # line, if there is one.  The width is 0.
                         leading = 0
                         if prev_y_height != -self.line_spacing:
-                            new_y_pos = prev_y_pos + prev_y_height \
-                                        + self.line_spacing
+                            new_y_pos = prev_y_pos + prev_y_height + self.line_spacing
                             ascent = prev_y_height
                         else:
                             new_y_pos = prev_y_pos
@@ -98,13 +104,14 @@ class MLTextLabel(Label):
             border_width = self.border_width if self.border_visible else 0
 
             self._bounding_box[0] = max_width + 2 * margin + 2 * border_width
-            self._bounding_box[1] = prev_y_pos + prev_y_height + margin \
-                                    + 2 * border_width
+            self._bounding_box[1] = (
+                prev_y_pos + prev_y_height + margin + 2 * border_width
+            )
             self._position_cache_valid = True
         return
 
     def draw(self, gc):
-        """ Draws the label.
+        """Draws the label.
 
         This method assumes the graphics context has been translated to the
         correct position such that the origin is at the lower left-hand corner
@@ -133,8 +140,12 @@ class MLTextLabel(Label):
                 gc.set_stroke_color(self.border_color_)
                 gc.set_line_width(self.border_width)
                 border_offset = (self.border_width - 1) / 2.0
-                gc.rect(border_offset, border_offset,
-                        width - 2 * border_offset, height - 2 * border_offset)
+                gc.rect(
+                    border_offset,
+                    border_offset,
+                    width - 2 * border_offset,
+                    height - 2 * border_offset,
+                )
                 gc.stroke_path()
 
             gc.set_fill_color(self.color_)
@@ -166,11 +177,11 @@ class MLTextLabel(Label):
         def gen():
             offset = 0
             for ti in tokenize(txt):
-                if ti == 'sup':
+                if ti == "sup":
                     offset = 1
-                elif ti == 'sub':
+                elif ti == "sub":
                     offset = -1
-                elif ti in ('/sup', '/sub'):
+                elif ti in ("/sup", "/sub"):
                     offset = 0
                 else:
                     yield offset, ti
@@ -216,7 +227,7 @@ class OffsetPlotLabel(PlotLabel):
 class AtmInterceptOverlay(AbstractOverlay):
     line_width = Float(1.5)
     font = KivaFont("modern 10")
-    line_style = LineStyle('dash')
+    line_style = LineStyle("dash")
     label = Str
     value = Float
 
@@ -231,7 +242,9 @@ class AtmInterceptOverlay(AbstractOverlay):
             gc.set_font(self.font)
             w, h = gc.get_full_text_extent(txt)[:2]
 
-            gc.clip_to_rect(component.x - w - 5, component.y, component.width, component.height)
+            gc.clip_to_rect(
+                component.x - w - 5, component.y, component.width, component.height
+            )
 
             gc.set_line_width(self.line_width)
             gc.set_line_dash(self.line_style_)
@@ -256,14 +269,14 @@ class InverseIsochron(Isochron):
         g = self.graph
         for i, p in enumerate(g.plots):
             l, h = self.ymis[i], self.ymas[i]
-            g.set_y_limits(max(0, l), h, pad='0.1', pad_style='upper', plotid=i)
+            g.set_y_limits(max(0, l), h, pad="0.1", pad_style="upper", plotid=i)
 
         g.set_x_limits(0, self.xma * 1.1)
         self._fix_log_axes()
 
     def plot(self, plots, legend=None):
         """
-            plot data on plots
+        plot data on plots
         """
         graph = self.graph
 
@@ -274,7 +287,7 @@ class InverseIsochron(Isochron):
             plot_name = po.plot_name
             if not plot_name:
                 continue
-            getattr(self, '_plot_{}'.format(plot_name))(po, plotobj, pid)
+            getattr(self, "_plot_{}".format(plot_name))(po, plotobj, pid)
 
     # ===============================================================================
     # plotters
@@ -284,18 +297,20 @@ class InverseIsochron(Isochron):
         ys, es = self._get_aux_plot_data(vk, po.scalar)
         self._add_aux_plot(ys, title, vk, pid)
 
-    def _add_plot(self, xs, ys, es, plotid, value_scale='linear'):
+    def _add_plot(self, xs, ys, es, plotid, value_scale="linear"):
         pass
 
     def _plot_inverse_isochron(self, po, plot, pid):
         opt = self.options
         self.analysis_group.isochron_age_error_kind = opt.error_calc_method
         self.analysis_group.isochron_method = opt.regressor_kind
-        _, _, reg = self.analysis_group.get_isochron_data(exclude_non_plateau=opt.exclude_non_plateau)
+        _, _, reg = self.analysis_group.get_isochron_data(
+            exclude_non_plateau=opt.exclude_non_plateau
+        )
         graph = self.graph
 
-        xtitle = '<sup>39</sup>Ar/<sup>40</sup>Ar'
-        ytitle = '<sup>36</sup>Ar/<sup>40</sup>Ar'
+        xtitle = "<sup>39</sup>Ar/<sup>40</sup>Ar"
+        ytitle = "<sup>36</sup>Ar/<sup>40</sup>Ar"
 
         # self._set_ml_title(ytitle, pid, 'y')
         # self._set_ml_title(xtitle, pid, 'x')
@@ -306,30 +321,35 @@ class InverseIsochron(Isochron):
         p.y_axis.title_spacing = 50
 
         graph.set_grid_traits(visible=False)
-        graph.set_grid_traits(visible=False, grid='y')
+        graph.set_grid_traits(visible=False, grid="y")
         group = opt.get_group(self.group_id)
         color = group.color
 
         marker = opt.marker
         marker_size = opt.marker_size
 
-        scatter, _p = graph.new_series(reg.xs, reg.ys,
-                                       xerror=ArrayDataSource(data=reg.xserr),
-                                       yerror=ArrayDataSource(data=reg.yserr),
-                                       type='scatter',
-                                       marker=marker,
-                                       selection_marker=marker,
-                                       selection_marker_size=marker_size,
-                                       bind_id=self.group_id,
-                                       color=color,
-                                       marker_size=marker_size)
-        graph.set_series_label('data{}'.format(self.group_id))
+        scatter, _p = graph.new_series(
+            reg.xs,
+            reg.ys,
+            xerror=ArrayDataSource(data=reg.xserr),
+            yerror=ArrayDataSource(data=reg.yserr),
+            type="scatter",
+            marker=marker,
+            selection_marker=marker,
+            selection_marker_size=marker_size,
+            bind_id=self.group_id,
+            color=color,
+            marker_size=marker_size,
+        )
+        graph.set_series_label("data{}".format(self.group_id))
 
-        eo = ErrorEllipseOverlay(component=scatter,
-                                 reg=reg,
-                                 border_color=color,
-                                 fill=opt.fill_ellipses,
-                                 kind=opt.ellipse_kind)
+        eo = ErrorEllipseOverlay(
+            component=scatter,
+            reg=reg,
+            border_color=color,
+            fill=opt.fill_ellipses,
+            kind=opt.ellipse_kind,
+        )
         scatter.overlays.append(eo)
 
         ma = max(reg.xs)
@@ -340,10 +360,10 @@ class InverseIsochron(Isochron):
         rxs = linspace(mi, ma * 1.1)
         rys = reg.predict(rxs)
 
-        graph.set_x_limits(min_=mi, max_=ma, pad='0.1')
+        graph.set_x_limits(min_=mi, max_=ma, pad="0.1")
 
         l, _ = graph.new_series(rxs, rys, color=color)
-        graph.set_series_label('fit{}'.format(self.group_id))
+        graph.set_series_label("fit{}".format(self.group_id))
 
         l.index.set_data(rxs)
         l.value.set_data(rys)
@@ -358,9 +378,9 @@ class InverseIsochron(Isochron):
 
         if opt.include_error_envelope:
             lci, uci = reg.calculate_error_envelope(l.index.get_data())
-            ee = ErrorEnvelopeOverlay(component=l,
-                                      upper=uci, lower=lci,
-                                      line_color=color)
+            ee = ErrorEnvelopeOverlay(
+                component=l, upper=uci, lower=lci, line_color=color
+            )
             l.underlays.append(ee)
             l.error_envelope = ee
 
@@ -371,7 +391,7 @@ class InverseIsochron(Isochron):
             if opt.show_nominal_intercept:
                 self._add_atm_overlay(plot)
 
-            graph.add_vertical_rule(0, color='black')
+            graph.add_vertical_rule(0, color="black")
         if opt.show_results_info:
             self._add_results_info(plot, text_color=color)
         if opt.show_info:
@@ -381,22 +401,23 @@ class InverseIsochron(Isochron):
             self._add_point_labels(scatter)
 
         def ad(i, x, y, ai):
-            a = ai.isotopes['Ar39'].get_interference_corrected_value()
-            b = ai.isotopes['Ar40'].get_interference_corrected_value()
+            a = ai.isotopes["Ar39"].get_interference_corrected_value()
+            b = ai.isotopes["Ar40"].get_interference_corrected_value()
             r = a / b
             v = nominal_value(r)
             e = std_dev(r)
 
             try:
-                pe = '({:0.2f}%)'.format(e / v * 100)
+                pe = "({:0.2f}%)".format(e / v * 100)
             except ZeroDivisionError:
-                pe = '(Inf%)'
+                pe = "(Inf%)"
 
-            return u'39Ar/40Ar= {} {} {} {}'.format(floatfmt(v, n=6), PLUSMINUS, floatfmt(e, n=7), pe)
+            return u"39Ar/40Ar= {} {} {} {}".format(
+                floatfmt(v, n=6), PLUSMINUS, floatfmt(e, n=7), pe
+            )
 
-        self._add_scatter_inspector(scatter,
-                                    additional_info=ad)
-        p.index_mapper.on_trait_change(self.update_index_mapper, 'updated')
+        self._add_scatter_inspector(scatter, additional_info=ad)
+        p.index_mapper.on_trait_change(self.update_index_mapper, "updated")
 
         # sel = self._get_omitted_by_tag(self.analyses)
         # self._rebuild_iso(sel)
@@ -411,10 +432,12 @@ class InverseIsochron(Isochron):
             m = self.options.regressor_kind
             s = self.options.nsigma
             es = self.options.ellipse_kind
-            ts.append(u'{} {}{}{} Data: {}{}'.format(m, PLUSMINUS, s, SIGMA, PLUSMINUS, es))
+            ts.append(
+                u"{} {}{}{} Data: {}{}".format(m, PLUSMINUS, s, SIGMA, PLUSMINUS, es)
+            )
 
         if self.options.show_error_type_info:
-            ts.append('Error Type: {}'.format(self.options.error_calc_method))
+            ts.append("Error Type: {}".format(self.options.error_calc_method))
 
         if ts:
             self._add_info_label(plot, ts, font=self.options.info_font)
@@ -423,17 +446,22 @@ class InverseIsochron(Isochron):
 
         opt = self.options
         group = opt.get_group(self.group_id)
-        insetp = InverseIsochronPointsInset(reg.xs, reg.ys,
-                                            marker_size=opt.inset_marker_size,
-                                            line_width=0,
-                                            nominal_intercept=opt.inominal_intercept_value,
-                                            label_font=opt.inset_label_font)
+        insetp = InverseIsochronPointsInset(
+            reg.xs,
+            reg.ys,
+            marker_size=opt.inset_marker_size,
+            line_width=0,
+            nominal_intercept=opt.inominal_intercept_value,
+            label_font=opt.inset_label_font,
+        )
         if opt.inset_show_error_ellipse:
-            eo = ErrorEllipseOverlay(component=insetp,
-                                     reg=reg,
-                                     border_color=group.color,
-                                     fill=opt.fill_ellipses,
-                                     kind=opt.ellipse_kind)
+            eo = ErrorEllipseOverlay(
+                component=insetp,
+                reg=reg,
+                border_color=group.color,
+                fill=opt.fill_ellipses,
+                kind=opt.ellipse_kind,
+            )
             insetp.overlays.append(eo)
 
         if self.group_id > 0:
@@ -455,15 +483,14 @@ class InverseIsochron(Isochron):
         xs = linspace(lx, hx, 20)
         ys = reg.predict(xs)
 
-        xtitle, ytitle = '', ''
+        xtitle, ytitle = "", ""
         if opt.inset_show_axes_titles:
-            xtitle = '<sup>39</sup>Ar/<sup>40</sup>Ar'
-            ytitle = '<sup>36</sup>Ar/<sup>40</sup>Ar'
+            xtitle = "<sup>39</sup>Ar/<sup>40</sup>Ar"
+            ytitle = "<sup>36</sup>Ar/<sup>40</sup>Ar"
 
-        insetl = InverseIsochronLineInset(xs, ys,
-                                          xtitle=xtitle,
-                                          ytitle=ytitle,
-                                          label_font=opt.inset_label_font)
+        insetl = InverseIsochronLineInset(
+            xs, ys, xtitle=xtitle, ytitle=ytitle, label_font=opt.inset_label_font
+        )
         plot.overlays.append(insetl)
         plot.overlays.append(insetp)
 
@@ -475,7 +502,9 @@ class InverseIsochron(Isochron):
             hy = max(1.1 * opt.inominal_intercept_value, yintercept * 1.1)
 
         for inset in plot.overlays:
-            if isinstance(inset, (InverseIsochronPointsInset, InverseIsochronLineInset)):
+            if isinstance(
+                inset, (InverseIsochronPointsInset, InverseIsochronLineInset)
+            ):
                 inset.location = opt.inset_location
                 inset.width = opt.inset_width
                 inset.height = opt.inset_height
@@ -489,11 +518,15 @@ class InverseIsochron(Isochron):
         plot.request_redraw()
 
     def _add_atm_overlay(self, plot):
-        plot.overlays.append(AtmInterceptOverlay(component=plot,
-                                                 label=self.options.nominal_intercept_label,
-                                                 value=self.options.inominal_intercept_value))
+        plot.overlays.append(
+            AtmInterceptOverlay(
+                component=plot,
+                label=self.options.nominal_intercept_label,
+                value=self.options.inominal_intercept_value,
+            )
+        )
 
-    def _add_results_info(self, plot, label=None, text_color='black'):
+    def _add_results_info(self, plot, label=None, text_color="black"):
 
         ag = self.analysis_group
 
@@ -512,21 +545,27 @@ class InverseIsochron(Isochron):
             err = inv_intercept * p * opt.nsigma
             mse = err * mswd ** 0.5
             sf = opt.yintercept_sig_figs
-            v, e, p, mse = floatfmt(inv_intercept, n=sf, s=3), floatfmt(err, n=sf, s=3), \
-                           floatfmt(p * 100, n=2), floatfmt(mse, s=3)
+            v, e, p, mse = (
+                floatfmt(inv_intercept, n=sf, s=3),
+                floatfmt(err, n=sf, s=3),
+                floatfmt(p * 100, n=2),
+                floatfmt(mse, s=3),
+            )
         except ZeroDivisionError:
-            v, e, p, mse = 'NaN', 'NaN', 'NaN', 'NaN'
+            v, e, p, mse = "NaN", "NaN", "NaN", "NaN"
 
-        sample_line = u'{}({})'.format(ag.identifier, ag.sample)
-        mse_text = ''
+        sample_line = u"{}({})".format(ag.identifier, ag.sample)
+        mse_text = ""
         if opt.include_4036_mse:
-            mse_text = ' MSE= {}'.format(mse)
+            mse_text = " MSE= {}".format(mse)
 
-        ptext = ''
+        ptext = ""
         if opt.include_percent_error:
-            ptext = ' ({}%)'.format(p)
+            ptext = " ({}%)".format(p)
 
-        ratio_line = '<sup>40</sup>Ar/<sup>36</sup>Ar= {} {} {}{}{}'.format(v, PLUSMINUS, e, ptext, mse_text)
+        ratio_line = "<sup>40</sup>Ar/<sup>36</sup>Ar= {} {} {}{}{}".format(
+            v, PLUSMINUS, e, ptext, mse_text
+        )
 
         v = nominal_value(age)
         e = std_dev(age) * opt.nsigma
@@ -539,25 +578,30 @@ class InverseIsochron(Isochron):
             mse_age = 0
 
         valid = validate_mswd(mswd, n)
-        mswd = '{:0.2f}'.format(mswd)
+        mswd = "{:0.2f}".format(mswd)
         if not valid:
-            mswd = '*{}'.format(mswd)
+            mswd = "*{}".format(mswd)
 
         af = opt.age_sig_figs
 
-        mse_text = ''
+        mse_text = ""
         if opt.include_age_mse:
-            mse_text = ' MSE= {}'.format(floatfmt(mse_age, s=3))
+            mse_text = " MSE= {}".format(floatfmt(mse_age, s=3))
 
-        pe = ''
+        pe = ""
         if opt.include_age_percent_error:
             p = format_percent_error(v, e)
-            pe = ' ({})%'.format(p)
+            pe = " ({})%".format(p)
 
-        age_line = u'Age={} {} {}{} {}{}'.format(floatfmt(v, n=af),
-                                                 PLUSMINUS,
-                                                 floatfmt(e, n=af, s=3), pe, ag.age_units, mse_text)
-        mswd_line = 'N={} MSWD={}'.format(n, mswd)
+        age_line = u"Age={} {} {}{} {}{}".format(
+            floatfmt(v, n=af),
+            PLUSMINUS,
+            floatfmt(e, n=af, s=3),
+            pe,
+            ag.age_units,
+            mse_text,
+        )
+        mswd_line = "N={} MSWD={}".format(n, mswd)
         if label is None:
             th = 0
             for overlay in plot.overlays:
@@ -568,11 +612,12 @@ class InverseIsochron(Isochron):
             label = OffsetPlotLabel(
                 offset=(1, th),
                 component=plot,
-                overlay_position='inside bottom',
-                hjustify='left',
-                bgcolor='transparent',
+                overlay_position="inside bottom",
+                hjustify="left",
+                bgcolor="transparent",
                 font=opt.results_font,
-                color=text_color)
+                color=text_color,
+            )
             plot.overlays.append(label)
             self._plot_label = label
 
@@ -580,7 +625,7 @@ class InverseIsochron(Isochron):
         if opt.include_sample:
             lines.insert(0, sample_line)
 
-        lines = u'\n'.join(lines)
+        lines = u"\n".join(lines)
         label.text = lines
         label.bgcolor = plot.bgcolor
         label.request_redraw()
@@ -599,9 +644,12 @@ class InverseIsochron(Isochron):
 
         if sel is not None:
             g = self.graph
-            ss = [p.plots[pp][0] for p in g.plots
-                  for pp in p.plots
-                  if pp == 'data{}'.format(self.group_id)]
+            ss = [
+                p.plots[pp][0]
+                for p in g.plots
+                for pp in p.plots
+                if pp == "data{}".format(self.group_id)
+            ]
             self._set_renderer_selection(ss, sel)
 
         self.analysis_group.dirty = True
@@ -611,7 +659,7 @@ class InverseIsochron(Isochron):
             self.analysis_group.calculate_isochron()
 
         reg = self.analysis_group.isochron_regressor
-        fit = self.graph.plots[0].plots['fit{}'.format(self.group_id)][0]
+        fit = self.graph.plots[0].plots["fit{}".format(self.group_id)][0]
 
         mi, ma = self.graph.get_x_limits()
         rxs = linspace(0, ma)
@@ -623,12 +671,12 @@ class InverseIsochron(Isochron):
 
         if self.options.include_error_envelope:
             lci, uci = reg.calculate_error_envelope(rxs)
-            if not hasattr(fit, 'error_envelope'):
+            if not hasattr(fit, "error_envelope"):
                 group = self.options.get_group(self.group_id)
                 color = group.color
-                ee = ErrorEnvelopeOverlay(component=fit,
-                                          upper=uci, lower=lci,
-                                          line_color=color)
+                ee = ErrorEnvelopeOverlay(
+                    component=fit, upper=uci, lower=lci, line_color=color
+                )
                 fit.underlays.append(ee)
                 fit.error_envelope = ee
             else:
@@ -657,7 +705,7 @@ class InverseIsochron(Isochron):
         if new:
             self.update_graph_metadata(None, name, old, new)
 
-        if name == 'updated':
+        if name == "updated":
             self.replot()
 
     # ===============================================================================
@@ -665,11 +713,11 @@ class InverseIsochron(Isochron):
     # ===============================================================================
     def _add_aux_plot(self, ys, title, vk, pid, **kw):
         graph = self.graph
-        graph.set_y_title(title,
-                          plotid=pid)
+        graph.set_y_title(title, plotid=pid)
 
         xs, ys, es, _ = self._calculate_spectrum(value_key=vk)
         self._add_plot(xs, ys, es, pid, **kw)
+
 
 # ============= EOF =============================================
 # def max_x(self, *args):

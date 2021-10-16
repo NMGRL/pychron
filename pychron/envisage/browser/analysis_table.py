@@ -24,8 +24,21 @@ from operator import attrgetter
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from pyface.message_dialog import warning, information
-from traits.api import List, Any, Str, Enum, Bool, Event, Property, cached_property, Instance, DelegatesTo, \
-    CStr, Int, Button
+from traits.api import (
+    List,
+    Any,
+    Str,
+    Enum,
+    Bool,
+    Event,
+    Property,
+    cached_property,
+    Instance,
+    DelegatesTo,
+    CStr,
+    Int,
+    Button,
+)
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.fuzzyfinder import fuzzyfinder
@@ -41,7 +54,7 @@ from pychron.pychron_constants import AUTO_SCROLL_KINDS, BOTTOM, TOP
 
 
 def sort_items(ans):
-    return sorted(ans, key=attrgetter('timestampf'))
+    return sorted(ans, key=attrgetter("timestampf"))
 
 
 class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
@@ -55,15 +68,15 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
     analysis_filter = CStr
     analysis_filter_values = List
-    analysis_filter_comparator = Enum('=', '<', '>', '>=', '<=', 'not =', 'startswith')
+    analysis_filter_comparator = Enum("=", "<", ">", ">=", "<=", "not =", "startswith")
     analysis_filter_parameter = Str
-    analysis_filter_parameters = Property(List, depends_on='tabular_adapter.columns')
+    analysis_filter_parameters = Property(List, depends_on="tabular_adapter.columns")
 
     # omit_invalid = Bool(True)
     table_configurer = Instance(AnalysisTableConfigurer)
 
-    limit = DelegatesTo('table_configurer')
-    omit_invalid = DelegatesTo('table_configurer')
+    limit = DelegatesTo("table_configurer")
+    omit_invalid = DelegatesTo("table_configurer")
 
     no_update = False
     scroll_to_row = Event
@@ -83,16 +96,18 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
     max_history = Int
     suppress_load_analysis_set = False
 
-    default_attr = 'identifier'
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    default_attr = "identifier"
+    dvc = Instance("pychron.dvc.dvc.DVC")
 
     one_selected_is_all = Bool(True)
     auto_scroll_kind = Enum(AUTO_SCROLL_KINDS)
 
     def __init__(self, *args, **kw):
         super(AnalysisTable, self).__init__(*args, **kw)
-        bind_preference(self, 'one_selected_is_all', 'pychron.browser.one_selected_is_all')
-        bind_preference(self, 'auto_scroll_kind', 'pychron.browser.auto_scroll_kind')
+        bind_preference(
+            self, "one_selected_is_all", "pychron.browser.one_selected_is_all"
+        )
+        bind_preference(self, "auto_scroll_kind", "pychron.browser.auto_scroll_kind")
 
         self._analysis_sets = OrderedDict()
 
@@ -100,32 +115,32 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         self.oanalyses = vs
 
     def load(self):
-        p = paths.hidden_path('analysis_sets')
+        p = paths.hidden_path("analysis_sets")
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 try:
                     jd = json.load(rfile, object_pairs_hook=OrderedDict)
                 except ValueError as e:
-                    print('load sanlaysis set exception', e)
+                    print("load sanlaysis set exception", e)
                     return
 
                 self._analysis_sets = jd
                 self.analysis_set_names = list(reversed([ji[0] for ji in jd.values()]))
 
-        p = paths.hidden_path('selected_analysis_set')
+        p = paths.hidden_path("selected_analysis_set")
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 self.analysis_set = rfile.read().strip()
 
     def dump(self):
-        p = paths.hidden_path('analysis_sets')
+        p = paths.hidden_path("analysis_sets")
         if self._analysis_sets:
-            with open(p, 'w') as wfile:
+            with open(p, "w") as wfile:
                 json.dump(self._analysis_sets, wfile)
 
-        p = paths.hidden_path('selected_analysis_set')
-        with open(p, 'w') as wfile:
-            wfile.write(self.analysis_set or '')
+        p = paths.hidden_path("selected_analysis_set")
+        with open(p, "w") as wfile:
+            wfile.write(self.analysis_set or "")
 
     def increment_selected(self, d):
         n = len(self.analyses)
@@ -150,15 +165,15 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
             aset = [(a.uuid, a.record_id) for a in ans]
             if aset:
                 if len(aset) > 1:
-                    name = '{} -- {}'.format(aset[0][1], aset[-1][1])
+                    name = "{} -- {}".format(aset[0][1], aset[-1][1])
                 else:
                     name = aset[0][1]
 
             # sort by uuid, calculate md5 hash
-            h = md5(''.join(sorted((ai[0] for ai in aset))).encode('utf-8')).hexdigest()
+            h = md5("".join(sorted((ai[0] for ai in aset))).encode("utf-8")).hexdigest()
 
             if h not in self._analysis_sets:
-                name = '{} ({})'.format(name, datetime.now().strftime('%m/%d/%y'))
+                name = "{} ({})".format(name, datetime.now().strftime("%m/%d/%y"))
                 self._analysis_sets[h] = (name, aset)
 
                 if self.max_history:
@@ -179,7 +194,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         self.selected = []
 
     def remove_invalid(self):
-        self.oanalyses = [ai for ai in self.oanalyses if ai.tag != 'invalid']
+        self.oanalyses = [ai for ai in self.oanalyses if ai.tag != "invalid"]
         self._analysis_filter_changed(self.analysis_filter)
 
     def add_analyses(self, ans):
@@ -200,7 +215,9 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         self.oanalyses = []
         self.selected = []
 
-    def set_analyses(self, ans, tc=None, page=None, reset_page=False, selected_identifiers=None):
+    def set_analyses(
+        self, ans, tc=None, page=None, reset_page=False, selected_identifiers=None
+    ):
         if selected_identifiers:
             aa = self.analyses
             aa = [ai for ai in aa if ai.identifier in selected_identifiers]
@@ -225,19 +242,19 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
             self._python_dt(ans)
 
     def _python_dt(self, ans):
-        ans = sorted(ans, key=attrgetter('timestampf'))
+        ans = sorted(ans, key=attrgetter("timestampf"))
 
         ref = ans[0]
         prev = ref.timestampf
         ref.delta_time = 0
         for ai in ans[1:]:
             t = ai.timestampf
-            dt = (t - prev) / 60.
+            dt = (t - prev) / 60.0
             ai.delta_time = dt
             prev = t
 
     def configure_table(self):
-        self.table_configurer.edit_traits(kind='livemodal')
+        self.table_configurer.edit_traits(kind="livemodal")
 
     def remove_others(self):
         self.set_analyses(self.selected)
@@ -260,7 +277,11 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         self.refresh_needed = True
 
     def review_status_details(self):
-        from pychron.envisage.browser.review_status_details import ReviewStatusDetailsView, ReviewStatusDetailsModel
+        from pychron.envisage.browser.review_status_details import (
+            ReviewStatusDetailsView,
+            ReviewStatusDetailsModel,
+        )
+
         record = self.selected[0]
         self.dvc.sync_repo(record.repository_identifier)
         m = ReviewStatusDetailsModel(record)
@@ -302,7 +323,7 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         return self.analyses
 
     def _get_selection_attrs(self):
-        return ['identifier', 'aliquot', 'step', 'comment', 'tag']
+        return ["identifier", "aliquot", "step", "comment", "tag"]
 
     # handlers
     # def _key_pressed_changed(self, new):
@@ -321,8 +342,8 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         self._analysis_set_changed(self.analysis_set)
 
         # hack to get the analyses to display
-        self.analysis_filter = 'a'
-        self.analysis_filter = ''
+        self.analysis_filter = "a"
+        self.analysis_filter = ""
 
     def _analysis_set_changed(self, new):
         if self.suppress_load_analysis_set or not new:
@@ -331,14 +352,17 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         try:
             ans = self.get_analysis_set(new)
             if not ans:
-                warning(None, 'Analysis set is empty')
+                warning(None, "Analysis set is empty")
                 return
 
             ans = self.dvc.get_analyses_uuid([a[0] for a in ans])
             if not ans:
-                information(None, 'Previously selected analyses not in the current database. This is not fatal. Its '
-                                  'ok to continue')
-                self.analysis_set = ''
+                information(
+                    None,
+                    "Previously selected analyses not in the current database. This is not fatal. Its "
+                    "ok to continue",
+                )
+                self.analysis_set = ""
                 self.dump()
                 return
 
@@ -390,14 +414,17 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
 
     # defaults
     def _table_configurer_default(self):
-        return AnalysisTableConfigurer(id='analysis.table', title='Configure Analysis Table')
+        return AnalysisTableConfigurer(
+            id="analysis.table", title="Configure Analysis Table"
+        )
 
     def _analysis_filter_parameter_default(self):
-        return 'record_id'
+        return "record_id"
 
     def _tabular_adapter_default(self):
         adapter = AnalysisAdapter()
         self.table_configurer.set_adapter(adapter)
         return adapter
+
 
 # ============= EOF =============================================

@@ -32,13 +32,12 @@ from six.moves import zip
 
 # ============= local library imports  ==========================
 class CSVDataManager(DataManager):
-    '''
-    '''
+    """ """
 
-    format_str = '{:0.6f}'
+    format_str = "{:0.6f}"
     _writer = None
     _file = None
-    delimiter = ','
+    delimiter = ","
 
     def load(self, frame_key=None):
         if frame_key is None:
@@ -49,12 +48,12 @@ class CSVDataManager(DataManager):
             #            from pylab import datestr2num
             #            converters = {0:datestr2num}
             #            return loadtxt(frame, converters=converters, delimiter=',')
-            return loadtxt(frame, delimiter=',')
+            return loadtxt(frame, delimiter=",")
 
     def write_metadata(self, md, frame_key=None):
 
-        sline = ['#<metadata>===================================================']
-        eline = ['#</metadata>===================================================']
+        sline = ["#<metadata>==================================================="]
+        eline = ["#</metadata>==================================================="]
         data = [sline] + md + [eline]
         self.write_to_frame(data, frame_key)
 
@@ -68,12 +67,10 @@ class CSVDataManager(DataManager):
             self.new_writer(frame, datum)
 
     def new_writer(self, p, datum, append=True):
-        '''
-
-        '''
-        mode = 'w'
+        """ """
+        mode = "w"
         if append:
-            mode = 'a'
+            mode = "a"
         with open(p, mode) as f:
             #            writer = self.writer
             writer = csv.writer(f, delimiter=self.delimiter)
@@ -98,11 +95,12 @@ class CSVDataManager(DataManager):
         if not os.path.isfile(path):
             return
 
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             reader = csv.reader(f)
 
             data = [row for row in reader]
             return list(zip(*data))
+
 
 #    @property
 #    def writer(self):

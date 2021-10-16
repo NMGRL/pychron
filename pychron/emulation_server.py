@@ -53,7 +53,7 @@ class EmulationServer(object):
         if not (port and host):
             return
 
-        print('serving on {}:{}'.format(host, port))
+        print("serving on {}:{}".format(host, port))
         server = six.moves.socketserver.TCPServer((host, port), self.emulator)
         server.allow_reuse_address = True
         self.server = server
@@ -100,5 +100,6 @@ class EmulationServer(object):
                     else:
                         s.close()
                         input_.remove(s)
+
 
 # ============= EOF =============================================

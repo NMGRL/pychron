@@ -26,11 +26,11 @@ class MDriveMotor(CoreDevice, BaseMDrive):
     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.paths import paths
 
-    paths.build('_dev')
-    m = MDriveMotor(name='mdrive')
+    paths.build("_dev")
+    m = MDriveMotor(name="mdrive")
     m.bootstrap()
 
 # ============= EOF =============================================

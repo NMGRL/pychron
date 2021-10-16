@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import HasTraits
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.editors.gain_calibration_editor import GainCalibrationEditor
@@ -30,7 +31,7 @@ class GainCalibrationOption(HasTraits):
 
 class GainCalibrationNode(BaseDVCNode):
     options_klass = GainCalibrationOption
-    name = 'Gain Calibration'
+    name = "Gain Calibration"
 
     # def configure(self):
     #     ms = ['jan', 'obama']
@@ -42,5 +43,6 @@ class GainCalibrationNode(BaseDVCNode):
         editor = GainCalibrationEditor(dvc=self.dvc)
         editor.initialize()
         state.editors.append(editor)
+
 
 # ============= EOF =============================================

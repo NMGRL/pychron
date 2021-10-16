@@ -21,6 +21,6 @@ from pychron.core.ui.factory import toolkit_factory
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-LaserComponentEditor = toolkit_factory('stage_component_editor', 'LaserComponentEditor')
-VideoComponentEditor = toolkit_factory('video_component_editor', 'VideoComponentEditor')
+LaserComponentEditor = toolkit_factory("stage_component_editor", "LaserComponentEditor")
+VideoComponentEditor = toolkit_factory("video_component_editor", "VideoComponentEditor")
 # ============= EOF =============================================

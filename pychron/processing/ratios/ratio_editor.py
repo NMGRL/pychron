@@ -18,23 +18,25 @@
 from __future__ import absolute_import
 from traits.api import Instance, Float
 from traitsui.api import View, Item, UItem, VGroup
+
 # ============= standard library imports ========================
 from uncertainties import nominal_value
+
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 
 
 class RatioEditor(BaseTraitsEditor):
-    """
-    """
+    """ """
+
     graph = Instance(StackedRegressionGraph)
 
     intercept_ratio = Float
     time_zero_offset = Float(0, auto_set=False, enter_set=True)
     ratio_intercept = Float
 
-    basename = ''
+    basename = ""
 
     def _time_zero_offset_changed(self):
         self.refresh_plot()
@@ -44,9 +46,7 @@ class RatioEditor(BaseTraitsEditor):
         self.setup_graph()
 
     def setup_graph(self):
-        cd = dict(padding=20,
-                  spacing=5,
-                  stack_order='top_to_bottom')
+        cd = dict(padding=20, spacing=5, stack_order="top_to_bottom")
         g = StackedRegressionGraph(container_dict=cd)
         self.graph = g
         self.refresh_plot()
@@ -57,7 +57,7 @@ class RatioEditor(BaseTraitsEditor):
 
         g.clear()
 
-        for ni, di in [('Ar40', 'Ar39')]:
+        for ni, di in [("Ar40", "Ar39")]:
             niso, diso = d[ni], d[di]
             self.plot_ratio(g, niso, diso)
 
@@ -67,7 +67,7 @@ class RatioEditor(BaseTraitsEditor):
         niso.time_zero_offset = self.time_zero_offset
         diso.time_zero_offset = self.time_zero_offset
 
-        fd = {'filter_outliers': True, 'std_devs': 2, 'iterations': 1}
+        fd = {"filter_outliers": True, "std_devs": 2, "iterations": 1}
 
         niso.filter_outliers_dict = fd
         diso.filter_outliers_dict = fd
@@ -99,30 +99,34 @@ class RatioEditor(BaseTraitsEditor):
         rys = niso.ys / diso.ys
 
         g.new_plot()
-        g.set_y_title('{}/{}'.format(niso.name, diso.name))
-        g.set_x_title('Time (s)')
+        g.set_y_title("{}/{}".format(niso.name, diso.name))
+        g.set_x_title("Time (s)")
         # p,s,l = g.new_series(xs, rys, fit='parabolic', filter_outliers_dict=fd)
 
-        fd = {'filter_outliers': True, 'std_devs': 2, 'iterations': 1}
+        fd = {"filter_outliers": True, "std_devs": 2, "iterations": 1}
 
         fitfunc = lambda p, x: (p[0] * x + p[1]) / (p[2] * x + p[3])
 
         fit = ((fitfunc, [1, 1, 1, 1]), None)
-        p, s, l = g.new_series(xs, rys, fit=fit,
-                               use_error_envelope=False,
-                               filter_outliers_dict=fd)
+        p, s, l = g.new_series(
+            xs, rys, fit=fit, use_error_envelope=False, filter_outliers_dict=fd
+        )
         reg = l.regressor
         self.ratio_intercept = reg.predict(0)
 
     def traits_view(self):
-        v = View(UItem('graph', style='custom'),
-                 VGroup(Item('time_zero_offset'),
-                        Item('intercept_ratio', style='readonly'),
-                        Item('ratio_intercept', style='readonly')))
+        v = View(
+            UItem("graph", style="custom"),
+            VGroup(
+                Item("time_zero_offset"),
+                Item("intercept_ratio", style="readonly"),
+                Item("ratio_intercept", style="readonly"),
+            ),
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     re = RatioEditor()
     re.setup()
     re.configure_traits()

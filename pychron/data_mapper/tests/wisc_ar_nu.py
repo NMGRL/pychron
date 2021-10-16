@@ -4,6 +4,7 @@ import os
 import unittest
 
 from pychron.data_mapper.sources.wiscar_meta_parser import WiscArMetaParser
+
 # from pychron.data_mapper.sources.wiscar_source import WiscArNuSource
 # from pychron.data_mapper.tests.file_source import BaseFileSourceTestCase
 from pychron.data_mapper.tests import fget_data_dir
@@ -24,17 +25,16 @@ class WiscArMetaTxtTestCase(unittest.TestCase):
         parser = WiscArMetaParser()
 
         spec = Spec()
-        p = os.path.join(fget_data_dir(), 'WISCAR_test_metadata.txt')
+        p = os.path.join(fget_data_dir(), "WISCAR_test_metadata.txt")
         parser.populate_spec(p, spec)
-        cls.expected = {'sample': 'H-15-27A',
-                        'irradiation': 'UW133'}
+        cls.expected = {"sample": "H-15-27A", "irradiation": "UW133"}
         cls.spec = spec
 
     def test_sample(self):
-        self.assertEqual(self.expected['sample'], self.spec.run_spec.sample)
+        self.assertEqual(self.expected["sample"], self.spec.run_spec.sample)
 
     def test_irradiation(self):
-        self.assertEqual(self.expected['irradiation'], self.spec.run_spec.irradiation)
+        self.assertEqual(self.expected["irradiation"], self.spec.run_spec.irradiation)
 
 
 #
@@ -90,5 +90,5 @@ class WiscArMetaTxtTestCase(unittest.TestCase):
 #         self.assertEqual(self.spec.j_err, self.expected['j_err'])
 #
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,3 @@
+[tool.black]
+exclude= "docs,sandbox,test,alembic_dvc,zobs"
+max-line-length= "100"

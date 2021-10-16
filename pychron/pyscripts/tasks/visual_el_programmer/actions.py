@@ -24,21 +24,23 @@ from pychron.envisage.tasks.actions import FileOpenAction, NewAction
 
 
 class SwitchRenamerAction(Action):
-    name = 'Switch Renamer...'
+    name = "Switch Renamer..."
 
     def perform(self, event):
         from pychron.pyscripts.switch_renamer import SwitchRenamer
+
         sr = SwitchRenamer()
         sr.edit_traits()
 
 
 class OpenVisualELScriptAction(FileOpenAction):
-    name = 'Open Visual PyScript...'
-    task_id = 'pychron.pyscript.visual_el_programmer'
+    name = "Open Visual PyScript..."
+    task_id = "pychron.pyscript.visual_el_programmer"
 
 
 class NewVisualELScriptAction(NewAction):
-    task_id = 'pychron.pyscript.visual_el_programmer'
-    name = 'New Visual PyScript'
+    task_id = "pychron.pyscript.visual_el_programmer"
+    name = "New Visual PyScript"
+
 
 # ============= EOF =============================================

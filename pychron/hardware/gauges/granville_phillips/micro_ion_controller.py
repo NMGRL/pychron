@@ -19,25 +19,28 @@ from traitsui.api import View, Item, ListEditor, InstanceEditor, Group
 # =============local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.gauges.base_controller import BaseGauge
-from pychron.hardware.gauges.granville_phillips.base_micro_ion_controller import BaseMicroIonController
+from pychron.hardware.gauges.granville_phillips.base_micro_ion_controller import (
+    BaseMicroIonController,
+)
 
 
 # =============standard library imports ========================
 
 
 class MicroIonController(BaseMicroIonController, CoreDevice):
-    scan_func = 'get_pressures'
+    scan_func = "get_pressures"
     gauge_klass = BaseGauge
 
     def graph_builder(self, g):
         super(MicroIonController, self).graph_builder(g, show_legend=True)
         g.new_series()
-        g.set_series_label('IG', series=0)
+        g.set_series_label("IG", series=0)
 
         g.new_series()
-        g.set_series_label('CG1', series=1)
+        g.set_series_label("CG1", series=1)
 
         g.new_series()
-        g.set_series_label('CG2', series=2)
+        g.set_series_label("CG2", series=2)
+
 
 # ============= EOF ====================================

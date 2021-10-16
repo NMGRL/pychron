@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from pychron.experiment.utilities.identifier import is_special
-from pychron.experiment.utilities.repository_identifier import retroactive_repository_identifiers
+from pychron.experiment.utilities.repository_identifier import (
+    retroactive_repository_identifiers,
+)
 
-__author__ = 'ross'
+__author__ = "ross"
 
 import unittest
 
@@ -16,7 +18,9 @@ class DummyExecutor(object):
 
     def retroactive_repository_identifiers(self, spec):
         # print '{} added to {}'.format(spec.experiment_id, spec.runid)
-        self.cruns, self.expid = retroactive_repository_identifiers(spec, self.cruns, self.expid)
+        self.cruns, self.expid = retroactive_repository_identifiers(
+            spec, self.cruns, self.expid
+        )
 
         self.associate(spec.repository_identifier, spec.runid)
         if not is_special(spec.identifier) and self.cruns:
@@ -69,33 +73,38 @@ class ExperimentIdentifierTestCase(unittest.TestCase):
 
     def test3(self):
         d = DummyExecutor()
-        spec = AutomatedRunSpec(identifier='bu-FD-j', aliquot=1)
+        spec = AutomatedRunSpec(identifier="bu-FD-j", aliquot=1)
         d.retroactive_repository_identifiers(spec)
 
-        spec = AutomatedRunSpec(identifier='bu-FD-j', aliquot=2)
+        spec = AutomatedRunSpec(identifier="bu-FD-j", aliquot=2)
         d.retroactive_repository_identifiers(spec)
 
-        spec = AutomatedRunSpec(identifier='10000', repository_identifier='foo')
+        spec = AutomatedRunSpec(identifier="10000", repository_identifier="foo")
         d.retroactive_repository_identifiers(spec)
 
-        spec = AutomatedRunSpec(identifier='20000', repository_identifier='bar')
+        spec = AutomatedRunSpec(identifier="20000", repository_identifier="bar")
         d.retroactive_repository_identifiers(spec)
 
-        spec = AutomatedRunSpec(identifier='20000', aliquot=1, repository_identifier='bar')
+        spec = AutomatedRunSpec(
+            identifier="20000", aliquot=1, repository_identifier="bar"
+        )
         d.retroactive_repository_identifiers(spec)
 
-        spec = AutomatedRunSpec(identifier='bu-FD-j', aliquot=3)
+        spec = AutomatedRunSpec(identifier="bu-FD-j", aliquot=3)
         d.retroactive_repository_identifiers(spec)
 
-        self.assertListEqual(d.associations, [
-            ('foo', '10000-00'),
-            ('foo', 'bu-FD-j-01'),
-            ('foo', 'bu-FD-j-02'),
-            ('bar', '20000-00'),
-            ('bar', '20000-01'),
-            ('bar', 'bu-FD-j-03'),
-        ])
+        self.assertListEqual(
+            d.associations,
+            [
+                ("foo", "10000-00"),
+                ("foo", "bu-FD-j-01"),
+                ("foo", "bu-FD-j-02"),
+                ("bar", "20000-00"),
+                ("bar", "20000-01"),
+                ("bar", "bu-FD-j-03"),
+            ],
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

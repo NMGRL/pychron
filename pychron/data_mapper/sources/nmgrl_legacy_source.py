@@ -22,4 +22,5 @@ class NMGRLLegacySource(FileSource):
         pspec = self.new_persistence_spec()
         return pspec
 
+
 # ============= EOF =============================================

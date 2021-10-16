@@ -17,11 +17,13 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Instance, Bool, Str
+
 # import apptools.sweet_pickle as pickle
 # ============= standard library imports ========================
 from threading import Event, Thread
 import six.moves.cPickle as pickle
 import os
+
 # ============= local library imports  ==========================
 from pychron.core.pid import PID
 
@@ -37,7 +39,7 @@ from pychron.core.helpers.filetools import list_directory
 
 class LaserManager(BaseLaserManager):
     """
-        Base class for a GUI representation of a laser device
+    Base class for a GUI representation of a laser device
     """
 
     laser_script_executor = Instance(LaserScriptExecutor)
@@ -46,7 +48,7 @@ class LaserManager(BaseLaserManager):
     record_lasing_power = Bool(False)
 
     monitor = Instance(LaserMonitor)
-    monitor_name = 'laser_monitor'
+    monitor_name = "laser_monitor"
     monitor_klass = LaserMonitor
 
     plugin_id = Str
@@ -62,26 +64,28 @@ class LaserManager(BaseLaserManager):
 
         from apptools.preferences.preference_binding import bind_preference
 
-        bind_preference(self, 'use_video', '{}.use_video'.format(pref_id))
-        bind_preference(self, 'close_after_minutes', '{}.close_after'.format(pref_id))
+        bind_preference(self, "use_video", "{}.use_video".format(pref_id))
+        bind_preference(self, "close_after_minutes", "{}.close_after".format(pref_id))
         #         bind_preference(self, 'record_lasing_video', '{}.record_lasing_video'.format(pref_id))
         #         bind_preference(self, 'record_lasing_power', '{}.record_lasing_power'.format(pref_id))
-        bind_preference(self, 'window_height', '{}.height'.format(pref_id))
-        bind_preference(self, 'window_x', '{}.x'.format(pref_id))
-        bind_preference(self, 'window_y', '{}.y'.format(pref_id))
-        bind_preference(self, 'use_calibrated_power', '{}.use_calibrated_power'.format(pref_id))
+        bind_preference(self, "window_height", "{}.height".format(pref_id))
+        bind_preference(self, "window_x", "{}.x".format(pref_id))
+        bind_preference(self, "window_y", "{}.y".format(pref_id))
+        bind_preference(
+            self, "use_calibrated_power", "{}.use_calibrated_power".format(pref_id)
+        )
 
-        self.debug('binding stage manager preferences')
+        self.debug("binding stage manager preferences")
         self.stage_manager.bind_preferences(pref_id)
 
     def set_xy(self, xy, velocity=None):
         self.stage_manager.set_xy(*xy)
 
     def get_pattern_names(self):
-        return list_directory(paths.pattern_dir, extension='.lp')
+        return list_directory(paths.pattern_dir, extension=".lp")
 
     def enable_laser(self, **kw):
-        self.info('enable laser')
+        self.info("enable laser")
         enabled = self._enable_hook(**kw)
 
         if self.simulation:
@@ -89,30 +93,34 @@ class LaserManager(BaseLaserManager):
             return True
 
         if isinstance(enabled, bool) and enabled:
-            if self.clear_flag('enable_error_flag'):
-                self.debug('clearing enable error flag')
+            if self.clear_flag("enable_error_flag"):
+                self.debug("clearing enable error flag")
 
             self.enabled = True
             self.monitor = self.monitor_factory()
             self.monitor.reset()
             if not self.monitor.monitor():
                 self.disable_laser()
-                self.warning_dialog('Monitor could not be started. Laser disabled', sound='alarm1')
+                self.warning_dialog(
+                    "Monitor could not be started. Laser disabled", sound="alarm1"
+                )
             else:
                 if self.monitor.check():
-                    self.emergency_shutoff('Laser Monitor detected an error')
+                    self.emergency_shutoff("Laser Monitor detected an error")
         else:
-            self.warning_dialog('Could not enable laser. Check coolant and manual interlocks')
+            self.warning_dialog(
+                "Could not enable laser. Check coolant and manual interlocks"
+            )
 
-            if self.set_flag('enable_error_flag'):
-                self.debug('setting enable_error_flag')
+            if self.set_flag("enable_error_flag"):
+                self.debug("setting enable_error_flag")
 
             self.disable_laser()
 
         return enabled
 
     def disable_laser(self):
-        self.info('disable laser')
+        self.info("disable laser")
         # stop the laser monitor
         # if the laser is not firing is there any reason to be running the monitor?
         if self.monitor is not None:
@@ -129,18 +137,17 @@ class LaserManager(BaseLaserManager):
 
     def set_laser_output(self, *args, **kw):
         """
-            by default set_laser_output simply uses set_laser_power
-            but subclasses can override for different units
+        by default set_laser_output simply uses set_laser_power
+        but subclasses can override for different units
         """
         self.set_laser_power(*args, **kw)
 
     def set_laser_power(self, power, verbose=True, units=None, *args, **kw):
-        """
-        """
+        """ """
 
-        if units == 'percent':
+        if units == "percent":
             p = power
-        elif units == 'lumens':
+        elif units == "lumens":
             self._luminosity_hook(power)
             return
 
@@ -151,12 +158,14 @@ class LaserManager(BaseLaserManager):
                 p = None
 
         if p is None:
-            self.emergency_shutoff('Invalid power calibration')
-            self.warning_dialog('Invalid Power Calibration')
+            self.emergency_shutoff("Invalid power calibration")
+            self.warning_dialog("Invalid Power Calibration")
             return False
 
         if verbose:
-            self.info('request power {:0.3f}, calibrated power {:0.3f}'.format(power, p))
+            self.info(
+                "request power {:0.3f}, calibrated power {:0.3f}".format(power, p)
+            )
 
         self._requested_power = power
         self._calibrated_power = p
@@ -164,36 +173,37 @@ class LaserManager(BaseLaserManager):
 
     def close(self, ok):
         self.pulse.dump_pulse()
-        self.debug('laser close')
+        self.debug("laser close")
         return super(LaserManager, self).close(ok)
 
     def set_laser_monitor_duration(self, d):
         """
-            duration in minutes
+        duration in minutes
         """
         self.monitor.max_duration = d
         self.monitor.reset_start_time()
 
     def reset_laser_monitor(self):
-        """
-        """
+        """ """
         self.monitor.reset_start_time()
 
     def emergency_shutoff(self, reason):
-        """
-        """
-        self.warning('Emergency shutoff')
+        """ """
+        self.warning("Emergency shutoff")
         self.disable_laser()
 
         if reason is not None:
-            self.warning('EMERGENCY SHUTOFF reason: {}'.format(reason))
+            self.warning("EMERGENCY SHUTOFF reason: {}".format(reason))
 
             # from pychron.remote_hardware.errors.laser_errors import LaserMonitorErrorCode
 
             from pychron.tx.errors import LaserMonitorErrorCode
+
             self.error_code = LaserMonitorErrorCode(reason)
 
-            invoke_in_main_thread(self.warning_dialog, reason, title='AUTOMATIC LASER SHUTOFF')
+            invoke_in_main_thread(
+                self.warning_dialog, reason, title="AUTOMATIC LASER SHUTOFF"
+            )
 
     def start_video_recording(self, *args, **kw):
         pass
@@ -220,7 +230,7 @@ class LaserManager(BaseLaserManager):
         self._dispose_optional_windows_hook()
 
     def shutdown(self):
-        self.debug('shutdown')
+        self.debug("shutdown")
         self._dump_pulse()
         if self.stage_manager:
             self.stage_manager.shutdown()
@@ -275,8 +285,7 @@ class LaserManager(BaseLaserManager):
     #            self.status_text = 'x = {:n} ({:0.4f} mm), y = {:n} ({:0.4f} mm)'.format(*new)
 
     def _enable_fired(self):
-        """
-        """
+        """ """
         if not self.enabled:
             self.enable_laser()
         else:
@@ -315,9 +324,11 @@ class LaserManager(BaseLaserManager):
     def monitor_factory(self):
         lm = self.monitor
         if lm is None:
-            lm = self.monitor_klass(manager=self,
-                                    #                            configuration_dir_name=paths.monitors_dir,
-                                    name=self.monitor_name)
+            lm = self.monitor_klass(
+                manager=self,
+                #                            configuration_dir_name=paths.monitors_dir,
+                name=self.monitor_name,
+            )
         # if hasattr(lm, 'update_imb'):
         #     self.on_trait_change(lm.update_imb, 'laser_controller:internal_meter_response')
         return lm
@@ -326,22 +337,22 @@ class LaserManager(BaseLaserManager):
     # defaults
     # ===============================================================================
     def _dump_pulse(self):
-        p = os.path.join(paths.hidden_dir, 'pulse')
-        with open(p, 'wb') as f:
+        p = os.path.join(paths.hidden_dir, "pulse")
+        with open(p, "wb") as f:
             pickle.dump(self.pulse, f)
 
     def _load_pulse(self, p):
-        with open(p, 'rb') as f:
+        with open(p, "rb") as f:
             try:
                 pul = pickle.load(f)
                 pul.manager = self
                 return pul
             except Exception as e:
-                self.debug('load pulse problem {} {}'.format(p, e))
+                self.debug("load pulse problem {} {}".format(p, e))
 
     def _pulse_default(self):
         pul = None
-        p = os.path.join(paths.hidden_dir, 'pulse')
+        p = os.path.join(paths.hidden_dir, "pulse")
         if os.path.isfile(p):
             pul = self._load_pulse(p)
 
@@ -351,8 +362,7 @@ class LaserManager(BaseLaserManager):
         return pul
 
     def _laser_script_executor_default(self):
-        return LaserScriptExecutor(laser_manager=self,
-                                   name=self.name)
+        return LaserScriptExecutor(laser_manager=self, name=self.name)
 
 
 # ===============================================================================
@@ -558,11 +568,11 @@ class LaserManager(BaseLaserManager):
 #                                        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
 
-    logging_setup('calib')
-    lm = LaserManager(name='FusionsDiode')
+    logging_setup("calib")
+    lm = LaserManager(name="FusionsDiode")
     lm.set_laser_power(10)
 #    from pychron.lasers.power.power_calibration_manager import PowerCalibrationManager, PowerCalibrationObject
 #

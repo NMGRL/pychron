@@ -53,20 +53,23 @@ class _ReferenceMarkEditor(Editor):
         self.control = QWidget()
         self.control.setLayout(layout)
 
-    def update_editor(self, ):
+    def update_editor(
+        self,
+    ):
         dim = self._dimension
         sp = self._spacing
         self._scene.clear()
-        for r, v in enumerate(self.value.split('\n')):
+        for r, v in enumerate(self.value.split("\n")):
             for c, vi in enumerate(v):
                 rect = self._scene.addRect(c * (dim + sp), r * (dim + sp), dim, dim)
-                if vi == '1':
+                if vi == "1":
                     rect.setBrush(QColor(200, 0, 0))
 
 
 class ReferenceMarkEditor(BasicEditorFactory):
-    """
-    """
+    """ """
+
     klass = _ReferenceMarkEditor
+
 
 # ============= EOF =============================================

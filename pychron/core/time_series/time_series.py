@@ -16,30 +16,78 @@
 from numpy import asarray, r_, ones, convolve, concatenate, mean
 
 
-def smooth(x, window_len=11, window='hanning'):
+def smooth(x, window_len=11, window="hanning"):
     x = asarray(x)
-    s = r_[2 * x[0] - x[window_len - 1::-1], x, 2 * x[-1] - x[-1:-window_len:-1]]
+    s = r_[2 * x[0] - x[window_len - 1 :: -1], x, 2 * x[-1] - x[-1:-window_len:-1]]
 
-    if window == 'flat':  # moving average
-        w = ones(window_len, 'd')
+    if window == "flat":  # moving average
+        w = ones(window_len, "d")
     else:
-        mod = __import__('numpy', fromlist=[window])
+        mod = __import__("numpy", fromlist=[window])
         func = getattr(mod, window)
         w = func(window_len)
         # w = eval('np.' + window + '(window_len)')
 
-    y = convolve(w / w.sum(), s, mode='same')
-    return y[window_len:-window_len + 1]
+    y = convolve(w / w.sum(), s, mode="same")
+    return y[window_len : -window_len + 1]
 
 
 def seasonal_subseries(x, y, **kw):
     from pychron.core.helpers.datetime_tools import get_datetime
 
-    ybins = [[], [], [], [], [], [], [], [], [], [], [], [],
-             [], [], [], [], [], [], [], [], [], [], [], []]
-    xbins = [[], [], [], [], [], [], [], [], [], [], [], [],
-             [], [], [], [], [], [], [], [], [], [], [], []]
-    m = 3600 * 24. / len(x)
+    ybins = [
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+    ]
+    xbins = [
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+    ]
+    m = 3600 * 24.0 / len(x)
     for xi, yi in zip(x, y):
         i = get_datetime(xi).hour
         ybins[i - 1].append(yi)
@@ -54,7 +102,7 @@ def downsample_1d(data, factor=5, estimator=None):
         estimator = mean
 
     n = data.shape[0]
-    crarr = data[:n - (n % int(factor))]
+    crarr = data[: n - (n % int(factor))]
     a = [crarr[i::factor] for i in range(factor)]
     return estimator(concatenate([a]), axis=0)
 
@@ -69,10 +117,13 @@ def downsample_1d(data, factor=5, estimator=None):
 #    r = np.real(np.fft.ifft(s * np.conjugate(s))) / np.var(x)
 #    return np.linspace(0, len(r) - 1, len(r)), r
 
+
 def autocorrelation(x, nlags=100):
     #    from autocorr import autocorr
     from pychron.core.time_series import autocorr
+
     return autocorr(x, nlags=nlags)
+
 
 # if __name__ == '__main__':
 #    import csv

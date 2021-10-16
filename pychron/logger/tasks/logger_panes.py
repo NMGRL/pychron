@@ -30,12 +30,17 @@ class DisplayPane(TraitsTaskPane):
     selected = Any
 
     def traits_view(self):
-        v = View(UItem('loggers',
-                       editor=ListEditor(use_notebook=True,
-                                         page_name='.title',
-                                         selected='selected'),
-                       style='custom'))
+        v = View(
+            UItem(
+                "loggers",
+                editor=ListEditor(
+                    use_notebook=True, page_name=".title", selected="selected"
+                ),
+                style="custom",
+            )
+        )
 
         return v
+
 
 # ============= EOF =============================================

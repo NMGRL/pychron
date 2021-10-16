@@ -21,8 +21,7 @@ from __future__ import print_function
 from threading import Thread
 
 from traits.api import Instance, Enum, DelegatesTo, Property, Button, Any, Float
-from traitsui.api import View, Item, HGroup, spring, \
-    ListEditor, VGroup, UItem
+from traitsui.api import View, Item, HGroup, spring, ListEditor, VGroup, UItem
 
 # =============standard library imports ========================
 
@@ -35,25 +34,24 @@ import six
 
 
 class MotionControllerManager(Manager):
-    """
-    """
+    """ """
 
     motion_controller = Instance(MotionController)
-    _axes = DelegatesTo('motion_controller', prefix='axes')
+    _axes = DelegatesTo("motion_controller", prefix="axes")
     axes = Property
 
-    apply_button = Button('Apply')
-    read_button = Button('Read')
-    load_button = Button('Load')
+    apply_button = Button("Apply")
+    read_button = Button("Read")
+    load_button = Button("Load")
     # print_param_table = Button('Print')
 
-    motion_group = DelegatesTo('motion_controller', prefix='groupobj')
+    motion_group = DelegatesTo("motion_controller", prefix="groupobj")
 
-    view_style = Enum('simple_view', 'full_view')
+    view_style = Enum("simple_view", "full_view")
 
     selected = Any
-    xmove_to_button = Button('Move X')
-    ymove_to_button = Button('Move Y')
+    xmove_to_button = Button("Move X")
+    ymove_to_button = Button("Move Y")
     xtarget_position = Float
     ytarget_position = Float
 
@@ -81,17 +79,17 @@ class MotionControllerManager(Manager):
 
     # handlers
     def _xmove_to_button_fired(self):
-        self._move_to('x', self.xtarget_position)
+        self._move_to("x", self.xtarget_position)
 
     def _ymove_to_button_fired(self):
-        self._move_to('y', self.ytarget_position)
+        self._move_to("y", self.ytarget_position)
 
     def _move_to(self, k, v):
         def func():
             self.motion_controller.start_timer()
             ax = self.motion_controller.axes[k]
             self.motion_controller.destroy_group()
-            self.motion_controller._axis_move('{}PA{}'.format(ax.id, v), block=k)
+            self.motion_controller._axis_move("{}PA{}".format(ax.id, v), block=k)
             self.motion_controller.update_axes()
 
         t = Thread(target=func)
@@ -133,42 +131,64 @@ class MotionControllerManager(Manager):
                 # ax.load_parameters_from_file(path)
 
     def traits_view(self):
-        """
-        """
-        cgrp = VGroup(Item('axes',
-                           style='custom',
-                           show_label=False,
-                           editor=ListEditor(use_notebook=True,
-                                             dock_style='tab',
-                                             page_name='.name',
-                                             selected='selected',
-                                             view='full_view')),
-                      HGroup(spring, Item('load_button'),
-                             Item('read_button'),
-                             Item('apply_button'),
-                             show_labels=False))
+        """ """
+        cgrp = VGroup(
+            Item(
+                "axes",
+                style="custom",
+                show_label=False,
+                editor=ListEditor(
+                    use_notebook=True,
+                    dock_style="tab",
+                    page_name=".name",
+                    selected="selected",
+                    view="full_view",
+                ),
+            ),
+            HGroup(
+                spring,
+                Item("load_button"),
+                Item("read_button"),
+                Item("apply_button"),
+                show_labels=False,
+            ),
+        )
 
-        tgrp = VGroup(HGroup(UItem('xmove_to_button'), UItem('xtarget_position')),
-                      HGroup(UItem('ymove_to_button'), UItem('ytarget_position')))
+        tgrp = VGroup(
+            HGroup(UItem("xmove_to_button"), UItem("xtarget_position")),
+            HGroup(UItem("ymove_to_button"), UItem("ytarget_position")),
+        )
 
-        view = View(VGroup(tgrp, cgrp),
-                    resizable=True,
-                    handler=self.handler_klass,  # MotionControllerManagerHandler,
-                    title='Configure Motion Controller')
+        view = View(
+            VGroup(tgrp, cgrp),
+            resizable=True,
+            handler=self.handler_klass,  # MotionControllerManagerHandler,
+            title="Configure Motion Controller",
+        )
         return view
 
     def configure_view(self):
-        v = View(Item('axes',
-                      style='custom',
-                      show_label=False,
-                      editor=ListEditor(use_notebook=True,
-                                        dock_style='tab',
-                                        page_name='.name',
-                                        view=self.view_style,
-                                        selected='selected'
-                                        )),
-                 HGroup(spring, Item('load_button'),
-                        Item('read_button'), Item('apply_button'), show_labels=False, ))
+        v = View(
+            Item(
+                "axes",
+                style="custom",
+                show_label=False,
+                editor=ListEditor(
+                    use_notebook=True,
+                    dock_style="tab",
+                    page_name=".name",
+                    view=self.view_style,
+                    selected="selected",
+                ),
+            ),
+            HGroup(
+                spring,
+                Item("load_button"),
+                Item("read_button"),
+                Item("apply_button"),
+                show_labels=False,
+            ),
+        )
         return v
         #        print [self._axes[k] for k in keys] + [self.motion_group]
         #        return [self._axes[k] for k in keys] + [self.motion_group]

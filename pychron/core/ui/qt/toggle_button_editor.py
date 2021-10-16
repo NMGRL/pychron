@@ -69,26 +69,27 @@ class _ToggleButtonEditor(Editor):
             self.control.setToolTip(self.tooltip_on)
 
     def prepare(self, parent):
-        """ Finishes setting up the editor. This differs from the base class
-            in that self.update_editor() is not called at the end, which
-            would fire an event.
+        """Finishes setting up the editor. This differs from the base class
+        in that self.update_editor() is not called at the end, which
+        would fire an event.
         """
         name = self.extended_name
-        if name != 'None':
-            self.context_object.on_trait_change(self._update_editor, name,
-                                                dispatch='ui')
+        if name != "None":
+            self.context_object.on_trait_change(
+                self._update_editor, name, dispatch="ui"
+            )
         self.init(parent)
         self._sync_values()
 
     def update_object(self):
-        """ Handles the user clicking the button by setting the factory value
-            on the object.
+        """Handles the user clicking the button by setting the factory value
+        on the object.
         """
         self.value = self.factory.value
 
     def update_editor(self):
-        """ Updates the editor when the object trait changes externally to the
-            editor.
+        """Updates the editor when the object trait changes externally to the
+        editor.
         """
         pass
 
@@ -125,5 +126,6 @@ class ToggleButtonEditor(BasicEditorFactory):
                     self._value = float(value)
                 except:
                     pass
+
 
 # ============= EOF =============================================

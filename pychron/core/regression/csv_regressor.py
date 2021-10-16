@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 def get_data():
     x = [29, 136, 181, 359, 384]
     y = [75.56, 74.56, 74.11, 73.37, 73.04]
-    e = [0.2, 0.07, 0.31, .09, .13]
+    e = [0.2, 0.07, 0.31, 0.09, 0.13]
     return x, y, e
 
 
@@ -41,30 +41,45 @@ def results():
     mi, ma = min(x), max(x)
     pad = (ma - mi) * 0.1
     fxs = linspace(mi - pad, ma + pad)
-    plt.errorbar(x, y, yerr=e, )
+    plt.errorbar(
+        x,
+        y,
+        yerr=e,
+    )
     reg.calculate()
 
-    l, u = reg.calculate_error_envelope(fxs, error_calc='CI')
-    plt.plot(fxs, l, 'b')
-    plt.plot(fxs, u, 'b')
+    l, u = reg.calculate_error_envelope(fxs, error_calc="CI")
+    plt.plot(fxs, l, "b")
+    plt.plot(fxs, u, "b")
     # plt.plot(fxs, reg.predict(fxs), 'b-')
-    print('Age={}, SD={} SEM={} CI={}'.format(reg.predict(328), reg.predict_error(328), reg.predict_error(328, 'SEM'),
-                                              reg.predict_error(328, 'CI')))
+    print(
+        "Age={}, SD={} SEM={} CI={}".format(
+            reg.predict(328),
+            reg.predict_error(328),
+            reg.predict_error(328, "SEM"),
+            reg.predict_error(328, "CI"),
+        )
+    )
 
     reg = WeightedPolynomialRegressor(degree=1, xs=x, ys=y, yserr=e)
     reg.calculate()
-    plt.plot(fxs, reg.predict(fxs), 'g')
-    l, u = reg.calculate_error_envelope(fxs, error_calc='CI')
-    plt.plot(fxs, l, 'r')
-    plt.plot(fxs, u, 'r')
+    plt.plot(fxs, reg.predict(fxs), "g")
+    l, u = reg.calculate_error_envelope(fxs, error_calc="CI")
+    plt.plot(fxs, l, "r")
+    plt.plot(fxs, u, "r")
 
-    print('Weighted fit Age={}, SD={} SEM={} CI={}'.format(reg.predict(328),
-                                                           reg.predict_error(328), reg.predict_error(328, 'SEM'),
-                                                           reg.predict_error(328, 'CI')))
+    print(
+        "Weighted fit Age={}, SD={} SEM={} CI={}".format(
+            reg.predict(328),
+            reg.predict_error(328),
+            reg.predict_error(328, "SEM"),
+            reg.predict_error(328, "CI"),
+        )
+    )
     plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     results()
 
 # ============= EOF =============================================

@@ -45,8 +45,8 @@ class StratCanvas(SceneCanvas):
         self.index_range.low = -2
         self.index_range.high = 10
 
-        self.value_axis.title = 'Elevation (m. asl)'
-        self.index_axis.title = 'Age (Ma)'
+        self.value_axis.title = "Elevation (m. asl)"
+        self.index_axis.title = "Age (Ma)"
         s = StratScene()
         s.load(p)
         self.scene = s
@@ -63,5 +63,6 @@ class StratCanvas(SceneCanvas):
 
         for i in self.scene.items():
             i.index_origin = io
+
 
 # ============= EOF =============================================

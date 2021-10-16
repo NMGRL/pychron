@@ -21,6 +21,7 @@ from chaco.abstract_overlay import AbstractOverlay
 from chaco.tools.scatter_inspector import ScatterInspector, ScatterInspectorEvent
 from enable.base_tool import BaseTool, KeySpec
 from kiva.fonttools import Font
+
 # from pychron.pipeline.plot.inspector_item import BaseInspectorItem
 from six.moves import range
 from six.moves import zip
@@ -29,10 +30,10 @@ from traits.api import Event, Instance
 
 def intersperse(m, delim):
     """
-        intersperse ```delim``` in m
-         m=[1,2,3]
-         delim='---'
-         result=[1,'---',2,'---',3]
+    intersperse ```delim``` in m
+     m=[1,2,3]
+     delim='---'
+     result=[1,'---',2,'---',3]
 
     """
     m = iter(m)
@@ -55,7 +56,7 @@ class InfoInspector(ScatterInspector):
 
     def __init__(self, *args, **kw):
         super(InfoInspector, self).__init__(*args, **kw)
-        self.selection_mode = 'multi'
+        self.selection_mode = "multi"
         self.multiselect_modifier = KeySpec(None)
 
     # select_event = Event
@@ -72,16 +73,18 @@ class InfoInspector(ScatterInspector):
 
     def normal_left_dclick(self, event):
         for sel in self.component.index.metadata[self.selection_metadata_name]:
-            self.inspector_event = ScatterInspectorEvent(event_type='deselect', event_index=sel)
+            self.inspector_event = ScatterInspectorEvent(
+                event_type="deselect", event_index=sel
+            )
         self.component.index.metadata[self.selection_metadata_name] = []
 
     def normal_mouse_move(self, event):
         xy = event.x, event.y
         try:
             pos = self.component.hittest(xy, threshold=self.hittest_threshold)
-            event.window.set_pointer('cross')
+            event.window.set_pointer("cross")
         except IndexError:
-            event.window.set_pointer('arrow')
+            event.window.set_pointer("arrow")
             return
 
         if isinstance(pos, (tuple, list)):
@@ -89,7 +92,7 @@ class InfoInspector(ScatterInspector):
             self.current_screen = xy
             event.handled = True
         else:
-            event.window.set_pointer('arrow')
+            event.window.set_pointer("arrow")
             self.current_position = None
             self.current_screen = None
 
@@ -129,8 +132,9 @@ class InfoInspector(ScatterInspector):
 
 class InfoOverlay(AbstractOverlay):
     """
-        abstract class for displaying hover data
+    abstract class for displaying hover data
     """
+
     tool = Instance(BaseTool)
     visible = False
 
@@ -166,7 +170,7 @@ class InfoOverlay(AbstractOverlay):
         x, y = sx, sy = self.tool.current_screen
 
         size = 14
-        gc.set_font(Font('Arial', size=size))
+        gc.set_font(Font("Arial", size=size))
         gc.set_fill_color((0.8, 0.8, 0.8))
 
         lws, lhs = list(zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines]))
@@ -216,7 +220,7 @@ class InfoOverlay(AbstractOverlay):
             for col in range(multi_column):
                 i = 0
                 for mi in gen:
-                    if i == 0 and mi == '--------':
+                    if i == 0 and mi == "--------":
                         continue
 
                     yi = h * i
@@ -232,9 +236,10 @@ class InfoOverlay(AbstractOverlay):
 
     def _tool_changed(self, old, new):
         if old:
-            old.on_trait_change(self._update, 'metadata_changed', remove=True)
+            old.on_trait_change(self._update, "metadata_changed", remove=True)
 
         if new:
-            new.on_trait_change(self._update, 'metadata_changed')
+            new.on_trait_change(self._update, "metadata_changed")
+
 
 # ============= EOF =============================================

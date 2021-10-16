@@ -27,4 +27,5 @@ class IsotopxSpectrometerTask(SpectrometerTask):
     def _peak_center_stop_hook(self):
         self.scan_manager.setup_scan()
 
+
 # ============= EOF =============================================

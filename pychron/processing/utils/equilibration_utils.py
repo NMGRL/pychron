@@ -19,8 +19,19 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from numpy import asarray, convolve, exp, linspace, where
-from pylab import plot, show, axvline, legend, \
-    xlabel, ylabel, polyval, axhline, ylim, xlim, array
+from pylab import (
+    plot,
+    show,
+    axvline,
+    legend,
+    xlabel,
+    ylabel,
+    polyval,
+    axhline,
+    ylim,
+    xlim,
+    array,
+)
 from six.moves import range
 
 
@@ -29,7 +40,7 @@ def calc_optimal_eqtime(xs, ys):
     xs, ys = asarray(xs), asarray(ys)
     # calculate rise rate for 10s window
     window = [-1, 1]
-    rise_rates = convolve(ys, window, mode='same') / convolve(xs, window, mode='same')
+    rise_rates = convolve(ys, window, mode="same") / convolve(xs, window, mode="same")
 
     tol = 0.1
     rm = where(rise_rates < tol)[0]
@@ -38,7 +49,7 @@ def calc_optimal_eqtime(xs, ys):
         xx, yy = xs[idx], ys[idx]
     except Exception as e:
         xx, yy = None, None
-        print('calc optimal eqtime', e)
+        print("calc optimal eqtime", e)
 
     return rise_rates, xx, yy
 
@@ -61,22 +72,24 @@ def calc_optimal_eqtime(xs, ys):
 #    legend()
 #    show()
 
+
 def F(t, mag=1, rate=0.8):
-    '''
-        extraction line - mass spec equilibration function
-    '''
+    """
+    extraction line - mass spec equilibration function
+    """
     return mag * (1 - exp(-rate * t))
 
 
 def G(t, f, rate=1):
-    '''
-        mass spec consumption function during equilibration
-    '''
+    """
+    mass spec consumption function during equilibration
+    """
     return rate * t * f
 
 
 #    return ones_like(t) * mag
 #    return mag * (exp(-rate * t))
+
 
 def ratio_change(mag, t_inlet_close=None):
     eq_m = -0.0001
@@ -117,29 +130,29 @@ def equil():
     b = rise_rate * ts
 
     fg = f + g + b
-    plot(ts, f, label='F Equilibration')
-    plot(ts, g, label='G Consumption')
-    plot(ts, fg, label='F-G (Sniff Evo)')
+    plot(ts, f, label="F Equilibration")
+    plot(ts, g, label="G Consumption")
+    plot(ts, fg, label="F-G (Sniff Evo)")
 
     rf, rollover_F, vi_F = calc_optimal_eqtime(ts, f)
     rfg, rollover_FG, vi_FG = calc_optimal_eqtime(ts, fg)
     m = 2 * eq_m * mag
 
-    axvline(x=rollover_F, ls='--', color='blue')
-    axvline(x=rollover_FG, ls='--', color='red')
+    axvline(x=rollover_F, ls="--", color="blue")
+    axvline(x=rollover_FG, ls="--", color="red")
 
     idx = list(ts).index(rollover_F)
 
     b = fg[idx] - m * rollover_F
     evo = polyval((m, b), ts)
-    plot(ts, evo, ls='-.', color='blue', label='Static Evo. A')
+    plot(ts, evo, ls="-.", color="blue", label="Static Evo. A")
     # ee = where(evo > mag)[0]
     # to_F = ts[max(ee)]
     # print 'F', rollover_F, b, to_F
 
     b = vi_FG - m * rollover_FG
     evo = polyval((m, b), ts)
-    plot(ts, evo, ls='-.', color='red', label='Static Evo. B')
+    plot(ts, evo, ls="-.", color="red", label="Static Evo. B")
 
     print(polyval((m, b), 200))
     ee = where(evo > mag)[0]
@@ -149,27 +162,27 @@ def equil():
     #     axvline(x=to_FG, ls='-', color='red')
     #     axvline(x=to_F, ls='-', color='blue')
 
-    axhline(y=mag, ls='-', color='black')
+    axhline(y=mag, ls="-", color="black")
     #    plot([ti], [mag], 'bo')
 
     legend(loc=0)
     #     ylim(2980, 3020)
     ylim(18, 21)
     xlim(0, 20)
-    ylabel('Intensity')
-    xlabel('t (s)')
+    ylabel("Intensity")
+    xlabel("t (s)")
     #    fig = gcf()
     #    fig.text(0.1, 0.01, 'asdfasfasfsadfsdaf')
 
     show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     ti, ts1, bs1 = ratio_change(1000)
     ti, ts2, bs2 = ratio_change(10, ti)
     rr = bs1 / bs2
     print(rr)
-    rr = (rr - 100) / 100. * 100
+    rr = (rr - 100) / 100.0 * 100
 
     plot(ts1 - ti, rr)
 

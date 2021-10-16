@@ -19,7 +19,17 @@ from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from pyface.message_dialog import information
 from traits.api import List, HasTraits, Button, Any, on_trait_change
-from traitsui.api import View, Item, TableEditor, EnumEditor, Controller, VGroup, TextEditor, HGroup, UItem
+from traitsui.api import (
+    View,
+    Item,
+    TableEditor,
+    EnumEditor,
+    Controller,
+    VGroup,
+    TextEditor,
+    HGroup,
+    UItem,
+)
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 
@@ -34,63 +44,86 @@ from pychron.processing.analyses.preferred import preferred_item
 
 
 class BaseColumn(ObjectColumn):
-    text_font = 'arial 10'
+    text_font = "arial 10"
 
 
 class UObjectColumn(BaseColumn):
     editable = False
 
 
-lithology_grp = VGroup(Item('lithology', editor=EnumEditor(name='lithologies')),
-                       Item('lithology_class', label='Class', editor=EnumEditor(name='lithology_classes')),
-                       Item('lithology_group', label='Group', editor=EnumEditor(name='lithology_groups')),
-                       Item('lithology_type', label='Type', editor=EnumEditor(name='lithology_types')),
-                       show_border=True, label='Lithology')
+lithology_grp = VGroup(
+    Item("lithology", editor=EnumEditor(name="lithologies")),
+    Item("lithology_class", label="Class", editor=EnumEditor(name="lithology_classes")),
+    Item("lithology_group", label="Group", editor=EnumEditor(name="lithology_groups")),
+    Item("lithology_type", label="Type", editor=EnumEditor(name="lithology_types")),
+    show_border=True,
+    label="Lithology",
+)
 
-metadata_grp = VGroup(HGroup(Item('sample'), Item('igsn')),
-                      HGroup(Item('material'), UItem('grainsize', tooltip='Grainsize (optional)')),
-                      Item('project'),
-                      Item('note', style='custom'),
-                      Item('reference', label='Reference',
-                           tooltip='Published reference/citation for this interpreted age'),
-                      Item('rlocation', label='Relative Location', tooltip='Relative location of the sample '
-                                                                           'within the unit'),
-                      HGroup(Item('latitude', label='Lat.'), Item('longitude', label='Lon.')),
-                      lithology_grp,
-                      show_border=True,
-                      label='MetaData')
+metadata_grp = VGroup(
+    HGroup(Item("sample"), Item("igsn")),
+    HGroup(Item("material"), UItem("grainsize", tooltip="Grainsize (optional)")),
+    Item("project"),
+    Item("note", style="custom"),
+    Item(
+        "reference",
+        label="Reference",
+        tooltip="Published reference/citation for this interpreted age",
+    ),
+    Item(
+        "rlocation",
+        label="Relative Location",
+        tooltip="Relative location of the sample " "within the unit",
+    ),
+    HGroup(Item("latitude", label="Lat."), Item("longitude", label="Lon.")),
+    lithology_grp,
+    show_border=True,
+    label="MetaData",
+)
 
 
 class TItem(Item):
     def _editor_default(self):
-        return TextEditor(read_only=True, format_str='%0.3f')
+        return TextEditor(read_only=True, format_str="%0.3f")
 
 
-EDIT_VIEW = View(HGroup(preferred_item,
-                        metadata_grp))
+EDIT_VIEW = View(HGroup(preferred_item, metadata_grp))
 
 cols = [
-    CheckboxColumn(name='use', label='Save', width=10),
-    UObjectColumn(name='identifier', width=50),
-    BaseColumn(name='name', width=50),
-    BaseColumn(name='repository_identifier',
-               width=50,
-               editor=EnumEditor(name='controller.repository_identifiers')),
+    CheckboxColumn(name="use", label="Save", width=10),
+    UObjectColumn(name="identifier", width=50),
+    BaseColumn(name="name", width=50),
+    BaseColumn(
+        name="repository_identifier",
+        width=50,
+        editor=EnumEditor(name="controller.repository_identifiers"),
+    ),
 ]
 
-editor = TableEditor(columns=cols, orientation='vertical',
-                     selection_mode='rows',
-                     selected='selected',
-                     sortable=False, edit_view=EDIT_VIEW)
+editor = TableEditor(
+    columns=cols,
+    orientation="vertical",
+    selection_mode="rows",
+    selected="selected",
+    sortable=False,
+    edit_view=EDIT_VIEW,
+)
 
-VIEW = okcancel_view(HGroup(icon_button_editor('sync_metadata_button', 'database_link',
-                                               tooltip='Sync the Interpreted Age metadata with the database. This '
-                                                       'will supersede the metadata saved with the analyses. Use '
-                                                       'this option if the metadata is missing or if the metadata '
-                                                       'was modified after analysis')),
-                     Item('items', show_label=False, editor=editor),
-                     width=1200,
-                     title='Set Interpreted Age')
+VIEW = okcancel_view(
+    HGroup(
+        icon_button_editor(
+            "sync_metadata_button",
+            "database_link",
+            tooltip="Sync the Interpreted Age metadata with the database. This "
+            "will supersede the metadata saved with the analyses. Use "
+            "this option if the metadata is missing or if the metadata "
+            "was modified after analysis",
+        )
+    ),
+    Item("items", show_label=False, editor=editor),
+    width=1200,
+    title="Set Interpreted Age",
+)
 
 
 class InterpretedAgeFactoryModel(HasTraits):
@@ -101,7 +134,7 @@ class InterpretedAgeFactoryModel(HasTraits):
 
     _triggered = False
 
-    @on_trait_change('items:preferred_values:[kind, error_kind]')
+    @on_trait_change("items:preferred_values:[kind, error_kind]")
     def handle_change(self, obj, name, old, new):
         # print('asdf', obj, new)
         # print('saelect', self.selected)
@@ -121,7 +154,7 @@ class InterpretedAgeFactoryModel(HasTraits):
         o = self.selected[:]
         self.selected = []
         self.selected = o
-        information(None, 'Metadata sync complete')
+        information(None, "Metadata sync complete")
 
 
 class InterpretedAgeFactoryView(Controller):
@@ -138,11 +171,8 @@ def set_interpreted_age(dvc, ias):
         ia.lithology_types = types
         ia.lithologies = liths
 
-    model = InterpretedAgeFactoryModel(items=ias,
-                                       selected=ias[:1],
-                                       dvc=dvc)
-    iaf = InterpretedAgeFactoryView(model=model,
-                                    repository_identifiers=repos)
+    model = InterpretedAgeFactoryModel(items=ias, selected=ias[:1], dvc=dvc)
+    iaf = InterpretedAgeFactoryView(model=model, repository_identifiers=repos)
 
     while 1:
         info = iaf.edit_traits()
@@ -151,31 +181,43 @@ def set_interpreted_age(dvc, ias):
             ias = [ia for ia in ias if ia.use]
             for ia in ias:
                 if not ia.latitude and not ia.longitude:
-                    no_lat_lon.append('{} ({})'.format(ia.name, ia.identifier))
+                    no_lat_lon.append("{} ({})".format(ia.name, ia.identifier))
 
             if no_lat_lon:
-                n = ','.join(no_lat_lon)
-                if not confirm(None, 'No Lat/Lon. entered for {}. Are you sure you want to continue without setting a '
-                                     'Lat/Lon?'.format(n)) == YES:
+                n = ",".join(no_lat_lon)
+                if (
+                    not confirm(
+                        None,
+                        "No Lat/Lon. entered for {}. Are you sure you want to continue without setting a "
+                        "Lat/Lon?".format(n),
+                    )
+                    == YES
+                ):
                     continue
 
             ris = []
-            for rid, iass in groupby_key(ias, key='repository_identifier'):
+            for rid, iass in groupby_key(ias, key="repository_identifier"):
                 if dvc.add_interpreted_ages(rid, iass):
                     ris.append(rid)
 
             if ris:
-                if confirm(None, 'Would you like to share changes to {}?'.format(','.join(ris))) == YES:
+                if (
+                    confirm(
+                        None,
+                        "Would you like to share changes to {}?".format(",".join(ris)),
+                    )
+                    == YES
+                ):
                     for rid in ris:
                         dvc.push_repository(rid)
-                    information(None, 'Sharing changes complete')
+                    information(None, "Sharing changes complete")
 
             break
         else:
             break
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     m = InterpretedAgeFactoryModel()
     m.items = [InterpretedAgeGroup()]
     c = InterpretedAgeFactoryView(model=m)

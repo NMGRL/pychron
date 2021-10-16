@@ -18,7 +18,15 @@
 
 from pyface.tasks.traits_editor import TraitsEditor
 from traits.api import Button, Instance, Int
-from traitsui.api import View, UItem, InstanceEditor, VGroup, HGroup, TabularEditor, VSplit
+from traitsui.api import (
+    View,
+    UItem,
+    InstanceEditor,
+    VGroup,
+    HGroup,
+    TabularEditor,
+    VSplit,
+)
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -29,22 +37,25 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class ScanEditor(TraitsEditor):
-    id = 'pychron.scan'
-    model = Instance('pychron.spectrometer.scan_manager.ScanManager')
+    id = "pychron.scan"
+    model = Instance("pychron.spectrometer.scan_manager.ScanManager")
 
     def stop(self):
         self.model.stop()
 
     def traits_view(self):
-        v = View(UItem('graph', style='custom', editor=InstanceEditor()))
+        v = View(UItem("graph", style="custom", editor=InstanceEditor()))
         return v
 
 
 class PeakCenterResultsAdapter(TabularAdapter):
-    columns = [('Detector', 'detector'), ('Center DAC (V)', 'center_dac'),
-               ('Resolution', 'resolution'),
-               ('Low Mass Resolving Power', 'low_resolving_power'),
-               ('High Mass Resolving Power', 'high_resolving_power')]
+    columns = [
+        ("Detector", "detector"),
+        ("Center DAC (V)", "center_dac"),
+        ("Resolution", "resolution"),
+        ("Low Mass Resolving Power", "low_resolving_power"),
+        ("High Mass Resolving Power", "high_resolving_power"),
+    ]
 
     detector_width = Int(100)
     center_dac_width = Int(150)
@@ -53,30 +64,41 @@ class PeakCenterResultsAdapter(TabularAdapter):
 
 
 class PeakCenterEditor(ScanEditor):
-    model = Instance('pychron.spectrometer.jobs.peak_center.PeakCenter')
+    model = Instance("pychron.spectrometer.jobs.peak_center.PeakCenter")
 
     def traits_view(self):
-        v = View(VSplit(UItem('graph', style='custom', height=0.8, editor=InstanceEditor()),
-                        UItem('results',
-                              height=0.2,
-                              editor=TabularEditor(adapter=PeakCenterResultsAdapter()))))
+        v = View(
+            VSplit(
+                UItem("graph", style="custom", height=0.8, editor=InstanceEditor()),
+                UItem(
+                    "results",
+                    height=0.2,
+                    editor=TabularEditor(adapter=PeakCenterResultsAdapter()),
+                ),
+            )
+        )
         return v
 
 
 class ScannerEditor(ScanEditor):
-    model = Instance('pychron.spectrometer.jobs.base_scanner.BaseScanner')
+    model = Instance("pychron.spectrometer.jobs.base_scanner.BaseScanner")
 
 
 class CoincidenceEditor(PeakCenterEditor):
-    model = Instance('pychron.spectrometer.jobs.coincidence.Coincidence')
+    model = Instance("pychron.spectrometer.jobs.coincidence.Coincidence")
     stop_button = Button
 
     def _stop_button_fired(self):
         self.stop()
 
     def traits_view(self):
-        tgrp = HGroup(icon_button_editor('editor.stop_button', 'stop', tooltip='Stop the current scan'))
-        v = View(VGroup(tgrp, UItem('graph', style='custom', editor=InstanceEditor())))
+        tgrp = HGroup(
+            icon_button_editor(
+                "editor.stop_button", "stop", tooltip="Stop the current scan"
+            )
+        )
+        v = View(VGroup(tgrp, UItem("graph", style="custom", editor=InstanceEditor())))
         return v
+
 
 # ============= EOF =============================================

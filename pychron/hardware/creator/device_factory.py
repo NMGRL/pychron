@@ -25,7 +25,7 @@ set_qt()
 
 from pychron.core.helpers.logger_setup import logging_setup
 
-logging_setup('dcreator')
+logging_setup("dcreator")
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str
 from traitsui.api import View, Item
@@ -41,25 +41,25 @@ class DeviceModel(HasTraits):
     def make_from_file(self):
         tmp = self.get_template()
 
-        p = '/Users/ross/Sandbox/device_creator.yaml'
-        with open(p, 'r') as rfile:
+        p = "/Users/ross/Sandbox/device_creator.yaml"
+        with open(p, "r") as rfile:
             yd = yaml.load(rfile)
             print(yd)
 
         print(tmp.render(**yd))
 
     def get_template(self):
-        tmp = Template(filename='./device_template.txt')
+        tmp = Template(filename="./device_template.txt")
         return tmp
 
 
 class DeviceFactory(Controller):
     def traits_view(self):
-        v = View(Item('name'))
+        v = View(Item("name"))
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     d = DeviceModel()
     d.make_from_file()
     # d = DeviceFactory(model=DeviceModel())

@@ -18,23 +18,31 @@
 from __future__ import absolute_import
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traitsui.api import View, UItem, TabularEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 
 
 class ImageAdapter(TabularAdapter):
-    columns = [('Name', 'name'),
-               ('Sample', 'sample')]
+    columns = [("Name", "name"), ("Sample", "sample")]
 
 
 class UploadPane(TraitsTaskPane):
     def traits_view(self):
-        v = View(UItem('items', editor=TabularEditor(adapter=ImageAdapter(),
-                                                     editable=False,
-                                                     selected='selected_items',
-                                                     auto_update=True,
-                                                     multi_select=True)))
+        v = View(
+            UItem(
+                "items",
+                editor=TabularEditor(
+                    adapter=ImageAdapter(),
+                    editable=False,
+                    selected="selected_items",
+                    auto_update=True,
+                    multi_select=True,
+                ),
+            )
+        )
         return v
+
 
 # ============= EOF =============================================

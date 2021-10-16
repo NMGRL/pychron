@@ -15,10 +15,10 @@
 # ===============================================================================
 
 
-'''
+"""
 Color generator methods
 utility functions for creating a series of colors
-'''
+"""
 
 colors8i = dict(
     black=(0, 0, 0),
@@ -41,8 +41,7 @@ colors8i = dict(
     firebrick=(142, 35, 35),
     greenyellow=(147, 219, 112),
     white=(255, 255, 255),
-    darkgreen=(32, 117, 49)
-
+    darkgreen=(32, 117, 49),
 )
 
 # colors1f = dict()
@@ -50,88 +49,206 @@ colors8i = dict(
 #     c = colors8i[color]
 #     colors1f[color] = c[0] / 255., c[1] / 255., c[2] / 255.
 
-colors1f = {k: (c[0] / 255., c[1] / 255., c[2] / 255.) for k, c in colors8i.items()}
+colors1f = {k: (c[0] / 255.0, c[1] / 255.0, c[2] / 255.0) for k, c in colors8i.items()}
 
-colornames = ['black',
-              'limegreen',
-              'blue',
-              'violet',
-              'maroon',
-              'red',
-              'gray',
-              'green',
-              'aquamarine',
-              'silver',
-              'navy',
-              'plum',
-              'purple',
-              'blue violet',
-              'brown',
-              'firebrick',
-              'greenyellow',
-              'coral',
-              'brown',
-              'cyan',
-              'azure',
-              'darkgrey',
-              'darkgreen',
-              'aqua',
-              'beige'
-              ]
+colornames = [
+    "black",
+    "limegreen",
+    "blue",
+    "violet",
+    "maroon",
+    "red",
+    "gray",
+    "green",
+    "aquamarine",
+    "silver",
+    "navy",
+    "plum",
+    "purple",
+    "blue violet",
+    "brown",
+    "firebrick",
+    "greenyellow",
+    "coral",
+    "brown",
+    "cyan",
+    "azure",
+    "darkgrey",
+    "darkgreen",
+    "aqua",
+    "beige",
+]
 
-allcolornames = ['aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure',
-                 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood',
-
-                 'cadetblue', 'chartreuse', 'chocolate', 'clear', 'coral', 'cornflowerblue',
-                 'cornsilk', 'crimson', 'cyan',
-
-                 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgreen', 'darkgrey', 'darkkhaki',
-                 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen',
-                 'darkslateblue', 'darkslategray', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink',
-                 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue',
-
-                 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia',
-                 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 'greenyellow', 'grey',
-                 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki',
-
-                 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan',
-                 'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon',
-                 'lightseagreen', 'lightskyblue', 'lightslategray', 'lightslategrey', 'lightsteelblue',
-                 'lightyellow', 'lime', 'limegreen', 'linen',
-
-                 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple',
-                 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred',
-                 'midnightblue', 'mintcream', 'mistyrose', 'moccasin',
-
-                 'navajowhite', 'navy', 'none', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid',
-
-                 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff',
-                 'peru', 'pink', 'plum', 'powderblue', 'purple',
-
-                 'red', 'rosybrown', 'royalblue',
-
-                 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue',
-                 'slateblue', 'slategray', 'slategrey', 'snow', 'springgreen', 'steelblue', 'sys_window',
-
-                 'tan', 'teal', 'thistle', 'tomato', 'transparent', 'turquoise', 'violet', 'wheat',
-                 'white', 'whitesmoke', 'yellow', 'yellowgreen']
+allcolornames = [
+    "aliceblue",
+    "antiquewhite",
+    "aqua",
+    "aquamarine",
+    "azure",
+    "beige",
+    "bisque",
+    "black",
+    "blanchedalmond",
+    "blue",
+    "blueviolet",
+    "brown",
+    "burlywood",
+    "cadetblue",
+    "chartreuse",
+    "chocolate",
+    "clear",
+    "coral",
+    "cornflowerblue",
+    "cornsilk",
+    "crimson",
+    "cyan",
+    "darkblue",
+    "darkcyan",
+    "darkgoldenrod",
+    "darkgray",
+    "darkgreen",
+    "darkgrey",
+    "darkkhaki",
+    "darkmagenta",
+    "darkolivegreen",
+    "darkorange",
+    "darkorchid",
+    "darkred",
+    "darksalmon",
+    "darkseagreen",
+    "darkslateblue",
+    "darkslategray",
+    "darkslategrey",
+    "darkturquoise",
+    "darkviolet",
+    "deeppink",
+    "deepskyblue",
+    "dimgray",
+    "dimgrey",
+    "dodgerblue",
+    "firebrick",
+    "floralwhite",
+    "forestgreen",
+    "fuchsia",
+    "gainsboro",
+    "ghostwhite",
+    "gold",
+    "goldenrod",
+    "gray",
+    "green",
+    "greenyellow",
+    "grey",
+    "honeydew",
+    "hotpink",
+    "indianred",
+    "indigo",
+    "ivory",
+    "khaki",
+    "lavender",
+    "lavenderblush",
+    "lawngreen",
+    "lemonchiffon",
+    "lightblue",
+    "lightcoral",
+    "lightcyan",
+    "lightgoldenrodyellow",
+    "lightgray",
+    "lightgreen",
+    "lightgrey",
+    "lightpink",
+    "lightsalmon",
+    "lightseagreen",
+    "lightskyblue",
+    "lightslategray",
+    "lightslategrey",
+    "lightsteelblue",
+    "lightyellow",
+    "lime",
+    "limegreen",
+    "linen",
+    "magenta",
+    "maroon",
+    "mediumaquamarine",
+    "mediumblue",
+    "mediumorchid",
+    "mediumpurple",
+    "mediumseagreen",
+    "mediumslateblue",
+    "mediumspringgreen",
+    "mediumturquoise",
+    "mediumvioletred",
+    "midnightblue",
+    "mintcream",
+    "mistyrose",
+    "moccasin",
+    "navajowhite",
+    "navy",
+    "none",
+    "oldlace",
+    "olive",
+    "olivedrab",
+    "orange",
+    "orangered",
+    "orchid",
+    "palegoldenrod",
+    "palegreen",
+    "paleturquoise",
+    "palevioletred",
+    "papayawhip",
+    "peachpuff",
+    "peru",
+    "pink",
+    "plum",
+    "powderblue",
+    "purple",
+    "red",
+    "rosybrown",
+    "royalblue",
+    "saddlebrown",
+    "salmon",
+    "sandybrown",
+    "seagreen",
+    "seashell",
+    "sienna",
+    "silver",
+    "skyblue",
+    "slateblue",
+    "slategray",
+    "slategrey",
+    "snow",
+    "springgreen",
+    "steelblue",
+    "sys_window",
+    "tan",
+    "teal",
+    "thistle",
+    "tomato",
+    "transparent",
+    "turquoise",
+    "violet",
+    "wheat",
+    "white",
+    "whitesmoke",
+    "yellow",
+    "yellowgreen",
+]
 
 colorname_pairs = [
-    (0xffbf33, 0x2b46d6),
-    (0x00ffff, 0xff5300),
-    (0xff00ff, 0xebff00),
-    (0x00cc66, 0xff2c00),
-    (0x0021cc, 0xffaf00),
-    (0xffe200, 0x4d00cc),
-    (0xdff400, 0xcc00c8),
-    (0x5adb00, 0xe40034),
+    (0xFFBF33, 0x2B46D6),
+    (0x00FFFF, 0xFF5300),
+    (0xFF00FF, 0xEBFF00),
+    (0x00CC66, 0xFF2C00),
+    (0x0021CC, 0xFFAF00),
+    (0xFFE200, 0x4D00CC),
+    (0xDFF400, 0xCC00C8),
+    (0x5ADB00, 0xE40034),
     # (0xFF5300, 0x00ffff),
     # (0x0000cc, 0xffbd00),
 ]
 
 
 def compare_colors(cv, r, g, b):
-    nc = int('{:02x}{:02x}{:02x}'.format(r, g, b), 16)
+    nc = int("{:02x}{:02x}{:02x}".format(r, g, b), 16)
     return cv == nc
 
 
@@ -149,14 +266,12 @@ def paired_colorname_generator():
 
 
 def colorname_generator():
-    """
-    """
+    """ """
     return gen(colornames)
 
 
 def color8i_generator():
-    """
-    """
+    """ """
     i = 0
     while 1:
         if i > len(colornames):
@@ -166,8 +281,7 @@ def color8i_generator():
 
 
 def color1f_generator():
-    """
-    """
+    """ """
     i = 0
     g = colors1f.items()
     while 1:

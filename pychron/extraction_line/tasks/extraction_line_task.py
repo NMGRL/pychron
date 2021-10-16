@@ -22,18 +22,28 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem
 from traits.api import Instance
 
 from pychron.envisage.tasks.base_task import BaseHardwareTask
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.pane_helpers import ConsolePane
 from pychron.envisage.tasks.wait_pane import WaitPane
-from pychron.extraction_line.tasks.extraction_line_actions import SampleLoadingAction, AutoReloadAction
-from pychron.extraction_line.tasks.extraction_line_pane import CanvasPane, GaugePane, \
-    ExplanationPane, CryoPane, ReadbackPane, EditorPane
+from pychron.extraction_line.tasks.extraction_line_actions import (
+    SampleLoadingAction,
+    AutoReloadAction,
+)
+from pychron.extraction_line.tasks.extraction_line_pane import (
+    CanvasPane,
+    GaugePane,
+    ExplanationPane,
+    CryoPane,
+    ReadbackPane,
+    EditorPane,
+)
 
 
 class ExtractionLineTask(BaseHardwareTask):
-    id = 'pychron.extraction_line'
-    name = 'Extraction Line'
+    id = "pychron.extraction_line"
+    name = "Extraction Line"
     wait_pane = Instance(WaitPane)
 
     def activated(self):
@@ -49,14 +59,15 @@ class ExtractionLineTask(BaseHardwareTask):
 
     def create_dock_panes(self):
         self.wait_pane = WaitPane(model=self.manager.wait_group)
-        panes = [GaugePane(model=self.manager),
-                 CryoPane(model=self.manager),
-                 ExplanationPane(model=self.manager),
-                 ConsolePane(model=self.manager),
-                 ReadbackPane(model=self.manager),
-                 EditorPane(model=self.manager.canvas_editor),
-                 self.wait_pane
-                 ]
+        panes = [
+            GaugePane(model=self.manager),
+            CryoPane(model=self.manager),
+            ExplanationPane(model=self.manager),
+            ConsolePane(model=self.manager),
+            ReadbackPane(model=self.manager),
+            EditorPane(model=self.manager.canvas_editor),
+            self.wait_pane,
+        ]
         return panes
 
     # =======================================================================
@@ -75,13 +86,17 @@ class ExtractionLineTask(BaseHardwareTask):
             # IsolateChamberAction(),
             # EvacuateChamberAction(),
             # FinishChamberChangeAction(),
-            image_size=(16, 16))
+            image_size=(16, 16),
+        )
         tb2 = SToolBar(AutoReloadAction())
         return [tb, tb2]
 
     def _default_layout_default(self):
         return TaskLayout(
-            top=PaneItem('pychron.extraction_line.gauges'),
-            left=PaneItem('pychron.extraction_line.explanation'),
-            right=PaneItem('pychron.console'))
+            top=PaneItem("pychron.extraction_line.gauges"),
+            left=PaneItem("pychron.extraction_line.explanation"),
+            right=PaneItem("pychron.console"),
+        )
+
+
 # ============= EOF =============================================

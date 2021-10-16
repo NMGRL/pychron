@@ -24,10 +24,11 @@ from pychron.git.tasks.githost_preferences import GitLabPreferencesPane
 
 
 class GitLabPlugin(BaseGitPlugin):
-    name = 'GitLab'
+    name = "GitLab"
     service_klass = GitLabService
 
     def _preferences_panes_default(self):
         return [GitLabPreferencesPane]
+
 
 # ============= EOF =============================================

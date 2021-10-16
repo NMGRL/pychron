@@ -20,8 +20,19 @@ from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
 from traits.api import Int, Property, Instance
-from traitsui.api import View, UItem, Item, VGroup, TabularEditor, HGroup, spring, \
-    EnumEditor, Tabbed, Handler, CheckListEditor
+from traitsui.api import (
+    View,
+    UItem,
+    Item,
+    VGroup,
+    TabularEditor,
+    HGroup,
+    spring,
+    EnumEditor,
+    Tabbed,
+    Handler,
+    CheckListEditor,
+)
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -35,129 +46,155 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class PositionsAdapter(TabularAdapter, ConfigurableMixin):
-    columns = [('Identifier', 'identifier'),
-               ('Irradiation', 'irradiation_str'),
-               ('Sample', 'sample'),
-               ('Material', 'material'),
-               ('Position', 'position'),
-               ('Weight', 'weight'),
-               ('N. Xtals', 'nxtals'),
-               ('Note', 'note')]
-    all_columns = [('Identifier', 'identifier'),
-                   ('Packet', 'packet'),
-                   ('Irradiation', 'irradiation_str'),
-                   ('Sample', 'sample'),
-                   ('Material', 'material'),
-                   ('Position', 'position'),
-                   ('Weight', 'weight'),
-                   ('N. Xtals', 'nxtals'),
-                   ('Note', 'note')]
-    font = 'arial 12'
+    columns = [
+        ("Identifier", "identifier"),
+        ("Irradiation", "irradiation_str"),
+        ("Sample", "sample"),
+        ("Material", "material"),
+        ("Position", "position"),
+        ("Weight", "weight"),
+        ("N. Xtals", "nxtals"),
+        ("Note", "note"),
+    ]
+    all_columns = [
+        ("Identifier", "identifier"),
+        ("Packet", "packet"),
+        ("Irradiation", "irradiation_str"),
+        ("Sample", "sample"),
+        ("Material", "material"),
+        ("Position", "position"),
+        ("Weight", "weight"),
+        ("N. Xtals", "nxtals"),
+        ("Note", "note"),
+    ]
+    font = "arial 12"
 
     def get_menu(self, obj, trait, row, column):
-        actions = [Action(name='Configure', action='configure_position_table'), ]
+        actions = [
+            Action(name="Configure", action="configure_position_table"),
+        ]
         mm = MenuManager(*actions)
         return mm
 
 
 class GroupedPositionsAdapter(TabularAdapter, ConfigurableMixin):
-    columns = [('Identifier', 'identifier'),
-               ('Irradiation', 'irradiation_str'),
-               ('Sample', 'sample'),
-               ('Material', 'material'),
-               ('Positions', 'position_str')]
+    columns = [
+        ("Identifier", "identifier"),
+        ("Irradiation", "irradiation_str"),
+        ("Sample", "sample"),
+        ("Material", "material"),
+        ("Positions", "position_str"),
+    ]
 
-    all_columns = [('Identifier', 'identifier'),
-                   ('Packet', 'packet'),
-                   ('Irradiation', 'irradiation_str'),
-                   ('Sample', 'sample'),
-                   ('Material', 'material'),
-                   ('Positions', 'position_str')]
-    font = 'arial 12'
+    all_columns = [
+        ("Identifier", "identifier"),
+        ("Packet", "packet"),
+        ("Irradiation", "irradiation_str"),
+        ("Sample", "sample"),
+        ("Material", "material"),
+        ("Positions", "position_str"),
+    ]
+    font = "arial 12"
     identifier_width = Int(80)
     irradiation_str_width = Int(80)
     sample_width = Int(80)
     position_str_width = Int(80)
 
     def get_menu(self, obj, trait, row, column):
-        actions = [Action(name='Configure', action='configure_grouped_position_table'), ]
+        actions = [
+            Action(name="Configure", action="configure_grouped_position_table"),
+        ]
         mm = MenuManager(*actions)
         return mm
 
     def get_bg_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
         c = item.color
-        if hasattr(c, '__iter__'):
+        if hasattr(c, "__iter__"):
             c = [x * 255 for x in c]
         return c
 
     def get_text_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
-        color = 'black'
-        if hasattr(item.color, '__iter__'):
+        color = "black"
+        if hasattr(item.color, "__iter__"):
             if sum(item.color[:3]) < 1.5:
-                color = 'white'
+                color = "white"
         return color
 
 
 class BaseLoadPane(TraitsDockPane):
-    display_load_name = Property(depends_on='model.load_name')
+    display_load_name = Property(depends_on="model.load_name")
 
     # display_tray_name = Property(depends_on='model.tray')
 
     def _get_display_load_name(self):
         if self.model.load_instance:
-            ret = '<font size=12 color="blue"><b>{} ({}) {}</b></font>'.format(self.model.load_instance.name,
-                                                                               self.model.tray,
-                                                                               self.model.load_instance.create_date)
+            ret = '<font size=12 color="blue"><b>{} ({}) {}</b></font>'.format(
+                self.model.load_instance.name,
+                self.model.tray,
+                self.model.load_instance.create_date,
+            )
         else:
-            ret = ''
+            ret = ""
         return ret
 
 
 class PositionTableConfigurer(TableConfigurer):
-    id = 'position_table'
+    id = "position_table"
 
     def traits_view(self):
-        v = VGroup(UItem('columns',
-                         style='custom',
-                         editor=CheckListEditor(name='available_columns', cols=3)),
-                   Item('font', enabled_when='fontsize_enabled'))
-        return okcancel_view(v,
-                             # kind='modal',
-                             title='Configure Position Table',
-                             handler=TableConfigurerHandler())
+        v = VGroup(
+            UItem(
+                "columns",
+                style="custom",
+                editor=CheckListEditor(name="available_columns", cols=3),
+            ),
+            Item("font", enabled_when="fontsize_enabled"),
+        )
+        return okcancel_view(
+            v,
+            # kind='modal',
+            title="Configure Position Table",
+            handler=TableConfigurerHandler(),
+        )
 
 
 class GroupedPositionTableConfigurer(TableConfigurer):
-    id = 'grouped_position_table'
+    id = "grouped_position_table"
 
     def traits_view(self):
-        v = VGroup(UItem('columns',
-                         style='custom',
-                         editor=CheckListEditor(name='available_columns', cols=3)),
-                   Item('font', enabled_when='fontsize_enabled'))
-        return okcancel_view(v,
-                             # kind='modal',
-                             title='Configure Grouped Position Table',
-                             handler=TableConfigurerHandler())
+        v = VGroup(
+            UItem(
+                "columns",
+                style="custom",
+                editor=CheckListEditor(name="available_columns", cols=3),
+            ),
+            Item("font", enabled_when="fontsize_enabled"),
+        )
+        return okcancel_view(
+            v,
+            # kind='modal',
+            title="Configure Grouped Position Table",
+            handler=TableConfigurerHandler(),
+        )
 
 
 class LoadTableHandler(Handler):
     def configure_position_table(self, info, obj):
-        pane = info.ui.context['pane']
+        pane = info.ui.context["pane"]
         tb = pane.position_configurer
         tb.edit_traits()
 
     def configure_grouped_position_table(self, info, obj):
-        pane = info.ui.context['pane']
+        pane = info.ui.context["pane"]
         tb = pane.grouped_position_configurer
         tb.edit_traits()
 
 
 class LoadTablePane(BaseLoadPane):
-    name = 'Positions'
-    id = 'pychron.loading.positions'
+    name = "Positions"
+    id = "pychron.loading.positions"
 
     position_configurer = Instance(PositionTableConfigurer)
     grouped_position_configurer = Instance(GroupedPositionTableConfigurer)
@@ -187,108 +224,149 @@ class LoadTablePane(BaseLoadPane):
         return GroupedPositionsAdapter()
 
     def traits_view(self):
-        a = HGroup(spring, UItem('pane.display_load_name', style='readonly'), spring)
+        a = HGroup(spring, UItem("pane.display_load_name", style="readonly"), spring)
 
-        b = UItem('positions',
-                  editor=TabularEditor(adapter=self.position_adapter,
-                                       multi_select=True))
-        c = UItem('grouped_positions',
-                  label='Grouped Positions',
-                  editor=TabularEditor(adapter=self.grouped_position_adapter))
+        b = UItem(
+            "positions",
+            editor=TabularEditor(adapter=self.position_adapter, multi_select=True),
+        )
+        c = UItem(
+            "grouped_positions",
+            label="Grouped Positions",
+            editor=TabularEditor(adapter=self.grouped_position_adapter),
+        )
 
         v = View(VGroup(spring, a, Tabbed(b, c)), handler=LoadTableHandler())
         return v
 
 
 class LoadInstanceAdapter(TabularAdapter):
-    columns = [('Load', 'name'),
-               ('Create Date', 'create_date')]
-    font = 'modern 10'
+    columns = [("Load", "name"), ("Create Date", "create_date")]
+    font = "modern 10"
 
 
 class LoadPane(TraitsTaskPane):
     def traits_view(self):
-        v = View(VGroup(UItem('canvas',
-                              style='custom',
-                              editor=ComponentEditor())))
+        v = View(VGroup(UItem("canvas", style="custom", editor=ComponentEditor())))
         return v
 
 
 class LoadDockPane(BaseLoadPane):
-    name = 'Load'
-    id = 'pychron.loading.load'
+    name = "Load"
+    id = "pychron.loading.load"
 
     def traits_view(self):
-        a = HGroup(Item('pane.display_load_name', style='readonly', label='Load'), spring)
-        b = UItem('canvas',
-                  style='custom',
-                  editor=ComponentEditor())
+        a = HGroup(
+            Item("pane.display_load_name", style="readonly", label="Load"), spring
+        )
+        b = UItem("canvas", style="custom", editor=ComponentEditor())
         v = View(VGroup(a, b))
 
         return v
 
 
 class LoadControlPane(TraitsDockPane):
-    name = 'Load'
-    id = 'pychron.loading.controls'
+    name = "Load"
+    id = "pychron.loading.controls"
 
     def traits_view(self):
-        notegrp = VGroup(Item('retain_note',
-                              tooltip='Retain the Note for the next hole',
-                              label='Lock'),
-                         Item('note', style='custom', show_label=False),
-                         show_border=True,
-                         label='Note')
+        notegrp = VGroup(
+            Item(
+                "retain_note", tooltip="Retain the Note for the next hole", label="Lock"
+            ),
+            Item("note", style="custom", show_label=False),
+            show_border=True,
+            label="Note",
+        )
 
-        viewgrp = VGroup(HGroup(Item('use_cmap', label='Color Map'),
-                                UItem('cmap_name', enabled_when='use_cmap')),
-                         HGroup(Item('show_hole_numbers'), Item('show_identifiers', label='Identifiers')),
-                         HGroup(Item('show_weights'), Item('show_nxtals', label='N. Xtals')),
-                         Item('show_samples'),
-                         # Item('show_spans'),
-                         show_border=True,
-                         label='View')
+        viewgrp = VGroup(
+            HGroup(
+                Item("use_cmap", label="Color Map"),
+                UItem("cmap_name", enabled_when="use_cmap"),
+            ),
+            HGroup(
+                Item("show_hole_numbers"), Item("show_identifiers", label="Identifiers")
+            ),
+            HGroup(Item("show_weights"), Item("show_nxtals", label="N. Xtals")),
+            Item("show_samples"),
+            # Item('show_spans'),
+            show_border=True,
+            label="View",
+        )
 
-        load_grp = VGroup(HGroup(Item('username', label='User', editor=EnumEditor(name='available_user_names')),
-                                 icon_button_editor('add_button', 'add', tooltip='Add a load'),
-                                 icon_button_editor('delete_button', 'delete', tooltip='Delete selected load'),
-                                 icon_button_editor('archive_button', 'application-x-archive',
-                                                    tooltip='Archive a set of loads'),
-                                 icon_button_editor('unarchive_button', 'application-x-archive',
-                                                    tooltip='Unarchive a set of loads'),
-                                 ),
-                          UItem('loads',
-                                editor=FilterTabularEditor(adapter=LoadInstanceAdapter(),
-                                                           use_fuzzy=True,
-                                                           editable=False,
-                                                           multi_select=True,
-                                                           selected='selected_instances',
-                                                           stretch_last_section=False),
-                                height=250),
-                          label='Load',
-                          show_border=True)
+        load_grp = VGroup(
+            HGroup(
+                Item(
+                    "username",
+                    label="User",
+                    editor=EnumEditor(name="available_user_names"),
+                ),
+                icon_button_editor("add_button", "add", tooltip="Add a load"),
+                icon_button_editor(
+                    "delete_button", "delete", tooltip="Delete selected load"
+                ),
+                icon_button_editor(
+                    "archive_button",
+                    "application-x-archive",
+                    tooltip="Archive a set of loads",
+                ),
+                icon_button_editor(
+                    "unarchive_button",
+                    "application-x-archive",
+                    tooltip="Unarchive a set of loads",
+                ),
+            ),
+            UItem(
+                "loads",
+                editor=FilterTabularEditor(
+                    adapter=LoadInstanceAdapter(),
+                    use_fuzzy=True,
+                    editable=False,
+                    multi_select=True,
+                    selected="selected_instances",
+                    stretch_last_section=False,
+                ),
+                height=250,
+            ),
+            label="Load",
+            show_border=True,
+        )
 
-        samplegrp = VGroup(HGroup(UItem('irradiation', editor=EnumEditor(name='irradiations')),
-                                  UItem('level', editor=EnumEditor(name='levels')),
-                                  UItem('identifier', editor=EnumEditor(name='identifiers'))),
-                           Item('sample_info', style='readonly'),
-                           Item('packet', style='readonly'),
-                           HGroup(Item('weight', label='Weight (mg)', springy=True),
-                                  Item('retain_weight', label='Lock',
-                                       tooltip='Retain the Weight for the next hole')),
-                           HGroup(Item('nxtals', label='N. Xtals', springy=True),
-                                  Item('retain_nxtals', label='Lock',
-                                       tooltip='Retain the N. Xtals for the next hole')),
-                           HGroup(Item('npositions', label='NPositions', springy=True),
-                                  Item('auto_increment')),
-                           enabled_when='load_name',
-                           show_border=True,
-                           label='Sample')
+        samplegrp = VGroup(
+            HGroup(
+                UItem("irradiation", editor=EnumEditor(name="irradiations")),
+                UItem("level", editor=EnumEditor(name="levels")),
+                UItem("identifier", editor=EnumEditor(name="identifiers")),
+            ),
+            Item("sample_info", style="readonly"),
+            Item("packet", style="readonly"),
+            HGroup(
+                Item("weight", label="Weight (mg)", springy=True),
+                Item(
+                    "retain_weight",
+                    label="Lock",
+                    tooltip="Retain the Weight for the next hole",
+                ),
+            ),
+            HGroup(
+                Item("nxtals", label="N. Xtals", springy=True),
+                Item(
+                    "retain_nxtals",
+                    label="Lock",
+                    tooltip="Retain the N. Xtals for the next hole",
+                ),
+            ),
+            HGroup(
+                Item("npositions", label="NPositions", springy=True),
+                Item("auto_increment"),
+            ),
+            enabled_when="load_name",
+            show_border=True,
+            label="Sample",
+        )
 
-        v = View(VFold(load_grp,
-                       samplegrp,
-                       notegrp,
-                       viewgrp))
+        v = View(VFold(load_grp, samplegrp, notegrp, viewgrp))
         return v
+
 
 # ============= EOF =============================================

@@ -33,27 +33,28 @@ class ScanInspector(HasTraits):
     graph = Instance(Graph)
 
     def activated(self):
-        p = os.path.join(paths.spectrometer_scans_dir, 'scan-005.txt')
+        p = os.path.join(paths.spectrometer_scans_dir, "scan-005.txt")
         g = self.graph
-        with open(p, 'r') as rfile:
+        with open(p, "r") as rfile:
             fi = fileiter(rfile, strip=True)
 
-            fi.next().split(',')
+            fi.next().split(",")
             plot = g.new_plot(padding=[60, 5, 5, 50])
 
-            g.set_y_title('Intensity (fA)')
+            g.set_y_title("Intensity (fA)")
 
-            data = [line.split(',') for line in fi]
+            data = [line.split(",") for line in fi]
             data = array(data, dtype=float).T
             xs = data[0]
             for ys in data[1:]:
                 g.new_series(x=xs, y=ys)
 
-            plot.value_scale = 'log'
+            plot.value_scale = "log"
 
     def _graph_default(self):
         g = TimeSeriesStackedGraph()
         # g.new_plot()
         return g
+
 
 # ============= EOF =============================================

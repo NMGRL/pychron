@@ -22,12 +22,14 @@ from traits.api import Float, Tuple
 from pychron.core.helpers.strtools import csv_to_ints
 from pychron.hardware.axis import Axis
 
-MAPPING = dict(acceleration='HA',
-               deceleration='HD',
-               # emergency_deceleration = 'HE',
-               jerk='HJ',
-               velocity='HV',
-               axes='HN')
+MAPPING = dict(
+    acceleration="HA",
+    deceleration="HD",
+    # emergency_deceleration = 'HE',
+    jerk="HJ",
+    velocity="HV",
+    axes="HN",
+)
 
 
 class NewportGroup(Axis):
@@ -36,7 +38,7 @@ class NewportGroup(Axis):
     emergency_deceleration = None
     jerk = Float
     # velocity = Float
-    name = 'GroupedAxes'
+    name = "GroupedAxes"
     machine_velocity = Float
     machine_acceleration = Float
     machine_deceleration = Float
@@ -56,17 +58,18 @@ class NewportGroup(Axis):
 
     def load(self, path):
         config = self.get_configuration(path)
-        for attr in ['acceleration',
-                     'deceleration',
-                     # 'emergency_deceleration',
-                     'jerk',
-                     'velocity',
-                     ]:
-            self.set_attribute(config, attr, 'General', attr, cast='float')
+        for attr in [
+            "acceleration",
+            "deceleration",
+            # 'emergency_deceleration',
+            "jerk",
+            "velocity",
+        ]:
+            self.set_attribute(config, attr, "General", attr, cast="float")
 
-        self.set_attribute(config, 'id', 'General', 'id', cast='int')
+        self.set_attribute(config, "id", "General", "id", cast="int")
 
-        axes = self.config_get(config, 'General', 'axes')
+        axes = self.config_get(config, "General", "axes")
         self.axes = tuple(csv_to_ints(axes))
         self.nominal_velocity = self.velocity
         self.nominal_acceleration = self.acceleration
@@ -75,15 +78,14 @@ class NewportGroup(Axis):
     def build_command(self, new_group):
         cmds = []
         for key, value in MAPPING.items():
-            if key is not 'axes':
-                cmds.append(
-                    '{}{}{:0.5f}'.format(self.id, value,
-                                         getattr(self, key)))
+            if key is not "axes":
+                cmds.append("{}{}{:0.5f}".format(self.id, value, getattr(self, key)))
 
         if new_group:
-            gid = '{:n}HN{}'.format(self.id, ','.join(map(str, self.axes)))
+            gid = "{:n}HN{}".format(self.id, ",".join(map(str, self.axes)))
             cmds = [gid] + cmds
 
-        return ';'.join(cmds)
+        return ";".join(cmds)
+
 
 # ============= EOF ==============================================

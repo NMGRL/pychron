@@ -15,12 +15,12 @@
 # ===============================================================================
 
 
-'''
+"""
 
 http://docs.cython.org/pychron/quickstart/build.html
 
 python setup.py build_ext --inplace
-'''
+"""
 
 from __future__ import absolute_import
 from distutils.core import setup
@@ -29,15 +29,15 @@ from distutils.extension import Extension
 import numpy
 from Cython.Distutils import build_ext
 
-ext_modules = [Extension("autocorr", ["autocorr.pyx"],
+ext_modules = [
+    Extension(
+        "autocorr",
+        ["autocorr.pyx"],
+        include_dirs=[
+            numpy.get_include(),
+            # pychron_dir
+        ],
+    )
+]
 
-                         include_dirs=[numpy.get_include(),
-                                       # pychron_dir
-                                       ]
-                         )]
-
-setup(
-    name='autocorr',
-    cmdclass={'build_ext': build_ext},
-    ext_modules=ext_modules
-)
+setup(name="autocorr", cmdclass={"build_ext": build_ext}, ext_modules=ext_modules)

@@ -10,21 +10,6 @@ on:
     branches: [ dev/dr ]
 
 jobs:
-  flake8_py3:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out source repository
-        uses: actions/checkout@v2
-      - name: Set up Python environment
-        uses: actions/setup-python@v1
-        with:
-          python-version: "3.8"
-      - name: Run flake8
-        uses: py-actions/flake8@v1
-        with:
-          ignore: "F401,E501"
-          exclude: "docs,sandbox,test,alembic_dvc,zobs"
-          max-line-length: "100"
   build:
     name:  Pychron Install via EDM (${{ matrix.python-version }}, ${{ matrix.os }})
     strategy:

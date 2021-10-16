@@ -29,7 +29,7 @@ class MarkerTool(BaseTool):
 
     overlay = None
     underlay = None
-    text = ''
+    text = ""
 
     marker_added = Event
     use_vertical_markers = False
@@ -43,10 +43,10 @@ class MarkerTool(BaseTool):
     def normal_left_down(self, event):
         self.token = token = self.hittest(event)
         if token:
-            self.event_state = 'select'
+            self.event_state = "select"
             token.horizontal_line_visible = True
         else:
-            self.event_state = 'normal'
+            self.event_state = "normal"
 
     def select_mouse_move(self, event):
         y = event.y
@@ -54,15 +54,15 @@ class MarkerTool(BaseTool):
         self.token.data_y = self.component.value_mapper.map_data(y)
 
     def select_left_up(self, event):
-        self.event_state = 'normal'
+        self.event_state = "normal"
         self.token.horizontal_line_visible = False
         self.component.request_redraw()
 
     def normal_mouse_move(self, event):
         if self.hittest(event):
-            event.window.set_pointer('hand')
+            event.window.set_pointer("hand")
         else:
-            event.window.set_pointer('arrow')
+            event.window.set_pointer("arrow")
 
     def normal_left_dclick(self, event):
         x, y = event.x, event.y
@@ -70,16 +70,21 @@ class MarkerTool(BaseTool):
         # if self.label_with_intensity:
         #     text = '{:0.4f}'.format(self.component.value_mapper.map_data(y))
 
-        m = self.overlay.add_marker(x, y, text,
-                                    vertical_marker=self.use_vertical_markers,
-                                    label_with_intensity=self.label_with_intensity)
+        m = self.overlay.add_marker(
+            x,
+            y,
+            text,
+            vertical_marker=self.use_vertical_markers,
+            label_with_intensity=self.label_with_intensity,
+        )
 
         l = self.underlay.add_marker_line(event.x)
 
-        m.on_trait_change(l.set_visible, 'visible')
-        m.on_trait_change(l.set_x, 'x')
+        m.on_trait_change(l.set_visible, "visible")
+        m.on_trait_change(l.set_x, "x")
 
         self.marker_added = m
         self.component.invalidate_and_redraw()
+
 
 # ============= EOF =============================================

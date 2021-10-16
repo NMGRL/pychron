@@ -3,19 +3,23 @@ import unittest
 
 from pychron.core.helpers.tests.floatfmt import SigFigStdFmtTestCase
 from pychron.core.stats.tests.mswd_tests import MSWDTestCase
+
 # from pychron.pyscripts.tests.extraction_script import WaitForTestCase
 # from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
 #
 # # Core
 # from pychron.core.tests.spell_correct import SpellCorrectTestCase
 from pychron.core.tests.filtering_tests import FilteringTestCase
+
 # from pychron.core.stats.tests.peak_detection_test import MultiPeakDetectionTestCase
 from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
 from pychron.core.helpers.tests.strtools import CamelCaseTestCase
+
 # from pychron.core.xml.tests.xml_parser import XMLParserTestCase
 # from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
 #     FilterOLSRegressionTest, OLSRegressionTest2, TruncateRegressionTest
 from pychron.core.tests.alpha_tests import AlphaTestCase
+
 #
 # # DataMapper
 # from pychron.data_mapper.tests.usgs_vsc_file_source import USGSVSCFileSourceUnittest, \
@@ -65,10 +69,11 @@ from pychron.core.tests.alpha_tests import AlphaTestCase
 #
 def suite():
     # set env. variables
-    os.environ['MassSpecDBVersion'] = '16'
+    os.environ["MassSpecDBVersion"] = "16"
 
     from pychron.paths import paths
-    paths.build('_dev')
+
+    paths.build("_dev")
 
     # if use_logger:
     #     from pychron.core.helpers.logger_setup import logging_setup
@@ -80,7 +85,6 @@ def suite():
     tests = (
         # Canvas
         # CalibrationObjectTestCase,
-
         # Core
         AlphaTestCase,
         # SpellCorrectTestCase,
@@ -93,22 +97,17 @@ def suite():
         # XMLParserTestCase,
         # OLSRegressionTest,
         # MeanRegressionTest,
-
         # FilterOLSRegressionTest,
         # OLSRegressionTest2,
         # TruncateRegressionTest,
         MSWDTestCase,
-
         # old
         # ExpoRegressionTest,
         # ExpoRegressionTest2,
-
-
         # DataMapper
         # USGSVSCFileSourceUnittest,
         # USGSVSCIrradiationSourceUnittest,
         # NMGRLLegacySourceUnittest,
-
         # Experiment
         # ExperimentIdentifierTestCase,
         # PeakHopYamlCase1,
@@ -124,25 +123,20 @@ def suite():
         # ParseConditionalsTestCase,
         # IdentifierTestCase,
         # CommentTemplaterTestCase,
-
         # ExternalPipette
         # ExternalPipetteTestCase,
-
         # Processing
         # PlateauTestCase,
         # RatioTestCase,
         # AgeConverterTestCase,
-
         # Pyscripts
         # WaitForTestCase,
         # InterpolationTestCase,
         # DocstrContextTestCase,
-
         # Spectrometer
         # MFTableTestCase,
         # DiscreteMFTableTestCase,
         # IntegrationTimeTestCase,
-
         # Stage
         # StageMapTestCase,
         # TransformTestCase
@@ -154,5 +148,5 @@ def suite():
     return suite
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.TextTestRunner(verbosity=2).run(suite())

@@ -40,4 +40,5 @@ class RatioSeries(Series):
         uys = [ufloat(*d) / po.standard_ratio for d in zip(ys, yserr)]
         return [nominal_value(yi) for yi in uys], [std_dev(yi) for yi in uys]
 
+
 # ============= EOF =============================================

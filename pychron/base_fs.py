@@ -23,14 +23,12 @@ from pychron.paths import paths
 
 class BaseFS(HasTraits):
     def open_file_dialog(self, **kw):
-        """
-        """
-        return self._file_dialog('open', **kw)
+        """ """
+        return self._file_dialog("open", **kw)
 
     def save_file_dialog(self, **kw):
-        """
-        """
-        return self._file_dialog('save as', **kw)
+        """ """
+        return self._file_dialog("save as", **kw)
 
     def open_directory_dialog(self, **kw):
         return self._directory_dialog(False, **kw)
@@ -45,13 +43,13 @@ class BaseFS(HasTraits):
             return dlg.path
 
     def _file_dialog(self, action, **kw):
-        """
-        """
-        if 'default_directory' not in kw:
-            kw['default_directory'] = paths.home
+        """ """
+        if "default_directory" not in kw:
+            kw["default_directory"] = paths.home
 
         dlg = FileDialog(action=action, **kw)
         if dlg.open() == OK:
             return dlg.path
+
 
 # ============= EOF =============================================

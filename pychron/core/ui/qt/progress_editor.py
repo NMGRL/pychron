@@ -19,11 +19,13 @@ from __future__ import absolute_import
 from traits.api import Int, Str
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
+
 # ============= standard library imports ========================
 from pyface.qt.QtGui import QProgressBar, QVBoxLayout, QLabel
 
 
 # ============= local library imports  ==========================
+
 
 class _ProgressEditor(Editor):
     max = Int
@@ -34,9 +36,9 @@ class _ProgressEditor(Editor):
         self.control.setMaximum(self.factory.max)
         self.control.setMinimum(self.factory.min)
         if self.factory.max_name:
-            self.sync_value(self.factory.max_name, 'max', mode='from')
+            self.sync_value(self.factory.max_name, "max", mode="from")
         if self.factory.message_name:
-            self.sync_value(self.factory.message_name, 'message', mode='from')
+            self.sync_value(self.factory.message_name, "message", mode="from")
 
     def _max_changed(self):
         # print 'max',self.max
@@ -51,7 +53,7 @@ class _ProgressEditor(Editor):
         pb = QProgressBar()
 
         self._message_control = QLabel()
-        self._message_control.setText('     ')
+        self._message_control.setText("     ")
         layout.addWidget(self._message_control)
         layout.addWidget(pb)
 
@@ -67,5 +69,6 @@ class ProgressEditor(BasicEditorFactory):
     max = Int
     max_name = Str
     message_name = Str
+
 
 # ============= EOF =============================================

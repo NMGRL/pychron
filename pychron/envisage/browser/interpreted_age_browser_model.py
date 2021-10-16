@@ -27,8 +27,8 @@ from pychron.envisage.browser.interpreted_age_table import InterpretedAgeTable
 
 class InterpretedAgeBrowserModel(BrowserModel):
     table = Instance(InterpretedAgeTable)
-    persistence_name = 'ia_browser_options'
-    selection_persistence_name = 'ia_browser_selection'
+    persistence_name = "ia_browser_options"
+    selection_persistence_name = "ia_browser_selection"
 
     def get_interpreted_age_records(self):
         records = self.table.selected
@@ -63,5 +63,6 @@ class InterpretedAgeBrowserModel(BrowserModel):
 
     def _table_default(self):
         return InterpretedAgeTable(dvc=self.dvc)
+
 
 # ============= EOF =============================================

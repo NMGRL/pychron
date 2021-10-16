@@ -14,7 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 from traits.api import HasTraits, List, Str, Instance
-from traitsui.api import View, EnumEditor, Item, VGroup, Label, UReadonly, TabularEditor, UItem, HGroup
+from traitsui.api import (
+    View,
+    EnumEditor,
+    Item,
+    VGroup,
+    Label,
+    UReadonly,
+    TabularEditor,
+    UItem,
+    HGroup,
+)
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import BorderVGroup
@@ -45,29 +55,39 @@ class BranchMergeView(HasTraits):
         cs = self.repo.get_branch_diff(self.to_, self.from_)
         self.from_changes = cs
 
-        bfrom = '<b>{}</b>'.format(self.from_)
-        tfrom = '<b>{}</b>'.format(self.to_)
-        fmt = 'Changes on {} but not on {}. n={}'
+        bfrom = "<b>{}</b>".format(self.from_)
+        tfrom = "<b>{}</b>".format(self.to_)
+        fmt = "Changes on {} but not on {}. n={}"
         self.from_label = fmt.format(bfrom, tfrom, len(self.from_changes))
         self.to_label = fmt.format(tfrom, bfrom, len(self.to_changes))
 
         if not self.from_changes:
-            self.msg = '{}. Fully merged'.format(self.to_)
+            self.msg = "{}. Fully merged".format(self.to_)
         else:
             self.msg = self.to_
 
     def traits_view(self):
-        v = okcancel_view(VGroup(HGroup(Item('from_', editor=EnumEditor(name='branches')),
-                                        Label('Into'),
-                                        UReadonly('msg')),
-                                 BorderVGroup(
-                                     UReadonly('from_label'),
-                                     UItem('from_changes', editor=TabularEditor(adapter=CommitAdapter()))),
-                                 BorderVGroup(
-                                     UReadonly('to_label'),
-                                     UItem('to_changes', editor=TabularEditor(adapter=CommitAdapter()))),
-                                 ),
-                          title='Merge Branches'
-                          )
+        v = okcancel_view(
+            VGroup(
+                HGroup(
+                    Item("from_", editor=EnumEditor(name="branches")),
+                    Label("Into"),
+                    UReadonly("msg"),
+                ),
+                BorderVGroup(
+                    UReadonly("from_label"),
+                    UItem(
+                        "from_changes", editor=TabularEditor(adapter=CommitAdapter())
+                    ),
+                ),
+                BorderVGroup(
+                    UReadonly("to_label"),
+                    UItem("to_changes", editor=TabularEditor(adapter=CommitAdapter())),
+                ),
+            ),
+            title="Merge Branches",
+        )
         return v
+
+
 # ============= EOF =============================================

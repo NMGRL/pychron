@@ -23,7 +23,7 @@ from pychron.envisage.tasks.base_task import BaseTask
 
 
 class DashboardClientTask(BaseTask):
-    name = 'Dashboard Client'
+    name = "Dashboard Client"
     # devices = DelegatesTo('server')
     # selected_device = Instance(DashboardDevice)
 
@@ -46,4 +46,6 @@ class DashboardClientTask(BaseTask):
     #
     # def _default_layout_default(self):
     #     return TaskLayout(left=PaneItem('pychron.dashboard.devices'))
+
+
 # ============= EOF =============================================

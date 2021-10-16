@@ -23,16 +23,14 @@ from .messaging_handler import MessagingHandler
 
 class TCPHandler(MessagingHandler):
     def get_packet(self):
-        """
-        """
+        """ """
         size = self.server.datasize
         data = self.request.recv(size).strip()
 
         return data
 
     def send_packet(self, response):
-        """
-        """
+        """ """
         self._send_packet(response, self.request.send)
 
     #     if response is None:
@@ -46,5 +44,6 @@ class TCPHandler(MessagingHandler):
     #     while totalsent < mlen:
     #         sent = sock.send(s[totalsent:])
     #         totalsent += sent
+
 
 # ============= EOF ====================================

@@ -22,23 +22,23 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 
 
 class AuditAdapter(TabularAdapter):
-    columns = [('RunID', 'record_id'),
-               ('UUID', 'uuid'),
-               ('RunDate', 'rundate'),
-               ]
-    font = '10'
+    columns = [
+        ("RunID", "record_id"),
+        ("UUID", "uuid"),
+        ("RunDate", "rundate"),
+    ]
+    font = "10"
     width = Int(70)
 
     def set_columns(self, isos, dets):
-        cs = [('RunID', 'record_id'),
-              ('Date', 'rundate')]
+        cs = [("RunID", "record_id"), ("Date", "rundate")]
         for i in sort_isotopes(isos):
-            for k in ('rev.', 'fit', 'bs. fit'):
-                cs.append(('{} {}'.format(i, k), 'iso:{}:{}'.format(k, i)))
+            for k in ("rev.", "fit", "bs. fit"):
+                cs.append(("{} {}".format(i, k), "iso:{}:{}".format(k, i)))
 
         for d in sort_detectors(dets):
-            for k in ('rev.',):
-                cs.append(('{} IC {}'.format(d, k), 'ic:{}:{}'.format(k, d)))
+            for k in ("rev.",):
+                cs.append(("{} IC {}".format(d, k), "ic:{}:{}".format(k, d)))
 
         self.columns = cs
 
@@ -51,32 +51,32 @@ class AuditAdapter(TabularAdapter):
             return super(AuditAdapter, self).get_width(obj, trait, column)
 
     def _get_ic_text(self, name):
-        ret = ''
-        _, kind, det = name.split(':')
+        ret = ""
+        _, kind, det = name.split(":")
         iso = self.item.get_isotope(detector=det)
 
-        if kind == 'rev.':
-            ret = 'Yes' if iso.ic_factor_reviewed else 'No'
+        if kind == "rev.":
+            ret = "Yes" if iso.ic_factor_reviewed else "No"
         return ret
 
     def _get_iso_text(self, name):
-        ret = ''
-        _, kind, iso = name.split(':')
+        ret = ""
+        _, kind, iso = name.split(":")
         iso = self.item.get_isotope(iso)
-        if kind == 'rev.':
-            ret = 'Yes' if iso.reviewed else 'No'
-        elif kind == 'fit':
+        if kind == "rev.":
+            ret = "Yes" if iso.reviewed else "No"
+        elif kind == "fit":
             ret = iso.fit_abbreviation
-        elif kind == 'bs. fit':
+        elif kind == "bs. fit":
             ret = iso.baseline.fit_abbreviation
         return ret
 
     def get_text(self, obj, trait, row, column):
         name = self.column_map[column]
 
-        if name.startswith('iso:'):
+        if name.startswith("iso:"):
             ret = self._get_iso_text(name)
-        elif name.startswith('ic:'):
+        elif name.startswith("ic:"):
             ret = self._get_ic_text(name)
         else:
             ret = super(AuditAdapter, self).get_text(obj, trait, row, column)
@@ -95,11 +95,24 @@ class AuditEditor(BaseTraitsEditor):
 
     def _hide_reviewed_changed(self, new):
         if new:
-            isos = [iso for iso in self.isotopes if
-                    not all(a.get_isotope(iso).reviewed for ans in (self.unknowns, self.references) for a in ans)]
-            dets = [det for det in self.detectors if
-                    not all(a.get_isotope(detector=det).ic_factor_reviewed for ans in (self.unknowns, self.references)
-                            for a in ans)]
+            isos = [
+                iso
+                for iso in self.isotopes
+                if not all(
+                    a.get_isotope(iso).reviewed
+                    for ans in (self.unknowns, self.references)
+                    for a in ans
+                )
+            ]
+            dets = [
+                det
+                for det in self.detectors
+                if not all(
+                    a.get_isotope(detector=det).ic_factor_reviewed
+                    for ans in (self.unknowns, self.references)
+                    for a in ans
+                )
+            ]
         else:
             isos = self.isotopes
             dets = self.detectors
@@ -108,7 +121,9 @@ class AuditEditor(BaseTraitsEditor):
 
     def set_columns(self, unks, refs):
         isos = {k for ans in (unks, refs) for ai in ans for k in ai.isotope_keys}
-        dets = {v.detector for ans in (unks, refs) for ai in ans for v in ai.itervalues()}
+        dets = {
+            v.detector for ans in (unks, refs) for ai in ans for v in ai.itervalues()
+        }
 
         self.isotopes = isos
         self.detectors = dets
@@ -122,13 +137,19 @@ class AuditEditor(BaseTraitsEditor):
         self.set_columns(unks, refs)
 
     def traits_view(self):
-        tools_grp = HGroup(Item('hide_reviewed'))
-        unk_grp = UItem('unknowns', editor=TabularEditor(selected='selected',
-                                                         editable=False,
-                                                         stretch_last_section=False,
-                                                         adapter=self.adapter))
+        tools_grp = HGroup(Item("hide_reviewed"))
+        unk_grp = UItem(
+            "unknowns",
+            editor=TabularEditor(
+                selected="selected",
+                editable=False,
+                stretch_last_section=False,
+                adapter=self.adapter,
+            ),
+        )
 
         v = View(VGroup(tools_grp, unk_grp))
         return v
+
 
 # ============= EOF =============================================

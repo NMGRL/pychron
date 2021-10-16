@@ -24,9 +24,11 @@ from traits.api import HasTraits, List, Property, Str, Int, Float, Button, Enum
 from traitsui.api import View, Item, Group, TableEditor
 from traitsui.table_column import ObjectColumn
 import six.moves.cPickle as pickle
+
 # ============= standard library imports ========================
 import os
 import shutil
+
 # ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.core.helpers.filetools import unique_path
@@ -35,108 +37,101 @@ from pychron.core.helpers.datetime_tools import generate_datetimestamp
 
 # ============= views ===================================
 class LaserShot(HasTraits):
-    '''
-    '''
+    """ """
+
     id = Int
-    mode = Enum('single', 'continuous')
+    mode = Enum("single", "continuous")
     timestamp = Str
     energy = Float
 
 
 class LaserShotHistory(HasTraits):
-    '''
-        G{classtree}
-    '''
+    """
+    G{classtree}
+    """
+
     pickle_path = Str
     history = List(LaserShot)
     dump = Button
     clear = Button
-    count = Property(depends_on='history')
-    view_mode = Enum('detail', 'simple')
+    count = Property(depends_on="history")
+    view_mode = Enum("detail", "simple")
 
     def __init__(self, *args, **kw):
-        '''
-            @type *args: C{str}
-            @param *args:
+        """
+        @type *args: C{str}
+        @param *args:
 
-            @type **kw: C{str}
-            @param **kw:
-        '''
+        @type **kw: C{str}
+        @param **kw:
+        """
         super(LaserShotHistory, self).__init__(*args, **kw)
         if not self.pickle_path:
-            self.pickle_path = os.path.join(paths.root, '.laser_shot_history')
+            self.pickle_path = os.path.join(paths.root, ".laser_shot_history")
         self.load()
 
     def _get_count(self):
-        '''
-        '''
+        """ """
         return len(self.history)
 
     def _dump_fired(self):
-        '''
-        '''
+        """ """
         self.__dump()
 
     def _clear_fired(self):
-        '''
-        '''
+        """ """
         self.__clear()
 
     def __dump(self):
-        '''
-        '''
-        with open(self.pickle_path, 'w') as f:
+        """ """
+        with open(self.pickle_path, "w") as f:
             pickle.dump(self.history, f)
 
     def load(self):
-        '''
-        '''
+        """ """
         if os.path.isfile(self.pickle_path):
-            with open(self.pickle_path, 'r') as f:
+            with open(self.pickle_path, "r") as f:
                 self.history = pickle.load(f)
 
     def __clear(self):
-        '''
-        '''
+        """ """
         # make a backup copy
-        p, _cnt = unique_path(paths.root, 'laser_shot_history', 'bak')
+        p, _cnt = unique_path(paths.root, "laser_shot_history", "bak")
         shutil.copy(self.pickle_path, p)
 
         os.remove(self.pickle_path)
         self.history = []
 
     def add_shot(self, **kw):
-        '''
-            @type **kw: C{str}
-            @param **kw:
-        '''
+        """
+        @type **kw: C{str}
+        @param **kw:
+        """
         n = len(self.history)
 
-        shot = LaserShot(id=n,
-                         timestamp=generate_datetimestamp(),
-                         **kw)
+        shot = LaserShot(id=n, timestamp=generate_datetimestamp(), **kw)
         self.history.append(shot)
         self.__dump()
 
     def traits_view(self):
-        '''
-        '''
+        """ """
 
-        cols = [ObjectColumn(name='id'),
-                ObjectColumn(name='mode'),
-                ObjectColumn(name='timestamp')]
-        table_editor = TableEditor(columns=cols,
-                                   editable=False)
-        detail_view = Group(Item('dump', show_label=False),
-                            Item('clear', show_label=False),
-                            Item('history', editor=table_editor,
-                                 show_label=False),
-                            visible_when='view_mode=="detail"',
-                            )
-        simple_view = Group(Item('count'),
-                            visible_when='view_mode=="simple"')
-        v = View(detail_view,
-                 simple_view)
+        cols = [
+            ObjectColumn(name="id"),
+            ObjectColumn(name="mode"),
+            ObjectColumn(name="timestamp"),
+        ]
+        table_editor = TableEditor(columns=cols, editable=False)
+        detail_view = Group(
+            Item("dump", show_label=False),
+            Item("clear", show_label=False),
+            Item("history", editor=table_editor, show_label=False),
+            visible_when='view_mode=="detail"',
+        )
+        simple_view = Group(Item("count"), visible_when='view_mode=="simple"')
+        v = View(detail_view, simple_view)
 
         return v
+
+
 # ============= EOF ====================================

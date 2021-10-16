@@ -35,14 +35,14 @@ ETX = chr(3)
 EOT = chr(4)
 ENQ = chr(5)
 DLE = chr(16)
-ANSWER_ADDR = '0002'
-STATUS = ['Powering On', 'Laser Off', 'Turning On', 'Laser On']
-ACTION = ['Turn Off', 'Turn on', 'Single Shot', 'Run', 'Firing']
+ANSWER_ADDR = "0002"
+STATUS = ["Powering On", "Laser Off", "Turning On", "Laser On"]
+ACTION = ["Turn Off", "Turn on", "Single Shot", "Run", "Firing"]
 
 
 class ATLLaserControlUnit(CoreDevice):
-    """
-    """
+    """ """
+
     energy_readback = Float
     pressure_readback = Float
     burst_readback = Int
@@ -50,10 +50,10 @@ class ATLLaserControlUnit(CoreDevice):
     action_readback = Str
     firing = Bool
 
-    burst_shot = Property(Int(enter_set=True, auto_set=False), depends_on='_burst_shot')
+    burst_shot = Property(Int(enter_set=True, auto_set=False), depends_on="_burst_shot")
     _burst_shot = Int
 
-    reprate = Property(Int(enter_set=True, auto_set=False), depends_on='_reprate')
+    reprate = Property(Int(enter_set=True, auto_set=False), depends_on="_reprate")
     _reprate = Int
     _was_fired = False
 
@@ -138,7 +138,7 @@ class ATLLaserControlUnit(CoreDevice):
         self._reprate = self.get_reprate()
 
         v = 55
-        self.set_stabilization('energy', v)
+        self.set_stabilization("energy", v)
         return r
 
     def set_stabilization(self, mode, v):
@@ -151,12 +151,11 @@ class ATLLaserControlUnit(CoreDevice):
                               -------- trigger mode
                                        -- disable on low energy
         """
-        MODES = {'energy': '001', 'hv': '000',
-                 'energy_w_pge': '011'}
-        mode = MODES.get(mode, '000')
+        MODES = {"energy": "001", "hv": "000", "energy_w_pge": "011"}
+        mode = MODES.get(mode, "000")
 
         with self._lock:
-            p = '000 {} 1 000 0'.format(mode).replace(' ', '')
+            p = "000 {} 1 000 0".format(mode).replace(" ", "")
             cmd = self._build_command(1000, int(p, 2))
             self._send_command(cmd, lock=False)
 
@@ -168,7 +167,7 @@ class ATLLaserControlUnit(CoreDevice):
         return self.energies.mean()
 
     def is_enabled(self):
-        return self.status_readback == 'Laser On'
+        return self.status_readback == "Laser On"
 
     def set_reprate(self, n, save=True):
         lh = self._make_integer_pair(n)
@@ -192,7 +191,9 @@ class ATLLaserControlUnit(CoreDevice):
 
     def set_nburst(self, n, save=True):
         if int(n) != int(self._burst_shot):
-            self.debug('setting nburst n={} current_value={}'.format(n, self._burst_shot))
+            self.debug(
+                "setting nburst n={} current_value={}".format(n, self._burst_shot)
+            )
             lh = self._make_integer_pair(n)
             if lh:
                 with self._lock:
@@ -211,7 +212,7 @@ class ATLLaserControlUnit(CoreDevice):
         self._send_command(cmd, lock=lock)
 
     def get_reprate(self, verbose=True):
-        self.debug('get reprate')
+        self.debug("get reprate")
         resp = self._send_query(1001, 1, verbose=verbose)
         v = -1
         if resp is not None:  # and len(resp) == 4:
@@ -228,7 +229,7 @@ class ATLLaserControlUnit(CoreDevice):
 
     def get_nburst(self, verbose=True):
         if verbose:
-            self.debug('get nburst')
+            self.debug("get nburst")
 
         v = 0
         resp = self._send_query(22, 2, verbose=verbose)
@@ -250,7 +251,7 @@ class ATLLaserControlUnit(CoreDevice):
     def get_process_status(self):
         # ps = '0000000000000000'
         r = self._send_query(1000, 1)
-        self.debug('get process status {}'.format(r))
+        self.debug("get process status {}".format(r))
         if r is not None:
             r = int(r, 16)
             ps = make_bitarray(r, width=16)
@@ -261,7 +262,7 @@ class ATLLaserControlUnit(CoreDevice):
             if ps is None:
                 ps = self.get_process_status()
 
-            nps = ps[:16 - 4] + str(int(mode)) + ps[-4:]
+            nps = ps[: 16 - 4] + str(int(mode)) + ps[-4:]
             print(mode, nps)
 
             cmd = self._build_command(1000, int(nps, 2))
@@ -282,7 +283,7 @@ class ATLLaserControlUnit(CoreDevice):
         self._send_command(cmd)
 
     def laser_run(self):
-        self.debug('run laser')
+        self.debug("run laser")
         self.firing = True
         self.energies = array([])
 
@@ -290,7 +291,7 @@ class ATLLaserControlUnit(CoreDevice):
         self._send_command(cmd)
 
     def laser_stop(self):
-        self.debug('stop laser')
+        self.debug("stop laser")
         cmd = self._build_command(11, 1)
         self._send_command(cmd)
         self.firing = False
@@ -357,7 +358,7 @@ class ATLLaserControlUnit(CoreDevice):
         if vs is not None:
             vs = self._parse_response(vs, 1)
             if vs is not None:
-                self.pressure_readback = vs[0] / 1000.
+                self.pressure_readback = vs[0] / 1000.0
 
     def get_gas_status(self):
         r = self._send_query(13, 1)
@@ -368,10 +369,10 @@ class ATLLaserControlUnit(CoreDevice):
         return self._parse_response(r, 1)
 
     def open_valve(self, addr):
-        self.info('open valve {}'.format(addr))
+        self.info("open valve {}".format(addr))
 
     def close_valve(self, addr):
-        self.info('close valve {}'.format(addr))
+        self.info("close valve {}".format(addr))
 
     def update_parameters(self):
 
@@ -381,7 +382,7 @@ class ATLLaserControlUnit(CoreDevice):
         if vs is not None:
             vs = self._parse_response(vs, 4)
             if vs is not None:
-                self.energy_readback = vs[0] / 10.
+                self.energy_readback = vs[0] / 10.0
                 self.energies = hstack((self.energies[:-5], [self.energy_readback]))
 
                 self.pressure_readback = vs[1]
@@ -392,16 +393,24 @@ class ATLLaserControlUnit(CoreDevice):
         if b is not None:
             self.burst_readback = b
             if self.firing:
-                self.debug('readback={} burst={} fired={}'.format(b, self.burst_shot, self._was_fired))
+                self.debug(
+                    "readback={} burst={} fired={}".format(
+                        b, self.burst_shot, self._was_fired
+                    )
+                )
                 if not b or (self._was_fired and b == self.burst_shot):
-                    self.debug('AUTO STOP LASER')
+                    self.debug("AUTO STOP LASER")
                     self.laser_stop()
                     self._was_fired = False
 
                 self._was_fired = b != self.burst_shot
 
-    def _set_answer_parameters(self, start_addr_value, answer_len,
-                               verbose=True, ):
+    def _set_answer_parameters(
+        self,
+        start_addr_value,
+        answer_len,
+        verbose=True,
+    ):
 
         values = [start_addr_value, answer_len]
         cmd = self._build_command(ANSWER_ADDR, values)
@@ -411,15 +420,15 @@ class ATLLaserControlUnit(CoreDevice):
     def _build_command(self, start_addr, values):
 
         if isinstance(start_addr, int):
-            start_addr = '{:04X}'.format(start_addr)
+            start_addr = "{:04X}".format(start_addr)
 
         if isinstance(values, int):
             values = (values,)
             #            values = ('{:04X}'.format(values),)
 
-        values = list(map('{:04X}'.format, values))
+        values = list(map("{:04X}".format, values))
 
-        cmd = start_addr + ''.join(values)
+        cmd = start_addr + "".join(values)
         cmd += ETX
         BCC = computeBCC(cmd)
 
@@ -437,10 +446,10 @@ class ATLLaserControlUnit(CoreDevice):
             # =self.ask('A'+ENQ, nchars=(l+1)*4+6)
             #        self._start_message()
             n = (l + 1) * 4 + 6
-            cmd = 'a' + ENQ
+            cmd = "a" + ENQ
             r = self.ask(cmd, nchars=n, verbose=verbose)
             #        r = self.read(nchars=n)
-            self.tell(DLE + '1', verbose=verbose)
+            self.tell(DLE + "1", verbose=verbose)
             self._end_message(verbose=verbose)
             return self._clean_response(r)
 
@@ -449,7 +458,7 @@ class ATLLaserControlUnit(CoreDevice):
             self._lock.acquire()
 
         self._start_message(verbose=verbose)
-        self.ask(cmd, read_terminator=DLE + '1', verbose=verbose)
+        self.ask(cmd, read_terminator=DLE + "1", verbose=verbose)
         self._end_message(verbose=verbose)
 
         if lock:
@@ -457,8 +466,8 @@ class ATLLaserControlUnit(CoreDevice):
 
     def _start_message(self, verbose=True):
 
-        cmd = 'A' + ENQ
-        self.ask(cmd, read_terminator=DLE + '0', verbose=verbose)
+        cmd = "A" + ENQ
+        self.ask(cmd, read_terminator=DLE + "0", verbose=verbose)
 
     def _end_message(self, verbose=True):
         cmd = EOT
@@ -469,7 +478,7 @@ class ATLLaserControlUnit(CoreDevice):
         handshake = r[:4]
 
         # print handshake,handshake=='a'+DLE+'0'+STX
-        if handshake == 'a' + DLE + '0' + STX:
+        if handshake == "a" + DLE + "0" + STX:
 
             chksum = computeBCC(r[4:-1])
 
@@ -480,7 +489,7 @@ class ATLLaserControlUnit(CoreDevice):
     def _parse_response(self, resp, l):
         #        print resp, l, len(resp),l*4
         if resp is not None and len(resp) == l * 4:
-            return [int(resp[i:i + 4], 16) for i in range(0, len(resp) - 3, 4)]
+            return [int(resp[i : i + 4], 16) for i in range(0, len(resp) - 3, 4)]
 
     def _get_burst_shot(self):
         return self._burst_shot
@@ -547,12 +556,13 @@ class ATLLaserControlUnit(CoreDevice):
 #        self.trait_set(**kw)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
 
-    logging_setup('atl')
-    a = ATLLaserControlUnit(name='ATLLaserControlUnit',
-                            configuration_dir_name='fusions_uv')
+    logging_setup("atl")
+    a = ATLLaserControlUnit(
+        name="ATLLaserControlUnit", configuration_dir_name="fusions_uv"
+    )
     a.bootstrap()
     a.laser_off()
 # ============= EOF ====================================
