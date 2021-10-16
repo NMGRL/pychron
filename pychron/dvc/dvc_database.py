@@ -532,7 +532,7 @@ class DVCDatabase(DatabaseAdapter):
 
             # add choice
             for k, v in kw.items():
-                if v and v is not "X":
+                if v and v != "X":
                     if k in SAMPLE_PREP_STEPS:
                         self.add_sample_prep_choice(k, v)
 
@@ -1698,7 +1698,7 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx():
             levels = self.get_irradiation_levels(irrad)
             if levels:
-                return [l.name for l in levels]
+                return [level.name for level in levels]
             else:
                 return []
 
