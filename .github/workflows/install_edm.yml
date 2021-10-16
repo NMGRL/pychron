@@ -41,7 +41,7 @@ jobs:
 
       - name: Test with unittest
         run: |
-          ~/.edm/envs/edm/bin/python pychron/test_suite.py
+          PYTHONPATH=/home/runner/work/pychron ~/.edm/envs/edm/bin/python -m pytest pychron/test_suite.py
       - name: Lint with flake8
         run: |
           ~/.edm/envs/edm/bin/flake8 . --extend-exclude=docs/,zobs/,sandbox/,test/,alembic_dvc --count --select=E9,F63,F7,F82 --show-source --statistics
