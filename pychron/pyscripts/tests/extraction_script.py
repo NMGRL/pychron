@@ -5,10 +5,6 @@ __author__ = 'ross'
 import time
 import unittest
 
-from pychron.core.ui import set_qt
-
-set_qt()
-
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 
 
