@@ -21,7 +21,7 @@ from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class CosmogenicCorrectionNode(BaseNode):
-    name = 'Cosmogenic Correction'
+    name = "Cosmogenic Correction"
 
     solar3836_v = Float
     solar3836_e = Float
@@ -40,11 +40,20 @@ class CosmogenicCorrectionNode(BaseNode):
 
     def traits_view(self):
         # add views for configurable options
-        cg = HGroup(Label('Cosmo 38/36'),
-                    UItem('cosmo3836_v'), Label(PLUSMINUS_ONE_SIGMA), UItem('cosmo3836_e'))
-        sg = HGroup(Item('Solar/Terrestrial/Martian 38/36'),
-                    UItem('solar3836_v'), Label(PLUSMINUS_ONE_SIGMA), UItem('solar3836_e'))
+        cg = HGroup(
+            Label("Cosmo 38/36"),
+            UItem("cosmo3836_v"),
+            Label(PLUSMINUS_ONE_SIGMA),
+            UItem("cosmo3836_e"),
+        )
+        sg = HGroup(
+            Item("Solar/Terrestrial/Martian 38/36"),
+            UItem("solar3836_v"),
+            Label(PLUSMINUS_ONE_SIGMA),
+            UItem("solar3836_e"),
+        )
 
         return self._view_factory(VGroup(cg, sg))
+
 
 # ============= EOF =============================================

@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 from traits.api import Any
+
 # ============= standard library imports ========================
 import time
+
 # ============= local library imports  ==========================
 from pychron.hardware import get_float
 from pychron.spectrometer.base_magnet import BaseMagnet
@@ -27,6 +29,7 @@ class MapMagnet(BaseMagnet):
     """
     Abstraction for the MAP Magent
     """
+
     device = Any
 
     # ===============================================================================
@@ -47,7 +50,7 @@ class MapMagnet(BaseMagnet):
         dev = self.device
         if dev:
             r = int(r) - 1
-            dev.tell('B{}.'.format(r), verbose=verbose)
+            dev.tell("B{}.".format(r), verbose=verbose)
 
     def set_dac(self, v, verbose=False):
         """
@@ -64,7 +67,7 @@ class MapMagnet(BaseMagnet):
         dev = self.device
         if dev:
             self.set_range(v)
-            dev.tell('W{}.'.format(v), verbose=verbose)
+            dev.tell("W{}.".format(v), verbose=verbose)
             time.sleep(self.settling_time)
 
         change = v != self._dac

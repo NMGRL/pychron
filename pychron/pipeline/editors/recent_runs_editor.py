@@ -25,7 +25,7 @@ class RecentRunsEditor(BaseTraitsEditor):
     forward_button = Button
     back_button = Button
     analysis_view = Instance(AnalysisView, ())
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance("pychron.dvc.dvc.DVC")
     spectrometer = Str
     available_spectrometers = List
     stack = None
@@ -54,7 +54,7 @@ class RecentRunsEditor(BaseTraitsEditor):
                 self.stack_hash.add(a.uuid)
 
             an = ans[-1]
-            self.stack_pointer = len(ans)-1
+            self.stack_pointer = len(ans) - 1
             self.analysis_view.load(an, quick=self.quick_load)
 
     def _activate_analysis(self, an):
@@ -99,13 +99,18 @@ class RecentRunsEditor(BaseTraitsEditor):
             self.analysis_view.load(an, quick=True)
 
     def traits_view(self):
-        tgrp = HGroup(icon_button_editor('back_button', 'arrow_left'),
-                      icon_button_editor('forward_button', 'arrow_right'),
-                      Item('quick_load', tooltip='If checked only load the Main and Isotope views'),
-                      Item('spectrometer', editor=EnumEditor(name='available_spectrometers')))
+        tgrp = HGroup(
+            icon_button_editor("back_button", "arrow_left"),
+            icon_button_editor("forward_button", "arrow_right"),
+            Item(
+                "quick_load", tooltip="If checked only load the Main and Isotope views"
+            ),
+            Item("spectrometer", editor=EnumEditor(name="available_spectrometers")),
+        )
 
-        agrp = UCustom('analysis_view')
+        agrp = UCustom("analysis_view")
         v = View(VGroup(tgrp, agrp))
         return v
+
 
 # ============= EOF =============================================

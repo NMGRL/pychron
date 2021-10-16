@@ -21,14 +21,27 @@ from __future__ import absolute_import
 from numpy.ma import arange
 from pyface.timer.do_later import do_later, do_after
 from traits.api import HasTraits, Instance, Event, Str, Bool, List, Any, on_trait_change
-from traitsui.api import View, UItem, VGroup, Group, Handler, spring, HGroup, ListEditor, Spring
+from traitsui.api import (
+    View,
+    UItem,
+    VGroup,
+    Group,
+    Handler,
+    spring,
+    HGroup,
+    ListEditor,
+    Spring,
+)
 
 from pychron.core.helpers.binpack import unpack
 from pychron.core.regression.ols_regressor import PolynomialRegressor
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.view_util import open_view
 from pychron.graph.stacked_graph import StackedGraph
-from pychron.processing.analyses.view.adapters import IsotopeTabularAdapter, IntermediateTabularAdapter
+from pychron.processing.analyses.view.adapters import (
+    IsotopeTabularAdapter,
+    IntermediateTabularAdapter,
+)
 from pychron.processing.analyses.view.detector_ic_view import DetectorICView
 from pychron.processing.analyses.view.dvc_commit_view import HistoryView
 from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
@@ -48,45 +61,61 @@ class AnalysisViewHandler(Handler):
         obj.updated = {}
 
     def show_isotope_evolution_with_sniff(self, uiinfo, obj):
-        obj.updated = {'show_equilibration': True}
+        obj.updated = {"show_equilibration": True}
         # obj.show_iso_evolutions(show_equilibration=True)
 
     def show_isotope_evolution_with_baseline(self, uiinfo, obj):
         # obj.show_iso_evolutions(show_baseline=True)
-        obj.updated = {'show_baseline': True}
+        obj.updated = {"show_baseline": True}
 
     def show_residuals(self, uiinfo, obj):
-        obj.updated = {'show_residuals': True}
+        obj.updated = {"show_residuals": True}
 
     def show_inspection(self, uiinfo, obj):
-        obj.updated = {'show_inspection': True}
+        obj.updated = {"show_inspection": True}
 
     def show_baseline(self, uiinfo, obj):
-        obj.updated = {'show_evo': False, 'show_baseline': True}
+        obj.updated = {"show_evo": False, "show_baseline": True}
         # obj.show_iso_evolutions(show_evo=False, show_baseline=True)
 
     def show_sniff(self, uiinfo, obj):
-        obj.updated = {'show_evo': False, 'show_equilibration': True}
+        obj.updated = {"show_evo": False, "show_equilibration": True}
         # obj.show_iso_evolutions(show_evo=False, show_equilibration=True)
 
     def show_all(self, uiinfo, obj):
-        obj.updated = {'show_evo': True, 'show_equilibration': True, 'show_baseline': True}
+        obj.updated = {
+            "show_evo": True,
+            "show_equilibration": True,
+            "show_baseline": True,
+        }
         # obj.show_iso_evolutions(show_evo=True, show_equilibration=True, show_baseline=True)
 
 
 class MetaView(HasTraits):
-    name = 'Meta'
+    name = "Meta"
     spectrometer = Instance(SpectrometerView)
     interference = Instance(InterferencesView)
 
     def traits_view(self):
-        v = View(VGroup(VGroup(UItem('spectrometer', style='custom'), show_border=True, label='Spectrometer'),
-                        VGroup(UItem('interference', style='custom'), show_border=True, label='Reactor')))
+        v = View(
+            VGroup(
+                VGroup(
+                    UItem("spectrometer", style="custom"),
+                    show_border=True,
+                    label="Spectrometer",
+                ),
+                VGroup(
+                    UItem("interference", style="custom"),
+                    show_border=True,
+                    label="Reactor",
+                ),
+            )
+        )
         return v
 
 
 class IsotopeView(HasTraits):
-    name = 'Isotopes'
+    name = "Isotopes"
     isotopes = List
     isotope_adapter = Instance(IsotopeTabularAdapter, ())
     intermediate_adapter = Instance(IntermediateTabularAdapter, ())
@@ -102,51 +131,57 @@ class IsotopeView(HasTraits):
             # self.model.show_isotope_evolutions((item,))
 
     def traits_view(self):
-        teditor = myTabularEditor(adapter=self.isotope_adapter,
-                                  drag_enabled=False,
-                                  stretch_last_section=False,
-                                  editable=False,
-                                  multi_select=True,
-                                  selected='selected',
-                                  dclicked='dclicked',
-                                  refresh='refresh_needed')
-        ieditor = myTabularEditor(adapter=self.intermediate_adapter,
-                                  editable=False,
-                                  drag_enabled=False,
-                                  stretch_last_section=False,
-                                  refresh='refresh_needed')
-        isotope_grp = Group(UItem('isotopes',
-                                  editor=teditor, ),
-                            UItem('isotopes',
-                                  editor=ieditor,
-                                  visible_when='show_intermediate'))
+        teditor = myTabularEditor(
+            adapter=self.isotope_adapter,
+            drag_enabled=False,
+            stretch_last_section=False,
+            editable=False,
+            multi_select=True,
+            selected="selected",
+            dclicked="dclicked",
+            refresh="refresh_needed",
+        )
+        ieditor = myTabularEditor(
+            adapter=self.intermediate_adapter,
+            editable=False,
+            drag_enabled=False,
+            stretch_last_section=False,
+            refresh="refresh_needed",
+        )
+        isotope_grp = Group(
+            UItem(
+                "isotopes",
+                editor=teditor,
+            ),
+            UItem("isotopes", editor=ieditor, visible_when="show_intermediate"),
+        )
         v = View(isotope_grp, handler=AnalysisViewHandler())
         return v
 
 
 class ExtractionView(HasTraits):
     graph = Instance(StackedGraph)
-    name = 'Extraction'
+    name = "Extraction"
     refresh_needed = Event
 
     def setup_graph(self, response_data, request_data, setpoint_data):
-        self.graph = g = StackedGraph(container_dict={'spacing': 10})
+        self.graph = g = StackedGraph(container_dict={"spacing": 10})
         ret = False
         pid = 0
         if response_data:
             try:
-                x, y = unpack(response_data, fmt='<ff', decode=True)
+                x, y = unpack(response_data, fmt="<ff", decode=True)
                 if x[1:]:
                     p = g.new_plot()
                     p.value_range.tight_bounds = False
-                    g.set_x_title('Time (s)')
-                    g.set_y_title('Temp C')
+                    g.set_x_title("Time (s)")
+                    g.set_y_title("Temp C")
                     g.new_series(x[1:], y[1:])
                     pid += 1
                     ret = True
 
                     if setpoint_data:
-                        x, y = unpack(setpoint_data, fmt='<ff', decode=True)
+                        x, y = unpack(setpoint_data, fmt="<ff", decode=True)
                         if x[1:]:
                             g.new_series(x[1:], y[1:])
 
@@ -155,12 +190,12 @@ class ExtractionView(HasTraits):
 
         if request_data:
             try:
-                x, y = unpack(request_data, fmt='<ff', decode=True)
+                x, y = unpack(request_data, fmt="<ff", decode=True)
                 if x[1:]:
                     p = self.graph.new_plot()
 
-                    g.set_x_title('Time')
-                    g.set_y_title('% Power')
+                    g.set_x_title("Time")
+                    g.set_y_title("% Power")
                     g.new_series(x[1:], y[1:])
                     g.set_y_limits(min_=0, max_=max(y) * 1.1, plotid=pid)
                     ret = True
@@ -170,13 +205,13 @@ class ExtractionView(HasTraits):
         return ret
 
     def traits_view(self):
-        v = View(UItem('graph', style='custom'))
+        v = View(UItem("graph", style="custom"))
         return v
 
 
 class AnalysisView(HasTraits):
     # application = Any
-    model = Instance('pychron.processing.analyses.analysis.Analysis')
+    model = Instance("pychron.processing.analyses.analysis.Analysis")
     # selection_tool = Instance('pychron.processing.analyses.analysis_view.ViewSelection')
     analysis_id = Str
     selected_tab = Any
@@ -190,23 +225,32 @@ class AnalysisView(HasTraits):
 
     groups = List
 
-    def show_iso_evolutions(self, show_evo=True, show_equilibration=False, show_baseline=False,
-                            show_inspection=False, show_residuals=False):
+    def show_iso_evolutions(
+        self,
+        show_evo=True,
+        show_equilibration=False,
+        show_baseline=False,
+        show_inspection=False,
+        show_residuals=False,
+    ):
         isotopes = self.isotope_view.selected
-        return self.model.show_isotope_evolutions(isotopes, show_evo=show_evo,
-                                                  show_equilibration=show_equilibration,
-                                                  show_baseline=show_baseline,
-                                                  show_inspection=show_inspection,
-                                                  show_residuals=show_residuals)
+        return self.model.show_isotope_evolutions(
+            isotopes,
+            show_evo=show_evo,
+            show_equilibration=show_equilibration,
+            show_baseline=show_baseline,
+            show_inspection=show_inspection,
+            show_residuals=show_residuals,
+        )
 
     def update_fontsize(self, view, size):
-        if 'main' in view:
+        if "main" in view:
             v = self.main_view
-            view = view.split('.')[-1]
-            adapter = getattr(v, '{}_adapter'.format(view))
-            adapter.font = 'arial {}'.format(size)
+            view = view.split(".")[-1]
+            adapter = getattr(v, "{}_adapter".format(view))
+            adapter.font = "arial {}".format(size)
         else:
-            v = getattr(self, '{}_view'.format(view))
+            v = getattr(self, "{}_view".format(view))
             if v is not None:
                 v.fontsize = size
 
@@ -250,10 +294,10 @@ class AnalysisView(HasTraits):
             if isinstance(g, ErrorComponentsView):
                 g.load(self.model)
 
-    @on_trait_change('isotope_view:updated')
+    @on_trait_change("isotope_view:updated")
     def show_iso_evo(self, new):
         g = self.show_iso_evolutions(**new)
-        g.on_trait_change(self.refresh, 'grouping')
+        g.on_trait_change(self.refresh, "grouping")
 
     def _selected_tab_changed(self, new):
         if isinstance(new, HistoryView):
@@ -265,15 +309,20 @@ class AnalysisView(HasTraits):
         view = HistoryView()
         gs.append(view)
 
-        view = MetaView(interference=InterferencesView(an),
-                        spectrometer=SpectrometerView(an))
+        view = MetaView(
+            interference=InterferencesView(an), spectrometer=SpectrometerView(an)
+        )
         gs.append(view)
 
         view = RegressionView()
         gs.append(view)
         if an.measured_response_stream:
             ev = ExtractionView()
-            if ev.setup_graph(an.measured_response_stream, an.requested_output_stream, an.setpoint_stream):
+            if ev.setup_graph(
+                an.measured_response_stream,
+                an.requested_output_stream,
+                an.setpoint_stream,
+            ):
                 gs.append(ev)
 
         if an.snapshots:
@@ -293,16 +342,24 @@ class AnalysisView(HasTraits):
             gs.append(pch)
 
     def traits_view(self):
-        v = View(VGroup(Spring(springy=False, height=10),
-                        HGroup(spring, UItem('analysis_id', style='readonly'), spring),
-                        UItem('groups', style='custom',
-                              editor=ListEditor(use_notebook=True,
-                                                page_name='.name',
-                                                selected='selected_tab'))))
+        v = View(
+            VGroup(
+                Spring(springy=False, height=10),
+                HGroup(spring, UItem("analysis_id", style="readonly"), spring),
+                UItem(
+                    "groups",
+                    style="custom",
+                    editor=ListEditor(
+                        use_notebook=True, page_name=".name", selected="selected_tab"
+                    ),
+                ),
+            )
+        )
         return v
 
 
 class DBAnalysisView(AnalysisView):
     pass
+
 
 # ============= EOF =============================================

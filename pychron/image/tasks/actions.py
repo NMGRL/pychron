@@ -17,41 +17,41 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from pyface.tasks.action.task_action import TaskAction
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 
 
 class UploadAction(TaskAction):
-    name = 'Upload'
-    image = icon('image_add')
-    method = 'upload_image_from_file'
+    name = "Upload"
+    image = icon("image_add")
+    method = "upload_image_from_file"
 
 
 class SnapshotAction(TaskAction):
-    name = 'Snapshot'
-    image = icon('camera')
-    method = 'save_file_snapshot'
+    name = "Snapshot"
+    image = icon("camera")
+    method = "save_file_snapshot"
 
 
 class DBSnapshotAction(TaskAction):
-    name = 'DB Snapshot'
-    image = icon('camera')
-    method = 'save_db_snapshot'
+    name = "DB Snapshot"
+    image = icon("camera")
+    method = "save_db_snapshot"
 
 
 class AssociateAction(TaskAction):
-    name = 'Associate Sample'
-    method = 'associate_sample'
-    enabled_name = 'association_enabled'
+    name = "Associate Sample"
+    method = "associate_sample"
+    enabled_name = "association_enabled"
 
 
 class SaveAction(TaskAction):
-    name = 'Save'
-    method = 'save'
-    image = icon('database_save')
+    name = "Save"
+    method = "save"
+    image = icon("database_save")
     # enabled_name = 'save_enabled'
+
+
 # ============= EOF =============================================
-
-
-

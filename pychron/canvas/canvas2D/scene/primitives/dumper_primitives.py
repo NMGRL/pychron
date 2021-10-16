@@ -28,12 +28,12 @@ class StateableRectangle(RoundedRectangle):
 
     def set_state(self, state):
         if isinstance(state, bool):
-            state = 'open' if state else 'closed'
+            state = "open" if state else "closed"
 
         state_dict = self.states[state]
 
-        self._set_dimensions(state_dict.get('dimension'))
-        self._set_translation(state_dict.get('translation'))
+        self._set_dimensions(state_dict.get("dimension"))
+        self._set_translation(state_dict.get("translation"))
         self.request_layout()
 
     def _set_dimensions(self, wh):
@@ -51,5 +51,6 @@ class Gate(StateableRectangle):
 
 class Funnel(StateableRectangle):
     pass
+
 
 # ============= EOF =============================================

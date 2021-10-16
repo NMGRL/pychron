@@ -17,6 +17,7 @@ import os
 from operator import attrgetter
 
 from numpy import array, array_split
+
 # ============= enthought library imports =======================
 from traits.api import Str, Enum, Tuple
 from traitsui.api import UItem, EnumEditor, VGroup
@@ -28,21 +29,33 @@ from pychron.pipeline.grouping import group_analyses_by_key
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.subgrouping import apply_subgrouping, compress_groups
 from pychron.processing.analyses.preferred import get_preferred_grp, Preferred
-from pychron.pychron_constants import SUBGROUPING_ATTRS, WEIGHTED_MEAN, \
-    MSEM, SD, DEFAULT_INTEGRATED
+from pychron.pychron_constants import (
+    SUBGROUPING_ATTRS,
+    WEIGHTED_MEAN,
+    MSEM,
+    SD,
+    DEFAULT_INTEGRATED,
+)
 
 
 class GroupingNode(BaseNode):
     by_key = Str
-    keys = Tuple('Aliquot', 'Comment', 'Identifier', 'Sample', 'Step', 'SubGroup',
-            'Group Name',
-            'Label Name',
-            'No Grouping')
-    analysis_kind = 'unknowns'
-    name = 'Grouping'
-    title = 'Edit Grouping'
+    keys = Tuple(
+        "Aliquot",
+        "Comment",
+        "Identifier",
+        "Sample",
+        "Step",
+        "SubGroup",
+        "Group Name",
+        "Label Name",
+        "No Grouping",
+    )
+    analysis_kind = "unknowns"
+    name = "Grouping"
+    title = "Edit Grouping"
 
-    attribute = Enum('Group', 'Graph', 'Tab', 'Aux')
+    attribute = Enum("Group", "Graph", "Tab", "Aux")
     # _attr = 'group_id'
     _id_func = None
 
@@ -52,23 +65,23 @@ class GroupingNode(BaseNode):
     _parent_group = None
 
     def load(self, nodedict):
-        self.by_key = nodedict.get('key', 'Identifier')
-        if to_bool(os.getenv('CSV_DEBUG')):
-            self.by_key = 'Group Name'
-            self.attribute = 'Aux'
+        self.by_key = nodedict.get("key", "Identifier")
+        if to_bool(os.getenv("CSV_DEBUG")):
+            self.by_key = "Group Name"
+            self.attribute = "Aux"
 
     def _to_template(self, d):
-        d['key'] = self.by_key
+        d["key"] = self.by_key
 
     def _generate_key(self):
         key = self.by_key
-        if key != 'No Grouping':
-            if key == 'Aliquot':
-                key = 'identifier_aliquot_pair'
-            elif key == 'Group Name':
-                key = 'group'
-            elif key == 'Label Name':
-                key = 'label_name'
+        if key != "No Grouping":
+            if key == "Aliquot":
+                key = "identifier_aliquot_pair"
+            elif key == "Group Name":
+                key = "group"
+            elif key == "Label Name":
+                key = "label_name"
             else:
                 key = self._generate_key_hook(key)
             return attrgetter(key.lower())
@@ -90,11 +103,16 @@ class GroupingNode(BaseNode):
         for unk in unks:
             self._clear_grouping(unk)
 
-        if self.by_key != 'No Grouping':
+        if self.by_key != "No Grouping":
             key = self._generate_key()
-            group_analyses_by_key(unks, key=key, attr=self._attr, id_func=self._id_func,
-                                  sorting_enabled=self._sorting_enabled,
-                                  parent_group=self._parent_group)
+            group_analyses_by_key(
+                unks,
+                key=key,
+                attr=self._attr,
+                id_func=self._id_func,
+                sorting_enabled=self._sorting_enabled,
+                parent_group=self._parent_group,
+            )
 
             setattr(state, self.analysis_kind, unks)
             setattr(self, self.analysis_kind, unks)
@@ -104,46 +122,50 @@ class GroupingNode(BaseNode):
 
     @property
     def _attr(self):
-        return '{}_id'.format(self.attribute.lower())
+        return "{}_id".format(self.attribute.lower())
 
     def traits_view(self):
-        kgrp = VGroup(UItem('by_key',
-                            style='custom',
-                            editor=EnumEditor(name='keys')),
-                      show_border=True,
-                      label='Key')
+        kgrp = VGroup(
+            UItem("by_key", style="custom", editor=EnumEditor(name="keys")),
+            show_border=True,
+            label="Key",
+        )
 
-        agrp = VGroup(UItem('attribute',
-                            tooltip='Group=Display all groups on a single graph\n'
-                                    'Graph=Display groups on separate graphs\n'
-                                    'Tab=Display groups on separate tabs'), label='To Group', show_border=True)
-        v = okcancel_view(VGroup(agrp, kgrp),
-                          width=300,
-                          title=self.title)
+        agrp = VGroup(
+            UItem(
+                "attribute",
+                tooltip="Group=Display all groups on a single graph\n"
+                "Graph=Display groups on separate graphs\n"
+                "Tab=Display groups on separate tabs",
+            ),
+            label="To Group",
+            show_border=True,
+        )
+        v = okcancel_view(VGroup(agrp, kgrp), width=300, title=self.title)
         return v
 
 
 class GraphGroupingNode(GroupingNode):
-    title = 'Edit Graph Grouping'
-    name = 'Graphing Group'
-    _attr = 'graph_id'
+    title = "Edit Graph Grouping"
+    name = "Graphing Group"
+    _attr = "graph_id"
 
 
 class SubGroupingNode(GroupingNode, Preferred):
-    title = 'Edit SubGrouping'
-    keys = ('Aliquot', 'Identifier', 'Step', 'Comment', 'No Grouping')
-    name = 'SubGroup'
-    by_key = 'Aliquot'
-    attribute = 'subgroup'
+    title = "Edit SubGrouping"
+    keys = ("Aliquot", "Identifier", "Step", "Comment", "No Grouping")
+    name = "SubGroup"
+    by_key = "Aliquot"
+    attribute = "subgroup"
 
     # include_j_error_in_individual_analyses = Bool(False)
     # include_j_error_in_mean = Bool(True)
 
     _sorting_enabled = False
-    _parent_group = 'group_id'
+    _parent_group = "group_id"
 
     def load(self, nodedict):
-        self.by_key = nodedict.get('key', 'Aliquot')
+        self.by_key = nodedict.get("key", "Aliquot")
 
     def _clear_grouping(self, unk):
         unk.subgroup = None
@@ -152,11 +174,11 @@ class SubGroupingNode(GroupingNode, Preferred):
         analyses = list(analyses)
         naliquots = len({a.aliquot for a in analyses})
         for attr in SUBGROUPING_ATTRS:
-            if attr == 'age':
+            if attr == "age":
                 continue
 
             pv = self._get_pv(attr)
-            if attr == 'age':
+            if attr == "age":
                 kind, error = WEIGHTED_MEAN, MSEM
             else:
                 kind = WEIGHTED_MEAN if naliquots > 1 else DEFAULT_INTEGRATED
@@ -165,9 +187,14 @@ class SubGroupingNode(GroupingNode, Preferred):
             pv.kind = kind
             pv.error_kind = error
 
-        grouping = {'{}_kind'.format(pv.attr): pv.kind for pv in self.preferred_values}
-        grouping.update({'{}_error_kind'.format(pv.attr): pv.error_kind for pv in self.preferred_values})
-        grouping['nanalyses'] = len(analyses)
+        grouping = {"{}_kind".format(pv.attr): pv.kind for pv in self.preferred_values}
+        grouping.update(
+            {
+                "{}_error_kind".format(pv.attr): pv.error_kind
+                for pv in self.preferred_values
+            }
+        )
+        grouping["nanalyses"] = len(analyses)
 
         return apply_subgrouping(grouping, analyses, gid=gid)
 
@@ -186,25 +213,29 @@ class SubGroupingNode(GroupingNode, Preferred):
 
     def traits_view(self):
 
-        v = okcancel_view(VGroup(VGroup(UItem('by_key',
-                                              style='custom',
-                                              editor=EnumEditor(name='keys')),
-                                        show_border=True, label='Grouping'),
-
-                                 get_preferred_grp(label='Types', show_border=True)),
-                          width=500,
-                          resizable=True,
-                          title=self.title)
+        v = okcancel_view(
+            VGroup(
+                VGroup(
+                    UItem("by_key", style="custom", editor=EnumEditor(name="keys")),
+                    show_border=True,
+                    label="Grouping",
+                ),
+                get_preferred_grp(label="Types", show_border=True),
+            ),
+            width=500,
+            resizable=True,
+            title=self.title,
+        )
         return v
 
 
 class BinNode(BaseNode):
-    analysis_kind = 'unknowns'
+    analysis_kind = "unknowns"
 
     def run(self, state):
         unks = getattr(state, self.analysis_kind)
 
-        key = attrgetter('timestamp')
+        key = attrgetter("timestamp")
         unks = sorted(unks, key=key)
 
         tol_hrs = 1
@@ -220,5 +251,6 @@ class BinNode(BaseNode):
         else:
             for ai in unks:
                 ai.group_id = 0
+
 
 # ============= EOF =============================================

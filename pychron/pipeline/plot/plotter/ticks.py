@@ -20,8 +20,10 @@ from numpy import array, arange
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS, \
-    ANALYSIS_MAPPING_UNDERSCORE_KEY
+from pychron.experiment.utilities.identifier import (
+    ANALYSIS_MAPPING_INTS,
+    ANALYSIS_MAPPING_UNDERSCORE_KEY,
+)
 
 TICKS = array(sorted(ANALYSIS_MAPPING_INTS.values()))
 
@@ -51,7 +53,8 @@ def analysis_type_formatter(x):
     try:
         v = KEYS[int(x)]
     except IndexError:
-        v = ''
+        v = ""
     return v
+
 
 # ============= EOF =============================================

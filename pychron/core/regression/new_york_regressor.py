@@ -17,6 +17,7 @@
 from numpy import linspace, Inf, zeros_like
 from scipy.optimize import fsolve
 from traits.api import Array, Property, Float
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import std_dev, ufloat
@@ -28,7 +29,7 @@ from pychron.pychron_constants import MSE, SE
 
 
 def kron(i, j):
-    """"
+    """ "
     # calculates Kronecker delta
     if i == j:
         return 1.
@@ -39,7 +40,8 @@ def kron(i, j):
 
 
 class YorkRegressor(OLSRegressor):
-    """ York 1969, Mahon 1996"""
+    """York 1969, Mahon 1996"""
+
     xns = Array
     xds = Array
 
@@ -98,8 +100,8 @@ class YorkRegressor(OLSRegressor):
             fyn = ynes / yns  # f36Ar
             fxn = xnes / xns  # f39Ar
 
-            a = (1 + (fyn / fd) ** 2)
-            b = (1 + (fxn / fd) ** 2)
+            a = 1 + (fyn / fd) ** 2
+            b = 1 + (fxn / fd) ** 2
             return (a * b) ** -0.5
         else:
             return zeros_like(self.clean_xs)
@@ -143,7 +145,7 @@ class YorkRegressor(OLSRegressor):
 
     def get_intercept_error(self):
 
-        if self.error_calc_type == 'CI':
+        if self.error_calc_type == "CI":
             e = self.calculate_ci_error(0)[0]
         # elif self.error_calc_type in (SEM, MSEM):
         #     e = (self.get_intercept_variance() ** 0.5) * self.n ** -0.5
@@ -165,9 +167,9 @@ class YorkRegressor(OLSRegressor):
         W = self._calculate_W(b)
         U, V = self._calculate_UV(W)
 
-        sigbsq = 1/sum(W*U**2)
+        sigbsq = 1 / sum(W * U ** 2)
 
-        sigasq = sigbsq*sum(W*self.clean_xs**2)/sum(W)
+        sigasq = sigbsq * sum(W * self.clean_xs ** 2) / sum(W)
 
         self._intercept_variance = sigasq
         return sigbsq
@@ -211,8 +213,9 @@ class YorkRegressor(OLSRegressor):
 
         v = 0
         if len(sx) and len(sy):
-            v = calculate_mswd2(x, y, sx, sy, a, b,
-                                corrcoeffs=self.calculate_correlation_coefficients())
+            v = calculate_mswd2(
+                x, y, sx, sy, a, b, corrcoeffs=self.calculate_correlation_coefficients()
+            )
             self.valid_mswd = validate_mswd(v, len(x), k=2)
 
         return v
@@ -232,7 +235,7 @@ class YorkRegressor(OLSRegressor):
         cnt = 0
         b, a, cnt = self._calculate_slope_intercept(Inf, b, cnt)
         if cnt >= 500:
-            print('regression did not converge')
+            print("regression did not converge")
             #             self.warning('regression did not converge')
         #         else:
         #             self.info('regression converged after {} iterations'.format(cnt))
@@ -242,9 +245,9 @@ class YorkRegressor(OLSRegressor):
 
     def _calculate_slope_intercept(self, pb, b, cnt, total=500, tol=1e-10):
         """
-            recursively calculate slope
-            b=slope
-            a=intercept
+        recursively calculate slope
+        b=slope
+        a=intercept
         """
         a = 0
         if abs(pb - b) < tol or cnt > total:
@@ -265,7 +268,9 @@ class YorkRegressor(OLSRegressor):
             U, V = self._calculate_UV(W)
 
             sumA = sum(W ** 2 * V * (U * var_y + b * V * var_x - r * V * sig_x * sig_y))
-            sumB = sum(W ** 2 * U * (U * var_y + b * V * var_x - b * r * U * sig_x * sig_y))
+            sumB = sum(
+                W ** 2 * U * (U * var_y + b * V * var_x - b * r * U * sig_x * sig_y)
+            )
             try:
                 nb = sumA / sumB
                 b, a, cnt = self._calculate_slope_intercept(b, nb, cnt + 1)
@@ -281,9 +286,8 @@ class YorkRegressor(OLSRegressor):
 
 class NewYorkRegressor(YorkRegressor):
     """
-        mahon 1996
+    mahon 1996
     """
-
 
     def get_slope_variance(self):
         """
@@ -322,23 +326,23 @@ class NewYorkRegressor(YorkRegressor):
 
         # now calculate sigasq and sigbsq
         wksum = sum(W)
-        sigasq = 0.
-        sigbsq = 0.
+        sigasq = 0.0
+        sigbsq = 0.0
 
-        x = (b ** 2 * (V * var_x - 2 * U * sxy) + 2 * b * U * var_y - V * var_y)
-        xx = (b ** 2 * U * var_x + 2 * V * sxy - 2 * b * V * var_x - U * var_y)
+        x = b ** 2 * (V * var_x - 2 * U * sxy) + 2 * b * U * var_y - V * var_y
+        xx = b ** 2 * U * var_x + 2 * V * sxy - 2 * b * V * var_x - U * var_y
         for i, wi in enumerate(W):
             var_xi = var_x[i]
             var_yi = var_y[i]
             sxyi = sxy[i]
 
             # calculate dell theta / dell xi and dell theta / dell yi
-            dthdxi = 0.
-            dthdyi = 0.
+            dthdxi = 0.0
+            dthdyi = 0.0
             ww = wi / wksum
             for j, wj in enumerate(W):
                 # add to dthdxi and dthdyi
-                a = wj ** 2. * (kron(i, j) - ww)
+                a = wj ** 2.0 * (kron(i, j) - ww)
                 dthdxi += a * x[j]
                 # correct equation! not equal to equation 21 in Mahon (1996)
                 dthdyi += a * xx[j]
@@ -348,11 +352,17 @@ class NewYorkRegressor(YorkRegressor):
             dadyi = ww - xbar * dthdyi / dthdb
 
             # now finally add to sigasq and sigbsq
-            sigbsq += dthdxi ** 2. * var_xi + dthdyi ** 2. * var_yi + 2 * sxyi * dthdxi * dthdyi
-            sigasq += dadxi ** 2. * var_xi + dadyi ** 2. * var_yi + 2 * sxyi * dadxi * dadyi
+            sigbsq += (
+                dthdxi ** 2.0 * var_xi
+                + dthdyi ** 2.0 * var_yi
+                + 2 * sxyi * dthdxi * dthdyi
+            )
+            sigasq += (
+                dadxi ** 2.0 * var_xi + dadyi ** 2.0 * var_yi + 2 * sxyi * dadxi * dadyi
+            )
 
         # now divide sigbsq
-        sigbsq /= dthdb ** 2.
+        sigbsq /= dthdb ** 2.0
         self._intercept_variance = sigasq
         return sigbsq
 
@@ -391,11 +401,11 @@ class NewYorkRegressor(YorkRegressor):
         # return var_b
 
 
-
 class ReedYorkRegressor(YorkRegressor):
     """
-        reed 1989
+    reed 1989
     """
+
     _degree = 1
 
     #     def _set_degree(self, d):
@@ -475,28 +485,78 @@ class ReedYorkRegressor(YorkRegressor):
 
     def predict(self, x, *args, **kw):
         """
-            a=Y-bX
+        a=Y-bX
 
-            a=y-intercept
-            b=slope
+        a=y-intercept
+        b=slope
 
         """
         slope, intercept = self.get_slope(), self.get_intercept()
         return slope * x + intercept
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from numpy import ones, array, polyval
     from pylab import plot, show
 
-    xs = [0.89, 1.0, 0.92, 0.87, 0.9, 0.86, 1.08, 0.86, 1.25,
-          1.01, 0.86, 0.85, 0.88, 0.84, 0.79, 0.88, 0.70, 0.81,
-          0.88, 0.92, 0.92, 1.01, 0.88, 0.92, 0.96, 0.85, 1.04
-          ]
-    ys = [0.67, 0.64, 0.76, 0.61, 0.74, 0.61, 0.77, 0.61, 0.99,
-          0.77, 0.73, 0.64, 0.62, 0.63, 0.57, 0.66, 0.53, 0.46,
-          0.79, 0.77, 0.7, 0.88, 0.62, 0.80, 0.74, 0.64, 0.93
-          ]
+    xs = [
+        0.89,
+        1.0,
+        0.92,
+        0.87,
+        0.9,
+        0.86,
+        1.08,
+        0.86,
+        1.25,
+        1.01,
+        0.86,
+        0.85,
+        0.88,
+        0.84,
+        0.79,
+        0.88,
+        0.70,
+        0.81,
+        0.88,
+        0.92,
+        0.92,
+        1.01,
+        0.88,
+        0.92,
+        0.96,
+        0.85,
+        1.04,
+    ]
+    ys = [
+        0.67,
+        0.64,
+        0.76,
+        0.61,
+        0.74,
+        0.61,
+        0.77,
+        0.61,
+        0.99,
+        0.77,
+        0.73,
+        0.64,
+        0.62,
+        0.63,
+        0.57,
+        0.66,
+        0.53,
+        0.46,
+        0.79,
+        0.77,
+        0.7,
+        0.88,
+        0.62,
+        0.80,
+        0.74,
+        0.64,
+        0.93,
+    ]
     exs = ones(27) * 0.01
     eys = ones(27) * 0.01
 
@@ -507,13 +567,9 @@ if __name__ == '__main__':
     exs = 1 / wxs ** 0.5
     eys = 1 / wys ** 0.5
 
-    plot(xs, ys, 'o')
+    plot(xs, ys, "o")
 
-    reg = NewYorkRegressor(
-        ys=ys,
-        xs=xs,
-        xserr=exs,
-        yserr=eys)
+    reg = NewYorkRegressor(ys=ys, xs=xs, xserr=exs, yserr=eys)
 
     m, b = reg.get_slope(), reg.get_intercept()
     xs = linspace(0, 8)

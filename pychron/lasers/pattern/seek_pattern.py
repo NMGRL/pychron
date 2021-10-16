@@ -21,10 +21,12 @@ from chaco.default_colormaps import hot
 from chaco.scatterplot import render_markers
 from traits.api import List, Float, Int, Enum, CFloat, Instance
 from traitsui.api import View, Item, UItem
+
 # ============= standard library imports ========================
 import math
 from collections import defaultdict
 from numpy import polyfit, linspace, hstack, average, zeros, uint8, arange
+
 # ============= local library imports  ==========================
 from pychron.lasers.pattern.patterns import Pattern
 from six.moves import zip
@@ -37,8 +39,8 @@ class CurrentPointOverlay(AbstractOverlay):
         if self._points:
             with gc:
                 pts = self.component.map_screen(self._points)
-                render_markers(gc, pts[1:], 'circle', 3, (0, 1, 0), 1, (0, 1, 0))
-                render_markers(gc, pts[:1], 'circle', 3, (1, 1, 0), 1, (1, 1, 0))
+                render_markers(gc, pts[1:], "circle", 3, (0, 1, 0), 1, (0, 1, 0))
+                render_markers(gc, pts[:1], "circle", 3, (1, 1, 0), 1, (1, 1, 0))
 
     def add_point(self, pt):
         self._points.append(pt)
@@ -64,10 +66,10 @@ def calculate_center(ps):
     spts = [rotate(*p, theta=-theta) for p in pts]
 
     x1, y1 = spts[0]
-    b2 = base / 2.
+    b2 = base / 2.0
     height = 3 ** 0.5 / 2 * base
     bx = x1 + b2
-    by = y1 + 1 / 3. * height
+    by = y1 + 1 / 3.0 * height
 
     cx, cy = rotate(bx, by, theta=theta)
     return cx, cy
@@ -99,8 +101,8 @@ def triangulator(pts, side):
     # mx = (x1 * s11 + x2 * s22)  # / 2.
     # my = (y1 * s11 + y2 * s22)  # / 2.
 
-    mx = (x1 + x2) / 2.
-    my = (y1 + y2) / 2.
+    mx = (x1 + x2) / 2.0
+    my = (y1 + y2) / 2.0
     v1 = mx - ox
     v2 = my - oy
     l = (v1 ** 2 + v2 ** 2) ** 0.5
@@ -116,7 +118,7 @@ def triangulator(pts, side):
 
 
 def height(b):
-    return (3 ** 0.5) / 2. * b
+    return (3 ** 0.5) / 2.0 * b
 
 
 class Point:
@@ -137,7 +139,7 @@ class Triangle:
         h = height(base)
         self._height = h
 
-        self._points = [Point(0, 0), Point(base, 0), Point(base / 2., h)]
+        self._points = [Point(0, 0), Point(base, 0), Point(base / 2.0, h)]
 
         self.clear_point_cnts()
 
@@ -162,8 +164,9 @@ class Triangle:
     def point_xy(self, idx=None):
         if idx is None:
 
-            pts = sorted([p for p in self._points],
-                         key=lambda px: px.score, reverse=True)
+            pts = sorted(
+                [p for p in self._points], key=lambda px: px.score, reverse=True
+            )
 
             x, y, opt = triangulator(pts, self._height)
             self._points.remove(opt)
@@ -191,13 +194,13 @@ class Triangle:
     def centered(self, cx, cy):
         base = self.base
         h = self._height
-        x1 = cx - (1 / 2.) * base
-        x2 = cx + (1 / 2.) * base
+        x1 = cx - (1 / 2.0) * base
+        x2 = cx + (1 / 2.0) * base
         x3 = cx
 
-        y1 = cy - (1 / 3.) * h
+        y1 = cy - (1 / 3.0) * h
         y2 = y1
-        y3 = cy + (2 / 3.) * h
+        y3 = cy + (2 / 3.0) * h
 
         pts = Point(x2, y2), Point(x1, y1), Point(x3, y3)
         self._points = list(pts)
@@ -233,16 +236,16 @@ class SeekPattern(Pattern):
     pre_seek_delay = Float(0.25)
     saturation_threshold = Float(0.75)
 
-    mask_kind = Enum('Hole', 'Beam', 'Custom')
+    mask_kind = Enum("Hole", "Beam", "Custom")
     custom_mask_radius = Float
 
     _points = List
     _data = List
 
-    execution_graph = Instance('pychron.graph.graph.Graph', transient=True)
+    execution_graph = Instance("pychron.graph.graph.Graph", transient=True)
 
     def execution_graph_view(self):
-        v = View(UItem('execution_graph', style='custom'))
+        v = View(UItem("execution_graph", style="custom"))
         return v
 
     def setup_execution_graph(self):
@@ -257,12 +260,12 @@ class SeekPattern(Pattern):
         xs = linspace(-r, r)
         xs2 = xs[::-1]
         ys = (r ** 2 - xs ** 2) ** 0.5
-        ys2 = -(r ** 2 - xs2 ** 2) ** 0.5
+        ys2 = -((r ** 2 - xs2 ** 2) ** 0.5)
 
-        g.new_series(x=hstack((xs, xs2)), y=hstack((ys, ys2)), type='line')
+        g.new_series(x=hstack((xs, xs2)), y=hstack((ys, ys2)), type="line")
 
-        g.set_x_title('X (mm)', plotid=0)
-        g.set_y_title('Y (mm)', plotid=0)
+        g.set_x_title("X (mm)", plotid=0)
+        g.set_y_title("Y (mm)", plotid=0)
 
         # g.new_plot(padding_top=10, padding_bottom=20, padding_right=20, padding_left=60)
         # g.new_series(type='line')
@@ -272,8 +275,8 @@ class SeekPattern(Pattern):
 
         g.new_plot(padding_right=10)
         g.new_series()
-        g.set_y_title('Score', plotid=1)
-        g.set_x_title('Time (s)', plotid=1)
+        g.set_y_title("Score", plotid=1)
+        g.set_x_title("Time (s)", plotid=1)
 
         # name = 'imagedata{:03d}'.format(i)
         # plotdata.set_data(name, ones(wh))
@@ -286,8 +289,8 @@ class SeekPattern(Pattern):
         imgplot.x_grid.visible = False
         imgplot.y_grid.visible = False
 
-        imgplot.data.set_data('imagedata', zeros((5, 5, 3), dtype=uint8))
-        imgplot.img_plot('imagedata', colormap=hot, origin='top left')
+        imgplot.data.set_data("imagedata", zeros((5, 5, 3), dtype=uint8))
+        imgplot.img_plot("imagedata", colormap=hot, origin="top left")
 
         g.set_x_limits(-r, r)
         g.set_y_limits(-r, r)
@@ -301,14 +304,16 @@ class SeekPattern(Pattern):
         return imgplot, cp
 
     def validate(self, xx, yy):
-        return ((xx - self.cx) ** 2 + (yy - self.cy) ** 2) ** 0.5 <= self.perimeter_radius
+        return (
+            (xx - self.cx) ** 2 + (yy - self.cy) ** 2
+        ) ** 0.5 <= self.perimeter_radius
 
     def reduce_vector_magnitude(self, px, py, scalar=1.0):
         vx, vy = (px - self.cx), (py - self.cy)
         mag = (vx ** 2 + vy ** 2) ** 0.5
         px = vx * self.perimeter_radius / mag * scalar
         py = vy * self.perimeter_radius / mag * scalar
-        return px+self.cx, py+self.cy
+        return px + self.cx, py + self.cy
 
     @property
     def total_duration(self):
@@ -341,7 +346,7 @@ class SeekPattern(Pattern):
                             # construct a new triangle centered at weighted centroid of current points
                             # weighted by score
                             p1, p2, p3 = tri.weighted_centroid()
-                            print('using weighted centroid')
+                            print("using weighted centroid")
                             yield p1
                             yield p2
                             yield p3
@@ -352,7 +357,7 @@ class SeekPattern(Pattern):
                 tri.discount()
 
                 if tri.point_cnt(pt) > 1:
-                    print('using centered')
+                    print("using centered")
                     self._data = []
                     tri.clear_point_cnts()
                     tri.set_scalar(0.75)
@@ -365,7 +370,7 @@ class SeekPattern(Pattern):
                     continue
 
                 if not self._validate(pt):
-                    print('using invalid')
+                    print("using invalid")
                     self._tri = tri = Triangle(self.base)
                     yield tri.point_xy(0)
                     yield tri.point_xy(1)
@@ -401,36 +406,59 @@ class SeekPattern(Pattern):
 
     def set_point(self, z, pt):
         self._data.append(z)
-        self._data = self._data[-self.limit:]
+        self._data = self._data[-self.limit :]
 
         pt.score = z
         # self._tri.set_point(z, pt)
 
     def maker_view(self):
-        v = View(Item('manual_total_duration', label='Total Duration (s)',
-                      tooltip='Total duration of search (in seconds)'),
-                 Item('duration',
-                      label='Dwell Duration (s)',
-                      tooltip='Amount of time (in seconds) to wait at each point. '
-                              'The brightness value is average of all measurements taken '
-                              'while moving AND waiting at the vertex'),
-                 Item('pre_seek_delay', label='Pre Search Delay (s)',
-                      tooltip='Turn laser on and wait N seconds before starting search'),
-                 Item('velocity',
-                      label='Velocity (mm/s)'),
-                 Item('perimeter_radius',
-                      label='Perimeter Radius (mm)',
-                      tooltip='Limit the search to a circular area with this radius (in mm)'),
-                 Item('base',
-                      label='Side (mm)',
-                      tooltip="Length (in mm) of the search triangle's side"),
-                 Item('saturation_threshold', label='Saturation Threshold',
-                      tooltip='If the saturation score is greater than X then do not move'),
-                 Item('mask_kind', label='Mask', tooltip="Define the lumen detector's mask as Hole, Beam, Custom."
-                                                         "Beam= Beam radius + 10%\n"
-                                                         "Hole= Hole radius"),
-                 Item('custom_mask_radius', label='Mask Radius (mm)',
-                      visible_when='mask_kind=="Custom"'))
+        v = View(
+            Item(
+                "manual_total_duration",
+                label="Total Duration (s)",
+                tooltip="Total duration of search (in seconds)",
+            ),
+            Item(
+                "duration",
+                label="Dwell Duration (s)",
+                tooltip="Amount of time (in seconds) to wait at each point. "
+                "The brightness value is average of all measurements taken "
+                "while moving AND waiting at the vertex",
+            ),
+            Item(
+                "pre_seek_delay",
+                label="Pre Search Delay (s)",
+                tooltip="Turn laser on and wait N seconds before starting search",
+            ),
+            Item("velocity", label="Velocity (mm/s)"),
+            Item(
+                "perimeter_radius",
+                label="Perimeter Radius (mm)",
+                tooltip="Limit the search to a circular area with this radius (in mm)",
+            ),
+            Item(
+                "base",
+                label="Side (mm)",
+                tooltip="Length (in mm) of the search triangle's side",
+            ),
+            Item(
+                "saturation_threshold",
+                label="Saturation Threshold",
+                tooltip="If the saturation score is greater than X then do not move",
+            ),
+            Item(
+                "mask_kind",
+                label="Mask",
+                tooltip="Define the lumen detector's mask as Hole, Beam, Custom."
+                "Beam= Beam radius + 10%\n"
+                "Hole= Hole radius",
+            ),
+            Item(
+                "custom_mask_radius",
+                label="Mask Radius (mm)",
+                visible_when='mask_kind=="Custom"',
+            ),
+        )
         return v
 
     def replot(self):
@@ -441,8 +469,10 @@ class SeekPattern(Pattern):
 
     def _execution_graph_default(self):
         from pychron.graph.graph import Graph
-        g = Graph(container_dict={'kind': 'h'})
+
+        g = Graph(container_dict={"kind": "h"})
         return g
+
 
 # def test1():
 #     from numpy import zeros, ogrid

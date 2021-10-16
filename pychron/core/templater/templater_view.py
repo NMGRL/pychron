@@ -16,7 +16,15 @@
 
 # ============= enthought library imports =======================
 from traits.api import Int, Str
-from traitsui.api import Item, VGroup, HGroup, ListStrEditor, EnumEditor, UItem, Controller
+from traitsui.api import (
+    Item,
+    VGroup,
+    HGroup,
+    ListStrEditor,
+    EnumEditor,
+    UItem,
+    Controller,
+)
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -31,23 +39,35 @@ class BaseTemplateView(Controller):
 
     # views
     def _get_main_view(self):
-        return VGroup(HGroup(Item('predefined_label',
-                                  editor=EnumEditor(name='predefined_labels'))),
-                      UItem('attributes',
-                            editor=ListStrEditor(
-                                editable=False,
-                                activated='activated')),
-                      BorderHGroup(UItem('label'),
-                                   icon_button_editor('clear_button', 'clear',
-                                                      tooltip='Clear current label'),
-                                   icon_button_editor('add_label_button', 'add',
-                                                      enabled_when='add_enabled',
-                                                      tooltip='Save current label to the predefined list'),
-                                   icon_button_editor('delete_label_button', 'delete',
-                                                      enabled_when='delete_enabled',
-                                                      tooltip='Remove current label from the predefined list'),
-                                   label='Label'),
-                      BorderHGroup(UItem('example', style='readonly'), label='Example'))
+        return VGroup(
+            HGroup(
+                Item("predefined_label", editor=EnumEditor(name="predefined_labels"))
+            ),
+            UItem(
+                "attributes",
+                editor=ListStrEditor(editable=False, activated="activated"),
+            ),
+            BorderHGroup(
+                UItem("label"),
+                icon_button_editor(
+                    "clear_button", "clear", tooltip="Clear current label"
+                ),
+                icon_button_editor(
+                    "add_label_button",
+                    "add",
+                    enabled_when="add_enabled",
+                    tooltip="Save current label to the predefined list",
+                ),
+                icon_button_editor(
+                    "delete_label_button",
+                    "delete",
+                    enabled_when="delete_enabled",
+                    tooltip="Remove current label from the predefined list",
+                ),
+                label="Label",
+            ),
+            BorderHGroup(UItem("example", style="readonly"), label="Example"),
+        )
 
     def _get_additional_groups(self):
         pass
@@ -58,9 +78,8 @@ class BaseTemplateView(Controller):
         if grps:
             vg.content.extend(grps)
 
-        v = okcancel_view(vg,
-                          width=self.width,
-                          title=self.view_title)
+        v = okcancel_view(vg, width=self.width, title=self.view_title)
         return v
+
 
 # ============= EOF =============================================

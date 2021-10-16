@@ -15,48 +15,48 @@
 # ===============================================================================
 import requests
 
-DEFS_URL = 'http://macrostrat.org/api/defs'
+DEFS_URL = "http://macrostrat.org/api/defs"
 CACHED_LITHOLOGIES = None
 
 
 def get_minerals(min_type=None):
     s = requests.Session()
 
-    url = '{}/minerals?'.format(DEFS_URL)
+    url = "{}/minerals?".format(DEFS_URL)
     if min_type:
-        url = '{}mineral_type={}'.format(min_type)
+        url = "{}mineral_type={}".format(min_type)
     else:
-        url = '{}all'.format(url)
+        url = "{}all".format(url)
 
     r = s.get(url)
     obj = r.json()
 
-    return obj['success']['data']
+    return obj["success"]["data"]
 
 
 def get_lithologies(lith_type=None, lith_class=None, lith_group=None):
     s = requests.Session()
 
-    url = '{}/lithologies?'.format(DEFS_URL)
+    url = "{}/lithologies?".format(DEFS_URL)
     qs = []
     if lith_type:
-        qs.append('lith_type={}'.format(lith_type))
+        qs.append("lith_type={}".format(lith_type))
 
     if lith_class:
-        qs.append('lith_class={}'.format(lith_class))
+        qs.append("lith_class={}".format(lith_class))
 
     if lith_group:
-        qs.append('lith_group={}'.format(lith_group))
+        qs.append("lith_group={}".format(lith_group))
 
     if not qs:
-        url = '{}all'.format(url)
+        url = "{}all".format(url)
     else:
-        url = '{}{}'.format(url, '&'.join(qs))
+        url = "{}{}".format(url, "&".join(qs))
 
     r = s.get(url)
 
     obj = r.json()
-    return obj['success']['data']
+    return obj["success"]["data"]
 
 
 def get_lithology_values():
@@ -69,10 +69,10 @@ def get_lithology_values():
         types = []
         liths = []
         for li in ls:
-            groups.append(li['group'])
-            types.append(li['type'])
-            classes.append(li['class'])
-            liths.append(li['name'])
+            groups.append(li["group"])
+            types.append(li["type"])
+            classes.append(li["class"])
+            liths.append(li["name"])
 
         ret = [sorted(list(set(a))) for a in (liths, groups, classes, types)]
         CACHED_LITHOLOGIES = ret
@@ -80,16 +80,12 @@ def get_lithology_values():
     return ret
 
 
-if __name__ == '__main__':
-    rets= get_lithology_values()
-    names = 'liths','groups','classes','types'
+if __name__ == "__main__":
+    rets = get_lithology_values()
+    names = "liths", "groups", "classes", "types"
     for (n, vs) in zip(names, rets):
-        with open('/Users/ross/Desktop/defs_{}.txt'.format(n), 'w') as wfile:
+        with open("/Users/ross/Desktop/defs_{}.txt".format(n), "w") as wfile:
             for vi in vs:
-                wfile.write('{}\n'.format(vi))
-
-
-
-
+                wfile.write("{}\n".format(vi))
 
 # ============= EOF =============================================

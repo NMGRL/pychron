@@ -37,8 +37,8 @@ class GosubPopupWidget(QWidget):
             self.text.setPlainText(text)
 
         else:
-            self.text = QLabel('Invalid Gosub')
-            self.text.setStyleSheet('QLabel {color: green; font-size: 30px}')
+            self.text = QLabel("Invalid Gosub")
+            self.text.setStyleSheet("QLabel {color: green; font-size: 30px}")
 
         layout.addWidget(self.text)
         self.setLayout(layout)
@@ -46,6 +46,3 @@ class GosubPopupWidget(QWidget):
 
 
 # ============= EOF =============================================
-
-
-

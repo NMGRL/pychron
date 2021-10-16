@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Dict
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
@@ -23,40 +24,41 @@ from pychron.hardware.core.core_device import CoreDevice
 
 class QtegraDevice(CoreDevice):
     """
-        qtegra_monitor.cfg
+    qtegra_monitor.cfg
 
-        [General]
-        name=Jan
-        [Communications]
-        type=ethernet
-        host=localhost
-        port=1069
-        [Parameters]
-        manometer=MKS 1000
+    [General]
+    name=Jan
+    [Communications]
+    type=ethernet
+    host=localhost
+    port=1069
+    [Parameters]
+    manometer=MKS 1000
 
-        dashboard.yaml
-        - name: JanMonitor
+    dashboard.yaml
+    - name: JanMonitor
+      enabled: True
+      device: qtegra_monitor
+      values:
+        - name: JanTrapCurrent
+          func: get_trap_current
           enabled: True
-          device: qtegra_monitor
-          values:
-            - name: JanTrapCurrent
-              func: get_trap_current
-              enabled: True
-              period: on_change
-            - name: JanEmission
-              func: get_emission
-              enabled: True
-              period: on_change
-            - name: JanDecabinTemp
-              func: get_decabin_temperature
-              enabled: True
-              period: on_change
+          period: on_change
+        - name: JanEmission
+          func: get_emission
+          enabled: True
+          period: on_change
+        - name: JanDecabinTemp
+          func: get_decabin_temperature
+          enabled: True
+          period: on_change
     """
+
     _parameters = Dict
 
     def load_additional_args(self, config):
 
-        section = 'Parameters'
+        section = "Parameters"
         if config.has_section(section):
             for opt in config.options(section):
                 v = config.get(section, opt)
@@ -65,30 +67,30 @@ class QtegraDevice(CoreDevice):
         return True
 
     def __getattr__(self, item):
-        if item.startswith('read_'):
+        if item.startswith("read_"):
             param = self._parameters.get(item[5:])
             if param:
                 return self.get_parameter(param)
 
     def read_decabin_temperature(self, **kw):
-        v = self.get_parameter('Temp1')
+        v = self.get_parameter("Temp1")
         if v is not None:
             self.last_response = str(round(v, 1))
 
         return v
 
     def read_trap_current(self, **kw):
-        return self.get_parameter('Trap Current Readback')
+        return self.get_parameter("Trap Current Readback")
 
     def read_emission(self, **kw):
-        return self.get_parameter('Source Current Readback')
+        return self.get_parameter("Source Current Readback")
 
     def read_hv(self):
-        v = self.ask('GetHV')
+        v = self.ask("GetHV")
         return self._parse_response(v)
 
     def get_parameter(self, m):
-        v = self.ask('GetParameter {}'.format(m))
+        v = self.ask("GetParameter {}".format(m))
         return self._parse_response(v)
 
     def _parse_response(self, v):
@@ -96,5 +98,6 @@ class QtegraDevice(CoreDevice):
             return float(v)
         except (ValueError, TypeError):
             return self.get_random_value()
+
 
 # ============= EOF =============================================

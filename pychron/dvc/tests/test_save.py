@@ -30,31 +30,36 @@ from pychron.paths import paths
 
 
 def test_save_persister():
-    paths.build('_dev')
+    paths.build("_dev")
     dvc = DVC(bind=False)
     dvc.db.connect()
 
     per = DVCPersister(dvc=dvc)
 
     run_spec = AutomatedRunSpec()
-    run_spec.labnumber = '10001'
-    run_spec.project = 'Test'
+    run_spec.labnumber = "10001"
+    run_spec.project = "Test"
 
     arar = ArArAge()
-    arar.isotopes['Ar40'] = Isotope(xs=[1, 2, 3], ys=[1, 2, 3],
-                                    name='Ar40', detector='H1')
+    arar.isotopes["Ar40"] = Isotope(
+        xs=[1, 2, 3], ys=[1, 2, 3], name="Ar40", detector="H1"
+    )
     sd = {}
-    dd = {'H1': 100}
-    gd = {'H1': 1.021}
-    per_spec = PersistenceSpec(run_spec=run_spec,
-                               arar_age=arar,
-                               spec_dict=sd,
-                               defl_dict=dd,
-                               gains=gd,
-                               positions=[1, ],
-                               experiment_queue_name='testexp.txt',
-                               measurement_name='jan_unknown.py',
-                               extraction_name='foo.py')
+    dd = {"H1": 100}
+    gd = {"H1": 1.021}
+    per_spec = PersistenceSpec(
+        run_spec=run_spec,
+        arar_age=arar,
+        spec_dict=sd,
+        defl_dict=dd,
+        gains=gd,
+        positions=[
+            1,
+        ],
+        experiment_queue_name="testexp.txt",
+        measurement_name="jan_unknown.py",
+        extraction_name="foo.py",
+    )
 
     per.per_spec_save(per_spec)
     # per.pre_extraction_save()
@@ -63,6 +68,6 @@ def test_save_persister():
     # per.post_measurement_save()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_save_persister()
 # ============= EOF =============================================

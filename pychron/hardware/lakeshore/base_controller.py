@@ -26,9 +26,9 @@ import re
 import time
 import string
 
-IDN_RE = re.compile(r'\w{4},\w{8},\w{7}\/[\w\#]{7},\d.\d')
+IDN_RE = re.compile(r"\w{4},\w{8},\w{7}\/[\w\#]{7},\d.\d")
 
-PRED_RE = re.compile(r'(?P<name>[A-Za-z])')
+PRED_RE = re.compile(r"(?P<name>[A-Za-z])")
 
 
 class RangeTest:
@@ -38,7 +38,7 @@ class RangeTest:
         self._attr = None
         match = PRED_RE.search(test)
         if match:
-            self._attr = match.group('name')
+            self._attr = match.group("name")
 
     def test(self, v):
         if self._attr and eval(self._test, {self._attr: float(v)}):
@@ -46,8 +46,8 @@ class RangeTest:
 
 
 class BaseLakeShoreController(CoreDevice):
-    units = Enum('C', 'K')
-    scan_func = 'update'
+    units = Enum("C", "K")
+    scan_func = "update"
 
     input_a = Float
     input_b = Float
@@ -64,41 +64,41 @@ class BaseLakeShoreController(CoreDevice):
     graph_klass = StreamStackedGraph
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'units', 'General', 'units', default='K')
+        self.set_attribute(config, "units", "General", "units", default="K")
 
         # [Range]
         # 1=v<10
         # 2=10<v<30
         # 3=v>30
 
-        if config.has_section('Range'):
-            items = config.items('Range')
+        if config.has_section("Range"):
+            items = config.items("Range")
 
         else:
-            items = [(1, 'v<10'), (2, '10<v<30'), (3, 'v>30')]
+            items = [(1, "v<10"), (2, "10<v<30"), (3, "v>30")]
 
         if items:
             self.range_tests = [RangeTest(*i) for i in items]
 
-        if config.has_section('IOConfig'):
-            iodict = dict(config.items('IOConfig'))
-            self.num_inputs = int(iodict['num_inputs'])
-            for i, tag in enumerate(string.ascii_lowercase[:self.num_inputs]):
+        if config.has_section("IOConfig"):
+            iodict = dict(config.items("IOConfig"))
+            self.num_inputs = int(iodict["num_inputs"])
+            for i, tag in enumerate(string.ascii_lowercase[: self.num_inputs]):
                 try:
-                    self.ionames.append(iodict['input_{}_name'.format(tag)])
+                    self.ionames.append(iodict["input_{}_name".format(tag)])
                 except ValueError:
-                    self.ionames.append('input_{}'.format(tag))
-                self.iolist.append('input_{}'.format(tag))
-                mapsetpoint = iodict['input_{}'.format(tag)]
-                if mapsetpoint.lower() == 'none':
+                    self.ionames.append("input_{}".format(tag))
+                self.iolist.append("input_{}".format(tag))
+                mapsetpoint = iodict["input_{}".format(tag)]
+                if mapsetpoint.lower() == "none":
                     self.iomap.append(None)
                 else:
                     self.iomap.append(mapsetpoint)
         else:
             self.num_inputs = 2
-            self.iolist = ['input_a', 'input_b']
-            self.ionames = ['', '', '', '']
-            self.iomap = ['setpoint1', 'setpoint2', 'setpoint3', 'setpoint4']
+            self.iolist = ["input_a", "input_b"]
+            self.ionames = ["", "", "", ""]
+            self.iomap = ["setpoint1", "setpoint2", "setpoint3", "setpoint4"]
 
         return True
 
@@ -107,19 +107,19 @@ class BaseLakeShoreController(CoreDevice):
         return super(BaseLakeShoreController, self).initialize(*args, **kw)
 
     def test_connection(self):
-        self.tell('*CLS')
-        resp = self.ask('*IDN?')
+        self.tell("*CLS")
+        resp = self.ask("*IDN?")
         return bool(IDN_RE.match(resp))
 
     def update(self, **kw):
         for tag in self.iolist:
-            func = getattr(self, 'read_{}'.format(tag))
+            func = getattr(self, "read_{}".format(tag))
             v = func(**kw)
             setattr(self, tag, v)
 
         for tag in self.iomap:
             v = self.read_setpoint(tag)
-            setattr(self, '{}_readback'.format(tag), v)
+            setattr(self, "{}_readback".format(tag), v)
         return self._update_hook()
 
     def setpoints_achieved(self, tol=1):
@@ -149,7 +149,7 @@ class BaseLakeShoreController(CoreDevice):
         for i, v in enumerate(setpoints):
             if v is not None:
                 idx = i + 1
-                setattr(self, 'setpoint{}'.format(idx), v)
+                setattr(self, "setpoint{}".format(idx), v)
 
         if block:
             delay = max(0.5, delay)
@@ -173,7 +173,7 @@ class BaseLakeShoreController(CoreDevice):
             if sp==v:
                 break
             time.sleep(1)
-            
+
         else:
             self.warning_dialog('Failed setting setpoint to {}. Got={}'.format(v, sp))
 
@@ -188,7 +188,7 @@ class BaseLakeShoreController(CoreDevice):
         for r in self.range_tests:
             ra = r.test(v)
             if ra:
-                self.tell('RANGE {},{}'.format(output, ra))
+                self.tell("RANGE {},{}".format(output, ra))
                 break
 
         time.sleep(1)
@@ -199,14 +199,14 @@ class BaseLakeShoreController(CoreDevice):
         return self._read_input(v, self.units, **kw)
 
     def read_input_a(self, **kw):
-        return self._read_input('a', self.units, **kw)
+        return self._read_input("a", self.units, **kw)
 
     def read_input_b(self, **kw):
-        return self._read_input('b', self.units, **kw)
+        return self._read_input("b", self.units, **kw)
 
     @get_float(default=0)
-    def _read_input(self, tag, mode='C', verbose=False):
-        return self.ask('{}RDG? {}'.format(mode, tag), verbose=verbose)
+    def _read_input(self, tag, mode="C", verbose=False):
+        return self.ask("{}RDG? {}".format(mode, tag), verbose=verbose)
 
     def _setpoint1_changed(self):
         self.set_setpoint(self.setpoint1, 1)

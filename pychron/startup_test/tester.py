@@ -31,7 +31,7 @@ class TestResult(HasTraits):
     name = Str
     plugin = Str
     duration = Float
-    result = Enum('Passed', 'Failed', 'Skipped', 'Invalid')
+    result = Enum("Passed", "Failed", "Skipped", "Invalid")
     description = Str
     error = Str
 
@@ -48,11 +48,15 @@ class StartupTester(Loggable):
         try:
             tests = self._get_tests(pname)
         except KeyError:
-            self.warning('Could not load tests for "{}". Check startup_test.yaml format'.format(pname))
+            self.warning(
+                'Could not load tests for "{}". Check startup_test.yaml format'.format(
+                    pname
+                )
+            )
             return
 
         if not tests:
-            self.debug('No tests for {}'.format(pname))
+            self.debug("No tests for {}".format(pname))
             return
 
         for ti in tests:
@@ -60,51 +64,61 @@ class StartupTester(Loggable):
                 func = getattr(plugin, ti)
             except AttributeError:
                 self.warning('Invalid test "{}" for plugin "{}"'.format(ti, pname))
-                self.add_test_result(plugin=pname, name=ti, result='Invalid')
+                self.add_test_result(plugin=pname, name=ti, result="Invalid")
                 continue
 
             try:
-                description = getattr(plugin, '{}_description'.format(ti))
+                description = getattr(plugin, "{}_description".format(ti))
             except AttributeError:
-                description = ''
+                description = ""
 
             self.info('Testing "{} - {}"'.format(pname, ti))
             st = time.time()
             try:
                 result, error = func()
             except ValueError as e:
-                self.critical('Invalid function {} {}'.format(plugin.name, ti))
+                self.critical("Invalid function {} {}".format(plugin.name, ti))
                 raise e
-            self.info('Test result={}'.format(result))
+            self.info("Test result={}".format(result))
             if isinstance(result, bool):
-                result = 'Passed' if result else 'Failed'
+                result = "Passed" if result else "Failed"
             elif result is None:
-                result = 'Invalid'
+                result = "Invalid"
 
             # try:
             #     error = getattr(plugin, '{}_error'.format(ti))
             # except AttributeError:
             #     error = ''
 
-            self.add_test_result(name=ti, plugin=pname,
-                                 description=description,
-                                 duration=time.time() - st,
-                                 error=error or '',
-                                 result=result)
+            self.add_test_result(
+                name=ti,
+                plugin=pname,
+                description=description,
+                duration=time.time() - st,
+                error=error or "",
+                result=result,
+            )
 
     def ok_close(self):
         ok = True
-        specresult = next((ri for ri in self.results
-                           if 'spectrometer' in ri.plugin.lower() and ri.name == 'test_communication'), None)
+        specresult = next(
+            (
+                ri
+                for ri in self.results
+                if "spectrometer" in ri.plugin.lower()
+                and ri.name == "test_communication"
+            ),
+            None,
+        )
         if specresult:
-            ok = specresult.result == 'Passed'
+            ok = specresult.result == "Passed"
         return ok
 
     def add_test_result(self, **kw):
         """
-            rdict is a dictionary with the follow key:value_type
+        rdict is a dictionary with the follow key:value_type
 
-            name: str, duration: float, result: enum('Passed', 'Fail', 'Skipped', 'Invalid')
+        name: str, duration: float, result: enum('Passed', 'Fail', 'Skipped', 'Invalid')
         """
 
         if kw:
@@ -115,11 +129,22 @@ class StartupTester(Loggable):
             # for ti in self._tests:
             #     print(ti['plugin'].lower() , name.lower())
 
-            ts = next((ti['tests'] for ti in self._tests if ti['plugin'].lower() == name.lower()), None)
+            ts = next(
+                (
+                    ti["tests"]
+                    for ti in self._tests
+                    if ti["plugin"].lower() == name.lower()
+                ),
+                None,
+            )
             if ts is None:
-                self.debug('------------ Plugin "{}" not in startup_tests.yaml'.format(name))
-                self.debug(','.join((ti['plugin'] for ti in self._tests)))
-                self.debug('---------------------------------------------------------------')
+                self.debug(
+                    '------------ Plugin "{}" not in startup_tests.yaml'.format(name)
+                )
+                self.debug(",".join((ti["plugin"] for ti in self._tests)))
+                self.debug(
+                    "---------------------------------------------------------------"
+                )
             return ts
 
     def _load(self):
@@ -127,11 +152,13 @@ class StartupTester(Loggable):
             yd = yload(paths.startup_tests)
             return yd
         else:
-            self.warning('No Startup Test file located at "{}"'.format(paths.startup_tests))
+            self.warning(
+                'No Startup Test file located at "{}"'.format(paths.startup_tests)
+            )
 
     @property
     def all_passed(self):
-        a = all([ri.result in ('Passed', 'Skipped') for ri in self.results])
+        a = all([ri.result in ("Passed", "Skipped") for ri in self.results])
         return a
 
         # ============= EOF =============================================
@@ -210,5 +237,3 @@ class StartupTester(Loggable):
         #
         #     return ret
         #
-
-

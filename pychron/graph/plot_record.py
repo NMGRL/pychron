@@ -21,6 +21,8 @@
 
 from __future__ import absolute_import
 from six.moves import zip
+
+
 class PlotRecord(object):
     data = None
     plotids = None
@@ -37,17 +39,18 @@ class PlotRecord(object):
             return (self.data,)
 
     def __str__(self, *args, **kwargs):
-        fmt_str = '{}={:0.3f}'
+        fmt_str = "{}={:0.3f}"
         s = []
         for a in zip(self.labels, self.data):
             s.append(fmt_str.format(*a))
 
-        return ', '.join(s)
+        return ", ".join(s)
 
     def __getitem__(self, item):
         return self.data[item]
 
     def __iter__(self):
         return iter(self.data)
+
 
 # ============= EOF =====================================

@@ -31,16 +31,16 @@ from pychron.pychron_constants import IRRADIATION_KEYS
 
 # ============= local library imports  ==========================
 
-STATUS_MAP = {0: 'ok', 1: 'omit', 2: 'invalid'}
+STATUS_MAP = {0: "ok", 1: "omit", 2: "invalid"}
 
 
 def get_fn(blob):
     fn = None
     if blob is not None:
-        blob = blob.decode('utf-8')
-        ps = blob.strip().split('\n')
+        blob = blob.decode("utf-8")
+        ps = blob.strip().split("\n")
         fn = len(ps)
-        if fn == 1 and ps[0] == '':
+        if fn == 1 and ps[0] == "":
             fn = 0
 
     return fn
@@ -51,13 +51,13 @@ class Blob:
         self._buf = BytesIO(v)
 
     def short(self):
-        return struct.unpack('>h', self._buf.read(2))[0]
+        return struct.unpack(">h", self._buf.read(2))[0]
 
     def single(self):
-        return struct.unpack('>f', self._buf.read(4))[0]
+        return struct.unpack(">f", self._buf.read(4))[0]
 
     def double(self):
-        return struct.unpack('>d', self._buf.read(8))[0]
+        return struct.unpack(">d", self._buf.read(8))[0]
 
 
 class MassSpecAnalysis(Analysis):
@@ -102,7 +102,7 @@ class MassSpecAnalysis(Analysis):
             self.tag = STATUS_MAP.get(changeable.StatusLevel)
             prefs = changeable.preferences_set
             if prefs:
-                fo = prefs.DelOutliersAfterFit == 'true'
+                fo = prefs.DelOutliersAfterFit == "true"
                 fi = int(prefs.NFilterIter)
                 fs = int(prefs.OutlierSigmaFactor)
                 self.lambda_k = prefs.Lambda40Kepsilon + prefs.Lambda40KBeta
@@ -122,7 +122,9 @@ class MassSpecAnalysis(Analysis):
             if arar:
                 try:
                     k = key[2:]
-                    tv, te = getattr(arar, 'Tot{}'.format(k)), getattr(arar, 'Tot{}Er'.format(k))
+                    tv, te = getattr(arar, "Tot{}".format(k)), getattr(
+                        arar, "Tot{}Er".format(k)
+                    )
                 except AttributeError:
                     pass
 
@@ -133,12 +135,14 @@ class MassSpecAnalysis(Analysis):
 
             iso.ic_factor = ufloat(det.ICFactor, det.ICFactorEr)
 
-            iso.fit = r.fit.Label.lower() if r.fit else ''
+            iso.fit = r.fit.Label.lower() if r.fit else ""
 
             iso.baseline = Baseline(key, det.detector_type.Label)
 
-            iso.baseline.fit = 'average'
-            iso.baseline.set_filter_outliers_dict(filter_outliers=fo, iterations=fi, std_devs=fs)
+            iso.baseline.fit = "average"
+            iso.baseline.set_filter_outliers_dict(
+                filter_outliers=fo, iterations=fi, std_devs=fs
+            )
 
             iso.baseline.n = dbiso.baseline.NumCnts
 
@@ -177,12 +181,11 @@ class MassSpecAnalysis(Analysis):
         return r.Iso, r.IsoEr
 
     def sync_filtering(self, obj, prefs):
-        """
-        """
+        """ """
 
         fo, fi, fs = 0, 0, 0
         if prefs:
-            fo = prefs.DelOutliersAfterFit == 'true'
+            fo = prefs.DelOutliersAfterFit == "true"
             fi = int(prefs.NFilterIter)
             fs = int(prefs.OutlierSigmaFactor)
 
@@ -192,13 +195,17 @@ class MassSpecAnalysis(Analysis):
         if irrad:
             production = irrad.production
             if production:
-                self.production_ratios['Ca_K'] = ufloat(production.CaOverKMultiplier,
-                                                        production.CaOverKMultiplierEr)
-                self.production_ratios['Cl_K'] = ufloat(production.ClOverKMultiplier,
-                                                        production.ClOverKMultiplierEr)
+                self.production_ratios["Ca_K"] = ufloat(
+                    production.CaOverKMultiplier, production.CaOverKMultiplierEr
+                )
+                self.production_ratios["Cl_K"] = ufloat(
+                    production.ClOverKMultiplier, production.ClOverKMultiplierEr
+                )
 
                 for k, _ in IRRADIATION_KEYS:
-                    self.interference_corrections[k] = getattr(production, k.capitalize())
+                    self.interference_corrections[k] = getattr(
+                        production, k.capitalize()
+                    )
 
     def sync_fn(self, key, pdpblob):
         if pdpblob:
@@ -224,7 +231,7 @@ class MassSpecAnalysis(Analysis):
                 if fn is not None:
                     iso.baseline.fn = iso.baseline.n - fn
 
-                v = iso.baseline_corrected+iso.baseline.uvalue
+                v = iso.baseline_corrected + iso.baseline.uvalue
                 iso.set_uvalue(v)
 
     # private
@@ -255,5 +262,6 @@ class MassSpecBlank(MassSpecAnalysis):
 
     def _intercept_value(self, r):
         return r.Bkgd, r.BkgdEr
+
 
 # ============= EOF =============================================

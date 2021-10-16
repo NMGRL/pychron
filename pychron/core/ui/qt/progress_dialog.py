@@ -42,7 +42,7 @@ class Stream(object):
     def write(self, msg):
         n = self.message_length
         if len(msg) > n:
-            msg = '...{}'.format(msg[-n:])
+            msg = "...{}".format(msg[-n:])
         self.parent.change_message(msg)
 
     def flush(self):
@@ -140,7 +140,7 @@ class myProgressDialog(ProgressDialog):
                 QtGui.QApplication.processEvents()
 
         except RuntimeError as e:
-            print('exception', e)
+            print("exception", e)
 
     # def _create_message(self, dialog, layout):
     #     label = QLabel(self.message, dialog)
@@ -176,7 +176,7 @@ class myProgressDialog(ProgressDialog):
         if self.max > 0:
             self.progress_bar.setValue(value)
 
-            if (self.max != self.min):
+            if self.max != self.min:
                 percent = (float(value) - self.min) / (self.max - self.min)
             else:
                 percent = 1.0
@@ -194,12 +194,9 @@ class myProgressDialog(ProgressDialog):
             elapsed = current_time - self._start_time
             estimated = elapsed / percent
             remaining = estimated - elapsed
-            self._set_time_label(elapsed,
-                                 self._elapsed_control)
-            self._set_time_label(estimated,
-                                 self._estimated_control)
-            self._set_time_label(remaining,
-                                 self._remaining_control)
+            self._set_time_label(elapsed, self._elapsed_control)
+            self._set_time_label(estimated, self._estimated_control)
+            self._set_time_label(remaining, self._remaining_control)
 
         if self.show_percent:
             self._percent_control = "%3f" % ((percent * 100) % 1)
@@ -207,6 +204,7 @@ class myProgressDialog(ProgressDialog):
         QtGui.QApplication.processEvents()
 
         return (not self._user_cancelled, False)
+
 
 # def set_size(self, w, h):
 # #        self.dialog_size = QRect(QPoint(0, 0), QSize(w, h))

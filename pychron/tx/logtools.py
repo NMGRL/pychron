@@ -20,6 +20,7 @@ from __future__ import absolute_import
 import io
 import os
 import sys
+
 # ============= local library imports  ==========================
 from twisted.logger import eventsFromJSONLogFile, textFileLogObserver
 import six
@@ -28,15 +29,17 @@ import six
 def print_log(path=None, output_stream=None):
     if path is None:
         from pychron.paths import paths
-        path = os.path.join(paths.log_dir, 'pps.log.json')
+
+        path = os.path.join(paths.log_dir, "pps.log.json")
 
     if output_stream is None:
         output_stream = sys.stdout
     elif isinstance(output_stream, (str, six.text_type)):
-        output_stream = io.open(output_stream, 'w')
+        output_stream = io.open(output_stream, "w")
 
     output = textFileLogObserver(output_stream)
     for event in eventsFromJSONLogFile(io.open(path)):
         output(event)
+
 
 # ============= EOF =============================================

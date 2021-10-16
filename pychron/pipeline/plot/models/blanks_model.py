@@ -25,4 +25,5 @@ from pychron.pipeline.plot.panels.blanks_panel import BlanksPanel
 class BlanksModel(FigureModel):
     _panel_klass = BlanksPanel
 
+
 # ============= EOF =============================================

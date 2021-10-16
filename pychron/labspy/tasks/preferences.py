@@ -27,7 +27,7 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class LabspyPreferences(BasePreferencesHelper, ConnectionMixin):
-    preferences_path = 'pychron.labspy'
+    preferences_path = "pychron.labspy"
     host = Str
     port = Int
     password = Password
@@ -38,60 +38,80 @@ class LabspyPreferences(BasePreferencesHelper, ConnectionMixin):
     connection_status_period = Int
 
     def _get_connection_dict(self):
-        return dict(username=self.username,
-                    host=self.host,
-                    password=self.password,
-                    name=self.name,
-                    kind='mysql')
+        return dict(
+            username=self.username,
+            host=self.host,
+            password=self.password,
+            name=self.name,
+            kind="mysql",
+        )
 
 
 class LabspyPreferencesPane(PreferencesPane):
     model_factory = LabspyPreferences
-    category = 'Labspy'
+    category = "Labspy"
 
     def traits_view(self):
-        dbconngrp = VGroup(Item('name'),
-                           Item('host'),
-                           Item('username'),
-                           Item('password'),
-                           HGroup(icon_button_editor('test_connection_button', 'database_connect',
-                                                     tooltip='Test connection'),
-                                  Spring(width=10, springy=False),
-                                  Label('Status:'),
-                                  CustomLabel('_connected_label',
-                                              label='Status',
-                                              weight='bold',
-                                              color_name='_connected_color')),
-                           label='Database Connection',
-                           show_border=True)
+        dbconngrp = VGroup(
+            Item("name"),
+            Item("host"),
+            Item("username"),
+            Item("password"),
+            HGroup(
+                icon_button_editor(
+                    "test_connection_button",
+                    "database_connect",
+                    tooltip="Test connection",
+                ),
+                Spring(width=10, springy=False),
+                Label("Status:"),
+                CustomLabel(
+                    "_connected_label",
+                    label="Status",
+                    weight="bold",
+                    color_name="_connected_color",
+                ),
+            ),
+            label="Database Connection",
+            show_border=True,
+        )
 
-        csgrp = VGroup(Item('use_connection_status', label='Use Connection Status',
-                            tooltip='Enable connection status checking'),
-                       Item('connection_status_period',
-                            label='Period (s)',
-                            tooltip='Check connection status every X seconds',
-                            enabled_when='use_connection_status'),
-                       label='Connection Status',
-                       show_border=True)
+        csgrp = VGroup(
+            Item(
+                "use_connection_status",
+                label="Use Connection Status",
+                tooltip="Enable connection status checking",
+            ),
+            Item(
+                "connection_status_period",
+                label="Period (s)",
+                tooltip="Check connection status every X seconds",
+                enabled_when="use_connection_status",
+            ),
+            label="Connection Status",
+            show_border=True,
+        )
 
-        v = View(VGroup(
-            dbconngrp,
-            csgrp))
+        v = View(VGroup(dbconngrp, csgrp))
         return v
 
 
 class LabspyExperimentPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.labspy.experiment'
+    preferences_path = "pychron.labspy.experiment"
     enabled = Bool
 
 
 class LabspyExperimentPreferencesPane(PreferencesPane):
     model_factory = LabspyExperimentPreferences
-    category = 'Experiment'
+    category = "Experiment"
 
     def traits_view(self):
-        v = View(VGroup(Item('enabled', label='Use Labspy'),
-                        label='Labspy', show_border=True))
+        v = View(
+            VGroup(
+                Item("enabled", label="Use Labspy"), label="Labspy", show_border=True
+            )
+        )
         return v
+
 
 # ============= EOF =============================================

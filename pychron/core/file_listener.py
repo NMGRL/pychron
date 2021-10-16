@@ -24,6 +24,7 @@ from threading import Thread
 
 # ============= local library imports  ==========================
 
+
 class FileListener(object):
     _path = None
     _callback = None
@@ -33,17 +34,17 @@ class FileListener(object):
 
     def __init__(self, path, callback=None, check=None, freq=1):
         """
-            two methods for check if the file has changed
-            1. check=None
-                a file has changed if its modified time is different from the original modified time
-            2. check=callable
-                use a callable to compare files
-                e.g experiment_set uses check_for_mods which compares the sha digests of the file contents
+        two methods for check if the file has changed
+        1. check=None
+            a file has changed if its modified time is different from the original modified time
+        2. check=callable
+            use a callable to compare files
+            e.g experiment_set uses check_for_mods which compares the sha digests of the file contents
 
-            freq= in hertz... sleep period =1/freq
+        freq= in hertz... sleep period =1/freq
 
 
-            remember to call stop() to stop checking the file for changes
+        remember to call stop() to stop checking the file for changes
         """
         self._path = path
         self._callback = callback

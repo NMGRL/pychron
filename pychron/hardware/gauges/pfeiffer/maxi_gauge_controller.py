@@ -23,7 +23,7 @@ from pychron.hardware.gauges.base_controller import BaseGauge, BaseGaugeControll
 class PfeifferMaxiGaugeController(BaseGaugeController, CoreDevice):
     def _read_pressure(self, name=None, verbose=False):
         if name is None:
-            name = 'Z'
+            name = "Z"
         else:
             if isinstance(name, str):
                 gauge = self.get_gauge(name)
@@ -31,29 +31,32 @@ class PfeifferMaxiGaugeController(BaseGaugeController, CoreDevice):
             else:
                 name = name.channel
 
-        pressure = 'err'
+        pressure = "err"
         if name:
-            cmd = 'PR{}'.format(name)
+            cmd = "PR{}".format(name)
             r = self.ask(cmd, verbose=verbose)
             if chr(6) in r:
-                cmd = '\x05'
+                cmd = "\x05"
                 oterminator = self.communicator.write_terminator
                 self.communicator.write_terminator = None
                 r = self.ask(cmd, verbose=verbose)
                 self.communicator.write_terminator = oterminator
                 # pressure = r.split(',')[1].rstrip('\r\n')
                 try:
-                    pressure = r.split(',')[1].rstrip()
+                    pressure = r.split(",")[1].rstrip()
                 except IndexError:
-                    pressure = 'err'
+                    pressure = "err"
 
         return pressure
 
     def load_additional_args(self, config, *args, **kw):
-        self.address = self.config_get(config, 'General', 'address', optional=False)
-        self.display_name = self.config_get(config, 'General', 'display_name', default=self.name)
+        self.address = self.config_get(config, "General", "address", optional=False)
+        self.display_name = self.config_get(
+            config, "General", "display_name", default=self.name
+        )
         # self.mode = self.config_get(config, 'Communications', 'mode', default='rs485')
         self._load_gauges(config)
         return True
+
 
 # ============= EOF =============================================

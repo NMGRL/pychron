@@ -20,9 +20,22 @@ from datetime import datetime
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict, color_map_dict
 from numpy import linspace
-from traits.api import HasTraits, cached_property, List, Str, Instance, \
-    Property, Int, Any, Bool, Button, Float, on_trait_change, Enum, \
-    RGBColor
+from traits.api import (
+    HasTraits,
+    cached_property,
+    List,
+    Str,
+    Instance,
+    Property,
+    Int,
+    Any,
+    Bool,
+    Button,
+    Float,
+    on_trait_change,
+    Enum,
+    RGBColor,
+)
 from traitsui.api import Item, EnumEditor, UItem, ListStrEditor
 
 from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
@@ -37,6 +50,7 @@ from pychron.dvc.meta_object import MetaObjectException
 from pychron.envisage.view_util import open_view
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
+
 # ============= enthought library imports =======================
 from pychron.pychron_constants import NULL_STR
 from pychron.regex import LOAD_REGEX
@@ -44,18 +58,18 @@ from pychron.regex import LOAD_REGEX
 
 def make_bound(st):
     if len(st) > 1:
-        s = '{}-{}'.format(st[0], st[-1])
+        s = "{}-{}".format(st[0], st[-1])
     else:
-        s = '{}'.format(st[0])
+        s = "{}".format(st[0])
     return s
 
 
 def make_position_str(pos):
-    s = ''
+    s = ""
     if pos:
         pos = [p.position for p in pos]
         ss = group_position(pos, make_bound)
-        s = ','.join(ss)
+        s = ",".join(ss)
     return s
 
 
@@ -64,11 +78,16 @@ class LoadSelection(HasTraits):
     selected = List
 
     def traits_view(self):
-        v = okcancel_view(UItem('loads', editor=ListStrEditor(selected='selected',
-                                                              multi_select=True,
-                                                              editable=False)),
-                          width=300,
-                          title='Select Loads to Unarchive')
+        v = okcancel_view(
+            UItem(
+                "loads",
+                editor=ListStrEditor(
+                    selected="selected", multi_select=True, editable=False
+                ),
+            ),
+            width=300,
+            title="Select Loads to Unarchive",
+        )
         return v
 
 
@@ -93,15 +112,15 @@ class LoadPosition(HasTraits):
     color = RGBColor
 
     def _get_level_str(self):
-        return '{}{}'.format(self.level, self.irrad_position)
+        return "{}{}".format(self.level, self.irrad_position)
 
     def _get_irradiation_str(self):
-        return '{} {}'.format(self.irradiation, self.level_str)
+        return "{} {}".format(self.irradiation, self.level_str)
 
 
 class GroupedPosition(LoadPosition):
     positions = List
-    position_str = Property(depends_on='positions[]')
+    position_str = Property(depends_on="positions[]")
 
     color = Property
     sample = Property
@@ -154,15 +173,15 @@ class LoadingManager(DVCIrradiationable):
     nxtals = Int
     save_directory = Str
 
-    '''
+    """
         when a hole is selected npositions defines the number of 
         total positions to apply the current information i.e identifier
-    '''
+    """
     npositions = Int(1)
     auto_increment = Bool(False)
 
     positions = List
-    grouped_positions = Property(depends_on='positions')
+    grouped_positions = Property(depends_on="positions")
 
     # table signal/events
     scroll_to_row = Int
@@ -183,7 +202,7 @@ class LoadingManager(DVCIrradiationable):
     tray = Str
     trays = List
 
-    sample_info = Property(depends_on='identifier')
+    sample_info = Property(depends_on="identifier")
     sample = Str
     project = Str
     irradiation_hole = Int
@@ -202,7 +221,7 @@ class LoadingManager(DVCIrradiationable):
 
     cmap_name = Enum(sorted(list(color_map_name_dict.keys())))
     use_cmap = Bool(True)
-    interaction_mode = Enum('Entry', 'Info', 'Edit')
+    interaction_mode = Enum("Entry", "Info", "Edit")
     suppress_update = False
 
     use_measured = Bool(False)
@@ -224,7 +243,10 @@ class LoadingManager(DVCIrradiationable):
             self.canvas.clear_all()
 
     def get_selection(self):
-        from pychron.loading.load_view_selection import LoadViewSelectionModel, LoadViewSelectionController
+        from pychron.loading.load_view_selection import (
+            LoadViewSelectionModel,
+            LoadViewSelectionController,
+        )
 
         self.setup()
         if self.loads:
@@ -240,15 +262,18 @@ class LoadingManager(DVCIrradiationable):
             if info.result:
                 return lvsm.selected_positions
         else:
-            self.warning_dialog('No Loads available')
+            self.warning_dialog("No Loads available")
 
     def get_positions_for_load(self, name):
         self.debug('get positions for load "{}"'.format(name))
         with self.dvc.session_ctx():
             loadtable = self.dvc.get_loadtable(name)
             if loadtable:
-                return [(p.identifier, str(p.position)) for p in loadtable.loaded_positions
-                        if p.identifier and p.position]
+                return [
+                    (p.identifier, str(p.position))
+                    for p in loadtable.loaded_positions
+                    if p.identifier and p.position
+                ]
             else:
                 self.warning_dialog('No Positions specified in load "{}"'.format(name))
 
@@ -257,7 +282,7 @@ class LoadingManager(DVCIrradiationable):
         self.load_load_by_name()
 
     def load_load_by_name(self):
-        self.tray = ''
+        self.tray = ""
         if not self.load_instance:
             return
 
@@ -276,11 +301,11 @@ class LoadingManager(DVCIrradiationable):
         #     self.debug('failed reading LoadTbl create_date from database')
 
         pos = []
-        for ln, poss in groupby_key(loadtable.loaded_positions, 'identifier'):
+        for ln, poss in groupby_key(loadtable.loaded_positions, "identifier"):
             dbpos = self.dvc.db.get_identifier(ln)
-            sample = ''
-            project = ''
-            material = ''
+            sample = ""
+            project = ""
+            material = ""
             if dbpos.sample:
                 sample = dbpos.sample.name
                 if dbpos.sample.project:
@@ -301,11 +326,13 @@ class LoadingManager(DVCIrradiationable):
                     item.add_identifier_label(ln, visible=self.show_identifiers)
                     item.add_sample_label(sample, visible=self.show_samples)
 
-                    oy = -10 if not (self.show_identifiers or self.show_samples) else -20
-                    wt = '' if pi.weight is None else str(pi.weight)
+                    oy = (
+                        -10 if not (self.show_identifiers or self.show_samples) else -20
+                    )
+                    wt = "" if pi.weight is None else str(pi.weight)
                     item.add_weight_label(wt, oy=oy, visible=self.show_weights)
 
-                    nxtals = '' if pi.nxtals is None else str(pi.nxtals)
+                    nxtals = "" if pi.nxtals is None else str(pi.nxtals)
                     item.add_nxtals_label(nxtals, oy=oy, visible=self.show_nxtals)
 
                     item.nxtals = pi.nxtals
@@ -334,15 +361,16 @@ class LoadingManager(DVCIrradiationable):
         lt = db.get_loadtable(new)
         c = self.canvas
         if not c:
-            c = LoadingCanvas(view_x_range=(-2, 2),
-                              view_y_range=(-2, 2),
-                              bgcolor='lightgray',
-                              editable=editable)
+            c = LoadingCanvas(
+                view_x_range=(-2, 2),
+                view_y_range=(-2, 2),
+                bgcolor="lightgray",
+                editable=editable,
+            )
         if lt and lt.holderName and lt.holderName != NULL_STR:
             self.tray = lt.holderName
             holes = self.dvc.get_load_holder_holes(lt.holderName)
-            load_holder_canvas(c, holes,
-                               show_hole_numbers=self.show_hole_numbers)
+            load_holder_canvas(c, holes, show_hole_numbers=self.show_hole_numbers)
 
             for pi in lt.loaded_positions:
                 item = c.scene.get_item(str(pi.position))
@@ -371,10 +399,10 @@ class LoadingManager(DVCIrradiationable):
             self._refresh_loads(select=False)
 
             ts = self.dvc.get_load_holders()
-            self.debug('Found load holders={}'.format(ts))
+            self.debug("Found load holders={}".format(ts))
             if ts:
                 ts = self._check_load_holders(ts)
-                self.debug('Valid load holders={}'.format(ts))
+                self.debug("Valid load holders={}".format(ts))
                 self.trays = ts
 
             us = db.get_usernames()
@@ -391,7 +419,7 @@ class LoadingManager(DVCIrradiationable):
     def configure_pdf(self):
         options = self._pdf_writer.options
 
-        options.orientation = 'portrait'
+        options.orientation = "portrait"
         options.left_margin = 0.5
         options.right_margin = 0.5
         options.top_margin = 0.5
@@ -403,7 +431,7 @@ class LoadingManager(DVCIrradiationable):
             options.dump()
 
     def save_pdf(self):
-        self.debug('save pdf')
+        self.debug("save pdf")
 
         if self.load_instance:
             ln = self.load_instance.name
@@ -411,17 +439,15 @@ class LoadingManager(DVCIrradiationable):
             if not root or not os.path.isdir(root):
                 root = paths.loading_dir
 
-            ps = ', '.join({p.project for p in self.grouped_positions})
+            ps = ", ".join({p.project for p in self.grouped_positions})
 
             un = self.username
 
             dt = datetime.now()
             date_str = dt.strftime("%Y-%m-%d %H:%M:%S")
-            meta = dict(load_name=ln, username=un,
-                        load_date=date_str,
-                        projects=ps)
+            meta = dict(load_name=ln, username=un, load_date=date_str, projects=ps)
 
-            path = os.path.join(root, '{}.pdf'.format(ln))
+            path = os.path.join(root, "{}.pdf".format(ln))
 
             options = self._pdf_writer.options
 
@@ -430,12 +456,14 @@ class LoadingManager(DVCIrradiationable):
             oshn = self.show_hole_numbers
             oss = self.show_samples
 
-            for attr in ('identifiers', 'weights', 'hole_numbers', 'samples'):
-                attr = 'show_{}'.format(attr)
+            for attr in ("identifiers", "weights", "hole_numbers", "samples"):
+                attr = "show_{}".format(attr)
                 setattr(self, attr, getattr(options, attr))
 
             # c = self.canvas.clone_traits()
-            self._pdf_writer.build(path, self.positions, self.grouped_positions, self.canvas, meta)
+            self._pdf_writer.build(
+                path, self.positions, self.grouped_positions, self.canvas, meta
+            )
             if options.view_pdf:
                 view_file(path)
 
@@ -452,7 +480,7 @@ class LoadingManager(DVCIrradiationable):
             self.show_samples = oss
 
         else:
-            self.information_dialog('Please select a load')
+            self.information_dialog("Please select a load")
 
     def save_tray_pdf(self):
         p = os.path.join(paths.loading_dir, self.tray)
@@ -461,14 +489,14 @@ class LoadingManager(DVCIrradiationable):
         gc.save()
 
     def save(self, save_positions=True, inform=False):
-        self.debug('saving load to database')
+        self.debug("saving load to database")
         self._save_load()
         if save_positions:
             self._save_positions(self.load_instance.name)
         self.dirty = False
 
         if inform:
-            msg = 'Saved {} to database'.format(self.load_instance.name)
+            msg = "Saved {} to database".format(self.load_instance.name)
             self.information_dialog(msg)
 
         return True
@@ -483,8 +511,10 @@ class LoadingManager(DVCIrradiationable):
             except MetaObjectException as e:
                 self.warning(e)
             except BaseException:
-                self.warning_dialog('"{}" is an invalid load holder file. '
-                                    'Holder unavailable until its fixed'.format(ti))
+                self.warning_dialog(
+                    '"{}" is an invalid load holder file. '
+                    "Holder unavailable until its fixed".format(ti)
+                )
         return ns
 
     def _get_load_instances(self):
@@ -492,7 +522,10 @@ class LoadingManager(DVCIrradiationable):
         if loads is None:
             loads = []
 
-        return [Load(name=li.name, create_date=li.create_date.strftime('%m/%d/%Y')) for li in loads]
+        return [
+            Load(name=li.name, create_date=li.create_date.strftime("%m/%d/%Y"))
+            for li in loads
+        ]
 
     # def _get_last_load(self):
     #     lt = self.dvc.db.get_loadtable()
@@ -504,12 +537,10 @@ class LoadingManager(DVCIrradiationable):
     def _set_canvas_hole_selected(self, item):
         item.fill = True
 
-        item.add_identifier_label(self.identifier,
-                                  visible=self.show_identifiers,
-                                  oy=-10)
-        item.add_sample_label(self.sample,
-                              visible=self.show_samples,
-                              oy=-10)
+        item.add_identifier_label(
+            self.identifier, visible=self.show_identifiers, oy=-10
+        )
+        item.add_sample_label(self.sample, visible=self.show_samples, oy=-10)
         oy = -10 if not (self.show_identifiers or self.show_samples) else -20
         item.add_weight_label(str(self.weight), visible=self.show_weights, oy=oy)
         item.add_nxtals_label(str(self.nxtals), visible=self.show_nxtals, oy=oy)
@@ -517,8 +548,9 @@ class LoadingManager(DVCIrradiationable):
         item.nxtals = self.nxtals
         item.note = self.note
         item.sample = self.sample
-        item.irradiation = '{} {}{}'.format(self.irradiation, self.level,
-                                            self.irradiation_hole)
+        item.irradiation = "{} {}{}".format(
+            self.irradiation, self.level, self.irradiation_hole
+        )
 
     def _deselect_position(self, canvas_hole):
 
@@ -535,17 +567,19 @@ class LoadingManager(DVCIrradiationable):
     def _new_position(self, canvas_hole):
         pid = int(canvas_hole.name)
 
-        lp = LoadPosition(identifier=self.identifier,
-                          irradiation=self.irradiation,
-                          level=self.level,
-                          irrad_position=int(self.irradiation_hole),
-                          sample=self.sample,
-                          material=self.material,
-                          project=self.project,
-                          position=pid,
-                          nxtals=self.nxtals,
-                          weight=self.weight,
-                          note=self.note)
+        lp = LoadPosition(
+            identifier=self.identifier,
+            irradiation=self.irradiation,
+            level=self.level,
+            irrad_position=int(self.irradiation_hole),
+            sample=self.sample,
+            material=self.material,
+            project=self.project,
+            position=pid,
+            nxtals=self.nxtals,
+            weight=self.weight,
+            note=self.note,
+        )
         self.positions.append(lp)
 
         self._set_canvas_hole_selected(canvas_hole)
@@ -560,7 +594,7 @@ class LoadingManager(DVCIrradiationable):
                 try:
                     self.level = self.levels[idx + 1]
                     self.identifier = self.identifiers[0]
-                    self.debug('increment level {}'.format(self.level))
+                    self.debug("increment level {}".format(self.level))
                 except IndexError:
                     idx = self.irradiations.index(self.irradiation)
                     try:
@@ -568,17 +602,23 @@ class LoadingManager(DVCIrradiationable):
                         self.level = self.levels[0]
                         self.identifier = self.identifiers[0]
                     except IndexError:
-                        print('lm autoincrement', self.level, self.levels, self.level in self.levels, self.identifier)
+                        print(
+                            "lm autoincrement",
+                            self.level,
+                            self.levels,
+                            self.level in self.levels,
+                            self.identifier,
+                        )
 
     def _save_load(self):
         db = self.dvc.db
         nln = self.new_load_name
         if not self.username:
-            self.warning_dialog('Please select a User')
+            self.warning_dialog("Please select a User")
             return
 
         if nln:
-            self.info('adding load {} {} to database'.format(nln, self.tray))
+            self.info("adding load {} {} to database".format(nln, self.tray))
 
             db.add_load(nln, holder=self.tray, username=self.username)
             db.flush()
@@ -586,7 +626,7 @@ class LoadingManager(DVCIrradiationable):
             self._refresh_loads()
 
             # self._get_last_load()
-            self.new_load_name = ''
+            self.new_load_name = ""
 
     def _save_positions(self, name):
         db = self.dvc.db
@@ -597,23 +637,29 @@ class LoadingManager(DVCIrradiationable):
 
         for pp in self.positions:
             ln = pp.identifier
-            self.info('updating positions for load:{}, identifier: {}'.format(lt.name, ln))
+            self.info(
+                "updating positions for load:{}, identifier: {}".format(lt.name, ln)
+            )
 
-            self.debug('weight: {} note: {}'.format(pp.weight, pp.note))
+            self.debug("weight: {} note: {}".format(pp.weight, pp.note))
 
-            i = db.add_load_position(ln,
-                                     position=pp.position,
-                                     weight=pp.weight,
-                                     note=pp.note,
-                                     nxtals=pp.nxtals)
+            i = db.add_load_position(
+                ln,
+                position=pp.position,
+                weight=pp.weight,
+                note=pp.note,
+                nxtals=pp.nxtals,
+            )
             lt.loaded_positions.append(i)
         db.commit()
 
     def _new_load_view(self):
-        v = okcancel_view(Item('new_load_name', label='Name'),
-                          Item('tray', editor=EnumEditor(name='trays')),
-                          title='New Load Name',
-                          width=300)
+        v = okcancel_view(
+            Item("new_load_name", label="Name"),
+            Item("tray", editor=EnumEditor(name="trays")),
+            title="New Load Name",
+            width=300,
+        )
         return v
 
     def _refresh_loads(self, select=True):
@@ -627,7 +673,9 @@ class LoadingManager(DVCIrradiationable):
 
         cs = {}
         if self.use_cmap:
-            c = next((k for k, v in color_map_dict.items() if v == self.cmap_name), None)
+            c = next(
+                (k for k, v in color_map_dict.items() if v == self.cmap_name), None
+            )
             if c:
                 c = c(DataRange1D(low=0.0, high=1.0))
 
@@ -641,7 +689,7 @@ class LoadingManager(DVCIrradiationable):
 
         for i, p in enumerate(self.positions):
             color = cs.get(p.identifier, (1, 1, 0))
-            fcolor = ','.join([str(int(x * 255)) for x in color])
+            fcolor = ",".join([str(int(x * 255)) for x in color])
             p.color = color
             # for pp in p.positions:
             pp = scene.get_item(p.position, klass=LoadIndicator)
@@ -651,29 +699,31 @@ class LoadingManager(DVCIrradiationable):
     @cached_property
     def _get_grouped_positions(self):
         gs = []
-        for idn, poss in groupby_key(self.positions, 'identifier'):
+        for idn, poss in groupby_key(self.positions, "identifier"):
             poss = list(poss)
-            gp = GroupedPosition(identifier=idn,
-                                 meta_position=poss[0],
-                                 positions=poss)
+            gp = GroupedPosition(identifier=idn, meta_position=poss[0], positions=poss)
             gs.append(gp)
 
         return gs
 
     def _get_sample_info(self):
-        return '{} {}{} {}'.format(self.identifier, self.level, self.irradiation_hole, self.sample)
+        return "{} {}{} {}".format(
+            self.identifier, self.level, self.irradiation_hole, self.sample
+        )
 
     # ==========================================================================
     # handlers
     # ==========================================================================
-    @on_trait_change('level')
+    @on_trait_change("level")
     def _get_identifiers(self):
         db = self.dvc.db
         r = []
         if db.connected:
             level = db.get_irradiation_level(self.irradiation, self.level)
             if level:
-                r = sorted([str(li.identifier) for li in level.positions if li.identifier])
+                r = sorted(
+                    [str(li.identifier) for li in level.positions if li.identifier]
+                )
                 if r:
                     self.identifier = r[0]
 
@@ -683,7 +733,7 @@ class LoadingManager(DVCIrradiationable):
         if self.dvc.db.connected and new:
             pos = self.dvc.db.get_identifier(new)
             self.irradiation_hole = pos.position
-            self.packet = pos.packet or ''
+            self.packet = pos.packet or ""
             try:
                 dbsample = pos.sample
                 if dbsample:
@@ -696,10 +746,10 @@ class LoadingManager(DVCIrradiationable):
             except AttributeError:
                 pass
         else:
-            self.sample = ''
-            self.packet = ''
-            self.material = ''
-            self.project = ''
+            self.sample = ""
+            self.packet = ""
+            self.material = ""
+            self.project = ""
             self.irradiation_hole = 0
 
     def _archive_button_fired(self):
@@ -715,10 +765,12 @@ class LoadingManager(DVCIrradiationable):
         #     self.loads = self._get_load_instances()
 
         if not self.selected_instances:
-            self.information_dialog('Please select a set of loads to archive')
+            self.information_dialog("Please select a set of loads to archive")
             return
 
-        if self.confirmation_dialog('Are you sure you want to Archive the selected Loads?'):
+        if self.confirmation_dialog(
+            "Are you sure you want to Archive the selected Loads?"
+        ):
             self.dvc.archive_loads([li.name for li in self.selected_instances])
             self._refresh_loads()
 
@@ -739,12 +791,12 @@ class LoadingManager(DVCIrradiationable):
             # try to extract an increment from the name
             m = LOAD_REGEX.match(ln.name)
             if m:
-                prefix = m.group('prefix')
-                inc = m.group('inc')
-                nv = '{{:0{}n}}'.format(len(inc)).format(int(inc) + 1)
-                self.new_load_name = '{}{}'.format(prefix, nv)
+                prefix = m.group("prefix")
+                inc = m.group("inc")
+                nv = "{{:0{}n}}".format(len(inc)).format(int(inc) + 1)
+                self.new_load_name = "{}{}".format(prefix, nv)
 
-        info = self.edit_traits(view='_new_load_view')
+        info = self.edit_traits(view="_new_load_view")
 
         if info.result:
             self.save(save_positions=False)
@@ -754,15 +806,15 @@ class LoadingManager(DVCIrradiationable):
         if self.load_instance:
             ln = self.load_instance.name
             if not self.confirmation_dialog(
-                    'Are you sure you want to delete {}?'.format(ln)):
+                "Are you sure you want to delete {}?".format(ln)
+            ):
                 return
 
             db = self.dvc.db
             # delete the load and any associated records
             dbload = db.get_loadtable(name=ln)
             if dbload:
-                for ps in (
-                        dbload.loaded_positions, dbload.measured_positions):
+                for ps in (dbload.loaded_positions, dbload.measured_positions):
                     for pos in ps:
                         db.delete(pos)
 
@@ -858,24 +910,34 @@ class LoadingManager(DVCIrradiationable):
                 sel.nxtals = self.nxtals
                 sel.nxtals_label.text = self.nxtals
 
-    @on_trait_change('canvas:selected')
+    @on_trait_change("canvas:selected")
     def _update_selected(self, new):
         if not new:
             return
 
         if not self.load_instance:
-            self.warning_dialog('Select a load')
+            self.warning_dialog("Select a load")
             return
 
         if not self.canvas.editable:
             if self.use_measured:
                 if new.measured_indicator:
-                    p = next((p for p in self.selected_positions if int(new.name) in p.positions), None)
+                    p = next(
+                        (
+                            p
+                            for p in self.selected_positions
+                            if int(new.name) in p.positions
+                        ),
+                        None,
+                    )
                     if p:
                         self.selected_positions.remove(p)
                     else:
-                        self.selected_positions.append(LoadPosition(positions=[int(new.name)],
-                                                                    identifier=new.identifier))
+                        self.selected_positions.append(
+                            LoadPosition(
+                                positions=[int(new.name)], identifier=new.identifier
+                            )
+                        )
             else:
                 pp = []
                 ps = self.canvas.get_selection()
@@ -888,10 +950,10 @@ class LoadingManager(DVCIrradiationable):
             return
 
         if not self.username:
-            self.warning_dialog('Set a username')
+            self.warning_dialog("Set a username")
             return
 
-        if self.canvas.event_state in ('edit', 'info'):
+        if self.canvas.event_state in ("edit", "info"):
             self.note = new.note
             self.weight = new.weight or 0
 
@@ -900,7 +962,7 @@ class LoadingManager(DVCIrradiationable):
                 self._deselect_position(new)
             else:
                 if not self.identifier:
-                    self.warning_dialog('Select a Labnumber')
+                    self.warning_dialog("Select a Labnumber")
                 else:
                     for i in range(self.npositions):
                         if not new:
@@ -919,7 +981,7 @@ class LoadingManager(DVCIrradiationable):
                     if not self.retain_weight:
                         self.weight = 0
                     if not self.retain_note:
-                        self.note = ''
+                        self.note = ""
                     if not self.retain_nxtals:
                         self.nxtals = 0
                     self._suppress_edit = False
@@ -930,6 +992,7 @@ class LoadingManager(DVCIrradiationable):
         # self.refresh_table = True
         self.dirty = True
         self.canvas.request_redraw()
+
 
 # ============= EOF =============================================
 

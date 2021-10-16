@@ -52,13 +52,14 @@ class Result(HasTraits):
 
 
 class ResultsAdapter(TabularAdapter):
-    columns = [('Name', 'name'),
-               ('Mean', 'value'),
-               (PLUSMINUS_ONE_SIGMA, 'error'),
-               ('Wt. Mean', 'wm_value'),
-               (PLUSMINUS_ONE_SIGMA, 'wm_error'),
-               ('MSWD', 'mswd')
-               ]
+    columns = [
+        ("Name", "name"),
+        ("Mean", "value"),
+        (PLUSMINUS_ONE_SIGMA, "error"),
+        ("Wt. Mean", "wm_value"),
+        (PLUSMINUS_ONE_SIGMA, "wm_error"),
+        ("MSWD", "mswd"),
+    ]
 
     name_width = Int(100)
     value_width = Int(125)
@@ -112,32 +113,33 @@ class BaseCorrectionFactorsEditor(BaseTraitsEditor):
         ys = array([nominal_value(ri) for ri in rs])
         yes = array([std_dev(ri) for ri in rs])
 
-        p, s, l = self.graph.new_series(xs, ys,
-                                        yerror=yes,
-                                        fit='weighted mean',
-                                        type='scatter')
+        p, s, l = self.graph.new_series(
+            xs, ys, yerror=yes, fit="weighted mean", type="scatter"
+        )
 
-        ebo = ErrorBarOverlay(component=s,
-                              orientation='y',
-                              nsigma=2,
-                              visible=True,
-                              use_end_caps=True)
+        ebo = ErrorBarOverlay(
+            component=s, orientation="y", nsigma=2, visible=True, use_end_caps=True
+        )
 
         s.underlays.append(ebo)
         s.yerror = ArrayDataSource(yes)
 
-        self.graph.set_x_limits(pad='0.1', plotid=plotid)
+        self.graph.set_x_limits(pad="0.1", plotid=plotid)
 
         ymin, ymax = min(ys - 2 * yes), max(ys + 2 * yes)
-        self.graph.set_y_limits(min_=ymin, max_=ymax, pad='0.1', plotid=plotid)
+        self.graph.set_y_limits(min_=ymin, max_=ymax, pad="0.1", plotid=plotid)
 
     def traits_view(self):
-        v = View(VSplit(UItem('results',
-                              height=100,
-                              editor=TabularEditor(editable=False,
-                                                   adapter=ResultsAdapter())),
-                        UItem('graph',
-                              style='custom')))
+        v = View(
+            VSplit(
+                UItem(
+                    "results",
+                    height=100,
+                    editor=TabularEditor(editable=False, adapter=ResultsAdapter()),
+                ),
+                UItem("graph", style="custom"),
+            )
+        )
         return v
 
 
@@ -145,8 +147,8 @@ class KCorrectionFactorsEditor(BaseCorrectionFactorsEditor):
     def calculate(self):
         results = []
         n = len(self.analyses)
-        tag = '(40/39)K'
-        rs = [a.computed['rad40'] / a.computed['k39'] for a in self.analyses]
+        tag = "(40/39)K"
+        rs = [a.computed["rad40"] / a.computed["k39"] for a in self.analyses]
 
         results.append(Result(array(rs), tag))
         self._plot(rs, tag, n, 0)
@@ -156,19 +158,21 @@ class KCorrectionFactorsEditor(BaseCorrectionFactorsEditor):
 
 
 class CaCorrectionFactorsEditor(BaseCorrectionFactorsEditor):
-
     def calculate(self):
         results = []
         n = len(self.analyses)
-        dkey = 'Ar39'
-        for i, (nkey, tag) in enumerate((('Ar36', '(36/39)Ca'),
-                                         ('Ar37', '(37/39)Ca'))):
-            rs = [a.corrected_intensities[nkey] / a.corrected_intensities[dkey] for a in self.analyses]
+        dkey = "Ar39"
+        for i, (nkey, tag) in enumerate((("Ar36", "(36/39)Ca"), ("Ar37", "(37/39)Ca"))):
+            rs = [
+                a.corrected_intensities[nkey] / a.corrected_intensities[dkey]
+                for a in self.analyses
+            ]
 
             results.append(Result(array(rs), tag))
             self._plot(rs, tag, n, i)
 
         self.graph.refresh()
         self.results = results[::-1]
+
 
 # ============= EOF =============================================

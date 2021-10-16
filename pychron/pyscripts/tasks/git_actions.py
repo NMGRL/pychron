@@ -23,10 +23,8 @@ from pyface.tasks.action.task_action import TaskAction
 
 
 class CommitChangesAction(TaskAction):
-    name = 'Commit'
-    method = 'commit_changes'
+    name = "Commit"
+    method = "commit_changes"
+
 
 # ============= EOF =============================================
-
-
-

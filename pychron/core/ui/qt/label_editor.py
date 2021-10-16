@@ -20,6 +20,7 @@ from PySide import QtCore
 from pyface.qt.QtGui import QLabel, QPainter, QColor, QWidget, QHBoxLayout
 from traits.api import Str
 from traits.trait_types import Event
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
@@ -27,7 +28,8 @@ from traitsui.qt4.editor import Editor
 
 
 class mLabel(QLabel):
-    color = ''
+    color = ""
+
     # text = ''
     # def __init__(self, text):
     # super(mLabel, self).__init__()
@@ -37,7 +39,7 @@ class mLabel(QLabel):
         # print 'paint', self.color, self.text(), self.width(), self.height(), evt.rect().width()
         qp = QPainter()
         qp.begin(self)
-        qp.setBrush(QColor('#{}'.format(self.color[:-2])))
+        qp.setBrush(QColor("#{}".format(self.color[:-2])))
         qp.drawRect(0, 0, self.width(), self.height())
         qp.end()
 
@@ -51,7 +53,7 @@ class mLabel(QLabel):
         g = self.color[2:4]
         b = self.color[4:6]
         s = sum((int(r, 16), int(g, 16), int(b, 16)))
-        c = 'white' if s < 256 else 'black'
+        c = "white" if s < 256 else "black"
         return QColor(c)
 
         # super(mLabel, self).paintEvent(evt)
@@ -72,8 +74,7 @@ class _LabelWidget(QWidget):
         self.update()
 
     def _dispose_items(self):
-        """ Disposes of each current list item.
-        """
+        """Disposes of each current list item."""
         layout = self.layout()
         if not layout:
             layout = QHBoxLayout()
@@ -95,11 +96,12 @@ class _LabelEditor(Editor):
 
     def init(self, parent):
         self.control = _LabelWidget()
-        self.sync_value(self.factory.refresh, 'refresh')
+        self.sync_value(self.factory.refresh, "refresh")
 
-        extended_name = self.extended_name.replace('.', ':')
-        self.context_object.on_trait_change(self.update_editor,
-                                            extended_name + '_items?', dispatch='ui')
+        extended_name = self.extended_name.replace(".", ":")
+        self.context_object.on_trait_change(
+            self.update_editor, extended_name + "_items?", dispatch="ui"
+        )
 
     def update_editor(self):
         self.control.blockSignals(True)
@@ -116,6 +118,3 @@ class LabelEditor(BasicEditorFactory):
 
 
 # ============= EOF =============================================
-
-
-

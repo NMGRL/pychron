@@ -22,6 +22,7 @@ from pychron.iextraction_device import IExtractionDevice
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class ILaserManager(IExtractionDevice):
     def trace_path(self, *args, **kw):
         pass
@@ -31,6 +32,7 @@ class ILaserManager(IExtractionDevice):
 
     def take_snapshot(self, *args, **kw):
         pass
+
 
 # def extract(self, *args, **kw):
 #        pass

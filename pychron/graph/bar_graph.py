@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
@@ -28,5 +27,6 @@ from .graph import Graph
 class BarGraph(Graph):
     pass
     # def new_series(self,*args,**kw):
+
 
 # ============= EOF ====================================

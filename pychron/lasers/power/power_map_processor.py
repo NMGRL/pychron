@@ -18,25 +18,28 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from traits.api import Bool, HasTraits, Instance
+
 # from traitsui.api import View, Item, Group, HGroup, VGroup, HSplit, VSplit
 # ============= standard library imports ========================
 # from tables import open_file
-from numpy import transpose, array, shape, max, linspace, rot90, \
-    min
+from numpy import transpose, array, shape, max, linspace, rot90, min
+
 # ============= local library imports  ==========================
 from pychron.graph.contour_graph import ContourGraph
 from pychron.graph.graph import container_factory
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 
 from scipy.interpolate.ndgriddata import griddata
+
+
 # from numpy.lib.function_base import percentile
 
 
 class PowerMapProcessor(HasTraits):
-    """
-    """
+    """ """
+
     correct_baseline = Bool(False)
-    color_map = 'hot'
+    color_map = "hot"
     levels = 15
     interpolation_factor = 5
     graph = Instance(ContourGraph)
@@ -52,15 +55,16 @@ class PowerMapProcessor(HasTraits):
         cg = self.graph
         args = self._measure_properties(self._data, self._metadata, n)
         if args:
-            cg.plots[0].data.set_data('z0', args[1])
+            cg.plots[0].data.set_data("z0", args[1])
 
-    def load_graph(self, reader, window_title=''):
+    def load_graph(self, reader, window_title=""):
         cg = ContourGraph(
-            container_dict=dict(kind='h',
-                                #                                               padding=40,
-                                #                                               shape=(2, 2),
-                                #                                               spacing=(12, 12)
-                                )
+            container_dict=dict(
+                kind="h",
+                #                                               padding=40,
+                #                                               shape=(2, 2),
+                #                                               spacing=(12, 12)
+            )
         )
 
         z, metadata = self._extract_power_map_data(reader)
@@ -71,7 +75,7 @@ class PowerMapProcessor(HasTraits):
             padding=0,
             width=400,
             height=400,
-            resizable=''
+            resizable=""
             #                             aspect_ratio=1
         )
         center_plot.index_axis.visible = False
@@ -79,66 +83,61 @@ class PowerMapProcessor(HasTraits):
 
         #         from skimage.morphology import label
         #         z = label(z)
-        bounds = metadata['bounds']
+        bounds = metadata["bounds"]
         # center_plot, names, rd = cg.new_series(z=z, style='contour',
-        cg.new_series(z=z, style='contour',
-                      xbounds=bounds,
-                      ybounds=bounds, )
+        cg.new_series(
+            z=z,
+            style="contour",
+            xbounds=bounds,
+            ybounds=bounds,
+        )
 
         bottom_plot = cg.new_plot(
-            add=False,
-            height=150,
-            resizable='h',
-            padding=0,
-            xtitle='mm',
-            ytitle='power')
+            add=False, height=150, resizable="h", padding=0, xtitle="mm", ytitle="power"
+        )
 
         right_plot = cg.new_plot(
-            add=False,
-            width=150,
-            resizable='v',
-            padding=0,
-            xtitle='mm',
-            ytitle='power')
-        right_plot.x_axis.orientation = 'right'
+            add=False, width=150, resizable="v", padding=0, xtitle="mm", ytitle="power"
+        )
+        right_plot.x_axis.orientation = "right"
         #         right_plot.x_axis.title = 'mm'
-        right_plot.y_axis.orientation = 'top'
+        right_plot.y_axis.orientation = "top"
         #         right_plot.y_axis.title = 'power'
 
-        center = center_plot.plots['plot0'][0]
-        options = dict(style='cmap_scatter',
-                       type='cmap_scatter',
-                       marker='circle',
-                       color_mapper=center.color_mapper)
+        center = center_plot.plots["plot0"][0]
+        options = dict(
+            style="cmap_scatter",
+            type="cmap_scatter",
+            marker="circle",
+            color_mapper=center.color_mapper,
+        )
 
-        cg.new_series(plotid=1, render_style='connectedpoints')
+        cg.new_series(plotid=1, render_style="connectedpoints")
         cg.new_series(plotid=1, **options)
 
-        right_plot.x_axis.orientation = 'right'
-        right_plot.y_axis.orientation = 'top'
+        right_plot.x_axis.orientation = "right"
+        right_plot.y_axis.orientation = "top"
 
         right_plot.x_axis.mapper = center_plot.value_mapper
         right_plot.y_axis.mapper = bottom_plot.value_mapper
         right_plot.x_axis.axis_line_visible = False
         right_plot.y_axis.axis_line_visible = False
 
-        s = cg.new_series(plotid=2, render_style='connectedpoints')[0]
-        s.orientation = 'v'
+        s = cg.new_series(plotid=2, render_style="connectedpoints")[0]
+        s.orientation = "v"
         s = cg.new_series(plotid=2, **options)[0]
-        s.orientation = 'v'
+        s.orientation = "v"
 
-        center.index.on_trait_change(cg.metadata_changed,
-                                     'metadata_changed')
+        center.index.on_trait_change(cg.metadata_changed, "metadata_changed")
 
-        cg.show_crosshairs('blue')
+        cg.show_crosshairs("blue")
 
         #         z = self._plot_properties(z, metadata, cg)
         #         cg.plots[0].data.set_data('z0', z)
 
-        gridcontainer = container_factory(kind='g',
-                                          padding=40,
-                                          shape=(2, 2),
-                                          spacing=(12, 12))
+        gridcontainer = container_factory(
+            kind="g", padding=40, shape=(2, 2), spacing=(12, 12)
+        )
 
         gridcontainer.add(center_plot)
         gridcontainer.add(right_plot)
@@ -175,31 +174,36 @@ class PowerMapProcessor(HasTraits):
 
         props = None
         try:
-            props = regionprops(nim.astype(int), ['EquivDiameter', 'Centroid',
-                                                  'MajorAxisLength', 'MinorAxisLength',
-                                                  'Orientation'
-                                                  ])
+            props = regionprops(
+                nim.astype(int),
+                [
+                    "EquivDiameter",
+                    "Centroid",
+                    "MajorAxisLength",
+                    "MinorAxisLength",
+                    "Orientation",
+                ],
+            )
         except TypeError as e:
             pass
         return props, nim
 
     def _extract_properties(self, z, prop, metadata):
-        r, c = prop['Centroid']
+        r, c = prop["Centroid"]
 
         rr, cc = z.shape
         #         print r, c
-        b = metadata['bounds']
+        b = metadata["bounds"]
         scale = rr / (b[1] - b[0])
 
         cx = c / scale + b[0]
         cy = r / scale + b[0]
         #         print cx, cy
-        radius = prop['EquivDiameter'] / (2. * scale)
+        radius = prop["EquivDiameter"] / (2.0 * scale)
         return cx, cy, radius, scale
 
     def _extract_power_map_data(self, reader):
-        """
-        """
+        """ """
         if isinstance(reader, H5DataManager):
             d = self._extract_h5(reader)
         else:
@@ -209,33 +213,32 @@ class PowerMapProcessor(HasTraits):
 
     def _extract_h5(self, dm):
         #         cells = []
-        tab = dm.get_table('power_map', '/')
+        tab = dm.get_table("power_map", "/")
         metadata = dict()
         try:
-            b = tab._v_attrs['bounds']
+            b = tab._v_attrs["bounds"]
         except Exception as e:
-            print('exception', e)
+            print("exception", e)
             b = 1
 
-        metadata['bounds'] = -float(b), float(b)
+        metadata["bounds"] = -float(b), float(b)
 
         try:
-            bd = tab._v_attrs['beam_diameter']
+            bd = tab._v_attrs["beam_diameter"]
         except Exception as e:
-            print('exception', e)
+            print("exception", e)
             bd = 0
 
         try:
-            po = tab._v_attrs['power']
+            po = tab._v_attrs["power"]
         except Exception as e:
-            print('exception', e)
+            print("exception", e)
             po = 0
 
-        metadata['beam_diameter'] = bd
-        metadata['power'] = po
+        metadata["beam_diameter"] = bd
+        metadata["power"] = po
 
-        xs, ys, power = array([(r['x'], r['y'], r['power'])
-                               for r in tab.iterrows()]).T
+        xs, ys, power = array([(r["x"], r["y"], r["power"]) for r in tab.iterrows()]).T
 
         #        xs, ys, power = array(xs), array(ys), array(power)
         #        n = power.shape[0]
@@ -246,10 +249,13 @@ class PowerMapProcessor(HasTraits):
         X = xi[None, :]
         Y = yi[:, None]
 
-        power = griddata((xs, ys), power, (X, Y),
-                         fill_value=0,
-                         #                          method='cubic'
-                         )
+        power = griddata(
+            (xs, ys),
+            power,
+            (X, Y),
+            fill_value=0,
+            #                          method='cubic'
+        )
         return rot90(power, k=2), metadata
 
     #        return flipud(fliplr(power)), metadata
@@ -286,10 +292,10 @@ class PowerMapProcessor(HasTraits):
             if reader_meta:
                 metadata.append(row)
                 continue
-            if '<metadata>' in row[0]:
+            if "<metadata>" in row[0]:
                 reader_meta = True
                 continue
-            if '</metadata>' in row[0]:
+            if "</metadata>" in row[0]:
                 reader_meta = False
                 continue
 
@@ -304,7 +310,7 @@ class PowerMapProcessor(HasTraits):
             # baseline = self._calc_baseline(table, index) if self.correct_baseline else 0.0
             baseline = 0
             try:
-                pwr = row['power']
+                pwr = row["power"]
             except:
                 pwr = float(row[2])
             nr.append(max(pwr - baseline, 0))
@@ -316,8 +322,7 @@ class PowerMapProcessor(HasTraits):
         return rot90(array(cells), k=2), md
 
     def _calc_baseline(self, table, index):
-        """
-        """
+        """ """
 
         try:
             b1 = table.attrs.baseline1
@@ -335,9 +340,7 @@ class PowerMapProcessor(HasTraits):
         return bi
 
     def _prep_2D_data(self, z):
-        """
-
-        """
+        """ """
         z = transpose(z)
         #        print z
         mx = float(max(z))
@@ -348,6 +351,7 @@ class PowerMapProcessor(HasTraits):
         x = linspace(0, 1, r)
         y = linspace(0, 1, c)
         return x, y, z
+
 
 # if __name__ == '__main__':
 #    p=PowerMapViewer()

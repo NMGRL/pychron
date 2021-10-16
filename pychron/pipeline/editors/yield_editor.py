@@ -37,16 +37,18 @@ class YieldEditor(BaseTraitsEditor):
     analyses = List
 
     current_yield = Float(1.0)
-    new_yield = Property(depends_on='current,current_yield,standard_ratio,refresh_current,references')
-    current = Property(Float, depends_on='use_weighted_mean, refresh_current')
+    new_yield = Property(
+        depends_on="current,current_yield,standard_ratio,refresh_current,references"
+    )
+    current = Property(Float, depends_on="use_weighted_mean, refresh_current")
     standard_ratio = Float
     _current = Float
 
     refresh_current = Event
     use_weighted_mean = Bool(True)
 
-    set_yield_button = Button('Set Yield')
-    revert_button = Button('Revert')
+    set_yield_button = Button("Set Yield")
+    revert_button = Button("Revert")
 
     graph = Instance(AnalysisStackedRegressionGraph)
     options = None
@@ -71,20 +73,22 @@ class YieldEditor(BaseTraitsEditor):
 
         graph.new_plot()
 
-        plot, scatter, line = graph.new_series(x=xs, y=vs[0],
-                                               fit='weighted mean',
-                                               yerror=vs[1], type='scatter')
+        plot, scatter, line = graph.new_series(
+            x=xs, y=vs[0], fit="weighted mean", yerror=vs[1], type="scatter"
+        )
 
-        ebo = ErrorBarOverlay(component=scatter,
-                              orientation='y')
+        ebo = ErrorBarOverlay(component=scatter, orientation="y")
         scatter.overlays.append(ebo)
 
-        graph.set_x_title('Time (hrs)')
+        graph.set_x_title("Time (hrs)")
         graph.set_y_title(self.options.ratio_str)
 
-        graph.set_y_limits(min_=min([v - e for v, e in zip(*vs)]),
-                           max_=max([v + e for v, e in zip(*vs)]), pad='0.1')
-        graph.set_x_limits(min_=min(xs), max_=max(xs), pad='0.1')
+        graph.set_y_limits(
+            min_=min([v - e for v, e in zip(*vs)]),
+            max_=max([v + e for v, e in zip(*vs)]),
+            pad="0.1",
+        )
+        graph.set_x_limits(min_=min(xs), max_=max(xs), pad="0.1")
 
         graph.refresh()
         self.graph = graph
@@ -103,13 +107,13 @@ class YieldEditor(BaseTraitsEditor):
     def _get_xs(self):
         vs = sorted((ai.timestamp for ai in self.analyses))
         vo = vs[0]
-        return [(vi - vo) / 3600. for vi in vs]
+        return [(vi - vo) / 3600.0 for vi in vs]
 
     def _get_values(self, scalar=None):
         r = self.options.ratio_str
         vs = [getattr(ai, r) for ai in self.analyses]
         if scalar:
-            vs = [vi/scalar for vi in vs]
+            vs = [vi / scalar for vi in vs]
         ys = list(map(nominal_value, vs))
         es = list(map(std_dev, vs))
 
@@ -137,14 +141,16 @@ class YieldEditor(BaseTraitsEditor):
         return self.standard_ratio / self.current * self.current_yield
 
     def dump(self):
-        with open(self.yield_path, 'w') as wfile:
-            yaml.dump({'{}_yield'.format(self.options.ratio_str): self.new_yield}, wfile)
+        with open(self.yield_path, "w") as wfile:
+            yaml.dump(
+                {"{}_yield".format(self.options.ratio_str): self.new_yield}, wfile
+            )
 
     def load(self):
         p = self.yield_path
         if os.path.isfile(p):
             yd = yload(p)
-            key = '{}_yield'.format(self.options.ratio_str)
+            key = "{}_yield".format(self.options.ratio_str)
             try:
                 self.current_yield = yd[key]
             except KeyError:
@@ -152,7 +158,7 @@ class YieldEditor(BaseTraitsEditor):
 
     @property
     def yield_path(self):
-        p = os.path.join(paths.hidden_dir, 'yield.yaml')
+        p = os.path.join(paths.hidden_dir, "yield.yaml")
         return p
 
     # handlers
@@ -164,13 +170,16 @@ class YieldEditor(BaseTraitsEditor):
         self.dump()
 
     def traits_view(self):
-        ctrl_grp = VGroup(Item('use_weighted_mean'),
-                          HGroup(Item('standard_ratio'),Item('current_yield')),
-                          HGroup(Item('current'), UItem('revert_button')),
-                          HGroup(Item('new_yield'), UItem('set_yield_button')))
+        ctrl_grp = VGroup(
+            Item("use_weighted_mean"),
+            HGroup(Item("standard_ratio"), Item("current_yield")),
+            HGroup(Item("current"), UItem("revert_button")),
+            HGroup(Item("new_yield"), UItem("set_yield_button")),
+        )
 
-        graph_grp = VGroup(UItem('graph', style='custom'))
+        graph_grp = VGroup(UItem("graph", style="custom"))
         v = View(VGroup(ctrl_grp, graph_grp))
         return v
+
 
 # ============= EOF =============================================

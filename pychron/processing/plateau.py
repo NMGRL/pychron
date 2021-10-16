@@ -37,10 +37,11 @@ def memoize(function):
     return closure
 
 
-class Log():
+class Log:
     def debug(self, txt):
         pass
         # print 'debug --- {}'.format(txt)
+
 
 log = Log()
 
@@ -59,9 +60,9 @@ class Plateau(HasTraits):
     use_mswd = False  # mahon criterion
     total_signal = None
 
-    def find_plateaus(self, method=''):
+    def find_plateaus(self, method=""):
         """
-            method: str either fleck 1977 or mahon 1996
+        method: str either fleck 1977 or mahon 1996
         """
         if method.lower() == MAHON:
             self.use_mswd = True
@@ -102,11 +103,11 @@ class Plateau(HasTraits):
                 continue
 
             if not self.check_nsteps(start, i):
-                log.debug('{} {} nsteps failed'.format(start, i))
+                log.debug("{} {} nsteps failed".format(start, i))
                 continue
 
             if self.use_overlap and not self.check_overlap(start, i, overlap_func):
-                log.debug('{} {} overlap failed'.format(start, i))
+                log.debug("{} {} overlap failed".format(start, i))
                 # potential_end=None
                 break
 
@@ -114,7 +115,7 @@ class Plateau(HasTraits):
                 continue
 
             if not self.check_percent_released(start, i):
-                log.debug('{} {} percent failed'.format(start, i))
+                log.debug("{} {} percent failed".format(start, i))
                 continue
 
             potential_end = i
@@ -123,16 +124,19 @@ class Plateau(HasTraits):
             return start, potential_end
 
     def check_percent_released(self, start, end):
-        ss = sum([(s if not i in self.excludes else 0)
-                  for i, s in enumerate(self.signals)][start:end + 1])
+        ss = sum(
+            [(s if not i in self.excludes else 0) for i, s in enumerate(self.signals)][
+                start : end + 1
+            ]
+        )
 
-        log.debug('percent {} {} {}'.format(start, end, ss / self.total_signal))
+        log.debug("percent {} {} {}".format(start, end, ss / self.total_signal))
 
-        return ss / self.total_signal >= self.gas_fraction/100.
+        return ss / self.total_signal >= self.gas_fraction / 100.0
 
     def check_mswd(self, start, end):
         """
-            return False if not valid
+        return False if not valid
         """
         ages = self.ages[start, end + 1]
         errors = self.errors[start, end + 1]
@@ -151,7 +155,8 @@ class Plateau(HasTraits):
                         return
                 except BaseException as e:
                     import traceback
-                    log.debug('Overlap exception: {}'.format(e, traceback.format_exc()))
+
+                    log.debug("Overlap exception: {}".format(e, traceback.format_exc()))
                     continue
         else:
             return True
@@ -173,5 +178,5 @@ class Plateau(HasTraits):
     def check_nsteps(self, start, end):
         return (end - start) + 1 >= self.nsteps
 
-# ============= EOF =============================================
 
+# ============= EOF =============================================

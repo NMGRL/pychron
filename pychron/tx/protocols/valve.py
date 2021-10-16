@@ -47,17 +47,19 @@ class ValveProtocol(BaseValveProtocol):
         for k, v in FUNC_REGISTRY.items():
             self.register_service(k, make_wrapper(*v))
 
-        services = (('GetData', '_get_data'),
-                    ('Read', '_read'),
-                    ('Set', '_set'),
-                    ('Ping', '_ping'),
-                    ('GetPressure', '_get_pressure'))
+        services = (
+            ("GetData", "_get_data"),
+            ("Read", "_read"),
+            ("Set", "_set"),
+            ("Ping", "_ping"),
+            ("GetPressure", "_get_pressure"),
+        )
 
         self._register_services(services)
 
     def _get_data(self, data):
         if isinstance(data, dict):
-            offset = data['value']
+            offset = data["value"]
         else:
             offset = float(data)
         v = random.random() + offset
@@ -67,7 +69,7 @@ class ValveProtocol(BaseValveProtocol):
         dev = None
         if self._application is not None:
             if protocol is None:
-                protocol = 'pychron.hardware.core.i_core_device.ICoreDevice'
+                protocol = "pychron.hardware.core.i_core_device.ICoreDevice"
             dev = self._application.get_service(protocol, 'name=="{}"'.format(name))
             if dev is None:
                 # possible we are trying to get a flag
@@ -86,9 +88,9 @@ class ValveProtocol(BaseValveProtocol):
 
     def _set(self, data):
         if isinstance(data, dict):
-            dname, value = data['device'], data['value']
+            dname, value = data["device"], data["value"]
         else:
-            dname, value = data.split(' ')
+            dname, value = data.split(" ")
 
         d = self._get_device(dname, owner=self._addr)
         # self.debug('Set {name} {value}', name=dname, value=value)
@@ -102,13 +104,13 @@ class ValveProtocol(BaseValveProtocol):
 
     def _ping(self, data):
         if isinstance(data, dict):
-            dname = data['device']
+            dname = data["device"]
         else:
             dname = data
 
         d = self._get_device(dname, owner=self._addr)
         if d is not None:
-            if hasattr(d, 'ping'):
+            if hasattr(d, "ping"):
                 result = d.ping()
         else:
             result = DeviceConnectionErrorCode(dname, logger=self)
@@ -116,7 +118,7 @@ class ValveProtocol(BaseValveProtocol):
 
     def _read(self, data):
         if isinstance(data, dict):
-            data = data['value']
+            data = data["value"]
         # self.debug('Read {data}', data=data)
         d = self._get_device(data, owner=self._addr)
         if d is not None:
@@ -133,7 +135,7 @@ class ValveProtocol(BaseValveProtocol):
 
         manager = self._manager
         if isinstance(data, dict):
-            controller, gauge = data['controller'], data['gauge']
+            controller, gauge = data["controller"], data["gauge"]
         else:
             controller, gauge = data
 
@@ -145,5 +147,6 @@ class ValveProtocol(BaseValveProtocol):
             p = InvalidGaugeErrorCode(controller, gauge)
 
         return str(p)
+
 
 # ============= EOF =============================================

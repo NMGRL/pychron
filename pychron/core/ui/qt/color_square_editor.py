@@ -17,11 +17,13 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Int
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pyface.qt.QtGui import QFrame, QPainter, QColor
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
+
 
 class Square(QFrame):
     value = None
@@ -31,8 +33,9 @@ class Square(QFrame):
     def __init__(self):
         self.value = QColor(0, 0, 0)
         super(Square, self).__init__()
-#        super(Bar, self).__init__()
-#        self._cmap = get_cmap('jet')
+
+    #        super(Bar, self).__init__()
+    #        self._cmap = get_cmap('jet')
 
     def paintEvent(self, e):
         qp = QPainter()
@@ -46,6 +49,7 @@ class Square(QFrame):
             self.value = v
             self.update()
 
+
 class _ColorSquareEditor(Editor):
     def init(self, parent):
         self.control = Square()
@@ -54,7 +58,10 @@ class _ColorSquareEditor(Editor):
         if self.control:
             self.control.set_value(self.value)
 
+
 class ColorSquareEditor(BasicEditorFactory):
     klass = _ColorSquareEditor
     width = Int(100)
+
+
 # ============= EOF =============================================

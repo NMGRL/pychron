@@ -20,7 +20,10 @@
 from __future__ import absolute_import
 
 from pychron.spectrometer.thermo.manager.base import ThermoSpectrometerManager
-from pychron.spectrometer.thermo.spectrometer.helix import HelixSpectrometer, HelixSFTSpectrometer
+from pychron.spectrometer.thermo.spectrometer.helix import (
+    HelixSpectrometer,
+    HelixSFTSpectrometer,
+)
 
 
 class HelixSpectrometerManager(ThermoSpectrometerManager):

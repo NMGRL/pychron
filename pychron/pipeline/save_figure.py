@@ -36,11 +36,13 @@ class SaveFigureModel(SaveModel):
     pdf_options = Instance(FigurePDFOptions)
 
     def __init__(self, analyses, *args, **kw):
-        self.repository_identifiers = tuple({ai.repository_identifier for ai in analyses})
+        self.repository_identifiers = tuple(
+            {ai.repository_identifier for ai in analyses}
+        )
         self.root_directory = self.repository_identifiers[0]
 
         identifiers = tuple({ai.identifier for ai in analyses})
-        self.name = '_'.join(identifiers)
+        self.name = "_".join(identifiers)
 
         m = FigurePDFOptions()
         m.load()
@@ -53,52 +55,53 @@ class SaveFigureModel(SaveModel):
 
 class SaveFigureView(SaveController):
     def _get_root_item(self):
-        item = Item('root_directory', label='Directory',
-                    editor=ComboboxEditor(name='repository_identifiers'))
+        item = Item(
+            "root_directory",
+            label="Directory",
+            editor=ComboboxEditor(name="repository_identifiers"),
+        )
         return item
 
     def traits_view(self):
         path_group = self._get_path_group()
 
-        options_group = VGroup(UItem('pdf_options',
-                                     style='custom',
-                                     editor=InstanceEditor(view=PDFLayoutView)),
-                               label='Layout')
+        options_group = VGroup(
+            UItem(
+                "pdf_options", style="custom", editor=InstanceEditor(view=PDFLayoutView)
+            ),
+            label="Layout",
+        )
 
-        v = okcancel_view(Tabbed(path_group, options_group),
-                          title='Save PDF Dialog',
-                          width=700)
+        v = okcancel_view(
+            Tabbed(path_group, options_group), title="Save PDF Dialog", width=700
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import random
 
-    paths.build('_dev')
-
+    paths.build("_dev")
 
     class A(object):
         def __init__(self):
-            self.repository_identifier = random.choice(['Foo', 'Bar', 'Bat'])
-            self.identifier = '1000'
-
+            self.repository_identifier = random.choice(["Foo", "Bar", "Bat"])
+            self.identifier = "1000"
 
     ans = [A() for i in range(5)]
     sfm = SaveFigureModel(ans)
     sfv = SaveFigureView(model=sfm)
 
-
     class Demo(HasTraits):
         test = Button
 
         def traits_view(self):
-            return View('test')
+            return View("test")
 
         def _test_fired(self):
             sfv.edit_traits()
             # sfv.configure_traits()
-            print('fff', sfm.prepare_path())
-
+            print("fff", sfm.prepare_path())
 
     Demo().configure_traits()
 # ============= EOF =============================================

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 
@@ -25,7 +24,9 @@ from .core_device import CoreDevice
 
 
 class ArduinoCoreDevice(CoreDevice):
-    '''
-    '''
+    """ """
+
     pass
+
+
 # ============= EOF ====================================

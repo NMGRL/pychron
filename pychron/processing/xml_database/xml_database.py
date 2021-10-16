@@ -25,8 +25,14 @@ from traits.api import Str, List, Instance
 # ============= local library imports  ==========================
 from pychron.core.xml.xml_parser import XMLParser
 from pychron.loggable import Loggable
-from pychron.processing.xml_database.primitives import XMLLabnumber, XMLProjectRecordView, \
-    XMLSpectrometerRecord, XMLIrradiationRecordView, XMLAnalysis, XMLAnalysisRecord
+from pychron.processing.xml_database.primitives import (
+    XMLLabnumber,
+    XMLProjectRecordView,
+    XMLSpectrometerRecord,
+    XMLIrradiationRecordView,
+    XMLAnalysis,
+    XMLAnalysisRecord,
+)
 
 
 class MockSession(object):
@@ -49,10 +55,12 @@ class XMLDatabase(Loggable):
     _parser = Instance(XMLParser)
 
     def _path_changed(self, new):
-        self.datasource_url = 'Invalid Path'
+        self.datasource_url = "Invalid Path"
         if new:
             if os.path.isfile(new):
-                self.datasource_url = os.path.join(os.path.basename(os.path.dirname(new)), os.path.basename(new))
+                self.datasource_url = os.path.join(
+                    os.path.basename(os.path.dirname(new)), os.path.basename(new)
+                )
 
                 self._parser = XMLParser(new)
 
@@ -82,19 +90,25 @@ class XMLDatabase(Loggable):
         dt = datetime.now()
         return dt, dt
 
-    def get_project_labnumbers(self, projects, filter_non_run_samples=None, lp=None, hp=None,
-                               analysis_types=None,
-                               mass_spectrometers=None):
-        elems = self._parser.get_elements('Sample')
+    def get_project_labnumbers(
+        self,
+        projects,
+        filter_non_run_samples=None,
+        lp=None,
+        hp=None,
+        analysis_types=None,
+        mass_spectrometers=None,
+    ):
+        elems = self._parser.get_elements("Sample")
 
         return [XMLLabnumber(i) for i in elems]
 
     def get_labnumber_analyses(self, lns, **kw):
         for li in lns:
-            elems = self._parser.get_elements('Sample')
+            elems = self._parser.get_elements("Sample")
             for e in elems:
-                if e.get('igsn') == li:
-                    ms = e.xpath('Parameters/Experiment/Measurement')
+                if e.get("igsn") == li:
+                    ms = e.xpath("Parameters/Experiment/Measurement")
                     ans = [XMLAnalysisRecord(e, mi) for mi in ms]
                     return ans, len(ans)
 
@@ -105,16 +119,16 @@ class XMLDatabase(Loggable):
         if klass is None:
             klass = XMLAnalysisRecord
 
-        ms = self._parser.get_elements('Parameters/Experiment/Measurement')
+        ms = self._parser.get_elements("Parameters/Experiment/Measurement")
         ans = []
 
         for ui in uuids:
-            mi = next((mi for mi in ms if mi.get('measurementNumber') == ui))
+            mi = next((mi for mi in ms if mi.get("measurementNumber") == ui))
 
             cur = mi
             while 1:
                 elem = cur.getparent()
-                if elem.tag == 'Sample':
+                if elem.tag == "Sample":
                     break
                 else:
                     cur = elem
@@ -128,22 +142,24 @@ class XMLDatabase(Loggable):
 
     # private
     def _load_projects(self):
-        elem = self._parser.get_elements('Parameters/Experiment')
-        self.projects = [XMLProjectRecordView(i.get('projectName')) for i in elem]
+        elem = self._parser.get_elements("Parameters/Experiment")
+        self.projects = [XMLProjectRecordView(i.get("projectName")) for i in elem]
 
     def _load_irradiations(self):
-        elem = self._parser.get_elements('Parameters/Experiment/Irradiation')
-        self.irradiations = [XMLIrradiationRecordView(i.get('irradiationName')) for i in elem]
+        elem = self._parser.get_elements("Parameters/Experiment/Irradiation")
+        self.irradiations = [
+            XMLIrradiationRecordView(i.get("irradiationName")) for i in elem
+        ]
 
     def _load_mass_spectrometers(self):
-        elem = self._parser.get_elements('Parameters/Experiment')
-        self.mass_spectrometers = [XMLSpectrometerRecord(i.get('massSpectrometer')) for i in elem]
+        elem = self._parser.get_elements("Parameters/Experiment")
+        self.mass_spectrometers = [
+            XMLSpectrometerRecord(i.get("massSpectrometer")) for i in elem
+        ]
 
     def _load_sample_meta(self):
-        elem = self._parser.get_elements('Sample')
+        elem = self._parser.get_elements("Sample")
         pass
 
+
 # ============= EOF =============================================
-
-
-

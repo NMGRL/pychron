@@ -23,12 +23,25 @@ from numpy import linspace, polyval
 
 # ============= local library imports  ==========================
 from pychron.core.regression.least_squares_regressor import ExponentialRegressor
-from pychron.core.regression.mean_regressor import MeanRegressor  # , WeightedMeanRegressor
-from pychron.core.regression.new_york_regressor import ReedYorkRegressor, NewYorkRegressor
+from pychron.core.regression.mean_regressor import (
+    MeanRegressor,
+)  # , WeightedMeanRegressor
+from pychron.core.regression.new_york_regressor import (
+    ReedYorkRegressor,
+    NewYorkRegressor,
+)
 from pychron.core.regression.ols_regressor import OLSRegressor
+
 # from pychron.core.regression.york_regressor import YorkRegressor
-from pychron.core.regression.tests.standard_data import mean_data, filter_data, ols_data, pearson, pre_truncated_data, \
-    expo_data, expo_data_linear
+from pychron.core.regression.tests.standard_data import (
+    mean_data,
+    filter_data,
+    ols_data,
+    pearson,
+    pre_truncated_data,
+    expo_data,
+    expo_data_linear,
+)
 
 
 class RegressionTestCase(object):
@@ -37,7 +50,7 @@ class RegressionTestCase(object):
         cls.reg = cls.reg_klass()
 
     def testN(self):
-        self.assertEqual(self.reg.n, self.solution['n'])
+        self.assertEqual(self.reg.n, self.solution["n"])
 
 
 class TruncateRegressionTest(TestCase):
@@ -49,18 +62,18 @@ class TruncateRegressionTest(TestCase):
         self.reg.trait_set(xs=xs, ys=ys)
         self.solution = sol
         self.reg.trait_set(xs=xs, ys=ys)
-        self.reg.set_truncate('x<5')
+        self.reg.set_truncate("x<5")
 
-        self.assertEqual(self.reg.mean, self.solution['pre_mean'])
+        self.assertEqual(self.reg.mean, self.solution["pre_mean"])
 
     def test_post_truncate(self):
         xs, ys, sol = pre_truncated_data()
         self.reg.trait_set(xs=xs, ys=ys)
         self.solution = sol
         self.reg.trait_set(xs=xs, ys=ys)
-        self.reg.set_truncate('x>=5')
+        self.reg.set_truncate("x>=5")
 
-        self.assertEqual(self.reg.mean, self.solution['post_mean'])
+        self.assertEqual(self.reg.mean, self.solution["post_mean"])
 
 
 class MeanRegressionTest(RegressionTestCase, TestCase):
@@ -73,10 +86,10 @@ class MeanRegressionTest(RegressionTestCase, TestCase):
         self.solution = sol
 
     def testMean(self):
-        self.assertAlmostEqual(self.reg.mean, self.solution['mean'], 2)
+        self.assertAlmostEqual(self.reg.mean, self.solution["mean"], 2)
 
     def testStd(self):
-        self.assertAlmostEqual(self.reg.std, self.solution['std'], 2)
+        self.assertAlmostEqual(self.reg.std, self.solution["std"], 2)
 
 
 class OLSRegressionTest(RegressionTestCase, TestCase):
@@ -84,21 +97,21 @@ class OLSRegressionTest(RegressionTestCase, TestCase):
 
     def setUp(self):
         xs, ys, sol = ols_data()
-        self.reg.trait_set(xs=xs, ys=ys, fit='linear')
+        self.reg.trait_set(xs=xs, ys=ys, fit="linear")
         self.solution = sol
         self.reg.calculate()
 
     def testSlope(self):
         cs = self.reg.coefficients
-        self.assertAlmostEqual(cs[-1], self.solution['slope'], 4)
+        self.assertAlmostEqual(cs[-1], self.solution["slope"], 4)
 
     def testYIntercept(self):
         cs = self.reg.coefficients
-        self.assertAlmostEqual(cs[0], self.solution['y_intercept'], 4)
+        self.assertAlmostEqual(cs[0], self.solution["y_intercept"], 4)
 
     def testPredictErrorSEM(self):
-        e = self.reg.predict_error(self.solution['pred_x'], error_calc='SEM')
-        self.assertAlmostEqual(e, self.solution['pred_error'], 3)
+        e = self.reg.predict_error(self.solution["pred_x"], error_calc="SEM")
+        self.assertAlmostEqual(e, self.solution["pred_error"], 3)
 
 
 class OLSRegressionTest2(RegressionTestCase, TestCase):
@@ -110,15 +123,17 @@ class OLSRegressionTest2(RegressionTestCase, TestCase):
         xs = linspace(0, 100, n)
         ys = polyval(coeffs, xs)
 
-        self.reg.trait_set(xs=xs, ys=ys, fit='parabolic')
+        self.reg.trait_set(xs=xs, ys=ys, fit="parabolic")
 
-        sol = {'coefficients': coeffs, 'n': n}
+        sol = {"coefficients": coeffs, "n": n}
         self.solution = sol
         self.reg.calculate()
 
     def testcoefficients(self):
-        self.assertListEqual(list([round(x, 6) for x in self.reg.coefficients[::-1]]),
-                             self.solution['coefficients'])
+        self.assertListEqual(
+            list([round(x, 6) for x in self.reg.coefficients[::-1]]),
+            self.solution["coefficients"],
+        )
 
 
 class FilterOLSRegressionTest(RegressionTestCase, TestCase):
@@ -126,27 +141,35 @@ class FilterOLSRegressionTest(RegressionTestCase, TestCase):
 
     def setUp(self):
         xs, ys, sol = filter_data()
-        self.reg.trait_set(xs=xs, ys=ys, fit='linear',
-                           filter_outliers_dict={'filter_outliers': True, 'iterations': 1, 'std_devs': 2})
+        self.reg.trait_set(
+            xs=xs,
+            ys=ys,
+            fit="linear",
+            filter_outliers_dict={
+                "filter_outliers": True,
+                "iterations": 1,
+                "std_devs": 2,
+            },
+        )
         self.solution = sol
         self.reg.calculate()
 
     def testSlope(self):
         cs = self.reg.coefficients
-        self.assertAlmostEqual(cs[-1], self.solution['slope'], 4)
+        self.assertAlmostEqual(cs[-1], self.solution["slope"], 4)
 
     def testYIntercept(self):
         cs = self.reg.coefficients
-        self.assertAlmostEqual(cs[0], self.solution['y_intercept'], 4)
+        self.assertAlmostEqual(cs[0], self.solution["y_intercept"], 4)
 
     def testPredictErrorSEM(self):
-        e = self.reg.predict_error(self.solution['pred_x'], error_calc='SEM')
+        e = self.reg.predict_error(self.solution["pred_x"], error_calc="SEM")
         # e=self.reg.coefficient_errors[0]
-        self.assertAlmostEqual(e, self.solution['pred_error'], 3)
+        self.assertAlmostEqual(e, self.solution["pred_error"], 3)
 
 
 class PearsonRegressionTest(RegressionTestCase):
-    kind = ''
+    kind = ""
 
     def setUp(self):
         xs, ys, wxs, wys = pearson()
@@ -154,42 +177,43 @@ class PearsonRegressionTest(RegressionTestCase):
         exs = wxs ** -0.5
         eys = wys ** -0.5
 
-        self.reg.trait_set(xs=xs, ys=ys,
-                           xserr=exs,
-                           yserr=eys,
-                           error_calc_type='SE')
+        self.reg.trait_set(xs=xs, ys=ys, xserr=exs, yserr=eys, error_calc_type="SE")
         self.reg.calculate()
-        self.solution = {'n': len(xs)}
+        self.solution = {"n": len(xs)}
 
     def test_slope(self):
         exp = pearson(self.kind)
-        self.assertAlmostEqual(self.reg.slope, exp['slope'], 4)
+        self.assertAlmostEqual(self.reg.slope, exp["slope"], 4)
 
     def test_slope_err(self):
         exp = pearson(self.kind)
-        self.assertAlmostEqual(self.reg.get_slope_variance() ** 0.5, exp['slope_err'], 4)
+        self.assertAlmostEqual(
+            self.reg.get_slope_variance() ** 0.5, exp["slope_err"], 4
+        )
 
     def test_y_intercept(self):
         expected = pearson(self.kind)
-        self.assertAlmostEqual(self.reg.intercept, expected['intercept'], 4)
+        self.assertAlmostEqual(self.reg.intercept, expected["intercept"], 4)
 
     def test_y_intercept_error(self):
         expected = pearson(self.kind)
-        self.assertAlmostEqual(self.reg.get_intercept_error(), expected['intercept_err'], 4)
+        self.assertAlmostEqual(
+            self.reg.get_intercept_error(), expected["intercept_err"], 4
+        )
 
     def test_mswd(self):
         expected = pearson(self.kind)
-        self.assertAlmostEqual(self.reg.mswd, expected['mswd'], 3)
+        self.assertAlmostEqual(self.reg.mswd, expected["mswd"], 3)
 
 
 class ReedRegressionTest(PearsonRegressionTest, TestCase):
     reg_klass = ReedYorkRegressor
-    kind = 'reed'
+    kind = "reed"
 
 
 class NewYorkRegressionTest(PearsonRegressionTest, TestCase):
     reg_klass = NewYorkRegressor
-    kind = 'new_york'
+    kind = "new_york"
     # def test_llnl(self):
     #     self.assertEqual(self.reg.get_slope_variance(), self.reg.test_llnl())
     # def test_llnl_vs_pychron_mahon(self):
@@ -204,15 +228,21 @@ class ExpoRegressionTest(TestCase):
 
     def test_a(self):
         self.reg.calculate()
-        self.assertAlmostEqual(self.reg.coefficients[0], self.solution['coefficients'][0])
+        self.assertAlmostEqual(
+            self.reg.coefficients[0], self.solution["coefficients"][0]
+        )
 
     def test_b(self):
         self.reg.calculate()
-        self.assertAlmostEqual(self.reg.coefficients[1], self.solution['coefficients'][1])
+        self.assertAlmostEqual(
+            self.reg.coefficients[1], self.solution["coefficients"][1]
+        )
 
     def test_c(self):
         self.reg.calculate()
-        self.assertAlmostEqual(self.reg.coefficients[2], self.solution['coefficients'][2])
+        self.assertAlmostEqual(
+            self.reg.coefficients[2], self.solution["coefficients"][2]
+        )
 
 
 class ExpoRegressionTest2(TestCase):
@@ -223,7 +253,11 @@ class ExpoRegressionTest2(TestCase):
 
     def test_c(self):
         self.reg.calculate()
-        self.assertAlmostEqual(self.reg.coefficients[2], self.solution['coefficients'][2], places=5)
+        self.assertAlmostEqual(
+            self.reg.coefficients[2], self.solution["coefficients"][2], places=5
+        )
+
+
 # ============= EOF =============================================
 
 # class WeightedMeanRegressionTest(RegressionTestCase, TestCase):

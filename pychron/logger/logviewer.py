@@ -18,9 +18,11 @@
 from __future__ import absolute_import
 from traits.api import HasTraits, Str, Bool, List, Event, Int
 from traitsui.api import View, UItem, Item, HGroup, VGroup, TabularEditor, Controller
+
 # ============= standard library imports ========================
 import os
 import re
+
 # ============= local library imports  ==========================
 from traitsui.editors.check_list_editor import CheckListEditor
 from traitsui.tabular_adapter import TabularAdapter
@@ -31,10 +33,12 @@ import six
 
 
 class LogAdapter(TabularAdapter):
-    columns = [('Timestamp', 'timestamp'),
-               ('Name', 'name'),
-               ('Level', 'level'),
-               ('Message', 'message'), ]
+    columns = [
+        ("Timestamp", "timestamp"),
+        ("Name", "name"),
+        ("Level", "level"),
+        ("Message", "message"),
+    ]
     timestamp_width = Int(175)
     level_width = Int(100)
 
@@ -44,26 +48,26 @@ class LogAdapter(TabularAdapter):
         if item.found:
             c = LIGHT_GREEN
         else:
-            c = 'white'
+            c = "white"
 
         return c
 
 
 class LogItem:
-    name = ''
-    message = ''
-    timestamp = ''
-    level = ''
+    name = ""
+    message = ""
+    timestamp = ""
+    level = ""
     found = False
 
 
-name = r'(?P<name>^.{{1,{width}}}):'.format(width=40)
-ts = r'(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})'
-level = r'(?P<level>(INFO|DEBUG|WARNING|CRITICAL)\s{{1,{width}}})'.format(width=9)
-thread = r'(?P<thread>\(.{{1,{width}}}\))'.format(width=10)
-message = r'(?P<message>.*)'
+name = r"(?P<name>^.{{1,{width}}}):".format(width=40)
+ts = r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})"
+level = r"(?P<level>(INFO|DEBUG|WARNING|CRITICAL)\s{{1,{width}}})".format(width=9)
+thread = r"(?P<thread>\(.{{1,{width}}}\))".format(width=10)
+message = r"(?P<message>.*)"
 
-regex = r' '.join((name, ts, level, thread, message))
+regex = r" ".join((name, ts, level, thread, message))
 regex = re.compile(regex)
 
 
@@ -75,20 +79,22 @@ class LogModel(HasTraits):
         li = LogItem()
         m = regex.match(line)
         if m:
-            li.name = m.group('name').strip()
-            li.timestamp = m.group('timestamp').strip()
-            li.level = m.group('level').strip()
-            li.thread = m.group('thread').strip()
-            li.message = m.group('message').strip()
+            li.name = m.group("name").strip()
+            li.timestamp = m.group("timestamp").strip()
+            li.level = m.group("level").strip()
+            li.thread = m.group("thread").strip()
+            li.message = m.group("message").strip()
         else:
             li.message = line
         return li
 
     def open_file(self, path):
         self.path = path
-        with open(path, 'r') as rfile:
+        with open(path, "r") as rfile:
             # print rfile.read()
-            self.items = self.oitems = [self._factory(line) for line in self._file(rfile)]
+            self.items = self.oitems = [
+                self._factory(line) for line in self._file(rfile)
+            ]
 
     def _file(self, r):
         return r
@@ -105,22 +111,23 @@ def tostr(vv):
 class TwistedLogModel(LogModel):
     def _file(self, r):
         from twisted.logger import eventsFromJSONLogFile
+
         return eventsFromJSONLogFile(r)
 
     def _factory(self, ii):
         li = LogItem()
-        li.name = 'foo'
-        json_level = str(ii.get('log_level'))
-        if 'debug' in json_level:
-            li.level = 'DEBUG'
-        elif 'info' in json_level:
-            li.level = 'WARNING'
+        li.name = "foo"
+        json_level = str(ii.get("log_level"))
+        if "debug" in json_level:
+            li.level = "DEBUG"
+        elif "info" in json_level:
+            li.level = "WARNING"
         else:
-            li.level = 'INFO'
+            li.level = "INFO"
 
-        li.timestamp = get_datetime(ii.get('log_time'))
+        li.timestamp = get_datetime(ii.get("log_time"))
 
-        fmt = ii.get('log_format')
+        fmt = ii.get("log_format")
         li.message = str(fmt.format(**{k: tostr(v) for k, v in ii.items()}))
 
         return li
@@ -150,11 +157,11 @@ class LogViewer(Controller):
     refresh_needed = Event
     use_fuzzy = Bool(True)
     use_filter = Bool(True)
-    levels = List(('DEBUG', 'INFO', 'WARNING'))
-    available_levels = List(('DEBUG', 'INFO', 'WARNING'))
+    levels = List(("DEBUG", "INFO", "WARNING"))
+    available_levels = List(("DEBUG", "INFO", "WARNING"))
 
     def init(self, info):
-        info.ui.title = 'Log Viewer - {}'.format(os.path.basename(self.model.path))
+        info.ui.title = "Log Viewer - {}".format(os.path.basename(self.model.path))
         return True
 
     # def controller_levels_changed(self, info):
@@ -190,39 +197,56 @@ class LogViewer(Controller):
         v = self.search_entry
         if v:
             if self.use_fuzzy:
-                pat = '.*?'.join(map(re.escape, v))
+                pat = ".*?".join(map(re.escape, v))
             else:
-                pat = '^{}'.format(v)
+                pat = "^{}".format(v)
 
             regex = re.compile(pat)
             return regex
 
     def traits_view(self):
-        ctrlgrp = VGroup(HGroup(UItem('controller.search_entry'),
-                                Item('controller.use_fuzzy'),
-                                Item('controller.use_filter')),
-                         HGroup(UItem('controller.levels',
-                                      style='custom',
-                                      editor=CheckListEditor(name='controller.available_levels',
-                                                             cols=3))))
+        ctrlgrp = VGroup(
+            HGroup(
+                UItem("controller.search_entry"),
+                Item("controller.use_fuzzy"),
+                Item("controller.use_filter"),
+            ),
+            HGroup(
+                UItem(
+                    "controller.levels",
+                    style="custom",
+                    editor=CheckListEditor(name="controller.available_levels", cols=3),
+                )
+            ),
+        )
 
-        v = View(VGroup(ctrlgrp, UItem('items', editor=TabularEditor(adapter=LogAdapter(),
-                                                                     refresh='controller.refresh_needed',
-                                                                     operations=[]))),
-                 title='Log Viewer',
-                 resizable=True,
-                 width=800,
-                 height=600)
+        v = View(
+            VGroup(
+                ctrlgrp,
+                UItem(
+                    "items",
+                    editor=TabularEditor(
+                        adapter=LogAdapter(),
+                        refresh="controller.refresh_needed",
+                        operations=[],
+                    ),
+                ),
+            ),
+            title="Log Viewer",
+            resizable=True,
+            width=800,
+            height=600,
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     m = LogModel()
     # m.parse()
     # m.open_file('/Users/ross/Pychron_dev/logs/pychron.current.log')
     # m.open_file('/Users/ross/Sandbox/pychron.current.log')
     m = TwistedLogModel()
-    m.open_file('/Users/diode/Pychron_dev/logs/pps.log.json')
+    m.open_file("/Users/diode/Pychron_dev/logs/pps.log.json")
 
     lv = LogViewer(model=m)
     lv.configure_traits()

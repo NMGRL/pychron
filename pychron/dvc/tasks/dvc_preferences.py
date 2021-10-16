@@ -21,8 +21,11 @@ from traitsui.api import View, Item, HGroup, VGroup
 
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.pychron_traits import BorderVGroup
-from pychron.database.tasks.connection_preferences import ConnectionPreferences, ConnectionPreferencesPane, \
-    ConnectionFavoriteItem
+from pychron.database.tasks.connection_preferences import (
+    ConnectionPreferences,
+    ConnectionPreferencesPane,
+    ConnectionFavoriteItem,
+)
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
@@ -31,36 +34,93 @@ class DVCConnectionItem(ConnectionFavoriteItem):
     meta_repo_name = Str
     meta_repo_dir = Str
     repository_root = Str
-    attributes = ('name', 'kind', 'username', 'host',
-                  'dbname', 'password', 'enabled', 'default', 'path',
-                  'organization', 'meta_repo_name', 'meta_repo_dir', 'timeout',
-                  'repository_root')
+    attributes = (
+        "name",
+        "kind",
+        "username",
+        "host",
+        "dbname",
+        "password",
+        "enabled",
+        "default",
+        "path",
+        "organization",
+        "meta_repo_name",
+        "meta_repo_dir",
+        "timeout",
+        "repository_root",
+    )
 
-    def __init__(self, schema_identifier='', attrs=None, load_names=False):
+    def __init__(self, schema_identifier="", attrs=None, load_names=False):
         super(ConnectionFavoriteItem, self).__init__()
         self.schema_identifier = schema_identifier
 
         if attrs:
-            attrs = attrs.split(',')
+            attrs = attrs.split(",")
             try:
-                (self.name, self.kind, self.username, self.host, self.dbname,
-                 self.password, enabled, default, path) = attrs
+                (
+                    self.name,
+                    self.kind,
+                    self.username,
+                    self.host,
+                    self.dbname,
+                    self.password,
+                    enabled,
+                    default,
+                    path,
+                ) = attrs
 
             except ValueError:
                 try:
-                    (self.name, self.kind, self.username, self.host, self.dbname,
-                     self.password, enabled, default, self.path, self.organization,
-                     self.meta_repo_name, self.meta_repo_dir) = attrs
+                    (
+                        self.name,
+                        self.kind,
+                        self.username,
+                        self.host,
+                        self.dbname,
+                        self.password,
+                        enabled,
+                        default,
+                        self.path,
+                        self.organization,
+                        self.meta_repo_name,
+                        self.meta_repo_dir,
+                    ) = attrs
                 except ValueError:
                     try:
-                        (self.name, self.kind, self.username, self.host, self.dbname,
-                         self.password, enabled, default, self.path, self.organization,
-                         self.meta_repo_name, self.meta_repo_dir, timeout) = attrs
+                        (
+                            self.name,
+                            self.kind,
+                            self.username,
+                            self.host,
+                            self.dbname,
+                            self.password,
+                            enabled,
+                            default,
+                            self.path,
+                            self.organization,
+                            self.meta_repo_name,
+                            self.meta_repo_dir,
+                            timeout,
+                        ) = attrs
                         self.timeout = int(timeout)
                     except ValueError:
-                        (self.name, self.kind, self.username, self.host, self.dbname,
-                         self.password, enabled, default, self.path, self.organization,
-                         self.meta_repo_name, self.meta_repo_dir, timeout, self.repository_root) = attrs
+                        (
+                            self.name,
+                            self.kind,
+                            self.username,
+                            self.host,
+                            self.dbname,
+                            self.password,
+                            enabled,
+                            default,
+                            self.path,
+                            self.organization,
+                            self.meta_repo_name,
+                            self.meta_repo_dir,
+                            timeout,
+                            self.repository_root,
+                        ) = attrs
                         self.timeout = int(timeout)
 
             self.enabled = to_bool(enabled)
@@ -70,28 +130,30 @@ class DVCConnectionItem(ConnectionFavoriteItem):
 
 
 class DVCConnectionPreferences(ConnectionPreferences):
-    preferences_path = 'pychron.dvc.connection'
-    _adapter_klass = 'pychron.dvc.dvc_database.DVCDatabase'
-    _schema_identifier = 'AnalysisTbl'
+    preferences_path = "pychron.dvc.connection"
+    _adapter_klass = "pychron.dvc.dvc_database.DVCDatabase"
+    _schema_identifier = "AnalysisTbl"
     _fav_klass = DVCConnectionItem
 
 
 class DVCConnectionPreferencesPane(ConnectionPreferencesPane):
     model_factory = DVCConnectionPreferences
-    category = 'DVC'
+    category = "DVC"
 
     def traits_view(self):
-        ev = View(Item('organization'),
-                  Item('meta_repo_name', label='MetaData Name'),
-                  Item('meta_repo_dir', label='MetaData Directory'),
-                  Item('repository_root', label='Repository Directory'))
+        ev = View(
+            Item("organization"),
+            Item("meta_repo_name", label="MetaData Name"),
+            Item("meta_repo_dir", label="MetaData Directory"),
+            Item("repository_root", label="Repository Directory"),
+        )
         fav_grp = self.get_fav_group(edit_view=ev)
 
         return View(fav_grp)
 
 
 class DVCPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.dvc'
+    preferences_path = "pychron.dvc"
     use_cocktail_irradiation = Bool
     use_cache = Bool
     max_cache_size = Int
@@ -103,61 +165,100 @@ class DVCPreferences(BasePreferencesHelper):
 
 class DVCPreferencesPane(PreferencesPane):
     model_factory = DVCPreferences
-    category = 'DVC'
+    category = "DVC"
 
     def traits_view(self):
-        v = View(VGroup(BorderVGroup(Item('use_cocktail_irradiation',
-                                          tooltip='Use the special cocktail.json for defining the '
-                                                  'irradiation flux and chronology',
-                                          label='Use Cocktail Irradiation')),
-                        BorderVGroup(Item('use_auto_pull', label='Auto Pull', tooltip='If selected, automatically '
-                                                                                      'update your version to the '
-                                                                                      'latest version. Deselect if '
-                                                                                      'you want to be asked to pull '
-                                                                                      'the official version.'),
-                                     Item('use_auto_push', label='Auto Push',
-                                          tooltip='Push changes when a PushNode is used automatically without asking '
-                                                  'for confirmation.')),
-                        BorderVGroup(Item('use_default_commit_author', label='Use Default Commit Author'),
-                                     label='Commit'),
-                        BorderVGroup(Item('update_currents_enabled', label='Enabled'),
-                                     label='Current Values'),
-                        BorderVGroup(HGroup(Item('use_cache', label='Enabled'),
-                                            Item('max_cache_size', label='Max Size')),
-                                     label='Cache')))
+        v = View(
+            VGroup(
+                BorderVGroup(
+                    Item(
+                        "use_cocktail_irradiation",
+                        tooltip="Use the special cocktail.json for defining the "
+                        "irradiation flux and chronology",
+                        label="Use Cocktail Irradiation",
+                    )
+                ),
+                BorderVGroup(
+                    Item(
+                        "use_auto_pull",
+                        label="Auto Pull",
+                        tooltip="If selected, automatically "
+                        "update your version to the "
+                        "latest version. Deselect if "
+                        "you want to be asked to pull "
+                        "the official version.",
+                    ),
+                    Item(
+                        "use_auto_push",
+                        label="Auto Push",
+                        tooltip="Push changes when a PushNode is used automatically without asking "
+                        "for confirmation.",
+                    ),
+                ),
+                BorderVGroup(
+                    Item(
+                        "use_default_commit_author", label="Use Default Commit Author"
+                    ),
+                    label="Commit",
+                ),
+                BorderVGroup(
+                    Item("update_currents_enabled", label="Enabled"),
+                    label="Current Values",
+                ),
+                BorderVGroup(
+                    HGroup(
+                        Item("use_cache", label="Enabled"),
+                        Item("max_cache_size", label="Max Size"),
+                    ),
+                    label="Cache",
+                ),
+            )
+        )
         return v
 
 
 class DVCExperimentPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.dvc.experiment'
+    preferences_path = "pychron.dvc.experiment"
     use_dvc_persistence = Bool
 
 
 class DVCExperimentPreferencesPane(PreferencesPane):
     model_factory = DVCExperimentPreferences
-    category = 'Experiment'
+    category = "Experiment"
 
     def traits_view(self):
-        v = View(BorderVGroup(Item('use_dvc_persistence', label='Use DVC Persistence'),
-                              label='DVC'))
+        v = View(
+            BorderVGroup(
+                Item("use_dvc_persistence", label="Use DVC Persistence"), label="DVC"
+            )
+        )
         return v
 
 
 class DVCRepositoryPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.dvc.repository'
+    preferences_path = "pychron.dvc.repository"
     check_for_changes = Bool
     auto_fetch = Bool
 
 
 class DVCRepositoryPreferencesPane(PreferencesPane):
     model_factory = DVCRepositoryPreferences
-    category = 'Repositories'
+    category = "Repositories"
 
     def traits_view(self):
-        v = View(BorderVGroup(Item('check_for_changes', label='Check for Changes'),
-                              Item('auto_fetch', label='Auto Fetch',
-                                   tooltip='Automatically "fetch" when a local repository is selected. Turn this off '
-                                           'if fetching speed is an issue'),
-                              label=''))
+        v = View(
+            BorderVGroup(
+                Item("check_for_changes", label="Check for Changes"),
+                Item(
+                    "auto_fetch",
+                    label="Auto Fetch",
+                    tooltip='Automatically "fetch" when a local repository is selected. Turn this off '
+                    "if fetching speed is an issue",
+                ),
+                label="",
+            )
+        )
         return v
+
+
 # ============= EOF =============================================

@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 
 import os
+
 # ============= standard library imports ========================
 import smtplib
 import time
@@ -42,10 +43,7 @@ class User(HasTraits):
     telephone = Str
 
     def edit_view(self):
-        return View('name',
-                    'email',
-                    'level',
-                    'telephone')
+        return View("name", "email", "level", "telephone")
 
 
 class Emailer(Loggable):
@@ -54,17 +52,17 @@ class Emailer(Loggable):
     server_host = Str
     server_port = Int
 
-    sender = Str('pychron@gmail.com')
+    sender = Str("pychron@gmail.com")
 
     def __init__(self, *args, **kw):
         super(Emailer, self).__init__(*args, **kw)
 
         self._server = None
 
-        bind_preference(self, 'server_username', 'pychron.email.server_username')
-        bind_preference(self, 'server_password', 'pychron.email.server_password')
-        bind_preference(self, 'server_host', 'pychron.email.server_host')
-        bind_preference(self, 'server_port', 'pychron.email.server_port')
+        bind_preference(self, "server_username", "pychron.email.server_username")
+        bind_preference(self, "server_password", "pychron.email.server_password")
+        bind_preference(self, "server_host", "pychron.email.server_host")
+        bind_preference(self, "server_port", "pychron.email.server_port")
         if not self.server_port:
             self.server_port = 587
 
@@ -82,25 +80,29 @@ class Emailer(Loggable):
                 server.quit()
                 return True
         except (smtplib.SMTPServerDisconnected, BaseException) as e:
-            self.debug('SMTPServer connection err: {}'
-                       'host={}, user={}, port={}'.format(e, self.server_host, self.server_username, self.server_port))
+            self.debug(
+                "SMTPServer connection err: {}"
+                "host={}, user={}, port={}".format(
+                    e, self.server_host, self.server_username, self.server_port
+                )
+            )
             if warn:
-                self.warning('SMTPServer not properly configured')
+                self.warning("SMTPServer not properly configured")
             server = None
 
         return server
 
     def send(self, addrs, sub, msg, paths=None):
-        self.info('Send email. addrs: {}'.format(addrs, sub))
+        self.info("Send email. addrs: {}".format(addrs, sub))
 
-        if ',' in addrs:
-            addrs = ','.split(addrs)
+        if "," in addrs:
+            addrs = ",".split(addrs)
 
         for i in range(10):
             server = self.connect()
             if server is not None:
                 break
-            self.debug('doing email connection retry {}'.format(i))
+            self.debug("doing email connection retry {}".format(i))
             time.sleep(1)
 
         if server:
@@ -113,25 +115,28 @@ class Emailer(Loggable):
                 server.quit()
                 return True
             except BaseException as e:
-                self.warning('Failed sending mail. {}'.format(e))
+                self.warning("Failed sending mail. {}".format(e))
         else:
-            self.warning('Failed connecting to server')
+            self.warning("Failed connecting to server")
 
     def _message_factory(self, addrs, sub, txt, paths):
         msg = MIMEMultipart()
-        msg['From'] = self.sender  # 'nmgrl@gmail.com'
-        msg['To'] = ','.join(addrs)
-        msg['Subject'] = sub
+        msg["From"] = self.sender  # 'nmgrl@gmail.com'
+        msg["To"] = ",".join(addrs)
+        msg["Subject"] = sub
         msg.attach(MIMEText(txt))
 
         if paths:
             for p in paths:
                 name = os.path.basename(p)
-                with open(p, 'rb') as rfile:
-                    part = MIMEBase('application', "octet-stream")
+                with open(p, "rb") as rfile:
+                    part = MIMEBase("application", "octet-stream")
                     part.set_payload(rfile.read())
-                    part['Content-Disposition'] = 'attachment; filename="{}"'.format(name)
+                    part["Content-Disposition"] = 'attachment; filename="{}"'.format(
+                        name
+                    )
                     msg.attach(part)
         return msg
+
 
 # ============= EOF =============================================

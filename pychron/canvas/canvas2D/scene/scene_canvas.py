@@ -33,7 +33,7 @@ class SceneCanvas(BaseDataCanvas):
     def __init__(self, *args, **kw):
         super(SceneCanvas, self).__init__(*args, **kw)
         self.border_visible = True
-        self.border_color = 'lightgray'
+        self.border_color = "lightgray"
         self.border_width = 5
 
     def clear_all(self):
@@ -94,13 +94,13 @@ class SceneCanvas(BaseDataCanvas):
     # handlers
     def _scene_changed(self, name, old, new):
         if new:
-            new.on_trait_change(self.request_redraw, 'layout_needed')
+            new.on_trait_change(self.request_redraw, "layout_needed")
         if old:
-            old.on_trait_change(self.request_redraw,
-                                'layout_needed', remove=True)
+            old.on_trait_change(self.request_redraw, "layout_needed", remove=True)
 
     def _scene_default(self):
         if self.scene_klass:
             return self.scene_klass()
+
 
 # ============= EOF =============================================

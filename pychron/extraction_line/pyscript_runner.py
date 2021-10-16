@@ -23,7 +23,9 @@ from traits.api import Any, Dict, List, provides
 
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
-from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
+from pychron.hardware.core.communicators.ethernet_communicator import (
+    EthernetCommunicator,
+)
 from pychron.loggable import Loggable
 
 
@@ -83,13 +85,13 @@ class RemoteResource(object):
         self._ping_evt = None
 
     def ping(self):
-        return self.handle.ask('Ping {}'.format(self.name), verbose=True)
+        return self.handle.ask("Ping {}".format(self.name), verbose=True)
 
     # ===============================================================================
     # threading.Event interface
     # ===============================================================================
     def read(self, verbose=True):
-        resp = self.handle.ask('Read {}'.format(self.name), verbose=verbose)
+        resp = self.handle.ask("Read {}".format(self.name), verbose=verbose)
         if resp is not None:
             resp = resp.strip()
             # resp = resp[4:-4]
@@ -113,13 +115,13 @@ class RemoteResource(object):
     def _ping_loop(self):
         evt = self._ping_evt
         while not evt.is_set():
-            if self.ping() == 'Complete':
+            if self.ping() == "Complete":
                 break
 
             time.sleep(3)
 
     def _set(self, v):
-        self.handle.ask('Set {} {}'.format(self.name, v))
+        self.handle.ask("Set {} {}".format(self.name, v))
         if v:
             self._ping_evt = Event()
             self._ping_thread = Thread(target=self._ping_loop)
@@ -171,8 +173,8 @@ class RemotePyScriptRunner(PyScriptRunner):
         return self.handle.open()
 
 
-if __name__ == '__main__':
-    logging_setup('py_runner')
+if __name__ == "__main__":
+    logging_setup("py_runner")
     p = PyScriptRunner()
 
     p.configure_traits()

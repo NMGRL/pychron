@@ -40,4 +40,5 @@ class TableOptionsManager(BaseOptionsManager):
     def persistence_root(self):
         return os.path.join(paths.table_options_dir, globalv.username)
 
+
 # ============= EOF =============================================

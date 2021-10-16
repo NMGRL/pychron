@@ -21,13 +21,14 @@ from pychron.envisage.ui_actions import UIAction
 
 
 class LabnumberEntryAction(UIAction):
-    name = 'Package'
+    name = "Package"
     # accelerator = 'Ctrl+Shift+l'
-    id = 'pychron.labnumber_entry'
+    id = "pychron.labnumber_entry"
 
     def perform(self, event):
-        pid = 'pychron.entry.irradiation.task'
+        pid = "pychron.entry.irradiation.task"
         app = event.task.window.application
         app.get_task(pid)
+
 
 # ============= EOF =============================================

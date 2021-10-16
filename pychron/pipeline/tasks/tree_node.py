@@ -26,16 +26,16 @@ from pychron.pipeline.nodes import ReviewNode
 
 
 class PipelineGroupTreeNode(TreeNode):
-    icon_name = ''
-    label = 'name'
+    icon_name = ""
+    label = "name"
 
 
 ICON_MAP = {}
 
 
 class PipelineTreeNode(TreeNode):
-    icon_name = ''
-    label = 'name'
+    icon_name = ""
+    label = "name"
 
     def get_background(self, obj):
         if isinstance(obj, Pipeline):
@@ -43,13 +43,13 @@ class PipelineTreeNode(TreeNode):
         else:
             if isinstance(obj, ReviewNode):
                 if not obj.enabled:
-                    c = QColor('#ff8080')  # light red
+                    c = QColor("#ff8080")  # light red
                 else:
                     c = QColor(Qt.cyan)
             elif obj.skip_configure:
-                c = QColor('#D05BFF')
+                c = QColor("#D05BFF")
             elif not obj.enabled:
-                c = QColor('#ff8080')  # light red
+                c = QColor("#ff8080")  # light red
             else:
                 c = super(PipelineTreeNode, self).get_background(obj)
         return c
@@ -59,11 +59,11 @@ class PipelineTreeNode(TreeNode):
         if not isinstance(obj, Pipeline):
             c = QColor(Qt.lightGray)
             if not obj.enabled:
-                c = QColor('lightblue')
+                c = QColor("lightblue")
             elif obj.visited:
-                c = QColor('#0dbf81')
+                c = QColor("#0dbf81")
             elif obj.active:
-                c = QColor('orange')
+                c = QColor("orange")
         return c
 
     def get_icon(self, obj, is_expanded):
@@ -71,13 +71,13 @@ class PipelineTreeNode(TreeNode):
         if not isinstance(obj, Pipeline):
 
             if not obj.enabled:
-                name = 'cancel'
+                name = "cancel"
 
         if name in ICON_MAP:
             i = ICON_MAP[name]
         else:
             if not name:
-                name = 'large_tiles'
+                name = "large_tiles"
             i = icon(name)
             ICON_MAP[name] = i
 
@@ -89,31 +89,31 @@ class PipelineTreeNode(TreeNode):
 
 
 class NodeGroupTreeNode(PipelineTreeNode):
-    icon_name = ''
+    icon_name = ""
 
 
 class DataTreeNode(PipelineTreeNode):
-    icon_name = 'table'
+    icon_name = "table"
 
 
 class FilterTreeNode(PipelineTreeNode):
-    icon_name = 'table_filter'
+    icon_name = "table_filter"
 
 
 class IdeogramTreeNode(PipelineTreeNode):
-    icon_name = 'histogram'
+    icon_name = "histogram"
 
 
 class SpectrumTreeNode(PipelineTreeNode):
-    icon_name = ''
+    icon_name = ""
 
 
 class SeriesTreeNode(PipelineTreeNode):
-    icon_name = ''
+    icon_name = ""
 
 
 class PDFTreeNode(PipelineTreeNode):
-    icon_name = 'file_pdf'
+    icon_name = "file_pdf"
 
 
 class GroupingTreeNode(PipelineTreeNode):
@@ -121,18 +121,19 @@ class GroupingTreeNode(PipelineTreeNode):
 
 
 class DBSaveTreeNode(PipelineTreeNode):
-    icon_name = 'database_save'
+    icon_name = "database_save"
 
 
 class FindTreeNode(PipelineTreeNode):
-    icon_name = 'find'
+    icon_name = "find"
 
 
 class FitTreeNode(PipelineTreeNode):
-    icon_name = 'lightning'
+    icon_name = "lightning"
 
 
 class ReviewTreeNode(PipelineTreeNode):
     pass
+
 
 # ============= EOF =============================================

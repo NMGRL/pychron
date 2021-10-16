@@ -61,7 +61,7 @@ class BaseU3LV:
 
     def load_additional_args(self, config):
         mapping = {}
-        section = 'DIOMapping'
+        section = "DIOMapping"
         if config.has_section(section):
             for option in config.options(section):
                 u3channel = config.get(section, option)

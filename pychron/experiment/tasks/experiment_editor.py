@@ -24,15 +24,22 @@ from pychron.core.ui.qt.tabular_editor import TabularEditorHandler
 from pychron.core.ui.table_configurer import ExperimentTableConfigurer
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.experiment.automated_run.tabular_adapter import AutomatedRunSpecAdapter, UVAutomatedRunSpecAdapter, \
-    ExecutedAutomatedRunSpecAdapter, ExecutedUVAutomatedRunSpecAdapter
+from pychron.experiment.automated_run.tabular_adapter import (
+    AutomatedRunSpecAdapter,
+    UVAutomatedRunSpecAdapter,
+    ExecutedAutomatedRunSpecAdapter,
+    ExecutedUVAutomatedRunSpecAdapter,
+)
 from pychron.experiment.bulk_run_fixer import BulkRunFixer
 from pychron.experiment.queue.experiment_queue import ExperimentQueue
-from pychron.experiment.utilities.repository_identifier import get_curtag, populate_repository_identifiers
+from pychron.experiment.utilities.repository_identifier import (
+    get_curtag,
+    populate_repository_identifiers,
+)
 
 
 class ExperimentEditorHandler(TabularEditorHandler):
-    refresh_name = 'refresh_table_needed'
+    refresh_name = "refresh_table_needed"
 
     def select_special(self, info, obj):
         obj.select_special()
@@ -92,21 +99,21 @@ class ExperimentEditorHandler(TabularEditorHandler):
         obj.show_evolutions(show_equilibration=True)
 
     def configure_table(self, info, obj):
-        info.ui.context['editor'].show_table_configurer()
+        info.ui.context["editor"].show_table_configurer()
 
     def __getattr__(self, item):
-        if item.startswith('show_evolution_'):
-            key = item.split('_')[-1]
+        if item.startswith("show_evolution_"):
+            key = item.split("_")[-1]
 
             def closure(info, obj):
                 kw = {}
-                if item.startswith('show_evolution_eq_bs'):
-                    kw['show_equilibration'] = True
-                    kw['show_baseline'] = True
-                elif item.startswith('show_evolution_eq'):
-                    kw['show_equilibration'] = True
-                elif item.startswith('show_evolution_bs'):
-                    kw['show_baseline'] = True
+                if item.startswith("show_evolution_eq_bs"):
+                    kw["show_equilibration"] = True
+                    kw["show_baseline"] = True
+                elif item.startswith("show_evolution_eq"):
+                    kw["show_equilibration"] = True
+                elif item.startswith("show_evolution_bs"):
+                    kw["show_baseline"] = True
 
                 obj.show_evolutions((key,), **kw)
 
@@ -117,10 +124,10 @@ class ExperimentEditor(BaseTraitsEditor):
     queue = Instance(ExperimentQueue, ())  # Any
     path = Unicode
 
-    name = Property(Unicode, depends_on='path')
-    tooltip = Property(Unicode, depends_on='path')
+    name = Property(Unicode, depends_on="path")
+    tooltip = Property(Unicode, depends_on="path")
 
-    executed = DelegatesTo('queue')
+    executed = DelegatesTo("queue")
     tabular_adapter_klass = AutomatedRunSpecAdapter
     executed_tabular_adapter_klass = ExecutedAutomatedRunSpecAdapter
     bgcolor = Color
@@ -141,9 +148,9 @@ class ExperimentEditor(BaseTraitsEditor):
 
     def setup_tabular_adapters(self, c, ec, colors, use_atype_colors, atype_colors):
         if c is None:
-            c = 'white'
+            c = "white"
         if ec is None:
-            ec = 'white'
+            ec = "white"
 
         self.bgcolor = c
         self.tabular_adapter = self.tabular_adapter_klass()
@@ -158,10 +165,12 @@ class ExperimentEditor(BaseTraitsEditor):
         self.tabular_adapter.even_bg_color = ec
         self.executed_tabular_adapter.even_bg_color = ec
 
-        v = ExperimentTableConfigurer(children=[self.executed_tabular_adapter],
-                                      auto_set=True,
-                                      refresh_func=self.refresh,
-                                      id='experiment.table')
+        v = ExperimentTableConfigurer(
+            children=[self.executed_tabular_adapter],
+            auto_set=True,
+            refresh_func=self.refresh,
+            id="experiment.table",
+        )
 
         self.table_configurer = v
         v.set_adapter(self.tabular_adapter)
@@ -172,7 +181,7 @@ class ExperimentEditor(BaseTraitsEditor):
             if queue.load(txt):
                 self.queue = queue
             else:
-                self.warning('failed to load queue')
+                self.warning("failed to load queue")
         else:
             self.queue = queue
 
@@ -191,56 +200,62 @@ class ExperimentEditor(BaseTraitsEditor):
     def traits_view(self):
         # show row titles is causing a layout issue when resetting queues
         # disabling show_row_titles for the moment.
-        operations = ['delete', 'move']
+        operations = ["delete", "move"]
         if self.automated_runs_editable:
-            operations.append('edit')
+            operations.append("edit")
 
-        arun_grp = UItem('automated_runs',
-                         editor=myTabularEditor(adapter=self.tabular_adapter,
-                                                operations=operations,
-                                                editable=True,
-                                                mime_type='pychron.automated_run_spec',
-                                                show_row_titles=True,
-                                                bgcolor=self.bgcolor,
+        arun_grp = UItem(
+            "automated_runs",
+            editor=myTabularEditor(
+                adapter=self.tabular_adapter,
+                operations=operations,
+                editable=True,
+                mime_type="pychron.automated_run_spec",
+                show_row_titles=True,
+                bgcolor=self.bgcolor,
+                dclicked="dclicked",
+                selected="selected",
+                paste_function="paste_function",
+                update="refresh_table_needed",
+                refresh="refresh_table_needed",
+                scroll_to_row="automated_runs_scroll_to_row",
+                # copy_cache='linked_copy_cache',
+                stretch_last_section=False,
+                multi_select=True,
+            ),
+        )
 
-                                                dclicked='dclicked',
-                                                selected='selected',
-                                                paste_function='paste_function',
-                                                update='refresh_table_needed',
-                                                refresh='refresh_table_needed',
-                                                scroll_to_row='automated_runs_scroll_to_row',
-                                                # copy_cache='linked_copy_cache',
-                                                stretch_last_section=False,
-                                                multi_select=True))
-
-        executed_grp = UItem('display_executed_runs',
-                             editor=myTabularEditor(adapter=self.executed_tabular_adapter,
-                                                    bgcolor=self.bgcolor,
-                                                    editable=False,
-                                                    # auto_update=True,
-                                                    selectable=True,
-                                                    pastable=False,
-                                                    mime_type='pychron.automated_run_spec',
-                                                    # link_copyable=False,
-                                                    paste_function='executed_paste_function',
-                                                    # copy_cache='linked_copy_cache',
-                                                    update='refresh_table_needed',
-                                                    refresh='refresh_table_needed',
-                                                    selected='executed_selected',
-                                                    multi_select=True,
-                                                    stretch_last_section=False,
-                                                    scroll_to_row='executed_runs_scroll_to_row'),
-                             height=-300,
-                             visible_when='executed')
+        executed_grp = UItem(
+            "display_executed_runs",
+            editor=myTabularEditor(
+                adapter=self.executed_tabular_adapter,
+                bgcolor=self.bgcolor,
+                editable=False,
+                # auto_update=True,
+                selectable=True,
+                pastable=False,
+                mime_type="pychron.automated_run_spec",
+                # link_copyable=False,
+                paste_function="executed_paste_function",
+                # copy_cache='linked_copy_cache',
+                update="refresh_table_needed",
+                refresh="refresh_table_needed",
+                selected="executed_selected",
+                multi_select=True,
+                stretch_last_section=False,
+                scroll_to_row="executed_runs_scroll_to_row",
+            ),
+            height=-300,
+            visible_when="executed",
+        )
 
         v = View(executed_grp, arun_grp, handler=ExperimentEditorHandler())
         return v
 
     def trait_context(self):
-        """ Use the model object for the Traits UI context, if appropriate.
-        """
+        """Use the model object for the Traits UI context, if appropriate."""
         if self.queue:
-            return {'object': self.queue, 'editor': self}
+            return {"object": self.queue, "editor": self}
         return super(ExperimentEditor, self).trait_context()
 
     # ===============================================================================
@@ -251,10 +266,10 @@ class ExperimentEditor(BaseTraitsEditor):
     def _queue_changed(self, old, new):
         f = self._set_queue_dirty
         if old:
-            old.on_trait_change(f, 'automated_runs[]', remove=True)
-            old.on_trait_change(f, 'changed', remove=True)
-        new.on_trait_change(f, 'automated_runs[]')
-        new.on_trait_change(f, 'changed')
+            old.on_trait_change(f, "automated_runs[]", remove=True)
+            old.on_trait_change(f, "changed", remove=True)
+        new.on_trait_change(f, "automated_runs[]")
+        new.on_trait_change(f, "changed")
         new.path = self.path
 
     def _path_changed(self):
@@ -274,27 +289,39 @@ class ExperimentEditor(BaseTraitsEditor):
         overriden_special = []
         for i, ai in enumerate(runs):
             if not ai.repository_identifier:
-                self.warning('No repository identifier for i={}, {}'.format(i + 1, ai.runid))
+                self.warning(
+                    "No repository identifier for i={}, {}".format(i + 1, ai.runid)
+                )
                 no_repo.append(ai)
-            elif ai.is_special() \
-                    and ai.repository_identifier \
-                    and not ai.is_default_repository(qi.mass_spectrometer, curtag):
+            elif (
+                ai.is_special()
+                and ai.repository_identifier
+                and not ai.is_default_repository(qi.mass_spectrometer, curtag)
+            ):
                 overriden_special.append(ai)
 
         if no_repo:
-            if self.confirmation_dialog('Missing repository identifiers. Automatically populate?'):
-                populate_repository_identifiers(runs, qi.mass_spectrometer, curtag, debug=self.debug)
+            if self.confirmation_dialog(
+                "Missing repository identifiers. Automatically populate?"
+            ):
+                populate_repository_identifiers(
+                    runs, qi.mass_spectrometer, curtag, debug=self.debug
+                )
                 self.refresh()
 
         if overriden_special:
-            if not self.confirmation_dialog('You have reference analyses with non-standard repositories. '
-                                            'Are you sure you want to do this? If you are confused or are '
-                                            'unsure then the answer is "NO"'):
+            if not self.confirmation_dialog(
+                "You have reference analyses with non-standard repositories. "
+                "Are you sure you want to do this? If you are confused or are "
+                'unsure then the answer is "NO"'
+            ):
                 for ai in runs:
                     if ai.is_special():
-                        ai.repository_identifier = ''
+                        ai.repository_identifier = ""
 
-                populate_repository_identifiers(runs, qi.mass_spectrometer, curtag, debug=self.debug)
+                populate_repository_identifiers(
+                    runs, qi.mass_spectrometer, curtag, debug=self.debug
+                )
                 self.refresh()
 
         qi.executable = True
@@ -310,8 +337,10 @@ class ExperimentEditor(BaseTraitsEditor):
 
         info = hec.check_runs_non_fatal(runs)
         if info:
-            if not self.confirmation_dialog('There is a nonfatal issue.\n\n{}\n\n Are you sure you want to '
-                                            'continue?'.format(info)):
+            if not self.confirmation_dialog(
+                "There is a nonfatal issue.\n\n{}\n\n Are you sure you want to "
+                "continue?".format(info)
+            ):
                 return
 
         err = hec.check_runs(runs, test_all=True, test_scripts=True)
@@ -336,8 +365,8 @@ class ExperimentEditor(BaseTraitsEditor):
 
         p = add_extension(p)
 
-        self.info('saving experiment to {}'.format(p))
-        with open(p, 'w') as wfile:
+        self.info("saving experiment to {}".format(p))
+        with open(p, "w") as wfile:
             self.queue.path = p
             self.queue.dump(wfile)
 
@@ -354,12 +383,13 @@ class ExperimentEditor(BaseTraitsEditor):
             name = os.path.basename(self.path)
             name, _ = os.path.splitext(name)
         else:
-            name = 'Untitled'
+            name = "Untitled"
         return name
 
 
 class UVExperimentEditor(ExperimentEditor):
     tabular_adapter_klass = UVAutomatedRunSpecAdapter
     executed_tabular_adapter_klass = ExecutedUVAutomatedRunSpecAdapter
+
 
 # ============= EOF =============================================

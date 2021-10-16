@@ -19,6 +19,7 @@ import re
 import requests
 from apptools.preferences.api import PreferencesHelper
 from envisage.ui.tasks.preferences_pane import PreferencesPane
+
 # ============= enthought library imports =======================
 from traits.api import List, Button, Any, Str, Enum, Color, BaseStr
 from traitsui.api import View, VGroup, UItem, HGroup, Item
@@ -29,33 +30,33 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class FavoritesAdapter(ListStrAdapter):
-    columns = [('', 'name')]
+    columns = [("", "name")]
     can_edit = False
 
     def get_text(self, obj, tr, ind):
         o = getattr(obj, tr)[ind]
-        return o.split(',')[0]
+        return o.split(",")[0]
 
 
 class BasePreferencesHelper(PreferencesHelper):
     pass
 
 
-REPO_REGEX = re.compile(r'^\w+[\w\-\_]*\/\w+$')
+REPO_REGEX = re.compile(r"^\w+[\w\-\_]*\/\w+$")
 
 
 def test_connection_item():
-    return icon_button_editor('test_connection', 'server-connect',
-                              tooltip='Test connection to Github Repo')
+    return icon_button_editor(
+        "test_connection", "server-connect", tooltip="Test connection to Github Repo"
+    )
 
 
 def remote_status_item(label=None):
-    grp = HGroup(Item('remote',
-                      label='Name', springy=True),
-                 test_connection_item(),
-                 CustomLabel('_remote_status',
-                             width=50,
-                             color_name='_remote_status_color'))
+    grp = HGroup(
+        Item("remote", label="Name", springy=True),
+        test_connection_item(),
+        CustomLabel("_remote_status", width=50, color_name="_remote_status_color"),
+    )
     if label:
         grp.label = label
         grp.show_border = True
@@ -63,7 +64,6 @@ def remote_status_item(label=None):
 
 
 class RepoString(BaseStr):
-
     def validate(self, obj, name, value):
         if REPO_REGEX.match(value):
             return value
@@ -78,19 +78,19 @@ class GitRepoPreferencesHelper(BasePreferencesHelper):
     _remote_status_color = Color
 
     def _test_connection_fired(self):
-        self._remote_status_color = 'red'
-        self._remote_status = 'Invalid'
+        self._remote_status_color = "red"
+        self._remote_status = "Invalid"
 
         if self.remote.strip():
             try:
-                cmd = 'https://github.com/{}.git'.format(self.remote)
+                cmd = "https://github.com/{}.git".format(self.remote)
                 r = requests.get(cmd)
                 if r.status_code == 200:
-                    self._remote_status = 'Valid'
-                    self._remote_status_color = 'green'
+                    self._remote_status = "Valid"
+                    self._remote_status_color = "green"
                     self._connection_hook()
             except BaseException as e:
-                print('exception', e, cmd)
+                print("exception", e, cmd)
 
     def _connection_hook(self):
         pass
@@ -100,8 +100,8 @@ class FavoritesPreferencesHelper(BasePreferencesHelper):
     favorites = List
     _fav_items = List
 
-    add_favorite = Button('+')
-    delete_favorite = Button('-')
+    add_favorite = Button("+")
+    delete_favorite = Button("-")
 
     _selected = Any
 
@@ -110,10 +110,12 @@ class FavoritesPreferencesHelper(BasePreferencesHelper):
         self._fav_items = [self._fav_factory(f) for f in self.favorites]
 
     def _is_preference_trait(self, trait_name):
-        if trait_name in ('favorites_items', '_selected'):
+        if trait_name in ("favorites_items", "_selected"):
             return False
         else:
-            return super(FavoritesPreferencesHelper, self)._is_preference_trait(trait_name)
+            return super(FavoritesPreferencesHelper, self)._is_preference_trait(
+                trait_name
+            )
 
     def _delete_favorite_fired(self):
         if self._selected in self._fav_items:
@@ -134,27 +136,33 @@ class FavoritesPreferencesHelper(BasePreferencesHelper):
 class BaseConsolePreferences(BasePreferencesHelper):
     fontsize = Enum(6, 8, 10, 11, 12, 14, 16, 18, 22, 24, 36)
 
-    textcolor = Color('green')
-    bgcolor = Color('black')
+    textcolor = Color("green")
+    bgcolor = Color("black")
 
-    preview = Str('Pychron is python + geochronology')
+    preview = Str("Pychron is python + geochronology")
 
 
 class BaseConsolePreferencesPane(PreferencesPane):
-    category = 'Console'
-    label = ''
+    category = "Console"
+    label = ""
 
     def traits_view(self):
-        preview = CustomLabel('preview',
-                              size_name='fontsize',
-                              color_name='textcolor',
-                              bgcolor_name='bgcolor')
+        preview = CustomLabel(
+            "preview",
+            size_name="fontsize",
+            color_name="textcolor",
+            bgcolor_name="bgcolor",
+        )
 
-        v = View(VGroup(HGroup(UItem('fontsize'),
-                               UItem('textcolor'),
-                               UItem('bgcolor')),
-                        preview,
-                        show_border=True,
-                        label=self.label))
+        v = View(
+            VGroup(
+                HGroup(UItem("fontsize"), UItem("textcolor"), UItem("bgcolor")),
+                preview,
+                show_border=True,
+                label=self.label,
+            )
+        )
         return v
+
+
 # ============= EOF =============================================

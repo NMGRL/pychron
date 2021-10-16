@@ -20,4 +20,5 @@ from pychron.spectrometer.isotopx.detector.base import IsotopxDetector
 class NGXDetector(IsotopxDetector):
     pass
 
+
 # ============= EOF =============================================

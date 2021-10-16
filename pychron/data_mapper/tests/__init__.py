@@ -16,8 +16,10 @@
 from __future__ import absolute_import
 from pychron.core.test_helpers import get_data_dir
 
+
 def fget_data_dir():
-    op = 'pychron/data_mapper/tests/data'
+    op = "pychron/data_mapper/tests/data"
     return get_data_dir(op)
+
 
 # ============= EOF =============================================

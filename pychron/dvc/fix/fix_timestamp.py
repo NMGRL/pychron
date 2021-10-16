@@ -21,7 +21,7 @@ from pychron.paths import paths
 
 
 def get_runlist():
-    runlist = [('bu-FC-J-{}'.format(i), i) for i in range(4389, 4439)]
+    runlist = [("bu-FC-J-{}".format(i), i) for i in range(4389, 4439)]
     return runlist
 
 
@@ -31,16 +31,16 @@ def fix_timestamp():
     dvc.create_session()
     runlist = get_runlist()
     for run, aliquot in runlist:
-        an = dvc.get_analysis_runid('bu-FC-J', aliquot)
-        print('ff', an, an.repository_identifier)
+        an = dvc.get_analysis_runid("bu-FC-J", aliquot)
+        print("ff", an, an.repository_identifier)
 
-        p = analysis_path(run, 'Streck2015')
-        ip = analysis_path(run, 'Irradiation-NM-276')
+        p = analysis_path(run, "Streck2015")
+        ip = analysis_path(run, "Irradiation-NM-276")
         print(p, os.path.isfile(p), os.path.isfile(ip))
         # print('run {}'.format(run))
 
 
-if __name__ == '__main__':
-    paths.build('~/PychronDev')
+if __name__ == "__main__":
+    paths.build("~/PychronDev")
     fix_timestamp()
 # ============= EOF =============================================

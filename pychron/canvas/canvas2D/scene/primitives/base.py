@@ -16,7 +16,16 @@
 
 # ============= enthought library imports =======================
 from kiva.fonttools import str_to_font
-from traits.api import HasTraits, Str, Any, Float, Property, on_trait_change, Color, List
+from traits.api import (
+    HasTraits,
+    Str,
+    Any,
+    Float,
+    Property,
+    on_trait_change,
+    Color,
+    List,
+)
 from traitsui.api import View, Item, VGroup, HGroup
 
 
@@ -41,11 +50,11 @@ class Primitive(HasTraits):
     state = False
     selected = False
 
-    default_color = Color('red')
-    active_color = Color('(0,255,0)')
-    selected_color = Color('blue')
-    name_color = Color('black')
-    text_color = Color('black')
+    default_color = Color("red")
+    active_color = Color("(0,255,0)")
+    selected_color = Color("blue")
+    name_color = Color("black")
+    text_color = Color("black")
 
     canvas = Any
 
@@ -58,11 +67,11 @@ class Primitive(HasTraits):
 
     klass_name = Property
 
-    space = 'data'
+    space = "data"
     visible = True
 
     primitives = List
-    font = Str('modern 14')
+    font = Str("modern 14")
 
     width = Float
     height = Float
@@ -86,9 +95,13 @@ class Primitive(HasTraits):
                 'dimension': '{:0.2f}, {:0.2f}'.format(self.width, self.height)}
 
     def edit_view(self):
-        v = View(VGroup(Item('name'),
-                        HGroup(Item('x'), Item('y')),
-                        HGroup(Item('width'), Item('height'))))
+        v = View(
+            VGroup(
+                Item("name"),
+                HGroup(Item("x"), Item("y")),
+                HGroup(Item("width"), Item("height")),
+            )
+        )
         return v
 
     @property
@@ -97,7 +110,7 @@ class Primitive(HasTraits):
 
     @property
     def label(self):
-        return '{} {} {}'.format(self.klass_name, self.name, self.identifier)
+        return "{} {} {}".format(self.klass_name, self.name, self.identifier)
 
     def request_layout(self):
         self._cached_wh = None
@@ -148,7 +161,7 @@ class Primitive(HasTraits):
                 y = self.y
             # x, y = self.x, self.y
             offset = 0
-            if self.space == 'data':
+            if self.space == "data":
                 # if self.canvas is None:
                 # print self
                 if self.canvas:
@@ -173,8 +186,10 @@ class Primitive(HasTraits):
             if self._layout_needed or not self._cached_wh:
                 w, h = self.width, self.height
                 # w, h = 20, 20
-                if self.space == 'data':
-                    (w, h), (ox, oy) = self.canvas.map_screen([(self.width, self.height), (0, 0)])
+                if self.space == "data":
+                    (w, h), (ox, oy) = self.canvas.map_screen(
+                        [(self.width, self.height), (0, 0)]
+                    )
                     w, h = w - ox, h - oy
             else:
                 w, h = self._cached_wh
@@ -250,8 +265,8 @@ class Primitive(HasTraits):
     def _render_textbox(self, gc, x, y, w, h, txt):
 
         tw, th, _, _ = gc.get_full_text_extent(txt)
-        x = x + w / 2. - tw / 2.
-        y = y + h / 2. - th / 2.
+        x = x + w / 2.0 - tw / 2.0
+        y = y + h / 2.0 - th / 2.0
 
         self._render_text(gc, txt, x, y)
 
@@ -265,11 +280,11 @@ class Primitive(HasTraits):
     def _convert_color(self, c):
         if not isinstance(c, (list, tuple)):
             c = c.red, c.green, c.blue
-        c = [x / 255. for x in c]
+        c = [x / 255.0 for x in c]
         return c
 
     # handlers
-    @on_trait_change('default_color, active_color, x, y')
+    @on_trait_change("default_color, active_color, x, y")
     def _refresh_canvas(self):
         self.request_redraw()
 
@@ -286,7 +301,7 @@ class QPrimitive(Primitive):
         if not isinstance(c, (list, tuple)):
             c = c.red(), c.green(), c.blue(), c.alpha()
 
-        c = [x / 255. for x in c]
+        c = [x / 255.0 for x in c]
         return c
 
     def is_in(self, x, y):
@@ -300,7 +315,7 @@ class Connectable(QPrimitive):
     connections = List
     volume = Float
 
-    @on_trait_change('x,y')
+    @on_trait_change("x,y")
     def _update_xy(self):
         if not self._initialized:
             return
@@ -312,10 +327,11 @@ class Connectable(QPrimitive):
             c.clear_vorientation = cvo
             c.clear_horientation = cho
 
-            func = getattr(c, 'set_{}point'.format(t))
+            func = getattr(c, "set_{}point".format(t))
             w, h = self.width, self.height
-            func((self.x + w / 2., self.y + h / 2.))
+            func((self.x + w / 2.0, self.y + h / 2.0))
 
         self.request_redraw()
+
 
 # ============= EOF =============================================

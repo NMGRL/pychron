@@ -25,10 +25,13 @@ class ServiceNameError(BaseException):
         self._data = data
 
     def __str__(self):
-        return 'ServiceNameError: "{}" is not a registered service. data:{}'.format(self._name, self._data)
+        return 'ServiceNameError: "{}" is not a registered service. data:{}'.format(
+            self._name, self._data
+        )
 
 
 class ResponseError(BaseException):
     pass
+
 
 # ============= EOF =============================================

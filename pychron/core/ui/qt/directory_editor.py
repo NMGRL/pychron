@@ -17,6 +17,7 @@
 # ============= standard library imports ========================
 import six
 from pyface.qt import QtCore, QtGui
+
 # ============= enthought library imports =======================
 from traits.api import Str, Bool, Int, File, Event
 from traitsui.api import View, Group
@@ -47,8 +48,12 @@ class _DirectoryEditor(CustomEditor):
         self.control.setModel(model)
 
         # Don't apply filters to directories and don't show "." and ".."
-        model.setFilter(QtCore.QDir.AllDirs | QtCore.QDir.Files |
-                        QtCore.QDir.Drives | QtCore.QDir.NoDotAndDotDot)
+        model.setFilter(
+            QtCore.QDir.AllDirs
+            | QtCore.QDir.Files
+            | QtCore.QDir.Drives
+            | QtCore.QDir.NoDotAndDotDot
+        )
 
         # Hide filtered out files instead of only disabling them
         self._model.setNameFilterDisables(False)
@@ -64,11 +69,11 @@ class _DirectoryEditor(CustomEditor):
         factory = self.factory
         self.filter = factory.filter
         self.root_path = factory.root_path
-        self.sync_value(factory.filter_name, 'filter', 'from', is_list=True)
-        self.sync_value(factory.root_path_name, 'root_path', 'from')
-        self.sync_value(factory.reload_name, 'reload', 'from')
-        self.sync_value(factory.dclick_name, 'dclick', 'to')
-        self.sync_value(factory.selected_name, 'selected', 'to')
+        self.sync_value(factory.filter_name, "filter", "from", is_list=True)
+        self.sync_value(factory.root_path_name, "root_path", "from")
+        self.sync_value(factory.reload_name, "reload", "from")
+        self.sync_value(factory.dclick_name, "dclick", "to")
+        self.sync_value(factory.selected_name, "selected", "to")
 
         self.set_tooltip()
 
@@ -122,17 +127,24 @@ class myDirectoryEditor(BasicEditorFactory):
     selected_name = Str
     # The style of file dialog to use when the 'Browse...' button is clicked
     # Should be one of 'open' or 'save'
-    dialog_style = Str('open')
+    dialog_style = Str("open")
 
     # ---------------------------------------------------------------------------
     #  Traits view definition:
     # ---------------------------------------------------------------------------
 
-    traits_view = View([['<options>',
-                         'truncate_ext{Automatically truncate file extension?}',
-                         '|options:[Options]>'],
-                        ['filter', '|[Wildcard filters]<>']])
+    traits_view = View(
+        [
+            [
+                "<options>",
+                "truncate_ext{Automatically truncate file extension?}",
+                "|options:[Options]>",
+            ],
+            ["filter", "|[Wildcard filters]<>"],
+        ]
+    )
 
     extras = Group()
+
 
 # ============= EOF =============================================

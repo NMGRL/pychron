@@ -18,15 +18,21 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from traits.api import HasTraits
+
 # ============= standard library imports ========================
 import os
+
 # ============= local library imports  ==========================
 from pychron.dvc.dvc_database import DVCDatabase
-from pychron.dvc.dvc_orm import ProjectTbl, AnalysisTbl, SampleTbl, IrradiationPositionTbl
+from pychron.dvc.dvc_orm import (
+    ProjectTbl,
+    AnalysisTbl,
+    SampleTbl,
+    IrradiationPositionTbl,
+)
 from six.moves import map
 
-TABLES = {'project': ProjectTbl,
-          'sample': SampleTbl}
+TABLES = {"project": ProjectTbl, "sample": SampleTbl}
 
 
 class CustomAnalysisQuery(HasTraits):
@@ -45,39 +51,41 @@ class CustomAnalysisQuery(HasTraits):
 
     def generate_query(self, txt):
         filters = []
-        for line in txt.split('\n'):
-            tbl, val = list(map(str.strip, line.split(':')))
+        for line in txt.split("\n"):
+            tbl, val = list(map(str.strip, line.split(":")))
 
-            if '.' in tbl:
-                tbl, attr = tbl.split('.')
+            if "." in tbl:
+                tbl, attr = tbl.split(".")
             else:
                 tbl = tbl
-                attr = 'name'
+                attr = "name"
 
             tbl = TABLES.get(tbl)
             if tbl:
                 attr = getattr(tbl, attr)
 
-                if ',' in val:
-                    f = attr.in_(val.split('.'))
+                if "," in val:
+                    f = attr.in_(val.split("."))
                 else:
                     f = attr == val
                 filters.append(f)
             else:
-                print('invalid table {}'.format(tbl))
+                print("invalid table {}".format(tbl))
 
         return filters
 
 
-if __name__ == '__main__':
-    db = DVCDatabase(host='localhost',
-                     username=os.environ.get('LOCALHOST_DB_USER'),
-                     password=os.environ.get('LOCALHOST_DB_PWD'),
-                     kind='mysql',
-                     # echo=True,
-                     name='pychrondvc_dev')
-    txt = '''project.name: Irradiation-NM-274
-sample: FC-2'''
+if __name__ == "__main__":
+    db = DVCDatabase(
+        host="localhost",
+        username=os.environ.get("LOCALHOST_DB_USER"),
+        password=os.environ.get("LOCALHOST_DB_PWD"),
+        kind="mysql",
+        # echo=True,
+        name="pychrondvc_dev",
+    )
+    txt = """project.name: Irradiation-NM-274
+sample: FC-2"""
     # txt = '''sample: FC-2'''
     db.connect()
     c = CustomAnalysisQuery(db=db)

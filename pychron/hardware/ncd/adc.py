@@ -1,4 +1,4 @@
-'''
+"""
     National Control Devices
     
    http://www.controlanything.com/ 
@@ -6,7 +6,7 @@
    The Complete ProXR Command Set:
    http://www.controlanything.com/Relay/Device/A0010
    http://assets.controlanything.com/manuals/ProXR.pdf
-'''
+"""
 # ===============================================================================
 # Copyright 2012 Jake Ross
 #
@@ -63,8 +63,8 @@ class ProXRADC(NCDDevice):
 
     def read_bank(self, bank=0, nbits=8, verbose=True):
         """
-            return voltages (V) measured on channels in "bank"
-            nbits= 8 or 12 resolution of measurement
+        return voltages (V) measured on channels in "bank"
+        nbits= 8 or 12 resolution of measurement
         """
         self._check_nbits(nbits)
 
@@ -80,13 +80,13 @@ class ProXRADC(NCDDevice):
         resp = self.ask(cmdstr, nchars=nbytes, verbose=verbose, remove_eol=False)
         vs = self._map_to_voltage(resp, nbits, nbytes)
         if verbose:
-            self.debug('bank={} nbits={} values={}'.format(bank, nbits, to_csv_str(vs)))
+            self.debug("bank={} nbits={} values={}".format(bank, nbits, to_csv_str(vs)))
         return vs
 
     def read_channel(self, channel, nbits=8, verbose=True):
         """
-            return voltage (V) measured on "channel"
-            nbits= 8 or 12. resolution of measurement
+        return voltage (V) measured on "channel"
+        nbits= 8 or 12. resolution of measurement
         """
         self._check_nbits(nbits)
 
@@ -109,7 +109,7 @@ class ProXRADC(NCDDevice):
             volts = self.get_random_value()
 
         if verbose:
-            self.debug('bank={} nbits={} volts={}'.format(bank_idx, nbits, volts))
+            self.debug("bank={} nbits={} volts={}".format(bank_idx, nbits, volts))
         return volts
 
     def _parse_response(self, v):
@@ -119,15 +119,15 @@ class ProXRADC(NCDDevice):
 
     def _check_nbits(self, nbits):
         if not nbits in (8, 12):
-            raise Exception('Invalid nbits {}. use 8 or 12')
+            raise Exception("Invalid nbits {}. use 8 or 12")
 
     def _map_to_voltage(self, resp, nbits, nbytes):
         if resp is None:
             return (0,)
 
-        f, s = '>B', 1
+        f, s = ">B", 1
         if nbits == 12:
-            f, s = '<h', 2
+            f, s = "<h", 2
 
         m = 2 ** nbits - 1
 
@@ -135,23 +135,25 @@ class ProXRADC(NCDDevice):
             nd = int(math.log10(m))
             return round(v / float(m) * self.max_voltage, nd)
 
-        return [vfunc(struct.unpack(f, resp[i:i + s])[0]) for i in range(0, nbytes, s)]
+        return [
+            vfunc(struct.unpack(f, resp[i : i + s])[0]) for i in range(0, nbytes, s)
+        ]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
     from pychron.paths import paths
 
-    paths.build('_dev')
+    paths.build("_dev")
 
-    logging_setup('adc', use_archiver=False)
+    logging_setup("adc", use_archiver=False)
 
     # paths.build('_dev')
-    #[254][199][0]
-    a = ProXRADC(name='ProXRADC')
+    # [254][199][0]
+    a = ProXRADC(name="ProXRADC")
     # a = MultiBankADCExpansion(name='proxr_adc')
     # a.bootstrap()
-    a.load_communicator('serial', port='usbserial-A5018URQ', baudrate=115200)
+    a.load_communicator("serial", port="usbserial-A5018URQ", baudrate=115200)
     a.initialize()
     a.open()
     # print 'read bank', a.read_bank()
@@ -164,7 +166,7 @@ if __name__ == '__main__':
     for i in range(100):
         # for j in range(8):
         #     a.read_channel(j, nbits=8)
-            # time.sleep(0.5)
+        # time.sleep(0.5)
         a.read_bank(0, nbits=12)
         a.read_bank(1, nbits=12)
         a.read_bank(2, nbits=12)

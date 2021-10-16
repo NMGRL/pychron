@@ -22,6 +22,7 @@ import time
 
 # ============= standard library imports ========================
 from numpy import vstack, histogram, array
+
 # import math
 from numpy.core.fromnumeric import argmax
 from numpy.random import normal
@@ -35,7 +36,7 @@ from pychron.core.time_series.time_series import smooth
 
 # ============= local library imports  ==========================
 
-'''
+"""
     Bayesian stratigraphic modeler
     
     input:
@@ -66,7 +67,7 @@ from pychron.core.time_series.time_series import smooth
                   /     
               -----C------
     
-'''
+"""
 
 
 def _monte_carlo_step(in_ages):
@@ -76,8 +77,7 @@ def _monte_carlo_step(in_ages):
 
 
 def _generate_ages(in_ages):
-    ages = array([normal(loc=ai, scale=ei)
-                  for ai, ei in in_ages])
+    ages = array([normal(loc=ai, scale=ei) for ai, ei in in_ages])
     return ages
 
 
@@ -111,11 +111,11 @@ class BayesianModeler2(HasTraits):
         st = time.time()
         # results = pool.map(_monte_carlo_step, age_gen)
         results = [_monte_carlo_step(a) for a in age_gen]
-        print('a', time.time() - st)
+        print("a", time.time() - st)
 
         st = time.time()
         results = vstack((ri for ri in results if ri is not None))
-        print('b', time.time() - st)
+        print("b", time.time() - st)
 
         for xx, (ai, ei) in zip(results.T, ages):
             #             print 'dev ', abs(xx.mean() - ai) / ai * 100, abs(xx.std() - ei) / ei * 100
@@ -125,19 +125,19 @@ class BayesianModeler2(HasTraits):
             lp = plot(v[:-1], f)[0]
             c = lp.get_color()
 
-            nf = smooth(f, window='flat')
-            plot(v[:-1], nf, c=c, ls='--', lw=2)
+            nf = smooth(f, window="flat")
+            plot(v[:-1], nf, c=c, ls="--", lw=2)
 
-            axvline(ai, c=c, lw=5) # nominal age
+            axvline(ai, c=c, lw=5)  # nominal age
             #             print f, v
             idx = argmax(nf)
             #             axvline(xx.mean(), c=c, ls='--')
-            axvline(v[idx], c=c, ls='--')
+            axvline(v[idx], c=c, ls="--")
 
         show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     bm = BayesianModeler2()
     bm.run()
 

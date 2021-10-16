@@ -43,8 +43,12 @@ class HoleOverlay(AbstractOverlay):
             self._calculate_cached_result_points(other_component)
 
         with gc:
-            gc.clip_to_rect(other_component.x, other_component.y,
-                            other_component.width, other_component.height)
+            gc.clip_to_rect(
+                other_component.x,
+                other_component.y,
+                other_component.width,
+                other_component.height,
+            )
             with gc:
 
                 for (x, y), r in self._cached_pts:
@@ -74,13 +78,13 @@ class HoleOverlay(AbstractOverlay):
         pts = comp.map_screen([(x, y) for (x, y), _ in holes])
 
         cx, cy = comp.map_screen([(0, 0)])[0]
-        rs = comp.map_screen([(d / 2., 0) for _, d in holes])
+        rs = comp.map_screen([(d / 2.0, 0) for _, d in holes])
 
         rs = [(a[0] - cx) for a in rs]
         pts = list(zip(pts, rs))
         self._cached_pts = pts
 
-    @on_trait_change('component.+')
+    @on_trait_change("component.+")
     def _handle_component_change(self, name, new):
         self._layout_needed = True
         self.request_redraw()
@@ -107,8 +111,7 @@ class StageVisualizationCanvas(BaseDataCanvas):
         holes = []
 
         for si in sm.sample_holes:
-            x, y = sm.map_to_calibration(si.nominal_position,
-                                         center, rot)
+            x, y = sm.map_to_calibration(si.nominal_position, center, rot)
             xmi = min(x, xmi)
             xma = max(x, xma)
             ymi = min(y, ymi)
@@ -116,18 +119,17 @@ class StageVisualizationCanvas(BaseDataCanvas):
 
             holes.append(((x, y), si.dimension))
 
-        o = HoleOverlay(component=self,
-                        holes=holes,
-                        results=results)
+        o = HoleOverlay(component=self, holes=holes, results=results)
         self.overlays.append(o)
 
         pa = 0
         if si is not None:
             pa = si.dimension
 
-        self.set_mapper_limits('x', (xmi, xma), pad=pa)
-        self.set_mapper_limits('y', (ymi, yma), pad=pa)
+        self.set_mapper_limits("x", (xmi, xma), pad=pa)
+        self.set_mapper_limits("y", (ymi, yma), pad=pa)
         self.invalidate_and_redraw()
+
 
 # def map_dimension(self, d):
 #        (w, h), (ox, oy) = self.map_screen([(d, d), (0, 0)])

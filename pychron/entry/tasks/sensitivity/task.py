@@ -17,25 +17,21 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from pychron.envisage.tasks.base_task import BaseManagerTask
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 from pychron.entry.tasks.sensitivity.panes import SensitivityPane
 from pychron.entry.entry_views.sensitivity_entry import SensitivityEntry
 from pyface.tasks.action.schema import SToolBar
-from pychron.entry.tasks.actions import SaveSensitivityAction, \
-    AddSensitivityAction
+from pychron.entry.tasks.actions import SaveSensitivityAction, AddSensitivityAction
 
 
 class SensitivityEntryTask(BaseManagerTask):
-    name = 'Sensitivity Entry'
+    name = "Sensitivity Entry"
 
     tool_bars = [
-        SToolBar(
-            SaveSensitivityAction(),
-            AddSensitivityAction(),
-            image_size=(16, 16)
-        ),
+        SToolBar(SaveSensitivityAction(), AddSensitivityAction(), image_size=(16, 16)),
     ]
 
     def activated(self):
@@ -55,26 +51,27 @@ class SensitivityEntryTask(BaseManagerTask):
     # GenericActon Handlers
     # ===========================================================================
     def save_as(self):
-        self.debug('sensitivity entry save as')
+        self.debug("sensitivity entry save as")
         self.save()
 
     def save(self):
-        self.debug('sensitivity entry save')
+        self.debug("sensitivity entry save")
         self.manager.save()
 
     def add(self):
-        self.debug('sensitivity entry add')
+        self.debug("sensitivity entry add")
         self.manager.add()
 
     # ===============================================================================
     # defaults
     # ===============================================================================
     def _manager_default(self):
-        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        dvc = self.application.get_service("pychron.dvc.dvc.DVC")
         return SensitivityEntry(dvc=dvc)
 
         #
         #     def _default_layout_default(self):
+
 
 #         return TaskLayout(
 #                           left=Splitter(

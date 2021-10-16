@@ -13,23 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.options.options_manager import OptionsController, ArArCalculationsOptionsManager
+from pychron.options.options_manager import (
+    OptionsController,
+    ArArCalculationsOptionsManager,
+)
 from pychron.options.views.views import view
 from pychron.pipeline.nodes.base import BaseNode
 
 
 class ArArCalculationsNode(BaseNode):
-    name = 'ArArCalculations'
+    name = "ArArCalculations"
 
     def run(self, state):
         state.arar_calculation_options = self.options
 
     def configure(self, pre_run=False, **kw):
         model = ArArCalculationsOptionsManager()
-        info = OptionsController(model=model).edit_traits(view=view('{} Options'.format(self.name)),
-                                                          kind='livemodal')
+        info = OptionsController(model=model).edit_traits(
+            view=view("{} Options".format(self.name)), kind="livemodal"
+        )
         if info.result:
             self.options = model.selected_options
             return True
+
 
 # ============= EOF =============================================

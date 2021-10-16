@@ -20,7 +20,7 @@ from pychron.pipeline.nodes.data import DVCNode
 
 
 class DSCorrelationNode(DVCNode):
-    name = 'DS Correlation'
+    name = "DS Correlation"
     configurable = False
 
     def run(self, state):
@@ -39,15 +39,18 @@ class DSCorrelationNode(DVCNode):
         es = self.dvc.meta_repo.get_correlation_ellipses()
         cs = []
         for k, v in es.items():
-            a, kca = v['age'], v['kca']
-            amin, amax = a['min'], a['max']
-            kmin, kmax = kca['min'], kca['max']
-            if xmin < amin < xmax and \
-                    xmin < amax < xmax and \
-                    ymin < kmin < ymax and \
-                    ymin < kmax < ymax:
+            a, kca = v["age"], v["kca"]
+            amin, amax = a["min"], a["max"]
+            kmin, kmax = kca["min"], kca["max"]
+            if (
+                xmin < amin < xmax
+                and xmin < amax < xmax
+                and ymin < kmin < ymax
+                and ymin < kmax < ymax
+            ):
                 cs.append((k, v))
 
         state.correlation_ellipses = cs
+
 
 # ============= EOF =============================================

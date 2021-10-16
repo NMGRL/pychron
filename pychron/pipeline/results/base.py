@@ -17,27 +17,29 @@ from traits.api import HasTraits, Instance, Str
 
 
 class BaseResult(HasTraits):
-    analysis = Instance('pychron.processing.analyses.analysis.Analysis')
+    analysis = Instance("pychron.processing.analyses.analysis.Analysis")
     isotope = Str
 
     @property
     def record_id(self):
-        r = ''
+        r = ""
         if self.analysis:
             r = self.analysis.record_id
         return r
 
     @property
     def identifier(self):
-        r = ''
+        r = ""
         if self.analysis:
             r = self.analysis.identifier
         return r
 
     @property
     def display_uuid(self):
-        r = ''
+        r = ""
         if self.analysis:
             r = self.analysis.display_uuid
         return r
+
+
 # ============= EOF =============================================

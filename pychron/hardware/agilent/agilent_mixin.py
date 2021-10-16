@@ -16,10 +16,10 @@
 
 
 class AgilentMixin:
-    id_query = '*TST?'
+    id_query = "*TST?"
 
     def id_response(self, response):
-        if response.strip() == '0':
+        if response.strip() == "0":
             return True
 
     def initialize(self, *args, **kw):
@@ -38,16 +38,16 @@ class AgilentMixin:
         pass
 
     def _clear_and_report_errors(self):
-        self.info('Clear and Report Errors. simulation:{}'.format(self.simulation))
+        self.info("Clear and Report Errors. simulation:{}".format(self.simulation))
 
         es = self._get_errors()
-        self.info('------------------------ Errors ------------------------')
+        self.info("------------------------ Errors ------------------------")
         if es:
             for ei in es:
                 self.warning(ei)
         else:
-            self.info('No Errors')
-        self.info('--------------------------------------------------------')
+            self.info("No Errors")
+        self.info("--------------------------------------------------------")
 
     def _get_errors(self):
         # maximum of 10 errors so no reason to use a while loop
@@ -63,7 +63,7 @@ class AgilentMixin:
 
     def _get_error(self):
         error = None
-        cmd = 'SYST:ERR?'
+        cmd = "SYST:ERR?"
         if not self.simulation:
             s = self.ask(cmd)
             if s is not None:

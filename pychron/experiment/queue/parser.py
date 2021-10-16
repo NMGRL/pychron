@@ -19,27 +19,45 @@
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_bool
 from pychron.loggable import Loggable
-from pychron.pychron_constants import EXTRACT_VALUE, COLLECTION_TIME_ZERO_OFFSET, DELAY_AFTER, WEIGHT, RAMP_DURATION, \
-    POSTCLEANUP, PRECLEANUP, CLEANUP, DURATION, LIGHT_VALUE, BEAM_DIAMETER, USE_CDD_WARMING, POSITION, PATTERN, COMMENT, \
-    REPOSITORY_IDENTIFIER, OVERLAP, EXTRACT_UNITS, CRYO_TEMP
+from pychron.pychron_constants import (
+    EXTRACT_VALUE,
+    COLLECTION_TIME_ZERO_OFFSET,
+    DELAY_AFTER,
+    WEIGHT,
+    RAMP_DURATION,
+    POSTCLEANUP,
+    PRECLEANUP,
+    CLEANUP,
+    DURATION,
+    LIGHT_VALUE,
+    BEAM_DIAMETER,
+    USE_CDD_WARMING,
+    POSITION,
+    PATTERN,
+    COMMENT,
+    REPOSITORY_IDENTIFIER,
+    OVERLAP,
+    EXTRACT_UNITS,
+    CRYO_TEMP,
+)
 from pychron.regex import ALIQUOT_REGEX
 
 
 class RunParser(Loggable):
-    def parse(self, header, line, delim='\t'):
+    def parse(self, header, line, delim="\t"):
         params = dict()
         if not isinstance(line, list):
             line = line.split(delim)
 
         args = [l.strip() for l in line]
         script_info = self._load_scripts(header, args)
-        ln = args[header.index('labnumber')]
+        ln = args[header.index("labnumber")]
         if ALIQUOT_REGEX.match(ln):
-            ln, a = ln.split('-')
+            ln, a = ln.split("-")
             # params['aliquot'] = int(a)
-            params['user_defined_aliquot'] = int(a)
+            params["user_defined_aliquot"] = int(a)
 
-        params['labnumber'] = ln
+        params["labnumber"] = ln
 
         # load strings
         self._load_strings(header, args, params)
@@ -55,10 +73,13 @@ class RunParser(Loggable):
     def _load_scripts(self, header, args):
         script_info = dict()
         # load scripts
-        for attr in ['measurement', 'extraction',
-                     ('script_options', 's_opt'),
-                     ('post_measurement', 'post_meas'),
-                     ('post_equilibration', 'post_eq'), ]:
+        for attr in [
+            "measurement",
+            "extraction",
+            ("script_options", "s_opt"),
+            ("post_measurement", "post_meas"),
+            ("post_equilibration", "post_eq"),
+        ]:
             v = self._get_attr_value(header, args, attr)
             if v is not None:
                 script_info[v[0]] = v[1]
@@ -80,33 +101,37 @@ class RunParser(Loggable):
                     # print 'exception', e, attr, idx, args
 
     def _load_strings(self, header, args, params):
-        for attr in [PATTERN,
-                     POSITION,
-                     COMMENT,
-                     'syn_extraction',
-                     OVERLAP,
-                     REPOSITORY_IDENTIFIER,
-                     ('conditionals', 'truncate'),
-                     (EXTRACT_UNITS, 'e_units')]:
+        for attr in [
+            PATTERN,
+            POSITION,
+            COMMENT,
+            "syn_extraction",
+            OVERLAP,
+            REPOSITORY_IDENTIFIER,
+            ("conditionals", "truncate"),
+            (EXTRACT_UNITS, "e_units"),
+        ]:
             v = self._get_attr_value(header, args, attr)
             # print attr, v
             if v is not None:
                 params[v[0]] = v[1]
 
     def _load_numbers(self, header, args, params):
-        for attr in [DURATION,
-                     CLEANUP,
-                     PRECLEANUP,
-                     POSTCLEANUP,
-                     CRYO_TEMP,
-                     (RAMP_DURATION, 'ramp'),
-                     WEIGHT,
-                     DELAY_AFTER,
-                     (COLLECTION_TIME_ZERO_OFFSET, 't_o'),
-                     (EXTRACT_VALUE, 'e_value'),
-                     (BEAM_DIAMETER, 'beam_diam'),
-                     LIGHT_VALUE,
-                     'frequency_group', ]:
+        for attr in [
+            DURATION,
+            CLEANUP,
+            PRECLEANUP,
+            POSTCLEANUP,
+            CRYO_TEMP,
+            (RAMP_DURATION, "ramp"),
+            WEIGHT,
+            DELAY_AFTER,
+            (COLLECTION_TIME_ZERO_OFFSET, "t_o"),
+            (EXTRACT_VALUE, "e_value"),
+            (BEAM_DIAMETER, "beam_diam"),
+            LIGHT_VALUE,
+            "frequency_group",
+        ]:
 
             v = self._get_attr_value(header, args, attr, cast=float)
             if v is not None:
@@ -114,10 +139,14 @@ class RunParser(Loggable):
 
     def _load_booleans(self, header, args, params):
 
-        for attr in ['autocenter',
-                     USE_CDD_WARMING,
-                     ('disable_between_positions', 'dis_btw_pos')]:
-            v = self._get_attr_value(header, args, attr, cast=lambda x: to_bool(x.strip()))
+        for attr in [
+            "autocenter",
+            USE_CDD_WARMING,
+            ("disable_between_positions", "dis_btw_pos"),
+        ]:
+            v = self._get_attr_value(
+                header, args, attr, cast=lambda x: to_bool(x.strip())
+            )
             if v is not None:
                 params[v[0]] = v[1]
 
@@ -136,7 +165,7 @@ class RunParser(Loggable):
 
 
 class UVRunParser(RunParser):
-    def parse(self, header, line, delim='\t'):
+    def parse(self, header, line, delim="\t"):
         script_info, params = super(UVRunParser, self).parse(header, line, delim)
         if not isinstance(line, list):
             line = line.split(delim)
@@ -152,10 +181,10 @@ class UVRunParser(RunParser):
                 # print 'exception', e
                 pass
 
-        _set('reprate', int)
-        _set('attenuator', str)
-        _set('mask', str)
-        _set('image', str)
+        _set("reprate", int)
+        _set("attenuator", str)
+        _set("mask", str)
+        _set("image", str)
 
         return script_info, params
 

@@ -48,7 +48,9 @@ class MFTableConfig(HasTraits, PersistenceMixin):
     pdetectors = List(dump=True)
 
     def dump(self, verbose=False):
-        self.pdetectors = [(d.name, d.enabled, d.deflection) for d in self.detectors if d.enabled]
+        self.pdetectors = [
+            (d.name, d.enabled, d.deflection) for d in self.detectors if d.enabled
+        ]
         super(MFTableConfig, self).dump(verbose=verbose)
 
     def get_finish_position(self):
@@ -58,26 +60,45 @@ class MFTableConfig(HasTraits, PersistenceMixin):
         self.detectors = [Detector(d) for d in dets]
         self.available_detector_names = [di.name for di in self.detectors]
         for d in self.detectors:
-            for name, e, defl, in self.pdetectors:
+            for (
+                name,
+                e,
+                defl,
+            ) in self.pdetectors:
                 if name == d.name:
                     d.enabled, d.deflection = e, defl
 
     def traits_view(self):
-        pcc = VGroup(UItem('peak_center_config',
-                           editor=InstanceEditor(),
-                           style='custom'), label='Peak Center Config.', show_border=True)
+        pcc = VGroup(
+            UItem("peak_center_config", editor=InstanceEditor(), style="custom"),
+            label="Peak Center Config.",
+            show_border=True,
+        )
 
-        cols = [CheckboxColumn(name='enabled'), ObjectColumn(name='name'),
-                ObjectColumn(name='deflection')]
+        cols = [
+            CheckboxColumn(name="enabled"),
+            ObjectColumn(name="name"),
+            ObjectColumn(name="deflection"),
+        ]
 
-        v = okcancel_view(VGroup(Item('detectors',
-                                      editor=TableEditor(columns=cols)),
-                                 Item('isotope', editor=EnumEditor(name='isotopes')),
-                                 VGroup(Item('finish_detector', editor=EnumEditor(name='available_detector_names')),
-                                        Item('finish_isotope', editor=EnumEditor(name='isotopes')),
-                                        show_border=True, label='End Position'),
-                                 pcc),
-                          title='Populate Magnetic Field Table')
+        v = okcancel_view(
+            VGroup(
+                Item("detectors", editor=TableEditor(columns=cols)),
+                Item("isotope", editor=EnumEditor(name="isotopes")),
+                VGroup(
+                    Item(
+                        "finish_detector",
+                        editor=EnumEditor(name="available_detector_names"),
+                    ),
+                    Item("finish_isotope", editor=EnumEditor(name="isotopes")),
+                    show_border=True,
+                    label="End Position",
+                ),
+                pcc,
+            ),
+            title="Populate Magnetic Field Table",
+        )
         return v
+
 
 # ============= EOF =============================================

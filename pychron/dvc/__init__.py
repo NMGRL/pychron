@@ -27,35 +27,38 @@ from pychron.core.helpers.filetools import subdirize, add_extension
 from pychron.paths import paths
 from pychron.wisc_ar_constants import WISCAR_ID_RE
 
-__version__ = '2.1'
+__version__ = "2.1"
 
 # changelog
 # 2.1 added pre/post cleanup
 
 USE_GIT_TAGGING = False
 
-MASS_SPEC_REDUCED = 'MASS SPEC REDUCED'
-HISTORY_TAGS = ('TAG', 'ISOEVO', 'BLANKS', 'ICFactor', 'DEFINE EQUIL', MASS_SPEC_REDUCED, 'COLLECTION', 'IMPORT',
-                'MANUAL')
+MASS_SPEC_REDUCED = "MASS SPEC REDUCED"
+HISTORY_TAGS = (
+    "TAG",
+    "ISOEVO",
+    "BLANKS",
+    "ICFactor",
+    "DEFINE EQUIL",
+    MASS_SPEC_REDUCED,
+    "COLLECTION",
+    "IMPORT",
+    "MANUAL",
+)
 
-DATA = '.data'
-TAGS = 'tags'
-BASELINES = 'baselines'
-BLANKS = 'blanks'
-ICFACTORS = 'icfactors'
-INTERCEPTS = 'intercepts'
-PEAKCENTER = 'peakcenter'
-COSMOGENIC = 'cosmogenic'
+DATA = ".data"
+TAGS = "tags"
+BASELINES = "baselines"
+BLANKS = "blanks"
+ICFACTORS = "icfactors"
+INTERCEPTS = "intercepts"
+PEAKCENTER = "peakcenter"
+COSMOGENIC = "cosmogenic"
 
-HISTORY_PATHS = (None,
-                 DATA,
-                 BASELINES,
-                 BLANKS,
-                 ICFACTORS,
-                 INTERCEPTS,
-                 TAGS)
+HISTORY_PATHS = (None, DATA, BASELINES, BLANKS, ICFACTORS, INTERCEPTS, TAGS)
 
-static = (PEAKCENTER, 'extraction', 'monitor')
+static = (PEAKCENTER, "extraction", "monitor")
 PATH_MODIFIERS = HISTORY_PATHS + static
 NPATH_MODIFIERS = (None, DATA, TAGS) + static
 
@@ -65,7 +68,9 @@ class DVCException(BaseException):
         self._attr = attr
 
     def __repr__(self):
-        return 'DVCException: neither DVCDatabase or MetaRepo have {}'.format(self._attr)
+        return "DVCException: neither DVCDatabase or MetaRepo have {}".format(
+            self._attr
+        )
 
     def __str__(self):
         return self.__repr__()
@@ -77,29 +82,29 @@ class AnalysisNotAnvailableError(BaseException):
         self._runid = runid
 
     def __str__(self):
-        return 'Analysis Not Available. {} - {}'.format(self._root, self._runid)
+        return "Analysis Not Available. {} - {}".format(self._root, self._runid)
 
 
 def dvc_dump(obj, path):
     if obj is None:
-        print('no object to dump')
+        print("no object to dump")
         return
 
-    with open(path, 'w') as wfile:
+    with open(path, "w") as wfile:
         try:
             json.dump(obj, wfile, indent=4, sort_keys=True)
         except TypeError as e:
-            print('dvc dump exception. error:{}, {}'.format(e, pformat(obj)))
+            print("dvc dump exception. error:{}, {}".format(e, pformat(obj)))
 
 
 def dvc_load(path):
     ret = {}
     if os.path.isfile(path):
-        with open(path, 'r') as rfile:
+        with open(path, "r") as rfile:
             try:
                 ret = json.load(rfile)
             except ValueError as e:
-                print('dvc load exception. error: {}, {}'.format(e, path))
+                print("dvc load exception. error: {}, {}".format(e, path))
     return ret
 
 
@@ -111,7 +116,7 @@ def get_masses():
 
     global MASSES
     if MASSES is None:
-        path = os.path.join(paths.meta_root, 'molecular_weights.json')
+        path = os.path.join(paths.meta_root, "molecular_weights.json")
         MASSES = dvc_load(path)
 
     return MASSES
@@ -142,7 +147,7 @@ def analysis_path(analysis, *args, **kw):
         try:
             ret = _analysis_path(uuid, *args, **kw)
         except AnalysisNotAnvailableError as e:
-            if kw.get('mode', 'r') == 'r':
+            if kw.get("mode", "r") == "r":
                 ret = None
             else:
                 raise e
@@ -150,20 +155,30 @@ def analysis_path(analysis, *args, **kw):
     return ret
 
 
-UUID_RE = re.compile(r'^[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12}$', re.IGNORECASE)
+UUID_RE = re.compile(
+    r"^[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12}$",
+    re.IGNORECASE,
+)
 
 
-def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r', root=None, is_temp=False,
-                   force_sublen=False):
-
-    runid = runid.replace(':', '_')
+def _analysis_path(
+    runid,
+    repository,
+    modifier=None,
+    extension=".json",
+    mode="r",
+    root=None,
+    is_temp=False,
+    force_sublen=False,
+):
+    runid = runid.replace(":", "_")
 
     if root is None:
         root = paths.repository_dataset_dir
 
     root = os.path.join(root, repository)
     if is_temp:
-        root = os.path.join(root, 'temp')
+        root = os.path.join(root, "temp")
         if not os.path.isdir(root):
             os.mkdir(root)
 
@@ -175,8 +190,8 @@ def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r'
         sublen = 3
     else:
         sublen = 3
-        if runid.count('-') > 1:
-            args = runid.split('-')[:-1]
+        if runid.count("-") > 1:
+            args = runid.split("-")[:-1]
             if len(args[0]) == 1:
                 sublen = 4
             else:
@@ -189,20 +204,20 @@ def _analysis_path(runid, repository, modifier=None, extension='.json', mode='r'
     if modifier:
         d = os.path.join(root, modifier)
         if not os.path.isdir(d):
-            if mode == 'r':
+            if mode == "r":
                 raise AnalysisNotAnvailableError(root, runid)
 
             os.mkdir(d)
 
         root = d
-        fmt = '{}.{}'
-        if modifier.startswith('.'):
-            fmt = '{}{}'
+        fmt = "{}.{}"
+        if modifier.startswith("."):
+            fmt = "{}{}"
         tail = fmt.format(tail, modifier[:4])
 
     name = add_extension(tail, extension)
     path = os.path.join(root, name)
-    if mode == 'r':
+    if mode == "r":
         if not os.path.isfile(path):
             raise AnalysisNotAnvailableError(root, runid)
 
@@ -214,18 +229,23 @@ def repository_path(*args):
 
 
 def make_ref_list(refs):
-    ret = ''
+    ret = ""
     if refs:
-        ret = [{'record_id': r.record_id, 'uuid': r.uuid, 'exclude': r.temp_status} for r in refs]
+        ret = [
+            {"record_id": r.record_id, "uuid": r.uuid, "exclude": r.temp_status}
+            for r in refs
+        ]
     return ret
 
 
 def list_frozen_productions(repo):
     ps = []
-    for prod in glob.glob(repository_path(repo, '*.*.production.json')):
+    for prod in glob.glob(repository_path(repo, "*.*.production.json")):
         name = os.path.basename(prod)
-        irrad, level = name.split('.')[:2]
-        name = '{}.{}'.format(irrad, level)
+        irrad, level = name.split(".")[:2]
+        name = "{}.{}".format(irrad, level)
         ps.append((name, prod))
     return ps
+
+
 # ============= EOF =============================================

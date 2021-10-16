@@ -24,7 +24,6 @@ from pychron.spectrometer.jobs.sweep import BaseSweep
 class HVSweep(BaseSweep):
     def _step(self, v):
         self.spectrometer.set_hv(v, verbose=self.verbose)
+
+
 # ============= EOF =============================================
-
-
-

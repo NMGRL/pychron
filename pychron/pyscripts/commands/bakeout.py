@@ -18,10 +18,12 @@
 from __future__ import absolute_import
 from traits.api import Float, Str
 from traitsui.api import View, Item, VGroup, EnumEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pyscripts.commands.core import Command
 from traitsui.menu import OKCancelButtons
+
 
 class Ramp(Command):
     setpoint = Float(1)
@@ -31,16 +33,17 @@ class Ramp(Command):
     period = Float(_default_period)
 
     def traits_view(self):
-        v = View(Item('setpoint', label='Setpoint (C)'),
-               Item('rate', label='Rate C/hr'),
-               VGroup(
-                      Item('start', label='Start Setpoint (C)'),
-                      Item('period', label='Update Period (s)'),
-                      show_border=True,
-                      label='Optional'
-                      ),
-                buttons=OKCancelButtons
-                )
+        v = View(
+            Item("setpoint", label="Setpoint (C)"),
+            Item("rate", label="Rate C/hr"),
+            VGroup(
+                Item("start", label="Start Setpoint (C)"),
+                Item("period", label="Update Period (s)"),
+                show_border=True,
+                label="Optional",
+            ),
+            buttons=OKCancelButtons,
+        )
         return v
 
     def _to_string(self):
@@ -50,39 +53,45 @@ class Ramp(Command):
         except (ValueError, TypeError):
             pass
 
-
-        words = [('setpoint', self.setpoint, True),
-                 ('rate', self.rate, True),
-               ]
+        words = [
+            ("setpoint", self.setpoint, True),
+            ("rate", self.rate, True),
+        ]
         if start is not None:
-            words.append(('start', start, True))
+            words.append(("start", start, True))
 
         if self.period != self._default_period:
-            words.append(('period', self.period, True))
+            words.append(("period", self.period, True))
 
         return self._keywords(words)
 
 
-time_dict = dict(h='hours', m='minutes', s='seconds')
+time_dict = dict(h="hours", m="minutes", s="seconds")
+
+
 class Setpoint(Command):
     setpoint = Float
     duration = Float
-    units = Str('h')
+    units = Str("h")
 
     def _get_view(self):
-        v = VGroup(Item('setpoint', label='Temperature (C)'),
-                   Item('duration', label='Duration (units)'),
-                   Item('units', editor=EnumEditor(values=time_dict),
-
-                    ),
-               )
+        v = VGroup(
+            Item("setpoint", label="Temperature (C)"),
+            Item("duration", label="Duration (units)"),
+            Item(
+                "units",
+                editor=EnumEditor(values=time_dict),
+            ),
+        )
 
         return v
+
     def _to_string(self):
-        words = [('temperature', self.setpoint, True),
-               ('duration', self.duration, True),
-               ('units', self.units)
-               ]
+        words = [
+            ("temperature", self.setpoint, True),
+            ("duration", self.duration, True),
+            ("units", self.units),
+        ]
         return self._keywords(words)
 
 

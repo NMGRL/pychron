@@ -25,11 +25,11 @@ from pychron.loggable import Loggable
 
 class ModelView(HasTraits):
     def trait_context(self):
-        return {'object': self.model}
+        return {"object": self.model}
 
 
 class BaseIrradiationEditor(Loggable):
     db = Any
 
-# ============= EOF =============================================
 
+# ============= EOF =============================================

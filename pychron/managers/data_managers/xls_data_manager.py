@@ -28,9 +28,9 @@ from six.moves import range
 
 
 def camel_case(a):
-    if '_' in a:
-        items = a.split('_')
-        a = ''.join(map(str.capitalize, items))
+    if "_" in a:
+        items = a.split("_")
+        a = "".join(map(str.capitalize, items))
     return a
 
 
@@ -80,14 +80,19 @@ class XLSDataManager(DataManager):
 
             header = list(map(str.lower, list(map(str, header))))
             for attr in names:
-                for ai in (attr, attr.replace('_', ''),
-                           attr.replace('_', ' '),
-                           attr.replace(' ', ''), attr.lower()):
+                for ai in (
+                    attr,
+                    attr.replace("_", ""),
+                    attr.replace("_", " "),
+                    attr.replace(" ", ""),
+                    attr.lower(),
+                ):
                     if ai in header:
                         return header.index(ai)
 
             if not optional:
-                cols = ','.join(names)
+                cols = ",".join(names)
                 self.warning_dialog('Invalid sheet. No column named "{}"'.format(cols))
+
 
 # ============= EOF =============================================

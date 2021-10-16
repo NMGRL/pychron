@@ -18,6 +18,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Property, Instance, DelegatesTo
+
 # from traitsui.api import View, Item, Group, HGroup, VGroup
 from traitsui.api import VGroup, Item, HGroup
 
@@ -31,13 +32,13 @@ from pychron.lasers.laser_managers.laser_manager import LaserManager
 
 
 class SynradCO2Manager(LaserManager):
-    name = 'SynradCO2'
+    name = "SynradCO2"
 
     control_dac = Instance(AgilentDAC)
     control_switch = Instance(AgilentGPActuator)
-    request_power = Property(depends_on='control_dac.value')
-    request_powermin = DelegatesTo('control_dac', prefix='min_value')
-    request_powermax = DelegatesTo('control_dac', prefix='max_value')
+    request_power = Property(depends_on="control_dac.value")
+    request_powermin = DelegatesTo("control_dac", prefix="min_value")
+    request_powermax = DelegatesTo("control_dac", prefix="max_value")
 
     enable_address = 120
 
@@ -51,15 +52,13 @@ class SynradCO2Manager(LaserManager):
         self.control_dac.set(v)
 
     def disable_laser(self):
-
         self.control_switch.close_channel(self.enable_address)
         super(SynradCO2Manager, self).disable_laser()
 
         return True
 
     def enable_laser(self):
-        """
-        """
+        """ """
 
         is_ok = True
 
@@ -70,12 +69,10 @@ class SynradCO2Manager(LaserManager):
         return is_ok
 
     def _control_dac_default(self):
-        return AgilentDAC(name='control_dac',
-                          configuration_dir_name='synrad')
+        return AgilentDAC(name="control_dac", configuration_dir_name="synrad")
 
     def _control_switch_default(self):
-        a = AgilentGPActuator(name='control_switch',
-                              configuration_dir_name='synrad')
+        a = AgilentGPActuator(name="control_switch", configuration_dir_name="synrad")
 
         return a
 
@@ -106,13 +103,12 @@ class SynradCO2Manager(LaserManager):
     #     return vg
 
     def _stage_manager_default(self):
-        """
-        """
+        """ """
 
-        args = dict(name='synradstage',
-                    configuration_dir_name='synrad',
-                    parent=self)
+        args = dict(name="synradstage", configuration_dir_name="synrad", parent=self)
         stm = self._stage_manager_factory(args)
 
         return stm
+
+
 # ============= EOF ====================================

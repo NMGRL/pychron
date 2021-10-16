@@ -129,7 +129,7 @@ def get_boolean(default=False):
     return dec
 
 
-def get_blob(default=b''):
+def get_blob(default=b""):
     def dec(func):
         def wrapper(*args, **kw):
             t = func(*args, **kw)

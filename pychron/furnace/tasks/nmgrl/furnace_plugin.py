@@ -21,15 +21,17 @@ from pychron.furnace.tasks.nmgrl.task import NMGRLFurnaceTask
 
 
 class NMGRLFurnacePlugin(BaseFurnacePlugin):
-    name = 'NMGRLFurnace'
-    id = 'pychron.furnace.nmgrl.plugin'
+    name = "NMGRLFurnace"
+    id = "pychron.furnace.nmgrl.plugin"
 
-    klass = ('pychron.furnace.nmgrl.furnace_manager', 'NMGRLFurnaceManager')
+    klass = ("pychron.furnace.nmgrl.furnace_manager", "NMGRLFurnaceManager")
     task_klass = NMGRLFurnaceTask
 
     def _help_tips_default(self):
-        return ['NMGRLFurnace hardware was designed by William McIntosh. Firmware and software was designed by Jake '
-                'Ross']
+        return [
+            "NMGRLFurnace hardware was designed by William McIntosh. Firmware and software was designed by Jake "
+            "Ross"
+        ]
 
     def _deactivations_default(self):
         application = self.application
@@ -38,7 +40,7 @@ class NMGRLFurnacePlugin(BaseFurnacePlugin):
             manager = application.get_service(IFurnaceManager)
             if manager:
                 for window in application.windows:
-                    if 'furnace' in window.active_task.id:
+                    if "furnace" in window.active_task.id:
                         break
                 else:
                     manager.stop_update()
@@ -52,6 +54,7 @@ class NMGRLFurnacePlugin(BaseFurnacePlugin):
     def _panes_default(self):
         def f():
             from pychron.furnace.tasks.nmgrl.panes import ExperimentFurnacePane
+
             manager = self._get_manager()
             fpane = ExperimentFurnacePane(model=manager)
             return fpane

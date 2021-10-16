@@ -28,18 +28,18 @@ from pychron.core.helpers.filetools import unique_dir, list_directory
 
 def migrate_directory(root, clean=False):
     """
-        create a migrated directory
+    create a migrated directory
     """
 
-    dest = unique_dir(root, 'migrated')
-    for p in list_directory(root, extension='.py'):
+    dest = unique_dir(root, "migrated")
+    for p in list_directory(root, extension=".py"):
         migrate_file(p, root, dest, clean)
 
 
 def comment(ostream, line, tag, clean):
     if line.startswith(tag):
         if not clean:
-            li = '#{}'.format(line)
+            li = "#{}".format(line)
             ostream.write(li)
         return True
 
@@ -47,51 +47,53 @@ def comment(ostream, line, tag, clean):
 def new_method(ostream, line, tag, nmeth, clean):
     if line.startswith(tag):
         if not clean:
-            li = '    #{}\n'.format(line.strip())
+            li = "    #{}\n".format(line.strip())
             ostream.write(li)
-        ostream.write('    {}\n'.format(nmeth))
+        ostream.write("    {}\n".format(nmeth))
         return True
 
 
 def migrate_file(p, srcroot, destroot, clean):
     """
-        if clean=True dont comment out changes just remove them
+    if clean=True dont comment out changes just remove them
     """
     src = os.path.join(srcroot, p)
     dest = os.path.join(destroot, p)
 
     has_default_fits = False
-    #examine docstr
-    with open(src, 'r') as rfile:
+    # examine docstr
+    with open(src, "r") as rfile:
         srctxt = rfile.read()
         m = ast.parse(srctxt)
         docstr = ast.get_docstring(m)
         if docstr is not None:
             yd = yaml.load(docstr)
-            if yd and 'default_fits' in yd:
+            if yd and "default_fits" in yd:
                 has_default_fits = True
                 # print yaml.dump(yd, default_flow_style=False)
 
     if not has_default_fits:
         doc_updated = False
-        with open(src, 'r') as rfile, open(dest, 'w') as dfp:
+        with open(src, "r") as rfile, open(dest, "w") as dfp:
             for li in rfile:
                 sli = li.strip()
                 if not doc_updated:
-                    #search for start of docstr
+                    # search for start of docstr
 
                     if sli == '"""' or sli == "'''":
                         dfp.write(li)
-                        dfp.write('{}\n'.format('default_fits: nominal_fits'))
+                        dfp.write("{}\n".format("default_fits: nominal_fits"))
                         doc_updated = True
                 else:
-                    if comment(dfp, li, 'FITS=', clean):
+                    if comment(dfp, li, "FITS=", clean):
                         continue
-                    if comment(dfp, li, 'BASELINE_FITS=', clean):
+                    if comment(dfp, li, "BASELINE_FITS=", clean):
                         continue
-                    if new_method(dfp, li, '    set_fits', 'set_fits()', clean):
+                    if new_method(dfp, li, "    set_fits", "set_fits()", clean):
                         continue
-                    if new_method(dfp, li, '    set_baseline_fits', 'set_baseline_fits()', clean):
+                    if new_method(
+                        dfp, li, "    set_baseline_fits", "set_baseline_fits()", clean
+                    ):
                         continue
 
                     dfp.write(li)
@@ -100,8 +102,7 @@ def migrate_file(p, srcroot, destroot, clean):
         shutil.copyfile(src, dest)
 
 
-if __name__ == '__main__':
-    root = '/Users/ross/Pychrondata_dev/scripts/migration_test'
+if __name__ == "__main__":
+    root = "/Users/ross/Pychrondata_dev/scripts/migration_test"
     migrate_directory(root, clean=True)
 # ============= EOF =============================================
-

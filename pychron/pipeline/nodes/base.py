@@ -26,7 +26,7 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class BaseNode(ColumnSorterMixin):
-    name = 'Base'
+    name = "Base"
     enabled = Bool(True)
     visited = Bool(False)
     skip_configure = Bool(False)
@@ -137,7 +137,7 @@ class BaseNode(ColumnSorterMixin):
                     obj = self
 
             self._configure_hook()
-            info = obj.edit_traits(kind='livemodal')
+            info = obj.edit_traits(kind="livemodal")
             if info.result:
                 self._finish_configure()
                 self.refresh()
@@ -152,7 +152,7 @@ class BaseNode(ColumnSorterMixin):
         pass
 
     def to_template(self):
-        d = {'klass': self.__class__.__name__}
+        d = {"klass": self.__class__.__name__}
         self._to_template(d)
 
         return d
@@ -169,15 +169,17 @@ class BaseNode(ColumnSorterMixin):
         # return []
 
     def _view_factory(self, *items, **kw):
-        if 'title' not in kw:
-            kw['title'] = 'Configure {}'.format(self.name)
+        if "title" not in kw:
+            kw["title"] = "Configure {}".format(self.name)
 
         return okcancel_view(*items, **kw)
 
     def __str__(self):
-        return '{}<{}>'.format(self.name, self.__class__.__name__)
+        return "{}<{}>".format(self.name, self.__class__.__name__)
 
 
 class SortableNode(BaseNode):
     pass
+
+
 # ============= EOF =============================================

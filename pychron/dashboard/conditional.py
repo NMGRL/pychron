@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from traits.api import HasTraits, Float, Str, Int, List, String
 from traitsui.api import View, HGroup, spring, Readonly
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
@@ -25,7 +26,7 @@ from pychron.dashboard.constants import WARNING
 
 
 class DashboardConditional(HasTraits):
-    key = 'x'
+    key = "x"
     value = Float
     teststr = Str
     nfail = Int
@@ -49,22 +50,18 @@ class DashboardConditional(HasTraits):
                     return True
                 else:
                     self._fail_count += 1
-                    self.state = 'NFails {}/{}'.format(self._fail_count, self.nfail)
+                    self.state = "NFails {}/{}".format(self._fail_count, self.nfail)
             else:
                 return ret
         else:
             self._fail_count = 0
-            self.state = ''
+            self.state = ""
 
         return ret
 
     def traits_view(self):
-        v = View(HGroup(Readonly('teststr', width=-200),
-                        Readonly('state'),
-                        spring))
+        v = View(HGroup(Readonly("teststr", width=-200), Readonly("state"), spring))
         return v
 
+
 # ============= EOF =============================================
-
-
-

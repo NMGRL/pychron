@@ -20,25 +20,34 @@ from traitsui.api import View, UItem, VGroup, HSplit, TabularEditor
 from traitsui.editors.api import TextEditor
 from traitsui.group import HGroup
 from traitsui.tabular_adapter import TabularAdapter
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView, DiffView
+from pychron.git_archive.history import (
+    GitArchiveHistory,
+    GitArchiveHistoryView,
+    DiffView,
+)
 
 
 def left_group():
-    return VGroup(HGroup(UItem('left_message', style='readonly'),
-                         UItem('left_date', style='readonly')),
-                  UItem('left',
-                        style='custom',
-                        editor=TextEditor(read_only=True)))
+    return VGroup(
+        HGroup(
+            UItem("left_message", style="readonly"),
+            UItem("left_date", style="readonly"),
+        ),
+        UItem("left", style="custom", editor=TextEditor(read_only=True)),
+    )
 
 
 def right_group():
-    return VGroup(HGroup(UItem('right_message', style='readonly'),
-                         UItem('right_date', style='readonly')),
-                  UItem('right',
-                        style='custom',
-                        editor=TextEditor(read_only=True)))
+    return VGroup(
+        HGroup(
+            UItem("right_message", style="readonly"),
+            UItem("right_date", style="readonly"),
+        ),
+        UItem("right", style="custom", editor=TextEditor(read_only=True)),
+    )
 
 
 class ItemAdapter(TabularAdapter):
@@ -76,20 +85,26 @@ class MFTableDiffView(DiffView):
                 self.diff_items.append(d)
 
     def _parse_txt(self, txt):
-        lines = txt.split('\n')
-        keys = lines[0].split(',')
-        data = [line.split(',') for line in lines[1:] if line]
+        lines = txt.split("\n")
+        keys = lines[0].split(",")
+        data = [line.split(",") for line in lines[1:] if line]
         return keys, data
 
     def traits_view(self):
-        v = View(VGroup(HSplit(left_group(), right_group()),
-                        UItem('diff_items', editor=TabularEditor(editable=False,
-                                                                 adapter=self.item_adapter))),
-                 title='Diff',
-                 width=900,
-                 buttons=['OK'],
-                 kind='livemodal',
-                 resizable=True)
+        v = View(
+            VGroup(
+                HSplit(left_group(), right_group()),
+                UItem(
+                    "diff_items",
+                    editor=TabularEditor(editable=False, adapter=self.item_adapter),
+                ),
+            ),
+            title="Diff",
+            width=900,
+            buttons=["OK"],
+            kind="livemodal",
+            resizable=True,
+        )
         return v
 
 
@@ -112,6 +127,3 @@ class LocalMFTableHistoryView(GitArchiveHistoryView):
 #     # ghv = LocalMFTableHistoryView(model=gh)
 #     # ghv.configure_traits(kind='livemodal')
 # ============= EOF =============================================
-
-
-

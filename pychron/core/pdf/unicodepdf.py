@@ -15,17 +15,30 @@
 # ===============================================================================
 from reportlab.pdfgen.canvas import Canvas
 from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.ttfonts import TTFont, TTFError
 
-c = Canvas('/Users/ross/Desktop/temp.pdf', pagesize=(200,100))
+for face in ["arial"]:
+    for face_name in (face, face.lower()):
+        spec = Font(face_name=face_name, style=NORMAL, weight=NORMAL).findfont()
+        try:
+            if isinstance(spec, str):
+                tf = TTFont(face_name, spec)
+            else:
+                tf = TTFont(face_name, spec.filename, subfontIndex=spec.face_index)
+            pdfmetrics.registerFont(tf)
+            # pdfmetrics.registerTypeFace(TypeFace(face_name))
+        except TTFError as e:
+            print("invalid font", spec, e)
+
+c = Canvas("/Users/ross/Desktop/temp.pdf", pagesize=(200, 100))
 c.setPageCompression(0)
 y = 50
 
-line = 'fooobasd \xb1 \xb2 \xf3'
+line = "fooobasd \xb1 \xb2 \xf3"
 
-pdfmetrics.registerFont(TTFont('Arial', '/Library/Fonts/Microsoft/Arial.ttf'))
-pdfmetrics.registerFontFamily('Arial', normal='Arial')
-c.setFont('Arial', 20)
+pdfmetrics.registerFont(TTFont("Arial", "/Library/Fonts/Microsoft/Arial.ttf"))
+pdfmetrics.registerFontFamily("Arial", normal="Arial")
+c.setFont("Arial", 20)
 c.drawString(50, y, line.strip())
 
 c.save()

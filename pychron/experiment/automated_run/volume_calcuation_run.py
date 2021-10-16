@@ -41,11 +41,11 @@ class VolumeCalculationRun(AutomatedRun):
         return (refvol * s2 / s1) / (1 - s2 / s1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     v2 = 500
 
-    s1 = 100.
-    s2 = 1.
+    s1 = 100.0
+    s2 = 1.0
 
     # s2/s1 = v1/(v1+v2)
     #

@@ -38,11 +38,15 @@ class GitCommitAuthorView(HasTraits):
             self.email = a.email
 
     def traits_view(self):
-        v = okcancel_view(VGroup(Item('author', editor=ComboboxEditor(name='authornames')),
-                                 Item('email')),
-                          Item('remember_choice', label='Remember this choice?'),
-                          width=400,
-                          title='Git Commit Author')
+        v = okcancel_view(
+            VGroup(
+                Item("author", editor=ComboboxEditor(name="authornames")), Item("email")
+            ),
+            Item("remember_choice", label="Remember this choice?"),
+            width=400,
+            title="Git Commit Author",
+        )
         return v
+
 
 # ============= EOF =============================================

@@ -27,4 +27,5 @@ class IsotopxSpectrometer(Loggable):
     source_klass = Any
     detector_klass = Any
 
+
 # ============= EOF =============================================

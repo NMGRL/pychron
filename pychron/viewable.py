@@ -17,8 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
-from traits.api import Either, Int, Float, Str, List, Event, \
-    Bool
+from traits.api import Either, Int, Float, Str, List, Event, Bool
 from traitsui.api import Handler
 from traitsui.api import View
 
@@ -68,7 +67,7 @@ class ViewableHandler(Handler):
 
 
 class Viewable(Loggable):
-    id = ''
+    id = ""
     handler_klass = ViewableHandler
     handler = None
 
@@ -113,7 +112,7 @@ class Viewable(Loggable):
     def close_ui(self):
         from pychron.core.ui.gui import invoke_in_main_thread
 
-        self.debug('close ui')
+        self.debug("close ui")
         invoke_in_main_thread(self.trait_set, disposed=True)
 
     def show(self, **kw):
@@ -122,33 +121,33 @@ class Viewable(Loggable):
             func = self.edit_traits
         else:
             func = self.trait_set
-            kw['raised'] = True
+            kw["raised"] = True
 
         func(*args, **kw)
 
     def view_factory(self, *args, **kw):
         if self.window_x:
-            kw['x'] = self.window_x
+            kw["x"] = self.window_x
         if self.window_y:
-            kw['y'] = self.window_y
+            kw["y"] = self.window_y
         if self.window_width:
-            kw['width'] = self.window_width
+            kw["width"] = self.window_width
         if self.window_height:
-            kw['height'] = self.window_height
+            kw["height"] = self.window_height
 
-        if 'resizable' not in kw:
-            kw['resizable'] = self.resizable
+        if "resizable" not in kw:
+            kw["resizable"] = self.resizable
 
-        if 'title' not in kw:
-            kw['title'] = self.title
+        if "title" not in kw:
+            kw["title"] = self.title
 
-        if 'id' not in kw and self.id:
-            kw['id'] = self.id
+        if "id" not in kw and self.id:
+            kw["id"] = self.id
 
         if self.handler:
-            kw['handler'] = self.handler
+            kw["handler"] = self.handler
         else:
-            kw['handler'] = self.handler_klass()
+            kw["handler"] = self.handler_klass()
 
         return View(*args, **kw)
 
@@ -163,5 +162,6 @@ class Viewable(Loggable):
 
     def _window_y_default(self):
         return 0.5
+
 
 # ============= EOF =============================================

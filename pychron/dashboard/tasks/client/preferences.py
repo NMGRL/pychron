@@ -24,36 +24,36 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class ExperimentDashboardClientPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.dashboard.experiment'
+    preferences_path = "pychron.dashboard.experiment"
     use_dashboard_client = Bool
 
 
 class ExperimentDashboardClientPreferencesPane(PreferencesPane):
     model_factory = ExperimentDashboardClientPreferences
-    category = 'Experiment'
+    category = "Experiment"
 
     def traits_view(self):
-        v = View(Item('use_dashboard_client'))
+        v = View(Item("use_dashboard_client"))
         return v
 
 
 class DashboardClientPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.dashboard.client'
+    preferences_path = "pychron.dashboard.client"
     host = Str
     port = Int
 
 
 class DashboardClientPreferencesPane(PreferencesPane):
     model_factory = DashboardClientPreferences
-    category = 'Dashboard'
+    category = "Dashboard"
 
     def traits_view(self):
-        v = View(VGroup(Item('host'),
-                        Item('port'),
-                        show_border=True,
-                        label='Dashboard Server'))
+        v = View(
+            VGroup(
+                Item("host"), Item("port"), show_border=True, label="Dashboard Server"
+            )
+        )
         return v
+
+
 # ============= EOF =============================================
-
-
-

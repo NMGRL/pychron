@@ -16,20 +16,21 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import  Any, Str, Int, Float, \
-    Bool, Property, on_trait_change, CInt
+from traits.api import Any, Str, Int, Float, Bool, Property, on_trait_change, CInt
 from traitsui.api import View, Item
+
 # ============= standard library imports ========================
 import os
+
 # ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
 
 
 class Axis(ConfigLoadable):
-    """
-    """
+    """ """
+
     id = Int
-#    name = Str
+    #    name = Str
     position = Float
     negative_limit = Float
     positive_limit = Float
@@ -38,13 +39,13 @@ class Axis(ConfigLoadable):
     calculate_parameters = Bool(True)
     drive_ratio = Float(1)
 
-    velocity = Property(depends_on='_velocity')
+    velocity = Property(depends_on="_velocity")
     _velocity = Float(enter_set=True, auto_set=False)
 
-    acceleration = Property(depends_on='_acceleration')
+    acceleration = Property(depends_on="_acceleration")
     _acceleration = Float(enter_set=True, auto_set=False)
 
-    deceleration = Property(depends_on='_deceleration')
+    deceleration = Property(depends_on="_deceleration")
     _deceleration = Float(enter_set=True, auto_set=False)
 
     machine_velocity = Float
@@ -84,7 +85,7 @@ class Axis(ConfigLoadable):
 
         params = []
         if not os.path.isfile(path):
-            path = os.path.join(path, '{}axis.cfg'.format(self.name))
+            path = os.path.join(path, "{}axis.cfg".format(self.name))
 
         cp = self.get_configuration(path)
         if cp:
@@ -100,25 +101,36 @@ class Axis(ConfigLoadable):
             pass
 
     # handlers
-    @on_trait_change('_velocity, _acceleration, _deceleration')
+    @on_trait_change("_velocity, _acceleration, _deceleration")
     def update_machine_values(self, obj, name, old, new):
-        setattr(self, 'machine{}'.format(name), new)
+        setattr(self, "machine{}".format(name), new)
 
     def _calibration_changed(self):
         self.parent.update_axes()
 
     # views
     def simple_view(self):
-        v = View(Item('calculate_parameters'),
-                 Item('velocity', format_str='%0.3f',
-                      enabled_when='not calculate_parameters'),
-                 Item('acceleration', format_str='%0.3f',
-                      enabled_when='not calculate_parameters'),
-                 Item('deceleration', format_str='%0.3f',
-                      enabled_when='not calculate_parameters'),
-                 Item('drive_ratio'))
+        v = View(
+            Item("calculate_parameters"),
+            Item(
+                "velocity", format_str="%0.3f", enabled_when="not calculate_parameters"
+            ),
+            Item(
+                "acceleration",
+                format_str="%0.3f",
+                enabled_when="not calculate_parameters",
+            ),
+            Item(
+                "deceleration",
+                format_str="%0.3f",
+                enabled_when="not calculate_parameters",
+            ),
+            Item("drive_ratio"),
+        )
         return v
 
     def full_view(self):
         return self.simple_view()
+
+
 # ============= EOF ====================================

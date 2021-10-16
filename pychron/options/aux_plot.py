@@ -15,8 +15,23 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Bool, \
-    Float, Property, on_trait_change, Dict, Tuple, Enum, List, Any, Trait, Button, Color
+from traits.api import (
+    HasTraits,
+    Str,
+    Int,
+    Bool,
+    Float,
+    Property,
+    on_trait_change,
+    Dict,
+    Tuple,
+    Enum,
+    List,
+    Any,
+    Trait,
+    Button,
+    Color,
+)
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -28,21 +43,22 @@ def has_limits(lims):
     return lims is not None and lims[0] != lims[1]
 
 
-YTITLES = {'Ar36': '<sup>36</sup>Ar<sub>tot</sub>(fA)',
-           'Ar40': '<sup>40</sup>Ar<sub>tot</sub>(fA)',
-           'uAr40/Ar36': 'noncor. <sup>40</sup>Ar/<sup>36</sup>Ar',
-           'Ar40/Ar36': '<sup>40</sup>Ar/<sup>36</sup>Ar',
-           'icf_40_36': 'ifc <sup>40</sup>Ar/<sup>36</sup>Ar',
-           'radiogenic_yield': '%<sup>40</sup>Ar*',
-           'extract_value': 'Extract Value',
-           'kcl': 'K/Cl',
-           'clk': 'Cl/K',
-           'kca': 'K/Ca',
-           'k39': '<sup>39</sup>Ar<sub>K</sub>(fA)',
-           'moles_k39': '<sup>39</sup>Ar<sub>K</sub>(mol)',
-           'Analysis Number': 'Analysis #',
-           'Analysis Number Nonsorted': 'A# Nonsorted'
-           }
+YTITLES = {
+    "Ar36": "<sup>36</sup>Ar<sub>tot</sub>(fA)",
+    "Ar40": "<sup>40</sup>Ar<sub>tot</sub>(fA)",
+    "uAr40/Ar36": "noncor. <sup>40</sup>Ar/<sup>36</sup>Ar",
+    "Ar40/Ar36": "<sup>40</sup>Ar/<sup>36</sup>Ar",
+    "icf_40_36": "ifc <sup>40</sup>Ar/<sup>36</sup>Ar",
+    "radiogenic_yield": "%<sup>40</sup>Ar*",
+    "extract_value": "Extract Value",
+    "kcl": "K/Cl",
+    "clk": "Cl/K",
+    "kca": "K/Ca",
+    "k39": "<sup>39</sup>Ar<sub>K</sub>(fA)",
+    "moles_k39": "<sup>39</sup>Ar<sub>K</sub>(mol)",
+    "Analysis Number": "Analysis #",
+    "Analysis Number Nonsorted": "A# Nonsorted",
+}
 
 
 class AuxPlot(HasTraits):
@@ -54,8 +70,8 @@ class AuxPlot(HasTraits):
     save_enabled = Bool
     plot_enabled = Bool
     name = Str(NULL_STR)
-    plot_name = Property(Str, depends_on='name')
-    scale = Enum('linear', 'log')
+    plot_name = Property(Str, depends_on="name")
+    scale = Enum("linear", "log")
     scalar = Float(1.0)
     height = Int(100, enter_set=True, auto_set=False)
     x_error = Bool(False)
@@ -69,13 +85,13 @@ class AuxPlot(HasTraits):
 
     use_sparse_yticks = Bool(True)
     sparse_yticks_step = Int(2)
-    ytick_interval = Trait('auto', 'auto', Float)
+    ytick_interval = Trait("auto", "auto", Float)
 
     filter_str = FilterPredicate
     sigma_filter_n = Int
-    has_filter = Property(depends_on='filter_str, sigma_filter_n')
-    filter_str_tag = Enum(('Omit', 'Outlier', 'Invalid'))
-    sigma_filter_tag = Enum(('Omit', 'Outlier', 'Invalid'))
+    has_filter = Property(depends_on="filter_str, sigma_filter_n")
+    filter_str_tag = Enum(("Omit", "Outlier", "Invalid"))
+    sigma_filter_tag = Enum(("Omit", "Outlier", "Invalid"))
 
     normalize = None
     use_time_axis = False
@@ -93,9 +109,9 @@ class AuxPlot(HasTraits):
     _has_ylimits = Bool(False, transient=True)
     _has_xlimits = Bool(False, transient=True)
 
-    marker = Str('circle')
+    marker = Str("circle")
     marker_size = Float(2)
-    marker_color = Color('black')
+    marker_color = Color("black")
 
     calculated_ymax = Any(transient=True)
     calculated_ymin = Any(transient=True)
@@ -105,7 +121,7 @@ class AuxPlot(HasTraits):
     def get_ytitle(self, k):
         t = self.ytitle
         if not t:
-            t = YTITLES.get(k, '***')
+            t = YTITLES.get(k, "***")
         return t
 
     def to_dict(self):
@@ -121,7 +137,7 @@ class AuxPlot(HasTraits):
     def has_ylimits(self):
         return self._has_ylimits or has_limits(self.ylimits)
 
-    @on_trait_change('clear_ylimits_button')
+    @on_trait_change("clear_ylimits_button")
     def clear_ylimits(self):
         self.ymin, self.ymax = 0, 0
         self.ylimits = (self.ymin, self.ymax)
@@ -142,7 +158,7 @@ class AuxPlot(HasTraits):
             try:
                 return self._plot_names[self.names.index(self.name)]
             except IndexError:
-                return ''
+                return ""
         else:
             return self.name
 
@@ -151,4 +167,6 @@ class AuxPlot(HasTraits):
 
     def _get_has_filter(self):
         return self.filter_str or self.sigma_filter_n
+
+
 # ============= EOF =============================================

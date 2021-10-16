@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import Bool
+
 # ============= standard library imports ========================
 from numpy import zeros_like, invert, uint8
 try:
@@ -25,6 +26,7 @@ except ImportError:
 
 from skimage.feature import canny
 from skimage.morphology import watershed
+
 # ============= local library imports  ==========================
 from pychron.mv.segment.base import BaseSegmenter
 
@@ -37,15 +39,14 @@ class RegionSegmenter(BaseSegmenter):
     use_watershed = Bool(True)
 
     def segment(self, image):
-        """
-        """
+        """ """
         if self.use_adaptive_threshold:
             bs = self.blocksize
             if not bs % 2:
                 bs += 1
 
             markers = threshold_adaptive(image, bs)
-            n = markers.astype('uint8')
+            n = markers.astype("uint8")
             return n
         else:
             markers = zeros_like(image)
@@ -58,5 +59,6 @@ class RegionSegmenter(BaseSegmenter):
             return invert(wsrc.astype(uint8))
         else:
             return invert(markers)
+
 
 # ============= EOF =============================================

@@ -17,14 +17,18 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.etsconfig.api import ETSConfig
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 def toolkit_factory(name, klass):
-    if ETSConfig.toolkit == 'wx':
-        raise NotImplementedError('wx backend is not available')
+    if ETSConfig.toolkit == "wx":
+        raise NotImplementedError("wx backend is not available")
     else:
-        pkg = 'pychron.core.ui.qt'
+        pkg = "pychron.core.ui.qt"
 
-    mod = __import__('{}.{}'.format(pkg, name), fromlist=[klass])
+    mod = __import__("{}.{}".format(pkg, name), fromlist=[klass])
     return getattr(mod, klass)
+
+
 # ============= EOF =============================================

@@ -26,7 +26,12 @@ from pychron.core.ui.check_list_editor import CheckListEditor
 from pychron.pipeline.editors.flux_results_editor import FluxPosition
 from pychron.pipeline.graphical_filter import GraphicalFilterModel, GraphicalFilterView
 from pychron.pipeline.nodes.data import DVCNode
-from pychron.pychron_constants import DEFAULT_MONITOR_NAME, NULL_STR, REFERENCE_ANALYSIS_TYPES, BLANKS
+from pychron.pychron_constants import (
+    DEFAULT_MONITOR_NAME,
+    NULL_STR,
+    REFERENCE_ANALYSIS_TYPES,
+    BLANKS,
+)
 
 
 def compress_groups(ans):
@@ -50,7 +55,7 @@ class FindRepositoryAnalysesNode(FindNode):
             ans = dvc.get_repoository_analyses(ri)
             rs.extend(ans)
 
-        unks, refs = partition(rs, predicate=lambda x: x.analysis_type == 'unknown')
+        unks, refs = partition(rs, predicate=lambda x: x.analysis_type == "unknown")
         state.unknowns = unks
         state.references = refs
         self.unknowns = unks
@@ -60,22 +65,22 @@ class FindRepositoryAnalysesNode(FindNode):
 class BaseFindFluxNode(FindNode):
     irradiation = Str
     irradiations = Property
-    samples = Property(depends_on='irradiation, level')
-    levels = Property(depends_on='irradiation, dirty')
+    samples = Property(depends_on="irradiation, level")
+    levels = Property(depends_on="irradiation, dirty")
     level = Str
     monitor_sample_name = Str(DEFAULT_MONITOR_NAME)
     dirty = Event
-    exclude = '%_MST'
+    exclude = "%_MST"
 
     def load(self, nodedict):
-        self.irradiation = nodedict.get('irradiation', '')
+        self.irradiation = nodedict.get("irradiation", "")
         self._load_hook(nodedict)
 
     def _load_hook(self, nodedict):
         pass
 
     def _to_template(self, d):
-        d['irradiation'] = self.irradiation
+        d["irradiation"] = self.irradiation
 
     def _irradiation_changed(self):
         try:
@@ -109,37 +114,44 @@ class BaseFindFluxNode(FindNode):
         else:
             return []
 
-    def _fp_factory(self, geom, irradiation, level, identifier, sample, hole_id, fluxes):
+    def _fp_factory(
+        self, geom, irradiation, level, identifier, sample, hole_id, fluxes
+    ):
 
-        pp = next((p for p in fluxes if p['identifier'] == identifier))
-        j, j_err, mean_j, mean_j_err, model_kind = 0, 0, 0, 0, ''
+        pp = next((p for p in fluxes if p["identifier"] == identifier))
+        j, j_err, mean_j, mean_j_err, model_kind = 0, 0, 0, 0, ""
         if pp:
-            j = pp.get('j', 0)
-            j_err = pp.get('j_err', 0)
-            mean_j = pp.get('mean_j', 0)
-            mean_j_err = pp.get('mean_j_err', 0)
-            mean_j_mswd = pp.get('mean_j_mswd', 0)
-            options = pp.get('options')
+            j = pp.get("j", 0)
+            j_err = pp.get("j_err", 0)
+            mean_j = pp.get("mean_j", 0)
+            mean_j_err = pp.get("mean_j_err", 0)
+            mean_j_mswd = pp.get("mean_j_mswd", 0)
+            options = pp.get("options")
             if options:
-                model_kind = options.get('model_kind', '')
+                model_kind = options.get("model_kind", "")
 
         x, y, r, idx = geom[hole_id - 1]
-        fp = FluxPosition(identifier=identifier,
-                          irradiation=irradiation,
-                          level=level,
-                          sample=sample, hole_id=hole_id,
-                          saved_j=j or 0,
-                          saved_jerr=j_err or 0,
-                          mean_j=mean_j or 0,
-                          mean_jerr=mean_j_err or 0,
-                          mean_j_mswd=mean_j_mswd or 0,
-                          model_kind=model_kind,
-                          x=x, y=y, r=r)
+        fp = FluxPosition(
+            identifier=identifier,
+            irradiation=irradiation,
+            level=level,
+            sample=sample,
+            hole_id=hole_id,
+            saved_j=j or 0,
+            saved_jerr=j_err or 0,
+            mean_j=mean_j or 0,
+            mean_jerr=mean_j_err or 0,
+            mean_j_mswd=mean_j_mswd or 0,
+            model_kind=model_kind,
+            x=x,
+            y=y,
+            r=r,
+        )
         return fp
 
 
 class FindIrradiationNode(BaseFindFluxNode):
-    select_all_button = Button('Select All')
+    select_all_button = Button("Select All")
     selected_levels = List
 
     def run(self, state):
@@ -161,22 +173,28 @@ class FindIrradiationNode(BaseFindFluxNode):
         self.selected_levels = self.levels
 
     def traits_view(self):
-        v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
-                               BorderVGroup(UItem('select_all_button', enabled_when='irradiation'),
-                                            UItem('selected_levels',
-                                                  style='custom',
-                                                  editor=CheckListEditor(name='levels', cols=6)),
-                                            enabled_when='irradiation',
-                                            label='Levels'),
-                               width=300,
-                               height=300,
-                               title='Select Irradiation and Level',
-                               resizable=True)
+        v = self._view_factory(
+            Item("irradiation", editor=EnumEditor(name="irradiations")),
+            BorderVGroup(
+                UItem("select_all_button", enabled_when="irradiation"),
+                UItem(
+                    "selected_levels",
+                    style="custom",
+                    editor=CheckListEditor(name="levels", cols=6),
+                ),
+                enabled_when="irradiation",
+                label="Levels",
+            ),
+            width=300,
+            height=300,
+            title="Select Irradiation and Level",
+            resizable=True,
+        )
         return v
 
 
 class FindVerticalFluxNode(FindIrradiationNode):
-    name = 'Find Vertical Flux'
+    name = "Find Vertical Flux"
     exclude = None
     use_saved_means = Bool(False)
 
@@ -185,40 +203,48 @@ class FindVerticalFluxNode(FindIrradiationNode):
             self.irradiation = self.irradiations[0]
 
     def traits_view(self):
-        v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
-                               BorderVGroup(UItem('select_all_button'),
-                                            UItem('selected_levels',
-                                                  style='custom',
-                                                  editor=CheckListEditor(name='levels', cols=6)),
-                                            enabled_when='irradiation',
-                                            label='Levels'),
-                               Item('monitor_sample_name'),
-                               Item('use_saved_means'),
-                               width=300,
-                               height=300,
-                               title='Select Irradiation and Level',
-                               resizable=True)
+        v = self._view_factory(
+            Item("irradiation", editor=EnumEditor(name="irradiations")),
+            BorderVGroup(
+                UItem("select_all_button"),
+                UItem(
+                    "selected_levels",
+                    style="custom",
+                    editor=CheckListEditor(name="levels", cols=6),
+                ),
+                enabled_when="irradiation",
+                label="Levels",
+            ),
+            Item("monitor_sample_name"),
+            Item("use_saved_means"),
+            width=300,
+            height=300,
+            title="Select Irradiation and Level",
+            resizable=True,
+        )
         return v
 
     def _run_hook(self, state):
         if not self.use_saved_means:
-            monitors = self.dvc.find_flux_monitors(self.irradiation, state.levels, self.monitor_sample_name)
+            monitors = self.dvc.find_flux_monitors(
+                self.irradiation, state.levels, self.monitor_sample_name
+            )
             state.unknowns = monitors
         state.use_saved_means = self.use_saved_means
 
 
 class TransferFluxMonitorMeansNode(FindIrradiationNode):
-    name = 'Transfer Flux Monitor Means'
+    name = "Transfer Flux Monitor Means"
 
 
 class FindFluxMonitorMeansNode(BaseFindFluxNode):
-    name = 'Find Flux Monitor Means'
+    name = "Find Flux Monitor Means"
     exclude = None
     include_all_positions = Bool
 
     def _load_hook(self, nodedict):
-        self.irradiation = nodedict.get('irradiation', '')
-        self.level = nodedict.get('level', '')
+        self.irradiation = nodedict.get("irradiation", "")
+        self.level = nodedict.get("level", "")
         if self.level and self.level not in self.levels:
             self.dirty = True
 
@@ -238,47 +264,73 @@ class FindFluxMonitorMeansNode(BaseFindFluxNode):
 
             msn = self.monitor_sample_name
             if not msn:
-                msn = 'FC-2'
+                msn = "FC-2"
 
             include_all = self.include_all_positions
 
             fluxes = dvc.get_flux_positions(self.irradiation, self.level)
-            if self.irradiation.endswith('_MST'):
+            if self.irradiation.endswith("_MST"):
+
                 def check(ip):
                     ret = True
                     if not include_all:
-                        ret = ip['sample'] == msn
+                        ret = ip["sample"] == msn
                     return ret
 
-                monitor_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
-                                                      ip['identifier'], ip['sample'], ip['position'], fluxes)
-                                     for ip in fluxes if check(ip)]
+                monitor_positions = [
+                    self._fp_factory(
+                        state.geometry,
+                        self.irradiation,
+                        self.level,
+                        ip["identifier"],
+                        ip["sample"],
+                        ip["position"],
+                        fluxes,
+                    )
+                    for ip in fluxes
+                    if check(ip)
+                ]
             else:
                 if include_all:
                     msn = None
                 ips = dvc.get_flux_monitors(self.irradiation, self.level, msn)
 
-                monitor_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
-                                                      ip.identifier, ip.sample.name, ip.position, fluxes)
-                                     for ip in ips if ip.identifier]
+                monitor_positions = [
+                    self._fp_factory(
+                        state.geometry,
+                        self.irradiation,
+                        self.level,
+                        ip.identifier,
+                        ip.sample.name,
+                        ip.position,
+                        fluxes,
+                    )
+                    for ip in ips
+                    if ip.identifier
+                ]
 
             state.monitor_positions = monitor_positions
             state.irradiation = self.irradiation
             state.level = self.level
 
     def traits_view(self):
-        v = self._view_factory(Item('irradiation', editor=EnumEditor(name='irradiations')),
-                               Item('level', editor=EnumEditor(name='levels')),
-                               Item('include_all_positions', label='Include All Positions'),
-                               Item('monitor_sample_name', editor=EnumEditor(name='samples'),
-                                    enabled_when='not include_all_positions'),
-                               width=300,
-                               title='Select Irradiation and Level')
+        v = self._view_factory(
+            Item("irradiation", editor=EnumEditor(name="irradiations")),
+            Item("level", editor=EnumEditor(name="levels")),
+            Item("include_all_positions", label="Include All Positions"),
+            Item(
+                "monitor_sample_name",
+                editor=EnumEditor(name="samples"),
+                enabled_when="not include_all_positions",
+            ),
+            width=300,
+            title="Select Irradiation and Level",
+        )
         return v
 
 
 class FindFluxMonitorsNode(BaseFindFluxNode):
-    name = 'Find Flux Monitors'
+    name = "Find Flux Monitors"
 
     use_browser = Bool(False)
 
@@ -296,18 +348,33 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
                 state.geometry = geom
                 state.holder = holder
 
-            ips = dvc.get_unknown_positions(self.irradiation, self.level, self.monitor_sample_name)
+            ips = dvc.get_unknown_positions(
+                self.irradiation, self.level, self.monitor_sample_name
+            )
 
             fluxes = dvc.get_flux_positions(self.irradiation, self.level)
-            state.unknown_positions = [self._fp_factory(state.geometry, self.irradiation, self.level,
-                                                        ip.identifier, ip.sample.name, ip.position, fluxes)
-                                       for ip in ips if ip.identifier]
+            state.unknown_positions = [
+                self._fp_factory(
+                    state.geometry,
+                    self.irradiation,
+                    self.level,
+                    ip.identifier,
+                    ip.sample.name,
+                    ip.position,
+                    fluxes,
+                )
+                for ip in ips
+                if ip.identifier
+            ]
 
             if self.use_browser:
-                is_append, monitors = self.get_browser_analyses(irradiation=self.irradiation,
-                                                                level=self.level)
+                is_append, monitors = self.get_browser_analyses(
+                    irradiation=self.irradiation, level=self.level
+                )
             else:
-                monitors = self.dvc.find_flux_monitors(self.irradiation, self.level, self.monitor_sample_name)
+                monitors = self.dvc.find_flux_monitors(
+                    self.irradiation, self.level, self.monitor_sample_name
+                )
 
             state.unknowns = monitors
 
@@ -315,29 +382,35 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
             state.level = self.level
 
     def _load_hook(self, nodedict):
-        self.level = nodedict.get('level', '')
+        self.level = nodedict.get("level", "")
         if self.level and self.level not in self.levels:
             self.dirty = True
 
     def _to_template(self, d):
         super(FindFluxMonitorsNode, self)._to_template(d)
-        d['level'] = self.level
+        d["level"] = self.level
 
     def traits_view(self):
-        sgrp = BorderVGroup(Item('irradiation', editor=EnumEditor(name='irradiations')),
-                            Item('level', editor=EnumEditor(name='levels')),
-                            Item('monitor_sample_name', editor=EnumEditor(name='samples')),
-                            label='Auto Select',
-                            enabled_when='not use_browser')
+        sgrp = BorderVGroup(
+            Item("irradiation", editor=EnumEditor(name="irradiations")),
+            Item("level", editor=EnumEditor(name="levels")),
+            Item("monitor_sample_name", editor=EnumEditor(name="samples")),
+            label="Auto Select",
+            enabled_when="not use_browser",
+        )
 
-        bgrp = BorderHGroup(Item('use_browser',
-                                 label='Use Browser',
-                                 tooltip='Use Browser to select monitor analyses manually'),
-                            label='Manual Select')
+        bgrp = BorderHGroup(
+            Item(
+                "use_browser",
+                label="Use Browser",
+                tooltip="Use Browser to select monitor analyses manually",
+            ),
+            label="Manual Select",
+        )
 
-        v = self._view_factory(VGroup(bgrp, sgrp),
-                               width=300,
-                               title='Select Irradiation and Level')
+        v = self._view_factory(
+            VGroup(bgrp, sgrp), width=300, title="Select Irradiation and Level"
+        )
         return v
 
 
@@ -347,7 +420,7 @@ class FindReferencesNode(FindNode):
 
     load_name = Str
 
-    display_loads = Property(depends_on='limit_to_analysis_loads')
+    display_loads = Property(depends_on="limit_to_analysis_loads")
     loads = List
     analysis_loads = List
     limit_to_analysis_loads = Bool(True)
@@ -375,13 +448,13 @@ class FindReferencesNode(FindNode):
         super(FindReferencesNode, self).reset()
 
     def load(self, nodedict):
-        self.threshold = nodedict.get('threshold', 10)
-        self.analysis_types = nodedict.get('analysis_types', [])
-        self.name = nodedict.get('name', 'Find References')
-        self.limit_to_analysis_loads = nodedict.get('limit_to_analysis_loads', True)
-        self.use_graphical_filter = nodedict.get('use_graphical_filter', True)
-        self.use_extract_device = nodedict.get('use_extract_device', True)
-        self.use_mass_spectrometer = nodedict.get('use_mass_spectrometer', True)
+        self.threshold = nodedict.get("threshold", 10)
+        self.analysis_types = nodedict.get("analysis_types", [])
+        self.name = nodedict.get("name", "Find References")
+        self.limit_to_analysis_loads = nodedict.get("limit_to_analysis_loads", True)
+        self.use_graphical_filter = nodedict.get("use_graphical_filter", True)
+        self.use_extract_device = nodedict.get("use_extract_device", True)
+        self.use_mass_spectrometer = nodedict.get("use_mass_spectrometer", True)
 
     def finish_load(self):
         self.extract_devices = self.dvc.get_extraction_device_names()
@@ -395,7 +468,12 @@ class FindReferencesNode(FindNode):
 
     def _to_template(self, d):
         d = dict()
-        for key in ('threshold', 'analysis_types', 'limit_to_analysis_loads', 'use_graphical_filter'):
+        for key in (
+            "threshold",
+            "analysis_types",
+            "limit_to_analysis_loads",
+            "use_graphical_filter",
+        ):
             d[key] = getattr(self, key)
 
     def pre_run(self, state, configure=True):
@@ -438,10 +516,14 @@ class FindReferencesNode(FindNode):
             return True
 
     def _run_group(self, state, gid, unknowns):
-        atypes = [ai.lower().replace(' ', '_') for ai in self.analysis_types]
-        kw = dict(extract_devices=self.extract_device if self.use_extract_device else '',
-                  mass_spectrometers=self.mass_spectrometer if self.use_mass_spectrometer else '',
-                  make_records=False)
+        atypes = [ai.lower().replace(" ", "_") for ai in self.analysis_types]
+        kw = dict(
+            extract_devices=self.extract_device if self.use_extract_device else "",
+            mass_spectrometers=self.mass_spectrometer
+            if self.use_mass_spectrometer
+            else "",
+            make_records=False,
+        )
 
         while 1:
             if self.load_name and self.load_name != NULL_STR:
@@ -450,17 +532,25 @@ class FindReferencesNode(FindNode):
                     times = sorted([ai.rundate for ai in refs])
             else:
                 times = sorted([ai.rundate for ai in unknowns])
-                refs = self.dvc.find_references(times, atypes, hours=self.threshold, **kw)
+                refs = self.dvc.find_references(
+                    times, atypes, hours=self.threshold, **kw
+                )
 
             if not refs:
-                if confirm(None, 'No References Found. Would you like to try different search criteria?') == YES:
+                if (
+                    confirm(
+                        None,
+                        "No References Found. Would you like to try different search criteria?",
+                    )
+                    == YES
+                ):
                     if self.configure():
                         continue
                     else:
                         state.canceled = True
                         return True
                 else:
-                    if not confirm(None, 'Would you like to search manually?') == YES:
+                    if not confirm(None, "Would you like to search manually?") == YES:
                         state.canceled = True
                     return True
             else:
@@ -468,24 +558,26 @@ class FindReferencesNode(FindNode):
 
         if refs:
             if self.use_graphical_filter:
-                ed = self.extract_device if self.use_extract_device else ''
-                ms = self.mass_spectrometer if self.use_mass_spectrometer else ''
+                ed = self.extract_device if self.use_extract_device else ""
+                ms = self.mass_spectrometer if self.use_mass_spectrometer else ""
 
                 unknowns.extend(refs)
-                model = GraphicalFilterModel(analyses=unknowns,
-                                             dvc=self.dvc,
-                                             extract_device=ed,
-                                             mass_spectrometer=ms,
-                                             low_post=times[0],
-                                             high_post=times[-1],
-                                             threshold=self.threshold,
-                                             gid=gid)
+                model = GraphicalFilterModel(
+                    analyses=unknowns,
+                    dvc=self.dvc,
+                    extract_device=ed,
+                    mass_spectrometer=ms,
+                    low_post=times[0],
+                    high_post=times[-1],
+                    threshold=self.threshold,
+                    gid=gid,
+                )
 
                 model.setup()
                 model.analysis_types = self.analysis_types
 
                 obj = GraphicalFilterView(model=model)
-                info = obj.edit_traits(kind='livemodal')
+                info = obj.edit_traits(kind="livemodal")
                 if info.result:
                     refs = model.get_filtered_selection()
                 else:
@@ -499,38 +591,63 @@ class FindReferencesNode(FindNode):
 
     def traits_view(self):
 
-        load_grp = BorderHGroup(UItem('load_name', editor=EnumEditor(name='display_loads')),
-                                Item('limit_to_analysis_loads',
-                                     tooltip='Limit Loads based on the selected analyses',
-                                     label='Limit Loads by Analyses'),
-                                label='Load')
-        inst_grp = BorderVGroup(HGroup(UItem('use_extract_device'),
-                                       Item('extract_device',
-                                            enabled_when='enable_extract_device',
-                                            editor=EnumEditor(name='extract_devices'),
-                                            label='Extract Device')),
-                                HGroup(UItem('use_mass_spectrometer'),
-                                       Item('mass_spectrometer',
-                                            label='Mass Spectrometer',
-                                            enabled_when='enable_mass_spectrometer',
-                                            editor=EnumEditor(name='mass_spectrometers'))),
-                                label='Instruments')
+        load_grp = BorderHGroup(
+            UItem("load_name", editor=EnumEditor(name="display_loads")),
+            Item(
+                "limit_to_analysis_loads",
+                tooltip="Limit Loads based on the selected analyses",
+                label="Limit Loads by Analyses",
+            ),
+            label="Load",
+        )
+        inst_grp = BorderVGroup(
+            HGroup(
+                UItem("use_extract_device"),
+                Item(
+                    "extract_device",
+                    enabled_when="enable_extract_device",
+                    editor=EnumEditor(name="extract_devices"),
+                    label="Extract Device",
+                ),
+            ),
+            HGroup(
+                UItem("use_mass_spectrometer"),
+                Item(
+                    "mass_spectrometer",
+                    label="Mass Spectrometer",
+                    enabled_when="enable_mass_spectrometer",
+                    editor=EnumEditor(name="mass_spectrometers"),
+                ),
+            ),
+            label="Instruments",
+        )
 
-        filter_grp = BorderVGroup(Item('threshold',
-                                       tooltip='Maximum difference between references and unknowns in hours',
-                                       enabled_when='threshold_enabled',
-                                       label='Threshold (Hrs)'),
-                                  Item('use_graphical_filter', label='Graphical Selection'),
-                                  VGroup(UItem('analysis_types',
-                                               style='custom',
-                                               editor=CheckListEditor(name='available_analysis_types', cols=2)),
-                                         show_border=True, label='Analysis Types'),
-                                  label='Filtering')
+        filter_grp = BorderVGroup(
+            Item(
+                "threshold",
+                tooltip="Maximum difference between references and unknowns in hours",
+                enabled_when="threshold_enabled",
+                label="Threshold (Hrs)",
+            ),
+            Item("use_graphical_filter", label="Graphical Selection"),
+            VGroup(
+                UItem(
+                    "analysis_types",
+                    style="custom",
+                    editor=CheckListEditor(name="available_analysis_types", cols=2),
+                ),
+                show_border=True,
+                label="Analysis Types",
+            ),
+            label="Filtering",
+        )
 
-        v = self._view_factory(VGroup(Item('use_browser'),
-                                      VGroup(load_grp,
-                                             filter_grp,
-                                             inst_grp, enabled_when='not use_browser')))
+        v = self._view_factory(
+            VGroup(
+                Item("use_browser"),
+                VGroup(load_grp, filter_grp, inst_grp, enabled_when="not use_browser"),
+            )
+        )
 
         return v
 
@@ -550,5 +667,6 @@ class FindReferencesNode(FindNode):
 class FindBlanksNode(FindReferencesNode):
     def _available_analysis_types_default(self):
         return [(b, b) for b in BLANKS]
+
 
 # ============= EOF =============================================

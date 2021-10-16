@@ -19,24 +19,34 @@ from __future__ import absolute_import
 from traits.api import List, Instance
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.experiment.events import ExperimentEventAddition, START_QUEUE, END_QUEUE, START_RUN, END_RUN
+from pychron.experiment.events import (
+    ExperimentEventAddition,
+    START_QUEUE,
+    END_QUEUE,
+    START_RUN,
+    END_RUN,
+)
 from pychron.social.twitter.client import TwitterClient
 
-from pychron.social.twitter.tasks.preferences import TwitterPreferencesPane, TwitterExperimentPreferencesPane
+from pychron.social.twitter.tasks.preferences import (
+    TwitterPreferencesPane,
+    TwitterExperimentPreferencesPane,
+)
 
 
 class TwitterPlugin(BaseTaskPlugin):
-    id = 'pychron.social.twitter.plugin'
-    name = 'Twitter'
+    id = "pychron.social.twitter.plugin"
+    name = "Twitter"
 
-    events = List(contributes_to='pychron.experiment.events')
+    events = List(contributes_to="pychron.experiment.events")
     client = Instance(TwitterClient)
 
     def _service_offers_default(self):
-        """
-        """
-        so = self.service_offer_factory(protocol='pychron.social.twitter.client.TwitterClient',
-                                        factory=TwitterClient)
+        """ """
+        so = self.service_offer_factory(
+            protocol="pychron.social.twitter.client.TwitterClient",
+            factory=TwitterClient,
+        )
         return [so]
 
     def test_api(self):
@@ -44,43 +54,55 @@ class TwitterPlugin(BaseTaskPlugin):
         return s.test_api()
 
     def _end_run_event(self, ctx):
-        self.debug('end run event')
-        enabled = self.application.get_boolean_preference('pychron.twitter.experiment.enabled')
+        self.debug("end run event")
+        enabled = self.application.get_boolean_preference(
+            "pychron.twitter.experiment.enabled"
+        )
         if enabled:
-            run = ctx['run']
-            self.client.twit('End Run {}'.format(run.runid))
+            run = ctx["run"]
+            self.client.twit("End Run {}".format(run.runid))
 
     def _end_experiment_event(self, ctx):
-        self.debug('end experiment event')
+        self.debug("end experiment event")
         # d = {'end': 'now',
         #      'summary': 'Experiment: {} {}'.format(ctx['experiment_name'],
         #                                            ctx['err_message'])}
         #
-        enabled = self.application.get_boolean_preference('pychron.twitter.experiment.enabled')
+        enabled = self.application.get_boolean_preference(
+            "pychron.twitter.experiment.enabled"
+        )
         if enabled:
-            self.client.twit('End Experiment {}'.format(ctx['experiment_name']))
+            self.client.twit("End Experiment {}".format(ctx["experiment_name"]))
 
     def _start_experiment_event(self, ctx):
-        self.debug('start experiment event')
+        self.debug("start experiment event")
 
-        enabled = self.application.get_boolean_preference('pychron.twitter.experiment.enabled')
+        enabled = self.application.get_boolean_preference(
+            "pychron.twitter.experiment.enabled"
+        )
         if enabled:
-            self.client.twit('Start Experiment {}'.format(ctx['experiment_name']))
+            self.client.twit("Start Experiment {}".format(ctx["experiment_name"]))
 
     def _client_default(self):
         return TwitterClient()
 
     def _events_default(self):
-        e1 = ExperimentEventAddition(id='pychron.twitter.start_experiment_event',
-                                     level=START_QUEUE,
-                                     action=self._start_experiment_event)
-        e2 = ExperimentEventAddition(id='pychron.twitter.end_experiment_event',
-                                     level=END_QUEUE,
-                                     action=self._end_experiment_event)
+        e1 = ExperimentEventAddition(
+            id="pychron.twitter.start_experiment_event",
+            level=START_QUEUE,
+            action=self._start_experiment_event,
+        )
+        e2 = ExperimentEventAddition(
+            id="pychron.twitter.end_experiment_event",
+            level=END_QUEUE,
+            action=self._end_experiment_event,
+        )
 
-        e3 = ExperimentEventAddition(id='pychron.twitter.end_run_event',
-                                     level=END_RUN,
-                                     action=self._end_run_event)
+        e3 = ExperimentEventAddition(
+            id="pychron.twitter.end_run_event",
+            level=END_RUN,
+            action=self._end_run_event,
+        )
         return [e1, e2, e3]
 
     # def _preferences_default(self):
@@ -95,5 +117,6 @@ class TwitterPlugin(BaseTaskPlugin):
 
     def _preferences_panes_default(self):
         return [TwitterPreferencesPane, TwitterExperimentPreferencesPane]
+
 
 # ============= EOF =============================================

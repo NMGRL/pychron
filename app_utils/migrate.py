@@ -30,7 +30,7 @@ def migrate():
     if root is None:
         root = os.path.join(os.path.expanduser('~'), 'Pychron')
 
-    print 'Using root: {}'.format(root)
+    print('Using root: {}'.format(root))
     version = get_version(root)
     if version == '0':
         migrate_spectrometer_config(root)

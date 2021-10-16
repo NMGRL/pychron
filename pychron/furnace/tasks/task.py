@@ -22,4 +22,6 @@ class BaseFurnaceTask(BaseManagerTask):
 
     def prepare_destroy(self):
         self.manager.prepare_destroy()
+
+
 # ============= EOF =============================================

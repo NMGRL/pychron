@@ -17,34 +17,49 @@ from __future__ import absolute_import
 from traits.api import List, Dict
 from traitsui.api import View, UItem, VGroup
 
-from pychron.data_mapper.sources.usgs_vsc_source import USGSVSCNuSource, USGSVSCMAPSource
+from pychron.data_mapper.sources.usgs_vsc_source import (
+    USGSVSCNuSource,
+    USGSVSCMAPSource,
+)
 from pychron.envisage.tasks.base_plugin import BasePlugin
 
 
 class ViewUSGSVSCNuSource(USGSVSCNuSource):
     def traits_view(self):
-        return View(VGroup(VGroup(UItem('directory'), show_border=True, label='Directory'),
-                           VGroup(UItem('path'), show_border=True, label='File')))
+        return View(
+            VGroup(
+                VGroup(UItem("directory"), show_border=True, label="Directory"),
+                VGroup(UItem("path"), show_border=True, label="File"),
+            )
+        )
 
     def irradiation_view(self):
-        v = View(VGroup(UItem('irradiation_path'), show_border=True, label='File'))
+        v = View(VGroup(UItem("irradiation_path"), show_border=True, label="File"))
         return v
 
 
 class ViewUSGSVSCMAPSource(USGSVSCMAPSource):
     def traits_view(self):
-        return View(VGroup(VGroup(UItem('directory'), show_border=True, label='Directory'),
-                           VGroup(UItem('path'), show_border=True, label='File')))
+        return View(
+            VGroup(
+                VGroup(UItem("directory"), show_border=True, label="Directory"),
+                VGroup(UItem("path"), show_border=True, label="File"),
+            )
+        )
 
     def irradiation_view(self):
-        v = View(VGroup(UItem('irradiation_path'), show_border=True, label='File'))
+        v = View(VGroup(UItem("irradiation_path"), show_border=True, label="File"))
         return v
 
 
 class USGSVSCDataPlugin(BasePlugin):
-    sources = List(contributes_to='pychron.entry.data_sources')
+    sources = List(contributes_to="pychron.entry.data_sources")
 
     def _sources_default(self):
-        return [('USGSVSC MAP', ViewUSGSVSCMAPSource()), ('USGSVSC Nu', ViewUSGSVSCNuSource())]
+        return [
+            ("USGSVSC MAP", ViewUSGSVSCMAPSource()),
+            ("USGSVSC Nu", ViewUSGSVSCNuSource()),
+        ]
+
 
 # ============= EOF =============================================

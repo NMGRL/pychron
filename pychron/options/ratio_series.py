@@ -31,7 +31,7 @@ class RatioSeriesAuxPlot(SeriesFitAuxPlot):
 
     def _get_name(self):
         if self.denominator and self.denominator != NULL_STR:
-            ret = '{}/{}'.format(self.numerator, self.denominator)
+            ret = "{}/{}".format(self.numerator, self.denominator)
         else:
             ret = self.numerator
         return ret
@@ -44,9 +44,10 @@ class RatioSeriesOptions(SeriesOptions):
     aux_plot_klass = RatioSeriesAuxPlot
 
     def initialize(self):
-        self.subview_names = [MAIN, 'Ratio Series', APPEARANCE]
+        self.subview_names = [MAIN, "Ratio Series", APPEARANCE]
 
     def _get_subview(self, name):
         return VIEWS[name]
+
 
 # ============= EOF =============================================

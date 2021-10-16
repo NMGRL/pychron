@@ -33,14 +33,13 @@ class BasePDFTableWriter(BasePDFWriter):
     def _calculate_col_widths(self, rows):
         def get_width(pa):
             if pa.frags:
-                ft = ''
+                ft = ""
                 fs = 0
                 for f in pa.frags:
                     ft += f.text
                     fs = max(fs, f.fontSize)
 
-                w = stringWidth(ft, fontName=f.fontName,
-                                fontSize=fs) + 10
+                w = stringWidth(ft, fontName=f.fontName, fontSize=fs) + 10
             else:
                 w = 8
 
@@ -59,47 +58,44 @@ class BasePDFTableWriter(BasePDFWriter):
         self.col_widths = wcols
 
     def _get_idxs(self, rows, klass):
-        return [(i, v) for i, v in enumerate(rows)
-                if isinstance(v, klass)]
+        return [(i, v) for i, v in enumerate(rows) if isinstance(v, klass)]
 
-    def _new_line(self, style, idx, weight=1.5,
-                  start=0, end=-1,
-                  color='black',
-                  cmd='LINEBELOW'):
+    def _new_line(
+        self, style, idx, weight=1.5, start=0, end=-1, color="black", cmd="LINEBELOW"
+    ):
 
-        style.add(cmd, (start, idx), (end, idx),
-                  weight, getattr(colors, color))
+        style.add(cmd, (start, idx), (end, idx), weight, getattr(colors, color))
 
-    def _new_table(self, style, data, hAlign='LEFT',
-                   col_widths=None, *args, **kw):
+    def _new_table(self, style, data, hAlign="LEFT", col_widths=None, *args, **kw):
 
         # set spans
 
         for idx, ri in enumerate(data):
             for s, e in ri.spans:
-                style.add('SPAN', (s, idx), (e, idx))
+                style.add("SPAN", (s, idx), (e, idx))
 
-        style.add('NOSPLIT', (0, -2), (-1, -1))
+        style.add("NOSPLIT", (0, -2), (-1, -1))
         # render rows
-        rows = [di.render() if hasattr(di, 'render') else di
-                for di in data]
+        rows = [di.render() if hasattr(di, "render") else di for di in data]
 
-        t = Table(rows, hAlign=hAlign,
-                  style=style,
-                  *args, **kw)
+        t = Table(rows, hAlign=hAlign, style=style, *args, **kw)
 
         self._set_col_widths(t, rows, col_widths)
         self._set_row_heights(t, data)
 
         return t
 
-    def _new_style(self, header_line_idx=None, header_line_width=1,
-                   header_line_color='black',
-                   debug_grid=False):
+    def _new_style(
+        self,
+        header_line_idx=None,
+        header_line_width=1,
+        header_line_color="black",
+        debug_grid=False,
+    ):
 
         ts = TableStyle()
         if debug_grid:
-            ts.add('GRID', (0, 0), (-1, -1), 1, colors.red)
+            ts.add("GRID", (0, 0), (-1, -1), 1, colors.red)
 
         if isinstance(header_line_color, str):
             try:
@@ -108,9 +104,13 @@ class BasePDFTableWriter(BasePDFWriter):
                 header_line_color = colors.black
 
         if header_line_idx is not None:
-            ts.add('LINEBELOW', (0, header_line_idx),
-                   (-1, header_line_idx),
-                   header_line_width, header_line_color)
+            ts.add(
+                "LINEBELOW",
+                (0, header_line_idx),
+                (-1, header_line_idx),
+                header_line_width,
+                header_line_color,
+            )
 
         return ts
 
@@ -137,5 +137,6 @@ class BasePDFTableWriter(BasePDFWriter):
                 cs.extend([30 for _ in range(dn - cn)])
 
             t._argW = cs
+
 
 # ============= EOF =============================================

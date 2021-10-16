@@ -41,10 +41,11 @@ from pychron.hardware.core.data_helper import make_bitarray
 
 class ISeriesDevice(CoreDevice):
     """
-        http://www.omega.com/iseries/Pdf/M3397CO.pdf
+    http://www.omega.com/iseries/Pdf/M3397CO.pdf
     """
-    prefix = '*'
-    scan_func = 'read_device'
+
+    prefix = "*"
+    scan_func = "read_device"
     process_value = Float
     address = None
 
@@ -53,13 +54,12 @@ class ISeriesDevice(CoreDevice):
         return self.address is not None
 
     def _parse_response(self, re):
-        """
-        """
+        """ """
         if re is not None:
             if self.multipoint:
                 re = re[3:-2]
 
-            args = re.split(' ')
+            args = re.split(" ")
 
             if len(args) > 1:
                 try:
@@ -70,40 +70,52 @@ class ISeriesDevice(CoreDevice):
             return re
 
     def _build_command(self, cmd_type, cmd_indx):
-        """
-        """
+        """ """
         if self.multipoint:
-            cmd_type = '{}{}'.format(self.address, cmd_type)
+            cmd_type = "{}{}".format(self.address, cmd_type)
 
-        return '{}{}{}'.format(self.prefix, cmd_type, cmd_indx)
+        return "{}{}{}".format(self.prefix, cmd_type, cmd_indx)
 
     def _write_command(self, commandindex, value=None):
-        """
-        """
-        args = [self.prefix, 'W', commandindex]
+        """ """
+        args = [self.prefix, "W", commandindex]
 
         if value is not None:
             args += [str(value)]
-        self.ask(''.join(args),
-                 # delay = 400
-                 )
+        self.ask(
+            "".join(args),
+            # delay = 400
+        )
 
 
-INPUT_CLASS_MAP = {0: 'TC', 1: 'RTD', 2: 'PROCESS'}
-TC_MAP = {0: 'J', 1: 'K', 2: 'T', 3: 'E', 4: 'N', 5: 'Din-J', 6: 'R', 7: 'S', 8: 'B', 9: 'C'}
-TC_KEYS = ['J', 'K', 'T', 'E', 'N', 'Din-J', 'R', 'S', 'B', 'C']
+INPUT_CLASS_MAP = {0: "TC", 1: "RTD", 2: "PROCESS"}
+TC_MAP = {
+    0: "J",
+    1: "K",
+    2: "T",
+    3: "E",
+    4: "N",
+    5: "Din-J",
+    6: "R",
+    7: "S",
+    8: "B",
+    9: "C",
+}
+TC_KEYS = ["J", "K", "T", "E", "N", "Din-J", "R", "S", "B", "C"]
 
 
 class DPi32TemperatureMonitor(ISeriesDevice):
-    """
-    """
-    scan_func = 'read_temperature'
-    input_type = Property(depends_on='_input_type')
+    """ """
+
+    scan_func = "read_temperature"
+    input_type = Property(depends_on="_input_type")
     _input_type = Str
-    id_query = '*R07'
+    id_query = "*R07"
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'address', 'General', 'address', optional=True, default=None)
+        self.set_attribute(
+            config, "address", "General", "address", optional=True, default=None
+        )
         return super(DPi32TemperatureMonitor, self).load_additional_args(config)
 
     def id_response(self, response):
@@ -111,7 +123,7 @@ class DPi32TemperatureMonitor(ISeriesDevice):
         if response is not None:
             re = response.strip()
             # strip off first three command characters
-            if re[:3] == 'R07':
+            if re[:3] == "R07":
                 r = True
 
         return r
@@ -119,7 +131,7 @@ class DPi32TemperatureMonitor(ISeriesDevice):
     def initialize(self, *args, **kw):
         # self.set_input_type('C')
 
-        self.info('getting input type')
+        self.info("getting input type")
         return self.read_input_type()
 
     # ResponseRecorder interface
@@ -129,27 +141,25 @@ class DPi32TemperatureMonitor(ISeriesDevice):
         return self.process_value
 
     def _get_input_type(self):
-        """
-        """
+        """ """
         return self._input_type
 
     def _set_input_type(self, v):
-        """
-        """
+        """ """
         self._input_type = v
         self.set_input_type(v)
 
     def get_process_value(self):
-        """
-        """
+        """ """
         return self.process_value
 
     def read_temperature(self, **kw):
-        """
-        """
-        idx = '01'
-        cmd = 'V', idx
-        x = self.repeat_command(cmd, check_type=float, break_val='{} ?+999'.format(idx), **kw)
+        """ """
+        idx = "01"
+        cmd = "V", idx
+        x = self.repeat_command(
+            cmd, check_type=float, break_val="{} ?+999".format(idx), **kw
+        )
         if x is not None:
             try:
                 self.process_value = x
@@ -161,7 +171,7 @@ class DPi32TemperatureMonitor(ISeriesDevice):
         return self.process_value
 
     def set_busformat(self):
-        commandindex = '1F'
+        commandindex = "1F"
 
         sep = 0  # space
         flow = 0  # continoues
@@ -170,84 +180,77 @@ class DPi32TemperatureMonitor(ISeriesDevice):
         linefeed = 1
         modbus = 0
 
-        bits = '00{}{}{}{}{}{}'.format(sep,
-                                       flow,
-                                       mode,
-                                       echo,
-                                       linefeed,
-                                       modbus
-                                       )
-        value = '{:02X}'.format(int(bits, 2))
+        bits = "00{}{}{}{}{}{}".format(sep, flow, mode, echo, linefeed, modbus)
+        value = "{:02X}".format(int(bits, 2))
         self._write_command(commandindex, value)
 
     def set_input_type(self, v):
-        """
-        """
-        commandindex = '07'
+        """ """
+        commandindex = "07"
 
-        input_class = '00'
+        input_class = "00"
 
         # bits 7,6 meaningless for thermocouple
-        bits = '00{}{}'.format(make_bitarray(TC_KEYS.index(v),
-                                             width=4),
-                               input_class)
-        value = '{:02X}'.format(int(bits, 2))
+        bits = "00{}{}".format(make_bitarray(TC_KEYS.index(v), width=4), input_class)
+        value = "{:02X}".format(int(bits, 2))
 
         self._write_command(commandindex, value=value)
 
     def read_input_type(self):
-        """
-        """
-        cmd = 'R', '07'
+        """ """
+        cmd = "R", "07"
         re = self.repeat_command(cmd)
-        self.debug('read input type {}'.format(re))
+        self.debug("read input type {}".format(re))
         if re is not None:
             re = re.strip()
             re = make_bitarray(int(re, 16))
             input_class = INPUT_CLASS_MAP[int(re[:2], 2)]
-            if input_class == 'TC':
+            if input_class == "TC":
                 self._input_type = TC_MAP[int(re[2:6], 2)]
-            self.debug('Input Class={}'.format(input_class))
-            self.debug('Input Type={}'.format(self._input_type))
+            self.debug("Input Class={}".format(input_class))
+            self.debug("Input Type={}".format(self._input_type))
             return True
 
-                # self.debug('read input type2 {}'.format(re.strip()[:3]))
-                # re = re.strip()
-                # if re[:3] == 'R07':
-                #     re = make_bitarray(int(re[3:], 16))
-                #     input_class = INPUT_CLASS_MAP[int(re[:2], 2)]
-                #     if input_class == 'TC':
-                #         self._input_type = TC_MAP[int(re[2:6], 2)]
-                #     self.debug('Input Class={}'.format(input_class))
-                #     self.debug('Input Type={}'.format(self._input_type))
-                #     return True
+            # self.debug('read input type2 {}'.format(re.strip()[:3]))
+            # re = re.strip()
+            # if re[:3] == 'R07':
+            #     re = make_bitarray(int(re[3:], 16))
+            #     input_class = INPUT_CLASS_MAP[int(re[:2], 2)]
+            #     if input_class == 'TC':
+            #         self._input_type = TC_MAP[int(re[2:6], 2)]
+            #     self.debug('Input Class={}'.format(input_class))
+            #     self.debug('Input Type={}'.format(self._input_type))
+            #     return True
 
     def reset(self):
-        """
-        """
-        c = self._build_command('Z', '02')
+        """ """
+        c = self._build_command("Z", "02")
         self.ask(c)
 
     def graph_builder(self, g):
-        g.new_plot(padding=[20, 5, 5, 20],
-                   scan_delay=self.scan_period * self.time_dict[self.scan_units] / 1000.0,
-                   zoom=True,
-                   pan=True)
+        g.new_plot(
+            padding=[20, 5, 5, 20],
+            scan_delay=self.scan_period * self.time_dict[self.scan_units] / 1000.0,
+            zoom=True,
+            pan=True,
+        )
         g.new_series()
 
     def get_control_group(self):
-        return VGroup(Item('process_value', style='readonly'),
-                      Item('input_type', editor=EnumEditor(values=TC_KEYS), show_label=False))
+        return VGroup(
+            Item("process_value", style="readonly"),
+            Item("input_type", editor=EnumEditor(values=TC_KEYS), show_label=False),
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
 
-    logging_setup('dpi32')
+    logging_setup("dpi32")
 
     a = DPi32TemperatureMonitor()
-    a.address = '01'
-    a.load_communicator('serial', port='usbserial-FTT3I39P', baudrate=9600)
+    a.address = "01"
+    a.load_communicator("serial", port="usbserial-FTT3I39P", baudrate=9600)
     a.open()
     print(a.communicator.handle)
     print(a.read_input_type())

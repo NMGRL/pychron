@@ -24,14 +24,12 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class AddRemoteView(HasTraits):
-    url = Str('https://github.com/')
-    name = 'origin'
+    url = Str("https://github.com/")
+    name = "origin"
 
     def traits_view(self):
-        v = okcancel_view(UItem('name'),
-                          UItem('url'),
-                          width=600,
-                          title='Add Remote')
+        v = okcancel_view(UItem("name"), UItem("url"), width=600, title="Add Remote")
         return v
+
 
 # ============= EOF =============================================

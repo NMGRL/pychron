@@ -27,7 +27,7 @@ class SelectSameMixin(HasTraits):
         hs = self._get_selection_attrs()
         if self.selected:
             ev = SelectAttrView(available_attributes=hs)
-            ev.on_trait_change(self._handle_select_attributes, 'attributes')
+            ev.on_trait_change(self._handle_select_attributes, "attributes")
             ev.edit_traits()
         else:
             warning(None, 'You must select at least one run to use "Select Same"')
@@ -67,10 +67,15 @@ class SelectAttrView(HasTraits):
     available_attributes = List
 
     def traits_view(self):
-        v = okcancel_view(UItem('attributes', style='custom',
-                                editor=CheckListEditor(name='available_attributes',
-                                                       cols=3)),
-                          title='Select Attributes')
+        v = okcancel_view(
+            UItem(
+                "attributes",
+                style="custom",
+                editor=CheckListEditor(name="available_attributes", cols=3),
+            ),
+            title="Select Attributes",
+        )
         return v
+
 
 # ============= EOF =============================================

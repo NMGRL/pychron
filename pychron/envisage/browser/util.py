@@ -36,16 +36,16 @@ from pychron.paths import paths
 
 
 def browser_pane_item(width=300):
-    return PaneItem('pychron.browser', width=width)
+    return PaneItem("pychron.browser", width=width)
 
 
 # ===============================================================
 def get_pad(low, high):
-    p = os.path.join(paths.hidden_dir, 'pad_entry.p')
+    p = os.path.join(paths.hidden_dir, "pad_entry.p")
     pe = None
     if os.path.isfile(p):
         try:
-            with open(p, 'rb') as rfile:
+            with open(p, "rb") as rfile:
                 pe = pickle.load(rfile)
         except (pickle.PickleError, OSError, EOFError, TypeError):
             pass
@@ -53,16 +53,19 @@ def get_pad(low, high):
     if not pe:
         pe = PadEntry()
 
-    pe.trait_set(**{'low_post': low,
-                    'high_post': high,
-                    'olow_post': low,
-                    'ohigh_post': high,
-                    })
+    pe.trait_set(
+        **{
+            "low_post": low,
+            "high_post": high,
+            "olow_post": low,
+            "ohigh_post": high,
+        }
+    )
     pe.update_pad()
 
     info = pe.edit_traits()
     if info.result:
-        with open(p, 'wb') as wfile:
+        with open(p, "wb") as wfile:
             pickle.dump(pe, wfile)
         return pe
 
@@ -72,11 +75,11 @@ class PadEntry(HasTraits):
     olow_post = Date
     ohigh_post = Date
 
-    low_post = Property(depends_on='low_post_data, low_post_time')
+    low_post = Property(depends_on="low_post_data, low_post_time")
     low_post_date = Date
     low_post_time = Time
 
-    high_post = Property(depends_on='high_post_data, high_post_time')
+    high_post = Property(depends_on="high_post_data, high_post_time")
     high_post_date = Date
     high_post_time = Time
 
@@ -108,14 +111,11 @@ class PadEntry(HasTraits):
         return datetime.combine(self.low_post_date, self.low_post_time)
 
     def traits_view(self):
-        l = VGroup(UItem('low_post_time'),
-                   UItem('low_post_date', style='custom'))
-        h = VGroup(UItem('high_post_time'),
-                   UItem('high_post_date', style='custom'))
+        l = VGroup(UItem("low_post_time"), UItem("low_post_date", style="custom"))
+        h = VGroup(UItem("high_post_time"), UItem("high_post_date", style="custom"))
 
-        v = okcancel_view(Item('pad', label='Pad (hrs)'),
-                          HGroup(l, h),
-                          width=500)
+        v = okcancel_view(Item("pad", label="Pad (hrs)"), HGroup(l, h), width=500)
         return v
+
 
 # ============= EOF =============================================

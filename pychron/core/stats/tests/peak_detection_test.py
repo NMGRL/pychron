@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from pychron.core.stats.peak_detection import find_peaks
 from pychron.core.stats.probability_curves import cumulative_probability
 
-__author__ = 'ross'
+__author__ = "ross"
 
 import unittest
 
@@ -30,5 +30,5 @@ class MultiPeakDetectionTestCase(unittest.TestCase):
         self.assertAlmostEqual(maxp[1][0], 20.0, 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

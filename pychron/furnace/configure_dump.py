@@ -15,13 +15,22 @@
 # ===============================================================================
 from __future__ import absolute_import
 from traitsui.api import Controller, View, Item
+
+
 class ConfigureDump(Controller):
     def traits_view(self):
-        v = View(Item('dump_funnel_safety_override', tooltip='Override safety check that the funnel must be down to '
-                                                             'actuate magnets'),
-                 title='Configure Dump',
-                 resizable=True,
-                 buttons=['OK','Cancel'],
-                 kind='livemodal')
+        v = View(
+            Item(
+                "dump_funnel_safety_override",
+                tooltip="Override safety check that the funnel must be down to "
+                "actuate magnets",
+            ),
+            title="Configure Dump",
+            resizable=True,
+            buttons=["OK", "Cancel"],
+            kind="livemodal",
+        )
         return v
+
+
 # ============= EOF =============================================

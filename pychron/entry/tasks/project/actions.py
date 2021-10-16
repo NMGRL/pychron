@@ -24,13 +24,14 @@ from traitsui.menu import Action
 
 
 class ProjectAction(Action):
-    name = 'Project Database'
-    dname = 'Project Database'
-    id = 'pychron.project_database'
+    name = "Project Database"
+    dname = "Project Database"
+    id = "pychron.project_database"
 
     def perform(self, event):
-        pid = 'pychron.entry.project.task'
+        pid = "pychron.entry.project.task"
         app = event.task.window.application
         app.get_task(pid)
+
 
 # ============= EOF =============================================

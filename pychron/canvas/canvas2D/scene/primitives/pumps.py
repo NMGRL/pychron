@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 import math
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.primitives import Animation
@@ -37,8 +38,8 @@ class Turbo(RoundedRectangle, Animation):
             x, y = self.get_xy(clear_layout_needed=False)
             w, h = self.get_wh()
 
-            cx = x + w / 2.
-            cy = y + h / 2. - 20
+            cx = x + w / 2.0
+            cy = y + h / 2.0 - 20
             gc.translate_ctm(cx, cy)
 
             gc.set_stroke_color((0, 0, 0))
@@ -63,6 +64,3 @@ class IonPump(RoundedRectangle):
     pass
 
 # ============= EOF =============================================
-
-
-

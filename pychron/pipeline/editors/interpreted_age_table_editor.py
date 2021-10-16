@@ -24,26 +24,30 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.column_sorter_mixin import ColumnSorterMixin
 from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.tasks.base_editor import BaseTraitsEditor
-from pychron.pipeline.tables.interpreted_xlsx_table_writer import InterpretedAgeXLSTableWriter
+from pychron.pipeline.tables.interpreted_xlsx_table_writer import (
+    InterpretedAgeXLSTableWriter,
+)
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class InterpretedAgeAdapter(TabularAdapter):
-    columns = [('Status', 'status'),
-               ('Name', 'name'),
-               ('Sample', 'sample'),
-               ('Identifier', 'identifier'),
-               ('Material', 'material'),
-               ('Irradiation', 'irradiation'),
-               ('Kind', 'age_kind'),
-               ('N', 'nanalyses'),
-               ('MSWD', 'mswd'),
-               ('K/Ca', 'kca'),
-               (PLUSMINUS_ONE_SIGMA, 'kca_err'),
-               ('Age', 'display_age'),
-               [PLUSMINUS_ONE_SIGMA, 'display_age_err']]
+    columns = [
+        ("Status", "status"),
+        ("Name", "name"),
+        ("Sample", "sample"),
+        ("Identifier", "identifier"),
+        ("Material", "material"),
+        ("Irradiation", "irradiation"),
+        ("Kind", "age_kind"),
+        ("N", "nanalyses"),
+        ("MSWD", "mswd"),
+        ("K/Ca", "kca"),
+        (PLUSMINUS_ONE_SIGMA, "kca_err"),
+        ("Age", "display_age"),
+        [PLUSMINUS_ONE_SIGMA, "display_age_err"],
+    ]
 
-    font = 'arial 10'
+    font = "arial 10"
     sample_width = Int(100)
     identifier_width = Int(100)
     age_kind_width = Int(100)
@@ -68,33 +72,33 @@ class InterpretedAgeAdapter(TabularAdapter):
     display_age_nsigma = Int(2)
 
     def _get_status_text(self):
-        return 'X' if self.item.is_omitted() else ''
+        return "X" if self.item.is_omitted() else ""
 
     def _get_display_age_text(self):
-        return self._format_number('display_age')
+        return self._format_number("display_age")
 
     def _get_display_age_err_text(self):
-        return self._format_err('display_age')
+        return self._format_err("display_age")
 
     def _get_mswd_text(self):
-        return self._format_number('mswd')
+        return self._format_number("mswd")
 
     def _get_kca_text(self):
-        return self._format_number('kca')
+        return self._format_number("kca")
 
     def _get_kca_err_text(self):
-        return self._format_err('kca')
+        return self._format_err("kca")
 
     def _format_number(self, attr):
         v = getattr(self.item, attr)
-        n = getattr(self, '{}_sigfigs'.format(attr))
+        n = getattr(self, "{}_sigfigs".format(attr))
         return floatfmt(v, n)
 
     def _format_err(self, attr):
-        nsigma = getattr(self, '{}_nsigma'.format(attr))
-        v = getattr(self.item, '{}_err'.format(attr))
+        nsigma = getattr(self, "{}_nsigma".format(attr))
+        v = getattr(self.item, "{}_err".format(attr))
         v *= nsigma
-        n = getattr(self, '{}_err_sigfigs'.format(attr))
+        n = getattr(self, "{}_err_sigfigs".format(attr))
         return floatfmt(v, n)
 
 
@@ -103,10 +107,10 @@ class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
     # analyses = List
     # pdf_table_options = Instance(PDFTableOptions, ())
     # saved_group_id = Int
-    name = 'Untitled'
+    name = "Untitled"
     refresh = Event
     tabular_adapter = Instance(InterpretedAgeAdapter, ())
-    title = Str('Table 1. Ar/Ar Summary Table')
+    title = Str("Table 1. Ar/Ar Summary Table")
 
     # def save_summary_table(self, root, auto_view=False):
     #     name = '{}_summary'.format(self.name)
@@ -135,7 +139,13 @@ class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
         t = InterpretedAgeXLSTableWriter()
         path = output_options.path
         if path:
-            t.build(path, self.interpreted_ages, self._generate_title(), self.tabular_adapter, output_options)
+            t.build(
+                path,
+                self.interpreted_ages,
+                self._generate_title(),
+                self.tabular_adapter,
+                output_options,
+            )
             return path
 
     def _generate_title(self):
@@ -150,14 +160,19 @@ class InterpretedAgeTableEditor(BaseTraitsEditor, ColumnSorterMixin):
     #         self.pdf_table_options.age_units = self.interpreted_ages[0].display_age_units
 
     def traits_view(self):
-        interpreted_grp = UItem('interpreted_ages',
-                                editor=TabularEditor(adapter=self.tabular_adapter,
-                                                     operations=['move', 'delete'],
-                                                     column_clicked='column_clicked',
-                                                     refresh='refresh'))
-        title_grp = HGroup(Item('title'))
+        interpreted_grp = UItem(
+            "interpreted_ages",
+            editor=TabularEditor(
+                adapter=self.tabular_adapter,
+                operations=["move", "delete"],
+                column_clicked="column_clicked",
+                refresh="refresh",
+            ),
+        )
+        title_grp = HGroup(Item("title"))
         v = View(VGroup(title_grp, interpreted_grp))
         return v
+
 
 # # ============= EOF =============================================
 # # def _selected_history_name_changed(self):

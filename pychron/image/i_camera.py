@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Interface
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -36,7 +38,6 @@ class ICamera(Interface):
 
     def get_image_data(self, size):
         pass
+
+
 # ============= EOF =============================================
-
-
-

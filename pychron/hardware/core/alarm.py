@@ -20,6 +20,7 @@ from traits.api import HasTraits, Str
 
 # ============= standard library imports ========================
 from datetime import datetime
+
 # ============= local library imports  ==========================
 from pychron.pychron_constants import DATE_FORMAT
 
@@ -31,8 +32,8 @@ class Alarm(HasTraits):
     def get_alarm_params(self):
         als = self.alarm_str
         cond = als[0]
-        if cond not in ['<', '>']:
-            cond = '='
+        if cond not in ["<", ">"]:
+            cond = "="
             trigger = float(als)
         else:
             trigger = float(als[1:])
@@ -41,7 +42,7 @@ class Alarm(HasTraits):
     def test_condition(self, value):
         cond, trigger = self.get_alarm_params()
 
-        expr = 'value {} {}'.format(cond, trigger)
+        expr = "value {} {}".format(cond, trigger)
 
         triggered = eval(expr, {}, dict(value=value))
 
@@ -57,5 +58,7 @@ class Alarm(HasTraits):
         cond, trigger = self.get_alarm_params()
         tstamp = datetime.strftime(datetime.now(), DATE_FORMAT)
 
-        return '<<<<<<ALARM {}>>>>>> {} {} {}'.format(tstamp, value, cond, trigger)
+        return "<<<<<<ALARM {}>>>>>> {} {} {}".format(tstamp, value, cond, trigger)
+
+
 # ============= EOF =============================================

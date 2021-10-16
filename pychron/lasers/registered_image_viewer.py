@@ -21,7 +21,11 @@ import os
 
 from PIL import Image
 from affine import Affine
-from pychron.core.geometry.affine import AffineTransform, calculate_rigid_itransform_affine, calculate_rigid_itransform
+from pychron.core.geometry.affine import (
+    AffineTransform,
+    calculate_rigid_itransform_affine,
+    calculate_rigid_itransform,
+)
 
 from chaco.array_plot_data import ArrayPlotData
 from chaco.image_plot import ImagePlot
@@ -29,10 +33,25 @@ from chaco.plot import Plot
 from chaco.tools.image_inspector_tool import ImageInspectorTool
 from enable.base_tool import BaseTool
 from enable.component_editor import ComponentEditor
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change, Instance, Event, Tuple, Enum
+from traits.api import (
+    HasTraits,
+    Str,
+    Int,
+    Bool,
+    Any,
+    Float,
+    Property,
+    on_trait_change,
+    Instance,
+    Event,
+    Tuple,
+    Enum,
+)
 from traitsui.api import View, UItem, Item, HGroup, VGroup
+
 # ============= standard library imports ========================
 from numpy import array
+
 # ============= local library imports  ==========================
 from traitsui.handler import Controller
 
@@ -41,8 +60,7 @@ from pychron.core.geometry.affine import calculate_rigid_transform
 
 
 class RegisteredImageInspectorTool(BaseTool):
-    """ A tool that captures the color and underlying values of an image plot.
-    """
+    """A tool that captures the color and underlying values of an image plot."""
 
     # Indicates whether overlays listening to this tool should be visible.
     # visible = Bool(True)
@@ -129,16 +147,18 @@ class RegisteredImage(HasTraits):
 
     def load_registration(self):
 
-        refpoints = [[375.23, 443.17],
-                     [525.42, 183.47],
-                     [265.72, 33.39],
-                     # [470, 90]
-                     ]
-        points = [[1, 1],
-                  [1, -1],
-                  [-1, -1],
-                  # [1, 1]
-                  ]
+        refpoints = [
+            [375.23, 443.17],
+            [525.42, 183.47],
+            [265.72, 33.39],
+            # [470, 90]
+        ]
+        points = [
+            [1, 1],
+            [1, -1],
+            [-1, -1],
+            # [1, 1]
+        ]
 
         self._load_affine(refpoints, points)
 
@@ -155,15 +175,15 @@ class RegisteredImage(HasTraits):
         if new:
             img = Image.open(new)
             self._image_width, self._image_height = float(img.width), float(img.height)
-            self.plot.aspect_ratio = self._image_width/self._image_height
+            self.plot.aspect_ratio = self._image_width / self._image_height
 
-            pflag = 'imagedata' not in self.pd.list_data()
-            self.pd.set_data('imagedata', array(img))
+            pflag = "imagedata" not in self.pd.list_data()
+            self.pd.set_data("imagedata", array(img))
             if pflag:
-                img_plot = self.plot.img_plot('imagedata')[0]
+                img_plot = self.plot.img_plot("imagedata")[0]
                 imgtool = RegisteredImageInspectorTool(img_plot)
-                imgtool.on_trait_change(self._handle_move, 'move_event')
-                imgtool.on_trait_change(self._handle_goto, 'goto_event')
+                imgtool.on_trait_change(self._handle_move, "move_event")
+                imgtool.on_trait_change(self._handle_goto, "goto_event")
                 img_plot.tools.append(imgtool)
 
     def _handle_move(self, new):
@@ -176,14 +196,14 @@ class RegisteredImage(HasTraits):
             dx, dy = self.affine.transform(sx, sy)
             self.affine.scale(1 / ssx, 1 / ssy)
 
-            s = 'screen:{},{}'.format(int(sx), int(sy))
-            self.position = '{:<20s} data:{:0.3f},{:0.3f}'.format(s, dx, dy)
+            s = "screen:{},{}".format(int(sx), int(sy))
+            self.position = "{:<20s} data:{:0.3f},{:0.3f}".format(s, dx, dy)
 
     def _handle_goto(self, new):
         if new:
             sx, sy = new
             dx, dy = self.affine.transform(sx, sy)
-            print('goto {}, {}'.format(new, (dx, dy)))
+            print("goto {}, {}".format(new, (dx, dy)))
             self.stage_manager.linear_move(dx, dy)
 
 
@@ -191,20 +211,24 @@ class RegisteredImageViewer(Controller):
     model = Instance(RegisteredImage)
 
     def traits_view(self):
-        v = View(VGroup(UItem('plot', editor=ComponentEditor(width=740, height=600)),
-                        Item('position', style='readonly')),
-                 resizable=True)
+        v = View(
+            VGroup(
+                UItem("plot", editor=ComponentEditor(width=740, height=600)),
+                Item("position", style="readonly"),
+            ),
+            resizable=True,
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+
     class SM:
         def linear_move(self, dx, dy):
-            print('moving to {}, {}'.format(dx, dy))
-
+            print("moving to {}, {}".format(dx, dy))
 
     r = RegisteredImage(stage_manager=SM())
-    p = '/Users/ross/Programming/registered_image_rotate30.04-01.png'
+    p = "/Users/ross/Programming/registered_image_rotate30.04-01.png"
     r.load_path(p)
     r.load_registration()
 

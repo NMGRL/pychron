@@ -22,5 +22,5 @@ from pychron.core.ui.factory import toolkit_factory
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-myEnumEditor = toolkit_factory('enum_editor', 'myEnumEditor')
+myEnumEditor = toolkit_factory("enum_editor", "myEnumEditor")
 # ============= EOF =============================================

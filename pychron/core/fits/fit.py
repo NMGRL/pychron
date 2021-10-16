@@ -90,4 +90,5 @@ class IsoFilterFit(FilterFit):
     use_sniff = Bool
     time_zero_offset = Int(0)
 
+
 # ============= EOF =============================================

@@ -18,15 +18,17 @@
 from __future__ import absolute_import
 from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 from reportlab.platypus.flowables import Flowable
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
 
 class ComponentFlowable(Flowable):
     component = None
     fixed_scale = None
 
-    def __init__(self, component=None, bounds=None,
-                 fixed_scale=None, hAlign='CENTER'):
+    def __init__(self, component=None, bounds=None, fixed_scale=None, hAlign="CENTER"):
         self.fixed_scale = fixed_scale
         self.component = component
         if bounds is None:
@@ -38,8 +40,7 @@ class ComponentFlowable(Flowable):
         if hAlign:
             self.hAlign = hAlign
 
-    def _compute_scale(self, page_width, page_height,
-                       width, height):
+    def _compute_scale(self, page_width, page_height, width, height):
         scale = self.fixed_scale
         if not scale:
             aspect = float(width) / float(height)
@@ -72,5 +73,6 @@ class ComponentFlowable(Flowable):
             gc.scale_ctm(scale, scale)
             gc.translate_ctm(-self.component.x, -self.component.y)
             self.component.draw(gc)
+
 
 # ============= EOF =============================================

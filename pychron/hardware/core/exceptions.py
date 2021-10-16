@@ -21,7 +21,7 @@
 
 
 class CRCError(BaseException):
-    _cmd = ''
+    _cmd = ""
 
     def __init__(self, cmd):
         self._cmd = cmd
@@ -36,9 +36,10 @@ class TimeoutError(BaseException):
         self.timeout = timeout
 
     def __repr__(self):
-        return 'TimeoutError func={}, timeout={}'.format(self.name, self.timeout)
+        return "TimeoutError func={}, timeout={}".format(self.name, self.timeout)
 
     def __str__(self):
         return repr(self)
+
 
 # ============= EOF =============================================

@@ -38,6 +38,3 @@ class ScanInspectorTask(BaseManagerTask):
 
 
 # ============= EOF =============================================
-
-
-

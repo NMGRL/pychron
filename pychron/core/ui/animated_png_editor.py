@@ -21,5 +21,5 @@
 from __future__ import absolute_import
 from .factory import toolkit_factory
 
-AnimatedPNGEditor = toolkit_factory('animated_png_editor', 'AnimatedPNGEditor')
+AnimatedPNGEditor = toolkit_factory("animated_png_editor", "AnimatedPNGEditor")
 # ============= EOF =============================================

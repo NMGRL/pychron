@@ -16,8 +16,10 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import HasTraits, Str, Float
+
 # ============= standard library imports ========================
 from reportlab.lib import colors
+
 # ============= local library imports  ==========================
 from pychron.core.pdf.base_table_pdf_writer import BasePDFTableWriter
 from pychron.core.pdf.items import Row
@@ -35,7 +37,7 @@ class Irradiation(HasTraits):
 
         self.date = dbrecord.chronology.start_date
         self.duration = dbrecord.chronology.duration
-        self.reactor = dbrecord.reactor.name.replace('&', '&amp;')
+        self.reactor = dbrecord.reactor.name.replace("&", "&amp;")
 
 
 class PDFWriter(BasePDFTableWriter):
@@ -53,26 +55,26 @@ class PDFWriter(BasePDFTableWriter):
 Texas A&amp;M=  1 MW TRIGA Reactor. Nuclear Science Center, Texas A&amp;M University, College Station, TX. http://nsc.tamu.edu/about-the-nsc/
 <br/>
 USGS Denver= 1 MW TRIGA Reactor. U.S. Geological Survey, Lakewood, CO. http://pubs.usgs.gov/fs/2012/3093/"""
-        p = self._new_paragraph(t, backColor='lightgrey', fontSize=6)
+        p = self._new_paragraph(t, backColor="lightgrey", fontSize=6)
         return p
 
     def _make_table(self, irrads):
         ts = self._new_style(header_line_idx=0, header_line_width=2)
 
-        ts.add('LINEBELOW', (0, 1), (-1, -1), 1.0, colors.black)
+        ts.add("LINEBELOW", (0, 1), (-1, -1), 1.0, colors.black)
 
         header = Row()
-        header.add_item(value='<b>Irradiation</b>')
-        header.add_item(value='<b>Date</b>')
-        header.add_item(value='<b>Duration (hr)</b>')
-        header.add_item(value='<b>Reactor</b>')
+        header.add_item(value="<b>Irradiation</b>")
+        header.add_item(value="<b>Date</b>")
+        header.add_item(value="<b>Duration (hr)</b>")
+        header.add_item(value="<b>Reactor</b>")
 
         rows = [header]
         for i in irrads:
             r = Row()
             r.add_item(value=i.name)
             r.add_item(value=i.date)
-            r.add_item(value='{:0.1f}'.format(i.duration))
+            r.add_item(value="{:0.1f}".format(i.duration))
             r.add_item(value=i.reactor)
             rows.append(r)
 
@@ -80,10 +82,11 @@ USGS Denver= 1 MW TRIGA Reactor. U.S. Geological Survey, Lakewood, CO. http://pu
         return t
 
     def _make_table_title(self):
-        t = '<b>Table X. Irradiations</b>'
+        t = "<b>Table X. Irradiations</b>"
         # p = self._new_paragraph(t, s='Heading1')
         p = self._new_paragraph(t)
         return p
+
 
 # ============= EOF =============================================
 # class IrradiationTableWriter(IsotopeDatabaseManager):

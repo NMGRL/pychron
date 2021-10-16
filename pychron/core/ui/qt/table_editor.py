@@ -76,13 +76,15 @@ class myTableView(TableView):
         if self._editor.factory.paste_factory:
             clipboard = QApplication.clipboard()
             md = clipboard.mimeData()
-            if md.hasFormat('text/plain'):
-                txt = md.data('text/plain')
+            if md.hasFormat("text/plain"):
+                txt = md.data("text/plain")
 
-                rows = txt.split('\n')
-                if len({len(row.split('\t')) for row in rows}) <= 1:
-                    vs = [self._editor.factory.paste_factory(i, row.data().decode('utf8')) for i, row in enumerate(
-                        rows)]
+                rows = txt.split("\n")
+                if len({len(row.split("\t")) for row in rows}) <= 1:
+                    vs = [
+                        self._editor.factory.paste_factory(i, row.data().decode("utf8"))
+                        for i, row in enumerate(rows)
+                    ]
                     self._editor.value.extend(vs)
 
 
@@ -99,5 +101,6 @@ class myTableEditor(TableEditor):
 
     def _get_custom_editor_class(self):
         return self.simple_editor_class
+
 
 # ============= EOF =============================================

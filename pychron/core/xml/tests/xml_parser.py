@@ -1,11 +1,11 @@
 from __future__ import absolute_import
 from pychron.core.xml.xml_parser import pprint_xml
 
-__author__ = 'ross'
+__author__ = "ross"
 
 import unittest
 
-INIT_XML = '''<?xml version='1.0' encoding='ASCII'?>
+INIT_XML = """<?xml version='1.0' encoding='ASCII'?>
 <root>
 <!--            <klass>RemoteNewportMotionController</klass> -->
   <globals>
@@ -138,9 +138,9 @@ INIT_XML = '''<?xml version='1.0' encoding='ASCII'?>
       <plugin enabled="false">Twitter</plugin>
     </social>
   </plugins>
-</root>'''
+</root>"""
 
-EINIT_XML = '''<?xml version='1.0' encoding='ASCII'?>
+EINIT_XML = """<?xml version='1.0' encoding='ASCII'?>
 <root> <!--
     <klass>RemoteNewportMotionController</klass>
 -->
@@ -270,7 +270,7 @@ EINIT_XML = '''<?xml version='1.0' encoding='ASCII'?>
             <plugin enabled="false">Twitter</plugin>
         </social>
     </plugins>
-</root>'''
+</root>"""
 
 
 class XMLParserTestCase(unittest.TestCase):
@@ -289,56 +289,56 @@ class XMLParserTestCase(unittest.TestCase):
     #         self.assertEqual(t, tt)
     #
     def test_pprint1(self):
-        intxt = '''<root><a>1234<b>xy</b></a></root>'''
+        intxt = """<root><a>1234<b>xy</b></a></root>"""
         otxt = pprint_xml(intxt)
-        etxt='''<root>
+        etxt = """<root>
     <a>1234
         <b>xy</b>
     </a>
-</root>'''
+</root>"""
         self.assertEqual(otxt, etxt)
 
     def test_pprint(self):
-        intxt = '''<root><a><b></b></a></root>'''
+        intxt = """<root><a><b></b></a></root>"""
         otxt = pprint_xml(intxt)
-        etxt='''<root>
+        etxt = """<root>
     <a>
         <b></b>
     </a>
-</root>'''
+</root>"""
         self.assertEqual(otxt, etxt)
 
     def test_pprint2(self):
-        intxt = '''<root><a><b></b><c></c></a></root>'''
+        intxt = """<root><a><b></b><c></c></a></root>"""
         otxt = pprint_xml(intxt)
-        etxt='''<root>
+        etxt = """<root>
     <a>
         <b></b>
         <c></c>
     </a>
-</root>'''
+</root>"""
         self.assertEqual(otxt, etxt)
 
     def test_pprint4(self):
-        intxt = '''<root><a>12<b>123</b><c>1234</c></a></root>'''
+        intxt = """<root><a>12<b>123</b><c>1234</c></a></root>"""
         otxt = pprint_xml(intxt)
-        etxt='''<root>
+        etxt = """<root>
     <a>12
         <b>123</b>
         <c>1234</c>
     </a>
-</root>'''
+</root>"""
         self.assertEqual(otxt, etxt)
 
     def test_pprint5(self):
-        intxt = '''<root><a enabled="false">12<b>123</b><c>1234</c></a></root>'''
+        intxt = """<root><a enabled="false">12<b>123</b><c>1234</c></a></root>"""
         otxt = pprint_xml(intxt)
-        etxt='''<root>
+        etxt = """<root>
     <a enabled="false">12
         <b>123</b>
         <c>1234</c>
     </a>
-</root>'''
+</root>"""
 
         self.assertEqual(otxt, etxt)
 
@@ -347,5 +347,5 @@ class XMLParserTestCase(unittest.TestCase):
         self.assertEqual(EINIT_XML, otxt)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

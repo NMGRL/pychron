@@ -22,27 +22,28 @@ from traitsui.api import Item, HGroup, spring
 
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.hardware.core.core_device import CoreDevice
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.managers.manager import Manager
 
 
 class HeaderLabel(CustomLabel):
-    color = 'maroon'
+    color = "maroon"
     size = 14
 
 
 class MultiplexerManager(Manager):
     controller = Instance(CoreDevice)
-    hname = Str('Name')
-    haddress = Str('Address')
-    hvalue = Str('Value')
-    hprocessvalue = Str('ProcessValue')
-    title = 'Multiplexer'
+    hname = Str("Name")
+    haddress = Str("Address")
+    hvalue = Str("Value")
+    hprocessvalue = Str("ProcessValue")
+    title = "Multiplexer"
     window_width = 500
     window_height = 500
-    id = 'multiplexer_manager'
-    reload_channels_button = Button('Reload')
+    id = "multiplexer_manager"
+    reload_channels_button = Button("Reload")
 
     def reload_channels(self):
         self.closed(True)
@@ -68,19 +69,20 @@ class MultiplexerManager(Manager):
         v = self.view_factory(
             HGroup(
                 #                      CustomLabel('hname', size=18, color='maroon', width=200),
-                HeaderLabel('hname', width=200),
+                HeaderLabel("hname", width=200),
                 #                      Item('hname', show_label=False, style='readonly', width=200),
-                HeaderLabel('haddress', width=75),
-
+                HeaderLabel("haddress", width=75),
                 #                      Item('haddress', show_label=False, style='readonly', width=75),
-                HeaderLabel('hvalue', width=100),
+                HeaderLabel("hvalue", width=100),
                 #                      Item('hvalue', show_label=False, style='readonly', width=100),
-                HeaderLabel('hprocessvalue', width=100)
+                HeaderLabel("hprocessvalue", width=100)
                 #                      Item('hprocessvalue', show_label=False, style='readonly', width=100)
             ),
-            Item('controller', style='custom', show_label=False),
-            HGroup(spring, Item('reload_channels_button', show_label=False)),
+            Item("controller", style="custom", show_label=False),
+            HGroup(spring, Item("reload_channels_button", show_label=False)),
         )
 
         return v
+
+
 # ============= EOF =============================================

@@ -25,7 +25,7 @@ from pychron.envisage.browser.adapters import ProjectAdapter, SampleImageAdapter
 
 
 class ImageAdapter(TabularAdapter):
-    columns = [('Name', 'name'), ('Date', 'create_date')]
+    columns = [("Name", "name"), ("Date", "create_date")]
 
 
 # class CameraPane(TraitsTaskPane):
@@ -35,56 +35,82 @@ class ImageAdapter(TabularAdapter):
 #         # v = View(UItem('camera', editor=CameraEditor()))
 #         return v
 
+
 class InfoPane(TraitsDockPane):
-    id = 'pychron.image.info'
-    name = 'Image Info'
+    id = "pychron.image.info"
+    name = "Image Info"
 
     def traits_view(self):
-        v=View(VGroup(Item('object.selected_info_model.create_date', style='readonly'),
-                      Item('object.selected_info_model.name'),
-                      VGroup(UItem('object.selected_info_model.note', style='custom',
-                                   editor=TextEditor(read_only=False)))))
+        v = View(
+            VGroup(
+                Item("object.selected_info_model.create_date", style="readonly"),
+                Item("object.selected_info_model.name"),
+                VGroup(
+                    UItem(
+                        "object.selected_info_model.note",
+                        style="custom",
+                        editor=TextEditor(read_only=False),
+                    )
+                ),
+            )
+        )
         return v
 
 
 class SampleBrowserPane(TraitsDockPane):
-    id = 'pychron.image.browser'
-    name = 'Browser'
+    id = "pychron.image.browser"
+    name = "Browser"
 
     def traits_view(self):
-        sample_grp = VGroup(UItem('samples',
-                                  editor=FilterTabularEditor(
-                                      # adapter=LabnumberAdapter(),
-                                      adapter=SampleImageAdapter(),
-                                      editable=False,
-                                      multi_select=True,
-                                      selected='selected_samples',
-                                      stretch_last_section=False),
-                                  height=-200,
-                                  width=75),
-                            show_border=True, label='Samples')
+        sample_grp = VGroup(
+            UItem(
+                "samples",
+                editor=FilterTabularEditor(
+                    # adapter=LabnumberAdapter(),
+                    adapter=SampleImageAdapter(),
+                    editable=False,
+                    multi_select=True,
+                    selected="selected_samples",
+                    stretch_last_section=False,
+                ),
+                height=-200,
+                width=75,
+            ),
+            show_border=True,
+            label="Samples",
+        )
 
         project_grp = VGroup(
-            UItem('projects',
-                  editor=FilterTabularEditor(editable=False,
-                                             selected='selected_projects',
-                                             adapter=ProjectAdapter(),
-                                             multi_select=True),
-                  height=-200,
-                  width=175),
+            UItem(
+                "projects",
+                editor=FilterTabularEditor(
+                    editable=False,
+                    selected="selected_projects",
+                    adapter=ProjectAdapter(),
+                    multi_select=True,
+                ),
+                height=-200,
+                width=175,
+            ),
             show_border=True,
-            label='Projects')
-        image_grp = VGroup(UItem('images',
-                                 editor=TabularEditor(editable=False,
-                                                      adapter=ImageAdapter(),
-                                                      multi_select=False,
-                                                      dclicked='dclicked',
-                                                      selected='selected_image')),
-                           show_border=True,
-                           label='Images')
+            label="Projects",
+        )
+        image_grp = VGroup(
+            UItem(
+                "images",
+                editor=TabularEditor(
+                    editable=False,
+                    adapter=ImageAdapter(),
+                    multi_select=False,
+                    dclicked="dclicked",
+                    selected="selected_image",
+                ),
+            ),
+            show_border=True,
+            label="Images",
+        )
         v = View(VGroup(project_grp, sample_grp, image_grp))
         return v
 
+
 # ============= EOF =============================================
-
-

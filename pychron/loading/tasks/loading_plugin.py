@@ -26,7 +26,11 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.loading.loading_manager import LoadingManager
-from pychron.loading.tasks.actions import SaveLoadingPDFAction, SaveTrayPDFAction, GenerateResultsAction
+from pychron.loading.tasks.actions import (
+    SaveLoadingPDFAction,
+    SaveTrayPDFAction,
+    GenerateResultsAction,
+)
 from pychron.loading.tasks.load_task import LoadingTask
 from pychron.loading.tasks.loading_preferences import LoadingPreferencesPane
 from pychron.loading.tasks.panes import LoadDockPane, LoadTablePane
@@ -34,47 +38,59 @@ from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class LoadingPlugin(BaseTaskPlugin):
-    name = 'Loading'
-    id = 'pychron.loading'
+    name = "Loading"
+    id = "pychron.loading"
 
     def _task_extensions_default(self):
-        actions = [SchemaAddition(id='save_loading_figure',
-                                  factory=SaveLoadingPDFAction,
-                                  path='MenuBar/file.menu'),
-                   SchemaAddition(id='save_tray',
-                                  factory=SaveTrayPDFAction,
-                                  path='MenuBar/file.menu'),
-                   SchemaAddition(id='generate_results',
-                                  factory=GenerateResultsAction,
-                                  path='MenuBar/file.menu')]
-        return [TaskExtension(task_id='pychron.loading',
-                              actions=actions)]
+        actions = [
+            SchemaAddition(
+                id="save_loading_figure",
+                factory=SaveLoadingPDFAction,
+                path="MenuBar/file.menu",
+            ),
+            SchemaAddition(
+                id="save_tray", factory=SaveTrayPDFAction, path="MenuBar/file.menu"
+            ),
+            SchemaAddition(
+                id="generate_results",
+                factory=GenerateResultsAction,
+                path="MenuBar/file.menu",
+            ),
+        ]
+        return [TaskExtension(task_id="pychron.loading", actions=actions)]
 
     def _tasks_default(self):
-        return [TaskFactory(id='pychron.loading',
-                            factory=self._load_task_factory,
-                            name='Loading',
-                            accelerator='Ctrl+Y',
-                            task_group='experiment')]
+        return [
+            TaskFactory(
+                id="pychron.loading",
+                factory=self._load_task_factory,
+                name="Loading",
+                accelerator="Ctrl+Y",
+                task_group="experiment",
+            )
+        ]
 
     def _service_offers_default(self):
-        load = self.service_offer_factory(protocol=LoadDockPane,
-                                          factory=LoadDockPane)
-        table = self.service_offer_factory(protocol=LoadTablePane,
-                                           factory=LoadTablePane)
-        man = self.service_offer_factory(protocol=LoadingManager,
-                                         factory=self._loading_manager_factory)
+        load = self.service_offer_factory(protocol=LoadDockPane, factory=LoadDockPane)
+        table = self.service_offer_factory(
+            protocol=LoadTablePane, factory=LoadTablePane
+        )
+        man = self.service_offer_factory(
+            protocol=LoadingManager, factory=self._loading_manager_factory
+        )
 
         return [load, table, man]
 
     def _loading_manager_factory(self):
-        return LoadingManager(application=self.application,
-                              dvc=self.application.get_service(DVC_PROTOCOL))
+        return LoadingManager(
+            application=self.application, dvc=self.application.get_service(DVC_PROTOCOL)
+        )
 
     def _load_task_factory(self):
         return LoadingTask(manager=self._loading_manager_factory())
 
     def _preferences_panes_default(self):
         return [LoadingPreferencesPane]
+
 
 # ============= EOF =============================================

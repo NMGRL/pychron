@@ -21,21 +21,24 @@ from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, NULL_STR
 
 
 class PeaksAdapter(TabularAdapter):
-    columns = [('Peak Age', 'peak_age'), ('Candidates', 'candidates_text')]
+    columns = [("Peak Age", "peak_age"), ("Candidates", "candidates_text")]
 
 
 class CandidateAdapter(TabularAdapter):
-    columns = [('Sample', 'sample'),
-               ('Material', 'material'),
-               ('Project', 'project'),
-               ('Age', 'age'), (PLUSMINUS_ONE_SIGMA, 'age_error'),
-               ('Dev.', 'dev'),
-               ('% Dev.', 'dev_percent')]
+    columns = [
+        ("Sample", "sample"),
+        ("Material", "material"),
+        ("Project", "project"),
+        ("Age", "age"),
+        (PLUSMINUS_ONE_SIGMA, "age_error"),
+        ("Dev.", "dev"),
+        ("% Dev.", "dev_percent"),
+    ]
 
     dev_percent_text = Property
 
     def _get_dev_percent_text(self):
-        return '{:0.2f}'.format(self.item.dev_percent)
+        return "{:0.2f}".format(self.item.dev_percent)
 
 
 class Candidate(HasTraits):
@@ -54,7 +57,7 @@ class Candidate(HasTraits):
         self.project = arg[3] or NULL_STR
         self.age = float(arg[4])
         self.age_error = float(arg[5])
-        self.label = '{}({}) {}'.format(self.sample, self.material, self.id)
+        self.label = "{}({}) {}".format(self.sample, self.material, self.id)
 
         self.dev = peak_age - self.age
         self.dev_percent = abs(self.dev) / peak_age * 100
@@ -68,12 +71,12 @@ class Peak(HasTraits):
         super(Peak, self).__init__(*args, **kw)
 
         candidates = [Candidate(peak_age, c) for c in candidates]
-        self.candidates_text = ','.join([c.label for c in candidates])
+        self.candidates_text = ",".join([c.label for c in candidates])
         self.candidates = candidates
         self.peak_age = peak_age
 
     def traits_view(self):
-        v = View(UItem('candidates', editor=TabularEditor(adapter=CandidateAdapter())))
+        v = View(UItem("candidates", editor=TabularEditor(adapter=CandidateAdapter())))
         return v
 
 
@@ -94,7 +97,9 @@ class IdentifyPeakView(HasTraits):
         if peaks is None:
             peaks = self._peak_ages
 
-        self.peaks = [Peak(p, self.source.find_candidates(p, tol=self.threshold)) for p in peaks]
+        self.peaks = [
+            Peak(p, self.source.find_candidates(p, tol=self.threshold)) for p in peaks
+        ]
 
     def _threshold_changed(self, new):
         if new:
@@ -102,14 +107,20 @@ class IdentifyPeakView(HasTraits):
 
     def traits_view(self):
 
-        v = View(HGroup(Item('threshold')),
-                 UItem('peaks', editor=TabularEditor(adapter=PeaksAdapter(),
-                                                     selected='selected')),
-                 UItem('selected', style='custom', editor=InstanceEditor()),
-                 title='Candidate Associations',
-                 resizable=True,
-                 kind='livemodal',
-                 width=500,
-                 height=500)
+        v = View(
+            HGroup(Item("threshold")),
+            UItem(
+                "peaks",
+                editor=TabularEditor(adapter=PeaksAdapter(), selected="selected"),
+            ),
+            UItem("selected", style="custom", editor=InstanceEditor()),
+            title="Candidate Associations",
+            resizable=True,
+            kind="livemodal",
+            width=500,
+            height=500,
+        )
         return v
+
+
 # ============= EOF =============================================

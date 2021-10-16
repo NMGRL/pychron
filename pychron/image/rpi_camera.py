@@ -21,6 +21,7 @@ from threading import Thread
 
 import picamera
 import picamera.array
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import time
@@ -32,7 +33,6 @@ from six.moves import map
 
 
 class RPiCamera(HeadlessConfigLoadable):
-
     sharpness = 0
     contrast = 0
     brightness = 50
@@ -44,21 +44,21 @@ class RPiCamera(HeadlessConfigLoadable):
     # exposure modes
     # off, auto, night, nightpreview, backlight, spotlight, sports, snow, beach,
     # verylong, fixedfps, antishake, fireworks,
-    exposure_mode = 'auto'
+    exposure_mode = "auto"
 
-    meter_mode = 'average'  # stop, average, backlit, matrix
+    meter_mode = "average"  # stop, average, backlit, matrix
 
     # awb_modes
     # off, auto, sunlight, cloudy, shade, tungsten, fluorescent, incandescent, flash, horizon
-    awb_mode = 'auto'
+    awb_mode = "auto"
 
     # image effects
     # none, negative, solarize, sketch, denoise, emboss, oilpaint, hatch,
     # gpen, pastel, watercolor,film, blur, saturation, colorswap, washedout,
     # posterise, colorpoint, colorbalance, cartoon, deinterlace1, deinterlace2
-    image_effect = 'none'
+    image_effect = "none"
 
-    color_effects = None # (u,v)
+    color_effects = None  # (u,v)
     rotation = 0  # 0,90,180,270
     hflip = False
     vflip = False
@@ -69,41 +69,53 @@ class RPiCamera(HeadlessConfigLoadable):
     def load_additional_args(self, *args, **kw):
         config = self.get_configuration()
 
-        self.set_attribute(config, 'sharpness', 'Settings', 'sharpness', cast='int')
-        self.set_attribute(config, 'contrast', 'Settings', 'contrast', cast='int')
-        self.set_attribute(config, 'brightness', 'Settings', 'brightness', cast='int')
-        self.set_attribute(config, 'saturation', 'Settings', 'saturation', cast='int')
-        self.set_attribute(config, 'ISO', 'Settings', 'ISO', cast='int')
-        self.set_attribute(config, 'video_stabilization', 'Settings', 'video_stabilization', cast='boolean')
-        self.set_attribute(config, 'exposure_compensation', 'Settings', 'exposure_compensation', cast='int')
-        self.set_attribute(config, 'exposure_mode', 'Settings', 'exposure_mode')
-        self.set_attribute(config, 'meter_mode', 'Settings', 'meter_mode')
-        self.set_attribute(config, 'awb_mode', 'Settings', 'awb_mode')
-        self.set_attribute(config, 'image_effect', 'Settings', 'image_effect')
-        self.set_attribute(config, 'color_effects', 'Settings', 'color_effects')
-        self.set_attribute(config, 'rotation', 'Settings', 'rotation', cast='int')
-        self.set_attribute(config, 'hflip', 'Settings', 'hflip', cast='boolean')
-        self.set_attribute(config, 'vflip', 'Settings', 'vflip', cast='boolean')
+        self.set_attribute(config, "sharpness", "Settings", "sharpness", cast="int")
+        self.set_attribute(config, "contrast", "Settings", "contrast", cast="int")
+        self.set_attribute(config, "brightness", "Settings", "brightness", cast="int")
+        self.set_attribute(config, "saturation", "Settings", "saturation", cast="int")
+        self.set_attribute(config, "ISO", "Settings", "ISO", cast="int")
+        self.set_attribute(
+            config,
+            "video_stabilization",
+            "Settings",
+            "video_stabilization",
+            cast="boolean",
+        )
+        self.set_attribute(
+            config,
+            "exposure_compensation",
+            "Settings",
+            "exposure_compensation",
+            cast="int",
+        )
+        self.set_attribute(config, "exposure_mode", "Settings", "exposure_mode")
+        self.set_attribute(config, "meter_mode", "Settings", "meter_mode")
+        self.set_attribute(config, "awb_mode", "Settings", "awb_mode")
+        self.set_attribute(config, "image_effect", "Settings", "image_effect")
+        self.set_attribute(config, "color_effects", "Settings", "color_effects")
+        self.set_attribute(config, "rotation", "Settings", "rotation", cast="int")
+        self.set_attribute(config, "hflip", "Settings", "hflip", cast="boolean")
+        self.set_attribute(config, "vflip", "Settings", "vflip", cast="boolean")
 
-        crop = self.config_get(config, 'Settings', 'crop')
+        crop = self.config_get(config, "Settings", "crop")
         if crop:
-            self.crop = tuple(map(float, crop.split(',')))
+            self.crop = tuple(map(float, crop.split(",")))
 
         return True
 
     def start_video_service(self):
         def func():
-            root = '/var/www/firm_cam'
+            root = "/var/www/firm_cam"
             if not os.path.isdir(root):
                 os.mkdir(root)
-            path = os.path.join(root, 'image.jpg')
+            path = os.path.join(root, "image.jpg")
             with picamera.PiCamera() as camera:
                 self._setup_camera(camera)
 
                 camera.capture(path)
                 while 1:
                     camera.capture(path)
-                    time.sleep(1/float(self.frame_rate))
+                    time.sleep(1 / float(self.frame_rate))
 
         t = Thread(target=func)
         t.setDaemon(True)
@@ -113,7 +125,7 @@ class RPiCamera(HeadlessConfigLoadable):
         with picamera.PiCamera() as camera:
             self._setup_camera(camera)
             with picamera.array.PiRGBArray(camera) as output:
-                camera.capture(output, 'rgb')
+                camera.capture(output, "rgb")
                 return output.array
 
     def capture(self, path=None, name=None, **options):
@@ -121,18 +133,32 @@ class RPiCamera(HeadlessConfigLoadable):
             self._setup_camera(camera)
             if path is None:
                 if name is None:
-                    path, _ = unique_path2(paths.snapshot_dir, name, extension='.jpg')
+                    path, _ = unique_path2(paths.snapshot_dir, name, extension=".jpg")
                 else:
-                    path, _ = unique_path2(paths.snapshot_dir, 'rpi', extension='.jpg')
+                    path, _ = unique_path2(paths.snapshot_dir, "rpi", extension=".jpg")
 
             camera.capture(path, **options)
 
     # private
     def _setup_camera(self, camera):
-        attrs = ('sharpness', 'contrast', 'brightness', 'saturation', 'ISO',
-                 'video_stabilization', 'exposure_compensation', 'exposure_mode',
-                 'meter_mode', 'awb_mode', 'image_effect', 'color_effects',
-                 'rotation', 'hflip', 'vflip', 'crop')
+        attrs = (
+            "sharpness",
+            "contrast",
+            "brightness",
+            "saturation",
+            "ISO",
+            "video_stabilization",
+            "exposure_compensation",
+            "exposure_mode",
+            "meter_mode",
+            "awb_mode",
+            "image_effect",
+            "color_effects",
+            "rotation",
+            "hflip",
+            "vflip",
+            "crop",
+        )
         for attr in attrs:
             setattr(camera, attr, getattr(self, attr))
 

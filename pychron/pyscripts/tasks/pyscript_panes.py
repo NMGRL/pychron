@@ -18,14 +18,26 @@
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from traits.api import List, Instance, Str, Property, Any, String, Button
-from traitsui.api import View, Item, UItem, InstanceEditor, ButtonEditor, VGroup, TabularEditor, \
-    HGroup, spring, VSplit, Label
+from traitsui.api import (
+    View,
+    Item,
+    UItem,
+    InstanceEditor,
+    ButtonEditor,
+    VGroup,
+    TabularEditor,
+    HGroup,
+    spring,
+    VSplit,
+    Label,
+)
 from traitsui.handler import Handler
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 import os
+
 # ============= local library imports  ==========================
 from pychron.git_archive.views import CommitAdapter
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -35,14 +47,16 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 
 class mCommitAdapter(CommitAdapter):
     def get_bg_color(self, obj, trait, row, column=0):
-        color = 'white'
+        color = "white"
         if self.item.active:
-            color = 'gray'
+            color = "gray"
         return color
 
     def get_menu(self, obj, trait, row, column):
-        return MenuManager(Action(name='Diff', action='on_diff'),
-                           Action(name='Revert To', action='on_revert_to'))
+        return MenuManager(
+            Action(name="Diff", action="on_diff"),
+            Action(name="Revert To", action="on_revert_to"),
+        )
 
 
 class RepoHandler(Handler):
@@ -54,61 +68,67 @@ class RepoHandler(Handler):
 
 
 class RepoPane(TraitsDockPane):
-    name = 'Repo'
-    id = 'pychron.pyscript.repo'
+    name = "Repo"
+    id = "pychron.pyscript.repo"
 
     def traits_view(self):
-        v = View(UItem('selected_path_commits',
-                       editor=TabularEditor(adapter=mCommitAdapter(),
-                                            editable=False,
-                                            multi_select=True,
-                                            refresh='refresh_commits_table_needed',
-                                            selected='selected_commits')),
-                 handler=RepoHandler())
+        v = View(
+            UItem(
+                "selected_path_commits",
+                editor=TabularEditor(
+                    adapter=mCommitAdapter(),
+                    editable=False,
+                    multi_select=True,
+                    refresh="refresh_commits_table_needed",
+                    selected="selected_commits",
+                ),
+            ),
+            handler=RepoHandler(),
+        )
         return v
 
 
 class ControlPane(TraitsDockPane):
-    name = 'Control'
-    id = 'pychron.pyscript.control'
+    name = "Control"
+    id = "pychron.pyscript.control"
 
     def traits_view(self):
-        v = View(VGroup(UItem('execute',editor=ButtonEditor(label_value='execute_label'))))
+        v = View(
+            VGroup(UItem("execute", editor=ButtonEditor(label_value="execute_label")))
+        )
         return v
 
 
 class DescriptionPane(TraitsDockPane):
-    name = 'Description'
-    id = 'pychron.pyscript.description'
+    name = "Description"
+    id = "pychron.pyscript.description"
 
     def traits_view(self):
-        v = View(UItem('description', style='readonly'))
+        v = View(UItem("description", style="readonly"))
         return v
 
 
 class ExamplePane(TraitsDockPane):
-    name = 'Example'
-    id = 'pychron.pyscript.example'
+    name = "Example"
+    id = "pychron.pyscript.example"
 
     def traits_view(self):
-        v = View(
-            UItem('example',
-                  style='readonly'))
+        v = View(UItem("example", style="readonly"))
         return v
 
 
 class ContextEditorPane(TraitsDockPane):
-    name = 'Context'
-    id = 'pychron.pyscript.context_editor'
-    editor = Instance('pychron.pyscripts.context_editors.context_editor.ContextEditor')
+    name = "Context"
+    id = "pychron.pyscript.context_editor"
+    editor = Instance("pychron.pyscripts.context_editors.context_editor.ContextEditor")
 
     def traits_view(self):
-        v = View(UItem('editor', style='custom'))
+        v = View(UItem("editor", style="custom"))
         return v
 
 
 class CommandsAdapter(TabularAdapter):
-    columns = [('Name', 'name')]
+    columns = [("Name", "name")]
     name_text = Property
 
     def _get_name_text(self, *args, **kw):
@@ -116,26 +136,26 @@ class CommandsAdapter(TabularAdapter):
 
 
 class CommandEditorPane(TraitsDockPane):
-    name = 'Commands Editor'
-    id = 'pychron.pyscript.commands_editor'
+    name = "Commands Editor"
+    id = "pychron.pyscript.commands_editor"
     command_object = Any
     insert_button = Button
 
     def traits_view(self):
         v = View(
-            UItem('insert_button', enabled_when='command_object'),
-            UItem('command_object',
-                  width=-275,
-                  editor=InstanceEditor(),
-                  style='custom'))
+            UItem("insert_button", enabled_when="command_object"),
+            UItem(
+                "command_object", width=-275, editor=InstanceEditor(), style="custom"
+            ),
+        )
         return v
 
 
 class CommandsPane(TraitsDockPane):
-    name = 'Commands'
-    id = 'pychron.pyscript.commands'
+    name = "Commands"
+    id = "pychron.pyscript.commands"
 
-    commands = Property(depends_on='_commands')
+    commands = Property(depends_on="_commands")
     _commands = List
     name = Str
 
@@ -144,18 +164,24 @@ class CommandsPane(TraitsDockPane):
     command_objects = List
 
     def set_command(self, line):
-        args = line.split('(')
+        args = line.split("(")
         cmd = args[0]
         if cmd:
             self.selected_command = cmd
-            s = '('.join(args[1:])
+            s = "(".join(args[1:])
             s = s[:-1]
             self.command_object.load_str(s)
 
     def _selected_command_changed(self):
         if self.selected_command:
-            obj = next((ci for ci in self.command_objects
-                        if ci and ci.name == self.selected_command), None)
+            obj = next(
+                (
+                    ci
+                    for ci in self.command_objects
+                    if ci and ci.name == self.selected_command
+                ),
+                None,
+            )
             self.command_object = obj
 
     def _set_commands(self, cs):
@@ -165,19 +191,25 @@ class CommandsPane(TraitsDockPane):
         return sorted(self._commands)
 
     def traits_view(self):
-        v = View(Item('commands',
-                      style='custom',
-                      show_label=False,
-                      editor=myTabularEditor(operations=['move'],
-                                             adapter=CommandsAdapter(),
-                                             editable=True,
-                                             selected='selected_command'),
-                      width=200, ))
+        v = View(
+            Item(
+                "commands",
+                style="custom",
+                show_label=False,
+                editor=myTabularEditor(
+                    operations=["move"],
+                    adapter=CommandsAdapter(),
+                    editable=True,
+                    selected="selected_command",
+                ),
+                width=200,
+            )
+        )
         return v
 
 
 class ScriptBrowserAdapter(TabularAdapter):
-    columns = [('Name', 'name')]
+    columns = [("Name", "name")]
     name_text = Property
 
     def _get_name_text(self):
@@ -185,17 +217,17 @@ class ScriptBrowserAdapter(TabularAdapter):
 
 
 class ScriptBrowserPane(TraitsDockPane):
-    id = 'pychron.pyscript.script_browser'
+    id = "pychron.pyscript.script_browser"
     items = List
     root = String
     selected = String
     dclicked = Any
     directory_dclicked = Any
     selected_directory = String
-    selected_directory_name = Property(depends_on='selected_directory')
-    up_directory_name = Property(depends_on='selected_directory')
+    selected_directory_name = Property(depends_on="selected_directory")
+    up_directory_name = Property(depends_on="selected_directory")
     directories = List
-    name = 'Browser'
+    name = "Browser"
     up_button = Button
     forward_button = Button
 
@@ -206,12 +238,16 @@ class ScriptBrowserPane(TraitsDockPane):
         root = self.root
         if root:
             ps = [p for p in os.listdir(root)]
-            self.items = [x for x in ps if not (x.startswith('.') or os.path.isdir(os.path.join(root, x)))]
+            self.items = [
+                x
+                for x in ps
+                if not (x.startswith(".") or os.path.isdir(os.path.join(root, x)))
+            ]
             self.directories = [x for x in ps if os.path.isdir(os.path.join(root, x))]
             self.selected_directory = self.root
         else:
             self.directories = []
-            self.selected_directory = ''
+            self.selected_directory = ""
 
     def _directory_dclicked_changed(self):
         if self.selected_directory:
@@ -219,21 +255,47 @@ class ScriptBrowserPane(TraitsDockPane):
             self.root = p
 
     def traits_view(self):
-        v = View(VGroup(HGroup(icon_button_editor('up_button', 'arrow_left', tooltip='Go back one directory'),
-                               CustomLabel('up_directory_name', size=14, color='maroon'), spring),
-                        VSplit(VGroup(UItem('directories',
-                                            editor=TabularEditor(selected='selected_directory',
-                                                                 dclicked='directory_dclicked',
-                                                                 editable=False,
-                                                                 adapter=ScriptBrowserAdapter()),
-                                            height=0.25),
-                                      HGroup(Label('Current Dir.'), CustomLabel('selected_directory_name',
-                                                                                size=14, color='maroon'))),
-                               UItem('items', editor=TabularEditor(selected='selected',
-                                                                   dclicked='dclicked',
-                                                                   editable=False,
-                                                                   adapter=ScriptBrowserAdapter()),
-                                     height=0.75))))
+        v = View(
+            VGroup(
+                HGroup(
+                    icon_button_editor(
+                        "up_button", "arrow_left", tooltip="Go back one directory"
+                    ),
+                    CustomLabel("up_directory_name", size=14, color="maroon"),
+                    spring,
+                ),
+                VSplit(
+                    VGroup(
+                        UItem(
+                            "directories",
+                            editor=TabularEditor(
+                                selected="selected_directory",
+                                dclicked="directory_dclicked",
+                                editable=False,
+                                adapter=ScriptBrowserAdapter(),
+                            ),
+                            height=0.25,
+                        ),
+                        HGroup(
+                            Label("Current Dir."),
+                            CustomLabel(
+                                "selected_directory_name", size=14, color="maroon"
+                            ),
+                        ),
+                    ),
+                    UItem(
+                        "items",
+                        editor=TabularEditor(
+                            selected="selected",
+                            dclicked="dclicked",
+                            editable=False,
+                            adapter=ScriptBrowserAdapter(),
+                        ),
+                        height=0.75,
+                    ),
+                ),
+            )
+        )
         return v
 
     def _get_up_directory_name(self):
@@ -241,5 +303,6 @@ class ScriptBrowserPane(TraitsDockPane):
 
     def _get_selected_directory_name(self):
         return os.path.basename(self.root)
+
 
 # ============= EOF =============================================

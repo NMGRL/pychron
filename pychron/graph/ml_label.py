@@ -23,6 +23,7 @@ import re
 from chaco.axis import PlotAxis
 from enable.component_editor import ComponentEditor
 from enable.label import Label
+
 # ============= standard library imports ========================
 from numpy import array, float64
 from traits.api import HasTraits
@@ -32,13 +33,16 @@ from traitsui.api import View, UItem
 # http://stackoverflow.com/questions/2358890/python-lexical-analysis-and-tokenization
 # http://effbot.org/zone/xml-scanner.htm
 
-xml = re.compile(r"""
+xml = re.compile(
+    r"""
     <([/?!]?\w+)     # 1. tags
     |&(\#?\w+);      # 2. entities
     |([^<>&'\"=\s]+) # 3. text strings (no special characters)
     |(\s+)           # 4. whitespace
     |(.)             # 5. special characters
-    """, re.VERBOSE)
+    """,
+    re.VERBOSE,
+)
 
 
 def tokenize(text):
@@ -48,49 +52,55 @@ def tokenize(text):
         if not m:
             break
         tok = m.group(m.lastindex)
-        if tok != '>':
+        if tok != ">":
             yield tok
 
 
 def clean(text):
-    t = ''.join((ti for ti in tokenize(text) if ti not in ('sup', '/sup', 'sub', '/sub')))
+    t = "".join(
+        (ti for ti in tokenize(text) if ti not in ("sup", "/sup", "sub", "/sub"))
+    )
     return t
 
 
 class MPlotAxis(PlotAxis):
     def clone(self, ax):
-        for attr in ('mapper', 'origin',
-                     'title_font',
-                     'title_spacing',
-                     'title_color',
-                     'tick_weight',
-                     'tick_color',
-                     'tick_label_font',
-                     'tick_label_color',
-                     'tick_label_rotate_angle',
-                     'tick_label_alignment',
-                     'tick_label_margin',
-                     'tick_label_offset',
-                     'tick_label_position',
-                     'tick_label_formatter',
-                     'tick_in',
-                     'tick_out',
-                     'tick_visible',
-                     'tick_interval',
-                     'tick_generator',
-                     'orientation',
-                     'axis_line_visible',
-                     'axis_line_color',
-                     'axis_line_weight',
-                     'axis_line_style',
-                     'small_haxis_style',
-                     'ensure_labels_bounded',
-                     'ensure_ticks_bounded',
-                     'bgcolor',
-                     'use_draw_order', 'component',
-                     'resizable',
-                     'tag',
-                     'use'):
+        for attr in (
+            "mapper",
+            "origin",
+            "title_font",
+            "title_spacing",
+            "title_color",
+            "tick_weight",
+            "tick_color",
+            "tick_label_font",
+            "tick_label_color",
+            "tick_label_rotate_angle",
+            "tick_label_alignment",
+            "tick_label_margin",
+            "tick_label_offset",
+            "tick_label_position",
+            "tick_label_formatter",
+            "tick_in",
+            "tick_out",
+            "tick_visible",
+            "tick_interval",
+            "tick_generator",
+            "orientation",
+            "axis_line_visible",
+            "axis_line_color",
+            "axis_line_weight",
+            "axis_line_style",
+            "small_haxis_style",
+            "ensure_labels_bounded",
+            "ensure_ticks_bounded",
+            "bgcolor",
+            "use_draw_order",
+            "component",
+            "resizable",
+            "tag",
+            "use",
+        ):
             try:
                 setattr(self, attr, getattr(ax, attr))
             except AttributeError:
@@ -98,11 +108,13 @@ class MPlotAxis(PlotAxis):
 
     def _draw_title(self, gc, label=None, axis_offset=None):
         if label is None:
-            title_label = MLLabel(text=self.title,
-                                  font=self.title_font,
-                                  color=self.title_color,
-                                  rotate_angle=self.title_angle,
-                                  orientation=self.orientation)
+            title_label = MLLabel(
+                text=self.title,
+                font=self.title_font,
+                color=self.title_color,
+                rotate_angle=self.title_angle,
+                orientation=self.orientation,
+            )
         else:
             title_label = label
 
@@ -112,14 +124,17 @@ class MPlotAxis(PlotAxis):
         # which axis are we moving away from the axis line along?
         axis_index = self._major_axis.argmin()
 
-        if self.title_spacing != 'auto':
+        if self.title_spacing != "auto":
             axis_offset = self.title_spacing
 
         if (self.title_spacing) and (axis_offset is None):
             if not self.ticklabel_cache:
                 axis_offset = 25
             else:
-                axis_offset = max([l._bounding_box[axis_index] for l in self.ticklabel_cache]) * 1.3
+                axis_offset = (
+                    max([l._bounding_box[axis_index] for l in self.ticklabel_cache])
+                    * 1.3
+                )
 
         offset = (self._origin_point + self._end_axis_point) / 2
         axis_dist = self.tick_out + tl_bounds[axis_index] / 2.0 + axis_offset
@@ -145,11 +160,11 @@ class MLLabel(Label):
         texts = []
         offset = 0
         for ti in tokenize(self.text):
-            if ti == 'sup':
+            if ti == "sup":
                 offset = 1
-            elif ti == 'sub':
+            elif ti == "sub":
                 offset = -1
-            elif ti in ('/sup', '/sub'):
+            elif ti in ("/sup", "/sub"):
                 offset = 0
             else:
                 texts.append((offset, ti))
@@ -192,7 +207,7 @@ class MLLabel(Label):
             gc.set_font(self.font)
             gc.set_fill_color(self.color_)
             poss = self._text_positions
-            if self.orientation in ('top', 'bottom'):
+            if self.orientation in ("top", "bottom"):
                 self._draw_horizontal(gc, poss)
             else:
                 self._draw_vertical(gc, poss)
@@ -236,12 +251,11 @@ class MLLabel(Label):
 
 class Demo(HasTraits):
     def traits_view(self):
-        v = View(UItem('plot', editor=ComponentEditor()),
-                 resizable=True)
+        v = View(UItem("plot", editor=ComponentEditor()), resizable=True)
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # m = MLLabel()
     # m.text = '<sup>40</sup>Ar'
     # d = Demo()
@@ -256,19 +270,19 @@ if __name__ == '__main__':
     g = StackedGraph()
     plot = g.new_plot(padding_left=100, padding_bottom=100)
     xa = plot.x_axis
-    xa.title_color = 'red'
-    xa.title = 'sasfas'
+    xa.title_color = "red"
+    xa.title = "sasfas"
     nxa = MPlotAxis()
-    nxa.title = '<sup>39</sup>Ar/<sup>40</sup>Ar'
+    nxa.title = "<sup>39</sup>Ar/<sup>40</sup>Ar"
     # nxa.title = '39Ar/40Ar'
     nxa.clone(xa)
 
     ya = plot.y_axis
-    ya.title_color = 'red'
-    ya.title = 'sasfas'
-    ya.title_font = 'modern 36'
+    ya.title_color = "red"
+    ya.title = "sasfas"
+    ya.title_font = "modern 36"
     nya = MPlotAxis()
-    nya.title = '<sup>39</sup>Ar/<sup>40</sup>Ar'
+    nya.title = "<sup>39</sup>Ar/<sup>40</sup>Ar"
     # nya.title = '39Ar/40Ar'
     nya.clone(ya)
 
@@ -276,8 +290,8 @@ if __name__ == '__main__':
     plot.y_axis = nya
 
     plot = g.new_plot(padding_left=100, padding_bottom=100)
-    plot.y_axis.title = 'Foo'
-    plot.y_axis.title_font = 'modern 18'
+    plot.y_axis.title = "Foo"
+    plot.y_axis.title_font = "modern 18"
     g.configure_traits()
 
 # ============= EOF =============================================

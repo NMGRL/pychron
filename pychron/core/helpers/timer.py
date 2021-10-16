@@ -65,7 +65,7 @@ class Timer(QThread):
         while 1:
             if timeout:
                 if time.time() - st > timeout:
-                    return 'timeout'
+                    return "timeout"
 
             if not self.isActive():
                 break
@@ -86,12 +86,13 @@ class Timer(QThread):
     # and not self._completed
 
     def set_interval(self, v):
-        self._period = v / 1000.
+        self._period = v / 1000.0
 
     def get_interval(self):
         """
-            return period in s
+        return period in s
         """
         return self._period
+
 
 # ============= EOF =====================================

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from .data_manager import DataManager
@@ -29,31 +28,32 @@ from numpy import loadtxt
 import os
 from six.moves import map
 from six.moves import zip
+
+
 # ============= local library imports  ==========================
 class CSVDataManager(DataManager):
-    '''
-    '''
+    """ """
 
-    format_str = '{:0.6f}'
+    format_str = "{:0.6f}"
     _writer = None
     _file = None
-    delimiter = ','
+    delimiter = ","
+
     def load(self, frame_key=None):
         if frame_key is None:
             frame_key = self._current_frame
 
         frame = self._get_frame(frame_key)
         if frame is not None:
-#            from pylab import datestr2num
-#            converters = {0:datestr2num}
-#            return loadtxt(frame, converters=converters, delimiter=',')
-            return loadtxt(frame, delimiter=',')
-
+            #            from pylab import datestr2num
+            #            converters = {0:datestr2num}
+            #            return loadtxt(frame, converters=converters, delimiter=',')
+            return loadtxt(frame, delimiter=",")
 
     def write_metadata(self, md, frame_key=None):
 
-        sline = ['#<metadata>===================================================']
-        eline = ['#</metadata>===================================================']
+        sline = ["#<metadata>==================================================="]
+        eline = ["#</metadata>==================================================="]
         data = [sline] + md + [eline]
         self.write_to_frame(data, frame_key)
 
@@ -62,26 +62,24 @@ class CSVDataManager(DataManager):
             frame_key = self._current_frame
 
         frame = self._get_frame(frame_key)
-#        print frame, frame_key, self.frames.keys()
+        #        print frame, frame_key, self.frames.keys()
         if frame is not None:
             self.new_writer(frame, datum)
 
     def new_writer(self, p, datum, append=True):
-        '''
-
-        '''
-        mode = 'w'
+        """ """
+        mode = "w"
         if append:
-            mode = 'a'
+            mode = "a"
         with open(p, mode) as f:
-#            writer = self.writer
+            #            writer = self.writer
             writer = csv.writer(f, delimiter=self.delimiter)
             if isinstance(datum[0], (list, tuple)):
                 writer.writerows(datum)
             else:
                 try:
                     datum = list(map(self.format_str.format, datum))
-#                    datum = [self.format_str.format(d) for d in datum]
+                #                    datum = [self.format_str.format(d) for d in datum]
                 except Exception:
                     pass
 
@@ -97,7 +95,7 @@ class CSVDataManager(DataManager):
         if not os.path.isfile(path):
             return
 
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             reader = csv.reader(f)
 
             data = [row for row in reader]

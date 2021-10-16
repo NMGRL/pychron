@@ -21,6 +21,7 @@ import re
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 def pos_gen(s, e, inc=1):
     if s > e:
         inc *= -1
@@ -42,18 +43,18 @@ def increment_list(ps, start=0):
 
 
 def slice_func(pos):
-    s, e = pos.split('-')
+    s, e = pos.split("-")
     return pos_gen(int(s), int(e))
 
 
 def islice_func(pos, start=0):
     ps = slice_func(pos)
     nls = increment_list(ps, start)
-    return '{}-{}'.format(nls[0], nls[-1])
+    return "{}-{}".format(nls[0], nls[-1])
 
 
 def sslice_func(pos):
-    s, e, inc = pos.split(':')
+    s, e, inc = pos.split(":")
 
     return pos_gen(int(s), int(e), int(inc))
 
@@ -62,25 +63,25 @@ def isslice_func(pos):
     ps = sslice_func(pos)
     nls = increment_list(ps)
     step = nls[1] - nls[0]
-    return '{}:{}:{}'.format(nls[0], nls[-1], step)
+    return "{}:{}:{}".format(nls[0], nls[-1], step)
 
 
 def pslice_func(pos):
-    s, e = pos.split(':')
+    s, e = pos.split(":")
     return pos_gen(int(s), int(e))
 
 
 def ipslice_func(pos):
     ps = pslice_func(pos)
     nls = increment_list(ps)
-    return '{}:{}'.format(nls[0], nls[-1])
+    return "{}:{}".format(nls[0], nls[-1])
 
 
 def cslice_func(pos):
-    args = pos.split(';')
+    args = pos.split(";")
     positions = []
     for ai in args:
-        if '-' in ai:
+        if "-" in ai:
             positions.extend(slice_func(ai))
         else:
             positions.append(int(ai))
@@ -88,30 +89,32 @@ def cslice_func(pos):
 
 
 def icslice_func(pos):
-    args = pos.split(';')
+    args = pos.split(";")
     ns = []
     x = args[-1]
 
-    if '-' in x:
-        start = int(x.split('-')[-1])
+    if "-" in x:
+        start = int(x.split("-")[-1])
     else:
         start = int(x)
 
     for ai in args:
-        if '-' in ai:
+        if "-" in ai:
             ns.append(islice_func(ai, start))
         else:
             ns.append(str(int(ai) + start))
 
-    return ';'.join(ns)
+    return ";".join(ns)
 
 
-SLICE_REGEX = (re.compile(r'[\d]+-{1}[\d]+$'),
-               slice_func, islice_func, 'Slice')  # 1-4
-SSLICE_REGEX = (re.compile(r'\d+:{1}\d+:{1}\d+$'),
-                sslice_func, isslice_func, 'SSlice')  # 1:4:2
-PSLICE_REGEX = (re.compile(r'\d+:{1}\d+$'),
-                pslice_func, ipslice_func, 'PSlice')  # 1:4
+SLICE_REGEX = (re.compile(r"[\d]+-{1}[\d]+$"), slice_func, islice_func, "Slice")  # 1-4
+SSLICE_REGEX = (
+    re.compile(r"\d+:{1}\d+:{1}\d+$"),
+    sslice_func,
+    isslice_func,
+    "SSlice",
+)  # 1:4:2
+PSLICE_REGEX = (re.compile(r"\d+:{1}\d+$"), pslice_func, ipslice_func, "PSlice")  # 1:4
 
 # 1-4;6;9;11-15
 # 1-4;6;9
@@ -119,10 +122,14 @@ PSLICE_REGEX = (re.compile(r'\d+:{1}\d+$'),
 # 6;9;11-15
 # 1-4;6;9;11-15;50-42
 
-CSLICE_REGEX = (re.compile(r'((\d+-\d+)|\d+)(;+\d+)+((-\d+)|(;+\d+))*'),
-                cslice_func, icslice_func, 'CSlice')
+CSLICE_REGEX = (
+    re.compile(r"((\d+-\d+)|\d+)(;+\d+)+((-\d+)|(;+\d+))*"),
+    cslice_func,
+    icslice_func,
+    "CSlice",
+)
 
-'''
+"""
     use regex to match valid tansect entry
     e.g t2-3   point 3 of transect 2
 
@@ -133,7 +140,7 @@ CSLICE_REGEX = (re.compile(r'((\d+-\d+)|\d+)(;+\d+)+((-\d+)|(;+\d+))*'),
     3. -         followed by -
     4. [\d\W]+  followed by at least one digit character and no word characters
     5  $         end of string
-'''
+"""
 
 
 def transect_func(pos):
@@ -141,13 +148,18 @@ def transect_func(pos):
 
 
 def transect_ifunc(pos):
-    t, p = pos.split('-')
-    return '{}-{}'.format(t, int(p) + 1)
+    t, p = pos.split("-")
+    return "{}-{}".format(t, int(p) + 1)
 
 
-TRANSECT_REGEX = (re.compile('[tT]+[\d\W]+-+[\d\W]+$'), transect_func, transect_ifunc, 'Transect')
+TRANSECT_REGEX = (
+    re.compile("[tT]+[\d\W]+-+[\d\W]+$"),
+    transect_func,
+    transect_ifunc,
+    "Transect",
+)
 
-'''
+"""
     use regex to match valid position
     e.g. p1, 1
 
@@ -158,19 +170,19 @@ TRANSECT_REGEX = (re.compile('[tT]+[\d\W]+-+[\d\W]+$'), transect_func, transect_
     3. | or
     4. [\d\W]$  at least one digit character and no word characters
 
-'''
+"""
 # POSITION_REGEX = re.compile('[pPlLrRdD\d]+[\d\W]$|[\d\W]$')
-POSITION_REGEX = (re.compile('[pPlLrRdD\d]?[\d]$|[\d]$'), None, None, 'Position')
+POSITION_REGEX = (re.compile("[pPlLrRdD\d]?[\d]$|[\d]$"), None, None, "Position")
 
-'''
+"""
     e.g. 1.00,3.01
          1.0,2.0,3.0
          1.0,2.0;3.0,4.0
-'''
+"""
 
 
 def xy_func(p):
-    return p.split(';')
+    return p.split(";")
     # cant get non match with trailing ; to work so manual trim if present
     # return [p for p in map(str.strip,p.split(';')) if p]
 
@@ -178,18 +190,30 @@ def xy_func(p):
 # XY_REGEX = (re.compile('[-,\d+].*\d*,[-,\d+].*\d*'), None, None)
 # XY_REGEX = (re.compile('([-\d+]+.\d+(,[-\d+]+.\d+){1,3})(;([-\d+]+.\d+(,[-\d+]+.\d+){1,3}))*$'), xy_func, None, 'XY')
 XY_REGEX = (
-re.compile(r'([-\d+]+(\.\d)+(,[-\d+]+(\.\d)+){1,2})(;([-\d+]+(\.\d)+(,[-\d+]+(\.\d+)){1,2}))*$'), xy_func, None, 'XY')
+    re.compile(
+        r"([-\d+]+(\.\d)+(,[-\d+]+(\.\d)+){1,2})(;([-\d+]+(\.\d)+(,[-\d+]+(\.\d+)){1,2}))*$"
+    ),
+    xy_func,
+    None,
+    "XY",
+)
 
-DRILL_REGEX = re.compile(r'^(?P<id>[dD]\d+)$')
-POINT_REGEX = re.compile(r'^(?P<id>[pP]\d+)$')
+DRILL_REGEX = re.compile(r"^(?P<id>[dD]\d+)$")
+POINT_REGEX = re.compile(r"^(?P<id>[pP]\d+)$")
 
-SCAN_REGEX = (re.compile(r'^(?P<id>[sS]\d+)$'), None, None, 'Scan')
+SCAN_REGEX = (re.compile(r"^(?P<id>[sS]\d+)$"), None, None, "Scan")
 
-if __name__ == '__main__':
-    for pos in ('-1.0,2.0;', '1.0;', '1.0;2.0', '1.0,2.0;3.0,4.0'):
-        for r, f, _, name in (SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX,
-                              TRANSECT_REGEX, POSITION_REGEX, XY_REGEX):
+if __name__ == "__main__":
+    for pos in ("-1.0,2.0;", "1.0;", "1.0;2.0", "1.0,2.0;3.0,4.0"):
+        for r, f, _, name in (
+            SLICE_REGEX,
+            SSLICE_REGEX,
+            PSLICE_REGEX,
+            TRANSECT_REGEX,
+            POSITION_REGEX,
+            XY_REGEX,
+        ):
             if r.match(pos):
-                print('matched {} to {}'.format(name, pos))
+                print("matched {} to {}".format(name, pos))
                 print(f(pos))
 # ============= EOF =============================================
