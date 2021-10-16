@@ -18,7 +18,7 @@ jobs:
         uses: py-actions/flake8@v1
         with:
           ignore: "F401,E501"
-          args: "--exit-zero"
+          args: "--exit-zero --select=E"
           exclude: "docs,sandbox,test,alembic_dvc,zobs"
 
   format:
