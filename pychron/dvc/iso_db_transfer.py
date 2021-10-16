@@ -416,7 +416,9 @@ class IsoDBTransfer(Loggable):
         dest = self.dvc.db
 
         with src.session_ctx():
-            key = lambda x: x.split("-")[0]
+            def key(x):
+                return x.split("-")[0]
+
             runs = sorted(runs, key=key)
             with dest.session_ctx():
                 repo = self._add_repository(
