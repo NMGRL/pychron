@@ -3,7 +3,7 @@ import unittest
 
 from pychron.core.helpers.tests.floatfmt import SigFigStdFmtTestCase
 from pychron.core.stats.tests.mswd_tests import MSWDTestCase
-from pychron.pyscripts.tests.extraction_script import WaitForTestCase
+# from pychron.pyscripts.tests.extraction_script import WaitForTestCase
 # from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
 #
 # # Core
