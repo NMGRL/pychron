@@ -7,11 +7,11 @@ on:
   push:
     branches: [ dev/dr ]
     paths:
-      - '*.py'
+      - '*.py, *.yml'
   pull_request:
     branches: [ dev/dr ]
     paths:
-      - '*.py'
+      - '*.py, *.yml'
 
 jobs:
   flake8_py3:
