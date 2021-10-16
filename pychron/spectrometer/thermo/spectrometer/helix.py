@@ -36,13 +36,13 @@ class HelixSpectrometer(ThermoSpectrometer):
 
     def hardware_names(self):
         hn = super(HelixSpectrometer, self).hardware_names()
-        hn['flatapole'] = 'DAC_1_0_(Flata-Pole)'
-        hn['rotation_quad'] = 'RotationQuad'
-        hn['vertical_deflection_n'] = 'DAC_0_0_(Pole-N)'
-        hn['vertical_deflection_s'] = 'DAC_0_4_(Pole-S)'
-        hn['horizontal_symmetry'] = 'Horizontal Symmetry Set'
-        hn['extraction_focus'] = 'Extraction Focus Set'
-        hn['extraction_symmetry'] = 'Extraction Symmetry Set'
+        hn["flatapole"] = "DAC_1_0_(Flata-Pole)"
+        hn["rotation_quad"] = "RotationQuad"
+        hn["vertical_deflection_n"] = "DAC_0_0_(Pole-N)"
+        hn["vertical_deflection_s"] = "DAC_0_4_(Pole-S)"
+        hn["horizontal_symmetry"] = "Horizontal Symmetry Set"
+        hn["extraction_focus"] = "Extraction Focus Set"
+        hn["extraction_symmetry"] = "Extraction Symmetry Set"
 
         return hn
 
@@ -53,6 +53,7 @@ class HelixPlusSpectrometer(HelixSpectrometer):
 
 class HelixSFTSpectrometer(HelixSpectrometer):
     source_klass = HelixSFTSource
-    reference_detector = Str('Cup')
+    reference_detector = Str("Cup")
+
 
 # ============= EOF =============================================

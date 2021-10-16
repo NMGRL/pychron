@@ -151,7 +151,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         stage_map_klass = LaserStageMap
 
         t = self.tray
-        path = os.path.join(paths.map_dir, add_extension(t, '.txt'))
+        path = os.path.join(paths.map_dir, add_extension(t, ".txt"))
         sm = stage_map_klass(file_path=path)
         if sm.load():
             new_pos = []

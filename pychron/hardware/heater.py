@@ -34,7 +34,7 @@ class HeaterMixin(HasTraits):
     graph = Instance(StreamGraph)
 
     def load_from_device(self):
-        self.debug('finish loading heater. initialize with values from device')
+        self.debug("finish loading heater. initialize with values from device")
         self.setpoint = self.read_setpoint()
         self.readback = self.read_readback()
         self.use_pid = self.read_use_pid()

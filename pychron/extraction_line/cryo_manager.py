@@ -26,7 +26,7 @@ from pychron.pychron_constants import AR_AR, NE, HE, GENERIC
 
 
 class CryoManager(Manager):
-    name = 'Cryo'
+    name = "Cryo"
     species = Enum(HE, AR_AR, NE, GENERIC)
 
     def finish_loading(self, *args, **kw):
@@ -95,12 +95,20 @@ class CryoManager(Manager):
                 dev = next((d for d in self.devices if d.name == device_name), None)
                 if not dev:
                     names = [d.name for d in self.devices]
-                    self.warning('Invalid device name: {}. Valid names: {}'.format(device_name, names))
+                    self.warning(
+                        "Invalid device name: {}. Valid names: {}".format(
+                            device_name, names
+                        )
+                    )
             else:
                 try:
                     dev = self.devices[idx]
                 except IndexError:
-                    self.warning('Invalid idx: {}. Valid indices: {}'.format(idx, list(range(len(self.devices)))))
+                    self.warning(
+                        "Invalid idx: {}. Valid indices: {}".format(
+                            idx, list(range(len(self.devices)))
+                        )
+                    )
 
             if dev:
                 dev.set_setpoints(v1, v2, block=block, **kw)
@@ -122,31 +130,40 @@ class CryoManager(Manager):
         :return:
         """
 
-        if v in ('freeze', 'pump', 'release'):
-            s = 'Ar' if self.species == AR_AR else self.species
-            v = '{}_{}'.format(s, v)
+        if v in ("freeze", "pump", "release"):
+            s = "Ar" if self.species == AR_AR else self.species
+            v = "{}_{}".format(s, v)
 
-        p = os.path.join(paths.device_dir, 'cryotemps.yaml')
+        p = os.path.join(paths.device_dir, "cryotemps.yaml")
         if os.path.isfile(p):
             yd = yload(p)
             return csv_to_floats(yd[v])
         else:
-            self.warning('File {} does not exist. Cryostat setpoint can not be set')
+            self.warning("File {} does not exist. Cryostat setpoint can not be set")
 
     def traits_view(self):
         if self.devices:
-            v = View(Item('devices', style='custom',
-                          show_label=False,
-                          editor=ListEditor(mutable=False,
-                                            columns=1,
-                                            page_name='.name',
-                                            style='custom',
-                                            editor=InstanceEditor(view='control_view'))),
-                     height=-100)
+            v = View(
+                Item(
+                    "devices",
+                    style="custom",
+                    show_label=False,
+                    editor=ListEditor(
+                        mutable=False,
+                        columns=1,
+                        page_name=".name",
+                        style="custom",
+                        editor=InstanceEditor(view="control_view"),
+                    ),
+                ),
+                height=-100,
+            )
         else:
             v = View()
         return v
 
     def _get_simulation(self):
         return any([dev.simulation for dev in self.devices])
+
+
 # ============= EOF =============================================

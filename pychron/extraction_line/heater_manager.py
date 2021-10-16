@@ -24,6 +24,7 @@ from pychron.managers.manager import Manager
 class HeaterManager(Manager):
     period = Float(5)
     is_alive = Bool
+
     def finish_loading(self, *args, **kw):
         super().finish_loading(*args, **kw)
         for di in self.devices:

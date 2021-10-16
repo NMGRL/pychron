@@ -105,7 +105,7 @@ class Emailer(Loggable):
                 break
             self.debug("doing email connection retry {}".format(i))
             time.sleep(1)
-        self.debug('server connection duration={}'.format(time.time()-st))
+        self.debug("server connection duration={}".format(time.time() - st))
 
         if server:
             if not isinstance(addrs, (list, tuple)):
@@ -116,7 +116,7 @@ class Emailer(Loggable):
                 st = time.time()
                 server.sendmail(self.sender, addrs, msg.as_string())
                 server.quit()
-                self.debug('server.sendmail duration={}'.format(time.time()-st))
+                self.debug("server.sendmail duration={}".format(time.time() - st))
                 return True
             except BaseException as e:
                 self.warning("Failed sending mail. {}".format(e))

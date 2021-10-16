@@ -109,7 +109,7 @@ class GaugeNode(RootNode):
 
 
 class ColdFingerNode(RootNode):
-    tag = 'coldfinger'
+    tag = "coldfinger"
     precedence = 71
 
 

@@ -21,7 +21,10 @@ import math
 import os
 
 from pychron.canvas.canvas2D.scene.primitives.primitives import Image
-from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle, CircleStage
+from pychron.canvas.canvas2D.scene.primitives.rounded import (
+    RoundedRectangle,
+    CircleStage,
+)
 from pychron.paths import icons, paths
 
 
@@ -33,7 +36,7 @@ class Laser(RoundedRectangle):
     cnt_tol = 5
     radius = 4
     use_symbol = True
-    
+
     def __init__(self, x, y, *args, **kw):
         super(Laser, self).__init__(x, y, *args, **kw)
         # path = os.path.join(icons, 'laser.png')
@@ -60,7 +63,7 @@ class Laser(RoundedRectangle):
                 # h = w
                 w = 40
                 h = 32
-                gc.translate_ctm((ww - w) / 2., hh/8)
+                gc.translate_ctm((ww - w) / 2.0, hh / 8)
                 with gc:
                     gc.set_line_width(3)
                     gc.move_to(0, 0)
@@ -74,19 +77,20 @@ class Laser(RoundedRectangle):
                 # gc.arc(w/2, 10, 3, 0, 360)
                 # gc.draw_path()
 
-                gc.translate_ctm(w/2, 12)
+                gc.translate_ctm(w / 2, 12)
                 gc.move_to(0, 0)
                 gc.line_to(14, 0)
                 gc.stroke_path()
 
                 n = 8
-                step = 360/n
+                step = 360 / n
                 for i in range(n):
                     with gc:
                         gc.rotate_ctm(math.radians(i * step))
                         gc.move_to(0, 0)
                         gc.line_to(8, 0)
                         gc.stroke_path()
+
     #     iw = 60
     #     gc.translate_ctm((w - iw) / 2, 0)
     #     self._img.render(gc)
@@ -129,5 +133,6 @@ class Laser(RoundedRectangle):
     #             gc.draw_path()
     #
     #     self.increment_cnt()
+
 
 # ============= EOF =============================================
