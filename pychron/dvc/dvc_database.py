@@ -87,22 +87,22 @@ def make_filter(qq, table, col="value"):
     comp = qq.comparator
     v = qq.criterion
     if comp == "<":
-        ffunc = '__lt__'
+        ffunc = "__lt__"
         # ffunc = lambda col: col.__lt__(v)
     elif comp == ">":
-        ffunc = '__gt__'
+        ffunc = "__gt__"
         # ffunc = lambda col: col.__gt__(v)
     elif comp == ">=":
-        ffunc = '__ge__'
+        ffunc = "__ge__"
         # ffunc = lambda col: col.__ge__(v)
     elif comp == "<=":
-        ffunc = '__le__'
+        ffunc = "__le__"
         # ffunc = lambda col: col.__le__(v)
     elif comp == "==":
-        ffunc = '__eq__'
+        ffunc = "__eq__"
         # ffunc = lambda col: col.__eq__(v)
     elif comp == "!=":
-        ffunc = '__ne__'
+        ffunc = "__ne__"
         # ffunc = lambda col: col.__ne__(v)
 
     col = getattr(table, col)
