@@ -416,6 +416,7 @@ class IsoDBTransfer(Loggable):
         dest = self.dvc.db
 
         with src.session_ctx():
+
             def key(x):
                 return x.split("-")[0]
 
