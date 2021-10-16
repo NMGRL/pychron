@@ -8,10 +8,10 @@ from pychron.core.stats.tests.mswd_tests import MSWDTestCase
 #
 # # Core
 # from pychron.core.tests.spell_correct import SpellCorrectTestCase
-# from pychron.core.tests.filtering_tests import FilteringTestCase
+from pychron.core.tests.filtering_tests import FilteringTestCase
 # from pychron.core.stats.tests.peak_detection_test import MultiPeakDetectionTestCase
-# from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
-# from pychron.core.helpers.tests.strtools import CamelCaseTestCase
+from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
+from pychron.core.helpers.tests.strtools import CamelCaseTestCase
 # from pychron.core.xml.tests.xml_parser import XMLParserTestCase
 # from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
 #     FilterOLSRegressionTest, OLSRegressionTest2, TruncateRegressionTest
@@ -84,11 +84,11 @@ def suite():
         # Core
         AlphaTestCase,
         # SpellCorrectTestCase,
-        # FilteringTestCase,
+        FilteringTestCase,
         # MultiPeakDetectionTestCase,
-        # FloatfmtTestCase,
+        FloatfmtTestCase,
         SigFigStdFmtTestCase,
-        # CamelCaseTestCase,
+        CamelCaseTestCase,
         # RatioTestCase,
         # XMLParserTestCase,
         # OLSRegressionTest,
@@ -134,7 +134,7 @@ def suite():
         # AgeConverterTestCase,
 
         # Pyscripts
-        WaitForTestCase,
+        # WaitForTestCase,
         # InterpolationTestCase,
         # DocstrContextTestCase,
 

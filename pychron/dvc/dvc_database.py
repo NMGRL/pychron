@@ -87,19 +87,27 @@ def make_filter(qq, table, col="value"):
     comp = qq.comparator
     v = qq.criterion
     if comp == "<":
-        ffunc = lambda col: col.__lt__(v)
+        ffunc = '__lt__'
+        # ffunc = lambda col: col.__lt__(v)
     elif comp == ">":
-        ffunc = lambda col: col.__gt__(v)
+        ffunc = '__gt__'
+        # ffunc = lambda col: col.__gt__(v)
     elif comp == ">=":
-        ffunc = lambda col: col.__ge__(v)
+        ffunc = '__ge__'
+        # ffunc = lambda col: col.__ge__(v)
     elif comp == "<=":
-        ffunc = lambda col: col.__le__(v)
+        ffunc = '__le__'
+        # ffunc = lambda col: col.__le__(v)
     elif comp == "==":
-        ffunc = lambda col: col.__eq__(v)
+        ffunc = '__eq__'
+        # ffunc = lambda col: col.__eq__(v)
     elif comp == "!=":
-        ffunc = lambda col: col.__ne__(v)
+        ffunc = '__ne__'
+        # ffunc = lambda col: col.__ne__(v)
 
-    nclause = ffunc(getattr(table, col))
+    col = getattr(table, col)
+    nclause = getattr(col, ffunc)(v)
+    # nclause = ffunc(getattr(table, col))
 
     chain = ""
     if qq.show_chain:

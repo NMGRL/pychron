@@ -22,14 +22,14 @@ jobs:
       - name: Run flake8
         uses: py-actions/flake8@v1
         with:
-          ignore: "F401"
-          exclude: "docs,sandbox,tests,alembic_dvc,zobs"
+          ignore: "F401,E501"
+          exclude: "docs,sandbox,test,alembic_dvc,zobs"
           max-line-length: "100"
   build:
     name:  Pychron Install via EDM (${{ matrix.python-version }}, ${{ matrix.os }})
     strategy:
       matrix:
-        os: [ macos-latest, ubuntu-latest, windows-latest ]
+        os: [ macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -49,7 +49,7 @@ jobs:
         run: >
           edm install -y chaco certifi cython envisage future gitpython keyring jinja2 lxml numpy pandas patsy pillow
           pip pyface pyparsing pyproj pymysql pyqt5 pytables pyyaml pygments qt Reportlab requests
-          scipy sqlalchemy traits xlrd xlsxwriter xlwt flake8 pytest
+          scipy sqlalchemy traits xlrd xlsxwriter xlwt pytest
       - name: Install PIP dependencies
         run: >
           ~/.edm/envs/edm/bin/python -m pip install --no-dependencies uncertainties statsmodels qimage2ndarray peakutils
