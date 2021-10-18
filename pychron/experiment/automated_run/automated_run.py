@@ -1431,6 +1431,7 @@ class AutomatedRun(Loggable):
         return self._start_script(EXTRACTION)
 
     def start_measurement(self):
+        self.persister.insure_run()
         return self._start_script(MEASUREMENT)
 
     def do_extraction(self):
