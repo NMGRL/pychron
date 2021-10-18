@@ -5,9 +5,9 @@ name: Pychron Install via EDM with pytest suite
 
 on:
   push:
-    branches: [ dev/dr ]
+    branches: [ dev/dr, hot/dr, hot/dc]
   pull_request:
-    branches: [ dev/dr ]
+    branches: [ dev/dr , hot/dr, hot/dc]
 
 jobs:
   build:
@@ -34,10 +34,10 @@ jobs:
         run: >
           edm install -y chaco certifi cython envisage future gitpython keyring jinja2 lxml numpy pandas patsy pillow
           pip pyface pyparsing pyproj pymysql pyqt5 pytables pyyaml pygments qt Reportlab requests
-          scipy sqlalchemy traits xlrd xlsxwriter xlwt pytest
+          scipy sqlalchemy traits xlrd xlsxwriter xlwt pytest statsmodels
       - name: Install PIP dependencies
         run: >
-          ~/.edm/envs/edm/bin/python -m pip install --no-dependencies uncertainties statsmodels qimage2ndarray peakutils
+          ~/.edm/envs/edm/bin/python -m pip install --no-dependencies uncertainties qimage2ndarray peakutils
       - name: Test with pytest
         run: |
           ~/.edm/envs/edm/bin/python -m unittest pychron/test_suite.py

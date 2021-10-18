@@ -8,16 +8,16 @@ from pychron.core.stats.tests.mswd_tests import MSWDTestCase
 # from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
 #
 # # Core
-# from pychron.core.tests.spell_correct import SpellCorrectTestCase
+from pychron.core.tests.spell_correct import SpellCorrectTestCase
 from pychron.core.tests.filtering_tests import FilteringTestCase
 
 # from pychron.core.stats.tests.peak_detection_test import MultiPeakDetectionTestCase
 from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
 from pychron.core.helpers.tests.strtools import CamelCaseTestCase
 
-# from pychron.core.xml.tests.xml_parser import XMLParserTestCase
-# from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
-#     FilterOLSRegressionTest, OLSRegressionTest2, TruncateRegressionTest
+from pychron.core.xml.tests.xml_parser import XMLParserTestCase
+from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
+    FilterOLSRegressionTest, OLSRegressionTest2, TruncateRegressionTest
 from pychron.core.tests.alpha_tests import AlphaTestCase
 
 
@@ -46,7 +46,7 @@ from pychron.core.tests.alpha_tests import AlphaTestCase
 #
 # # Processing
 # from pychron.processing.tests.plateau import PlateauTestCase
-# from pychron.processing.tests.ratio import RatioTestCase
+from pychron.processing.tests.ratio import RatioTestCase
 # from pychron.processing.tests.age_converter import AgeConverterTestCase
 #
 # # Pyscripts
@@ -88,19 +88,19 @@ def suite():
         # CalibrationObjectTestCase,
         # Core
         AlphaTestCase,
-        # SpellCorrectTestCase,
+        SpellCorrectTestCase,
         FilteringTestCase,
         # MultiPeakDetectionTestCase,
         FloatfmtTestCase,
         SigFigStdFmtTestCase,
         CamelCaseTestCase,
-        # RatioTestCase,
-        # XMLParserTestCase,
-        # OLSRegressionTest,
-        # MeanRegressionTest,
-        # FilterOLSRegressionTest,
-        # OLSRegressionTest2,
-        # TruncateRegressionTest,
+        RatioTestCase,
+        XMLParserTestCase,
+        OLSRegressionTest,
+        MeanRegressionTest,
+        FilterOLSRegressionTest,
+        OLSRegressionTest2,
+        TruncateRegressionTest,
         MSWDTestCase,
         # old
         # ExpoRegressionTest,
