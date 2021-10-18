@@ -38,7 +38,7 @@ jobs:
       - name: Install PIP dependencies
         run: >
           ~/.edm/envs/edm/bin/python -m pip install --no-dependencies uncertainties qimage2ndarray peakutils
-      - name: Test with pytest
+      - name: Test with unittest
         run: |
           ~/.edm/envs/edm/bin/python -m unittest pychron/test_suite.py
 

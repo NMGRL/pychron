@@ -4,23 +4,17 @@ import os
 from datetime import datetime
 
 from pychron.core.helpers.filetools import unique_date_path
-from pychron.core.test_helpers import get_data_dir as mget_data_dir
 
 __author__ = "ross"
 
 import unittest
 
 
-def get_data_dir():
-    op = "pychron/experiment/tests/data"
-    return mget_data_dir(op)
-
-
 class BackupTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.dt = datetime.now().strftime("%m-%d-%Y")
-        cls.root = get_data_dir()
+        cls.root = ''
 
     def test_unique_date_path(self):
         self._test("a")
@@ -37,8 +31,10 @@ class BackupTestCase(unittest.TestCase):
         with open(p, "w"):
             pass
 
-        p = unique_date_path(self.root, base)
-        self.assertEqual(os.path.basename(p), "{}_{}-002.txt".format(base, self.dt))
+        p2 = unique_date_path(self.root, base)
+        self.assertEqual(os.path.basename(p2), "{}_{}-002.txt".format(base, self.dt))
+        os.remove(p)
+
 
 
 if __name__ == "__main__":
