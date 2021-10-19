@@ -1,7 +1,6 @@
 import os
 import unittest
 
-from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
 from pychron.core.helpers.tests.floatfmt import SigFigStdFmtTestCase
 from pychron.core.stats.tests.mswd_tests import MSWDTestCase
 
@@ -31,8 +30,6 @@ from pychron.external_pipette.tests.external_pipette import ExternalPipetteTestC
 from pychron.processing.tests.age_converter import AgeConverterTestCase
 from pychron.processing.tests.plateau import PlateauTestCase
 from pychron.processing.tests.ratio import RatioTestCase
-from pychron.spectrometer.tests.mftable import MFTableTestCase
-from pychron.stage.tests.stage_map import StageMapTestCase, TransformTestCase
 #
 # os.environ['MassSpecDBVersion'] = '16'
 #
