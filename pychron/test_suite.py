@@ -1,6 +1,7 @@
 import os
 import unittest
 
+from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
 from pychron.core.helpers.tests.floatfmt import SigFigStdFmtTestCase
 from pychron.core.stats.tests.mswd_tests import MSWDTestCase
 
@@ -8,6 +9,7 @@ from pychron.core.stats.tests.mswd_tests import MSWDTestCase
 # from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
 #
 # # Core
+from pychron.core.stats.tests.peak_detection_test import MultiPeakDetectionTestCase
 from pychron.core.tests.spell_correct import SpellCorrectTestCase
 from pychron.core.tests.filtering_tests import FilteringTestCase
 
@@ -33,6 +35,8 @@ from pychron.external_pipette.tests.external_pipette import ExternalPipetteTestC
 from pychron.processing.tests.age_converter import AgeConverterTestCase
 from pychron.processing.tests.plateau import PlateauTestCase
 from pychron.processing.tests.ratio import RatioTestCase
+from pychron.spectrometer.tests.integration_time import IntegrationTimeTestCase
+from pychron.spectrometer.tests.mftable import DiscreteMFTableTestCase
 from pychron.stage.tests.stage_map import StageMapTestCase, TransformTestCase
 #
 # os.environ['MassSpecDBVersion'] = '16'
@@ -61,12 +65,12 @@ def suite():
 
     tests = (
         # Canvas
-        # CalibrationObjectTestCase,
+        CalibrationObjectTestCase,
         # Core
         AlphaTestCase,
         SpellCorrectTestCase,
         FilteringTestCase,
-        # MultiPeakDetectionTestCase,
+        MultiPeakDetectionTestCase,
         FloatfmtTestCase,
         SigFigStdFmtTestCase,
         CamelCaseTestCase,
@@ -113,8 +117,8 @@ def suite():
         # DocstrContextTestCase,
         # Spectrometer
         # MFTableTestCase,
-        # DiscreteMFTableTestCase,
-        # IntegrationTimeTestCase,
+        DiscreteMFTableTestCase,
+        IntegrationTimeTestCase,
 
         # Stage
         StageMapTestCase,
