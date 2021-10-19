@@ -14,10 +14,12 @@
 # limitations under the License.
 # ===============================================================================
 from traitsui.api import View, Item, ListEditor, InstanceEditor, VGroup, UCustom
+
+from pychron.extraction_line.device_manager import DeviceManager
 from pychron.managers.manager import Manager
 
 
-class PumpManager(Manager):
+class PumpManager(DeviceManager):
     def get_pressure(self, idx=0):
         try:
             d = self.devices[idx]
@@ -30,26 +32,6 @@ class PumpManager(Manager):
                 )
             )
             return 0
-
-    def traits_view(self):
-        if self.devices:
-            v = View(
-                VGroup(
-                    UCustom(
-                        "devices",
-                        editor=ListEditor(
-                            mutable=False,
-                            columns=len(self.devices),
-                            style="custom",
-                            editor=InstanceEditor(view="pump_view"),
-                        ),
-                    )
-                ),
-                height=-100,
-            )
-        else:
-            v = View()
-        return v
 
 
 # ============= EOF =============================================

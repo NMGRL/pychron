@@ -102,6 +102,21 @@ class MeasurementPyScript(ValvePyScript):
     # ===============================================================================
     # commands
     # ===============================================================================
+    @verbose_skip
+    @command_register
+    def sink_data(self, n=100, delay=1, calc_time=False):
+        """
+
+        @param n: number of measurements
+        @param period: delay between measurements
+        @param calc_time:
+        @return:
+        """
+        if calc_time:
+            return n * delay
+        self._automated_run_call("py_sink_data", n=n, delay=delay)
+
+    @verbose_skip
     @command_register
     def measurement_delay(self, duration=None, message=None):
         if duration:

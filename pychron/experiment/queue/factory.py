@@ -37,6 +37,7 @@ from traits.api import (
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import glob_list_directory
+from pychron.core.pychron_traits import LoadNameStr
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.entry_views.user_entry import UserEntry
 from pychron.globals import globalv
@@ -81,7 +82,7 @@ class ExperimentQueueFactory(DVCAble, PersistenceLoggable):
     note = Str
     default_lighting = CInt(0)
 
-    load_name = Str(enter_set=True, auto_set=False)
+    load_name = LoadNameStr(enter_set=True, auto_set=False)
 
     select_existing_load_name_button = Button
 

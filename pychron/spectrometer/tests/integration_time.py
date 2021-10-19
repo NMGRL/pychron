@@ -1,6 +1,6 @@
 import unittest
 
-from pychron.spectrometer.thermo.spectrometer.base import normalize_integration_time
+from pychron.spectrometer.thermo.spectrometer import normalize_integration_time
 
 
 class IntegrationTimeTestCase(unittest.TestCase):
