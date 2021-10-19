@@ -42,8 +42,10 @@ SPECIAL_KEYS = []  # ba
 
 
 def load_identifiers_file():
-    p = os.path.join(paths.hidden_dir, "identifiers.yaml")
-    if os.path.isfile(p):
+    p = None
+    if paths.hidden_dir:
+        p = os.path.join(paths.hidden_dir, "identifiers.yaml")
+    if p and os.path.isfile(p):
         yd = yload(p)
     else:
         yd = yload(IDENTIFIERS_DEFAULT)

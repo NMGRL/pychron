@@ -214,7 +214,7 @@ class AutomatedRunPersister(BasePersister):
     """
     Save automated run data to file and database(s)
 
-    #. save meta data to the local_lab database. This keeps are local record of all analyses run on the local system
+    #. save meta data to the local_lab database. This keeps a local record of all analyses run on the local system
     #. save data to an HDF5 file using a ``H5DataManager``
     #. use the ``Datahub`` to save data to databases
 
@@ -267,6 +267,12 @@ class AutomatedRunPersister(BasePersister):
             "pychron.massspec.database.enabled",
             to_bool,
         )
+
+    def insure_run(self):
+        """
+        save the analysis to the local lab db now before the run has actually executed
+        """
+        self._local_db_save()
 
     # ===============================================================================
     # data writing

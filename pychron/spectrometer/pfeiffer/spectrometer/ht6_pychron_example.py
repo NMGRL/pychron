@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2021 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,35 +13,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-# ============= enthought library imports =======================
-# ============= standard library imports ========================
-from numpy import array, argmin
-
-# ============= local library imports  ==========================
-from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
+import socket
+import struct
+import time
 
 
-def normalize_integration_time(it):
+def measure(n, measurement):
     """
-    find the integration time closest to "it"
-    """
-    try:
-        x = array(QTEGRA_INTEGRATION_TIMES)
-        return x[argmin(abs(x - it))]
-    except TypeError:
-        return 1.0
 
+    n: number of cycles
+    measurement: either a name of a stored routine on client
+        or it could be the text of a .par file?
 
-def calculate_radius(m_e, hv, mfield):
     """
-    m_e= mass/charge
-    hv= accelerating voltage (V)
-    mfield= magnet field (H)
-    """
-    r = ((2 * m_e * hv) / mfield ** 2) ** 0.5
+    # get client
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(("localhost", 8089))
 
-    return r
+    # trigger measurement
+    client.send(f"trigger {measurement}")
+
+    records = []
+    # get the data
+    for i in range(int(n)):
+        size = client.recv(4)
+        size = struct.unpack("i", size)[0]
+        str_data = client.recv(size)
+        r = (time.time(), str_data.decode("ascii"))
+        records.append(r)
 
 
 # ============= EOF =============================================
