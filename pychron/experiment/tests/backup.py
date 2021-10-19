@@ -14,7 +14,7 @@ class BackupTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.dt = datetime.now().strftime("%m-%d-%Y")
-        cls.root = ''
+        cls.root = ""
 
     def test_unique_date_path(self):
         self._test("a")
@@ -34,7 +34,6 @@ class BackupTestCase(unittest.TestCase):
         p2 = unique_date_path(self.root, base)
         self.assertEqual(os.path.basename(p2), "{}_{}-002.txt".format(base, self.dt))
         os.remove(p)
-
 
 
 if __name__ == "__main__":

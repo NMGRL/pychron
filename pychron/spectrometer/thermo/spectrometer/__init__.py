@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from numpy import array, argmin
+
 # ============= local library imports  ==========================
 from pychron.pychron_constants import QTEGRA_INTEGRATION_TIMES
 
@@ -41,5 +42,6 @@ def calculate_radius(m_e, hv, mfield):
     r = ((2 * m_e * hv) / mfield ** 2) ** 0.5
 
     return r
+
 
 # ============= EOF =============================================

@@ -42,8 +42,10 @@ class BaseGitPlugin(BasePlugin):
             )
         try:
             self.debug("checking for gh cli")
-            subprocess.call(["gh", "--version"],
-                            stdout=subprocess.DEVNULL,)
+            subprocess.call(
+                ["gh", "--version"],
+                stdout=subprocess.DEVNULL,
+            )
             self.debug("github authentication handled by gh")
             return
         except FileNotFoundError:

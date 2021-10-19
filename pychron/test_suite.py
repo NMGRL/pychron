@@ -14,14 +14,25 @@ from pychron.core.helpers.tests.floatfmt import FloatfmtTestCase
 from pychron.core.helpers.tests.strtools import CamelCaseTestCase
 
 from pychron.core.xml.tests.xml_parser import XMLParserTestCase
-from pychron.core.regression.tests.regression import OLSRegressionTest, MeanRegressionTest, \
-    FilterOLSRegressionTest, OLSRegressionTest2, TruncateRegressionTest
+from pychron.core.regression.tests.regression import (
+    OLSRegressionTest,
+    MeanRegressionTest,
+    FilterOLSRegressionTest,
+    OLSRegressionTest2,
+    TruncateRegressionTest,
+)
 from pychron.core.tests.alpha_tests import AlphaTestCase
 from pychron.experiment.tests.backup import BackupTestCase
 from pychron.experiment.tests.comment_template import CommentTemplaterTestCase
-from pychron.experiment.tests.conditionals import ConditionalsTestCase, ParseConditionalsTestCase
+from pychron.experiment.tests.conditionals import (
+    ConditionalsTestCase,
+    ParseConditionalsTestCase,
+)
 from pychron.experiment.tests.duration_tracker import DurationTrackerTestCase
-from pychron.experiment.tests.frequency_test import FrequencyTestCase, FrequencyTemplateTestCase
+from pychron.experiment.tests.frequency_test import (
+    FrequencyTestCase,
+    FrequencyTemplateTestCase,
+)
 from pychron.experiment.tests.identifier import IdentifierTestCase
 from pychron.experiment.tests.peak_hop_parse import PeakHopYamlCase1, PeakHopTxtCase
 from pychron.experiment.tests.peak_hop_parse import PeakHopYamlCase2
@@ -31,6 +42,7 @@ from pychron.external_pipette.tests.external_pipette import ExternalPipetteTestC
 from pychron.processing.tests.age_converter import AgeConverterTestCase
 from pychron.processing.tests.plateau import PlateauTestCase
 from pychron.processing.tests.ratio import RatioTestCase
+
 #
 # os.environ['MassSpecDBVersion'] = '16'
 #
@@ -83,12 +95,10 @@ def suite():
         # old
         # ExpoRegressionTest,
         # ExpoRegressionTest2,
-
         # DataMapper
         # USGSVSCFileSourceUnittest,
         # USGSVSCIrradiationSourceUnittest,
         # NMGRLLegacySourceUnittest,
-
         # Experiment
         PeakHopYamlCase1,
         PeakHopYamlCase2,
@@ -117,10 +127,9 @@ def suite():
         # MFTableTestCase,
         DiscreteMFTableTestCase,
         IntegrationTimeTestCase,
-
         # Stage
         StageMapTestCase,
-        TransformTestCase
+        TransformTestCase,
     )
 
     for t in tests:

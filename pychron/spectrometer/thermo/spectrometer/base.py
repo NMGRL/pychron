@@ -624,8 +624,8 @@ class ThermoSpectrometer(BaseSpectrometer):
 
                 trap = config["trap"]
                 for tag, func in (
-                        ("voltage", self.source.read_trap_voltage),
-                        ("current", self.source.read_trap_current),
+                    ("voltage", self.source.read_trap_voltage),
+                    ("current", self.source.read_trap_current),
                 ):
                     # set trap voltage
                     v = trap.get(tag)
@@ -674,7 +674,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                 self.source.sync_parameters()
 
     def _ramp_trap_current(
-            self, v, step, period, use_ramp=False, tol=10, confirm=False
+        self, v, step, period, use_ramp=False, tol=10, confirm=False
     ):
         if use_ramp:
             self.debug("ramping trap current")
@@ -741,6 +741,7 @@ class ThermoSpectrometer(BaseSpectrometer):
     def _set_sub_cup_configuration(self, v):
         self._sub_cup_configuration = v
         self.ask("SetSubCupConfiguration {}".format(v))
+
 
 # if __name__ == '__main__':
 # s = Spectrometer()
