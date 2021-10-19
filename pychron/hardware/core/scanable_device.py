@@ -40,7 +40,7 @@ class ScanableDevice(ViewableDevice):
 
     is_scanable = Bool(False)
     scan_func = Any
-    scan_lock = None
+    _scan_lock = None
     timer = None
     scan_period = Float(1000, enter_set=True, auto_set=False)
     scan_width = Float(5, enter_set=True, auto_set=False)
@@ -61,6 +61,7 @@ class ScanableDevice(ViewableDevice):
 
     _scanning = Bool(False)
     _auto_started = False
+    _last_update = None
 
     def is_scanning(self):
         return self._scanning
@@ -177,11 +178,27 @@ class ScanableDevice(ViewableDevice):
                 else:
                     self._no_response_counter += 1
 
-    def scan(self, *args, **kw):
-        if self.scan_lock is None:
-            self.scan_lock = Lock()
+    def should_update(self):
+        """
+        This is used by scannable devices that are grouped into DeviceManagers
+        e.g Gauges, Pumps, Heaters
 
-        with self.scan_lock:
+        The DeviceManagers handle the scan function being called
+        """
+        su = True
+        if self._last_update:
+            if time.time() - self._last_update < self.scan_period * self.time_dict[self.scan_units]:
+                su = False
+        self._last_update = time.time()
+        return su
+
+    def lock_scan(self):
+        if self._scan_lock is None:
+            self._scan_lock = Lock()
+        return self._scan_lock
+
+    def scan(self, *args, **kw):
+        with self.lock_scan():
             self._scan_(*args, **kw)
 
     def start_scan(self, period=None):

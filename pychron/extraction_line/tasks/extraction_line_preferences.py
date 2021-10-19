@@ -26,6 +26,7 @@ from traitsui.group import Tabbed
 from traitsui.item import UItem
 
 # ============= local library imports  ==========================
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.envisage.tasks.base_preferences_helper import (
     BasePreferencesHelper,
@@ -74,7 +75,13 @@ class BaseExtractionLinePreferences(BasePreferencesHelper):
     volume_key = Str
 
     gauge_update_period = Int
-    use_gauge_update = Bool
+    gauge_update_enabled = Bool
+
+    pump_update_period = Int
+    pump_update_enabled = Bool
+
+    heater_update_period = Int
+    heater_update_enabled = Bool
 
     canvas_path = Str
     canvas_config_path = Str
@@ -112,7 +119,7 @@ class ExtractionLinePreferencesPane(PreferencesPane):
                         "display_volume",
                         label="Display Volume",
                         tooltip="Display the volume for selected section. Hover over section "
-                        'and hit the defined volume key (default="v")',
+                                'and hit the defined volume key (default="v")',
                     ),
                     Item(
                         "volume_key",
@@ -172,20 +179,55 @@ class ExtractionLinePreferencesPane(PreferencesPane):
         return p_grp
 
     def _get_gauge_group(self):
-        g_grp = VGroup(
+        g_grp = BorderVGroup(
             Item(
-                "use_gauge_update",
+                "gauge_update_enabled",
                 label="Use Gauge Update",
                 tooltip="Start a timer to periodically update the gauge pressures",
             ),
             Item(
                 "gauge_update_period",
                 label="Period",
-                tooltip="Delay between updates in seconds. "
-                "Set to 0 to use the gauge controllers configured value.",
-                enabled_when="use_gauge_update",
+                tooltip="Delay between updates in seconds. ",
+                enabled_when="gauge_update_enabled",
             ),
             label="Gauges",
+        )
+
+        return g_grp
+
+    def _get_heater_group(self):
+        g_grp = BorderVGroup(
+            Item(
+                "heater_update_enabled",
+                label="Use Heater Update",
+                tooltip="Start a timer to periodically update the heater temperatures",
+            ),
+            Item(
+                "heater_update_period",
+                label="Period",
+                tooltip="Delay between updates in seconds. ",
+                enabled_when="heater_update_enabled",
+            ),
+            label="Heaters",
+        )
+
+        return g_grp
+
+    def _get_pump_group(self):
+        g_grp = BorderVGroup(
+            Item(
+                "pump_update_enabled",
+                label="Use Pump Update",
+                tooltip="Start a timer to periodically update the pump parameters",
+            ),
+            Item(
+                "pump_update_period",
+                label="Period",
+                tooltip="Delay between updates in seconds. ",
+                enabled_when="pump_update_enabled",
+            ),
+            label="Pumps",
         )
 
         return g_grp
@@ -193,12 +235,14 @@ class ExtractionLinePreferencesPane(PreferencesPane):
     def _get_tabs(self):
         p_grp = self._get_path_group()
         v_grp = self._get_valve_group()
-        g_grp = self._get_gauge_group()
-        return p_grp, v_grp, g_grp
+        d_grp = VGroup(self._get_gauge_group(),
+                       self._get_heater_group(),
+                       self._get_pump_group(),
+                       label='Device Managers')
+        return p_grp, v_grp, d_grp
 
     def traits_view(self):
         mgrp = VGroup(Item("logging_level"))
         return View(VGroup(Tabbed(*self._get_tabs()), mgrp))
-
 
 # ============= EOF =============================================

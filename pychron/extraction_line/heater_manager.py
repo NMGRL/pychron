@@ -18,48 +18,12 @@ from threading import Thread
 from traits.api import List, Float, Event, Bool, Property
 from traitsui.api import View, Item, UItem, ButtonEditor, InstanceEditor, ListEditor
 
+from pychron.extraction_line.device_manager import DeviceManager
 from pychron.managers.manager import Manager
 
 
-class HeaterManager(Manager):
-    period = Float(5)
-    is_alive = Bool
-
-    def finish_loading(self, *args, **kw):
-        super().finish_loading(*args, **kw)
-        for di in self.devices:
-            di.load_from_device()
-
-    def start_scans(self):
-        self._thread = Thread(target=self._scan)
-        self._thread.start()
-
-    def _scan(self):
-        self.is_alive = True
-        if self.devices:
-            while self.is_alive:
-                for h in self.devices:
-                    h.update()
-                time.sleep(self.period)
-
-    def stop_scans(self):
-        self.is_alive = False
-
-    def traits_view(self):
-        v = View(
-            Item(
-                "devices",
-                style="custom",
-                show_label=False,
-                editor=ListEditor(
-                    mutable=False,
-                    style="custom",
-                    editor=InstanceEditor(view="heater_view"),
-                ),
-            ),
-        )
-
-        return v
+class HeaterManager(DeviceManager):
+    device_view_name = 'heater_view'
 
 
 # ============= EOF =============================================
