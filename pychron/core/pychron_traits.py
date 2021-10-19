@@ -55,11 +55,11 @@ class URLStr(BaseStr):
 class HostStr(BaseStr):
     def validate(self, obj, name, value):
         if (
-            not value
-            or value == "localhost"
-            or IPREGEX.match(value)
-            or URLREGEX.match(value)
-            or "\\" in value
+                not value
+                or value == "localhost"
+                or IPREGEX.match(value)
+                or URLREGEX.match(value)
+                or "\\" in value
         ):
 
             return value
@@ -129,6 +129,17 @@ class RestrictedStr(BaseStr):
             return value
 
 
+LOADNAME_REGEX = re.compile(r'^[a-zA-z]*(?<!O)\d+$')
+
+
+class LoadNameStr(BaseStr):
+    def validate(self, obj, name, value):
+        if LOADNAME_REGEX.match(value):
+            return value
+        else:
+            self.error(obj, name, value)
+
+
 class BorderVGroup(VGroup):
     def _show_border_default(self):
         return True
@@ -137,6 +148,5 @@ class BorderVGroup(VGroup):
 class BorderHGroup(HGroup):
     def _show_border_default(self):
         return True
-
 
 # ============= EOF =============================================
