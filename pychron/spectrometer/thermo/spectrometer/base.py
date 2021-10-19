@@ -37,28 +37,6 @@ from pychron.spectrometer import get_spectrometer_config_path
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
 
 
-def normalize_integration_time(it):
-    """
-    find the integration time closest to "it"
-    """
-    try:
-        x = array(QTEGRA_INTEGRATION_TIMES)
-        return x[argmin(abs(x - it))]
-    except TypeError:
-        return 1.0
-
-
-def calculate_radius(m_e, hv, mfield):
-    """
-    m_e= mass/charge
-    hv= accelerating voltage (V)
-    mfield= magnet field (H)
-    """
-    r = ((2 * m_e * hv) / mfield ** 2) ** 0.5
-
-    return r
-
-
 class ThermoSpectrometer(BaseSpectrometer):
     integration_time = Float
     integration_times = List(QTEGRA_INTEGRATION_TIMES)
@@ -646,8 +624,8 @@ class ThermoSpectrometer(BaseSpectrometer):
 
                 trap = config["trap"]
                 for tag, func in (
-                    ("voltage", self.source.read_trap_voltage),
-                    ("current", self.source.read_trap_current),
+                        ("voltage", self.source.read_trap_voltage),
+                        ("current", self.source.read_trap_current),
                 ):
                     # set trap voltage
                     v = trap.get(tag)
@@ -696,7 +674,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                 self.source.sync_parameters()
 
     def _ramp_trap_current(
-        self, v, step, period, use_ramp=False, tol=10, confirm=False
+            self, v, step, period, use_ramp=False, tol=10, confirm=False
     ):
         if use_ramp:
             self.debug("ramping trap current")
@@ -763,7 +741,6 @@ class ThermoSpectrometer(BaseSpectrometer):
     def _set_sub_cup_configuration(self, v):
         self._sub_cup_configuration = v
         self.ask("SetSubCupConfiguration {}".format(v))
-
 
 # if __name__ == '__main__':
 # s = Spectrometer()
