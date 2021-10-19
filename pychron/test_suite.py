@@ -1,6 +1,7 @@
 import os
 import unittest
 
+from pychron.canvas.canvas2D.tests.calibration_item import CalibrationObjectTestCase
 from pychron.core.helpers.tests.floatfmt import SigFigStdFmtTestCase
 from pychron.core.stats.tests.mswd_tests import MSWDTestCase
 
@@ -40,6 +41,11 @@ from pychron.processing.tests.ratio import RatioTestCase
 # use_logger = False
 #
 #
+from pychron.spectrometer.tests.integration_time import IntegrationTimeTestCase
+from pychron.spectrometer.tests.mftable import DiscreteMFTableTestCase
+from pychron.stage.tests.stage_map import StageMapTestCase, TransformTestCase
+
+
 def suite():
     # set env. variables
     os.environ["MassSpecDBVersion"] = "16"
@@ -57,7 +63,7 @@ def suite():
 
     tests = (
         # Canvas
-        # CalibrationObjectTestCase,
+        CalibrationObjectTestCase,
         # Core
         AlphaTestCase,
         SpellCorrectTestCase,
@@ -109,12 +115,12 @@ def suite():
         # DocstrContextTestCase,
         # Spectrometer
         # MFTableTestCase,
-        # DiscreteMFTableTestCase,
-        # IntegrationTimeTestCase,
+        DiscreteMFTableTestCase,
+        IntegrationTimeTestCase,
 
         # Stage
-        # StageMapTestCase,
-        # TransformTestCase
+        StageMapTestCase,
+        TransformTestCase
     )
 
     for t in tests:
