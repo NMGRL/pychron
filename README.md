@@ -2,6 +2,8 @@ Pychron
 ========
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3237834.svg)](https://doi.org/10.5281/zenodo.3237834)
 [![Format code](https://github.com/NMGRL/pychron/actions/workflows/format_code.yml/badge.svg?branch=develop)](https://github.com/NMGRL/pychron/actions/workflows/format_code.yml)
+[![Pychron Install via EDM with unittest suite](https://github.com/PychronLabsLLC/pychron/actions/workflows/unittests.
+yml/badge.svg)](https://github.com/PychronLabsLLC/pychron/actions/workflows/unittests.yml)
 
 [Changes](CHANGELOG.md)
 
