@@ -28,21 +28,19 @@ def measure(n, measurement):
     """
     # get client
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(('localhost', 8089))
+    client.connect(("localhost", 8089))
 
     # trigger measurement
-    client.send(f'trigger {measurement}')
+    client.send(f"trigger {measurement}")
 
     records = []
     # get the data
     for i in range(int(n)):
         size = client.recv(4)
-        size = struct.unpack('i', size)[0]
+        size = struct.unpack("i", size)[0]
         str_data = client.recv(size)
-        r = (time.time(), str_data.decode('ascii'))
+        r = (time.time(), str_data.decode("ascii"))
         records.append(r)
-
-
 
 
 # ============= EOF =============================================

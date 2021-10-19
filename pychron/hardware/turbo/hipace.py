@@ -35,8 +35,7 @@ import re
 BASE = r"^(?P<address>\d{3})(?P<action>\d{2})(?P<parameter>\d{2})(?P<datalength>\d{2})"
 RESPONSE_RE = re.compile(BASE)
 
-PARAMETERS = {'set_speed': 308,
-              'actual_speed': 309}
+PARAMETERS = {"set_speed": 308, "actual_speed": 309}
 
 
 def make_pattern(dl):
@@ -54,17 +53,17 @@ def calc_checksum(msg):
 
 
 class HiPace(CoreDevice):
-    scan_func = 'update'
+    scan_func = "update"
 
     def update(self):
         self.read_set_speed()
         self.read_actual_speed()
 
     def read_set_speed(self):
-        return self._read_parameter('set_speed')
+        return self._read_parameter("set_speed")
 
     def read_actual_speed(self):
-        return self._read_parameter('actual_speed')
+        return self._read_parameter("actual_speed")
 
     def _read_parameter(self, attr):
         param = PARAMETERS[attr]
@@ -107,9 +106,20 @@ class HiPace(CoreDevice):
                     return data
 
     def pump_view(self):
-        v = View(Item('setspeed', label='SetSpeed (308)', editor=LCDEditor(width=100, height=50)),
-                 Item('actualspeed', label='ActualSpeed (309)', editor=LCDEditor(width=100, height=50)))
+        v = View(
+            Item(
+                "setspeed",
+                label="SetSpeed (308)",
+                editor=LCDEditor(width=100, height=50),
+            ),
+            Item(
+                "actualspeed",
+                label="ActualSpeed (309)",
+                editor=LCDEditor(width=100, height=50),
+            ),
+        )
         return v
+
 
 # class HiPaceCommunicator(SerialCommunicator):
 #     def ask(self, action, parameter, data=None, *args, **kw):

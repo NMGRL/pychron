@@ -113,8 +113,8 @@ class MeasurementPyScript(ValvePyScript):
         @return:
         """
         if calc_time:
-            return n*delay
-        self._automated_run_call('py_sink_data', n=n, delay=delay)
+            return n * delay
+        self._automated_run_call("py_sink_data", n=n, delay=delay)
 
     @verbose_skip
     @command_register

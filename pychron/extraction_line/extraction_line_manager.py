@@ -140,9 +140,9 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def deactivate(self):
 
-        for t in ('gauge', 'heater', 'pump'):
-            self.info('start {} scans'.format(t))
-            man = getattr(self, '{}_manager'.format(t))
+        for t in ("gauge", "heater", "pump"):
+            self.info("start {} scans".format(t))
+            man = getattr(self, "{}_manager".format(t))
             man.stop_scans()
 
         if self.monitor:
@@ -176,8 +176,8 @@ class ExtractionLineManager(Manager, Consoleable):
 
         self.console_bind_preferences("{}.console".format(prefid))
 
-        for t in ('gauge', 'heater', 'pump'):
-            man = getattr(self, '{}_manager'.format(t))
+        for t in ("gauge", "heater", "pump"):
+            man = getattr(self, "{}_manager".format(t))
             if man:
                 bind_preference(
                     man,
@@ -630,9 +630,9 @@ class ExtractionLineManager(Manager, Consoleable):
         self.monitor.monitor()
 
         # start the managers 'a scanning
-        for t in ('gauge', 'heater', 'pump'):
-            self.info('start {} scans'.format(t))
-            man = getattr(self, '{}_manager'.format(t))
+        for t in ("gauge", "heater", "pump"):
+            self.info("start {} scans".format(t))
+            man = getattr(self, "{}_manager".format(t))
             man.start_scans()
 
         if self.switch_manager and self.use_hardware_update:
@@ -850,7 +850,7 @@ class ExtractionLineManager(Manager, Consoleable):
             "cryo_manager",
             "manometer_manager",
             "heater_manager",
-            'pump_manager',
+            "pump_manager",
         ):
             if manager == "switch_manager":
                 man = self._switch_manager_factory()

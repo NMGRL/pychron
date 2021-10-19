@@ -119,7 +119,7 @@ class ExtractionLinePreferencesPane(PreferencesPane):
                         "display_volume",
                         label="Display Volume",
                         tooltip="Display the volume for selected section. Hover over section "
-                                'and hit the defined volume key (default="v")',
+                        'and hit the defined volume key (default="v")',
                     ),
                     Item(
                         "volume_key",
@@ -235,14 +235,17 @@ class ExtractionLinePreferencesPane(PreferencesPane):
     def _get_tabs(self):
         p_grp = self._get_path_group()
         v_grp = self._get_valve_group()
-        d_grp = VGroup(self._get_gauge_group(),
-                       self._get_heater_group(),
-                       self._get_pump_group(),
-                       label='Device Managers')
+        d_grp = VGroup(
+            self._get_gauge_group(),
+            self._get_heater_group(),
+            self._get_pump_group(),
+            label="Device Managers",
+        )
         return p_grp, v_grp, d_grp
 
     def traits_view(self):
         mgrp = VGroup(Item("logging_level"))
         return View(VGroup(Tabbed(*self._get_tabs()), mgrp))
+
 
 # ============= EOF =============================================

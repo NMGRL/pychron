@@ -187,7 +187,10 @@ class ScanableDevice(ViewableDevice):
         """
         su = True
         if self._last_update:
-            if time.time() - self._last_update < self.scan_period * self.time_dict[self.scan_units]:
+            if (
+                time.time() - self._last_update
+                < self.scan_period * self.time_dict[self.scan_units]
+            ):
                 su = False
         self._last_update = time.time()
         return su

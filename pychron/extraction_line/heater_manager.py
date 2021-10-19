@@ -23,7 +23,7 @@ from pychron.managers.manager import Manager
 
 
 class HeaterManager(DeviceManager):
-    device_view_name = 'heater_view'
+    device_view_name = "heater_view"
 
 
 # ============= EOF =============================================

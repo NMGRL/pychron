@@ -76,7 +76,7 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         # get the data
         header = None
         cnt = 1
-        start_time=st = time.time()
+        start_time = st = time.time()
         isotopes = {}
         while 1:
             if cnt > n:
@@ -88,44 +88,58 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
 
             st = time.time()
             size = sock.recv(4)
-            size = struct.unpack('i', size)[0]
+            size = struct.unpack("i", size)[0]
             str_data = sock.recv(size)
             # self.debug(str_data)
-            s = str_data.decode('ascii')
+            s = str_data.decode("ascii")
 
             self.debug(s)
 
-            s = s.replace('False', '"False"')
-            s = s.replace('True', '"True"')
+            s = s.replace("False", '"False"')
+            s = s.replace("True", '"True"')
             obj = json.loads(s)
             # if not i:
             # construct and write the header
             keys = list(obj.keys())
 
-            if 'amuNames' not in keys:
+            if "amuNames" not in keys:
                 continue
 
             if not header:
-                masses = ['mass({})'.format(m) for m in obj['amuNames']]
-                header = ['count', 'time', ] + masses + keys
+                masses = ["mass({})".format(m) for m in obj["amuNames"]]
+                header = (
+                    [
+                        "count",
+                        "time",
+                    ]
+                    + masses
+                    + keys
+                )
                 writer.writerow(header)
 
             raw = [obj[h] for h in keys]
-            intensities = obj['intensity']
+            intensities = obj["intensity"]
             ct = time.time()
-            for m, si in zip(obj['amuNames'], intensities):
+            for m, si in zip(obj["amuNames"], intensities):
                 if m not in isotopes:
-                    iso = Isotope(m, 'Detector')
+                    iso = Isotope(m, "Detector")
                     iso.name = m
                     isotopes[m] = iso
                 else:
                     iso = isotopes[m]
 
-                iso.xs = npappend(iso.xs, ct-start_time)
+                iso.xs = npappend(iso.xs, ct - start_time)
                 iso.ys = npappend(iso.ys, si)
 
-            row = [cnt, ct, ] + intensities + raw
-            self.debug('sinking row: {}'.format(row))
+            row = (
+                [
+                    cnt,
+                    ct,
+                ]
+                + intensities
+                + raw
+            )
+            self.debug("sinking row: {}".format(row))
             writer.writerow(row)
             cnt += 1
         return IsotopeGroup(isotopes=isotopes)
