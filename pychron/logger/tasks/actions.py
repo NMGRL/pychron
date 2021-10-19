@@ -30,7 +30,7 @@ from pychron.paths import paths
 
 
 class LogViewerAction(TaskAction):
-    name = 'Open Log Viewer...'
+    name = "Open Log Viewer..."
     path = None
 
     def perform(self, event):
@@ -38,18 +38,19 @@ class LogViewerAction(TaskAction):
         if path is None:
             try:
                 import twisted._version
-                wildcard = '*.log;*.json|log|*.json'
-            except ImportError:
-                wildcard = '*.log'
 
-            dlg = FileDialog(action='open',
-                             wildcard=wildcard,
-                             default_directory=paths.log_dir)
+                wildcard = "*.log;*.json|log|*.json"
+            except ImportError:
+                wildcard = "*.log"
+
+            dlg = FileDialog(
+                action="open", wildcard=wildcard, default_directory=paths.log_dir
+            )
             if dlg.open() == OK:
                 path = dlg.path
 
         if path:
-            klass = TwistedLogModel if path.endswith('.json') else LogModel
+            klass = TwistedLogModel if path.endswith(".json") else LogModel
             lm = klass()
             lm.open_file(path)
             lv = LogViewer(model=lm)
@@ -57,7 +58,8 @@ class LogViewerAction(TaskAction):
 
 
 class CurrentLogViewerAction(LogViewerAction):
-    name = 'Current Log Viewer'
-    path = os.path.join(paths.log_dir, 'pychron.current.log')
+    name = "Current Log Viewer"
+    path = os.path.join(paths.log_dir, "pychron.current.log")
+
 
 # ============= EOF =============================================

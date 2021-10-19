@@ -18,13 +18,14 @@
 from __future__ import absolute_import
 from traits.api import HasTraits, Enum, List, Instance, File, Str, Password, Dict
 from traitsui.api import View, Item, UItem, VGroup, InstanceEditor, ListStrEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 
 
 class IrradiationAdapter(TabularAdapter):
-    columns = [('Irradiation', 'name')]
+    columns = [("Irradiation", "name")]
 
 
 class BaseExportDestination(HasTraits):
@@ -36,10 +37,10 @@ class FileDestination(BaseExportDestination):
     path = File
 
     def to_dict(self):
-        return {'path': self.path}
+        return {"path": self.path}
 
     def traits_view(self):
-        v = View(Item('path'))
+        v = View(Item("path"))
         return v
 
 
@@ -62,18 +63,18 @@ class MassSpecDestination(BaseExportDestination):
     password = Password
 
     def to_dict(self):
-        return {attr:getattr(self, attr) for attr in ('name','host','username','password')}
+        return {
+            attr: getattr(self, attr)
+            for attr in ("name", "host", "username", "password")
+        }
 
     def traits_view(self):
-        v = View(VGroup(Item('name'),
-                        Item('host'),
-                        Item('username'),
-                        Item('password')))
+        v = View(VGroup(Item("name"), Item("host"), Item("username"), Item("password")))
         return v
 
 
 class ExportSelectionView(HasTraits):
-    export_type = Enum('MassSpec', 'XML', 'YAML', 'XLS')
+    export_type = Enum("MassSpec", "XML", "YAML", "XLS")
     irradiations = List
     export_destination = Instance(BaseExportDestination)
     default_massspec_connection = Dict
@@ -88,31 +89,36 @@ class ExportSelectionView(HasTraits):
         return self.export_destination.to_dict()
 
     def _export_type_changed(self):
-        dest = globals()['{}Destination'.format(self.export_type)]
+        dest = globals()["{}Destination".format(self.export_type)]
         d = dest()
-        if self.export_type == 'MassSpec':
+        if self.export_type == "MassSpec":
             d.trait_set(**self.default_massspec_connection)
 
         self.export_destination = d
 
     def traits_view(self):
-        v = View(VGroup(UItem('export_type'),
-                        VGroup(UItem('export_destination',
-                                     style='custom',
-                                     editor=InstanceEditor()),
-                               label='Destination', show_border=True),
-                        UItem('irradiations',
-                              editor=ListStrEditor(selected='selected',
-                                                   multi_select=True))),
-                 buttons=['OK','Cancel'],
-                 resizable=True)
+        v = View(
+            VGroup(
+                UItem("export_type"),
+                VGroup(
+                    UItem(
+                        "export_destination", style="custom", editor=InstanceEditor()
+                    ),
+                    label="Destination",
+                    show_border=True,
+                ),
+                UItem(
+                    "irradiations",
+                    editor=ListStrEditor(selected="selected", multi_select=True),
+                ),
+            ),
+            buttons=["OK", "Cancel"],
+            resizable=True,
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     esv = ExportSelectionView()
     esv.configure_traits()
 # ============= EOF =============================================
-
-
-

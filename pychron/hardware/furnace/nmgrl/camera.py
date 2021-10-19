@@ -55,13 +55,17 @@ class NMGRLCamera(ConfigLoadable):
 
     @timeout
     def test_connection(self):
-        resp = self._session.get('http://{}/html/cam_pic.php'.format(self.host), timeout=2)
-        self.debug('testing connection Status Code: {}'.format(resp.status_code))
+        resp = self._session.get(
+            "http://{}/html/cam_pic.php".format(self.host), timeout=2
+        )
+        self.debug("testing connection Status Code: {}".format(resp.status_code))
         return resp.status_code == 200
 
     @timeout
     def get_image_data(self, size=None):
-        resp = self._session.get('http://{}/html/cam_pic.php'.format(self.host), timeout=2)
+        resp = self._session.get(
+            "http://{}/html/cam_pic.php".format(self.host), timeout=2
+        )
         if resp.status_code == 200:
             if resp.content:
                 buf = StringIO(resp.content)
@@ -78,13 +82,15 @@ class NMGRLCamera(ConfigLoadable):
     def load(self, *args, **kw):
         config = self.get_configuration()
         if config:
-            if config.has_section('General'):
-                name = self.config_get(config, 'General', 'name', optional=True)
+            if config.has_section("General"):
+                name = self.config_get(config, "General", "name", optional=True)
                 if name is not None:
                     self.name = name
 
-            if config.has_section('Communications'):
-                self.set_attribute(config, 'host', 'Communications', 'host', optional=False)
+            if config.has_section("Communications"):
+                self.set_attribute(
+                    config, "host", "Communications", "host", optional=False
+                )
             return True
 
             # def open(self, *args, **kw):
@@ -150,5 +156,6 @@ class NMGRLCamera(ConfigLoadable):
             #     img = fromstring(img)
             #     print img.shape
             #     return img
+
 
 # ============= EOF =============================================

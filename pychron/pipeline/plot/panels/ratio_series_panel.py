@@ -25,4 +25,5 @@ from pychron.pipeline.plot.plotter.ratio_series import RatioSeries
 class RatioSeriesPanel(FigurePanel):
     _figure_klass = RatioSeries
 
+
 # ============= EOF =============================================

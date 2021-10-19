@@ -36,15 +36,14 @@ def time_generator(start=None):
         yield time.time() - start
 
 
-def generate_datetimestamp(resolution='seconds'):
-    """
-    """
+def generate_datetimestamp(resolution="seconds"):
+    """ """
     ti = time.time()
-    if resolution == 'seconds':
+    if resolution == "seconds":
         r = time.strftime(ISO_FORMAT_STR)
     else:
         millisecs = math.modf(ti)[0] * 1000
-        r = '{}{:0.5f}'.format(time.strftime(ISO_FORMAT_STR), millisecs)
+        r = "{}{:0.5f}".format(time.strftime(ISO_FORMAT_STR), millisecs)
     return r
 
 
@@ -63,7 +62,7 @@ def get_datetime(timestamp=None):
     return d
 
 
-def get_date(fmt='%Y-%m-%d'):
+def get_date(fmt="%Y-%m-%d"):
     return time.strftime(fmt)
 
 
@@ -88,6 +87,7 @@ def convert_timestamp(timestamp, fmt=None):
 
 #    return time.mktime(t.timetuple()) + 1e-6 * t.microsecond
 # def convert_float(timestamp):
+
 
 def diff_timestamp(end, start=0):
     if not isinstance(end, datetime):
@@ -123,7 +123,7 @@ def bin_datetimes(ts, delta):
     yield low, high
 
 
-ISO8601 = '%Y-%m-%dT%H:%M:%SZ'
+ISO8601 = "%Y-%m-%dT%H:%M:%SZ"
 
 
 def format_iso_datetime(v, as_str=True):
@@ -132,11 +132,11 @@ def format_iso_datetime(v, as_str=True):
     else:
         v = datetime.strptime(v, ISO8601)
         if as_str:
-            v = v.strftime('%m-%d-%Y %H:%M')
+            v = v.strftime("%m-%d-%Y %H:%M")
     return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     times = [1, 2, 3, 4, 7, 20, 21, 22]
 
     for l, h in bin_datetimes(times, 5):

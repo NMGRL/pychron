@@ -47,13 +47,13 @@ PRECISION = 4.0 * EPS
 
 
 def betaFraction(x, p, q):
-    '''
-        @type p: C{str}
-        @param p:
+    """
+    @type p: C{str}
+    @param p:
 
-        @type q: C{str}
-        @param q:
-    '''
+    @type q: C{str}
+    @param q:
+    """
     """Evaluates of continued fraction part of incomplete beta function.
     
     Based on an idea from Numerical Recipes (W.H. Press et al, 1992)."""
@@ -87,10 +87,12 @@ def betaFraction(x, p, q):
         # odd index for d
         d = -(p + m) * (sum_pq + m) * x / ((p + m2) * (p_plus + m2))
         h = 1.0 + d * h
-        if abs(h) < XMININ: h = XMININ
+        if abs(h) < XMININ:
+            h = XMININ
         h = 1.0 / h
         c = 1.0 + d / c
-        if abs(c) < XMININ: c = XMININ
+        if abs(c) < XMININ:
+            c = XMININ
         delta = h * c
         frac *= delta
         m += 1
@@ -104,45 +106,79 @@ LOG_GAMMA_X_MAX_VALUE = 2.55e305
 lg_d1 = -0.5772156649015328605195174
 lg_d2 = 0.4227843350984671393993777
 lg_d4 = 1.791759469228055000094023
-lg_p1 = [4.945235359296727046734888,
-         201.8112620856775083915565, 2290.838373831346393026739,
-         11319.67205903380828685045, 28557.24635671635335736389,
-         38484.96228443793359990269, 26377.48787624195437963534,
-         7225.813979700288197698961]
-lg_q1 = [67.48212550303777196073036,
-         1113.332393857199323513008, 7738.757056935398733233834,
-         27639.87074403340708898585, 54993.10206226157329794414,
-         61611.22180066002127833352, 36351.27591501940507276287,
-         8785.536302431013170870835]
-lg_p2 = [4.974607845568932035012064,
-         542.4138599891070494101986, 15506.93864978364947665077,
-         184793.2904445632425417223, 1088204.76946882876749847,
-         3338152.967987029735917223, 5106661.678927352456275255,
-         3074109.054850539556250927]
-lg_q2 = [183.0328399370592604055942,
-         7765.049321445005871323047, 133190.3827966074194402448,
-         1136705.821321969608938755, 5267964.117437946917577538,
-         13467014.54311101692290052, 17827365.30353274213975932,
-         9533095.591844353613395747]
-lg_p4 = [14745.02166059939948905062,
-         2426813.369486704502836312, 121475557.4045093227939592,
-         2663432449.630976949898078, 29403789566.34553899906876,
-         170266573776.5398868392998, 492612579337.743088758812,
-         560625185622.3951465078242]
-lg_q4 = [2690.530175870899333379843,
-         639388.5654300092398984238, 41355999.30241388052042842,
-         1120872109.61614794137657, 14886137286.78813811542398,
-         101680358627.2438228077304, 341747634550.7377132798597,
-         446315818741.9713286462081]
-lg_c = [-0.001910444077728, 8.4171387781295e-4,
-        - 5.952379913043012e-4, 7.93650793500350248e-4,
-        - 0.002777777777777681622553, 0.08333333333333333331554247,
-        0.0057083835261]
+lg_p1 = [
+    4.945235359296727046734888,
+    201.8112620856775083915565,
+    2290.838373831346393026739,
+    11319.67205903380828685045,
+    28557.24635671635335736389,
+    38484.96228443793359990269,
+    26377.48787624195437963534,
+    7225.813979700288197698961,
+]
+lg_q1 = [
+    67.48212550303777196073036,
+    1113.332393857199323513008,
+    7738.757056935398733233834,
+    27639.87074403340708898585,
+    54993.10206226157329794414,
+    61611.22180066002127833352,
+    36351.27591501940507276287,
+    8785.536302431013170870835,
+]
+lg_p2 = [
+    4.974607845568932035012064,
+    542.4138599891070494101986,
+    15506.93864978364947665077,
+    184793.2904445632425417223,
+    1088204.76946882876749847,
+    3338152.967987029735917223,
+    5106661.678927352456275255,
+    3074109.054850539556250927,
+]
+lg_q2 = [
+    183.0328399370592604055942,
+    7765.049321445005871323047,
+    133190.3827966074194402448,
+    1136705.821321969608938755,
+    5267964.117437946917577538,
+    13467014.54311101692290052,
+    17827365.30353274213975932,
+    9533095.591844353613395747,
+]
+lg_p4 = [
+    14745.02166059939948905062,
+    2426813.369486704502836312,
+    121475557.4045093227939592,
+    2663432449.630976949898078,
+    29403789566.34553899906876,
+    170266573776.5398868392998,
+    492612579337.743088758812,
+    560625185622.3951465078242,
+]
+lg_q4 = [
+    2690.530175870899333379843,
+    639388.5654300092398984238,
+    41355999.30241388052042842,
+    1120872109.61614794137657,
+    14886137286.78813811542398,
+    101680358627.2438228077304,
+    341747634550.7377132798597,
+    446315818741.9713286462081,
+]
+lg_c = [
+    -0.001910444077728,
+    8.4171387781295e-4,
+    -5.952379913043012e-4,
+    7.93650793500350248e-4,
+    -0.002777777777777681622553,
+    0.08333333333333333331554247,
+    0.0057083835261,
+]
 
 
 def logGamma(x):
-    '''
-    '''
+    """ """
     """The natural logarithm of the gamma function.
 Based on public domain NETLIB (Fortran) code by W. J. Cody and L. Stoltz<BR>
 Applied Mathematics Division<BR>
@@ -178,7 +214,7 @@ The computation is believed to be free of underflow and overflow."""
         return -math.log(y)
 
     if y <= 1.5:
-        if (y < pnt68):
+        if y < pnt68:
             corr = -math.log(y)
             xm1 = y
         else:
@@ -201,7 +237,7 @@ The computation is believed to be free of underflow and overflow."""
                 xden = xden * xm2 + lg_q2[i]
             return corr + xm2 * (lg_d2 + xm2 * (xnum / xden))
 
-    if (y <= 4.0):
+    if y <= 4.0:
         xm2 = y - 2.0
         xden = 1.0
         xnum = 0.0
@@ -232,10 +268,10 @@ The computation is believed to be free of underflow and overflow."""
 
 
 def logBeta(p, q):
-    '''
-        @type q: C{str}
-        @param q:
-    '''
+    """
+    @type q: C{str}
+    @param q:
+    """
     """The natural logarithm of the beta function."""
     assert p > 0
     assert q > 0
@@ -246,13 +282,13 @@ def logBeta(p, q):
 
 
 def incompleteBeta(x, p, q):
-    '''
-        @type p: C{str}
-        @param p:
+    """
+    @type p: C{str}
+    @param p:
 
-        @type q: C{str}
-        @param q:
-    '''
+    @type q: C{str}
+    @param q:
+    """
     """Incomplete beta function.
 
     The computation is based on formulas from Numerical Recipes, Chapter 6.4 (W.H. Press et al, 1992).
@@ -282,16 +318,16 @@ MAX_ITERATIONS = 10000
 
 
 def findRoot(value, x_low, x_high, function):
-    '''
-        @type x_low: C{str}
-        @param x_low:
+    """
+    @type x_low: C{str}
+    @param x_low:
 
-        @type x_high: C{str}
-        @param x_high:
+    @type x_high: C{str}
+    @param x_high:
 
-        @type function: C{str}
-        @param function:
-    '''
+    @type function: C{str}
+    @param function:
+    """
     """Use the bisection method to find root such that function(root) == value."""
 
     guess = (x_high + x_low) / 2.0
@@ -313,25 +349,27 @@ def findRoot(value, x_low, x_high, function):
 
 
 def StudentTCDF(degree_of_freedom, X):
-    '''
-        @type X: C{str}
-        @param X:
-    '''
+    """
+    @type X: C{str}
+    @param X:
+    """
     """Student's T distribution CDF. Returns probability that a value x < X.
     
     Ported from Java: http://jsci.sourceforge.net/"""
 
-    A = 0.5 * incompleteBeta(degree_of_freedom / (degree_of_freedom + X * X), 0.5 * degree_of_freedom, 0.5)
+    A = 0.5 * incompleteBeta(
+        degree_of_freedom / (degree_of_freedom + X * X), 0.5 * degree_of_freedom, 0.5
+    )
     if X > 0:
         return 1 - A
     return A
 
 
 def InverseStudentT(degree_of_freedom, probability):
-    '''
-        @type probability: C{str}
-        @param probability:
-    '''
+    """
+    @type probability: C{str}
+    @param probability:
+    """
     """Inverse of Student's T distribution CDF. Returns the value x such that CDF(x) = probability.
 
     Ported from Java: http://jsci.sourceforge.net/
@@ -357,14 +395,14 @@ def InverseStudentT(degree_of_freedom, probability):
     def f(x):
         return StudentTCDF(degree_of_freedom, x)
 
-    return findRoot(probability, -10 ** 4, 10 ** 4, f)
+    return findRoot(probability, -(10 ** 4), 10 ** 4, f)
 
 
 def tinv(p, degree_of_freedom):
-    '''
-        @type degree_of_freedom: C{str}
-        @param degree_of_freedom:
-    '''
+    """
+    @type degree_of_freedom: C{str}
+    @param degree_of_freedom:
+    """
     """Similar to the TINV function in Excel
     
     p: 1-confidence (eg. 0.05 = 95% confidence)"""
@@ -375,8 +413,7 @@ def tinv(p, degree_of_freedom):
 
 
 def memoize(function):
-    '''
-    '''
+    """ """
     cache = {}
 
     def closure(*args):
@@ -392,10 +429,10 @@ cached_tinv = memoize(tinv)
 
 
 def stats(r, confidence_interval=0.05):
-    '''
-        @type confidence_interval: C{str}
-        @param confidence_interval:
-    '''
+    """
+    @type confidence_interval: C{str}
+    @param confidence_interval:
+    """
     """Returns statistics about a sequence of numbers.
 
     By default it computes the 95% confidence interval.

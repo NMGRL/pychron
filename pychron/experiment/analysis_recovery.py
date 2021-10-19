@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 from numpy import array
+
 # ============= local library imports  ==========================
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.automated_run.persistence import AutomatedRunPersister
@@ -33,22 +34,24 @@ import six
 
 class AnalysisRecoverer(Loggable):
     def recover_last_analysis(self):
-        self.debug('recover last analysis')
+        self.debug("recover last analysis")
 
         ldb = LocalLabAdapter()
 
         if not ldb.connect():
-            self.warning('No analyses to recover')
+            self.warning("No analyses to recover")
             return
 
         lt = ldb.get_last_analysis()
         if lt is None:
-            self.warning('No analyses to recover')
+            self.warning("No analyses to recover")
             return
 
-        self.debug('last analysis Time: {}, Identifier: {}, Aliquot: {}'.format(lt.create_date,
-                                                                                lt.labnumber,
-                                                                                lt.aliquot))
+        self.debug(
+            "last analysis Time: {}, Identifier: {}, Aliquot: {}".format(
+                lt.create_date, lt.labnumber, lt.aliquot
+            )
+        )
         persister = AutomatedRunPersister()
         datahub = Datahub()
         persister.datahub = datahub
@@ -72,7 +75,7 @@ class AnalysisRecoverer(Loggable):
         run_spec.identifier = lt.labnumber
         run_spec.aliquot = lt.aliquot
         run_spec.step = lt.step
-        run_spec.username = 'analysis_recovery'
+        run_spec.username = "analysis_recovery"
         run_spec.uuid = lt.uuid
 
         cp = lt.collection_path
@@ -80,18 +83,17 @@ class AnalysisRecoverer(Loggable):
         man.open_file(cp)
 
         # add signal/isotopes
-        group = man.get_group('signal')
+        group = man.get_group("signal")
         for grp in man.get_groups(group):
             isok = grp._v_name
-            iso = Isotope(name=isok,
-                          fit='linear')
+            iso = Isotope(name=isok, fit="linear")
 
             # only handle one detector per isotope
             tbl = man.get_tables(grp)[0]
 
             iso.detector = tbl._v_name
-            xs = array([x['time'] for x in tbl.iterrows()])
-            ys = array([x['value'] for x in tbl.iterrows()])
+            xs = array([x["time"] for x in tbl.iterrows()])
+            ys = array([x["value"] for x in tbl.iterrows()])
 
             iso.xs = xs
             iso.ys = ys
@@ -99,34 +101,32 @@ class AnalysisRecoverer(Loggable):
             arar_age.isotopes[isok] = iso
 
         # add sniffs
-        group = man.get_group('sniff')
+        group = man.get_group("sniff")
         for k, iso in six.iteritems(arar_age.isotopes):
             grp = man.get_group(k, group)
             tbl = man.get_tables(grp)[0]
 
             iso.sniff.detector = tbl._v_name
-            xs = array([x['time'] for x in tbl.iterrows()])
-            ys = array([x['value'] for x in tbl.iterrows()])
+            xs = array([x["time"] for x in tbl.iterrows()])
+            ys = array([x["value"] for x in tbl.iterrows()])
             iso.sniff.xs = xs
             iso.sniff.ys = ys
 
         # add baselines
-        group = man.get_group('baseline')
+        group = man.get_group("baseline")
         for dettbl in man.get_tables(group):
             detname = dettbl._v_name
 
-            xs = array([x['time'] for x in dettbl.iterrows()])
-            ys = array([x['value'] for x in dettbl.iterrows()])
+            xs = array([x["time"] for x in dettbl.iterrows()])
+            ys = array([x["value"] for x in dettbl.iterrows()])
 
             for iso in six.itervalues(arar_age.isotopes):
                 if iso.detector == detname:
                     iso.baseline.xs = xs
                     iso.baseline.ys = ys
-                    iso.baseline.fit = 'average'
+                    iso.baseline.fit = "average"
 
         return per_spec
 
+
 # ============= EOF =============================================
-
-
-

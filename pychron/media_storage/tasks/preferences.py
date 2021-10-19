@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Enum, Str, Password
 from traitsui.api import View, Item, VGroup
-from traitsui.editors import DirectoryEditor
+from traitsui.editors.api import DirectoryEditor
 
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 from pychron.media_storage import BACKENDS
@@ -26,7 +26,7 @@ from pychron.paths import paths
 
 
 class MediaStoragePreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.media_storage'
+    preferences_path = "pychron.media_storage"
     backend_kind = Enum(BACKENDS)
 
     root = Str
@@ -39,23 +39,30 @@ class MediaStoragePreferences(BasePreferencesHelper):
 
 class MediaStoragePreferencesPane(PreferencesPane):
     model_factory = MediaStoragePreferences
-    category = 'MediaStorage'
+    category = "MediaStorage"
 
     def traits_view(self):
-        local_grp = VGroup(Item('root', editor=DirectoryEditor(root_path=paths.media_storage_dir)),
-                           visible_when='backend_kind=="Local"')
-        remote_grp = VGroup(Item('host', label='Host'),
-                            Item('username', label='Username'),
-                            Item('password', label='Password'),
-                            visible_when='backend_kind in ("SFTP", "FTP", "SMB")')
+        local_grp = VGroup(
+            Item("root", editor=DirectoryEditor(root_path=paths.media_storage_dir)),
+            visible_when='backend_kind=="Local"',
+        )
+        remote_grp = VGroup(
+            Item("host", label="Host"),
+            Item("username", label="Username"),
+            Item("password", label="Password"),
+            visible_when='backend_kind in ("SFTP", "FTP", "SMB")',
+        )
 
-        smb_grp = VGroup(Item('smb_service_name', label='SMB Root Folder'),
-                         visible_when='backend_kind=="SMB"')
-        v = View(VGroup(Item('backend_kind',
-                             label='Backend'),
-                        local_grp,
-                        remote_grp,
-                        smb_grp))
+        smb_grp = VGroup(
+            Item("smb_service_name", label="SMB Root Folder"),
+            visible_when='backend_kind=="SMB"',
+        )
+        v = View(
+            VGroup(
+                Item("backend_kind", label="Backend"), local_grp, remote_grp, smb_grp
+            )
+        )
         return v
+
 
 # ============= EOF =============================================

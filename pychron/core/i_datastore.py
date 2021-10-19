@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Interface
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -33,5 +35,6 @@ class IDatastore(Interface):
 
     def is_connected(self):
         pass
+
 
 # ============= EOF =============================================

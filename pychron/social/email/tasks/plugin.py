@@ -29,10 +29,10 @@ from pychron.social.email.tasks.preferences import EmailPreferencesPane
 
 
 class EmailPlugin(BaseTaskPlugin):
-    id = 'pychron.social.email.plugin'
-    name = 'Email'
-    test_email_server_description = 'Test connection to the SMTP Email Server'
-    events = List(contributes_to='pychron.experiment.events')
+    id = "pychron.social.email.plugin"
+    name = "Email"
+    test_email_server_description = "Test connection to the SMTP Email Server"
+    events = List(contributes_to="pychron.experiment.events")
     experiment_notifier = Instance(ExperimentNotifier)
 
     def test_email_server(self):
@@ -47,8 +47,9 @@ class EmailPlugin(BaseTaskPlugin):
         return [EmailPreferencesPane]
 
     def _service_offers_default(self):
-        so = self.service_offer_factory(factory=self._email_factory,
-                                        protocol='pychron.social.email.emailer.Emailer')
+        so = self.service_offer_factory(
+            factory=self._email_factory, protocol="pychron.social.email.emailer.Emailer"
+        )
         return [so]
 
     def _experiment_notifier_default(self):
@@ -56,12 +57,19 @@ class EmailPlugin(BaseTaskPlugin):
         return exp
 
     def _events_default(self):
-        evts = [ExperimentEventAddition(id='pychron.experiment_notifier.start_queue',
-                                        action=self.experiment_notifier.start_queue,
-                                        level=START_QUEUE),
-                ExperimentEventAddition(id='pychron.experiment_notifier.end_queue',
-                                        action=self.experiment_notifier.end_queue,
-                                        level=END_QUEUE)]
+        evts = [
+            ExperimentEventAddition(
+                id="pychron.experiment_notifier.start_queue",
+                action=self.experiment_notifier.start_queue,
+                level=START_QUEUE,
+            ),
+            ExperimentEventAddition(
+                id="pychron.experiment_notifier.end_queue",
+                action=self.experiment_notifier.end_queue,
+                level=END_QUEUE,
+            ),
+        ]
         return evts
+
 
 # ============= EOF =============================================

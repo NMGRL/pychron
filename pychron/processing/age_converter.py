@@ -49,10 +49,10 @@ class AgeConverter(object):
 
     def set_constants(self, **kw):
         for k, v in kw.items():
-            setattr(self, '_{}'.format(k), v)
+            setattr(self, "_{}".format(k), v)
 
     def convert(self, age, error):
-        if hasattr(age, '__iter__'):
+        if hasattr(age, "__iter__"):
             m = len(age)
         else:
             m = 1
@@ -123,8 +123,12 @@ class AgeConverter(object):
         f = self._f
 
         # partial derivatives
-        pd_el = -(1. / lambda_total) * (age + (b * f * r / ((el ** 2) * umath.exp(lambda_total * age))))
-        pd_b = (1 / lambda_total) * ((f * r / (el * umath.exp(lambda_total * age))) - age)
+        pd_el = -(1.0 / lambda_total) * (
+            age + (b * f * r / ((el ** 2) * umath.exp(lambda_total * age)))
+        )
+        pd_b = (1 / lambda_total) * (
+            (f * r / (el * umath.exp(lambda_total * age))) - age
+        )
         pd_f = r / (el * umath.exp(lambda_total * age))
         pd_r = f / (el * umath.exp(lambda_total * age))
 
@@ -146,9 +150,9 @@ class AgeConverter(object):
         cov_f_b = -6.5839e-19
         cov_el_b = -3.4711e-26
 
-        cov_f_el2 = 2. * cov_f_el * pd_f * pd_el
-        cov_f_b2 = 2. * cov_f_b * pd_f * pd_b
-        cov_el_b = 2. * cov_el_b * pd_el * pd_b
+        cov_f_el2 = 2.0 * cov_f_el * pd_f * pd_el
+        cov_f_b2 = 2.0 * cov_f_b * pd_f * pd_b
+        cov_el_b = 2.0 * cov_el_b * pd_el * pd_b
 
         sum_cov = cov_f_el2 + cov_f_b2 + cov_el_b
 

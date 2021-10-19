@@ -23,28 +23,45 @@ from pychron.options.options import SubOptions, AppearanceSubOptions
 
 class FluxVisualizationSubOptions(SubOptions):
     def traits_view(self):
-        grp = VGroup(Item('plot_kind'),
-                     Item('model_kind'))
+        grp = VGroup(Item("plot_kind"), Item("model_kind"))
         return self._make_view(grp)
 
 
 class FluxVisualizationAppearanceSubOptions(AppearanceSubOptions):
     def traits_view(self):
-        twodgrp = VGroup(HGroup(Item('color_map_name',
-                                     label='Color Map',
-                                     editor=EnumEditor(values=sorted(color_map_name_dict.keys()))),
-                                Item('levels')),
-                         visible_when='plot_kind=="2D"',
-                         label='Options',
-                         show_border=True)
-        onedgrp = VGroup(Item('marker_size'),
-                         visible_when='plot_kind=="1D"',
-                         label='Options',
-                         show_border=True)
-        scalegrp = VGroup(Item('flux_scalar', label='Scale', tooltip='Multiple flux by Scale. FOR DISPLAY ONLY'))
+        twodgrp = VGroup(
+            HGroup(
+                Item(
+                    "color_map_name",
+                    label="Color Map",
+                    editor=EnumEditor(values=sorted(color_map_name_dict.keys())),
+                ),
+                Item("levels"),
+                Item("rbf_kind", visible_when='model_kind="RBF"'),
+                Item("griddata_method", visible_when='model_kind="GridData"'),
+            ),
+            visible_when='plot_kind=="2D"',
+            label="Options",
+            show_border=True,
+        )
+        onedgrp = VGroup(
+            Item("marker_size"),
+            visible_when='plot_kind=="1D"',
+            label="Options",
+            show_border=True,
+        )
+        scalegrp = VGroup(
+            Item(
+                "flux_scalar",
+                label="Scale",
+                tooltip="Multiple flux by Scale. FOR DISPLAY ONLY",
+            )
+        )
         return self._make_view(VGroup(twodgrp, onedgrp, scalegrp))
 
 
-VIEWS = {'main': FluxVisualizationSubOptions,
-         'appearance': FluxVisualizationAppearanceSubOptions}
+VIEWS = {
+    "main": FluxVisualizationSubOptions,
+    "appearance": FluxVisualizationAppearanceSubOptions,
+}
 # ============= EOF =============================================

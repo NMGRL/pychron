@@ -21,13 +21,16 @@ from traits.api import Instance
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.dashboard.tasks.server.panes import DashboardDevicePane, DashboardCentralPane
+from pychron.dashboard.tasks.server.panes import (
+    DashboardDevicePane,
+    DashboardCentralPane,
+)
 from pychron.dashboard.server import DashboardServer
 from pychron.envisage.tasks.base_task import BaseTask
 
 
 class DashboardServerTask(BaseTask):
-    name = 'Dashboard Server'
+    name = "Dashboard Server"
     server = Instance(DashboardServer)
 
     def activated(self):
@@ -41,5 +44,5 @@ class DashboardServerTask(BaseTask):
         return panes
 
     def _default_layout_default(self):
-        return TaskLayout(left=PaneItem('pychron.dashboard.devices'))
+        return TaskLayout(left=PaneItem("pychron.dashboard.devices"))
         # ============= EOF =============================================

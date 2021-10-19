@@ -15,6 +15,7 @@
 # ===============================================================================
 
 from envisage.ui.tasks.preferences_pane import PreferencesPane
+
 # ============= enthought library imports =======================
 from traitsui.api import View
 
@@ -26,15 +27,16 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class MachineLearningPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.ml'
+    preferences_path = "pychron.ml"
 
 
 class MachineLearningPreferencesPane(PreferencesPane):
-    category = 'MachineLearning'
+    category = "MachineLearning"
     model_factory = MachineLearningPreferences
 
     def traits_view(self):
         v = View()
         return v
+
 
 # ============= EOF =============================================

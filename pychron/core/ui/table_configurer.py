@@ -21,8 +21,18 @@ import shutil
 from datetime import datetime
 
 import yaml
-from traits.api import HasTraits, List, Bool, Instance, Enum, \
-    Str, Callable, Button, Property, Int
+from traits.api import (
+    HasTraits,
+    List,
+    Bool,
+    Instance,
+    Enum,
+    Str,
+    Callable,
+    Button,
+    Property,
+    Int,
+)
 from traits.trait_errors import TraitError
 from traitsui.api import Item, UItem, CheckListEditor, VGroup, Handler, HGroup
 from traitsui.tabular_adapter import TabularAdapter
@@ -46,10 +56,14 @@ class TableConfigurerHandler(Handler):
 
 
 def get_columns_group():
-    col_grp = BorderVGroup(UItem('columns',
-                                 style='custom',
-                                 editor=CheckListEditor(name='available_columns', cols=3)),
-                           label='Columns')
+    col_grp = BorderVGroup(
+        UItem(
+            "columns",
+            style="custom",
+            editor=CheckListEditor(name="available_columns", cols=3),
+        ),
+        label="Columns",
+    )
     return col_grp
 
 
@@ -59,24 +73,24 @@ class TableConfigurer(HasTraits):
     available_columns = List
     sparse_columns = List
     adapter = Instance(TabularAdapter)
-    id = 'table'
+    id = "table"
     font = Enum(*SIZES)
     auto_set = Bool(False)
     auto_set_str = Str
 
     fontsize_enabled = Bool(True)
-    title = Str('Configure Table')
+    title = Str("Configure Table")
     refresh_func = Callable
-    show_all = Button('Show All')
+    show_all = Button("Show All")
 
-    set_sparse = Button('Define Sparse')
-    toggle_sparse = Button('Toggle Sparse')
+    set_sparse = Button("Define Sparse")
+    toggle_sparse = Button("Toggle Sparse")
 
-    sparse_enabled = Property(depends_on='columns[]')
+    sparse_enabled = Property(depends_on="columns[]")
 
     _toggle_sparse_enabled = Bool(False)
 
-    default_button = Button('Default')
+    default_button = Button("Default")
     defaults_path = Str
 
     def _get_sparse_enabled(self):
@@ -87,7 +101,7 @@ class TableConfigurer(HasTraits):
         if self.auto_set:
             s = self.auto_set_str
             if not s:
-                s = 'font, columns[]'
+                s = "font, columns[]"
             self.on_trait_change(self.update, s)
 
         self._load_state()
@@ -115,7 +129,7 @@ class TableConfigurer(HasTraits):
 
         if adapter:
             ctx = {}
-            for w in self.trait_names(kind='column_width'):
+            for w in self.trait_names(kind="column_width"):
                 v = getattr(self, w)
                 # trim off cw_
                 attr = w[3:]
@@ -133,7 +147,7 @@ class TableConfigurer(HasTraits):
 
     def set_font(self):
         if self.adapter:
-            font = 'arial {}'.format(self.font)
+            font = "arial {}".format(self.font)
             self.adapter.font = font
             for ci in self.children:
                 ci.font = font
@@ -160,12 +174,12 @@ class TableConfigurer(HasTraits):
 
         if os.path.isfile(p):
             try:
-                with open(p, 'rb') as rfile:
+                with open(p, "rb") as rfile:
                     state = pickle.load(rfile)
             except (pickle.PickleError, OSError, EOFError, TraitError):
                 return
-        elif os.path.isfile('{}.yaml'.format(p)):
-            state = yload('{}.yaml'.format(p))
+        elif os.path.isfile("{}.yaml".format(p)):
+            state = yload("{}.yaml".format(p))
 
         return state
 
@@ -173,11 +187,11 @@ class TableConfigurer(HasTraits):
         state = self._get_state()
         if state:
             try:
-                self.sparse_columns = state.get('sparse_columns')
+                self.sparse_columns = state.get("sparse_columns")
             except:
                 pass
 
-            cols = state.get('columns')
+            cols = state.get("columns")
             if cols:
                 ncols = []
                 for ai in self.available_columns:
@@ -186,7 +200,7 @@ class TableConfigurer(HasTraits):
 
                 self.columns = ncols
 
-            font = state.get('font', None)
+            font = state.get("font", None)
             if font:
                 self.font = font
             self._load_column_widths(state)
@@ -197,27 +211,29 @@ class TableConfigurer(HasTraits):
         p = os.path.join(paths.appdata_dir, self.id)
         obj = self._get_dump()
 
-        with open('{}.yaml'.format(p), 'w') as wfile:
+        with open("{}.yaml".format(p), "w") as wfile:
             yaml.dump(obj, wfile)
 
         # remove the deprecated pickle file
         if os.path.isfile(p):
-            shutil.move(p, os.path.join(paths.appdata_dir, '~{}'.format(self.id)))
+            shutil.move(p, os.path.join(paths.appdata_dir, "~{}".format(self.id)))
 
     def _get_dump(self):
-        obj = dict(columns=list(self.columns),
-                   font=self.font,
-                   sparse_columns=list(self.sparse_columns))
+        obj = dict(
+            columns=list(self.columns),
+            font=self.font,
+            sparse_columns=list(self.sparse_columns),
+        )
 
-        cws = {w: getattr(self, w) for w in self.trait_names(kind='column_width')}
-        obj['column_widths'] = cws
+        cws = {w: getattr(self, w) for w in self.trait_names(kind="column_width")}
+        obj["column_widths"] = cws
         return obj
 
     def _add_column_width(self, k):
-        self.add_trait(k, Int(kind='column_width'))
+        self.add_trait(k, Int(kind="column_width"))
 
     def _load_column_widths(self, state):
-        widths = state.get('column_widths')
+        widths = state.get("column_widths")
         if widths:
             for k, v in widths.items():
                 if not hasattr(self, k):
@@ -242,7 +258,7 @@ class TableConfigurer(HasTraits):
             #     yd = yaml.load(rfile)
             yd = yload(p)
             try:
-                self.columns = yd['columns']
+                self.columns = yd["columns"]
             except KeyError:
                 pass
             self.set_columns()
@@ -288,8 +304,8 @@ class TableConfigurer(HasTraits):
         self._load_state()
 
         for name in adp.trait_names():
-            if name != 'width' and name.endswith('width'):
-                tag = 'cw_{}'.format(name)
+            if name != "width" and name.endswith("width"):
+                tag = "cw_{}".format(name)
                 if not hasattr(self, tag):
                     self._add_column_width(tag)
 
@@ -298,51 +314,64 @@ class TableConfigurer(HasTraits):
     def _get_column_width_group(self):
         n = len(self.adapter.all_columns)
         aitems = []
-        for label, name in self.adapter.all_columns[:n // 2]:
-            aitems.append(Item('cw_{}_width'.format(name), label=label))
+        for label, name in self.adapter.all_columns[: n // 2]:
+            aitems.append(Item("cw_{}_width".format(name), label=label))
 
         bitems = []
-        for label, name in self.adapter.all_columns[n // 2:]:
-            bitems.append(Item('cw_{}_width'.format(name), label=label))
+        for label, name in self.adapter.all_columns[n // 2 :]:
+            bitems.append(Item("cw_{}_width".format(name), label=label))
 
-        widths_grp = BorderVGroup(HGroup(VGroup(*aitems),
-                                         VGroup(*bitems)),
-                                  label='Column Widths')
+        widths_grp = BorderVGroup(
+            HGroup(VGroup(*aitems), VGroup(*bitems)), label="Column Widths"
+        )
         return widths_grp
 
     def traits_view(self):
-        v = okcancel_view(VGroup(HGroup(UItem('show_all', tooltip='Show all columns'),
-                                        UItem('set_sparse',
-                                              tooltip='Set the current set of columns to the Sparse Column Set',
-                                              enabled_when='sparse_enabled'),
-                                        UItem('toggle_sparse',
-                                              tooltip='Display only Sparse Column Set'),
-                                        UItem('default_button',
-                                              tooltip='Set to Laboratory defaults. File located at '
-                                                      '[root]/experiments/experiment_defaults.yaml')),
-                                 BorderVGroup(UItem('columns',
-                                                    style='custom',
-                                                    editor=CheckListEditor(name='available_columns', cols=3)),
-                                              Item('font', enabled_when='fontsize_enabled'))),
-                          handler=TableConfigurerHandler(),
-                          title=self.title)
+        v = okcancel_view(
+            VGroup(
+                HGroup(
+                    UItem("show_all", tooltip="Show all columns"),
+                    UItem(
+                        "set_sparse",
+                        tooltip="Set the current set of columns to the Sparse Column Set",
+                        enabled_when="sparse_enabled",
+                    ),
+                    UItem("toggle_sparse", tooltip="Display only Sparse Column Set"),
+                    UItem(
+                        "default_button",
+                        tooltip="Set to Laboratory defaults. File located at "
+                        "[root]/experiments/experiment_defaults.yaml",
+                    ),
+                ),
+                BorderVGroup(
+                    UItem(
+                        "columns",
+                        style="custom",
+                        editor=CheckListEditor(name="available_columns", cols=3),
+                    ),
+                    Item("font", enabled_when="fontsize_enabled"),
+                ),
+            ),
+            handler=TableConfigurerHandler(),
+            title=self.title,
+        )
         return v
 
 
 def str_to_time(lp):
-    lp = lp.replace('/', '-')
-    if lp.count('-') == 2:
-        y = lp.split('-')[-1]
-        y = 'y' if len(y) == 2 else 'Y'
+    lp = lp.replace("/", "-")
+    if lp.count("-") == 2:
+        y = lp.split("-")[-1]
+        y = "y" if len(y) == 2 else "Y"
 
-        fmt = '%m-%d-%{}'.format(y)
-    elif lp.count('-') == 1:
-        y = lp.split('-')[-1]
-        y = 'y' if len(y) == 2 else 'Y'
+        fmt = "%m-%d-%{}".format(y)
+    elif lp.count("-") == 1:
+        y = lp.split("-")[-1]
+        y = "y" if len(y) == 2 else "Y"
 
-        fmt = '%m-%{}'.format(y)
+        fmt = "%m-%{}".format(y)
     else:
-        fmt = '%Y' if len(lp) == 4 else '%y'
+        fmt = "%Y" if len(lp) == 4 else "%y"
 
     return datetime.strptime(lp, fmt)
 
@@ -352,32 +381,39 @@ class ExperimentTableConfigurer(TableConfigurer):
 
 
 def width_test(v):
-    return v.startswith('cw') and v.endswith('width')
+    return v.startswith("cw") and v.endswith("width")
 
 
 class SampleTableConfigurer(TableConfigurer):
-    title = 'Configure Sample Table'
-    id = 'sample.table'
+    title = "Configure Sample Table"
+    id = "sample.table"
     filter_non_run_samples = Bool(True)
 
     def _get_dump(self):
         obj = super(SampleTableConfigurer, self)._get_dump()
-        obj['filter_non_run_samples'] = self.filter_non_run_samples
+        obj["filter_non_run_samples"] = self.filter_non_run_samples
 
         return obj
 
     def _load_hook(self, obj):
-        self.filter_non_run_samples = obj.get('filter_non_run_samples', True)
+        self.filter_non_run_samples = obj.get("filter_non_run_samples", True)
 
     def traits_view(self):
-        v = okcancel_view(VGroup(get_columns_group(),
-                                 Item('filter_non_run_samples',
-                                      tooltip='Omit samples that have not been analyzed to date',
-                                      label='Exclude Non-Run')),
-                          buttons=['OK', 'Cancel', 'Revert'],
-                          title=self.title,
-                          handler=TableConfigurerHandler,
-                          width=300)
+        v = okcancel_view(
+            VGroup(
+                get_columns_group(),
+                Item(
+                    "filter_non_run_samples",
+                    tooltip="Omit samples that have not been analyzed to date",
+                    label="Exclude Non-Run",
+                ),
+            ),
+            buttons=["OK", "Cancel", "Revert"],
+            title=self.title,
+            handler=TableConfigurerHandler,
+            width=300,
+        )
         return v
+
 
 # ============= EOF =============================================

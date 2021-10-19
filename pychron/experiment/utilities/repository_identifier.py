@@ -27,33 +27,33 @@ def get_curtag():
     now = datetime.now()
 
     suffix = 1 if now.month > 6 else 0
-    curtag = '{}{}'.format(now.strftime('%y'), suffix)
+    curtag = "{}{}".format(now.strftime("%y"), suffix)
     return curtag
 
 
 def make_references_repository_identifier(atype, ms, curtag):
-    repo_id = 'laboratory'
+    repo_id = "laboratory"
 
-    if atype in ('air', 'blank_air'):
-        repo_id = '{}_air{}'.format(ms, curtag)
-    elif atype in ('cocktail', 'blank_cocktail'):
-        repo_id = '{}_cocktail{}'.format(ms, curtag)
-    elif atype in ('blank_unknown', 'blank_extractionline'):
-        repo_id = '{}_blank{}'.format(ms, curtag)
+    if atype in ("air", "blank_air"):
+        repo_id = "{}_air{}".format(ms, curtag)
+    elif atype in ("cocktail", "blank_cocktail"):
+        repo_id = "{}_cocktail{}".format(ms, curtag)
+    elif atype in ("blank_unknown", "blank_extractionline"):
+        repo_id = "{}_blank{}".format(ms, curtag)
 
     return repo_id
 
 
 def populate_repository_identifiers(runs, ms, curtag, debug=None):
     if debug:
-        debug('populating repository identifiers, ms={}, curtag={}'.format(ms, curtag))
+        debug("populating repository identifiers, ms={}, curtag={}".format(ms, curtag))
 
     for ai in runs:
         if not ai.repository_identifier:
             atype = ai.analysis_type
             repo_id = make_references_repository_identifier(atype, ms, curtag)
             if debug:
-                debug('setting {} to repo={} type={}'.format(ai.runid, repo_id, atype))
+                debug("setting {} to repo={} type={}".format(ai.runid, repo_id, atype))
             ai.repository_identifier = repo_id
 
 
@@ -74,5 +74,6 @@ def retroactive_repository_identifiers(spec, cruns, active_respository_identifie
         active_respository_identifier = exp_id
 
     return cruns, active_respository_identifier
+
 
 # ============= EOF =============================================

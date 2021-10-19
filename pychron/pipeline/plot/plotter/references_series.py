@@ -47,19 +47,21 @@ def calc_limits(ys, ye, n):
 
 def unzip_data(data):
     try:
-        return array([nominal_value(ri) for ri in data]), array([std_dev(ri) for ri in data])
+        return array([nominal_value(ri) for ri in data]), array(
+            [std_dev(ri) for ri in data]
+        )
     except ValueError as e:
         print(e)
 
 
 class ReferencesSeries(BaseSeries):
     references = List
-    sorted_references = Property(depends_on='references')
+    sorted_references = Property(depends_on="references")
     show_current = True
     rxs = Array
-    references_name = 'References'
-    xtitle = 'Time (hrs)'
-    _normalization_factor = 3600.
+    references_name = "References"
+    xtitle = "Time (hrs)"
+    _normalization_factor = 3600.0
 
     def set_interpolated_values(self, iso, reg, fit):
         mi, ma = self._get_min_max()
@@ -97,29 +99,41 @@ class ReferencesSeries(BaseSeries):
                     graph.add_statistics(plotid=i)
 
             mi, ma = self._get_min_max()
-            self.xmi, self.xma = (mi - ma) / 3600., 0
-            self.xpad = '0.1'
+            self.xmi, self.xma = (mi - ma) / 3600.0, 0
+            self.xpad = "0.1"
 
-            legend = ExplicitLegend(plots=self.graph.plots[0].plots,
-                                    labels=[('plot1', self.references_name),
-                                            ('data0', self.references_name),
-                                            ('plot0', 'Unk. Current'),
-                                            ('Unknowns-predicted0', 'Unk. Predicted')])
+            legend = ExplicitLegend(
+                plots=self.graph.plots[0].plots,
+                labels=[
+                    ("plot1", self.references_name),
+                    ("data0", self.references_name),
+                    ("plot0", "Unk. Current"),
+                    ("Unknowns-predicted0", "Unk. Predicted"),
+                ],
+            )
             self.graph.plots[-1].overlays.append(legend)
 
     # private
-    @on_trait_change('graph:regression_results')
+    @on_trait_change("graph:regression_results")
     def _update_regression(self, new):
-        key = 'Unknowns-predicted{}'
+        key = "Unknowns-predicted{}"
         key = key.format(0)
         for plotobj, reg in new:
             if isinstance(reg, BaseRegressor):
 
                 excluded = reg.get_excluded()
                 for i, r in enumerate(self.sorted_references):
-                    r.set_temp_status('omit' if i in excluded else 'ok')
+                    r.set_temp_status("omit" if i in excluded else "ok")
 
                 self._set_values(plotobj, reg, key)
+
+    def _get_signal_intensity(self, po, analysis):
+        v, e = 0, 0
+        iso = self._get_isotope(po, analysis)
+        if iso:
+            i = iso.get_intensity()
+            v, e = nominal_value(i), std_dev(i)
+        return v, e
 
     def _get_isotope(self, po, analysis):
         return analysis.get_isotope(po.name)
@@ -127,14 +141,19 @@ class ReferencesSeries(BaseSeries):
     def _calc_limits(self, ys, ye):
         return calc_limits(ys, ye, self.options.nsigma)
 
-    def _add_plot_label(self, pid, po,  overlay_position='inside top', hjustify='left', **kw):
+    def _add_plot_label(
+        self, pid, po, overlay_position="inside top", hjustify="left", **kw
+    ):
         txt = self._get_plot_label_text(po)
         if txt:
             comp = self.graph.plots[pid]
-            pl = OffsetPlotLabel(txt,
-                                 component=comp,
-                                 overlay_position=overlay_position, hjustify=hjustify,
-                                 **kw)
+            pl = OffsetPlotLabel(
+                txt,
+                component=comp,
+                overlay_position=overlay_position,
+                hjustify=hjustify,
+                **kw
+            )
             comp.overlays.append(pl)
 
     def _get_plot_label_text(self, po):
@@ -152,19 +171,25 @@ class ReferencesSeries(BaseSeries):
                 ymi = min(ymi, a)
                 yma = max(yma, b)
 
-            self.graph.set_y_limits(ymi, yma, pad='0.05', plotid=pid)
+            self.graph.set_y_limits(ymi, yma, pad="0.05", plotid=pid)
         else:
-            warning(None, 'Invalid Detector choices for these analyses. {}'.format(po.name))
+            warning(
+                None, "Invalid Detector choices for these analyses. {}".format(po.name)
+            )
 
     def _get_min_max(self):
         mi = min(self.sorted_references[0].timestamp, self.sorted_analyses[0].timestamp)
-        ma = max(self.sorted_references[-1].timestamp, self.sorted_analyses[-1].timestamp)
+        ma = max(
+            self.sorted_references[-1].timestamp, self.sorted_analyses[-1].timestamp
+        )
         return mi, ma
 
     def _get_sorted_references(self):
-        return sorted(self.references,
-                      key=self._cmp_analyses,
-                      reverse=self._reverse_sorted_analyses)
+        return sorted(
+            self.references,
+            key=self._cmp_analyses,
+            reverse=self._reverse_sorted_analyses,
+        )
 
     def _set_values(self, plotobj, reg, key):
         iso = plotobj.isotope
@@ -181,11 +206,18 @@ class ReferencesSeries(BaseSeries):
         data = self._get_reference_data(po)
         if data:
             ans, xs, ys = data
-            return ans, array(xs), array([nominal_value(ri) for ri in ys]), array([std_dev(ri) for ri in ys])
+            return (
+                ans,
+                array(xs),
+                array([nominal_value(ri) for ri in ys]),
+                array([std_dev(ri) for ri in ys]),
+            )
 
     def current_data(self, po):
         data = self._get_current_data(po)
-        return array([nominal_value(ri) for ri in data]), array([std_dev(ri) for ri in data])
+        return array([nominal_value(ri) for ri in data]), array(
+            [std_dev(ri) for ri in data]
+        )
 
     def _get_current_data(self, po):
         return self._unpack_attr(po.name)
@@ -204,27 +236,37 @@ class ReferencesSeries(BaseSeries):
             ys, ye = self.current_data(po)
             ymi, yma = self._calc_limits(ys, ye)
 
-            scatter, plot = graph.new_series(x=self.xs,
-                                             y=ys, yerror=ye, type='scatter',
-                                             display_index=ArrayDataSource(data=n),
-                                             fit=False,
-                                             plotid=pid,
-                                             bind_id=-2,
-                                             add_tools=False,
-                                             add_inspector=False,
-                                             marker=po.marker,
-                                             marker_size=po.marker_size)
+            scatter, plot = graph.new_series(
+                x=self.xs,
+                y=ys,
+                yerror=ye,
+                type="scatter",
+                display_index=ArrayDataSource(data=n),
+                fit=False,
+                plotid=pid,
+                bind_id=-2,
+                add_tools=False,
+                add_inspector=False,
+                marker=po.marker,
+                marker_size=po.marker_size,
+            )
 
             def af(i, x, y, analysis):
                 v, e = self._get_interpolated_value(po, analysis)
-                return (u'Interpolated: {}{}{}'.format(floatfmt(v), PLUSMINUS, floatfmt(e)),
-                        'Run Date: {}'.format(analysis.rundate.strftime('%m-%d-%Y %H:%M')),
-                        'Rel. Time: {:0.4f}'.format(x))
+                s, se = self._get_signal_intensity(po, analysis)
+                return (
+                    u"Interpolated: {} {} {}".format(
+                        floatfmt(v), PLUSMINUS, floatfmt(e)
+                    ),
+                    "Run Date: {}".format(analysis.rundate.strftime("%m-%d-%Y %H:%M")),
+                    "Rel. Time: {:0.4f}".format(x),
+                    "Signal: {} {} {}".format(floatfmt(s), PLUSMINUS, floatfmt(se)),
+                )
 
-            self._add_error_bars(scatter, ye, 'y', self.options.nsigma, True)
-            self._add_scatter_inspector(scatter,
-                                        add_selection=False,
-                                        additional_info=af)
+            self._add_error_bars(scatter, ye, "y", self.options.nsigma, True)
+            self._add_scatter_inspector(
+                scatter, add_selection=False, additional_info=af
+            )
         return ymi, yma
 
     def _plot_interpolated(self, pid, po, reg, series_id=0):
@@ -236,23 +278,26 @@ class ReferencesSeries(BaseSeries):
 
             graph = self.graph
             # display the predicted values
-            s, p = graph.new_series(self.xs,
-                                    p_uys,
-                                    isotope=iso,
-                                    yerror=ArrayDataSource(p_ues),
-                                    fit=False,
-                                    add_tools=False,
-                                    add_inspector=False,
-                                    type='scatter',
-                                    marker=po.marker,
-                                    marker_size=po.marker_size,
-                                    plotid=pid,
-                                    bind_id=-1)
+            s, p = graph.new_series(
+                self.xs,
+                p_uys,
+                isotope=iso,
+                yerror=ArrayDataSource(p_ues),
+                fit=False,
+                add_tools=False,
+                add_inspector=False,
+                type="scatter",
+                marker=po.marker,
+                marker_size=po.marker_size,
+                plotid=pid,
+                bind_id=-1,
+            )
             series = len(p.plots) - 1
-            graph.set_series_label('Unknowns-predicted{}'.format(series_id), plotid=pid,
-                                   series=series)
+            graph.set_series_label(
+                "Unknowns-predicted{}".format(series_id), plotid=pid, series=series
+            )
 
-            self._add_error_bars(s, p_ues, 'y', self.options.nsigma, True)
+            self._add_error_bars(s, p_ues, "y", self.options.nsigma, True)
         return ymi, yma
 
     def _plot_references(self, pid, po):
@@ -266,27 +311,35 @@ class ReferencesSeries(BaseSeries):
             ymi, yma = self._calc_limits(r_ys, r_es)
 
             reg = None
-            kw = dict(add_tools=True,
-                      add_inspector=True,
-                      add_point_inspector=False,
-                      add_selection=False,
-                      # color='red',
-                      plotid=pid,
-                      selection_marker=po.marker,
-                      marker=po.marker,
-                      marker_size=po.marker_size, )
+            kw = dict(
+                add_tools=True,
+                add_inspector=True,
+                add_point_inspector=False,
+                add_selection=False,
+                # color='red',
+                plotid=pid,
+                selection_marker=po.marker,
+                marker=po.marker,
+                marker_size=po.marker_size,
+            )
 
             update_meta_func = None
-            if efit in ['preceding', 'bracketing interpolate', 'bracketing average', 'succeeding']:
+            if efit in [
+                "preceding",
+                "bracketing interpolate",
+                "bracketing average",
+                "succeeding",
+            ]:
                 reg = InterpolationRegressor(xs=r_xs, ys=r_ys, yserr=r_es, kind=efit)
-                kw['add_tools'] = False
-                scatter, _p = graph.new_series(r_xs, r_ys, yerror=r_es, type='scatter', fit=False,
-                                               **kw)
+                kw["add_tools"] = False
+                scatter, _p = graph.new_series(
+                    r_xs, r_ys, yerror=r_es, type="scatter", fit=False, **kw
+                )
 
                 def update_meta_func(obj, b, c, d):
                     self.update_interpolation_regressor(po.name, reg, obj, refs)
 
-                self._add_error_bars(scatter, r_es, 'y', self.options.nsigma, True)
+                self._add_error_bars(scatter, r_es, "y", self.options.nsigma, True)
 
                 ffit = po.fit
             else:
@@ -294,29 +347,38 @@ class ReferencesSeries(BaseSeries):
                 if self.options.link_plots:
                     bind_id = hash(tuple([r.uuid for r in refs]))
 
-                ffit = '{}_{}'.format(po.fit, po.error_type)
-                _, scatter, l = graph.new_series(r_xs, r_ys,
-                                                 yerror=ArrayDataSource(data=r_es),
-                                                 fit=ffit,
-                                                 bind_id=bind_id,
-                                                 **kw)
-                if hasattr(l, 'regressor'):
+                ffit = "{}_{}".format(po.fit, po.error_type)
+                _, scatter, l = graph.new_series(
+                    r_xs,
+                    r_ys,
+                    yerror=ArrayDataSource(data=r_es),
+                    fit=ffit,
+                    bind_id=bind_id,
+                    **kw
+                )
+                if hasattr(l, "regressor"):
                     reg = l.regressor
-                self._add_error_bars(scatter, r_es, 'y', self.options.nsigma, True)
+                self._add_error_bars(scatter, r_es, "y", self.options.nsigma, True)
 
             def af(i, x, y, analysis):
-                return ('Run Date: {}'.format(analysis.rundate.strftime('%m-%d-%Y %H:%M')),
-                        'Rel. Time: {:0.4f}'.format(x))
+                return (
+                    "Run Date: {}".format(analysis.rundate.strftime("%m-%d-%Y %H:%M")),
+                    "Rel. Time: {:0.4f}".format(x),
+                )
 
-            self._add_scatter_inspector(scatter,
-                                        update_meta_func=update_meta_func,
-                                        add_selection=True,
-                                        additional_info=af,
-                                        items=refs)
+            self._add_scatter_inspector(
+                scatter,
+                update_meta_func=update_meta_func,
+                add_selection=True,
+                additional_info=af,
+                items=refs,
+            )
             plot = graph.plots[pid]
             plot.isotope = po.name
             plot.fit = ffit
-            scatter.index.metadata['selections'] = [i for i, r in enumerate(refs) if r.temp_selected]
+            scatter.index.metadata["selections"] = [
+                i for i, r in enumerate(refs) if r.temp_selected
+            ]
             return reg, ymi, yma
 
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):
@@ -325,10 +387,11 @@ class ReferencesSeries(BaseSeries):
     def update_interpolation_regressor(self, isotope, reg, obj, references):
         sel = self._filter_metadata_changes(obj, references)
         reg.user_excluded = sel
-        key = 'Unknowns-predicted0'
+        key = "Unknowns-predicted0"
         for plotobj in self.graph.plots:
-            if hasattr(plotobj, 'isotope'):
+            if hasattr(plotobj, "isotope"):
                 if plotobj.isotope == isotope:
                     self._set_values(plotobj, reg, key)
+
 
 # ============= EOF =============================================

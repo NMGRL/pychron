@@ -28,9 +28,9 @@ class NGXMagnet(IsotopxMagnet):
 
     @get_float()
     def read_mass(self):
-        self.ask('StopAcq')
-        self.microcontroller.triggered=False
-        return self.ask('GETMASS')
+        self.ask("StopAcq")
+        self.microcontroller.triggered = False
+        return self.ask("GETMASS")
 
     def set_mass(self, v, delay=None, deflect=False):
         """
@@ -43,14 +43,15 @@ class NGXMagnet(IsotopxMagnet):
         if delay is None:
             delay = int(self.settling_time * 1000)
 
-        self.ask('StopAcq')
-        deflect = ',deflect' if deflect else ''
-        self.ask('SetMass {},{}{}'.format(v, delay, deflect))
-        self.microcontroller.triggered=False
+        self.ask("StopAcq")
+        deflect = ",deflect" if deflect else ""
+        self.ask("SetMass {},{}{}".format(v, delay, deflect))
+        self.microcontroller.triggered = False
         dv = abs(self._dac - v)
         self._dac = v
         change = dv > 1e-7
 
         return change
+
 
 # ============= EOF =============================================

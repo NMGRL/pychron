@@ -44,15 +44,14 @@ class BaseSource(SpectrometerDevice, FieldMixin):
 
     def set_hv(self, new):
         pass
-    
+
     def read_hv(self):
         pass
-    
+
     # private
     def _nominal_hv_changed(self, new):
         if new is not None:
             self.set_hv(new)
-
 
 
 # ============= EOF =============================================

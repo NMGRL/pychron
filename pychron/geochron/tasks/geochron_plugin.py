@@ -17,6 +17,7 @@
 # ============= local library imports  ==========================
 from envisage.ui.tasks.task_extension import TaskExtension
 from pyface.tasks.action.schema_addition import SchemaAddition
+
 # ============= standard library imports ========================
 from traits.api import List
 
@@ -37,39 +38,44 @@ nodes:
 
 
 class GeochronPlugin(BaseTaskPlugin):
-    id = 'pychron.geochron.plugin'
+    id = "pychron.geochron.plugin"
 
-    node_factories = List(contributes_to='pychron.pipeline.node_factories')
+    node_factories = List(contributes_to="pychron.pipeline.node_factories")
 
-    predefined_templates = List(contributes_to='pychron.pipeline.predefined_templates')
+    predefined_templates = List(contributes_to="pychron.pipeline.predefined_templates")
 
     def _node_factories_default(self):
         def geochron_factory():
             node = GeochronNode()
-            service = self.application.get_service('pychron.geochron.geochron_service.GeochronService')
+            service = self.application.get_service(
+                "pychron.geochron.geochron_service.GeochronService"
+            )
             node.trait_set(service=service)
             return node
 
-        return [NodeFactory('GeochronNode', geochron_factory), ]
+        return [
+            NodeFactory("GeochronNode", geochron_factory),
+        ]
 
     def _predefined_templates_default(self):
-        return [('Share', (('Geochron', GEOCHRON),))]
+        return [("Share", (("Geochron", GEOCHRON),))]
 
     def _help_tips_default(self):
-        return ['More information about Geochron is located at http://geochron.org/']
+        return ["More information about Geochron is located at http://geochron.org/"]
 
     def _service_offers_default(self):
-        so1 = self.service_offer_factory(factory=GeochronService,
-                                         protocol=GeochronService)
+        so1 = self.service_offer_factory(
+            factory=GeochronService, protocol=GeochronService
+        )
         return [so1]
 
     def _preferences_panes_default(self):
         return [GeochronPreferencesPane]
 
     def _task_extensions_default(self):
-        actions = [SchemaAddition(factory=UploadAction,
-                                  path='MenuBar/data.menu')]
+        actions = [SchemaAddition(factory=UploadAction, path="MenuBar/data.menu")]
         ts = [TaskExtension(actions=actions)]
         return ts
+
 
 # ============= EOF =============================================

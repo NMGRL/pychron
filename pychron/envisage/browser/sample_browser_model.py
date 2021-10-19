@@ -22,29 +22,34 @@ from apptools.preferences.preference_binding import bind_preference
 from traits.api import Str
 
 from pychron.envisage.browser.analysis_browser_model import AnalysisBrowserModel
-from pychron.envisage.browser.find_references_config import FindReferencesConfigModel, FindReferencesConfigView
+from pychron.envisage.browser.find_references_config import (
+    FindReferencesConfigModel,
+    FindReferencesConfigView,
+)
 from pychron.envisage.browser.util import get_pad
 from pychron.envisage.browser.view import SampleBrowserView
 
 
 class SampleBrowserModel(AnalysisBrowserModel):
-
     # time_view_model = Instance(TimeViewModel)
     monitor_sample_name = Str
 
     def __init__(self, *args, **kw):
         super(SampleBrowserModel, self).__init__(*args, **kw)
-        prefid = 'pychron.browser'
-        bind_preference(self.search_criteria, 'reference_hours_padding',
-                        '{}.reference_hours_padding'.format(prefid))
+        prefid = "pychron.browser"
+        bind_preference(
+            self.search_criteria,
+            "reference_hours_padding",
+            "{}.reference_hours_padding".format(prefid),
+        )
 
-        bind_preference(self, 'monitor_sample_name', 'pychron.entry.monitor_name')
+        bind_preference(self, "monitor_sample_name", "pychron.entry.monitor_name")
 
     def reattach(self):
 
-        self.debug('reattach')
+        self.debug("reattach")
 
-        ans = sorted(self.analysis_table.oanalyses, key=attrgetter('uuid'))
+        ans = sorted(self.table.oanalyses, key=attrgetter("uuid"))
         uuids = [ai.uuid for ai in ans]
         nans = self.db.get_analyses_uuid(uuids)
 
@@ -56,11 +61,11 @@ class SampleBrowserModel(AnalysisBrowserModel):
 
     def dump_browser(self):
         super(SampleBrowserModel, self).dump_browser()
-        self.analysis_table.dump()
+        self.table.dump()
 
     def activated(self, force=False):
         self.reattach()
-        self.analysis_table.load()
+        self.table.load()
 
         if not self.is_activated or force:
             self.load_browser_options()
@@ -74,44 +79,53 @@ class SampleBrowserModel(AnalysisBrowserModel):
             self._top_level_filter = None
 
     def load_review_status(self):
-        self.analysis_table.load_review_status()
+        self.table.load_review_status()
 
     def get_analysis_records(self):
         # if not self.sample_view_active:
         #     return self.time_view_model.get_analysis_records()
         # else:
-        #     return self.analysis_table.get_analysis_records()
-        return self.analysis_table.get_analysis_records()
+        #     return self.table.get_analysis_records()
+        return self.table.get_analysis_records()
 
-    def get_selection(self, low_post, high_post, unks=None, selection=None, make_records=True):
+    def get_selection(
+        self, low_post, high_post, unks=None, selection=None, make_records=True
+    ):
         ret = None
         if selection is None:
-            if self.analysis_table.selected:
-                ret = self.analysis_table.selected
+            if self.table.selected:
+                ret = self.table.selected
             # elif self.time_view_model.selected:
             #     ret = self.time_view_model.selected
             else:
                 selection = self.selected_samples
 
         if selection:
-            iv = not self.analysis_table.omit_invalid
+            iv = not self.table.omit_invalid
             uuids = [x.uuid for x in unks] if unks else None
-            ret = [ai for ai in self._retrieve_analyses(samples=selection,
-                                                        exclude_uuids=uuids,
-                                                        include_invalid=iv,
-                                                        low_post=low_post,
-                                                        high_post=high_post,
-                                                        make_records=make_records)]
+            ret = [
+                ai
+                for ai in self._retrieve_analyses(
+                    samples=selection,
+                    exclude_uuids=uuids,
+                    include_invalid=iv,
+                    low_post=low_post,
+                    high_post=high_post,
+                    make_records=make_records,
+                )
+            ]
         return ret
 
     def load_chrono_view(self):
-        self.debug('load time view')
+        self.debug("load time view")
         db = self.db
 
         ss = [si.labnumber for si in self.selected_samples]
         bt = self.search_criteria.reference_hours_padding
         if not bt:
-            self.information_dialog('Set "References Window" in Preferences.\n\nDefaulting to 2hrs')
+            self.information_dialog(
+                'Set "References Window" in Preferences.\n\nDefaulting to 2hrs'
+            )
             bt = 2
 
         # ss  = ['bu-FD-O']
@@ -126,8 +140,10 @@ class SampleBrowserModel(AnalysisBrowserModel):
 
         n = len(ts)
         if n > 1:
-            if not self.confirmation_dialog('The date range you selected is to large. It will be '
-                                            'broken into {} subranges.\nDo you want to Continue?'.format(n)):
+            if not self.confirmation_dialog(
+                "The date range you selected is to large. It will be "
+                "broken into {} subranges.\nDo you want to Continue?".format(n)
+            ):
                 return
 
             xx = []
@@ -144,33 +160,43 @@ class SampleBrowserModel(AnalysisBrowserModel):
                 return
             xx = self._get_analysis_series(pad.low_post, pad.high_post, ms)
 
-        self.analysis_table.set_analyses(xx)
+        self.table.set_analyses(xx)
 
     def delete_analysis_group(self):
-        self.debug('delete analysis groups')
+        self.debug("delete analysis groups")
         n = len(self.selected_analysis_groups)
         for i, g in enumerate(self.selected_analysis_groups):
-            self.debug('deleting analysis group. {}'.format(g))
+            self.debug("deleting analysis group. {}".format(g))
             self.db.delete_analysis_group(g, commit=i == n - 1)
             self.analysis_groups.remove(g)
 
     def add_analysis_group(self, ans):
-        from pychron.envisage.browser.add_analysis_group_view import AddAnalysisGroupView
+        from pychron.envisage.browser.add_analysis_group_view import (
+            AddAnalysisGroupView,
+        )
+
         # a = AddAnalysisGroupView(projects={'{:05n}:{}'.format(i, p.name): p for i, p in enumerate(self.projects)})
-        projects = self.db.get_projects(order='asc')
+        projects = self.db.get_projects(order="asc")
         projects = self._make_project_records(projects, include_recent=False)
-        agv = AddAnalysisGroupView(db=self.db,
-                                   projects={p: '{:05n}:{}'.format(i, p.name) for i, p in
-                                             enumerate(projects)})
+        agv = AddAnalysisGroupView(
+            db=self.db,
+            projects={p: "{:05n}:{}".format(i, p.name) for i, p in enumerate(projects)},
+        )
 
         project, pp = tuple({(a.project, a.principal_investigator) for a in ans})[0]
         try:
-            project = next((p for p in projects if p.name == project and p.principal_investigator == pp))
+            project = next(
+                (
+                    p
+                    for p in projects
+                    if p.name == project and p.principal_investigator == pp
+                )
+            )
             agv.project = project
         except StopIteration:
             pass
 
-        info = agv.edit_traits(kind='livemodal')
+        info = agv.edit_traits(kind="livemodal")
         if info.result:
             if agv.save(ans, self.db):
                 self.load_associated_groups(projects)
@@ -193,18 +219,18 @@ class SampleBrowserModel(AnalysisBrowserModel):
     #     self.dump()
 
     def _selected_samples_changed_hook(self, new):
-        self.analysis_table.selected = []
+        self.table.selected = []
 
         ans = []
         if new:
-            at = self.analysis_table
+            at = self.table
             lim = at.limit
 
-            uuids = [ai.uuid for ai in self.analysis_table.analyses]
+            uuids = [ai.uuid for ai in self.table.analyses]
 
-            kw = dict(limit=lim,
-                      include_invalid=not at.omit_invalid,
-                      exclude_uuids=uuids)
+            kw = dict(
+                limit=lim, include_invalid=not at.omit_invalid, exclude_uuids=uuids
+            )
 
             lp = self.low_post  # if self.use_low_post else None
             hp = self.high_post  # if self.use_high_post else None
@@ -213,102 +239,131 @@ class SampleBrowserModel(AnalysisBrowserModel):
             if self.load_enabled and self.selected_loads:
                 ls = [l.name for l in self.selected_loads]
 
-            ans = self._retrieve_analyses(samples=new, loads=ls, low_post=lp, high_post=hp, **kw)
+            ans = self._retrieve_analyses(
+                samples=new, loads=ls, low_post=lp, high_post=hp, **kw
+            )
 
-            self.debug('selected samples changed. loading analyses. '
-                       'low={}, high={}, limit={} n={}'.format(lp, hp, lim, len(ans)))
+            self.debug(
+                "selected samples changed. loading analyses. "
+                "low={}, high={}, limit={} n={}".format(lp, hp, lim, len(ans))
+            )
 
-        self.analysis_table.set_analyses(ans, selected_identifiers={ai.identifier for ai in new})
+        self.table.set_analyses(ans, selected_identifiers={ai.identifier for ai in new})
 
     # private
     def _load_recent(self):
         from pychron.envisage.browser.recent_view import RecentView
+
         if not self.available_mass_spectrometers:
             self._load_mass_spectrometers()
 
-        v = RecentView(available_mass_spectrometers=self.available_mass_spectrometers,
-                       use_mass_spectrometers=len(self.available_analysis_types) > 1)
+        v = RecentView(
+            available_mass_spectrometers=self.available_mass_spectrometers,
+            use_mass_spectrometers=len(self.available_analysis_types) > 1,
+        )
         v.load()
         info = v.edit_traits()
         if info.result:
             v.dump()
             now = datetime.now()
             lp = now - timedelta(hours=v.nhours)
-            ls = self.db.get_labnumbers(mass_spectrometers=v.mass_spectrometers if v.use_mass_spectrometers else None,
-                                        analysis_types=v.analysis_types,
-                                        high_post=now,
-                                        low_post=lp,
-                                        filter_non_run=self.filter_non_run_samples)
+            ls = self.db.get_labnumbers(
+                mass_spectrometers=v.mass_spectrometers
+                if v.use_mass_spectrometers
+                else None,
+                analysis_types=v.analysis_types,
+                high_post=now,
+                low_post=lp,
+                filter_non_run=self.filter_non_run_samples,
+            )
             if ls:
                 sams = self._load_sample_record_views(ls)
 
                 self.samples = sams
                 self.osamples = sams
 
-                xx = self._get_analysis_series(lp, now, v.mass_spectrometers, analysis_types=v.analysis_types)
-                self.analysis_table.set_analyses(xx)
+                xx = self._get_analysis_series(
+                    lp, now, v.mass_spectrometers, analysis_types=v.analysis_types
+                )
+                self.table.set_analyses(xx)
             else:
                 self.samples = []
                 self.osamples = []
-                self.analysis_table.clear()
+                self.table.clear()
 
     def _find_references_hook(self):
-        ans = self.analysis_table.analyses
+        ans = self.table.analyses
         ms = list({a.mass_spectrometer.lower() for a in ans if a.mass_spectrometer})
         es = list({a.extract_device.lower() for a in ans if a.extract_device})
-        irs = list({'{},{}'.format(a.irradiation, a.irradiation_level.upper()) for a in ans})
+        irs = list(
+            {"{},{}".format(a.irradiation, a.irradiation_level.upper()) for a in ans}
+        )
 
         samples = []
         for il in irs:
-            i, l = il.split(',')
+            i, l = il.split(",")
             ns = self.dvc.distinct_sample_names(i, l)
             samples.extend(ns)
 
-        m = FindReferencesConfigModel(mass_spectrometers=ms[:],
-                                      available_mass_spectrometers=ms,
-                                      extract_devices=es[:],
-                                      available_extract_devices=es,
-                                      monitor_samples=list(set(samples)),
-                                      available_irradiations=irs)
+        m = FindReferencesConfigModel(
+            mass_spectrometers=ms[:],
+            available_mass_spectrometers=ms,
+            extract_devices=es[:],
+            available_extract_devices=es,
+            monitor_samples=list(set(samples)),
+            available_irradiations=irs,
+        )
 
         v = FindReferencesConfigView(model=m)
         info = v.edit_traits()
         if info.result:
             if not m.mass_spectrometers:
-                self.warning_dialog('No Mass Spectrometer selected. Cannot find references. Select one or more Mass '
-                                    'Spectrometers from the "Configure Find References" window')
+                self.warning_dialog(
+                    "No Mass Spectrometer selected. Cannot find references. Select one or more Mass "
+                    'Spectrometers from the "Configure Find References" window'
+                )
                 return
             if m.replace:
-                self.analysis_table.clear()
+                self.table.clear()
 
             atypes = m.formatted_analysis_types
             if atypes:
-                refs = self.db.find_references(ans, atypes,
-                                               extract_devices=m.extract_devices,
-                                               mass_spectrometers=m.mass_spectrometers,
-                                               hours=m.threshold, make_records=False)
+                refs = self.db.find_references(
+                    ans,
+                    atypes,
+                    extract_devices=m.extract_devices,
+                    mass_spectrometers=m.mass_spectrometers,
+                    hours=m.threshold,
+                    make_records=False,
+                )
                 if refs:
-                    self.analysis_table.add_analyses(refs)
+                    self.table.add_analyses(refs)
                 else:
-                    atypes = ','.join(atypes)
-                    ms = ','.join(m.mass_spectrometers)
-                    self.warning_dialog('No References found.\n\n'
-                                        'Analysis Types: {}\n'
-                                        'Mass Spectrometers: {}'.format(atypes, ms))
+                    atypes = ",".join(atypes)
+                    ms = ",".join(m.mass_spectrometers)
+                    self.warning_dialog(
+                        "No References found.\n\n"
+                        "Analysis Types: {}\n"
+                        "Mass Spectrometers: {}".format(atypes, ms)
+                    )
 
             for irstr in m.irradiations:
-                i, l = irstr.split(',')
+                i, l = irstr.split(",")
                 r = self.db.get_flux_monitor_analyses(i, l, m.monitor_sample)
                 if r:
-                    self.analysis_table.add_analyses(r)
+                    self.table.add_analyses(r)
 
                 if atypes:
-                    refs = self.db.find_references(r, atypes,
-                                                   extract_devices=m.extract_devices,
-                                                   mass_spectrometers=m.mass_spectrometers,
-                                                   hours=m.threshold, make_records=False)
+                    refs = self.db.find_references(
+                        r,
+                        atypes,
+                        extract_devices=m.extract_devices,
+                        mass_spectrometers=m.mass_spectrometers,
+                        hours=m.threshold,
+                        make_records=False,
+                    )
                     if refs:
-                        self.analysis_table.add_analyses(refs)
+                        self.table.add_analyses(refs)
 
     def _project_date_bins(self, identifier):
         db = self.db
@@ -325,22 +380,25 @@ class SampleBrowserModel(AnalysisBrowserModel):
         self._set_low_post(lp)
         self.use_high_post = True
         self._set_high_post(hp)
-        ans = self._retrieve_analyses(low_post=lp,
-                                      high_post=hp,
-                                      order='desc',
-                                      mass_spectrometers=ms, analysis_types=analysis_types)
+        ans = self._retrieve_analyses(
+            low_post=lp,
+            high_post=hp,
+            order="desc",
+            mass_spectrometers=ms,
+            analysis_types=analysis_types,
+        )
         return ans
 
     def _selected_projects_change_hook(self, names):
         self.selected_samples = []
-        self.analysis_table.clear_non_frozen()
+        self.table.clear_non_frozen()
         #
         if not self._top_level_filter:
-            self._top_level_filter = 'project'
+            self._top_level_filter = "project"
 
         if names:
             irrads = []
-            if self._top_level_filter == 'project':
+            if self._top_level_filter == "project":
                 irrads = self.db.get_irradiations(project_names=names)
         else:
             irrads = self.db.get_irradiations()
@@ -352,5 +410,6 @@ class SampleBrowserModel(AnalysisBrowserModel):
 
     def _browser_view_default(self):
         return SampleBrowserView(model=self)
+
 
 # ============= EOF =============================================

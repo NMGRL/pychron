@@ -25,7 +25,9 @@ ARGON_IC_MFTABLE = True
 
 
 class ICMFTableGenerator(Loggable):
-    def make_mftable(self, arun, detectors, refiso, peak_center_config='ic_peakhop', n=1):
+    def make_mftable(
+        self, arun, detectors, refiso, peak_center_config="ic_peakhop", n=1
+    ):
         """
             peak center `refiso` for each detector in detectors
         :return:
@@ -39,30 +41,37 @@ class ICMFTableGenerator(Loggable):
 
         @contextmanager
         def listen():
-            arun.on_trait_change(func, '_alive')
+            arun.on_trait_change(func, "_alive")
             yield
-            arun.on_trait_change(func, '_alive', remove=True)
+            arun.on_trait_change(func, "_alive", remove=True)
 
         cumulative = {}
-        with arun.ion_optics_manager.mftable_ctx('ic_mftable'):
+        with arun.ion_optics_manager.mftable_ctx("ic_mftable"):
             for i in range(n):
                 with listen():
-                    self.info('Making IC MFTable')
+                    self.info("Making IC MFTable")
                     results = []
                     for di in detectors:
                         if not arun.is_alive():
                             return False
 
-                        self.info('Peak centering {}@{}'.format(di, refiso))
-                        ion.setup_peak_center(detector=[di], isotope=refiso,
-                                              config_name=peak_center_config,
-                                              plot_panel=plot_panel, show_label=True, use_configuration_dac=False)
+                        self.info("Peak centering {}@{}".format(di, refiso))
+                        ion.setup_peak_center(
+                            detector=[di],
+                            isotope=refiso,
+                            config_name=peak_center_config,
+                            plot_panel=plot_panel,
+                            show_label=True,
+                            use_configuration_dac=False,
+                        )
 
                         arun.peak_center = ion.peak_center
                         ion.do_peak_center(new_thread=False, save=False, warn=False)
                         apc = ion.adjusted_peak_center_result
                         if apc:
-                            self.info('Peak Center {}@{}={:0.6f}'.format(di, refiso, apc))
+                            self.info(
+                                "Peak Center {}@{}={:0.6f}".format(di, refiso, apc)
+                            )
                             results.append((di, apc))
                             time.sleep(0.25)
                         else:
@@ -77,13 +86,15 @@ class ICMFTableGenerator(Loggable):
 
                     centers.append(apc)
                     cumulative[det] = centers
-                    magnet.update_field_table(det, refiso, apc, 'ic_generator', update_others=False)
+                    magnet.update_field_table(
+                        det, refiso, apc, "ic_generator", update_others=False
+                    )
 
-        self.debug('=============== IC Peak Hop Center Deviations ===============')
+        self.debug("=============== IC Peak Hop Center Deviations ===============")
         for k, v in cumulative.items():
             v = array(v)
-            self.debug('{} {} {}'.format(k, v, diff(v)))
-        self.debug('=============================================================')
+            self.debug("{} {} {}".format(k, v, diff(v)))
+        self.debug("=============================================================")
         return True
 
         # def _update_table(self, arun, refiso, results):
@@ -114,5 +125,6 @@ class ICMFTableGenerator(Loggable):
         #             row.extend(results[1:])
         #
         #             w.writerow(row)
+
 
 # ============= EOF =============================================

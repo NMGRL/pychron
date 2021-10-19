@@ -64,6 +64,7 @@ from six.moves import range
 #             current = self.titleBarWidget()
 #             current.setTabsClosable(False)
 
+
 class myEditorAreaWidget(EditorAreaWidget):
     def contextMenuEvent(self, event):
         epos = event.pos()
@@ -73,9 +74,11 @@ class myEditorAreaWidget(EditorAreaWidget):
 
         menu = QtGui.QMenu(self)
 
-        for name, func in (('Close', 'close_action'),
-                           ('Close All', 'close_all_action'),
-                           ('Close Others', 'close_others_action')):
+        for name, func in (
+            ("Close", "close_action"),
+            ("Close All", "close_all_action"),
+            ("Close Others", "close_others_action"),
+        ):
             act = QAction(name, self)
             act.triggered.connect(getattr(self, func))
             menu.addAction(act)
@@ -88,8 +91,7 @@ class myEditorAreaWidget(EditorAreaWidget):
             current.editor.close()
 
     def get_dock_widgets_ordered(self, visible_only=False):
-        """ Gets all dock widgets in left-to-right, top-to-bottom order.
-            """
+        """Gets all dock widgets in left-to-right, top-to-bottom order."""
 
         def cmp(a, b):
             return (a > b) - (a < b)
@@ -100,10 +102,17 @@ class myEditorAreaWidget(EditorAreaWidget):
 
         children = []
         for child in self.children():
-            if (child.isWidgetType() and child.isVisible() and
-                    ((isinstance(child, QtGui.QTabBar) and not visible_only) or
-                         (isinstance(child, QtGui.QDockWidget) and
-                              (visible_only or not self.tabifiedDockWidgets(child))))):
+            if (
+                child.isWidgetType()
+                and child.isVisible()
+                and (
+                    (isinstance(child, QtGui.QTabBar) and not visible_only)
+                    or (
+                        isinstance(child, QtGui.QDockWidget)
+                        and (visible_only or not self.tabifiedDockWidgets(child))
+                    )
+                )
+            ):
                 children.append(child)
         children = sorted(children, key=cmp_to_key(compare))
         # children.sort(cmp=compare)
@@ -145,27 +154,27 @@ class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
     #     self.editors.append(editor)
 
     def create(self, parent):
-        """ Create and set the toolkit-specific control that represents the
-            pane.
+        """Create and set the toolkit-specific control that represents the
+        pane.
         """
         self.control = control = myEditorAreaWidget(self, parent)
         self._filter = EditorAreaDropFilter(self)
         self.control.installEventFilter(self._filter)
 
         # Add shortcuts for scrolling through tabs.
-        if sys.platform == 'darwin':
-            next_seq = 'Ctrl+}'
-            prev_seq = 'Ctrl+{'
+        if sys.platform == "darwin":
+            next_seq = "Ctrl+}"
+            prev_seq = "Ctrl+{"
         else:
-            next_seq = 'Ctrl+PgDown'
-            prev_seq = 'Ctrl+PgUp'
+            next_seq = "Ctrl+PgDown"
+            prev_seq = "Ctrl+PgUp"
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(next_seq), self.control)
         shortcut.activated.connect(self._next_tab)
         shortcut = QtGui.QShortcut(QtGui.QKeySequence(prev_seq), self.control)
         shortcut.activated.connect(self._previous_tab)
 
         # Add shortcuts for switching to a specific tab.
-        mod = 'Ctrl+' if sys.platform == 'darwin' else 'Alt+'
+        mod = "Ctrl+" if sys.platform == "darwin" else "Alt+"
         mapper = QtCore.QSignalMapper(self.control)
         mapper.mapped.connect(self._activate_tab)
         for i in range(1, 10):
@@ -175,13 +184,14 @@ class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
             mapper.setMapping(shortcut, i - 1)
 
     def remove_editor(self, editor):
-        """ Removes an editor from the pane.
-        """
+        """Removes an editor from the pane."""
         editor_widget = editor.control.parent()
         if editor.dirty:
-            ret = confirmation_dialog.confirm(editor_widget,
-                                              'Unsaved changes to "{}". '
-                                              'Do you want to continue'.format(editor.name))
+            ret = confirmation_dialog.confirm(
+                editor_widget,
+                'Unsaved changes to "{}". '
+                "Do you want to continue".format(editor.name),
+            )
             if ret == NO:
                 return
 
@@ -190,5 +200,6 @@ class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
         editor.editor_area = None
         if not self.editors:
             self.active_editor = None
+
 
 # ============= EOF =============================================

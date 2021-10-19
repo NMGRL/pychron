@@ -23,21 +23,27 @@ except AttributeError:
     Loader = yaml.Loader
 
 
-def yload(stream, default=None):
+def yload(stream, default=None, reraise=False):
     if default is None:
         default = {}
 
     if isinstance(stream, str) and os.path.isfile(stream):
-        with open(stream, 'r') as rfile:
+        with open(stream, "r") as rfile:
             try:
                 yd = yaml.load(rfile, Loader=Loader)
-            except yaml.YAMLError:
+            except yaml.YAMLError as e:
                 yd = default
+                if reraise:
+                    raise e
     else:
         try:
             yd = yaml.load(stream, Loader=Loader)
-        except yaml.YAMLError:
+        except yaml.YAMLError as e:
             yd = default
+            if reraise:
+                raise e
 
     return yd
+
+
 # ============= EOF =============================================

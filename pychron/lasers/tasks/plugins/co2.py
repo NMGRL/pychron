@@ -20,17 +20,18 @@ from __future__ import absolute_import
 
 from pychron.lasers.tasks.laser_preferences import FusionsCO2PreferencesPane
 from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pychron_constants import FUSIONS_CO2
 
 
 class FusionsCO2Plugin(FusionsPlugin):
-    id = 'pychron.fusions.co2'
-    name = FUSIONS_CO2.replace(' ', '')
-    klass = ('pychron.lasers.laser_managers.fusions_co2_manager', 'FusionsCO2Manager')
+    id = "pychron.fusions.co2"
+    name = FUSIONS_CO2.replace(" ", "")
+    klass = ("pychron.lasers.laser_managers.fusions_co2_manager", "FusionsCO2Manager")
     task_name = FUSIONS_CO2
-    accelerator = 'Ctrl+Shift+]'
+    accelerator = "Ctrl+Shift+]"
 
     def _task_factory(self):
         from pychron.lasers.tasks.laser_task import FusionsCO2Task
@@ -59,5 +60,6 @@ class FusionsCO2Plugin(FusionsPlugin):
     #                                   #                path='MenuBar/Laser')
     #                                   ])
     #     return exts + [ext1]
+
 
 # ============= EOF =============================================

@@ -17,13 +17,14 @@
 # ============= enthought library imports =======================
 from traits.api import HasTraits, List, Str, Float
 from traitsui.api import View, UItem, HGroup
-from traitsui.editors import TableEditor
+from traitsui.editors.api import TableEditor
 from traitsui.table_column import ObjectColumn
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.pychron_traits import BorderVGroup
+from pychron.core.ui.table_editor import myTableEditor
 from pychron.processing.analyses.view.magnitude_editor import MagnitudeColumn
 from pychron.pychron_constants import INTERFERENCE_KEYS
 
@@ -37,7 +38,7 @@ class ErrorComponent(HasTraits):
 
 
 class ErrorComponentsView(HasTraits):
-    name = 'Error Components'
+    name = "Error Components"
 
     error_components = List
     error_components2 = List
@@ -57,48 +58,67 @@ class ErrorComponentsView(HasTraits):
             es = []
             for k in keys:
                 iso = an.isotopes[k]
-                es.append(ErrorComponent(name=k,
-                                         value=an.get_error_component(iso.name, uage=age)))
+                es.append(
+                    ErrorComponent(
+                        name=k, value=an.get_error_component(iso.name, uage=age)
+                    )
+                )
 
-                d = '{} IC'.format(k)
-                es.append(ErrorComponent(name=d,
-                                         value=an.get_error_component(d, uage=age)))
-                d = '{} bk'.format(k)
-                es.append(ErrorComponent(name=d,
-                                         value=an.get_error_component(d, uage=age)))
+                d = "{} IC".format(k)
+                es.append(
+                    ErrorComponent(name=d, value=an.get_error_component(d, uage=age))
+                )
+                d = "{} bk".format(k)
+                es.append(
+                    ErrorComponent(name=d, value=an.get_error_component(d, uage=age))
+                )
 
-                d = '{} bs'.format(k)
-                es.append(ErrorComponent(name=d,
-                                         value=an.get_error_component(d, uage=age)))
+                d = "{} bs".format(k)
+                es.append(
+                    ErrorComponent(name=d, value=an.get_error_component(d, uage=age))
+                )
 
             return es
 
         es = get_comp(an.uage_w_j_err)
 
-        for k in INTERFERENCE_KEYS + ('J', 'trapped_4036'):
-            es.append(ErrorComponent(name=k, value=an.get_error_component(k, uage=an.uage_w_j_err)))
+        for k in INTERFERENCE_KEYS + ("J", "trapped_4036"):
+            es.append(
+                ErrorComponent(
+                    name=k, value=an.get_error_component(k, uage=an.uage_w_j_err)
+                )
+            )
 
         self.error_components = es
 
         es = get_comp(an.uage_w_position_err)
-        for k in INTERFERENCE_KEYS + ('Position', 'trapped_4036'):
-            es.append(ErrorComponent(name=k, value=an.get_error_component(k, uage=an.uage_w_position_err)))
+        for k in INTERFERENCE_KEYS + ("Position", "trapped_4036"):
+            es.append(
+                ErrorComponent(
+                    name=k, value=an.get_error_component(k, uage=an.uage_w_position_err)
+                )
+            )
         self.error_components2 = es
 
     def traits_view(self):
-        cols = [ObjectColumn(name='name', label='Component'),
-                MagnitudeColumn(name='value',
-                                label=''),
-                ObjectColumn(name='value', label='Value',
-                             width=100,
-                             format_func=lambda x: floatfmt(x, n=5))]
-        editor = TableEditor(columns=cols,
-                             sortable=False,
-                             editable=False)
+        cols = [
+            ObjectColumn(name="name", label="Component"),
+            MagnitudeColumn(name="value", label=""),
+            ObjectColumn(
+                name="value",
+                label="Value",
+                width=100,
+                format_func=lambda x: floatfmt(x, n=5),
+            ),
+        ]
+        editor = myTableEditor(columns=cols, sortable=False, editable=False)
 
-        e1 = BorderVGroup(UItem('error_components', editor=editor), label='With J Err.')
-        e2 = BorderVGroup(UItem('error_components2', editor=editor), label='With Position Err.')
+        e1 = BorderVGroup(UItem("error_components", editor=editor), label="With J Err.")
+        e2 = BorderVGroup(
+            UItem("error_components2", editor=editor), label="With Position Err."
+        )
         v = View(HGroup(e1, e2))
         return v
+
 
 # ============= EOF =============================================

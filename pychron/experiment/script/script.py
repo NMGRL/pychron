@@ -15,14 +15,29 @@
 # ===============================================================================
 # ============= enthought library imports =======================
 import ast
+
 # ============= standard library imports ========================
 import os
 
-from traits.api import Str, Property, Button, cached_property, \
-    String, HasTraits, Event, List, Bool
+from traits.api import (
+    Str,
+    Property,
+    Button,
+    cached_property,
+    String,
+    HasTraits,
+    Event,
+    List,
+    Bool,
+)
 from traitsui.api import View, HGroup, Label, spring, UItem
 
-from pychron.core.helpers.filetools import list_directory, add_extension, remove_extension
+from pychron.core.helpers.filetools import (
+    list_directory,
+    add_extension,
+    remove_extension,
+)
+
 # ============= local library imports  ==========================
 from pychron.core.ui.enum_editor import myEnumEditor
 from pychron.core.yaml import yload
@@ -41,23 +56,25 @@ class ScriptOptions(HasTraits):
         return list_directory(self.options_path(), remove_extension=True)
 
     def traits_view(self):
-        return View(HGroup(
-            Label('Options'),
-            spring,
-            UItem('name',
-                  width=-200,
-                  editor=myEnumEditor(name='names')),
-            UItem('edit',
-                  enabled_when='name and name!="---" and name is not "None"')))
+        return View(
+            HGroup(
+                Label("Options"),
+                spring,
+                UItem("name", width=-200, editor=myEnumEditor(name="names")),
+                UItem(
+                    "edit", enabled_when='name and name!="---" and name is not "None"'
+                ),
+            )
+        )
 
     def _edit_fired(self):
         o = OptionsEditor(path=self.options_path(self.name))
         o.edit_traits()
 
     def options_path(self, p=None):
-        r = os.path.join(paths.scripts_dir, 'options')
+        r = os.path.join(paths.scripts_dir, "options")
         if p is not None:
-            r = os.path.join(r, add_extension(p, '.yaml'))
+            r = os.path.join(r, add_extension(p, ".yaml"))
         return r
 
 
@@ -75,21 +92,23 @@ class Script(Loggable):
 
     name = Str
     # names = Property(depends_on='mass_spectrometer, directory, refresh_lists')
-    names = Property(depends_on='_name_prefix, directory, refresh_lists, mass_spectrometer')
+    names = Property(
+        depends_on="_name_prefix, directory, refresh_lists, mass_spectrometer"
+    )
     edit = Button
     editable = Bool(True)
-    enabled = Property(depends_on='name')
-    kind = 'ExtractionLine'
+    enabled = Property(depends_on="name")
+    kind = "ExtractionLine"
     shared_logger = True
 
     directory = Str(NULL_STR)
-    directories = Property(depends_on='refresh_lists')
+    directories = Property(depends_on="refresh_lists")
 
     def get_parameter(self, key, default=None):
         p = self.script_path()
 
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 text = rfile.read()
                 m = ast.parse(text)
             docstr = ast.get_docstring(m)
@@ -100,16 +119,20 @@ class Script(Loggable):
                 except KeyError:
                     pass
                 except TypeError:
-                    self.warning('Invalid yaml docstring in {}. Could not retrieve {}'.format(self.name, key))
+                    self.warning(
+                        "Invalid yaml docstring in {}. Could not retrieve {}".format(
+                            self.name, key
+                        )
+                    )
 
         return default
 
     def script_path(self):
         name = self.name
         if self.name_prefix:
-            name = '{}{}'.format(self.name_prefix, name)
+            name = "{}{}".format(self.name_prefix, name)
 
-        name = add_extension(name, '.py')
+        name = add_extension(name, ".py")
         p = os.path.join(self._get_root(), name)
 
         return p
@@ -118,18 +141,15 @@ class Script(Loggable):
         self.edit_event = (self.script_path(), self.kind)
 
     def traits_view(self):
-        return View(HGroup(
-            Label(self.label),
-            spring,
-            UItem('directory',
-                  width=-100,
-                  editor=myEnumEditor(name='directories')),
-            UItem('name',
-                  width=-200,
-                  editor=myEnumEditor(name='names')),
-            UItem('edit',
-                  visible_when='editable',
-                  enabled_when='enabled')))
+        return View(
+            HGroup(
+                Label(self.label),
+                spring,
+                UItem("directory", width=-100, editor=myEnumEditor(name="directories")),
+                UItem("name", width=-200, editor=myEnumEditor(name="names")),
+                UItem("edit", visible_when="editable", enabled_when="enabled"),
+            )
+        )
 
     def _clean_script_name(self, name):
         if self.name_prefix:
@@ -145,11 +165,11 @@ class Script(Loggable):
 
     def _remove_name_prefix(self, name):
         if self.name_prefix:
-            name = name[len(self.name_prefix):]
+            name = name[len(self.name_prefix) :]
         return name
 
     def _get_root(self):
-        d = self.label.lower().replace(' ', '_')
+        d = self.label.lower().replace(" ", "_")
         p = os.path.join(paths.scripts_dir, d)
         if self.directory != NULL_STR:
             p = os.path.join(p, self.directory)
@@ -159,19 +179,35 @@ class Script(Loggable):
     def _load_script_names(self):
         p = self._get_root()
         if os.path.isdir(p):
-            return sorted([s for s in os.listdir(p)
-                           if not s.startswith('.') and s.endswith('.py') and s != '__init__.py'])
+            return sorted(
+                [
+                    s
+                    for s in os.listdir(p)
+                    if not s.startswith(".")
+                    and s.endswith(".py")
+                    and s != "__init__.py"
+                ]
+            )
         else:
-            self.warning_dialog('{} script directory does not exist!'.format(p))
+            self.warning_dialog("{} script directory does not exist!".format(p))
 
     @cached_property
     def _get_enabled(self):
-        return self.name and self.name != NULL_STR and self.name is not None and self.name in self.names
+        return (
+            self.name
+            and self.name != NULL_STR
+            and self.name is not None
+            and self.name in self.names
+        )
 
     def _get_name_prefix(self):
-        r = ''
+        r = ""
         if self.use_name_prefix:
-            r = self._name_prefix if self._name_prefix else '{}_'.format(self.mass_spectrometer.lower())
+            r = (
+                self._name_prefix
+                if self._name_prefix
+                else "{}_".format(self.mass_spectrometer.lower())
+            )
         return r
 
     def _set_name_prefix(self, new):
@@ -180,25 +216,33 @@ class Script(Loggable):
     @cached_property
     def _get_directories(self):
         p = self._get_root()
-        return [NULL_STR] + [s for s in os.listdir(p)
-                             if os.path.isdir(os.path.join(p, s)) and s != 'zobs']
+        return [NULL_STR] + [
+            s
+            for s in os.listdir(p)
+            if os.path.isdir(os.path.join(p, s)) and s != "zobs"
+        ]
 
     @cached_property
     def _get_names(self):
         names = [NULL_STR]
         ms = self._load_script_names()
         if ms:
-            names.extend([self._clean_script_name(ei) for ei in ms
-                          if not self.name_prefix or ei.startswith(self.name_prefix)])
+            names.extend(
+                [
+                    self._clean_script_name(ei)
+                    for ei in ms
+                    if not self.name_prefix or ei.startswith(self.name_prefix)
+                ]
+            )
         return names
 
 
-if __name__ == '__main__':
-    paths.build('_dev')
+if __name__ == "__main__":
+    paths.build("_dev")
     s = Script()
-    s.label = 'extraction'
+    s.label = "extraction"
     # s.mass_spectrometer = 'jan'
-    s.name_prefix = 'jan'
+    s.name_prefix = "jan"
     s.configure_traits()
 
 # ============= EOF =============================================

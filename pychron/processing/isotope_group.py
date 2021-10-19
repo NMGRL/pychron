@@ -28,7 +28,7 @@ from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.processing.isotope import Isotope, Baseline
 
-logger = logging.getLogger('ISO')
+logger = logging.getLogger("ISO")
 
 
 class IsotopeGroup(HasTraits):
@@ -93,7 +93,10 @@ class IsotopeGroup(HasTraits):
     _sv = None
 
     def save_stored_value_state(self):
-        self._sv = [(i.use_stored_value, i.baseline.use_stored_value) for i in self.iter_isotopes()]
+        self._sv = [
+            (i.use_stored_value, i.baseline.use_stored_value)
+            for i in self.iter_isotopes()
+        ]
 
     def iter_isotopes(self):
         return (self.isotopes[k] for k in self.isotope_keys)
@@ -103,7 +106,7 @@ class IsotopeGroup(HasTraits):
             self.isotopes[iso.name] = Isotope(iso.name, iso.detector)
 
     def get_baseline(self, attr):
-        if attr.endswith('bs'):
+        if attr.endswith("bs"):
             attr = attr[:-2]
 
         if attr in self.isotopes:
@@ -136,10 +139,10 @@ class IsotopeGroup(HasTraits):
         return k
 
     def get_ratio(self, r, non_ic_corr=False):
-        if '/' in r:
-            n, d = r.split('/')
+        if "/" in r:
+            n, d = r.split("/")
         else:
-            n, d = r.split('_')
+            n, d = r.split("_")
         n = self.map_isotope_key(n)
         d = self.map_isotope_key(d)
         isos = self.isotopes
@@ -170,16 +173,23 @@ class IsotopeGroup(HasTraits):
         try:
             r = self.isotopes[attr].baseline.uvalue
         except KeyError:
-            r = next((iso.baseline.uvalue for iso in self.itervalues() if iso.detector == attr), None)
+            r = next(
+                (
+                    iso.baseline.uvalue
+                    for iso in self.itervalues()
+                    if iso.detector == attr
+                ),
+                None,
+            )
         return r
 
     def get_values(self, attr, n):
         """
-            return an array of floats
+        return an array of floats
 
-            attr: isotope key
-            n: int, values from the end to slice off. e.g 10 means last 10 items in array
-            return all values if n==-1
+        attr: isotope key
+        n: int, values from the end to slice off. e.g 10 means last 10 items in array
+        return all values if n==-1
         """
         try:
             r = self.isotopes[attr].ys
@@ -206,53 +216,54 @@ class IsotopeGroup(HasTraits):
         # storing ic_factor in preferences causing issues
         # ic_factor stored in detectors.cfg
 
-        p = os.path.join(paths.spectrometer_dir, 'detectors.cfg')
+        p = os.path.join(paths.spectrometer_dir, "detectors.cfg")
 
         ic = 1, 0
         if os.path.isfile(p):
             from configparser import ConfigParser
+
             c = ConfigParser()
             c.read(p)
             det = det.lower()
             for si in c.sections():
                 if si.lower() == det:
                     v, e = 1, 0
-                    if c.has_option(si, 'ic_factor'):
-                        v = c.getfloat(si, 'ic_factor')
-                    if c.has_option(si, 'ic_factor_err'):
-                        e = c.getfloat(si, 'ic_factor_err')
+                    if c.has_option(si, "ic_factor"):
+                        v = c.getfloat(si, "ic_factor")
+                    if c.has_option(si, "ic_factor_err"):
+                        e = c.getfloat(si, "ic_factor_err")
                     ic = v, e
                     break
 
         else:
-            p = os.path.join(paths.spectrometer_dir, 'detectors.yaml')
+            p = os.path.join(paths.spectrometer_dir, "detectors.yaml")
             if os.path.isfile(p):
                 for i, di in enumerate(yload(p)):
-                    if di.get('name', '').lower() == det:
-                        v = di.get('ic_factor', 1)
-                        e = di.get('ic_factor_err', 0)
+                    if di.get("name", "").lower() == det:
+                        v = di.get("ic_factor", 1)
+                        e = di.get("ic_factor_err", 0)
                         ic = v, e
                         break
             else:
-                self.debug('no detector file {}. cannot retrieve ic_factor'.format(p))
+                self.debug("no detector file {}. cannot retrieve ic_factor".format(p))
 
         r = ufloat(*ic)
         return r
 
     def append_data(self, iso, det, x, signal, kind):
         """
-            if kind is baseline then key used to match isotope is `detector` not an `isotope_name`
+        if kind is baseline then key used to match isotope is `detector` not an `isotope_name`
         """
 
         def _append(isotope):
-            if kind in ('sniff', 'baseline', 'whiff'):
-                if kind == 'sniff':
+            if kind in ("sniff", "baseline", "whiff"):
+                if kind == "sniff":
                     isotope._value = signal
                     # isotope.dirty = True
 
                 isotope = getattr(isotope, kind)
 
-            if kind == 'sniff':
+            if kind == "sniff":
                 isotope._value = signal
 
             xs = npappend(isotope.xs, x)
@@ -262,7 +273,7 @@ class IsotopeGroup(HasTraits):
             # isotope.dirty = True
 
         isotopes = self.isotopes
-        if kind == 'baseline':
+        if kind == "baseline":
             ret = False
             # get the isotopes that match detector
             for i in self.itervalues():
@@ -272,7 +283,7 @@ class IsotopeGroup(HasTraits):
             return ret
 
         else:
-            for i in ('{}{}'.format(iso, det), iso):
+            for i in ("{}{}".format(iso, det), iso):
                 if i in isotopes:
                     _append(isotopes[i])
                     return True
@@ -305,11 +316,11 @@ class IsotopeGroup(HasTraits):
             iso = self.isotopes.pop(name)
             if add:
                 if iso.detector != det:
-                    nn = '{}{}'.format(iso.name, iso.detector)
+                    nn = "{}{}".format(iso.name, iso.detector)
                     self.isotopes[nn] = iso
 
                     iso = Isotope(name, det)
-                    name = '{}{}'.format(name, det)
+                    name = "{}{}".format(name, det)
                     self.isotopes[name] = iso
                 else:
                     self.isotopes[name] = iso
@@ -339,40 +350,49 @@ class IsotopeGroup(HasTraits):
         iso = self.isotopes[name]
         title = name
         if iso.detector != detector:
-            title = '{}{}'.format(name, detector)
+            title = "{}{}".format(name, detector)
         return title
 
     def get_isotope(self, name=None, detector=None, kind=None):
         if name is None and detector is None:
-            raise NotImplementedError('name or detector required')
-        if detector and ':' in detector:
-            name, detector = detector.split(':')
+            raise NotImplementedError("name or detector required")
+        if detector and ":" in detector:
+            name, detector = detector.split(":")
 
         iso = None
         if name:
-            if ':' in name:
-                name, detector = name.split(':')
+            if ":" in name:
+                name, detector = name.split(":")
 
             try:
                 iso = self.isotopes[name]
                 if detector:
                     if iso.detector != detector:
-                        iso = next((i for i in self.itervalues() if i.name == name and i.detector == detector), None)
+                        iso = next(
+                            (
+                                i
+                                for i in self.itervalues()
+                                if i.name == name and i.detector == detector
+                            ),
+                            None,
+                        )
                         if not iso:
                             return
             except KeyError:
                 if detector:
                     try:
-                        iso = self.isotopes['{}{}'.format(name, detector)]
+                        iso = self.isotopes["{}{}".format(name, detector)]
                     except KeyError:
                         self.isotopes[name] = iso = Isotope(name, detector)
         else:
-            iso = next((iso for iso in self.itervalues() if iso.detector == detector), None)
+            iso = next(
+                (iso for iso in self.itervalues() if iso.detector == detector), None
+            )
 
         if iso:
-            if kind == 'sniff':
+            if kind == "sniff":
                 iso = iso.sniff
-            elif kind == 'baseline':
+            elif kind == "baseline":
                 iso = iso.baseline
         return iso
 
@@ -390,16 +410,16 @@ class IsotopeGroup(HasTraits):
         return niso
 
     def set_baseline(self, iso, detector, v):
-        for iso in ('{}{}'.format(iso, detector), iso):
+        for iso in ("{}{}".format(iso, detector), iso):
             if iso in self.isotopes:
-                self.debug('setting {} baseline {}'.format(iso, v))
+                self.debug("setting {} baseline {}".format(iso, v))
                 self.isotopes[iso].baseline.set_uvalue(v)
                 break
 
     def set_blank(self, iso, detector, v):
-        for iso in ('{}{}'.format(iso, detector), iso):
+        for iso in ("{}{}".format(iso, detector), iso):
             if iso in self.isotopes:
-                self.debug('setting {} blank {}'.format(iso, v))
+                self.debug("setting {} blank {}".format(iso, v))
                 self.isotopes[iso].blank.set_uvalue(v)
                 break
 
@@ -409,19 +429,20 @@ class IsotopeGroup(HasTraits):
         return sort_isotopes(keys)
 
     def _log(self, func, msg):
-        func('{} - {}'.format(self.name, msg))
+        func("{} - {}".format(self.name, msg))
 
     def __getattr__(self, attr):
-        if '/' in attr:
+        if "/" in attr:
             # treat as ratio
-            n, d = attr.split('/')
+            n, d = attr.split("/")
             try:
                 return self.get_value(n) / self.get_value(d)
             except (ZeroDivisionError, TypeError):
                 return ufloat(0, 0)
-        elif attr != 'unit' and (attr.startswith('u') or attr in self.isotope_keys):
+        elif attr != "unit" and (attr.startswith("u") or attr in self.isotope_keys):
             return self.get_value(attr)
         else:
             raise AttributeError(attr)
+
 
 # ============= EOF =============================================

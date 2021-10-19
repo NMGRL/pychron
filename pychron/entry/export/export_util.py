@@ -17,10 +17,18 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-EXP_DICT = {'MassSpec': ('pychron.entry.export.mass_spec_irradiation_exporter', 'MassSpecIrradiationExporter'),
-            'XML': ('pychron.entry.export.xml_irradiation_exporter', 'XMLIrradiationExporter'),
-            'YAML': ('pychron.entry.export.yaml_irradiation_exporter', 'YAMLIrradiationExporter'),
-            'XLS': ('pychron.entry.export.xls_irradiation_exporter', 'XLSIrradiationExporter')}
+EXP_DICT = {
+    "MassSpec": (
+        "pychron.entry.export.mass_spec_irradiation_exporter",
+        "MassSpecIrradiationExporter",
+    ),
+    "XML": ("pychron.entry.export.xml_irradiation_exporter", "XMLIrradiationExporter"),
+    "YAML": (
+        "pychron.entry.export.yaml_irradiation_exporter",
+        "YAMLIrradiationExporter",
+    ),
+    "XLS": ("pychron.entry.export.xls_irradiation_exporter", "XLSIrradiationExporter"),
+}
 
 
 def do_export(source, export_type, destination, irradiations):
@@ -29,7 +37,5 @@ def do_export(source, export_type, destination, irradiations):
     ex = getattr(mod, klass)(destination_spec=destination, source=source)
     ex.do_export(irradiations)
 
+
 # ============= EOF =============================================
-
-
-

@@ -18,9 +18,19 @@
 from itertools import groupby
 
 import six
+
 # ============= enthought library imports =======================
-from pyface.qt.QtGui import QTextEdit, QWidget, QHBoxLayout, QTextFormat, QColor, QPainter, QFrame, \
-    QSizePolicy, QPainterPath
+from pyface.qt.QtGui import (
+    QTextEdit,
+    QWidget,
+    QHBoxLayout,
+    QTextFormat,
+    QColor,
+    QPainter,
+    QFrame,
+    QSizePolicy,
+    QPainterPath,
+)
 from traits.trait_errors import TraitError
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
@@ -30,9 +40,10 @@ from pychron.git_archive.diff_util import extract_line_numbers
 
 
 def get_ranges(data):
-    return [[gi[0] for gi in g]
-            for k, g in groupby(enumerate(data),
-                                lambda i_x: i_x[0] - i_x[1])]
+    return [
+        [gi[0] for gi in g]
+        for k, g in groupby(enumerate(data), lambda i_x: i_x[0] - i_x[1])
+    ]
 
 
 class QDiffConnector(QFrame):
@@ -43,8 +54,7 @@ class QDiffConnector(QFrame):
         super(QDiffConnector, self).__init__()
 
         self.color = QColor(0, 100, 0, 100)
-        self.setSizePolicy(QSizePolicy(QSizePolicy.Fixed,
-                                       QSizePolicy.Ignored))
+        self.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Ignored))
         self.setFixedWidth(30)
 
     def paintEvent(self, event):
@@ -59,25 +69,25 @@ class QDiffConnector(QFrame):
         x = rect.x()
         w = rect.width()
         lineheight = 16
-        print('-------------------')
-        print('lefts', self.lefts)
-        print('rights', self.rights)
-        print('-------------------')
+        print("-------------------")
+        print("lefts", self.lefts)
+        print("rights", self.rights)
+        print("-------------------")
         ly = self._left_y + 5
         ry = self._right_y + 5
-        rs=self.rights[:]
+        rs = self.rights[:]
 
         # offset=1
         for i, l in enumerate(self.lefts):
             path = QPainterPath()
             sl, el = l[0], l[-1]
             try:
-                r=rs[i]
+                r = rs[i]
                 sr, er = r[0], r[-1]
                 rs.pop(i)
                 # offset+=1
             except IndexError:
-                sr, er = l[-1], l[-1]-1
+                sr, er = l[-1], l[-1] - 1
 
             y = ly + lineheight * sl
             y2 = ry + lineheight * sr
@@ -92,11 +102,11 @@ class QDiffConnector(QFrame):
             path = QPainterPath()
             sr, er = r[0], r[-1]
             # try:
-            l=self.lefts[i]
-            sl, el = r[-1], r[-1]-1
+            l = self.lefts[i]
+            sl, el = r[-1], r[-1] - 1
             # except IndexError:
             #     sl, el = l[-1]+2, l[-1]+1
-                # print sl, el
+            # print sl, el
 
             y = ly + lineheight * (sl)
             y2 = ry + lineheight * (sr)
@@ -119,7 +129,7 @@ class QDiffConnector(QFrame):
 class LinkedTextEdit(QTextEdit):
     linked_widget = None
     connector = None
-    orientation = 'left'
+    orientation = "left"
     no_update = False
 
     def scrollContentsBy(self, x, y):
@@ -131,7 +141,7 @@ class LinkedTextEdit(QTextEdit):
             self.linked_widget.no_update = False
 
         if self.connector:
-            if self.orientation == 'left':
+            if self.orientation == "left":
                 self.connector.set_left_y(y)
             else:
                 self.connector.set_right_y(y)
@@ -144,11 +154,11 @@ class QDiffEdit(QWidget):
     def __init__(self, parent, *args, **kw):
         super(QDiffEdit, self).__init__(*args, **kw)
         self.left = LinkedTextEdit()
-        self.left.orientation = 'left'
+        self.left.orientation = "left"
         self.left.setReadOnly(True)
 
         self.right = LinkedTextEdit()
-        self.right.orientation = 'right'
+        self.right.orientation = "right"
         self.right.setReadOnly(True)
 
         self.connector = QDiffConnector()
@@ -176,8 +186,7 @@ class QDiffEdit(QWidget):
         selection = QTextEdit.ExtraSelection()
         selection.cursor = ctrl.textCursor()
         selection.format.setBackground(QColor(100, 200, 100))
-        selection.format.setProperty(
-            QTextFormat.FullWidthSelection, True)
+        selection.format.setProperty(QTextFormat.FullWidthSelection, True)
 
         doc = ctrl.document()
 
@@ -196,8 +205,7 @@ class QDiffEdit(QWidget):
     def set_diff(self):
         self._clear_selection()
 
-        ls, rs = extract_line_numbers(self.left.toPlainText(),
-                                      self.right.toPlainText())
+        ls, rs = extract_line_numbers(self.left.toPlainText(), self.right.toPlainText())
         for li in ls:
             self.highlight(self.left, li)
         for ri in rs:
@@ -235,26 +243,27 @@ class _DiffEditor(Editor):
             self.control.set_diff()
 
     def update_right_object(self):
-        """ Handles the user entering input data in the edit control.
-        """
-        self._update_object('right')
+        """Handles the user entering input data in the edit control."""
+        self._update_object("right")
 
     def update_left_object(self):
-        """ Handles the user entering input data in the edit control.
-        """
-        self._update_object('left')
+        """Handles the user entering input data in the edit control."""
+        self._update_object("left")
 
     def _get_user_left_value(self):
-        return self._get_user_value('left')
+        return self._get_user_value("left")
 
     def _get_user_right_value(self):
-        return self._get_user_value('left')
+        return self._get_user_value("left")
 
     def _update_object(self, attr):
         if (not self._no_update) and (self.control is not None):
             try:
-                setattr(self.value, '{}_text'.format(attr),
-                        getattr(self, '_get_user_{}_value'.format(attr))())
+                setattr(
+                    self.value,
+                    "{}_text".format(attr),
+                    getattr(self, "_get_user_{}_value".format(attr))(),
+                )
                 self.control.set_diff()
                 if self._error is not None:
                     self._error = None
@@ -291,7 +300,5 @@ class _DiffEditor(Editor):
 class DiffEditor(BasicEditorFactory):
     klass = _DiffEditor
 
+
 # ============= EOF =============================================
-
-
-

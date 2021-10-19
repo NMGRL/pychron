@@ -44,7 +44,7 @@ class PipelinePyScriptEditor(BaseTraitsEditor):
         self.file_listener = FileListener(path=path, callback=self._refresh_from_disk)
 
         script = self.script
-        script.display_state = 'not run'
+        script.display_state = "not run"
         script.bootstrap()
         if auto_execute:
             self._execute()
@@ -54,16 +54,17 @@ class PipelinePyScriptEditor(BaseTraitsEditor):
 
         output = io.StringIO()
         import sys
+
         oout = sys.stdout
         sys.stdout = output
         script.execute(test=False, bootstrap=False)
 
         if script.execution_error:
-            script.display_state = 'failed'
+            script.display_state = "failed"
             self.exception_trace = script.exception_trace
         else:
-            script.display_state = 'completed'
-            self.exception_trace = ''
+            script.display_state = "completed"
+            self.exception_trace = ""
             self.output = output.getvalue()
             output.close()
 
@@ -77,23 +78,37 @@ class PipelinePyScriptEditor(BaseTraitsEditor):
 
     def traits_view(self):
 
-        error_grp = BorderVGroup(Readonly('object.script.execution_error'),
-                                 BorderVGroup(UItem('exception_trace', style='custom',
-                                                    editor=TextEditor(read_only=True)),
-                                              label='Exception'),
-                                 label='Errors')
-        output_grp = VGroup(BorderVGroup(UItem('output', style='custom', editor=TextEditor(read_only=True)),
-                                         label='StdOut'),
-                            error_grp,
-                            label='Output')
+        error_grp = BorderVGroup(
+            Readonly("object.script.execution_error"),
+            BorderVGroup(
+                UItem(
+                    "exception_trace", style="custom", editor=TextEditor(read_only=True)
+                ),
+                label="Exception",
+            ),
+            label="Errors",
+        )
+        output_grp = VGroup(
+            BorderVGroup(
+                UItem("output", style="custom", editor=TextEditor(read_only=True)),
+                label="StdOut",
+            ),
+            error_grp,
+            label="Output",
+        )
 
-        main_grp = VGroup(HGroup(icon_button_editor('execute_button', 'start'),
-                                 CustomLabel('object.script.display_state')),
-                          UItem('object.script.text', style='custom',
-                                editor=PyScriptCodeEditor()),
-                          label='Main')
+        main_grp = VGroup(
+            HGroup(
+                icon_button_editor("execute_button", "start"),
+                CustomLabel("object.script.display_state"),
+            ),
+            UItem("object.script.text", style="custom", editor=PyScriptCodeEditor()),
+            label="Main",
+        )
 
         v = View(Tabbed(main_grp, output_grp))
 
         return v
+
+
 # ============= EOF =============================================

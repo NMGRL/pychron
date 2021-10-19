@@ -32,11 +32,11 @@ from pychron.dvc.meta_repo import irradiation_geometry_holes, irradiation_chrono
 from pychron.loading.component_flowable import ComponentFlowable
 from pychron.pychron_constants import DEFAULT_MONITOR_NAME
 
-MATERIAL_MAP = {'GroundmassConcentrate': 'GMC'}
+MATERIAL_MAP = {"GroundmassConcentrate": "GMC"}
 
 
 def fontsize(x, f):
-    return '<font size={}>{}</font>'.format(f, x)
+    return "<font size={}>{}</font>".format(f, x)
 
 
 class RotatedParagraph(Paragraph):
@@ -46,7 +46,7 @@ class RotatedParagraph(Paragraph):
         self.canv.saveState()
 
         self.canv.rotate(self.rotation)
-        self.canv.translate(-self.width / 2. - 100, -self.height)
+        self.canv.translate(-self.width / 2.0 - 100, -self.height)
         Paragraph.draw(self)
         self.canv.restoreState()
 
@@ -61,32 +61,41 @@ class IrradiationPDFTableOptions(BasePDFOptions):
 
     only_selected_level = dumpable(Bool(False))
 
-    _persistence_name = 'irradiation_pdf_table_options'
+    _persistence_name = "irradiation_pdf_table_options"
 
     def widths(self, units=inch):
-        return [getattr(self, '{}_width'.format(w)) * units for w in ('status', 'position', 'identifier', 'sample',
-                                                                      'material',
-                                                                      'project')]
+        return [
+            getattr(self, "{}_width".format(w)) * units
+            for w in (
+                "status",
+                "position",
+                "identifier",
+                "sample",
+                "material",
+                "project",
+            )
+        ]
 
     def traits_view(self):
         layout_grp = self._get_layout_group()
         layout_grp.show_border = False
-        width_grp = VGroup(Item('status_width', label='Status (in)'),
-                           Item('position_width', label='Pos. (in)'),
-                           Item('identifier_width', label='L# (in)'),
-                           Item('sample_width', label='Sample (in)'),
-                           Item('material_width', label='Material (in)'),
-                           Item('project_width', label='Project (in)'),
-                           label='Column Widths')
+        width_grp = VGroup(
+            Item("status_width", label="Status (in)"),
+            Item("position_width", label="Pos. (in)"),
+            Item("identifier_width", label="L# (in)"),
+            Item("sample_width", label="Sample (in)"),
+            Item("material_width", label="Material (in)"),
+            Item("project_width", label="Project (in)"),
+            label="Column Widths",
+        )
 
-        main_grp = VGroup(Item('only_selected_level',
-                               label='Only Selected Level'),
-                          label='Main')
+        main_grp = VGroup(
+            Item("only_selected_level", label="Only Selected Level"), label="Main"
+        )
 
-        v = okcancel_view(Tabbed(main_grp,
-                                 layout_grp,
-                                 width_grp),
-                          title='PDF Save Options')
+        v = okcancel_view(
+            Tabbed(main_grp, layout_grp, width_grp), title="PDF Save Options"
+        )
         return v
 
 
@@ -101,7 +110,9 @@ class IrradiationPDFWriter(BasePDFTableWriter):
 
     def _build(self, doc, irrad, *args, **kw):
         if not self.options.only_selected_level:
-            self.options.page_number_format = '{} {{page:d}} - {{total:d}}'.format(irrad.name)
+            self.options.page_number_format = "{} {{page:d}} - {{total:d}}".format(
+                irrad.name
+            )
         flowables = self._make_levels(irrad)
         return flowables, None
 
@@ -122,7 +133,7 @@ class IrradiationPDFWriter(BasePDFTableWriter):
 
         for level in levels:
             if progress is not None:
-                progress.change_message('Making {}{}'.format(irradname, level.name))
+                progress.change_message("Making {}{}".format(irradname, level.name))
 
             c = self._make_canvas(level)
             fs = self._make_level_table(irrad, level, c)
@@ -138,46 +149,44 @@ class IrradiationPDFWriter(BasePDFTableWriter):
 
     def _make_summary(self, irrad):
         name = irrad.name
-        levels = ', '.join(sorted([li.name for li in irrad.levels]))
+        levels = ", ".join(sorted([li.name for li in irrad.levels]))
 
         chron = irradiation_chronology(name)
         dur = chron.total_duration_seconds
         date = chron.start_date
 
-        dur /= (60 * 60.)
-        date = 'Irradiation Date: {}'.format(date)
-        dur = 'Irradiation Duration: {:0.1f} hrs'.format(dur)
+        dur /= 60 * 60.0
+        date = "Irradiation Date: {}".format(date)
+        dur = "Irradiation Duration: {:0.1f} hrs".format(dur)
 
         name = fontsize(name, 40)
-        txt = '<br/>'.join((name, levels, date, dur))
+        txt = "<br/>".join((name, levels, date, dur))
 
         klass = Paragraph
         rotation = 0
-        if self.options.orientation == 'landscape':
+        if self.options.orientation == "landscape":
             klass = RotatedParagraph
             rotation = 90
 
-        p = self._new_paragraph(txt,
-                                klass=klass,
-                                s='Title',
-                                textColor=colors.black,
-                                alignment=TA_CENTER)
+        p = self._new_paragraph(
+            txt, klass=klass, s="Title", textColor=colors.black, alignment=TA_CENTER
+        )
         p.rotation = rotation
         return p
 
     def _make_summary_table(self, irrad):
         ts = self._new_style(header_line_idx=0)
         header = Row()
-        header.add_item(value='<b>Level</b>')
-        header.add_item(value='<b>Tray</b>')
-        header.add_item(value='<b>Project</b>')
+        header.add_item(value="<b>Level</b>")
+        header.add_item(value="<b>Tray</b>")
+        header.add_item(value="<b>Project</b>")
 
         def make_row(level):
             row = Row()
 
             row.add_item(value=level.name)
             row.add_item(value=level.holder)
-            row.add_item(value=', '.join(level.projects))
+            row.add_item(value=", ".join(level.projects))
             return row
 
         rows = [make_row(li) for li in sorted(irrad.levels, key=lambda x: x.name)]
@@ -192,8 +201,8 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         rows = [row]
 
         row = Row()
-        for v in ('', 'Pos.', 'L#', 'Sample', 'Material', 'Project', 'PI', 'Note'):
-            row.add_item(value=self._new_paragraph('<b>{}</b>'.format(v)))
+        for v in ("", "Pos.", "L#", "Sample", "Material", "Project", "PI", "Note"):
+            row.add_item(value=self._new_paragraph("<b>{}</b>".format(v)))
         rows.append(row)
 
         srows = []
@@ -212,7 +221,7 @@ class IrradiationPDFWriter(BasePDFTableWriter):
 
         ts = self._new_style(header_line_idx=0, header_line_width=2)
 
-        ts.add('LINEBELOW', (0, 1), (-1, -1), 1.0, colors.black)
+        ts.add("LINEBELOW", (0, 1), (-1, -1), 1.0, colors.black)
 
         cw = self.options.widths()
         t = self._new_table(ts, rows, colWidths=cw)
@@ -226,23 +235,23 @@ class IrradiationPDFWriter(BasePDFTableWriter):
         return flowables
 
     def _make_table_title(self, irrad, level):
-        t = '{}{} {}'.format(irrad.name, level.name, level.holder)
-        p = self._new_paragraph(t, s='Heading1', alignment=TA_CENTER)
+        t = "{}{} {}".format(irrad.name, level.name, level.holder)
+        p = self._new_paragraph(t, s="Heading1", alignment=TA_CENTER)
         return p
 
     def _make_blank_row(self, pos):
         r = Row()
-        r.add_item(value='[  ]')
+        r.add_item(value="[  ]")
         r.add_item(value=pos)
         for i in range(6):
-            r.add_item(value='')
+            r.add_item(value="")
 
         return r
 
     def _make_row(self, pos, canvas):
         r = Row()
         sample = pos.sample
-        project, pi, material = '', '', ''
+        project, pi, material = "", "", ""
         if sample:
             if sample.material:
                 material = sample.material.name
@@ -253,16 +262,16 @@ class IrradiationPDFWriter(BasePDFTableWriter):
             pi = sample.project.principal_investigator.name
             sample = sample.name
             if sample == DEFAULT_MONITOR_NAME:
-                project, pi, material = '', '', ''
+                project, pi, material = "", "", ""
 
-        r.add_item(value='[  ]')
+        r.add_item(value="[  ]")
         r.add_item(value=pos.position)
-        r.add_item(value=pos.identifier or '')
-        r.add_item(value=sample or '')
+        r.add_item(value=pos.identifier or "")
+        r.add_item(value=sample or "")
         r.add_item(value=material, fontsize=8)
         r.add_item(value=project, fontsize=8)
         r.add_item(value=pi, fontsize=8)
-        r.add_item(value='')
+        r.add_item(value="")
 
         if sample:
             item = canvas.scene.get_item(pos.position)
@@ -281,7 +290,7 @@ class IrradiationPDFWriter(BasePDFTableWriter):
 
 
 class LabbookPDFWriter(IrradiationPDFWriter):
-    title = 'New Mexico Geochronology Research Laboratory'
+    title = "New Mexico Geochronology Research Laboratory"
 
     def _build(self, doc, irrads, progress=None, *args, **kw):
         flowables = []
@@ -289,7 +298,9 @@ class LabbookPDFWriter(IrradiationPDFWriter):
         flowables.extend(self._make_title_page(irrads))
 
         for irrad in irrads:
-            self.options.page_number_format = '{} {{page:d}} - {{total:d}}'.format(irrad.name)
+            self.options.page_number_format = "{} {{page:d}} - {{total:d}}".format(
+                irrad.name
+            )
             fs = self._make_levels(irrad, progress)
 
             flowables.extend(fs)
@@ -300,36 +311,36 @@ class LabbookPDFWriter(IrradiationPDFWriter):
         start = irrads[0].name
         end = irrads[-1].name
         l1 = self.title
-        l2 = 'Irradiation Labbook'
+        l2 = "Irradiation Labbook"
         if start != end:
-            l3 = '{} to {}'.format(start, end)
+            l3 = "{} to {}".format(start, end)
         else:
             l3 = start
 
-        t = '<br/>'.join((l1, l2, l3))
-        p = self._new_paragraph(t, s='Title')
+        t = "<br/>".join((l1, l2, l3))
+        p = self._new_paragraph(t, s="Title")
         return p, self._page_break()
 
     def _make_summary(self, irrad):
         name = irrad.name
-        levels = ', '.join(sorted([li.name for li in irrad.levels]))
+        levels = ", ".join(sorted([li.name for li in irrad.levels]))
 
         chron = irradiation_chronology(name)
         dur = chron.total_duration_seconds
         date = chron.start_date
 
-        dur /= (60 * 60.)
-        date = 'Irradiation Date: {}'.format(date)
-        dur = 'Irradiation Duration: {:0.1f} hrs'.format(dur)
+        dur /= 60 * 60.0
+        date = "Irradiation Date: {}".format(date)
+        dur = "Irradiation Duration: {:0.1f} hrs".format(dur)
 
         name = fontsize(name, 40)
 
-        txt = '<br/>'.join((name, levels, date, dur))
-        p = self._new_paragraph(txt,
-                                s='Title',
-                                textColor=colors.green,
-                                alignment=TA_CENTER)
+        txt = "<br/>".join((name, levels, date, dur))
+        p = self._new_paragraph(
+            txt, s="Title", textColor=colors.green, alignment=TA_CENTER
+        )
 
         return p
+
 
 # ============= EOF =============================================

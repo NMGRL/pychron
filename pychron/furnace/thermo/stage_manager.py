@@ -76,7 +76,7 @@ class ThermoFurnaceStageManager(BaseFurnaceStageManager):
 
     # private
     def _move_to_hole(self, key, correct_position=True):
-        self.info('Move to hole {} type={}'.format(key, str(type(key))))
+        self.info("Move to hole {} type={}".format(key, str(type(key))))
         pos = self.stage_map.get_hole_pos(key)
 
         if pos:
@@ -86,30 +86,32 @@ class ThermoFurnaceStageManager(BaseFurnaceStageManager):
             self.temp_position = pos
 
             x, y = self.get_calibrated_position(pos, key=key)
-            self.info('hole={}, position={}, calibrated_position={}'.format(key, pos, (x, y)))
+            self.info(
+                "hole={}, position={}, calibrated_position={}".format(key, pos, (x, y))
+            )
             if do_hystersis:
-                self.info('doing hystersis')
+                self.info("doing hystersis")
                 hx = x - 5
-                self.debug('hystersis position={}'.format(hx))
+                self.debug("hystersis position={}".format(hx))
                 self.canvas.set_desired_position(hx, 0)
                 self.feeder._position = hx
-                self.feeder.move_absolute(hx, units='mm')
+                self.feeder.move_absolute(hx, units="mm")
 
                 self._inprogress()
 
-                self.info('Hystersis correction complete')
+                self.info("Hystersis correction complete")
                 self.update_axes()
 
             self.canvas.set_desired_position(x, 0)
             self.feeder._position = x
-            self.feeder.move_absolute(x, units='mm')
+            self.feeder.move_absolute(x, units="mm")
 
             self._inprogress()
 
-            self.info('Move complete')
+            self.info("Move complete")
             self.update_axes()  # update_hole=False)
         else:
-            self.debug('invalid hole {}'.format(key))
+            self.debug("invalid hole {}".format(key))
 
     def _inprogress(self, timeout=120):
         time.sleep(1)
@@ -132,15 +134,19 @@ class ThermoFurnaceStageManager(BaseFurnaceStageManager):
             time.sleep(0.5)
 
     def _update_axes(self, warn=False):
-        pos = self.feeder.get_position(units='mm')
-        self.debug('update feeder position={}'.format(pos))
+        pos = self.feeder.get_position(units="mm")
+        self.debug("update feeder position={}".format(pos))
         if pos is None:
             if warn:
-                self.warning_dialog('Could not read Feeder position. '
-                                    'Check that the furnace firmware computer is running and accessible')
-        elif pos == 'No Response':
+                self.warning_dialog(
+                    "Could not read Feeder position. "
+                    "Check that the furnace firmware computer is running and accessible"
+                )
+        elif pos == "No Response":
             if warn:
-                self.warning_dialog('Could not read Feeder position. Check that the Feeder motor is plugged in')
+                self.warning_dialog(
+                    "Could not read Feeder position. Check that the Feeder motor is plugged in"
+                )
         elif pos is not None:
             self.canvas.set_stage_position(pos, 0)
 
@@ -149,7 +155,8 @@ class ThermoFurnaceStageManager(BaseFurnaceStageManager):
         return c
 
     def _feeder_default(self):
-        d = Feeder(name='feeder', configuration_dir_name='furnace')
+        d = Feeder(name="feeder", configuration_dir_name="furnace")
         return d
+
 
 # ============= EOF =============================================

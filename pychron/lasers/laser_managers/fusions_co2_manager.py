@@ -25,20 +25,20 @@ from pychron.response_recorder import ResponseRecorder
 
 
 class FusionsCO2Manager(FusionsLaserManager):
-    """
-    """
-    stage_manager_id = 'fusions.co2'
-    name = 'FusionsCO2'
-    id = 'pychron.fusions.co2'
+    """ """
+
+    stage_manager_id = "fusions.co2"
+    name = "FusionsCO2"
+    id = "pychron.fusions.co2"
 
     launch_profile = Button
     launch_step = Button
 
-    request_power = DelegatesTo('laser_controller')
-    request_powermin = DelegatesTo('laser_controller')
-    request_powermax = DelegatesTo('laser_controller')
+    request_power = DelegatesTo("laser_controller")
+    request_powermin = DelegatesTo("laser_controller")
+    request_powermax = DelegatesTo("laser_controller")
 
-    monitor_name = 'co2_laser_monitor'
+    monitor_name = "co2_laser_monitor"
     monitor_klass = FusionsCO2LaserMonitor
 
     # dbname = paths.co2laser_db
@@ -46,54 +46,55 @@ class FusionsCO2Manager(FusionsLaserManager):
 
     _stop_signal = None
 
-    configuration_dir_name = 'fusions_co2'
+    configuration_dir_name = "fusions_co2"
 
     def get_laser_watts(self):
         return self.laser_controller.read_power_meter()
 
     def _set_laser_power_hook(self, rp, **kw):
-        """
-        """
+        """ """
         self.laser_controller.set_laser_power(rp, **kw)
         if self.monitor:
             self.monitor.setpoint = self._requested_power
         else:
-            self.debug('no monitor')
+            self.debug("no monitor")
 
         if self.data_manager:
             with self._data_manager_lock:
-                tab = self.data_manager.get_table('internal', 'Power')
+                tab = self.data_manager.get_table("internal", "Power")
                 if tab:
                     tab.attrs.request_power = rp
 
     def _laser_controller_default(self):
-        """
-        """
-        b = FusionsCO2LogicBoard(name='laser_controller',
-                                 configuration_name='laser_controller',
-                                 configuration_dir_name=self.configuration_dir_name)
+        """ """
+        b = FusionsCO2LogicBoard(
+            name="laser_controller",
+            configuration_name="laser_controller",
+            configuration_dir_name=self.configuration_dir_name,
+        )
         return b
 
     def _response_recorder_default(self):
-        r = ResponseRecorder(response_device=self.laser_controller,
-                             output_device=self.laser_controller)
+        r = ResponseRecorder(
+            response_device=self.laser_controller, output_device=self.laser_controller
+        )
         return r
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
     from pychron.envisage.initialization.initializer import Initializer
 
     from launchers.helpers import build_version
 
-    build_version('_test')
-    logging_setup('fusions co2')
+    build_version("_test")
+    logging_setup("fusions co2")
     f = FusionsCO2Manager()
     f.use_video = True
     f.record_brightness = True
     ini = Initializer()
 
-    a = dict(manager=f, name='FusionsCO2')
+    a = dict(manager=f, name="FusionsCO2")
     ini.add_initialization(a)
     ini.run()
     #    f.bootstrap()

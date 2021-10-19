@@ -24,45 +24,47 @@ from pychron.hardware.agilent.agilent_mixin import AgilentMixin
 
 class AgilentGPActuator(AgilentMixin, GPActuator):
     """
-        Abstract module for the Agilent 34903A GP AgilentGPActuator
+    Abstract module for the Agilent 34903A GP AgilentGPActuator
 
     """
 
     def get_channel_state(self, obj, verbose=False, **kw):
         """
-            Query the hardware for the channel state
+        Query the hardware for the channel state
         """
 
         # returns one if channel close  0 for open
-        cmd = 'ROUT:{}? (@{})'.format(self._get_cmd('OPEN'), get_switch_address(obj))
+        cmd = "ROUT:{}? (@{})".format(self._get_cmd("OPEN"), get_switch_address(obj))
         s = self.ask(cmd, verbose=verbose)
         if self.simulation:
             return
 
         if s:
-            return s[0] == '1'
+            return s[0] == "1"
 
     def close_channel(self, obj, excl=False):
         """
-            Close the channel
+        Close the channel
         """
 
-        return self._actuate(obj, 'CLOSE', excl)
+        return self._actuate(obj, "CLOSE", excl)
 
     def open_channel(self, obj):
         """
-            Open the channel
+        Open the channel
         """
-        return self._actuate(obj, 'OPEN')
+        return self._actuate(obj, "OPEN")
 
     def _actuate(self, obj, action, excl=False):
-        state = action == 'OPEN'
+        state = action == "OPEN"
         addr = get_switch_address(obj)
         if not addr:
             name = get_valve_name(obj)
             self.warning_dialog('Address not set for valve "{}"'.format(name))
 
-        cmd = 'ROUT:{}{} (@{})'.format(self._get_cmd(action), ':EXCL' if excl else '', addr)
+        cmd = "ROUT:{}{} (@{})".format(
+            self._get_cmd(action), ":EXCL" if excl else "", addr
+        )
         self.tell(cmd)
         if self.simulation:
             return True
@@ -72,7 +74,8 @@ class AgilentGPActuator(AgilentMixin, GPActuator):
     # private
     def _get_cmd(self, cmd):
         if self.invert:
-            cmd = 'CLOSE' if cmd == 'OPEN' else 'OPEN'
+            cmd = "CLOSE" if cmd == "OPEN" else "OPEN"
         return cmd
+
 
 # ============= EOF =====================================

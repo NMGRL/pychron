@@ -18,6 +18,8 @@
 from __future__ import absolute_import
 from traits.api import HasTraits, Str, Password
 from traitsui.api import View, Item, VGroup
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -28,7 +30,7 @@ class DBConnectionSpec(HasTraits):
     username = Str
     password = Password
     #    host = Str('129.138.12.131')
-    host = Str('localhost')
+    host = Str("localhost")
 
     name = Str
 
@@ -44,18 +46,27 @@ class DBConnectionSpec(HasTraits):
     database = property(get_database, set_database)
 
     def make_url(self):
-        return '{}:{}@{}/{}'.format(self.username, self.password, self.host, self.database)
+        return "{}:{}@{}/{}".format(
+            self.username, self.password, self.host, self.database
+        )
 
     def make_connection_dict(self):
-        return dict(name=self.database, username=self.username, password=self.password, host=self.host)
+        return dict(
+            name=self.database,
+            username=self.username,
+            password=self.password,
+            host=self.host,
+        )
 
     def traits_view(self):
-        return View(VGroup(
-            Item('host'),
-            Item('database'),
-            Item('username'),
-            Item('password'),
+        return View(
+            VGroup(
+                Item("host"),
+                Item("database"),
+                Item("username"),
+                Item("password"),
+            )
         )
-        )
+
 
 # ============= EOF =============================================

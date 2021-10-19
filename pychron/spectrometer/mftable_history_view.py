@@ -21,8 +21,18 @@ set_qt()
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Int, Date, List, Str, Instance, Button
-from traitsui.api import View, Item, TabularEditor, Controller, UItem, \
-    VSplit, VGroup, spring, EnumEditor, HGroup
+from traitsui.api import (
+    View,
+    Item,
+    TabularEditor,
+    Controller,
+    UItem,
+    VSplit,
+    VGroup,
+    spring,
+    EnumEditor,
+    HGroup,
+)
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -31,7 +41,7 @@ from pychron.database.isotope_database_manager import IsotopeDatabaseManager
 
 
 class FreeAdapter(TabularAdapter):
-    columns = [('placeholder', 'placeholder')]
+    columns = [("placeholder", "placeholder")]
 
 
 class FreeRow(HasTraits):
@@ -39,7 +49,7 @@ class FreeRow(HasTraits):
 
 
 class MFTableAdapter(TabularAdapter):
-    columns = [('Date', 'create_date')]
+    columns = [("Date", "create_date")]
 
 
 class MFTableRecord(HasTraits):
@@ -56,7 +66,7 @@ class MFTableHistory(HasTraits):
     selected_table = List
     spectrometer = Str
     spectrometers = List
-    checkout_button = Button('Checkout')
+    checkout_button = Button("Checkout")
 
     def __init__(self, connect=True, *args, **kw):
         super(MFTableHistory, self).__init__(*args, **kw)
@@ -71,8 +81,9 @@ class MFTableHistory(HasTraits):
         db = self.dbm.db
         items = db.get_mftables(self.spectrometer, limit=self.limit)
 
-        self.items = [MFTableRecord(rid=int(i.id),
-                                    create_date=i.create_date) for i in items]
+        self.items = [
+            MFTableRecord(rid=int(i.id), create_date=i.create_date) for i in items
+        ]
 
     def _selected_changed(self, new):
         if new:
@@ -86,8 +97,8 @@ class MFTableHistory(HasTraits):
             self._assemble_table(blob)
 
     def _assemble_table(self, b):
-        bs = b.split('\n')
-        header = bs[0].split(',')
+        bs = b.split("\n")
+        header = bs[0].split(",")
 
         self.selected_adapter.columns = [(hi, hi) for hi in header]
 
@@ -97,8 +108,7 @@ class MFTableHistory(HasTraits):
                 r.add_trait(hi, Str(v.strip()))
             return r
 
-        items = [make_row(l.split(','))
-                 for l in bs[1:] if l]
+        items = [make_row(l.split(",")) for l in bs[1:] if l]
         self.selected_table = items
 
     def _spectrometer_changed(self, old, new):
@@ -110,50 +120,66 @@ class MFTableHistory(HasTraits):
             self._load_items()
 
     def _checkout_button_fired(self):
-        with open(self.checkout_path, 'w') as wfile:
+        with open(self.checkout_path, "w") as wfile:
             hs = [hi[1] for hi in self.selected_adapter.columns]
-            h = ','.join(hs)
-            wfile.write('{}\n'.format(h))
+            h = ",".join(hs)
+            wfile.write("{}\n".format(h))
             for r in self.selected_table:
-                wfile.write('{}\n'.format(','.join([getattr(r, hi) for hi in hs])))
+                wfile.write("{}\n".format(",".join([getattr(r, hi) for hi in hs])))
 
 
 class MFTableHistoryView(Controller):
     def traits_view(self):
         self.model.selected_adapter = FreeAdapter()
         v = View(
-            VGroup(HGroup(spring,
-                          Item('spectrometer',
-                               editor=EnumEditor(name='spectrometers')),
-                          Item('limit')),
-                   VSplit(UItem('items', editor=TabularEditor(adapter=MFTableAdapter(),
-                                                              editable=False,
-                                                              selected='selected')),
-                          UItem('selected_table',
-                                visible_when='selected',
-                                editor=TabularEditor(adapter=self.model.selected_adapter))),
-                   HGroup(spring, UItem('checkout_button', enabled_when='selected'))),
-            kind='livemodal',
-            buttons=['OK'],
+            VGroup(
+                HGroup(
+                    spring,
+                    Item("spectrometer", editor=EnumEditor(name="spectrometers")),
+                    Item("limit"),
+                ),
+                VSplit(
+                    UItem(
+                        "items",
+                        editor=TabularEditor(
+                            adapter=MFTableAdapter(),
+                            editable=False,
+                            selected="selected",
+                        ),
+                    ),
+                    UItem(
+                        "selected_table",
+                        visible_when="selected",
+                        editor=TabularEditor(adapter=self.model.selected_adapter),
+                    ),
+                ),
+                HGroup(spring, UItem("checkout_button", enabled_when="selected")),
+            ),
+            kind="livemodal",
+            buttons=["OK"],
             width=500,
             height=400,
-            resizable=True)
+            resizable=True,
+        )
         return v
 
 
-if __name__ == '__main__':
-    mfh = MFTableHistory(connect=False,
-                         checkout_path='/Users/ross/Sandbox/mfcheckout.txt',
-                         spectrometer='jan')
-    mfh.dbm.db.trait_set(host='localhost',
-                         kind='mysql',
-                         username='root',
-                         password='Argon',
-                         name='pychrondata_dev')
+if __name__ == "__main__":
+    mfh = MFTableHistory(
+        connect=False,
+        checkout_path="/Users/ross/Sandbox/mfcheckout.txt",
+        spectrometer="jan",
+    )
+    mfh.dbm.db.trait_set(
+        host="localhost",
+        kind="mysql",
+        username="root",
+        password="Argon",
+        name="pychrondata_dev",
+    )
     mfh.dbm.connect()
     mfh.load_history()
     #
     mv = MFTableHistoryView(model=mfh)
     mv.configure_traits()
 # ============= EOF =============================================
-

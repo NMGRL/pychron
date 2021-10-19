@@ -18,28 +18,32 @@
 from __future__ import absolute_import
 from sqlalchemy import Integer, Column, String, ForeignKey, Table
 from sqlalchemy.ext.declarative import declarative_base
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
-association_table = Table('AssociationTable', Base.metadata,
-                          Column('path_id', Integer, ForeignKey('PathTable.id')),
-                          Column('label_id', String(200), ForeignKey('LabelTable.text')))
+association_table = Table(
+    "AssociationTable",
+    Base.metadata,
+    Column("path_id", Integer, ForeignKey("PathTable.id")),
+    Column("label_id", String(200), ForeignKey("LabelTable.text")),
+)
 
 
 class PathTable(Base):
-    __tablename__ = 'PathTable'
+    __tablename__ = "PathTable"
 
     id = Column(Integer, primary_key=True)
     relpath = Column(String(200))
 
-    labels = relationship('LabelTable', secondary=association_table, backref='paths')
+    labels = relationship("LabelTable", secondary=association_table, backref="paths")
 
 
 class LabelTable(Base):
-    __tablename__ = 'LabelTable'
+    __tablename__ = "LabelTable"
 
     text = Column(String(200), primary_key=True)
     color = Column(String(8))  # store as RRGGBBAA in  hex
@@ -48,7 +52,5 @@ class LabelTable(Base):
     def cnt(self):
         return len(self.paths)
 
+
 # ============= EOF =============================================
-
-
-

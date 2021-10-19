@@ -15,6 +15,8 @@
 # ===============================================================================
 
 from __future__ import print_function
+
+
 def get_data_test():
     h = [20, 0]
     t = [2, 12]
@@ -27,7 +29,7 @@ def get_data_test():
 def get_data3():
     h = [0, 178]
     t = [74.11, 73.37]
-    e = [0.62 / 2., 0.18 / 2.]
+    e = [0.62 / 2.0, 0.18 / 2.0]
 
     return h, t, e
 
@@ -107,27 +109,27 @@ def interpolate(y, t, e, yp):
     c = dt * dyp / dy ** 2
     ep2 = ((a * e[0]) ** 2 + (b * e[1]) ** 2 + (c * sy) ** 2 + (d * syp) ** 2) ** 0.5
     ep4 = ((a * e[1]) ** 2 + (b * e[0]) ** 2 + (c * sy) ** 2 + (d * syp) ** 2) ** 0.5
-    return tp, ep , ep3, ep2, ep4
+    return tp, ep, ep3, ep2, ep4
 
 
 y, t, e = get_data_test()
 # print interpolate(y, t, e, .75)
 # print interpolate(y, t, e, .5)
 # print interpolate(y, t, e, .25)
-print('from above')
-print('height=0', end=' ')
+print("from above")
+print("height=0", end=" ")
 print(interpolate(y, t, e, 0))
-print('height=10', end=' ')
+print("height=10", end=" ")
 print(interpolate(y, t, e, 10))
-print('height=20', end=' ')
+print("height=20", end=" ")
 print(interpolate(y, t, e, 20))
 
-print('from below')
-print('height=0', end=' ')
+print("from below")
+print("height=0", end=" ")
 print(interpolate2(y, t, e, 0))
-print('height=10', end=' ')
+print("height=10", end=" ")
 print(interpolate2(y, t, e, 10))
-print('height=20', end=' ')
+print("height=20", end=" ")
 print(interpolate2(y, t, e, 20))
 
 # y, t, e = get_data1()

@@ -1,7 +1,0 @@
-uncertainties
-GitPython >= 2.1.8
-peakutils
-qimage2ndarray
-tzlocal
-chaco
-enable

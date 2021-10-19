@@ -23,5 +23,4 @@ class NMGRLLegacySource(FileSource):
         return pspec
 
 
-
 # ============= EOF =============================================

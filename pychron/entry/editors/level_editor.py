@@ -19,9 +19,28 @@ import os
 # ============= enthought library imports =======================
 from enable.component_editor import ComponentEditor
 from pyface.constant import YES, NO
-from traits.api import List, Instance, Str, Button, Property, HasTraits, Dict, Enum, Float
-from traitsui.api import View, Item, TabularEditor, HGroup, UItem, Group, VGroup, \
-    HSplit, EnumEditor
+from traits.api import (
+    List,
+    Instance,
+    Str,
+    Button,
+    Property,
+    HasTraits,
+    Dict,
+    Enum,
+    Float,
+)
+from traitsui.api import (
+    View,
+    Item,
+    TabularEditor,
+    HGroup,
+    UItem,
+    Group,
+    VGroup,
+    HSplit,
+    EnumEditor,
+)
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron import json
@@ -39,8 +58,8 @@ from pychron.pychron_constants import FLUX_CONSTANTS
 
 
 def prep_prname(prname):
-    if prname.startswith('Global'):
-        prname = '_'.join(prname.split(' ')[1:])
+    if prname.startswith("Global"):
+        prname = "_".join(prname.split(" ")[1:])
     return prname
 
 
@@ -49,83 +68,122 @@ class NewProduction(HasTraits):
     reactor = Str
 
     def traits_view(self):
-        v = okcancel_view(HGroup('name', 'reactor'),
-                          buttons=['OK', 'Cancel', 'Revert'],
-                          title='New Production Ratio')
+        v = okcancel_view(
+            HGroup("name", "reactor"),
+            buttons=["OK", "Cancel", "Revert"],
+            title="New Production Ratio",
+        )
         return v
 
 
 class ProductionAdapter(TabularAdapter):
-    columns = [('Name', 'name'), ('Reactor', 'reactor'), ('Last Modified', 'last_modified')]
-    font = '10'
+    columns = [
+        ("Name", "name"),
+        ("Reactor", "reactor"),
+        ("Last Modified", "last_modified"),
+    ]
+    font = "10"
 
 
 class EditView(ModelView):
-    title = 'Edit Level'
+    title = "Edit Level"
 
     def traits_view(self):
-        rgrp = BorderHGroup(UItem('selected_reactor_name',
-                                  editor=EnumEditor(name='reactor_names')),
-                            icon_button_editor('add_reactor_button', 'add',
-                                               tooltip='Add Default Production for the selected '
-                                                       'Reactor to this Irradiation level'),
-                            icon_button_editor('update_reactor_default_button',
-                                               'arrow_up',
-                                               tooltip='Set current as the reactor default'),
-                            label='Available Default Productions')
-        mgrp = BorderVGroup(UItem('selected_monitor'),
-                            HGroup(Item('monitor_name'),
-                                   Item('monitor_material')),
-                            HGroup(Item('monitor_age'),
-                                   Item('lambda_k')),
-                            label='Monitor')
+        rgrp = BorderHGroup(
+            UItem("selected_reactor_name", editor=EnumEditor(name="reactor_names")),
+            icon_button_editor(
+                "add_reactor_button",
+                "add",
+                tooltip="Add Default Production for the selected "
+                "Reactor to this Irradiation level",
+            ),
+            icon_button_editor(
+                "update_reactor_default_button",
+                "arrow_up",
+                tooltip="Set current as the reactor default",
+            ),
+            label="Available Default Productions",
+        )
+        mgrp = BorderVGroup(
+            UItem("selected_monitor"),
+            HGroup(Item("monitor_name"), Item("monitor_material")),
+            HGroup(Item("monitor_age"), Item("lambda_k")),
+            label="Monitor",
+        )
 
-        pgrp = BorderHGroup(UItem('selected_production_name',
-                                  editor=EnumEditor(name='production_names')),
-                            icon_button_editor('apply_selected_production', 'arrow_left',
-                                               tooltip='Apply selection'),
-                            icon_button_editor('add_production_button', 'database_add',
-                                               tooltip='Add a Production Ratio'),
-                            icon_button_editor('edit_production_button', 'database_edit',
-                                               enabled_when='selected_production',
-                                               tooltip='Edit Production Ratio'),
-                            label='Production'),
-        pr_group = VGroup(rgrp,
-                          pgrp,
-                          UItem('selected_production', style='custom'),
-                          label='Production Ratios')
+        pgrp = (
+            BorderHGroup(
+                UItem(
+                    "selected_production_name",
+                    editor=EnumEditor(name="production_names"),
+                ),
+                icon_button_editor(
+                    "apply_selected_production", "arrow_left", tooltip="Apply selection"
+                ),
+                icon_button_editor(
+                    "add_production_button",
+                    "database_add",
+                    tooltip="Add a Production Ratio",
+                ),
+                icon_button_editor(
+                    "edit_production_button",
+                    "database_edit",
+                    enabled_when="selected_production",
+                    tooltip="Edit Production Ratio",
+                ),
+                label="Production",
+            ),
+        )
+        pr_group = VGroup(
+            rgrp,
+            pgrp,
+            UItem("selected_production", style="custom"),
+            label="Production Ratios",
+        )
 
-        editor = TabularEditor(adapter=TrayAdapter(),
-                               editable=False,
-                               selected='selected_tray')
-        tray_grp = VGroup(HGroup(icon_button_editor('add_tray_button', 'add',
-                                                    tooltip='Add a tray from file')),
-                          HSplit(UItem('trays', editor=editor, width=0.25),
-                                 UItem('canvas', editor=ComponentEditor(), width=0.75)),
-                          label='Tray')
+        editor = TabularEditor(
+            adapter=TrayAdapter(), editable=False, selected="selected_tray"
+        )
+        tray_grp = VGroup(
+            HGroup(
+                icon_button_editor(
+                    "add_tray_button", "add", tooltip="Add a tray from file"
+                )
+            ),
+            HSplit(
+                UItem("trays", editor=editor, width=0.25),
+                UItem("canvas", editor=ComponentEditor(), width=0.75),
+            ),
+            label="Tray",
+        )
 
-        v = okcancel_view(VGroup(HGroup(Item('name'), Item('z')),
-                                 BorderVGroup(UItem('level_note', style='custom'), label='Level Note'),
-                                 Group(pr_group,
-                                       tray_grp,
-                                       mgrp,
-                                       layout='tabbed')),
-                          width=550,
-                          height=650,
-                          title=self.title)
+        v = okcancel_view(
+            VGroup(
+                HGroup(Item("name"), Item("z")),
+                BorderVGroup(UItem("level_note", style="custom"), label="Level Note"),
+                Group(pr_group, tray_grp, mgrp, layout="tabbed"),
+            ),
+            width=550,
+            height=650,
+            title=self.title,
+        )
         return v
 
 
 class AddView(EditView):
-    title = 'Add Level'
+    title = "Add Level"
 
 
 class UpdateReactorView(ModelView):
     def traits_view(self):
-        v = okcancel_view(UItem('update_reactor_name',
-                                editor=ComboboxEditor(name='update_reactor_names')),
-                          width=300,
-                          title='Update Reactor Default')
+        v = okcancel_view(
+            UItem(
+                "update_reactor_name",
+                editor=ComboboxEditor(name="update_reactor_names"),
+            ),
+            width=300,
+            title="Update Reactor Default",
+        )
         return v
 
 
@@ -156,16 +214,20 @@ class IrradiationLevelEditor(PackageLevelEditor):
     meta_repo = Instance(MetaRepo)
 
     selected_monitor = Enum(list(FLUX_CONSTANTS.keys()))
-    monitor_name = Property(depends_on='selected_monitor')
-    monitor_age = Property(depends_on='selected_monitor')
-    monitor_material = Property(depends_on='selected_monitor')
-    lambda_k = Property(depends_on='selected_monitor')
+    monitor_name = Property(depends_on="selected_monitor")
+    monitor_age = Property(depends_on="selected_monitor")
+    monitor_material = Property(depends_on="selected_monitor")
+    lambda_k = Property(depends_on="selected_monitor")
 
-    _check_attrs = (('name', 'No name enter for this level. Would you like to enter one?'),
-                    ('selected_production',
-                     'No Production Ratios selected for this level. Would you like to select one?'),
-                    ('selected_tray', 'No tray selected for this level. Would like to select one?'))
-    _tagname = 'Irradiation'
+    _check_attrs = (
+        ("name", "No name enter for this level. Would you like to enter one?"),
+        (
+            "selected_production",
+            "No Production Ratios selected for this level. Would you like to select one?",
+        ),
+        ("selected_tray", "No tray selected for this level. Would like to select one?"),
+    )
+    _tagname = "Irradiation"
 
     _add_view_klass = AddView
     _edit_view_klass = EditView
@@ -180,9 +242,11 @@ class IrradiationLevelEditor(PackageLevelEditor):
 
     # private
     def _select_production(self):
-        self.selected_production_name = ''
+        self.selected_production_name = ""
         pname, prod = self.dvc.meta_repo.get_production(self.irradiation, self.name)
-        self.debug('select production={} for {},{}'.format(pname, self.irradiation, self.name))
+        self.debug(
+            "select production={} for {},{}".format(pname, self.irradiation, self.name)
+        )
         self.selected_production_name = pname
 
     def _refresh_production(self):
@@ -202,25 +266,28 @@ class IrradiationLevelEditor(PackageLevelEditor):
 
         original_tray = None
         if level.holder:
-            self.selected_tray = next((t for t in self.trays if t == level.holder), '')
+            self.selected_tray = next((t for t in self.trays if t == level.holder), "")
             original_tray = self.selected_tray
 
         if level.note:
-            self.level_note = level.note.decode('utf-8')
+            self.level_note = level.note.decode("utf-8")
         else:
-            self.level_note = ''
+            self.level_note = ""
 
         ev = EditView(model=self)
         info = ev.edit_traits()
         while 1:
             if info.result:
                 if self.name != orignal_name:
-                    ret = self.confirmation_dialog('You have changed the name for this level.\n\n'
-                                                   'Would you like to rename "{}" to "{}" (Yes) '
-                                                   'or add a new level named "{}" (No)'.format(orignal_name,
-                                                                                               self.name,
-                                                                                               self.name),
-                                                   cancel=True, return_retval=True)
+                    ret = self.confirmation_dialog(
+                        "You have changed the name for this level.\n\n"
+                        'Would you like to rename "{}" to "{}" (Yes) '
+                        'or add a new level named "{}" (No)'.format(
+                            orignal_name, self.name, self.name
+                        ),
+                        cancel=True,
+                        return_retval=True,
+                    )
                     if ret == YES:
                         level.name = self.name
                     elif ret == NO:
@@ -243,13 +310,18 @@ class IrradiationLevelEditor(PackageLevelEditor):
                     #     pr = db.add_production(prname)
                     # level.production = pr
 
-                    self.dvc.meta_repo.update_level_production(self.irradiation, self.name, prname, self.level_note)
+                    self.dvc.meta_repo.update_level_production(
+                        self.irradiation, self.name, prname, self.level_note
+                    )
                 if self.selected_monitor:
-                    self.dvc.meta_repo.update_level_monitor(self.irradiation,
-                                                        self.name,
-                                                        self.monitor_name, self.monitor_material,
-                                                        self.monitor_age,
-                                                        self.lambda_k)
+                    self.dvc.meta_repo.update_level_monitor(
+                        self.irradiation,
+                        self.name,
+                        self.monitor_name,
+                        self.monitor_material,
+                        self.monitor_age,
+                        self.lambda_k,
+                    )
 
                 if original_tray != self.selected_tray:
                     self._save_tray(level, original_tray)
@@ -259,11 +331,11 @@ class IrradiationLevelEditor(PackageLevelEditor):
                 break
 
         changes = self.dvc.meta_repo.get_local_changes()
-        self.debug('changes {}'.format(changes))
+        self.debug("changes {}".format(changes))
         if changes:
             self.dvc.meta_repo.smart_pull()
-            # self.dvc.meta_repo.commit('Edited level {}'.format(self.name))
-            # self.dvc.meta_repo.push()
+            self.dvc.meta_repo.commit("Edited level {}".format(self.name))
+            self.dvc.meta_repo.push()
             db.commit()
 
         self._refresh_production()
@@ -271,7 +343,11 @@ class IrradiationLevelEditor(PackageLevelEditor):
         return self.name
 
     def _save_tray(self, level, original_tray):
-        self.debug('saving tray {}. original={}, current={}'.format(level.name, original_tray, self.selected_tray))
+        self.debug(
+            "saving tray {}. original={}, current={}".format(
+                level.name, original_tray, self.selected_tray
+            )
+        )
         db = self.dvc.db
         # tr = db.get_irradiation_holder(self.selected_tray)
         # n = len(tuple(iter_geom(tr.geometry)))
@@ -280,18 +356,28 @@ class IrradiationLevelEditor(PackageLevelEditor):
         on = len(level.positions)
         if n < on:
             if any([p.labnumber.analyses for p in level.positions[n:]]):
-                self.warning_dialog('Cannot change tray from "{}" to "{}" '
-                                    'This change would orphan irradiation identifiers '
-                                    'that have associated analyses'.format(original_tray, self.selected_tray))
-            elif self.confirmation_dialog('You are about to orphan {} irradiation identifiers. '
-                                          'Are you sure you want to continue?'.format(on - n)):
+                self.warning_dialog(
+                    'Cannot change tray from "{}" to "{}" '
+                    "This change would orphan irradiation identifiers "
+                    "that have associated analyses".format(
+                        original_tray, self.selected_tray
+                    )
+                )
+            elif self.confirmation_dialog(
+                "You are about to orphan {} irradiation identifiers. "
+                "Are you sure you want to continue?".format(on - n)
+            ):
 
                 level.holder = self.selected_tray
                 for p in level.positions[n:]:
-                    self.debug('deleting {} {} {} {}'.format(level.irradiation.name,
-                                                             level.name,
-                                                             p.position,
-                                                             p.labnumber.identifier))
+                    self.debug(
+                        "deleting {} {} {} {}".format(
+                            level.irradiation.name,
+                            level.name,
+                            p.position,
+                            p.labnumber.identifier,
+                        )
+                    )
                     db.delete_irradiation_position(p)
         else:
             level.holder = self.selected_tray
@@ -327,11 +413,11 @@ class IrradiationLevelEditor(PackageLevelEditor):
 
     def _load_productions(self, load_reactors=True):
         self.dvc.meta_repo.smart_pull()
-        root = os.path.join(paths.meta_root, self.irradiation, 'productions')
+        root = os.path.join(paths.meta_root, self.irradiation, "productions")
         ps = {}
         keys = []
         for p in os.listdir(root):
-            if p.endswith('.json'):
+            if p.endswith(".json"):
                 with open(os.path.join(root, p)) as rfile:
                     obj = json.load(rfile)
                 head, tail = os.path.splitext(p)
@@ -344,10 +430,10 @@ class IrradiationLevelEditor(PackageLevelEditor):
             self._load_reactors()
 
     def _load_reactors(self):
-        p = os.path.join(paths.meta_root, 'reactors.json')
+        p = os.path.join(paths.meta_root, "reactors.json")
         reactors = {}
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 reactors = json.load(rfile)
                 for k, v in reactors.items():
                     reactors[k] = IrradiationProduction(k, v)
@@ -356,11 +442,11 @@ class IrradiationLevelEditor(PackageLevelEditor):
         self.reactor_names = list(reactors.keys())
 
     def _update_reactor(self):
-        p = os.path.join(paths.meta_root, 'reactors.json')
+        p = os.path.join(paths.meta_root, "reactors.json")
 
         reactors = {}
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 reactors = json.load(rfile)
 
         self.update_reactor_names = list(reactors.keys())
@@ -368,50 +454,68 @@ class IrradiationLevelEditor(PackageLevelEditor):
 
         info = v.edit_traits()
         if info.result:
-            pp = os.path.join(paths.meta_root, self.irradiation,
-                              'productions', '{}.json'.format(self.selected_production_name))
-            with open(pp, 'r') as rfile:
+            pp = os.path.join(
+                paths.meta_root,
+                self.irradiation,
+                "productions",
+                "{}.json".format(self.selected_production_name),
+            )
+            with open(pp, "r") as rfile:
                 obj = json.load(rfile)
 
-            with open(p, 'w') as wfile:
-                obj['source_path'] = pp
-                obj['source_sha'] = self.dvc.meta_repo.get_sha(pp)
+            with open(p, "w") as wfile:
+                obj["source_path"] = pp
+                obj["source_sha"] = self.dvc.meta_repo.get_sha(pp)
 
                 reactors[self.update_reactor_name] = obj
 
                 json.dump(reactors, wfile)
 
             self.dvc.meta_repo.add(p, commit=False)
-            self.dvc.meta_repo.commit('updated reactor default. {}'.format(self.update_reactor_name))
+            self.dvc.meta_repo.commit(
+                "updated reactor default. {}".format(self.update_reactor_name)
+            )
 
     def _save_level(self):
         prname = self.selected_production_name
         if not prname:
-            self.warning_dialog('SAVE CANCELED\n\nPlease select a set of Production Ratios for this level.')
+            self.warning_dialog(
+                "SAVE CANCELED\n\nPlease select a set of Production Ratios for this level."
+            )
             return
 
         db = self.dvc.db
         # add to database
-        db.add_irradiation_level(self.name, self.irradiation,
-                                 self.selected_tray,
-                                 prname,
-                                 float(self.z),
-                                 self.level_note)
+        db.add_irradiation_level(
+            self.name,
+            self.irradiation,
+            self.selected_tray,
+            prname,
+            float(self.z),
+            self.level_note,
+        )
 
         # add to repository
         self.dvc.meta_repo.add_level(self.irradiation, self.name)
         self.dvc.meta_repo.update_productions(self.irradiation, self.name, prname)
-        self.dvc.meta_repo.add_production_to_irradiation(self.irradiation, prname,
-                                                     self.selected_production.get_params())
+        self.dvc.meta_repo.add_production_to_irradiation(
+            self.irradiation, prname, self.selected_production.get_params()
+        )
 
-        self.dvc.meta_repo.commit('Added level {} to {}'.format(self.name, self.irradiation))
+        self.dvc.meta_repo.commit(
+            "Added level {} to {}".format(self.name, self.irradiation)
+        )
 
         self._refresh_production()
         return True
 
-    def _save_production(self, name=None):
+    def _save_production(self, name=None, commit=True):
         prod = self.selected_production
-        self.debug('Saving production={}, dirty={}, keywordname={}'.format(prod.name, prod.dirty, name))
+        self.debug(
+            "Saving production={}, dirty={}, keywordname={}".format(
+                prod.name, prod.dirty, name
+            )
+        )
         if prod.dirty or name:  # or prod.name.startswith('Global'):
             if name:
                 prname = name
@@ -420,18 +524,31 @@ class IrradiationLevelEditor(PackageLevelEditor):
 
             prod.name = prname
 
-            self.debug('saving production {}'.format(prname))
+            self.debug("saving production {}".format(prname))
 
-            self.dvc.meta_repo.add_production_to_irradiation(self.irradiation, prname,
-                                                         self.selected_production.get_params())
-            self.dvc.meta_repo.commit('Edited production {} for Irradiation {}'.format(prname, self.irradiation))
+            self.dvc.meta_repo.add_production_to_irradiation(
+                self.irradiation, prname, self.selected_production.get_params()
+            )
+            if commit:
+                self.dvc.meta_repo.commit(
+                    "Edited production {} for Irradiation {}".format(
+                        prname, self.irradiation
+                    )
+                )
 
     def _add_production_button_fired(self):
-        v = okcancel_view(Item('new_production_name', label='Name'), title='New Production')
+        v = okcancel_view(
+            Item("new_production_name", label="Name"), title="New Production"
+        )
         info = self.edit_traits(v)
         if info.result:
-            self._save_production(name=self.new_production_name)
+            name = self.new_production_name
+            self._save_production(name=name, commit=False)
+            self.dvc.meta_repo.commit(
+                "Added production {} for Irradiation {}".format(name, self.irradiation)
+            )
             self._load_productions()
+            self.selected_production_name = name
 
     def _update_reactor_default_button_fired(self):
         self._update_reactor()
@@ -442,7 +559,7 @@ class IrradiationLevelEditor(PackageLevelEditor):
     def _apply_selected_production_fired(self):
         if self.selected_production_name:
             o = self.selected_production_name
-            self.selected_production_name = ''
+            self.selected_production_name = ""
             self.selected_production_name = o
 
     # def _apply_selected_reactor_fired(self):
@@ -462,8 +579,9 @@ class IrradiationLevelEditor(PackageLevelEditor):
     def _add_reactor_button_fired(self):
         if self.selected_reactor_name:
             prod = self.reactors[self.selected_reactor_name]
-            self.dvc.meta_repo.add_production_to_irradiation(self.irradiation,
-                                                         self.selected_reactor_name, prod.get_params())
+            self.dvc.meta_repo.add_production_to_irradiation(
+                self.irradiation, self.selected_reactor_name, prod.get_params()
+            )
             self._load_productions(load_reactors=False)
 
         # dlg = FileDialog(action='open', default_directory=paths.irradiation_tray_maps_dir)
@@ -476,46 +594,43 @@ class IrradiationLevelEditor(PackageLevelEditor):
         #                                  os.path.basename(dlg.path), overwrite_geometry=True)
 
     def _get_monitor_name(self):
-        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_name', '')
+        return FLUX_CONSTANTS[self.selected_monitor].get("monitor_name", "")
 
     def _get_monitor_age(self):
-        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_age', 0)
+        return FLUX_CONSTANTS[self.selected_monitor].get("monitor_age", 0)
 
     def _get_monitor_material(self):
-        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_material', '')
+        return FLUX_CONSTANTS[self.selected_monitor].get("monitor_material", "")
 
     def _get_lambda_k(self):
         c = FLUX_CONSTANTS[self.selected_monitor]
         try:
-            return c['lambda_ec'][0] + c['lambda_b'][0]
+            return c["lambda_ec"][0] + c["lambda_b"][0]
         except KeyError:
             return 0
 
 
-if __name__ == '__main__':
-    paths.build('_dev')
-    logging_setup('le')
+if __name__ == "__main__":
+    paths.build("_dev")
+    logging_setup("le")
     from pychron.dvc.dvc_database import DVCDatabase
 
-    dbt = DVCDatabase(kind='sqlite', path='/Users/ross/Programming/test3.sqlite')
+    dbt = DVCDatabase(kind="sqlite", path="/Users/ross/Programming/test3.sqlite")
     dbt.connect()
     # from pychron.dvc.meta_repo import MetaRepo
 
     mr = MetaRepo()
     mr.open_repo(paths.meta_root)
 
-
     class Demo(HasTraits):
         test = Button
-        traits_view = View('test')
+        traits_view = View("test")
 
         def _test_fired(self):
-            e = IrradiationLevelEditor(db=dbt,
-                                       meta_repo=mr,
-                                       irradiation='NM-274',
-                                       name='H')
+            e = IrradiationLevelEditor(
+                db=dbt, meta_repo=mr, irradiation="NM-274", name="H"
+            )
             e.edit()
-
 
     d = Demo()
     d.configure_traits()

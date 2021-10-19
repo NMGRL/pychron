@@ -25,14 +25,14 @@ from pychron.lasers.laser_managers.ethernet_laser_manager import EthernetLaserMa
 
 
 class ChromiumLaserManager(EthernetLaserManager):
-    stage_manager_id = 'chromium.pychron'
-    configuration_dir_name = 'chromium'
+    stage_manager_id = "chromium.pychron"
+    configuration_dir_name = "chromium"
     _alive = False
 
     def setup_communicator(self):
         com = super(ChromiumLaserManager, self).setup_communicator()
         if self.communicator:
-            self.communicator.write_terminator='\n\r'
+            self.communicator.write_terminator = "\n\r"
         return com
 
     def set_tray(self, t):
@@ -40,29 +40,33 @@ class ChromiumLaserManager(EthernetLaserManager):
             self.stage_manager.stage_map_name = t
 
     def end_extract(self, *args, **kw):
-        self._ask('laser.stop')
+        self._ask("laser.stop")
 
-        self.info('ending extraction. set laser power to 0')
+        self.info("ending extraction. set laser power to 0")
         self.set_laser_power(0)
 
         if self._patterning:
             self.stop_pattern()
 
     def fire_laser(self):
-        self.info('fire laser')
-        self._ask('laser.fire')
+        self.info("fire laser")
+        self._ask("laser.fire")
 
     def extract(self, value, units=None, tol=0.1, fire_laser=True, **kw):
         if units is None:
-            units = 'watts'
+            units = "watts"
 
-        self.info('set laser output to {} {}'.format(value, units))
-        if units == 'watts':
+        self.info("set laser output to {} {}".format(value, units))
+        if units == "watts":
             ovalue = value
             value = self.calculate_calibrated_power(value)
             if value < 0:
-                self.warning('Consider changing you calibration curve. '
-                             '{} watts converted to {}%. % must be positive'.format(ovalue, value))
+                self.warning(
+                    "Consider changing you calibration curve. "
+                    "{} watts converted to {}%. % must be positive".format(
+                        ovalue, value
+                    )
+                )
                 value = 0
 
         resp = self.set_laser_power(value)
@@ -77,21 +81,21 @@ class ChromiumLaserManager(EthernetLaserManager):
 
     def set_laser_power(self, v):
 
-        return self._ask('laser.output {}'.format(v))
+        return self._ask("laser.output {}".format(v))
 
     def enable_laser(self, **kw):
         # self.ask('laser.enable ON')
         self.enabled = True
 
     def disable_laser(self):
-        self._ask('laser.stop')
+        self._ask("laser.stop")
         self.enabled = False
 
     def get_position(self):
         x, y, z = self._x, self._y, self._z
-        xyz_microns = self._ask('stage.pos?')
+        xyz_microns = self._ask("stage.pos?")
         if xyz_microns:
-            x, y, z = [float(v) / 1000. for v in xyz_microns.split(',')]
+            x, y, z = [float(v) / 1000.0 for v in xyz_microns.split(",")]
             if self.stage_manager.use_sign_position_correction:
                 x = x * self.stage_manager.x_sign
                 y = y * self.stage_manager.y_sign
@@ -102,7 +106,7 @@ class ChromiumLaserManager(EthernetLaserManager):
         self._move_to_position((x, y), block=block)
 
     def stop(self):
-        self._ask('stage.stop')
+        self._ask("stage.stop")
         self._alive = False
         self.update_position()
 
@@ -112,9 +116,9 @@ class ChromiumLaserManager(EthernetLaserManager):
 
     def _fire_laser_button_fired(self):
         if self._firing:
-            cmd = 'laser.stop'
+            cmd = "laser.stop"
         else:
-            cmd = 'laser.fire'
+            cmd = "laser.fire"
         self._firing = not self._firing
         self._ask(cmd)
 
@@ -124,19 +128,31 @@ class ChromiumLaserManager(EthernetLaserManager):
     def _set_x(self, v):
         if self._move_enabled:
             self._alive = True
-            self._ask('stage.moveto {},{},{},{},{},{}'.format(v * 1000, self._y * 1000, self._z * 1000, 10, 10, 0))
+            self._ask(
+                "stage.moveto {},{},{},{},{},{}".format(
+                    v * 1000, self._y * 1000, self._z * 1000, 10, 10, 0
+                )
+            )
             self._single_axis_moving(v * 1000, 0)
 
     def _set_y(self, v):
         if self._move_enabled:
             self._alive = True
-            self._ask('stage.moveto {},{},{},{},{},{}'.format(self._x * 1000, v * 1000, self._z * 1000, 10, 10, 0))
+            self._ask(
+                "stage.moveto {},{},{},{},{},{}".format(
+                    self._x * 1000, v * 1000, self._z * 1000, 10, 10, 0
+                )
+            )
             self._single_axis_moving(v * 1000, 1)
 
     def _set_z(self, v):
         if self._move_enabled:
             self._alive = True
-            self._ask('stage.moveto {},{},{},{},{},{}'.format(self._x * 1000, self._y * 1000, v * 1000, 10, 10, 0))
+            self._ask(
+                "stage.moveto {},{},{},{},{},{}".format(
+                    self._x * 1000, self._y * 1000, v * 1000, 10, 10, 0
+                )
+            )
             self._single_axis_moving(v * 1000, 2)
 
     def _single_axis_moving(self, v, axis):
@@ -145,12 +161,12 @@ class ChromiumLaserManager(EthernetLaserManager):
                 if not self._alive:
                     return True
 
-                pos = float(xyz.split(',')[axis])
+                pos = float(xyz.split(",")[axis])
                 return abs(pos - v) > 2
             except ValueError as e:
-                print('_moving exception {}'.format(e))
+                print("_moving exception {}".format(e))
 
-        self._block(cmd='stage.pos?', cmpfunc=cmpfunc)
+        self._block(cmd="stage.pos?", cmpfunc=cmpfunc)
         time.sleep(0.25)
         self._alive = False
         self.update_position()
@@ -168,7 +184,7 @@ class ChromiumLaserManager(EthernetLaserManager):
         zs = 100
 
         self._alive = True
-        self.debug('pos={}, x={}, y={}'.format(pos, x, y))
+        self.debug("pos={}, x={}, y={}".format(pos, x, y))
 
         xm = x * 1000
         ym = y * 1000
@@ -178,8 +194,10 @@ class ChromiumLaserManager(EthernetLaserManager):
             ym *= sm.y_sign
             zm *= sm.z_sign
 
-        cmd = 'stage.moveto {:0.0f},{:0.0f},{:0.0f},{:0.0f},{:0.0f},{:0.0f}'.format(xm, ym, zm, xs, ys, zs)
-        self.info('sending {}'.format(cmd))
+        cmd = "stage.moveto {:0.0f},{:0.0f},{:0.0f},{:0.0f},{:0.0f},{:0.0f}".format(
+            xm, ym, zm, xs, ys, zs
+        )
+        self.info("sending {}".format(cmd))
         self._ask(cmd)
 
         time.sleep(1)
@@ -198,15 +216,17 @@ class ChromiumLaserManager(EthernetLaserManager):
 
                     return not all(abs(a - b) <= 10 for a, b in zip(ps, (xm, ym, zm)))
                 except ValueError as e:
-                    print('_moving exception {}'.format(e))
+                    print("_moving exception {}".format(e))
 
-            r = self._block(cmd='stage.pos?', cmpfunc=cmpfunc, period=1)
+            r = self._block(cmd="stage.pos?", cmpfunc=cmpfunc, period=1)
             self._alive = False
             self.update_position()
         return r
 
     def _stage_manager_factory(self, args):
-        from pychron.lasers.stage_managers.chromium_stage_manager import ChromiumStageManager
+        from pychron.lasers.stage_managers.chromium_stage_manager import (
+            ChromiumStageManager,
+        )
 
         self.stage_args = args
 
@@ -219,9 +239,9 @@ class ChromiumLaserManager(EthernetLaserManager):
     def _pattern_executor_default(self):
         from pychron.lasers.pattern.pattern_executor import PatternExecutor
 
-        pm = PatternExecutor(application=self.application,
-                             controller=self,
-                             laser_manager=self)
+        pm = PatternExecutor(
+            application=self.application, controller=self, laser_manager=self
+        )
         return pm
 
 
@@ -234,43 +254,46 @@ class ChromiumDiodeManager(ChromiumLaserManager):
 
 
 def scans(cmd):
-    return 'Scans.{}'.format(cmd)
+    return "Scans.{}".format(cmd)
 
 
 class ChromiumUVManager(ChromiumLaserManager):
-    configuration_dir_name = 'chromium_uv'
+    configuration_dir_name = "chromium_uv"
     _active_scan = None
 
     def active_scan_cmd(self, cmd):
-        return scans('{} {}'.format(cmd, self._active_scan))
+        return scans("{} {}".format(cmd, self._active_scan))
 
     def ask_active_scan(self, cmd):
         return self._ask(self.active_scan_cmd(cmd))
 
     def _opened_hook(self):
-        self._ask(scans('Status_Verbosity 1'))
+        self._ask(scans("Status_Verbosity 1"))
 
     def warmup(self, block=None):
         if self._active_scan:
             self._warmed = True
-            self.ask_active_scan('Run')
+            self.ask_active_scan("Run")
 
             if block:
-                def func(r):
-                    return r.lower() !='running: warming up laser...'
 
-                self._block(cmd=scans('Status?'), cmpfunc=func, timeout=120)
+                def func(r):
+                    return r.lower() != "running: warming up laser..."
+
+                self._block(cmd=scans("Status?"), cmpfunc=func, timeout=120)
 
     def extract(self, *args, **kw):
         if self._active_scan:
             if not self._warmed:
-                self.ask_active_scan('Run')
+                self.ask_active_scan("Run")
 
             def func(r):
-                return str(r).strip().lower() !='idle: idle'
+                return str(r).strip().lower() != "idle: idle"
 
-            self._block(cmd=scans('Status?'), cmpfunc=func, timeout=kw.get('block', 300) or 300)
-            self._warmed=False
+            self._block(
+                cmd=scans("Status?"), cmpfunc=func, timeout=kw.get("block", 300) or 300
+            )
+            self._warmed = False
             return True
         else:
             return super(ChromiumUVManager, self).extract(*args, **kw)
@@ -282,24 +305,26 @@ class ChromiumUVManager(ChromiumLaserManager):
         scan_id = self._get_scan_id(pos)
         if scan_id:
             self._active_scan = scan_id
-            self.ask_active_scan('MoveTo')
+            self.ask_active_scan("MoveTo")
 
             def func(r):
                 return not bool(int(r))
-            self._block(cmd=self.active_scan_cmd('InPos?'), cmpfunc=func)
+
+            self._block(cmd=self.active_scan_cmd("InPos?"), cmpfunc=func)
 
         else:
             self._active_scan = None
             return super(ChromiumUVManager, self)._move_to_position(pos, *args, **kw)
 
     def disable_laser(self):
-        self._ask(scans('Stop'))
+        self._ask(scans("Stop"))
         super(ChromiumUVManager, self).disable_laser()
 
     def _get_scan_id(self, pos):
         m = SCAN_REGEX[0].match(pos)
         if m:
-            return int(m.group('id')[1:])
+            return int(m.group("id")[1:])
         return
+
 
 # ============= EOF =============================================

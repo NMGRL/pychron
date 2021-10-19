@@ -18,15 +18,23 @@
 from __future__ import absolute_import
 from pyface.message_dialog import information
 from traits.api import HasTraits, Button, Str, Int, Float, List, Any, Date
-from traitsui.api import View, UItem, HGroup, VGroup, HSplit, InstanceEditor, \
-    TabularEditor
-from traitsui.editors import ListEditor
+from traitsui.api import (
+    View,
+    UItem,
+    HGroup,
+    VGroup,
+    HSplit,
+    InstanceEditor,
+    TabularEditor,
+)
+from traitsui.editors.api import ListEditor
 from traitsui.handler import Controller
 from traitsui.item import UReadonly
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 from datetime import datetime
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -53,51 +61,61 @@ class GainsModel(HasTraits):
             hashkey = db.make_gains_hash(gains)
             hist = db.get_gain_history(hashkey)
             if not hist:
-                hist = db.add_gain_history(hashkey, save_type='manual')
+                hist = db.add_gain_history(hashkey, save_type="manual")
                 for d, v in gains.items():
                     db.add_gain(d, v, hist)
 
             hist.applied_date = datetime.now()
             db.commit()
-            gainstr = '\n'.join(['{} {}'.format(*g) for g in gains.items()])
-            information(None, 'Gains set\n\n{}'.format(gainstr))
+            gainstr = "\n".join(["{} {}".format(*g) for g in gains.items()])
+            information(None, "Gains set\n\n{}".format(gainstr))
 
     def _apply_history_button_fired(self):
         if self.spectrometer:
-            self.spectrometer.set_gains(gains=self.selected.gains,
-                                        history=self.selected)
+            self.spectrometer.set_gains(
+                gains=self.selected.gains, history=self.selected
+            )
         db = self.db
         hist = db.get_gain_history(self.selected.hashkey)
         hist.applied_date = datetime.now()
         db.commit()
-        information(None, 'Gains update to {}'.format(self.selected.create_date))
+        information(None, "Gains update to {}".format(self.selected.create_date))
 
     def _selected_changed(self, new):
         if not new.gains:
             db = self.db
             hist = db.get_gain_history(new.hashkey)
-            self.selected.gains = [Gain(detector=gi.detector.name,
-                                        strvalue=floatfmt(gi.value),
-                                        gain=gi.value)
-                                   for gi in hist.gains]
+            self.selected.gains = [
+                Gain(
+                    detector=gi.detector.name,
+                    strvalue=floatfmt(gi.value),
+                    gain=gi.value,
+                )
+                for gi in hist.gains
+            ]
 
     def load_histories(self):
         db = self.db
         hists = db.get_gain_histories()
         if hists:
-            self.histories = [GainHistory(create_date=hi.create_date,
-                                          applied_date=hi.applied_date,
-                                          hashkey=hi.hash,
-                                          username=hi.user.name) for hi in hists]
+            self.histories = [
+                GainHistory(
+                    create_date=hi.create_date,
+                    applied_date=hi.applied_date,
+                    hashkey=hi.hash,
+                    username=hi.user.name,
+                )
+                for hi in hists
+            ]
 
 
 class GainHistoryAdapter(TabularAdapter):
-    columns = [('Date', 'create_date'), ('User', 'username')]
+    columns = [("Date", "create_date"), ("User", "username")]
     create_date_width = Int(200)
 
 
 class GainAdapter(TabularAdapter):
-    columns = [('Name', 'detector'), ('Gain', 'strvalue')]
+    columns = [("Name", "detector"), ("Gain", "strvalue")]
 
 
 class GainHistory(HasTraits):
@@ -111,37 +129,60 @@ class GainHistory(HasTraits):
 
 class GainsEditView(Controller):
     def traits_view(self):
-        a = UItem('histories', editor=TabularEditor(adapter=GainHistoryAdapter(),
-                                                    editable=False,
-                                                    selected='selected'))
-        b = UItem('selected',
-                  style='custom',
-                  editor=InstanceEditor(view=View(UItem('gains',
-                                                        editor=TabularEditor(editable=False,
-                                                                             adapter=GainAdapter())))))
+        a = UItem(
+            "histories",
+            editor=TabularEditor(
+                adapter=GainHistoryAdapter(), editable=False, selected="selected"
+            ),
+        )
+        b = UItem(
+            "selected",
+            style="custom",
+            editor=InstanceEditor(
+                view=View(
+                    UItem(
+                        "gains",
+                        editor=TabularEditor(editable=False, adapter=GainAdapter()),
+                    )
+                )
+            ),
+        )
 
-        dview = View(HGroup(UReadonly('name'), 'gain'))
+        dview = View(HGroup(UReadonly("name"), "gain"))
         egrp = VGroup(
-            HGroup(icon_button_editor('apply_button', 'apply')),
-            UItem('object.spectrometer.detectors',
-                  editor=ListEditor(mutable=False,
-                                    style='custom',
-                                    editor=InstanceEditor(view=dview))),
+            HGroup(icon_button_editor("apply_button", "apply")),
+            UItem(
+                "object.spectrometer.detectors",
+                editor=ListEditor(
+                    mutable=False, style="custom", editor=InstanceEditor(view=dview)
+                ),
+            ),
             show_border=True,
-            label='Edit Detector Gains')
+            label="Edit Detector Gains",
+        )
 
-        v = View(VGroup(HGroup(icon_button_editor('apply_history_button', 'apply',
-                                                  tooltip='Set gains to values stored with the selected history',
-                                                  enabled_when='selected')),
-                        HSplit(a, b),
-                        egrp),
-                 width=650,
-                 title='View Detector Gain Histories',
-                 resizable=True)
+        v = View(
+            VGroup(
+                HGroup(
+                    icon_button_editor(
+                        "apply_history_button",
+                        "apply",
+                        tooltip="Set gains to values stored with the selected history",
+                        enabled_when="selected",
+                    )
+                ),
+                HSplit(a, b),
+                egrp,
+            ),
+            width=650,
+            title="View Detector Gain Histories",
+            resizable=True,
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+
     class Detector(HasTraits):
         name = Str
         gain = Float
@@ -150,15 +191,17 @@ if __name__ == '__main__':
         detectors = List
 
     spec = Spectrometer()
-    spec.detectors = [Detector(name='H1'), Detector(name='AX')]
+    spec.detectors = [Detector(name="H1"), Detector(name="AX")]
 
     from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 
-    db = IsotopeAdapter(name='pychrondata_dev',
-                        kind='mysql',
-                        host='localhost',
-                        username='root',
-                        password='Argon')
+    db = IsotopeAdapter(
+        name="pychrondata_dev",
+        kind="mysql",
+        host="localhost",
+        username="root",
+        password="Argon",
+    )
     db.connect()
     # hist = [GainHistory(create_date=datetime.fromtimestamp(i),) for i in range(10)]
     gv = GainsModel(db=db, spectrometer=spec)

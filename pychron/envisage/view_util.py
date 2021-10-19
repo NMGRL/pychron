@@ -24,13 +24,13 @@ __views__ = []
 def open_view(obj, **kw):
     info = obj.edit_traits(**kw)
     add_view(info)
-    info.on_trait_change(destroyed, 'destroyed')
+    info.on_trait_change(destroyed, "destroyed")
 
     return info
 
 
 def destroyed(obj, name, old, new):
-    obj.on_trait_change(destroyed, 'destroyed', remove=True)
+    obj.on_trait_change(destroyed, "destroyed", remove=True)
     __views__.remove(obj)
 
 
@@ -53,10 +53,11 @@ def close_views():
 
 def report_view_stats():
     if __views__:
-        print('report view stats')
-        print('-------------------------')
+        print("report view stats")
+        print("-------------------------")
         for v in __views__:
             print(v)
-        print('-------------------------')
+        print("-------------------------")
+
 
 # ============= EOF =============================================

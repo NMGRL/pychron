@@ -27,34 +27,33 @@ class ExperimentUndoer(Loggable):
     run_factory = Any
     _stack = List
 
-    @on_trait_change('run_factory:edit_event')
+    @on_trait_change("run_factory:edit_event")
     def _handle_edit_event(self, evt):
-        self.push(evt['attribute'], evt)
+        self.push(evt["attribute"], evt)
 
     def undo(self):
         if self._stack:
             self._undo()
             self.update_event = True
         else:
-            self.warning('no action to undo')
+            self.warning("no action to undo")
 
     def push(self, action, state):
         self._stack.insert(0, (action, state))
 
     def _undo(self):
         action, state = self._stack.pop(0)
-        self.debug('undoing action: {}'.format(action))
-        if action == 'add runs':
+        self.debug("undoing action: {}".format(action))
+        if action == "add runs":
             q = self.queue
             for ri in state:
                 q.remove(ri)
         else:
-            attr = state['attribute']
-            for ri, v in state['previous_state']:
+            attr = state["attribute"]
+            for ri, v in state["previous_state"]:
                 setattr(ri, attr, v)
 
         self.run_factory.refresh()
 
 
 # ============= EOF =============================================
-

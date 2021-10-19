@@ -1,0 +1,41 @@
+name: Format code
+on:
+  pull_request:
+    branches: [develop, dev/dr, dev/dc]
+  push:
+    branches: [develop, dev/dr, dev/dc]
+jobs:
+  flake8_py3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v2
+      - name: Set up Python environment
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.8"
+      - name: Run flake8
+        uses: py-actions/flake8@v1
+        with:
+          ignore: "F401,E501"
+          args: "--exit-zero --select=E"
+          exclude: "docs,sandbox,test,alembic_dvc,zobs"
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
+      - uses: psf/black@stable
+        with:
+          options: "--verbose"
+#          src: "pychron/"
+#      - uses: rickstaa/action-black@v1
+#        with:
+#          black_args: " pychron/**/*.py "
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v4.1.2
+        with:
+          commit_message: Formatting changes
+          branch: ${{ github.head_ref }}

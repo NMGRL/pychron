@@ -13,68 +13,90 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import os
+
 from uncertainties import nominal_value, std_dev, ufloat
 
 from pychron.core.helpers.iterfuncs import groupby_key, groupby_repo
-from pychron.dvc import analysis_path, _analysis_path, dvc_load
+from pychron.dvc import analysis_path, _analysis_path, dvc_load, dvc_dump
 from pychron.dvc.dvc_orm import AnalysisTbl
 from pychron.dvc.fix import get_dvc
+from pychron.paths import paths
 
 dvc = get_dvc()
-dvc = None
 
 
-def get_analyses(dvc):
-    lpost = ''
-    hpost = ''
+# dvc = None
 
-    ans = dvc.get_analyses_by_date_range(lpost, hpost)
+
+def get_analyses():
+    # get low post and high post of A-02-J and A-02-Få
+
+    hpost = "2020-11-04 17:39:19"
+    # hpost = '2018-11-04 17:39:19'
+    lpost = "2017-12-05 14:05:48"
+
+    ans = dvc.get_analyses_by_date_range(
+        lpost, hpost, analysis_types=("unknown",), verbose=True
+    )
+
     return groupby_repo(ans)
 
 
 def main():
-    det = 'CDD'
-    scalar = 0.1
+    scalar = 293.5 / 295.5
 
     if dvc:
         dvc.create_session()
 
     # get analyses
-    for repo, ans in get_analyses(dvc.session):
-        if dvc:
-            dvc.open_repo(repo)
-            dvc.smart_pull()
+    for repo, ans in get_analyses():
+        repo_root = os.path.join(paths.repository_dataset_dir, repo)
+        if os.path.isdir(repo_root):
+            continue
 
+        print("repository={}".format(repo))
+        if dvc:
+            dvc.clone_repository(repo, "https://github.com/NMGRLData/{}".format(repo))
+
+        dvc.branch_repo(repo, "ic_factor_fix")
         ans = list(ans)
         for a in ans:
-            set_ic_factor(repo, a, det, scalar)
+            set_ic_factor(repo, a, ("CDD", "L2(CDD)"), scalar)
 
         if dvc:
-            dvc.update_analyses(ans, 'icfactors', '<ICFactor> bulk edit scaled icfactor by {}'.format(scalar))
+            dvc.update_analyses(
+                ans,
+                "icfactors",
+                "<ICFactor> bulk edit scaled icfactor by {}".format(scalar),
+            )
 
     if dvc:
         dvc.close_session()
 
 
-def set_ic_factor(repo, runid, target_det, scalar):
-    p = _analysis_path(runid, repo, modifier='icfactors')
-    jd = dvc_load(p)
-    print('old', jd)
-    for key, v in jd.items():
-        if isinstance(v, dict):
-            vv, ee = v['value'] or 0, v['error'] or 0
-            if key == target_det:
-                nv = ufloat(vv, ee) * scalar
-                jd[key] = {'value': nominal_value(nv),
-                           'error': std_dev(nv),
-                           'reviewed': True,
-                           'fit': 'bulk_edit',
-                           'references': ''}
+def set_ic_factor(repo, analysis, target_det, scalar):
+    p = analysis_path((analysis.uuid, analysis.record_id), repo, modifier="icfactors")
+    if p:
+        jd = dvc_load(p)
 
-    print('new', jd)
-    # dvc_dump(jd, path)
+        for key, v in jd.items():
+            if isinstance(v, dict):
+                vv, ee = v["value"] or 0, v["error"] or 0
+                if key in target_det:
+                    nv = ufloat(vv, ee) * scalar
+                    jd[key] = {
+                        "value": nominal_value(nv),
+                        "error": std_dev(nv),
+                        "scalar": scalar,
+                        "reviewed": True,
+                        "fit": "bulk_edit",
+                        "references": "",
+                    }
+
+        dvc_dump(jd, p)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 # ============= EOF =============================================

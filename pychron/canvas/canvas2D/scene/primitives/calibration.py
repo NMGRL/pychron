@@ -39,9 +39,9 @@ class CalibrationObject(HasTraits):
     rx = Float
     ry = Float
 
-    rotation = Property(depends_on='rx,ry,_rotation')
+    rotation = Property(depends_on="rx,ry,_rotation")
     _rotation = Float
-    center = Property(depends_on='cx,cy')
+    center = Property(depends_on="cx,cy")
     scale = Float(1)
 
     def _set_rotation(self, rot):
@@ -67,25 +67,27 @@ class CalibrationObject(HasTraits):
         self.cx = x
         self.cy = y
 
-    def calculate_rotation(self, x, y, sense='east'):
+    def calculate_rotation(self, x, y, sense="east"):
         def rotation(a, b):
             return calc_rotation(self.cx, self.cy, a, b)
 
-        if sense == 'west':
-            print('x={}, y={}, cx={}, cy={}'.format(x, y, self.cx, self.cy))
+        if sense == "west":
+            print("x={}, y={}, cx={}, cy={}".format(x, y, self.cx, self.cy))
             if y > self.cy:
                 rot = calc_rotation(self.cx, self.cy, x, y) - 180
             else:
                 rot = calc_rotation(self.cx, self.cy, x, y) + 180
-        elif sense == 'north':
+        elif sense == "north":
             if x > self.cx:
                 rot = rotation(x, -y)
             else:
                 rot = rotation(y, -x)
-        elif sense == 'south':
+        elif sense == "south":
             rot = rotation(-y, x)
         else:
             rot = rotation(x, y)
 
         return rot
+
+
 # ============= EOF =============================================

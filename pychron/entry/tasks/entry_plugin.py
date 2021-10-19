@@ -23,16 +23,29 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 from traits.api import List
 
 from pychron.entry.editors.flux_monitor_editor import FluxMonitorEditor
-from pychron.entry.tasks.actions import MakeIrradiationBookPDFAction, MakeIrradiationTemplateAction, \
-    SensitivityEntryAction, AddFluxMonitorAction, \
-    GenerateTrayAction, \
-    ImportIrradiationGeometryAction, ExportIrradiationAction, ImportIrradiationAction, \
-    TransferJAction, ImportIrradiationFileAction, GetIGSNAction, GenerateIrradiationTableAction, \
-    GenerateStatusReportAction, ImportAnalysesAction, CorrelationEllipsesAction
+from pychron.entry.tasks.actions import (
+    MakeIrradiationBookPDFAction,
+    MakeIrradiationTemplateAction,
+    SensitivityEntryAction,
+    AddFluxMonitorAction,
+    GenerateTrayAction,
+    ImportIrradiationGeometryAction,
+    ExportIrradiationAction,
+    ImportIrradiationAction,
+    TransferJAction,
+    ImportIrradiationFileAction,
+    GenerateIrradiationTableAction,
+    GenerateStatusReportAction,
+    ImportAnalysesAction,
+    CorrelationEllipsesAction,
+)
 from pychron.entry.tasks.basic.actions import BasicEntryAction
 from pychron.entry.tasks.labnumber.actions import LabnumberEntryAction
-from pychron.entry.tasks.preferences import LabnumberEntryPreferencesPane, SamplePrepPreferencesPane, \
-    SampleEntryPreferencesPane
+from pychron.entry.tasks.preferences import (
+    LabnumberEntryPreferencesPane,
+    SamplePrepPreferencesPane,
+    SampleEntryPreferencesPane,
+)
 from pychron.entry.tasks.project.actions import ProjectAction
 from pychron.entry.tasks.sample.actions import SampleEntryAction, ImportSamplesAction
 from pychron.entry.tasks.sample_prep.actions import SamplePrepAction
@@ -41,18 +54,18 @@ from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class EntryPlugin(BaseTaskPlugin):
-    id = 'pychron.entry.plugin'
-    name = 'Entry'
-    data_sources = ExtensionPoint(List, id='pychron.entry.data_sources')
+    id = "pychron.entry.plugin"
+    name = "Entry"
+    data_sources = ExtensionPoint(List, id="pychron.entry.data_sources")
 
     def _help_tips_default(self):
-        return ['Use <b>Entry>Labnumber</b> to add/edit irradiation information including '
-                'Irradiation, Level, Sample, Project, Labnumber, etc...',
-
-                'Use <b>Entry>Sensitivity</b> to add/edit the sensitivity table.',
-
-                'Once the Labnumber window is activated additional Menu actions are available including, '
-                'Transfer J and Generate Labbook.']
+        return [
+            "Use <b>Entry>Labnumber</b> to add/edit irradiation information including "
+            "Irradiation, Level, Sample, Project, Labnumber, etc...",
+            "Use <b>Entry>Sensitivity</b> to add/edit the sensitivity table.",
+            "Once the Labnumber window is activated additional Menu actions are available including, "
+            "Transfer J and Generate Labbook.",
+        ]
 
     # def _actions_default(self):
     #     return [('pychron.labnumber_entry', 'Ctrl+Shift+l', 'Open Labnumber Entry Window'),
@@ -64,14 +77,23 @@ class EntryPlugin(BaseTaskPlugin):
             e = FluxMonitorEditor(dvc=dvc)
             return e
 
-        so2 = self.service_offer_factory(factory=factory2,
-                                         protocol=FluxMonitorEditor)
+        so2 = self.service_offer_factory(factory=factory2, protocol=FluxMonitorEditor)
         return [so2]
 
     def _task_extensions_default(self):
-        extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]
-        additions = [SchemaAddition(id='entry', factory=lambda: SMenu(id='entry.menu', name='Entry'), path='MenuBar',
-                                    before='tools.menu', after='view.menu')]
+        extensions = [
+            TaskExtension(actions=actions, task_id=eid)
+            for eid, actions in self._get_extensions()
+        ]
+        additions = [
+            SchemaAddition(
+                id="entry",
+                factory=lambda: SMenu(id="entry.menu", name="Entry"),
+                path="MenuBar",
+                before="tools.menu",
+                after="view.menu",
+            )
+        ]
 
         eflag = False
         eeflag = False
@@ -79,99 +101,206 @@ class EntryPlugin(BaseTaskPlugin):
             # print 'b', eid, len(actions)
             for ai in actions:
                 # print 'c',ai,ai.id
-                if not eflag and ai.id.startswith('pychron.entry1'):
+                if not eflag and ai.id.startswith("pychron.entry1"):
                     eflag = True
-                    additions.append(SchemaAddition(id='entry_group', factory=lambda: SGroup(id='entry.group'),
-                                                    path='MenuBar/entry.menu'))
-                    additions.append(SchemaAddition(id='entry_sample_group',
-                                                    absolute_position='first',
-                                                    factory=lambda: SGroup(id='entry.sample.group'),
-                                                    path='MenuBar/entry.menu'))
-                elif not eeflag and ai.id.startswith('pychron.entry2'):
+                    additions.append(
+                        SchemaAddition(
+                            id="entry_group",
+                            factory=lambda: SGroup(id="entry.group"),
+                            path="MenuBar/entry.menu",
+                        )
+                    )
+                    additions.append(
+                        SchemaAddition(
+                            id="entry_sample_group",
+                            absolute_position="first",
+                            factory=lambda: SGroup(id="entry.sample.group"),
+                            path="MenuBar/entry.menu",
+                        )
+                    )
+                elif not eeflag and ai.id.startswith("pychron.entry2"):
                     eeflag = True
-                    additions.append(SchemaAddition(id='entry_group2', factory=lambda: SGroup(id='entry.group2'),
-                                                    after='entry_group',
-                                                    path='MenuBar/entry.menu'), )
+                    additions.append(
+                        SchemaAddition(
+                            id="entry_group2",
+                            factory=lambda: SGroup(id="entry.group2"),
+                            after="entry_group",
+                            path="MenuBar/entry.menu",
+                        ),
+                    )
 
         extensions.append(TaskExtension(actions=additions))
 
         return extensions
 
     def _available_task_extensions_default(self):
-        g2path = 'MenuBar/entry.menu/entry.group2'
-        gpath = 'MenuBar/entry.menu/entry.group'
-        spath = 'MenuBar/entry.menu/entry.sample.group'
+        g2path = "MenuBar/entry.menu/entry.group2"
+        gpath = "MenuBar/entry.menu/entry.group"
+        spath = "MenuBar/entry.menu/entry.sample.group"
 
-        return [('{}.entry2'.format(self.id),
-                 'pychron.entry.irradiation.task',
-                 'Entry Tools',
-                 [SchemaAddition(id='pychron.entry2.transfer_j', factory=TransferJAction, path=g2path),
-                  SchemaAddition(id='pychron.entry2.get_igsns', factory=GetIGSNAction, path=g2path),
-                  SchemaAddition(id='pychron.entry2.export_irradiation', factory=ExportIrradiationAction, path=g2path),
-                  SchemaAddition(id='pychron.entry2.import_irradiations_from_file', factory=ImportIrradiationFileAction,
-                                 path=g2path),
-                  SchemaAddition(id='pychron.entry2.run_report', factory=GenerateStatusReportAction,
-                                 path=gpath),
-                  SchemaAddition(id='pychron.entry2.save_labbook', factory=MakeIrradiationBookPDFAction, path=g2path)]),
-                ('{}.sample_entry'.format(self.id),
-                 'pychron.entry.sample.task',
-                 'Sample',
-                 [SchemaAddition(id='pychron.entry2.import_samples_from_file', factory=ImportSamplesAction,
-                                 path=g2path),]),
-                (self.id, '', 'Entry',
-                 [SchemaAddition(id='pychron.entry1.sample_entry', factory=SampleEntryAction,
-                                 path=spath, absolute_position='first'),
-                  SchemaAddition(id='pychron.entry1.sample_prep', factory=SamplePrepAction,
-                                 path=spath, after='pychron.entry1.sample_edit'),
-                  SchemaAddition(id='pychron.entry1.labnumber_entry', factory=LabnumberEntryAction,
-                                 path=spath, after='pychron.entry1.sample_prep'),
-                  SchemaAddition(id='pychron.entry1.project', factory=ProjectAction,
-                                 path=gpath),
-                  SchemaAddition(id='pychron.entry1.basic', factory=BasicEntryAction,
-                                 path=gpath),
-                  SchemaAddition(id='pychron.entry2.import_analyses', factory=ImportAnalysesAction, path=g2path),
-                  SchemaAddition(id='pychron.entry2.import_irradiation', factory=ImportIrradiationAction, path=g2path),
-                  SchemaAddition(id='pychron.entry1.make_template', factory=MakeIrradiationTemplateAction,
-                                 path=g2path),
-                  SchemaAddition(id='pychron.entry1.generate_irradiation_table', factory=GenerateIrradiationTableAction,
-                                 path=gpath),
-                  SchemaAddition(id='pychron.entry1.import_irradiation_geom', factory=ImportIrradiationGeometryAction,
-                                 path=gpath),
-                  SchemaAddition(id='pychron.entry1.sensitivity_entry', factory=SensitivityEntryAction,
-                                 path=gpath),
-                  # SchemaAddition(id='pychron.entry1.molecular_weight_entry', factory=AddMolecularWeightAction,
-                  #                path=gpath),
-                  SchemaAddition(id='pychron.entry1.flux_monitor', factory=AddFluxMonitorAction,
-                                 path=gpath),
-                  SchemaAddition(id='pychron.entry2.generate_tray', factory=GenerateTrayAction, path=g2path),
-                  SchemaAddition(id='pychron.entry2.edit_correlation_ellipses',
-                                 factory=CorrelationEllipsesAction,
-                                 path=g2path),
-                  ])]
+        return [
+            (
+                "{}.entry2".format(self.id),
+                "pychron.entry.irradiation.task",
+                "Entry Tools",
+                [
+                    SchemaAddition(
+                        id="pychron.entry2.transfer_j",
+                        factory=TransferJAction,
+                        path=g2path,
+                    ),
+                    # SchemaAddition(id='pychron.entry2.get_igsns', factory=GetIGSNAction, path=g2path),
+                    SchemaAddition(
+                        id="pychron.entry2.export_irradiation",
+                        factory=ExportIrradiationAction,
+                        path=g2path,
+                    ),
+                    SchemaAddition(
+                        id="pychron.entry2.import_irradiations_from_file",
+                        factory=ImportIrradiationFileAction,
+                        path=g2path,
+                    ),
+                    SchemaAddition(
+                        id="pychron.entry2.run_report",
+                        factory=GenerateStatusReportAction,
+                        path=gpath,
+                    ),
+                    SchemaAddition(
+                        id="pychron.entry2.save_labbook",
+                        factory=MakeIrradiationBookPDFAction,
+                        path=g2path,
+                    ),
+                ],
+            ),
+            (
+                "{}.sample_entry".format(self.id),
+                "pychron.entry.sample.task",
+                "Sample",
+                [
+                    SchemaAddition(
+                        id="pychron.entry2.import_samples_from_file",
+                        factory=ImportSamplesAction,
+                        path=g2path,
+                    ),
+                ],
+            ),
+            (
+                self.id,
+                "",
+                "Entry",
+                [
+                    SchemaAddition(
+                        id="pychron.entry1.sample_entry",
+                        factory=SampleEntryAction,
+                        path=spath,
+                        absolute_position="first",
+                    ),
+                    SchemaAddition(
+                        id="pychron.entry1.sample_prep",
+                        factory=SamplePrepAction,
+                        path=spath,
+                        after="pychron.entry1.sample_edit",
+                    ),
+                    SchemaAddition(
+                        id="pychron.entry1.labnumber_entry",
+                        factory=LabnumberEntryAction,
+                        path=spath,
+                        after="pychron.entry1.sample_prep",
+                    ),
+                    SchemaAddition(
+                        id="pychron.entry1.project", factory=ProjectAction, path=gpath
+                    ),
+                    SchemaAddition(
+                        id="pychron.entry1.basic", factory=BasicEntryAction, path=gpath
+                    ),
+                    SchemaAddition(
+                        id="pychron.entry2.import_analyses",
+                        factory=ImportAnalysesAction,
+                        path=g2path,
+                    ),
+                    SchemaAddition(
+                        id="pychron.entry2.import_irradiation",
+                        factory=ImportIrradiationAction,
+                        path=g2path,
+                    ),
+                    SchemaAddition(
+                        id="pychron.entry1.make_template",
+                        factory=MakeIrradiationTemplateAction,
+                        path=g2path,
+                    ),
+                    SchemaAddition(
+                        id="pychron.entry1.generate_irradiation_table",
+                        factory=GenerateIrradiationTableAction,
+                        path=gpath,
+                    ),
+                    SchemaAddition(
+                        id="pychron.entry1.import_irradiation_geom",
+                        factory=ImportIrradiationGeometryAction,
+                        path=gpath,
+                    ),
+                    SchemaAddition(
+                        id="pychron.entry1.sensitivity_entry",
+                        factory=SensitivityEntryAction,
+                        path=gpath,
+                    ),
+                    # SchemaAddition(id='pychron.entry1.molecular_weight_entry', factory=AddMolecularWeightAction,
+                    #                path=gpath),
+                    SchemaAddition(
+                        id="pychron.entry1.flux_monitor",
+                        factory=AddFluxMonitorAction,
+                        path=gpath,
+                    ),
+                    SchemaAddition(
+                        id="pychron.entry2.generate_tray",
+                        factory=GenerateTrayAction,
+                        path=g2path,
+                    ),
+                    SchemaAddition(
+                        id="pychron.entry2.edit_correlation_ellipses",
+                        factory=CorrelationEllipsesAction,
+                        path=g2path,
+                    ),
+                ],
+            ),
+        ]
 
     def _tasks_default(self):
-        return [TaskFactory(id='pychron.entry.irradiation.task',
-                            factory=self._labnumber_entry_task_factory,
-                            include_view_menu=False),
-                TaskFactory(id='pychron.entry.sensitivity.task',
-                            factory=self._sensitivity_entry_task_factory,
-                            include_view_menu=False),
-                TaskFactory(id='pychron.entry.sample.task',
-                            factory=self._sample_entry_task_factory,
-                            include_view_menu=False),
-                TaskFactory(id='pychron.entry.sample.prep.task',
-                            factory=self._sample_prep_task_factory,
-                            include_view_menu=False),
-                TaskFactory(id='pychron.entry.project.task',
-                            factory=self._project_task_factory,
-                            include_view_menu=False),
-                TaskFactory(id='pychron.entry.basic.task',
-                            factory=self._basic_task_factory,
-                            include_view_menu=False),
-                ]
+        return [
+            TaskFactory(
+                id="pychron.entry.irradiation.task",
+                factory=self._labnumber_entry_task_factory,
+                include_view_menu=False,
+            ),
+            TaskFactory(
+                id="pychron.entry.sensitivity.task",
+                factory=self._sensitivity_entry_task_factory,
+                include_view_menu=False,
+            ),
+            TaskFactory(
+                id="pychron.entry.sample.task",
+                factory=self._sample_entry_task_factory,
+                include_view_menu=False,
+            ),
+            TaskFactory(
+                id="pychron.entry.sample.prep.task",
+                factory=self._sample_prep_task_factory,
+                include_view_menu=False,
+            ),
+            TaskFactory(
+                id="pychron.entry.project.task",
+                factory=self._project_task_factory,
+                include_view_menu=False,
+            ),
+            TaskFactory(
+                id="pychron.entry.basic.task",
+                factory=self._basic_task_factory,
+                include_view_menu=False,
+            ),
+        ]
 
     def _project_task_factory(self):
         from pychron.entry.tasks.project.task import ProjectTask
+
         return ProjectTask(application=self.application)
 
     def _sample_prep_task_factory(self):
@@ -186,20 +315,25 @@ class EntryPlugin(BaseTaskPlugin):
 
     def _labnumber_entry_task_factory(self):
         from pychron.entry.tasks.labnumber.task import LabnumberEntryTask
+
         return LabnumberEntryTask(application=self.application)
 
     def _sensitivity_entry_task_factory(self):
         from pychron.entry.tasks.sensitivity.task import SensitivityEntryTask
+
         return SensitivityEntryTask(application=self.application)
 
     def _basic_task_factory(self):
         from pychron.entry.tasks.basic.task import BasicEntryTask
+
         return BasicEntryTask(application=self.application)
 
     def _preferences_panes_default(self):
-        return [LabnumberEntryPreferencesPane,
-                SamplePrepPreferencesPane,
-                SampleEntryPreferencesPane]
+        return [
+            LabnumberEntryPreferencesPane,
+            SamplePrepPreferencesPane,
+            SampleEntryPreferencesPane,
+        ]
 
         # ============= EOF =============================================
         # def _task_extensions_default(self):

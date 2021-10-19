@@ -17,8 +17,7 @@
 # ============= enthought library imports =======================
 from numpy import polyfit, linspace
 from traits.api import HasTraits, Float, Any, Button, Bool, List, Color, Property
-from traitsui.api import View, Item, spring, ButtonEditor, HGroup, \
-    VGroup, UItem
+from traitsui.api import View, Item, spring, ButtonEditor, HGroup, VGroup, UItem
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.formatting import floatfmt
@@ -28,7 +27,12 @@ from .spectrometer_task import SpectrometerTask
 
 
 class ResultsAdapter(TabularAdapter):
-    columns = [('N', 'cnt'), ('Endpoints', 'endpoints'), ('Linear', 'linear'), ('Duration (m)', 'duration')]
+    columns = [
+        ("N", "cnt"),
+        ("Endpoints", "endpoints"),
+        ("Linear", "linear"),
+        ("Duration (m)", "duration"),
+    ]
 
     endpoints_text = Property
     linear_text = Property
@@ -51,7 +55,7 @@ class Result(HasTraits):
 
     def calculate(self, xs, ys, rise, starttime):
         ti = xs[-1]
-        run = (ti - starttime) / 60.
+        run = (ti - starttime) / 60.0
         rrendpoints = rise / run
 
         rrfit = polyfit(linspace(0, run, len(ys)), ys, 1)[0]
@@ -66,12 +70,12 @@ class RiseRate(SpectrometerTask):
     result_endpoints = Float
     results = List
     graph = Any
-    clear_button = Button('Clear')
-    clear_results_button = Button('Clear Results')
+    clear_button = Button("Clear")
+    clear_results_button = Button("Clear Results")
     calculated = Bool
 
-    end_color = Color('red')
-    start_color = Color('black')
+    end_color = Color("red")
+    start_color = Color("black")
 
     _start_time = None
     _start_intensity = None
@@ -107,9 +111,11 @@ class RiseRate(SpectrometerTask):
         self.graph.add_vertical_rule(ti, color=self.end_color)
         self.graph.redraw()
         self.calculated = True
-        self.info('calculated rise rate '
-                  'endpoint={:0.2f}(rise/run= {:0.3f}/{:0.3f}), '
-                  'linear={:0.3f}'.format(rrendpoints, rise, run, rrfit))
+        self.info(
+            "calculated rise rate "
+            "endpoint={:0.2f}(rise/run= {:0.3f}/{:0.3f}), "
+            "linear={:0.3f}".format(rrendpoints, rise, run, rrfit)
+        )
 
         self.result_endpoints = rrendpoints
         self.result_fit = rrfit
@@ -123,24 +129,41 @@ class RiseRate(SpectrometerTask):
         self._calculate_rise_rate()
 
     def traits_view(self):
-        v = View(VGroup(HGroup(spring,
-                               Item('clear_button', show_label=False,
-                                    enabled_when='calculated'),
-                               Item('execute_button',
-                                    editor=ButtonEditor(label_value='execute_label'),
-                                    show_label=False)),
-
-                        VGroup(Item('result_endpoints', style='readonly',
-                                    format_str='%0.3f',
-                                    label='Rise Rate endpoints (fA/min)'),
-                               Item('result_fit', style='readonly',
-                                    format_str='%0.3f',
-                                    label='Rise Rate linear fit  (fA/min)')),
-                        HGroup(UItem('clear_results_button')),
-                        UItem('results',
-                              editor=myTabularEditor(operations=[],
-                                                     editable=False,
-                                                     adapter=ResultsAdapter()))))
+        v = View(
+            VGroup(
+                HGroup(
+                    spring,
+                    Item("clear_button", show_label=False, enabled_when="calculated"),
+                    Item(
+                        "execute_button",
+                        editor=ButtonEditor(label_value="execute_label"),
+                        show_label=False,
+                    ),
+                ),
+                VGroup(
+                    Item(
+                        "result_endpoints",
+                        style="readonly",
+                        format_str="%0.3f",
+                        label="Rise Rate endpoints (fA/min)",
+                    ),
+                    Item(
+                        "result_fit",
+                        style="readonly",
+                        format_str="%0.3f",
+                        label="Rise Rate linear fit  (fA/min)",
+                    ),
+                ),
+                HGroup(UItem("clear_results_button")),
+                UItem(
+                    "results",
+                    editor=myTabularEditor(
+                        operations=[], editable=False, adapter=ResultsAdapter()
+                    ),
+                ),
+            )
+        )
         return v
+
 
 # ============= EOF =============================================

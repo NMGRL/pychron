@@ -36,14 +36,14 @@ class ICFactorOptions(RatioSeriesOptions):
     aux_plot_klass = ICFactorAuxPlot
     delete_existing = Bool
     use_source_correction = Bool  # this is experimental and should be removed? requested by WiscAr to correct for
-                                  # source bias
-    source_correction_kind = Enum('Exponential')
+    # source bias
+    source_correction_kind = Enum("Exponential")
 
     def initialize(self):
-        self.subview_names = [MAIN, 'ICFactor', APPEARANCE]
+        self.subview_names = [MAIN, "ICFactor", APPEARANCE]
 
     def set_detectors(self, dets):
-        dets = [NULL_STR, 'age'] + dets
+        dets = [NULL_STR, "rad40"] + dets
         super(ICFactorOptions, self).set_detectors(dets)
 
     # def get_subview(self, name):
@@ -72,5 +72,6 @@ class ICFactorOptions(RatioSeriesOptions):
 
         self.aux_plots = pp
         self.selected = []
+
 
 # ============= EOF =============================================

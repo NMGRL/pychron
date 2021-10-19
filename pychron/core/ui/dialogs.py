@@ -21,10 +21,11 @@ from __future__ import absolute_import
 
 from pychron.core.ui.factory import toolkit_factory
 
-myMessageDialog = toolkit_factory('dialogs', 'myMessageDialog')
-myConfirmationDialog = toolkit_factory('dialogs', 'myConfirmationDialog')
-RememberConfirmationDialog = toolkit_factory('dialogs', 'RememberConfirmationDialog')
-CustomizableDialog = toolkit_factory('dialogs', 'CustomizableDialog')
+myMessageDialog = toolkit_factory("dialogs", "myMessageDialog")
+myConfirmationDialog = toolkit_factory("dialogs", "myConfirmationDialog")
+RememberConfirmationDialog = toolkit_factory("dialogs", "RememberConfirmationDialog")
+CustomizableDialog = toolkit_factory("dialogs", "CustomizableDialog")
+PrinterDialog = toolkit_factory("dialogs", "PrinterDialog")
 
 
 def cinformation(**kw):

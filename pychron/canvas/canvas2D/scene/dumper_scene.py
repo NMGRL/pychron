@@ -23,7 +23,7 @@ from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineSc
 from pychron.canvas.canvas2D.scene.primitives.dumper_primitives import Gate, Funnel
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
 
-KLASS_MAP = {'gate': Gate, 'funnel': Funnel}
+KLASS_MAP = {"gate": Gate, "funnel": Funnel}
 
 
 class DumperScene(ExtractionLineScene):
@@ -40,7 +40,7 @@ class DumperScene(ExtractionLineScene):
         self._load_markup(cp, origin, color_dict)
 
     def _load_stateables(self, cp, origin, color_dict):
-        for key in ('gate', 'funnel'):
+        for key in ("gate", "funnel"):
             for b in cp.get_elements(key):
                 if key in color_dict:
                     c = color_dict[key]
@@ -48,27 +48,32 @@ class DumperScene(ExtractionLineScene):
                     c = (204, 204, 204)
 
                 klass = KLASS_MAP.get(key, RoundedRectangle)
-                rect = self._new_rectangle(cp, b, c, bw=5, origin=origin, klass=klass, type_tag=key)
+                rect = self._new_rectangle(
+                    cp, b, c, bw=5, origin=origin, klass=klass, type_tag=key
+                )
                 self._load_states(rect, b)
 
     def _load_states(self, item, elem):
-        closed_state = {'translation': (item.x, item.y), 'dimension': (item.width, item.height)}
-        states = {'closed': closed_state}
-        for state in elem.findall('state'):
+        closed_state = {
+            "translation": (item.x, item.y),
+            "dimension": (item.width, item.height),
+        }
+        states = {"closed": closed_state}
+        for state in elem.findall("state"):
             try:
-                trans = self._get_floats(state, 'translation')
+                trans = self._get_floats(state, "translation")
             except:
                 trans = item.x, item.y
             try:
-                dim = self._get_floats(state, 'dimension')
+                dim = self._get_floats(state, "dimension")
             except:
                 dim = item.width, item.height
 
-            d = {'translation': trans,
-                 'dimension': dim}
+            d = {"translation": trans, "dimension": dim}
 
             states[state.text.strip()] = d
 
         item.states = states
+
 
 # ============= EOF =============================================

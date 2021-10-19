@@ -7,30 +7,29 @@ def load_holder_canvas(canvas, geom, **kw):
     if geom:
         if isinstance(geom, str):
 
-            holes = [(x, y, r, str(c + 1))
-                     for c, (x, y, r) in iter_geom(geom)]
+            holes = [(x, y, r, str(c + 1)) for c, (x, y, r) in iter_geom(geom)]
         else:
             holes = geom
 
         canvas.load_scene(holes, **kw)
 
 
-def iter_geom(geom, fmt='>fff', width=12):
+def iter_geom(geom, fmt=">fff", width=12):
     def f(x):
-        return struct.unpack(fmt, geom[x:x + width])
+        return struct.unpack(fmt, geom[x : x + width])
 
     return ((i, f(gi)) for i, gi in enumerate(range(0, len(geom), width)))
 
 
-def make_geom(xyr, fmt='>fff'):
-    return b''.join((struct.pack(fmt, *args)) for args in xyr).decode('utf-8')
+def make_geom(xyr, fmt=">fff"):
+    return b"".join((struct.pack(fmt, *args)) for args in xyr).decode("utf-8")
 
 
 def markup_canvas_position(canvas, dbpos, monitor_name):
-    cgen = ('#{:02x}{:02x}{:02x}'.format(*ci) for ci in ((194, 194, 194),
-                                                         (255, 255, 160),
-                                                         (255, 255, 0),
-                                                         (25, 230, 25)))
+    cgen = (
+        "#{:02x}{:02x}{:02x}".format(*ci)
+        for ci in ((194, 194, 194), (255, 255, 160), (255, 255, 0), (25, 230, 25))
+    )
 
     def set_color(ii, value):
         if ii is not None:
@@ -38,7 +37,7 @@ def markup_canvas_position(canvas, dbpos, monitor_name):
                 ii.fill_color = next(cgen)
 
     if dbpos:
-        v = ''
+        v = ""
         if dbpos.identifier:
             v = str(dbpos.identifier)
 
@@ -65,6 +64,7 @@ def markup_canvas_position(canvas, dbpos, monitor_name):
 
 def markup_canvas(canvas, positions, monitor_name):
     for p in positions:
-        markup_canvas_position(canvas, p,  monitor_name)
+        markup_canvas_position(canvas, p, monitor_name)
+
 
 # ============= EOF =============================================

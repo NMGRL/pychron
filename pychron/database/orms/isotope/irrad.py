@@ -30,7 +30,7 @@ from .util import Base
 
 
 class irrad_HolderTable(Base, NameMixin):
-    levels = relationship('irrad_LevelTable', backref='holder')
+    levels = relationship("irrad_LevelTable", backref="holder")
     geometry = Column(BLOB)
 
 
@@ -38,22 +38,23 @@ class irrad_LevelTable(Base, NameMixin):
     z = Column(Float)
     note = Column(BLOB)
 
-    holder_id = foreignkey('irrad_HolderTable')
-    irradiation_id = foreignkey('irrad_IrradiationTable')
-    production_id = foreignkey('irrad_ProductionTable')
+    holder_id = foreignkey("irrad_HolderTable")
+    irradiation_id = foreignkey("irrad_IrradiationTable")
+    production_id = foreignkey("irrad_ProductionTable")
 
-    positions = relationship('irrad_PositionTable', backref='level')
+    positions = relationship("irrad_PositionTable", backref="level")
     create_date = Column(DateTime, default=func.now())
 
     last_modified = Column(DateTime, onupdate=func.now())
 
 
 class irrad_PositionTable(Base, BaseMixin):
-    labnumber = relationship('gen_LabTable', backref='irradiation_position',
-                             uselist=False)
-    flux_histories = relationship('flux_HistoryTable', backref='position')
+    labnumber = relationship(
+        "gen_LabTable", backref="irradiation_position", uselist=False
+    )
+    flux_histories = relationship("flux_HistoryTable", backref="position")
 
-    level_id = foreignkey('irrad_LevelTable')
+    level_id = foreignkey("irrad_LevelTable")
     position = Column(Integer)
     weight = Column(Float)
 
@@ -85,32 +86,32 @@ class irrad_ProductionTable(Base, NameMixin):
     note = Column(BLOB)
     last_modified = Column(DateTime, onupdate=func.now())
     # irradiations = relationship('irrad_IrradiationTable', backref='production')
-    levels = relationship('irrad_LevelTable', backref='production')
+    levels = relationship("irrad_LevelTable", backref="production")
 
 
 class irrad_ReactorTable(Base, NameMixin):
     note = Column(BLOB)
     address = stringcolumn(180)
     reactor_type = stringcolumn(80)
-    irradiations = relationship('irrad_IrradiationTable', backref='reactor')
+    irradiations = relationship("irrad_IrradiationTable", backref="reactor")
 
 
 class irrad_IrradiationTable(Base, NameMixin):
-    levels = relationship('irrad_LevelTable', backref='irradiation')
+    levels = relationship("irrad_LevelTable", backref="irradiation")
     # irradiation_production_id = foreignkey('irrad_ProductionTable')
-    irradiation_chronology_id = foreignkey('irrad_ChronologyTable')
-    reactor_id = foreignkey('irrad_ReactorTable')
+    irradiation_chronology_id = foreignkey("irrad_ChronologyTable")
+    reactor_id = foreignkey("irrad_ReactorTable")
 
 
 class irrad_ChronologyTable(Base, BaseMixin):
     chronology = Column(BLOB)
-    irradiation = relationship('irrad_IrradiationTable', backref='chronology')
+    irradiation = relationship("irrad_IrradiationTable", backref="chronology")
 
     @property
     def start_date(self):
         """
-            return date component of dose.
-            dose =(pwr, %Y-%m-%d %H:%M:%S, %Y-%m-%d %H:%M:%S)
+        return date component of dose.
+        dose =(pwr, %Y-%m-%d %H:%M:%S, %Y-%m-%d %H:%M:%S)
 
         """
         # doses = self.get_doses(tofloat=False)
@@ -118,28 +119,28 @@ class irrad_ChronologyTable(Base, BaseMixin):
         # return d.strftime('%m-%d-%Y')
         # d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
         d = self.get_doses()[0][1]
-        return d.strftime('%m-%d-%Y')
+        return d.strftime("%m-%d-%Y")
 
     @property
     def duration(self):
         """
-            return total irradiation duration in hours
+        return total irradiation duration in hours
         """
         doses = self.get_doses()
         total_seconds = sum([(di[2] - di[1]).total_seconds() for di in doses])
-        return total_seconds / 3600.
+        return total_seconds / 3600.0
 
     def get_doses(self, todatetime=True):
-        doses = self.chronology.split(b'$')
+        doses = self.chronology.split(b"$")
         # doses = [di.strip().split('%') for di in doses]
         dd = []
         for di in doses:
             pwr = 1.0
-            if b'|' in di:
-                pwr, di = di.split(b'|')
+            if b"|" in di:
+                pwr, di = di.split(b"|")
                 pwr = float(pwr)
             try:
-                s, e = di.strip().split(b'%')
+                s, e = di.strip().split(b"%")
                 dd.append((pwr, s, e))
             except ValueError:
                 pass
@@ -151,9 +152,12 @@ class irrad_ChronologyTable(Base, BaseMixin):
             #         pwr,x = x.split('|')
             #
             #     return pwr, datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
-            convert = lambda x: datetime.strptime(x.decode('utf-8'), '%Y-%m-%d %H:%M:%S')
+            convert = lambda x: datetime.strptime(
+                x.decode("utf-8"), "%Y-%m-%d %H:%M:%S"
+            )
             dd = [(p, convert(s), convert(e)) for p, s, e in dd]
 
         return dd
+
 
 # ============= EOF =============================================

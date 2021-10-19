@@ -39,22 +39,35 @@ class TransferConfigView(Controller):
     model = Instance(TransferConfigModel)
 
     def traits_view(self):
-        transfer_grp = BorderVGroup(Item('include_j', label='J', tooltip='Transfer J data'),
-                                    Item('include_note', label='Note', tooltip='Transfer Notes'))
+        transfer_grp = BorderVGroup(
+            Item("include_j", label="J", tooltip="Transfer J data"),
+            Item("include_note", label="Note", tooltip="Transfer Notes"),
+        )
 
-        v = okcancel_view(VGroup(Readonly('massspecname', label='Mass Spec DB Name'),
-                                 transfer_grp,
-                                 Item('forward_transfer', label='MassSpec to Pychron'),
-                                 Item('auto_save', tooltip='Automatically save transferred J to the database')),
-                          title='Configure J Transfer')
+        v = okcancel_view(
+            VGroup(
+                Readonly("massspecname", label="Mass Spec DB Name"),
+                transfer_grp,
+                Item("forward_transfer", label="MassSpec to Pychron"),
+                Item(
+                    "auto_save",
+                    tooltip="Automatically save transferred J to the database",
+                ),
+            ),
+            title="Configure J Transfer",
+        )
         return v
 
 
 class JTransferer(Loggable):
-    pychrondb = Any  # Instance('pychron.database.adapters.isotope_adapter.IsotopeAdapter')
-    massspecdb = Instance('pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter')
+    pychrondb = (
+        Any  # Instance('pychron.database.adapters.isotope_adapter.IsotopeAdapter')
+    )
+    massspecdb = Instance(
+        "pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter"
+    )
 
-    src = Instance('pychron.database.adapters.database_adapter.DatabaseAdapter')
+    src = Instance("pychron.database.adapters.database_adapter.DatabaseAdapter")
 
     def do_transfer(self, *args):
         config = self._configure_transfer()
@@ -83,9 +96,11 @@ class JTransferer(Loggable):
 
     def _transfer(self, func, config, irrad, level, positions):
         for pp in positions:
-            self.debug('Transferring position {}. labnumber={} current_j={}'.format(pp.hole,
-                                                                                    pp.identifier,
-                                                                                    pp.j))
+            self.debug(
+                "Transferring position {}. labnumber={} current_j={}".format(
+                    pp.hole, pp.identifier, pp.j
+                )
+            )
             func(config, irrad, level, pp)
 
     def _forward_transfer_func(self, config, irrad, level, position):
@@ -95,7 +110,7 @@ class JTransferer(Loggable):
         :return:
         """
 
-        posstr = '{}{} {}'.format(irrad, level, position.hole)
+        posstr = "{}{} {}".format(irrad, level, position.hole)
         if position.identifier:
             # pdb = self.pychrondb
             # get the massspec irradiation_position
@@ -106,10 +121,10 @@ class JTransferer(Loggable):
 
                 d = {}
                 if config.include_note:
-                    d['note'] = ms_ip.Note
+                    d["note"] = ms_ip.Note
                 if config.include_j:
-                    d['j'] = j
-                    d['j_err'] = j_err
+                    d["j"] = j
+                    d["j_err"] = j_err
                 position.trait_set(**d)
 
                 # get the pychron irradiation_position
@@ -135,11 +150,14 @@ class JTransferer(Loggable):
                 # else:
                 #     add_flux()
             else:
-                self.warning('Irradiation Position {} not in MassSpecDatabase'.format(posstr))
+                self.warning(
+                    "Irradiation Position {} not in MassSpecDatabase".format(posstr)
+                )
         else:
-            self.warning('No Labnumber for {}'.format(posstr))
+            self.warning("No Labnumber for {}".format(posstr))
 
     def _backward_transfer_func(self, irrad, level, position):
         pass
+
 
 # ============= EOF =============================================

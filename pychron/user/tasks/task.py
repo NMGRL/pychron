@@ -24,7 +24,7 @@ import yaml
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.action.task_action import TaskAction
 from pyface.tasks.task_layout import TaskLayout
-from traits.api import HasTraits, List, Str, Bool, Enum, on_trait_change
+from traits.api import List, Str, Enum, on_trait_change
 from traits.api import Instance
 
 from pychron.core.pychron_traits import EmailStr
@@ -34,39 +34,28 @@ from pychron.envisage.tasks.base_task import BaseTask
 from pychron.paths import paths
 from pychron.pychron_constants import DVC_PROTOCOL
 from pychron.user.tasks.panes import UsersPane, NewUserView
-
-
-class User(HasTraits):
-    name = Str
-    email = Str
-    enabled = Bool
-    keys = ('name', 'email', 'enabled')
-
-    def __init__(self, dbrecord, *args, **kw):
-        super(User, self).__init__(*args, **kw)
-        self.name = dbrecord.name
-        self.email = dbrecord.email or ''
+from pychron.user.user import User
 
 
 class NewUserAction(TaskAction):
-    name = 'New'
-    image = icon('user-new-2')
-    method = 'new_user'
+    name = "New"
+    image = icon("user-new-2")
+    method = "new_user"
 
 
 class UsersTask(BaseTask):
-    name = 'Users'
+    name = "Users"
     users = List
     ousers = List
-    filter_attribute = Enum('name', 'email')
+    filter_attribute = Enum("name", "email")
     filter_str = Str
 
     new_user_name = Str
     new_user_email = EmailStr
 
     tool_bars = [SToolBar(NewUserAction())]
-    db = Instance('pychron.dvc.dvc_database.DVCDatabase')
-    id = 'pychron.users'
+    db = Instance("pychron.dvc.dvc_database.DVCDatabase")
+    id = "pychron.users"
     _hash = None
     auto_save = False
 
@@ -94,28 +83,30 @@ class UsersTask(BaseTask):
         self.ousers = self.users[:]
 
     def new_user(self):
-        info = self.edit_traits(view=NewUserView, kind='livemodal')
+        info = self.edit_traits(view=NewUserView, kind="livemodal")
         if info.result:
             if not self.db.get_user(self.new_user_name):
                 self.db.add_user(self.new_user_name, email=self.new_user_email)
                 self.load_users()
             else:
-                self.information_dialog('User "{}" already exists'.format(self.new_user_name))
+                self.information_dialog(
+                    'User "{}" already exists'.format(self.new_user_name)
+                )
 
     def _sync(self, users):
-        path = os.path.join(paths.setup_dir, 'users.yaml')
+        path = os.path.join(paths.setup_dir, "users.yaml")
         if os.path.isfile(path):
             yl = yload(path)
             for yi in yl:
-                uu = next((i for i in users if i.name == yi.get('name')), None)
+                uu = next((i for i in users if i.name == yi.get("name")), None)
                 if uu:
-                    uu.enabled = yi.get('enabled')
+                    uu.enabled = yi.get("enabled")
 
     def _generate_hash(self, users):
         md5 = hashlib.md5()
         for u in users:
             for k in User.keys:
-                md5.update(str(getattr(u, k)).encode('utf-8'))
+                md5.update(str(getattr(u, k)).encode("utf-8"))
         return md5.hexdigest()
 
     def _save(self):
@@ -128,9 +119,12 @@ class UsersTask(BaseTask):
             db.commit()
 
         # dump to users.yaml
-        path = os.path.join(paths.setup_dir, 'users.yaml')
-        with open(path, 'w') as wfile:
-            yl = [{'name': i.name, 'email': i.email, 'enabled': i.enabled} for i in self.ousers]
+        path = os.path.join(paths.setup_dir, "users.yaml")
+        with open(path, "w") as wfile:
+            yl = [
+                {"name": i.name, "email": i.email, "enabled": i.enabled}
+                for i in self.ousers
+            ]
             yaml.dump(yl, wfile, default_flow_style=False)
 
         self._hash = self._generate_hash(self.ousers)
@@ -138,21 +132,24 @@ class UsersTask(BaseTask):
 
     def _prompt_for_save(self):
         if self._hash != self._generate_hash(self.ousers):
-            message = 'You have unsaved changes. Save changes to Database?'
+            message = "You have unsaved changes. Save changes to Database?"
             ret = self._handle_prompt_for_save(message)
-            if ret == 'save':
+            if ret == "save":
                 return self._save()
             return ret
         return True
 
-    @on_trait_change('users:[enabled]')
+    @on_trait_change("users:[enabled]")
     def _handle(self):
         if self.auto_save:
             self._save()
 
     def _filter_str_changed(self):
-        self.users = [u for u in self.ousers
-                      if getattr(u, self.filter_attribute).lower().startswith(self.filter_str)]
+        self.users = [
+            u
+            for u in self.ousers
+            if getattr(u, self.filter_attribute).lower().startswith(self.filter_str)
+        ]
 
     def _default_layout_default(self):
         return TaskLayout()
@@ -162,4 +159,6 @@ class UsersTask(BaseTask):
         d = app.get_service(DVC_PROTOCOL)
         d.db.create_session()
         return d.db
+
+
 # ============= EOF =============================================

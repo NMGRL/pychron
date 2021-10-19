@@ -24,4 +24,6 @@ from pychron.pipeline.plot.panels.ratio_series_panel import RatioSeriesPanel
 
 class RatioSeriesModel(FigureModel):
     _panel_klass = RatioSeriesPanel
+
+
 # ============= EOF =============================================

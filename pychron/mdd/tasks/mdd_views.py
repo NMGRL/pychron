@@ -28,14 +28,14 @@ class MDDFigureAppearanceOptions(AppearanceSubOptions):
 
 class MDDFigureMainOptions(SubOptions):
     def traits_view(self):
-        r1 = HGroup(UItem('panel_ul'), UItem('panel_ur'))
-        r2 = HGroup(UItem('panel_ll'), UItem('panel_lr'))
+        r1 = HGroup(UItem("panel_ul"), UItem("panel_ur"))
+        r2 = HGroup(UItem("panel_ll"), UItem("panel_lr"))
 
-        panel_grp = VGroup(r1, r2, show_border=True, label='Panels')
+        panel_grp = VGroup(r1, r2, show_border=True, label="Panels")
         v = View(panel_grp)
         return v
 
 
-VIEWS = {'main': MDDFigureMainOptions, 'appearance': MDDFigureAppearanceOptions}
+VIEWS = {"main": MDDFigureMainOptions, "appearance": MDDFigureAppearanceOptions}
 
 # ============= EOF =============================================

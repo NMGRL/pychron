@@ -24,17 +24,15 @@ from pychron.core.ui.preference_binding import bind_preference, color_bind_prefe
 class PreferenceMixin(object):
     def _preference_binder(self, prefid, attrs, mod=None, obj=None):
         if mod is None:
-            mod=bind_preference
-        elif mod=='color':
-            mod=color_bind_preference
+            mod = bind_preference
+        elif mod == "color":
+            mod = color_bind_preference
 
         if obj is None:
             obj = self
 
         for attr in attrs:
-            mod(obj, attr, '{}.{}'.format(prefid, attr))
+            mod(obj, attr, "{}.{}".format(prefid, attr))
+
 
 # ============= EOF =============================================
-
-
-

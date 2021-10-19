@@ -20,8 +20,10 @@ from envisage.ui.tasks.preferences_pane import PreferencesPane
 from traits.api import Bool, Str
 from traitsui.api import View, Item, VGroup
 
-from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHelper, \
-    remote_status_item
+from pychron.envisage.tasks.base_preferences_helper import (
+    GitRepoPreferencesHelper,
+    remote_status_item,
+)
 
 
 # from pychron.pychron_constants import PLUSMINUS
@@ -30,8 +32,8 @@ from pychron.envisage.tasks.base_preferences_helper import GitRepoPreferencesHel
 
 
 class PyScriptPreferences(GitRepoPreferencesHelper):
-    name = 'Scripts'
-    preferences_path = 'pychron.pyscript'
+    name = "Scripts"
+    preferences_path = "pychron.pyscript"
     auto_detab = Bool
     use_git_repo = Bool
     use_name_prefix = Bool
@@ -39,19 +41,24 @@ class PyScriptPreferences(GitRepoPreferencesHelper):
 
 
 class PyScriptPreferencesPane(PreferencesPane):
-    category = 'Scripts'
+    category = "Scripts"
     model_factory = PyScriptPreferences
 
     def traits_view(self):
-        prefix_grp = VGroup(Item('use_name_prefix'),
-                            Item('name_prefix', enabled_when='use_name_prefix'),
-                            show_border=True, label='Prefix')
+        prefix_grp = VGroup(
+            Item("use_name_prefix"),
+            Item("name_prefix", enabled_when="use_name_prefix"),
+            show_border=True,
+            label="Prefix",
+        )
 
-        git_grp = VGroup(Item('use_git_repo'),
-                         remote_status_item('Script Repo'),
-                         show_border=True, label='Git')
-        v = View(VGroup(Item('auto_detab'),
-                        prefix_grp, git_grp))
+        git_grp = VGroup(
+            Item("use_git_repo"),
+            remote_status_item("Script Repo"),
+            show_border=True,
+            label="Git",
+        )
+        v = View(VGroup(Item("auto_detab"), prefix_grp, git_grp))
 
         return v
 

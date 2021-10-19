@@ -28,20 +28,24 @@ from pychron.paths import paths
 # from pychron.managers.manager import Manager
 from pychron.extraction_line.switch_manager import SwitchManager
 from pyface.timer.timer import Timer
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
 
 class UVGasHandlerManager(SwitchManager):
     canvas = Instance(ExtractionLineCanvas2D)
     controller = Any
     use_explanation = False
-    mode = 'normal'
+    mode = "normal"
 
     auto_gas_exchange = Button
 
     # energy_readback=DelegatesTo('controller')
-    pressure_readback = DelegatesTo('controller')
-#    pressure_readback=Float
+    pressure_readback = DelegatesTo("controller")
+
+    #    pressure_readback=Float
     def set_software_lock(self, name, lock):
         if lock:
             self.lock(name)
@@ -49,70 +53,81 @@ class UVGasHandlerManager(SwitchManager):
             self.unlock(name)
 
     def load(self):
-        path = os.path.join(paths.extraction_line_dir, 'uv_gas_handling_valves.xml')
+        path = os.path.join(paths.extraction_line_dir, "uv_gas_handling_valves.xml")
         self._load_valves_from_file(path)
         return True
 
     def open_valve(self, name, mode):
         pass
-#        v = self.get_valve_by_name(name)
-#        self.controller.open_valve(v.address)
-#        return True
+
+    #        v = self.get_valve_by_name(name)
+    #        self.controller.open_valve(v.address)
+    #        return True
 
     def close_valve(self, name, mode):
         pass
-#        v = self.get_valve_by_name(name)
-#        self.controller.close_valve(v.address)
-#        return True
+
+    #        v = self.get_valve_by_name(name)
+    #        self.controller.close_valve(v.address)
+    #        return True
 
     def _auto_gas_exchange(self):
-        self.info('Starting auto gas exchange')
+        self.info("Starting auto gas exchange")
         self._timer = Timer(1000, self._update_pressure)
         self._timer.Start()
-#        self.controller.start_update_timer()
-        if not self.confirmation_dialog('Are both gas cylinders closed', title='Auto Gas Exchange'):
+        #        self.controller.start_update_timer()
+        if not self.confirmation_dialog(
+            "Are both gas cylinders closed", title="Auto Gas Exchange"
+        ):
             self._timer.Stop()
             return
 
         self.controller.do_auto_vac()
-        if not self.confirmation_dialog('Open Premix Cylinder, set secondary pressure to 6.5 - 7.5 bar', title='Auto Gas Exchange'):
+        if not self.confirmation_dialog(
+            "Open Premix Cylinder, set secondary pressure to 6.5 - 7.5 bar",
+            title="Auto Gas Exchange",
+        ):
             self._timer.Stop()
             return
 
         self.controller.do_auto_gas_exchange()
-        self.information_dialog('Close Premix Gas Cylinder', title='Auto Gas Exchange')
+        self.information_dialog("Close Premix Gas Cylinder", title="Auto Gas Exchange")
         self._timer.Stop()
 
     def _update_pressure(self):
         self.controller.get_pressure()
 
-# ===============================================================================
-# handlers
-# ===============================================================================
+    # ===============================================================================
+    # handlers
+    # ===============================================================================
     def _auto_gas_exchange_fired(self):
         self._auto_gas_exchange()
 
     def _canvas_default(self):
-        p = os.path.join(paths.canvas2D_dir, 'uv_gas_handling_canvas.xml')
+        p = os.path.join(paths.canvas2D_dir, "uv_gas_handling_canvas.xml")
         canvas = ExtractionLineCanvas2D(manager=self)
         canvas.load_canvas_file(p)
         return canvas
 
     def traits_view(self):
-        ctrl_grp = HGroup(Item('auto_gas_exchange', show_label=False))
+        ctrl_grp = HGroup(Item("auto_gas_exchange", show_label=False))
         info_grp = HGroup(
-                        # Item('energy_readback', width=50,style='readonly'),
-                        Item('pressure_readback', width=50, style='readonly')
-                        )
+            # Item('energy_readback', width=50,style='readonly'),
+            Item("pressure_readback", width=50, style="readonly")
+        )
         v = View(
-                 ctrl_grp,
-                 info_grp,
-                 Item('canvas',
-                      show_label=False,
-                      editor=ComponentEditor(),
-                      ), resizable=True,
-                 width=700,
-                 height=500
-                 )
+            ctrl_grp,
+            info_grp,
+            Item(
+                "canvas",
+                show_label=False,
+                editor=ComponentEditor(),
+            ),
+            resizable=True,
+            width=700,
+            height=500,
+        )
         return v
+
+
 # ============= EOF =============================================

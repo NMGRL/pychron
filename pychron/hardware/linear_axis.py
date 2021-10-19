@@ -17,20 +17,21 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Float, Property
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.core.abstract_device import AbstractDevice
 
 
 class LinearAxis(AbstractDevice):
-    position = Property(depends_on='_position')
+    position = Property(depends_on="_position")
     _position = Float
 
     min_value = Float(0.0)
     max_value = Float(100.0)
 
-    min_limit = Property(depends_on='_position')
-    max_limit = Property(depends_on='_position')
+    min_limit = Property(depends_on="_position")
+    max_limit = Property(depends_on="_position")
 
     _slewing = False
 
@@ -69,11 +70,12 @@ class LinearAxis(AbstractDevice):
         return abs(self._position - self.max_value) < 1e-5
 
     def _get_position(self):
-        return float('{:0.3f}'.format(self._position))
+        return float("{:0.3f}".format(self._position))
 
     def _set_position(self, v):
         self._position = v
         if self._cdevice:
             self.set_position(v)
+
 
 # ============= EOF =============================================

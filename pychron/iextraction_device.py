@@ -36,4 +36,6 @@ class IExtractionDevice(Interface):
 
     def is_ready(self):
         pass
+
+
 # ============= EOF =============================================

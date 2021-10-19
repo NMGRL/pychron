@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2015 Jake Ross
+# Copyright 2021 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,13 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.pipeline.editors.recent_runs_editor import RecentRunsEditor
+from pychron.pipeline.nodes.data import DVCNode
 
-# ============= enthought library imports =======================
-# ============= standard library imports ========================
-# ============= local library imports  ==========================
+
+class RecentRunsNode(DVCNode):
+    configurable = False
+
+    def run(self, state):
+        editor = self._editor_factory()
+        editor.initialize()
+        state.editors.append(editor)
+
+    def _editor_factory(self):
+        ed = RecentRunsEditor(dvc=self.dvc)
+        return ed
 
 
 # ============= EOF =============================================
-
-
-

@@ -32,7 +32,7 @@ class _WebViewEditor(Editor):
 
     def init(self, parent):
         self.control = self._create_control()
-        self.sync_value(self.factory.refresh, 'refresh', 'from')
+        self.sync_value(self.factory.refresh, "refresh", "from")
         self.update_editor()
 
     def _create_control(self):
@@ -50,8 +50,8 @@ class _WebViewEditor(Editor):
 
 
 class WebViewEditor(BasicEditorFactory):
-    """ wxPython editor factory for Enable components.
-    """
+    """wxPython editor factory for Enable components."""
+
     # ---------------------------------------------------------------------------
     #  Trait definitions:
     # ---------------------------------------------------------------------------
@@ -66,8 +66,8 @@ class Center(HasTraits):
     y = Float(35.0, enter_set=True, auto_set=False)
     zoom = Range(1, 20, 6)
 
-    xlabel = Str('Longitude')
-    ylabel = Str('Latitude')
+    xlabel = Str("Longitude")
+    ylabel = Str("Latitude")
 
     @property
     def location(self):
@@ -79,11 +79,10 @@ class FoliumMap(HasTraits):
 
     def __init__(self, *args, **kw):
         super(FoliumMap, self).__init__(*args, **kw)
-        m = folium.Map(location=self.center.location,
-                       zoom_start=self.center.zoom)
+        m = folium.Map(location=self.center.location, zoom_start=self.center.zoom)
 
-        folium.TileLayer(tiles='OpenStreetMap').add_to(m)
-        folium.TileLayer(tiles='Stamen Terrain').add_to(m)
+        folium.TileLayer(tiles="OpenStreetMap").add_to(m)
+        folium.TileLayer(tiles="Stamen Terrain").add_to(m)
         folium.LayerControl().add_to(m)
 
         self._map = m
@@ -103,43 +102,53 @@ class MapFigureEditor(BaseEditor):
 
     def load(self):
         lats, lons = [], []
-        for name, ans in groupby_key(self.items, key=attrgetter('sample')):
+        for name, ans in groupby_key(self.items, key=attrgetter("sample")):
             record = list(ans)[0]
             # samples = [(35, -116.15), (35.23, -116.34)]
             if record.latitude and record.longitude:
                 lats.append(record.latitude)
                 lons.append(record.longitude)
-                self.fmap.add_marker(location=(record.latitude, record.longitude),
-                                     popup='<b>{}</b>'.format(record.sample))
+                self.fmap.add_marker(
+                    location=(record.latitude, record.longitude),
+                    popup="<b>{}</b>".format(record.sample),
+                )
         if lats:
             self.fmap.center.x = sum(lons) / len(lons)
             self.fmap.center.y = sum(lats) / len(lats)
 
             self.refresh = True
 
-    @on_trait_change('fmap.center.[x,y,zoom]')
+    @on_trait_change("fmap.center.[x,y,zoom]")
     def center_changed(self):
         self.fmap._map.location = self.fmap.center.location
         self.refresh = True
 
     def traits_view(self):
-        center_grp = VGroup(HGroup(
-            UReadonly('object.fmap.center.ylabel'), UItem('object.fmap.center.y'),
-            UReadonly('object.fmap.center.xlabel'), UItem('object.fmap.center.x')))
+        center_grp = VGroup(
+            HGroup(
+                UReadonly("object.fmap.center.ylabel"),
+                UItem("object.fmap.center.y"),
+                UReadonly("object.fmap.center.xlabel"),
+                UItem("object.fmap.center.x"),
+            )
+        )
 
         ctrl_grp = VGroup(center_grp)
-        v = View(ctrl_grp,
-
-                 Item('fmap', editor=WebViewEditor(
-                     refresh='refresh'
-                 ),
-                      width=1200, height=900,
-                      show_label=False),
-                 resizable=True)
+        v = View(
+            ctrl_grp,
+            Item(
+                "fmap",
+                editor=WebViewEditor(refresh="refresh"),
+                width=1200,
+                height=900,
+                show_label=False,
+            ),
+            resizable=True,
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     m = MapFigureEditor()
     m.load()
     m.configure_traits()

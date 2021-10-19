@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from __future__ import print_function
@@ -34,23 +33,23 @@ class MinorTicksOverlay(AbstractOverlay):
     tick_out = Float(2.5)
     interval = Int(5)
     use_endpoints = Bool(True)
-    orientation = Enum('v', 'h')
-    placement = Enum('normal', 'opposite')
+    orientation = Enum("v", "h")
+    placement = Enum("normal", "opposite")
     aux_component = Any
 
     def overlay(self, component, gc, *args, **kw):
-        '''
+        """
         :param: component
-        '''
+        """
         try:
             gc.save_state()
             c = self.component
-#            print c, component
+            #            print c, component
             if self.aux_component is not None:
                 component = self.aux_component
-#                print 'axu', component
+            #                print 'axu', component
 
-            if self.orientation == 'v':
+            if self.orientation == "v":
                 r = c.index_range
                 nt = len(component.x_axis.ticklabel_cache)
             else:
@@ -60,21 +59,23 @@ class MinorTicksOverlay(AbstractOverlay):
             s = r.low
             e = r.high
 
-            ts = auto_ticks(s, e, s, e, (nt + 2) * -self.interval, use_endpoints=self.use_endpoints)
+            ts = auto_ticks(
+                s, e, s, e, (nt + 2) * -self.interval, use_endpoints=self.use_endpoints
+            )
             for ti in ts:
 
-                if self.orientation == 'v':
+                if self.orientation == "v":
                     ti = round(c.map_screen([[ti, 0]])[0][0])
-                    if self.placement == 'normal':
+                    if self.placement == "normal":
                         y = c.y
                     else:
                         y = c.y2 + 1
-#                    print y
+                    #                    print y
                     args1 = ti, y - self.tick_in
                     args2 = ti, y + self.tick_out
                 else:
                     ti = round(c.map_screen([[0, ti]])[0][1])
-                    if self.placement == 'normal':
+                    if self.placement == "normal":
                         x = component.x
                     else:
                         x = component.x2
@@ -88,8 +89,9 @@ class MinorTicksOverlay(AbstractOverlay):
             gc.stroke_path()
 
         except Exception as e:
-            print('exception', e)
+            print("exception", e)
         finally:
             gc.restore_state()
+
 
 # ============= EOF =====================================

@@ -22,6 +22,7 @@ from traits.api import Interface
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class IPyScriptRunner(Interface):
     def get_resource(self, name):
         pass
@@ -29,7 +30,5 @@ class IPyScriptRunner(Interface):
     def reset_connection(self):
         pass
 
+
 # ============= EOF =============================================
-
-
-

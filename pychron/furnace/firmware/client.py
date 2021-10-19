@@ -25,39 +25,41 @@ from traitsui.api import View, UItem, Item, HGroup, VGroup, TextEditor
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
+from pychron.hardware.core.communicators.ethernet_communicator import (
+    EthernetCommunicator,
+)
 
 
 class FirmwareClient(HasTraits):
     command = Str  # (enter_set=True, auto_set=False)
     responses = Str
 
-    send_button = Button('Send')
+    send_button = Button("Send")
 
     host = Str
     port = Int
 
-    test_button = Button('Test')
+    test_button = Button("Test")
     _cnt = 0
 
     def __init__(self, *args, **kw):
         super(FirmwareClient, self).__init__(*args, **kw)
 
-        c = EthernetCommunicator(host=self.host, port=self.port,
-                                 use_end=True,
-                                 kind='TCP')
+        c = EthernetCommunicator(
+            host=self.host, port=self.port, use_end=True, kind="TCP"
+        )
         self._comm = c
 
     def test_connection(self):
         if not self._comm.open():
-            warning(None, 'Could not connect to {}:{}'.format(self.host, self.port))
+            warning(None, "Could not connect to {}:{}".format(self.host, self.port))
         else:
             return True
 
     def _send(self, cmd):
         resp = self._comm.ask(cmd)
-        resp = '{} ==> {}'.format(cmd, resp)
-        self.responses = '{}\n{}'.format(self.responses, resp)
+        resp = "{} ==> {}".format(cmd, resp)
+        self.responses = "{}\n{}".format(self.responses, resp)
 
     # handlers
     def _test_button_fired(self):
@@ -74,9 +76,16 @@ class FirmwareClient(HasTraits):
         # d = json.dumps({'command': 'GetPosition', 'drive': 'feeder', 'position': 1, 'units': 'turns'})
         # pos = self.command if self._cnt % 2 == 0 else 0
         pos = float(self.command)
-        d = json.dumps({'command': 'MoveAbsolute', 'drive': 'funnel', 'position': pos, 'units': 'turns'})
+        d = json.dumps(
+            {
+                "command": "MoveAbsolute",
+                "drive": "funnel",
+                "position": pos,
+                "units": "turns",
+            }
+        )
         self._send(d)
-        self._cnt +=1
+        self._cnt += 1
 
         # v, a, d = self.command.split(',')
         # d = {'command': 'StartJitter', 'drive': 'feeder', 'turns': 0.125, 'p1': 0.1, 'p2': 0.25,
@@ -115,16 +124,19 @@ class FirmwareClient(HasTraits):
     #     self._send(self.command)
 
     def traits_view(self):
-        v = View(VGroup(HGroup(Item('command'), UItem('send_button'), UItem('test_button')),
-                        UItem('responses', style='custom',
-                              editor=TextEditor(read_only=True))),
-                 title='Furnace Firmware Client',
-                 resizable=True)
+        v = View(
+            VGroup(
+                HGroup(Item("command"), UItem("send_button"), UItem("test_button")),
+                UItem("responses", style="custom", editor=TextEditor(read_only=True)),
+            ),
+            title="Furnace Firmware Client",
+            resizable=True,
+        )
         return v
 
 
-if __name__ == '__main__':
-    c = FirmwareClient(host='192.168.2.2', port=4567)
+if __name__ == "__main__":
+    c = FirmwareClient(host="192.168.2.2", port=4567)
     if c.test_connection():
         c.configure_traits()
 # ============= EOF =============================================

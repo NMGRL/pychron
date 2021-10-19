@@ -24,4 +24,6 @@ from pychron.hardware.watlow.base_ezzone import BaseWatlowEZZone
 
 class HeadlessWatlowEZZone(BaseWatlowEZZone, HeadlessCoreDevice):
     pass
+
+
 # ============= EOF =============================================

@@ -16,34 +16,88 @@
 
 # ============= enthought library imports =======================
 from chaco.default_colormaps import color_map_name_dict
-from traits.api import Int, Bool, Float, Property, on_trait_change, Enum, List, Dict, Button, Str, Color
+from traits.api import (
+    Int,
+    Bool,
+    Float,
+    Property,
+    on_trait_change,
+    Enum,
+    List,
+    Dict,
+    Button,
+    Str,
+    Color,
+)
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.ideogram_group_options import IdeogramGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.ideogram_views import VIEWS
-from pychron.pychron_constants import NULL_STR, FONTS, SIZES, SIG_FIGS, MAIN, APPEARANCE, DISPLAY, GROUPS, STD_SIG_FIGS
+from pychron.pychron_constants import (
+    NULL_STR,
+    FONTS,
+    SIZES,
+    SIG_FIGS,
+    MAIN,
+    APPEARANCE,
+    DISPLAY,
+    GROUPS,
+    STD_SIG_FIGS,
+    CUMULATIVE,
+    WEIGHTED_MEAN,
+    KERNEL,
+    SCHAEN2020_1,
+    SCHAEN2020_2,
+    SCHAEN2020_3,
+    DEINO,
+    SCHAEN2020_3youngest,
+)
 
 
 class IdeogramAuxPlot(AuxPlot):
-    names = List([NULL_STR, 'Analysis Number Nonsorted', 'Analysis Number',
-                  'Radiogenic 40Ar',
-                  'K/Ca', 'K/Cl',
-                  'Ca/K', 'Cl/K',
-                  'Mol K39', 'Signal K39', 'Ideogram'],
-                 transient=True)
-    _plot_names = List(['', 'analysis_number_nonsorted', 'analysis_number', 'radiogenic_yield',
-                        'kca', 'kcl',
-                        'cak', 'clk',
-                        'moles_k39', 'signal_k39', 'relative_probability'],
-                       transient=True)
+    names = List(
+        [
+            NULL_STR,
+            "Analysis Number Nonsorted",
+            "Analysis Number",
+            "Radiogenic 40Ar",
+            "K/Ca",
+            "K/Cl",
+            "Ca/K",
+            "Cl/K",
+            "Mol K39",
+            "Signal K39",
+            "Ideogram",
+        ],
+        transient=True,
+    )
+    _plot_names = List(
+        [
+            "",
+            "analysis_number_nonsorted",
+            "analysis_number",
+            "radiogenic_yield",
+            "kca",
+            "kcl",
+            "cak",
+            "clk",
+            "moles_k39",
+            "signal_k39",
+            "relative_probability",
+        ],
+        transient=True,
+    )
+
+    @property
+    def use_integer_ticks(self):
+        return self.plot_name.startswith("analysis_number")
 
 
 class IdeogramOptions(AgeOptions):
     naux_plots = 8
     aux_plot_klass = IdeogramAuxPlot
 
-    edit_label_format_button = Button
     edit_mean_format_button = Button
 
     mean_label_format = Str
@@ -51,8 +105,22 @@ class IdeogramOptions(AgeOptions):
     # edit_label_format = Button
     # refresh_asymptotic_button = Button
     index_attrs = Dict(transient=True)
-    probability_curve_kind = Enum('cumulative', 'kernel')
-    mean_calculation_kind = Enum('weighted mean', 'kernel')
+    probability_curve_kind = Enum(CUMULATIVE, KERNEL)
+    mean_calculation_kind = Enum(
+        WEIGHTED_MEAN,
+        KERNEL,
+        SCHAEN2020_1,
+        SCHAEN2020_2,
+        SCHAEN2020_3,
+        SCHAEN2020_3youngest,
+        DEINO,
+    )
+    skew_min = Float(-0.2)
+    skew_max = Float(0.2)
+    shapiro_wilk_alpha = Float(0.05)
+    age_normalize = Bool
+    age_normalize_value = Float(0)
+
     use_centered_range = Bool
     use_static_limits = Bool
     xlow = Float
@@ -62,12 +130,16 @@ class IdeogramOptions(AgeOptions):
 
     centered_range = Float(0.5)
 
+    display_group_marker = Bool(True)
     display_mean_indicator = Bool(True)
     display_mean = Bool(True)
     display_mean_mswd = Bool(True)
     display_mean_n = Bool(True)
     display_mswd_pvalue = Bool(True)
     display_percent_error = Bool(True)
+    display_mean_location = Enum(
+        "Mean", "Upper Right", "Upper Left", "Lower Right", "Lower Left"
+    )
     # display_identifier_on_mean = Bool(False)
     # display_sample_on_mean = Bool(False)
     label_all_peaks = Bool(True)
@@ -76,13 +148,13 @@ class IdeogramOptions(AgeOptions):
     peak_label_border = Int
     peak_label_border_color = Color
     peak_label_bgcolor_enabled = Bool(False)
-    aux_plot_name = 'Ideogram'
+    aux_plot_name = "Ideogram"
 
     use_asymptotic_limits = Bool
     # asymptotic_width = Float)
     asymptotic_height_percent = Float
 
-    analysis_number_sorting = Enum('Oldest @Top', 'Youngest @Top')
+    analysis_number_sorting = Enum("Oldest @Top", "Youngest @Top")
     global_analysis_number_sorting = Bool(True)
 
     mean_indicator_font = Property
@@ -97,6 +169,7 @@ class IdeogramOptions(AgeOptions):
     show_results_table = Bool(False)
     show_ttest_table = Bool(False)
     show_rvalues = Bool(False)
+    show_subgroup_indicators = Bool(True)
 
     # correlation
     show_correlation_ellipses = Bool(False)
@@ -105,20 +178,35 @@ class IdeogramOptions(AgeOptions):
     group_options_klass = IdeogramGroupOptions
 
     include_group_legend = Bool(True)
-    group_legend_label_attribute = Enum('Group', 'Label Name', 'Sample', 'Aliquot')
+    group_legend_label_attribute = Enum("Group", "Label Name", "Sample", "Aliquot")
     _use_centered_range = Bool
     _use_asymptotic_limits = Bool
     _suppress_xlimits_clear = Bool
 
+    @property
+    def outlier_options(self):
+        return {
+            "skew_min": self.skew_min,
+            "skew_max": self.skew_max,
+            "alpha": self.shapiro_wilk_alpha,
+        }
+
     def initialize(self):
-        self.subview_names = [MAIN, 'Ideogram', APPEARANCE, 'Calculations', DISPLAY, GROUPS]
+        self.subview_names = [
+            MAIN,
+            "Ideogram",
+            APPEARANCE,
+            "Calculations",
+            DISPLAY,
+            GROUPS,
+        ]
 
     def to_dict(self):
         d = super(IdeogramOptions, self).to_dict()
         aux_plots = self.to_dict_aux_plots()
         # groups = self.to_dict_groups()
 
-        d['aux_plots'] = aux_plots
+        d["aux_plots"] = aux_plots
         # d['groups'] = groups
         return d
 
@@ -129,7 +217,12 @@ class IdeogramOptions(AgeOptions):
         pass
 
     def to_dict_test(self, k):
-        return k not in ('_suppress_xlimits_clear', 'aux_plots', 'groups', 'index_attrs')
+        return k not in (
+            "_suppress_xlimits_clear",
+            "aux_plots",
+            "groups",
+            "index_attrs",
+        )
 
     def get_colors(self):
         return [fg.color for fg in self.groups]
@@ -147,22 +240,24 @@ class IdeogramOptions(AgeOptions):
         #     rgb = [c*0.9*subgroup_id for c in rgb]
         #     color.setRgb(*rgb)
 
-        d = {'color': color,
-             'edge_color': line_color,
-             'edge_width': fg.line_width,
-             'line_width': fg.line_width,
-             'line_color': line_color}
+        d = {
+            "color": color,
+            "edge_color": line_color,
+            "edge_width": fg.line_width,
+            "line_width": fg.line_width,
+            "line_color": line_color,
+        }
 
         if fg.use_fill:
             color = fg.color.toRgb()
             color.setAlphaF(fg.alpha * 0.01)
-            d['fill_color'] = color
-            d['type'] = 'filled_line'
+            d["fill_color"] = color
+            d["type"] = "filled_line"
 
         if fg.marker_non_default():
-            d['marker'] = fg.marker
+            d["marker"] = fg.marker
         if fg.marker_size_non_default():
-            d['marker_size'] = fg.marker_size
+            d["marker_size"] = fg.marker_size
 
         return d
 
@@ -171,7 +266,7 @@ class IdeogramOptions(AgeOptions):
         return VIEWS[name]
 
     # handlers
-    @on_trait_change('use_static_limits, use_centered_range')
+    @on_trait_change("use_static_limits, use_centered_range")
     def _handle_use_limits(self, new):
         # persist use asymptotic limits
         self._suppress_xlimits_clear = True
@@ -192,12 +287,14 @@ class IdeogramOptions(AgeOptions):
             else:
                 self.trait_set(use_centered_range=self._use_centered_range)
 
-    @on_trait_change('xlow, xhigh')
+    @on_trait_change("xlow, xhigh")
     def _handle_static_limits(self):
         for ap in self.aux_plots:
             ap.clear_xlimits()
 
-    @on_trait_change('use_asymptotic_limits, asymptotic+, use_centered_range, centered_range, use_static_limits')
+    @on_trait_change(
+        "use_asymptotic_limits, asymptotic+, use_centered_range, centered_range, use_static_limits"
+    )
     def _handle_asymptotic(self, name, new):
         # if name.startswith('use') and not new:
         #     return
@@ -210,19 +307,11 @@ class IdeogramOptions(AgeOptions):
         for ap in self.aux_plots:
             ap.clear_ylimits()
 
-    def _edit_label_format_button_fired(self):
-        from pychron.options.label_maker import LabelTemplater, LabelTemplateView
-
-        lm = LabelTemplater(label=self.analysis_label_display)
-        lv = LabelTemplateView(model=lm)
-        info = lv.edit_traits()
-        if info.result:
-            self.analysis_label_format = lm.formatter
-            self.analysis_label_display = lm.label
-            # self.refresh_plot_needed = True
-
     def _edit_mean_format_button_fired(self):
-        from pychron.options.label_maker import MeanLabelTemplater, MeanLabelTemplateView
+        from pychron.options.label_maker import (
+            MeanLabelTemplater,
+            MeanLabelTemplateView,
+        )
 
         lm = MeanLabelTemplater(label=self.mean_label_display)
         lv = MeanLabelTemplateView(model=lm)
@@ -232,22 +321,26 @@ class IdeogramOptions(AgeOptions):
             self.mean_label_display = lm.label
 
     def _get_mean_indicator_font(self):
-        return '{} {}'.format(self.mean_indicator_fontname,
-                              self.mean_indicator_fontsize)
+        return "{} {}".format(
+            self.mean_indicator_fontname, self.mean_indicator_fontsize
+        )
 
     def _index_attrs_default(self):
-        return {'uage': '01:Age',
-                'uF': '02:Ar40*/Ar39k',
-                'Ar40/Ar36': '03:Ar40/Ar36',
-                'Ar40/Ar39': '04:Ar40/Ar39',
-                'Ar40/Ar38': '05:Ar40/Ar38',
-                'Ar39/Ar37': '06:Ar39/Ar37',
-                'uAr40/Ar36': '07:uncor. Ar40/Ar36',
-                'Ar40': '08:Ar40',
-                'Ar39': '09:Ar39',
-                'Ar38': '10:Ar38',
-                'Ar37': '11:Ar37',
-                'Ar36': '12:Ar36',
-                'j': '13:J'}
+        return {
+            "uage": "01:Age",
+            "uF": "02:Ar40*/Ar39k",
+            "Ar40/Ar36": "03:Ar40/Ar36",
+            "Ar40/Ar39": "04:Ar40/Ar39",
+            "Ar40/Ar38": "05:Ar40/Ar38",
+            "Ar39/Ar37": "06:Ar39/Ar37",
+            "uAr40/Ar36": "07:uncor. Ar40/Ar36",
+            "Ar40": "08:Ar40",
+            "Ar39": "09:Ar39",
+            "Ar38": "10:Ar38",
+            "Ar37": "11:Ar37",
+            "Ar36": "12:Ar36",
+            "j": "13:J",
+        }
+
 
 # ============= EOF =============================================

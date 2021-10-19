@@ -17,8 +17,10 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import HasTraits, Str, provides
+
 # ============= standard library imports ========================
 from random import random
+
 # ============= local library imports  ==========================
 from pychron.hardware.core.i_core_device import ICoreDevice
 
@@ -28,24 +30,19 @@ class DummyDevice(HasTraits):
     name = Str
 
     def get(self, *args, **kw):
-        """
-        """
+        """ """
         return random()
 
     def set(self, v):
-        """
-        """
+        """ """
         pass
 
     def close(self):
-        """
-        """
+        """ """
         pass
 
     def __getattr__(self, item):
         pass
 
+
 # ============= EOF =============================================
-
-
-

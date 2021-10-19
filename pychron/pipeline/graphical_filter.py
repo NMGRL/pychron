@@ -23,7 +23,19 @@ from chaco.scales_tick_generator import ScalesTickGenerator
 from chaco.tools.broadcaster import BroadcasterTool
 from enable.tools.drag_tool import DragTool
 from numpy import array, where
-from traits.api import HasTraits, Instance, List, Int, Bool, on_trait_change, Button, Str, Any, Float, Event
+from traits.api import (
+    HasTraits,
+    Instance,
+    List,
+    Int,
+    Bool,
+    on_trait_change,
+    Button,
+    Str,
+    Any,
+    Float,
+    Event,
+)
 from traitsui.api import View, Controller, UItem, HGroup, VGroup, Item, spring
 
 from pychron.core.helpers.iterfuncs import groupby_key
@@ -31,10 +43,15 @@ from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_INTS
 from pychron.graph.graph import Graph
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
-from pychron.graph.tools.rect_selection_tool import RectSelectionTool, RectSelectionOverlay
+from pychron.graph.tools.rect_selection_tool import (
+    RectSelectionTool,
+    RectSelectionOverlay,
+)
 from pychron.pychron_constants import BLANK_TYPES
 
-REVERSE_ANALYSIS_MAPPING = {v: k.replace('_', ' ') for k, v in ANALYSIS_MAPPING_INTS.items()}
+REVERSE_ANALYSIS_MAPPING = {
+    v: k.replace("_", " ") for k, v in ANALYSIS_MAPPING_INTS.items()
+}
 
 
 def get_analysis_type(x):
@@ -54,7 +71,10 @@ def analysis_type_func(analyses, mapping, offset=True):
 
     """
     if offset:
-        counts = {k.lower(): float(len(list(v))) for k, v in groupby_key(analyses, 'analysis_type')}
+        counts = {
+            k.lower(): float(len(list(v)))
+            for k, v in groupby_key(analyses, "analysis_type")
+        }
 
     __cache__ = {}
 
@@ -158,23 +178,23 @@ class SelectionGraph(Graph):
         p.y_axis.tick_label_rotate_angle = 60
         p.y_axis.tick_label_formatter = tickformatter
         p.y_axis.tick_generator = StaticTickGenerator(_nticks=len(atypes))
-        p.y_axis.title = 'Analysis Type'
-        p.y_axis.title_font = 'modern 18'
-        p.y_axis.tick_label_font = 'modern 14'
+        p.y_axis.title = "Analysis Type"
+        p.y_axis.title_font = "modern 18"
+        p.y_axis.tick_label_font = "modern 14"
 
         self.add_axis_tool(p, p.x_axis)
         self.add_axis_tool(p, p.y_axis)
-        self.add_limit_tool(p, 'x')
-        self.add_limit_tool(p, 'y')
+        self.add_limit_tool(p, "x")
+        self.add_limit_tool(p, "y")
 
         self.set_y_limits(min_=-1, max_=len(atypes))
 
         p.index_range.tight_bounds = False
         p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
         p.x_grid.tick_generator = p.x_axis.tick_generator
-        p.x_axis.title = 'Time'
-        p.x_axis.title_font = 'modern 18'
-        p.x_axis.tick_label_font = 'modern 14'
+        p.x_axis.title = "Time"
+        p.x_axis.title_font = "modern 18"
+        p.x_axis.tick_label_font = "modern 14"
 
         t = GroupingTool(component=p)
         p.tools.append(t)
@@ -183,27 +203,35 @@ class SelectionGraph(Graph):
 
         self.grouping_tool = t
 
-        scatter, _ = self.new_series(x, y, type='scatter',
-                                     marker_size=1.5,
-                                     selection_color='red',
-                                     selection_marker='circle',
-                                     selection_marker_size=2.5)
+        scatter, _ = self.new_series(
+            x,
+            y,
+            type="scatter",
+            marker_size=1.5,
+            selection_color="red",
+            selection_marker="circle",
+            selection_marker_size=2.5,
+        )
 
         broadcaster = BroadcasterTool()
         scatter.tools.append(broadcaster)
 
-        point_inspector = AnalysisPointInspector(scatter,
-                                                 analyses=ans,
-                                                 value_format=get_analysis_type,
-                                                 additional_info=lambda i, x, y, ai: ('Time={}'.format(ai.rundate),
-                                                                                      'Project={}'.format(ai.project)))
+        point_inspector = AnalysisPointInspector(
+            scatter,
+            analyses=ans,
+            value_format=get_analysis_type,
+            additional_info=lambda i, x, y, ai: (
+                "Time={}".format(ai.rundate),
+                "Project={}".format(ai.project),
+            ),
+        )
 
-        pinspector_overlay = PointInspectorOverlay(component=scatter,
-                                                   tool=point_inspector)
+        pinspector_overlay = PointInspectorOverlay(
+            component=scatter, tool=point_inspector
+        )
 
         rect_tool = RectSelectionTool(scatter)
-        rect_overlay = RectSelectionOverlay(component=scatter,
-                                            tool=rect_tool)
+        rect_overlay = RectSelectionOverlay(component=scatter, tool=rect_tool)
 
         broadcaster.tools.append(rect_tool)
         broadcaster.tools.append(point_inspector)
@@ -218,7 +246,7 @@ class GraphicalFilterModel(HasTraits):
     dvc = Any
     graph = Instance(SelectionGraph, ())
     analyses = List
-    analysis_types = List(['Unknown'])
+    analysis_types = List(["Unknown"])
     available_analysis_types = List
     toggle_analysis_types = Bool
 
@@ -243,7 +271,7 @@ class GraphicalFilterModel(HasTraits):
         f = analysis_type_func(ans, mapping, offset=self.use_offset_analyses)
 
         def ff(at):
-            return ' '.join((ai.capitalize() for ai in at.split('_')))
+            return " ".join((ai.capitalize() for ai in at.split("_")))
 
         display_atypes = [ff(at) for at in atypes]
 
@@ -254,14 +282,16 @@ class GraphicalFilterModel(HasTraits):
             ans = sorted(ans, key=lambda x: x.timestampf)
             self.analyses = ans
             # todo: CalendarScaleSystem off by 1 hour. add 3600 as a temp hack
-            x, y = list(zip(*[(ai.timestampf + 3600, f(ai.analysis_type)) for ai in ans]))
+            x, y = list(
+                zip(*[(ai.timestampf + 3600, f(ai.analysis_type)) for ai in ans])
+            )
         else:
             x, y, ans = [], [], []
 
         self.graph.setup(x, y, ans, display_atypes, mapping)
 
     def get_filtered_selection(self):
-        selection = self.graph.scatter.index.metadata['selections']
+        selection = self.graph.scatter.index.metadata["selections"]
         ans = self.analyses
         if selection:
             ans = [ai for i, ai in enumerate(self.analyses) if i not in selection]
@@ -286,12 +316,14 @@ class GraphicalFilterModel(HasTraits):
     def search(self, func):
         uuids = [a.uuid for a in self.analyses]
         for i in range(10):
-            records = self.dvc.find_references([self.low_post, self.high_post],
-                                               [x.lower().replace(' ', '_') for x in self.analysis_types],
-                                               self.threshold,
-                                               mass_spectrometers=[self.mass_spectrometer],
-                                               extract_devices=[self.extract_device],
-                                               exclude=uuids)
+            records = self.dvc.find_references(
+                [self.low_post, self.high_post],
+                [x.lower().replace(" ", "_") for x in self.analysis_types],
+                self.threshold,
+                mass_spectrometers=[self.mass_spectrometer],
+                extract_devices=[self.extract_device],
+                exclude=uuids,
+            )
             func()
             if records:
                 self.analyses.extend(records)
@@ -311,19 +343,19 @@ class GraphicalFilterModel(HasTraits):
                 l, h = (px, idx)
 
             for ai in ans[l:h]:
-                ai.group_id = int('{}{:02n}'.format(self.gid, i))
+                ai.group_id = int("{}{:02n}".format(self.gid, i))
 
             px = idx
 
         for ai in ans[px:]:
-            ai.group_id = int('{}{:02n}'.format(self.gid, i + 1))
+            ai.group_id = int("{}{:02n}".format(self.gid, i + 1))
 
     def _filter_analysis_types(self, ans):
         """
-            only use analyses with analysis_type in self.analyses_types
+        only use analyses with analysis_type in self.analyses_types
         """
-        ats = [x.lower().replace(' ', '_') for x in self.analysis_types]
-        if 'blank' in ats:
+        ats = [x.lower().replace(" ", "_") for x in self.analysis_types]
+        if "blank" in ats:
             ats.extend(BLANK_TYPES)
 
         ans = [a for a in ans if a.analysis_type.lower() in ats]
@@ -337,16 +369,16 @@ class GraphicalFilterModel(HasTraits):
 
         self.trait_set(analysis_types=val)
 
-    @on_trait_change('use_offset_analyses, analysis_types[]')
+    @on_trait_change("use_offset_analyses, analysis_types[]")
     def handle_analysis_types(self):
         self.setup(set_atypes=False)
 
 
 class GraphicalFilterView(Controller):
-    accept_button = Button('Accept')
+    accept_button = Button("Accept")
 
     is_append = False
-    help_str = Str('Select the analyses you want to EXCLUDE')
+    help_str = Str("Select the analyses you want to EXCLUDE")
 
     search_backward = Button
     search_forward = Button
@@ -361,21 +393,26 @@ class GraphicalFilterView(Controller):
         self.info.ui.dispose(result=True)
 
     def traits_view(self):
-        tgrp = HGroup(UItem('controller.help_str', style='readonly'), show_border=True)
-        bgrp = HGroup(spring, UItem('controller.accept_button'))
+        tgrp = HGroup(UItem("controller.help_str", style="readonly"), show_border=True)
+        bgrp = HGroup(spring, UItem("controller.accept_button"))
 
-        sgrp = HGroup(Item('use_offset_analyses', label='Use Offset'),
-                      UItem('controller.search_backward'),
-                      spring,
-                      UItem('controller.search_forward'))
+        sgrp = HGroup(
+            Item("use_offset_analyses", label="Use Offset"),
+            UItem("controller.search_backward"),
+            spring,
+            UItem("controller.search_forward"),
+        )
 
-        ggrp = UItem('graph', style='custom')
-        v = View(VGroup(tgrp, sgrp, ggrp, bgrp),
-                 title='Graphical Filter',
-                 kind='livemodal',
-                 width=800,
-                 resizable=True)
+        ggrp = UItem("graph", style="custom")
+        v = View(
+            VGroup(tgrp, sgrp, ggrp, bgrp),
+            title="Graphical Filter",
+            kind="livemodal",
+            width=800,
+            resizable=True,
+        )
 
         return v
+
 
 # ============= EOF =============================================

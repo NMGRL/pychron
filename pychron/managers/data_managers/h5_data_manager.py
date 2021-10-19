@@ -16,8 +16,10 @@
 
 # ============= enthought library imports =======================
 from traits.api import Any
+
 # ============= standard library imports ========================
 from tables import open_file, Filters
+
 # ============= local library imports  ==========================
 from .data_manager import DataManager
 from .table_descriptions import table_description_factory
@@ -39,8 +41,7 @@ def get_table(name, group, frame):
 
 class TableCTX(object):
     def __init__(self, p, t, g, complevel, mode):
-        self._file = open_file(p, mode,
-                               filters=Filters(complevel=complevel))
+        self._file = open_file(p, mode, filters=Filters(complevel=complevel))
         self._t = t
         self._g = g
 
@@ -54,8 +55,7 @@ class TableCTX(object):
 
 class FileCTX(object):
     def __init__(self, parent, p, m, complevel):
-        self._file = open_file(p, m,
-                               filters=Filters(complevel=complevel))
+        self._file = open_file(p, m, filters=Filters(complevel=complevel))
         self._parent = parent
         self._parent._frame = self._file
 
@@ -75,10 +75,10 @@ class FileCTX(object):
 
 
 class H5DataManager(DataManager):
-    """
-    """
+    """ """
+
     #    _extension = 'h5'
-    _extension = 'hdf5'
+    _extension = "hdf5"
     repository = Any
     workspace_root = None
     compression_level = 5
@@ -96,9 +96,7 @@ class H5DataManager(DataManager):
         setattr(group._v_attrs, key, value)
 
     def record(self, values, table):
-        """
-
-        """
+        """ """
         _df, ptable = self._get_parent(table)
         nr = ptable.row
         for key in values:
@@ -121,27 +119,25 @@ class H5DataManager(DataManager):
         try:
             os.remove(p)
         except Exception as e:
-            print('exception', e)
+            print("exception", e)
 
     def new_frame_ctx(self, *args, **kw):
         p = self._new_frame_path(*args, **kw)
-        return self.open_file(p, 'w')
+        return self.open_file(p, "w")
 
     def new_frame(self, *args, **kw):
-        """
-
-        """
+        """ """
         p = self._new_frame_path(*args, **kw)
         try:
-            self._frame = open_file(p, mode='w')
+            self._frame = open_file(p, mode="w")
 
             return self._frame
         except ValueError:
             pass
 
-    def new_group(self, group_name, parent=None, description=''):
+    def new_group(self, group_name, parent=None, description=""):
         """
-            if group already exists return it otherwise create a new group
+        if group already exists return it otherwise create a new group
         """
         if parent is None:
             parent = self._frame.root
@@ -153,15 +149,18 @@ class H5DataManager(DataManager):
 
         return grp
 
-    def new_table(self, group, table_name, n=None, table_style='TimeSeries'):
+    def new_table(self, group, table_name, n=None, table_style="TimeSeries"):
         """
-            if table already exists return it otherwise create a new table
+        if table already exists return it otherwise create a new table
         """
         tab = self.get_table(table_name, group)
         if tab is None:
-            tab = self._frame.create_table(group, table_name,
-                                           table_description_factory(table_style),
-                                           expectedrows=n or 10000)
+            tab = self._frame.create_table(
+                group,
+                table_name,
+                table_description_factory(table_style),
+                expectedrows=n or 10000,
+            )
 
         tab.flush()
         return tab
@@ -190,38 +189,43 @@ class H5DataManager(DataManager):
 
     def get_tables(self, grp):
         if isinstance(grp, str):
-            grp = '/{}'.format(grp)
+            grp = "/{}".format(grp)
 
         f = self._frame
-        return [n for n in f.walk_nodes(grp, 'Table')]
+        return [n for n in f.walk_nodes(grp, "Table")]
 
     def isfile(self, path):
         return os.path.isfile(path)
 
-    def open_data(self, path, mode='r'):
+    def open_data(self, path, mode="r"):
         if self.repository:
             out = os.path.join(self.workspace_root, path)
             path = os.path.join(self.repository.root, path)
             if not os.path.isfile(out):
-                self.info('copying {} to repository {}'.format(path, os.path.dirname(out)))
+                self.info(
+                    "copying {} to repository {}".format(path, os.path.dirname(out))
+                )
                 if not self.repository.retrieveFile(path, out):
                     return False
             path = out
 
         try:
-            self._frame = open_file(path, mode, filters=Filters(complevel=self.compression_level))
+            self._frame = open_file(
+                path, mode, filters=Filters(complevel=self.compression_level)
+            )
             return True
         except Exception:
             self._frame = None
             import traceback
+
             traceback.print_exc()
             return True
 
     def close_file(self):
         try:
-            self.debug('flush and close file {}'.format(self._frame.filename))
+            self.debug("flush and close file {}".format(self._frame.filename))
 
-            for node in self._frame.walk_nodes('/', 'Table'):
+            for node in self._frame.walk_nodes("/", "Table"):
                 node.flush()
 
             self._frame.flush()
@@ -229,20 +233,20 @@ class H5DataManager(DataManager):
             self._frame = None
 
         except Exception as e:
-            print('exception closing file', e)
+            print("exception closing file", e)
 
-    def open_file(self, path, mode='r+'):
+    def open_file(self, path, mode="r+"):
         self._file_stack.append(1)
         return FileCTX(weakref.ref(self)(), path, mode, self.compression_level)
 
-    def open_table(self, path, table, group='/', mode='r'):
+    def open_table(self, path, table, group="/", mode="r"):
         return TableCTX(path, table, group, self.compression_level, mode)
 
     def kill(self):
         self.close_file()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     d = H5DataManager()
     print(d)
 

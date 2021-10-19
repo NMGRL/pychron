@@ -18,6 +18,7 @@ import time
 
 # ============= standard library imports ========================
 from pyface.qt.QtCore import QTimer
+
 # ============= enthought library imports =======================
 from traits.api import Any, Int, Str, Event
 
@@ -26,8 +27,8 @@ from .stage_component_editor import _LaserComponentEditor, LaserComponentEditor
 
 
 class _VideoComponentEditor(_LaserComponentEditor):
-    """
-    """
+    """ """
+
     playTimer = Any
     fps = Int
     stop_timer = Event
@@ -49,10 +50,10 @@ class _VideoComponentEditor(_LaserComponentEditor):
         #     self.playTimer.setInterval(1000 / float(self.value.fps))
         # self.playTimer.start()
 
-        self.value.on_trait_change(self.stop, 'closed_event')
+        self.value.on_trait_change(self.stop, "closed_event")
 
         # self.value.on_trait_change(self._update_fps, 'fps')
-        self.sync_value('stop_timer', 'stop_timer', mode='from')
+        self.sync_value("stop_timer", "stop_timer", mode="from")
         # self._prev_time = time.time()
         self._alive = True
         QTimer.singleShot(self._get_interval(), lambda: self.update(-1))
@@ -67,7 +68,7 @@ class _VideoComponentEditor(_LaserComponentEditor):
             return 1000 / float(self.value.fps)
 
     def stop(self):
-        print('VideoComponentEditor stop')
+        print("VideoComponentEditor stop")
         self._alive = False
         # try:
         #     self.playTimer.stop()
@@ -84,18 +85,21 @@ class _VideoComponentEditor(_LaserComponentEditor):
             # print et
             #  = time.time()
             # self.value.invalidate_and_redraw()
-            QTimer.singleShot(max(1, self._get_interval() - et), lambda: self.update(pt))
+            QTimer.singleShot(
+                max(1, self._get_interval() - et), lambda: self.update(pt)
+            )
 
     def _stop_timer_fired(self):
-        print('VideoComponentEditor stopping playTimer')
+        print("VideoComponentEditor stopping playTimer")
         self._alive = False
         # self.playTimer.stop()
 
 
 class VideoComponentEditor(LaserComponentEditor):
-    """
-    """
+    """ """
+
     klass = _VideoComponentEditor
     stop_timer = Str
+
 
 # ============= EOF ====================================

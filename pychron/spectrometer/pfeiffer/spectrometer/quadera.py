@@ -21,11 +21,19 @@ from numpy import append as npappend
 from traits.api import List
 
 from pychron.hardware.quadera_spectrometer_controller import QuaderaController
+
 from pychron.processing.isotope import Isotope
 from pychron.processing.isotope_group import IsotopeGroup
-from pychron.pychron_constants import ISOTOPX_DEFAULT_INTEGRATION_TIME, ISOTOPX_INTEGRATION_TIMES, NULL_STR, \
-    QUADERA_DEFAULT_INTEGRATION_TIME, QUADERA_INTEGRATION_TIMES
+from pychron.pychron_constants import (
+    ISOTOPX_DEFAULT_INTEGRATION_TIME,
+    ISOTOPX_INTEGRATION_TIMES,
+    NULL_STR,
+    QUADERA_DEFAULT_INTEGRATION_TIME,
+    QUADERA_INTEGRATION_TIMES,
+)
+
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
+
 # from pychron.spectrometer.isotopx import SOURCE_CONTROL_PARAMETERS, IsotopxMixin
 
 from pychron.spectrometer.pfeiffer import PfeifferMixin
@@ -52,7 +60,7 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         # service = 'pychron.hardware.quadera_spectrometer_controller.QuaderaController'
         # s = self.application.get_service(service)
 
-        s = QuaderaController(name='spectrometer_microcontroller')
+        s = QuaderaController(name="spectrometer_microcontroller")
         s.bootstrap()
         s.communicator.simulation = True
         return s
@@ -267,7 +275,9 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         :param force: set integration even if "it" is not different than self.integration_time
         :return: float, integration time
         """
-        self.debug('acquisition period set to 1 second.  integration time set to {}'.format(it))
+        self.debug(
+            "acquisition period set to 1 second.  integration time set to {}".format(it)
+        )
         # self.ask('SetAcqPeriod 1000')
         self.integration_time = it
 
@@ -301,11 +311,12 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
 
     def _get_simulation_data(self):
         signals = [1, 100, 3, 0.01, 0.01, 0.01]  # + random(6)
-        keys = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+        keys = ["H2", "H1", "AX", "L1", "L2", "CDD"]
         return keys, signals, None
 
     def _integration_time_default(self):
         self.default_integration_time = QUADERA_DEFAULT_INTEGRATION_TIME
         return QUADERA_DEFAULT_INTEGRATION_TIME
+
 
 # ============= EOF =============================================

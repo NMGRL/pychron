@@ -24,7 +24,11 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
 from pychron.tx.errors import EnableErrorCode
 from pychron.tx.errors import InvalidArgumentsErrorCode
-from pychron.tx.errors import LogicBoardCommErrorCode, InvalidMotorErrorCode, InvalidSampleHolderErrorCode
+from pychron.tx.errors import (
+    LogicBoardCommErrorCode,
+    InvalidMotorErrorCode,
+    InvalidSampleHolderErrorCode,
+)
 from pychron.tx.protocols.service import ServiceProtocol
 
 
@@ -36,69 +40,71 @@ class LaserProtocol(ServiceProtocol):
         self._manager = man
         self._addr = addr
 
-        services = (('GetError', '_get_error'),
-                    # ('MachineVisionDegas', '_machine_vision_degas'),
-                    ('StartVideoRecording', '_start_video_recording'),
-                    ('StopVideoRecording', '_stop_video_recording'),
-                    ('ReadLaserPower', '_read_laser_power'),
-                    ('GetLaserStatus', '_get_laser_status'),
-                    ('Snapshot', '_snapshot'),
-                    ('PrepareLaser', '_prepare_laser'),
-                    ('LaserReady', '_laser_ready'),
-                    ('Enable', '_enable'),
-                    ('Disable', '_disable'),
-                    ('SetXY', '_set_x_y'),
-                    ('SetX', '_set_x'),
-                    ('SetY', '_set_y'),
-                    ('SetZ', '_set_z'),
-                    ('GetPosition', '_get_position'),
-                    ('GetAutoCorrecting', '_get_auto_correcting'),
-                    ('CancelAutoCorrecting', '_cancel_auto_correcting'),
-                    ('GetDriveMoving', '_get_drive_moving'),
-                    ('GetXMoving', '_get_x_moving'),
-                    ('GetYMoving', '_get_y_moving'),
-                    ('GetZMoving', '_get_z_moving'),
-                    ('StopDrive', '_stop_drive'),
-                    ('SetDriveHome', '_set_drive_home'),
-                    ('SetHomeX', '_set_home_x'),
-                    ('SetHomeY', '_set_home_y'),
-                    ('SetHomeZ', '_set_home_z'),
-                    ('GoToHole', '_go_to_hole'),
-                    ('DoPattern', '_do_pattern'),
-                    ('IsPatterning', '_is_patterning'),
-                    ('AbortPattern', '_abort_pattern'),
-                    ('DoJog', '_do_pattern'),
-                    ('IsJogging', '_is_patterning'),
-                    ('AbortJog', '_abort_pattern'),
-                    ('GetJogProcedures', '_get_pattern_names'),
-                    ('GetPatternNames', '_get_pattern_names'),
-                    ('SetBeamDiameter', '_set_beam_diameter'),
-                    ('GetBeamDiameter', '_get_beam_diameter'),
-                    ('SetZoom', '_set_zoom'),
-                    ('GetZoom', '_get_zoom'),
-                    ('SetMotorLock', '_set_motor_lock'),
-                    ('SetMotor', '_set_motor'),
-                    ('GetMotorMoving', '_get_motor_moving'),
-                    ('SetSampleHolder', '_set_sample_holder'),
-                    ('GetSampleHolder', '_get_sample_holder'),
-                    ('StartMeasureGrainPolygon', '_start_measure_grain_polygon'),
-                    ('StopMeasureGrainPolygon', '_stop_measure_grain_polygon'),
-                    ('GetGrainPolygonBlob', '_get_grain_polygon_blob'),
-                    ('AcquireGrainPolygonBlob', '_get_grain_polygon'),
-                    ('SetLaserPower', '_set_laser_power'),
-                    ('SetLaserOutput', '_set_laser_output'),
-                    ('GetAchievedOutput', '_get_achieved_output'),
-                    ('GetResponseBlob', '_get_response_blob'),
-                    ('GetOutputBlob', '_get_output_blob'),
-                    ('GetPyrometerTemperature', '_get_pyrometer_temperature'),
-                    ('GoToNamedPosition', '_go_to_named_position'),
-                    ('GoToPoint', '_go_to_point'),
-                    # ('TracePath', '_trace_path'),
-                    ('IsTracing', '_is_tracing'),
-                    ('StopTrace', '_stop_trace'),
-                    ('Prepare', '_prepare'),
-                    ('IsReady', '_is_ready'),
-                    ('SetLight', '_set_light'))
+        services = (
+            ("GetError", "_get_error"),
+            # ('MachineVisionDegas', '_machine_vision_degas'),
+            ("StartVideoRecording", "_start_video_recording"),
+            ("StopVideoRecording", "_stop_video_recording"),
+            ("ReadLaserPower", "_read_laser_power"),
+            ("GetLaserStatus", "_get_laser_status"),
+            ("Snapshot", "_snapshot"),
+            ("PrepareLaser", "_prepare_laser"),
+            ("LaserReady", "_laser_ready"),
+            ("Enable", "_enable"),
+            ("Disable", "_disable"),
+            ("SetXY", "_set_x_y"),
+            ("SetX", "_set_x"),
+            ("SetY", "_set_y"),
+            ("SetZ", "_set_z"),
+            ("GetPosition", "_get_position"),
+            ("GetAutoCorrecting", "_get_auto_correcting"),
+            ("CancelAutoCorrecting", "_cancel_auto_correcting"),
+            ("GetDriveMoving", "_get_drive_moving"),
+            ("GetXMoving", "_get_x_moving"),
+            ("GetYMoving", "_get_y_moving"),
+            ("GetZMoving", "_get_z_moving"),
+            ("StopDrive", "_stop_drive"),
+            ("SetDriveHome", "_set_drive_home"),
+            ("SetHomeX", "_set_home_x"),
+            ("SetHomeY", "_set_home_y"),
+            ("SetHomeZ", "_set_home_z"),
+            ("GoToHole", "_go_to_hole"),
+            ("DoPattern", "_do_pattern"),
+            ("IsPatterning", "_is_patterning"),
+            ("AbortPattern", "_abort_pattern"),
+            ("DoJog", "_do_pattern"),
+            ("IsJogging", "_is_patterning"),
+            ("AbortJog", "_abort_pattern"),
+            ("GetJogProcedures", "_get_pattern_names"),
+            ("GetPatternNames", "_get_pattern_names"),
+            ("SetBeamDiameter", "_set_beam_diameter"),
+            ("GetBeamDiameter", "_get_beam_diameter"),
+            ("SetZoom", "_set_zoom"),
+            ("GetZoom", "_get_zoom"),
+            ("SetMotorLock", "_set_motor_lock"),
+            ("SetMotor", "_set_motor"),
+            ("GetMotorMoving", "_get_motor_moving"),
+            ("SetSampleHolder", "_set_sample_holder"),
+            ("GetSampleHolder", "_get_sample_holder"),
+            ("StartMeasureGrainPolygon", "_start_measure_grain_polygon"),
+            ("StopMeasureGrainPolygon", "_stop_measure_grain_polygon"),
+            ("GetGrainPolygonBlob", "_get_grain_polygon_blob"),
+            ("AcquireGrainPolygonBlob", "_get_grain_polygon"),
+            ("SetLaserPower", "_set_laser_power"),
+            ("SetLaserOutput", "_set_laser_output"),
+            ("GetAchievedOutput", "_get_achieved_output"),
+            ("GetResponseBlob", "_get_response_blob"),
+            ("GetOutputBlob", "_get_output_blob"),
+            ("GetPyrometerTemperature", "_get_pyrometer_temperature"),
+            ("GoToNamedPosition", "_go_to_named_position"),
+            ("GoToPoint", "_go_to_point"),
+            # ('TracePath', '_trace_path'),
+            ("IsTracing", "_is_tracing"),
+            ("StopTrace", "_stop_trace"),
+            ("Prepare", "_prepare"),
+            ("IsReady", "_is_ready"),
+            ("SetLight", "_set_light"),
+        )
         self._register_services(services)
 
     # ===============================================================================
@@ -124,7 +130,7 @@ class LaserProtocol(ServiceProtocol):
     # ===============================================================================
     def _start_video_recording(self, data):
         if isinstance(data, dict):
-            name = data['name']
+            name = data["name"]
         else:
             name = data
 
@@ -135,27 +141,27 @@ class LaserProtocol(ServiceProtocol):
 
     def _snapshot(self, data):
         """
-            name: base name for file. saved in default directory
+        name: base name for file. saved in default directory
 
-            returns: abs path to saved file in the media server
+        returns: abs path to saved file in the media server
         """
         if isinstance(data, dict):
-            name, pic_format = data['name'], data['pic_format']
+            name, pic_format = data["name"], data["pic_format"]
         else:
             name, pic_format = data
 
         sm = self._manager.stage_manager
-        if hasattr(sm, 'video'):
-            if pic_format not in ('.jpg', '.png'):
-                pic_format = '.jpg'
+        if hasattr(sm, "video"):
+            if pic_format not in (".jpg", ".png"):
+                pic_format = ".jpg"
 
-            lpath, upath, imageblob = sm.snapshot(name=name,
-                                                  return_blob=True,
-                                                  inform=False,
-                                                  pic_format=pic_format)
+            lpath, upath, imageblob = sm.snapshot(
+                name=name, return_blob=True, inform=False, pic_format=pic_format
+            )
 
-            s = '{:02X}{}{:02x}{}{}'.format(len(lpath),
-                                            lpath, len(upath), upath, imageblob)
+            s = "{:02X}{}{:02x}{}{}".format(
+                len(lpath), lpath, len(upath), upath, imageblob
+            )
             return s
 
     def _get_grain_polygon_blob(self, data):
@@ -174,11 +180,11 @@ class LaserProtocol(ServiceProtocol):
     # Laser
     # ===============================================================================
     def _get_error(self, data):
-        return self._manager.get_error() or 'OK'
+        return self._manager.get_error() or "OK"
 
     def _read_laser_power(self, data):
         """
-            return watts
+        return watts
         """
         return self._manager.get_laser_watts()
 
@@ -198,7 +204,7 @@ class LaserProtocol(ServiceProtocol):
             err = LogicBoardCommErrorCode()
         elif isinstance(err, str):
             err = EnableErrorCode(err)
-        return err or 'OK'
+        return err or "OK"
 
     def _disable(self, data):
         err = self._manager.disable_laser()
@@ -206,27 +212,27 @@ class LaserProtocol(ServiceProtocol):
             err = LogicBoardCommErrorCode()
         elif isinstance(err, str):
             err = EnableErrorCode(err)
-        return err or 'OK'
+        return err or "OK"
 
     def _set_laser_power(self, data):
         try:
             p = float(data)
         except:
-            return InvalidArgumentsErrorCode('SetLaserPower', data)
+            return InvalidArgumentsErrorCode("SetLaserPower", data)
 
         self._manager.set_laser_power(p)
         return True
 
     def _set_laser_output(self, data):
         if isinstance(data, dict):
-            value, units = data['value'], data['units']
+            value, units = data["value"], data["units"]
         else:
             value, units = data
 
         try:
             p = float(value)
         except:
-            return InvalidArgumentsErrorCode('SetLaserOutput', value)
+            return InvalidArgumentsErrorCode("SetLaserOutput", value)
 
         self._manager.set_laser_output(p, units=units)
         return True
@@ -250,12 +256,12 @@ class LaserProtocol(ServiceProtocol):
         try:
             bd = float(data)
         except ValueError:
-            return InvalidArgumentsErrorCode('SetBeamDiameter', data)
+            return InvalidArgumentsErrorCode("SetBeamDiameter", data)
         return self._manager.set_beam_diameter(bd, block=False)
 
     def _get_beam_diameter(self, data):
-        motor = self._manager.get_motor('beam')
-        pos = 'No Beam Motor'
+        motor = self._manager.get_motor("beam")
+        pos = "No Beam Motor"
         if motor:
             pos = motor.data_position
         return pos
@@ -264,22 +270,22 @@ class LaserProtocol(ServiceProtocol):
         try:
             zoom = float(data)
         except (ValueError, TypeError):
-            return InvalidArgumentsErrorCode('SetZoom', data)
+            return InvalidArgumentsErrorCode("SetZoom", data)
 
         self._manager.zoom = zoom
         return True
 
     def _get_zoom(self, data):
-        motor = self._manager.get_motor('zoom')
-        pos = 'No Zoom Motor'
+        motor = self._manager.get_motor("zoom")
+        pos = "No Zoom Motor"
         if motor:
             pos = motor.data_position
         return pos
 
     def _set_motor_lock(self, data):
         if isinstance(data, dict):
-            name = data['name']
-            value = data['value']
+            name = data["name"]
+            value = data["value"]
         else:
             name, value = data
 
@@ -287,21 +293,21 @@ class LaserProtocol(ServiceProtocol):
 
     def _set_motor(self, data):
         if isinstance(data, dict):
-            name = data['name']
-            value = data['value']
+            name = data["name"]
+            value = data["value"]
         else:
             name, value = data
 
         try:
             value = float(value)
         except ValueError:
-            return InvalidArgumentsErrorCode('SetMotor', value)
+            return InvalidArgumentsErrorCode("SetMotor", value)
 
         return self._manager.set_motor(name, value, block=False)
 
     def _get_motor_moving(self, data):
         if isinstance(data, dict):
-            name = data['name']
+            name = data["name"]
         else:
             name = data
         motor = self._manager.get_motor(name)
@@ -316,7 +322,7 @@ class LaserProtocol(ServiceProtocol):
     # ===============================================================================
     def _set_x_y(self, data):
         if isinstance(data, dict):
-            x, y = data['x'], data['y']
+            x, y = data["x"], data["y"]
         else:
             x, y = data
         # try:
@@ -327,27 +333,27 @@ class LaserProtocol(ServiceProtocol):
         try:
             x = float(x)
         except ValueError:
-            return InvalidArgumentsErrorCode('SetXY', 'x={}'.format(x))
+            return InvalidArgumentsErrorCode("SetXY", "x={}".format(x))
 
         try:
             y = float(y)
         except ValueError:
-            return InvalidArgumentsErrorCode('SetXY', 'y{}'.format(y))
+            return InvalidArgumentsErrorCode("SetXY", "y{}".format(y))
 
         # need to remember x,y so we can fool mass spec that we are at position
         self._manager.stage_manager.temp_position = x, y
 
         err = self._manager.stage_manager.set_xy(x, y)
-        return err or 'OK'
+        return err or "OK"
 
     def _set_x(self, data):
-        return self._set_axis('x', data)
+        return self._set_axis("x", data)
 
     def _set_y(self, data):
-        return self._set_axis('y', data)
+        return self._set_axis("y", data)
 
     def _set_z(self, data):
-        return self._set_axis('z', data)
+        return self._set_axis("z", data)
 
     def _get_position(self, data):
         smanager = self._manager.stage_manager
@@ -359,19 +365,19 @@ class LaserProtocol(ServiceProtocol):
             x, y = smanager.get_calibrated_xy()
 
         pos = x, y, z
-        return ','.join(['{:0.5f}'.format(i) for i in pos])
+        return ",".join(["{:0.5f}".format(i) for i in pos])
 
     def _get_drive_moving(self, data):
         return self._manager.stage_manager.moving()
 
     def _get_x_moving(self, data):
-        return self._manager.stage_manager.moving(axis='x')
+        return self._manager.stage_manager.moving(axis="x")
 
     def _get_y_moving(self, data):
-        return self._manager.stage_manager.moving(axis='y')
+        return self._manager.stage_manager.moving(axis="y")
 
     def _get_z_moving(self, data):
-        return self._manager.stage_manager.moving(axis='z')
+        return self._manager.stage_manager.moving(axis="z")
 
     def _stop_drive(self, data):
         self._manager.stage_manager.stop()
@@ -382,17 +388,17 @@ class LaserProtocol(ServiceProtocol):
         return True
 
     def _set_home_x(self, data):
-        return self._set_home_(self._manager, axis='x')
+        return self._set_home_(self._manager, axis="x")
 
     def _set_home_y(self, data):
-        return self._set_home_(self._manager, axis='y')
+        return self._set_home_(self._manager, axis="y")
 
     def _set_home_z(self, data):
-        return self._set_home_(self._manager, axis='z')
+        return self._set_home_(self._manager, axis="z")
 
     def _set_sample_holder(self, name):
         if name is None:
-            r = InvalidArgumentsErrorCode('SetSampleHolder', name)
+            r = InvalidArgumentsErrorCode("SetSampleHolder", name)
         else:
             err = self._manager.stage_manager._set_stage_map(name)
             if not err:
@@ -405,19 +411,20 @@ class LaserProtocol(ServiceProtocol):
 
     def _go_to_hole(self, data):
         if isinstance(data, dict):
-            hole, autocenter = data['hole'], data['autocenter']
+            hole, autocenter = data["hole"], data["autocenter"]
         else:
             hole, autocenter = data
 
         try:
             hole = int(hole)
             autocenter = to_bool(autocenter)
-            err = self._manager.stage_manager.move_to_hole(str(hole),
-                                                           correct_position=autocenter)
+            err = self._manager.stage_manager.move_to_hole(
+                str(hole), correct_position=autocenter
+            )
         except (ValueError, TypeError):
-            err = InvalidArgumentsErrorCode('GoToHole', (hole, autocenter))
+            err = InvalidArgumentsErrorCode("GoToHole", (hole, autocenter))
 
-        return err or 'OK'
+        return err or "OK"
 
     def _go_to_named_position(self, data):
         return self._manager.goto_named_position(data)
@@ -438,27 +445,27 @@ class LaserProtocol(ServiceProtocol):
     # Patterning
     # ===============================================================================
     def _get_pattern_names(self, data):
-        ret = ''
+        ret = ""
         jogs = self._manager.get_pattern_names()
         if jogs:
-            ret = ','.join(jogs)
+            ret = ",".join(jogs)
 
         return ret
 
     def _do_pattern(self, data):
         if isinstance(data, dict):
-            name = data['name']
-            duration = data['duration']
+            name = data["name"]
+            duration = data["duration"]
         else:
             name, duration = data
 
-        return self._manager.execute_pattern(name, duration) or 'OK'
+        return self._manager.execute_pattern(name, duration) or "OK"
 
     def _is_patterning(self, data):
         return self._manager.isPatterning()
 
     def _abort_pattern(self, data):
-        return self._manager.stop_pattern() or 'OK'
+        return self._manager.stop_pattern() or "OK"
 
     # ===============================================================================
     # Misc
@@ -478,15 +485,15 @@ class LaserProtocol(ServiceProtocol):
         try:
             d = float(value)
         except (ValueError, TypeError) as err:
-            return InvalidArgumentsErrorCode('Set{}'.format(axis.upper()), err)
+            return InvalidArgumentsErrorCode("Set{}".format(axis.upper()), err)
 
         err = self._manager.stage_manager.single_axis_move(axis, d)
-        return err or 'OK'
+        return err or "OK"
 
     def _set_home_(self, **kw):
-        """
-        """
+        """ """
         err = self._manager.stage_manager.define_home(**kw)
-        return err or 'OK'
+        return err or "OK"
+
 
 # ============= EOF =============================================

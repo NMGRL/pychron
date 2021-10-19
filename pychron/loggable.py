@@ -55,15 +55,15 @@ class unique(object):
 
 
 class Loggable(BaseFS):
-    """
-    """
+    """ """
+
     application = Any
     logger = None  # (transient=True)
     name = String
     logger_name = String
     # use_logger_display = True
     # use_warning_display = True
-    logcolor = 'black'
+    logcolor = "black"
     shared_logger = False
 
     def __init__(self, *args, **kw):
@@ -78,7 +78,7 @@ class Loggable(BaseFS):
             self._add_logger()
 
     def report_logger_stats(self):
-        self.debug('&&&& len __gloggers__ = {}'.format(len(__gloggers__)))
+        self.debug("&&&& len __gloggers__ = {}".format(len(__gloggers__)))
 
     @unique()
     def unique_warning(self, *args, **kw):
@@ -93,8 +93,7 @@ class Loggable(BaseFS):
         self.debug(*args, **kw)
 
     def warning(self, msg):
-        """
-        """
+        """ """
 
         if self.logger is not None:
             if globalv.use_warning_display:
@@ -102,24 +101,26 @@ class Loggable(BaseFS):
 
                 if globalv.show_warnings:
                     gWarningDisplay.add_text(
-                        '{{:<{}s}} -- {{}}'.format(NAME_WIDTH).format(self.logger.name.strip(), msg))
+                        "{{:<{}s}} -- {{}}".format(NAME_WIDTH).format(
+                            self.logger.name.strip(), msg
+                        )
+                    )
 
-            self._log_('warning', msg)
+            self._log_("warning", msg)
 
     def info(self, msg, dolater=False, color=None):
-        """
-
-        """
+        """ """
         if self.logger is not None:
             if globalv.use_logger_display:
                 from pychron.core.displays.gdisplays import gLoggerDisplay
 
                 if globalv.show_infos:
-                    args = ('{{:<{}s}} -- {{}}'.format(NAME_WIDTH).format(self.logger.name.strip(),
-                                                                          msg))
+                    args = "{{:<{}s}} -- {{}}".format(NAME_WIDTH).format(
+                        self.logger.name.strip(), msg
+                    )
                     gLoggerDisplay.add_text(args, color=color)
 
-            self._log_('info', msg)
+            self._log_("info", msg)
 
     def debug_exception(self):
         import traceback
@@ -130,15 +131,16 @@ class Loggable(BaseFS):
 
     def warning_exception(self):
         import traceback
+
         exc = traceback.format_exc()
         self.warning_dialog(exc)
         return exc
 
     def critical(self, msg):
-        self._log_('critical', msg)
+        self._log_("critical", msg)
 
     def debug(self, msg):
-        self._log_('debug', msg)
+        self._log_("debug", msg)
 
     def log(self, msg, level=10):
         def log(m, *args, **kw):
@@ -148,15 +150,14 @@ class Loggable(BaseFS):
         self._log_(log, msg)
 
     # dialogs
-    def warning_dialog(self, msg, sound=None, title='Warning', **kw):
+    def warning_dialog(self, msg, sound=None, title="Warning", **kw):
         self.warning(msg)
 
         from pychron.core.ui.dialogs import myMessageDialog
 
         dialog = myMessageDialog(
-            parent=None, message=str(msg),
-            title=title,
-            severity='warning', **kw)
+            parent=None, message=str(msg), title=title, severity="warning", **kw
+        )
         #         if sound:
         #             from pychron.core.helpers.media import loop_sound
         #             evt = loop_sound(sound)
@@ -169,13 +170,13 @@ class Loggable(BaseFS):
     def confirmation_dialog(self, *args, **kw):
         return confirmation_dialog(*args, **kw)
 
-    def information_dialog(self, msg, title='Information', **kw):
+    def information_dialog(self, msg, title="Information", **kw):
         from pychron.core.ui.dialogs import myMessageDialog
 
         self.info(msg)
-        dlg = myMessageDialog(parent=None, message=msg,
-                              title=title,
-                              severity='information', **kw)
+        dlg = myMessageDialog(
+            parent=None, message=msg, title=title, severity="information", **kw
+        )
         dlg.open()
 
     def message(self, msg):
@@ -193,9 +194,7 @@ class Loggable(BaseFS):
 
     # private
     def _add_logger(self):
-        """
-
-        """
+        """ """
         if self.logger_name:
             name = self.logger_name
         elif self.name:
@@ -208,33 +207,35 @@ class Loggable(BaseFS):
             __gloggers__[name] = self.logger
 
         c = next(color_name_gen)
-        if c in ['gray', 'silver', 'greenyellow']:
+        if c in ["gray", "silver", "greenyellow"]:
             c = next(color_name_gen)
         self.logcolor = c
 
     def _log_(self, func, msg):
 
-        def get_thread_name():
-            ct = current_thread()
-            name = ct.name
-            # from pychron.core.ui.thread import currentThreadName
-            # if name.startswith('Dummy'):
-            #     name = currentThreadName()
-
-            return name
+        # def get_thread_name():
+        #     name = 'foo'
+        #     # ct = current_thread()
+        #     # name = ct.name
+        #     from pychron.core.ui.thread import currentThreadName
+        #     # if name.startswith('Dummy'):
+        #     #     name = currentThreadName()
+        #
+        #     return name
 
         if self.logger is None:
             return
 
-        extras = {'threadName_': get_thread_name()}
+        # extras = {'threadName_': get_thread_name()}
         if isinstance(func, str):
             func = getattr(self.logger, func)
 
         if isinstance(msg, (list, tuple)):
-            msg = ','.join(map(str, msg))
+            msg = ",".join(map(str, msg))
 
         msg = self._post_process_msg(msg)
-        func(msg, extra=extras)
+        # func(msg, extra=extras)
+        func(msg)
 
     def _post_process_msg(self, msg):
         return msg
@@ -245,6 +246,7 @@ class Loggable(BaseFS):
 
     def _logger_name_changed(self):
         self._add_logger()
+
 
 # class Loggable(HasTraits, Loggable):
 #     def __init__(self, *args, **kw):

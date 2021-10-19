@@ -19,16 +19,18 @@ from pychron.hardware.gauges.base_controller import BaseGaugeController
 
 class QtegraGaugeController(BaseGaugeController, CoreDevice):
     def load_additional_args(self, config, *args, **kw):
-        self.display_name = self.config_get(config, 'General', 'display_name', default=self.name)
+        self.display_name = self.config_get(
+            config, "General", "display_name", default=self.name
+        )
         self._load_gauges(config)
         return True
 
     def get_pressures(self, *args, **kw):
-        kw['force'] = True
+        kw["force"] = True
         return super(QtegraGaugeController, self).get_pressures(*args, **kw)
 
     def _read_pressure(self, name=None, verbose=False):
-        pressure = 'err'
+        pressure = "err"
 
         if isinstance(name, str):
             gauge = self.get_gauge(name)
@@ -37,8 +39,9 @@ class QtegraGaugeController(BaseGaugeController, CoreDevice):
             name = name.name
 
         if name is not None:
-            pressure = self.ask('GetParameter {}'.format(name), verbose=True)
+            pressure = self.ask("GetParameter {}".format(name), verbose=True)
 
         return pressure
+
 
 # ============= EOF =============================================

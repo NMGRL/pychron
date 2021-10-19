@@ -22,9 +22,13 @@ from apptools.preferences.preference_binding import bind_preference
 from pychron.envisage.view_util import open_view
 from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
 from pychron.spectrometer.jobs.cdd_operating_voltage_scan import CDDOperatingVoltageScan
-from pychron.spectrometer.jobs.relative_detector_positions import RelativeDetectorPositions
-from pychron.spectrometer.spectrometer_parameters import SpectrometerParameters, \
-    SpectrometerParametersView
+from pychron.spectrometer.jobs.relative_detector_positions import (
+    RelativeDetectorPositions,
+)
+from pychron.spectrometer.spectrometer_parameters import (
+    SpectrometerParameters,
+    SpectrometerParametersView,
+)
 
 
 class ThermoSpectrometerManager(BaseSpectrometerManager):
@@ -37,8 +41,8 @@ class ThermoSpectrometerManager(BaseSpectrometerManager):
     """
 
     def protect_detector(self, det, protect):
-        protect = 'On' if protect else 'Off'
-        self.spectrometer.set_parameter('ProtectDetector', '{},{}'.format(det, protect))
+        protect = "On" if protect else "Off"
+        self.spectrometer.set_parameter("ProtectDetector", "{},{}".format(det, protect))
 
     def set_deflection(self, det, defl):
         self.spectrometer.set_deflection(det, defl)
@@ -58,15 +62,24 @@ class ThermoSpectrometerManager(BaseSpectrometerManager):
             return spec.set_gains(*args, **kw)
 
     def bind_preferences(self):
-        pref_id = 'pychron.spectrometer'
-        bind_preference(self.spectrometer, 'send_config_on_startup',
-                        '{}.send_config_on_startup'.format(pref_id))
+        pref_id = "pychron.spectrometer"
+        bind_preference(
+            self.spectrometer,
+            "send_config_on_startup",
+            "{}.send_config_on_startup".format(pref_id),
+        )
 
-        bind_preference(self.spectrometer.magnet, 'confirmation_threshold_mass',
-                        '{}.confirmation_threshold_mass'.format(pref_id))
+        bind_preference(
+            self.spectrometer.magnet,
+            "confirmation_threshold_mass",
+            "{}.confirmation_threshold_mass".format(pref_id),
+        )
 
-        bind_preference(self.spectrometer, 'force_send_configuration',
-                        '{}.force_send_configuration'.format(pref_id))
+        bind_preference(
+            self.spectrometer,
+            "force_send_configuration",
+            "{}.force_send_configuration".format(pref_id),
+        )
 
     def relative_detector_positions_task_factory(self):
         return self._factory(RelativeDetectorPositions)
@@ -87,17 +100,16 @@ class ThermoSpectrometerManager(BaseSpectrometerManager):
 
     def cdd_operate_voltage_scan_task_factory(self):
         obj = CDDOperatingVoltageScan(spectrometer=self.spectrometer)
-        info = obj.edit_traits(kind='livemodal')
+        info = obj.edit_traits(kind="livemodal")
         if info.result:
             open_view(obj.graph)
             obj.execute()
 
     def _factory(self, klass):
-        ion = self.application.get_service('pychron.spectrometer.ion_optics_manager.IonOpticsManager')
+        ion = self.application.get_service(
+            "pychron.spectrometer.ion_optics_manager.IonOpticsManager"
+        )
         return klass(spectrometer=self.spectrometer, ion_optics_manager=ion)
 
 
 # ============= EOF =============================================
-
-
-

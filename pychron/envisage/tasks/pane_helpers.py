@@ -29,14 +29,13 @@ def spacer(width=-1, **kw):
 
 
 class ConsolePane(TraitsDockPane):
-    id = 'pychron.console'
-    name = 'Console'
+    id = "pychron.console"
+    name = "Console"
     console_display = Instance(DisplayController)
 
     def traits_view(self):
-        v = View(UItem('console_display',
-                       style='custom'))
+        v = View(UItem("console_display", style="custom"))
         return v
 
-# ============= EOF =============================================
 
+# ============= EOF =============================================

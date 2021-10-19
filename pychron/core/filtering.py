@@ -28,10 +28,13 @@ from numpy import ma
 def filter_items(items, predicate_str, return_indices=True):
     omits = []
     if predicate_str:
-        match = re.search(r'(?P<name>[A-Za-z])', predicate_str)
+        match = re.search(r"(?P<name>[A-Za-z])", predicate_str)
         if match:
-            variable_name = match.group('name')
-            omits = [(eval(predicate_str, {variable_name: yi}), i) for i, yi in enumerate(items)]
+            variable_name = match.group("name")
+            omits = [
+                (eval(predicate_str, {variable_name: yi}), i)
+                for i, yi in enumerate(items)
+            ]
             omits = [idx for ti, idx in omits if ti]
             if not return_indices:
                 omits = [items[i] for i in omits]
@@ -39,7 +42,7 @@ def filter_items(items, predicate_str, return_indices=True):
     return omits
 
 
-regex = re.compile(r'error|percent_error|(?! and| or)[A-Za-z]+')
+regex = re.compile(r"error|percent_error|(?! and| or)[A-Za-z]+")
 
 
 def validate_filter_predicate(predicate):
@@ -70,9 +73,9 @@ def filter_ufloats(items, predicate_str, return_indices=True):
     def make_ctx(v, e):
         ctx = {}
         for ai in attrs:
-            if ai == 'error':
+            if ai == "error":
                 ctx[ai] = e
-            elif ai == 'percent_error':
+            elif ai == "percent_error":
                 ctx[ai] = e / v * 100 if v else 0
             else:
                 ctx[ai] = v
@@ -94,7 +97,7 @@ def sigma_filter(vs, nsigma):
     return list(omits)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     x = ma.array([1, 1, 1, 1, 1, 10], mask=False)
     x.mask[5] = True
     o = sigma_filter(x, 1)

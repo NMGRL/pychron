@@ -26,4 +26,5 @@ command_register = makeRegistry()
 class NGXMeasurementPyScript(MeasurementPyScript):
     pass
 
+
 # ============= EOF =============================================

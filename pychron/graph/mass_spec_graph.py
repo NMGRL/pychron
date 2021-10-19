@@ -15,11 +15,8 @@
 # ===============================================================================
 
 
-
 from __future__ import absolute_import
 from pychron.graph.stacked_graph import StackedGraph
-
-
 
 
 class MassSpecGraph(StackedGraph):

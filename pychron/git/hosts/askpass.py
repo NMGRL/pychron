@@ -19,16 +19,16 @@ from os import environ
 from sys import argv
 
 v = argv[1].lower()
-if 'username' in v:
+if "username" in v:
     try:
-        print(environ['GIT_ASKPASS_USERNAME'])
+        print(environ["GIT_ASKPASS_USERNAME"])
     except KeyError:
         exit(1)
 
     exit()
-elif 'password' in v:
+elif "password" in v:
     try:
-        print(environ['GIT_ASKPASS_PASSWORD'])
+        print(environ["GIT_ASKPASS_PASSWORD"])
     except KeyError:
         exit(1)
 

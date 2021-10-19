@@ -19,10 +19,12 @@ from __future__ import absolute_import
 import time
 
 from traits.api import Str, Event
+
 # ============= standard library imports ========================
 from threading import Thread
 from glob import glob
 import os
+
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 
@@ -43,7 +45,7 @@ class DirectoryWatcher(Loggable):
         self._alive = False
 
     def _start(self):
-        self.info('start polling {} for changes'.format(self._path))
+        self.info("start polling {} for changes".format(self._path))
         self._alive = True
         t = Thread(target=self._poll)
         t.start()
@@ -53,14 +55,12 @@ class DirectoryWatcher(Loggable):
         while 1:
             if not self._alive:
                 break
-            nfiles = glob(os.path.join(self._path, '*.png'))
+            nfiles = glob(os.path.join(self._path, "*.png"))
 
             if nfiles:
                 self.dir_changed = nfiles
 
             time.sleep(period)
+
+
 # ============= EOF =============================================
-
-
-
-

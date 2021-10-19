@@ -20,6 +20,8 @@ from chaco.label import Label
 from kiva import FILL
 from traits.trait_types import Bool, Float, Str
 from traits.traits import Property
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -40,36 +42,36 @@ class MarkerLabel(Label):
     horizontal_line_visible = False
     label_with_intensity = False
 
-    text = Property(depends_on='_text, label_with_intensity')
+    text = Property(depends_on="_text, label_with_intensity")
     _text = Str
 
     def _set_text(self, text):
-        self._text =text
+        self._text = text
 
     def _get_text(self):
         if self.label_with_intensity:
-            return '{:0.4f}'.format(self.data_y)
+            return "{:0.4f}".format(self.data_y)
         else:
             return self._text
 
     def draw(self, gc, component_height):
         if not self.text:
-            self.text = ''
+            self.text = ""
 
         if self.bgcolor != "transparent":
             gc.set_fill_color(self.bgcolor_)
 
-        #draw tag border
+        # draw tag border
         with gc:
             if self.vertical:
-                self.rotate_angle=90
+                self.rotate_angle = 90
                 width, height = self.get_bounding_box(gc)
-                gc.translate_ctm(self.x, self.zero_y_vert-35-height)
+                gc.translate_ctm(self.x, self.zero_y_vert - 35 - height)
             else:
                 if self.horizontal_line_visible:
                     self._draw_horizontal_line(gc)
 
-                gc.translate_ctm(self.x+self.xoffset, self.y)
+                gc.translate_ctm(self.x + self.xoffset, self.y)
                 self._draw_tag_border(gc)
 
             super(MarkerLabel, self).draw(gc)
@@ -81,10 +83,10 @@ class MarkerLabel(Label):
     def _draw_horizontal_line(self, gc):
         with gc:
             # print self.x, self.y
-            gc.set_stroke_color((0,0,0,1))
+            gc.set_stroke_color((0, 0, 0, 1))
             gc.set_line_width(2)
             oy = 7 if self.text else 4
-            y=self.y+oy
+            y = self.y + oy
             gc.move_to(0, y)
             gc.line_to(self.x, y)
             gc.stroke_path()
@@ -105,12 +107,18 @@ class MarkerLabel(Label):
 
         offset = 2
         xoffset = self.xoffset
-        gc.lines([(-xoffset, (bb_height + offset) / 2.0),
-                  (0, bb_height + 2 * offset),
-                  (bb_width + offset, bb_height + 2 * offset),
-                  (bb_width + offset, -offset),
-                  (0, -offset),
-                  (-xoffset, (bb_height + offset) / 2.0)])
+        gc.lines(
+            [
+                (-xoffset, (bb_height + offset) / 2.0),
+                (0, bb_height + 2 * offset),
+                (bb_width + offset, bb_height + 2 * offset),
+                (bb_width + offset, -offset),
+                (0, -offset),
+                (-xoffset, (bb_height + offset) / 2.0),
+            ]
+        )
 
         gc.draw_path()
+
+
 # ============= EOF =============================================

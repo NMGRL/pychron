@@ -20,8 +20,20 @@ from __future__ import absolute_import
 import csv
 import os
 
-from traits.api import HasTraits, Float, Enum, List, Int, \
-    File, Property, Button, on_trait_change, Any, Event, cached_property
+from traits.api import (
+    HasTraits,
+    Float,
+    Enum,
+    List,
+    Int,
+    File,
+    Property,
+    Button,
+    on_trait_change,
+    Any,
+    Event,
+    cached_property,
+)
 from traits.trait_errors import TraitError
 from traitsui.api import View, UItem, HGroup, Item, spring, VGroup
 from traitsui.tabular_adapter import TabularAdapter
@@ -41,11 +53,13 @@ from pychron.viewable import Viewable
 
 
 class BaseIncrementalHeatAdapter(TabularAdapter):
-    columns = [('Step', 'step_id'),
-               ('Value', 'value'),
-               ('Units', 'units'),
-               ('Duration (s)', 'duration'),
-               ('Cleanup (s)', 'cleanup')]
+    columns = [
+        ("Step", "step_id"),
+        ("Value", "value"),
+        ("Units", "units"),
+        ("Duration (s)", "duration"),
+        ("Cleanup (s)", "cleanup"),
+    ]
 
     step_id_width = Int(40)
     step_id_text = Property
@@ -65,19 +79,21 @@ class BaseIncrementalHeatAdapter(TabularAdapter):
 
 
 class LaserIncrementalHeatAdapter(BaseIncrementalHeatAdapter):
-    columns = [('Step', 'step_id'),
-               ('Value', 'value'),
-               ('Units', 'units'),
-               ('Duration (s)', 'duration'),
-               ('Cleanup (s)', 'cleanup'),
-               ('Beam Diameter', 'beam_diameter')]
+    columns = [
+        ("Step", "step_id"),
+        ("Value", "value"),
+        ("Units", "units"),
+        ("Duration (s)", "duration"),
+        ("Cleanup (s)", "cleanup"),
+        ("Beam Diameter", "beam_diameter"),
+    ]
 
     beam_diameter_text = Property
 
     def _get_beam_diameter_text(self):
         bd = self.item.beam_diameter
         if bd is None:
-            bd = ''
+            bd = ""
         return bd
 
 
@@ -86,10 +102,10 @@ class BaseIncrementalHeatStep(HasTraits):
     duration = Float
     cleanup = Float
     value = Float
-    units = Enum('watts', 'temp', 'percent')
+    units = Enum("watts", "temp", "percent")
 
     #    is_ok = Property
-    step = Property(depends_on='step_id')
+    step = Property(depends_on="step_id")
 
     @cached_property
     def _get_step(self):
@@ -107,10 +123,12 @@ class BaseIncrementalHeatStep(HasTraits):
         if not cleanup:
             cleanup = gcleanup
 
-        d = dict(extract_value=self.value,
-                 extract_units=self.units,
-                 duration=dur,
-                 cleanup=cleanup)
+        d = dict(
+            extract_value=self.value,
+            extract_units=self.units,
+            duration=dur,
+            cleanup=cleanup,
+        )
 
         return d
 
@@ -123,18 +141,23 @@ class BaseIncrementalHeatStep(HasTraits):
 
 
 class LaserIncrementalHeatStep(BaseIncrementalHeatStep):
-    beam_diameter = Property(depends_on='_beam_diameter')
+    beam_diameter = Property(depends_on="_beam_diameter")
     _beam_diameter = Float(default_value=None)
 
     def make_dict(self, gdur, gcleanup):
         d = super(LaserIncrementalHeatStep, self).make_dict(gdur, gcleanup)
         if self.beam_diameter is not None:
-            d['beam_diameter'] = self.beam_diameter
+            d["beam_diameter"] = self.beam_diameter
         return d
 
     def make_row(self):
-        return self.value, self.units, self.duration, \
-               self.cleanup, self.beam_diameter if self.beam_diameter is not None else ''
+        return (
+            self.value,
+            self.units,
+            self.duration,
+            self.cleanup,
+            self.beam_diameter if self.beam_diameter is not None else "",
+        )
 
     def _get_beam_diameter(self):
         return self._beam_diameter
@@ -148,19 +171,19 @@ class BaseIncrementalHeatTemplate(Viewable):
     step_klass = BaseIncrementalHeatStep
     adapter_klass = BaseIncrementalHeatAdapter
 
-    name = Property(depends_on='path')
+    name = Property(depends_on="path")
     path = File
     names = List
 
-    save_button = Button('save')
-    save_as_button = Button('save as')
-    add_row = Button('add step')
+    save_button = Button("save")
+    save_as_button = Button("save as")
+    add_row = Button("add step")
     title = Property
 
     selected = Any
     refresh_needed = Event
 
-    units = Enum('', 'watts', 'temp', 'percent')
+    units = Enum("", "watts", "temp", "percent")
 
     gduration = Float
     gcleanup = Float
@@ -172,7 +195,7 @@ class BaseIncrementalHeatTemplate(Viewable):
 
         self.path = path
         self.steps = []
-        with open(path, 'r') as rfile:
+        with open(path, "r") as rfile:
             reader = csv.reader(rfile)
             header = next(reader)
             cnt = 1
@@ -180,15 +203,14 @@ class BaseIncrementalHeatTemplate(Viewable):
                 if row:
                     params = self._parse_row(row, header)
 
-                    step = self.step_klass(step_id=cnt,
-                                           **params)
+                    step = self.step_klass(step_id=cnt, **params)
                     self.steps.append(step)
                     cnt += 1
 
     def dump(self, path):
-        with open(path, 'w') as wfile:
+        with open(path, "w") as wfile:
             writer = csv.writer(wfile)
-            header = ('value', 'units', 'duration', 'cleanup', 'beam_diameter')
+            header = ("value", "units", "duration", "cleanup", "beam_diameter")
             writer.writerow(header)
             for step in self.steps:
                 writer.writerow(step.make_row())
@@ -196,22 +218,24 @@ class BaseIncrementalHeatTemplate(Viewable):
     # private
     def _parse_row(self, row, header):
         params = dict()
-        for a, cast in (('value', float),
-                        ('units', str),
-                        ('duration', float),
-                        ('cleanup', float)):
+        for a, cast in (
+            ("value", float),
+            ("units", str),
+            ("duration", float),
+            ("cleanup", float),
+        ):
             idx = header.index(a)
             params[a] = cast(row[idx])
         return params
 
     def _gduration_changed(self):
-        self._set_steps_attr('duration', self.gduration)
+        self._set_steps_attr("duration", self.gduration)
 
     def _gcleanup_changed(self):
-        self._set_steps_attr('cleanup', self.gcleanup)
+        self._set_steps_attr("cleanup", self.gcleanup)
 
     def _units_changed(self):
-        self._set_steps_attr('units', self.units)
+        self._set_steps_attr("units", self.units)
 
     def _set_steps_attr(self, attr, v):
         steps = self.selected
@@ -226,7 +250,7 @@ class BaseIncrementalHeatTemplate(Viewable):
         if self.path:
             return os.path.basename(self.path)
         else:
-            return ' '
+            return " "
 
     def _steps_default(self):
         return [self.step_klass(step_id=i + 1) for i in range(20)]
@@ -282,7 +306,7 @@ class BaseIncrementalHeatTemplate(Viewable):
     # ===============================================================================
     # handlers
     # ===============================================================================
-    @on_trait_change('steps[]')
+    @on_trait_change("steps[]")
     def _steps_updated(self):
         for i, si in enumerate(self.steps):
             si.step_id = i + 1
@@ -320,7 +344,9 @@ class BaseIncrementalHeatTemplate(Viewable):
         steps = [s for s in self.steps if s.is_valid]
         n = len(steps)
 
-        dlg = IncrementalHeatTemplateSaveDialog(n=n, root=paths.incremental_heat_template_dir)
+        dlg = IncrementalHeatTemplateSaveDialog(
+            n=n, root=paths.incremental_heat_template_dir
+        )
         path = dlg.get_path()
         if path:
             self.dump(path)
@@ -328,12 +354,14 @@ class BaseIncrementalHeatTemplate(Viewable):
             self.close_ui()
 
     def traits_view(self):
-        editor = myTabularEditor(adapter=self.adapter_klass(),
-                                 refresh='refresh_needed',
-                                 selected='selected',
-                                 # copy_cache='copy_cache',
-                                 # pasted='pasted',
-                                 multi_select=True)
+        editor = myTabularEditor(
+            adapter=self.adapter_klass(),
+            refresh="refresh_needed",
+            selected="selected",
+            # copy_cache='copy_cache',
+            # pasted='pasted',
+            multi_select=True,
+        )
 
         # cols=[ObjectColumn(name='step', label='Step', editable=False),
         #       ObjectColumn(name='value',label='Value'),
@@ -346,22 +374,27 @@ class BaseIncrementalHeatTemplate(Viewable):
         #                    show_toolbar=True,
         #                    selection_mode='rows', sortable=False)
 
-        v = View(VGroup(HGroup(UItem('name', editor=myEnumEditor(name='names')),
-                               icon_button_editor('add_row', 'table_add', tooltip='Add a step'), spring,
-                               Item('gduration', label='Duration'),
-                               Item('gcleanup', label='Cleanup'),
-                               Item('units')),
-                        UItem('steps',
-                              style='custom',
-                              editor=editor),
-
-                        HGroup(UItem('save_button', enabled_when='path'),
-                               UItem('save_as_button'))),
-                 height=500,
-                 width=900,
-                 resizable=True,
-                 title=self.title,
-                 handler=self.handler_klass)
+        v = View(
+            VGroup(
+                HGroup(
+                    UItem("name", editor=myEnumEditor(name="names")),
+                    icon_button_editor("add_row", "table_add", tooltip="Add a step"),
+                    spring,
+                    Item("gduration", label="Duration"),
+                    Item("gcleanup", label="Cleanup"),
+                    Item("units"),
+                ),
+                UItem("steps", style="custom", editor=editor),
+                HGroup(
+                    UItem("save_button", enabled_when="path"), UItem("save_as_button")
+                ),
+            ),
+            height=500,
+            width=900,
+            resizable=True,
+            title=self.title,
+            handler=self.handler_klass,
+        )
         return v
 
 
@@ -372,7 +405,7 @@ class LaserIncrementalHeatTemplate(BaseIncrementalHeatTemplate):
     def _parse_row(self, row, header):
         params = super(LaserIncrementalHeatTemplate, self)._parse_row(row, header)
         try:
-            idx = header.index('beam_diameter')
+            idx = header.index("beam_diameter")
         except ValueError:
             idx = None
 
@@ -380,18 +413,18 @@ class LaserIncrementalHeatTemplate(BaseIncrementalHeatTemplate):
             try:
                 v = row[idx]
             except IndexError:
-                v = ''
+                v = ""
 
             if v.strip():
                 try:
-                    params['beam_diameter'] = float(v)
+                    params["beam_diameter"] = float(v)
                 except ValueError:
-                    self.warning('Invalid beam_diameter value {}'.format(v))
+                    self.warning("Invalid beam_diameter value {}".format(v))
         return params
 
 
-if __name__ == '__main__':
-    paths.build('_dev')
+if __name__ == "__main__":
+    paths.build("_dev")
     im = LaserIncrementalHeatTemplate()
     # im.load(os.path.join(paths.incremental_heat_template_dir,
     #                      'a.txt'

@@ -21,7 +21,7 @@ from pychron.core.fits.fit import IsoFilterFit
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.fit import FitOptions
 from pychron.options.views.iso_evo_views import VIEWS
-from pychron.pychron_constants import FIT_TYPES, MAIN
+from pychron.pychron_constants import FIT_TYPES, MAIN, AUTO_N
 
 
 class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
@@ -35,16 +35,26 @@ class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
     curvature_goodness_at = Float
     rsquared_goodness = Range(0.0, 1.0, 0.95)
     signal_to_blank_goodness = Float
+    signal_to_baseline_goodness = Float
+    signal_to_baseline_percent_goodness = Float
     fitfunc = Str
+    filter_coefficients = Str("0.0003,0.5,0.00005,0.015")
 
     n_threshold = Int
     n_true = Enum(FIT_TYPES)
     n_false = Enum(FIT_TYPES)
 
+    def smart_filter_values(self, xx):
+        a, b, c, d = self.get_filter_coefficients()
+        return a * xx ** b + c * xx + d
+
+    def get_filter_coefficients(self):
+        return (float(f) for f in self.filter_coefficients.split(","))
+
     @cached_property
     def _get_fit_types(self):
         fts = super(IsoFilterFitAuxPlot, self)._get_fit_types()
-        return fts + ['Auto', ]
+        return fts + [AUTO_N]
 
     def auto_fit(self, n):
         if n >= self.n_threshold:
@@ -62,8 +72,12 @@ class IsotopeEvolutionOptions(FitOptions):
 
     def initialize(self):
         self.subview_names = [MAIN]
+        for ap in self.aux_plots:
+            if ap.fit == "Auto":
+                ap.fit = AUTO_N
 
     def _get_subview(self, name):
         return VIEWS[name]
+
 
 # ============= EOF =============================================

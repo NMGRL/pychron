@@ -26,7 +26,7 @@ ESTIMATED_DURATION_FF = 1.0
 class ThermoMeasurementPyScript(MeasurementPyScript):
     @verbose_skip
     @command_register
-    def set_deflection(self, detname, v=''):
+    def set_deflection(self, detname, v=""):
         """
         if v is an empty str (default) then get the deflection value from
         the configuration file.
@@ -37,14 +37,18 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
         :type v: '', int, float
 
         """
-        if v == '':
+        if v == "":
             v = self._get_deflection_from_file(detname)
 
         if v is not None:
-            v = '{},{}'.format(detname, v)
-            self._set_spectrometer_parameter('SetDeflection', v)
+            v = "{},{}".format(detname, v)
+            self._set_spectrometer_parameter("SetDeflection", v)
         else:
-            self.debug('no deflection value for {} supplied or in the config file'.format(detname))
+            self.debug(
+                "no deflection value for {} supplied or in the config file".format(
+                    detname
+                )
+            )
 
     @verbose_skip
     @command_register
@@ -56,7 +60,7 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
         :type detname: str
         :return: float
         """
-        return self._get_spectrometer_parameter('GetDeflection', detname)
+        return self._get_spectrometer_parameter("GetDeflection", detname)
 
     @verbose_skip
     @command_register
@@ -67,12 +71,12 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
         func = self._set_spectrometer_parameter
 
         config = self._get_config()
-        section = 'Deflections'
+        section = "Deflections"
         dets = config.options(section)
         for dn in dets:
             v = config.getfloat(section, dn)
             if v is not None:
-                func('SetDeflection', '{},{}'.format(dn, v))
+                func("SetDeflection", "{},{}".format(dn, v))
 
     @verbose_skip
     @command_register
@@ -84,7 +88,7 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
         :type v: int, float
 
         """
-        self._set_spectrometer_parameter('SetYSymmetry', v)
+        self._set_spectrometer_parameter("SetYSymmetry", v)
 
     @verbose_skip
     @command_register
@@ -95,7 +99,7 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
         :param v: zsymmetry value
         :type v: int, float
         """
-        self._set_spectrometer_parameter('SetZSymmetry', v)
+        self._set_spectrometer_parameter("SetZSymmetry", v)
 
     @verbose_skip
     @command_register
@@ -106,7 +110,7 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
         :param v: zfocus value
         :type v: int, float
         """
-        self._set_spectrometer_parameter('SetZFocus', v)
+        self._set_spectrometer_parameter("SetZFocus", v)
 
     @verbose_skip
     @command_register
@@ -117,7 +121,7 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
         :param v: extractionfocus value
         :type v: int, float
         """
-        self._set_spectrometer_parameter('SetExtractionFocus', v)
+        self._set_spectrometer_parameter("SetExtractionFocus", v)
 
     @verbose_skip
     @command_register
@@ -128,7 +132,7 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
         :param v: extraction symmetry value
         :type v: int, float
         """
-        self._set_spectrometer_parameter('SetExtractionSymmetry', v)
+        self._set_spectrometer_parameter("SetExtractionSymmetry", v)
 
     @verbose_skip
     @command_register
@@ -139,22 +143,22 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
         :param v: extraction lens value
         :type v: int, float
         """
-        self._set_spectrometer_parameter('SetExtractionLens', v)
+        self._set_spectrometer_parameter("SetExtractionLens", v)
 
     @verbose_skip
     @command_register
-    def set_cdd_operating_voltage(self, v=''):
+    def set_cdd_operating_voltage(self, v=""):
         """
         if v is '' (default) use value from file
 
         :param v: cdd operating voltage
         :type v: '', int, float
         """
-        if v == '':
+        if v == "":
             config = self._get_config()
-            v = config.getfloat('CDDParameters', 'OperatingVoltage')
+            v = config.getfloat("CDDParameters", "OperatingVoltage")
 
-        self._set_spectrometer_parameter('SetIonCounterVoltage', v)
+        self._set_spectrometer_parameter("SetIonCounterVoltage", v)
 
     @verbose_skip
     @command_register
@@ -170,20 +174,21 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
             set_source_optics(YSymmetry=10.0)
 
         """
-        self._set_from_file('SourceOptics', **kw)
+        self._set_from_file("SourceOptics", **kw)
 
     @verbose_skip
     @command_register
     def set_source_parameters(self, **kw):
-        self._set_from_file('SourceParameters', **kw)
+        self._set_from_file("SourceParameters", **kw)
 
     @verbose_skip
     @command_register
-    def set_accelerating_voltage(self, v=''):
-        self._set_spectrometer_parameter('SetHV', v)
+    def set_accelerating_voltage(self, v=""):
+        self._set_spectrometer_parameter("SetHV", v)
 
 
 class NGXMeasurementPyScript(MeasurementPyScript):
     pass
+
 
 # ============= EOF =============================================

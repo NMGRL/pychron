@@ -23,34 +23,44 @@ from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.gauges.base_controller import BaseGauge, BaseGaugeController
 
-ACK_RE = re.compile(r'@\d\d\dACK(?P<value>\d+.\d\dE-*\d\d);FF')
-LO_RE = re.compile(r'@\d\d\dACKLO<E-11;FF')
-NO_GAUGE_RE = re.compile(r'@\d\d\dACKNO_GAUGE;FF')
-OFF_RE = re.compile(r'@\d\d\dACKOFF;FF')
-PROTOFF_RE = re.compile(r'@\d\d\dACKPROT_OFF;FF')
+ACK_RE = re.compile(r"@\d\d\dACK(?P<value>\d+.\d\dE-*\d\d);FF")
+LO_RE = re.compile(r"@\d\d\dACKLO<E-11;FF")
+NO_GAUGE_RE = re.compile(r"@\d\d\dACKNO_GAUGE;FF")
+OFF_RE = re.compile(r"@\d\d\dACKOFF;FF")
+PROTOFF_RE = re.compile(r"@\d\d\dACKPROT_OFF;FF")
 
 
 class Gauge(BaseGauge):
     def traits_view(self):
-        v = View(HGroup(Item('display_name', show_label=False, style='readonly',
-                             width=-50, ),
-                        Item('pressure',
-                             format_str='%0.2e',
-                             show_label=False,
-                             style='readonly'),
-                        Item('pressure',
-                             show_label=False,
-                             width=self.width,
-                             editor=BarGaugeEditor(low=self.low,
-                                                   high=self.high,
-                                                   scale='power',
-                                                   color_scalar=self.color_scalar,
-                                                   width=self.width))))
+        v = View(
+            HGroup(
+                Item(
+                    "display_name",
+                    show_label=False,
+                    style="readonly",
+                    width=-50,
+                ),
+                Item(
+                    "pressure", format_str="%0.2e", show_label=False, style="readonly"
+                ),
+                Item(
+                    "pressure",
+                    show_label=False,
+                    width=self.width,
+                    editor=BarGaugeEditor(
+                        low=self.low,
+                        high=self.high,
+                        scale="power",
+                        color_scalar=self.color_scalar,
+                        width=self.width,
+                    ),
+                ),
+            )
+        )
         return v
 
 
 class MKSController(BaseGaugeController, CoreDevice):
-
     def initialize(self, *args, **kw):
         BaseGaugeController.initialize(self, *args, **kw)
 
@@ -64,7 +74,7 @@ class MKSController(BaseGaugeController, CoreDevice):
         return r
 
     def _power_onoff(self, ch, state, verbose=False):
-        cmd = 'CP{}!{}'.format(ch, 'ON' if state else 'OFF')
+        cmd = "CP{}!{}".format(ch, "ON" if state else "OFF")
         cmd = self._build_command(cmd)
         self.ask(cmd, verbose=verbose)
 
@@ -75,30 +85,37 @@ class MKSController(BaseGaugeController, CoreDevice):
                 gauge = self.get_gauge(name)
             channel = gauge.channel
         else:
-            channel = 'Z'
+            channel = "Z"
 
-        cmd = self._build_query('PR{}'.format(channel))
+        cmd = self._build_query("PR{}".format(channel))
         r = self.ask(cmd, verbose=verbose)
         if r is not None:
             match = ACK_RE.match(r)
             if match:
-                v = float(match.group('value'))
+                v = float(match.group("value"))
                 return v
 
-            for reg, ret in ((NO_GAUGE_RE, 0), (LO_RE, 1e-12), (PROTOFF_RE, 760), (OFF_RE, 1000)):
+            for reg, ret in (
+                (NO_GAUGE_RE, 0),
+                (LO_RE, 1e-12),
+                (PROTOFF_RE, 760),
+                (OFF_RE, 1000),
+            ):
                 match = reg.match(r)
                 if match:
                     return ret
 
     def _build_query(self, cmd):
-        return self._build_command('{}?'.format(cmd))
+        return self._build_command("{}?".format(cmd))
 
     def _build_command(self, cmd):
-        return '@{}{};FF'.format(self.address, cmd)
+        return "@{}{};FF".format(self.address, cmd)
 
     def load_additional_args(self, config, *args, **kw):
-        self.address = self.config_get(config, 'General', 'address', optional=False)
-        self.display_name = self.config_get(config, 'General', 'display_name', default=self.name)
+        self.address = self.config_get(config, "General", "address", optional=False)
+        self.display_name = self.config_get(
+            config, "General", "display_name", default=self.name
+        )
         # self.mode = self.config_get(config, 'Communications', 'mode', default='rs485')
         self._load_gauges(config)
         return True

@@ -4,12 +4,18 @@ from pychron.experiment.automated_run.persistence import AutomatedRunPersister
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
 from six.moves import range
 
-__author__ = 'ross'
+__author__ = "ross"
 
 import unittest
 
-runs = [('references', 'bu-j-1', 'b1'), ('A', '11111', 'u1'),
-        ('references', 'bu-j-2', 'b2'), ('B','22222','u2'), ('B','33333','u3')]
+runs = [
+    ("references", "bu-j-1", "b1"),
+    ("A", "11111", "u1"),
+    ("references", "bu-j-2", "b2"),
+    ("B", "22222", "u2"),
+    ("B", "33333", "u3"),
+]
+
 
 class MockDB(object):
     def __init__(self):
@@ -24,23 +30,23 @@ class MockDB(object):
 
     def add_analysis_group_set(self, ag, analysis):
         ag.analyses.append(analysis)
-        print('adding {}, {}'.format(analysis.uuid, len(ag.analyses)))
+        print("adding {}, {}".format(analysis.uuid, len(ag.analyses)))
 
     def get_last_analysis(self, **kw):
-        if self._cnt==0:
+        if self._cnt == 0:
             pass
         else:
             m = MockAnalysis()
-            m.uuid='12345'
-            m.project='A'
+            m.uuid = "12345"
+            m.project = "A"
             return m
-        self._cnt+=1
+        self._cnt += 1
 
     def get_analysis_uuid(self, u):
-        t = next((r for r in runs if r[2]==u), None)
+        t = next((r for r in runs if r[2] == u), None)
         if t:
-            m=MockAnalysis()
-            m.uuid=u
+            m = MockAnalysis()
+            m.uuid = u
             m.rid = t[1]
             return m
 
@@ -51,14 +57,15 @@ class MockAnalysisGroup(object):
 
 
 class MockAnalysis(object):
-    project = ''
+    project = ""
+
     @property
     def project_name(self):
         return self.project
 
 
 class MockRunSpec(object):
-    project = ''
+    project = ""
 
 
 def gen_mock_analysis():
@@ -76,9 +83,6 @@ def gen_mock_runspec():
         yield rs
 
 
-
-
-
 class MyTestCase(unittest.TestCase):
     # @classmethod
     # def setUpClass(cls):
@@ -87,7 +91,7 @@ class MyTestCase(unittest.TestCase):
     def setUp(self):
         self.mock_analyses = gen_mock_analysis()
         self.runspecs = gen_mock_runspec()
-        self.persister =AutomatedRunPersister()
+        self.persister = AutomatedRunPersister()
         self.db = MockDB()
 
     def test_save_group(self):
@@ -108,11 +112,11 @@ class MyTestCase(unittest.TestCase):
             analysis = next(self.mock_analyses)
             per._save_analysis_group(db, analysis)
 
-        for a in db.groups['A-autogen'].analyses:
+        for a in db.groups["A-autogen"].analyses:
             print(a.uuid)
 
-        uuids = [a.uuid for a in db.groups['A-autogen'].analyses]
-        self.assertEqual(uuids, ['u1','b1','b2'])
+        uuids = [a.uuid for a in db.groups["A-autogen"].analyses]
+        self.assertEqual(uuids, ["u1", "b1", "b2"])
 
     def test_save_group_sequence2(self):
         per = self.persister
@@ -126,8 +130,9 @@ class MyTestCase(unittest.TestCase):
         # for a in db.groups['B-autogen'].analyses:
         #     print a.uuid
 
-        uuids = [a.uuid for a in db.groups['B-autogen'].analyses]
-        self.assertEqual(uuids, ['u2','b2','u3'])
+        uuids = [a.uuid for a in db.groups["B-autogen"].analyses]
+        self.assertEqual(uuids, ["u2", "b2", "u3"])
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

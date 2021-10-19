@@ -18,7 +18,7 @@ import re
 
 from numpy import where
 
-detregex = re.compile(r'^Mass\((?P<idx>\d)')
+detregex = re.compile(r"^Mass\((?P<idx>\d)")
 
 
 class NuBase:
@@ -27,6 +27,7 @@ class NuBase:
             other = other.ys
 
         return self.__class__(self.xs, self.ys + other)
+
     __radd__ = __add__
 
     def __sub__(self, other):
@@ -51,7 +52,7 @@ class Mass(NuBase):
         self.xs, self.ys = xs, ys
 
 
-class NiceParser():
+class NiceParser:
     def __init__(self, signals):
         self._signals = signals
         self._tokens = []
@@ -66,32 +67,32 @@ class NiceParser():
         mt = detregex.match(self._tokens[0])
 
         result = self.term()
-        while self._current in ('+', '-'):
-            if self._current == '+':
+        while self._current in ("+", "-"):
+            if self._current == "+":
                 self.next_value()
 
                 result += self.term()
 
-            if self._current == '-':
+            if self._current == "-":
                 self.next_value()
                 result -= self.term()
 
-        return result, mt.group('idx')
+        return result, mt.group("idx")
 
     def factor(self):
         result = None
         if self._current[0].isdigit() or self._current[-1].isdigit():
             result = float(self._current)
             self.next_value()
-        elif self._current is '(':
+        elif self._current is "(":
             self.next_value()
             result = self.exp()
             self.next_value()
-        elif self._current[:4] == 'Mass':
+        elif self._current[:4] == "Mass":
             result = generate_mass(*eval(self._current[4:]))(self._signals)
             result = Mass(*result)
             self.next_value()
-        elif self._current[:4] == 'Zero':
+        elif self._current[:4] == "Zero":
             result = generate_zero(*eval(self._current[4:]))(self._signals)
             result = Zero(*result)
             self.next_value()
@@ -104,11 +105,11 @@ class NiceParser():
 
     def term(self):
         result = self.factor()
-        while self._current in ('*', '/'):
-            if self._current == '*':
+        while self._current in ("*", "/"):
+            if self._current == "*":
                 self.next_value()
                 result *= self.term()
-            if self._current == '/':
+            if self._current == "/":
                 self.next_value()
                 result /= self.term()
         return result
@@ -130,5 +131,6 @@ def generate_zero(m, n):
 
 def generate_mass(m, n):
     return _generate(100 + m, n)
+
 
 # ============= EOF =============================================

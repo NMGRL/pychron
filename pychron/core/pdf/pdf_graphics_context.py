@@ -57,9 +57,9 @@ UNITS_MAP = {
 }
 
 if Canvas is not None:
+
     class PdfPlotGraphicsContext(GraphicsContext):
-        """ A convenience class for rendering PlotComponents onto PDF
-        """
+        """A convenience class for rendering PlotComponents onto PDF"""
 
         # The name of the file that this graphics context will use when
         # gc.save() is called without a filename being supplied.
@@ -81,8 +81,14 @@ if Canvas is not None:
         # The units of the values in dest_box
         dest_box_units = "inch"  # Enum("inch", "cm", "mm", "pica")
 
-        def __init__(self, pdf_canvas=None, filename=None, pagesize=None,
-                     dest_box=None, dest_box_units=None):
+        def __init__(
+            self,
+            pdf_canvas=None,
+            filename=None,
+            pagesize=None,
+            dest_box=None,
+            dest_box_units=None,
+        ):
             if filename:
                 self.filename = filename
             if pagesize:
@@ -98,7 +104,7 @@ if Canvas is not None:
             GraphicsContext.__init__(self, pdf_canvas)
 
         def add_page(self):
-            """ Adds a new page to the PDF canvas and makes that the current
+            """Adds a new page to the PDF canvas and makes that the current
             drawing target.
             """
             if self.gc is None:
@@ -111,9 +117,10 @@ if Canvas is not None:
             # We'll need to call _initialize_page() before drawing
             self._page_initialized = False
 
-        def render_component(self, component, container_coords=False,
-                             halign="center", valign="top"):
-            """ Erases the current contents of the graphics context and renders
+        def render_component(
+            self, component, container_coords=False, halign="center", valign="top"
+        ):
+            """Erases the current contents of the graphics context and renders
             the given component at the maximum possible scaling while
             preserving aspect ratio.
 
@@ -175,6 +182,7 @@ if Canvas is not None:
             # self.stroke_rect((0,0,full_page_width-page_offset_x-2, full_page_height-page_offset_y-2))
             # self.stroke_rect((0,0,page_width, page_height))
 
+            print(page_width, page_height, width, height)
             aspect = float(width) / float(height)
             if aspect >= page_width / page_height:
                 # We are limited in width, so use widths to compute the scale
@@ -217,9 +225,13 @@ if Canvas is not None:
             self.gc.save()
 
         def _create_new_canvas(self):
-            """ Create the PDF canvas context.
-            """
-            x, y, w, h, = self._get_bounding_box()
+            """Create the PDF canvas context."""
+            (
+                x,
+                y,
+                w,
+                h,
+            ) = self._get_bounding_box()
             if w < 0 or h < 0:
                 self.gc = None
                 return
@@ -241,8 +253,7 @@ if Canvas is not None:
             return pagesize
 
         def _get_bounding_box(self):
-            """ Compute the bounding rect of a page.
-            """
+            """Compute the bounding rect of a page."""
 
             # pagesize = PAGE_SIZE_MAP[self.pagesize]
             pagesize = self._get_pagesize()
@@ -264,9 +275,13 @@ if Canvas is not None:
             return x, y, w, h
 
         def _initialize_page(self, gc):
-            """ Make sure the origin is set to something consistent.
-            """
-            x, y, w, h, = self._get_bounding_box()
+            """Make sure the origin is set to something consistent."""
+            (
+                x,
+                y,
+                w,
+                h,
+            ) = self._get_bounding_box()
 
             gc.translate(x, y)
 
@@ -275,5 +290,6 @@ if Canvas is not None:
             # gc.clipPath(path, stroke=0, fill=0)
 
             self._page_initialized = True
+
 
 # ============= EOF =============================================

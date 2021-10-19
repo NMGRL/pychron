@@ -28,57 +28,72 @@ from gitdb.util import hex_to_bin
 # ============= local library imports  ==========================
 from pychron.git_archive.git_objects import GitSha, GitTag
 
-TAG_RE = re.compile(r'(?P<tag>^\<[\w ]+\>)')
+TAG_RE = re.compile(r"(?P<tag>^\<[\w ]+\>)")
+
+LOGFMT = "--pretty=%H|%cn|%ce|%ct|%s"
 
 
 def from_gitlog(obj, tag=None):
-    hexsha, author, email, ct, message = obj.split('|')
+    hexsha, author, email, ct, message = obj.split("|")
     date = datetime.fromtimestamp(float(ct))
 
     if not tag:
         tag = TAG_RE.match(message)
         if tag:
-            tag = tag.group('tag')[1:-1]
+            tag = tag.group("tag")[1:-1]
         else:
-            tag = ''
+            tag = ""
 
-    g = GitSha(hexsha=hexsha,
-               message=message,
-               date=date,
-               author=author,
-               email=email,
-               tag=tag or '')
+    g = GitSha(
+        hexsha=hexsha,
+        message=message,
+        date=date,
+        author=author,
+        email=email,
+        tag=tag or "",
+    )
     return g
 
 
-def gitlog(repo, branch=None, args=None, path=None, limit=None):
+def gitlog(repo, branch=None, args=None, path=None, limit=None, greps=None):
     cmd = []
     if branch:
         cmd.append(branch)
 
-    cmd.append('--pretty=%H|%cn|%ce|%ct|%s')
+    cmd.append("--pretty=%H|%cn|%ce|%ct|%s")
 
     if limit:
-        cmd.append('-{}'.format(limit))
+        cmd.append("-{}".format(limit))
 
     if args:
         cmd.extend(args)
 
+    if greps:
+        if isinstance(greps, str):
+            cmd.append("--grep={}".format(greps))
+        else:
+            cmd.extend(greps)
+
     if path:
-        cmd.extend(['--', path])
+        cmd.append("--")
+        if isinstance(path, list):
+            cmd.extend(path)
+        else:
+            cmd.append(path)
+
     return repo.git.log(*cmd)
 
 
 def get_head_commit(repo):
-    txt = gitlog(repo, args=('-n', '1', 'HEAD'))
-    return from_gitlog(txt.strip(), '')
+    txt = gitlog(repo, args=("-n", "1", "HEAD"))
+    return from_gitlog(txt.strip(), "")
 
 
-def get_commits(repo, branch, path, tag, *args, limit=None):
+def get_commits(repo, branch, path, tag, *args, limit=None, greps=None):
     repo = get_repo(repo)
-    txt = gitlog(repo, branch=branch, args=args, path=path, limit=limit)
+    txt = gitlog(repo, branch=branch, args=args, path=path, limit=limit, greps=greps)
 
-    return [from_gitlog(l.strip(), tag) for l in txt.split('\n')] if txt else []
+    return [from_gitlog(l.strip(), tag) for l in txt.split("\n")] if txt else []
 
 
 def get_tags(repo):
@@ -91,18 +106,18 @@ def get_log(repo, branch, path):
     return gitlog(repo, branch=branch, path=path)
 
 
-def get_diff(repo, a, b, path, change_type='M'):
+def get_diff(repo, a, b, path, change_type="M"):
     repo = get_repo(repo)
-    diff = repo.git.diff(a, b, '--full-index', '--', path)
+    diff = repo.git.diff(a, b, "--full-index", "--", path)
     if diff:
-        return fu(repo, diff.encode('utf-8'))
+        return fu(repo, diff.encode("utf-8"))
 
 
-aregex = re.compile(r'\[ahead (?P<count>\d+)')
-bregex = re.compile(r'behind (?P<count>\d+)')
+aregex = re.compile(r"\[ahead (?P<count>\d+)")
+bregex = re.compile(r"behind (?P<count>\d+)")
 
 
-def ahead_behind(repo, fetch=True, remote='origin'):
+def ahead_behind(repo, fetch=True, remote="origin"):
     repo = get_repo(repo)
 
     ahead = 0
@@ -111,13 +126,13 @@ def ahead_behind(repo, fetch=True, remote='origin'):
         if fetch:
             repo.git.fetch(remote)
 
-        status = repo.git.status('-sb')
+        status = repo.git.status("-sb")
         ma = aregex.search(status)
         mb = bregex.search(status)
         if ma:
-            ahead = int(ma.group('count'))
+            ahead = int(ma.group("count"))
         if mb:
-            behind = int(mb.group('count'))
+            behind = int(mb.group("count"))
 
     return ahead, behind
 
@@ -166,19 +181,23 @@ def fu(repo, text):
 
         # Make sure the mode is set if the path is set. Otherwise the resulting blob is invalid
         # We just use the one mode we should have parsed
-        a_mode = old_mode or deleted_file_mode or (a_path and (b_mode or new_mode or new_file_mode))
+        a_mode = (
+            old_mode
+            or deleted_file_mode
+            or (a_path and (b_mode or new_mode or new_file_mode))
+        )
         b_mode = b_mode or new_mode or new_file_mode or (b_path and a_mode)
         ablob = Blob(repo, hex_to_bin(a_blob_id), mode=a_mode, path=a_path)
         bblob = Blob(repo, hex_to_bin(b_blob_id), mode=b_mode, path=a_path)
         return ablob, bblob
 
 
-if __name__ == '__main__':
-    repo = '/Users/ross/Pychron_dev/data/.dvc/experiments/J-Curve'
+if __name__ == "__main__":
+    repo = "/Users/ross/Pychron_dev/data/.dvc/experiments/J-Curve"
     # for c in get_commits(repo, 'master', 'a-01/tag/-J-2562.tag.json', '--grep=^Update'):
     #     print c.hexsha, c.date, c.message
     # get_diff(repo, 'HEAD', '0ed461408fc8939909a907a73d2d991efc334eec')
     # get_diff(repo, '0ed461408fc8939909a907a73d2d991efc334eec', 'HEAD')
-    get_diff(repo, 'HEAD~1', 'HEAD')
+    get_diff(repo, "HEAD~1", "HEAD")
 
 # ============= EOF =============================================

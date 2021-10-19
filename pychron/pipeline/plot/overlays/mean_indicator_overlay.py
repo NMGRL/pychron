@@ -18,7 +18,8 @@
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.plot_label import PlotLabel
 from chaco.scatterplot import render_markers
-from traits.api import Color, Instance, Str, Float, Int, Any
+from enable.markers import MarkerNameDict
+from traits.api import Color, Instance, Str, Float, Int, Any, Enum, Bool
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -54,12 +55,63 @@ class MovableMixin:
 
 
 try:
+
     class XYPlotLabel(PlotLabel, MovableMixin):
         sx = Float
         sy = Float
+        marker = None
+        marker_size = None
+        display_marker = False
+
+        def _draw_overlay(self, gc, view_bounds=None, mode="normal"):
+            """Draws the overlay layer of a component.
+
+            Overrides PlotComponent.
+            """
+            # Perform justification and compute the correct offsets for
+            # the label position
+            width, height = self._label.get_bounding_box(gc)
+            if self.hjustify == "left":
+                x_offset = 0
+            elif self.hjustify == "right":
+                x_offset = self.width - width
+            elif self.hjustify == "center":
+                x_offset = int((self.width - width) / 2)
+
+            if self.vjustify == "bottom":
+                y_offset = 0
+            elif self.vjustify == "top":
+                y_offset = self.height - height
+            elif self.vjustify == "center":
+                y_offset = int((self.height - height) / 2)
+
+            with gc:
+                # XXX: Uncomment this after we fix kiva GL backend's clip stack
+                # gc.clip_to_rect(self.x, self.y, self.width, self.height)
+
+                # We have to translate to our position because the label
+                # tries to draw at (0,0).
+                gc.translate_ctm(self.x + x_offset, self.y + y_offset)
+                if self.marker and self.display_marker:
+                    self._draw_marker(gc, height)
+                self._label.draw(gc)
+
+            return
+
+        def _draw_marker(self, gc, height):
+            marker = self.marker
+            marker_size = self.marker_size
+            points = [(-10 - self.marker_size / 2, (height + marker_size) / 2)]
+            # points = [(0, 100)]
+            color = self.color
+            line_width = 1
+            outline_color = self.color
+            render_markers(
+                gc, points, marker, marker_size, color, line_width, outline_color
+            )
 
         def do_layout(self):
-            """ Tells this component to do layout.
+            """Tells this component to do layout.
 
             Overrides PlotComponent.
             """
@@ -90,6 +142,8 @@ try:
 
         def set_altered(self):
             self.altered_screen_point = (self.x, self.y)
+
+
 except TypeError:
     # documentation auto doc hack
     class XYPlotLabel:
@@ -138,18 +192,24 @@ def render_end_cap(gc, x, y, length=3):
 
 
 try:
+
     class MeanIndicatorOverlay(AbstractOverlay, MovableMixin):
         color = Color
         label = Instance(PlotLabel)
         text = Str
+        location = Enum("Mean", "Upper Right")
         # font = KivaFont('modern 15')
         x = Float
         error = Float
         nsigma = Int
 
-        marker = Str('vertical')
+        marker = Str("vertical")
         end_cap_length = Int(4)
         label_tool = Any
+        group_id = Int
+        group_marker = Str("circle")
+        group_marker_size = Float(1)
+        display_group_marker = Bool(True)
 
         def clear(self):
             self.altered_screen_point = None
@@ -166,11 +226,17 @@ try:
             label = self.label
 
             if label is None:
-                label = XYPlotLabel(component=self.component,
-                                    font=self.font,
-                                    text=self.text,
-                                    color=self.color,
-                                    id='{}_label'.format(self.id))
+                label = XYPlotLabel(
+                    component=self.component,
+                    font=self.font,
+                    text=self.text,
+                    color=self.color,
+                    marker=self.group_marker,
+                    marker_size=self.group_marker_size,
+                    display_marker=self.display_group_marker,
+                    id="{}_label".format(self.id),
+                )
+
                 self.label = label
                 self.overlays.append(label)
                 tool = LabelMoveTool(component=label)
@@ -184,7 +250,10 @@ try:
             color = self.color
             # if isinstance(color, str):
             #    color=color_table[color]
-            self._color = [x / 255. for x in (color.red(), color.green(), color.blue(), color.alpha())]
+            self._color = [
+                x / 255.0
+                for x in (color.red(), color.green(), color.blue(), color.alpha())
+            ]
             # self._color=color
 
         def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
@@ -197,22 +266,28 @@ try:
                 color = self._color
                 line_width = 1
                 outline_color = self._color
-                if marker != 'vertical':
+                if marker != "vertical":
                     marker_size = 3
-                    render_markers(gc, points, marker, marker_size,
-                                   color, line_width, outline_color)
+                    render_markers(
+                        gc,
+                        points,
+                        marker,
+                        marker_size,
+                        color,
+                        line_width,
+                        outline_color,
+                    )
                 else:
-                    render_vertical_marker(gc, points,
-                                           color, line_width, outline_color)
+                    render_vertical_marker(gc, points, color, line_width, outline_color)
 
                 x, y = self.get_current_point()
 
                 e = self.error * max(1, self.nsigma)
                 p1, p2 = self.component.map_screen([(self.x - e, 0), (self.x + e, 0)])
 
-                render_error_bar(gc, p1[0], p2[0], y,
-                                 self._color,
-                                 end_caps=self.end_cap_length)
+                render_error_bar(
+                    gc, p1[0], p2[0], y, self._color, end_caps=self.end_cap_length
+                )
 
             for o in self.overlays:
                 o.overlay(other_component, gc, view_bounds=view_bounds, mode=mode)
@@ -220,11 +295,26 @@ try:
         def _gather_data(self):
             comp = self.component
             x = comp.map_screen([(self.x, 0)])[0, 0]
+
             if self.altered_screen_point is None:
                 if self.label:
                     if not self.label.altered_screen_point:
+                        y = self.y
+                        if self.location == "Upper Right":
+                            x = comp.x2 - self.label.width
+                            y = comp.y2 - 20 * self.group_id
+                        elif self.location == "Upper Left":
+                            x = comp.x + 10
+                            y = comp.y2 - 20 * self.group_id
+                        elif self.location == "Lower Right":
+                            x = comp.x2 - self.label.width
+                            y = 20 * self.group_id
+                        elif self.location == "Lower Left":
+                            x = comp.x + 10
+                            y = 20 * self.group_id
+
                         self.label.sx = x
-                        self.label.sy = self.y
+                        self.label.sy = y
                 self.current_screen_point = (x, self.y)
 
                 return [(x, self.y)]
@@ -247,8 +337,12 @@ try:
                 self.altered_screen_point = (x, self.altered_screen_point[1])
             else:
                 self.current_screen_point = (x, self.y)
+
+
 except TypeError:
     # documentation auto doc hack
     class MeanIndicatorOverlay:
         pass
+
+
 # ============= EOF =============================================

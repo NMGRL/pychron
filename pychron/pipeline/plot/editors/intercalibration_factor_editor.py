@@ -26,7 +26,7 @@ from pychron.pipeline.plot.models.icfactor_model import ICFactorModel
 class IntercalibrationFactorEditor(InterpolationEditor):
     figure_model_klass = ICFactorModel
     references_name = Str
-    basename = 'ICFactors'
+    basename = "ICFactors"
 
     def _figure_model_factory(self):
         model = self.figure_model
@@ -34,12 +34,15 @@ class IntercalibrationFactorEditor(InterpolationEditor):
             model = self.figure_model_klass()
             self.figure_model = model
 
-        model.trait_set(plot_options=self.plotter_options,
-                        # analysis_groups=self.analysis_groups,
-                        references_name=self.references_name,
-                        analyses=self.items,
-                        references=self.references)
+        model.trait_set(
+            plot_options=self.plotter_options,
+            # analysis_groups=self.analysis_groups,
+            references_name=self.references_name,
+            analyses=self.items,
+            references=self.references,
+        )
 
         return model
+
 
 # ============= EOF =============================================

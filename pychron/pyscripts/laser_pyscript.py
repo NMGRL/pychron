@@ -27,13 +27,13 @@ command_register = makeRegistry()
 
 
 class LaserPyScript(ExtractionPyScript):
-
     _task = None
+
     @verbose_skip
     @command_register
     def power_map(self, *args, **kw):
         self._task = None
-        self.debug('Opening power map task')
+        self.debug("Opening power map task")
         invoke_in_main_thread(self._open_power_map, *args)
 
         # wait until task is opened
@@ -41,20 +41,22 @@ class LaserPyScript(ExtractionPyScript):
             time.sleep(0.5)
 
         self._task.execute_active_editor(block=True)
-        self.debug('power mapping complete')
+        self.debug("power mapping complete")
 
     def _open_power_map(self, cx, cy, padding, step_length, bd, power):
         app = self.application
-        task = app.open_task('pychron.laser.calibration')
+        task = app.open_task("pychron.laser.calibration")
         task.new_power_map()
-        task.active_editor.editor.trait_set(center_x=cx,
-                                            center_y=cy,
-                                            beam_diameter=bd,
-                                            padding=padding,
-                                            request_power=power,
-                                            step_length=step_length
-                                            )
+        task.active_editor.editor.trait_set(
+            center_x=cx,
+            center_y=cy,
+            beam_diameter=bd,
+            padding=padding,
+            request_power=power,
+            step_length=step_length,
+        )
         self._task = task
+
 
 #     def _power_map(self, cx, cy, padding, bd, power):
 #         print cx, cy, padding

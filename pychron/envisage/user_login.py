@@ -43,12 +43,12 @@ class LoginHandler(Handler):
 
 def load_user_file():
     users = []
-    last_login = ''
+    last_login = ""
     path = users_file
     isfile = False
     if os.path.isfile(path):
         isfile = True
-        with open(path, 'rb') as rfile:
+        with open(path, "rb") as rfile:
             try:
                 users, last_login = pickle.load(rfile)
             except (UnicodeDecodeError, EOFError, ValueError):
@@ -61,9 +61,9 @@ def load_user_file():
 def load_environments_file():
     path = environments_file
     envs = []
-    last_env = ''
+    last_env = ""
     if os.path.isfile(path):
-        with open(path, 'rb') as rfile:
+        with open(path, "rb") as rfile:
             try:
                 last_env, envs = pickle.load(rfile)
             except (UnicodeDecodeError, EOFError, ValueError):
@@ -73,24 +73,27 @@ def load_environments_file():
 
 def dump_environments_file(env, envs):
     path = environments_file
-    with open(path, 'wb') as wfile:
+    with open(path, "wb") as wfile:
         pickle.dump((env, envs), wfile)
 
 
 def dump_user_file(names, last_login=None):
     if last_login is None:
         from pychron.globals import globalv
+
         last_login = globalv.username
 
     if names is None:
         _, names, _ = load_user_file()
 
     if not isinstance(names, list):
-        names = [names, ]
+        names = [
+            names,
+        ]
 
     names = [ni for ni in names if ni and ni.strip()]
 
-    with open(users_file, 'wb') as wfile:
+    with open(users_file, "wb") as wfile:
         pickle.dump((names, last_login), wfile)
 
 
@@ -103,17 +106,26 @@ class Login(HasTraits):
     environments = List
     directory_select_button = Button
     message = Str
-    user_help = 'Select your username or enter a new one'
+    user_help = "Select your username or enter a new one"
 
     def __init__(self, *args, **kw):
         super(Login, self).__init__(*args, **kw)
-        self.environment, self.environments = load_environments_file()
+
+        env = os.environ.get("PYCHRON_ENV")
+        if not env:
+            self.environment, self.environments = load_environments_file()
+        else:
+            self.environment = env
+            self.environments = [env]
+
         self.user, self.users, isfile = load_user_file()
         if not isfile or not self.users:
-            self.user = 'root'
+            self.user = "root"
             self.user_enabled = False
-            if os.environ.get('PYCHRON_APPNAME') in ('pyexperiment', 'pyview'):
-                self.message = 'Auto Login as "root". Quit Pychron to populate users from database'
+            if os.environ.get("PYCHRON_APPNAME") in ("pyexperiment", "pyview"):
+                self.message = (
+                    'Auto Login as "root". Quit Pychron to populate users from database'
+                )
 
     def dump(self):
         dump_user_file(self.users, self.user)
@@ -127,19 +139,24 @@ class Login(HasTraits):
 
     def traits_view(self):
         v = okcancel_view(
-            CustomLabel('message', color='red', size=14, defined_when='message'),
-            CustomLabel('user_help', defined_when='not message'),
-
-            HGroup(UItem('user', width=225,
-                         enabled_when='user_enabled',
-                         editor=ComboboxEditor(name='users'))),
-            Label('Select your work environment'),
-            HGroup(UItem('environment', width=225,
-                         editor=EnumEditor(name='environments')),
-                   icon_button_editor('directory_select_button',
-                                      'configure-2')),
+            CustomLabel("message", color="red", size=14, defined_when="message"),
+            CustomLabel("user_help", defined_when="not message"),
+            HGroup(
+                UItem(
+                    "user",
+                    width=225,
+                    enabled_when="user_enabled",
+                    editor=ComboboxEditor(name="users"),
+                )
+            ),
+            Label("Select your work environment"),
+            HGroup(
+                UItem("environment", width=225, editor=EnumEditor(name="environments")),
+                icon_button_editor("directory_select_button", "configure-2"),
+            ),
             handler=LoginHandler(),
-            title='Login')
+            title="Login",
+        )
         return v
 
 
@@ -172,7 +189,7 @@ class Login(HasTraits):
 
 def get_last_login(last_login):
     try:
-        with open(paths.last_login_file, 'r') as rfile:
+        with open(paths.last_login_file, "r") as rfile:
             obj = pickle.load(rfile)
             return obj[last_login]
     except BaseException:
@@ -186,10 +203,12 @@ def get_usernames():
 
 def get_user():
     """
-        current: str, current user. if supplied omit from available list
+    current: str, current user. if supplied omit from available list
     """
     login = Login()
-    if to_bool(os.getenv('PYCHRON_USE_LOGIN', True)) or not (login.user and login.environment):
+    if to_bool(os.getenv("PYCHRON_USE_LOGIN", True)) or not (
+        login.user and login.environment
+    ):
         while 1:
             info = login.edit_traits()
             if info.result:

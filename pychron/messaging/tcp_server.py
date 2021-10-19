@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
@@ -29,15 +28,13 @@ from threading import Thread
 from .messaging_server import MessagingServer
 from pychron.messaging.handlers.tcp_handler import TCPHandler
 
+
 # class TCPServer(_TCPServer, MessagingServer):
 class TCPServer(ThreadingTCPServer, MessagingServer):
-    '''
-    '''
+    """ """
 
     def __init__(self, parent, processor_type, datasize, *args, **kw):
-        '''
-
-        '''
+        """ """
 
         self.parent = parent
         self.repeater = parent.repeater
@@ -58,23 +55,26 @@ class TCPServer(ThreadingTCPServer, MessagingServer):
         self._running = False
 
     def add_link(self, name, connection_str):
-        addr, port, ptype = connection_str.split(':')
+        addr, port, ptype = connection_str.split(":")
         port = int(port)
         self._running = True
-        self.info('start link {}:{}'.format(addr, port))
+        self.info("start link {}:{}".format(addr, port))
+
         def listen():
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#            try:
+            #            try:
 
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind((addr, port))
-#            except:
-#                return
+            #            except:
+            #                return
             sock.listen(2)
             # running = True
             _input = [sock]
             while self._running:
-                inputready, _outputready, _exceptready = select.select(_input, [], [], 0.25)
+                inputready, _outputready, _exceptready = select.select(
+                    _input, [], [], 0.25
+                )
                 for s in inputready:
                     if s == sock:
                         # handle the sock socket
@@ -91,18 +91,18 @@ class TCPServer(ThreadingTCPServer, MessagingServer):
                         if data:
                             data = data.strip()
                             self.increment_packets_received()
-                            self.parent.info('Link {} Received: {}'.format(name, data))
+                            self.parent.info("Link {} Received: {}".format(name, data))
                             self.parent.cur_rpacket = data
 
                             result = self.repeater.get_response(ptype, data)
-                            if 'Error' in result:
+                            if "Error" in result:
                                 self.increment_repeater_fails()
                             else:
                                 self.repeater.led.state = 2
 
                             self.parent.cur_spacket = result
-                            s.send(result + '\n')
-                            self.parent.info('Link {} Sent: {}'.format(name, result))
+                            s.send(result + "\n")
+                            self.parent.info("Link {} Sent: {}".format(name, result))
 
                             self.increment_packets_sent()
                         else:
@@ -113,5 +113,6 @@ class TCPServer(ThreadingTCPServer, MessagingServer):
         # start a listener thread
         t = Thread(target=listen)
         t.start()
+
 
 # ============= EOF ====================================

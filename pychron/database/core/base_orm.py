@@ -30,13 +30,13 @@ Base = declarative_base()
 
 
 class MigrateVersionTable(Base):
-    __tablename__ = 'migrate_version'
+    __tablename__ = "migrate_version"
     repository_id = Column(String(40), primary_key=True)
     version = Column(Integer)
 
 
 class AlembicVersionTable(Base):
-    __tablename__ = 'alembic_version'
+    __tablename__ = "alembic_version"
     version_num = Column(String(32), primary_key=True)
 
 
@@ -54,7 +54,7 @@ class BaseMixin(object):
 class UserMixin(BaseMixin):
     @declared_attr
     def user_id(self):
-        return foreignkey('gen_UserTable')
+        return foreignkey("gen_UserTable")
 
 
 class NameMixin(BaseMixin):
@@ -66,7 +66,7 @@ class ResultsMixin(BaseMixin):
 
     @declared_attr
     def path(self):
-        name = self.__name__.replace('Table', 'PathTable')
+        name = self.__name__.replace("Table", "PathTable")
         return relationship(name, uselist=False)
 
 

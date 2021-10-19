@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import List, Int, HasTraits, Str, Bool
 from traitsui.api import View, UItem, Item, HGroup, VGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -24,7 +25,7 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem
 
 
 class MachineLearningTask(BaseManagerTask):
-    id = 'pychron.machinelearning.task'
+    id = "pychron.machinelearning.task"
 
     def activated(self):
         pass
@@ -40,5 +41,6 @@ class MachineLearningTask(BaseManagerTask):
 
     def _default_layout_default(self):
         return TaskLayout()
+
 
 # ============= EOF =============================================

@@ -19,4 +19,5 @@ from pychron.hardware.lakeshore.base_controller import BaseLakeShoreController
 class Model331TemperatureController(BaseLakeShoreController):
     pass
 
+
 # ============= EOF =============================================

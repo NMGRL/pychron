@@ -17,17 +17,19 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Int
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.adc.adc_device import PolynomialMapperMixin
 from pychron.hardware.core.abstract_device import AddressableAbstractDevice
 from pychron.hardware.core.core_device import CoreDevice
+
 # from pychron.remote_hardware.registry import register, registered_function
 from pychron.tx.registry import tx_register_functions, register, registered_function
 
 
 class Pneumatics(AddressableAbstractDevice, PolynomialMapperMixin):
-    scan_func = 'get_pressure'
+    scan_func = "get_pressure"
     nbits = Int(8)
 
     def __init__(self, *args, **kw):
@@ -35,23 +37,23 @@ class Pneumatics(AddressableAbstractDevice, PolynomialMapperMixin):
         tx_register_functions(self)
 
     # def initialize(self, *args, **kw):
-        # self._cdevice.auto_handle_response = False
+    # self._cdevice.auto_handle_response = False
 
-        # return True
-        # self.register_functions()
+    # return True
+    # self.register_functions()
 
     def load_additional_args(self, config):
         self.load_mapping(config)
-        self.set_attribute(config, 'nbits', 'General', 'nbits', cast='int')
+        self.set_attribute(config, "nbits", "General", "nbits", cast="int")
         if self.nbits not in (8, 12):
-            self.warning('nbits must be 8 or 12')
+            self.warning("nbits must be 8 or 12")
             self.nbits = 8
         return super(Pneumatics, self).load_additional_args(config)
 
-    @register('GetPneumaticsPressure')
+    @register("GetPneumaticsPressure")
     def get_pressure(self, **kw):
-        if 'nbits' not in kw:
-            kw['nbits'] = self.nbits
+        if "nbits" not in kw:
+            kw["nbits"] = self.nbits
 
         v = self.get(**kw)
         if v is not None:
@@ -64,11 +66,12 @@ class Pneumatics(AddressableAbstractDevice, PolynomialMapperMixin):
 
 
 class PychronPneumatics(CoreDevice):
-    @registered_function('GetPneumaticsPressure', camel_case=True, returntype=float)
+    @registered_function("GetPneumaticsPressure", camel_case=True, returntype=float)
     def get_pressure(self):
         pass
 
     def get(self, *args, **kw):
-        return self.ask('Read {}'.format(self.name))
+        return self.ask("Read {}".format(self.name))
+
 
 # ============= EOF =============================================

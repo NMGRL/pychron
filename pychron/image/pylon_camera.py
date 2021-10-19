@@ -23,7 +23,7 @@ from pychron.core.yaml import yload
 try:
     import pypylon
 except ImportError:
-    print('failed importing pylon')
+    print("failed importing pylon")
 
 from pychron.loggable import Loggable
 
@@ -32,12 +32,15 @@ class PylonCamera(Loggable):
     def __init__(self, identifier, *args, **kw):
 
         available_cameras = pypylon.factory.find_devices()
-        self.debug('Available cameras {}'.format(available_cameras))
+        self.debug("Available cameras {}".format(available_cameras))
         try:
             try:
                 dev = available_cameras[int(identifier)]
             except ValueError:
-                dev = next((c for c in available_cameras if c.user_defined_name == identifier), None)
+                dev = next(
+                    (c for c in available_cameras if c.user_defined_name == identifier),
+                    None,
+                )
             cam = pypylon.factory.create_device(dev)
         except (IndexError, NameError):
             cam = None
@@ -53,25 +56,27 @@ class PylonCamera(Loggable):
             return True
 
     def load_configuration(self, cfg):
-        self.debug('Load configuration')
+        self.debug("Load configuration")
 
         if cfg and self._cam:
-            dev = cfg.get('Device')
+            dev = cfg.get("Device")
             if dev:
-                pylon = dev.get('PylonParameters', {})
+                pylon = dev.get("PylonParameters", {})
                 for k, v in pylon.items():
                     try:
                         self._cam.properties[k] = v
-                        self.debug('Set {} to {}'.format(k, v))
+                        self.debug("Set {} to {}".format(k, v))
                     except ValueError as e:
-                        self.warning('Invalid Property value. k="{}",v={}. e={}'.format(k, v, e))
+                        self.warning(
+                            'Invalid Property value. k="{}",v={}. e={}'.format(k, v, e)
+                        )
                     except KeyError:
                         self.warning('Invalid Camera Property "{}"'.format(k))
                     except RuntimeError as e:
-                        self.warning('RunTimeError: {}. k={},v={}'.format(e, k, v))
+                        self.warning("RunTimeError: {}. k={},v={}".format(e, k, v))
                     except IOError as e:
-                        self.warning('IOError: {}, k={}, k={}'.format(e, k, v))
-            self.pixel_depth = self._cam.properties['PixelDynamicRangeMax']
+                        self.warning("IOError: {}, k={}, k={}".format(e, k, v))
+            self.pixel_depth = self._cam.properties["PixelDynamicRangeMax"]
 
     def read(self):
 
@@ -106,5 +111,6 @@ class PylonCamera(Loggable):
             yd = yload(p)
             self.load_configuration(yd)
         self._setting_config = False
+
 
 # ============= EOF =============================================

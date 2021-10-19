@@ -43,7 +43,14 @@ class MeasurementFit(FilterFit):
     is_baseline = False
 
 
-ATTRS = ['fit', 'error_type', 'name', 'filter_outliers', 'filter_iterations', 'filter_std_devs']
+ATTRS = [
+    "fit",
+    "error_type",
+    "name",
+    "filter_outliers",
+    "filter_iterations",
+    "filter_std_devs",
+]
 
 
 class MeasurementFitsSelector(FilterFitSelector):
@@ -60,7 +67,7 @@ class MeasurementFitsSelector(FilterFitSelector):
             self._load_name(new)
 
     def _load_name(self, name):
-        self.load(os.path.join(paths.fits_dir, add_extension(name, '.yaml')))
+        self.load(os.path.join(paths.fits_dir, add_extension(name, ".yaml")))
 
     def duplicate(self):
         self.save()
@@ -70,17 +77,16 @@ class MeasurementFitsSelector(FilterFitSelector):
     def open(self, script_path):
         dfp = self._extract_default_fits_file(script_path)
         if dfp:
-            self.load(os.path.join(paths.fits_dir, add_extension(dfp, '.yaml')))
+            self.load(os.path.join(paths.fits_dir, add_extension(dfp, ".yaml")))
 
     def save(self, name=None):
         if name is None:
             name = self.name
         bfs, sfs = partition(self.fits, lambda x: x.is_baseline)
-        yd = {'signal': self._dump(sfs),
-              'baseline': self._dump(bfs)}
+        yd = {"signal": self._dump(sfs), "baseline": self._dump(bfs)}
 
-        p = os.path.join(paths.fits_dir, '{}.yaml'.format(name))
-        with open(p, 'w') as wfile:
+        p = os.path.join(paths.fits_dir, "{}.yaml".format(name))
+        with open(p, "w") as wfile:
             yaml.dump(yd, wfile, default_flow_style=False)
 
     def load(self, p):
@@ -88,24 +94,26 @@ class MeasurementFitsSelector(FilterFitSelector):
             return
 
         yd = yload(p)
-        fits = self._load_fits(yd['signal'])
-        fits.extend(self._load_fits(yd['baseline'], is_baseline=True))
+        fits = self._load_fits(yd["signal"])
+        fits.extend(self._load_fits(yd["baseline"], is_baseline=True))
         self.fits = fits
 
         h, _ = os.path.splitext(os.path.basename(p))
         self.name = h
 
     def _load_available_names(self):
-        ps = glob_list_directory(paths.fits_dir, extension='.yaml', remove_extension=True)
+        ps = glob_list_directory(
+            paths.fits_dir, extension=".yaml", remove_extension=True
+        )
         self.available_names = ps
 
     def _extract_default_fits_file(self, path):
-        with open(path, 'r') as rfile:
+        with open(path, "r") as rfile:
             m = ast.parse(rfile.read())
             docstr = ast.get_docstring(m)
             yd = yload(docstr)
             if yd:
-                return yd.get('default_fits', None)
+                return yd.get("default_fits", None)
 
     def _dump(self, fs):
         ys = []
@@ -127,10 +135,11 @@ class MeasurementFitsSelectorView(Controller):
     duplicate_button = Button
 
     def _duplicate_button_fired(self):
-        info = self.model.edit_traits(view=okcancel_view(Item('name'),
-                                                         title='Enter a new name',
-                                                         width=300,
-                                                         kind='modal'))
+        info = self.model.edit_traits(
+            view=okcancel_view(
+                Item("name"), title="Enter a new name", width=300, kind="modal"
+            )
+        )
         if info.result:
             self.model.duplicate()
 
@@ -140,58 +149,70 @@ class MeasurementFitsSelectorView(Controller):
 
     def _get_toggle_group(self):
         g = HGroup(
-            UItem('filter_all_button'), )
+            UItem("filter_all_button"),
+        )
         return g
 
     def _get_auto_group(self):
-        return HGroup(UItem('global_fit', editor=myEnumEditor(name='fit_types')),
-                      UItem('global_error_type', editor=myEnumEditor(name='error_types')))
+        return HGroup(
+            UItem("global_fit", editor=myEnumEditor(name="fit_types")),
+            UItem("global_error_type", editor=myEnumEditor(name="error_types")),
+        )
 
     def _get_fit_group(self):
-        cols = [ObjectColumn(name='name', editable=False,
-                             tooltip='If name is an isotope e.g Ar40 '
-                                     'fit is for a signal, if name is a detector e.g H1 fit is for a baseline'),
-                ObjectColumn(name='fit',
-                             editor=myEnumEditor(name='fit_types'),
-                             width=75),
-                ObjectColumn(name='error_type',
-                             editor=myEnumEditor(name='error_types'),
-                             label='Error',
-                             width=75),
-                CheckboxColumn(name='filter_outliers', label='Out.'),
-                ObjectColumn(name='filter_iterations', label='Iter.'),
-                ObjectColumn(name='filter_std_devs', label='NSigma'),
-                CheckboxColumn(name='use_standard_deviation_filtering', label='Use SD'),
-                CheckboxColumn(name='use_iqr_filtering', label='Use IQR')
-                ]
+        cols = [
+            ObjectColumn(
+                name="name",
+                editable=False,
+                tooltip="If name is an isotope e.g Ar40 "
+                "fit is for a signal, if name is a detector e.g H1 fit is for a baseline",
+            ),
+            ObjectColumn(name="fit", editor=myEnumEditor(name="fit_types"), width=75),
+            ObjectColumn(
+                name="error_type",
+                editor=myEnumEditor(name="error_types"),
+                label="Error",
+                width=75,
+            ),
+            CheckboxColumn(name="filter_outliers", label="Out."),
+            ObjectColumn(name="filter_iterations", label="Iter."),
+            ObjectColumn(name="filter_std_devs", label="NSigma"),
+            CheckboxColumn(name="use_standard_deviation_filtering", label="Use SD"),
+            CheckboxColumn(name="use_iqr_filtering", label="Use IQR"),
+        ]
 
-        editor = myTableEditor(columns=cols,
-                               selected='selected',
-                               selection_mode='rows',
-                               sortable=False,
-                               edit_on_first_click=False,
-                               clear_selection_on_dclicked=True,
-                               on_command_key=self._update_command_key, )
-        grp = UItem('fits',
-                    style='custom',
-                    editor=editor)
+        editor = myTableEditor(
+            columns=cols,
+            selected="selected",
+            selection_mode="rows",
+            sortable=False,
+            edit_on_first_click=False,
+            clear_selection_on_dclicked=True,
+            on_command_key=self._update_command_key,
+        )
+        grp = UItem("fits", style="custom", editor=editor)
         return grp
 
     def traits_view(self):
 
         name_grp = HGroup(
-            UItem('name', editor=myEnumEditor(name='available_names')),
-            icon_button_editor('controller.duplicate_button', 'duplicate'))
-        v = okcancel_view(VGroup(name_grp,
-                                 self._get_toggle_group(),
-                                 self._get_auto_group(),
-                                 self._get_fit_group()),
-                          height=400,
-                          title='Edit Default Fits')
+            UItem("name", editor=myEnumEditor(name="available_names")),
+            icon_button_editor("controller.duplicate_button", "duplicate"),
+        )
+        v = okcancel_view(
+            VGroup(
+                name_grp,
+                self._get_toggle_group(),
+                self._get_auto_group(),
+                self._get_fit_group(),
+            ),
+            height=400,
+            title="Edit Default Fits",
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # build_directories(paths)
     m = MeasurementFitsSelector()
 
@@ -200,7 +221,7 @@ if __name__ == '__main__':
     # fits = [('linear', 'SEM', {}),
     #         ('linear', 'SEM', {})]
 
-    t = os.path.join(paths.fits_dir, 'test.yaml')
+    t = os.path.join(paths.fits_dir, "test.yaml")
     m.load(t)
     a = MeasurementFitsSelectorView(model=m)
     a.configure_traits()

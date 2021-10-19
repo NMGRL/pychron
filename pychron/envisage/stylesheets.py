@@ -22,7 +22,8 @@ import os
 # ============= local library imports  ==========================
 from pychron.paths import paths
 
-DEFAULT_STYLESHEETS = {'experiment_factory': '''QLineEdit {font-size: 14px}
+DEFAULT_STYLESHEETS = {
+    "experiment_factory": """QLineEdit {font-size: 14px}
 QGroupBox {background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
                                       stop: 0 #E0E0E0, stop: 1 #FFFFFF);
            border: 2px solid gray;
@@ -36,8 +37,8 @@ QGroupBox::title {subcontrol-origin: margin;
 QComboBox {font-size: 14px}
 QLabel {font-size: 15px}
 QToolBox::tab {font-size: 15px}
-QToolTip {font-size: 14px}''',
-                       'labnumber_entry': '''QLineEdit {font-size: 10px}
+QToolTip {font-size: 14px}""",
+    "labnumber_entry": """QLineEdit {font-size: 10px}
 QGroupBox {background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
                                       stop: 0 #E0E0E0, stop: 1 #FFFFFF);
            border: 2px solid gray;
@@ -52,17 +53,19 @@ QGroupBox::title {subcontrol-origin: margin;
 QComboBox {font-size: 10px}
 QLabel {font-size: 14px}
 QToolBox::tab {font-size: 15px}
-QToolTip {font-size: 14px}'''}
+QToolTip {font-size: 14px}""",
+}
 
 
 def load_stylesheet(name):
-    path = os.path.join(paths.hidden_dir, '{}.css'.format(name))
+    path = os.path.join(paths.hidden_dir, "{}.css".format(name))
     if os.path.isfile(path):
-        with open(path, 'r') as rfile:
+        with open(path, "r") as rfile:
             ss = rfile.readall()
     else:
-        ss = DEFAULT_STYLESHEETS.get(name, '')
+        ss = DEFAULT_STYLESHEETS.get(name, "")
 
     return ss
+
 
 # ============= EOF =============================================

@@ -21,14 +21,15 @@ from pychron.classifier.isotope_trainer import IsotopeTrainer
 
 
 class TrainIsotopeClassifierAction(Action):
-    name = 'Train'
+    name = "Train"
 
     def perform(self, event):
         app = event.task.application
-        dvc = app.get_service('pychron.dvc.dvc.DVC')
-        print('asdfasd', dvc)
+        dvc = app.get_service("pychron.dvc.dvc.DVC")
+        print("asdfasd", dvc)
         trainer = IsotopeTrainer(dvc=dvc)
         trainer.train()
         # trainer.edit_traits(view=View('test'))
+
 
 # ============= EOF =============================================

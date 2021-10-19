@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports ======================
 from __future__ import absolute_import
 from pyface.constant import OK
@@ -44,19 +43,16 @@ class Result(HasTraits):
         self.result = result
 
     def tostring(self):
-        return '{:<50}{:<10}{:<10}\n'.format(self.name,
-                                                 self.key,
-                                                 self.result
-                                                 )
+        return "{:<50}{:<10}{:<10}\n".format(self.name, self.key, self.result)
 
 
 class ResultsAdapter(TabularAdapter):
-
-    columns = [('Name', 'name'),
-             ('Key', 'key'),
-             # ('Command', 'cmd'),
-             ('Result', 'result')
-             ]
+    columns = [
+        ("Name", "name"),
+        ("Key", "key"),
+        # ('Command', 'cmd'),
+        ("Result", "result"),
+    ]
 
     def get_width(self, obj, trait, column):
         w = -1
@@ -71,13 +67,11 @@ class ResultsReport(Loggable):
     axis = Axis
 
     def _save_fired(self):
-        dlg = FileDialog(default_directory=paths.root_dir,
-                         action='save as'
-                         )
+        dlg = FileDialog(default_directory=paths.root_dir, action="save as")
         if dlg.open() == OK:
-            self.info('saving results to {}'.format(dlg.path))
-            with open(dlg.path, 'w') as f:
-                f.write('name = {} id = {}\n'.format(self.axis.name, self.axis.id))
+            self.info("saving results to {}".format(dlg.path))
+            with open(dlg.path, "w") as f:
+                f.write("name = {} id = {}\n".format(self.axis.name, self.axis.id))
                 for r in self.results:
                     f.write(r.tostring())
 
@@ -87,18 +81,20 @@ class ResultsReport(Loggable):
     def traits_view(self):
 
         self.results = sorted(self.results, key=lambda r: r.key)
-        v = View(Item('results', show_label=False,
-                      style='custom',
-                      editor=TabularEditor(adapter=ResultsAdapter(),
-
-                                           editable=False
-                                           )
-                    ),
-                 HGroup(spring, Item('save', show_label=False)),
-                 width=550,
-                 height=800,
-                 resizable=True,
-                 title='Results'
-                 )
+        v = View(
+            Item(
+                "results",
+                show_label=False,
+                style="custom",
+                editor=TabularEditor(adapter=ResultsAdapter(), editable=False),
+            ),
+            HGroup(spring, Item("save", show_label=False)),
+            width=550,
+            height=800,
+            resizable=True,
+            title="Results",
+        )
         return v
+
+
 # ============= EOF ===================================

@@ -20,6 +20,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class Irradiation:
     levels = None
     doses = None
@@ -92,5 +93,6 @@ class ImportSpec:
     irradiation = None
     analyses = None
     analysis = None
+
 
 # ============= EOF =============================================

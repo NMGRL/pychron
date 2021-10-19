@@ -20,6 +20,12 @@ nodes:
   - klass: MLRegressionNode
 """
 
+RECENT_RUNS = """
+required:
+nodes:
+    - klass: RecentRunsNode
+"""
+
 REGRESSION_SERIES = """
 required:
 nodes:
@@ -53,6 +59,7 @@ nodes:
   - klass: FitICFactorNode
   - klass: ReviewNode
   - klass: ICFactorPersistNode
+  - klass: PushNode
 """
 
 DEFINE_EQUILIBRATION = """
@@ -73,6 +80,7 @@ nodes:
   - klass: ReviewNode
   - klass: IsotopeEvolutionPersistNode
     use_editor: False
+  - klass: PushNode
 """
 
 BLANKS = """
@@ -86,6 +94,7 @@ nodes:
   - klass: FitBlanksNode
   - klass: ReviewNode
   - klass: BlanksPersistNode
+  - klass: PushNode
 """
 
 CSV_IDEO = """
@@ -163,12 +172,33 @@ nodes:
   - klass: SpectrumNode
 """
 
+CSV_INVERSE_ISOCHRON = """
+required:
+nodes:
+  - klass: CSVIsochronNode
+  - klass: GroupingNode
+  - klass: InverseIsochronNode
+"""
+CSV_REGRESSION = """
+required:
+nodes:
+  - klass: CSVRegressionNode
+  - klass: RegressionNode
+"""
+
 COMPOSITE = """
 required:
 nodes:
   - klass: UnknownNode
   - klass: GroupingNode
   - klass: CompositeNode
+"""
+
+FLUX_EXPORT = """
+required:
+nodes:
+ - klass: FindFluxMonitorMeansNode
+ - klass: FluxMonitorMeansPersistNode
 """
 
 FLUX_VISUALIZATION = """
@@ -318,8 +348,8 @@ FLUX = """
 required:
 nodes:
   - klass: FindFluxMonitorsNode
-#    irradiation: NM-300
-#    level: E
+    # irradiation: NM-312
+    # level: P
   - klass: FluxMonitorsNode
   - klass: FitFluxNode
   - klass: ReviewNode

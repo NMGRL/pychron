@@ -25,6 +25,11 @@ class HeaterManager(Manager):
     period = Float(5)
     is_alive = Bool
 
+    def finish_loading(self, *args, **kw):
+        super().finish_loading(*args, **kw)
+        for di in self.devices:
+            di.load_from_device()
+
     def start_scans(self):
         self._thread = Thread(target=self._scan)
         self._thread.start()
@@ -41,13 +46,20 @@ class HeaterManager(Manager):
         self.is_alive = False
 
     def traits_view(self):
-        v = View(Item('devices', style='custom',
-                          show_label=False,
-                          editor=ListEditor(mutable=False,
-                                            style='custom',
-                                            editor=InstanceEditor(view='heater_view'))),
-                     )
+        v = View(
+            Item(
+                "devices",
+                style="custom",
+                show_label=False,
+                editor=ListEditor(
+                    mutable=False,
+                    style="custom",
+                    editor=InstanceEditor(view="heater_view"),
+                ),
+            ),
+        )
 
         return v
+
 
 # ============= EOF =============================================

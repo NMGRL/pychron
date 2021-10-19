@@ -32,26 +32,28 @@ class InitializerError(BaseException):
 
 
 class Initializer(Loggable):
-    name = 'Initializer'
+    name = "Initializer"
     _init_list = List
     _parser = Any
     _pd = Any
 
     def add_initialization(self, a):
-        """
-        """
-        self.debug('add initialization {}'.format(a))
+        """ """
+        self.debug("add initialization {}".format(a))
         self._init_list.append(a)
 
     def run(self, application=None):
         self._parser = InitializationParser()
-        self.info('Initialization Path: {}'.format(self._parser.path))
+        self.info("Initialization Path: {}".format(self._parser.path))
 
         self.application = application
 
         ok = True
-        self.info('Running Initializer')
-        nsteps = sum([self._get_nsteps(idict['plugin_name']) for idict in self._init_list]) + 1
+        self.info("Running Initializer")
+        nsteps = (
+            sum([self._get_nsteps(idict["plugin_name"]) for idict in self._init_list])
+            + 1
+        )
 
         pd = self._setup_progress(nsteps)
         try:
@@ -60,14 +62,15 @@ class Initializer(Loggable):
                 if not ok:
                     break
 
-            msg = ('Complete' if ok else 'Failed')
-            self.info('Initialization {}'.format(msg))
+            msg = "Complete" if ok else "Failed"
+            self.info("Initialization {}".format(msg))
 
             pd.close()
         except BaseException as e:
             import traceback
+
             traceback.print_exc()
-            self.debug('Initializer Exception: {}'.format(e))
+            self.debug("Initializer Exception: {}".format(e))
             raise e
 
         return ok
@@ -89,7 +92,7 @@ class Initializer(Loggable):
 
         parser = self._parser
         if manager is not None:
-            self.info('Manager loading {}'.format(name))
+            self.info("Manager loading {}".format(name))
             manager.application = self.application
             manager.load()
         else:
@@ -109,14 +112,14 @@ class Initializer(Loggable):
             managers = parser.get_managers(mp)
 
         if managers:
-            self.info('loading managers - {}'.format(', '.join(managers)))
+            self.info("loading managers - {}".format(", ".join(managers)))
             manager.name = name
             self._load_managers(manager, managers, plugin_name)
 
         self._load_elements(mp, manager, name, plugin_name)
 
         if manager is not None:
-            self.info('finish {} loading'.format(name))
+            self.info("finish {} loading".format(name))
             manager.finish_loading()
 
         return True
@@ -132,46 +135,51 @@ class Initializer(Loggable):
         valve_flags_attrs = []
         if valve_flags:
             for vf in valve_flags:
-                vs = vf.find('valves')
+                vs = vf.find("valves")
                 if vs:
-                    vs = vs.split(',')
+                    vs = vs.split(",")
             valve_flags_attrs.append((vf.text.strip(), vs))
 
         if devices:
-            self.info('loading devices - {}'.format(', '.join(devices)))
+            self.info("loading devices - {}".format(", ".join(devices)))
             self._load_devices(manager, name, devices, plugin_name)
 
         if flags:
-            self.info('loading flags - {}'.format(', '.join(flags)))
+            self.info("loading flags - {}".format(", ".join(flags)))
             self._load_flags(manager, flags)
 
         if timed_flags:
-            self.info('loading timed flags - {}'.format(','.join(timed_flags)))
+            self.info("loading timed flags - {}".format(",".join(timed_flags)))
             self._load_timed_flags(manager, timed_flags)
 
         if valve_flags_attrs:
-            self.info('loading valve flags - {}'.format(','.join(valve_flags_attrs)))
+            self.info("loading valve flags - {}".format(",".join(valve_flags_attrs)))
             self._load_valve_flags(manager, valve_flags_attrs)
 
     # loaders
     def _load_flags(self, manager, flags):
         for f in flags:
-            self.info('loading {}'.format(f))
+            self.info("loading {}".format(f))
             manager.add_flag(f)
 
     def _load_timed_flags(self, manager, flags):
         for f in flags:
-            self.info('loading {}'.format(f))
+            self.info("loading {}".format(f))
             manager.add_timed_flag(f)
 
     def _load_valve_flags(self, manager, flags):
         for f, v in flags:
-            self.info('loading {}, valves={}'.format(f, v))
+            self.info("loading {}, valves={}".format(f, v))
             manager.add_valve_flag(f, v)
 
-    def _load_devices(self, manager, name, devices, plugin_name, ):
-        """
-        """
+    def _load_devices(
+        self,
+        manager,
+        name,
+        devices,
+        plugin_name,
+    ):
+        """ """
         devs = []
         if manager is None:
             return
@@ -183,52 +191,57 @@ class Initializer(Loggable):
 
             pdev = self._parser.get_device(name, device, plugin_name, element=True)
 
-            dev_class = pdev.find('klass')
+            dev_class = pdev.find("klass")
             if dev_class is not None:
                 dev_class = dev_class.text.strip()
 
             try:
                 dev = getattr(manager, device)
                 if dev is None:
-                    dev = manager.create_device(device,
-                                                dev_class=dev_class)
+                    dev = manager.create_device(device, dev_class=dev_class)
                 else:
                     if dev_class and dev.__class__.__name__ != dev_class:
-                        dev = manager.create_device(device, dev_class=dev_class, obj=dev)
+                        dev = manager.create_device(
+                            device, dev_class=dev_class, obj=dev
+                        )
 
             except AttributeError:
                 dev = manager.create_device(device, dev_class=dev_class)
 
             if dev is None:
-                self.warning('No device for {}'.format(device))
+                self.warning("No device for {}".format(device))
                 continue
 
-            self.info('loading {}'.format(dev.name))
+            self.info("loading {}".format(dev.name))
 
             dev.application = self.application
             if dev.load():
                 # register the device
                 if self.application is not None:
                     # display with the HardwareManager
-                    self.info('Register device name={}, {}'.format(dev.name, dev))
-                    self.application.register_service(ICoreDevice, dev, {'display': True})
+                    self.info("Register device name={}, {}".format(dev.name, dev))
+                    self.application.register_service(
+                        ICoreDevice, dev, {"display": True}
+                    )
 
                 devs.append(dev)
-                self.info('opening {}'.format(dev.name))
+                self.info("opening {}".format(dev.name))
                 if not dev.open(prefs=self.device_prefs):
-                    self.info('failed connecting to {}'.format(dev.name))
+                    self.info("failed connecting to {}".format(dev.name))
             else:
-                self.info('failed loading {}'.format(dev.name))
+                self.info("failed loading {}".format(dev.name))
 
         for od in devs:
-            self.info('Initializing {}'.format(od.name))
+            self.info("Initializing {}".format(od.name))
             result = od.initialize(progress=self._pd)
             if result is not True:
-                self.warning('Failed setting up communications to {}'.format(od.name))
+                self.warning("Failed setting up communications to {}".format(od.name))
                 od.set_simulation(True)
 
             elif result is None:
-                self.debug('{} initialize function does not return a boolean'.format(od.name))
+                self.debug(
+                    "{} initialize function does not return a boolean".format(od.name)
+                )
                 raise NotImplementedError
 
             od.application = self.application
@@ -240,7 +253,7 @@ class Initializer(Loggable):
         for mi in managers:
             man = None
 
-            self.info('load {}'.format(mi))
+            self.info("load {}".format(mi))
 
             try:
                 man = getattr(manager, mi)
@@ -256,7 +269,7 @@ class Initializer(Loggable):
                     traceback.print_exc()
 
             if man is None:
-                self.debug('trouble creating manager {}'.format(mi))
+                self.debug("trouble creating manager {}".format(mi))
                 continue
 
             if self.application is not None:
@@ -273,19 +286,19 @@ class Initializer(Loggable):
 
             self._load_elements(element, man, mi, plugin_name)
 
-            self.info('finish {} loading'.format(mi))
+            self.info("finish {} loading".format(mi))
             man.finish_loading()
 
     # helpers
     def _setup_progress(self, n):
         """
-            n: int, initialize progress dialog with n steps
+        n: int, initialize progress dialog with n steps
 
-            return a myProgressDialog object
+        return a myProgressDialog object
         """
-        pd = myProgressDialog(max=n, message='Welcome',
-                              position=(100, 100),
-                              size=(500, 50))
+        pd = myProgressDialog(
+            max=n, message="Welcome", position=(100, 100), size=(500, 50)
+        )
         self._pd = pd
         self._pd.open()
         return pd
@@ -295,18 +308,20 @@ class Initializer(Loggable):
         devs = self._parser.get_devices(subtree, all_=True, element=True)
         for di in devs:
             required = True
-            req = self._parser.get_parameter(di, 'required')
+            req = self._parser.get_parameter(di, "required")
             if req:
                 required = to_bool(req)
 
-            enabled = to_bool(di.get('enabled'))
+            enabled = to_bool(di.get("enabled"))
 
             if required and not enabled:
                 name = di.text.strip().upper()
-                msg = '''Device {} is REQUIRED but is not ENABLED.
+                msg = """Device {} is REQUIRED but is not ENABLED.
 
-Do you want to quit to enable {} in the Initialization File?'''.format(name, name)
-                result = self.confirmation_dialog(msg, title='Quit Pychron')
+Do you want to quit to enable {} in the Initialization File?""".format(
+                    name, name
+                )
+                result = self.confirmation_dialog(msg, title="Quit Pychron")
                 if result:
                     raise InitializerError()
 
@@ -328,11 +343,12 @@ Do you want to quit to enable {} in the Initialization File?'''.format(name, nam
 
         ns = 0
         if mp is not None:
-            ns += (2 * (len(parser.get_managers(mp)) + 1))
-            ns += (3 * (len(parser.get_devices(mp)) + 1))
-            ns += (len(parser.get_flags(mp)) + 1)
-            ns += (len(parser.get_timed_flags(mp)) + 1)
+            ns += 2 * (len(parser.get_managers(mp)) + 1)
+            ns += 3 * (len(parser.get_devices(mp)) + 1)
+            ns += len(parser.get_flags(mp)) + 1
+            ns += len(parser.get_timed_flags(mp)) + 1
 
         return ns
+
 
 # ========================= EOF ===================================

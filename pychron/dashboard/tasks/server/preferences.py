@@ -21,18 +21,20 @@ from envisage.ui.tasks.preferences_pane import PreferencesPane
 
 
 class DashboardServerPreferences(PreferencesHelper):
-    id = 'pychron.dashboard.server.preferences'
-    preferences_path = 'pychron.dashboard.server'
+    id = "pychron.dashboard.server.preferences"
+    preferences_path = "pychron.dashboard.server"
 
     notifier_enabled = Bool
 
 
 class DashboardServerPreferencesPane(PreferencesPane):
-    category = 'Dashboard'
+    category = "Dashboard"
     model_factory = DashboardServerPreferences
 
     def traits_view(self):
-        v = View(Item('notifier_enabled'))
+        v = View(Item("notifier_enabled"))
 
         return v
+
+
 # ============= EOF =============================================

@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Interface
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class IPipetteManager(Interface):
@@ -38,5 +40,5 @@ class IPipetteManager(Interface):
     def set_extract_state(self, state, *args, **kw):
         pass
 
-# ============= EOF =============================================
 
+# ============= EOF =============================================

@@ -24,4 +24,5 @@ from pychron.spectrometer.thermo.detector.base import ThermoDetector
 class ArgusDetector(ThermoDetector):
     pass
 
+
 # ============= EOF =============================================

@@ -23,6 +23,7 @@ from apptools.preferences.preference_binding import PreferenceBinding
 # ============= local library imports  ==========================
 # from apptools.preferences.api import PreferenceBinding as TPreferenceBinding
 
+
 def color_set_preference(preferences, obj, attr, ppath):
     v = preferences.get(ppath)
     if v is not None:
@@ -80,13 +81,11 @@ def color_bind_preference(*args, **kw):
 
 
 # Factory function for creating bindings.
-def bind_preference(obj, trait_name, preference_path,
-                    factory=None,
-                    preferences=None):
+def bind_preference(obj, trait_name, preference_path, factory=None, preferences=None):
     # added factory keyword
     # if none use PreferenceBinding
 
-    """ Create a new preference binding. """
+    """Create a new preference binding."""
 
     # This may seem a bit wierd, but we manually build up a dictionary of
     # the traits that need to be set at the time the 'PreferenceBinding'
@@ -100,18 +99,15 @@ def bind_preference(obj, trait_name, preference_path,
     # then it is too late as the binding initialization is done in the
     # constructor (we could of course split that out, which may be the 'right'
     # way to do it ;^).
-    traits = {
-        'obj': obj,
-        'trait_name': trait_name,
-        'preference_path': preference_path
-    }
+    traits = {"obj": obj, "trait_name": trait_name, "preference_path": preference_path}
 
     if preferences is not None:
-        traits['preferences'] = preferences
+        traits["preferences"] = preferences
 
     if factory is not None:
         return factory(**traits)
     else:
         return PreferenceBinding(**traits)
+
 
 # ============= EOF =============================================

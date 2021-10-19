@@ -25,10 +25,10 @@ from pychron.processing.interpreted_age import InterpretedAge
 class Tag(object):
     name = None
     path = None
-    note = ''
-    subgroup = ''
-    uuid = ''
-    record_id = ''
+    note = ""
+    subgroup = ""
+    uuid = ""
+    record_id = ""
 
     @classmethod
     def from_analysis(cls, an, **kw):
@@ -39,7 +39,7 @@ class Tag(object):
         tag.uuid = an.uuid
         tag.repository_identifier = an.repository_identifier
         # tag.path = analysis_path(an.record_id, an.repository_identifier, modifier='tags')
-        tag.path = analysis_path(an, an.repository_identifier, modifier='tags')
+        tag.path = analysis_path(an, an.repository_identifier, modifier="tags")
         tag.subgroup = an.subgroup
 
         for k, v in kw.items():
@@ -48,11 +48,11 @@ class Tag(object):
         return tag
 
     def dump(self):
-        obj = {'name': self.name,
-               'note': self.note,
-               'subgroup': self.subgroup}
+        obj = {"name": self.name, "note": self.note, "subgroup": self.subgroup}
         if not self.path:
-            self.path = analysis_path(self.uuid, self.repository_identifier, modifier='tags', mode='w')
+            self.path = analysis_path(
+                self.uuid, self.repository_identifier, modifier="tags", mode="w"
+            )
 
         dvc_dump(obj, self.path)
 
@@ -64,20 +64,20 @@ class DVCInterpretedAge(InterpretedAge):
     analyses = None
 
     def load_tag(self, obj):
-        self.tag = obj.get('name', '')
-        self.tag_note = obj.get('note', '')
+        self.tag = obj.get("name", "")
+        self.tag_note = obj.get("note", "")
 
     def from_json(self, obj):
-        for attr in ('name', 'uuid'):
-            setattr(self, attr, obj.get(attr, ''))
+        for attr in ("name", "uuid"):
+            setattr(self, attr, obj.get(attr, ""))
 
-        pf = obj['preferred']
-        for attr in ('age', 'age_err'):
+        pf = obj["preferred"]
+        for attr in ("age", "age_err"):
             setattr(self, attr, pf.get(attr, 0))
 
-        sm = obj['sample_metadata']
-        for attr in ('sample', 'material', 'project', 'irradiation'):
-            setattr(self, attr, sm.get(attr, ''))
+        sm = obj["sample_metadata"]
+        for attr in ("sample", "material", "project", "irradiation"):
+            setattr(self, attr, sm.get(attr, ""))
 
         # for a in ('age', 'age_err', 'age_kind',
         #           # 'kca', 'kca_err','kca_kind',
@@ -91,17 +91,17 @@ class DVCInterpretedAge(InterpretedAge):
 
         self.labnumber = self.identifier
         # self.uage = ufloat(self.age, self.age_err)
-        self._record_id = '{} {}'.format(self.identifier, self.name)
+        self._record_id = "{} {}".format(self.identifier, self.name)
 
-        self.analyses = obj.get('analyses', [])
+        self.analyses = obj.get("analyses", [])
 
-        pkinds = pf.get('preferred_kinds')
+        pkinds = pf.get("preferred_kinds")
         if pkinds:
             for k in pkinds:
-                attr = k['attr']
-                if attr == 'age':
-                    attr = 'uage'
-                setattr(self, attr, ufloat(k['value'], k['error']))
+                attr = k["attr"]
+                if attr == "age":
+                    attr = "uage"
+                setattr(self, attr, ufloat(k["value"], k["error"]))
 
     def get_value(self, attr):
         try:
@@ -111,4 +111,4 @@ class DVCInterpretedAge(InterpretedAge):
 
     @property
     def status(self):
-        return 'X' if self.is_omitted() else ''
+        return "X" if self.is_omitted() else ""

@@ -49,4 +49,5 @@ class GrainPolygonCTX(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._script.stop_grain_polygon()
 
+
 # ============= EOF =============================================

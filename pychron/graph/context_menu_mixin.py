@@ -20,7 +20,7 @@ from __future__ import absolute_import
 from traits.api import HasTraits
 from traitsui.menu import Action, Menu as MenuManager
 
-from pychron.pychron_constants import PLUSMINUS
+from pychron.pychron_constants import PLUSMINUS, EXPONENTIAL
 
 
 # from pyface.action.group import Group
@@ -28,6 +28,7 @@ from pychron.pychron_constants import PLUSMINUS
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
 
 class ContextMenuMixin(HasTraits):
     use_context_menu = True
@@ -39,25 +40,26 @@ class ContextMenuMixin(HasTraits):
         return Action(name=name, on_perform=getattr(self, func), **kw)
 
     def contextual_menu_contents(self):
-        """
-        """
-        save = [('PDF', 'save_pdf', {}), ('PNG', 'save_png', {})]
+        """ """
+        save = [("PDF", "save_pdf", {}), ("PNG", "save_png", {})]
         save_actions = [self.action_factory(n, f, **kw) for n, f, kw in save]
-        save_menu = MenuManager(name='Save Figure', *save_actions)
+        save_menu = MenuManager(name="Save Figure", *save_actions)
 
-        export_actions = [self.action_factory('CSV', 'export_data')]
-        export_menu = MenuManager(name='Export', *export_actions)
+        export_actions = [self.action_factory("CSV", "export_data")]
+        export_menu = MenuManager(name="Export", *export_actions)
 
-        rescale = [('X', 'rescale_x_axis', {}),
-                   ('Y', 'rescale_y_axis', {}),
-                   ('Both', 'rescale_both', {})]
+        rescale = [
+            ("X", "rescale_x_axis", {}),
+            ("Y", "rescale_y_axis", {}),
+            ("Both", "rescale_both", {}),
+        ]
         a = self.get_rescale_actions()
 
         if a:
             rescale.extend(a)
 
         rescale_actions = [self.action_factory(n, f, **kw) for n, f, kw in rescale]
-        rescale_menu = MenuManager(name='Rescale', *rescale_actions)
+        rescale_menu = MenuManager(name="Rescale", *rescale_actions)
 
         contents = [save_menu, export_menu, rescale_menu]
         c = self.get_child_context_menu_actions()
@@ -73,8 +75,7 @@ class ContextMenuMixin(HasTraits):
         return
 
     def get_contextual_menu(self):
-        """
-        """
+        """ """
         ctx_menu = MenuManager(*self.contextual_menu_contents())
 
         return ctx_menu
@@ -126,31 +127,43 @@ class ContextMenuMixin(HasTraits):
 class RegressionContextMenuMixin(ContextMenuMixin):
     def contextual_menu_contents(self):
         contents = super(RegressionContextMenuMixin, self).contextual_menu_contents()
-        actions = [('linear', 'cm_linear'),
-                   ('parabolic', 'cm_parabolic'),
-                   ('cubic', 'cm_cubic'),
-                   ('quartic', 'cm_quartic'),
-                   ('exponential', 'cm_exponential'),
-                   (u'average {}SD'.format(PLUSMINUS), 'cm_average_std'),
-                   (u'average {}SEM'.format(PLUSMINUS), 'cm_average_sem')]
+        actions = [
+            ("linear", "cm_linear"),
+            ("parabolic", "cm_parabolic"),
+            ("cubic", "cm_cubic"),
+            ("quartic", "cm_quartic"),
+            (EXPONENTIAL, "cm_exponential"),
+            ("auto_linear_parabolic", "cm_auto_linear_parabolic"),
+            (u"average {}SD".format(PLUSMINUS), "cm_average_std"),
+            (u"average {}SEM".format(PLUSMINUS), "cm_average_sem"),
+        ]
 
-        menu = MenuManager(*[self.action_factory(name, func) for name, func in actions],
-                           name='Fit')
-        actions = [('SD', 'cm_sd'),
-                   ('SEM', 'cm_sem'),
-                   ('CI', 'cm_ci'),
-                   ('MonteCarlo', 'cm_mc')]
+        menu = MenuManager(
+            *[self.action_factory(name, func) for name, func in actions], name="Fit"
+        )
+        actions = [
+            ("SD", "cm_sd"),
+            ("SEM", "cm_sem"),
+            ("CI", "cm_ci"),
+            ("MonteCarlo", "cm_mc"),
+        ]
 
-        emenu = MenuManager(*[self.action_factory(name, func) for name, func in actions],
-                            name='Error')
+        emenu = MenuManager(
+            *[self.action_factory(name, func) for name, func in actions], name="Error"
+        )
 
-        fmenu = MenuManager(self.action_factory('Show/Hide Filter Region', 'cm_toggle_filter_bounds'),
-                            self.action_factory('Show/Hide All Filter Region', 'cm_toggle_filter_bounds_all'),
-                            self.action_factory('Toggle Filtering', 'cm_toggle_filtering'),
-                            name='Filtering')
+        fmenu = MenuManager(
+            self.action_factory("Show/Hide Filter Region", "cm_toggle_filter_bounds"),
+            self.action_factory(
+                "Show/Hide All Filter Region", "cm_toggle_filter_bounds_all"
+            ),
+            self.action_factory("Toggle Filtering", "cm_toggle_filtering"),
+            name="Filtering",
+        )
         contents.append(menu)
         contents.append(emenu)
         contents.append(fmenu)
         return contents
+
 
 # ============= EOF =============================================

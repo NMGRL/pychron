@@ -26,10 +26,12 @@ class Identifier(HasTraits):
 
 
 class Adapter(TabularAdapter):
-    columns = [('Identifier', 'identifier'),
-               ('Irradiation', 'irradiation'),
-               ('Level', 'level'),
-               ('Position', 'position')]
+    columns = [
+        ("Identifier", "identifier"),
+        ("Irradiation", "irradiation"),
+        ("Level", "level"),
+        ("Position", "position"),
+    ]
 
 
 class AssociatedIdentifiersView(HasTraits):
@@ -37,16 +39,24 @@ class AssociatedIdentifiersView(HasTraits):
 
     def add_items(self, irposs):
         def factory(irpos):
-            i = Identifier(identifier=irpos.identifier,
-                           irradiation=irpos.level.irradiation.name,
-                           level=irpos.level.name,
-                           position=irpos.position)
+            i = Identifier(
+                identifier=irpos.identifier,
+                irradiation=irpos.level.irradiation.name,
+                level=irpos.level.name,
+                position=irpos.position,
+            )
             return i
 
         self.items.extend([factory(i) for i in irposs])
 
     def traits_view(self):
-        v = View(UItem('items', editor=TabularEditor(adapter=Adapter())),
-                 width=500, resizable=True, title='Associated Irradiation Positions')
+        v = View(
+            UItem("items", editor=TabularEditor(adapter=Adapter())),
+            width=500,
+            resizable=True,
+            title="Associated Irradiation Positions",
+        )
         return v
+
+
 # ============= EOF =============================================

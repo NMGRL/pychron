@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from jinja2 import Template
 
-BASE_TEMPLATE = '''
+BASE_TEMPLATE = """
 user           = {{experiment.username}}
 computer       = {{shorthost}}({{host}})
 Pychron Ver.   = {{version}}
@@ -22,7 +22,7 @@ runs           = {{experiment.execution_ratio}}
 {{log}}
 =======================================================
 {% endif %}
-'''
+"""
 
 
 def email_template(**kw):

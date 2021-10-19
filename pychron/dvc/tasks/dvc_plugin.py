@@ -29,21 +29,30 @@ from pychron.dvc import repository_path
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister
 from pychron.dvc.tasks import list_local_repos
-from pychron.dvc.tasks.actions import WorkOfflineAction, UseOfflineDatabase, ShareChangesAction, ClearCacheAction, \
-    GenerateCurrentsAction
-from pychron.dvc.tasks.dvc_preferences import DVCConnectionPreferencesPane, DVCExperimentPreferencesPane, \
-    DVCRepositoryPreferencesPane, DVCPreferencesPane
+from pychron.dvc.tasks.actions import (
+    WorkOfflineAction,
+    UseOfflineDatabase,
+    ShareChangesAction,
+    ClearCacheAction,
+    GenerateCurrentsAction,
+)
+from pychron.dvc.tasks.dvc_preferences import (
+    DVCConnectionPreferencesPane,
+    DVCExperimentPreferencesPane,
+    DVCRepositoryPreferencesPane,
+    DVCPreferencesPane,
+)
 from pychron.dvc.tasks.repo_task import ExperimentRepoTask
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.git.hosts import IGitHost
 
 
 class DVCPlugin(BaseTaskPlugin):
-    id = 'pychron.dvc.plugin'
-    name = 'DVC'
+    id = "pychron.dvc.plugin"
+    name = "DVC"
     _fetched = False
 
-    background_processes = List(contributes_to='pychron.background_processes')
+    background_processes = List(contributes_to="pychron.background_processes")
 
     def start(self):
         super(DVCPlugin, self).start()
@@ -54,7 +63,9 @@ class DVCPlugin(BaseTaskPlugin):
 
         service = self.application.get_service(IGitHost)
         if not service:
-            self.information_dialog('No GitHost Plugin enabled. (Enable GitHub or GitLab to share your changes)')
+            self.information_dialog(
+                "No GitHost Plugin enabled. (Enable GitHub or GitLab to share your changes)"
+            )
 
     def stop(self):
         # dvc = self.application.get_service(DVC)
@@ -65,13 +76,14 @@ class DVCPlugin(BaseTaskPlugin):
         dvc = self.application.get_service(DVC)
         with dvc.session_ctx(use_parent_session=False):
             names = dvc.get_usernames()
-            self.debug('dumping usernames {}'.format(names))
+            self.debug("dumping usernames {}".format(names))
             if names:
                 from pychron.envisage.user_login import dump_user_file
+
                 dump_user_file(names)
 
     def test_database(self):
-        ret, err = True, ''
+        ret, err = True, ""
         dvc = self.application.get_service(DVC)
         db = dvc.db
         connected = db.connect(warn=False)
@@ -81,7 +93,7 @@ class DVCPlugin(BaseTaskPlugin):
         return ret, err
 
     def test_dvc_fetch_meta(self):
-        ret, err = False, ''
+        ret, err = False, ""
         dvc = self.application.get_service(DVC)
         if dvc.open_meta_repo():
             dvc.meta_pull()
@@ -109,55 +121,63 @@ class DVCPlugin(BaseTaskPlugin):
                 try:
                     r.git.fetch()
                 except GitCommandError as e:
-                    self.warning('error examining {}. {}'.format(name, e))
+                    self.warning("error examining {}. {}".format(name, e))
                 time.sleep(1)
 
             time.sleep(period)
 
     # defaults
     def _background_processes_default(self):
-        return [('fetch', self._fetch)]
+        return [("fetch", self._fetch)]
 
     def _service_offers_default(self):
-        so = self.service_offer_factory(protocol=DVCPersister,
-                                        factory=DVCPersister,
-                                        properties={'dvc': self._dvc_factory()})
+        so = self.service_offer_factory(
+            protocol=DVCPersister,
+            factory=DVCPersister,
+            properties={"dvc": self._dvc_factory()},
+        )
 
-        so2 = self.service_offer_factory(protocol=DVC,
-                                         factory=self._dvc_factory)
+        so2 = self.service_offer_factory(protocol=DVC, factory=self._dvc_factory)
 
         return [so, so2]
 
     def _preferences_default(self):
-        return self._preferences_factory('dvc')
+        return self._preferences_factory("dvc")
 
     def _preferences_panes_default(self):
-        return [DVCPreferencesPane,
-                DVCConnectionPreferencesPane,
-                DVCExperimentPreferencesPane,
-                DVCRepositoryPreferencesPane]
+        return [
+            DVCPreferencesPane,
+            DVCConnectionPreferencesPane,
+            DVCExperimentPreferencesPane,
+            DVCRepositoryPreferencesPane,
+        ]
 
     def _tasks_default(self):
-        return [TaskFactory(id='pychron.repo.task',
-                            name='Repositories',
-                            factory=self._repo_factory,
-                            image='repo')]
+        return [
+            TaskFactory(
+                id="pychron.repo.task",
+                name="Repositories",
+                factory=self._repo_factory,
+                image="repo",
+            )
+        ]
 
     def _task_extensions_default(self):
-        actions = [SchemaAddition(factory=WorkOfflineAction,
-                                  path='MenuBar/tools.menu'),
-                   SchemaAddition(factory=UseOfflineDatabase,
-                                  path='MenuBar/tools.menu'),
-                   SchemaAddition(factory=ShareChangesAction,
-                                  path='MenuBar/tools.menu'),
-                   SchemaAddition(factory=ClearCacheAction,
-                                  path='MenuBar/tools.menu')
-                   ]
+        actions = [
+            SchemaAddition(factory=WorkOfflineAction, path="MenuBar/tools.menu"),
+            SchemaAddition(factory=UseOfflineDatabase, path="MenuBar/tools.menu"),
+            SchemaAddition(factory=ShareChangesAction, path="MenuBar/tools.menu"),
+            SchemaAddition(factory=ClearCacheAction, path="MenuBar/tools.menu"),
+        ]
 
-        pipeline_actions = [SchemaAddition(factory=GenerateCurrentsAction,
-                                           path='MenuBar/tools.menu')]
+        pipeline_actions = [
+            SchemaAddition(factory=GenerateCurrentsAction, path="MenuBar/tools.menu")
+        ]
 
-        return [TaskExtension(actions=actions),
-                TaskExtension(actions=pipeline_actions, task_id='pychron.pipeline.task')]
+        return [
+            TaskExtension(actions=actions),
+            TaskExtension(actions=pipeline_actions, task_id="pychron.pipeline.task"),
+        ]
+
 
 # ============= EOF =============================================

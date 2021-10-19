@@ -19,4 +19,5 @@ from pychron.hardware.core.core_device import CoreDevice
 class MKSSRG(CoreDevice):
     pass
 
+
 # ============= EOF =============================================

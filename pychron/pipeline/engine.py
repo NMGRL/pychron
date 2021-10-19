@@ -19,10 +19,21 @@ import time
 from operator import attrgetter, itemgetter
 
 import yaml
+
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_later
-from traits.api import HasTraits, Str, Instance, List, Event, on_trait_change, Any, Bool, Dict
+from traits.api import (
+    HasTraits,
+    Str,
+    Instance,
+    List,
+    Event,
+    on_trait_change,
+    Any,
+    Bool,
+    Dict,
+)
 
 from pychron.core.confirmation import remember_confirmation_dialog
 from pychron.core.helpers.filetools import glob_list_directory, add_extension
@@ -40,28 +51,89 @@ from pychron.pipeline.nodes import PushNode
 from pychron.pipeline.nodes import ReviewNode
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import UnknownNode, ReferenceNode, InterpretedAgeNode
-from pychron.pipeline.nodes.figure import IdeogramNode, SpectrumNode, SeriesNode, NoAnalysesError, \
-    InverseIsochronNode
+from pychron.pipeline.nodes.figure import (
+    IdeogramNode,
+    SpectrumNode,
+    SeriesNode,
+    NoAnalysesError,
+    InverseIsochronNode,
+)
 from pychron.pipeline.nodes.filter import FilterNode, MSWDFilterNode
-from pychron.pipeline.nodes.fit import FitIsotopeEvolutionNode, FitBlanksNode, FitICFactorNode
-from pychron.pipeline.nodes.grouping import GroupingNode, GraphGroupingNode, SubGroupingNode
+from pychron.pipeline.nodes.fit import (
+    FitIsotopeEvolutionNode,
+    FitBlanksNode,
+    FitICFactorNode,
+)
+from pychron.pipeline.nodes.grouping import (
+    GroupingNode,
+    GraphGroupingNode,
+    SubGroupingNode,
+)
 from pychron.pipeline.nodes.ia import SetInterpretedAgeNode
-from pychron.pipeline.nodes.persist import PDFFigureNode, IsotopeEvolutionPersistNode, \
-    BlanksPersistNode, ICFactorPersistNode
-from pychron.pipeline.pipeline_defaults import ISOEVO, BLANKS, ICFACTOR, IDEO, SPEC, SERIES, INVERSE_ISOCHRON, FLUX, \
-    CSV_IDEO, XY_SCATTER, INTERPRETED_AGE_IDEOGRAM, ANALYSIS_TABLE, INTERPRETED_AGE_TABLE, REPORT, \
-    REGRESSION_SERIES, VERTICAL_FLUX, \
-    CSV_ANALYSES_EXPORT, BULK_EDIT, HISTORY_IDEOGRAM, HISTORY_SPECTRUM, AUDIT, SUBGROUP_IDEOGRAM, HYBRID_IDEOGRAM, \
-    MASSSPEC_REDUCED, DEFINE_EQUILIBRATION, CA_CORRECTION_FACTORS, K_CORRECTION_FACTORS, \
-    FLUX_VISUALIZATION, CSV_RAW_DATA_EXPORT, COMPOSITE, SIMPLE_ANALYSIS_TABLE, MASS_SPEC_FLUX, PYSCRIPT, RATIO_SERIES, \
-    CSV_SPEC, ARAR_IDEO, ARAR_SPEC, ARAR_INVERSE_ISOCHRON, ARAR_SIMPLE_ANALYSIS_TABLE, RUNID_EDIT, CORRELATION_IDEO, \
-    COSMOGENIC
+from pychron.pipeline.nodes.persist import (
+    PDFFigureNode,
+    IsotopeEvolutionPersistNode,
+    BlanksPersistNode,
+    ICFactorPersistNode,
+)
+from pychron.pipeline.pipeline_defaults import (
+    ISOEVO,
+    BLANKS,
+    ICFACTOR,
+    IDEO,
+    SPEC,
+    SERIES,
+    INVERSE_ISOCHRON,
+    FLUX,
+    CSV_IDEO,
+    XY_SCATTER,
+    INTERPRETED_AGE_IDEOGRAM,
+    ANALYSIS_TABLE,
+    INTERPRETED_AGE_TABLE,
+    REPORT,
+    REGRESSION_SERIES,
+    VERTICAL_FLUX,
+    CSV_ANALYSES_EXPORT,
+    BULK_EDIT,
+    HISTORY_IDEOGRAM,
+    HISTORY_SPECTRUM,
+    AUDIT,
+    SUBGROUP_IDEOGRAM,
+    HYBRID_IDEOGRAM,
+    MASSSPEC_REDUCED,
+    DEFINE_EQUILIBRATION,
+    CA_CORRECTION_FACTORS,
+    K_CORRECTION_FACTORS,
+    FLUX_VISUALIZATION,
+    CSV_RAW_DATA_EXPORT,
+    COMPOSITE,
+    SIMPLE_ANALYSIS_TABLE,
+    MASS_SPEC_FLUX,
+    PYSCRIPT,
+    RATIO_SERIES,
+    CSV_SPEC,
+    ARAR_IDEO,
+    ARAR_SPEC,
+    ARAR_INVERSE_ISOCHRON,
+    ARAR_SIMPLE_ANALYSIS_TABLE,
+    RUNID_EDIT,
+    CORRELATION_IDEO,
+    COSMOGENIC,
+    FLUX_EXPORT,
+    RECENT_RUNS,
+    CSV_INVERSE_ISOCHRON,
+    CSV_REGRESSION,
+)
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
 from pychron.pipeline.plot.editors.spectrum_editor import SpectrumEditor
 from pychron.pipeline.state import EngineState
-from pychron.pipeline.template import PipelineTemplate, PipelineTemplateSaveView, PipelineTemplateGroup, \
-    PipelineTemplateRoot
+from pychron.pipeline.template import (
+    PipelineTemplate,
+    PipelineTemplateSaveView,
+    PipelineTemplateGroup,
+    PipelineTemplateRoot,
+)
 from pychron.pychron_constants import BLANK_UNKNOWN, AIR, DEFAULT_PIPELINE_ROOTS
 
 
@@ -94,7 +166,7 @@ class NodeGroup(BaseNode):
 
 
 class Pipeline(HasTraits):
-    name = Str('Pipeline 1')
+    name = Str("Pipeline 1")
     nodes = List
     active = Bool(False)
 
@@ -158,11 +230,11 @@ class Pipeline(HasTraits):
         nodes = [ni.to_template() for ni in self.nodes]
         required = [r for ni in self.nodes for r in ni.required]
 
-        return {'required': required, 'nodes': nodes}
+        return {"required": required, "nodes": nodes}
 
     def iternodes(self, start_node=None, run_to=None):
         if run_to:
-            return self.nodes[:self.nodes.index(run_to) + 1]
+            return self.nodes[: self.nodes.index(run_to) + 1]
         else:
             if start_node is None:
                 idx = -1
@@ -170,8 +242,9 @@ class Pipeline(HasTraits):
                 idx = self.nodes.index(start_node)
 
             try:
+
                 def gen():
-                    for n in self.nodes[idx + 1:]:
+                    for n in self.nodes[idx + 1 :]:
                         yield n
                         if isinstance(n, NodeGroup):
                             for nn in n.nodes:
@@ -189,7 +262,7 @@ class PipelineGroup(HasTraits):
 
     def add(self):
         self.count += 1
-        p = Pipeline(name='Pipeline {}'.format(self.count))
+        p = Pipeline(name="Pipeline {}".format(self.count))
         self.pipelines.append(p)
         return p
 
@@ -204,15 +277,23 @@ class PipelineGroup(HasTraits):
 
 
 class PipelineEngine(Loggable):
-    dvc = Instance('pychron.dvc.dvc.DVC')
-    browser_model = Instance('pychron.envisage.browser.base_browser_model.BaseBrowserModel')
-    interpreted_age_browser_model = Instance('pychron.envisage.browser.base_browser_model.BaseBrowserModel')
+    dvc = Instance("pychron.dvc.dvc.DVC")
+    browser_model = Instance(
+        "pychron.envisage.browser.base_browser_model.BaseBrowserModel"
+    )
+    interpreted_age_browser_model = Instance(
+        "pychron.envisage.browser.base_browser_model.BaseBrowserModel"
+    )
     pipeline = Instance(Pipeline)
     pipeline_group = Instance(PipelineGroup, ())
     nodes = List
     node_factories = List
-    predefined_templates = List  # contributed to by other plugins. passed in by PipelinePlugin
-    pipeline_group_icon_map = Dict  # contributed to by other plugins. passed in by PipelinePlugin
+    predefined_templates = (
+        List  # contributed to by other plugins. passed in by PipelinePlugin
+    )
+    pipeline_group_icon_map = (
+        Dict  # contributed to by other plugins. passed in by PipelinePlugin
+    )
 
     selected = Instance(BaseNode, ())
 
@@ -242,6 +323,7 @@ class PipelineEngine(Loggable):
     dclicked_references = Event
 
     recall_analyses_needed = Event
+    play_analysis_video_needed = Event
     reset_event = Event
 
     state = Instance(EngineState)
@@ -253,7 +335,9 @@ class PipelineEngine(Loggable):
     def __init__(self, *args, **kw):
         super(PipelineEngine, self).__init__(*args, **kw)
         self._confirmation_cache = {}
-        bind_preference(self, 'use_arar_calculations', 'pychron.pipeline.use_arar_calculations')
+        bind_preference(
+            self, "use_arar_calculations", "pychron.pipeline.use_arar_calculations"
+        )
 
     def drop_factory(self, items):
         return self.dvc.make_analyses(items)
@@ -274,20 +358,24 @@ class PipelineEngine(Loggable):
         return [n for n in self.pipeline.nodes if n.__class__ == klass]
 
     def save_analysis_group(self):
-        self.debug('save analysis group')
+        self.debug("save analysis group")
 
-        from pychron.envisage.browser.add_analysis_group_view import AddAnalysisGroupView
+        from pychron.envisage.browser.add_analysis_group_view import (
+            AddAnalysisGroupView,
+        )
 
         ans = self.selected_unknowns
         if not ans:
             ans = self.selected.unknowns
         projects = {a.project for a in ans}
-        agv = AddAnalysisGroupView(projects={p: '{:05n}:{}'.format(i, p) for i, p in enumerate(projects)})
+        agv = AddAnalysisGroupView(
+            projects={p: "{:05n}:{}".format(i, p) for i, p in enumerate(projects)}
+        )
 
         project = tuple({a.project for a in ans})[0]
         agv.project = project
 
-        info = agv.edit_traits(kind='livemodal')
+        info = agv.edit_traits(kind="livemodal")
         if info.result:
             agv.save(ans, self.dvc)
 
@@ -300,7 +388,7 @@ class PipelineEngine(Loggable):
             items = self.selected.unknowns
 
         self._set_grouping(items, 0)
-        self._set_grouping(items, 0, attr='aux_id')
+        self._set_grouping(items, 0, attr="aux_id")
 
     def unknowns_group_by(self, attr):
         items = self.selected_unknowns
@@ -321,16 +409,20 @@ class PipelineEngine(Loggable):
     def unknowns_toggle_status(self):
         for i in self.selected_unknowns:
             # print('asdf', i.temp_status)
-            i.temp_status = 'ok' if i.temp_status == 'omit' else 'omit'
-            if hasattr(self.selected, 'editor') and self.selected.editor:
+            i.temp_status = "ok" if i.temp_status == "omit" else "omit"
+            if hasattr(self.selected, "editor") and self.selected.editor:
                 self.selected.editor.refresh_needed = True
 
+    def play_analysis_video(self):
+        self.debug("play analysis video")
+        self.play_analysis_video_needed = self.selected_unknowns
+
     def recall_unknowns(self):
-        self.debug('recall unks')
+        self.debug("recall unks")
         self.recall_analyses_needed = self.selected_unknowns
 
     def recall_references(self):
-        self.debug('recall refs')
+        self.debug("recall refs")
         self.recall_analyses_needed = self.selected_references
 
     def review_node(self, node):
@@ -341,19 +433,25 @@ class PipelineEngine(Loggable):
             return
 
         if node.configure():
-            for tag, klass, editor in (('Ideogram', IdeogramNode, IdeogramEditor),
-                                       ('Spectrum', SpectrumNode, SpectrumEditor),
-                                       ):
+            for tag, klass, editor in (
+                ("Ideogram", IdeogramNode, IdeogramEditor),
+                ("Spectrum", SpectrumNode, SpectrumEditor),
+            ):
 
                 if isinstance(node, klass):
                     e = node.editor
-                    es = [ei for ei in self.editors if isinstance(ei, editor) and ei != node.editor]
+                    es = [
+                        ei
+                        for ei in self.editors
+                        if isinstance(ei, editor) and ei != node.editor
+                    ]
                     if es:
                         memory = self._confirmation_cache.get(tag, None)
                         if memory is None:
                             yes, remember = remember_confirmation_dialog(
-                                'Would you like to apply these changes to all open '
-                                '{}?'.format(tag))
+                                "Would you like to apply these changes to all open "
+                                "{}?".format(tag)
+                            )
 
                         if yes:
                             for ni in es:
@@ -389,23 +487,23 @@ class PipelineEngine(Loggable):
         if path:
             nodes = yload(path)
             for i, ni in enumerate(nodes):
-                klass = ni['klass']
-                if klass == 'ReviewNode':
-                    ni['enabled'] = state
+                klass = ni["klass"]
+                if klass == "ReviewNode":
+                    ni["enabled"] = state
 
-            with open(path, 'w') as wfile:
+            with open(path, "w") as wfile:
                 yaml.dump(nodes, wfile)
 
             if is_user_path:
-                with open(path, 'r') as rfile:
+                with open(path, "r") as rfile:
                     paths.update_manifest(name, rfile.read())
 
     # debugging
     def select_default(self):
         node = self.pipeline.nodes[0]
 
-        self.browser_model.select_project('J-Curve')
-        self.browser_model.select_repository('Irradiation-NM-272')
+        self.browser_model.select_project("J-Curve")
+        self.browser_model.select_repository("Irradiation-NM-272")
         self.browser_model.select_sample(idx=0)
         records = self.browser_model.get_analysis_records()
         if records:
@@ -417,9 +515,9 @@ class PipelineEngine(Loggable):
         node = self.pipeline.nodes[-1]
         newnode = FilterNode()
         filt = newnode.filters[0]
-        filt.attribute = 'uage'
-        filt.comparator = '<'
-        filt.criterion = '10'
+        filt.attribute = "uage"
+        filt.comparator = "<"
+        filt.criterion = "10"
 
         self.pipeline.add_after(node, newnode)
 
@@ -429,7 +527,7 @@ class PipelineEngine(Loggable):
 
     def remove_invalid(self):
         unks = self.selected.unknowns
-        self.selected.unknowns = [unk for unk in unks if unk.tag.lower() != 'invalid']
+        self.selected.unknowns = [unk for unk in unks if unk.tag.lower() != "invalid"]
         self.refresh_table_needed = True
 
     # ============================================================================================================
@@ -444,16 +542,20 @@ class PipelineEngine(Loggable):
         :return:
         """
 
-        self.debug('add data node')
+        self.debug("add data node")
         newnode = UnknownNode(dvc=self.dvc, browser_model=self.browser_model)
         self._add_node(node, newnode)
 
     def add_references(self, node=None):
-        newnode = ReferenceNode(name='references', dvc=self.dvc, browser_model=self.browser_model)
+        newnode = ReferenceNode(
+            name="references", dvc=self.dvc, browser_model=self.browser_model
+        )
         self._add_node(node, newnode)
 
     def add_interpreted_ages(self, node):
-        newnode = InterpretedAgeNode(dvc=self.dvc, browser_model=self.interpreted_age_browser_model)
+        newnode = InterpretedAgeNode(
+            dvc=self.dvc, browser_model=self.interpreted_age_browser_model
+        )
         self._add_node(node, newnode)
 
     def add_review(self, node=None):
@@ -461,7 +563,7 @@ class PipelineEngine(Loggable):
         self._add_node(node, newnode)
 
     def chain_ideogram(self, node):
-        group = self.pipeline.add_group('Ideo Group')
+        group = self.pipeline.add_group("Ideo Group")
 
         n = GroupingNode()
         n.finish_load()
@@ -579,7 +681,7 @@ class PipelineEngine(Loggable):
         self._add_node(node, new)
 
     def add_pdf_figure(self, node=None):
-        newnode = PDFFigureNode(root='/Users/ross/Sandbox')
+        newnode = PDFFigureNode(root="/Users/ross/Sandbox")
         self._add_node(node, newnode)
 
     def add_push(self, node=None):
@@ -600,8 +702,8 @@ class PipelineEngine(Loggable):
                 if not os.path.isdir(v.group_path):
                     os.mkdir(v.group_path)
 
-            path = add_extension(v.path, '.yaml')
-            with open(path, 'w') as wfile:
+            path = add_extension(v.path, ".yaml")
+            with open(path, "w") as wfile:
                 obj = self.pipeline.to_template()
                 yaml.dump(obj, wfile, default_flow_style=False)
 
@@ -612,10 +714,10 @@ class PipelineEngine(Loggable):
         if self.pipeline:
             ret = bool(self.pipeline.nodes)
             if not ret:
-                self.warning_dialog('Please select a pipeline template to run')
-            elif run_kind == 'run_from_pipeline':
+                self.warning_dialog("Please select a pipeline template to run")
+            elif run_kind == "run_from_pipeline":
                 if self.selected is None or self.selected not in self.pipeline.nodes:
-                    self.warning_dialog('Please select the starting node')
+                    self.warning_dialog("Please select the starting node")
                     ret = False
 
             return ret
@@ -638,7 +740,7 @@ class PipelineEngine(Loggable):
     def refresh_figure_editors(self):
         for ed in self.state.editors:
             if isinstance(ed, FigureEditor):
-                print('refresh figure editors')
+                print("refresh figure editors")
                 ed.refresh_needed = True
 
     def rerun_with(self, unks, post_run=True):
@@ -656,7 +758,7 @@ class PipelineEngine(Loggable):
                 with ActiveCTX(node):
 
                     if not node.pre_run(state, configure=False):
-                        self.debug('Pre run failed {}'.format(node))
+                        self.debug("Pre run failed {}".format(node))
                         return True
 
                     st = time.time()
@@ -665,29 +767,35 @@ class PipelineEngine(Loggable):
                         node.visited = True
                         self.selected = node
                     except NoAnalysesError:
-                        self.information_dialog('No Analyses in Pipeline!')
+                        self.information_dialog("No Analyses in Pipeline!")
                         self.pipeline.reset()
                         return True
-                    self.debug('{:02n}: {} Runtime: {:0.4f}'.format(idx, node, time.time() - st))
+                    self.debug(
+                        "{:02n}: {} Runtime: {:0.4f}".format(
+                            idx, node, time.time() - st
+                        )
+                    )
 
                     if state.veto:
-                        self.debug('pipeline vetoed by {}'.format(node))
+                        self.debug("pipeline vetoed by {}".format(node))
                         return
 
                     if state.canceled:
-                        self.debug('pipeline canceled by {}'.format(node))
+                        self.debug("pipeline canceled by {}".format(node))
                         return True
 
             else:
-                self.debug('Skip node {:02n}: {}'.format(idx, node))
+                self.debug("Skip node {:02n}: {}".format(idx, node))
         else:
-            self.debug('pipeline run finished')
-            self.debug('pipeline runtime {}'.format(time.time() - ost))
+            self.debug("pipeline run finished")
+            self.debug("pipeline runtime {}".format(time.time() - ost))
             if post_run:
                 self.post_run(state)
             return True
 
-    def run_pipeline(self, run_from=None, state=None, pipeline=None, post_run=True, configure=True):
+    def run_pipeline(
+        self, run_from=None, state=None, pipeline=None, post_run=True, configure=True
+    ):
         self.selected_unknowns = []
         self.selected_references = []
 
@@ -698,7 +806,7 @@ class PipelineEngine(Loggable):
             state = EngineState()
             self.state = state
         else:
-            self.debug('using existing state')
+            self.debug("using existing state")
 
         ost = time.time()
 
@@ -708,9 +816,9 @@ class PipelineEngine(Loggable):
             pipeline.resume(state)
 
         start_node = run_from or state.veto
-        self.debug('pipeline run started')
+        self.debug("pipeline run started")
         if start_node:
-            self.debug('starting at node {} {}'.format(start_node, run_from))
+            self.debug("starting at node {} {}".format(start_node, run_from))
         state.veto = None
         state.canceled = False
 
@@ -728,7 +836,7 @@ class PipelineEngine(Loggable):
 
                 with ActiveCTX(node):
                     if not node.pre_run(state, configure=configure):
-                        self.debug('Pre run failed {}'.format(node))
+                        self.debug("Pre run failed {}".format(node))
                         return True
 
                     st = time.time()
@@ -738,27 +846,31 @@ class PipelineEngine(Loggable):
                         self.selected = node
                         # self.update_detectors()
                     except NoAnalysesError:
-                        self.information_dialog('No Analyses in Pipeline!')
+                        self.information_dialog("No Analyses in Pipeline!")
                         pipeline.reset()
                         return True
-                    self.debug('{:02n}: {} Runtime: {:0.4f}'.format(idx, node, time.time() - st))
+                    self.debug(
+                        "{:02n}: {} Runtime: {:0.4f}".format(
+                            idx, node, time.time() - st
+                        )
+                    )
 
                     if state.veto:
                         if state.veto_message:
                             self.information_dialog(state.veto_message)
 
-                        self.debug('pipeline vetoed by {}'.format(node))
+                        self.debug("pipeline vetoed by {}".format(node))
                         return
 
                     if state.canceled:
-                        self.debug('pipeline canceled by {}'.format(node))
+                        self.debug("pipeline canceled by {}".format(node))
                         return True
 
             else:
-                self.debug('Skip node {:02n}: {}'.format(idx, node))
+                self.debug("Skip node {:02n}: {}".format(idx, node))
         else:
-            self.debug('pipeline run finished')
-            self.debug('pipeline runtime {}'.format(time.time() - ost))
+            self.debug("pipeline run finished")
+            self.debug("pipeline runtime {}".format(time.time() - ost))
             if post_run:
                 self.post_run(state)
 
@@ -767,15 +879,15 @@ class PipelineEngine(Loggable):
     run = run_pipeline
 
     def post_run(self, state):
-        self.debug('pipeline post run started')
+        self.debug("pipeline post run started")
         for idx, node in enumerate(self.pipeline.nodes):
-            action = 'skip'
+            action = "skip"
             if node.enabled:
-                action = 'post run'
+                action = "post run"
                 node.post_run(self, state)
 
-            self.debug('{} node {:02n}: {}'.format(action, idx, node.name))
-        self.debug('pipeline post run finished')
+            self.debug("{} node {:02n}: {}".format(action, idx, node.name))
+        self.debug("pipeline post run finished")
         self.post_run_refresh(state)
 
     def post_run_refresh(self, state=None):
@@ -788,7 +900,13 @@ class PipelineEngine(Loggable):
         # always select last node
         self.selected = self.pipeline.nodes[-1]
 
-        reponames = list({a.repository_identifier for items in (state.unknowns, state.references) for a in items})
+        reponames = list(
+            {
+                a.repository_identifier
+                for items in (state.unknowns, state.references)
+                for a in items
+            }
+        )
 
         if reponames:
             repos = [RepoItem(name=n) for n in reponames]
@@ -797,40 +915,44 @@ class PipelineEngine(Loggable):
 
     def select_node_by_editor(self, editor):
         for node in self.pipeline.nodes:
-            if hasattr(node, 'editor'):
+            if hasattr(node, "editor"):
                 if node.editor == editor:
                     self.selected = node
                     break
 
     def refresh_repository_status(self):
-        self.debug('PipelineEngine.refresh_repository_status')
+        self.debug("PipelineEngine.refresh_repository_status")
         for r in self._active_repositories():
             r.update()
 
     def pull(self):
-        self.debug('PipelineEngine.pull')
+        self.debug("PipelineEngine.pull")
         dvc = self.dvc
         for r in self._active_repositories():
             dvc.pull_repository(r.name)
 
     def push(self):
-        self.debug('PipelineEngine.push')
+        self.debug("PipelineEngine.push")
         dvc = self.dvc
         for r in self._active_repositories():
             r.update()
             if r.behind:
-                self.warning_dialog('{} is Behind and needs to be updated before it can be pushed'.format(r.name))
+                self.warning_dialog(
+                    "{} is Behind and needs to be updated before it can be pushed".format(
+                        r.name
+                    )
+                )
             else:
                 dvc.push_repository(r.name)
 
     def delete_local_changes(self):
-        self.debug('PipelineEngine.delete_local_changes')
+        self.debug("PipelineEngine.delete_local_changes")
         dvc = self.dvc
         for r in self._active_repositories():
             dvc.delete_local_commits(r.name)
 
     def load_predefined_templates(self):
-        self.debug('load predefined templates')
+        self.debug("load predefined templates")
 
         root = PipelineTemplateRoot()
         nodes = {n.__name__: n for n in self.nodes}
@@ -838,88 +960,132 @@ class PipelineEngine(Loggable):
         groups = []
 
         if self.use_arar_calculations:
-            plots = (('Ideogram', ARAR_IDEO),
-                     ('CSV Ideogram', CSV_IDEO),
-                     ('Interpreted Age Ideogram', INTERPRETED_AGE_IDEOGRAM),
-                     ('Hybrid Ideogram', HYBRID_IDEOGRAM),
-                     ('SubGroup Ideogram', SUBGROUP_IDEOGRAM),
-                     ('Spectrum', ARAR_SPEC),
-                     ('CSV Spectrum', CSV_SPEC),
-                     ('Spectrum/Isochron', COMPOSITE),
-                     ('Series', SERIES),
-                     ('Ratio Series', RATIO_SERIES),
-                     ('InverseIsochron', ARAR_INVERSE_ISOCHRON),
-                     ('XY Scatter', XY_SCATTER),
-                     ('Regression', REGRESSION_SERIES),
-                     ('Flux Visualization', FLUX_VISUALIZATION),
-                     ('Vertical Flux', VERTICAL_FLUX))
-            tables = (('SubGrouped Analyses', ANALYSIS_TABLE),
-                      ('Grouped Analyses', ARAR_SIMPLE_ANALYSIS_TABLE),
-                      ('Interpreted Age', INTERPRETED_AGE_TABLE),
-                      ('Report', REPORT))
+            plots = (
+                ("Ideogram", ARAR_IDEO),
+                ("CSV Ideogram", CSV_IDEO),
+                ("Interpreted Age Ideogram", INTERPRETED_AGE_IDEOGRAM),
+                ("Hybrid Ideogram", HYBRID_IDEOGRAM),
+                ("SubGroup Ideogram", SUBGROUP_IDEOGRAM),
+                ("Spectrum", ARAR_SPEC),
+                ("CSV Spectrum", CSV_SPEC),
+                ("Spectrum/Isochron", COMPOSITE),
+                ("Series", SERIES),
+                ("Ratio Series", RATIO_SERIES),
+                ("InverseIsochron", ARAR_INVERSE_ISOCHRON),
+                ("XY Scatter", XY_SCATTER),
+                ("Regression", REGRESSION_SERIES),
+                ("Flux Visualization", FLUX_VISUALIZATION),
+                ("Vertical Flux", VERTICAL_FLUX),
+            )
+            tables = (
+                ("SubGrouped Analyses", ANALYSIS_TABLE),
+                ("Grouped Analyses", ARAR_SIMPLE_ANALYSIS_TABLE),
+                ("Interpreted Age", INTERPRETED_AGE_TABLE),
+                ("Report", REPORT),
+            )
         else:
-            plots = (('Ideogram', IDEO),
-                     ('Correlation Ideogram', CORRELATION_IDEO),
-                     ('CSV Ideogram', CSV_IDEO),
-                     ('Interpreted Age Ideogram', INTERPRETED_AGE_IDEOGRAM),
-                     ('Hybrid Ideogram', HYBRID_IDEOGRAM),
-                     ('SubGroup Ideogram', SUBGROUP_IDEOGRAM),
-                     ('Spectrum', SPEC),
-                     ('CSV Spectrum', CSV_SPEC),
-                     ('Spectrum/Isochron', COMPOSITE),
-                     ('Series', SERIES),
-                     ('Ratio Series', RATIO_SERIES),
-                     ('InverseIsochron', INVERSE_ISOCHRON),
-                     ('XY Scatter', XY_SCATTER),
-                     ('Regression', REGRESSION_SERIES),
-                     ('Flux Visualization', FLUX_VISUALIZATION),
-                     ('Vertical Flux', VERTICAL_FLUX))
-            tables = (('SubGrouped Analyses', ANALYSIS_TABLE),
-                      ('Grouped Analyses', SIMPLE_ANALYSIS_TABLE),
-                      ('Interpreted Age', INTERPRETED_AGE_TABLE),
-                      ('Report', REPORT))
+            plots = (
+                ("Recent Recall", RECENT_RUNS),
+                ("Ideogram", IDEO),
+                ("Correlation Ideogram", CORRELATION_IDEO),
+                ("CSV Ideogram", CSV_IDEO),
+                ("Interpreted Age Ideogram", INTERPRETED_AGE_IDEOGRAM),
+                ("Hybrid Ideogram", HYBRID_IDEOGRAM),
+                ("SubGroup Ideogram", SUBGROUP_IDEOGRAM),
+                ("Spectrum", SPEC),
+                ("CSV Spectrum", CSV_SPEC),
+                ("Spectrum/Isochron", COMPOSITE),
+                ("Series", SERIES),
+                ("Ratio Series", RATIO_SERIES),
+                ("InverseIsochron", INVERSE_ISOCHRON),
+                ("CSV InverseIsochron", CSV_INVERSE_ISOCHRON),
+                ("XY Scatter", XY_SCATTER),
+                ("CSV Regression", CSV_REGRESSION),
+                ("Isotope Regression", REGRESSION_SERIES),
+                ("Flux Visualization", FLUX_VISUALIZATION),
+                ("Vertical Flux", VERTICAL_FLUX),
+            )
+            tables = (
+                ("SubGrouped Analyses", ANALYSIS_TABLE),
+                ("Grouped Analyses", SIMPLE_ANALYSIS_TABLE),
+                ("Interpreted Age", INTERPRETED_AGE_TABLE),
+                ("Report", REPORT),
+            )
 
-        default = [('Fit', (('Define Equilibration', DEFINE_EQUILIBRATION),
-                            ('Iso Evo', ISOEVO),
-                            ('Blanks', BLANKS),
-                            ('IC Factor', ICFACTOR),
-                            ('Flux', FLUX),
-                            ('Cosmogenic', COSMOGENIC),
-                            ('Ca Correction Factors', CA_CORRECTION_FACTORS),
-                            ('K Correction Factors', K_CORRECTION_FACTORS),
-                            ('Audit', AUDIT))),
-                   ('Edit', (('Bulk Edit', BULK_EDIT),
-                             ('RunID Edit', RUNID_EDIT))),
-                   ('Plot', plots),
-                   ('Table', tables),
-                   ('History', (('Ideogram', HISTORY_IDEOGRAM),
-                                ('Spectrum', HISTORY_SPECTRUM))),
-                   ('Share', (('CSV Analyses Export', CSV_ANALYSES_EXPORT),
-                              ('CSV Raw Data Export', CSV_RAW_DATA_EXPORT))),
-                   ('Transfer', (('Mass Spec Reduced', MASSSPEC_REDUCED),
-                                 ('Mass Spec Flux', MASS_SPEC_FLUX))),
-                   ('Scripting', (('PyScript', PYSCRIPT),))]
+        default = [
+            (
+                "Fit",
+                (
+                    ("Define Equilibration", DEFINE_EQUILIBRATION),
+                    ("Iso Evo", ISOEVO),
+                    ("Blanks", BLANKS),
+                    ("IC Factor", ICFACTOR),
+                    ("Flux", FLUX),
+                    ("Cosmogenic", COSMOGENIC),
+                    ("Ca Correction Factors", CA_CORRECTION_FACTORS),
+                    ("K Correction Factors", K_CORRECTION_FACTORS),
+                    ("Audit", AUDIT),
+                ),
+            ),
+            ("Edit", (("Bulk Edit", BULK_EDIT), ("RunID Edit", RUNID_EDIT))),
+            ("Plot", plots),
+            ("Table", tables),
+            (
+                "History",
+                (("Ideogram", HISTORY_IDEOGRAM), ("Spectrum", HISTORY_SPECTRUM)),
+            ),
+            (
+                "Share",
+                (
+                    ("CSV Analyses Export", CSV_ANALYSES_EXPORT),
+                    ("CSV Raw Data Export", CSV_RAW_DATA_EXPORT),
+                    ("CSV Flux Export", FLUX_EXPORT),
+                ),
+            ),
+            (
+                "Transfer",
+                (
+                    ("Mass Spec Reduced", MASSSPEC_REDUCED),
+                    ("Mass Spec Flux", MASS_SPEC_FLUX),
+                ),
+            ),
+            ("Scripting", (("PyScript", PYSCRIPT),)),
+        ]
 
         # predefined_templates contributed to by other plugins
-        for grp_name, gs in groupby_key(default + self.predefined_templates, key=itemgetter(0)):
-            grp = PipelineTemplateGroup(name=grp_name, icon=icon(self.pipeline_group_icon_map.get(grp_name, '')))
+        for grp_name, gs in groupby_key(
+            default + self.predefined_templates, key=itemgetter(0)
+        ):
+            grp = PipelineTemplateGroup(
+                name=grp_name, icon=icon(self.pipeline_group_icon_map.get(grp_name, ""))
+            )
 
-            templates = [PipelineTemplate(n, text, nodes, node_factories) for nn, gg in gs for n, text in gg]
+            templates = [
+                PipelineTemplate(n, text, nodes, node_factories)
+                for nn, gg in gs
+                for n, text in gg
+            ]
 
             pp = os.path.join(paths.user_pipeline_template_dir, grp_name.lower())
             # add templates from named user directory
-            for temp in glob_list_directory(pp, extension='.yaml', remove_extension=True):
-                path = os.path.join(pp, '{}.yaml'.format(temp))
+            for temp in glob_list_directory(
+                pp, extension=".yaml", remove_extension=True
+            ):
+                path = os.path.join(pp, "{}.yaml".format(temp))
                 templates.append(PipelineTemplate(temp, path, nodes, node_factories))
 
             grp.templates = templates
             groups.append(grp)
 
         # add user templates from user directory
-        grp = PipelineTemplateGroup(name='User', icon=icon('user_suit'))
+        grp = PipelineTemplateGroup(name="User", icon=icon("user_suit"))
         user_templates = []
-        for temp in glob_list_directory(paths.user_pipeline_template_dir, extension='.yaml', remove_extension=True):
-            path = os.path.join(paths.user_pipeline_template_dir, '{}.yaml'.format(temp))
+        for temp in glob_list_directory(
+            paths.user_pipeline_template_dir, extension=".yaml", remove_extension=True
+        ):
+            path = os.path.join(
+                paths.user_pipeline_template_dir, "{}.yaml".format(temp)
+            )
             user_templates.append(PipelineTemplate(temp, path, nodes, node_factories))
 
         grp.templates = user_templates
@@ -937,7 +1103,7 @@ class PipelineEngine(Loggable):
             if gi.name not in DEFAULT_PIPELINE_ROOTS:
                 ngroups.append(gi)
 
-        self.debug('loaded {} user templates'.format(len(user_templates)))
+        self.debug("loaded {} user templates".format(len(user_templates)))
 
         root.groups = ngroups
         self.pipeline_template_root = root
@@ -950,17 +1116,18 @@ class PipelineEngine(Loggable):
         self.refresh_table_needed = True
 
     def handle_len_unknowns(self, new):
-        self._handle_len('unknowns', lambda e: e.set_items(self.selected.unknowns))
+        self._handle_len("unknowns", lambda e: e.set_items(self.selected.unknowns))
 
         def func(editor):
             vs = self.selected.unknowns
-            editor.set_items(vs)
+            if editor:
+                editor.set_items(vs)
             self.state.unknowns = vs
             for node in self.pipeline.nodes:
                 if isinstance(node, UnknownNode) and node is not self.selected:
                     node.unknowns = vs
 
-        self._handle_len('unknowns', func)
+        self._handle_len("unknowns", func)
 
     def handle_len_references(self, new):
         def func(editor):
@@ -972,7 +1139,7 @@ class PipelineEngine(Loggable):
                 if isinstance(node, ReferenceNode) and node is not self.selected:
                     node.references = vs
 
-        self._handle_len('references', func)
+        self._handle_len("references", func)
 
     def identify_peaks(self, *args, **kw):
         self._identify_peaks(*args, **kw)
@@ -991,11 +1158,11 @@ class PipelineEngine(Loggable):
                 if not r.update():
                     self.warning('Failed to update repo="{}"'.format(r.name))
 
-    def _set_grouping(self, items, gid, attr='group_id'):
+    def _set_grouping(self, items, gid, attr="group_id"):
         for si in items:
             setattr(si, attr, gid)
 
-        if hasattr(self.selected, 'editor') and self.selected.editor:
+        if hasattr(self.selected, "editor") and self.selected.editor:
             self.selected.editor.refresh_needed = True
         self.refresh_table_needed = True
 
@@ -1006,35 +1173,45 @@ class PipelineEngine(Loggable):
             pt = name
 
         try:
-            pt.render(self.application, self.pipeline,
-                      self.browser_model,
-                      self.interpreted_age_browser_model,
-                      self.dvc,
-                      clear=clear,
-                      exclude_klass=exclude_klass)
+            pt.render(
+                self.application,
+                self.pipeline,
+                self.browser_model,
+                self.interpreted_age_browser_model,
+                self.dvc,
+                clear=clear,
+                exclude_klass=exclude_klass,
+            )
         except BaseException as e:
             import traceback
+
             traceback.print_exc()
-            self.debug('Invalid Template: {}'.format(e))
-            self.warning_dialog('Invalid Pipeline Template. There is a syntax problem with "{}"'.format(name))
+            self.debug("Invalid Template: {}".format(e))
+            self.warning_dialog(
+                'Invalid Pipeline Template. There is a syntax problem with "{}"'.format(
+                    name
+                )
+            )
             return
 
         if self.pipeline.nodes:
             self.selected = self.pipeline.nodes[0]
 
     def _get_template_path(self, name):
-        pname = name.replace(' ', '_').lower()
-        if pname == 'iso_evo':
-            pname = 'isotope_evolutions'
+        pname = name.replace(" ", "_").lower()
+        if pname == "iso_evo":
+            pname = "isotope_evolutions"
 
-        pname = add_extension(pname, '.yaml')
+        pname = add_extension(pname, ".yaml")
         path = os.path.join(paths.pipeline_template_dir, pname)
         user_path = False
         if not os.path.isfile(path):
             path = os.path.join(paths.user_pipeline_template_dir, pname)
             user_path = True
             if not os.path.isfile(path):
-                self.warning_dialog('Invalid template name "{}". {} does not exist'.format(name, path))
+                self.warning_dialog(
+                    'Invalid template name "{}". {} does not exist'.format(name, path)
+                )
                 return
 
         return path, user_path
@@ -1064,32 +1241,34 @@ class PipelineEngine(Loggable):
 
     def _handle_figure_event(self, evt):
         kind = evt[0]
-        print('fiafsfdasfsa', evt, kind)
-        if kind == 'alternate_figure':
+        print("fiafsfdasfsa", evt, kind)
+        if kind == "alternate_figure":
             self._make_alternate_figure(evt)
-        elif kind == 'tag':
+        elif kind == "tag":
             self.tag_event = evt[1]
-        elif kind == 'identify_peaks':
+        elif kind == "identify_peaks":
             self._identify_peaks(evt[1])
-        elif kind == 'plot_on_map':
+        elif kind == "plot_on_map":
             self._plot_on_map()
 
     def _identify_peaks(self, ps):
         from pychron.pipeline.identify_peak_view import IdentifyPeakView
 
-        source = self.application.get_service('pychron.sparrow.sparrow.Sparrow')
+        source = self.application.get_service("pychron.sparrow.sparrow.Sparrow")
         if source is None:
-            self.warning_dialog('At least one datasource plugin is required, e.g. Sparrow')
+            self.warning_dialog(
+                "At least one datasource plugin is required, e.g. Sparrow"
+            )
             return
 
         if source.connect():
             ipv = IdentifyPeakView(ps, source=source)
             open_view(ipv)
         else:
-            self.warning_dialog('Failed to connect to a relevant datasource')
+            self.warning_dialog("Failed to connect to a relevant datasource")
 
     def _plot_on_map(self):
-        self.information_dialog('Psyche.  Plot on Map not yet implemented')
+        self.information_dialog("Psyche.  Plot on Map not yet implemented")
 
     def _make_alternate_figure(self, evt):
         self.add_pipeline = True
@@ -1100,26 +1279,37 @@ class PipelineEngine(Loggable):
         do_later(self.trait_set, run_needed=True)
 
     # handlers
-    @on_trait_change('active_editor')
+    @on_trait_change("active_editor")
     def _handle_active_editor(self, obj, name, old, new):
         def refresh():
             self.refresh_table_needed = True
 
         if old:
-            if hasattr(old, 'figure_model'):
-                old.on_trait_change(refresh, 'figure_model:panels:figures:refresh_unknowns_table', remove=True)
-                old.on_trait_change(self._handle_figure_event, 'figure_model:panels:figure_event',
-                                    remove=True)
+            if hasattr(old, "figure_model"):
+                old.on_trait_change(
+                    refresh,
+                    "figure_model:panels:figures:refresh_unknowns_table",
+                    remove=True,
+                )
+                old.on_trait_change(
+                    self._handle_figure_event,
+                    "figure_model:panels:figure_event",
+                    remove=True,
+                )
 
         if new:
-            if hasattr(new, 'figure_model'):
-                new.on_trait_change(refresh, 'figure_model:panels:figures:refresh_unknowns_table')
-                new.on_trait_change(self._handle_figure_event, 'figure_model:panels:figure_event')
+            if hasattr(new, "figure_model"):
+                new.on_trait_change(
+                    refresh, "figure_model:panels:figures:refresh_unknowns_table"
+                )
+                new.on_trait_change(
+                    self._handle_figure_event, "figure_model:panels:figure_event"
+                )
 
     def _add_pipeline_fired(self):
         p = self.pipeline_group.add()
         self.pipeline = p
-        self.trait_setq(selected_pipeline_template='')
+        self.trait_setq(selected_pipeline_template="")
 
     def _dclicked_unknowns_changed(self):
         if self.selected_unknowns:
@@ -1136,7 +1326,7 @@ class PipelineEngine(Loggable):
     def _selected_pipeline_template_changed(self, new):
         if isinstance(new, (PipelineTemplate, str, tuple)):
             if self.run_enabled and not self.pipeline.active:
-                self.debug('Pipeline template {} selected'.format(new))
+                self.debug("Pipeline template {} selected".format(new))
                 self._set_template(new)
 
     _len_unknowns_cnt = 0
@@ -1145,15 +1335,15 @@ class PipelineEngine(Loggable):
     _len_references_removed = 0
 
     def _handle_len(self, k, func):
-        lr = '_len_{}_removed'.format(k)
-        lc = '_len_{}_cnt'.format(k)
+        lr = "_len_{}_removed".format(k)
+        lc = "_len_{}_cnt".format(k)
 
         editor = None
-        if hasattr(self.selected, 'editor'):
+        if hasattr(self.selected, "editor"):
             editor = self.selected.editor
 
         if editor:
-            n = len(getattr(self, 'selected_{}'.format(k)))
+            n = len(getattr(self, "selected_{}".format(k)))
             if not n:
                 setattr(self, lc, getattr(self, lc) + 1)
 
@@ -1161,8 +1351,9 @@ class PipelineEngine(Loggable):
                 setattr(self, lc, 0)
                 setattr(self, lr, n)
 
-            if getattr(self, lc) >= getattr(self, lr) or n == 1:
-                setattr(self, lc, 0)
+        if getattr(self, lc) >= getattr(self, lr) or n == 1:
+            setattr(self, lc, 0)
+            if editor:
                 func(editor)
                 editor.refresh_needed = True
 
@@ -1171,5 +1362,6 @@ class PipelineEngine(Loggable):
 
     def _pipeline_default(self):
         return self.pipeline_group.pipelines[0]
+
 
 # ============= EOF =============================================

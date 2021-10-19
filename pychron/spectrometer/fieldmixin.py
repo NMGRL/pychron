@@ -19,21 +19,23 @@ from traits.api import Instance, HasTraits
 
 
 class FieldMixin(HasTraits):
-    field_table = Instance('pychron.spectrometer.field_table.FieldTable', ())
+    field_table = Instance("pychron.spectrometer.field_table.FieldTable", ())
 
     def get_field_table_path(self):
         return self.field_table.path
 
     def field_table_setup(self):
-        print('asdfasfsaf',self.spectrometer)
+        print("asdfasfsaf", self.spectrometer)
         if self.spectrometer:
             molweights = self.spectrometer.molecular_weights
             name = self.spectrometer.name
         else:
-            from pychron.spectrometer.molecular_weights import MOLECULAR_WEIGHTS as molweights
+            from pychron.spectrometer.molecular_weights import (
+                MOLECULAR_WEIGHTS as molweights,
+            )
 
-            name = ''
-        print('moasdf', molweights)
+            name = ""
+        print("moasdf", molweights)
         self.field_table.initialize(molweights)
         self.field_table.spectrometer_name = name.lower()
 
@@ -45,4 +47,6 @@ class FieldMixin(HasTraits):
 
     def update_field_table(self, *args, **kw):
         self.field_table.update_field_table(*args, **kw)
+
+
 # ============= EOF =============================================

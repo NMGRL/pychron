@@ -15,17 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 import os
 
 from traits.api import HasTraits, Button, Str, Any, List
 from traitsui.api import View, UItem, HGroup, VGroup, Controller, TabularEditor
 
-
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.editors import TextEditor
+from traitsui.editors.api import TextEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 
@@ -48,61 +45,63 @@ class MergeModel(HasTraits):
     def set_conflict(self, c):
         ourtext = []
         theirtext = []
-        with open(os.path.join(self.repo.path, c.path), 'r') as rfile:
+        with open(os.path.join(self.repo.path, c.path), "r") as rfile:
             oflag = False
             tflag = False
             for line in rfile:
-                if line.startswith('<<<<<<<'):
+                if line.startswith("<<<<<<<"):
                     oflag = True
 
-                elif line.strip() == '=======':
+                elif line.strip() == "=======":
                     oflag = False
                     tflag = True
-                elif line.startswith('>>>>>>>'):
+                elif line.startswith(">>>>>>>"):
                     tflag = False
                 elif oflag:
                     ourtext.append(line)
                 elif tflag:
                     theirtext.append(line)
 
-        self.our_text = ''.join(ourtext)
-        self.their_text = ''.join(theirtext)
-
-        # return
-        # cc = repo.rev_parse(ourhexsha)
-        # self.left_text = cc.data_stream.read()
-        # cc = repo.rev_parse(theirhexsha)
-        # self.right_text = cc.data_stream.read()
+        self.our_text = "".join(ourtext)
+        self.their_text = "".join(theirtext)
 
     def accept_their(self, fl=None):
-        self._merge_accept(fl, 'theirs')
+        self._merge_accept(fl, "theirs")
 
     def accept_our(self, fl=None):
-        self._merge_accept(fl, 'ours')
+        self._merge_accept(fl, "ours")
 
     def commit(self):
-        self.repo.commit('merged {}/{} with local/{}'.format(self.remote, self.branch, self.branch))
+        self.repo.commit(
+            "merged {}/{} with local/{}".format(self.remote, self.branch, self.branch)
+        )
 
-    def _merge_accept(self, fl, k):
+    def _merge_accept(self, fl, strategy):
         if fl is None:
             fl = self.conflicts
 
         repo = self.repo.active_repo
         for fi in fl:
-            repo.git.checkout('--{}'.format(k), fi.path)
+            repo.git.checkout("--{}".format(strategy), fi.path)
             self.repo.add(fi.path, commit=False)
             self.conflicts.remove(fi)
 
+        self.repo.commit(
+            "merged {} with local/{}. strategy={}".format(
+                self.remote, self.branch, strategy
+            )
+        )
+
 
 class ConflictAdapter(TabularAdapter):
-    columns = [('Name', 'path')]
+    columns = [("Name", "path")]
 
 
 class MergeView(Controller):
     dclicked = Any
     selected = List
-    accept_their_button = Button('Accept Their')
-    accept_our_button = Button('Accept Our')
+    accept_their_button = Button("Accept Their")
+    accept_our_button = Button("Accept Our")
 
     def closed(self, info, is_ok):
         self.model.commit()
@@ -120,32 +119,45 @@ class MergeView(Controller):
             self.model.set_conflict(self.selected[0])
 
     def traits_view(self):
-        cgrp = VGroup(UItem('conflicts', editor=TabularEditor(adapter=ConflictAdapter(),
-                                                              operations=[],
-                                                              multi_select=True,
-                                                              selected='controller.selected',
-                                                              dclicked='controller.dclicked')))
+        cgrp = VGroup(
+            UItem(
+                "conflicts",
+                editor=TabularEditor(
+                    adapter=ConflictAdapter(),
+                    operations=[],
+                    multi_select=True,
+                    selected="controller.selected",
+                    dclicked="controller.dclicked",
+                ),
+            )
+        )
 
-        bgrp = VGroup(UItem('controller.accept_our_button'),
-                      UItem('controller.accept_their_button'),
-                      enabled_when='controller.selected')
+        bgrp = VGroup(
+            UItem("controller.accept_our_button"),
+            UItem("controller.accept_their_button"),
+            enabled_when="controller.selected",
+        )
 
-        tgrp = HGroup(VGroup(UItem('our_text',
-                                   style='custom',
-                                   editor=TextEditor(read_only=True)),
-                             show_border=True,
-                             label='Our'),
-                      VGroup(UItem('their_text',
-                                   style='custom',
-                                   editor=TextEditor(read_only=True)),
-                             show_border=True,
-                             label='Their'))
+        tgrp = HGroup(
+            VGroup(
+                UItem("our_text", style="custom", editor=TextEditor(read_only=True)),
+                show_border=True,
+                label="Our",
+            ),
+            VGroup(
+                UItem("their_text", style="custom", editor=TextEditor(read_only=True)),
+                show_border=True,
+                label="Their",
+            ),
+        )
 
-        v = View(VGroup(HGroup(cgrp, bgrp),
-                        tgrp),
-                 buttons=['OK'],
-                 title='Merge',
-                 resizable=True)
+        v = View(
+            VGroup(HGroup(cgrp, bgrp), tgrp),
+            buttons=["OK"],
+            title="Merge",
+            resizable=True,
+        )
         return v
+
 
 # ============= EOF =============================================

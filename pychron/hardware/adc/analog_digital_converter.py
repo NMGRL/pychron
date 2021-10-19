@@ -26,45 +26,42 @@ from pychron.hardware.core.core_device import CoreDevice
 
 
 class AnalogDigitalConverter(CoreDevice):
-    """
-    """
-    scan_func = 'read_device'
+    """ """
+
+    scan_func = "read_device"
     read_voltage = 0
 
     def read_device(self, **kw):
-        """
-        """
+        """ """
         if self.simulation:
             return self.get_random_value()
 
 
 class M1000(AnalogDigitalConverter):
-    """
-    """
-    short_form_prompt = '$'
-    long_form_prompt = '#'
+    """ """
+
+    short_form_prompt = "$"
+    long_form_prompt = "#"
     voltage_scalar = 1
-    units = ''
+    units = ""
 
     def load_additional_args(self, config):
-        """
-        """
-        self.set_attribute(config, 'address', 'General', 'address')
-        self.set_attribute(config, 'voltage_scalar', 'General',
-                           'voltage_scalar', cast='float')
-        self.set_attribute(config, 'units', 'General',
-                           'units')
+        """ """
+        self.set_attribute(config, "address", "General", "address")
+        self.set_attribute(
+            config, "voltage_scalar", "General", "voltage_scalar", cast="float"
+        )
+        self.set_attribute(config, "units", "General", "units")
         if self.address is not None:
             return True
 
     def read_device(self, **kw):
-        """
-        """
+        """ """
         res = super(M1000, self).read_device(**kw)
         if res is None:
-            cmd = 'RD'
+            cmd = "RD"
             addr = self.address
-            cmd = ''.join((self.short_form_prompt, addr, cmd))
+            cmd = "".join((self.short_form_prompt, addr, cmd))
 
             res = self.ask(cmd, **kw)
             res = self._parse_response_(res)
@@ -73,18 +70,20 @@ class M1000(AnalogDigitalConverter):
 
         return res
 
-    def _parse_response_(self, r, form='$', type_=None):
+    def _parse_response_(self, r, form="$", type_=None):
         """
-            typical response form
-            short *+00072.00
-            long *1RD+00072.00A4
+        typical response form
+        short *+00072.00
+        long *1RD+00072.00A4
         """
-        func = lambda X: float(X[5:-2]) if form == self.long_form_prompt else float(X[2:])
+        func = (
+            lambda X: float(X[5:-2]) if form == self.long_form_prompt else float(X[2:])
+        )
 
         if r:
-            if type_ == 'block':
-                r = r.split(',')
-                return [func(ri) for ri in r if ri is not '']
+            if type_ == "block":
+                r = r.split(",")
+                return [func(ri) for ri in r if ri is not ""]
             else:
                 return func(r)
 
@@ -104,13 +103,18 @@ class OmegaADC(M1000):
     D5141
 
     """
+
     @property
     def read_block(self):
-        """
-        """
-        com = 'RB'
-        r = self.ask(''.join((self.short_form_prompt, self.address, com)),
-                     remove_eol=False, replace=[chr(13), ','])
+        """ """
+        com = "RB"
+        r = self.ask(
+            "".join((self.short_form_prompt, self.address, com)),
+            remove_eol=False,
+            replace=[chr(13), ","],
+        )
 
-        return self._parse_response_(r, type_='block')
+        return self._parse_response_(r, type_="block")
+
+
 # ============= EOF =====================================

@@ -19,18 +19,17 @@ from pychron.hardware.actuators.gp_actuator import GPActuator
 
 
 class ASCIIGPActuator(GPActuator):
-    affirmative = 'OK'
-    close_cmd = 'Close'
-    open_cmd = 'Open'
-    delimiter = ' '
-    state_open = 'True'
-    state_cmd = 'GetValveState'
+    affirmative = "OK"
+    close_cmd = "Close"
+    open_cmd = "Open"
+    delimiter = " "
+    state_open = "True"
+    state_cmd = "GetValveState"
 
     def get_channel_state(self, obj, verbose=False, **kw):
-        """
-        """
+        """ """
 
-        cmd = '{} {}'.format(self.state_cmd, get_switch_address(obj))
+        cmd = "{} {}".format(self.state_cmd, get_switch_address(obj))
 
         s = self.ask(cmd, verbose=verbose)
 
@@ -39,16 +38,17 @@ class ASCIIGPActuator(GPActuator):
 
     @trim_affirmative
     def _actuate(self, obj, action):
-        self.debug('Actuate {} {}'.format(obj, action))
-        state = action.lower() == 'open'
+        self.debug("Actuate {} {}".format(obj, action))
+        state = action.lower() == "open"
         cmd = self.open_cmd if state else self.close_cmd
 
         if callable(cmd):
             cmd = cmd(get_switch_address(obj))
         else:
-            cmd = '{}{}{}'.format(cmd, self.delimiter, get_switch_address(obj))
+            cmd = "{}{}{}".format(cmd, self.delimiter, get_switch_address(obj))
 
         r = self.ask(cmd, verbose=True)
         return r, cmd
+
 
 # ============= EOF =============================================

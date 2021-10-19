@@ -48,4 +48,5 @@ class LabTable(Base, BaseMixin):
     repository_path = Column(String(200))
     create_date = Column(DateTime, default=func.now())
 
+
 # ============= EOF =============================================

@@ -26,22 +26,18 @@ from pychron.graph.graph import Graph
 
 
 class MassCalibrationEditor(BaseTraitsEditor):
-    graph = Instance('pychron.graph.graph.Graph')
+    graph = Instance("pychron.graph.graph.Graph")
 
-    name = 'Mass Cal'
+    name = "Mass Cal"
 
     def traits_view(self):
-        v = View(UItem('graph',
-                       style='custom',
-                       editor=InstanceEditor()))
+        v = View(UItem("graph", style="custom", editor=InstanceEditor()))
         return v
 
     def _graph_default(self):
-        return Graph(container_dict=dict(stack_order='top_to_bottom',
-                                         padding=5,
-                                         spacing=0
-        ))
+        return Graph(
+            container_dict=dict(stack_order="top_to_bottom", padding=5, spacing=0)
+        )
 
 
 # ============= EOF =============================================
-

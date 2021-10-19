@@ -16,16 +16,19 @@
 from traitsui.api import View, UItem, TabularEditor
 
 from pychron.core.pychron_traits import BorderVGroup
-from pychron.pipeline.plot.editors.base_matrix_table import BaseMatrixTable, ResultsAdapter
+from pychron.pipeline.plot.editors.base_matrix_table import (
+    BaseMatrixTable,
+    ResultsAdapter,
+)
 from pychron.pipeline.results.base_matrix_result import BaseMatrixResult
 
 
 class Results(BaseMatrixResult):
     def _format_value(self, v):
-        return '{:0.7f}'.format(v)
+        return "{:0.7f}".format(v)
 
     def _calculate_values(self, ag, others):
-        vs = ['']
+        vs = [""]
         try:
             fstd = ag.weighted_mean_f
         except TypeError:
@@ -33,19 +36,19 @@ class Results(BaseMatrixResult):
 
         for other in others:
             if other == ag:
-                pv = ''
+                pv = ""
             else:
                 try:
                     pv = other.weighted_mean_f / fstd
                 except (TypeError, ZeroDivisionError):
-                    pv = ''
+                    pv = ""
 
             vs.append(pv)
 
         return vs
 
     def get_color(self, row, column):
-        return 'white'
+        return "white"
 
 
 class RValuesTable(BaseMatrixTable):
@@ -53,12 +56,20 @@ class RValuesTable(BaseMatrixTable):
 
     def _make_adapter(self, ags):
         adp = ResultsAdapter()
-        cols = [(self._make_name(a), '{}_value'.format(a.group_id)) for a in ags[1:]]
-        adp.columns = [('Group', 'name'), ] + cols
+        cols = [(self._make_name(a), "{}_value".format(a.group_id)) for a in ags[1:]]
+        adp.columns = [
+            ("Group", "name"),
+        ] + cols
         return adp
 
     def traits_view(self):
-        v = View(BorderVGroup(UItem('results', editor=TabularEditor(adapter=self.adapter)),
-                              label='R-values'))
+        v = View(
+            BorderVGroup(
+                UItem("results", editor=TabularEditor(adapter=self.adapter)),
+                label="R-values",
+            )
+        )
         return v
+
+
 # ============= EOF =============================================

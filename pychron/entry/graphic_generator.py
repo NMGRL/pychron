@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
+from chaco.label import Label
 from six.moves import map
 
 from pychron.core.ui import set_qt
@@ -24,12 +25,13 @@ set_qt()
 
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
-from enable.base import str_to_font
+from kiva.fonttools import str_to_font
 from traits.api import HasTraits, Instance, Float, File, Property, Str, List
 from traitsui.api import View, Controller, UItem
 from chaco.api import OverlayPlotContainer
 from enable.component_editor import ComponentEditor
 from pyface.api import FileDialog, OK
+
 # ============= standard library imports ========================
 from lxml.etree import ElementTree, Element
 from chaco.plot import Plot
@@ -49,7 +51,7 @@ from pychron.core.helpers.strtools import to_bool
 class myDataLabel(DataLabel):
     show_label_coords = False
     marker_visible = False
-    label_position = 'center'
+    label_position = "center"
     border_visible = False
 
 
@@ -58,10 +60,13 @@ class LabelsOverlay(AbstractOverlay):
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
-            gc.set_font(str_to_font(None, None, '6'))
+            gc.set_font(str_to_font(None, None, "7"))
+
             for x, y, l in self.labels:
+                ll = Label(x=x, y=y, text=l, font="modern 7")
+                w, h = ll.get_bounding_box(gc)
                 x, y = other_component.map_screen([(x, y)])[0]
-                gc.set_text_position(x - 5, y - 10)
+                gc.set_text_position(x - w / 2.0, y + 5)
                 gc.show_text(l)
 
 
@@ -84,13 +89,15 @@ class GraphicGeneratorController(Controller):
 
     def traits_view(self):
         w, h = 750, 750
-        v = View(UItem('srcpath'),
-                 # Item('rotation'),
-                 UItem('container', editor=ComponentEditor(), style='custom'),
-                 width=w + 2,
-                 height=h + 56,
-                 resizable=True,
-                 buttons=[Action(name='Save', action='save'), 'OK', 'Cancel'])
+        v = View(
+            UItem("srcpath"),
+            # Item('rotation'),
+            UItem("container", editor=ComponentEditor(), style="custom"),
+            width=w + 2,
+            height=h + 56,
+            resizable=True,
+            buttons=[Action(name="Save", action="save"), "OK", "Cancel"],
+        )
         return v
 
 
@@ -104,28 +111,29 @@ class GraphicModel(HasTraits):
     initialized = False
 
     def _get_name(self):
-        return os.path.splitext(self._name if self._name else os.path.basename(self.srcpath))[0]
+        return os.path.splitext(
+            self._name if self._name else os.path.basename(self.srcpath)
+        )[0]
 
     def save(self, path=None):
         #        print self.container.bounds
 
         if path is None:
-            dlg = FileDialog(action='save as', default_directory=paths.data_dir)
+            dlg = FileDialog(action="save as", default_directory=paths.data_dir or "")
             if dlg.open() == OK:
                 path = dlg.path
 
         if path is not None:
             _, tail = os.path.splitext(path)
             c = self.container
-            if tail == '.pdf':
+            if tail == ".pdf":
                 from chaco.pdf_graphics_context import PdfPlotGraphicsContext
 
-                gc = PdfPlotGraphicsContext(filename=path,
-                                            pagesize='letter')
+                gc = PdfPlotGraphicsContext(filename=path, pagesize="letter")
 
             else:
-                if not tail in ('.png', '.jpg', '.tiff'):
-                    path = '{}.png'.format(path)
+                if not tail in (".png", ".jpg", ".tiff"):
+                    path = "{}.png".format(path)
 
                 gc = PlotGraphicsContext((int(c.outer_width), int(c.outer_height)))
                 #            c.use_backbuffer = False
@@ -139,6 +147,7 @@ class GraphicModel(HasTraits):
 
             # c.use_backbuffer = False
             from reportlab.lib.pagesizes import LETTER
+
             c.do_layout(size=(LETTER[1], LETTER[1]), force=True)
             gc.render_component(c)
             #            c.use_backbuffer = True
@@ -146,15 +155,15 @@ class GraphicModel(HasTraits):
             self._name = os.path.basename(path)
 
     def load(self, path):
-        parser = ElementTree(file=open(path, 'r'))
-        circles = parser.find('circles')
-        outline = parser.find('outline')
+        parser = ElementTree(file=open(path, "r"))
+        circles = parser.find("circles")
+        outline = parser.find("outline")
 
-        bb = outline.find('bounding_box')
-        bs = bb.find('width'), bb.find('height')
+        bb = outline.find("bounding_box")
+        bs = bb.find("width"), bb.find("height")
         w, h = [float(b.text) for b in bs]
 
-        use_label = parser.find('use_label')
+        use_label = parser.find("use_label")
         if use_label is not None:
             use_label = to_bool(use_label.text.strip())
         else:
@@ -168,8 +177,8 @@ class GraphicModel(HasTraits):
         p.x_axis.visible = False
         p.y_axis.visible = False
 
-        p.x_axis.title = 'X cm'
-        p.y_axis.title = 'Y cm'
+        p.x_axis.title = "X cm"
+        p.y_axis.title = "Y cm"
 
         p.index_range.low_setting = -w / 2
         p.index_range.high_setting = w / 2
@@ -179,27 +188,27 @@ class GraphicModel(HasTraits):
 
         thetas = linspace(0, 2 * pi)
 
-        radius = circles.find('radius').text
+        radius = circles.find("radius").text
         radius = float(radius)
 
-        face_color = circles.find('face_color')
+        face_color = circles.find("face_color")
         if face_color is not None:
             face_color = face_color.text
         else:
-            face_color = 'white'
+            face_color = "white"
         labels = []
-        for i, pp in enumerate(circles.findall('point')):
-            x, y, l = pp.find('x').text, pp.find('y').text, pp.find('label').text
+        for i, pp in enumerate(circles.findall("point")):
+            x, y, l = pp.find("x").text, pp.find("y").text, pp.find("label").text
 
             #             print i, pp, x, y
             # load hole specific attrs
-            r = pp.find('radius')
+            r = pp.find("radius")
             if r is None:
                 r = radius
             else:
                 r = float(r.text)
 
-            fc = pp.find('face_color')
+            fc = pp.find("face_color")
             if fc is None:
                 fc = face_color
             else:
@@ -209,13 +218,11 @@ class GraphicModel(HasTraits):
             xs = x + r * sin(thetas)
             ys = y + r * cos(thetas)
 
-            xn, yn = 'px{:03d}'.format(i), 'py{:03d}'.format(i)
+            xn, yn = "px{:03d}".format(i), "py{:03d}".format(i)
             data.set_data(xn, xs)
             data.set_data(yn, ys)
 
-            plot = p.plot((xn, yn),
-                          face_color=fc,
-                          type='polygon')[0]
+            plot = p.plot((xn, yn), face_color=fc, type="polygon")[0]
             labels.append((x, y, l))
             # if use_label:
             #     label = myDataLabel(component=plot,
@@ -247,45 +254,52 @@ class GraphicModel(HasTraits):
             self.container = self._container_factory()
             print(os.path.isfile(self.srcpath), self.srcpath)
             if os.path.isfile(self.srcpath):
-                p = make_xml(self.srcpath,
-                             default_bounds=(2.54, 2.54),
-                             default_radius=0.0175 * 2.54,
-                             rotate=self.rotation,
-                             convert_mm=True)
+                p = make_xml(
+                    self.srcpath,
+                    default_bounds=(2.54, 2.54),
+                    default_radius=0.0175 * 2.54,
+                    rotate=self.rotation,
+                    convert_mm=True,
+                )
                 self.load(p)
 
     def _container_default(self):
         return self._container_factory()
 
     def _container_factory(self):
-        return RotatingContainer(bgcolor='white')
+        return RotatingContainer(bgcolor="white")
 
 
-def make_xml(path, offset=100, default_bounds=(50, 50),
-             default_radius=3.0, convert_mm=False,
-             make=True,
-             use_label=True,
-             rotate=0):
+def make_xml(
+    path,
+    offset=100,
+    default_bounds=(50, 50),
+    default_radius=3.0,
+    convert_mm=False,
+    make=True,
+    use_label=True,
+    rotate=0,
+):
     """
-        convert a csv into an xml
+    convert a csv into an xml
 
-        use blank line as a group marker
-        circle labels are offset by ``offset*group_id``
-        ie. group 0. 1,2,3
-            group 1. 101,102,103
+    use blank line as a group marker
+    circle labels are offset by ``offset*group_id``
+    ie. group 0. 1,2,3
+        group 1. 101,102,103
     """
-    out = '{}_from_csv.xml'.format(os.path.splitext(path)[0])
+    out = "{}_from_csv.xml".format(os.path.splitext(path)[0])
     if not make:
         return out
 
-    root = Element('root')
-    ul = Element('use_label')
-    ul.text = 'True' if use_label else 'False'
+    root = Element("root")
+    ul = Element("use_label")
+    ul.text = "True" if use_label else "False"
     root.append(ul)
 
-    outline = Element('outline')
-    bb = Element('bounding_box')
-    width, height = Element('width'), Element('height')
+    outline = Element("outline")
+    bb = Element("bounding_box")
+    width, height = Element("width"), Element("height")
     width.text, height.text = list(map(str, default_bounds))
     bb.append(width)
     bb.append(height)
@@ -293,24 +307,24 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
     outline.append(bb)
     root.append(outline)
 
-    circles = Element('circles')
-    radius = Element('radius')
+    circles = Element("circles")
+    radius = Element("radius")
     radius.text = str(default_radius)
     circles.append(radius)
 
-    face_color = Element('face_color')
-    face_color.text = 'white'
+    face_color = Element("face_color")
+    face_color.text = "white"
     circles.append(face_color)
 
     root.append(circles)
 
     i = 0
     off = 0
-    reader = csv.reader(open(path, 'r'), delimiter=',')
+    reader = csv.reader(open(path, "r"), delimiter=",")
     # writer = open(path + 'angles.txt', 'w')
     nwriter = None
     if rotate:
-        nwriter = csv.writer(open(path + 'rotated_{}.txt'.format(rotate), 'w'))
+        nwriter = csv.writer(open(path + "rotated_{}.txt".format(rotate), "w"))
 
     header = next(reader)
     if nwriter:
@@ -321,13 +335,13 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
         # print k, row
         row = list(map(str.strip, row))
         if row:
-            e = Element('point')
-            x, y, l = Element('x'), Element('y'), Element('label')
+            e = Element("point")
+            x, y, l = Element("x"), Element("y"), Element("label")
 
-            xx, yy = float(row[0]), float(row[1])
+            xx, yy = float(row[1]), float(row[2])
             try:
-                r = float(row[2])
-                rr = Element('radius')
+                r = float(row[4])
+                rr = Element("radius")
                 if convert_mm:
                     r *= 2.54
 
@@ -341,10 +355,9 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
 
             xx, yy = px, py
             if nwriter:
-                data = ['{:0.4f}'.format(xx),
-                        '{:0.4f}'.format(yy)]
+                data = ["{:0.4f}".format(xx), "{:0.4f}".format(yy)]
                 if r is not None:
-                    data.append('{:0.4f}'.format(r))
+                    data.append("{:0.4f}".format(r))
 
                 nwriter.writerow(data)
 
@@ -352,6 +365,8 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
                 xx = xx * 2.54
                 yy = yy * 2.54
 
+            xx *= 1.1
+            yy *= 1.1
             x.text = str(xx)
             y.text = str(yy)
 
@@ -370,25 +385,24 @@ def make_xml(path, offset=100, default_bounds=(50, 50),
             i = 0
 
     tree = ElementTree(root)
-    tree.write(out,
-               xml_declaration=True,
-               method='xml',
-               pretty_print=True)
+    tree.write(out, xml_declaration=True, method="xml", pretty_print=True)
     return out
 
 
-def open_txt(p, bounds, radius,
-             use_label=True,
-             convert_mm=False,
-             make=True, rotate=None):
+def open_txt(
+    p, bounds, radius, use_label=True, convert_mm=False, make=True, rotate=None
+):
     gm = GraphicModel(srcpath=p, rotation=rotate or 0)
-    p = make_xml(p,
-                 default_radius=radius,
-                 default_bounds=bounds,
-                 convert_mm=convert_mm,
-                 use_label=use_label,
-                 make=make,
-                 rotate=rotate)
+    p = make_xml(
+        p,
+        offset=0,
+        default_radius=radius,
+        default_bounds=bounds,
+        convert_mm=convert_mm,
+        use_label=use_label,
+        make=make,
+        rotate=rotate,
+    )
 
     #    p = '/Users/ross/Sandbox/graphic_gen_from_csv.xml'
     gm.load(p)
@@ -398,7 +412,7 @@ def open_txt(p, bounds, radius,
     return gcc, gm
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     gm = GraphicModel()
     # p = '/Users/ross/Sandbox/2mmirrad.txt'
     # p = '/Users/ross/Sandbox/2mmirrad_ordered.txt'
@@ -406,7 +420,7 @@ if __name__ == '__main__':
     # p = '/Users/ross/Sandbox/1_75mmirrad_ordered.txt'
     # p = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/0_75mmirrad_ordered1.txt'
     # p = '/Users/ross/Sandbox/1_75mmirrad.txt'
-    p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/1_75mmirrad_continuous.txt'
+    p = "/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/1_75mmirrad_continuous.txt"
     # p = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/0_75mmirrad.txt'
     # p = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/0_75mmirrad_continuous.txt'
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/newtrays/2mmirrad_continuous.txt'
@@ -418,10 +432,10 @@ if __name__ == '__main__':
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/16_40_ms.txt'
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes_rev2.txt'
     # p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/40_spokes-5.txt'
-    p = '/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/24_spokes.txt'
-    gcc, gm = open_txt(p, (2.54, 2.54), 0.03 * 2.54,
-                       convert_mm=True, make=True,
-                       rotate=0)
+    p = "/Users/ross/Pychrondata_dev/setupfiles/irradiation_tray_maps/construction/newtrays/24_spokes.txt"
+    p = "/Users/ross/PychronDev/data/o2inch.txt"
+    p = "/Users/ross/PychronDev/data/421.txt"
+    gcc, gm = open_txt(p, (51, 51), 0.95, convert_mm=False, make=True, rotate=0)
 
     #     p2 = '/Users/ross/Pychrondata_diode/setupfiles/irradiation_tray_maps/newtrays/TX_6-Hole.txt'
     #     gcc, gm2 = open_txt(p2, (2.54, 2.54), .1, make=False)

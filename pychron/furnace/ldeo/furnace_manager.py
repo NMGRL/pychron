@@ -37,11 +37,10 @@ class LDEOFurnaceManager(BaseFurnaceManager):
     canvas = Instance(MapCanvas)
     dumper_canvas = Instance(DumperCanvas)
 
-    settings_name = 'furnace_settings'
+    settings_name = "furnace_settings"
 
     def _controller_default(self):
-        c = LamontFurnaceControl(name='controller',
-                                 configuration_dir_name='furnace')
+        c = LamontFurnaceControl(name="controller", configuration_dir_name="furnace")
         return c
 
     def _canvas_factory(self):
@@ -64,15 +63,15 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         # self.loader_logic.manager = self
 
     def start_update(self):
-        self.info('Start update')
+        self.info("Start update")
         self.reset_scan_timer(func=self._update_scan)
 
     def stop_update(self):
-        self.info('Stop update')
+        self.info("Stop update")
         self._stop_update()
 
     def prepare_destroy(self):
-        self.debug('prepare destroy')
+        self.debug("prepare destroy")
         self._stop_update()
         # self.loader_logic.manager = None
         if self.timer:
@@ -82,11 +81,11 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         pv = self.controller.get_process_value()
         return pv
 
-    def extract(self, v, units='volts'):
+    def extract(self, v, units="volts"):
         self.controller.extract(v, units, furnace=1)
 
     def move_to_position(self, pos, *args, **kw):
-        self.debug('move to position {}'.format(pos))
+        self.debug("move to position {}".format(pos))
         if pos > 0:
             self.controller.goto_ball(pos)
         else:
@@ -99,8 +98,8 @@ class LDEOFurnaceManager(BaseFurnaceManager):
             try:
                 pos = int(pos[0])
             except TypeError:
-                self.warning('Position is not either an integer or a list')
-        self.debug('drop sample {}'.format(pos))
+                self.warning("Position is not either an integer or a list")
+        self.debug("drop sample {}".format(pos))
         self.controller.drop_ball(pos)
 
     def stop_motors(self):
@@ -112,7 +111,9 @@ class LDEOFurnaceManager(BaseFurnaceManager):
     def set_pid_parameters(self, v):
         pass  # not implemented
 
-    def set_setpoint(self, v):  # use 'extract' instead unless units are being parsed at a higher level
+    def set_setpoint(
+        self, v
+    ):  # use 'extract' instead unless units are being parsed at a higher level
         self.controller.set_furnace_setpoint(v, furnace=1)
 
     def read_output_percent(self, force=False, verbose=False):
@@ -129,19 +130,19 @@ class LDEOFurnaceManager(BaseFurnaceManager):
 
     # private
     def _clear_sample_states(self):
-        self.debug('clear sample states')
+        self.debug("clear sample states")
         self._backup_sample_states()
         self._dump_sample_states(states=[])
 
     def _load_sample_states(self):
-        self.debug('load sample states')
+        self.debug("load sample states")
         p = paths.furnace_sample_states
         if os.path.isfile(p):
             states = yload(p)
-            self.debug('states={}'.format(states))
+            self.debug("states={}".format(states))
             for si in states:
                 hole = self.stage_manager.stage_map.get_hole(si)
-                self.debug('si={} hole={}'.format(si, hole))
+                self.debug("si={} hole={}".format(si, hole))
                 if hole:
                     hole.analyzed = True
 
@@ -149,16 +150,16 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         if states is None:
             states = self.stage_manager.get_sample_states()
 
-        self.debug('dump sample states')
+        self.debug("dump sample states")
         p = paths.furnace_sample_states
-        with open(p, 'w') as wfile:
+        with open(p, "w") as wfile:
             yaml.dump(states, wfile)
 
     def _backup_sample_states(self):
         if os.path.isfile(paths.furnace_sample_states):
             root, base = os.path.split(paths.furnace_sample_states)
-            bp = os.path.join(root, '~{}'.format(base))
-            self.debug('backing up furnace sample states to {}'.format(bp))
+            bp = os.path.join(root, "~{}".format(base))
+            self.debug("backing up furnace sample states to {}".format(bp))
 
             shutil.copyfile(paths.furnace_sample_states, bp)
 
@@ -173,9 +174,9 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         d = self.controller.get_summary()
         if d:
 
-            output1 = d.get('OP1')
+            output1 = d.get("OP1")
             # output2 = d.get('OP2')  # not recorded right now
-            temp1 = d.get('TC1')
+            temp1 = d.get("TC1")
             # temp2 = d.get('TC2')  # not recorded right now
             if temp1 is not None:
                 self.temperature_readback = temp1
@@ -184,12 +185,16 @@ class LDEOFurnaceManager(BaseFurnaceManager):
                     output1 = 0
                 else:
                     output1 = round(output1, 2)
-                self.output_percent_readback = output1 * 10  # this is a voltage on a 0-10 scale
+                self.output_percent_readback = (
+                    output1 * 10
+                )  # this is a voltage on a 0-10 scale
 
-            self._update_scan_graph(output1, temp1, 0)  # not writing setpoint at moment since not implemented
+            self._update_scan_graph(
+                output1, temp1, 0
+            )  # not writing setpoint at moment since not implemented
 
     def _stop_update(self):
-        self.debug('stop update')
+        self.debug("stop update")
         self._alive = False
         self.timer.stop()
 
@@ -214,8 +219,8 @@ class LDEOFurnaceManager(BaseFurnaceManager):
                 self.graph.record(setpoint, x=x, track_y=False)
 
             if self.graph_y_auto:
-                temp_plot = self.graph.plots[0].plots['plot0'][0]
-                setpoint_plot = self.graph.plots[0].plots['plot1'][0]
+                temp_plot = self.graph.plots[0].plots["plot0"][0]
+                setpoint_plot = self.graph.plots[0].plots["plot1"][0]
 
                 temp_data = temp_plot.value.get_data()
                 setpoint_data = setpoint_plot.value.get_data()
@@ -226,7 +231,7 @@ class LDEOFurnaceManager(BaseFurnaceManager):
                 else:
                     mi = min(setpoint_data.min(), temp_data.min())
 
-                self.graph.set_y_limits(min_=mi, max_=ma, pad='0.1', plotid=0)
+                self.graph.set_y_limits(min_=mi, max_=ma, pad="0.1", plotid=0)
 
             if self._recording:
                 self.record_data_manager.write_to_frame((x, response or 0, output or 0))
@@ -235,7 +240,7 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         self._recording = True
         self.record_data_manager = dm = self._record_data_manager_factory()
         dm.new_frame(directory=paths.furnace_scans_dir)
-        dm.write_to_frame(('time', 'temperature', 'output'))
+        dm.write_to_frame(("time", "temperature", "output"))
         self._start_time = time.time()
 
     def _stop_recording(self):
@@ -245,22 +250,28 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         g = TimeSeriesStreamStackedGraph()
         # g.plotcontainer.padding_top = 5
         # g.plotcontainer.padding_right = 5
-        g.new_plot(xtitle='Time (s)', ytitle='Temp. (C)', padding_top=5, padding_left=75, padding_right=5)
+        g.new_plot(
+            xtitle="Time (s)",
+            ytitle="Temp. (C)",
+            padding_top=5,
+            padding_left=75,
+            padding_right=5,
+        )
         g.set_scan_width(600, plotid=0)
         g.set_data_limits(1.8 * 600, plotid=0)
 
         # setpoint
-        g.new_series(plotid=0, line_width=2,
-                     render_style='connectedhold')
+        g.new_series(plotid=0, line_width=2, render_style="connectedhold")
         # response
         g.new_series(plotid=0)
 
-        g.new_plot(ytitle='Output (%)', padding_top=5, padding_left=75, padding_right=5)
+        g.new_plot(ytitle="Output (%)", padding_top=5, padding_left=75, padding_right=5)
         g.set_scan_width(600, plotid=1)
         g.set_data_limits(1.8 * 600, plotid=1)
         g.new_series(plotid=1)
         g.set_y_limits(min_=-2, max_=102, plotid=1)
 
         return g
+
 
 # ============= EOF =============================================

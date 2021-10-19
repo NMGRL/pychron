@@ -23,14 +23,13 @@ from pychron.core.templater.base_templater import BaseTemplater
 
 
 class CommentTemplater(BaseTemplater):
-    attributes = List(['irrad_level', 'irrad_hole', '<SPACE>'])
-    example_context = Dict({'irrad_level': 'A',
-                            'irrad_hole': '9'})
+    attributes = List(["irrad_level", "irrad_hole", "<SPACE>"])
+    example_context = Dict({"irrad_level": "A", "irrad_hole": "9"})
 
-    base_predefined_labels = List(['', 'irrad_level : irrad_hole'])
+    base_predefined_labels = List(["", "irrad_level : irrad_hole"])
 
-    label = 'irrad_level : irrad_hole'
-    persistence_name = 'comment'
+    label = "irrad_level : irrad_hole"
+    persistence_name = "comment"
 
     def render(self, obj):
         f = self.formatter
@@ -39,8 +38,13 @@ class CommentTemplater(BaseTemplater):
     def _generate_context(self, obj):
         ctx = {}
         for ai in self.attributes:
-            v = ' ' if ai == '<SPACE>' else (obj.get(ai) if isinstance(obj, dict) else getattr(obj, ai))
+            v = (
+                " "
+                if ai == "<SPACE>"
+                else (obj.get(ai) if isinstance(obj, dict) else getattr(obj, ai))
+            )
             ctx[ai] = str(v)
         return ctx
+
 
 # ============= EOF =============================================

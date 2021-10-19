@@ -38,9 +38,9 @@ class DashboardSeries(BaseArArFigure):
         graph = self.graph
         for po in plots:
             if po.use:
-                p = graph.new_plot(padding=self.options.get_paddings(),
-                                   ytitle=po.name,
-                                   xtitle='Time')
+                p = graph.new_plot(
+                    padding=self.options.get_paddings(), ytitle=po.name, xtitle="Time"
+                )
 
                 p.value_scale = po.scale
                 p.padding_left = 75
@@ -48,7 +48,7 @@ class DashboardSeries(BaseArArFigure):
 
     def plot(self, plots, legend=None):
         """
-            plot data on plots
+        plot data on plots
         """
         graph = self.graph
 
@@ -71,29 +71,31 @@ class DashboardSeries(BaseArArFigure):
                         if not po.use_time_axis:
                             xs /= 3600
                         else:
-                            graph.convert_index_func = lambda x: '{:0.2f} hrs'.format(x / 3600.)
+                            graph.convert_index_func = lambda x: "{:0.2f} hrs".format(
+                                x / 3600.0
+                            )
 
                     self._plot_series(po, i, xs, ys)
 
                 if plots:
                     window_hours = 6
                     _ma = max(_ma, _mi + 3600 * window_hours)
-                    graph.set_x_limits(min_=_mi, max_=_ma, pad='0.1',
-                                       plotid=0)
+                    graph.set_x_limits(min_=_mi, max_=_ma, pad="0.1", plotid=0)
 
     def _plot_series(self, po, pid, xs, ys):
         graph = self.graph
         try:
-            scatter, p = graph.new_series(x=xs,
-                                          y=ys,
-                                          fit=po.fit,
-                                          plotid=pid,
-                                          type='scatter')
+            scatter, p = graph.new_series(
+                x=xs, y=ys, fit=po.fit, plotid=pid, type="scatter"
+            )
             if po.use_time_axis:
-                p.x_axis.tick_generator = ScalesTickGenerator(scale=CalendarScaleSystem())
+                p.x_axis.tick_generator = ScalesTickGenerator(
+                    scale=CalendarScaleSystem()
+                )
 
         except (KeyError, ZeroDivisionError) as e:
-            print('Series', e)
+            print("Series", e)
+
 
 # ===============================================================================
 # plotters

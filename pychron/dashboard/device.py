@@ -18,6 +18,7 @@
 
 from traits.api import Str, Bool, List, Instance, Event
 from traitsui.api import View, ListEditor, InstanceEditor, UItem, VGroup, HGroup, VSplit
+
 # ============= standard library imports ========================
 import random
 import struct
@@ -78,7 +79,7 @@ class DashboardDevice(Loggable):
 
     def trigger(self):
         """
-            trigger a new value if appropriate
+        trigger a new value if appropriate
         """
         for value in self.values:
             if not value.enabled:
@@ -86,18 +87,20 @@ class DashboardDevice(Loggable):
 
             st = time.time()
             dt = st - value.last_time
-            if value.period == 'on_change':
+            if value.period == "on_change":
                 if value.timeout and dt > value.timeout:
-                    self.debug('Force trigger. timeout={}'.format(value.timeout))
+                    self.debug("Force trigger. timeout={}".format(value.timeout))
                     self._trigger(value, force=True)
             elif dt > value.period:
                 self._trigger(value)
 
     def _trigger(self, value, **kw):
         try:
-            self.debug('triggering value device={} value={} func={}'.format(self.hardware_device.name,
-                                                                            value.name,
-                                                                            value.func_name))
+            self.debug(
+                "triggering value device={} value={} func={}".format(
+                    self.hardware_device.name, value.name, value.func_name
+                )
+            )
             nv = None
             func = getattr(self.hardware_device, value.func_name)
             if func is not None:
@@ -114,26 +117,46 @@ class DashboardDevice(Loggable):
             self.debug(traceback.format_exc())
             # value.use_pv = False
 
-    def add_value(self, name, tag, func_name, period, enabled, threshold, units, timeout, record, bindname):
-        pv = ProcessValue(name=name,
-                          tag=tag,
-                          func_name=func_name,
-                          period=period,
-                          enabled=enabled,
-                          timeout=float(timeout),
-                          units=units,
-                          change_threshold=threshold,
-                          record=record)
+    def add_value(
+        self,
+        name,
+        tag,
+        func_name,
+        period,
+        enabled,
+        threshold,
+        units,
+        timeout,
+        record,
+        bindname,
+    ):
+        pv = ProcessValue(
+            name=name,
+            tag=tag,
+            func_name=func_name,
+            period=period,
+            enabled=enabled,
+            timeout=float(timeout),
+            units=units,
+            change_threshold=threshold,
+            record=record,
+        )
 
-        if period == 'on_change':
+        if period == "on_change":
             if self.hardware_device:
                 if bindname:
-                    self.debug('bind to {}'.format(bindname))
+                    self.debug("bind to {}".format(bindname))
                     if hasattr(self.hardware_device, bindname):
-                        self.hardware_device.on_trait_change(lambda a, b, c, d: self._handle_change(pv, a, b, c, d),
-                                                             bindname)
+                        self.hardware_device.on_trait_change(
+                            lambda a, b, c, d: self._handle_change(pv, a, b, c, d),
+                            bindname,
+                        )
                     else:
-                        self.debug('{} has not attribute "{}"'.format(self.hardware_device, bindname))
+                        self.debug(
+                            '{} has not attribute "{}"'.format(
+                                self.hardware_device, bindname
+                            )
+                        )
 
                         # else:
                         #     self.warning('need to set bindname for {}'.format(self.name, name))
@@ -147,7 +170,7 @@ class DashboardDevice(Loggable):
         pv.conditionals.append(cond)
 
     def _handle_change(self, pv, obj, name, old, new):
-        self.debug('handle change {} {}'.format(name, new))
+        self.debug("handle change {} {}".format(name, new))
         self._push_value(pv, new)
 
     def _push_value(self, pv, new):
@@ -158,7 +181,11 @@ class DashboardDevice(Loggable):
             try:
                 v = float(new)
             except (ValueError, TypeError) as e:
-                self.warning('failed to push value pv.name={}, value={}, error={}'.format(pv.name, new, e))
+                self.warning(
+                    "failed to push value pv.name={}, value={}, error={}".format(
+                        pv.name, new, e
+                    )
+                )
                 return
 
             tripped = pv.is_different(v)
@@ -177,72 +204,98 @@ class DashboardDevice(Loggable):
         if not path:
             path, _ = unique_path2(paths.device_scan_dir, pv.name)
             pv.path = path
-            self.info('Saving {} to {}'.format(pv.name, path))
+            self.info("Saving {} to {}".format(pv.name, path))
 
-        with open(path, 'a') as wfile:
-            wfile.write('{},{}\n'.format(time.time(), v))
+        with open(path, "a") as wfile:
+            wfile.write("{},{}\n".format(time.time(), v))
 
     def _check_conditional(self, pv, new):
         conds = pv.conditionals
         if conds:
             if pv.flag:
-                self.debug('not checking conditionals. already tripped')
+                self.debug("not checking conditionals. already tripped")
             else:
                 for cond in conds:
-                    self.debug('checking conditional {}.{}.{}, value={}'.format(self.name, pv.name, cond.teststr, new))
+                    self.debug(
+                        "checking conditional {}.{}.{}, value={}".format(
+                            self.name, pv.name, cond.teststr, new
+                        )
+                    )
                     if cond.check(new):
                         pv.flag = cond.severity
-                        self.debug('conditional triggered. severity={}'.format(cond.severity))
-                        msg = '{}.{}.{} is True. value={}'.format(self.name, pv.name, cond.teststr, new)
-                        self.conditional_event = '{}|{}|{}|{}'.format(cond.severity,
-                                                                      cond.script,
-                                                                      cond.emails, msg)
+                        self.debug(
+                            "conditional triggered. severity={}".format(cond.severity)
+                        )
+                        msg = "{}.{}.{} is True. value={}".format(
+                            self.name, pv.name, cond.teststr, new
+                        )
+                        self.conditional_event = "{}|{}|{}|{}".format(
+                            cond.severity, cond.script, cond.emails, msg
+                        )
 
     def dump_meta(self):
         d = []
 
         for pv in self.values:
-            dd = dict(((a, getattr(pv, a))
-                       for a in ('name', 'tag', 'enabled', 'func_name', 'period', 'timeout')))
+            dd = dict(
+                (
+                    (a, getattr(pv, a))
+                    for a in (
+                        "name",
+                        "tag",
+                        "enabled",
+                        "func_name",
+                        "period",
+                        "timeout",
+                    )
+                )
+            )
             d.append(dd)
         return yaml.dump(d)
 
     def get_scan_fmt(self):
         n = len(self.values) * 2
-        fmt = '>{}'.format('f' * n)
+        fmt = ">{}".format("f" * n)
         return fmt
 
     def append_scan_blob(self, blob=None, fmt=None):
-        new_args = [a for v in self.values
-                    for a in (v.last_time, v.last_value)]
+        new_args = [a for v in self.values for a in (v.last_time, v.last_value)]
 
         if blob:
-            step = 4 * fmt.count('f')
-            args = zip(*[struct.unpack(fmt, blob[i:i + step]) for i in range(0, len(blob), step)])
+            step = 4 * fmt.count("f")
+            args = zip(
+                *[
+                    struct.unpack(fmt, blob[i : i + step])
+                    for i in range(0, len(blob), step)
+                ]
+            )
             ns = []
             for blobv, lastv in zip(args, new_args):
                 blobv = list(blobv)
                 blobv.append(lastv)
                 ns.append(blobv)
-            blob = ''.join([struct.pack(fmt, *v) for v in zip(*ns)])
+            blob = "".join([struct.pack(fmt, *v) for v in zip(*ns)])
         else:
-            fmt = '>{}'.format('f' * len(new_args))
+            fmt = ">{}".format("f" * len(new_args))
             blob = struct.pack(fmt, *new_args)
 
         return blob
 
     def traits_view(self):
-        hgrp = HGroup(UItem('use'), UItem('name', style='readonly'))
-        dgrp = VGroup(UItem('values',
-                            editor=ListEditor(editor=InstanceEditor(),
-                                              style='custom',
-                                              mutable=False), ),
-                      show_border=True,
-                      enabled_when='use')
-        ggrp = UItem('graph', style='custom')
-        v = View(VGroup(hgrp,
-                        VSplit(dgrp,
-                               ggrp)))
+        hgrp = HGroup(UItem("use"), UItem("name", style="readonly"))
+        dgrp = VGroup(
+            UItem(
+                "values",
+                editor=ListEditor(
+                    editor=InstanceEditor(), style="custom", mutable=False
+                ),
+            ),
+            show_border=True,
+            enabled_when="use",
+        )
+        ggrp = UItem("graph", style="custom")
+        v = View(VGroup(hgrp, VSplit(dgrp, ggrp)))
         return v
+
 
 # ============= EOF =============================================

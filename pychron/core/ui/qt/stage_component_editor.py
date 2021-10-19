@@ -40,41 +40,40 @@ class _LaserComponentEditor(_ComponentEditor):
     keyboard_focus = Event
 
     def init(self, parent):
-        '''
+        """
         Finishes initializing the editor by creating the underlying toolkit
         widget.
-   
-        '''
+
+        """
 
         size = self._get_initial_size()
-        self._window = Window(parent,
-                              size=size,
-                              component=self.value)
+        self._window = Window(parent, size=size, component=self.value)
 
         self.control = self._window.control
         self._window.bgcolor = self.factory.bgcolor
         self._parent = parent
 
-        self.sync_value('keyboard_focus', 'keyboard_focus', mode='both')
+        self.sync_value("keyboard_focus", "keyboard_focus", mode="both")
         self._window.on_key_release = self.onKeyUp
 
     def onKeyUp(self, event):
 
+        """
+        key_released looking for text repr
 
-        '''
-            key_released looking for text repr
-            
-            <-- = left
-            --> = right
-        '''
+        <-- = left
+        --> = right
+        """
         ekey = event.key()
-        for sk, n in ((Qt.Key_Left, 'left'),
-                      (Qt.Key_Right, 'right'),
-                      (Qt.Key_Up, 'up'),
-                      (Qt.Key_Down, 'down')):
+        for sk, n in (
+            (Qt.Key_Left, "left"),
+            (Qt.Key_Right, "right"),
+            (Qt.Key_Up, "up"),
+            (Qt.Key_Down, "down"),
+        ):
 
             if ekey == sk:
-                if hasattr(self.value, 'key_released'):
+                if hasattr(self.value, "key_released"):
                     self.value.key_released(n)
                 break
 
@@ -85,5 +84,6 @@ class _LaserComponentEditor(_ComponentEditor):
 class LaserComponentEditor(ComponentEditor):
     klass = _LaserComponentEditor
     keyboard_focus = Str
+
 
 # ============= EOF =============================================

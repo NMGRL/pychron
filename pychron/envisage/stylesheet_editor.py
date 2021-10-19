@@ -41,20 +41,20 @@ import six
 # QToolTip {font-size: 14px}'''}
 class Element(HasTraits):
     def generate_css(self):
-        return 'Q{} {{{}}}'.format(self.__class__.__name__, self._generate_css())
+        return "Q{} {{{}}}".format(self.__class__.__name__, self._generate_css())
 
     def _generate_css(self):
-        return ''
+        return ""
 
 
 class FontElement(Element):
     font_size = Int
 
     def _generate_font_size(self):
-        return 'font-size: {}px'.format(self.font_size)
+        return "font-size: {}px".format(self.font_size)
 
     def _generate_css(self):
-        return ';'.join((self._generate_font_size(),))
+        return ";".join((self._generate_font_size(),))
 
 
 class LineEdit(FontElement):
@@ -78,7 +78,7 @@ class ToolTip(FontElement):
 
 
 class StyleSheetEditor(HasTraits):
-    element_names = List(['LineEdit', 'GroupBox', 'ComboBox', 'Label', 'ToolTip'])
+    element_names = List(["LineEdit", "GroupBox", "ComboBox", "Label", "ToolTip"])
     elements = Dict
     active_element = Instance(Element)
     selected = Any
@@ -88,13 +88,15 @@ class StyleSheetEditor(HasTraits):
     def __init__(self, *args, **kw):
         super(StyleSheetEditor, self).__init__(*args, **kw)
 
-        self.elements = {'LineEdit': LineEdit(),
-                         'GroupBox': GroupBox(),
-                         'ComboBox': ComboBox(),
-                         'Label': Label(),
-                         'ToolTip': ToolTip()}
+        self.elements = {
+            "LineEdit": LineEdit(),
+            "GroupBox": GroupBox(),
+            "ComboBox": ComboBox(),
+            "Label": Label(),
+            "ToolTip": ToolTip(),
+        }
 
-        self.selected = 'LineEdit'
+        self.selected = "LineEdit"
 
     def _test_fired(self):
         txt = self.generate_css()
@@ -104,19 +106,23 @@ class StyleSheetEditor(HasTraits):
         for ei in six.itervalues(self.elements):
             txt.append(ei.generate_css())
 
-        return '\n'.join(txt)
+        return "\n".join(txt)
 
     def _selected_changed(self):
         self.active_element = self.elements[self.selected]
 
     def traits_view(self):
-        v = View(Item('test'),
-                 HGroup(UItem('element_names', editor=ListStrEditor(selected='selected')),
-                        UItem('active_element', style='custom', editor=InstanceEditor())))
+        v = View(
+            Item("test"),
+            HGroup(
+                UItem("element_names", editor=ListStrEditor(selected="selected")),
+                UItem("active_element", style="custom", editor=InstanceEditor()),
+            ),
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     s = StyleSheetEditor()
     s.configure_traits()
 # ============= EOF =============================================

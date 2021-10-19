@@ -18,8 +18,8 @@ from pychron.pipeline.nodes.figure import FigureNode
 
 
 class ClusterNode(FigureNode):
-    name = 'Cluster'
-    editor_klass = 'pychron.ml.editors.cluster,ClusterEditor'
+    name = "Cluster"
+    editor_klass = "pychron.ml.editors.cluster,ClusterEditor"
     plotter_options_manager_klass = ClusterOptionsManager
 
     # def _options_view_default(self):
@@ -50,5 +50,6 @@ class ClusterNode(FigureNode):
         #
         #     editor.set_positions(ps)
         #     editor.name = 'Flux Visualization: {}{}'.format(state.irradiation, state.level)
+
 
 # ============= EOF =============================================

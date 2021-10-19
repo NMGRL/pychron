@@ -27,7 +27,7 @@ class StackedRegressionGraph(RegressionGraph, StackedGraph):
             scatter, plot = ret
 
         if self.bind_index:
-            bind_id = kw.get('bind_id')
+            bind_id = kw.get("bind_id")
             if bind_id:
                 self._bind_index(scatter, bind_id)
         return ret
@@ -66,12 +66,16 @@ def main_regtest():
 
     # y += d
 
-    fod = {'filter_outliers': False, 'iterations': 1, 'std_devs': 2}
-    rg.new_series(x, y,
-                  # yerror=random.rand(n)*5,
-                  fit='linear_SD',
-                  # truncate='x<1',
-                  filter_outliers_dict=fod, plotid=0)
+    fod = {"filter_outliers": False, "iterations": 1, "std_devs": 2}
+    rg.new_series(
+        x,
+        y,
+        # yerror=random.rand(n)*5,
+        fit="linear_SD",
+        # truncate='x<1',
+        filter_outliers_dict=fod,
+        plotid=0,
+    )
     rg.add_statistics(plotid=0)
     # fod = {'filter_outliers': True, 'iterations': 1, 'std_devs': 2}
     # rg.new_series(x, y,
@@ -80,11 +84,15 @@ def main_regtest():
     #               # truncate='x<1',
     #               filter_outliers_dict=fod, plotid=1)
     # fod = {'filter_outliers': True, 'iterations': 1, 'std_devs': 2}
-    rg.new_series(x, y2,
-                  # yerror=random.rand(n)*5,
-                  fit='average_SD',
-                  # truncate='x<1',
-                  filter_outliers_dict=fod, plotid=1)
+    rg.new_series(
+        x,
+        y2,
+        # yerror=random.rand(n)*5,
+        fit="average_SD",
+        # truncate='x<1',
+        filter_outliers_dict=fod,
+        plotid=1,
+    )
     rg.add_statistics(plotid=1)
     rg.set_y_limits(0, 20, plotid=0)
     rg.set_y_limits(0, 20, plotid=1)
@@ -95,20 +103,24 @@ def main_regtest():
 def main_coltest():
     from numpy import Inf, linspace
     from math import ceil
-    isotopes = ['a', 'b', 'c', 'd', 'e']
+
+    isotopes = ["a", "b", "c", "d", "e"]
     show_statistics = False
     show_evo = True
     ncols = 2
-    nrows = ceil(len(isotopes)/ncols)
-    g = ColumnStackedRegressionGraph(ncols=ncols, nrows=nrows, container_dict={'padding_top': 40,
-                                                                               'padding_bottom': 40})
+    nrows = ceil(len(isotopes) / ncols)
+    g = ColumnStackedRegressionGraph(
+        ncols=ncols,
+        nrows=nrows,
+        container_dict={"padding_top": 40, "padding_bottom": 40},
+    )
     xmi, xma = 0, -Inf
 
     def min_max(a, b, vs):
         return min(a, vs.min()), max(b, vs.max())
 
     def split(l, n):
-        return [l[i:i + n] for i in range(0, len(l), n)]
+        return [l[i : i + n] for i in range(0, len(l), n)]
 
     def reorder(l):
         nl = []
@@ -122,15 +134,15 @@ def main_coltest():
 
     ff = split(isotopes, nrows)
     isotopes = reorder(ff)
-    print('ff', ff)
-    print('as', isotopes)
+    print("ff", ff)
+    print("as", isotopes)
 
     for i, iso in enumerate(isotopes):
         ymi, yma = Inf, -Inf
 
         p = g.new_plot(padding=[80, 10, 10, 40])
-        g.add_limit_tool(p, 'x')
-        g.add_limit_tool(p, 'y')
+        g.add_limit_tool(p, "x")
+        g.add_limit_tool(p, "y")
         g.add_axis_tool(p, p.x_axis)
         g.add_axis_tool(p, p.y_axis)
         if show_statistics:
@@ -152,10 +164,8 @@ def main_coltest():
             #     iso.fit = 'linear'
             xs = linspace(0, 100)
             ys = 1000 - 0.1 * xs
-            fit = 'linear'
-            g.new_series(xs, ys,
-                         fit=fit,
-                         color='black')
+            fit = "linear"
+            g.new_series(xs, ys, fit=fit, color="black")
             ymi, yma = min_max(ymi, yma, ys)
             xmi, xma = min_max(xmi, xma, xs)
 
@@ -168,14 +178,14 @@ def main_coltest():
         #     ymi, yma = min_max(ymi, yma, baseline.ys)
         #     xmi, xma = min_max(xmi, xma, baseline.offset_xs)
 
-        g.set_x_limits(min_=xmi, max_=xma, pad='0.025,0.05')
-        g.set_y_limits(min_=ymi, max_=yma, pad='0.05', plotid=i)
-        g.set_x_title('Time (s)', plotid=i)
+        g.set_x_limits(min_=xmi, max_=xma, pad="0.025,0.05")
+        g.set_y_limits(min_=ymi, max_=yma, pad="0.05", plotid=i)
+        g.set_x_title("Time (s)", plotid=i)
         g.set_y_title(iso, plotid=i)
 
     g.configure_traits()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main_coltest()
 # ============= EOF =============================================

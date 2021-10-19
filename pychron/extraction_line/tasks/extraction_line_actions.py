@@ -29,28 +29,30 @@ from pychron.envisage.view_util import open_view
 
 
 class AutoReloadAction(TaskAction):
-    name = 'Auto Reload'
-    method = 'enable_auto_reload'
+    name = "Auto Reload"
+    method = "enable_auto_reload"
 
 
 class SampleLoadingAction(TaskAction):
-    name = 'Load Samples'
-    method = 'do_sample_loading'
-    image = icon('arrow_out')
+    name = "Load Samples"
+    method = "do_sample_loading"
+    image = icon("arrow_out")
 
 
 class ExtractionLineAction(Action):
     def _get_manager(self, event, app=None):
-        EL_PROTOCOL = 'pychron.extraction_line.extraction_line_manager.ExtractionLineManager'
+        EL_PROTOCOL = (
+            "pychron.extraction_line.extraction_line_manager.ExtractionLineManager"
+        )
         if app is None:
             app = event.task.window.application
         return app.get_service(EL_PROTOCOL)
 
 
 class OpenExtractionLineManager(ExtractionLineAction):
-    description = 'Open extraction line manager'
-    name = 'Open Extraction Line Manager'
-    accelerator = 'Ctrl+E'
+    description = "Open extraction line manager"
+    name = "Open Extraction Line Manager"
+    accelerator = "Ctrl+E"
 
     def perform(self, event):
         man = self._get_manager(event)
@@ -58,7 +60,7 @@ class OpenExtractionLineManager(ExtractionLineAction):
 
 
 class OpenExtractionLineExplanation(ExtractionLineAction):
-    description = 'Open extraction line explanation'
+    description = "Open extraction line explanation"
 
     def perform(self, event):
         man = self._get_manager(event)
@@ -66,24 +68,23 @@ class OpenExtractionLineExplanation(ExtractionLineAction):
 
 
 class LoadCanvasAction(ExtractionLineAction):
-    """
-    """
-    description = 'load an updated canvas file'
-    name = 'Load Canvas'
+    """ """
+
+    description = "load an updated canvas file"
+    name = "Load Canvas"
     enabled = False
 
     def perform(self, event):
-        """
-
-        """
+        """ """
         manager = self._get_manager(event)
         #        manager.window = self.window
         manager.load_canvas()
 
 
 class RefreshCanvasAction(ExtractionLineAction):
-    description = 'reload the scene graph to reflect changes made to setupfiles'
-    name = 'Refresh Canvas'
+    description = "reload the scene graph to reflect changes made to setupfiles"
+    name = "Refresh Canvas"
+
     #    enabled = False
 
     def perform(self, event):
@@ -93,13 +94,15 @@ class RefreshCanvasAction(ExtractionLineAction):
 
 
 class StopWatchAction(Action):
-    name = 'Stop Watch'
-    description = 'Simple stopwatch with call outs at desired intervals'
+    name = "Stop Watch"
+    description = "Simple stopwatch with call outs at desired intervals"
 
     def perform(self, event):
         from pychron.extraction_line.stop_watch import StopWatch
+
         sw = StopWatch()
         open_view(sw)
+
 
 # class OpenViewControllerAction(ExtractionLineAction):
 #    description = 'Open User views'
@@ -154,7 +157,7 @@ class OpenPyScriptEditorAction(ExtractionLineAction):
 
 
 class OpenMultiplexerAction(ExtractionLineAction):
-    accelerator = 'Ctrl+Shift+M'
+    accelerator = "Ctrl+Shift+M"
 
     def __init__(self, *args, **kw):
         super(OpenMultiplexerAction, self).__init__(*args, **kw)
@@ -166,5 +169,6 @@ class OpenMultiplexerAction(ExtractionLineAction):
         manager = self._get_manager(event)
         if manager.multiplexer_manager:
             open_view(manager.multiplexer_manager)
+
 
 # ============= EOF ====================================

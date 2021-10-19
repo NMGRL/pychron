@@ -22,8 +22,15 @@ import os
 
 import six
 from traits.api import HasTraits, Button, String, List, Any, Instance
-from traitsui.api import View, UItem, HGroup, VGroup, ListStrEditor, HSplit, \
-    TabularEditor
+from traitsui.api import (
+    View,
+    UItem,
+    HGroup,
+    VGroup,
+    ListStrEditor,
+    HSplit,
+    TabularEditor,
+)
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -47,18 +54,18 @@ class RunBlock(Loggable):
         pass
 
     def make_runs(self, path):
-        with open(path, 'r') as rfile:
+        with open(path, "r") as rfile:
             line_gen = self._get_line_generator(rfile)
             return self._load_runs(line_gen)
 
     def _get_line_generator(self, txt):
         if isinstance(txt, (str, six.text_type)):
-            return (l for l in txt.split('\n'))
+            return (l for l in txt.split("\n"))
         else:
             return txt
 
     def _runs_gen(self, line_gen):
-        delim = '\t'
+        delim = "\t"
 
         header = [l.strip() for l in next(line_gen).split(delim)]
         pklass = RunParser
@@ -71,9 +78,9 @@ class RunBlock(Loggable):
             line = line.rstrip()
 
             # load commented runs but flag as skipped
-            if line.startswith('##'):
+            if line.startswith("##"):
                 continue
-            if line.startswith('#'):
+            if line.startswith("#"):
                 skip = True
                 line = line[1:]
 
@@ -83,10 +90,10 @@ class RunBlock(Loggable):
             try:
                 script_info, params = parser.parse(header, line)
                 self._add_queue_meta(params)
-                params['skip'] = skip
-                params['mass_spectrometer'] = self.mass_spectrometer
-                if not params.get('repository_identifier'):
-                    params['repository_identifier'] = self.repository_identifier
+                params["skip"] = skip
+                params["mass_spectrometer"] = self.mass_spectrometer
+                if not params.get("repository_identifier"):
+                    params["repository_identifier"] = self.repository_identifier
 
                 klass = AutomatedRunSpec
                 if self.extract_device == FUSIONS_UV:
@@ -101,14 +108,18 @@ class RunBlock(Loggable):
                 import traceback
 
                 print(traceback.print_exc())
-                self.warning_dialog('Invalid Experiment file {}\nlinenum= {}\nline= {}'.format(e, linenum, line))
+                self.warning_dialog(
+                    "Invalid Experiment file {}\nlinenum= {}\nline= {}".format(
+                        e, linenum, line
+                    )
+                )
 
                 break
 
     def _load_runs(self, line_gen):
-        self.debug('loading runs')
+        self.debug("loading runs")
         aruns = list(self._runs_gen(line_gen))
-        self.debug('returning nruns {}'.format(len(aruns)))
+        self.debug("returning nruns {}".format(len(aruns)))
         return aruns
 
 
@@ -125,7 +136,7 @@ class RunBlockEditView(HasTraits):
 
     def _load_blocks(self):
         p = paths.run_block_dir
-        blocks = glob_list_directory(p, '.txt', remove_extension=True)
+        blocks = glob_list_directory(p, ".txt", remove_extension=True)
         self.blocks = blocks
 
     def _delete_run_fired(self):
@@ -142,16 +153,24 @@ class RunBlockEditView(HasTraits):
 
     def traits_view(self):
         adapter = RunBlockAdapter()
-        v = View(HSplit(VGroup(UItem('blocks',
-                                     width=0.25,
-                                     editor=ListStrEditor(selected='selected')),
-                               HGroup(icon_button_editor('delete_run', 'delete'))),
-                        UItem('runs',
-                              width=0.75,
-                              editor=TabularEditor(editable=False,
-                                                   adapter=adapter))),
-                 width=900,
-                 resizable=True)
+        v = View(
+            HSplit(
+                VGroup(
+                    UItem(
+                        "blocks", width=0.25, editor=ListStrEditor(selected="selected")
+                    ),
+                    HGroup(icon_button_editor("delete_run", "delete")),
+                ),
+                UItem(
+                    "runs",
+                    width=0.75,
+                    editor=TabularEditor(editable=False, adapter=adapter),
+                ),
+            ),
+            width=900,
+            resizable=True,
+        )
         return v
+
 
 # ============= EOF =============================================

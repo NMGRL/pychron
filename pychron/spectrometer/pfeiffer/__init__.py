@@ -19,9 +19,10 @@ ERRORS = []
 class PfeifferMixin(object):
     def handle_response(self, cmd, resp, *args, **kw):
         if resp in ERRORS:
-            if hasattr(self, 'warning'):
-                self.warning('Command {}==>{},{}'.format(cmd, resp, ERRORS[resp]))
+            if hasattr(self, "warning"):
+                self.warning("Command {}==>{},{}".format(cmd, resp, ERRORS[resp]))
             resp = None
         return resp
+
 
 # ============= EOF =============================================

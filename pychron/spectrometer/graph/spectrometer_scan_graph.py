@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import List, Str, on_trait_change, Button, Instance
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.graph.time_series_graph import TimeSeriesStreamGraph
@@ -31,7 +32,7 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
     markers = List
     use_vertical_markers = False
 
-    add_visual_marker_button = Button('Add Visual Marker')
+    add_visual_marker_button = Button("Add Visual Marker")
     marker_text = Str
     marker_tool = Instance(MarkerTool)
 
@@ -54,32 +55,38 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
             o.request_redraw()
 
     def get_marker_overlays(self):
-        return [o for p in self.plots
-                for layer in (p.underlays, p.overlays)
-                for o in layer if isinstance(o, (MarkerOverlay, MarkerLineOverlay))]
+        return [
+            o
+            for p in self.plots
+            for layer in (p.underlays, p.overlays)
+            for o in layer
+            if isinstance(o, (MarkerOverlay, MarkerLineOverlay))
+        ]
 
-    def add_visual_marker(self, text=None, bgcolor='white'):
+    def add_visual_marker(self, text=None, bgcolor="white"):
         if text is None:
             text = self.marker_text
 
         for i, p in enumerate(self.plots):
             for t in p.overlays:
                 if isinstance(t, MarkerOverlay):
-                    xd = p.data.get_data('x1')
+                    xd = p.data.get_data("x1")
                     x = p.map_screen([(xd[-1], 0)])[0][0]
                     y = 500 + self.visual_marker_counter * 21
                     if y > p.y2 - 20:
                         self.visual_marker_counter = -1
                         y = p.y2 - 20
 
-                    m = t.add_marker(x, y, text, bgcolor, vertical_marker=self.use_vertical_markers)
+                    m = t.add_marker(
+                        x, y, text, bgcolor, vertical_marker=self.use_vertical_markers
+                    )
                     self.visual_marker_counter += 1
                     self.markers.append(m)
                     for u in p.underlays:
                         if isinstance(u, MarkerLineOverlay):
                             l = u.add_marker_line(x, bgcolor)
-                            m.on_trait_change(l.set_visible, 'visible')
-                            m.on_trait_change(l.set_x, 'x')
+                            m.on_trait_change(l.set_visible, "visible")
+                            m.on_trait_change(l.set_x, "x")
         self.redraw()
 
     def new_plot(self, *args, **kw):
@@ -88,9 +95,13 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
         mo = MarkerOverlay(component=p, use_vertical_markers=self.use_vertical_markers)
         mu = MarkerLineOverlay(component=p)
 
-        mt = MarkerTool(component=p, overlay=mo, underlay=mu,
-                        use_vertical_markers=self.use_vertical_markers)
-        mt.on_trait_change(self._update_markers, 'marker_added')
+        mt = MarkerTool(
+            component=p,
+            overlay=mo,
+            underlay=mu,
+            use_vertical_markers=self.use_vertical_markers,
+        )
+        mt.on_trait_change(self._update_markers, "marker_added")
         self.marker_tool = mt
         p.tools.append(mt)
         p.overlays.append(mo)
@@ -107,12 +118,12 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
     def _update_markers(self, new):
         self.markers.append(new)
 
-    @on_trait_change('markers:x')
+    @on_trait_change("markers:x")
     def _handle_marker_layout(self, obj, name, old, new):
         if new < 0:
             self.markers.remove(obj)
 
-    @on_trait_change('markers[]')
+    @on_trait_change("markers[]")
     def _handle_markers_change(self, obj, name, old, new):
         if len(new) < len(old):
             clear = not self.markers
@@ -144,5 +155,6 @@ class SpectrometerScanGraph(TimeSeriesStreamGraph):
 
             self.invalidate_markers()
             self.redraw()
+
 
 # ============= EOF =============================================

@@ -18,11 +18,21 @@
 from __future__ import absolute_import
 
 from pyface.qt.QtCore import QRegExp, Qt
-from pyface.qt.QtGui import QHBoxLayout, QPushButton, QSizePolicy, QLineEdit, QCheckBox, \
-    QSortFilterProxyModel
+from pyface.qt.QtGui import (
+    QHBoxLayout,
+    QPushButton,
+    QSizePolicy,
+    QLineEdit,
+    QCheckBox,
+    QSortFilterProxyModel,
+)
 from traits.trait_types import Str, Bool, Any, Int
 
-from pychron.core.ui.qt.tabular_editor import myTabularEditor, _TableView, _TabularEditor
+from pychron.core.ui.qt.tabular_editor import (
+    myTabularEditor,
+    _TableView,
+    _TabularEditor,
+)
 from pychron.envisage.resources import icon
 
 
@@ -58,11 +68,10 @@ class _FilterTableView(_TableView):
 
         hl = QHBoxLayout()
         self.button = button = QPushButton()
-        button.setIcon(icon('delete').create_icon())
+        button.setIcon(icon("delete").create_icon())
         button.setEnabled(False)
         button.setFlat(True)
-        button.setSizePolicy(QSizePolicy.Fixed,
-                             QSizePolicy.Fixed)
+        button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
         button.setFixedWidth(15)
         button.setFixedHeight(15)
@@ -99,11 +108,10 @@ class _EnableFilterTableView(_FilterTableView):
         # hl.setSpacing(10)
         #
         self.button = button = QPushButton()
-        button.setIcon(icon('delete').create_icon())
+        button.setIcon(icon("delete").create_icon())
         button.setEnabled(False)
         button.setFlat(True)
-        button.setSizePolicy(QSizePolicy.Fixed,
-                             QSizePolicy.Fixed)
+        button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         button.setFixedWidth(15)
         button.setFixedHeight(15)
 
@@ -187,27 +195,28 @@ class _FilterTabularEditor(_TabularEditor):
         self.control.selectionModel().selectionChanged.connect(slot)
 
     def _scroll_to_row_changed(self, row):
-        scroll_hint = self.scroll_to_row_hint_map.get(self.factory.scroll_to_row_hint, self.control.PositionAtCenter)
+        scroll_hint = self.scroll_to_row_hint_map.get(
+            self.factory.scroll_to_row_hint, self.control.PositionAtCenter
+        )
         if self.proxyModel:
             self.control.scrollTo(self.proxyModel.index(row, 0), scroll_hint)
 
     def on_action(self):
-        self.control.text.setText('')
+        self.control.text.setText("")
 
     def on_text_change(self):
         ft = self.control.get_text()
         if self.use_fuzzy:
-            reg = QRegExp('.*'.join(ft), Qt.CaseInsensitive)
+            reg = QRegExp(".*".join(ft), Qt.CaseInsensitive)
         else:
-            reg = QRegExp('^{}'.format(ft), Qt.CaseInsensitive)
+            reg = QRegExp("^{}".format(ft), Qt.CaseInsensitive)
 
         self.proxyModel.setFilterRegExp(reg)
         self.control.sortByColumn(0, self.proxyModel.sortOrder())
         self.control.button.setEnabled(bool(ft))
 
     def _on_row_selection(self, added, removed):
-        """ Handle the row selection being changed.
-        """
+        """Handle the row selection being changed."""
         self._no_update = True
         try:
             indexes = self.control.selectionModel().selectedRows()
@@ -215,8 +224,9 @@ class _FilterTabularEditor(_TabularEditor):
 
             if index:
                 self.selected_row = index.row()
-                self.selected = self.adapter.get_item(self.object, self.name,
-                                                      self.selected_row)
+                self.selected = self.adapter.get_item(
+                    self.object, self.name, self.selected_row
+                )
             else:
                 self.selected_row = -1
                 self.selected = None
@@ -224,8 +234,7 @@ class _FilterTabularEditor(_TabularEditor):
             self._no_update = False
 
     def _on_rows_selection(self, added, removed):
-        """ Handle the rows selection being changed.
-        """
+        """Handle the rows selection being changed."""
         self._no_update = True
         try:
             indexes = self.control.selectionModel().selectedRows()
@@ -235,8 +244,7 @@ class _FilterTabularEditor(_TabularEditor):
                 index = self.proxyModel.mapToSource(index)
                 row = index.row()
                 selected_rows.append(row)
-                selected.append(self.adapter.get_item(self.object, self.name,
-                                                      row))
+                selected.append(self.adapter.get_item(self.object, self.name, row))
             self.multi_selected_rows = selected_rows
             self.multi_selected = selected
         finally:
@@ -252,7 +260,7 @@ class _EnableFilterTabularEditor(_FilterTabularEditor):
 
         self.control.cb.stateChanged.connect(self.on_cb)
         if self.factory.enabled_cb:
-            self.sync_value(self.factory.enabled_cb, 'enabled_cb', 'both')
+            self.sync_value(self.factory.enabled_cb, "enabled_cb", "both")
 
     def _enabled_cb_changed(self, new):
         self.control.text.setEnabled(new)
@@ -276,5 +284,6 @@ class FilterTabularEditor(myTabularEditor):
             return _EnableFilterTabularEditor
         else:
             return _FilterTabularEditor
+
 
 # ============= EOF =============================================

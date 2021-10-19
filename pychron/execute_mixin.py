@@ -26,13 +26,14 @@ from traits.api import HasTraits, Event, Property, Bool
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class ExecuteMixin(HasTraits):
     execute = Event
-    execute_label = Property(depends_on='executing')
+    execute_label = Property(depends_on="executing")
     executing = Bool
 
     def _get_execute_label(self):
-        return 'Stop' if self.executing else 'Start'
+        return "Stop" if self.executing else "Start"
 
     def _execute_fired(self):
         if self.executing:
@@ -56,5 +57,6 @@ class ExecuteMixin(HasTraits):
 
     def isAlive(self):
         return self.executing
+
 
 # ============= EOF =============================================

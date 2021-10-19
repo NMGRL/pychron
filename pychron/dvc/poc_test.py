@@ -40,28 +40,36 @@ proof of concept test see gist https://gist.github.com/jirhiker/3ba3e1e358ef933f
 dvc = DVC(clear_db=True, auto_add=True)
 DP = dvc.db.path
 
-units_map = {'K': 1e3, 'M': 1e6, 'G': 1e9}
+units_map = {"K": 1e3, "M": 1e6, "G": 1e9}
 
 
 def get_dir_size(path):
-    return subprocess.check_output(['du', '-sh', path]).split()[0].decode('utf-8')
+    return subprocess.check_output(["du", "-sh", path]).split()[0].decode("utf-8")
 
 
 def report_irrad_stats(wfile, nirrads, nlevels, npositions):
     if nirrads == 1 and nlevels == 1:
-        print('{:<10s}{:<10s}{:<10s}{:<10s}{:<10s}'.format('irrad', 'level', 'pos', 'sizedb', 'sizegit'))
-        wfile.write('{}\n'.format(','.join(('irrad', 'level', 'pos', 'sizedb', 'sizegit'))))
+        print(
+            "{:<10s}{:<10s}{:<10s}{:<10s}{:<10s}".format(
+                "irrad", "level", "pos", "sizedb", "sizegit"
+            )
+        )
+        wfile.write(
+            "{}\n".format(",".join(("irrad", "level", "pos", "sizedb", "sizegit")))
+        )
 
     size = os.path.getsize(DP)
-    size2 = get_dir_size(os.path.join(dvc.meta_repo.path, '.git'))
+    size2 = get_dir_size(os.path.join(dvc.meta_repo.path, ".git"))
 
-    print('{:<10}{:<10d}{:<10d}{:<10s}{:<10s}'.format(nirrads, nlevels, npositions, '{}K'.format(int(size / 1000.)),
-                                                      size2))
+    print(
+        "{:<10}{:<10d}{:<10d}{:<10s}{:<10s}".format(
+            nirrads, nlevels, npositions, "{}K".format(int(size / 1000.0)), size2
+        )
+    )
 
     units = size2[-1]
     size2 = float(size2[:-1]) * units_map[units]
-    wfile.write('{},{},{},{},{}\n'.format(nirrads, nlevels, npositions,
-                                          size, size2))
+    wfile.write("{},{},{},{},{}\n".format(nirrads, nlevels, npositions, size, size2))
 
 
 def add_project(p):
@@ -101,20 +109,32 @@ def do(wfile):
     nlevels = 20
     npositions = 40
 
-    materials = ['san', 'ban', 'gmc', 'horn', 'feld', 'musc', 'plag', 'alb', 'crypt', 'jar', 'alu']
+    materials = [
+        "san",
+        "ban",
+        "gmc",
+        "horn",
+        "feld",
+        "musc",
+        "plag",
+        "alb",
+        "crypt",
+        "jar",
+        "alu",
+    ]
     for mat in materials:
         add_material(mat)
 
     for i in range(nirrads):
-        irrad = 'NM-{:03d}'.format(i)
+        irrad = "NM-{:03d}".format(i)
         add_irradiation(irrad)
         for l in range(nlevels):
             level = chr(65 + l)
-            add_level(irrad, level, '{}Holes.txt'.format(npositions))
+            add_level(irrad, level, "{}Holes.txt".format(npositions))
             ps = []
             for p in (0, 1):
-                name = 'Project{:03d}'.format(pcount)
-                name = '{}.{:032X}'.format(name, hash(name))
+                name = "Project{:03d}".format(pcount)
+                name = "{}.{:032X}".format(name, hash(name))
                 add_project(name)
                 pcount += 1
                 ps.append(name)
@@ -125,13 +145,20 @@ def do(wfile):
                 else:
                     project = ps[0]
 
-                sample = '{:04d}.{:032X}'.format(scount, hash('{}{}'.format(project, scount)))
+                sample = "{:04d}.{:032X}".format(
+                    scount, hash("{}{}".format(project, scount))
+                )
                 add_sample(sample, project, random.choice(materials))
                 scount += 1
                 add_position(irrad, level, pp)
 
             dvc.commit_db()
-            report_irrad_stats(wfile, i + 1, i * nlevels + l + 1, (i * nlevels * npositions) + l * npositions + pp + 1)
+            report_irrad_stats(
+                wfile,
+                i + 1,
+                i * nlevels + l + 1,
+                (i * nlevels * npositions) + l * npositions + pp + 1,
+            )
 
             # for i in range(100):
             # add_analysis()
@@ -139,7 +166,7 @@ def do(wfile):
 
 
 def plot_results():
-    with open('results.txt', 'r') as rfile:
+    with open("results.txt", "r") as rfile:
         xs = []
         dbs = []
         gits = []
@@ -147,7 +174,7 @@ def plot_results():
         for i, line in enumerate(rfile):
             xs.append(i)
 
-            args = line.split(',')
+            args = line.split(",")
             s = float(args[-2])
             s2 = float(args[-1])
             dbs.append(s)
@@ -159,15 +186,12 @@ def plot_results():
 
 
 def main():
-    with open('results.txt', 'w') as wfile:
+    with open("results.txt", "w") as wfile:
         do(wfile)
 
         # plot_results()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 # ============= EOF =============================================
-
-
-

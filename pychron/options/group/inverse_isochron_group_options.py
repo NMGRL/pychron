@@ -26,11 +26,13 @@ class InverseIsochronGroupOptions(BaseGroupOptions):
         #                   label='Fill',
         #                   show_border=True)
 
-        line_grp = VGroup(UItem('line_color'),
-                          # Item('line_width',
-                          #      label='Width'),
-                          show_border=True,
-                          label='Line')
+        line_grp = VGroup(
+            UItem("line_color"),
+            # Item('line_width',
+            #      label='Width'),
+            show_border=True,
+            label="Line",
+        )
 
         # g = VGroup(Item('bind_colors', label='Bind Colors',
         #                 tooltip='Bind the Fill and Line colors, i.e changing the Fill color changes'
@@ -40,4 +42,6 @@ class InverseIsochronGroupOptions(BaseGroupOptions):
         #            label='Group {}'.format(self.group_id + 1))
         v = View(line_grp)
         return v
+
+
 # ============= EOF =============================================

@@ -22,7 +22,17 @@
 """
     https://gist.github.com/sixtenbe/1178136
 """
-from numpy import Inf, isscalar, array, argmax, polyfit, asarray, argsort, vstack, arange
+from numpy import (
+    Inf,
+    isscalar,
+    array,
+    argmax,
+    polyfit,
+    asarray,
+    argsort,
+    vstack,
+    arange,
+)
 
 from pychron.pychron_constants import NULL_STR
 
@@ -93,8 +103,7 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
     mn, mx = Inf, -Inf
 
     # Only detect peak if there is 'lookahead' amount of points after it
-    for index, (x, y) in enumerate(zip(x_axis[:-lookahead],
-                                       y_axis[:-lookahead])):
+    for index, (x, y) in enumerate(zip(x_axis[:-lookahead], y_axis[:-lookahead])):
         if y > mx:
             mx = y
             mxpos = x
@@ -106,7 +115,7 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
         if y < mx - delta and mx != Inf:
             # Maxima peak candidate found
             # look ahead in signal to ensure that this is a peak and not jitter
-            if y_axis[index:index + lookahead].max() < mx:
+            if y_axis[index : index + lookahead].max() < mx:
                 max_peaks.append([mxpos, mx])
                 dump.append(True)
                 # set algorithm to only find minima now
@@ -124,7 +133,7 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
         if y > mn + delta and mn != -Inf:
             # Minima peak candidate found
             # look ahead in signal to ensure that this is a peak and not jitter
-            if y_axis[index:index + lookahead].min() > mn:
+            if y_axis[index : index + lookahead].min() > mn:
                 min_peaks.append([mnpos, mn])
                 dump.append(False)
                 # set algorithm to only find maxima now
@@ -154,8 +163,8 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
 class PeakCenterError(BaseException):
     def __init__(self, *args, **kw):
         super(PeakCenterError, self).__init__(*args)
-        self.low_pos_error = kw.get('low_pos_error')
-        self.high_pos_error = kw.get('high_pos_error')
+        self.low_pos_error = kw.get("low_pos_error")
+        self.high_pos_error = kw.get("high_pos_error")
 
 
 def fformat(v, format_str):
@@ -169,7 +178,9 @@ def fformat(v, format_str):
 
 def calculate_resolution(x, y, format_str=None, return_all=False):
     try:
-        [lx, cx, hx], [ly, cy, hy], mx, my = calculate_peak_center(x, y, percent=95, ignore_max=True)
+        [lx, cx, hx], [ly, cy, hy], mx, my = calculate_peak_center(
+            x, y, percent=95, ignore_max=True
+        )
         res = cx / (hx - lx)
         data = ([lx, cx, hx], [ly, cy, hy])
     except PeakCenterError as e:
@@ -184,10 +195,12 @@ def calculate_resolution(x, y, format_str=None, return_all=False):
 
 def calculate_resolving_power(x, y, format_str=None, return_all=False):
     try:
-        [lx5, cx5, hx5], [ly5, cy5, hy5], _, _ = calculate_peak_center(x, y, test_peak_flat=False, percent=95,
-                                                                       ignore_max=True)
-        [lx95, cx95, hx95], [ly95, cy95, hy95], _, _ = calculate_peak_center(x, y, test_peak_flat=False, percent=5,
-                                                                             ignore_max=True)
+        [lx5, cx5, hx5], [ly5, cy5, hy5], _, _ = calculate_peak_center(
+            x, y, test_peak_flat=False, percent=95, ignore_max=True
+        )
+        [lx95, cx95, hx95], [ly95, cy95, hy95], _, _ = calculate_peak_center(
+            x, y, test_peak_flat=False, percent=5, ignore_max=True
+        )
 
         ldelta = abs(lx95 - lx5)
         hdelta = abs(hx95 - hx5)
@@ -205,13 +218,15 @@ def calculate_resolving_power(x, y, format_str=None, return_all=False):
         return lrp, hrp
 
 
-def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percent=80, ignore_max=False):
+def calculate_peak_center(
+    x, y, test_peak_flat=True, min_peak_height=1.0, percent=80, ignore_max=False
+):
     """
-        returns: (low_x, center_x, high_x), (low_y, center_y, high_y), max_y, min_y
+    returns: (low_x, center_x, high_x), (low_y, center_y, high_y), max_y, min_y
 
-            or
+        or
 
-            raises a PeakCenterError exception
+        raises a PeakCenterError exception
     """
 
     x = array(x)
@@ -222,10 +237,14 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     ma = max(y)
     max_i = argmax(y)
     if not ignore_max and ma < min_peak_height:
-        raise PeakCenterError('No peak greater than {}. max = {}'.format(min_peak_height, ma))
+        raise PeakCenterError(
+            "No peak greater than {}. max = {}".format(min_peak_height, ma)
+        )
 
     if max_i <= 3 or max_i >= len(x) - 3:
-        raise PeakCenterError('PeakCenterError: peak not well centered. Max intensity too close to scan limits')
+        raise PeakCenterError(
+            "PeakCenterError: peak not well centered. Max intensity too close to scan limits"
+        )
         # max_i = len(x) // 2
 
     mx = x[max_i]
@@ -235,13 +254,17 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     for i in range(max_i, 0, -1):
         # this prevent looping around to the end of the list
         if i < 1:
-            raise PeakCenterError('PeakCenterError: could not find a low pos', low_pos_error=True)
+            raise PeakCenterError(
+                "PeakCenterError: could not find a low pos", low_pos_error=True
+            )
 
         try:
-            if y[i] < (ma * (1 - percent / 100.)):
+            if y[i] < (ma * (1 - percent / 100.0)):
                 break
         except IndexError:
-            raise PeakCenterError('PeakCenterError: could not find a low pos', low_pos_error=True)
+            raise PeakCenterError(
+                "PeakCenterError: could not find a low pos", low_pos_error=True
+            )
 
     # xstep = (x[i] - x[i - 1]) / 2.
     # lx = x[i] - xstep
@@ -251,10 +274,12 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
     # look forward for point that is 80% of max
     for i in range(max_i, x.shape[0], 1):
         try:
-            if y[i] < (ma * (1 - percent / 100.)):
+            if y[i] < (ma * (1 - percent / 100.0)):
                 break
         except IndexError:
-            raise PeakCenterError('PeakCenterError: could not find a high pos', high_pos_error=True)
+            raise PeakCenterError(
+                "PeakCenterError: could not find a high pos", high_pos_error=True
+            )
 
     try:
         hx = x[i]
@@ -262,10 +287,16 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
         # hx = x[i + 1] - xstep
         # hy = y[i] - (y[i] - y[i + 1]) / 2.
     except IndexError:
-        raise PeakCenterError('peak not well centered, len(x)={}, len(y)={}, i={}'.format(len(x), len(y), i))
+        raise PeakCenterError(
+            "peak not well centered, len(x)={}, len(y)={}, i={}".format(
+                len(x), len(y), i
+            )
+        )
 
     if (hx - lx) < 0:
-        raise PeakCenterError('unable to find peak bounds high_pos < low_pos. {} < {}'.format(hx, lx))
+        raise PeakCenterError(
+            "unable to find peak bounds high_pos < low_pos. {} < {}".format(hx, lx)
+        )
 
     cx = (hx + lx) / 2.0
     cy = ma
@@ -273,13 +304,15 @@ def calculate_peak_center(x, y, test_peak_flat=True, min_peak_height=1.0, percen
         # find index in x closest to cx
         ccx = abs(x - cx).argmin()
         # check to see if were on a plateau
-        yppts = y[ccx - 2:ccx + 2]
+        yppts = y[ccx - 2 : ccx + 2]
 
         slope, _ = polyfit(list(range(len(yppts))), yppts, 1)
         std = yppts.std()
 
         if std > 5 and abs(slope) < 1:
-            raise PeakCenterError('No peak plateau std = {} (>5) slope = {} (<1)'.format(std, slope))
+            raise PeakCenterError(
+                "No peak plateau std = {} (>5) slope = {} (<1)".format(std, slope)
+            )
 
     return [lx, cx, hx], [ly, cy, hy], mx, my
 
@@ -289,20 +322,52 @@ def fast_find_peaks(ys, xs, **kw):
         from peakutils import indexes
     except ImportError:
         from pyface.message_dialog import warning
-        warning(None, 'PeakUtils required to identify and label peaks.\n\n'
-                      'Please install PeakUtils. From commandline use "pip install peakutils"')
+
+        warning(
+            None,
+            "PeakUtils required to identify and label peaks.\n\n"
+            'Please install PeakUtils. From commandline use "pip install peakutils"',
+        )
         return [], []
 
     ys, xs = asarray(ys), asarray(xs)
     idx = indexes(ys, **kw)
-    peaks_x = interpolate(xs, ys, ind=idx)
+    peaks_x, pidx = interpolate(xs, ys, ind=idx)
+    peak_x_ranges = []
+
+    for i in pidx:
+        ymax = ys[i]
+        # search forward
+        py = ymax
+        for ji, yi in enumerate(ys[i:]):
+            if yi / ymax < 0.1 or yi > py:
+                xmax = xs[i + ji]
+                break
+            py = yi
+        else:
+            xmax = xs.max()
+
+        py = ymax
+        # search backward
+        nys = ys[:i]
+        n = len(nys)
+        for ji, yi in enumerate(reversed(nys)):
+            if yi / ymax < 0.1 or yi > py:
+                xmin = xs[n - ji]
+                break
+            py = yi
+        else:
+            xmin = xs.min()
+
+        peak_x_ranges.append((xmin, xmax))
+
     try:
 
-        return peaks_x, ys[idx]
+        return peaks_x, ys[idx], peak_x_ranges
     except IndexError:
         # from pyface.message_dialog import warning
         # warning(None, 'There was an issue finding the peaks')
-        return [], []
+        return [], [], []
 
 
 def interpolate(x, y, ind=None, width=10, func=None):
@@ -333,28 +398,37 @@ def interpolate(x, y, ind=None, width=10, func=None):
     ndarray :
         Array with the adjusted peak positions (in *x*)
     """
-
+    pidx = []
     out = []
     try:
         if func is None:
             from peakutils import gaussian_fit
+
             func = gaussian_fit
 
         if ind is None:
             from peakutils import indexes
-            ind = indexes(y)
 
-        for slice_ in (slice(max(0, i - width), min(i + width, y.shape[0])) for i in ind):
+            ind = indexes(y)
+        for i, slice_ in (
+            (i, slice(max(0, i - width), min(i + width, y.shape[0]))) for i in ind
+        ):
             try:
                 fit = func(x[slice_], y[slice_])
                 out.append(fit)
+                pidx.append(i)
             except Exception:
                 pass
     except ImportError:
         from pyface.message_dialog import warning
-        warning(None, 'PeakUtils required to identify and label peaks.\n\n'
-                      'Please install PeakUtils. From commandline use "pip install peakutils"')
 
-    return array(out)
+        warning(
+            None,
+            "PeakUtils required to identify and label peaks.\n\n"
+            'Please install PeakUtils. From commandline use "pip install peakutils"',
+        )
+
+    return array(out), pidx
+
 
 # ============= EOF =============================================

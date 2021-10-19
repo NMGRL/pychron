@@ -26,28 +26,30 @@ from traits.api import Str, Bool, List, Button, Instance, Directory
 from traitsui.api import View, Item, EnumEditor, VGroup, HGroup
 
 from pychron.envisage.icon_button_editor import icon_button_editor
-from pychron.envisage.tasks.base_preferences_helper import remote_status_item, \
-    GitRepoPreferencesHelper
+from pychron.envisage.tasks.base_preferences_helper import (
+    remote_status_item,
+    GitRepoPreferencesHelper,
+)
 from pychron.pychron_constants import LINE_STR
 from pychron.updater.updater import gitcommand
 
 
 class Updater:
     _repo = None
-    build_repo = ''
+    build_repo = ""
 
     def pull(self, branch, inform=False):
         repo = self._get_working_repo(inform)
         if repo is not None:
-            gitcommand(repo, repo.head.name,
-                            'pull',
-                            lambda: repo.remote('origin').pull(branch))
+            gitcommand(
+                repo, repo.head.name, "pull", lambda: repo.remote("origin").pull(branch)
+            )
 
     def checkout_branch(self, name, inform=False):
         repo = self._get_working_repo(inform)
         if repo is not None:
             branch = self._get_branch(repo, name)
-            gitcommand(repo, name, 'checkout', lambda: branch.checkout())
+            gitcommand(repo, name, "checkout", lambda: branch.checkout())
 
     def checkout_tag(self, tag, inform=False):
         repo = self._get_working_repo(inform)
@@ -56,7 +58,9 @@ class Updater:
                 self.checkout_branch(tag)
             except AttributeError:
                 repo.git.fetch()
-                gitcommand(repo, tag, 'checkout', lambda: repo.git.checkout('-b', tag, tag))
+                gitcommand(
+                    repo, tag, "checkout", lambda: repo.git.checkout("-b", tag, tag)
+                )
 
     def _get_working_repo(self, inform):
         if not self._repo:
@@ -64,23 +68,26 @@ class Updater:
                 self._repo = Repo(self.build_repo)
             except InvalidGitRepositoryError:
                 if inform:
-                    warning(None, 'Invalid Build repository {}.\n'
-                                  'Pychron not properly configured for update. \n\n'
-                                  'Contact developer'.format(self.build_repo))
+                    warning(
+                        None,
+                        "Invalid Build repository {}.\n"
+                        "Pychron not properly configured for update. \n\n"
+                        "Contact developer".format(self.build_repo),
+                    )
         return self._repo
 
     def _get_branch(self, repo, name):
         try:
             branch = getattr(repo.branches, name)
         except AttributeError:
-            if name.startswith('origin'):
-                name = '/'.join(name.split('/')[1:])
+            if name.startswith("origin"):
+                name = "/".join(name.split("/")[1:])
             branch = repo.create_head(name)
         return branch
 
 
 class UpdatePreferencesHelper(GitRepoPreferencesHelper):
-    preferences_path = 'pychron.update'
+    preferences_path = "pychron.update"
     check_on_startup = Bool(False)
     check_on_quit = Bool(False)
 
@@ -109,11 +116,22 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
 
             bs = get_branches(new)
 
-            remotes = [bi for bi in bs if bi.startswith('release') or bi.startswith('dev') or bi in ('develop', ' \
-                                                                                                            ''master')]
+            remotes = [
+                bi
+                for bi in bs
+                if bi.startswith("release")
+                or bi.startswith("dev")
+                or bi
+                in (
+                    "develop",
+                    " \
+                                                                                                            "
+                    "master",
+                )
+            ]
 
             localbranches = []
-            if os.path.isdir(os.path.join(self.build_repo, '.git')):
+            if os.path.isdir(os.path.join(self.build_repo, ".git")):
                 repo = Repo(self.build_repo)
                 localbranches = [b.name for b in repo.branches if b.name not in remotes]
 
@@ -121,11 +139,12 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
                 remotes.append(LINE_STR)
                 remotes.extend(localbranches)
 
-            tags = [t for t in get_tags(new) if t.startswith('rc')]
+            tags = [t for t in get_tags(new) if t.startswith("rc")]
             return remotes, tags
 
         except BaseException as e:
             import traceback
+
             traceback.print_exc()
             return [], []
 
@@ -163,30 +182,47 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
 
 class UpdatePreferencesPane(PreferencesPane):
     model_factory = UpdatePreferencesHelper
-    category = 'Update'
+    category = "Update"
 
     def traits_view(self):
-        v = View(VGroup(Item('check_on_startup',
-                             label='Check for updates at startup'),
-                        Item('check_on_quit',
-                             label='Check for updates at quit'),
-                        VGroup(remote_status_item(),
-                               Item('build_repo', label='Build Directory'),
-                               Item('use_tag', label='Use Production'),
-                               Item('version_tag', editor=EnumEditor(name='_tags'),
-                                    enabled_when='use_tag'),
-                               Item('branch', editor=EnumEditor(name='_branches'),
-                                    enabled_when='not use_tag',
-                                    label='Branch'),
-                               HGroup(icon_button_editor('checkout_branch_button', 'bricks',
-                                                         tooltip='Checkout selected branch'),
-                                      icon_button_editor('pull_button', 'arrow_down',
-                                                         tooltip='Update Branch'),
-                                      enabled_when='not use_tag'),
-                               show_border=True,
-                               label='Update Repo'),
-                        label='Update',
-                        show_border=True))
+        v = View(
+            VGroup(
+                Item("check_on_startup", label="Check for updates at startup"),
+                Item("check_on_quit", label="Check for updates at quit"),
+                VGroup(
+                    remote_status_item(),
+                    Item("build_repo", label="Build Directory"),
+                    Item("use_tag", label="Use Production"),
+                    Item(
+                        "version_tag",
+                        editor=EnumEditor(name="_tags"),
+                        enabled_when="use_tag",
+                    ),
+                    Item(
+                        "branch",
+                        editor=EnumEditor(name="_branches"),
+                        enabled_when="not use_tag",
+                        label="Branch",
+                    ),
+                    HGroup(
+                        icon_button_editor(
+                            "checkout_branch_button",
+                            "bricks",
+                            tooltip="Checkout selected branch",
+                        ),
+                        icon_button_editor(
+                            "pull_button", "arrow_down", tooltip="Update Branch"
+                        ),
+                        enabled_when="not use_tag",
+                    ),
+                    show_border=True,
+                    label="Update Repo",
+                ),
+                label="Update",
+                show_border=True,
+            )
+        )
         return v
+
 
 # ============= EOF =============================================

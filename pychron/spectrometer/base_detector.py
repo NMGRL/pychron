@@ -16,6 +16,7 @@
 
 # ============= standard library imports ========================
 from numpy import array, hstack
+
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Str, Int, Bool, Float, Property, Color, Array
 
@@ -52,8 +53,8 @@ class BaseDetector(HasTraits):
                 self.intensities = array([])
 
             self.intensities = hstack((self.intensities[-n:], [v]))
-            self.std = '{:0.5f}'.format(self.intensities.std())
-            self.intensity = '{:0.5f}'.format(v)
+            self.std = "{:0.5f}".format(self.intensities.std())
+            self.intensity = "{:0.5f}".format(v)
 
     @property
     def gain_outdated(self):
@@ -75,22 +76,24 @@ class BaseDetector(HasTraits):
         return 0
 
     def toyaml(self):
-        attrs = ('name',
-                 'index',
-                 'software_gain',
-                 'serial_id',
-                 'relative_position',
-                 'use_deflection',
-                 'protection_threshold',
-                 'deflection_correction_sign',
-                 'deflection_name',
-                 'active',
-                 'isotope',
-                 'kind',
-                 'ypadding')
+        attrs = (
+            "name",
+            "index",
+            "software_gain",
+            "serial_id",
+            "relative_position",
+            "use_deflection",
+            "protection_threshold",
+            "deflection_correction_sign",
+            "deflection_name",
+            "active",
+            "isotope",
+            "kind",
+            "ypadding",
+        )
         yd = {attr: getattr(self, attr) for attr in attrs}
         color = self.color
-        yd['color'] = int('0x{:02X}{:02X}{:02X}'.format(*color.getRgb()), 16)
+        yd["color"] = int("0x{:02X}{:02X}{:02X}".format(*color.getRgb()), 16)
         return yd
 
     # private
@@ -106,6 +109,7 @@ class BaseDetector(HasTraits):
         # return sorted(molweights.keys(), key=lambda x: int(x[2:]))
 
     def __repr__(self):
-        return 'Detector({})'.format(self.name)
+        return "Detector({})".format(self.name)
+
 
 # ============= EOF =============================================

@@ -18,8 +18,10 @@
 from __future__ import absolute_import
 
 from chaco.abstract_overlay import AbstractOverlay
-from enable.base_tool import BaseTool
+from chaco.tools.scatter_inspector import ScatterInspector, ScatterInspectorEvent
+from enable.base_tool import BaseTool, KeySpec
 from kiva.fonttools import Font
+
 # from pychron.pipeline.plot.inspector_item import BaseInspectorItem
 from six.moves import range
 from six.moves import zip
@@ -28,10 +30,10 @@ from traits.api import Event, Instance
 
 def intersperse(m, delim):
     """
-        intersperse ```delim``` in m
-         m=[1,2,3]
-         delim='---'
-         result=[1,'---',2,'---',3]
+    intersperse ```delim``` in m
+     m=[1,2,3]
+     delim='---'
+     result=[1,'---',2,'---',3]
 
     """
     m = iter(m)
@@ -41,23 +43,48 @@ def intersperse(m, delim):
         yield x
 
 
-class InfoInspector(BaseTool):
+class InfoInspector(ScatterInspector):
+    # class InfoInspector(BaseTool):
     metadata_changed = Event
     current_position = None
     current_screen = None
     # use_pane = False
-    inspector_item = Event
+    # inspector_item = Event
     # inspector_item_klass = BaseInspectorItem
     event_queue = None
     hittest_threshold = 5
+
+    def __init__(self, *args, **kw):
+        super(InfoInspector, self).__init__(*args, **kw)
+        self.selection_mode = "multi"
+        self.multiselect_modifier = KeySpec(None)
+
+    # select_event = Event
+
+    # def normal_left_down(self, event):
+    #     pass
+    # print('infaso', event, id(event))
+    # if not event.handled:
+    #     super(InfoInspector, self).normal_left_down(event)
+
+    def normal_left_down(self, event):
+        if not event.handled:
+            super(InfoInspector, self).normal_left_down(event)
+
+    def normal_left_dclick(self, event):
+        for sel in self.component.index.metadata[self.selection_metadata_name]:
+            self.inspector_event = ScatterInspectorEvent(
+                event_type="deselect", event_index=sel
+            )
+        self.component.index.metadata[self.selection_metadata_name] = []
 
     def normal_mouse_move(self, event):
         xy = event.x, event.y
         try:
             pos = self.component.hittest(xy, threshold=self.hittest_threshold)
-            event.window.set_pointer('cross')
+            event.window.set_pointer("cross")
         except IndexError:
-            event.window.set_pointer('arrow')
+            event.window.set_pointer("arrow")
             return
 
         if isinstance(pos, (tuple, list)):
@@ -65,7 +92,7 @@ class InfoInspector(BaseTool):
             self.current_screen = xy
             event.handled = True
         else:
-            event.window.set_pointer('arrow')
+            event.window.set_pointer("arrow")
             self.current_position = None
             self.current_screen = None
 
@@ -105,8 +132,9 @@ class InfoInspector(BaseTool):
 
 class InfoOverlay(AbstractOverlay):
     """
-        abstract class for displaying hover data
+    abstract class for displaying hover data
     """
+
     tool = Instance(BaseTool)
     visible = False
 
@@ -142,13 +170,13 @@ class InfoOverlay(AbstractOverlay):
         x, y = sx, sy = self.tool.current_screen
 
         size = 14
-        gc.set_font(Font('Arial', size=size))
+        gc.set_font(Font("Arial", size=size))
         gc.set_fill_color((0.8, 0.8, 0.8))
 
         lws, lhs = list(zip(*[gc.get_full_text_extent(mi)[:2] for mi in lines]))
 
-        rect_width = max(lws) + 4
-        rect_height = (max(lhs) + 2) * len(lhs)
+        rect_width = max(lws) + 12
+        rect_height = (max(lhs) + 4) * len(lhs) + 2
 
         xoffset = 15
         yoffset = -15
@@ -163,15 +191,15 @@ class InfoOverlay(AbstractOverlay):
             x = x2 - rect_width - xoffset - 1
 
         multi_column = 0
-        h = max(lhs) + 2
+        h = max(lhs) + 4
         cheight = self.component.height
-        if rect_height > cheight+5*h:
+        if rect_height > cheight + 5 * h:
             multi_column = 2
         else:
             # move up if too tall
 
             if y + yoffset - rect_height < self.component.y:
-                y = self.component.y+rect_height-yoffset
+                y = self.component.y + rect_height - yoffset
 
         # if current point within bounds of box, move box to left
         if x < sx:
@@ -192,7 +220,7 @@ class InfoOverlay(AbstractOverlay):
             for col in range(multi_column):
                 i = 0
                 for mi in gen:
-                    if i == 0 and mi == '--------':
+                    if i == 0 and mi == "--------":
                         continue
 
                     yi = h * i
@@ -203,14 +231,15 @@ class InfoOverlay(AbstractOverlay):
                     i += 1
         else:
             for i, mi in enumerate(lines[::-1]):
-                gc.set_text_position(0, h * i)
+                gc.set_text_position(5, h * i + 5)
                 gc.show_text(mi)
 
     def _tool_changed(self, old, new):
         if old:
-            old.on_trait_change(self._update, 'metadata_changed', remove=True)
+            old.on_trait_change(self._update, "metadata_changed", remove=True)
 
         if new:
-            new.on_trait_change(self._update, 'metadata_changed')
+            new.on_trait_change(self._update, "metadata_changed")
+
 
 # ============= EOF =============================================

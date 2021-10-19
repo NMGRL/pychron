@@ -31,16 +31,16 @@ class AnalysisGraph(Graph):
     figure_event = Event
 
     def get_rescale_actions(self):
-        return [('Valid Analyses', 'rescale_to_valid', {})]
+        return [("Valid Analyses", "rescale_to_valid", {})]
 
     def rescale_to_valid(self):
-        self.rescale_event = 'valid'
+        self.rescale_event = "valid"
 
     def rescale_x_axis(self):
-        self.rescale_event = 'x'
+        self.rescale_event = "x"
 
     def rescale_y_axis(self):
-        self.rescale_event = 'y'
+        self.rescale_event = "y"
 
 
 class AnalysisStackedGraph(AnalysisGraph, StackedGraph):
@@ -55,18 +55,20 @@ class SpectrumGraph(AnalysisStackedGraph):
     # make_alternate_figure_event = Event
 
     def get_child_context_menu_actions(self):
-        return [self.action_factory('Ideogram...', 'make_ideogram'),
-                self.action_factory('Inverse Isochron...', 'make_inverse_isochron'),
-                self.action_factory('Tag Non Plateau...', 'tag_non_plateau')]
+        return [
+            self.action_factory("Ideogram...", "make_ideogram"),
+            self.action_factory("Inverse Isochron...", "make_inverse_isochron"),
+            self.action_factory("Tag Non Plateau...", "tag_non_plateau"),
+        ]
 
     def tag_non_plateau(self):
-        self.figure_event = ('tag', 'tag_non_plateau')
+        self.figure_event = ("tag", "tag_non_plateau")
 
     def make_ideogram(self):
-        self.figure_event = 'alternate_figure', 'Ideogram'
+        self.figure_event = "alternate_figure", "Ideogram"
 
     def make_inverse_isochron(self):
-        self.figure_event = 'alternate_figure', 'InverseIsochron'
+        self.figure_event = "alternate_figure", "InverseIsochron"
 
 
 class IdeogramGraph(AnalysisStackedGraph):
@@ -75,27 +77,36 @@ class IdeogramGraph(AnalysisStackedGraph):
     PipelineEngine
 
     """
+
     def get_child_context_menu_actions(self):
-        return [self.action_factory('Correlation...', 'make_correlation'),
-                self.action_factory('Identify Peaks', 'identify_peaks'),
-                self.action_factory('Plot On Map', 'plot_on_map')]
+        return [
+            self.action_factory("Correlation...", "make_correlation"),
+            self.action_factory("Identify Peaks", "identify_peaks"),
+            self.action_factory("Plot On Map", "plot_on_map"),
+        ]
 
     def make_correlation(self):
-        self.figure_event = ('correlation', (self.selected_plotid, self.selected_plot.y_axis.title))
+        self.figure_event = (
+            "correlation",
+            (self.selected_plotid, self.selected_plot.y_axis.title),
+        )
 
     def identify_peaks(self):
-        self.figure_event = ('identify_peaks', None)
+        self.figure_event = ("identify_peaks", None)
 
     def plot_on_map(self):
-        self.figure_event = ('plot_on_map', None)
+        self.figure_event = ("plot_on_map", None)
 
 
 class ReferencesGraph(AnalysisStackedRegressionGraph):
-
     def get_child_context_menu_actions(self):
-        return [self.action_factory('Correlation...', 'make_correlation')]
+        return [self.action_factory("Correlation...", "make_correlation")]
 
     def make_correlation(self):
-        self.figure_event = ('correlation', (self.selected_plot, self.selected_plot.y_axis.title))
+        self.figure_event = (
+            "correlation",
+            (self.selected_plot, self.selected_plot.y_axis.title),
+        )
+
 
 # ============= EOF =============================================

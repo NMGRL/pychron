@@ -17,16 +17,18 @@
 # ============= enthought library imports =======================
 
 from traits.api import Str, Property, cached_property, Float
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import ufloat
 
 from pychron.processing.analyses.analysis import Analysis
+from pychron.processing.isotope import Isotope
 
 
 class NonDBAnalysis(Analysis):
     # record_id = Str
-    uage = Property(depends_on='age, age_err')
+    uage = Property(depends_on="age, age_err")
     uuid = Str
     sample = Str
 
@@ -38,28 +40,58 @@ class NonDBAnalysis(Analysis):
     @classmethod
     def from_csv_record(cls, ri):
         obj = cls()
-        for a in ('age', 'age_err', 'group', 'aliquot', 'sample', 'label_name',
-                  'k39', 'k39_err', 'rad40', 'rad40_err',
-                  'kca', 'kca_err', 'radiogenic_yield', 'radiogenic_yield_err'):
+        for a in (
+            "age",
+            "age_err",
+            "group",
+            "aliquot",
+            "sample",
+            "label_name",
+            "k39",
+            "k39_err",
+            "rad40",
+            "rad40_err",
+            "kca",
+            "kca_err",
+            "radiogenic_yield",
+            "radiogenic_yield_err",
+            "x",
+            "y",
+            "x_err",
+            "y_err",
+        ):
             try:
                 setattr(obj, a, getattr(ri, a))
             except AttributeError:
                 pass
 
+        for k in ("ar40", "ar39", "ar36"):
+            iso = Isotope(k.capitalize(), "Det")
+            try:
+                iso.interference_corrected_value = ufloat(
+                    getattr(ri, k), getattr(ri, "{}_err".format(k))
+                )
+            except AttributeError:
+                continue
+
+            obj.isotopes[k.capitalize()] = iso
+
+        obj.record_id = ri.runid
+
         return obj
 
     def get_computed_value(self, attr):
-        if attr in ('k39', 'rad40', 'kca', 'radiogenic_yield'):
+        if attr in ("k39", "rad40", "kca", "radiogenic_yield"):
             return self._as_ufloat(attr)
         else:
             return ufloat(0, 0)
 
     def _as_ufloat(self, attr):
-        return ufloat(getattr(self, attr), getattr(self, '{}_err'.format(attr)))
+        return ufloat(getattr(self, attr), getattr(self, "{}_err".format(attr)))
 
     @cached_property
     def _get_uage(self):
-        return self._as_ufloat('age')
+        return self._as_ufloat("age")
 
 
 class FileAnalysis(NonDBAnalysis):

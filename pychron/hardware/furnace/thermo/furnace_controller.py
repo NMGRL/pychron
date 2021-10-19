@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import provides
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.furnace.ifurnace_controller import IFurnaceController
@@ -27,38 +28,40 @@ from pychron.hardware.core.core_device import CoreDevice
 class ThermoFurnaceController(CoreDevice):
     @get_float(default=0)
     def read_output_percent(self, **kw):
-        cmd = 'GetPercentOutput'
+        cmd = "GetPercentOutput"
         return self.ask(cmd)
 
     def get_summary(self, **kw):
-        return 'No Summary'
+        return "No Summary"
 
     def set_setpoint(self, v, **kw):
-        cmd = 'SetFurnaceStep {}'.format(v)
+        cmd = "SetFurnaceStep {}".format(v)
         self.ask(cmd)
 
     @get_float(default=0)
     def get_output(self, **kw):
-        cmd = 'GetFurnaceOutput'
+        cmd = "GetFurnaceOutput"
         return self.ask(cmd)
 
     @get_float(default=0)
     def get_setpoint(self, **kw):
-        cmd = 'GetFurnaceSetpoint'
+        cmd = "GetFurnaceSetpoint"
         return self.ask(cmd)
 
     @get_float(default=0)
     def get_response(self, **kw):
-        cmd = 'GetFurnaceResponse'
+        cmd = "GetFurnaceResponse"
         return self.ask(cmd)
 
     get_temperature = get_response
     get_process_value = get_response
 
     def test_connection(self):
-        return True, ''
+        return True, ""
 
     def set_pid(self, pstr):
-        cmd = ''
+        cmd = ""
         self.ask(cmd)
+
+
 # ============= EOF =============================================
