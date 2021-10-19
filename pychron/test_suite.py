@@ -36,7 +36,7 @@ from pychron.processing.tests.age_converter import AgeConverterTestCase
 from pychron.processing.tests.plateau import PlateauTestCase
 from pychron.processing.tests.ratio import RatioTestCase
 from pychron.spectrometer.tests.integration_time import IntegrationTimeTestCase
-from pychron.spectrometer.tests.mftable import DiscreteMFTableTestCase
+from pychron.spectrometer.tests.mftable import DiscreteMFTableTestCase, MFTableTestCase
 from pychron.stage.tests.stage_map import StageMapTestCase, TransformTestCase
 #
 # os.environ['MassSpecDBVersion'] = '16'
@@ -116,7 +116,7 @@ def suite():
         # InterpolationTestCase,
         # DocstrContextTestCase,
         # Spectrometer
-        # MFTableTestCase,
+        MFTableTestCase,
         DiscreteMFTableTestCase,
         IntegrationTimeTestCase,
 
