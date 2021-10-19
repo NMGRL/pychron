@@ -249,7 +249,9 @@ def unique_path2(root, base, delimiter="-", extension=".txt", width=3):
     if not extension.startswith("."):
         extension = ".{}".format(extension)
 
-    cnt = max_path_cnt(root, base, delimiter=delimiter, extension=extension)
+    cnt = max_path_cnt(
+        root, base, delimiter=delimiter, extension=extension, ndigits=width
+    )
     p = os.path.join(
         root, "{{}}-{{:0{}d}}{{}}".format(width).format(base, cnt, extension)
     )

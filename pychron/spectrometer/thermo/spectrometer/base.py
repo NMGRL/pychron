@@ -37,28 +37,6 @@ from pychron.spectrometer import get_spectrometer_config_path
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
 
 
-def normalize_integration_time(it):
-    """
-    find the integration time closest to "it"
-    """
-    try:
-        x = array(QTEGRA_INTEGRATION_TIMES)
-        return x[argmin(abs(x - it))]
-    except TypeError:
-        return 1.0
-
-
-def calculate_radius(m_e, hv, mfield):
-    """
-    m_e= mass/charge
-    hv= accelerating voltage (V)
-    mfield= magnet field (H)
-    """
-    r = ((2 * m_e * hv) / mfield ** 2) ** 0.5
-
-    return r
-
-
 class ThermoSpectrometer(BaseSpectrometer):
     integration_time = Float
     integration_times = List(QTEGRA_INTEGRATION_TIMES)

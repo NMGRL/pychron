@@ -15,6 +15,7 @@ class StageMapTestCase(unittest.TestCase):
             p = os.path.join(base, "data", "221-hole.txt")
 
         self.sm = LaserStageMap(file_path=p)
+        self.sm.load()
 
     def test_generate_interpolation(self):
         sm = self.sm
