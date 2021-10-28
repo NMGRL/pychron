@@ -80,15 +80,13 @@ class WorkOffline(Loggable):
         # repos = [{'name': 'Foo', 'created_at': '2021-10-28 13:23:05,286 '},
         #          {'name': 'Basdfarefasdasdc', 'created_at': '2021-10-28 13:23:05,286 '}]
 
-        repos = [r['name'] for r in repos]
+        repos = [r["name"] for r in repos]
 
-        metaname = 'MetaData'
+        metaname = "MetaData"
         if paths.meta_root:
             metaname = os.path.basename(paths.meta_root)
 
-        repos = sorted(
-            [ri for ri in repos if ri != metaname]
-        )
+        repos = sorted([ri for ri in repos if ri != metaname])
         self.repositories = repos
 
     def initialize(self):
@@ -171,7 +169,7 @@ class WorkOffline(Loggable):
         return unique_path2(paths.dvc_dir, "index", extension=".sqlite3")[0]
 
     def _clone_central_db(
-            self, repositories, analyses=None, principal_investigators=None, projects=None
+        self, repositories, analyses=None, principal_investigators=None, projects=None
     ):
 
         self.info("--------- Clone DB -----------")
@@ -184,8 +182,8 @@ class WorkOffline(Loggable):
         path = database_path()
         if os.path.isfile(path):
             if not self.confirmation_dialog(
-                    'The database "{}" already exists. '
-                    "Do you want to overwrite it".format(os.path.basename(path))
+                'The database "{}" already exists. '
+                "Do you want to overwrite it".format(os.path.basename(path))
             ):
 
                 path = self._get_new_path()
@@ -357,7 +355,7 @@ class WorkOffline(Loggable):
 
     # handlers
     def select_references(self):
-        self.debug('select references for {}'.format(self.selected_repositories))
+        self.debug("select references for {}".format(self.selected_repositories))
         nrepos = []
         for repo in self.selected_repositories:
             arepos = self.dvc.find_reference_repos(repo)
@@ -380,13 +378,15 @@ class WorkOffline(Loggable):
                 #         multi_select=True,
                 #     ),
                 # ),
-                UItem('selected_repositories',
-                      editor=SetEditor(name='repositories',
-                                       can_move_all=False)),
-
+                UItem(
+                    "selected_repositories",
+                    editor=SetEditor(name="repositories", can_move_all=False),
+                ),
                 UItem("work_offline_button", enabled_when="selected_repositories"),
             ),
-            toolbar=ToolBar(Action(name='Select References', action='select_references')),
+            toolbar=ToolBar(
+                Action(name="Select References", action="select_references")
+            ),
             title="Work Offline",
             resizable=True,
             width=500,
@@ -395,7 +395,7 @@ class WorkOffline(Loggable):
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     w = WorkOffline()
 
     w.load_repos()
