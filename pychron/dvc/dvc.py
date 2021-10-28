@@ -117,6 +117,7 @@ class DVC(Loggable):
     use_cache = Bool
     max_cache_size = Int
     irradiation_prefix = Str
+    irradiation_project_prefix = Str
 
     _cache = None
     _uuid_runid_cache = None
@@ -152,14 +153,14 @@ class DVC(Loggable):
             return True
 
     def fix_identifier(
-        self,
-        src_uuid,
-        src_id,
-        dest_id,
-        repo_identifier,
-        dest_identifier,
-        dest_aliquot,
-        dest_step,
+            self,
+            src_uuid,
+            src_id,
+            dest_id,
+            repo_identifier,
+            dest_identifier,
+            dest_aliquot,
+            dest_step,
     ):
         self.info("converting {} to {}".format(src_id, dest_id))
         err = self.db.map_runid(src_id, dest_id)
@@ -209,13 +210,13 @@ class DVC(Loggable):
             os.remove(sp)
 
             for modifier in (
-                "baselines",
-                "blanks",
-                "extraction",
-                "intercepts",
-                "icfactors",
-                "peakcenter",
-                ".data",
+                    "baselines",
+                    "blanks",
+                    "extraction",
+                    "intercepts",
+                    "icfactors",
+                    "peakcenter",
+                    ".data",
             ):
                 sp = analysis_path(
                     src_id, repo_identifier, modifier=modifier, root=root
@@ -245,8 +246,8 @@ class DVC(Loggable):
             return
 
         if not self.confirmation_dialog(
-            "Are you sure you want to generate current values for the entire database? "
-            "This could take a while!"
+                "Are you sure you want to generate current values for the entire database? "
+                "This could take a while!"
         ):
             return
 
@@ -259,7 +260,7 @@ class DVC(Loggable):
 
         def chunks(l, n):
             for i in range(0, len(l), n):
-                yield l[i : i + n]
+                yield l[i: i + n]
 
         def func(ai, prog, i, n):
             if prog:
@@ -307,11 +308,11 @@ class DVC(Loggable):
         with db.session_ctx():
             for repo in db.get_repositories():
                 if repo.name in (
-                    "JIRSandbox",
-                    "REEFenite",
-                    "Henry01184",
-                    "FractionatedRes",
-                    "PowerZPattern",
+                        "JIRSandbox",
+                        "REEFenite",
+                        "Henry01184",
+                        "FractionatedRes",
+                        "PowerZPattern",
                 ):
                     continue
                 self.debug("Updating currents for {}".format(repo.name))
@@ -369,6 +370,33 @@ class DVC(Loggable):
         #         r = an.record_id
         #         self._uuid_runid_cache[uuid] = r
         # return r
+
+    def find_reference_repos(self, repo):
+        irradiations = self.db.get_repository_irradiations(repo)
+        low, high = self.db.get_repository_analyses_date_range(repo)
+        mss = self.db.get_repository_mass_spectrometers(repo)
+        mss = [mi.capitalize() for mi in mss]
+
+        self.debug('{} {}'.format(low, high))
+        repos = []
+        if low.month <= 6:
+            year = low.year
+            year = str(year)[-2:]
+            repos.extend(['{}_air{}0'.format(mi, year) for mi in mss])
+            repos.extend(['{}_blank{}0'.format(mi, year) for mi in mss])
+            repos.extend(['{}_cocktail{}0'.format(mi, year) for mi in mss])
+
+        if high.month >= 6 or low.month >= 6:
+            year = high.year
+            year = str(year)[-2:]
+            repos.extend(['{}_air{}1'.format(mi, year) for mi in mss])
+            repos.extend(['{}_blank{}1'.format(mi, year) for mi in mss])
+            repos.extend(['{}_cocktail{}1'.format(mi, year) for mi in mss])
+
+        irradiation_project_prefix = self.irradiation_project_prefix
+        repos.extend(['{}{}'.format(irradiation_project_prefix, ir) for ir in irradiations])
+
+        return list(set(repos))
 
     def find_associated_identifiers(self, samples):
         from pychron.dvc.associated_identifiers import AssociatedIdentifiersView
@@ -521,12 +549,12 @@ class DVC(Loggable):
             material = ip.sample.material.name
             changed = False
             for attr, v in (
-                ("sample", sample),
-                ("project", project),
-                ("material", material),
-                ("irradiation", irrad),
-                ("irradiation_level", level),
-                ("irradiation_position", pos),
+                    ("sample", sample),
+                    ("project", project),
+                    ("material", material),
+                    ("irradiation", irrad),
+                    ("irradiation_level", level),
+                    ("irradiation_position", pos),
             ):
                 ov = obj.get(attr)
                 if ov != v:
@@ -750,7 +778,7 @@ class DVC(Loggable):
             self._update_current_age(ai)
 
     def save_icfactors(
-        self, ai, dets, fits, refs, use_source_correction, standard_ratios
+            self, ai, dets, fits, refs, use_source_correction, standard_ratios
     ):
         if use_source_correction:
             ai.dump_source_correction_icfactors(refs)
@@ -943,7 +971,7 @@ class DVC(Loggable):
             return records
 
     def find_references(
-        self, times, atypes, hours, exclude=None, make_records=True, **kw
+            self, times, atypes, hours, exclude=None, make_records=True, **kw
     ):
         records = self.db.find_references(times, atypes, hours, exclude=exclude, **kw)
 
@@ -999,13 +1027,13 @@ class DVC(Loggable):
             return a[0]
 
     def make_analyses(
-        self,
-        records,
-        calculate_f_only=False,
-        reload=False,
-        quick=False,
-        use_progress=True,
-        pull_frequency=None,
+            self,
+            records,
+            calculate_f_only=False,
+            reload=False,
+            quick=False,
+            use_progress=True,
+            pull_frequency=None,
     ):
         if not records:
             return []
@@ -1126,9 +1154,9 @@ class DVC(Loggable):
                         flux_histories[key] = v
 
                 if (
-                    use_cocktail_irradiation
-                    and r.analysis_type == "cocktail"
-                    and "cocktail" not in chronos
+                        use_cocktail_irradiation
+                        and r.analysis_type == "cocktail"
+                        and "cocktail" not in chronos
                 ):
                     cirr = meta_repo.get_cocktail_irradiation()
                     chronos["cocktail"] = cirr.get("chronology")
@@ -1180,8 +1208,8 @@ class DVC(Loggable):
         nn = len(records)
         if len(records) != n:
             if not self.confirmation_dialog(
-                "Failed making {} of {} analyses. "
-                "Are you sure you want to continue?".format(nn - n, nn)
+                    "Failed making {} of {} analyses. "
+                    "Are you sure you want to continue?".format(nn - n, nn)
             ):
                 return
 
@@ -1408,7 +1436,7 @@ class DVC(Loggable):
 
     def push_repositories(self, changes):
         if self.use_auto_push or self.confirmation_dialog(
-            "Would you like to push (share) your changes?"
+                "Would you like to push (share) your changes?"
         ):
             for gi in self.application.get_services(IGitHost):
                 push_repositories(changes, gi, quiet=False)
@@ -1649,18 +1677,18 @@ class DVC(Loggable):
         else:
             self.warning_dialog(HOST_WARNING_MESSAGE)
 
-    def add_readme(self, identifier):
+    def add_readme(self, identifier, content=''):
         self.debug("adding readme to repository identifier={}".format(identifier))
         root = repository_path(identifier)
         if os.path.isdir(root):
             p = os.path.join(root, "README.md")
             if not os.path.isfile(p):
                 with open(p, "w") as wfile:
-                    wfile.write("{}\n###############".format(identifier))
+                    wfile.write("{}\n###############\n{}".format(identifier, content))
             repo = self._get_repository(identifier, as_current=False)
             repo.add(p)
             repo.commit("initial commit")
-
+            repo.push()
         else:
             self.critical("Repository does not exist {}. {}".format(identifier, root))
 
@@ -1668,7 +1696,7 @@ class DVC(Loggable):
         repo = self._get_repository(repo)
         repo.create_branch(branch, inform=False)
 
-    def add_repository(self, identifier, principal_investigator, inform=True):
+    def add_repository(self, identifier, principal_investigator, inform=True, license_template=None):
         self.debug(
             "trying to add repository identifier={}, pi={}".format(
                 identifier, principal_investigator
@@ -1709,7 +1737,8 @@ class DVC(Loggable):
                             "Creating repository at {}. {}".format(gi.name, identifier)
                         )
 
-                        if gi.create_repo(identifier, organization=self.organization):
+                        if gi.create_repo(identifier, organization=self.organization,
+                                          license_template=license_template):
                             ret = True
                             if isinstance(gi, LocalGitHostService):
                                 if i == 0:
@@ -1843,7 +1872,7 @@ class DVC(Loggable):
 
     # private
     def _update_current_blanks(
-        self, ai, keys=None, dban=None, force=False, update_age=True, commit=True
+            self, ai, keys=None, dban=None, force=False, update_age=True, commit=True
     ):
         if self.update_currents_enabled:
             db = self.db
@@ -1896,7 +1925,7 @@ class DVC(Loggable):
                 )
 
     def _update_current(
-        self, ai, keys=None, dban=None, force=False, update_age=True, commit=True
+            self, ai, keys=None, dban=None, force=False, update_age=True, commit=True
     ):
         if self.update_currents_enabled:
             db = self.db
@@ -2052,23 +2081,23 @@ class DVC(Loggable):
         self.sync_repo(expid)
 
     def _make_record(
-        self,
-        record,
-        prog,
-        i,
-        n,
-        productions=None,
-        chronos=None,
-        branches=None,
-        fluxes=None,
-        sens=None,
-        frozen_fluxes=None,
-        frozen_productions=None,
-        flux_histories=None,
-        sample_prep=None,
-        calculate_f_only=False,
-        reload=False,
-        quick=False,
+            self,
+            record,
+            prog,
+            i,
+            n,
+            productions=None,
+            chronos=None,
+            branches=None,
+            fluxes=None,
+            sens=None,
+            frozen_fluxes=None,
+            frozen_productions=None,
+            flux_histories=None,
+            sample_prep=None,
+            calculate_f_only=False,
+            reload=False,
+            quick=False,
     ):
         meta_repo = self.meta_repo
         if prog:
@@ -2293,6 +2322,10 @@ class DVC(Loggable):
         bind_preference(
             self, "irradiation_prefix", "{}.irradiation_prefix".format(prefid)
         )
+
+        bind_preference(
+            self, "irradiation_project_prefix", "{}.irradiation_project_prefix".format(prefid)
+        )
         if self.use_cache:
             self._use_cache_changed()
 
@@ -2363,9 +2396,9 @@ class DVC(Loggable):
         self.debug("writing defaults")
         self.db.add_save_user()
         for tag, func in (
-            ("irradiation holders", self._add_default_irradiation_holders),
-            ("productions", self._add_default_irradiation_productions),
-            ("load holders", self._add_default_load_holders),
+                ("irradiation holders", self._add_default_irradiation_holders),
+                ("productions", self._add_default_irradiation_productions),
+                ("load holders", self._add_default_load_holders),
         ):
 
             d = os.path.join(self.meta_repo.path, tag.replace(" ", "_"))
@@ -2375,7 +2408,7 @@ class DVC(Loggable):
             if self.auto_add:
                 func()
             elif self.confirmation_dialog(
-                "You have no {}. Would you like to add some defaults?".format(tag)
+                    "You have no {}. Would you like to add some defaults?".format(tag)
             ):
                 func()
 

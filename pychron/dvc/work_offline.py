@@ -22,13 +22,14 @@ from operator import attrgetter
 import yaml
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
-from traits.api import Str, Button, List
-from traitsui.api import View, UItem, VGroup
-from traitsui.editors.api import TabularEditor
+from traits.api import Str, Button, List, Instance
+from traitsui.api import View, UItem, VGroup, SetEditor
+from traitsui.menu import Action, ToolBar
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.progress import progress_iterator, open_progress
+from pychron.dvc.dvc import DVC
 from pychron.envisage.browser.record_views import RepositoryRecordView
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -72,6 +73,23 @@ class WorkOffline(Loggable):
     selected_repositories = List
 
     work_offline_button = Button("Work Offline")
+    dvc = Instance(DVC)
+
+    def load_repos(self):
+        repos = self.dvc.remote_repositories()
+        # repos = [{'name': 'Foo', 'created_at': '2021-10-28 13:23:05,286 '},
+        #          {'name': 'Basdfarefasdasdc', 'created_at': '2021-10-28 13:23:05,286 '}]
+
+        repos = [r['name'] for r in repos]
+
+        metaname = 'MetaData'
+        if paths.meta_root:
+            metaname = os.path.basename(paths.meta_root)
+
+        repos = sorted(
+            [ri for ri in repos if ri != metaname]
+        )
+        self.repositories = repos
 
     def initialize(self):
         """
@@ -79,24 +97,9 @@ class WorkOffline(Loggable):
             a. check database
             b. check github
         """
-
         if self._check_database_connection():
             if self._check_githost_connection():
-                repos = self.dvc.remote_repositories()
-                repos = [
-                    RepositoryRecordView(
-                        name=r["name"],
-                        created_at=r.get("created_at", ""),
-                        pushed_at=r.get("pushed_at", ""),
-                    )
-                    for r in repos
-                ]
-
-                metaname = os.path.basename(paths.meta_root)
-                repos = sorted(
-                    [ri for ri in repos if ri.name != metaname], key=attrgetter("name")
-                )
-                self.repositories = repos
+                self.load_repos()
                 return True
 
     # private
@@ -118,7 +121,7 @@ class WorkOffline(Loggable):
         self.dvc.meta_pull()
 
         # clone central db
-        repos = [ri.name for ri in self.selected_repositories]
+        repos = [ri for ri in self.selected_repositories]
         path = self._clone_central_db(repos)
         if not path:
             return
@@ -157,8 +160,8 @@ class WorkOffline(Loggable):
         # clone the repositories
         def func(x, prog, i, n):
             if prog is not None:
-                prog.change_message("Cloning {}".format(x.name))
-            self.dvc.clone_repository(x.name)
+                prog.change_message("Cloning {} {}/{}".format(x, i, n))
+            self.dvc.clone_repository(x)
 
         progress_iterator(self.selected_repositories, func, threshold=0)
 
@@ -168,7 +171,7 @@ class WorkOffline(Loggable):
         return unique_path2(paths.dvc_dir, "index", extension=".sqlite3")[0]
 
     def _clone_central_db(
-        self, repositories, analyses=None, principal_investigators=None, projects=None
+            self, repositories, analyses=None, principal_investigators=None, projects=None
     ):
 
         self.info("--------- Clone DB -----------")
@@ -181,8 +184,8 @@ class WorkOffline(Loggable):
         path = database_path()
         if os.path.isfile(path):
             if not self.confirmation_dialog(
-                'The database "{}" already exists. '
-                "Do you want to overwrite it".format(os.path.basename(path))
+                    'The database "{}" already exists. '
+                    "Do you want to overwrite it".format(os.path.basename(path))
             ):
 
                 path = self._get_new_path()
@@ -353,6 +356,15 @@ class WorkOffline(Loggable):
         switch_to_offline_database(self.application.preferences)
 
     # handlers
+    def select_references(self):
+        self.debug('select references for {}'.format(self.selected_repositories))
+        nrepos = []
+        for repo in self.selected_repositories:
+            arepos = self.dvc.find_reference_repos(repo)
+            nrepos.extend(arepos)
+        nrepos = list(set(nrepos))
+        self.selected_repositories.extend(nrepos)
+
     def _work_offline_button_fired(self):
         self.debug("work offline fired")
         self._work_offline()
@@ -360,16 +372,21 @@ class WorkOffline(Loggable):
     def traits_view(self):
         v = View(
             VGroup(
-                UItem(
-                    "repositories",
-                    editor=TabularEditor(
-                        adapter=RepositoryTabularAdapter(),
-                        selected="selected_repositories",
-                        multi_select=True,
-                    ),
-                ),
+                # UItem(
+                #     "repositories",
+                #     editor=TabularEditor(
+                #         adapter=RepositoryTabularAdapter(),
+                #         selected="selected_repositories",
+                #         multi_select=True,
+                #     ),
+                # ),
+                UItem('selected_repositories',
+                      editor=SetEditor(name='repositories',
+                                       can_move_all=False)),
+
                 UItem("work_offline_button", enabled_when="selected_repositories"),
             ),
+            toolbar=ToolBar(Action(name='Select References', action='select_references')),
             title="Work Offline",
             resizable=True,
             width=500,
@@ -378,4 +395,9 @@ class WorkOffline(Loggable):
         return v
 
 
+if __name__ == '__main__':
+    w = WorkOffline()
+
+    w.load_repos()
+    w.configure_traits()
 # ============= EOF =============================================
