@@ -17,12 +17,13 @@
 # # ============= enthought library imports =======================
 
 import ast
+import importlib
 import os
 import re
 import time
 import weakref
 from pprint import pformat
-from threading import Thread, Event as TEvent
+from threading import Event as TEvent, Thread
 
 from numpy import Inf, polyfit, linspace, polyval
 from traits.api import (
@@ -46,7 +47,10 @@ from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.preference_binding import set_preference
+
+# from pychron.core.ui.thread import Thread
 from pychron.core.yaml import yload
 from pychron.experiment import ExtractionException
 from pychron.experiment.automated_run.hop_util import parse_hops
@@ -59,7 +63,9 @@ from pychron.experiment.conditional.conditional import (
     CancelationConditional,
     conditionals_from_file,
     QueueModificationConditional,
+    EquilibrationConditional,
 )
+from pychron.experiment.plot_panel import PlotPanel
 from pychron.experiment.utilities.conditionals import (
     test_queue_conditionals_name,
     QUEUE,
@@ -85,8 +91,15 @@ from pychron.pychron_constants import (
     SCRIPT_NAMES,
     POST_MEASUREMENT,
     POST_EQUILIBRATION,
+    FAILED,
+    TRUNCATED,
+    SUCCESS,
+    CANCELED,
 )
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
+from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
+from pychron.spectrometer.pfeiffer.manager.quadera import QuaderaSpectrometerManager
+from pychron.spectrometer.thermo.manager.base import ThermoSpectrometerManager
 
 DEBUG = False
 
@@ -212,9 +225,12 @@ class AutomatedRun(Loggable):
 
     termination_conditionals = List
     truncation_conditionals = List
+    equilibration_conditionals = List
     action_conditionals = List
     cancelation_conditionals = List
     modification_conditionals = List
+    pre_run_termination_conditionals = List
+    post_run_termination_conditionals = List
 
     tripped_conditional = Instance(
         "pychron.experiment.conditional.conditional.BaseConditional"
@@ -291,6 +307,9 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_measure(self):
+        return self.spectrometer_manager.measure()
+
     def py_get_intensity(self, detector):
         if self._intensities:
             try:
@@ -481,6 +500,9 @@ class AutomatedRun(Loggable):
     def py_post_equilibration(self, **kw):
         self.do_post_equilibration(**kw)
 
+    _equilibration_thread = None
+    _equilibration_evt = None
+
     def py_equilibration(
         self,
         eqtime=None,
@@ -490,16 +512,69 @@ class AutomatedRun(Loggable):
         close_inlet=True,
         delay=None,
     ):
-        evt = TEvent()
-        if not self._alive:
-            evt.set()
-            return evt
+        # evt = TEvent()
+        # if not self._alive:
+        #     evt.set()
+        #     return evt
 
         self.heading("Equilibration Started")
-        t = Thread(
+
+        inlet = self._convert_valve(inlet)
+        outlet = self._convert_valve(outlet)
+
+        elm = self.extraction_line_manager
+        if elm:
+            if outlet:
+                # close mass spec ion pump
+                for o in outlet:
+                    for i in range(3):
+                        ok, changed = elm.close_valve(o, mode="script")
+                        if ok:
+                            break
+                        else:
+                            time.sleep(0.1)
+                    else:
+                        from pychron.core.ui.gui import invoke_in_main_thread
+
+                        invoke_in_main_thread(
+                            self.warning_dialog,
+                            'Equilibration: Failed to Close "{}"'.format(o),
+                        )
+                        self.cancel_run(do_post_equilibration=False)
+                        return
+
+            if inlet:
+                self.debug(
+                    "waiting {}s before opening inlet value {}".format(delay, inlet)
+                )
+                # evt.wait(delay)
+                time.sleep(delay)
+                self.debug("delay completed")
+                # open inlet
+                for i in inlet:
+                    for j in range(3):
+                        ok, changed = elm.open_valve(i, mode="script")
+                        if ok:
+                            break
+                        else:
+                            time.sleep(0.5)
+                    else:
+                        from pychron.core.ui.gui import invoke_in_main_thread
+
+                        invoke_in_main_thread(
+                            self.warning_dialog,
+                            'Equilibration: Failed to Open "{}"'.format(i),
+                        )
+                        self.cancel_run(do_post_equilibration=False)
+                        return
+
+        # set the passed in event
+        # evt.set()
+
+        self._equilibration_thread = Thread(
             name="equilibration",
             target=self._equilibrate,
-            args=(evt,),
+            args=(None,),
             kwargs=dict(
                 eqtime=eqtime,
                 inlet=inlet,
@@ -509,10 +584,11 @@ class AutomatedRun(Loggable):
                 do_post_equilibration=do_post_equilibration,
             ),
         )
-        t.setDaemon(True)
-        t.start()
 
-        return evt
+        self._equilibration_thread.start()
+        return True
+        # self._equilibration_evt = evt
+        # return evt
 
     def py_sniff(self, ncounts, starttime, starttime_offset, series=0, block=True):
         if block:
@@ -523,7 +599,7 @@ class AutomatedRun(Loggable):
                 name="sniff",
                 args=(ncounts, starttime, starttime_offset, series),
             )
-            t.setDaemon(True)
+            # t.setDaemon(True)
             t.start()
             return True
 
@@ -592,14 +668,6 @@ class AutomatedRun(Loggable):
         )
 
         if self.plot_panel:
-            bs = dict(
-                [
-                    (iso.name, (iso.detector, iso.baseline.uvalue))
-                    for iso in self.isotope_group.values()
-                ]
-            )
-            # self.set_previous_baselines(bs)
-            self.executor_event = {"kind": "baselines", "baselines": bs}
             self.plot_panel.is_baseline = False
 
         self.multi_collector.is_baseline = False
@@ -1019,8 +1087,8 @@ class AutomatedRun(Loggable):
         if self.collector:
             self.collector.automated_run = None
 
-        if self.plot_panel:
-            self.plot_panel.automated_run = None
+        # if self.plot_panel:
+        #     self.plot_panel.automated_run = None
 
         self._persister_action("trait_set", persistence_spec=None, monitor=None)
 
@@ -1033,12 +1101,12 @@ class AutomatedRun(Loggable):
         if self.spec:
             if self.spec.state not in (
                 "not run",
-                "canceled",
-                "success",
-                "truncated",
+                CANCELED,
+                SUCCESS,
+                TRUNCATED,
                 "aborted",
             ):
-                self.spec.state = "failed"
+                self.spec.state = FAILED
                 self.experiment_queue.refresh_table_needed = True
 
         self.spectrometer_manager.spectrometer.active_detectors = []
@@ -1239,15 +1307,21 @@ class AutomatedRun(Loggable):
                 self.action_conditionals,
                 self.cancelation_conditionals,
                 self.modification_conditionals,
+                self.equilibration_conditionals,
             )
 
             env = self._get_environmentals()
             if env:
                 set_environmentals(self.spec, env)
 
+            tag = "ok"
+            if self.spec.state in (CANCELED, FAILED):
+                tag = self.spec.state
+
             self._update_persister_spec(
                 active_detectors=self._active_detectors,
                 conditionals=[c for cond in conds for c in cond],
+                tag=tag,
                 tripped_conditional=self.tripped_conditional,
                 **env
             )
@@ -1554,12 +1628,15 @@ class AutomatedRun(Loggable):
             self.heading("Post Measurement Finished unsuccessfully")
             return False
 
+    _post_equilibration_thread = None
+
     def do_post_equilibration(self, block=False):
         if block:
             self._post_equilibration()
         else:
             t = Thread(target=self._post_equilibration, name="post_equil")
-            t.setDaemon(True)
+            # t.setDaemon(True)
+            self._post_equilibration_thread = t
             t.start()
 
     def do_post_termination(self, do_post_equilibration=True):
@@ -1611,6 +1688,15 @@ anaylsis_type={}
             signal_string,
             age_string,
         )
+
+    def get_baselines(self):
+        if self.isotope_group:
+            return {
+                iso.name: (iso.detector, iso.baseline.uvalue)
+                for iso in self.isotope_group.values()
+            }
+            # return dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
+            #              self.isotope_group.values()])
 
     def get_baseline_corrected_signals(self):
         if self.isotope_group:
@@ -1905,9 +1991,9 @@ anaylsis_type={}
     def _add_conditionals_from_file(self, p, level=None):
         d = conditionals_from_file(p, level=level)
         for k, v in d.items():
-            if k in ("actions", "truncations", "terminations", "cancelations"):
-                var = getattr(self, "{}_conditionals".format(k[:-1]))
-                var.extend(v)
+            # if k in ('actions', 'truncations', 'terminations', 'cancelations'):
+            var = getattr(self, "{}_conditionals".format(k[:-1]))
+            var.extend(v)
 
     def _conditional_appender(self, name, cd, klass, level=None, location=None):
         if not self.isotope_group:
@@ -1981,8 +2067,19 @@ anaylsis_type={}
         dfp = self._get_default_fits_file()
         if dfp:
             ys = yload(dfp)
-            extract_fit_dict(sfods, ys["signal"])
-            extract_fit_dict(bsfods, ys["baseline"])
+            for fod, key in ((sfods, "signal"), (bsfods, "baseline")):
+                try:
+                    extract_fit_dict(fod, ys[key])
+                except BaseException:
+                    self.debug_exception()
+                    try:
+                        yload(dfp, reraise=True)
+                    except BaseException as ye:
+                        self.warning(
+                            "Failed getting signal from fits file. Please check the syntax. {}".format(
+                                ye
+                            )
+                        )
 
         return sfods, bsfods
 
@@ -2034,15 +2131,15 @@ anaylsis_type={}
         """
         self.debug("activate detectors")
 
-        if self.plot_panel is None:
-            create = True
-        else:
-            cd = set([d.name for d in self.plot_panel.detectors])
-            ad = set(dets)
-            create = cd - ad or ad - cd
+        create = True
+        # if self.plot_panel is None:
+        #     create = True
+        # else:
+        #     cd = set([d.name for d in self.plot_panel.detectors])
+        #     ad = set(dets)
+        #     create = cd - ad or ad - cd
 
         p = self._new_plot_panel(self.plot_panel, stack_order="top_to_bottom")
-        self.plot_panel = p
 
         self._active_detectors = self._set_active_detectors(dets)
 
@@ -2072,23 +2169,22 @@ anaylsis_type={}
 
         self._load_previous()
 
-        self.debug("load analysis view")
-        p.analysis_view.load(self)
+        # self.debug('load analysis view')
+        # p.analysis_view.load(self)
+        self.plot_panel = p
 
     def _load_previous(self):
         if not self.spec.analysis_type.startswith(
             "blank"
         ) and not self.spec.analysis_type.startswith("background"):
-            pid, blanks, runid = self.previous_blanks
+            runid, blanks = self.previous_blanks
 
             self.debug("setting previous blanks")
             for iso, v in blanks.items():
                 self.isotope_group.set_blank(iso, v[0], v[1])
 
             self._update_persister_spec(
-                previous_blank_id=pid,
-                previous_blanks=blanks,
-                previous_blank_runid=runid,
+                previous_blanks=blanks, previous_blank_runid=runid
             )
 
         self.isotope_group.clear_baselines()
@@ -2098,13 +2194,6 @@ anaylsis_type={}
             self.isotope_group.set_baseline(iso, v[0], v[1])
 
     def _add_conditionals(self):
-        klass_dict = {
-            "actions": ActionConditional,
-            "truncations": TruncationConditional,
-            "terminations": TerminationConditional,
-            "cancelations": CancelationConditional,
-            "modifications": QueueModificationConditional,
-        }
 
         t = self.spec.conditionals
         self.debug("adding conditionals {}".format(t))
@@ -2116,17 +2205,30 @@ anaylsis_type={}
                 failure = False
                 for kind, items in yd.items():
                     try:
-                        klass = klass_dict[kind]
-                    except KeyError:
-                        self.debug('Invalid conditional kind="{}"'.format(kind))
+                        okind = kind
+                        if kind.endswith("s"):
+                            kind = kind[:-1]
+
+                        if kind == "modification":
+                            klass_name = "QueueModification"
+                        elif kind in ("pre_run_termination", "post_run_termination"):
+                            continue
+                        else:
+                            klass_name = kind.capitalize()
+
+                        mod = "pychron.experiment.conditional.conditional"
+                        mod = importlib.import_module(mod)
+                        klass = getattr(mod, "{}Conditional".format(klass_name))
+                    except (ImportError, AttributeError):
+                        self.critical(
+                            'Invalid conditional kind="{}", klass_name="{}"'.format(
+                                okind, klass_name
+                            )
+                        )
                         continue
 
                     for cd in items:
                         try:
-                            # trim off s
-                            if kind.endswith("s"):
-                                kind = kind[:-1]
-
                             self._conditional_appender(kind, cd, klass, location=p)
                         except BaseException as e:
                             self.debug(
@@ -2174,14 +2276,14 @@ anaylsis_type={}
         if irradiation:
             title = "{}   {}".format(title, irradiation)
 
-        if plot_panel is None:
-            from pychron.experiment.plot_panel import PlotPanel
+        # if plot_panel is None:
+        #     from pychron.experiment.plot_panel import PlotPanel
 
-            plot_panel = PlotPanel(
-                stack_order=stack_order,
-                info_func=self.info,
-                isotope_group=self.isotope_group,
-            )
+        plot_panel = PlotPanel(
+            stack_order=stack_order,
+            info_func=self.info,
+            isotope_group=self.isotope_group,
+        )
 
         self.debug("*************** Set Analysis View {}".format(self.experiment_type))
         plot_panel.set_analysis_view(
@@ -2217,57 +2319,9 @@ anaylsis_type={}
         do_post_equilibration=True,
         close_inlet=True,
     ):
-
         inlet = self._convert_valve(inlet)
-        outlet = self._convert_valve(outlet)
-
         elm = self.extraction_line_manager
-        if elm:
-            if outlet:
-                # close mass spec ion pump
-                for o in outlet:
-                    for i in range(3):
-                        ok, changed = elm.close_valve(o, mode="script")
-                        if ok:
-                            break
-                        else:
-                            time.sleep(0.1)
-                    else:
-                        from pychron.core.ui.gui import invoke_in_main_thread
 
-                        invoke_in_main_thread(
-                            self.warning_dialog,
-                            'Equilibration: Failed to Close "{}"'.format(o),
-                        )
-                        self.cancel_run(do_post_equilibration=False)
-                        return
-
-            if inlet:
-                self.info(
-                    "waiting {}s before opening inlet value {}".format(delay, inlet)
-                )
-                time.sleep(delay)
-
-                # open inlet
-                for i in inlet:
-                    for j in range(3):
-                        ok, changed = elm.open_valve(i, mode="script")
-                        if ok:
-                            break
-                        else:
-                            time.sleep(0.1)
-                    else:
-                        from pychron.core.ui.gui import invoke_in_main_thread
-
-                        invoke_in_main_thread(
-                            self.warning_dialog,
-                            'Equilibration: Failed to Open "{}"'.format(i),
-                        )
-                        self.cancel_run(do_post_equilibration=False)
-                        return
-
-        # set the passed in event
-        evt.set()
         # delay for eq time
         self.info("equilibrating for {}sec".format(eqtime))
         time.sleep(eqtime)
@@ -2458,7 +2512,8 @@ anaylsis_type={}
             if self.plot_panel:
                 self.debug("load analysis view")
                 self.plot_panel.analysis_view.load(self)
-                self.plot_panel.analysis_view.refresh_needed = True
+
+            #     self.plot_panel.analysis_view.refresh_needed = True
 
         return change
 
@@ -2470,7 +2525,7 @@ anaylsis_type={}
         self._intensities = {}
         while 1:
             try:
-                k, s, t = spec.get_intensities(tagged=True, trigger=False)
+                k, s, t, inc = spec.get_intensities(tagged=True, trigger=False)
             except NoIntensityChange:
                 self.warning(
                     "Canceling Run. Intensity from mass spectrometer not changing"
@@ -2482,7 +2537,7 @@ anaylsis_type={}
                 except BaseException:
                     self.warning("Failed to save run")
 
-                self.cancel_run(state="failed")
+                self.cancel_run(state=FAILED)
                 yield None
 
             if not k:
@@ -2506,10 +2561,10 @@ anaylsis_type={}
 
                     # do we need to cancel the experiment or will the subsequent pre run
                     # checks sufficient to catch spectrometer communication errors.
-                    self.cancel_run(state="failed")
+                    self.cancel_run(state=FAILED)
                     yield None
                 else:
-                    yield None, None, None
+                    yield None, None, None, False
             else:
                 # reset the counter
                 cnt = 0
@@ -2519,7 +2574,7 @@ anaylsis_type={}
                 self._intensities["tags"] = k
                 self._intensities["signals"] = s
 
-                yield k, s, t
+                yield k, s, t, inc
 
         # return gen()
 
@@ -2607,7 +2662,7 @@ anaylsis_type={}
         self.persister.build_tables(gn, self._active_detectors, ncounts)
         # mem_log('build tables')
 
-        check_conditionals = False
+        check_conditionals = True
         writer = self.persister.get_data_writer(gn)
 
         result = self._measure(
@@ -2676,7 +2731,7 @@ anaylsis_type={}
             m.trait_set(trigger=self.spectrometer_manager.spectrometer.trigger_acq)
 
         if self.plot_panel:
-            self.plot_panel.integration_time = period
+            self.plot_panel.integration_time = self._integration_seconds
             self.plot_panel.set_ncounts(ncounts)
 
             if grpname == "sniff":
@@ -2915,22 +2970,25 @@ anaylsis_type={}
         sname = self.script_info.measurement_script_name
         sname = self._make_script_name(sname)
 
-        from pychron.spectrometer.thermo.manager.base import ThermoSpectrometerManager
-        from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
-
         klass = MeasurementPyScript
         if isinstance(self.spectrometer_manager, ThermoSpectrometerManager):
-            from pychron.pyscripts.thermo_measurement_pyscript import (
+            from pychron.pyscripts.measurement.thermo_measurement_pyscript import (
                 ThermoMeasurementPyScript,
             )
 
             klass = ThermoMeasurementPyScript
         elif isinstance(self.spectrometer_manager, NGXSpectrometerManager):
-            from pychron.pyscripts.ngx_measurement_pyscript import (
+            from pychron.pyscripts.measurement.ngx_measurement_pyscript import (
                 NGXMeasurementPyScript,
             )
 
             klass = NGXMeasurementPyScript
+        elif isinstance(self.spectrometer_manager, QuaderaSpectrometerManager):
+            from pychron.pyscripts.measurement.quadera_measurement_pyscript import (
+                QuaderaMeasurementPyScript,
+            )
+
+            klass = QuaderaMeasurementPyScript
 
         ms = klass(
             root=paths.measurement_dir,

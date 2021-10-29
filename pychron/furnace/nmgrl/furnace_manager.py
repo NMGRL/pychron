@@ -74,6 +74,7 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
     settings_name = "furnace_settings"
     status_txt = Str
 
+    use_full_power = Bool(False)
     dump_sample_enabled = Property(
         depends_on="dump_funnel_safety_override, funnel_up_enabled"
     )
@@ -335,11 +336,16 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
 
     def set_pid_parameters(self, v):
         self.debug("setting pid parameters for {}".format(v))
-        from pychron.hardware.eurotherm.base import get_pid_parameters
+        from pychron.hardware.eurotherm.base import (
+            get_pid_parameters,
+            modify_pid_parameter,
+        )
 
         params = get_pid_parameters(v)
         if params:
             _, param_str = params
+            if self.use_full_power:
+                param_str = modify_pid_parameter(param_str, "HO", 100)
             self._pid_str = param_str
             self.controller.set_pid(param_str)
 

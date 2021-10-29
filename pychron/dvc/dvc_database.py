@@ -63,6 +63,7 @@ from pychron.dvc.dvc_orm import (
     CurrentTbl,
     ParameterTbl,
     UnitsTbl,
+    MediaTbl,
 )
 from pychron.experiment.utilities.identifier import strip_runid
 from pychron.globals import globalv
@@ -622,6 +623,12 @@ class DVCDatabase(DatabaseAdapter):
             c.units = units
             self._add_item(c)
 
+    def add_media(self, p, an):
+        m = MediaTbl(url=p)
+        m.analysis = an
+
+        return self._add_item(m)
+
     def add_analysis(self, **kw):
         with self.session_ctx():
             a = AnalysisTbl(**kw)
@@ -962,6 +969,29 @@ class DVCDatabase(DatabaseAdapter):
             q = q.order_by(AnalysisTbl.timestamp.desc())
             q = q.limit(limit)
             return self._query_all(q)
+
+    def get_repository_analyses_date_range(self, repo):
+        with self.session_ctx() as sess:
+            r = self.get_repository(repo)
+            ts = {a.analysis.timestamp for a in r.repository_associations}
+            return min(ts), max(ts)
+
+    def get_repository_mass_spectrometers(self, repo):
+        with self.session_ctx() as sess:
+            r = self.get_repository(repo)
+            return {a.analysis.mass_spectrometer for a in r.repository_associations}
+
+    def get_repository_irradiations(self, repo):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationTbl)
+            q = q.join(LevelTbl)
+            q = q.join(IrradiationPositionTbl)
+            q = q.join(AnalysisTbl)
+            q = q.join(RepositoryAssociationTbl)
+            q = q.filter(RepositoryAssociationTbl.repository == repo)
+            return [i.name for i in self._query_all(q)]
+            # r = self.get_repository(repo)
+            # return {a.analysis.irradiation for a in r.repository_associations}
 
     def get_repository_analyses(self, repo):
         with self.session_ctx():

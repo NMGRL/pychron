@@ -558,8 +558,12 @@ class GitRepoManager(Loggable):
         # return self._repo.is_dirty()
 
     def has_unpushed_commits(self, remote="origin", branch="master"):
-        # return self._repo.git.log('--not', '--remotes', '--oneline')
-        return self._repo.git.log("{}/{}..HEAD".format(remote, branch), "--oneline")
+        if self._repo:
+            # return self._repo.git.log('--not', '--remotes', '--oneline')
+            if remote in self._repo.remotes:
+                return self._repo.git.log(
+                    "{}/{}..HEAD".format(remote, branch), "--oneline"
+                )
 
     def add_unstaged(self, root=None, add_all=False, extension=None, use_diff=False):
         if root is None:
@@ -841,6 +845,10 @@ class GitRepoManager(Loggable):
         accept_our=False,
         accept_their=False,
     ):
+
+        if remote not in self._repo.remotes:
+            return True
+
         try:
             ahead, behind = self.ahead_behind(remote)
         except GitCommandError as e:

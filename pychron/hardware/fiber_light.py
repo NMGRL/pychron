@@ -47,7 +47,10 @@ class FiberLight(AbstractDevice):
 
         self._cdevice = None
         if klass is not None:
-            package = "pychron.hardware.arduino.arduino_fiber_light_module"
+            if klass == "ArduinoFiberLightModule":
+                package = "pychron.hardware.arduino.arduino_fiber_light_module"
+            elif klass == "U3FiberLight":
+                package = "pychron.hardware.labjack.u3_fiber_light"
             factory = self.get_factory(package, klass)
             self._cdevice = factory(
                 name=klass, configuration_dir_name=self.configuration_dir_name
@@ -63,7 +66,7 @@ class FiberLight(AbstractDevice):
 
     def _write_intensity(self, v):
         if self._cdevice:
-            self._cdevice.set_intensity(v / 100 * 255)
+            self._cdevice.set_intensity(v / 100)
 
     def read_state(self):
         if self._cdevice is not None:

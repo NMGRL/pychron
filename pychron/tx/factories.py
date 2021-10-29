@@ -53,6 +53,10 @@ class FusionsUVFactory(LaserFactory):
     _name = "FusionsUV"
 
 
+class OsTechDiodeFactory(LaserFactory):
+    _name = "OsTechDiode"
+
+
 from pychron.paths import paths
 
 path = os.path.join(paths.log_dir, "pps.log.json")

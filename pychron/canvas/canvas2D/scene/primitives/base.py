@@ -89,6 +89,13 @@ class Primitive(HasTraits):
         super(Primitive, self).__init__(*args, **kw)
         self._initialized = True
 
+    def toyaml(self):
+        return {
+            "name": self.name,
+            "translation": "{:0.2f},{:0.2f}".format(self.x, self.y),
+            "dimension": "{:0.2f}, {:0.2f}".format(self.width, self.height),
+        }
+
     def edit_view(self):
         v = View(
             VGroup(

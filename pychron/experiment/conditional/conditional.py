@@ -26,6 +26,7 @@ from traits.trait_types import BaseStr
 from uncertainties import nominal_value, std_dev
 
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import ps
 from pychron.core.yaml import yload
 from pychron.experiment.conditional.regexes import (
     MAPPER_KEY_REGEX,
@@ -42,6 +43,15 @@ from pychron.experiment.conditional.utilities import (
 from pychron.experiment.utilities.conditionals import RUN, QUEUE, SYSTEM
 from pychron.loggable import Loggable
 from pychron.paths import paths
+from pychron.pychron_constants import (
+    TRUNCATION,
+    ACTION,
+    TERMINATION,
+    PRE_RUN_TERMINATION,
+    POST_RUN_TERMINATION,
+    CANCELATION,
+    POST_RUN_ACTION,
+)
 
 
 def dictgetter(d, attrs, default=None):
@@ -60,17 +70,18 @@ def dictgetter(d, attrs, default=None):
 def conditionals_from_file(p, name=None, level=SYSTEM, **kw):
     yd = yload(p)
     cs = (
-        ("TruncationConditional", "truncation", "truncations"),
-        ("ActionConditional", "action", "actions"),
-        ("ActionConditional", "action", "post_run_actions"),
-        ("TerminationConditional", "termination", "terminations"),
-        ("TerminationConditional", "pre_run_termination", "pre_run_terminations"),
-        ("TerminationConditional", "post_run_termination", "post_run_terminations"),
-        ("CancelationConditional", "cancelation", "cancelations"),
+        (TRUNCATION, ps(TRUNCATION)),
+        (ACTION, ps(ACTION)),
+        (ACTION, ps(POST_RUN_ACTION)),
+        (TERMINATION, ps(TERMINATION)),
+        (TERMINATION, ps(PRE_RUN_TERMINATION)),
+        (TERMINATION, ps(POST_RUN_TERMINATION)),
+        (CANCELATION, ps(CANCELATION)),
     )
 
     conddict = {}
-    for klass, _, tag in cs:
+    for klass, tag in cs:
+        klass = "{}Conditional".format(klass.capitalize())
         if name and tag != name:
             continue
 
@@ -206,9 +217,9 @@ class BaseConditional(Loggable):
 
         """
         if self._should_check(run, data, cnt):
-            return self._check(run, data)
+            return self._check(run, data, cnt)
 
-    def _check(self, run, data):
+    def _check(self, run, data, cnt):
         raise NotImplementedError
 
     def _should_check(self, run, data, cnt):
@@ -242,6 +253,7 @@ class AutomatedRunConditional(BaseConditional):
     # start_count=0,
     # frequency=1,
     # *args, **kw):
+    _analysis_types_logged = False
 
     def __init__(self, teststr, start_count=0, frequency=1, *args, **kw):
 
@@ -290,12 +302,14 @@ class AutomatedRunConditional(BaseConditional):
             if self.analysis_types:
                 # check if checking should be done on this run based on analysis_type
                 atype = run.spec.analysis_type.lower()
-
-                self.debug(
-                    "analysis_type={}, target_types={}".format(
-                        atype, self.analysis_types
+                if not self._analysis_types_logged:
+                    self.debug(
+                        "analysis_type={}, target_types={}".format(
+                            atype, self.analysis_types
+                        )
                     )
-                )
+                    self._analysis_types_logged = True
+
                 should = False
                 for target_type in self.analysis_types:
                     if target_type.lower() == "blank":
@@ -320,7 +334,7 @@ class AutomatedRunConditional(BaseConditional):
                 cnt_flag = b and c
                 return cnt_flag
 
-    def _check(self, run, data, verbose=False):
+    def _check(self, run, data, cnt, verbose=False):
         """
         make a teststr and context from the run and data
         evaluate the teststr with the context
@@ -331,7 +345,7 @@ class AutomatedRunConditional(BaseConditional):
 
         self.value_context = vc = pprint.pformat(ctx, width=1)
 
-        self.debug("testing {}".format(teststr))
+        self.debug("Count: {} testing {}".format(cnt, teststr))
         if verbose:
             self.debug(
                 "attribute context {}".format(
@@ -414,6 +428,10 @@ class TruncationConditional(AutomatedRunConditional):
                 setattr(self, tag, cd[tag])
 
 
+class EquilibrationConditional(TruncationConditional):
+    pass
+
+
 class TerminationConditional(AutomatedRunConditional):
     """
     Stop the current analysis immediately. Don't save to database.
@@ -473,6 +491,7 @@ MODIFICATION_ACTIONS = (
     "Skip Aliquot",
     "Skip to Last in Aliquot",
     "Set Extract",
+    "Repeat Run",
 )
 
 
@@ -514,10 +533,11 @@ class QueueModificationConditional(AutomatedRunConditional):
     action = Enum(MODIFICATION_ACTIONS)
     extraction_str = ExtractionStr
 
-    def do_modifications(self, queue, current_run):
+    def do_modifications(self, current_run, executor, queue):
         runs = queue.cleaned_automated_runs
         func = getattr(self, self.action.lower().replace(" ", "_"))
-        func(runs, current_run)
+        if func(queue, runs, current_run):
+            executor.queue_modified = True
         queue.refresh_table_needed = True
 
     def _from_dict_hook(self, cd):
@@ -525,7 +545,12 @@ class QueueModificationConditional(AutomatedRunConditional):
             if tag in cd:
                 setattr(self, tag, cd[tag])
 
-    def _skip_n_runs(self, runs, current_run, n=None):
+    def _repeat_run(self, queue, runs, current_run):
+        spec = current_run.spec.tocopy()
+        queue.automated_runs.insert(spec, 0)
+        return True
+
+    def _skip_n_runs(self, queue, runs, current_run, n=None):
         if n is None:
             n = self.nskip
 
@@ -533,10 +558,10 @@ class QueueModificationConditional(AutomatedRunConditional):
             r = runs[i]
             r.skip = True
 
-    def _skip_next_run(self, runs, current_run):
+    def _skip_next_run(self, queue, runs, current_run):
         self._skip_n_runs(runs, current_run, 1)
 
-    def _skip_aliquot(self, runs, current_run):
+    def _skip_aliquot(self, queue, runs, current_run):
 
         identifier = current_run.spec.identifier
         aliquot = current_run.spec.aliquot
@@ -547,7 +572,7 @@ class QueueModificationConditional(AutomatedRunConditional):
             if r.identifier == identifier and r.aliquot == aliquot:
                 r.skip = True
 
-    def _skip_to_last_in_aliquot(self, runs, current_run):
+    def _skip_to_last_in_aliquot(self, queue, runs, current_run):
         identifier = current_run.spec.identifier
         for i, r in enumerate(runs):
             if r.is_special():
@@ -563,7 +588,7 @@ class QueueModificationConditional(AutomatedRunConditional):
             except IndexError:
                 pass
 
-    def _set_extract(self, runs, current_run):
+    def _set_extract(self, queue, runs, current_run):
 
         es = self.extraction_str
 

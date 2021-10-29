@@ -61,7 +61,7 @@ class NMGRLFurnaceActuator(GPActuator):
         Query the hardware for the channel state
         """
         cmd = "GetChannelState {}".format(get_switch_address(obj))
-        return self.ask(cmd, verbose=verbose)
+        return self.ask(cmd, verbose=True)
 
     def get_indicator_state(self, obj, action="open", verbose=False):
         """
@@ -79,7 +79,7 @@ class NMGRLFurnaceActuator(GPActuator):
                 "action": action,
             }
         )
-        resp = self.ask(cmd, verbose=verbose)
+        resp = self.ask(cmd, verbose=True)
 
         # if action == 'open':
         # print 'aa', resp, action

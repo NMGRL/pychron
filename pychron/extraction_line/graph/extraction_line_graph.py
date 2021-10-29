@@ -33,6 +33,7 @@ from pychron.extraction_line.graph.nodes import (
     PipetteNode,
     GaugeNode,
     GetterNode,
+    ColdFingerNode,
 )
 from pychron.extraction_line.graph.traverse import bft
 
@@ -74,12 +75,46 @@ class ExtractionLineGraph(HasTraits):
     nodes = Dict
     suppress_changes = False
     inherit_state = Bool
+    _cp = None
+    _yd = None
+
+    def _findname(self, elem, tag):
+        if self._cp:
+            a = elem.find(tag).text
+        else:
+            a = elem.get(tag)["name"]
+
+        return a.strip()
+
+    def _get_volume(self, v, tag="volume", default=0):
+        if self._cp:
+            vol = get_volume(v, tag, default)
+        else:
+            vol = v.get(tag, default)
+        return vol
+
+    def _get_text(self, v):
+        if self._cp:
+            t = v.text
+        else:
+            t = v.get("name", "")
+        return t.strip()
+
+    def _get_elements(self, key):
+        if self._cp:
+            return self._cp.get_elements(key)
+        else:
+            return self._yd.get(key, [])
 
     def load(self, p):
+        if p.endswith(".yaml") or p.endswith(".yml"):
+            from pychron.core.yaml import yload
 
-        cp = CanvasParser(p)
-        if cp.get_root() is None:
-            return
+            self._yd = yload(p)
+        else:
+            self._cp = CanvasParser(p)
+            if self._cp.get_root() is None:
+                return
 
         nodes = dict()
 
@@ -102,15 +137,16 @@ class ExtractionLineGraph(HasTraits):
             ("pipette", PipetteNode),
             ("gauge", GaugeNode),
             ("getter", GetterNode),
+            ("coldfinger", ColdFingerNode),
         ):
-            for si in cp.get_elements(t):
-                n = si.text.strip()
+            for si in self._get_elements(t):
+                n = self._get_text(si)
                 if t in ("valve", "rough_valve", "manual_valve"):
-                    o_vol = get_volume(si, tag="open_volume", default=10)
-                    c_vol = get_volume(si, tag="closed_volume", default=5)
+                    o_vol = self._get_volume(si, tag="open_volume", default=10)
+                    c_vol = self._get_volume(si, tag="closed_volume", default=5)
                     vol = (o_vol, c_vol)
                 else:
-                    vol = get_volume(si)
+                    vol = self._get_volume(si)
 
                 node = klass(name=n, volume=vol)
                 nodes[n] = node
@@ -118,22 +154,23 @@ class ExtractionLineGraph(HasTraits):
         # =======================================================================
         # load edges
         # =======================================================================
-        for tag in ("connection", "elbow", "vconnection", "hconnection"):
-            for ei in cp.get_elements(tag):
-                sa = ei.find("start")
-                ea = ei.find("end")
-                vol = get_volume(ei)
+        for tag in ("connection", "elbow", "vconnection", "hconnection", "rconnection"):
+            for ei in self._get_elements(tag):
+                skey = self._findname(ei, "start")
+                ekey = self._findname(ei, "end")
+                vol = self._get_volume(ei)
                 edge = Edge(volume=vol)
                 s_name = ""
-                if sa.text in nodes:
-                    s_name = sa.text
+
+                if skey in nodes:
+                    s_name = skey
                     sa = nodes[s_name]
                     edge.nodes.append(sa)
                     sa.add_edge(edge)
 
                 e_name = ""
-                if ea.text in nodes:
-                    e_name = ea.text
+                if ekey in nodes:
+                    e_name = ekey
                     ea = nodes[e_name]
                     # edge.b_node = ea
                     edge.nodes.append(ea)
@@ -142,18 +179,15 @@ class ExtractionLineGraph(HasTraits):
                 edge.name = "{}_{}".format(s_name, e_name)
 
         for c in ("tee_connection", "fork_connection"):
-            for conn in cp.get_elements(c):
-                left = conn.find("left")
-                right = conn.find("right")
-                mid = conn.find("mid")
+            for conn in self._get_elements(c):
+                left = self._findname(conn, "left")
+                right = self._findname(conn, "right")
+                mid = self._findname(conn, "mid")
 
-                edge = Edge(vol=get_volume(conn))
-                lt = left.text.strip()
-                rt = right.text.strip()
-                mt = mid.text.strip()
+                edge = Edge(vol=self._get_volume(conn))
 
                 ns = []
-                for x in (lt, mt, rt):
+                for x in (left, mid, right):
                     if x in nodes:
                         ln = nodes[x]
                         edge.nodes.append(ln)

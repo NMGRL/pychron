@@ -142,12 +142,13 @@ class XMLParser(object):
     def __init__(self, path=None, *args, **kw):
         if path:
             self.path = path
-            try:
-                self._parse_file(path)
-            except ParseError as e:
-                from pyface.message_dialog import warning
+            if path.endswith(".xml"):
+                try:
+                    self._parse_file(path)
+                except ParseError as e:
+                    from pyface.message_dialog import warning
 
-                warning(None, str(e))
+                    warning(None, str(e))
         else:
             self._root = Element("root")
 
@@ -158,14 +159,15 @@ class XMLParser(object):
             if os.path.isfile(p):
                 with open(p, "rb") as rfile:
                     txt = rfile.read()
-
         if txt is None:
             txt = p.read()
         try:
             self._root = XML(txt, parser=LXMLParser(remove_blank_text=True))
             return True
         except XMLSyntaxError as e:
+            print("Syntax error", p, e)
             self._syntax_error = str(e)
+            print("asdfasdfas", p, self._syntax_error)
 
     def load(self, rfile):
         return self._parse_file(rfile)

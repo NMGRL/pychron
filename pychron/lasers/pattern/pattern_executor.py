@@ -254,9 +254,12 @@ class PatternExecutor(Patternable):
                 self.info("doing pattern iteration {}".format(ni))
                 self._execute_iteration(ni)
 
+            self.controller.nonstoppable = True
             self.controller.linear_move(
                 pat.cx, pat.cy, block=True, source="execute_xy_pattern"
             )
+            self.controller.nonstoppable = False
+
             if pat.disable_at_end:
                 self.laser_manager.disable_device()
 
@@ -419,17 +422,9 @@ class PatternExecutor(Patternable):
                     sleep(update_period / 5)
                     continue
 
-                sleep(update_period)
-
                 pt, peakcol, peakrow, peak_img, sat, src = args
 
                 sats.append(sat)
-                # if peak is None:
-                #     peak = peak_img
-                # else:
-                #     peak = ((peak.astype('int16') - 2) + peak_img).clip(0, 255)
-
-                # img = gray2rgb(peak).astype(uint8)
                 src = gray2rgb(src).astype(uint8)
                 if pt:
                     pts.append(pt)
@@ -437,9 +432,9 @@ class PatternExecutor(Patternable):
                     # img[c] = (255, 0, 0)
                     src[c] = (255, 0, 0)
 
-                # set_data('imagedata', src)
                 set_data2("imagedata", src)
-                # set_data('imagedata', img)
+
+                sleep(update_period)
 
             self.debug("iteration {} finished, npts={}".format(cnt, len(pts)))
 
@@ -477,20 +472,15 @@ class PatternExecutor(Patternable):
 
                 point_gen = None
 
-                # wait = True
-                if npt is None:
-                    block = total_duration - (time.time() - st) < duration
-                    linear_move(
-                        cx,
-                        cy,
-                        source="recenter_dragonfly{}".format(cnt),
-                        block=block,
-                        velocity=pattern.velocity,
-                        use_calibration=False,
-                    )
-                    pattern.position_str = "Return to Center"
-                    px, py = cx, cy
-                    continue
+                # # wait = True
+                # if npt is None:
+                #     block = total_duration - (time.time() - st) < duration
+                #     linear_move(cx, cy, source='recenter_dragonfly{}'.format(cnt), block=block,
+                #                 velocity=pattern.velocity,
+                #                 use_calibration=False)
+                #     pattern.position_str = 'Return to Center'
+                #     px, py = cx, cy
+                #     continue
 
                 try:
                     scalar = npt[2]
@@ -547,14 +537,18 @@ class PatternExecutor(Patternable):
             # if there is less than 1 duration left then block is true
             block = total_duration - (time.time() - st) < duration
             self.debug("blocking ={}".format(block))
-            linear_move(
-                px,
-                py,
-                source="dragonfly{}".format(cnt),
-                block=block,
-                velocity=pattern.velocity,
-                use_calibration=False,
-            )
+
+            try:
+                linear_move(
+                    px,
+                    py,
+                    source="dragonfly{}".format(cnt),
+                    block=block,
+                    velocity=pattern.velocity,
+                    use_calibration=False,
+                )
+            except TargetPositionError as e:
+                self.debug("Target position error: {}".format(e))
 
             ay, ax = py - cy, px - cx
             # self.debug('position mm ax={},ay={}'.format(ax, ay))

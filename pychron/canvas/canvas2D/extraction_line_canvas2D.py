@@ -17,9 +17,10 @@
 # ============= enthought library imports =======================
 import os
 
+from enable.enable_traits import Pointer
 from pyface.action.menu_manager import MenuManager
 from pyface.qt.QtGui import QToolTip
-from traits.api import Any, Str, on_trait_change, Bool
+from traits.api import Any, Str, on_trait_change, Bool, List
 from traitsui.menu import Action
 
 from pychron.canvas.canvas2D.overlays.extraction_line_overlay import (
@@ -41,6 +42,12 @@ from pychron.globals import globalv
 
 W = 2
 H = 2
+
+
+def snap_to_grid(dx, dy, interval):
+    dx = round(dx / interval) * interval
+    dy = round(dy / interval) * interval
+    return dx, dy
 
 
 class ExtractionLineAction(Action):
@@ -78,10 +85,21 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     force_actuate_enabled = True
 
+    drag_pointer = Pointer("bullseye")
+    snap_to_grid = True
+    grid_interval = 0.5
+    edit_mode = Bool(False)
+    _constrain = False
+
+    _px = None
+    _py = None
+
     def __init__(self, *args, **kw):
         super(ExtractionLineCanvas2D, self).__init__(*args, **kw)
 
-        tool = ExtractionLineInfoTool(scene=self.scene, manager=self.manager)
+        tool = ExtractionLineInfoTool(
+            scene=self.scene, manager=self.manager, component=self
+        )
         overlay = ExtractionLineInfoOverlay(tool=tool, component=self)
         self.tool = tool
         self.tools.append(tool)
@@ -145,7 +163,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
         return self.scene.get_is_in(x, y, exclude=[BorderLine, Elbow, Connection])
 
     def normal_left_down(self, event):
-        pass
+        event.handled = True
+
+    def normal_left_dclick(self, event):
+        event.handled = True
 
     def normal_mouse_move(self, event):
         item = self._over_item(event)
@@ -185,8 +206,15 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def select_left_down(self, event):
         """ """
+        event.handled = True
+
         item = self.active_item
         if item is None:
+            return
+
+        if self.edit_mode:
+            self.event_state = "drag"
+            event.window.set_pointer(self.drag_pointer)
             return
 
         if isinstance(item, Laser):
@@ -255,6 +283,49 @@ class ExtractionLineCanvas2D(SceneCanvas):
         if change:
             self.invalidate_and_redraw()
 
+        event.handled = True
+
+    def drag_mouse_move(self, event):
+        si = self.active_item
+
+        x, y = event.x, event.y
+        dx, dy = self.map_data((x, y))
+        w, h = si.width, si.height
+
+        dx -= w / 2.0
+        dy -= h / 2.0
+
+        if self.snap_to_grid:
+            dx, dy = snap_to_grid(dx, dy, interval=self.grid_interval)
+
+        if event.shift_down:
+            if self._px is not None and not self._constrain:
+                xx = abs(x - self._px)
+                yy = abs(y - self._py)
+                self._constrain = "v" if yy > xx else "h"
+            else:
+                self._px = x
+                self._py = y
+        else:
+            self._constrain = False
+            self._px, self._py = None, None
+
+        if self._constrain == "h":
+            si.x = dx
+        elif self._constrain == "v":
+            si.y = dy
+        else:
+            si.x, si.y = dx, dy
+
+        si.request_layout()
+        self.invalidate_and_redraw()
+
+    def drag_left_up(self, event):
+        self._set_normal_state(event)
+
+    def drag_mouse_leave(self, event):
+        self._set_normal_state(event)
+
     def on_lock(self):
         item = self._active_item
         if item:
@@ -268,6 +339,11 @@ class ExtractionLineCanvas2D(SceneCanvas):
     def on_force_open(self):
         self._force_actuate(self.manager.open_valve, True)
 
+    def iter_valves(self):
+        return self.scene.valves.values()
+        # return (i for i in six.itervalues(self.scene.valves))
+
+    # private
     def _force_actuate(self, func, state):
         item = self._active_item
         if item:
@@ -281,11 +357,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
             if change:
                 self.invalidate_and_redraw()
 
-    def iter_valves(self):
-        return self.scene.valves.values()
-        # return (i for i in six.itervalues(self.scene.valves))
+    def _set_normal_state(self, event):
+        self.event_state = "normal"
+        event.window.set_pointer(self.normal_pointer)
 
-    # private
     def _select_hook(self, item):
         pass
 

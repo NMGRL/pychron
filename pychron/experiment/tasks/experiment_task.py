@@ -44,6 +44,7 @@ from pychron.experiment.tasks.experiment_panes import (
     ConnectionStatusPane,
     LoggerPane,
     ExplanationPane,
+    ConditionalsPane,
 )
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
@@ -58,6 +59,14 @@ from pychron.pychron_constants import (
     AIR,
     BLANK,
     FUSIONS_UV,
+    INVALID,
+    EXTRACTION,
+    MEASUREMENT,
+    CANCELED,
+    TRUNCATED,
+    END_AFTER,
+    FAILED,
+    SUCCESS,
 )
 
 
@@ -78,6 +87,7 @@ class ExperimentEditorTask(EditorTask):
 
     automated_runs_editable = Bool
 
+    conditionals_pane = Instance(ConditionalsPane)
     isotope_evolution_pane = Instance(IsotopeEvolutionPane)
     experiment_factory_pane = Instance(ExperimentFactoryPane)
 
@@ -214,6 +224,7 @@ class ExperimentEditorTask(EditorTask):
         if not man or man.simulation:
             name = "{}(Simulation)".format(name)
 
+        ex = self.manager.executor
         self.isotope_evolution_pane = IsotopeEvolutionPane(name=name)
 
         self.experiment_factory_pane = ExperimentFactoryPane(
@@ -223,14 +234,15 @@ class ExperimentEditorTask(EditorTask):
 
         explanation_pane = ExplanationPane()
         explanation_pane.set_colors(self._assemble_state_colors())
+        self.conditionals_pane = ConditionalsPane(model=ex)
 
-        ex = self.manager.executor
         panes = [
             StatsPane(model=ex.stats, executor=ex),
             ControlsPane(model=ex, task=self),
             ConsolePane(model=ex),
             LoggerPane(),
             ConnectionStatusPane(model=ex),
+            self.conditionals_pane,
             self.experiment_factory_pane,
             self.isotope_evolution_pane,
             explanation_pane,
@@ -296,14 +308,14 @@ class ExperimentEditorTask(EditorTask):
     def _assemble_state_colors(self):
         colors = {}
         for c in (
-            "success",
-            "extraction",
-            "measurement",
-            "canceled",
-            "truncated",
-            "failed",
-            "end_after",
-            "invalid",
+            SUCCESS,
+            EXTRACTION,
+            MEASUREMENT,
+            CANCELED,
+            TRUNCATED,
+            FAILED,
+            END_AFTER,
+            INVALID,
         ):
             v = self.application.preferences.get(
                 "pychron.experiment.{}_color".format(c)
@@ -566,21 +578,16 @@ class ExperimentEditorTask(EditorTask):
 
             rf.selected_irradiation = nn.irradiation
             rf.selected_level = nn.level
-            rf.labnumber = nn.labnumber
+            rf.labnumber = nn.identifier
 
             # filter rows that dont match the first rows labnumber
-            ns = [str(ni.positions[0]) for ni in new if ni.labnumber == nn.labnumber]
+            ns = [str(ni.position) for ni in new if ni.identifier == nn.identifier]
 
-            group_positions = self.loading_manager.group_positions
-            # group_positions = False
-            if group_positions:
-                rf.position = ",".join(ns)
+            n = len(ns)
+            if n > 1 and abs(int(ns[0]) - int(ns[-1])) == n - 1:
+                rf.position = "{}-{}".format(ns[0], ns[-1])
             else:
-                n = len(ns)
-                if n > 1 and abs(int(ns[0]) - int(ns[-1])) == n - 1:
-                    rf.position = "{}-{}".format(ns[0], ns[-1])
-                else:
-                    rf.position = str(ns[0])
+                rf.position = str(ns[0])
 
     @on_trait_change("manager:experiment_factory:extract_device")
     def _handle_extract_device(self, new):
@@ -624,6 +631,7 @@ class ExperimentEditorTask(EditorTask):
     @on_trait_change("manager:experiment_factory:queue_factory:load_name")
     def _update_load(self, new):
         lm = self.loading_manager
+        self.debug("load_name changed={} {}".format(new, lm))
         if lm is not None:
             lm.set_load_by_name(new)
             if lm.canvas:
@@ -751,6 +759,10 @@ class ExperimentEditorTask(EditorTask):
         editor.last_update = time.time()
         return editor
 
+    @on_trait_change("manager:executor:show_conditionals_event")
+    def _handle_show_conditionals(self):
+        self._show_pane(self.conditionals_pane)
+
     @on_trait_change("manager:executor:[measuring,extracting]")
     def _handle_measuring(self, name, new):
         if new:
@@ -817,6 +829,7 @@ class ExperimentEditorTask(EditorTask):
         if lm:
             dvc = self.window.application.get_service(DVC_PROTOCOL)
             lm.trait_set(db=dvc.db, show_group_positions=True)
+            lm.setup()
             return lm
 
     def _default_directory_default(self):

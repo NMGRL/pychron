@@ -190,6 +190,10 @@ class MeasurementPyScript(ValvePyScript):
         :param integration_time: integration time in seconds
         :type integration_time: float
         """
+
+        if self.abbreviated_count_ratio:
+            ncounts *= self.abbreviated_count_ratio
+
         if calc_time:
             self._estimated_duration += (
                 ncounts * integration_time * ESTIMATED_DURATION_FF
@@ -197,8 +201,9 @@ class MeasurementPyScript(ValvePyScript):
             return
 
         self.ncounts = ncounts
-        if self.abbreviated_count_ratio:
-            ncounts *= self.abbreviated_count_ratio
+        # set self.ncounts before applying abbreviated_count_ratio
+        # if self.abbreviated_count_ratio:
+        #    ncounts *= self.abbreviated_count_ratio
 
         if not self._automated_run_call(
             "py_data_collection",
@@ -521,7 +526,7 @@ class MeasurementPyScript(ValvePyScript):
         :param delay: int, delay in seconds between close of outlet and open of inlet
 
         """
-        evt = self._automated_run_call(
+        ok = self._automated_run_call(
             "py_equilibration",
             eqtime=eqtime,
             inlet=inlet,
@@ -531,11 +536,11 @@ class MeasurementPyScript(ValvePyScript):
             delay=delay,
         )
 
-        if not evt:
+        if not ok:
             self.cancel()
-        else:
-            # wait for inlet to open
-            evt.wait()
+        # else:
+        # wait for inlet to open
+        # evt.wait()
 
     @verbose_skip
     @command_register

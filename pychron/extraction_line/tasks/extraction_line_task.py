@@ -38,6 +38,8 @@ from pychron.extraction_line.tasks.extraction_line_pane import (
     CryoPane,
     ReadbackPane,
     EditorPane,
+    PumpPane,
+    HeaterPane,
 )
 
 
@@ -62,9 +64,11 @@ class ExtractionLineTask(BaseHardwareTask):
         panes = [
             GaugePane(model=self.manager),
             CryoPane(model=self.manager),
+            PumpPane(model=self.manager),
             ExplanationPane(model=self.manager),
             ConsolePane(model=self.manager),
             ReadbackPane(model=self.manager),
+            HeaterPane(model=self.manager),
             EditorPane(model=self.manager.canvas_editor),
             self.wait_pane,
         ]

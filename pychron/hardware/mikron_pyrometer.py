@@ -28,13 +28,11 @@ from traitsui.api import (
     EnumEditor,
 )
 
-# from pychron.core import Q_
-from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
+# =============standard library imports ========================
 
 # =============local library imports  ==========================
-from .core.core_device import CoreDevice
-
-# =============standard library imports ========================
+from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
+from pychron.hardware.pyrometer import Pyrometer
 
 TIME_CONSTANTS = {
     "0": "Intrinsic",
@@ -47,7 +45,7 @@ TIME_CONSTANTS = {
 }
 
 
-class MikronGA140Pyrometer(CoreDevice):
+class MikronGA140Pyrometer(Pyrometer):
     """
     emissivity (Emi) = 100%;
     exposition time (t90) = min;
@@ -64,7 +62,6 @@ class MikronGA140Pyrometer(CoreDevice):
     device_address = "00"
     global_address = 99
     global_address_wo_response = 98
-    #    _terminator = chr(13)
 
     emissivity = Property(
         Float(enter_set=True, auto_set=False), depends_on="_emissivity"
@@ -72,20 +69,14 @@ class MikronGA140Pyrometer(CoreDevice):
     _emissivity = Float(50.0)
     emmin = Float(10.0)
     emmax = Float(100.0)
+
     time_constant = Property(
         String(enter_set=True, auto_set=False), depends_on="_time_constant"
     )
     _time_constant = Str
 
-    pointer = Button
-    pointing = Bool
-    pointer_label = Property(depends_on="pointing")
-
     units = Str("C")
-    temperature = Float
-    qtemperature = None
 
-    # char_write = True
     scan_func = "read_temperature"
 
     def initialize(self, *args, **kw):
@@ -133,7 +124,7 @@ class MikronGA140Pyrometer(CoreDevice):
             if response_type == "float":
                 try:
                     resp = int(resp)
-                except:
+                except ValueError:
                     resp = 0
                 resp /= float(scalar)
             elif response_type == "hex_range":
@@ -148,7 +139,6 @@ class MikronGA140Pyrometer(CoreDevice):
         cmd = self._build_command("ms")
         temp = self._parse_response(self.ask(cmd, **kw))
 
-        # self.qtemperature = Q_(temp, 'C')
         self.temperature = temp or 0
 
         return self.temperature
@@ -230,16 +220,6 @@ class MikronGA140Pyrometer(CoreDevice):
         """
         cmd = self._build_command("as", value=output_range_id, single_digit=True)
         self.ask(cmd)
-
-    def _get_pointer_label(self):
-        """ """
-        return "Pointer ON" if not self.pointing else "Pointer OFF"
-
-    def _pointer_fired(self):
-        """ """
-        self.pointing = not self.pointing
-
-        self.set_laser_pointer(self.pointing)
 
     def set_laser_pointer(self, onoff):
         """

@@ -104,8 +104,10 @@ class ExperimentPreferences(BasePreferencesHelper):
     n_executed_display = PositiveInteger
     failed_intensity_count_threshold = PositiveInteger(3)
     ratio_change_detection_enabled = Bool(False)
+    use_preceding_blank = Bool(False)
     plot_panel_update_period = PositiveInteger(1)
     execute_open_queues = Bool
+    save_all_runs = Bool
 
     def _get_memory_threshold(self):
         return self._memory_threshold
@@ -204,6 +206,7 @@ class ExperimentPreferencesPane(PreferencesPane):
                 label="N. Executed",
                 tooltip='Number of analyses to display in the "Executed" table',
             ),
+            Item("use_preceding_blank", label="Use Preceding Blank"),
             label="General",
         )
         editor_grp = VGroup(
@@ -277,6 +280,11 @@ class ExperimentPreferencesPane(PreferencesPane):
             Item("use_xls_persistence", label="Save analyses to Excel workbook"),
             Item("use_db_persistence", label="Save analyses to Database"),
             Item("use_uuid_path_name", label="Use UUID Path Names"),
+            Item(
+                "save_all_runs",
+                label="Save All analyses",
+                tooltip="Save analysis even if run canceled or failed",
+            ),
             label="Persist",
             show_border=True,
         )

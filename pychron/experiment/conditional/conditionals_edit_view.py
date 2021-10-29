@@ -25,6 +25,7 @@ from traitsui.menu import Action
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import get_path, add_extension
+from pychron.core.helpers.strtools import camel_case
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.yaml import yload
 from pychron.envisage.view_util import open_view
@@ -34,6 +35,7 @@ from pychron.experiment.conditional.conditional import (
     CancelationConditional,
     TerminationConditional,
     QueueModificationConditional,
+    EquilibrationConditional,
 )
 from pychron.experiment.conditional.groups import (
     ConditionalGroup,
@@ -44,9 +46,21 @@ from pychron.experiment.conditional.groups import (
     TerminationGroup,
     EPostRunGroup,
     EPreRunGroup,
+    EquilibrationGroup,
 )
 from pychron.paths import paths
-from pychron.pychron_constants import ARGON_KEYS
+from pychron.pychron_constants import (
+    ARGON_KEYS,
+    ACTION,
+    MODIFICATION,
+    TRUNCATION,
+    EQUILIBRATION,
+    CANCELATION,
+    TERMINATION,
+    POST_RUN_TERMINATION,
+    CONDITIONAL_GROUP_NAMES,
+    PRE_RUN_TERMINATION,
+)
 
 
 class CEHandler(Handler):
@@ -63,15 +77,7 @@ class CEHandler(Handler):
 
 
 class ConditionalsViewable(HasTraits):
-    group_names = (
-        "actions",
-        "truncations",
-        "cancelations",
-        "terminations",
-        "post_run_terminations",
-        "pre_run_terminations",
-        "modifications",
-    )
+    group_names = CONDITIONAL_GROUP_NAMES
     title = Str
     available_attrs = List
     groups = List
@@ -180,34 +186,26 @@ class ConditionalsEditView(ConditionalsViewable):
 
                 yd = yload(p)
 
-        if "pre_run_terminations" in self.group_names:
+        ps = "{}s".format(PRE_RUN_TERMINATION)
+        if ps in self.group_names:
             grp = self._group_factory(
-                yd,
-                EPreRunGroup,
-                name="pre_run_terminations",
-                label="PreRunTerminations",
-                editable=True,
+                yd, EPreRunGroup, name=ps, label="PreRunTerminations", editable=True
             )
             grp.available_attrs = self.detectors
 
-        for name, klass, cklass, label in (
-            (
-                "modifications",
-                ModificationGroup,
-                QueueModificationConditional,
-                "Modifications",
-            ),
-            ("actions", ActionGroup, ActionConditional, "Actions"),
-            ("truncations", TruncationGroup, TruncationConditional, "Truncations"),
-            ("cancelations", CancelationGroup, CancelationConditional, "Cancelations"),
-            ("terminations", TerminationGroup, TerminationConditional, "Terminations"),
-            (
-                "post_run_terminations",
-                EPostRunGroup,
-                TerminationConditional,
-                "PostRunTerminations",
-            ),
+        for name, klass, cklass in (
+            (MODIFICATION, ModificationGroup, QueueModificationConditional),
+            (ACTION, ActionGroup, ActionConditional),
+            (TRUNCATION, TruncationGroup, TruncationConditional),
+            (EQUILIBRATION, EquilibrationGroup, EquilibrationConditional),
+            (CANCELATION, CancelationGroup, CancelationConditional),
+            (TERMINATION, TerminationGroup, TerminationConditional),
+            (POST_RUN_TERMINATION, EPostRunGroup, TerminationConditional),
         ):
+
+            name = "{}s".format(name)
+            label = camel_case(name)
+
             if name in self.group_names:
                 grp = self._group_factory(
                     yd,
@@ -217,7 +215,7 @@ class ConditionalsEditView(ConditionalsViewable):
                     label=label,
                     editable=True,
                 )
-                if name == "post_run_terminations":
+                if name == "{}s".format(POST_RUN_TERMINATION):
                     grp.available_attrs = self.detectors
                     # setattr(self, '{}_group'.format(name), grp)
                     # self.pre_run_terminations_group = grp

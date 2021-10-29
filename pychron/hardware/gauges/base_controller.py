@@ -38,7 +38,7 @@ class BaseGauge(HasTraits):
                     "display_name",
                     show_label=False,
                     style="readonly",
-                    width=-30,
+                    width=-100,
                 ),
                 Item(
                     "pressure", format_str="%0.2e", show_label=False, style="readonly"
@@ -129,8 +129,8 @@ class BaseGaugeController(HasTraits):
     def _update_pressure(self, gauge, verbose=False):
         if isinstance(gauge, str):
             gauge = self.get_gauge(gauge)
-
-        self.debug("_update_pressure: {}".format(gauge))
+        if verbose:
+            self.debug("_update_pressure: {}".format(gauge))
         if gauge:
             p = self._read_pressure(gauge, verbose)
             if self._set_gauge_pressure(gauge, p):

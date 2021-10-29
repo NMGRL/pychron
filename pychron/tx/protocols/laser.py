@@ -58,6 +58,7 @@ class LaserProtocol(ServiceProtocol):
             ("SetZ", "_set_z"),
             ("GetPosition", "_get_position"),
             ("GetAutoCorrecting", "_get_auto_correcting"),
+            ("CancelAutoCorrecting", "_cancel_auto_correcting"),
             ("GetDriveMoving", "_get_drive_moving"),
             ("GetXMoving", "_get_x_moving"),
             ("GetYMoving", "_get_y_moving"),
@@ -120,6 +121,9 @@ class LaserProtocol(ServiceProtocol):
 
     def _get_auto_correcting(self, data):
         return self._manager.stage_manager.is_auto_correcting()
+
+    def _cancel_auto_correcting(self, data):
+        return self._manager.stage_manager.cancel_auto_correcting()
 
     # ===============================================================================
     # Video

@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Str, Enum
-from traitsui.api import View, Item, HGroup
+from traits.api import Str, Enum, Float
+from traitsui.api import View, Item, HGroup, Label, UItem
 
 from pychron.canvas.canvas2D.scene.primitives.base import QPrimitive
 from pychron.canvas.canvas2D.scene.primitives.primitives import (
@@ -29,20 +29,123 @@ class ConnectionMixin:
     orientation = Enum(NULL_STR, "vertical", "horizontal")
     start = Str
     end = Str
-    start_offset = Str
-    end_offset = Str
+    start_offsetx = Float
+    start_offsety = Float
+
+    end_offsetx = Float
+    end_offsety = Float
+
+    @property
+    def end_offset(self):
+        return "{:0.2f},{:0.2f}".format(self.end_offsetx, self.end_offsety)
+
+    @property
+    def start_offset(self):
+        return "{:0.2f},{:0.2f}".format(self.start_offsetx, self.start_offsety)
 
     def edit_view(self):
         v = View(
             Item("orientation"),
-            HGroup(Item("start"), Item("start_offset")),
-            HGroup(Item("end"), Item("end_offset")),
+            HGroup(
+                Item("start"),
+                Label("Offset"),
+                UItem("start_offsetx"),
+                UItem("start_offsety"),
+            ),
+            HGroup(
+                Item("end"), Label("Offset"), UItem("end_offsetx"), UItem("end_offsety")
+            ),
         )
         return v
 
 
-class Connection(BorderLine, ConnectionMixin):
+class Connection(ConnectionMixin, BorderLine):
     tag = "connection"
+    width = 10
+
+    def toyaml(self):
+        y = super(Connection, self).toyaml()
+        del y["dimension"]
+        del y["translation"]
+        del y["name"]
+
+        y["start"] = {"name": str(self.start), "offset": str(self.start_offset)}
+        y["end"] = {"name": str(self.end), "offset": str(self.end_offset)}
+        return y
+
+
+class RConnection(Connection):
+    tag = "rconnection"
+    border_width = 6
+    width = 3
+
+    # def _render_augmented_border(self, gc):
+    #     bc = self._get_border_color()
+    #     x, y = self.start_point.get_xy()
+    #     x1, y1 = self.end_point.get_xy()
+    #
+    #     i = 0
+    #     step = 10
+    #     if y1 < y or x1 < x:
+    #         step = -10
+    #
+    #     while 1:
+    #         gc.set_line_width(0)
+    #         gc.set_fill_color(bc)
+    #         # step = 10
+    #         with gc:
+    #             if x1 == x:
+    #                 cx = self.width+1
+    #                 cy = 0
+    #                 tx = x
+    #                 ty = y + (step * i)
+    #             else:
+    #                 cx = 0
+    #                 cy = self.width+1
+    #                 tx = x + (step * i)
+    #                 ty = y
+    #
+    #             gc.translate_ctm(tx, ty)
+    #             gc.arc(-cx, -cy, 4, 0, 360)
+    #             gc.arc(cx, cy, 4, 0, 360)
+    #             gc.draw_path()
+    #
+    #         i += 1
+    #         if x1 == x and (ty > max(y1, y) or ty < min(y1, y)):
+    #             break
+    #         elif tx > max(x1, x) or tx < min(x1, x):
+    #             break
+
+    def _render(self, gc):
+        # bc = self._get_border_color()
+        # with gc:
+        #     # w, h = self.get_wh()
+        #     gc.set_line_width(self.width + 10)
+        #
+        #     gc.set_stroke_color(bc)
+        #
+        #     x, y = self.start_point.get_xy()
+        #     x1, y1 = self.end_point.get_xy()
+        #     # draw border
+        #     gc.move_to(x, y)
+        #     gc.line_to(x1, y1)
+        #     gc.draw_path()
+
+        super(RConnection, self)._render(gc)
+
+        # draw border vertical augmentation
+        self._render_augmented_border(gc)
+        # with gc:
+        #     gc.set_line_width(self.width+4)
+        #
+        #     gc.set_stroke_color(self._convert_color(self.inner_border_color))
+        #
+        #     x, y = self.start_point.get_xy()
+        #     x1, y1 = self.end_point.get_xy()
+        #     # draw border
+        #     gc.move_to(x, y)
+        #     gc.line_to(x1, y1)
+        #     gc.draw_path()
 
 
 def fork(gc, lx, ly, rx, ry, mx, my, h):
@@ -64,7 +167,7 @@ def fork(gc, lx, ly, rx, ry, mx, my, h):
     gc.draw_path()
 
 
-class Fork(QPrimitive, Bordered, ConnectionMixin):
+class Fork(ConnectionMixin, QPrimitive, Bordered):
     tag = "fork"
     left = None
     right = None
@@ -228,7 +331,7 @@ def elbow(gc, sx, sy, ex, ey, corner="ul"):
     gc.stroke_path()
 
 
-class Elbow(BorderLine):
+class Elbow(ConnectionMixin, BorderLine):
     corner = "ul"
     tag = "elbow"
 

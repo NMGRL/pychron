@@ -221,7 +221,9 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     #                                   id_response=self.id_response
     #                                )
     def post_initialize(self, *args, **kw):
-        self.graph.set_y_title(self.graph_ytitle)
+        if self.graph_ytitle:
+            self.graph.set_y_title(self.graph_ytitle)
+
         self.setup_scan()
         self.setup_alarms()
         self.setup_scheduler()

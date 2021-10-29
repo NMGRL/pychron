@@ -57,19 +57,28 @@ from pychron.pychron_constants import (
     DELAY_AFTER,
     COMMENT,
     CRYO_TEMP,
+    FAILED,
+    CANCELED,
+    TRUNCATED,
+    SUCCESS,
+    EXTRACTION,
+    MEASUREMENT,
+    INVALID,
+    END_AFTER,
+    ABORTED,
 )
 
 # ============= local library imports  ==========================
 COLORS = {
-    "success": SUCCESS_COLOR,
-    "extraction": EXTRACTION_COLOR,
-    "measurement": MEASUREMENT_COLOR,
-    "canceled": CANCELED_COLOR,
-    "truncated": TRUNCATED_COLOR,
-    "failed": FAILED_COLOR,
-    "end_after": END_AFTER_COLOR,
-    "invalid": "red",
-    "aborted": "orange",
+    SUCCESS: SUCCESS_COLOR,
+    EXTRACTION: EXTRACTION_COLOR,
+    MEASUREMENT: MEASUREMENT_COLOR,
+    CANCELED: CANCELED_COLOR,
+    TRUNCATED: TRUNCATED_COLOR,
+    FAILED: FAILED_COLOR,
+    END_AFTER: END_AFTER_COLOR,
+    INVALID: "red",
+    ABORTED: "orange",
 }
 
 GRAY_BALL = icon("gray_ball")
@@ -121,6 +130,7 @@ randomize = MenuManager(
     Action(name="Randomize Unknowns", action="randomize_unknowns"),
     Action(name="Randomize All", action="randomize_all"),
     Action(name="Order From File", action="order_from_file"),
+    Action(name="Motion Saver", action="motion_saver"),
     name="Position Ordering",
 )
 
@@ -147,6 +157,9 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ("Aliquot", "aliquot"),
         ("Sample", SAMPLE),
         ("Project", PROJECT),
+        ("Irradiation", "irradiation"),
+        ("Irrad. Level", "irradiation_level"),
+        ("Irrad. Position", "irradiation_position"),
         ("Material", MATERIAL),
         ("RepositoryID", REPOSITORY_IDENTIFIER),
         ("Position", POSITION),

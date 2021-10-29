@@ -64,7 +64,8 @@ class FreeCalibrator(TrayCalibrator):
             else:
                 canvas.new_calibration_item()
                 self.points = []
-            return dict(calibration_step="End Calibrate")
+
+            return dict(calibration_step="End Calibrate", reload=False)
         # return 'End Calibrate', None, None, None, None, None
 
         elif step == "End Calibrate":

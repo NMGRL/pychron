@@ -140,7 +140,9 @@ class Switch(BaseSwitch):
             # result = self.actuator.get_indicator_state(self, 'closed', **kw)
 
         if dev:
-            result = getattr(dev, func)(address, *args, **kw)
+            func = getattr(dev, func)
+            if func:
+                result = func(address, *args, **kw)
 
         return result
 

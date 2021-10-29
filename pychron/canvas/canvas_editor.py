@@ -13,8 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import os
+import shutil
 from operator import attrgetter
 
+import yaml
 from enable.colors import ColorTrait
 from traits.api import (
     HasTraits,
@@ -25,16 +28,24 @@ from traits.api import (
     Enum,
     Instance,
     Str,
+    Bool,
 )
 from traitsui.api import View, UItem, TableEditor
 from traitsui.table_column import ObjectColumn
 
+from pychron.canvas.canvas2D.scene.base_scene_loader import SWITCH_TAGS, RECT_TAGS
 from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser
-from pychron.canvas.canvas2D.scene.extraction_line_scene import RECT_TAGS, SWITCH_TAGS
 from pychron.canvas.canvas2D.scene.primitives.base import Primitive
 from pychron.canvas.canvas2D.scene.primitives.connections import Connection
-from pychron.canvas.canvas2D.scene.primitives.rounded import Spectrometer, Stage
-from pychron.canvas.canvas2D.scene.primitives.valves import BaseValve, Valve
+from pychron.canvas.canvas2D.scene.primitives.lasers import Laser
+from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo, IonPump
+from pychron.canvas.canvas2D.scene.primitives.rounded import Spectrometer, Stage, Getter
+from pychron.canvas.canvas2D.scene.primitives.valves import (
+    BaseValve,
+    Valve,
+    Switch,
+    ManualSwitch,
+)
 from pychron.loggable import Loggable
 from pychron.pychron_constants import NULL_STR
 
@@ -96,6 +107,8 @@ class CanvasEditor(Loggable):
     add_item_button = Button("Add")
     new_item_kind = Enum(NULL_STR, "Valve", "Spectrometer", "Stage")
     new_item = Instance(Primitive)
+
+    edit_mode = Bool(False)
 
     def load(self, canvas, path):
         self.canvas = canvas
@@ -165,35 +178,86 @@ class CanvasEditor(Loggable):
             else:
                 self.information_dialog("Please enter a name for the new item")
 
+    def _edit_mode_changed(self, new):
+        if self.canvas:
+            self.canvas.edit_mode = new
+
+    def _save_yaml(self, p):
+        obj = {}
+
+        for klass, key in (
+            (Switch, "switch"),
+            (Valve, "valve"),
+            (ManualSwitch, "manual_valve"),
+            (Turbo, "turbo"),
+            (IonPump, "ionpump"),
+            (Getter, "getter"),
+            (Laser, "laser"),
+            (Stage, "stage"),
+            (Spectrometer, "spectrometer"),
+        ):
+            items = [i.toyaml() for i in self.canvas.scene.get_items(klass)]
+            obj[key] = items
+
+        for tag, orientation in (
+            ("connection", NULL_STR),
+            ("hconnection", "horizontal"),
+            ("vconnection", "vertical"),
+        ):
+            obj[tag] = [
+                i.toyaml()
+                for i in self.canvas.scene.get_items(Connection)
+                if i.orientation == orientation
+            ]
+
+        shutil.copyfile(p, "{}.bak".format(p))
+
+        with open(p, "w") as wfile:
+            yaml.dump(obj, wfile)
+
     def _save_button_fired(self):
-        cp = CanvasParser(self.path)
+        p = self.path
+        if p.endswith(".yaml") or p.endswith(".yml"):
+            self._save_yaml(p)
+        else:
+            yp = "{}.yaml".format(os.path.splitext(p)[0])
 
-        for o in self._valve_changes:
-            for t in SWITCH_TAGS:
-                elem = next(
-                    (s for s in cp.get_elements(t) if s.text.strip() == o.name), None
+            self.warning_dialog(
+                "The xml canvas format is deprecated. Please consider switching to YAML. "
+                "Pychron will attempt to create a yaml file automatically at {}".format(
+                    yp
                 )
-                if elem:
-                    t = elem.find("translation")
-                    t.text = "{},{}".format(o.x, o.y)
-                    break
+            )
 
-        for o in self._rect_changes:
-            for t in RECT_TAGS:
-                elem = next(
-                    (s for s in cp.get_elements(t) if s.text.strip() == o.name), None
-                )
-                if elem:
-                    t = elem.find("translation")
-                    t.text = "{},{}".format(o.x, o.y)
-                    t = elem.find("dimension")
-                    t.text = "{},{}".format(o.width, o.height)
-                    t = elem.find("color")
-                    if t:
-                        t.text = "{},{},{}".format(*o.default_color.getRgb())
-                    break
+            self._save_yaml(yp)
+            cp = CanvasParser(self.path)
+            for o in self._valve_changes:
+                for t in SWITCH_TAGS:
+                    elem = next(
+                        (s for s in cp.get_elements(t) if s.text.strip() == o.name),
+                        None,
+                    )
+                    if elem:
+                        t = elem.find("translation")
+                        t.text = "{},{}".format(o.x, o.y)
+                        break
 
-        cp.save()
+            for o in self._rect_changes:
+                for t in RECT_TAGS:
+                    elem = next(
+                        (s for s in cp.get_elements(t) if s.text.strip() == o.name),
+                        None,
+                    )
+                    if elem:
+                        t = elem.find("translation")
+                        t.text = "{},{}".format(o.x, o.y)
+                        t = elem.find("dimension")
+                        t.text = "{},{}".format(o.width, o.height)
+                        t = elem.find("color")
+                        if t:
+                            t.text = "{},{},{}".format(*o.default_color.getRgb())
+                        break
+            cp.save()
 
     def _increment_up_x_fired(self):
         self._increment(1, "x")

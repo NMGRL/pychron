@@ -65,11 +65,12 @@ def trim_affirmative(func):
             if isinstance(r, tuple):
                 r, cmd = r
 
-            r = r.strip()
-            if callable(obj.affirmative):
-                r = obj.affirmative(r, cmd)
-            else:
-                r = r == obj.affirmative
+            if r is not None:
+                r = r.strip()
+                if callable(obj.affirmative):
+                    r = obj.affirmative(r, cmd)
+                else:
+                    r = r == obj.affirmative
 
         return r
 
@@ -91,4 +92,7 @@ PACKAGES = dict(
     DummyGPActuator="{}.dummy_gp_actuator".format(abase),
     RPiGPIO="{}.rpi_gpio".format(base),
     T4Actuator="{}.t4_actuator".format(abase),
+    U3Actuator="{}.u3_actuator".format(abase),
+    ProXRActuator="{}.proxr_actuator".format(abase),
+    PLC2000GPActuator="{}.plc2000_gp_actuator".format(abase),
 )

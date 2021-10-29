@@ -22,8 +22,8 @@ from pychron.paths import paths
 
 
 class LocalGitHostService(BaseGitHostService):
-    def make_url(self):
-        return
+    def make_url(self, *args, **kw):
+        return ""
 
     def create_repo(self, name, **kw):
         self.create_empty_repo(name)

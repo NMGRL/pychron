@@ -135,13 +135,15 @@ class ClientSwitchManager(SwitchManager):
         d = {}
         if self.actuators:
             actuator = self.actuators[0]
-            word = actuator.get_lock_word()
-            # self.debug('Read Lock word={}'.format(word))
-            if self._validate_checksum(word):
-                d = self._parse_word(word[:-4])
-                if globalv.valve_debug:
-                    self.debug("Get Lock Word: {}".format(word))
-                    self.debug("Parsed Lock Word: {}".format(d))
+            func = actuator.get_lock_word
+            if func is not None:
+                word = func()
+                # self.debug('Read Lock word={}'.format(word))
+                if self._validate_checksum(word):
+                    d = self._parse_word(word[:-4])
+                    if globalv.valve_debug:
+                        self.debug("Get Lock Word: {}".format(word))
+                        self.debug("Parsed Lock Word: {}".format(d))
 
         return d
 
@@ -158,22 +160,24 @@ class ClientSwitchManager(SwitchManager):
         if self.actuators:
             rs = []
             actuator = self.actuators[0]
-            word = actuator.get_owners_word()
-            if word:
-                groups = word.split(":")
-                if len(groups) > 1:
-                    for gi in groups:
-                        if "-" in gi:
-                            owner, vs = gi.split("-")
-                        else:
-                            owner, vs = "", gi
+            func = actuator.get_owners_word
+            if func:
+                word = func()
+                if word:
+                    groups = word.split(":")
+                    if len(groups) > 1:
+                        for gi in groups:
+                            if "-" in gi:
+                                owner, vs = gi.split("-")
+                            else:
+                                owner, vs = "", gi
 
-                        rs.append((owner, vs.split(",")))
+                            rs.append((owner, vs.split(",")))
 
-                else:
-                    rs = [
-                        ("", groups[0].split(",")),
-                    ]
+                    else:
+                        rs = [
+                            ("", groups[0].split(",")),
+                        ]
             return rs
 
     # private

@@ -37,28 +37,6 @@ from pychron.spectrometer import get_spectrometer_config_path
 from pychron.spectrometer.base_spectrometer import BaseSpectrometer
 
 
-def normalize_integration_time(it):
-    """
-    find the integration time closest to "it"
-    """
-    try:
-        x = array(QTEGRA_INTEGRATION_TIMES)
-        return x[argmin(abs(x - it))]
-    except TypeError:
-        return 1.0
-
-
-def calculate_radius(m_e, hv, mfield):
-    """
-    m_e= mass/charge
-    hv= accelerating voltage (V)
-    mfield= magnet field (H)
-    """
-    r = ((2 * m_e * hv) / mfield ** 2) ** 0.5
-
-    return r
-
-
 class ThermoSpectrometer(BaseSpectrometer):
     integration_time = Float
     integration_times = List(QTEGRA_INTEGRATION_TIMES)
@@ -112,7 +90,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         values = self.get_parameter_word(keys)
         d = dict(list(zip(keys, values)))
 
-        key = "ElectronEnergy"
+        key = "Electron Energy Set"
         if key in d:
             d[key] = float("{:0.2f}".format(d[key]))
 
@@ -141,20 +119,29 @@ class ThermoSpectrometer(BaseSpectrometer):
         :return:
         """
         ret, err = True, ""
-        keys, one, _ = self.get_intensities()
+        keys, one, _, _ = self.get_intensities()
         it = 0.1 if self.simulation else self.integration_time
 
-        time.sleep(it)
-        keys, two, _ = self.get_intensities()
-
-        if all(one == two):
+        pv = None
+        for i in range(4):
             time.sleep(it)
-            keys, three, _ = self.get_intensities()
-            if all(two == three):
-                time.sleep(it)
-                keys, four, _ = self.get_intensities()
-                if all(three == four):
-                    ret = False
+            _, v, _, _ = self.get_intensities()
+            if pv is None or all(pv == v):
+                pv = v
+            else:
+                break
+        else:
+            ret = False
+        # time.sleep(it)
+        # keys, two, _, _ = self.get_intensities()
+        # if all(one == two):
+        #     time.sleep(it)
+        #     keys, three, _, _ = self.get_intensities()
+        #     if all(two == three):
+        #         time.sleep(it)
+        #         keys, four, _, _ = self.get_intensities()
+        #         if all(three == four):
+        #             ret = False
         return ret, err
 
     def set_gains(self, history=None):
@@ -208,6 +195,8 @@ class ThermoSpectrometer(BaseSpectrometer):
         if not name.startswith("Set"):
             mk = self.hardware_names()
             cmd = "SetParameter {},{}".format(mk.get(name, name), v)
+        elif name == "HV":
+            cmd = "SetHV {}".format(v)
         else:
             cmd = "{} {}".format(name, v)
 
@@ -407,7 +396,7 @@ class ThermoSpectrometer(BaseSpectrometer):
 
             signals = [float(s) for s in signals]
 
-        return keys, signals, None
+        return keys, signals, None, True
 
     def get_intensity(self, dkeys):
         """
@@ -417,7 +406,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         data = self.get_intensities()
         if data is not None:
 
-            keys, signals, _ = data
+            keys, signals, _, _ = data
 
             def func(k):
                 return signals[keys.index(k)] if k in keys else 0
@@ -481,6 +470,8 @@ class ThermoSpectrometer(BaseSpectrometer):
                         self.debug(
                             "--- Not checking {}. Not in hardware_names".format(k)
                         )
+                        self.debug("hardware names: {}".format(hardware_names))
+
                         continue
 
                     comp = readout_comp.get(k, {})
@@ -610,6 +601,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                         self.debug(
                             "--- Not setting {}. Not in hardware_names".format(k)
                         )
+                        self.debug("hardware names: {}".format(hardware_names))
                         continue
 
                     if not self.force_send_configuration:

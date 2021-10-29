@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
 from traitsui.view import View
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.strtools import ps
 from pychron.experiment.conditional.conditional import (
     ActionConditional,
     TruncationConditional,
@@ -30,6 +30,14 @@ from pychron.experiment.conditional.conditionals_edit_view import (
     ConditionalGroup,
 )
 from pychron.experiment.conditional.groups import PostRunGroup, PreRunGroup
+from pychron.pychron_constants import ACTION, TERMINATION, CANCELATION, TRUNCATION
+
+ADD_CONDITIONALS = (
+    (ps(ACTION), ConditionalGroup, ActionConditional),
+    (ps(TRUNCATION), ConditionalGroup, TruncationConditional),
+    (ps(CANCELATION), ConditionalGroup, CancelationConditional),
+    (ps(TERMINATION), ConditionalGroup, TerminationConditional),
+)
 
 
 class ConditionalsView(ConditionalsViewable):
@@ -54,12 +62,7 @@ class ConditionalsView(ConditionalsViewable):
 
     def add_system_conditionals(self, ditems):
         if ditems:
-            for name, klass, cklass in (
-                ("actions", ConditionalGroup, ActionConditional),
-                ("truncations", ConditionalGroup, TruncationConditional),
-                ("cancelations", ConditionalGroup, CancelationConditional),
-                ("terminations", ConditionalGroup, TerminationConditional),
-            ):
+            for name, klass, cklass in ADD_CONDITIONALS:
                 items = ditems.get(name, [])
                 self._group_factory(
                     items,
@@ -71,12 +74,7 @@ class ConditionalsView(ConditionalsViewable):
 
     def add_conditionals(self, ditems, **kw):
         if ditems:
-            for name, klass, cklass in (
-                ("actions", ConditionalGroup, ActionConditional),
-                ("truncations", ConditionalGroup, TruncationConditional),
-                ("cancelations", ConditionalGroup, CancelationConditional),
-                ("terminations", ConditionalGroup, TerminationConditional),
-            ):
+            for name, klass, cklass in ADD_CONDITIONALS:
                 items = ditems.get(name, [])
                 grp = next(
                     (gi for gi in self.groups if gi.label == name.capitalize()), None

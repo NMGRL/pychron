@@ -1,8 +1,8 @@
 """
     National Control Devices
-    
-   http://www.controlanything.com/ 
-   
+
+   http://www.controlanything.com/
+
    The Complete ProXR Command Set:
    http://www.controlanything.com/Relay/Device/A0010
    http://assets.controlanything.com/manuals/ProXR.pdf

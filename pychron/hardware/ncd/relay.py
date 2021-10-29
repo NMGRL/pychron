@@ -13,31 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from __future__ import absolute_import
-from __future__ import print_function
-from pychron.hardware.core.data_helper import make_bitarray
 
-"""
-    National Control Devices
-    
-   http://www.controlanything.com/ 
-   
-   The Complete ProXR Command Set:
-   http://www.controlanything.com/Relay/Device/A0010
-   http://assets.controlanything.com/manuals/ProXR.pdf
-"""
-
-from pychron.paths import paths
-from pychron.core.helpers.logger_setup import logging_setup
-
-logging_setup("prox")
-paths.build("_prox")
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.hardware.core.data_helper import make_bitarray
 from pychron.hardware.ncd import ON_MAP, OFF_MAP, STATE_MAP
 from pychron.hardware.ncd.ncd_device import NCDDevice
+
+"""
+    National Control Devices
+
+   http://www.controlanything.com/ 
+
+   The Complete ProXR Command Set:
+   http://www.controlanything.com/Relay/Device/A0010
+   http://assets.controlanything.com/manuals/ProXR.pdf
+
+"""
 
 
 class ProXR(NCDDevice):
@@ -59,21 +53,13 @@ class ProXR(NCDDevice):
         name = self._set_bank(channel)
         if name:
             local_idx = ON_MAP[name]
-            #            print local_idx
-            #            cmdstr = self._make_cmdstr(254, local_idx)
-            #            resp = self.ask(cmdstr, nchars=1)
-            #            return resp == 'U'  # hex(85)
             return self._ask_ok(254, local_idx)
 
     def close_channel(self, channel, *args, **kw):
         name = self._set_bank(channel)
         if name:
             local_idx = OFF_MAP[name]
-            #            cmdstr = self._make_cmdstr(254, local_idx)
             return self._ask_ok(254, local_idx)
-
-    #            resp = self.ask(cmdstr, nchars=1)
-    #            return resp == 'U'  # hex(85)
 
     def get_contact_state(self, channel, bank=None, *args, **w):
         if bank is None:
@@ -88,31 +74,31 @@ class ProXR(NCDDevice):
         ba = make_bitarray(a)
         return bool(int(ba[8 - idx]))
 
-    #        print resp, ord(resp)
-
     def get_channel_state(self, channel, *args, **kw):
         name = self._set_bank(channel)
         if name:
             local_idx = STATE_MAP[name]
             cmdstr = self._make_cmdstr(254, local_idx)
             resp = self.ask(cmdstr, nchars=1)  # returns 1 or 0
-            return bool(int(resp))
+            resp = ord(resp)
+            self.debug("get changell state ={} {}".format(bool(resp), resp))
+            return bool(resp)
 
     def get_channel_states(self, *args, **kw):
         cmdstr = self._make_cmdstr(254, 24)
         resp = self.ask(cmdstr)
 
-    def _ask_ok(self, *args):
-        cmdstr = self._make_cmdstr(*args)
-        return self.ask(cmdstr, nchars=1) == "U"
-
-    # =====================================    ==========================================
+    # ===============================================================================
     # configuration
     # ===============================================================================
 
     # ===============================================================================
     # private
     # ===============================================================================
+    def _ask_ok(self, *args):
+        cmdstr = self._make_cmdstr(*args)
+        return self.ask(cmdstr, nchars=1) == "U"
+
     def _set_bank(self, channel):
         idx, bank = self._get_bank_idx(channel)
         #        cmdstr = self._make_cmdstr(254, 49, bank)
@@ -125,16 +111,22 @@ class ProXR(NCDDevice):
         elif isinstance(channel, int):
             idx = channel
         else:
-            idx = channel.name
-        return idx
+            idx = channel.address
+        return int(idx)
 
     def _get_bank_idx(self, channel):
-        idx = self._get_bank_idx(channel)
+        idx = self._get_channel_idx(channel)
         bank = idx / 8 + 1
         return idx, bank
 
 
 if __name__ == "__main__":
+    from pychron.paths import paths
+    from pychron.core.helpers.logger_setup import logging_setup
+
+    logging_setup("prox")
+    paths.build("_prox")
+
     a = ProXR(name="proxr_actuator")
     a.bootstrap()
     #    a.open_channel(3)

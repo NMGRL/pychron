@@ -39,7 +39,7 @@ class NCDDevice(CoreDevice):
         return True
 
     def _make_cmdstr(self, *args):
-        return bytes(args)
+        return bytes([int(a) for a in args])
         # formatter = lambda x:chr(x)
         # return b''.join(map(chr, args))
 

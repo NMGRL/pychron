@@ -135,6 +135,7 @@ from pychron.pychron_constants import (
     CRYO_TEMP,
     TEMPLATE,
     USERNAME,
+    EDITABLE_RUN_CONDITIONALS,
 )
 
 
@@ -1067,7 +1068,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                             )
 
                     script = getattr(self, "{}_script".format(skey))
-                    script.name = new_script_name
+                    script.name = new_script_name or ""
 
     def _load_default_file(self):
         # open the yaml config file
@@ -1673,7 +1674,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             root=paths.conditionals_dir,
             save_as=True,
             title="Edit Run Conditionals",
-            kinds=("actions", "cancelations", "terminations", "truncations"),
+            kinds=EDITABLE_RUN_CONDITIONALS,
         )
         if name:
             self.load_conditionals()
@@ -1685,7 +1686,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 self.conditionals_path,
                 root=paths.conditionals_dir,
                 title="Edit Run Conditionals",
-                kinds=("actions", "cancelations", "terminations", "truncations"),
+                kinds=EDITABLE_RUN_CONDITIONALS,
             )
             self.load_conditionals()
         else:

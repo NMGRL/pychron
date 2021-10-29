@@ -60,6 +60,22 @@ class CanvasDockPane(TraitsDockPane):
         return v
 
 
+class HeaterPane(TraitsDockPane):
+    name = "Heaters"
+    id = "pychron.extraction_line.heater"
+
+    def traits_view(self):
+        v = View(
+            UItem(
+                "heater_manager",
+                editor=InstanceEditor(),
+                style="custom",
+                defined_when="heater_manager",
+            )
+        )
+        return v
+
+
 class CryoPane(TraitsDockPane):
     name = "Cryo"
     id = "pychron.extraction_line.cryo"
@@ -88,6 +104,23 @@ class GaugePane(TraitsDockPane):
                 style="custom",
                 height=125,
                 defined_when="gauge_manager",
+            )
+        )
+        return v
+
+
+class PumpPane(TraitsDockPane):
+    name = "Pumps"
+    id = "pychron.extraction_line.pumps"
+
+    def traits_view(self):
+        v = View(
+            UItem(
+                "pump_manager",
+                editor=InstanceEditor(),
+                style="custom",
+                height=125,
+                defined_when="pump_manager",
             )
         )
         return v
@@ -184,7 +217,9 @@ class EditorPane(TraitsDockPane):
             )
         )
 
-        v = View(VGroup(g, agrp, egrp))
+        v = View(
+            VGroup(UItem("edit_mode"), VGroup(g, agrp, egrp, enabled_when="edit_mode"))
+        )
         return v
 
 

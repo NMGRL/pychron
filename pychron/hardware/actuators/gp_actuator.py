@@ -27,6 +27,7 @@ from pychron.hardware.core.core_device import CoreDevice
 
 class GPActuator(CoreDevice):
     invert = Bool(False)
+    _lock = None
 
     def load_additional_args(self, config, **kw):
         self.set_attribute(config, "invert", "General", "invert", cast="boolean")
@@ -64,8 +65,17 @@ class GPActuator(CoreDevice):
         return self.actuate(obj, "Open")
 
     def actuate(self, obj, action):
+        if self._lock:
+            self._lock.acquire()
+
         if self._actuate(obj, action):
-            return self._check_actuate(obj, action)
+            ret = self._check_actuate(obj, action)
+            if self._lock:
+                self._lock.release()
+            return ret
+
+        if self._lock:
+            self._lock.release()
 
     def _check_actuate(self, obj, action):
         if not obj.check_actuation_enabled:

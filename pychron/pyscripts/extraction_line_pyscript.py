@@ -225,14 +225,22 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
-    def set_cryo(self, value):
-        result = self._manager_action(("set_cryo", (value,), {}), protocol=EL_PROTOCOL)
+    def set_cryo(self, value, device_name=None, block=False, delay=1):
+        result = self._manager_action(
+            (
+                "set_cryo",
+                (value,),
+                {"block": block, "device_name": device_name, "delay": delay},
+            ),
+            protocol=EL_PROTOCOL,
+        )
+
         self.debug("set cyro result={}".format(result))
         return result
 
     @verbose_skip
     @command_register
-    def get_cryo_temp(self, value):
+    def get_cryo_temp(self, value=1):
         result = self._manager_action(
             ("get_cryo_temp", (value,), {}), protocol=EL_PROTOCOL
         )
@@ -372,6 +380,11 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
+    def pause(self, delay=2):
+        self._sleep(delay, paused=True)
+
+    @verbose_skip
+    @command_register
     def waitfor(
         self,
         func_or_tuple,
@@ -411,7 +424,7 @@ class ExtractionPyScript(ValvePyScript):
             func = self._make_waitfor_func(*func_or_tuple, func_kw=func_kw)
         else:
             func = func_or_tuple
-            args = inspect.getargspec(func).args
+            args = inspect.getfullargspec(func).args
             if len(args) == 1:
                 include_time = True
             elif len(args) == 2:
@@ -937,10 +950,6 @@ class ExtractionPyScript(ValvePyScript):
     # ==========================================================================
     # properties
     # ==========================================================================
-    def _get_property(self, key, default=None):
-        ctx = self.get_context()
-        return ctx.get(key, default)
-
     @property
     def duration(self):
         return self._get_property(DURATION)

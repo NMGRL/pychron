@@ -546,7 +546,7 @@ def welcome():
 
 Developer: Jake Ross (NMT)
 Date: 10-02-2016
-Updated: 7-10-2019
+Updated: 6-11-2021
 ---*---*---*---*---*---*---*---*---*---*---*---*
 Welcome to the Pychron Installer.
 
@@ -605,6 +605,26 @@ def which(program):
             exe_file = os.path.join(path, program)
             if is_exe(exe_file):
                 return exe_file
+
+def install_conda_only():
+    info_header('Install Conda Env only')
+    cfg = {}
+    vv = input('Install conda env only [n]')
+    if vv.lower() in ('y', 'yes'):
+        build_requirements(cfg)
+        install_conda(cfg)
+    return cfg
+
+def install_setupfiles_only():
+    info_header('Install Setupfiles only')
+    cfg = {}
+    vv = input('Install setup files only [n]')
+    if vv.lower() in ('y', 'yes'):
+        cfg['install_exp_setupfiles'] = True
+        cfg['pychron_data_dir'] = 'PychronUF'
+        cfg['include_hardware_plugins'] = True
+
+    return cfg
 
 
 def install_edm_only():
@@ -750,15 +770,19 @@ def ask_config():
 def build_requirements(cfg):
     pip_reqs = ['chaco']
 
-    # pip_git_reqs =  ['git+https://github.com/enthought/chaco.git#egg=chaco',
-    #                 'git+https://github.com/enthought/enable.git#egg=enable']
     pip_git_reqs = []
+    # pip_git_reqs = ['git+https://github.com/enthought/chaco.git#egg=chaco',
+    #                 'git+https://github.com/enthought/enable.git#egg=enable']
 
-    conda_reqs = ['numpy', 'statsmodels', 'scikit-learn', 'PyYAML', 'yaml', 'traits', 'traitsui', 'pyface',
+    conda_reqs = ['numpy', 'statsmodels', 'scikit-learn', 'PyYAML', 'yaml',
+                  # 'traits=5', 'traitsui=6', 'pyface=6',
+                  'traits', 'traitsui', 'pyface',
                   'envisage', 'sqlalchemy', 'Reportlab', 'lxml', 'xlrd', 'xlwt', 'xlsxwriter', 'requests', 'keyring',
                   'pyparsing', 'pillow', 'gitpython', 'pytables', 'pyproj', 'pymysql', 'certifi', 'jinja2', 'swig=3',
                   'cython', 'uncertainties', 'qimage2ndarray', 'peakutils', 'pip',
                   'importlib_resources', cfg['qt_bindings']]
+    conda_other_channels = [['-c', 'dbanas', 'chaco']]
+
     edm_reqs = [
         'chaco', 'certifi', 'cython',
         'envisage',
@@ -786,7 +810,7 @@ def build_requirements(cfg):
 
     cfg['pip_requirements'] = pip_reqs
     cfg['pip_git_requirements'] = pip_git_reqs
-
+    cfg['conda_other_channels'] = conda_other_channels
     cfg['conda_requirements'] = conda_reqs
     cfg['edm_requirements'] = edm_reqs
 
@@ -878,11 +902,9 @@ def install_conda(cfg):
     subprocess.call(['conda', 'create', '-n', env_name, '--yes', 'python={}'.format(cfg['python_version'])])
 
     # install deps
-    # subprocess.call(['conda', 'create','--name', env_name, '--yes',
-    #                  'python=3.8'] + cfg['conda_requirements'])
-    subprocess.call(['conda', 'install', '--yes', '--name', env_name, '-c', 'conda-forge'] + cfg['conda_requirements'])
-    # subprocess.call(['conda', 'install', '--yes',
-    #                  '--name', env_name, '-c', 'dbanas', 'chaco'])
+    subprocess.call(['conda', 'install', '--yes',
+                     '--name', env_name] + cfg['conda_requirements'])
+
     if IS_MAC:
         # subprocess.call(['conda', 'activate', env_name])
         # install pip deps
@@ -890,7 +912,10 @@ def install_conda(cfg):
         # pip_path = 'pip'
         subprocess.call([pip_path, 'install', '--upgrade-strategy', 'only-if-needed'] + cfg['pip_requirements'])
         for r in cfg['pip_git_requirements']:
-            subprocess.call([pip_path, 'install', '--upgrade-strategy', 'only-if-needed', '-e', r])
+            subprocess.call([pip_path, 'install', '-e', r])
+
+        for c in cfg['conda_other_channels']:
+            subprocess.call(['conda', 'install']+c)
     else:
         print('WARNING!!!! Installing PIP dependencies on Windows currently not available. Please consult Pychron '
               'documentation or contact Pychron Labs for further instructions')

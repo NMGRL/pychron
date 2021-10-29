@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+def ps(t):
+    return "{}s".format(t)
 
 
 def camel_case(name, delimiters=None):

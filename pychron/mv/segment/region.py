@@ -19,7 +19,12 @@ from traits.api import Bool
 
 # ============= standard library imports ========================
 from numpy import zeros_like, invert, uint8
-from skimage.filters import threshold_adaptive
+
+try:
+    from skimage.filters import threshold_adaptive
+except ImportError:
+    from skimage.filters import threshold_local as threshold_adaptive
+
 from skimage.feature import canny
 from skimage.morphology import watershed
 

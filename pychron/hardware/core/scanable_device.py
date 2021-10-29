@@ -73,6 +73,7 @@ class ScanableDevice(ViewableDevice):
     # streamin interface
     # ===============================================================================
     def setup_scan(self):
+        self.debug("setup scan")
         # should get scan settings from the config file not the initialization.xml
         config = self.get_configuration()
         if config.has_section("Scan"):
@@ -106,6 +107,7 @@ class ScanableDevice(ViewableDevice):
                     self.scan_func = func
 
     def setup_alarms(self):
+        self.debug("setup alarms")
         config = self.get_configuration()
         if config.has_section("Alarms"):
             for opt in config.options("Alarms"):
@@ -118,7 +120,7 @@ class ScanableDevice(ViewableDevice):
         if self.scan_func:
 
             try:
-                v = getattr(self, self.scan_func)(verbose=False)
+                v = getattr(self, self.scan_func)()
             except AttributeError as e:
                 print("exception", e)
                 return
@@ -204,7 +206,7 @@ class ScanableDevice(ViewableDevice):
 
         if self.record_scan_data:
             self.info("Recording scan enabled")
-
+            dm = self.data_manager
             dm.delimiter = "\t"
 
             dw = DataWarehouse(root=paths.device_scan_dir)
@@ -270,7 +272,7 @@ class ScanableDevice(ViewableDevice):
         g.set_x_title("Time")
         g.new_series()
 
-    def current_state_view(self):
+    def get_additional_tabs(self):
         g = VGroup(
             Item("graph", show_label=False, style="custom"),
             VGroup(
@@ -306,8 +308,9 @@ class ScanableDevice(ViewableDevice):
             ),
             label="Scan",
         )
-        v = super(ScanableDevice, self).current_state_view()
-        v.content.content.append(g)
-        return v
+        return (g,)
+        # v = super(ScanableDevice, self).current_state_view()
+        # v.content.content.content.append(g)
+        # return v
 
         # ============= EOF =============================================

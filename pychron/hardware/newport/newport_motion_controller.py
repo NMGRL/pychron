@@ -152,44 +152,6 @@ class NewportMotionController(MotionController):
         if "x" in self.axes:
             return self.axes["x"].id == 2
 
-    def get_current_xy(self):
-        # x, y = None, None
-        # if self.mode == 'grouped':
-        #     f = self.ask('{}HP'.format(self.groupobj.id), verbose=True)
-        #     # cmd = '{}TP?;{}TP?'.format(self.axes['x'].id, self.axes['y'].id)
-        #     # f = self.ask(cmd, verbose=True)
-        #     # args = f.split(',')[:2]
-        #     try:
-        #         f = f.strip()
-        #         args = f.split('\n')
-        #         x, y = map(float, map(str.strip, args))
-        #
-        #         ax = self.axes['x']
-        #         x = self._sign_correct(x, 'x', ratio=False) / ax.drive_ratio
-        #
-        #         ax = self.axes['y']
-        #         y = self._sign_correct(y, 'y', ratio=False) / ax.drive_ratio
-        #     except BaseException, e:
-        #         # import traceback
-        #         # traceback.print_exc()
-        #         self.warning('get_current_xy failed. {}'.format(e))
-        #         x = self.get_current_position('x')
-        #         y = self.get_current_position('y')
-        #
-        # else:
-        x = self.get_current_position("x")
-        y = self.get_current_position("y")
-        if x is None or y is None:
-            return
-
-        return x, y
-
-        # cmd = '{}TP?;{}TP?'.format(self.axes['x'].id, self.axes['y'].id)
-        # # cmd = self._build_query('TP')
-        # f = self.ask(cmd, verbose=True)
-
-        # args = f.split(',')[:2]
-
     def get_current_position(self, aid):
         if isinstance(aid, str):
             if aid in self.axes:
@@ -463,9 +425,13 @@ class NewportMotionController(MotionController):
         return m
 
     def stop(self, ax_key=None, verbose=False):
+        if self.nonstoppable:
+            return
 
+        self._stopped = True
         if self.timer is not None:
-            self.timer.Stop()
+            self.timer.stop()
+            self.timer.wait_for_completion()
 
         if self.mode == "grouped":
             # check group is moving
@@ -867,11 +833,20 @@ class NewportMotionController(MotionController):
             self.info("move to {x:0.5f},{y:0.5f} complete".format(**kwargs))
             self.update_axes()
 
-            tol = 0.1
-            x, y = self._x_position, self._y_position
+            if not self._stopped:
+                tol = 0.1
+                x, y = self._x_position, self._y_position
 
-            if abs(x - target_x) > tol or abs(y - target_y) > tol:
-                raise TargetPositionError(x, y, target_x, target_y)
+                if abs(x - target_x) > tol or abs(y - target_y) > tol:
+                    self.warning(
+                        "TargetPosition warning:  "
+                        "current={},{}  target={},{}".format(x, y, target_x, target_y)
+                    )
+                    tol = 0.5
+                    if abs(x - target_x) > tol or abs(y - target_y) > tol:
+                        raise TargetPositionError(x, y, target_x, target_y)
+            else:
+                self.debug("motion stopped. not checking for TargetPositionError")
 
     def start_timer(self):
         self.timer = self.timer_factory()

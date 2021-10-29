@@ -212,19 +212,21 @@ class Loggable(BaseFS):
         self.logcolor = c
 
     def _log_(self, func, msg):
-        def get_thread_name():
-            ct = current_thread()
-            name = ct.name
-            # from pychron.core.ui.thread import currentThreadName
-            # if name.startswith('Dummy'):
-            #     name = currentThreadName()
 
-            return name
+        # def get_thread_name():
+        #     name = 'foo'
+        #     # ct = current_thread()
+        #     # name = ct.name
+        #     from pychron.core.ui.thread import currentThreadName
+        #     # if name.startswith('Dummy'):
+        #     #     name = currentThreadName()
+        #
+        #     return name
 
         if self.logger is None:
             return
 
-        extras = {"threadName_": get_thread_name()}
+        # extras = {'threadName_': get_thread_name()}
         if isinstance(func, str):
             func = getattr(self.logger, func)
 
@@ -232,7 +234,8 @@ class Loggable(BaseFS):
             msg = ",".join(map(str, msg))
 
         msg = self._post_process_msg(msg)
-        func(msg, extra=extras)
+        # func(msg, extra=extras)
+        func(msg)
 
     def _post_process_msg(self, msg):
         return msg

@@ -29,6 +29,7 @@ class RemoteDeviceMixin(Loggable):
     kind = Str
     message_frame = Str
     use_end = Bool
+    timeout = CInt
     write_terminator = chr(10)
 
     def open(self):
@@ -58,7 +59,6 @@ class SerialDeviceMixin(RemoteDeviceMixin):
     parity = Str
     stopbits = Str
     read_delay = CInt
-    timeout = CInt
 
     def setup_communicator(self):
         from pychron.hardware.core.communicators.serial_communicator import (

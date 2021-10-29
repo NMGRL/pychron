@@ -23,7 +23,7 @@ except AttributeError:
     Loader = yaml.Loader
 
 
-def yload(stream, default=None):
+def yload(stream, default=None, reraise=False):
     if default is None:
         default = {}
 
@@ -31,13 +31,17 @@ def yload(stream, default=None):
         with open(stream, "r") as rfile:
             try:
                 yd = yaml.load(rfile, Loader=Loader)
-            except yaml.YAMLError:
+            except yaml.YAMLError as e:
                 yd = default
+                if reraise:
+                    raise e
     else:
         try:
             yd = yaml.load(stream, Loader=Loader)
-        except yaml.YAMLError:
+        except yaml.YAMLError as e:
             yd = default
+            if reraise:
+                raise e
 
     return yd
 

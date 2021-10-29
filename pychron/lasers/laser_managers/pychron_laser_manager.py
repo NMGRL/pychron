@@ -220,7 +220,7 @@ class PychronLaserManager(EthernetLaserManager):
 
     def stop_video_recording(self):
         self.info("Stop Video Recording")
-        self._ask("StopVideoRecording")
+        return self._ask("StopVideoRecording")
 
     def take_snapshot(self, name, pic_format, view_snapshot=False):
         self.info("Take snapshot")

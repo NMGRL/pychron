@@ -142,14 +142,15 @@ class SwitchManager(Manager):
             if dev is not None:
                 self.actuators.append(dev)
 
-            return dev
+        return dev
 
     def finish_loading(self, update=False):
         """ """
         if self.actuators:
             for a in self.actuators:
                 self.info("setting actuator {}".format(a.name))
-                self.info("comm. device = {} ".format(a.com_device_name))
+                if hasattr(a, "com_device_name"):
+                    self.info("comm. device = {} ".format(a.com_device_name))
 
         # open config file
         # setup_file = os.path.join(paths.extraction_line_dir, add_extension(self.setup_name, '.xml'))
@@ -936,7 +937,7 @@ class SwitchManager(Manager):
         if p and os.path.isfile(p):
             obj = yload(p)
 
-        return obj
+        return obj or {}
 
     def _load_valves_from_file(self, path):
         self.info("loading valve definitions file  {}".format(path))
@@ -1088,7 +1089,7 @@ class SwitchManager(Manager):
             return name, hv
 
     def _make_switch_yaml_ctx(self, vobj, klass):
-        name = vobj.get("name")
+        name = str(vobj.get("name"))
         if not name:
             self.warning("Must specify a name for all switches.")
             return
@@ -1193,8 +1194,13 @@ class SwitchManager(Manager):
 
         qs = True
         vqs = v_elem.find("query_state")
+        if vqs is None:
+            vqs = v_elem.get("query_state")
+        else:
+            vqs = vqs.text
+
         if vqs is not None:
-            qs = to_bool(vqs.text.strip())
+            qs = to_bool(vqs.strip())
 
         parent = v_elem.find("parent")
 

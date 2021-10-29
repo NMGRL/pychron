@@ -13,11 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.hardware.labjack.base_labjack import BaseLabjack
+from traits.trait_errors import TraitError
 from traits.api import Enum, Str, HasTraits
+
+from pychron.hardware.labjack.base_labjack import BaseLabjack
 from pychron.hardware.core.data_helper import make_bitarray
 
-from labjack import ljm
+try:
+    from labjack import ljm
+except ImportError:
+    from pychron.hardware.labjack.mock_labjack import ljm
 
 
 class BaseT4(BaseLabjack, HasTraits):

@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pypylon.genicam import GenericException
+
 from pychron.core.yaml import yload
 
 try:
@@ -84,6 +86,8 @@ class BaslerPylonCamera(Loggable):
                         self.warning("IOError: {}, k={}, v={}".format(e, k, v))
                     except genicam.AccessException as e:
                         self.warning("Access Exception {}".format(e))
+                    except genicam.LogicalErrorException as e:
+                        self.warning("Logical Error Exception {}".format(e))
 
             self.pixel_depth = self._cam.PixelDynamicRangeMax.Value
             self._cam.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
@@ -91,11 +95,14 @@ class BaslerPylonCamera(Loggable):
     def read(self):
         ok, img = False, None
         if self._cam and not self._setting_config:
-            res = self._cam.RetrieveResult(0, pylon.TimeoutHandling_Return)
-            if res.IsValid():
-                ok = True
-                img = res.Array
-            res.Release()
+            try:
+                res = self._cam.RetrieveResult(0, pylon.TimeoutHandling_Return)
+                if res.IsValid():
+                    ok = True
+                    img = res.Array
+                res.Release()
+            except GenericException:
+                pass
 
         return ok, img
 

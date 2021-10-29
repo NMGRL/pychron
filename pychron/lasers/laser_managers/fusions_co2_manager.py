@@ -74,17 +74,6 @@ class FusionsCO2Manager(FusionsLaserManager):
         )
         return b
 
-    def _stage_manager_default(self):
-        """ """
-        args = dict(
-            name="stage",
-            configuration_name="stage",
-            configuration_dir_name=self.configuration_dir_name,
-            parent=self,
-        )
-
-        return self._stage_manager_factory(args)
-
     def _response_recorder_default(self):
         r = ResponseRecorder(
             response_device=self.laser_controller, output_device=self.laser_controller

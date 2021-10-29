@@ -15,18 +15,54 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 
 from numpy import poly1d
 from scipy import optimize
-from traits.api import HasTraits, List, Float
+from traits.api import HasTraits, List, Float, Str
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import csv_to_floats
 
 
-class PolynomialMapper(HasTraits):
+class PolynomialMapperMixin(HasTraits):
+    poly_mapper = None
+    mapped_name = Str
+
+    def load_mapping(self, config):
+        conv = "Conversion"
+        if config.has_section(conv):
+            pmapper = self.factory(config, conv)
+            self.poly_mapper = pmapper
+            self.set_attribute(config, "mapped_name", conv, "name")
+
+            if self.mapped_name:
+                u = self.config_get(config, conv, "units", default="")
+                self.graph_ytitle = "{} ({})".format(self.mapped_name.capitalize(), u)
+
+    def factory(self, config, section):
+        pmapper = PolynomialMapper()
+        coeffs = self.config_get(config, section, "coefficients")
+        pmapper.parse_coefficient_string(coeffs)
+        pmapper.output_low = self.config_get(
+            config, section, "output_low", cast="float"
+        )
+        pmapper.output_high = self.config_get(
+            config, section, "output_high", cast="float"
+        )
+
+        return pmapper
+
+
+class BaseMapper(HasTraits):
+    def map_measured(self, v):
+        raise NotImplementedError
+
+    def map_output(self, v):
+        raise NotImplementedError
+
+
+class PolynomialMapper(BaseMapper):
     """
     list of coefficients. see numpy.poly1d to see exactly how coefficients used
     coefficient = 1,2,3

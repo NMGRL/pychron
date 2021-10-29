@@ -234,8 +234,15 @@ NULL_EXTRACT_DEVICES = [EXTRACT_DEVICE, LINE_STR, NO_EXTRACT_DEVICE, None, ""]
 CRYO = "Cryo"
 FUSIONS_UV = "Fusions UV"
 FUSIONS_DIODE = "Fusions Diode"
+OSTECH_DIODE = "OsTech Diode"
 FUSIONS_CO2 = "Fusions CO2"
+CHROMIUM_CO2 = "Chromium CO2"
+ABLATION_CO2 = "Ablation CO2"
 FUSIONS = [FUSIONS_CO2, FUSIONS_DIODE, FUSIONS_UV]
+LASER_PLUGINS = [
+    a.replace(" ", "")
+    for a in (FUSIONS_CO2, FUSIONS_DIODE, CHROMIUM_CO2, ABLATION_CO2, OSTECH_DIODE)
+]
 
 NO_BLANK_CORRECT = (BLANK, DETECTOR_IC, BACKGROUND)
 
@@ -309,8 +316,12 @@ QTEGRA_INTEGRATION_TIMES = [
 
 QTEGRA_DEFAULT_INTEGRATION_TIME = 1.048576
 ISOTOPX_INTEGRATION_TIMES = [1.0, 2.0, 3.0, 4.0, 5.0, 10.0, 20.0, 100.0]
+QUADERA_INTEGRATION_TIMES = [
+    1.0,
+]
 ISOTOPX_DEFAULT_INTEGRATION_TIME = 1
-
+ATONA = "ATONA"
+QUADERA_DEFAULT_INTEGRATION_TIME = 1
 DEFAULT_INTEGRATION_TIME = 1
 
 K_DECAY_CONSTANTS = {
@@ -508,5 +519,41 @@ META_ATTRS = (
     "experiment_queue_name",
     EXPERIMENT_TYPE,
 ) + SAMPLE_METADATA
+
+FAILED = "failed"
+TRUNCATED = "truncated"
+CANCELED = "canceled"
+SUCCESS = "success"
+END_AFTER = "end_after"
+ABORTED = "aborted"
+NOT_RUN = "not run"
+
+EQUILIBRATION = "equilibration"
+ACTION = "action"
+TRUNCATION = "truncation"
+TERMINATION = "termination"
+CANCELATION = "cancelation"
+MODIFICATION = "modification"
+POST_RUN_TERMINATION = "post_run_termination"
+PRE_RUN_TERMINATION = "pre_run_termination"
+POST_RUN_ACTION = "post_run_action"
+
+CONDITIONAL_GROUP_NAMES = [
+    "{}s".format(t)
+    for t in (
+        ACTION,
+        EQUILIBRATION,
+        TRUNCATION,
+        CANCELATION,
+        TERMINATION,
+        POST_RUN_TERMINATION,
+        PRE_RUN_TERMINATION,
+        MODIFICATION,
+    )
+]
+EDITABLE_RUN_CONDITIONALS = [
+    "{}s".format(t)
+    for t in (ACTION, CANCELATION, TERMINATION, TRUNCATION, EQUILIBRATION)
+]
 
 # ============= EOF =============================================

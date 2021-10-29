@@ -166,6 +166,12 @@ class FusionsLogicBoard(CoreDevice):
         m = getattr(m, klass)
         return m(parent=self, name=name)
 
+    def enable(self, *args, **kw):
+        return self._enable_laser(**kw)
+
+    def disable(self, *args, **kw):
+        return self._disable_laser()
+
     # ==============================================================================
     # laser methods
     # ==============================================================================

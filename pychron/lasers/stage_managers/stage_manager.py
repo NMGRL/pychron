@@ -147,6 +147,9 @@ class StageManager(BaseStageManager):
     def is_auto_correcting(self):
         return False
 
+    def cancel_auto_correcting(self):
+        return True
+
     def bind_preferences(self, pref_id):
         bind_preference(self.canvas, "show_grids", "{}.show_grids".format(pref_id))
         self.canvas.change_grid_visibility()
@@ -1088,6 +1091,12 @@ class StageManager(BaseStageManager):
             )
 
             factory = AerotechMotionController
+        elif self.stage_controller_klass == "Zaber":
+            from pychron.hardware.zaber.zaber_motion_controller import (
+                LegacyBinaryZaberMotionController,
+            )
+
+            factory = LegacyBinaryZaberMotionController
 
         m = factory(
             name="{}controller".format(self.name),

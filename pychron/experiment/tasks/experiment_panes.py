@@ -531,6 +531,14 @@ class StatsPane(TraitsDockPane):
         return v
 
 
+class ConditionalsPane(TraitsDockPane):
+    id = "pychron.experiment.conditionals"
+    name = "Conditionals"
+
+    def traits_view(self):
+        return View(UItem("conditionals_view", style="custom"))
+
+
 class ControlsPane(TraitsDockPane):
     # name = 'Controls'
     id = "pychron.experiment.controls"

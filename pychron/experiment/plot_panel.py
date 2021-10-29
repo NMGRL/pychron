@@ -233,8 +233,8 @@ class PlotPanel(Loggable):
 
             klass = GenericAutomatedRunAnalysisView
 
-        if not self.analysis_view or not isinstance(self.analysis_view, klass):
-            self.analysis_view = klass(**kw)
+        # if not self.analysis_view or not isinstance(self.analysis_view, klass):
+        self.analysis_view = klass(**kw)
 
     def add_isotope_graph(self, name):
         self.debug("add isotope graph name={}".format(name))
@@ -372,7 +372,7 @@ class PlotPanel(Loggable):
         "isotope_graph:regression_results, baseline_graph:regression_results"
     )
     def _update_display(self, obj, name, old, new):
-        if new:
+        if new and self.analysis_view:
             self.analysis_view.load_computed(self.isotope_group, new_list=False)
             self.analysis_view.refresh_needed = True
 

@@ -52,7 +52,7 @@ class ChromiumLaserManager(EthernetLaserManager):
         self.info("fire laser")
         self._ask("laser.fire")
 
-    def extract(self, value, units=None, tol=0.1, fire_laser=True):
+    def extract(self, value, units=None, tol=0.1, fire_laser=True, **kw):
         if units is None:
             units = "watts"
 
@@ -222,15 +222,6 @@ class ChromiumLaserManager(EthernetLaserManager):
             self._alive = False
             self.update_position()
         return r
-
-    def _stage_manager_default(self):
-        args = dict(
-            name="stage",
-            configuration_name="stage",
-            configuration_dir_name=self.configuration_dir_name,
-            parent=self,
-        )
-        return self._stage_manager_factory(args)
 
     def _stage_manager_factory(self, args):
         from pychron.lasers.stage_managers.chromium_stage_manager import (

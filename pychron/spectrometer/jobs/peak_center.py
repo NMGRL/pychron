@@ -190,7 +190,10 @@ class BasePeakCenter(HasTraits):
         graph.set_x_limits(min_=min([start, end]), max_=max([start, end]))
 
         def get_reference_intensity():
-            keys, signals, t = spec.get_intensities(trigger=True)
+            keys, signals, t, inc = spec.get_intensities(
+                trigger=True, integrated_intensity=True
+            )
+
             idx = keys.index(self.reference_detector.name)
             return signals[idx]
 

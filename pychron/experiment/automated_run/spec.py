@@ -85,6 +85,15 @@ from pychron.pychron_constants import (
     USERNAME,
     NULL_STR,
     CRYO_TEMP,
+    CANCELED,
+    FAILED,
+    TRUNCATED,
+    SUCCESS,
+    EXTRACTION,
+    MEASUREMENT,
+    INVALID,
+    NOT_RUN,
+    ABORTED,
 )
 
 logger = new_logger("AutomatedRunSpec")
@@ -103,16 +112,16 @@ class AutomatedRunSpec(HasTraits):
 
     result = Instance(AutomatedRunResult, ())
     state = Enum(
-        "not run",
-        "extraction",
-        "measurement",
-        "success",
-        "failed",
-        "truncated",
-        "canceled",
-        "invalid",
+        NOT_RUN,
+        EXTRACTION,
+        MEASUREMENT,
+        SUCCESS,
+        FAILED,
+        TRUNCATED,
+        CANCELED,
+        INVALID,
         "test",
-        "aborted",
+        ABORTED,
     )
 
     skip = Bool(False)

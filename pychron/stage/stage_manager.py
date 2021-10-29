@@ -69,7 +69,6 @@ class BaseStageManager(Manager):
     temp_position = None
     temp_hole = None
     root = Str
-
     # use_modified = Bool(True)  # set true to use modified affine calculation
     def motor_event_hook(self, name, value, *args, **kw):
         pass
@@ -113,28 +112,28 @@ class BaseStageManager(Manager):
 
     def get_calibrated_position(self, pos, key=None):
         smap = self.stage_map
+        if smap:
+            # use a affine transform object to map
+            canvas = self.canvas
+            ca = canvas.calibration_item
 
-        # use a affine transform object to map
-        canvas = self.canvas
-        ca = canvas.calibration_item
+            # check if a calibration applies to this hole
+            hole_calibration = get_hole_calibration(smap.name, key)
+            if hole_calibration:
+                self.debug("Using hole calibration")
+                ca = hole_calibration
 
-        # check if a calibration applies to this hole
-        hole_calibration = get_hole_calibration(smap.name, key)
-        if hole_calibration:
-            self.debug("Using hole calibration")
-            ca = hole_calibration
+            if ca:
+                rot = ca.rotation
+                cpos = ca.center
+                scale = ca.scale
 
-        if ca:
-            rot = ca.rotation
-            cpos = ca.center
-            scale = ca.scale
-
-            self.debug(
-                "Calibration parameters: rot={:0.3f}, cpos={} scale={:0.3f}".format(
-                    rot, cpos, scale
+                self.debug(
+                    "Calibration parameters: rot={:0.3f}, cpos={} scale={:0.3f}".format(
+                        rot, cpos, scale
+                    )
                 )
-            )
-            pos = smap.map_to_calibration(pos, cpos=cpos, rot=rot, scale=scale)
+                pos = smap.map_to_calibration(pos, cpos=cpos, rot=rot, scale=scale)
 
         return pos
 

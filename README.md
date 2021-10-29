@@ -1,7 +1,7 @@
 Pychron
 ========
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3237834.svg)](https://doi.org/10.5281/zenodo.3237834)
-[![Format code](https://github.com/NMGRL/pychron/actions/workflows/format_code.yml/badge.svg?branch=dev%2Fdr)](https://github.com/NMGRL/pychron/actions/workflows/format_code.yml)
+[![Format code](https://github.com/NMGRL/pychron/actions/workflows/format_code.yml/badge.svg?branch=develop)](https://github.com/NMGRL/pychron/actions/workflows/format_code.yml)
 
 [Changes](CHANGELOG.md)
 
@@ -23,6 +23,14 @@ applications are pyValve, pyLaser, pyExperiment and pyCrunch. Additional compone
 Bakedpy.
 
 Pychron aims to augment and replace the current widely used program Mass Spec by Alan Deino of Berkeley Geochronology Center
+
+Give it a try
+====================
+Interesting in seeing pychron in action? Don't want to/can't install all the required dependencies? 
+
+A demo version of Pychron Data Reduction aka PyCrunch is now available via a docker image. Checkout https://github.com/NMGRL/pychron_docker for more details
+
+**NOTE: this is an experimental feature and is likely to evolve over time**
 
 Who's Using Pychron
 ====================

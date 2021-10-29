@@ -610,6 +610,7 @@ class DVCPersister(BasePersister):
             isod = {
                 "detector": iso.detector,
                 "name": iso.name,
+                "units": detector.units,
                 "serial_id": detector.serial_id if detector else "00000",
             }
 

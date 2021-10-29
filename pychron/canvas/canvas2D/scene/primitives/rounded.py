@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
-
 import math
+from numpy import array
+from traits.traits import Color
 
 from pychron.canvas.canvas2D.scene.primitives.base import Connectable
 from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow
@@ -53,32 +53,50 @@ def rounded_rect(gc, x, y, width, height, corner_radius):
         gc.draw_path()
 
 
+# class Stop:
+#     def __init__(self, idx, r,g,b,a):
+#         pass
+
+
 class RoundedRectangle(Rectangle, Connectable, Bordered):
     corner_radius = 8.0
     display_name = None
     fill = True
     use_border_gaps = True
 
+    def toyaml(self):
+        y = super(RoundedRectangle, self).toyaml()
+        y["display_name"] = self.display_name
+        y["fill"] = self.fill
+        y["color"] = ",".join([str(a) for a in self.default_color.getRgb()])
+        y["border_width"] = self.border_width
+        return y
+
     def get_tooltip_text(self):
         return "Stage={}\nVolume={}".format(self.name, self.volume)
+
+    def _get_name_xy(self, x, y, w, h):
+        return x, y
 
     def _render(self, gc):
         corner_radius = self.corner_radius
         with gc:
             width, height = self.get_wh()
             x, y = self.get_xy()
+
             if self.fill:
                 rounded_rect(gc, x, y, width, height, corner_radius)
 
             self._render_border(gc, x, y, width, height)
-
+            self._render_augmented_border(gc)
             gc.set_fill_color(self._convert_color(self.name_color))
             if self.display_name:
+                x, y = self._get_name_xy(x, y, width, height)
                 self._render_textbox(gc, x, y, width, height, self.display_name)
             elif not self.display_name == "":
                 self._render_name(gc, x, y, width, height)
 
-    def _render_border(self, gc, x, y, width, height):
+    def _render_border(self, gc, x, y, width, height, use_border_gaps=True):
         if self.use_border:
 
             corner_radius = self.corner_radius
@@ -94,12 +112,13 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                 gc.set_stroke_color(c)
                 rounded_rect(gc, x, y, width, height, corner_radius)
 
-            if self.use_border_gaps:
+            if self.use_border_gaps and use_border_gaps:
                 # from pychron.canvas.canvas2D.scene.primitives.connections import Fork, Tee
 
                 with gc:
                     for t, c in self.connections:
                         with gc:
+                            w2 = self.border_width
                             gc.set_line_width(self.border_width + 1)
                             if isinstance(c, Elbow):
                                 p1, p2 = c.start_point, c.end_point
@@ -125,6 +144,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                         gc.line_to(xx, p2y + 5)
 
                             elif isinstance(c, BorderLine):
+                                w2 = c.width / 2
                                 p1, p2 = c.start_point, c.end_point
                                 p2x, p2y = p2.get_xy()
                                 if p1.x == p2.x:
@@ -134,22 +154,30 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                             yy = y + height
 
                                     p1x, p1y = p1.get_xy()
-                                    gc.move_to(p1x - 5, yy)
-                                    gc.line_to(p1x + 5, yy)
+                                    gc.move_to(p1x - w2, yy)
+                                    gc.line_to(p1x + w2, yy)
                                 else:
                                     xx = x
 
                                     if p1.x >= self.x:
                                         xx = x + width
-                                    gc.move_to(xx, p2y - 5)
-                                    gc.line_to(xx, p2y + 5)
+                                    gc.move_to(xx, p2y - w2)
+                                    gc.line_to(xx, p2y + w2)
 
                             elif isinstance(c, Tee):
+
                                 if t == "mid":
-                                    yy = y if c.left.y < self.y else y + height
-                                    mx = c.get_midx()
-                                    gc.move_to(mx - 5, yy)
-                                    gc.line_to(mx + 5, yy)
+                                    # tee is vertical
+                                    if abs(c.left.x - c.right.x) <= 1:
+                                        xx = x if c.left.x < self.x else x + width
+                                        yy = y + height / 2
+                                        gc.move_to(xx, yy - w2)
+                                        gc.line_to(xx, yy + w2)
+                                    else:
+                                        mx = c.get_midx()
+                                        yy = y if c.left.y < self.y else y + height
+                                        gc.move_to(mx - w2, yy)
+                                        gc.line_to(mx + w2, yy)
                                 else:
                                     gc.set_line_width(self.border_width + 2)
                                     # gc.set_stroke_color((1,0,0))
@@ -159,13 +187,13 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                     else:
                                         xx, yy = c.right.get_xy()
 
-                                    gc.move_to(xx, yy - 5)
-                                    gc.line_to(xx, yy + 5)
+                                    gc.move_to(xx, yy - w2)
+                                    gc.line_to(xx, yy + w2)
                             elif isinstance(c, Fork):
                                 yy = y if c.left.y < self.y else y + height
                                 mx = c.get_midx()
-                                gc.move_to(mx - 5, yy)
-                                gc.line_to(mx + 5, yy)
+                                gc.move_to(mx - w2, yy)
+                                gc.line_to(mx + w2, yy)
 
                             gc.draw_path()
 
@@ -174,18 +202,18 @@ class Spectrometer(RoundedRectangle):
     tag = "spectrometer"
 
     def __init__(self, *args, **kw):
-        super(Spectrometer, self).__init__(*args, **kw)
         self.width = 10
         self.height = 10
+        super(Spectrometer, self).__init__(*args, **kw)
 
 
 class Stage(RoundedRectangle):
     tag = "stage"
 
     def __init__(self, *args, **kw):
-        super(Spectrometer, self).__init__(*args, **kw)
         self.width = 10
         self.height = 5
+        super(Stage, self).__init__(*args, **kw)
 
 
 class CircleStage(Connectable, Bordered):
@@ -284,6 +312,18 @@ class CircleStage(Connectable, Bordered):
 
                     gc.arc(cx, cy, r, theta - dw, theta + dw)
                     gc.stroke_path()
+
+
+class Getter(RoundedRectangle):
+    pass
+
+
+class Gauge(RoundedRectangle):
+    pass
+
+
+class ColdFinger(RoundedRectangle):
+    pass
 
 
 # ============= EOF =============================================

@@ -90,13 +90,19 @@ class Bordered(Primitive):
     use_border = True
     border_width = 2
 
-    def _get_border_color(self):
+    def _render_augmented_border(self, gc):
+        pass
+
+    def _get_border_color(self, scale=0.5):
         c = self.default_color
         if self.state:
             c = self.active_color
 
         c = self._convert_color(c)
-        c = [ci / 2.0 for ci in c]
+
+        if not isinstance(scale, (list, tuple)):
+            scale = (scale,) * len(c)
+        c = [ci * scale[i] for i, ci in enumerate(c)]
         if len(c) == 4:
             c[3] = 1
 
@@ -523,7 +529,10 @@ class ValueLabel(Label):
     value = Either(Int, Float, Str)
 
     def _get_text(self):
-        return self.text.format(self.value)
+        t = ""
+        if self.text and self.value is not None:
+            t = self.text.format(self.value)
+        return t
 
 
 class Indicator(QPrimitive):
@@ -681,7 +690,7 @@ class BorderLine(Line, Bordered):
     clear_horientation = False
 
     def _render(self, gc):
-        gc.save_state()
+        # gc.save_state()
         with gc:
             gc.set_line_width(self.width + self.border_width)
 
