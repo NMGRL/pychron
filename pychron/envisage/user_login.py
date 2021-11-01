@@ -149,7 +149,7 @@ class Login(HasTraits):
                     editor=ComboboxEditor(name="users"),
                 )
             ),
-            Label("Select your work environment"),
+            Label("Select your application environment"),
             HGroup(
                 UItem("environment", width=225, editor=EnumEditor(name="environments")),
                 icon_button_editor("directory_select_button", "configure-2"),
