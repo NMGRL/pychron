@@ -46,14 +46,14 @@ def load_user_file():
     last_login = ""
     path = users_file
     isfile = False
-    jpath = add_extension(path, '.yaml')
+    jpath = add_extension(path, ".yaml")
     if os.path.isfile(jpath):
         isfile = True
         with open(jpath, "r") as rfile:
             try:
                 jobj = yload(rfile)
-                users = jobj['users']
-                last_login = jobj['last_login']
+                users = jobj["users"]
+                last_login = jobj["last_login"]
             except BaseException:
                 pass
     elif os.path.isfile(path):
@@ -73,14 +73,14 @@ def load_environments_file():
     path = environments_file
     envs = []
     last_env = ""
-    jpath = add_extension(path, '.yaml')
+    jpath = add_extension(path, ".yaml")
 
     if os.path.isfile(jpath):
         with open(jpath, "r") as rfile:
             try:
                 jobj = yload(rfile)
-                last_env = jobj['env']
-                envs = jobj['envs']
+                last_env = jobj["env"]
+                envs = jobj["envs"]
             except BaseException:
                 pass
 
@@ -97,8 +97,8 @@ def load_environments_file():
 
 def dump_environments_file(env, envs):
     path = environments_file
-    with open(add_extension(path, '.yaml'), 'w') as wfile:
-        yaml.dump({'env': env, 'envs': list(envs)}, wfile)
+    with open(add_extension(path, ".yaml"), "w") as wfile:
+        yaml.dump({"env": env, "envs": list(envs)}, wfile)
 
     if os.path.isfile(path):
         os.remove(path)
@@ -122,8 +122,8 @@ def dump_user_file(names, last_login=None):
 
     names = [ni for ni in names if ni and ni.strip()]
 
-    with open(add_extension(users_file, '.yaml'), 'w') as wfile:
-        yaml.dump({'users': names, 'last_login': last_login}, wfile)
+    with open(add_extension(users_file, ".yaml"), "w") as wfile:
+        yaml.dump({"users": names, "last_login": last_login}, wfile)
 
     if os.path.isfile(users_file):
         os.remove(users_file)
@@ -241,7 +241,7 @@ def get_user():
     """
     login = Login()
     if to_bool(os.getenv("PYCHRON_USE_LOGIN", True)) or not (
-            login.user and login.environment
+        login.user and login.environment
     ):
         while 1:
             info = login.edit_traits()
@@ -252,5 +252,6 @@ def get_user():
                 break
     else:
         return login.user, login.environment
+
 
 # ============= EOF =============================================
