@@ -15,17 +15,17 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-
-from __future__ import absolute_import
-
 import os
 import pickle
+import yaml
 
 from pyface.constant import OK
 from pyface.directory_dialog import DirectoryDialog
 from traits.api import HasTraits, List, Str, Bool, Button
 from traitsui.api import HGroup, UItem, Label, Handler, EnumEditor
 
+from pychron.core.yaml import yload
+from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.combobox_editor import ComboboxEditor
@@ -46,13 +46,24 @@ def load_user_file():
     last_login = ""
     path = users_file
     isfile = False
-    if os.path.isfile(path):
+    jpath = add_extension(path, '.yaml')
+    if os.path.isfile(jpath):
+        isfile = True
+        with open(jpath, "r") as rfile:
+            try:
+                jobj = yload(rfile)
+                users = jobj['users']
+                last_login = jobj['last_login']
+            except BaseException:
+                pass
+    elif os.path.isfile(path):
         isfile = True
         with open(path, "rb") as rfile:
             try:
                 users, last_login = pickle.load(rfile)
             except (UnicodeDecodeError, EOFError, ValueError):
                 pass
+            dump_user_file(users, last_login)
 
     # return users, last_login, isfile
     return last_login, users, isfile
@@ -62,19 +73,37 @@ def load_environments_file():
     path = environments_file
     envs = []
     last_env = ""
-    if os.path.isfile(path):
+    jpath = add_extension(path, '.yaml')
+
+    if os.path.isfile(jpath):
+        with open(jpath, "r") as rfile:
+            try:
+                jobj = yload(rfile)
+                last_env = jobj['env']
+                envs = jobj['envs']
+            except BaseException:
+                pass
+
+    elif os.path.isfile(path):
         with open(path, "rb") as rfile:
             try:
                 last_env, envs = pickle.load(rfile)
             except (UnicodeDecodeError, EOFError, ValueError):
                 pass
+        dump_environments_file(last_env, envs)
+
     return last_env, envs
 
 
 def dump_environments_file(env, envs):
     path = environments_file
-    with open(path, "wb") as wfile:
-        pickle.dump((env, envs), wfile)
+    with open(add_extension(path, '.yaml'), 'w') as wfile:
+        yaml.dump({'env': env, 'envs': list(envs)}, wfile)
+
+    if os.path.isfile(path):
+        os.remove(path)
+    # with open(path, "wb") as wfile:
+    #     pickle.dump((env, envs), wfile)
 
 
 def dump_user_file(names, last_login=None):
@@ -93,8 +122,13 @@ def dump_user_file(names, last_login=None):
 
     names = [ni for ni in names if ni and ni.strip()]
 
-    with open(users_file, "wb") as wfile:
-        pickle.dump((names, last_login), wfile)
+    with open(add_extension(users_file, '.yaml'), 'w') as wfile:
+        yaml.dump({'users': names, 'last_login': last_login}, wfile)
+
+    if os.path.isfile(users_file):
+        os.remove(users_file)
+    # with open(users_file, "wb") as wfile:
+    #     pickle.dump((names, last_login), wfile)
 
 
 class Login(HasTraits):
@@ -207,7 +241,7 @@ def get_user():
     """
     login = Login()
     if to_bool(os.getenv("PYCHRON_USE_LOGIN", True)) or not (
-        login.user and login.environment
+            login.user and login.environment
     ):
         while 1:
             info = login.edit_traits()
@@ -218,6 +252,5 @@ def get_user():
                 break
     else:
         return login.user, login.environment
-
 
 # ============= EOF =============================================
