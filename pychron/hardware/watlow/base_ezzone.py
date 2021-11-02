@@ -79,7 +79,7 @@ class Protocol:
 
     def ftoc(self, f):
         try:
-            return (f - 32)  * 5 / 9.0
+            return (f - 32) * 5 / 9.0
         except (ValueError, TypeError):
             return
 
