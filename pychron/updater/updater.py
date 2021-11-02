@@ -467,7 +467,9 @@ class Updater(Loggable):
                     repo = Repo(p)
                 except git.GitError as e:
                     self.information_dialog(
-                        'The build directory you have selected is invalid. {}'.format(e),
+                        "The build directory you have selected is invalid. {}".format(
+                            e
+                        ),
                         position=STARTUP_MESSAGE_POSITION,
                     )
                     return
