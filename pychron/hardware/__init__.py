@@ -80,7 +80,7 @@ HW_PACKAGE_MAP = {
     "ProXRActuator": hardware_pkg("actuators.proxr_actuator"),
     "U3GaugeController": hardware_pkg("labjack.u3_gauge_controller"),
     "SPCIonPumpController": hardware_pkg("ionpump.spc_ion_pump_controller"),
-    'HiPace': hardware_pkg('turbo.hipace')
+    "HiPace": hardware_pkg("turbo.hipace"),
 }
 
 
