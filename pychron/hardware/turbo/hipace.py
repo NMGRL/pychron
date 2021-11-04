@@ -38,12 +38,16 @@ import re
 BASE = r"^(?P<address>\d{3})(?P<action>\d{2})(?P<parameter>\d{3})(?P<datalength>\d{2})"
 RESPONSE_RE = re.compile(BASE)
 
-def dt2(v):
-    return float(v)/100.
 
-PARAMETERS = {"set_speed": (308, int), 
-"actual_speed": (309, int), 
-'drive_current': (310, dt2)}
+def dt2(v):
+    return float(v) / 100.0
+
+
+PARAMETERS = {
+    "set_speed": (308, int),
+    "actual_speed": (309, int),
+    "drive_current": (310, dt2),
+}
 
 
 def make_pattern(dl):
@@ -53,7 +57,11 @@ def make_pattern(dl):
 def check_checksum(resp, chksum):
     r = resp[:-3]
 
-    print('calc {} {}  {}'.format(calc_checksum(r) == int(chksum), r, calc_checksum(r), int(chksum)))
+    print(
+        "calc {} {}  {}".format(
+            calc_checksum(r) == int(chksum), r, calc_checksum(r), int(chksum)
+        )
+    )
     return calc_checksum(r) == int(chksum)
 
 
@@ -64,19 +72,20 @@ def calc_checksum(msg):
 
 class HiPace(CoreDevice):
     scan_func = "update"
-    
+
     set_speed = Int
     actual_speed = Int
     drive_current = Float
     address = 1
+
     def update(self):
-        self.debug('update')
+        self.debug("update")
         self.read_set_speed()
         self.read_actual_speed()
         self.read_drive_current()
 
     def read_drive_current(self):
-        return self._read_parameter('drive_current')
+        return self._read_parameter("drive_current")
 
     def read_set_speed(self):
         return self._read_parameter("set_speed")
@@ -89,7 +98,7 @@ class HiPace(CoreDevice):
         cmd = self._assemble("read", param)
         resp = self.ask(cmd, verbose=True)
         data = self._get_data(resp)
-        self.debug('set data {}={}'.format(attr,data))
+        self.debug("set data {}={}".format(attr, data))
         try:
             v = datatype(data)
 
@@ -121,7 +130,7 @@ class HiPace(CoreDevice):
             dl = match.group("datalength")
             pattern = make_pattern(dl)
             match = re.search(pattern, resp)
-            self.debug('{} {}'.format(match, pattern))
+            self.debug("{} {}".format(match, pattern))
             if match:
                 if check_checksum(resp, match.group("checksum")):
                     data = match.group("data")
@@ -129,21 +138,24 @@ class HiPace(CoreDevice):
 
     def pump_view(self):
         v = View(
-            BorderVGroup(Item(
-                "set_speed",
-                label="SetSpeed hz (308)",
-                editor=LCDEditor(width=100, height=50),
-            ),
-            Item(
-                "actual_speed",
-                label="ActualSpeed hz (309)",
-                editor=LCDEditor(width=100, height=50),
-            ),
-            Item(
-                "drive_current",
-                label='DriveCurrent A (310) ',
-                editor=LCDEditor(width=100, height=50),
-            ), label=self.name)
+            BorderVGroup(
+                Item(
+                    "set_speed",
+                    label="SetSpeed hz (308)",
+                    editor=LCDEditor(width=100, height=50),
+                ),
+                Item(
+                    "actual_speed",
+                    label="ActualSpeed hz (309)",
+                    editor=LCDEditor(width=100, height=50),
+                ),
+                Item(
+                    "drive_current",
+                    label="DriveCurrent A (310) ",
+                    editor=LCDEditor(width=100, height=50),
+                ),
+                label=self.name,
+            )
         )
         return v
 

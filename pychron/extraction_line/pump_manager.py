@@ -20,7 +20,8 @@ from pychron.managers.manager import Manager
 
 
 class PumpManager(DeviceManager):
-    device_view_name = 'pump_view'
+    device_view_name = "pump_view"
+
     def get_pressure(self, idx=0):
         try:
             d = self.devices[idx]
