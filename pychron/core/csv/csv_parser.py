@@ -56,14 +56,16 @@ class BaseColumnParser(HasTraits):
             keys = self._header
 
         gv = self.get_value
-        data = array([[gv(ri, ki) for ki in keys] for ri in self.iternrows()], dtype=float)
+        data = array(
+            [[gv(ri, ki) for ki in keys] for ri in self.iternrows()], dtype=float
+        )
         return data.T
 
     def values(self, keys=None, lowercase_keys=False):
         """
-            returns a row iterator
-            each iteration is a dictionary containing "keys"
-            if keys is None return all values
+        returns a row iterator
+        each iteration is a dictionary containing "keys"
+        if keys is None return all values
 
         """
         if keys is None:
@@ -93,18 +95,18 @@ class BaseColumnParser(HasTraits):
             ks = (ks,)
 
         for k in ks:
-            for ki in (k, k.upper(), k.lower(), k.capitalize(), k.replace('_', '')):
+            for ki in (k, k.upper(), k.lower(), k.capitalize(), k.replace("_", "")):
                 try:
                     return self._header.index(ki)
                 except ValueError as e:
-                    print('exep', e)
+                    print("exep", e)
 
 
 class CSVColumnParser(BaseColumnParser):
-    delimiter = ','
+    delimiter = ","
 
     def _load(self, p, header_idx):
-        with open(p, 'U') as rfile:
+        with open(p, "U") as rfile:
             reader = csv.reader(rfile, delimiter=self.delimiter)
             self._lines = list(reader)
             self._header = [l.strip() for l in self._lines[header_idx]]
@@ -130,5 +132,6 @@ class CSVColumnParser(BaseColumnParser):
     @property
     def nrows(self):
         return self._nrows
+
 
 # ============= EOF =============================================

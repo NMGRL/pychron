@@ -22,13 +22,15 @@ import yaml
 from pychron.canvas.canvas2D.scene.primitives.connections import Connection
 from pychron.canvas.canvas2D.scene.primitives.valves import ManualSwitch, Switch, Valve
 from pychron.core.xml.xml_parser import XMLParser
+
+
 # ============= local library imports  ==========================
 from pychron.core.yaml import yload
 
 
-def get_volume(elem, tag='volume', default=0):
+def get_volume(elem, tag="volume", default=0):
     """
-        get volume tag from xml
+    get volume tag from xml
     """
     vol = elem.find(tag)
     if vol is not None:
@@ -39,9 +41,10 @@ def get_volume(elem, tag='volume', default=0):
 
 
 class CanvasParser(XMLParser):
-    """
-    """
+    """ """
+
     pass
+
 
 # ============= EOF ====================================
 #

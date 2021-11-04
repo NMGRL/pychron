@@ -17,8 +17,10 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Event
+
 # ============= standard library imports ========================
 from numpy import polyfit
+
 # ============= local library imports  ==========================
 from pychron.graph.graph import Graph
 from pychron.pipeline.plot.models.iso_evo_model import IsoEvoModel
@@ -27,13 +29,13 @@ from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 
 def fits_equal(dbfit, fit, fod):
     """
-        return True if fits are the same
+    return True if fits are the same
     """
     same = False
     if dbfit.fit == fit:
-        a = fod['filter_outliers'] == dbfit.filter_outliers
-        b = fod['iterations'] == dbfit.filter_outlier_iterations
-        c = fod['std_devs'] == dbfit.filter_outlier_std_devs
+        a = fod["filter_outliers"] == dbfit.filter_outliers
+        b = fod["iterations"] == dbfit.filter_outlier_iterations
+        c = fod["std_devs"] == dbfit.filter_outlier_std_devs
         return a and b and c
 
     return same
@@ -73,9 +75,9 @@ class IsoEvoGraph(Graph):
             self._eq_visible_dict = {sid: False}
 
         if v:
-            a = self.action_factory('Hide Equilibration', '_hide_equilibration')
+            a = self.action_factory("Hide Equilibration", "_hide_equilibration")
         else:
-            a = self.action_factory('Show Equilibration', '_show_equilibration')
+            a = self.action_factory("Show Equilibration", "_show_equilibration")
 
         v = False
         try:
@@ -86,9 +88,13 @@ class IsoEvoGraph(Graph):
             self._eq_only_dict = {sid: False}
 
         if v:
-            b = self.action_factory('Hide Equilibration Only', '_hide_equilibration_only')
+            b = self.action_factory(
+                "Hide Equilibration Only", "_hide_equilibration_only"
+            )
         else:
-            b = self.action_factory('Show Equilibration Only', '_show_equilibration_only')
+            b = self.action_factory(
+                "Show Equilibration Only", "_show_equilibration_only"
+            )
 
         return [a, b]
 
@@ -143,7 +149,8 @@ class IsotopeEvolutionEditor(FigureEditor):
     # component = Any
     # tool = Instance(IsoEvoFitSelector)
     figure_model_klass = IsoEvoModel
-    basename = 'IsoEvo'
+    basename = "IsoEvo"
+
     # pickle_path = 'iso_fits'
     # unpack_peaktime = True
     # calculate_age = False
@@ -344,9 +351,9 @@ class IsotopeEvolutionEditor(FigureEditor):
     # ============= deprecated =============================================
     def calculate_optimal_eqtime(self):
         # get x,y data
-        self.info('========================================')
-        self.info('           Optimal Eq. Results')
-        self.info('========================================')
+        self.info("========================================")
+        self.info("           Optimal Eq. Results")
+        self.info("========================================")
 
         from pychron.processing.utils.equilibration_utils import calc_optimal_eqtime
 
@@ -364,18 +371,21 @@ class IsotopeEvolutionEditor(FigureEditor):
                         xs, ys = iso.xs, iso.ys
                         m, b = polyfit(xs[:50], ys[:50], 1)
                         self.info(
-                            '{:<12s} {}  t={:0.1f}  initial static pump={:0.2e} (fA/s)'.format(unk.record_id, isok, ti,
-                                                                                               m))
+                            "{:<12s} {}  t={:0.1f}  initial static pump={:0.2e} (fA/s)".format(
+                                unk.record_id, isok, ti, m
+                            )
+                        )
                         g = self.graphs[unk.record_id]
                         if ti:
                             for plot in g.plots:
                                 g.add_vertical_rule(ti, plot=plot)
 
-        self.info('========================================')
+        self.info("========================================")
         self.component.invalidate_and_redraw()
 
         # ============= EOF =============================================
         #         def simple_rebuild_graph(self):
+
     # # self._new_container = False
     #         self.rebuild_graph()
     #         # self._new_container = True
@@ -576,6 +586,7 @@ class IsotopeEvolutionEditor(FigureEditor):
     #     db.add_isotope_result(dbiso, fit_hist,
     #                           signal_=v, signal_err=e)
     #     return fit_hist
+
 
 #
 # fitted=[]

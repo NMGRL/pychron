@@ -18,13 +18,15 @@
 from __future__ import absolute_import
 from enable.api import Component, Pointer
 
+
 # =============standard library imports ========================
 
 # =============local library imports  ==========================
 
+
 class BaseCanvas(Component):
-    '''
-    '''
+    """ """
+
     # directory = None
-    select_pointer = Pointer('hand')
-    normal_pointer = Pointer('arrow')
+    select_pointer = Pointer("hand")
+    normal_pointer = Pointer("arrow")

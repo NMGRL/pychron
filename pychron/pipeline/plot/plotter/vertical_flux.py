@@ -33,29 +33,26 @@ class VerticalFlux(BaseArArFigure):
         self.graph.set_x_title(self.options.x_title)
 
     def post_make(self):
-        self.graph.set_x_limits(min_=self.xmi, max_=self.xma, pad='0.1')
+        self.graph.set_x_limits(min_=self.xmi, max_=self.xma, pad="0.1")
 
     def plot(self, plots, legend=None):
         g = self.graph
 
         js, es, zs = self._gather_data()
 
-        s, _ = g.new_series(js, zs,
-                            marker='circle',
-                            type='scatter')
+        s, _ = g.new_series(js, zs, marker="circle", type="scatter")
 
-        self._add_error_bars(s, es, 'x', 2)
+        self._add_error_bars(s, es, "x", 2)
 
-        g.set_y_limits(pad='0.1')
+        g.set_y_limits(pad="0.1")
 
         # g.set_x_limits()
-        es2 = es*2
-        self.xma = max(js+es2)
-        self.xmi = min(js-es2)
+        es2 = es * 2
+        self.xma = max(js + es2)
+        self.xmi = min(js - es2)
         # self.xpad = '0.1'
 
     def _gather_data(self):
-
         return array([(i.j, i.j_err, i.z) for i in self.items]).T
 
         # js, es, zs = [], [], []
@@ -77,5 +74,6 @@ class VerticalFlux(BaseArArFigure):
         # #             es.append(d['j_err'])
         # #             zs.append(obj.get('z', i))
         # return js, es, zs
+
 
 # ============= EOF =============================================

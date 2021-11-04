@@ -31,7 +31,7 @@ from pychron.updater.updater import Updater
 
 def gen_commits(log):
     def _gen():
-        lines = iter(log.split('\n'))
+        lines = iter(log.split("\n"))
         commit = None
         while 1:
             try:
@@ -44,9 +44,9 @@ def gen_commits(log):
                 while 1:
                     line = next(lines)
 
-                    if line.startswith('commit '):
+                    if line.startswith("commit "):
                         commit = line
-                        yield date, author, '\n'.join(message)
+                        yield date, author, "\n".join(message)
                         break
                     else:
                         if line.strip():
@@ -54,23 +54,23 @@ def gen_commits(log):
 
             except StopIteration:
 
-                yield date, author, '\n'.join(message)
+                yield date, author, "\n".join(message)
                 break
 
     return _gen()
 
 
 class UpdatePlugin(BaseTaskPlugin):
-    name = 'Update'
-    id = 'pychron.update.plugin'
+    name = "Update"
+    id = "pychron.update.plugin"
 
     # plugin interface
     def test_repository(self):
-        updater = self.application.get_service('pychron.updater.updater.Updater')
+        updater = self.application.get_service("pychron.updater.updater.Updater")
         return bool(updater.test_origin())
 
     def start(self):
-        updater = self.application.get_service('pychron.updater.updater.Updater')
+        updater = self.application.get_service("pychron.updater.updater.Updater")
         try:
             if updater.check_on_startup:
                 updater.check_for_updates()
@@ -82,7 +82,7 @@ class UpdatePlugin(BaseTaskPlugin):
             pass
 
     def stop(self):
-        updater = self.application.get_service('pychron.updater.updater.Updater')
+        updater = self.application.get_service("pychron.updater.updater.Updater")
         try:
             if updater.check_on_quit:
                 updater.check_for_updates(restart=False)
@@ -100,7 +100,7 @@ class UpdatePlugin(BaseTaskPlugin):
             return False
 
     def _preferences_default(self):
-        return self._preferences_factory('update')
+        return self._preferences_factory("update")
 
     # private
     def _updater_factory(self):
@@ -110,26 +110,36 @@ class UpdatePlugin(BaseTaskPlugin):
 
     # defaults
     def _service_offers_default(self):
-        so = self.service_offer_factory(protocol=Updater,
-                                        factory=self._updater_factory)
+        so = self.service_offer_factory(protocol=Updater, factory=self._updater_factory)
         return [so]
 
     def _preferences_panes_default(self):
         return [UpdatePreferencesPane]
 
     def _available_task_extensions_default(self):
-        return [(self.id, '', self.name, [SchemaAddition(id='pychron.update.check_for_updates',
-                                                         factory=CheckForUpdatesAction,
-                                                         path='MenuBar/help.menu'),
-                                          # SchemaAddition(id='pychron.update.build_app',
-                                          #                factory=BuildApplicationAction,
-                                          #                path='MenuBar/help.menu'),
-                                          # SchemaAddition(id='pychron.update.manage_branch',
-                                          #                factory=ManageBranchAction,
-                                          #                path='MenuBar/help.menu'),
-                                          # SchemaAddition(id='pychron.update.manage_version',
-                                          #                factory=ManageVersionAction,
-                                          #                path='MenuBar/help.menu')
-                                          ])]
+        return [
+            (
+                self.id,
+                "",
+                self.name,
+                [
+                    SchemaAddition(
+                        id="pychron.update.check_for_updates",
+                        factory=CheckForUpdatesAction,
+                        path="MenuBar/help.menu",
+                    ),
+                    # SchemaAddition(id='pychron.update.build_app',
+                    #                factory=BuildApplicationAction,
+                    #                path='MenuBar/help.menu'),
+                    # SchemaAddition(id='pychron.update.manage_branch',
+                    #                factory=ManageBranchAction,
+                    #                path='MenuBar/help.menu'),
+                    # SchemaAddition(id='pychron.update.manage_version',
+                    #                factory=ManageVersionAction,
+                    #                path='MenuBar/help.menu')
+                ],
+            )
+        ]
+
 
 # ============= EOF =============================================

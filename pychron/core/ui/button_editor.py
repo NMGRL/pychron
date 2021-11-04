@@ -21,5 +21,5 @@
 from __future__ import absolute_import
 from pychron.core.ui.factory import toolkit_factory
 
-ButtonEditor = toolkit_factory('button_editor', 'ButtonEditor')
+ButtonEditor = toolkit_factory("button_editor", "ButtonEditor")
 # ============= EOF =============================================

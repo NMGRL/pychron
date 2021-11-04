@@ -15,14 +15,34 @@
 # ===============================================================================
 from __future__ import absolute_import
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.pipeline.plot.plotter.series import UAR4038, UAR4036, UAR4039, AR4039, AR4036, AR4038, AGE, \
-    RADIOGENIC_YIELD, PEAK_CENTER, ANALYSIS_TYPE, LAB_HUM, LAB_TEMP
+from pychron.pipeline.plot.plotter.series import (
+    UAR4038,
+    UAR4036,
+    UAR4039,
+    AR4039,
+    AR4036,
+    AR4038,
+    AGE,
+    RADIOGENIC_YIELD,
+    PEAK_CENTER,
+    ANALYSIS_TYPE,
+    LAB_HUM,
+    LAB_TEMP,
+)
 from pychron.pipeline.report_writer import ReportWriter, ReportOptions
-from pychron.pychron_constants import AR40, AR39, AR36, AR38, UNKNOWN, COCKTAIL, DETECTOR_IC
+from pychron.pychron_constants import (
+    AR40,
+    AR39,
+    AR36,
+    AR38,
+    UNKNOWN,
+    COCKTAIL,
+    DETECTOR_IC,
+)
 
 
 class ReportNode(BaseNode):
-    name = 'Report'
+    name = "Report"
     options_klass = ReportOptions
 
     def configure(self, *args, **kw):
@@ -53,8 +73,8 @@ class ReportNode(BaseNode):
                     for k in iso_keys:
                         if k not in names:
                             names.append(k)
-                            names.append('{}bs'.format(k))
-                            names.append('{}ic'.format(k))
+                            names.append("{}bs".format(k))
+                            names.append("{}ic".format(k))
 
                     # names.extend(iso_keys)
                     # names.extend(['{}bs'.format(ki) for ki in iso_keys])
@@ -72,7 +92,7 @@ class ReportNode(BaseNode):
                             for vj in isotopes.values():
                                 if vi == vj:
                                     continue
-                                k = '{}/{} DetIC'.format(vj.detector, vi.detector)
+                                k = "{}/{} DetIC".format(vj.detector, vi.detector)
                                 if k not in names:
                                     names.append(k)
 

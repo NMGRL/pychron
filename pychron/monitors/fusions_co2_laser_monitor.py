@@ -16,7 +16,8 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import  List
+from traits.api import List
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.monitors.co2_laser_monitor import CO2LaserMonitor
@@ -24,7 +25,6 @@ from pychron.monitors.fusions_laser_monitor import FusionsLaserMonitor
 
 
 class FusionsCO2LaserMonitor(FusionsLaserMonitor, CO2LaserMonitor):
-
     internal_meter_buffer = List
 
     def reset(self):
@@ -46,7 +46,7 @@ class FusionsCO2LaserMonitor(FusionsLaserMonitor, CO2LaserMonitor):
 
     def _fcheck_setpoint(self):
         if self.setpoint:
-            self.info('Check setpoint')
+            self.info("Check setpoint")
             manager = self.manager
             w = manager.get_laser_watts()
             if w is not None:
@@ -56,6 +56,8 @@ class FusionsCO2LaserMonitor(FusionsLaserMonitor, CO2LaserMonitor):
         trim = 500
         self.internal_meter_buffer.append(n)
         self.internal_meter_buffer = self.internal_meter_buffer[-trim:]
+
+
 #            avg = sum(self.internal_meter_buffer) / len(self.internal_meter_buffer)
 #            if abs(avg - self.setpoint) > self._setpoint_tolerance:
 #                pass

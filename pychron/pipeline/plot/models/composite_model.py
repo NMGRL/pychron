@@ -23,28 +23,29 @@ from pychron.pipeline.plot.panels.spectrum_panel import SpectrumPanel
 
 
 class CompositeModel(FigureModel):
-
-    # @on_trait_change('panels:figures:recalculate_event')
-    # def _handle_recalculate(self):
-    #     print('recalads')
-    #     for p in self.panels:
-    #         p.make_graph()
-
-    # def _refresh_panels_hook(self):
-    #     self.on_trait_change(self._handle_recalculate, 'panels:figures:recalculate_event')
+    def _make_panel_groups(self):
+        gs = [
+            SpectrumPanel(
+                analyses=self.analyses, plot_options=self.plot_options.spectrum_options
+            ),
+            InverseIsochronPanel(
+                analyses=self.analyses, plot_options=self.plot_options.isochron_options
+            ),
+        ]
+        return gs
 
     def _make_panels(self):
+        gs = super(CompositeModel, self)._make_panels()
+        if self.plot_options.auto_generate_title:
+            for gi in gs:
+                gi.title = ""
 
-        # spo = SpectrumOptionsManager().selected_options
-        # ipo = InverseIsochronOptionsManager().selected_options
-
-        gs = [SpectrumPanel(analyses=self.analyses,
-                            plot_options=self.plot_options.spectrum_options),
-              InverseIsochronPanel(analyses=self.analyses,
-                                   plot_options=self.plot_options.isochron_options)]
-        for gi in gs:
-            gi.make_figures()
+        else:
+            for i, gi in enumerate(gs):
+                if gi.plot_options.auto_generate_title:
+                    gi.title = gi.plot_options.generate_title(gi.analyses, i)
 
         return gs
+
 
 # ============= EOF =============================================

@@ -27,9 +27,9 @@ import re
 import time
 import string
 
-IDN_RE = re.compile(r'\w{4},\w{8},\w{7}\/[\w\#]{7},\d.\d')
+IDN_RE = re.compile(r"\w{4},\w{8},\w{7}\/[\w\#]{7},\d.\d")
 
-PRED_RE = re.compile(r'(?P<name>[A-Za-z])')
+PRED_RE = re.compile(r"(?P<name>[A-Za-z])")
 
 
 class RangeTest:
@@ -39,7 +39,7 @@ class RangeTest:
         self._attr = None
         match = PRED_RE.search(test)
         if match:
-            self._attr = match.group('name')
+            self._attr = match.group("name")
 
     def test(self, v):
         if self._attr and eval(self._test, {self._attr: float(v)}):
@@ -47,8 +47,8 @@ class RangeTest:
 
 
 class BaseLakeShoreController(CoreDevice):
-    units = Enum('C', 'K')
-    scan_func = 'update'
+    units = Enum("C", "K")
+    scan_func = "update"
 
     input_a = Float
     input_b = Float
@@ -67,41 +67,48 @@ class BaseLakeShoreController(CoreDevice):
     verify_setpoint = Bool
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'units', 'General', 'units', default='K')
-        self.set_attribute(config, 'verify_setpoint', 'General', 'verify_setpoint', cast='boolean', default=True)
+        self.set_attribute(config, "units", "General", "units", default="K")
+        self.set_attribute(
+            config,
+            "verify_setpoint",
+            "General",
+            "verify_setpoint",
+            cast="boolean",
+            default=True,
+        )
         # [Range]
         # 1=v<10
         # 2=10<v<30
         # 3=v>30
 
-        if config.has_section('Range'):
-            items = config.items('Range')
+        if config.has_section("Range"):
+            items = config.items("Range")
 
         else:
-            items = [(1, 'v<10'), (2, '10<v<30'), (3, 'v>30')]
+            items = [(1, "v<10"), (2, "10<v<30"), (3, "v>30")]
 
         if items:
             self.range_tests = [RangeTest(*i) for i in items]
 
-        if config.has_section('IOConfig'):
-            iodict = dict(config.items('IOConfig'))
-            self.num_inputs = int(iodict['num_inputs'])
-            for i, tag in enumerate(string.ascii_lowercase[:self.num_inputs]):
+        if config.has_section("IOConfig"):
+            iodict = dict(config.items("IOConfig"))
+            self.num_inputs = int(iodict["num_inputs"])
+            for i, tag in enumerate(string.ascii_lowercase[: self.num_inputs]):
                 try:
-                    self.ionames.append(iodict['input_{}_name'.format(tag)])
+                    self.ionames.append(iodict["input_{}_name".format(tag)])
                 except ValueError:
-                    self.ionames.append('input_{}'.format(tag))
-                self.iolist.append('input_{}'.format(tag))
-                mapsetpoint = iodict['input_{}'.format(tag)]
-                if mapsetpoint.lower() == 'none':
+                    self.ionames.append("input_{}".format(tag))
+                self.iolist.append("input_{}".format(tag))
+                mapsetpoint = iodict["input_{}".format(tag)]
+                if mapsetpoint.lower() == "none":
                     self.iomap.append(None)
                 else:
                     self.iomap.append(mapsetpoint)
         else:
             self.num_inputs = 2
-            self.iolist = ['input_a', 'input_b']
-            self.ionames = ['', '', '', '']
-            self.iomap = ['setpoint1', 'setpoint2', 'setpoint3', 'setpoint4']
+            self.iolist = ["input_a", "input_b"]
+            self.ionames = ["", "", "", ""]
+            self.iomap = ["setpoint1", "setpoint2", "setpoint3", "setpoint4"]
 
         return True
 
@@ -110,34 +117,36 @@ class BaseLakeShoreController(CoreDevice):
         return super(BaseLakeShoreController, self).initialize(*args, **kw)
 
     def test_connection(self):
-        self.tell('*CLS')
-        resp = self.ask('*IDN?')
+        self.tell("*CLS")
+        resp = self.ask("*IDN?")
         return bool(IDN_RE.match(resp))
 
     def update(self, **kw):
         for tag in self.iolist:
-            func = getattr(self, 'read_{}'.format(tag))
+            func = getattr(self, "read_{}".format(tag))
             v = func(**kw)
             setattr(self, tag, v)
 
         for tag in self.iomap:
             v = self.read_setpoint(tag)
-            setattr(self, '{}_readback'.format(tag), v)
+            setattr(self, "{}_readback".format(tag), v)
         return self._update_hook()
 
     def setpoints_achieved(self, setpoints, tol=1):
-        for i, (setpoint, tag, key) in enumerate(zip(setpoints, self.iomap, string.ascii_lowercase)):
+        for i, (setpoint, tag, key) in enumerate(
+            zip(setpoints, self.iomap, string.ascii_lowercase)
+        ):
 
             idx = i + 1
             v = self._read_input(key, self.units)
             if tag is not None:
                 try:
                     # setpoint = getattr(self, tag)
-                    self.debug('{}={}, v={}'.format(tag, setpoint, v))
+                    self.debug("{}={}, v={}".format(tag, setpoint, v))
                     if abs(v - setpoint) > tol:
                         return
                     else:
-                        self.debug('setpoint {} achieved'.format(idx))
+                        self.debug("setpoint {} achieved".format(idx))
                 except AttributeError:
                     pass
         return True
@@ -146,14 +155,14 @@ class BaseLakeShoreController(CoreDevice):
     def read_setpoint(self, output, verbose=False):
         if output is not None:
             if isinstance(output, str):
-                output = re.sub('[^0-9]', '', output)
-            return self.ask('SETP? {}'.format(output), verbose=verbose)
+                output = re.sub("[^0-9]", "", output)
+            return self.ask("SETP? {}".format(output), verbose=verbose)
 
     def set_setpoints(self, *setpoints, block=False, delay=1):
         for i, v in enumerate(setpoints):
             if v is not None:
                 idx = i + 1
-                setattr(self, 'setpoint{}'.format(idx), v)
+                setattr(self, "setpoint{}".format(idx), v)
 
         if block:
             delay = max(0.5, delay)
@@ -170,19 +179,19 @@ class BaseLakeShoreController(CoreDevice):
 
         self.set_range(v, output)
         for i in range(retries):
-            self.tell('SETP {},{}'.format(output, v))
+            self.tell("SETP {},{}".format(output, v))
             if not self.verify_setpoint:
                 break
 
             time.sleep(2)
             sp = self.read_setpoint(output, verbose=True)
-            self.debug('setpoint set to={} target={}'.format(sp, v))
+            self.debug("setpoint set to={} target={}".format(sp, v))
             if sp == v:
                 break
             time.sleep(1)
 
         else:
-            self.warning_dialog('Failed setting setpoint to {}. Got={}'.format(v, sp))
+            self.warning_dialog("Failed setting setpoint to {}. Got={}".format(v, sp))
 
     def set_range(self, v, output):
         # if v <= 10:
@@ -195,7 +204,7 @@ class BaseLakeShoreController(CoreDevice):
         for r in self.range_tests:
             ra = r.test(v)
             if ra:
-                self.tell('RANGE {},{}'.format(output, ra))
+                self.tell("RANGE {},{}".format(output, ra))
                 break
 
         time.sleep(1)
@@ -206,14 +215,14 @@ class BaseLakeShoreController(CoreDevice):
         return self._read_input(v, self.units, **kw)
 
     def read_input_a(self, **kw):
-        return self._read_input('a', self.units, **kw)
+        return self._read_input("a", self.units, **kw)
 
     def read_input_b(self, **kw):
-        return self._read_input('b', self.units, **kw)
+        return self._read_input("b", self.units, **kw)
 
     @get_float(default=0)
-    def _read_input(self, tag, mode='C', verbose=False):
-        return self.ask('{}RDG? {}'.format(mode, tag), verbose=verbose)
+    def _read_input(self, tag, mode="C", verbose=False):
+        return self.ask("{}RDG? {}".format(mode, tag), verbose=verbose)
 
     def _setpoint1_changed(self):
         self.set_setpoint(self.setpoint1, 1)
@@ -222,29 +231,51 @@ class BaseLakeShoreController(CoreDevice):
         self.set_setpoint(self.setpoint2, 2)
 
     def _update_hook(self):
-        r = PlotRecord((self.input_a, self.input_b), (0, 1), ('a', 'b'))
+        r = PlotRecord((self.input_a, self.input_b), (0, 1), ("a", "b"))
         return r
 
     def get_control_group(self):
-        grp = BorderVGroup(Spring(height=10, springy=False),
-                           HGroup(Item('input_a', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
-                                  Item('setpoint1'),
-                                  UItem('setpoint1_readback', editor=LCDEditor(width=120, height=30),
-                                        style='readonly'), Spring(width=10, springy=False)),
-                           HGroup(Item('input_b', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
-                                  Item('setpoint2'),
-                                  UItem('setpoint2_readback', editor=LCDEditor(width=120, height=30),
-                                        style='readonly'), Spring(width=10, springy=False)),
-                           label=self.name)
+        grp = BorderVGroup(
+            Spring(height=10, springy=False),
+            HGroup(
+                Item(
+                    "input_a",
+                    style="readonly",
+                    editor=LCDEditor(width=120, ndigits=6, height=30),
+                ),
+                Item("setpoint1"),
+                UItem(
+                    "setpoint1_readback",
+                    editor=LCDEditor(width=120, height=30),
+                    style="readonly",
+                ),
+                Spring(width=10, springy=False),
+            ),
+            HGroup(
+                Item(
+                    "input_b",
+                    style="readonly",
+                    editor=LCDEditor(width=120, ndigits=6, height=30),
+                ),
+                Item("setpoint2"),
+                UItem(
+                    "setpoint2_readback",
+                    editor=LCDEditor(width=120, height=30),
+                    style="readonly",
+                ),
+                Spring(width=10, springy=False),
+            ),
+            label=self.name,
+        )
         return grp
 
     def graph_builder(self, g, **kw):
         g.plotcontainer.spacing = 10
-        g.new_plot(xtitle='Time f(s)', ytitle='InputA',
-                   padding=[100, 10, 0, 60])
+        g.new_plot(xtitle="Time f(s)", ytitle="InputA", padding=[100, 10, 0, 60])
         g.new_series()
 
-        g.new_plot(ytitle='InputB',
-                   padding=[100, 10, 60, 0])
+        g.new_plot(ytitle="InputB", padding=[100, 10, 60, 0])
         g.new_series(plotid=1)
+
+
 # ============= EOF =============================================

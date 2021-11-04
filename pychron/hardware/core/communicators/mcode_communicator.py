@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 import time
 import serial
+
 # ============= local library imports  ==========================
 from pychron.hardware.core.communicators.communicator import Communicator
 
@@ -47,7 +48,7 @@ class MDriveCommunicator(Communicator):
         handle = self.handle
 
         if self._read_command_ok():
-            x = ''
+            x = ""
             while 1:
                 r = handle.read()
                 x += r
@@ -63,6 +64,7 @@ class MDriveCommunicator(Communicator):
             return x.strip()
 
     def _format_command(self, cmd):
-        return '{}{}'.format(cmd, self.terminator)
+        return "{}{}".format(cmd, self.terminator)
+
 
 # ============= EOF ====================================

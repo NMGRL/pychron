@@ -23,4 +23,5 @@ from pychron.loggable import Loggable
 class BaseTableWriter(Loggable):
     pass
 
+
 # ============= EOF =============================================

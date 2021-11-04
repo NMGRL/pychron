@@ -27,4 +27,5 @@ from pychron.pipeline.plot.panels.spectrum_panel import SpectrumPanel
 class SpectrumModel(FigureModel):
     _panel_klass = SpectrumPanel
 
+
 # ============= EOF =============================================

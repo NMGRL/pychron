@@ -25,8 +25,8 @@ from pychron.external_pipette.tasks.external_pipette_task import ExternalPipette
 
 
 class ExternalPipettePlugin(BaseTaskPlugin):
-    managers = List(contributes_to='pychron.hardware.managers')
-    id = 'pychron.external_pipette'
+    managers = List(contributes_to="pychron.hardware.managers")
+    id = "pychron.external_pipette"
 
     _manager = None
 
@@ -34,10 +34,10 @@ class ExternalPipettePlugin(BaseTaskPlugin):
         if self._manager:
             return self._manager
         else:
-            pkg = 'pychron.external_pipette.apis_manager'
-            klass = 'SimpleApisManager'
+            pkg = "pychron.external_pipette.apis_manager"
+            klass = "SimpleApisManager"
             factory = __import__(pkg, fromlist=[klass])
-            m = getattr(factory, klass)(name='externalpipette')
+            m = getattr(factory, klass)(name="externalpipette")
             m.bootstrap()
             m.plugin_id = self.id
             m.bind_preferences(self.id)
@@ -45,26 +45,37 @@ class ExternalPipettePlugin(BaseTaskPlugin):
             return m
 
     def _service_offers_default(self):
-        so = self.service_offer_factory(protocol=IPipetteManager,
-                                        factory=self._manager_factory)
-        return [so, ]
+        so = self.service_offer_factory(
+            protocol=IPipetteManager, factory=self._manager_factory
+        )
+        return [
+            so,
+        ]
 
     def _managers_default(self):
-        return [dict(name='ExternalPipette',
-                     plugin_name='ExternalPipette',
-                     manager=self._manager_factory())]
+        return [
+            dict(
+                name="ExternalPipette",
+                plugin_name="ExternalPipette",
+                manager=self._manager_factory(),
+            )
+        ]
 
     def _tasks_default(self):
-        return [TaskFactory(id=self.id,
-                            task_group='hardware',
-                            factory=self._task_factory,
-                            name='External Pipette',
-                            image='pipette',
-                            accelerator='Ctrl+Shift+0')]
+        return [
+            TaskFactory(
+                id=self.id,
+                task_group="hardware",
+                factory=self._task_factory,
+                name="External Pipette",
+                image="pipette",
+                accelerator="Ctrl+Shift+0",
+            )
+        ]
 
     def _task_factory(self):
         t = ExternalPipetteTask(manager=self._manager, application=self.application)
         return t
 
-# ============= EOF =============================================
 
+# ============= EOF =============================================

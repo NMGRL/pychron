@@ -17,33 +17,39 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import List
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.data_mapper.sources.mass_spec_source import MassSpecDBSource
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.mass_spec.mass_spec_recaller import MassSpecRecaller
-from pychron.mass_spec.tasks.preferences import MassSpecConnectionPane, MassSpecConfigPane
+from pychron.mass_spec.tasks.preferences import (
+    MassSpecConnectionPane,
+    MassSpecConfigPane,
+)
 
 
 class MassSpecPlugin(BaseTaskPlugin):
-    id = 'pychron.mass_spec.plugin'
-    name = 'MassSpec'
-    sources = List(contributes_to='pychron.entry.data_sources')
+    id = "pychron.mass_spec.plugin"
+    name = "MassSpec"
+    sources = List(contributes_to="pychron.entry.data_sources")
 
     def _sources_default(self):
         db = self._db_factory()
-        return [('Mass Spec', MassSpecDBSource(db=db)), ]
+        return [
+            ("Mass Spec", MassSpecDBSource(db=db)),
+        ]
 
     def test_database(self):
-        ret, err = 'Skipped', ''
+        ret, err = "Skipped", ""
         db = self._db_factory()
         if db:
             connected = db.connect(warn=False)
-            ret = 'Passed'
+            ret = "Passed"
             if not connected:
                 err = db.connection_error
-                ret = 'Failed'
+                ret = "Failed"
         return ret, err
 
     def _preferences_panes_default(self):
@@ -56,7 +62,7 @@ class MassSpecPlugin(BaseTaskPlugin):
 
     def _get_pref(self, name):
         prefs = self.application.preferences
-        return prefs.get('pychron.massspec.database.{}'.format(name))
+        return prefs.get("pychron.massspec.database.{}".format(name))
 
     def _db_factory(self):
         db = self.application.get_service(MassSpecDatabaseAdapter)
@@ -66,14 +72,20 @@ class MassSpecPlugin(BaseTaskPlugin):
 
     def _service_offers_default(self):
         sos = []
-        if self._get_pref('enabled'):
-            sos.append(self.service_offer_factory(
-                protocol=MassSpecDatabaseAdapter,
-                factory=MassSpecDatabaseAdapter))
+        if self._get_pref("enabled"):
+            sos.append(
+                self.service_offer_factory(
+                    protocol=MassSpecDatabaseAdapter, factory=MassSpecDatabaseAdapter
+                )
+            )
 
-            sos.append(self.service_offer_factory(protocol=MassSpecRecaller,
-                                                  factory=self._recaller_factory))
+            sos.append(
+                self.service_offer_factory(
+                    protocol=MassSpecRecaller, factory=self._recaller_factory
+                )
+            )
 
         return sos
+
 
 # ============= EOF =============================================

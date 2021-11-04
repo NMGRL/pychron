@@ -18,13 +18,18 @@
 from __future__ import absolute_import
 
 from envisage.ui.tasks.preferences_pane import PreferencesPane
-from traits.api import Bool, Enum, Directory, \
-    Color, Range, Float, Int
+from traits.api import Bool, Enum, Directory, Color, Range, Float, Int
 from traitsui.api import View, Item, VGroup, HGroup, Group, UItem
 
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
-from pychron.pychron_constants import SIZES, FUSIONS_DIODE, FUSIONS_CO2, FUSIONS_UV, OSTECH_DIODE
+from pychron.pychron_constants import (
+    SIZES,
+    FUSIONS_DIODE,
+    FUSIONS_CO2,
+    FUSIONS_UV,
+    OSTECH_DIODE,
+)
 
 
 class LaserPreferences(BasePreferencesHelper):
@@ -46,12 +51,12 @@ class LaserPreferences(BasePreferencesHelper):
     show_desired_position = Bool(True)
     show_map = Bool(False)
 
-    crosshairs_kind = Enum('BeamRadius', 'UserRadius', 'MaskRadius')
-    crosshairs_color = Color('maroon')
+    crosshairs_kind = Enum("BeamRadius", "UserRadius", "MaskRadius")
+    crosshairs_color = Color("maroon")
     crosshairs_radius = Range(0.0, 10.0, 1.0)
 
-    desired_position_color = Color('green')
-    calibration_style = Enum('Tray', 'Free')
+    desired_position_color = Color("green")
+    calibration_style = Enum("Tray", "Free")
     scaling = Range(1.0, 2.0, 1)
 
     use_autocenter = Bool(False)
@@ -68,13 +73,13 @@ class LaserPreferences(BasePreferencesHelper):
     render_with_markup = Bool(False)
     crosshairs_offsetx = Float(0)
     crosshairs_offsety = Float(0)
-    crosshairs_offset_color = Color('blue')
+    crosshairs_offset_color = Color("blue")
     crosshairs_line_width = Float(1.0)
 
     aux_crosshairs_radius = Range(0.0, 10.0, 1.0)
     aux_crosshairs_offsetx = Float(0)
     aux_crosshairs_offsety = Float(0)
-    aux_crosshairs_color = Color('red')
+    aux_crosshairs_color = Color("red")
     aux_crosshairs_line_width = Float(1.0)
 
     show_hole_label = Bool
@@ -110,22 +115,22 @@ class FusionsLaserPreferences(LaserPreferences):
 
 class FusionsDiodePreferences(FusionsLaserPreferences):
     name = FUSIONS_DIODE
-    preferences_path = 'pychron.fusions.diode'
+    preferences_path = "pychron.fusions.diode"
 
 
 class FusionsCO2Preferences(FusionsLaserPreferences):
     name = FUSIONS_CO2
-    preferences_path = 'pychron.fusions.co2'
+    preferences_path = "pychron.fusions.co2"
 
 
 class FusionsUVPreferences(FusionsLaserPreferences):
-    name = 'Fusions UV'
-    preferences_path = 'pychron.fusions.uv'
+    name = "Fusions UV"
+    preferences_path = "pychron.fusions.uv"
 
 
 class OsTechDiodePreferences(LaserPreferences):
     name = OSTECH_DIODE
-    preferences_path = 'pychron.ostech.diode'
+    preferences_path = "pychron.ostech.diode"
 
 
 # ===============================================================================
@@ -134,113 +139,163 @@ class OsTechDiodePreferences(LaserPreferences):
 class LaserPreferencesPane(PreferencesPane):
     def traits_view(self):
         grps = self.get_additional_groups()
-        v = View(Group(*grps, layout='tabbed'))
+        v = View(Group(*grps, layout="tabbed"))
         return v
 
     def get_additional_groups(self):
-        archivergrp = Group(Item('use_video_archiver'),
-                            Item('video_archive_days',
-                                 label='Archive after N. days',
-                                 enabled_when='use_video_archiver'),
-                            Item('video_archive_hours',
-                                 label='Archive after N. hours',
-                                 enabled_when='use_video_archiver'),
-                            Item('video_archive_months',
-                                 label='Delete after N. months',
-                                 enabled_when='use_video_archiver'),
-                            show_border=True,
-                            label='Archiver')
+        archivergrp = Group(
+            Item("use_video_archiver"),
+            Item(
+                "video_archive_days",
+                label="Archive after N. days",
+                enabled_when="use_video_archiver",
+            ),
+            Item(
+                "video_archive_hours",
+                label="Archive after N. hours",
+                enabled_when="use_video_archiver",
+            ),
+            Item(
+                "video_archive_months",
+                label="Delete after N. months",
+                enabled_when="use_video_archiver",
+            ),
+            show_border=True,
+            label="Archiver",
+        )
 
-        recgrp = Group(Item('video_directory', label='Save to',
-                            enabled_when='record_lasing_video_video'),
-                       show_border=True,
-                       label='Record')
+        recgrp = Group(
+            Item(
+                "video_directory",
+                label="Save to",
+                enabled_when="record_lasing_video_video",
+            ),
+            show_border=True,
+            label="Record",
+        )
 
-        media_storage_grp = VGroup(Item('use_media_storage'),
-                                   Item('keep_local_copy'),
-                                   Item('auto_upload'))
+        media_storage_grp = VGroup(
+            Item("use_media_storage"), Item("keep_local_copy"), Item("auto_upload")
+        )
 
-        autocenter_grp = VGroup(Item('use_autocenter', label='Auto Center Enabled'),
-                                VGroup(
-                                    VGroup(Item('autocenter_blur', label='Blur'),
-                                           Item('autocenter_stretch_intensity', label='Stretch Intensity'),
-                                           Item('dimension_multiplier', label='Dimension Multiplier'),
-                                           show_border=True,
-                                           label='Preprocess'),
-                                    VGroup(Item('autocenter_search_step', label='Step'),
-                                           Item('autocenter_search_n', label='N'),
-                                           Item('autocenter_search_width', label='Width'),
+        autocenter_grp = VGroup(
+            Item("use_autocenter", label="Auto Center Enabled"),
+            VGroup(
+                VGroup(
+                    Item("autocenter_blur", label="Blur"),
+                    Item("autocenter_stretch_intensity", label="Stretch Intensity"),
+                    Item("dimension_multiplier", label="Dimension Multiplier"),
+                    show_border=True,
+                    label="Preprocess",
+                ),
+                VGroup(
+                    Item("autocenter_search_step", label="Step"),
+                    Item("autocenter_search_n", label="N"),
+                    Item("autocenter_search_width", label="Width"),
+                    Item(
+                        "autocenter_use_adaptive_threshold",
+                        label="Use Adaptive Threshold",
+                    ),
+                    Item(
+                        "autocenter_blocksize",
+                        label="Block Size",
+                        enabled_when="autocenter_use_adaptive_threshold",
+                    ),
+                    Item(
+                        "autocenter_blocksize_step",
+                        label="Block Size Step",
+                        enabled_when="autocenter_use_adaptive_threshold",
+                    ),
+                    show_border=True,
+                    label="Search",
+                ),
+                show_border=True,
+            ),
+            enabled_when="use_video",
+            label="Autocenter",
+        )
 
-                                           Item('autocenter_use_adaptive_threshold', label='Use Adaptive Threshold'),
-                                           Item('autocenter_blocksize', label='Block Size',
-                                                enabled_when='autocenter_use_adaptive_threshold'),
-                                           Item('autocenter_blocksize_step', label='Block Size Step',
-                                                enabled_when='autocenter_use_adaptive_threshold'),
-                                           show_border=True,
-                                           label='Search'),
+        videogrp = VGroup(
+            Item("use_video"),
+            VGroup(
+                # Item('video_identifier', label='ID',
+                #      enabled_when='use_video'),
+                # Item('video_output_mode', label='Output Mode'),
+                # Item('ffmpeg_path', label='FFmpeg Location'),
+                Item("render_with_markup", label="Render Snapshot with markup"),
+                Item(
+                    "burst_delay",
+                    label="Burst Delay (ms)",
+                    tooltip="delay between snapshots in burst mode",
+                ),
+                recgrp,
+                archivergrp,
+                media_storage_grp,
+                enabled_when="use_video",
+            ),
+            label="Video",
+        )
 
-                                    show_border=True),
-                                enabled_when='use_video',
-                                label='Autocenter')
+        crosshairs_grp = BorderVGroup(
+            HGroup(
+                Item("show_laser_position", label="Display Current Position"),
+                Item(
+                    "crosshairs_kind",
+                    label="Crosshairs",
+                    enabled_when="show_laser_position",
+                ),
+            ),
+            Item("crosshairs_radius", visible_when='crosshairs_kind=="UserRadius"'),
+            Item("crosshairs_color", enabled_when="show_laser_position"),
+            Item("crosshairs_line_width", enabled_when="show_laser_position"),
+            HGroup(
+                Item("crosshairs_offsetx", label="Offset"), UItem("crosshairs_offsety")
+            ),
+            UItem("crosshairs_offset_color"),
+            label="Crosshairs",
+        )
+        aux_crosshairs_grp = BorderVGroup(
+            HGroup(
+                Item(
+                    "aux_crosshairs_kind",
+                    label="Crosshairs",
+                    enabled_when="aux_show_laser_position",
+                )
+            ),
+            Item(
+                "aux_crosshairs_radius",
+                visible_when='aux_crosshairs_kind=="UserRadius"',
+            ),
+            Item("aux_crosshairs_color", enabled_when="aux_show_laser_position"),
+            Item("aux_crosshairs_line_width", enabled_when="aux_show_laser_position"),
+            HGroup(
+                Item("aux_crosshairs_offsetx", label="Offset"),
+                UItem("aux_crosshairs_offsety"),
+            ),
+            UItem("aux_crosshairs_offset_color"),
+            label="Aux. Crosshairs",
+        )
 
-        videogrp = VGroup(Item('use_video'),
-                          VGroup(
-                              # Item('video_identifier', label='ID',
-                              #      enabled_when='use_video'),
-                              # Item('video_output_mode', label='Output Mode'),
-                              # Item('ffmpeg_path', label='FFmpeg Location'),
-                              Item('render_with_markup', label='Render Snapshot with markup'),
-                              Item('burst_delay', label='Burst Delay (ms)',
-                                   tooltip='delay between snapshots in burst mode'),
-                              recgrp,
-                              archivergrp,
-                              media_storage_grp,
-                              enabled_when='use_video'),
-                          label='Video')
+        canvasgrp = VGroup(
+            Item("show_bounds_rect", label="Display Bounds Rectangle"),
+            Item("show_map", label="Display Map"),
+            Item("show_grids", label="Display Grids"),
+            Item("show_desired_position", label="Display Desired Position"),
+            Item("show_hole_label", label="Display Hole Label"),
+            Item("hole_label_color"),
+            Item("hole_label_size"),
+            UItem("desired_position_color", enabled_when="show_desired_position"),
+            crosshairs_grp,
+            aux_crosshairs_grp,
+            Item("scaling"),
+            label="Canvas",
+        )
 
-        crosshairs_grp = BorderVGroup(HGroup(Item('show_laser_position', label='Display Current Position'),
-                                             Item('crosshairs_kind', label='Crosshairs',
-                                                  enabled_when='show_laser_position')),
-                                      Item('crosshairs_radius',
-                                           visible_when='crosshairs_kind=="UserRadius"'),
-                                      Item('crosshairs_color', enabled_when='show_laser_position'),
-                                      Item('crosshairs_line_width', enabled_when='show_laser_position'),
-                                      HGroup(Item('crosshairs_offsetx', label='Offset'),
-                                             UItem('crosshairs_offsety')),
-                                      UItem('crosshairs_offset_color'),
-                                      label='Crosshairs')
-        aux_crosshairs_grp = BorderVGroup(HGroup(Item('aux_crosshairs_kind', label='Crosshairs',
-                                                      enabled_when='aux_show_laser_position')),
-                                          Item('aux_crosshairs_radius',
-                                               visible_when='aux_crosshairs_kind=="UserRadius"'),
-                                          Item('aux_crosshairs_color', enabled_when='aux_show_laser_position'),
-                                          Item('aux_crosshairs_line_width', enabled_when='aux_show_laser_position'),
-                                          HGroup(Item('aux_crosshairs_offsetx', label='Offset'),
-                                                 UItem('aux_crosshairs_offsety')),
-                                          UItem('aux_crosshairs_offset_color'),
-                                          label='Aux. Crosshairs')
-
-        canvasgrp = VGroup(Item('show_bounds_rect', label='Display Bounds Rectangle'),
-                           Item('show_map', label='Display Map'),
-                           Item('show_grids', label='Display Grids'),
-                           Item('show_desired_position', label='Display Desired Position'),
-                           Item('show_hole_label', label='Display Hole Label'),
-
-                           Item('hole_label_color'),
-                           Item('hole_label_size'),
-
-                           UItem('desired_position_color', enabled_when='show_desired_position'),
-                           crosshairs_grp,
-                           aux_crosshairs_grp,
-                           Item('scaling'),
-                           label='Canvas')
-
-        patgrp = Group(Item('record_patterning'),
-                       Item('show_patterning'), label='Pattern')
-        powergrp = Group(Item('use_calibrated_power'),
-                         label='Power')
-        return [canvasgrp, videogrp, autocenter_grp,
-                patgrp, powergrp]
+        patgrp = Group(
+            Item("record_patterning"), Item("show_patterning"), label="Pattern"
+        )
+        powergrp = Group(Item("use_calibrated_power"), label="Power")
+        return [canvasgrp, videogrp, autocenter_grp, patgrp, powergrp]
 
 
 class FusionsLaserPreferencesPane(PreferencesPane):
@@ -265,4 +320,6 @@ class FusionsUVPreferencesPane(FusionsLaserPreferencesPane):
 class OsTechDiodePreferencesPane(LaserPreferencesPane):
     category = OSTECH_DIODE
     model_factory = OsTechDiodePreferences
+
+
 # ============= EOF =============================================

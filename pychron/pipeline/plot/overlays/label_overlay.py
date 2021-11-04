@@ -26,11 +26,12 @@ from six.moves import zip
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class RelativePlotLabel(PlotLabel):
     relative_position = Int
 
     def _draw_overlay(self, gc, view_bounds=None, mode="normal"):
-        """ Draws the overlay layer of a component.
+        """Draws the overlay layer of a component.
 
         Overrides PlotComponent.
         """
@@ -130,12 +131,16 @@ class SpectrumLabelOverlay(AbstractOverlay):
                         y = 50
 
                 txt = self._assemble_text(analysis)
-                labels.append(PlotLabel(text=txt,
-                                        font=self.font,
-                                        # font='modern {}'.format(self.font_size),
-                                        color=color,
-                                        x=xi,
-                                        y=y))
+                labels.append(
+                    PlotLabel(
+                        text=txt,
+                        font=self.font,
+                        # font='modern {}'.format(self.font_size),
+                        color=color,
+                        x=xi,
+                        y=y,
+                    )
+                )
 
             self._cached_labels = labels
 
@@ -145,23 +150,24 @@ class SpectrumLabelOverlay(AbstractOverlay):
             ts.append(ai.step)
 
         if self.display_extract_value:
-            ts.append('{:n}'.format(ai.extract_value))
+            ts.append("{:n}".format(ai.extract_value))
 
-        return '\n'.join(ts)
+        return "\n".join(ts)
 
-    @on_trait_change('component.+')
+    @on_trait_change("component.+")
     def _handle_component_change(self, name, new):
 
-        if name in ('bounds', '_cache_valid'):
-            if name == '_cache_valid' and not new:
+        if name in ("bounds", "_cache_valid"):
+            if name == "_cache_valid" and not new:
                 return
 
             self._cached_labels = []
             self._layout_needed = True
             self.invalidate_and_redraw()
 
-    @on_trait_change('display_extract_value, display_step')
+    @on_trait_change("display_extract_value, display_step")
     def _update_visible(self):
         self.visible = self.display_extract_value or self.display_step
+
 
 # ============= EOF =============================================

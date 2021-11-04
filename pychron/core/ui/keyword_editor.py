@@ -21,6 +21,6 @@
 from __future__ import absolute_import
 from .factory import toolkit_factory
 
-KeywordEditor = toolkit_factory('keyword_editor', 'KeywordEditor')
+KeywordEditor = toolkit_factory("keyword_editor", "KeywordEditor")
 
 # ============= EOF =============================================

@@ -47,7 +47,7 @@ class ResponseRecorder(Loggable):
 
     def start(self, base_frame_name=None):
         if self._alive:
-            self.debug('response recorder already alive')
+            self.debug("response recorder already alive")
             return
 
         t = time.time()
@@ -61,16 +61,21 @@ class ResponseRecorder(Loggable):
             self._write_data = True
             self.data_manager = CSVDataManager()
             self.data_manager.new_frame(base_frame_name=base_frame_name)
-            self.data_manager.write_to_frame(('#time', self.output_device.name,
-                                              self.response_device.name,
-                                              self.response_device_secondary.name))
+            self.data_manager.write_to_frame(
+                (
+                    "#time",
+                    self.output_device.name,
+                    self.response_device.name,
+                    self.response_device_secondary.name,
+                )
+            )
 
         t = Thread(target=self.run)
         t.setDaemon(True)
         t.start()
 
     def run(self):
-        self.debug('start response recorder')
+        self.debug("start response recorder")
         self._alive = True
         st = self._start_time
         p = self.period
@@ -97,7 +102,9 @@ class ResponseRecorder(Loggable):
             r = rd.get_response(force=True)
             rdata = vstack((rdata, (t, r)))
 
-            self.debug('response t={}, out={}, setpoint={}, response={}'.format(t, out, sp, r))
+            self.debug(
+                "response t={}, out={}, setpoint={}, response={}".format(t, out, sp, r)
+            )
             if rds:
                 r2 = rds.get_response(force=True)
 
@@ -141,7 +148,7 @@ class ResponseRecorder(Loggable):
         return std_bit and error_bit
 
     def stop(self):
-        self.debug('stop response recorder')
+        self.debug("stop response recorder")
         self._alive = False
         if self.data_manager:
             self.data_manager.close_file()
@@ -149,21 +156,22 @@ class ResponseRecorder(Loggable):
     def get_response_blob(self):
         if len(self.response_data):
             # return ''.join([struct.pack('<ff', x, y) for x, y in self.response_data])
-            return pack('<ff', self.response_data)
+            return pack("<ff", self.response_data)
 
     def get_output_blob(self):
         if len(self.output_data):
-            return pack('<ff', self.output_data)
+            return pack("<ff", self.output_data)
             # return ''.join([struct.pack('<ff', x, y) for x, y in self.output_data])
 
     def get_setpoint_blob(self):
         if len(self.setpoint_data):
-            return pack('<ff', self.setpoint_data)
+            return pack("<ff", self.setpoint_data)
             # return ''.join([struct.pack('<ff', x, y) for x, y in self.setpoint_data])
 
     @property
     def max_response(self):
         if len(self.response_data):
             return self.response_data.max()
+
 
 # ============= EOF =============================================

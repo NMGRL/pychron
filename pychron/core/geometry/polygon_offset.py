@@ -21,6 +21,7 @@
 from numpy import array, cross, vstack, dot, linalg
 
 from pychron.core.geometry.convex_hull import convex_hull
+
 # ============= local library imports  ==========================
 from pychron.core.geometry.geometry import sort_clockwise
 
@@ -29,7 +30,7 @@ def scaleadd(origin, offset, vectorx):
     """
     From a vector representing the origin,
     a scalar offset, and a vector, returns
-    a Vector3 object representing a point 
+    a Vector3 object representing a point
     offset from the origin.
 
     (Multiply vectorx by offset and add to origin.)
@@ -58,13 +59,11 @@ def getinsetpoint(pt1, pt2, pt3, offset):
     """
     origin = array((pt2[0], pt2[1], 0.0))
 
-    v1 = array((pt1[0] - pt2[0],
-                pt1[1] - pt2[1], 0.0))
+    v1 = array((pt1[0] - pt2[0], pt1[1] - pt2[1], 0.0))
 
     v1 = normalize(v1)
 
-    v2 = array((pt3[0] - pt2[0],
-                pt3[1] - pt2[1], 0.0))
+    v2 = array((pt3[0] - pt2[0], pt3[1] - pt2[1], 0.0))
 
     v2 = normalize(v2)
 
@@ -77,7 +76,7 @@ def getinsetpoint(pt1, pt2, pt3, offset):
     a1 = cs * v2
     a2 = v3 - a1
 
-    '''
+    """
         comment by Ahmad Rafsanjani suggests to use 
         if cs > 0:
             alpha = (magnitude(a2)) ** 0.5
@@ -85,7 +84,7 @@ def getinsetpoint(pt1, pt2, pt3, offset):
             alpha = -(magnitude(a2)) ** 0.5
             
         but if found that inverting alpha causes an issue
-    '''
+    """
     alpha = (magnitude(a2)) ** 0.5
 
     if v1[2] < 0.0:
@@ -110,17 +109,14 @@ def polygon_offset(poly, offset):
     i = 0
 
     while i < lenpolygon - 2:
-        polyinset.append(getinsetpoint(poly[i],
-                                       poly[i + 1], poly[i + 2], offset))
+        polyinset.append(getinsetpoint(poly[i], poly[i + 1], poly[i + 2], offset))
         i += 1
-    polyinset.append(getinsetpoint(poly[-2],
-                                   poly[0], poly[1], offset))
-    polyinset.append(getinsetpoint(poly[0],
-                                   poly[1], poly[2], offset))
+    polyinset.append(getinsetpoint(poly[-2], poly[0], poly[1], offset))
+    polyinset.append(getinsetpoint(poly[0], poly[1], poly[2], offset))
     return polyinset
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pylab import plot, show
 
     pts = [(2, 7), (4, 12), (8, 15), (16, 9), (11, 5), (8, 7), (5, 5)]
@@ -130,7 +126,7 @@ if __name__ == '__main__':
     #    pts = sort_clockwise(pts, pts)
     ppts = array(pts + pts[:1])
     xs, ys = ppts.T
-    plot(xs, ys, 'red')
+    plot(xs, ys, "red")
 
     pts = sort_clockwise(pts, pts)
     pts = convex_hull(pts)
@@ -143,7 +139,7 @@ if __name__ == '__main__':
         opts = array(opts)
         #    #    print opts
         xs, ys, zs = opts.T
-        plot(xs, ys, 'b')
+        plot(xs, ys, "b")
 
     show()
 # ============= EOF =============    ================================

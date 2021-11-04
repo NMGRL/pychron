@@ -50,7 +50,7 @@ class Model330TemperatureController(BaseLakeShoreController):
         for r in self.range_tests:
             ra = r.test(v)
             if ra:
-                self.tell('RANG {}'.format(ra))
+                self.tell("RANG {}".format(ra))
                 break
 
         time.sleep(1)
@@ -58,16 +58,35 @@ class Model330TemperatureController(BaseLakeShoreController):
     @get_float(default=0)
     def read_setpoint(self, output, verbose=False):
         if output is not None:
-            return self.ask('SETP?', verbose=verbose)
+            return self.ask("SETP?", verbose=verbose)
 
     def get_control_group(self):
-        grp = VGroup(Spring(height=10, springy=False),
-                     HGroup(Item('input_a', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
-                            Item('setpoint1'),
-                            UItem('setpoint1_readback', editor=LCDEditor(width=120, height=30),
-                                  style='readonly'), Spring(width=10, springy=False)),
-                     HGroup(Item('input_b', style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)),
-                            Spring(width=10, springy=False)))
+        grp = VGroup(
+            Spring(height=10, springy=False),
+            HGroup(
+                Item(
+                    "input_a",
+                    style="readonly",
+                    editor=LCDEditor(width=120, ndigits=6, height=30),
+                ),
+                Item("setpoint1"),
+                UItem(
+                    "setpoint1_readback",
+                    editor=LCDEditor(width=120, height=30),
+                    style="readonly",
+                ),
+                Spring(width=10, springy=False),
+            ),
+            HGroup(
+                Item(
+                    "input_b",
+                    style="readonly",
+                    editor=LCDEditor(width=120, ndigits=6, height=30),
+                ),
+                Spring(width=10, springy=False),
+            ),
+        )
         return grp
+
 
 # ============= EOF =============================================

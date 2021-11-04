@@ -18,6 +18,7 @@
 import string
 
 from numpy import asarray, sqrt, matrix, diagonal, array, exp, zeros
+
 # ============= standard library imports ========================
 from scipy import optimize
 from traits.api import Callable, List
@@ -40,12 +41,12 @@ class LeastSquaresRegressor(BaseRegressor):
     _nargs = 2
 
     def construct_fitfunc(self, fitstr):
-        fitstr = fitstr.lstrip('custom:').lower().split('_')[0]
+        fitstr = fitstr.lstrip("custom:").lower().split("_")[0]
         import numexpr as ne
 
         def func(x, *args):
-            ctx = dict(zip(string.ascii_lowercase[:len(args)][::-1], args))
-            ctx['x'] = x
+            ctx = dict(zip(string.ascii_lowercase[: len(args)][::-1], args))
+            ctx["x"] = x
             return ne.evaluate(fitstr, local_dict=ctx)
 
         self._nargs = 2
@@ -67,15 +68,19 @@ class LeastSquaresRegressor(BaseRegressor):
         else:
             fx, fy = cxs, cys
         try:
-            coeffs, cov = optimize.curve_fit(self.fitfunc, fx, fy, p0=self._calculate_initial_guess())
+            coeffs, cov = optimize.curve_fit(
+                self.fitfunc, fx, fy, p0=self._calculate_initial_guess()
+            )
             self._coefficients = list(coeffs)
             self._covariance = cov
             self._coefficient_errors = list(sqrt(diagonal(cov)))
         except RuntimeError:
             import os
-            if not os.getenv('TRAVIS_CI'):
+
+            if not os.getenv("TRAVIS_CI"):
                 from pyface.message_dialog import warning
-                warning(None, 'Exponential failed to converge. Choose a different fit')
+
+                warning(None, "Exponential failed to converge. Choose a different fit")
             raise FitError()
 
     def _calculate_initial_guess(self):
@@ -89,7 +94,7 @@ class LeastSquaresRegressor(BaseRegressor):
 
     def predict(self, x):
         return_single = False
-        if not hasattr(x, '__iter__'):
+        if not hasattr(x, "__iter__"):
             x = [x]
             return_single = True
 
@@ -101,12 +106,12 @@ class LeastSquaresRegressor(BaseRegressor):
 
         return fx
 
-    def predict_error(self, x, error_calc='sem'):
+    def predict_error(self, x, error_calc="sem"):
         """
-            returns percent error
+        returns percent error
         """
         return_single = False
-        if not hasattr(x, '__iter__'):
+        if not hasattr(x, "__iter__"):
             x = [x]
             return_single = True
 
@@ -114,10 +119,15 @@ class LeastSquaresRegressor(BaseRegressor):
         r, _ = self._covariance.shape
 
         def calc_error(xi):
-            Xk = matrix([xi, ] * r).T
+            Xk = matrix(
+                [
+                    xi,
+                ]
+                * r
+            ).T
 
-            varY_hat = (Xk.T * self._covariance * Xk)
-            if error_calc == 'sem':
+            varY_hat = Xk.T * self._covariance * Xk
+            if error_calc == "sem":
                 se = sef * sqrt(varY_hat)
             else:
                 se = sqrt(sef ** 2 + sef ** 2 * varY_hat)
@@ -147,4 +157,6 @@ class ExponentialRegressor(LeastSquaresRegressor):
         else:
             ig = -10, 0.1, 10
         return ig
+
+
 # ============= EOF =============================================

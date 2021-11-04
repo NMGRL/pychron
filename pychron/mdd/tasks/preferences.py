@@ -15,6 +15,7 @@
 # ===============================================================================
 
 from envisage.ui.tasks.preferences_pane import PreferencesPane
+
 # ============= enthought library imports =======================
 from traits.api import Directory, Float, Enum
 from traitsui.api import View, Item, VGroup
@@ -26,7 +27,7 @@ from pychron.mdd import GEOMETRIES
 
 
 class MDDPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.mdd'
+    preferences_path = "pychron.mdd"
     executable_root = Directory
     default_temp_offset = Float
     default_geometry = Enum(*GEOMETRIES)
@@ -34,13 +35,18 @@ class MDDPreferences(BasePreferencesHelper):
 
 class MDDPreferencesPane(PreferencesPane):
     model_factory = MDDPreferences
-    category = 'Pipeline'
+    category = "Pipeline"
 
     def traits_view(self):
-        v = View(VGroup(Item('executable_root', label='Executables Dir.'),
-                        Item('default_temp_offset', label='Default Temp. Offset'),
-                        Item('default_geometry', label='Default Geometry'),
-                        show_border=True, label='MDD'))
+        v = View(
+            VGroup(
+                Item("executable_root", label="Executables Dir."),
+                Item("default_temp_offset", label="Default Temp. Offset"),
+                Item("default_geometry", label="Default Geometry"),
+                show_border=True,
+                label="MDD",
+            )
+        )
         return v
 
 

@@ -26,7 +26,7 @@ from traitsui.api import TreeEditor as _TreeEditor
 from traitsui.qt4.tree_editor import SimpleEditor as _SimpleEditor
 
 LABEL_FONT_SIZE = 14
-if platform.system() == 'Windows':
+if platform.system() == "Windows":
     LABEL_FONT_SIZE = 8
 
 
@@ -39,13 +39,13 @@ class SimpleEditor(_SimpleEditor):
 
     def init(self, parent):
         super(SimpleEditor, self).init(parent)
-        self.sync_value(self.factory.refresh_icons, 'refresh_icons', 'from')
-        self.sync_value(self.factory.refresh_all_icons, 'refresh_all_icons', 'from')
-        self.sync_value(self.factory.collapse_all, 'collapse_all', 'from')
-        self.sync_value(self.factory.expand_all, 'expand_all', 'from')
-        self.sync_value(self.factory.update, 'update', 'from')
+        self.sync_value(self.factory.refresh_icons, "refresh_icons", "from")
+        self.sync_value(self.factory.refresh_all_icons, "refresh_all_icons", "from")
+        self.sync_value(self.factory.collapse_all, "collapse_all", "from")
+        self.sync_value(self.factory.expand_all, "expand_all", "from")
+        self.sync_value(self.factory.update, "update", "from")
 
-    def _refresh_changed( self ):
+    def _refresh_changed(self):
         nids = self._tree.selectedItems()
         obj, node = self._node_for(self.selected)
         bg = node.get_background(obj)
@@ -56,8 +56,7 @@ class SimpleEditor(_SimpleEditor):
         super(SimpleEditor, self)._refresh_changed()
 
     def _label_updated(self, obj, name, label):
-        """  Handles the label of an object being changed.
-        """
+        """Handles the label of an object being changed."""
         # Prevent the itemChanged() signal from being emitted.
         blk = self._tree.blockSignals(True)
 
@@ -124,7 +123,7 @@ class SimpleEditor(_SimpleEditor):
 
     def _refresh_icons(self, tree):
         """
-            recursively refresh the nodes
+        recursively refresh the nodes
         """
         if tree:
             n = tree.childCount()
@@ -161,7 +160,7 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
         super(PipelineDelegate, self).__init__(*args, **kwargs)
 
     def sizeHint(self, option, index):
-        """ returns area taken by the text. """
+        """returns area taken by the text."""
         # return self._size_map[self._tree.itemFromIndex(index)]
         return QtCore.QSize(1, 20)
 
@@ -182,7 +181,7 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
         try:
             expanded, node, obj = item._py_data
         except AttributeError as e:
-            print('asfasfas', e, item, index)
+            print("asfasfas", e, item, index)
             return
 
         text = node.get_label(obj)
@@ -220,12 +219,15 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
         font.setPointSize(LABEL_FONT_SIZE)
         painter.setFont(font)
 
-        painter.drawText(option.rect.left() + iconwidth,
-                         # option.rect.top(),
-                         option.rect.top() + option.rect.height() / 3,
-                         option.rect.width() - iconwidth,
-                         option.rect.height(),
-                         QtCore.Qt.TextWordWrap, text)
+        painter.drawText(
+            option.rect.left() + iconwidth,
+            # option.rect.top(),
+            option.rect.top() + option.rect.height() / 3,
+            option.rect.width() - iconwidth,
+            option.rect.height(),
+            QtCore.Qt.TextWordWrap,
+            text,
+        )
         # Need to set the appropriate sizeHint of the item.
         # if self._size_map[item] != rect.size():
         #     self._size_map[item] = rect.size()
@@ -240,10 +242,10 @@ class _PipelineEditor(SimpleEditor):
             self._tree.setItemDelegate(item)
 
     def _create_item(self, nid, node, obj, index=None):
-        """ Create  a new TreeWidgetItem as per word_wrap policy.
+        """Create  a new TreeWidgetItem as per word_wrap policy.
 
         Index is the index of the new node in the parent:
-            None implies append the child to the end. """
+            None implies append the child to the end."""
         if index is None:
             cnid = QtGui.QTreeWidgetItem(nid)
         else:
@@ -276,15 +278,14 @@ class TreeEditor(_TreeEditor):
     update = Str
 
     def _get_simple_editor_class(self):
-        """
-        """
+        """ """
         return SimpleEditor
 
 
 class PipelineEditor(TreeEditor):
     def _get_simple_editor_class(self):
-        """
-        """
+        """ """
         return _PipelineEditor
+
 
 # ============= EOF =============================================

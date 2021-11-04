@@ -19,8 +19,7 @@ from __future__ import absolute_import
 
 from datetime import datetime
 
-from traits.api import HasTraits, List, Str, Float, \
-    Date, Any, TraitError
+from traits.api import HasTraits, List, Str, Float, Date, Any, TraitError
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -36,23 +35,23 @@ class SensitivityRecord(HasTraits):
     mass_spectrometer = Str(dictable=True)
     sensitivity = Float(dictable=True)
     create_date = Date(dictable=True)
-    units = Str('mol/fA', dictable=True)
+    units = Str("mol/fA", dictable=True)
 
     def to_dict(self):
         d = {k: getattr(self, k) for k in self.traits(dictable=True)}
 
-        cd = d['create_date']
+        cd = d["create_date"]
         if not cd:
             self.create_date = cd = datetime.now()
 
-        d['create_date'] = cd.strftime(DATE_FORMAT)
+        d["create_date"] = cd.strftime(DATE_FORMAT)
         return d
 
     @classmethod
     def from_dict(cls, d):
         record = cls()
         for attr in record.traits(dictable=True):
-            if attr == 'create_date':
+            if attr == "create_date":
                 cd = d.get(attr)
                 if cd and not isinstance(cd, datetime):
                     cd = datetime.strptime(cd, DATE_FORMAT)
@@ -142,14 +141,17 @@ class SensitivityEntry(DVCAble):
     # @database_enabled()
     def _load_records(self):
         specs = self.dvc.get_sensitivities()
-        print('asdf', specs)
-        self.records = [SensitivityRecord.from_dict(sens) for spec in specs.values() for sens in spec]
+        print("asdf", specs)
+        self.records = [
+            SensitivityRecord.from_dict(sens)
+            for spec in specs.values()
+            for sens in spec
+        ]
 
     # @database_enabled()
     def save(self):
         sens = {}
-        for ms, ss in groupby_key(self.records, 'mass_spectrometer'):
-
+        for ms, ss in groupby_key(self.records, "mass_spectrometer"):
             sens[ms] = [ri.to_dict() for ri in ss]
 
         self.dvc.save_sensitivities(sens)
@@ -213,16 +215,17 @@ class SensitivityEntry(DVCAble):
 #                  )
 #         return v
 
+
 class SensitivitySelector(SensitivityEntry):
     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
 
-    paths.build('_experiment')
+    paths.build("_experiment")
 
-    logging_setup('runid')
+    logging_setup("runid")
     m = SensitivityEntry()
     m.configure_traits()
 # ============= EOF =============================================

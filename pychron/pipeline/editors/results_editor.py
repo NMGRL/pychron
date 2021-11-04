@@ -22,9 +22,32 @@ from chaco.scatter_inspector_overlay import ScatterInspectorOverlay
 from chaco.scatterplot import ScatterPlot
 from enable.component_editor import ComponentEditor
 from numpy import poly1d, linspace
-from traits.api import Int, Property, List, Instance, Event, Bool, Button, List, Set, Dict, Str
-from traitsui.api import View, UItem, TabularEditor, VGroup, HGroup, Item, Tabbed, VSplit, EnumEditor
+from traits.api import (
+    Int,
+    Property,
+    List,
+    Instance,
+    Event,
+    Bool,
+    Button,
+    List,
+    Set,
+    Dict,
+    Str,
+)
+from traitsui.api import (
+    View,
+    UItem,
+    TabularEditor,
+    VGroup,
+    HGroup,
+    Item,
+    Tabbed,
+    VSplit,
+    EnumEditor,
+)
 from traitsui.tabular_adapter import TabularAdapter
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.column_sorter_mixin import ColumnSorterMixin
@@ -36,7 +59,10 @@ from pychron.graph.graph import Graph
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.graph.tools.point_inspector import PointInspector, PointInspectorOverlay
 from pychron.options.layout import filled_grid
-from pychron.options.options_manager import RegressionSeriesOptionsManager, OptionsController
+from pychron.options.options_manager import (
+    RegressionSeriesOptionsManager,
+    OptionsController,
+)
 from pychron.options.views.views import view
 from pychron.pipeline.plot.figure_container import FigureContainer
 from pychron.pipeline.plot.models.regression_series_model import RegressionSeriesModel
@@ -45,16 +71,18 @@ from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED
 
 
 class IsoEvolutionResultsAdapter(TabularAdapter):
-    columns = [('RunID', 'record_id'),
-               ('UUID', 'display_uuid'),
-               ('Isotope', 'isotope'),
-               ('Fit', 'fit'),
-               ('N', 'nstr'),
-               ('Intercept', 'intercept_value'),
-               (PLUSMINUS_ONE_SIGMA, 'intercept_error'),
-               ('%', 'percent_error'),
-               ('Regression', 'regression_str')]
-    font = '10'
+    columns = [
+        ("RunID", "record_id"),
+        ("UUID", "display_uuid"),
+        ("Isotope", "isotope"),
+        ("Fit", "fit"),
+        ("N", "nstr"),
+        ("Intercept", "intercept_value"),
+        (PLUSMINUS_ONE_SIGMA, "intercept_error"),
+        ("%", "percent_error"),
+        ("Regression", "regression_str"),
+    ]
+    font = "10"
     record_id_width = Int(80)
     isotope_width = Int(50)
     fit_width = Int(80)
@@ -78,20 +106,20 @@ class IsoEvolutionResultsAdapter(TabularAdapter):
                 return LIGHT_RED
 
     def _get_intercept_value_text(self):
-        return self._format_number('intercept_value')
+        return self._format_number("intercept_value")
 
     def _get_intercept_error_text(self):
-        return self._format_number('intercept_error')
+        return self._format_number("intercept_error")
 
     def _get_percent_error_text(self):
-        return self._format_number('percent_error', n=3)
+        return self._format_number("percent_error", n=3)
 
     def _format_number(self, attr, **kw):
         if self.item.record_id:
             v = getattr(self.item, attr)
             r = floatfmt(v, **kw)
         else:
-            r = ''
+            r = ""
         return r
 
 
@@ -118,11 +146,11 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
     adapter = Instance(IsoEvolutionResultsAdapter, ())
     dclicked = Event
     display_only_bad = Bool
-    view_bad_button = Button('View Flagged')
-    view_selected_button = Button('View Selected')
+    view_bad_button = Button("View Flagged")
+    view_selected_button = Button("View Selected")
     selected = List
-    xarg = Str('intercept_value')
-    yarg = Str('slope')
+    xarg = Str("intercept_value")
+    yarg = Str("slope")
     xargs = List(ISO_EVO_RESULT_ARGS)
     yargs = List(ISO_EVO_RESULT_ARGS)
     graph = Instance(Graph)
@@ -133,7 +161,7 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
         super(IsoEvolutionResultsEditor, self).__init__(*args, **kw)
 
         na = grouped_name([r.identifier for r in results if r.identifier])
-        self.name = 'IsoEvo Results {}'.format(na)
+        self.name = "IsoEvo Results {}".format(na)
 
         self.oresults = self.results = results
         self.fits = fits
@@ -144,8 +172,8 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
     def _make_iso_evo_graph(self):
         g = Graph()
         g.new_plot(show_legend=True)
-        g.set_y_title('Intensity')
-        g.set_x_title('Time (s)')
+        g.set_y_title("Intensity")
+        g.set_x_title("Time (s)")
         self.iso_evo_graph = g
 
     def _make_graph(self):
@@ -156,11 +184,11 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
         # c = 0.00005
         # d = 0.015
         isos = len({r.isotope for r in results})
-        g = Graph(container_dict={'kind': 'g',
-                                  'shape': filled_grid(isos)})
-        key = attrgetter('isotope')
-        for i, (iso, gg) in enumerate(groupby(sort_isotopes(results, key=key),
-                                              key=key)):
+        g = Graph(container_dict={"kind": "g", "shape": filled_grid(isos)})
+        key = attrgetter("isotope")
+        for i, (iso, gg) in enumerate(
+            groupby(sort_isotopes(results, key=key), key=key)
+        ):
             # fit = next((fi for fi in fits if fi.name == iso))
             rs = list(gg)
             x, y = zip(*((getattr(r, self.xarg), getattr(r, self.yarg)) for r in rs))
@@ -168,31 +196,31 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
             # yy = fit.smart_filter_values(xx)
 
             p = g.new_plot()
-            g.add_limit_tool(p, 'x')
-            g.add_limit_tool(p, 'y')
+            g.add_limit_tool(p, "x")
+            g.add_limit_tool(p, "y")
 
-            scatter, _ = g.new_series(x, y, plotid=i, type='scatter', marker='plus')
+            scatter, _ = g.new_series(x, y, plotid=i, type="scatter", marker="plus")
 
-            inspector = IsoResultInspector(scatter,
-                                           # use_pane=False,
-                                           results=rs,
-                                           # convert_index=convert_index,
-                                           # index_tag=index_tag,
-                                           # index_attr=index_attr,
-                                           # value_format=value_format,
-                                           # additional_info=additional_info
-                                           )
+            inspector = IsoResultInspector(
+                scatter,
+                # use_pane=False,
+                results=rs,
+                # convert_index=convert_index,
+                # index_tag=index_tag,
+                # index_attr=index_attr,
+                # value_format=value_format,
+                # additional_info=additional_info
+            )
 
-            inspector.on_trait_change(self._handle_inspection, 'inspector_event')
-            pinspector_overlay = PointInspectorOverlay(component=scatter,
-                                                       tool=inspector)
+            inspector.on_trait_change(self._handle_inspection, "inspector_event")
+            pinspector_overlay = PointInspectorOverlay(
+                component=scatter, tool=inspector
+            )
             scatter.overlays.append(pinspector_overlay)
             scatter.tools.append(inspector)
 
             overlay = ScatterInspectorOverlay(scatter)
             scatter.overlays.append(overlay)
-
-
 
             # g.new_series(xx, yy, plotid=i)
             g.set_x_title(self.xarg, plotid=i)
@@ -210,10 +238,10 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
     def _handle_inspection(self, obj, name, old, event):
         results = obj.results
         result = results[event.event_index]
-        rid = '{}-{}'.format(result.record_id, result.isotope)
+        rid = "{}-{}".format(result.record_id, result.isotope)
 
         g = self.iso_evo_graph
-        if event.event_type == 'select':
+        if event.event_type == "select":
             if rid not in self._selected_set:
                 # an = result.analysis
                 # iso = an.get_isotope(result.isotope)
@@ -221,20 +249,22 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
                 iso = result.isotope_obj
                 x = iso.offset_xs
                 y = iso.ys
-                scatter, _ = g.new_series(x, y, type='scatter', marker_size=1.5)
+                scatter, _ = g.new_series(x, y, type="scatter", marker_size=1.5)
                 g.set_series_label(rid)
 
                 fx = linspace(0, x.max() * 1.2)
                 fy = iso.regressor.predict(fx)
                 g.new_series(fx, fy, color=scatter.color)
-                g.set_series_label('{}-fit'.format(rid))
+                g.set_series_label("{}-fit".format(rid))
                 self._selected_set.add(rid)
             else:
                 self.iso_evo_graph.set_series_visibility(True, series=rid)
-                self.iso_evo_graph.set_series_visibility(True, series='{}-fit'.format(rid))
-        elif event.event_type == 'deselect':
+                self.iso_evo_graph.set_series_visibility(
+                    True, series="{}-fit".format(rid)
+                )
+        elif event.event_type == "deselect":
             self.iso_evo_graph.set_series_visibility(False, series=rid)
-            self.iso_evo_graph.set_series_visibility(False, series='{}-fit'.format(rid))
+            self.iso_evo_graph.set_series_visibility(False, series="{}-fit".format(rid))
 
         ymin = 1e20
         ymax = -1
@@ -251,8 +281,8 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
                     xmin = min(xmin, a)
                     xmax = max(xmax, b)
 
-        g.set_y_limits(ymin, ymax, pad='0.1')
-        g.set_x_limits(0, xmax, pad='0.1', pad_style='upper')
+        g.set_y_limits(ymin, ymax, pad="0.1")
+        g.set_x_limits(0, xmax, pad="0.1", pad_style="upper")
         g.redraw(force=True)
 
     def _view_selected_button_fired(self):
@@ -270,20 +300,21 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
         pom = RegressionSeriesOptionsManager()
         names = list({k for a in ans for k in a.isotope_keys})
         pom.set_names(names)
-        pom.selected = 'multiregression'
+        pom.selected = "multiregression"
 
-        info = OptionsController(model=pom).edit_traits(view=view('Regression Options'),
-                                                        kind='livemodal')
+        info = OptionsController(model=pom).edit_traits(
+            view=view("Regression Options"), kind="livemodal"
+        )
         if info.result:
             m = RegressionSeriesModel(analyses=ans, plot_options=pom.selected_options)
             c.model = m
-            v = View(UItem('component',
-                           style='custom',
-                           editor=ComponentEditor()),
-                     title='Regression Results',
-                     width=0.90,
-                     height=0.75,
-                     resizable=True)
+            v = View(
+                UItem("component", style="custom", editor=ComponentEditor()),
+                title="Regression Results",
+                width=0.90,
+                height=0.75,
+                resizable=True,
+            )
 
             c.edit_traits(view=v)
 
@@ -299,23 +330,41 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
             result.analysis.show_isotope_evolutions((result.isotope,))
 
     def traits_view(self):
-        filter_grp = HGroup(Item('display_only_bad', label='Show Flagged Only'),
-                            UItem('view_bad_button'),
-                            UItem('view_selected_button'))
-        ggrp = VGroup(VSplit(VGroup(HGroup(Item('xarg', editor=EnumEditor(name='xargs')),
-                                           Item('yarg', editor=EnumEditor(name='yargs'))),
-                                    UItem('graph', style='custom')),
-                             UItem('iso_evo_graph', style='custom')),
-                      label='Graph')
-        tgrp = VGroup(filter_grp,
-                      UItem('results', editor=TabularEditor(adapter=self.adapter,
-                                                            editable=False,
-                                                            multi_select=True,
-                                                            selected='selected',
-                                                            column_clicked='column_clicked',
-                                                            dclicked='dclicked')),
-                      label='Table')
+        filter_grp = HGroup(
+            Item("display_only_bad", label="Show Flagged Only"),
+            UItem("view_bad_button"),
+            UItem("view_selected_button"),
+        )
+        ggrp = VGroup(
+            VSplit(
+                VGroup(
+                    HGroup(
+                        Item("xarg", editor=EnumEditor(name="xargs")),
+                        Item("yarg", editor=EnumEditor(name="yargs")),
+                    ),
+                    UItem("graph", style="custom"),
+                ),
+                UItem("iso_evo_graph", style="custom"),
+            ),
+            label="Graph",
+        )
+        tgrp = VGroup(
+            filter_grp,
+            UItem(
+                "results",
+                editor=TabularEditor(
+                    adapter=self.adapter,
+                    editable=False,
+                    multi_select=True,
+                    selected="selected",
+                    column_clicked="column_clicked",
+                    dclicked="dclicked",
+                ),
+            ),
+            label="Table",
+        )
         v = View(VGroup(Tabbed(ggrp, tgrp)))
         return v
+
 
 # ============= EOF =============================================

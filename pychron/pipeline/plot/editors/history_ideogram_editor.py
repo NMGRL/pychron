@@ -29,15 +29,24 @@ class EditorOptions(HasTraits):
     history_id = Int
 
     def traits_view(self):
-        v = View(UItem('opacities', editor=ListEditor(style='custom',
-                                                      editor=InstanceEditor(
-                                                          view=View(HGroup(UItem('name', style='readonly'),
-                                                                           UItem('value')))))))
+        v = View(
+            UItem(
+                "opacities",
+                editor=ListEditor(
+                    style="custom",
+                    editor=InstanceEditor(
+                        view=View(
+                            HGroup(UItem("name", style="readonly"), UItem("value"))
+                        )
+                    ),
+                ),
+            )
+        )
         return v
 
     def set_items(self, ans):
         hids = sorted(list({a.history_id for a in ans}))
-        self.opacities = [Opacity(name='H{}'.format(h), history_id=h) for h in hids]
+        self.opacities = [Opacity(name="H{}".format(h), history_id=h) for h in hids]
 
 
 class HistoryIdeogramEditor(IdeogramEditor):
@@ -48,9 +57,9 @@ class HistoryIdeogramEditor(IdeogramEditor):
         super(HistoryIdeogramEditor, self).set_items(*args, **kw)
         self.editor_options.set_items(self.analyses)
 
-    @on_trait_change('editor_options:opacities:value')
+    @on_trait_change("editor_options:opacities:value")
     def _handle_opacity(self, obj, name, old, new):
-        new /= 100.
+        new /= 100.0
         # print(obj, name, old, new)
         for panel in self.figure_model.panels:
             figure = panel.figures[0]
@@ -61,9 +70,14 @@ class HistoryIdeogramEditor(IdeogramEditor):
                             self.set_opacity(v, new)
 
     def set_opacity(self, v, op):
-        for attr in ('color', 'fill_color',
-                     'selection_color', 'selection_outline_color',
-                     'outline_color', 'edge_color'):
+        for attr in (
+            "color",
+            "fill_color",
+            "selection_color",
+            "selection_outline_color",
+            "outline_color",
+            "edge_color",
+        ):
             try:
                 cc = getattr(v, attr)
                 if not isinstance(cc, tuple):
@@ -79,5 +93,6 @@ class HistoryIdeogramEditor(IdeogramEditor):
     #                     self.get_component_view()),
     #              resizable=True)
     #     return v
+
 
 # ============= EOF =============================================

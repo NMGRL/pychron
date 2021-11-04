@@ -30,7 +30,7 @@ from .util import Base
 class med_ImageTable(Base, NameMixin):
     create_date = Column(DateTime, default=func.now())
     image = Column(BLOB)
-    extractions = relationship('meas_ExtractionTable', backref='image')
+    extractions = relationship("meas_ExtractionTable", backref="image")
 
 
 class med_SnapshotTable(Base, BaseMixin):
@@ -38,13 +38,14 @@ class med_SnapshotTable(Base, BaseMixin):
     remote_path = stringcolumn(200)
     create_date = Column(DateTime, default=func.now())
     image = Column(BLOB)
-    extraction_id = foreignkey('meas_ExtractionTable')
+    extraction_id = foreignkey("meas_ExtractionTable")
 
 
 class med_SampleImageTable(Base, NameMixin):
     create_date = Column(DateTime, default=func.now())
     image = Column(BLOB)
-    sample_id = foreignkey('gen_SampleTable')
+    sample_id = foreignkey("gen_SampleTable")
     note = Column(BLOB)
+
 
 # ============= EOF =============================================

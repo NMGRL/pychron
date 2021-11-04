@@ -24,42 +24,43 @@ from pychron.hardware.core.core_device import CoreDevice
 class SCPIDevice(CoreDevice):
     def initialize(self, *args, **kw):
         """
-            initialize instrument
+        initialize instrument
         """
-        self.tell('*RST')
+        self.tell("*RST")
         self.configure_instrument()
-        self.tell('*CLS')
+        self.tell("*CLS")
 
     def identify_instrument(self):
-        v = self.ask('*IDN?')
-        self.info('Instrument ID {}'.format(v))
+        v = self.ask("*IDN?")
+        self.info("Instrument ID {}".format(v))
 
     def configure_instrument(self):
         """
-            subclass should define this method
+        subclass should define this method
         """
         raise NotImplementedError
 
     def trigger(self):
         """
-            trigger a measurement. should be followed by a FETCH? (AgilentDMM.get_value)
+        trigger a measurement. should be followed by a FETCH? (AgilentDMM.get_value)
 
         """
-        self.debug('triggering measurement')
-        self.tell('INIT')
+        self.debug("triggering measurement")
+        self.tell("INIT")
 
     def get_measurement(self):
         """
-            return a value read from the device
+        return a value read from the device
         """
         if self.simulation:
-            self.debug('simulation')
+            self.debug("simulation")
             v = 0
         else:
-            v = self.ask('FETCH?')
+            v = self.ask("FETCH?")
 
         v = self._parse_response(v)
-        self.debug('get_measurment. value = {}'.format(v))
+        self.debug("get_measurment. value = {}".format(v))
         return v
+
 
 # ============= EOF =============================================

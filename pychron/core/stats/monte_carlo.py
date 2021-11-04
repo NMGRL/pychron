@@ -23,8 +23,8 @@ from scipy.stats import norm
 
 # ============= local library imports  ==========================
 
-class MonteCarloEstimator(object):
 
+class MonteCarloEstimator(object):
     def __init__(self, ntrials, regressor, seed=None):
         self.regressor = regressor
         self.ntrials = ntrials
@@ -65,7 +65,7 @@ class MonteCarloEstimator(object):
         pred = reg.fast_predict2
         yp = ys + yserr * ga
 
-        if hasattr(pexog, '__call__'):
+        if hasattr(pexog, "__call__"):
             for i in range(ntrials):
                 ps[i] = pred(yp[i], pexog(i))
         else:
@@ -105,10 +105,10 @@ class FluxEstimator(MonteCarloEstimator):
         return self._estimate(pts, get_pexog, yserr=0)
 
     def estimate(self, pts):
-
         reg = self.regressor
         pexog = reg.get_exog(pts)
 
         return self._estimate(pts, pexog)
+
 
 # ============= EOF =============================================

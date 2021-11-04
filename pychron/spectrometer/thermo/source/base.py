@@ -27,14 +27,14 @@ from pychron.spectrometer.base_source import BaseSource
 
 
 class ThermoSource(BaseSource):
-    trap_voltage = Property(depends_on='_trap_voltage')
+    trap_voltage = Property(depends_on="_trap_voltage")
     _trap_voltage = Float
-    trap_current = Property(depends_on='_trap_current')
+    trap_current = Property(depends_on="_trap_current")
     _trap_current = Float
 
-    z_symmetry = Property(depends_on='_z_symmetry')
-    y_symmetry = Property(depends_on='_y_symmetry')
-    extraction_lens = Property(Range(0, 100.0), depends_on='_extraction_lens')
+    z_symmetry = Property(depends_on="_z_symmetry")
+    y_symmetry = Property(depends_on="_y_symmetry")
+    extraction_lens = Property(Range(0, 100.0), depends_on="_extraction_lens")
     emission = Float
 
     _y_symmetry = Float  # Range(0.0, 100.)
@@ -48,30 +48,30 @@ class ThermoSource(BaseSource):
     _extraction_lens = Float  # Range(0.0, 100.)
 
     def set_hv(self, v):
-        return self._set_value('SetHV', v)
+        return self._set_value("SetHV", v)
 
     def read_emission(self):
-        return self._read_value('GetParameter Source Current Readback', 'emission')
+        return self._read_value("GetParameter Source Current Readback", "emission")
 
     def read_trap_current(self):
-        return self._read_value('GetParameter Trap Current Readback', '_trap_current')
+        return self._read_value("GetParameter Trap Current Readback", "_trap_current")
 
     def read_y_symmetry(self):
-        return self._read_value('GetParameter Y-Symmetry Set', '_y_symmetry')
+        return self._read_value("GetParameter Y-Symmetry Set", "_y_symmetry")
 
     def read_z_symmetry(self):
-        return self._read_value('GetParameter Z-Symmetry Set', '_z_symmetry')
+        return self._read_value("GetParameter Z-Symmetry Set", "_z_symmetry")
 
     def read_trap_voltage(self):
-        return self._read_value('GetParameter Trap Voltage Readback', '_trap_voltage')
+        return self._read_value("GetParameter Trap Voltage Readback", "_trap_voltage")
 
     def read_hv(self):
-        return self._read_value('GetHighVoltage', 'current_hv')
+        return self._read_value("GetHighVoltage", "current_hv")
 
     def _set_value(self, name, v):
-        r = self.ask('{} {}'.format(name, v))
+        r = self.ask("{} {}".format(name, v))
         if r is not None:
-            if r.lower().strip() == 'ok':
+            if r.lower().strip() == "ok":
                 return True
 
     def _read_value(self, name, value):
@@ -90,17 +90,29 @@ class ThermoSource(BaseSource):
         self.read_hv()
 
     def _get_default_group(self, label=None):
-        g = VGroup(Item('nominal_hv', format_str='%0.4f'),
-                   Item('current_hv', format_str='%0.4f', style='readonly'),
-                   Item('trap_current'),
-                   Item('trap_voltage'),
-                   Item('y_symmetry', editor=RangeEditor(low_name='y_symmetry_low',
-                                                         high_name='y_symmetry_high',
-                                                         mode='slider')),
-                   Item('z_symmetry', editor=RangeEditor(low_name='z_symmetry_low',
-                                                         high_name='z_symmetry_high',
-                                                         mode='slider')),
-                   Item('extraction_lens'))
+        g = VGroup(
+            Item("nominal_hv", format_str="%0.4f"),
+            Item("current_hv", format_str="%0.4f", style="readonly"),
+            Item("trap_current"),
+            Item("trap_voltage"),
+            Item(
+                "y_symmetry",
+                editor=RangeEditor(
+                    low_name="y_symmetry_low",
+                    high_name="y_symmetry_high",
+                    mode="slider",
+                ),
+            ),
+            Item(
+                "z_symmetry",
+                editor=RangeEditor(
+                    low_name="z_symmetry_low",
+                    high_name="z_symmetry_high",
+                    mode="slider",
+                ),
+            ),
+            Item("extraction_lens"),
+        )
         if label:
             g.label = label
         return g
@@ -128,23 +140,24 @@ class ThermoSource(BaseSource):
         return self._extraction_lens
 
     def _set_trap_voltage(self, v):
-        if self._set_value('SetParameter', 'Trap Voltage Set,{}'.format(v)):
+        if self._set_value("SetParameter", "Trap Voltage Set,{}".format(v)):
             self._trap_voltage = v
 
     def _set_trap_current(self, v):
-        if self._set_value('SetParameter', 'Trap Current Set,{}'.format(v)):
+        if self._set_value("SetParameter", "Trap Current Set,{}".format(v)):
             self._trap_current = v
 
     def _set_y_symmetry(self, v):
-        if self._set_value('SetYSymmetry', v):
+        if self._set_value("SetYSymmetry", v):
             self._y_symmetry = v
 
     def _set_z_symmetry(self, v):
-        if self._set_value('SetZSymmetry', v):
+        if self._set_value("SetZSymmetry", v):
             self._z_symmetry = v
 
     def _set_extraction_lens(self, v):
-        if self._set_value('SetExtractionLens', v):
+        if self._set_value("SetExtractionLens", v):
             self._extraction_lens = v
+
 
 # ============= EOF =============================================

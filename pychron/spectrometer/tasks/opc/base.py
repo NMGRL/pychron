@@ -20,12 +20,13 @@ from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometer
 
 
 class OPCSpectrometerPlugin(BaseSpectrometerPlugin):
-    id = 'pychron.spectrometer.argus'
+    id = "pychron.spectrometer.argus"
     spectrometer_manager_klass = QuaderaSpectrometerManager
-    manager_name = 'quadera_spectrometer_manager'
-    name = 'OPCSpectrometer'
+    manager_name = "quadera_spectrometer_manager"
+    name = "OPCSpectrometer"
 
     def start(self):
         super(OPCSpectrometerPlugin, self).start()
+
 
 # ============= EOF =============================================

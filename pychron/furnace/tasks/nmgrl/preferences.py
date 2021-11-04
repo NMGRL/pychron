@@ -21,17 +21,18 @@ from traitsui.api import View, FileEditor, VGroup, Item
 
 # ============= standard library imports ========================
 import os
+
 # ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class NMGRLFurnacePreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.nmgrlfurnace'
+    preferences_path = "pychron.nmgrlfurnace"
 
 
 class NMGRLFurnacePreferencesPane(PreferencesPane):
-    category = 'NMGRL Furnace'
+    category = "NMGRL Furnace"
     model_factory = NMGRLFurnacePreferences
 
     def traits_view(self):
@@ -40,7 +41,7 @@ class NMGRLFurnacePreferencesPane(PreferencesPane):
 
 
 class NMGRLFurnaceControlPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.nmgrlfurnace.control'
+    preferences_path = "pychron.nmgrlfurnace.control"
 
     canvas_path = Str
     canvas_config_path = Str
@@ -48,23 +49,31 @@ class NMGRLFurnaceControlPreferences(BasePreferencesHelper):
 
 
 class NMGRLFurnaceControlPreferencesPane(PreferencesPane):
-    category = 'NMGRL Furnace'
+    category = "NMGRL Furnace"
     model_factory = NMGRLFurnaceControlPreferences
 
     def traits_view(self):
-        p_grp = VGroup(Item('canvas_path',
-                            label='Canvas Path',
-                            editor=FileEditor(root_path=os.path.join(paths.canvas2D_dir, 'canvas.xml'))),
-                       Item('canvas_config_path',
-                            label='Config Path',
-                            editor=FileEditor()),
-                       Item('valves_path',
-                            label='Valves Path',
-                            editor=FileEditor(root_path=os.path.join(paths.extraction_line_dir,
-                                                                                    'valves.xml'))),
-                       show_border=True,
-                       label='Paths')
+        p_grp = VGroup(
+            Item(
+                "canvas_path",
+                label="Canvas Path",
+                editor=FileEditor(
+                    root_path=os.path.join(paths.canvas2D_dir, "canvas.xml")
+                ),
+            ),
+            Item("canvas_config_path", label="Config Path", editor=FileEditor()),
+            Item(
+                "valves_path",
+                label="Valves Path",
+                editor=FileEditor(
+                    root_path=os.path.join(paths.extraction_line_dir, "valves.xml")
+                ),
+            ),
+            show_border=True,
+            label="Paths",
+        )
         v = View(p_grp)
         return v
+
 
 # ============= EOF =============================================

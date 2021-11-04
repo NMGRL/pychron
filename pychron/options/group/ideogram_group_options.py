@@ -15,6 +15,7 @@
 # ===============================================================================
 
 from enable.markers import MarkerNameDict, marker_names
+
 # ============= enthought library imports =======================
 from traits.api import Range, Trait
 from traitsui.api import View, UItem, Item, HGroup, EnumEditor
@@ -46,15 +47,14 @@ from pychron.pychron_constants import NULL_STR
 
 m = [NULL_STR] + list(marker_names)
 md = MarkerNameDict.copy()
-md[NULL_STR] = ''
+md[NULL_STR] = ""
 
 # A mapped trait that allows string naming of marker classes.
-MarkerTrait = Trait("circle", md,
-                    editor=EnumEditor(values=m))
+MarkerTrait = Trait("circle", md, editor=EnumEditor(values=m))
 
 
 class IdeogramGroupOptions(BaseGroupOptions):
-    marker_size = Range(0.0, 10.0, 1.0, mode='spinner')
+    marker_size = Range(0.0, 10.0, 1.0, mode="spinner")
     marker = MarkerTrait
 
     def marker_non_default(self):
@@ -64,26 +64,30 @@ class IdeogramGroupOptions(BaseGroupOptions):
         return self.marker_size != 1
 
     def traits_view(self):
-        fill_grp = BorderVGroup(HGroup(UItem('use_fill'),
-                                       UItem('color')),
-                                Item('alpha', label='Opacity'),
-                                label='Fill')
+        fill_grp = BorderVGroup(
+            HGroup(UItem("use_fill"), UItem("color")),
+            Item("alpha", label="Opacity"),
+            label="Fill",
+        )
 
-        line_grp = BorderVGroup(UItem('line_color'),
-                                Item('line_width',
-                                     label='Width'),
-                                label='Line')
+        line_grp = BorderVGroup(
+            UItem("line_color"), Item("line_width", label="Width"), label="Line"
+        )
 
-        mgrp = BorderHGroup(UItem('marker'),
-                            UItem('marker_size'),
-                            label='Marker')
+        mgrp = BorderHGroup(UItem("marker"), UItem("marker_size"), label="Marker")
 
-        g = BorderVGroup(Item('bind_colors', label='Bind Colors',
-                              tooltip='Bind the Fill and Line colors, i.e changing the Fill color changes'
-                                      'the line color and vice versa'),
-                         HGroup(fill_grp, line_grp, mgrp),
-                         label='Group {}'.format(self.group_id + 1))
+        g = BorderVGroup(
+            Item(
+                "bind_colors",
+                label="Bind Colors",
+                tooltip="Bind the Fill and Line colors, i.e changing the Fill color changes"
+                "the line color and vice versa",
+            ),
+            HGroup(fill_grp, line_grp, mgrp),
+            label="Group {}".format(self.group_id + 1),
+        )
         v = View(g)
         return v
+
 
 # ============= EOF =============================================

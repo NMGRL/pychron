@@ -18,6 +18,7 @@
 
 from __future__ import absolute_import
 import time
+
 # ========== local library imports =============
 from pychron.hardware.actuators import get_switch_address, get_valve_name
 from pychron.hardware.actuators.gp_actuator import GPActuator
@@ -60,24 +61,24 @@ class ArduinoGPActuator(GPActuator):
 
     def _build_command(self, cmd, pin, state):
         #        delimiter = ','
-        eol = '\r\n'
+        eol = "\r\n"
         if state is None:
-            r = '{} {}{}'.format(cmd, pin, eol)
+            r = "{} {}{}".format(cmd, pin, eol)
         else:
-            r = '{} {} {}{}'.format(cmd, pin, state, eol)
+            r = "{} {} {}{}".format(cmd, pin, state, eol)
         return r
 
     def open_channel(self, obj):
         pin = PIN_MAPPING[int(get_switch_address(obj))]
 
-        cmd = ('w', pin, 1)
-        self.repeat_command(cmd, ntries=3, check_val='OK')
+        cmd = ("w", pin, 1)
+        self.repeat_command(cmd, ntries=3, check_val="OK")
         return self._check_actuation(obj, True)
 
     def close_channel(self, obj):
         pin = PIN_MAPPING[int(get_switch_address(obj))]
-        cmd = ('w', pin, 0)
-        self.repeat_command(cmd, ntries=3, check_val='OK')
+        cmd = ("w", pin, 0)
+        self.repeat_command(cmd, ntries=3, check_val="OK")
         return self._check_actuation(obj, False)
 
     def get_channel_state(self, obj, verbose=True, **kw):
@@ -86,16 +87,24 @@ class ArduinoGPActuator(GPActuator):
         indicator_open_pin = pin - 1
         indicator_close_pin = pin - 2
 
-        opened = self.repeat_command(('r', indicator_open_pin, None),
-                                     ntries=3, check_type=int, verbose=verbose)
+        opened = self.repeat_command(
+            ("r", indicator_open_pin, None), ntries=3, check_type=int, verbose=verbose
+        )
 
-        closed = self.repeat_command(('r', indicator_close_pin, None),
-                                     ntries=3, check_type=int, verbose=verbose)
+        closed = self.repeat_command(
+            ("r", indicator_close_pin, None), ntries=3, check_type=int, verbose=verbose
+        )
 
-        err_msg = '{} not functioning properly\n' \
-                  'Ic (pin={} state={}) does not agree with Io (pin={} state={})'.format(get_valve_name(obj),
-                                                                                         indicator_close_pin, closed,
-                                                                                         indicator_open_pin, opened)
+        err_msg = (
+            "{} not functioning properly\n"
+            "Ic (pin={} state={}) does not agree with Io (pin={} state={})".format(
+                get_valve_name(obj),
+                indicator_close_pin,
+                closed,
+                indicator_open_pin,
+                opened,
+            )
+        )
         try:
             s = closed + opened
         except (TypeError, ValueError, AttributeError):
@@ -113,7 +122,7 @@ class ArduinoGPActuator(GPActuator):
         if obj.check_actuation_delay:
             time.sleep(obj.check_actuation_delay)
 
-        cmd = 'r'
+        cmd = "r"
         pin = PIN_MAPPING[int(obj.address)]
         if request:
             # open pin
@@ -126,8 +135,7 @@ class ArduinoGPActuator(GPActuator):
         i = 0
         while state is None and i < ntries:
             time.sleep(0.25)
-            state = self.repeat_command((cmd, pin, None), ntries=3,
-                                        check_type=int)
+            state = self.repeat_command((cmd, pin, None), ntries=3, check_type=int)
             i += 1
             if bool(state):
                 break
@@ -136,6 +144,7 @@ class ArduinoGPActuator(GPActuator):
 
         if state is not None:
             return bool(state)
+
 
 # ============= EOF ====================================
 

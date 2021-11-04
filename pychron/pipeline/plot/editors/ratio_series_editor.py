@@ -24,6 +24,7 @@ from pychron.pipeline.plot.models.ratio_series_model import RatioSeriesModel
 
 class RatioSeriesEditor(FigureEditor):
     figure_model_klass = RatioSeriesModel
-    basename = 'RatioSeries'
+    basename = "RatioSeries"
+
 
 # ============= EOF =============================================

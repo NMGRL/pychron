@@ -22,8 +22,10 @@ from traits.api import Instance
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.dashboard.client import DashboardClient
-from pychron.dashboard.tasks.client.preferences import DashboardClientPreferencesPane, \
-    ExperimentDashboardClientPreferencesPane
+from pychron.dashboard.tasks.client.preferences import (
+    DashboardClientPreferencesPane,
+    ExperimentDashboardClientPreferencesPane,
+)
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
 
@@ -41,14 +43,15 @@ class DashboardClientPlugin(BaseTaskPlugin):
     #     return f
 
     def _service_offers_default(self):
-        so = self.service_offer_factory(protocol=DashboardClient,
-                                        factory=self._client_factory)
+        so = self.service_offer_factory(
+            protocol=DashboardClient, factory=self._client_factory
+        )
         return [so]
 
     def _client_factory(self):
         client = DashboardClient()
-        bind_preference(client, 'host', 'pychron.dashboard.client.host')
-        bind_preference(client, 'port', 'pychron.dashboard.client.port')
+        bind_preference(client, "host", "pychron.dashboard.client.host")
+        bind_preference(client, "port", "pychron.dashboard.client.port")
 
         client.connect()
         client.load_configuration()
@@ -68,8 +71,9 @@ class DashboardClientPlugin(BaseTaskPlugin):
 
     def _preferences_panes_default(self):
         ps = [DashboardClientPreferencesPane]
-        if self.application.get_plugin('pychron.experiment.plugin'):
+        if self.application.get_plugin("pychron.experiment.plugin"):
             ps.append(ExperimentDashboardClientPreferencesPane)
         return ps
+
 
 # ============= EOF =============================================

@@ -35,7 +35,7 @@ class GuideOverlayMoveTool(DragTool):
     def is_draggable(self, x, y):
         ov = self.overlay
 
-        if ov.orientation == 'v':
+        if ov.orientation == "v":
             mapper = ov.component.index_mapper
             cv = x
         else:
@@ -47,7 +47,7 @@ class GuideOverlayMoveTool(DragTool):
 
     def dragging(self, event):
         ov = self.overlay
-        if ov.orientation == 'v':
+        if ov.orientation == "v":
             v = event.x
             mapper = ov.component.index_mapper
         else:
@@ -71,16 +71,17 @@ class GuideOverlay(AbstractOverlay):
     """
     draws a horizontal or vertical line at the specified value
     """
-    orientation = Enum('h', 'v')
+
+    orientation = Enum("h", "v")
     value = Float
     color = ColorTrait("red")
-    line_style = LineStyle('dash')
+    line_style = LineStyle("dash")
     line_width = Float(1)
     display_value = False
 
     label = Instance(Label, ())
 
-    def overlay(self, component, gc, view_bounds=None, mode='normal'):
+    def overlay(self, component, gc, view_bounds=None, mode="normal"):
         with gc:
             gc.clip_to_rect(component.x, component.y, component.width, component.height)
             with gc:
@@ -89,7 +90,7 @@ class GuideOverlay(AbstractOverlay):
                 gc.set_stroke_color(self.color_)
                 gc.begin_path()
 
-                if self.orientation == 'h':
+                if self.orientation == "h":
                     x1 = component.x
                     x2 = component.x2
                     y1 = y2 = component.value_mapper.map_screen(self.value)
@@ -105,8 +106,9 @@ class GuideOverlay(AbstractOverlay):
             if self.display_value:
                 with gc:
                     l = self.label
-                    l.text = '{:0.5f}'.format(self.value)
+                    l.text = "{:0.5f}".format(self.value)
                     l.position = self.label_position
                     l.draw(gc)
+
 
 # ============= EOF =====================================

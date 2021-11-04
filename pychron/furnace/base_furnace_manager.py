@@ -43,34 +43,35 @@ class BaseFurnaceManager(StreamGraphManager):
     def _controller_default(self):
         if self.controller_klass is None:
             raise NotImplementedError
-        c = self.controller_klass(name='controller',
-                                  configuration_dir_name='furnace')
+        c = self.controller_klass(name="controller", configuration_dir_name="furnace")
         return c
 
     def _switch_manager_default(self):
-        sm = SwitchManager(configuration_dir_name='furnace')
+        sm = SwitchManager(configuration_dir_name="furnace")
 
-        sm.valves_path = os.path.join(paths.extraction_line_dir, 'furnace_valves.xml')
-        sm.on_trait_change(self._handle_state, 'refresh_state')
+        sm.valves_path = os.path.join(paths.extraction_line_dir, "furnace_valves.xml")
+        sm.on_trait_change(self._handle_state, "refresh_state")
         return sm
 
     def _response_recorder_default(self):
-        r = ResponseRecorder(response_device=self.controller,
-                             output_device=self.controller)
+        r = ResponseRecorder(
+            response_device=self.controller, output_device=self.controller
+        )
         return r
 
     def _handle_state(self, new):
         pass
 
     def test_furnace_api(self):
-        self.info('testing furnace api')
-        ret, err = False, ''
+        self.info("testing furnace api")
+        ret, err = False, ""
         if self.controller:
             ret, err = self.controller.test_connection()
         return ret, err
 
     def test_connection(self):
-        self.info('testing connection')
+        self.info("testing connection")
         return self.test_furnace_api()
+
 
 # ============= EOF =============================================

@@ -27,7 +27,7 @@ from pychron.pipeline.plot.editors.base_editor import BaseEditor
 class BaseTableEditor(BaseEditor):
     selected = Any
     refresh_needed = Event
-    basename = 'table'
+    basename = "table"
 
     # def save_file(self, p, title=''):
     #     if p.endswith('.xls'):
@@ -51,5 +51,6 @@ class BaseTableEditor(BaseEditor):
     #                 path = add_extension(dlg.path, ext)
     #
     #     return path
+
 
 # ============= EOF =============================================

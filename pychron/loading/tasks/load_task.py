@@ -22,7 +22,11 @@ from traits.api import Any
 
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.globals import globalv
-from pychron.loading.tasks.actions import SaveLoadingPDFAction, ConfigurePDFAction, SaveLoadingDBAction
+from pychron.loading.tasks.actions import (
+    SaveLoadingPDFAction,
+    ConfigurePDFAction,
+    SaveLoadingDBAction,
+)
 from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane
 
 
@@ -31,23 +35,28 @@ from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane
 
 
 class LoadingTask(BaseManagerTask):
-    name = 'Loading'
+    name = "Loading"
     load_pane = Any
 
-    tool_bars = [SToolBar(SaveLoadingPDFAction(),
-                          ConfigurePDFAction()),
-                 SToolBar(SaveLoadingDBAction())]
+    tool_bars = [
+        SToolBar(SaveLoadingPDFAction(), ConfigurePDFAction()),
+        SToolBar(SaveLoadingDBAction()),
+    ]
 
     def activated(self):
         if self.manager.verify_database_connection(inform=True):
             if self.manager.load():
                 self.manager.username = globalv.username
                 if self.manager.setup():
-                    bind_preference(self.manager, 'save_directory', 'pychron.loading.save_directory')
+                    bind_preference(
+                        self.manager, "save_directory", "pychron.loading.save_directory"
+                    )
 
     def _default_layout_default(self):
-        return TaskLayout(left=PaneItem('pychron.loading.controls'),
-                          right=PaneItem('pychron.loading.positions'))
+        return TaskLayout(
+            left=PaneItem("pychron.loading.controls"),
+            right=PaneItem("pychron.loading.positions"),
+        )
 
     def prepare_destroy(self):
         self.manager.dvc.close_session()
@@ -92,11 +101,12 @@ class LoadingTask(BaseManagerTask):
 
     def _prompt_for_save(self):
         if self.manager.dirty:
-            message = 'You have unsaved changes. Save changes to Database?'
+            message = "You have unsaved changes. Save changes to Database?"
             ret = self._handle_prompt_for_save(message)
-            if ret == 'save':
+            if ret == "save":
                 return self.manager.save()
             return ret
         return True
+
 
 # ============= EOF =============================================

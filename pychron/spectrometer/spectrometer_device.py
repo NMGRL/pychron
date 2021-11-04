@@ -43,13 +43,14 @@ class SpectrometerDevice(ConfigLoadable):
 
     def ask(self, cmd, *args, **kw):
         if self.microcontroller:
+
             def func():
                 r = self.microcontroller.ask(cmd, *args, **kw)
-                if hasattr(self, 'handle_response'):
+                if hasattr(self, "handle_response"):
                     r = self.handle_response(cmd, r)
                 return r
 
-            if hasattr(self.microcontroller, 'lock'):
+            if hasattr(self.microcontroller, "lock"):
                 with self.microcontroller.lock:
                     resp = func()
             else:
@@ -64,6 +65,9 @@ class SpectrometerDevice(ConfigLoadable):
     def tell(self, *args, **kw):
         if self.microcontroller:
             self.microcontroller.tell(*args, **kw)
+
     # def handle_response(self, cmd, resp):
     #     return resp
+
+
 # ============= EOF =============================================

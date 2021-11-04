@@ -8,8 +8,7 @@ class OffsetPlotLabel(PlotLabel):
     y_offset = Int
 
     def _layout_as_overlay(self, size=None, force=False):
-        """ Lays out the label as an overlay on another component.
-        """
+        """Lays out the label as an overlay on another component."""
         super(OffsetPlotLabel, self)._layout_as_overlay()
         self.x += self.x_offset
         self.y += self.y_offset

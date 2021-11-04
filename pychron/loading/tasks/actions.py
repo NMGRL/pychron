@@ -24,47 +24,49 @@ from pychron.envisage.resources import icon
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class SaveLoadingDBAction(TaskAction):
-    name = 'Save DB'
-    method = 'save_loading_db'
-    image = icon('database_save')
+    name = "Save DB"
+    method = "save_loading_db"
+    image = icon("database_save")
 
 
 class SaveLoadingPDFAction(TaskAction):
-    name = 'Save PDF'
-    method = 'save_loading_pdf'
-    image = icon('file_pdf')
+    name = "Save PDF"
+    method = "save_loading_pdf"
+    image = icon("file_pdf")
 
 
 class SaveTrayPDFAction(TaskAction):
-    name = 'Save Tray PDF'
-    method = 'save_tray_pdf'
-    image = icon('file_pdf')
+    name = "Save Tray PDF"
+    method = "save_tray_pdf"
+    image = icon("file_pdf")
 
 
 class ConfigurePDFAction(TaskAction):
-    name = 'Configure PDF'
-    method = 'configure_pdf'
-    image = icon('cog')
+    name = "Configure PDF"
+    method = "configure_pdf"
+    image = icon("cog")
 
 
 class EntryAction(TaskAction):
-    name = 'Entry'
-    method = 'set_entry'
+    name = "Entry"
+    method = "set_entry"
 
 
 class InfoAction(TaskAction):
-    name = 'Info'
-    method = 'set_info'
+    name = "Info"
+    method = "set_info"
 
 
 class EditAction(TaskAction):
-    name = 'Edit'
-    method = 'set_edit'
+    name = "Edit"
+    method = "set_edit"
 
 
 class GenerateResultsAction(TaskAction):
-    name = 'Generate Results'
-    method = 'generate_results'
+    name = "Generate Results"
+    method = "generate_results"
+
 
 # ============= EOF =============================================

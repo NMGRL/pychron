@@ -21,8 +21,10 @@ from pychron.hardware.gauges.base_controller import BaseGauge, BaseGaugeControll
 
 class BaseVarianGaugeController(BaseGaugeController, CoreDevice):
     def load_additional_args(self, config, *args, **kw):
-        self.address = self.config_get(config, 'General', 'address', optional=False)
-        self.display_name = self.config_get(config, 'General', 'display_name', default=self.name)
+        self.address = self.config_get(config, "General", "address", optional=False)
+        self.display_name = self.config_get(
+            config, "General", "display_name", default=self.name
+        )
         # self.mode = self.config_get(config, 'Communications', 'mode', default='rs485')
         self._load_gauges(config)
         return True
@@ -36,12 +38,14 @@ class XGS600GaugeController(BaseVarianGaugeController):
         else:
             name = name.channel
 
-        pressure = 'err'
+        pressure = "err"
         if name is not None:
-            cmd = '#{}02U{}'.format(self.address, name)
+            cmd = "#{}02U{}".format(self.address, name)
             pressure = self.ask(cmd, verbose=True)
-            if pressure and pressure.startswith('>'):
+            if pressure and pressure.startswith(">"):
                 pressure = pressure[1:]
 
-        return pressure or 'err'
+        return pressure or "err"
+
+
 # ============= EOF =============================================

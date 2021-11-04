@@ -18,11 +18,15 @@ from traitsui.api import Item, Tabbed
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import BorderVGroup
-from pychron.core.ui.table_configurer import TableConfigurer, TableConfigurerHandler, get_columns_group
+from pychron.core.ui.table_configurer import (
+    TableConfigurer,
+    TableConfigurerHandler,
+    get_columns_group,
+)
 
 
 class AnalysisTableConfigurer(TableConfigurer):
-    id = 'analysis.table'
+    id = "analysis.table"
     limit = Int
     omit_invalid = Bool(True)
 
@@ -33,28 +37,32 @@ class AnalysisTableConfigurer(TableConfigurer):
 
     def _get_dump(self):
         obj = super(AnalysisTableConfigurer, self)._get_dump()
-        obj['limit'] = self.limit
-        obj['omit_invalid'] = self.omit_invalid
+        obj["limit"] = self.limit
+        obj["omit_invalid"] = self.omit_invalid
 
         return obj
 
     def _load_hook(self, obj):
-        self.limit = obj.get('limit', 500)
-        self.omit_invalid = obj.get('omit_invalid', True)
+        self.limit = obj.get("limit", 500)
+        self.omit_invalid = obj.get("omit_invalid", True)
 
     def traits_view(self):
         widths_grp = self._get_column_width_group()
-        v = okcancel_view(BorderVGroup(Tabbed(get_columns_group(),
-                                              widths_grp),
-                                       Item('omit_invalid', label='Hide Invalid Analyses'),
-                                       Item('limit',
-                                            tooltip='Limit number of displayed analyses',
-                                            label='Limit'),
-                                       label='Limiting'),
-                          buttons=['OK', 'Cancel', 'Revert'],
-                          title=self.title,
-                          handler=TableConfigurerHandler,
-                          width=300)
+        v = okcancel_view(
+            BorderVGroup(
+                Tabbed(get_columns_group(), widths_grp),
+                Item("omit_invalid", label="Hide Invalid Analyses"),
+                Item(
+                    "limit", tooltip="Limit number of displayed analyses", label="Limit"
+                ),
+                label="Limiting",
+            ),
+            buttons=["OK", "Cancel", "Revert"],
+            title=self.title,
+            handler=TableConfigurerHandler,
+            width=300,
+        )
         return v
+
 
 # ============= EOF =============================================

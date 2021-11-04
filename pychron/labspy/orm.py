@@ -16,9 +16,19 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, func, Boolean
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    DateTime,
+    ForeignKey,
+    Float,
+    func,
+    Boolean,
+)
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -29,6 +39,7 @@ stringcolumn = lambda w=80, **kw: Column(String(w), **kw)
 
 class BaseMixin(object):
     id = Column(Integer, primary_key=True)
+
     @declared_attr
     def __tablename__(self):
         return self.__name__
@@ -39,25 +50,25 @@ class StatusMixin(object):
 
     @declared_attr
     def __tablename__(self):
-        return 'status_{}'.format(self.__name__.lower())
+        return "status_{}".format(self.__name__.lower())
 
 
 class Device(Base, StatusMixin):
     name = stringcolumn()
-    processes = relationship('ProcessInfo', backref='device')
+    processes = relationship("ProcessInfo", backref="device")
 
 
 class ProcessInfo(Base, StatusMixin):
     name = stringcolumn()
     units = stringcolumn()
-    device_id = Column(Integer, ForeignKey('status_device.id'))
-    measurements = relationship('Measurement', backref='process')
+    device_id = Column(Integer, ForeignKey("status_device.id"))
+    measurements = relationship("Measurement", backref="process")
     graph_title = stringcolumn()
 
 
 class Measurement(Base, StatusMixin):
     value = Column(Float(32))
-    process_info_id = Column(Integer, ForeignKey('status_processinfo.id'))
+    process_info_id = Column(Integer, ForeignKey("status_processinfo.id"))
     pub_date = Column(DateTime, default=func.now())
 
 
@@ -72,7 +83,7 @@ class Connections(Base, StatusMixin):
 
 
 class Version(Base):
-    __tablename__ = 'django_migrations'
+    __tablename__ = "django_migrations"
 
     id = Column(Integer, primary_key=True)
     app = stringcolumn()
@@ -81,7 +92,7 @@ class Version(Base):
 
 # Experiment klasses
 class Analysis(Base, StatusMixin):
-    experiment_id = Column(Integer, ForeignKey('status_experiment.id'))
+    experiment_id = Column(Integer, ForeignKey("status_experiment.id"))
     identifier = stringcolumn()
     increment = Column(Integer)
     aliquot = Column(Integer)
@@ -104,7 +115,8 @@ class Experiment(Base, StatusMixin):
     # User = stringcolumn()
 
     hashid = stringcolumn()
-    analyses = relationship('Analysis', backref='experiment')
+    analyses = relationship("Analysis", backref="experiment")
+
 
 #
 #

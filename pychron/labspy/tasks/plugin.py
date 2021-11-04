@@ -21,47 +21,57 @@ from traits.api import on_trait_change, List
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.experiment.events import ExperimentEventAddition, END_RUN, START_QUEUE
 from pychron.labspy.client import LabspyClient
-from pychron.labspy.tasks.preferences import LabspyPreferencesPane, LabspyExperimentPreferencesPane
+from pychron.labspy.tasks.preferences import (
+    LabspyPreferencesPane,
+    LabspyExperimentPreferencesPane,
+)
 
 
 class LabspyClientPlugin(BaseTaskPlugin):
-    name = 'LabspyClient'
-    id = 'pychron.labspy_client.plugin'
+    name = "LabspyClient"
+    id = "pychron.labspy_client.plugin"
 
-    events = List(contributes_to='pychron.experiment.events')
+    events = List(contributes_to="pychron.experiment.events")
 
     def _events_default(self):
-        e1 = ExperimentEventAddition(id='pychron.labspy.add_run',
-                                     action=self._add_run,
-                                     level=END_RUN)
-        e2 = ExperimentEventAddition(id='pychron.labspy.add_experiment',
-                                     level=START_QUEUE,
-                                     action=self._add_experiment)
+        e1 = ExperimentEventAddition(
+            id="pychron.labspy.add_run", action=self._add_run, level=END_RUN
+        )
+        e2 = ExperimentEventAddition(
+            id="pychron.labspy.add_experiment",
+            level=START_QUEUE,
+            action=self._add_experiment,
+        )
         return [e1, e2]
 
     def _add_run(self, ctx):
-        enabled = self.application.get_boolean_preference('pychron.labspy.experiment.enabled')
-        self.debug('add run enabled={}'.format(enabled))
+        enabled = self.application.get_boolean_preference(
+            "pychron.labspy.experiment.enabled"
+        )
+        self.debug("add run enabled={}".format(enabled))
         if enabled:
-            run = ctx['run']
-            if run.spec.state in ('success', 'truncated'):
-                self.info('adding run to labspy')
+            run = ctx["run"]
+            if run.spec.state in ("success", "truncated"):
+                self.info("adding run to labspy")
                 client = self.application.get_service(LabspyClient)
-                client.add_run(ctx['run'], ctx['experiment'])
+                client.add_run(ctx["run"], ctx["experiment"])
 
     def _add_experiment(self, ctx):
-        enabled = self.application.get_boolean_preference('pychron.labspy.experiment.enabled')
-        self.debug('add experiment enabled={}'.format(enabled))
+        enabled = self.application.get_boolean_preference(
+            "pychron.labspy.experiment.enabled"
+        )
+        self.debug("add experiment enabled={}".format(enabled))
         if enabled:
             client = self.application.get_service(LabspyClient)
-            client.add_experiment(ctx['experiment'])
+            client.add_experiment(ctx["experiment"])
 
     def _labspy_client_factory(self, *args, **kw):
         return LabspyClient(application=self.application)
 
     def _service_offers_default(self):
-        so = self.service_offer_factory(protocol=LabspyClient,
-                                        factory=self._labspy_client_factory)
+        so = self.service_offer_factory(
+            protocol=LabspyClient, factory=self._labspy_client_factory
+        )
         return [so]
 
     def _preferences_panes_default(self):
@@ -71,11 +81,14 @@ class LabspyClientPlugin(BaseTaskPlugin):
         lc = self.application.get_service(LabspyClient)
         return lc.test_connection(warn=False)
 
-    @on_trait_change('application:started')
+    @on_trait_change("application:started")
     def _start(self):
-        plugin = self.application.get_plugin('pychron.dashboard.tasks.server.plugin.DashboardServerPlugin')
+        plugin = self.application.get_plugin(
+            "pychron.dashboard.tasks.server.plugin.DashboardServerPlugin"
+        )
         if not plugin:
             client = self.application.get_service(LabspyClient)
             client.start()
+
 
 # ============= EOF =============================================

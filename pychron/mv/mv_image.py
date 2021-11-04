@@ -26,6 +26,7 @@ from traitsui.api import View, UItem
 
 # ============= standard library imports ========================
 from numpy import ones, asarray
+
 # ============= local library imports  ==========================
 from pychron.image.cv_wrapper import grayspace
 from pychron.viewable import Viewable
@@ -42,7 +43,7 @@ class MVImage(Viewable):
         for i in range(n):
             plot = Plot(plotdata, padding=0, default_origin="top left")
 
-            name = 'imagedata{:03d}'.format(i)
+            name = "imagedata{:03d}".format(i)
             plotdata.set_data(name, ones(wh))
 
             plot.img_plot(name, colormap=hot)
@@ -53,9 +54,9 @@ class MVImage(Viewable):
     def set_image(self, arr, idx=0):
         arr = asarray(grayspace(arr))
 
-        self.plotdata.set_data('imagedata{:03d}'.format(idx), arr)
+        self.plotdata.set_data("imagedata{:03d}".format(idx), arr)
         # invoke_in_main_thread(self.container.invalidate_and_redraw)
-#         self.container.invalidate_and_redraw()
+        #         self.container.invalidate_and_redraw()
         self.container.request_redraw()
 
     def _container_default(self):
@@ -63,8 +64,12 @@ class MVImage(Viewable):
         return hp
 
     def traits_view(self):
-        v = View(UItem('container', editor=ComponentEditor()),
-                 resizable=True,
-                 handler=self.handler_klass)
+        v = View(
+            UItem("container", editor=ComponentEditor()),
+            resizable=True,
+            handler=self.handler_klass,
+        )
         return v
+
+
 # ============= EOF =============================================

@@ -18,6 +18,7 @@ import os
 
 # ============= standard library imports ========================
 import yaml
+
 # ============= enthought library imports =======================
 from pyface.file_dialog import FileDialog
 from traits.api import HasTraits, List, Enum, Float, Int, Button, Any, Property, Str
@@ -33,14 +34,25 @@ from pychron.paths import paths
 
 
 class ActionItem(HasTraits):
-    attr = Enum('age', 'kca', 'radiogenic_yield', 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36', 'Ar41', '37/39')
-    comp = Enum('less than', 'greater than', 'between')
+    attr = Enum(
+        "age",
+        "kca",
+        "radiogenic_yield",
+        "Ar40",
+        "Ar39",
+        "Ar38",
+        "Ar37",
+        "Ar36",
+        "Ar41",
+        "37/39",
+    )
+    comp = Enum("less than", "greater than", "between")
     value = Float
     value1 = Float
     start = Int(10)
     frequency = Int(5)
 
-    label = Property(depends_on='attr,comp, value+, start, frequency')
+    label = Property(depends_on="attr,comp, value+, start, frequency")
 
     def __init__(self, saved_state=None, *args, **kw):
         super(ActionItem, self).__init__(*args, **kw)
@@ -50,31 +62,41 @@ class ActionItem(HasTraits):
             self.trait_set(**saved_state)
 
     def assemble(self):
-        return dict(attr=self.attr,
-                    check=self.label,
-                    value=self.value,
-                    value1=self.value,
-                    abbreviated_count_ratio=1.0,
-                    frequency=self.frequency,
-                    start=self.start)
+        return dict(
+            attr=self.attr,
+            check=self.label,
+            value=self.value,
+            value1=self.value,
+            abbreviated_count_ratio=1.0,
+            frequency=self.frequency,
+            start=self.start,
+        )
 
     def traits_view(self):
-        v = View(VGroup(HGroup(UItem('attr'), UItem('comp'), UItem('value'),
-                               UItem('value1', visible_when='comp=="between"')),
-                        HGroup(Item('start'), Item('frequency')),
-                        show_border=False))
+        v = View(
+            VGroup(
+                HGroup(
+                    UItem("attr"),
+                    UItem("comp"),
+                    UItem("value"),
+                    UItem("value1", visible_when='comp=="between"'),
+                ),
+                HGroup(Item("start"), Item("frequency")),
+                show_border=False,
+            )
+        )
         return v
 
     def _get_label(self):
-        if self.comp == 'less than':
-            c = '{}<{}'.format(self.attr, self.value)
-        elif self.comp == 'greater than':
-            c = '{}>{}'.format(self.attr, self.value)
+        if self.comp == "less than":
+            c = "{}<{}".format(self.attr, self.value)
+        elif self.comp == "greater than":
+            c = "{}>{}".format(self.attr, self.value)
         else:
             v = min(self.value, self.value1)
             v1 = max(self.value, self.value1)
 
-            c = '{}<{}<{}'.format(v, self.attr, v1)
+            c = "{}<{}<{}".format(v, self.attr, v1)
         return c
 
 
@@ -145,38 +167,43 @@ class ActionEditor(Controller):
 
     def _dump(self, p):
         d = self.model.dump_yaml()
-        with open(p, 'w') as wfile:
+        with open(p, "w") as wfile:
             yaml.dump(d, wfile, default_flow_style=False)
             self.model.path = p
 
     def _get_path(self):
         p = self.model.path
         if not p:
-            p = '/Users/ross/Sandbox/actions.yafml'
+            p = "/Users/ross/Sandbox/actions.yafml"
 
         if not os.path.isfile(p):
             p = None
-            dlg = FileDialog(action='save as', default_directory=paths.conditionals_dir)
+            dlg = FileDialog(action="save as", default_directory=paths.conditionals_dir)
             if dlg.open():
                 p = dlg.path.strip()
                 if p:
-                    p = add_extension(p, '.yaml')
+                    p = add_extension(p, ".yaml")
 
         return p
 
     def traits_view(self):
-        v = okcancel_view(HGroup(icon_button_editor('add_button', 'add'),
-                                 icon_button_editor('remove_button', 'delete')),
-                          UItem('actions',
-                                style='custom',
-                                editor=ListEditor(
-                                    use_notebook=True,
-                                    selected='selected',
-                                    page_name='.label')))
+        v = okcancel_view(
+            HGroup(
+                icon_button_editor("add_button", "add"),
+                icon_button_editor("remove_button", "delete"),
+            ),
+            UItem(
+                "actions",
+                style="custom",
+                editor=ListEditor(
+                    use_notebook=True, selected="selected", page_name=".label"
+                ),
+            ),
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     a = ActionEditor(model=ActionModel())
     a.configure_traits()
 

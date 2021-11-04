@@ -22,8 +22,8 @@
 # class HasCommunicator(ConfigLoadable):
 class HasCommunicator(object):
     communicator = None
-    id_query = ''
-    id_response = ''
+    id_query = ""
+    id_response = ""
 
     def load_communicator(self, comtype, **kw):
         communicator = self._communicator_factory(comtype)
@@ -39,18 +39,21 @@ class HasCommunicator(object):
 
     def _communicator_factory(self, communicator_type):
         if communicator_type is not None:
-            class_key = '{}Communicator'.format(communicator_type.capitalize())
-            module_path = 'pychron.hardware.core.communicators.{}_communicator'.format(communicator_type.lower())
+            class_key = "{}Communicator".format(communicator_type.capitalize())
+            module_path = "pychron.hardware.core.communicators.{}_communicator".format(
+                communicator_type.lower()
+            )
             classlist = [class_key]
 
             class_factory = __import__(module_path, fromlist=classlist)
-            return getattr(class_factory, class_key)(name='_'.join((self.name, communicator_type.lower())),
-                                                     id_query=self.id_query,
-                                                     id_response=self.id_response)
+            return getattr(class_factory, class_key)(
+                name="_".join((self.name, communicator_type.lower())),
+                id_query=self.id_query,
+                id_response=self.id_response,
+            )
 
     def open(self, **kw):
-        """
-        """
+        """ """
         if self.communicator is not None:
             ret = self.communicator.open(**kw)
             self.communicator.report()
@@ -67,8 +70,8 @@ class HasCommunicator(object):
             # give the _communicator the config object so it can load its args
             communicator.load(config, self.config_path)
 
-            if hasattr(self, 'id_query'):
-                communicator.id_query = getattr(self, 'id_query')
+            if hasattr(self, "id_query"):
+                communicator.id_query = getattr(self, "id_query")
             self.communicator = communicator
             return True
 
@@ -82,4 +85,6 @@ class HasCommunicator(object):
     def ask(self, *args, **kw):
         if self.communicator:
             return self.communicator.ask(*args, **kw)
+
+
 # ============= EOF =============================================

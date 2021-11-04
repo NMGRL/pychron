@@ -25,7 +25,7 @@ from pychron.social.google_calendar.client import GoogleCalendarClient
 
 
 class TwitterPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.twitter'
+    preferences_path = "pychron.twitter"
     consumer_key = Str
     consumer_secret = Str
     access_token_key = Str
@@ -33,34 +33,48 @@ class TwitterPreferences(BasePreferencesHelper):
 
     def __init__(self, *args, **kw):
         super(TwitterPreferences, self).__init__(*args, **kw)
+
     #
     # def _update_names(self):
     #     c = TwitterClient()
 
 
 class TwitterPreferencesPane(PreferencesPane):
-    category = 'Twitter'
+    category = "Twitter"
     model_factory = TwitterPreferences
 
     def traits_view(self):
-        v = View(VGroup(Item('consumer_key'),
-                        Item('consumer_secret'),
-                        Item('access_token_key'),
-                        Item('access_token_secret')))
+        v = View(
+            VGroup(
+                Item("consumer_key"),
+                Item("consumer_secret"),
+                Item("access_token_key"),
+                Item("access_token_secret"),
+            )
+        )
         return v
 
 
 class TwitterExperimentPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.twitter.experiment'
+    preferences_path = "pychron.twitter.experiment"
     enabled = Bool
 
 
 class TwitterExperimentPreferencesPane(PreferencesPane):
-    category = 'Experiment'
+    category = "Experiment"
     model_factory = TwitterExperimentPreferences
 
     def traits_view(self):
-        v = View(VGroup(Item('enabled', label='Enabled', tooltip='Post experiment events to Twitter')))
+        v = View(
+            VGroup(
+                Item(
+                    "enabled",
+                    label="Enabled",
+                    tooltip="Post experiment events to Twitter",
+                )
+            )
+        )
         return v
+
 
 # ============= EOF =============================================

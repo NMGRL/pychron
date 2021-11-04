@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from traits.api import Bool
 from traitsui.menu import Action
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.viewable import Viewable, ViewableHandler
@@ -39,8 +40,8 @@ class Saveable(Viewable):
     save_enabled = Bool(False)
 
 
-SaveButton = Action(name='Save', action='save', enabled_when='object.save_enabled')
-SaveAsButton = Action(name='Save As', action='save_as')
+SaveButton = Action(name="Save", action="save", enabled_when="object.save_enabled")
+SaveAsButton = Action(name="Save As", action="save_as")
 
 SaveableButtons = [SaveButton, SaveAsButton]
 # ============= EOF =============================================

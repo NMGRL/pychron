@@ -59,9 +59,9 @@ class GitArchive(GitRepoManager):
     #         message = '{} - {}'.format(message_prefix, message)
     #         index.commit(message)
 
-            # def get_history(self, p):
-            #     return repo.git.log('--pretty=%H', '--follow', '--', p).split('\n')
-            # return repo.git.log('--pretty=%H', '--follow', '--', p).split('\n')
+    # def get_history(self, p):
+    #     return repo.git.log('--pretty=%H', '--follow', '--', p).split('\n')
+    # return repo.git.log('--pretty=%H', '--follow', '--', p).split('\n')
 
     # def commits_iter(self, p, keys=None, limit='-'):
     #     repo = self._repo
@@ -105,4 +105,3 @@ class GitArchive(GitRepoManager):
 #         g.add(p)
 
 # ============= EOF =============================================
-

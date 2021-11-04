@@ -25,17 +25,19 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class ProjectAdapter(TabularAdapter):
-    columns = [('ProjectID', 'unique_id'),
-               ('Name', 'name'),
-               ('Lab Contact', 'lab_contact'),
-               ('PI', 'principal_investigator'),
-               ('Checkin', 'checkin_date'),
-               ('Comment', 'comment')]
+    columns = [
+        ("ProjectID", "unique_id"),
+        ("Name", "name"),
+        ("Lab Contact", "lab_contact"),
+        ("PI", "principal_investigator"),
+        ("Checkin", "checkin_date"),
+        ("Comment", "comment"),
+    ]
 
     checkin_date_text = Property
 
     def _get_checkin_date_text(self):
-        ret = ''
+        ret = ""
         if self.item.checkin_date:
             ret = self.item.checkin_date
         return str(ret)
@@ -43,25 +45,48 @@ class ProjectAdapter(TabularAdapter):
 
 class ProjectPane(TraitsTaskPane):
     def traits_view(self):
-        fgrp = HGroup(UItem('filter_attr', editor=EnumEditor(name='filter_attrs')), UItem('filter_str'),
-                      show_border=True,
-                      label='Filter')
+        fgrp = HGroup(
+            UItem("filter_attr", editor=EnumEditor(name="filter_attrs")),
+            UItem("filter_str"),
+            show_border=True,
+            label="Filter",
+        )
 
-        tgrp = VGroup(UItem('items', height=600, editor=myTabularEditor(adapter=ProjectAdapter(),
-                                                                        editable=False,
-                                                                        selected='selected',
-                                                                        multi_select=True,
-                                                                        refresh='refresh',
-                                                                        scroll_to_row='scroll_to_row')))
-        edit_grp = VGroup(Item('project_name', label='Project Name'),
-                          VGroup(UItem('comment', style='custom'),
-                                 enabled_when='selected',
-                                 label='Comment', show_border=True),
-                          HGroup(spring, icon_button_editor('save_button', 'database_save', tooltip='Save changes to '
-                                                                                                    'database')))
+        tgrp = VGroup(
+            UItem(
+                "items",
+                height=600,
+                editor=myTabularEditor(
+                    adapter=ProjectAdapter(),
+                    editable=False,
+                    selected="selected",
+                    multi_select=True,
+                    refresh="refresh",
+                    scroll_to_row="scroll_to_row",
+                ),
+            )
+        )
+        edit_grp = VGroup(
+            Item("project_name", label="Project Name"),
+            VGroup(
+                UItem("comment", style="custom"),
+                enabled_when="selected",
+                label="Comment",
+                show_border=True,
+            ),
+            HGroup(
+                spring,
+                icon_button_editor(
+                    "save_button",
+                    "database_save",
+                    tooltip="Save changes to " "database",
+                ),
+            ),
+        )
         bgrp = VSplit(tgrp, edit_grp)
         g = VGroup(fgrp, bgrp)
         v = View(g)
         return v
+
 
 # ============= EOF =============================================

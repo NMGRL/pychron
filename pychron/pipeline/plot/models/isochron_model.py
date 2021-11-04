@@ -21,8 +21,10 @@
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 from pychron.pipeline.plot.models.figure_model import FigureModel
-from pychron.pipeline.plot.panels.isochron_panel import \
-    InverseIsochronPanel, IsochronPanel
+from pychron.pipeline.plot.panels.isochron_panel import (
+    InverseIsochronPanel,
+    IsochronPanel,
+)
 
 
 class IsochronModel(FigureModel):
@@ -31,5 +33,6 @@ class IsochronModel(FigureModel):
 
 class InverseIsochronModel(FigureModel):
     _panel_klass = InverseIsochronPanel
+
 
 # ============= EOF =============================================

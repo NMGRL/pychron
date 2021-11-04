@@ -26,7 +26,7 @@ from pychron.media_storage.storage import RemoteStorage
 
 
 class FTPStorage(RemoteStorage):
-    url_name = 'FTP'
+    url_name = "FTP"
 
     def put(self, src, dest):
         client = self._get_client()
@@ -44,24 +44,26 @@ class FTPStorage(RemoteStorage):
 
     def _put(self, client, src, dest):
         head, ext = os.path.splitext(src)
-        if ext in ('.jpg', '.png'):
-            with open(src, 'rb') as rfile:
-                client.storbinary('STOR {}'.format(dest), rfile, 1024)
+        if ext in (".jpg", ".png"):
+            with open(src, "rb") as rfile:
+                client.storbinary("STOR {}".format(dest), rfile, 1024)
         else:
-            with open(src, 'r') as rfile:
-                client.storlines('STOR {}'.format(dest), rfile)
+            with open(src, "r") as rfile:
+                client.storlines("STOR {}".format(dest), rfile)
 
 
 class SFTPStorage(FTPStorage):
-    url_name = 'SFTP'
+    url_name = "SFTP"
 
     def _get_client(self):
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            ssh.connect(self.host, username=self.username, password=self.password, timeout=2)
+            ssh.connect(
+                self.host, username=self.username, password=self.password, timeout=2
+            )
         except (socket.timeout, paramiko.AuthenticationException):
-            self.warning_dialog('Could not connect to server')
+            self.warning_dialog("Could not connect to server")
             return
 
         return ssh.open_sftp()
@@ -71,5 +73,6 @@ class SFTPStorage(FTPStorage):
 
     def _put(self, client, src, dest):
         client.put(src, dest)
+
 
 # ============= EOF =============================================

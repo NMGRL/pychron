@@ -25,7 +25,7 @@ class _DAGEditor(Editor):
     selected_commits = List
 
     def init(self, parent):
-        self.sync_value(self.factory.selected, 'selected_commits', 'to')
+        self.sync_value(self.factory.selected, "selected_commits", "to")
         self.control = self._create_control(parent.parent())
 
     def _create_control(self, parent):
@@ -39,4 +39,6 @@ class _DAGEditor(Editor):
 class GitDAGEditor(BasicEditorFactory):
     klass = _DAGEditor
     selected = Str
+
+
 # ============= EOF =============================================

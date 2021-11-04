@@ -20,14 +20,14 @@ from traitsui.menu import Action
 
 class NameMeta(MetaHasTraits):
     def __new__(cls, name, bases, d):
-        if 'name' in d:
-            name = d['name']
-            if name.endswith('...'):
+        if "name" in d:
+            name = d["name"]
+            if name.endswith("..."):
                 name = name[:-3]
-            d['dname'] = name
+            d["dname"] = name
 
-        if 'description' in d:
-            d['ddescription'] = d['description']
+        if "description" in d:
+            d["ddescription"] = d["description"]
 
         return super().__new__(cls, name, bases, d)
 
@@ -38,4 +38,6 @@ class UIAction(Action, metaclass=NameMeta):
 
 class UITaskAction(TaskAction, metaclass=NameMeta):
     pass
+
+
 # ============= EOF =============================================

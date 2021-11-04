@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 # from traits.api import Instance, DelegatesTo
 from __future__ import absolute_import
-from traits.api import Any, Int, Instance, Property, Event, \
-    Enum, String
+from traits.api import Any, Int, Instance, Property, Event, Enum, String
 from traitsui.api import View, Item, VGroup, ButtonEditor, HGroup, Spring
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from .fusions_logic_board import FusionsLogicBoard
@@ -31,7 +31,7 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 from datetime import datetime, timedelta
 
 # from pychron.hardware.kerr.kerr_motor import KerrMotor
-FLOW_STATES = {'on': 'Stop Flow', 'off': 'Start Flow', 'purge': 'Purging'}
+FLOW_STATES = {"on": "Stop Flow", "off": "Start Flow", "purge": "Purging"}
 
 
 class NitrogenFlower(KerrDevice):
@@ -47,8 +47,8 @@ class NitrogenFlower(KerrDevice):
     #     _cancel = False
 
     flow_button = Event
-    flow_label = Property(depends_on='_flow_state')
-    _flow_state = Enum('off', 'purge', 'on')
+    flow_label = Property(depends_on="_flow_state")
+    _flow_state = Enum("off", "purge", "on")
 
     led = Instance(LED, ())
 
@@ -56,9 +56,9 @@ class NitrogenFlower(KerrDevice):
 
     def _flow_button_fired(self):
         #        print self._flowing, 'asdfasdfsa'
-        if self._flow_state in ('on', 'purge'):
+        if self._flow_state in ("on", "purge"):
             self.stop()
-        elif self._flow_state == 'off':
+        elif self._flow_state == "off":
             self.start()
 
     def _get_flow_label(self):
@@ -76,29 +76,29 @@ class NitrogenFlower(KerrDevice):
         self._set_state_off()
 
     def _set_state_off(self):
-        self._flow_state = 'off'
+        self._flow_state = "off"
         self.led.state = 0
-        self.message = ' '
+        self.message = " "
 
     def _set_state_on(self):
-        self._flow_state = 'on'
+        self._flow_state = "on"
         self.led.state = 2
         t = datetime.now()
         d = timedelta(seconds=self.timeout)
         t = t + d
-        st = t.strftime('%H:%M:%S')
-        self.message = 'Timeout at {}'.format(st)
+        st = t.strftime("%H:%M:%S")
+        self.message = "Timeout at {}".format(st)
 
     def _set_state_purge(self):
-        self._flow_state = 'purge'
+        self._flow_state = "purge"
         self.led.state = 1
-        self.message = 'Purging for 10s'
+        self.message = "Purging for 10s"
 
     def start(self):
-        if self._flow_state == 'on':
+        if self._flow_state == "on":
             # reset the timeout timer
             self._start_timeout_timer()
-        elif self._flow_state == 'purge':
+        elif self._flow_state == "purge":
             pass
         else:
             # start purge
@@ -212,21 +212,24 @@ class NitrogenFlower(KerrDevice):
             return self._ready_signal.is_set()
 
     def traits_view(self):
-        v = View(HGroup(Item('led', editor=LEDEditor(),
-                             show_label=False, style='custom'),
-                        Item('flow_button',
-                             show_label=False,
-                             editor=ButtonEditor(label_value='flow_label')),
-                        Spring(springy=False, width=20),
-                        CustomLabel('message',
-                                    color='maroon', size=14,
-                                    springy=True)))
+        v = View(
+            HGroup(
+                Item("led", editor=LEDEditor(), show_label=False, style="custom"),
+                Item(
+                    "flow_button",
+                    show_label=False,
+                    editor=ButtonEditor(label_value="flow_label"),
+                ),
+                Spring(springy=False, width=20),
+                CustomLabel("message", color="maroon", size=14, springy=True),
+            )
+        )
         return v
 
 
 class FusionsUVLogicBoard(FusionsLogicBoard):
-    """
-    """
+    """ """
+
     has_pointer = False
     _test_comms = False  # dont test comms on startup. UV doesn't really have logic board only kerr motor controllers
 
@@ -236,13 +239,11 @@ class FusionsUVLogicBoard(FusionsLogicBoard):
         return NitrogenFlower(parent=self)
 
     def _enable_laser(self, **kw):
-        """
-        """
+        """ """
         return True
 
     def _disable_laser(self):
-        """
-        """
+        """ """
         return True
 
     def prepare(self):
@@ -263,21 +264,26 @@ class FusionsUVLogicBoard(FusionsLogicBoard):
             # load nitrogen flower
 
             nf = self.nitrogen_flower
-            section = 'Flow'
+            section = "Flow"
             if config.has_section(section):
-                nf.delay = self.config_get(config, section, 'delay', cast='int', default=30)
-                nf.timeout = self.config_get(config, section, 'timeout', cast='int', default=6000)
-                nf.channel = self.config_get(config, section, 'channel', cast='int', default=1)
-                nf.address = self.config_get(config, section, 'address', default='01')
+                nf.delay = self.config_get(
+                    config, section, "delay", cast="int", default=30
+                )
+                nf.timeout = self.config_get(
+                    config, section, "timeout", cast="int", default=6000
+                )
+                nf.channel = self.config_get(
+                    config, section, "channel", cast="int", default=1
+                )
+                nf.address = self.config_get(config, section, "address", default="01")
             return True
 
     def get_control_group(self):
         cg = super(FusionsUVLogicBoard, self).get_control_group()
 
-        ng = VGroup(Item('nitrogen_flower', show_label=False, style='custom'),
-                    cg
-                    )
+        ng = VGroup(Item("nitrogen_flower", show_label=False, style="custom"), cg)
         return ng
+
 
 # ============= views ===================================
 

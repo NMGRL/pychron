@@ -15,7 +15,13 @@
 # ===============================================================================
 from __future__ import absolute_import
 
-from pychron.options.options import MainOptions, SubOptions, AppearanceSubOptions, TitleSubOptions, GroupSubOptions
+from pychron.options.options import (
+    MainOptions,
+    SubOptions,
+    AppearanceSubOptions,
+    TitleSubOptions,
+    GroupSubOptions,
+)
 from pychron.pychron_constants import APPEARANCE, MAIN
 
 
@@ -39,11 +45,13 @@ class DisplaySubOptions(TitleSubOptions):
     pass
 
 
-VIEWS = {MAIN.lower(): RadialMainOptions,
-         'radial': RadialSubOptions,
-         APPEARANCE.lower(): RadialAppearance,
-         'calculations': CalculationSubOptions,
-         'display': DisplaySubOptions,
-         'groups': GroupSubOptions}
+VIEWS = {
+    MAIN.lower(): RadialMainOptions,
+    "radial": RadialSubOptions,
+    APPEARANCE.lower(): RadialAppearance,
+    "calculations": CalculationSubOptions,
+    "display": DisplaySubOptions,
+    "groups": GroupSubOptions,
+}
 
 # ============= EOF =============================================

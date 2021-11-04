@@ -23,16 +23,17 @@ from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_PERCENT, NU
 
 
 class IAValuesAdapter(TabularAdapter):
-    columns = [('Name', 'name'),
-               ('Value', 'value')]
+    columns = [("Name", "name"), ("Value", "value")]
 
 
 class IAUValuesAdapter(TabularAdapter):
-    columns = [('Name', 'name'),
-               ('Value', 'value'),
-               ('Kind', 'kind'),
-               (PLUSMINUS_ONE_SIGMA, 'error'),
-               (PLUSMINUS_PERCENT, 'percent_error')]
+    columns = [
+        ("Name", "name"),
+        ("Value", "value"),
+        ("Kind", "kind"),
+        (PLUSMINUS_ONE_SIGMA, "error"),
+        (PLUSMINUS_PERCENT, "percent_error"),
+    ]
 
     value_text = Property
     error_text = Property
@@ -52,16 +53,18 @@ class IAUValuesAdapter(TabularAdapter):
 
 
 class IAAnalysesAdapter(TabularAdapter):
-    columns = [('RunID', 'record_id'),
-               ('Age', 'age'),
-               (PLUSMINUS_ONE_SIGMA, 'age_err'),
-               ('{} w/o J'.format(PLUSMINUS_ONE_SIGMA), 'age_err_wo_j'),
-               ('40Ar*', 'radiogenic_yield'),
-               (PLUSMINUS_ONE_SIGMA, 'radiogenic_yield_err'),
-               ('K/Ca', 'kca'),
-               (PLUSMINUS_ONE_SIGMA, 'kca_err'),
-               ('K/Cl', 'kcl'),
-               (PLUSMINUS_ONE_SIGMA, 'kcl_err')]
+    columns = [
+        ("RunID", "record_id"),
+        ("Age", "age"),
+        (PLUSMINUS_ONE_SIGMA, "age_err"),
+        ("{} w/o J".format(PLUSMINUS_ONE_SIGMA), "age_err_wo_j"),
+        ("40Ar*", "radiogenic_yield"),
+        (PLUSMINUS_ONE_SIGMA, "radiogenic_yield_err"),
+        ("K/Ca", "kca"),
+        (PLUSMINUS_ONE_SIGMA, "kca_err"),
+        ("K/Cl", "kcl"),
+        (PLUSMINUS_ONE_SIGMA, "kcl_err"),
+    ]
 
 
 class IAValue(HasTraits):
@@ -108,8 +111,16 @@ class IAAnalysis(HasTraits):
     kcl_err = Float
 
     def __init__(self, d):
-        for attr in ('record_id', 'age', 'age_err', 'age_err_wo_j',
-                     'kca', 'kca_err', 'kcl', 'kcl_err'):
+        for attr in (
+            "record_id",
+            "age",
+            "age_err",
+            "age_err_wo_j",
+            "kca",
+            "kca_err",
+            "kcl",
+            "kcl_err",
+        ):
             try:
                 v = d[attr]
                 setattr(self, attr, v)
@@ -125,11 +136,18 @@ class InterpretedAgeRecallEditor(BaseRecallEditor):
         super(InterpretedAgeRecallEditor, self).__init__(*args, **kw)
         self.basename = item.name
 
-        attrs = ('sample', 'lithology', 'identifier', 'material', 'irradiation', 'project')
+        attrs = (
+            "sample",
+            "lithology",
+            "identifier",
+            "material",
+            "irradiation",
+            "project",
+        )
 
         vs = [IAValue(s, getattr(item, s)) for s in attrs]
 
-        vs.append(IAValue('N', int(getattr(item, 'nanalyses'))))
+        vs.append(IAValue("N", int(getattr(item, "nanalyses"))))
         self.values = vs
 
         # attrs = ('age', 'kca')
@@ -138,15 +156,20 @@ class InterpretedAgeRecallEditor(BaseRecallEditor):
         # self.uvalues = [IAUValue(s, getattr(item, s, 0),
         #                          getattr(item, '{}_err'.format(s), 0),
         #                          getattr(item, '{}_kind'.format(s), '')) for s in attrs]
-        uv = [IAUValue('age', item.age, item.age_err, item.age_kind),
-              # IAValue('kca', item.kca, item.age_err, item.age_kind)
-              ]
+        uv = [
+            IAUValue("age", item.age, item.age_err, item.age_kind),
+            # IAValue('kca', item.kca, item.age_err, item.age_kind)
+        ]
         self.uvalues = uv
         self.analyses = [IAAnalysis(d) for d in item.analyses]
 
     def traits_view(self):
-        v = View(UItem('values', editor=TabularEditor(adapter=IAValuesAdapter())),
-                 UItem('uvalues', editor=TabularEditor(adapter=IAUValuesAdapter())),
-                 UItem('analyses', editor=TabularEditor(adapter=IAAnalysesAdapter())))
+        v = View(
+            UItem("values", editor=TabularEditor(adapter=IAValuesAdapter())),
+            UItem("uvalues", editor=TabularEditor(adapter=IAUValuesAdapter())),
+            UItem("analyses", editor=TabularEditor(adapter=IAAnalysesAdapter())),
+        )
         return v
+
+
 # ============= EOF =============================================

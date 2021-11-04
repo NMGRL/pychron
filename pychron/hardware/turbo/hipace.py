@@ -23,16 +23,23 @@ http://mmrc.caltech.edu/Optical%20Furnace/Manuals/Pfeiffer%20TC%20110%20Elec.%20
 """
 
 from __future__ import absolute_import
+
+from traitsui.item import Item
+from traitsui.view import View
+
+from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.hardware.core.communicators.serial_communicator import SerialCommunicator
 from pychron.hardware.core.core_device import CoreDevice
 import re
 
-BASE = r'^(?P<address>\d{3})(?P<action>\d{2})(?P<parameter>\d{2})(?P<datalength>\d{2})'
+BASE = r"^(?P<address>\d{3})(?P<action>\d{2})(?P<parameter>\d{2})(?P<datalength>\d{2})"
 RESPONSE_RE = re.compile(BASE)
+
+PARAMETERS = {"set_speed": 308, "actual_speed": 309}
 
 
 def make_pattern(dl):
-    return '{}(?P<data>\d{{{}}})(?P<checksum>\d{3}'.format(BASE, dl)
+    return "{}(?P<data>\d{{{}}})(?P<checksum>\d{3}".format(BASE, dl)
 
 
 def check_checksum(resp, chksum):
@@ -46,41 +53,31 @@ def calc_checksum(msg):
 
 
 class HiPace(CoreDevice):
+    scan_func = "update"
+
+    def update(self):
+        self.read_set_speed()
+        self.read_actual_speed()
 
     def read_set_speed(self):
-        return self._read_parameter(308)
+        return self._read_parameter("set_speed")
 
     def read_actual_speed(self):
-        return self._read_parameter(309)
+        return self._read_parameter("actual_speed")
 
-    def _read_parameter(self, param):
-        resp = self.ask('read', param)
+    def _read_parameter(self, attr):
+        param = PARAMETERS[attr]
+        cmd = self._assemble("read", param)
+        resp = self.ask(cmd)
         data = self._get_data(resp)
         try:
-            return int(data)
+            v = int(data)
+            setattr(self, attr, v)
         except (ValueError, TypeError):
             pass
 
-    def _get_data(self, resp):
-        match = RESPONSE_RE.search(resp)
-        if match:
-            dl = match.group('datalength')
-            pattern = make_pattern(dl)
-            match = re.search(pattern, resp)
-            if match:
-                if check_checksum(resp, match.group('checksum')):
-                    data = match.group('data')
-                    return data
-
-
-class HiPaceCommunicator(SerialCommunicator):
-
-    def ask(self, action, parameter, data=None, *args, **kw):
-        cmd = self._assemble(action, parameter, data)
-        return super(HiPaceCommunicator, self).ask(cmd, *args, **kw)
-
     def _assemble(self, action, parameter, data):
-        if action == 'read':
+        if action == "read":
             # read parameter
             action = 0
         else:
@@ -88,11 +85,64 @@ class HiPaceCommunicator(SerialCommunicator):
             action = 10
 
         if data is None:
-            data = '=?'
+            data = "=?"
 
         data_len = len(data)
-        msg = '{:03n}{:02n}{:03}{:02n}{}'.format(self.address, action, parameter, data_len, data)
+        msg = "{:03n}{:02n}{:03}{:02n}{}".format(
+            self.address, action, parameter, data_len, data
+        )
 
-        return '{}{:03n}'.format(msg, self._calc_checksum(msg))
+        return "{}{:03n}".format(msg, calc_checksum(msg))
+
+    def _get_data(self, resp):
+        match = RESPONSE_RE.search(resp)
+        if match:
+            dl = match.group("datalength")
+            pattern = make_pattern(dl)
+            match = re.search(pattern, resp)
+            if match:
+                if check_checksum(resp, match.group("checksum")):
+                    data = match.group("data")
+                    return data
+
+    def pump_view(self):
+        v = View(
+            Item(
+                "setspeed",
+                label="SetSpeed (308)",
+                editor=LCDEditor(width=100, height=50),
+            ),
+            Item(
+                "actualspeed",
+                label="ActualSpeed (309)",
+                editor=LCDEditor(width=100, height=50),
+            ),
+        )
+        return v
+
+
+# class HiPaceCommunicator(SerialCommunicator):
+#     def ask(self, action, parameter, data=None, *args, **kw):
+#         cmd = self._assemble(action, parameter, data)
+#         return super(HiPaceCommunicator, self).ask(cmd, *args, **kw)
+#
+#     def _assemble(self, action, parameter, data):
+#         if action == "read":
+#             # read parameter
+#             action = 0
+#         else:
+#             # describe parameter
+#             action = 10
+#
+#         if data is None:
+#             data = "=?"
+#
+#         data_len = len(data)
+#         msg = "{:03n}{:02n}{:03}{:02n}{}".format(
+#             self.address, action, parameter, data_len, data
+#         )
+#
+#         return "{}{:03n}".format(msg, self._calc_checksum(msg))
+
 
 # ============= EOF =============================================

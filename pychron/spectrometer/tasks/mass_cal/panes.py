@@ -25,36 +25,36 @@ from traitsui.table_column import ObjectColumn
 
 
 class MassCalibrationTablePane(TraitsDockPane):
-    name = 'Calibration Points'
-    id = 'pychron.mass_calibration.cal_points'
+    name = "Calibration Points"
+    id = "pychron.mass_calibration.cal_points"
 
     def traits_view(self):
-        cols = [ObjectColumn(name='isotope',
-                             editor=EnumEditor(name='isotopes')),
-                ObjectColumn(name='dac')]
+        cols = [
+            ObjectColumn(name="isotope", editor=EnumEditor(name="isotopes")),
+            ObjectColumn(name="dac"),
+        ]
         return View(
-            UItem('object.scanner.calibration_peaks',
-                  editor=TableEditor(columns=cols,
-                                     selected='object.scanner.selected')
+            UItem(
+                "object.scanner.calibration_peaks",
+                editor=TableEditor(columns=cols, selected="object.scanner.selected"),
             )
-
         )
 
 
 class MassCalibrationsPane(TraitsDockPane):
-    name = 'Calibrations'
-    id = 'pychron.mass_calibration.calibrations'
+    name = "Calibrations"
+    id = "pychron.mass_calibration.calibrations"
 
     def traits_view(self):
         return View()
 
 
 class MassCalibrationControlPane(TraitsDockPane):
-    name = 'Controls'
-    id = 'pychron.mass_calibration.controls'
+    name = "Controls"
+    id = "pychron.mass_calibration.controls"
 
     def traits_view(self):
-        v = View(UItem('scanner', style='custom'))
+        v = View(UItem("scanner", style="custom"))
         return v
 
         # ============= EOF =============================================

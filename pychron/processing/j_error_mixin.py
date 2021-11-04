@@ -18,12 +18,20 @@ from traitsui.api import HGroup, Item
 
 from pychron.persistence_loggable import dumpable
 
-J_ERROR_GROUP = HGroup(Item('include_j_position_error', label='Include Position Error',
-                            tooltip='Include J position error in the analytical error for each individual analysis.'),
-                       Item('include_j_error_in_mean', label='Include in Mean',
-                            tooltip='Include J error in the mean age error'),
-                       show_border=True,
-                       label='J Uncertainty')
+J_ERROR_GROUP = HGroup(
+    Item(
+        "include_j_position_error",
+        label="Include Position Error",
+        tooltip="Include J position error in the analytical error for each individual analysis.",
+    ),
+    Item(
+        "include_j_error_in_mean",
+        label="Include in Mean",
+        tooltip="Include J error in the mean age error",
+    ),
+    show_border=True,
+    label="J Uncertainty",
+)
 
 
 class JErrorMixin(HasTraits):
@@ -48,5 +56,6 @@ class JErrorMixin(HasTraits):
     #         self._suppress = True
     #         self.include_j_error_in_individual_analyses = False
     #         self._suppress = False
+
 
 # ============= EOF =============================================

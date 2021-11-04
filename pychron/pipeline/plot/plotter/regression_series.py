@@ -19,10 +19,9 @@ from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 
 
 class RegressionSeries(BaseArArFigure):
-
     def build(self, plots, plot_dict=None):
         """
-            make plots
+        make plots
         """
 
         graph = self.graph
@@ -34,23 +33,23 @@ class RegressionSeries(BaseArArFigure):
             title = self.options.title
 
         for i, po in enumerate(plots):
-            kw = {'ytitle': po.name}
+            kw = {"ytitle": po.name}
             if plot_dict:
                 kw.update(plot_dict)
 
             if i == (len(plots) - 1):
-                kw['title'] = title
+                kw["title"] = title
 
             if i == 0 and self.ytitle:
-                kw['ytitle'] = self.ytitle
+                kw["ytitle"] = self.ytitle
 
             if not po.ytitle_visible:
-                kw['ytitle'] = ''
+                kw["ytitle"] = ""
 
             if self.xtitle:
-                kw['xtitle'] = self.xtitle
+                kw["xtitle"] = self.xtitle
 
-            kw['padding'] = self.options.get_paddings()
+            kw["padding"] = self.options.get_paddings()
 
             p = graph.new_plot(**kw)
             # set a tag for easy identification
@@ -68,21 +67,27 @@ class RegressionSeries(BaseArArFigure):
         graph = self.graph
         for i, po in enumerate(plots):
             name = po.name
-            kind = 'signal'
-            if name.endswith('bs'):
-                kind = 'baseline'
+            kind = "signal"
+            if name.endswith("bs"):
+                kind = "baseline"
                 name = name[:-2]
             iso = a.get_isotope(name, kind=kind)
 
             xs = iso.xs
             ys = iso.ys
-            self.graph.new_series(xs, ys,
-                                  fit='{}_{}'.format(iso.fit, iso.error_type),
-                                  filter_outliers_dict=iso.filter_outliers_dict,
-                                  type='scatter', plotid=i, color=next(cg),
-                                  add_point_inspector=False)
+            self.graph.new_series(
+                xs,
+                ys,
+                fit="{}_{}".format(iso.fit, iso.error_type),
+                filter_outliers_dict=iso.filter_outliers_dict,
+                type="scatter",
+                plotid=i,
+                color=next(cg),
+                add_point_inspector=False,
+            )
 
             if self.options.show_statistics:
                 graph.add_statistics(plotid=i)
+
 
 # ============= EOF =============================================

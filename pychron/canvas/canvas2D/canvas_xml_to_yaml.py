@@ -23,12 +23,13 @@ class CanvasConverter:
         self.path = path
 
     def toyaml(self):
-        obj = {''}
+        obj = {""}
 
         output, tail = os.path.splitext(os.path.basename(self.path))
         root = os.path.dirname(self.path)
-        p = os.path.join(root, '{}.yaml'.format(output))
-        with open(p, 'w') as wfile:
+        p = os.path.join(root, "{}.yaml".format(output))
+        with open(p, "w") as wfile:
             yaml.dump(obj, wfile)
+
 
 # ============= EOF =============================================

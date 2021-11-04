@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.task_layout import TaskLayout, PaneItem
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.furnace.tasks.ldeo.panes import FurnacePane, ControlPane
@@ -23,8 +24,8 @@ from pychron.furnace.tasks.task import BaseFurnaceTask
 
 
 class LDEOFurnaceTask(BaseFurnaceTask):
-    id = 'pychron.ldeo.furnace.task'
-    name = 'LDEO Furnace'
+    id = "pychron.ldeo.furnace.task"
+    name = "LDEO Furnace"
 
     def create_dock_panes(self):
         return [ControlPane(model=self.manager)]
@@ -33,6 +34,7 @@ class LDEOFurnaceTask(BaseFurnaceTask):
         return FurnacePane(model=self.manager)
 
     def _default_layout_default(self):
-        return TaskLayout(left=PaneItem('pychron.ldeofurnace.controls'))
+        return TaskLayout(left=PaneItem("pychron.ldeofurnace.controls"))
+
 
 # ============= EOF =============================================

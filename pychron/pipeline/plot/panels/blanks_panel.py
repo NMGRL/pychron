@@ -26,4 +26,5 @@ from pychron.pipeline.plot.plotter.blanks import Blanks
 class BlanksPanel(ReferencesPanel):
     _figure_klass = Blanks
 
+
 # ============= EOF =============================================

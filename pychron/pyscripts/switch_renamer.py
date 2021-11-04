@@ -19,7 +19,16 @@ import shutil
 
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Str, List, Button, HasTraits, Any
-from traitsui.api import View, HGroup, UItem, EnumEditor, Item, VGroup, TabularEditor, TextEditor
+from traitsui.api import (
+    View,
+    HGroup,
+    UItem,
+    EnumEditor,
+    Item,
+    VGroup,
+    TabularEditor,
+    TextEditor,
+)
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -39,10 +48,10 @@ class ScriptItem(HasTraits):
 
 
 class ScriptItemAdapter(TabularAdapter):
-    columns = [('Name', 'name'), ('Directory', 'directory')]
+    columns = [("Name", "name"), ("Directory", "directory")]
 
 
-PATTERN = '[\'\"]{}[\'\"]'
+PATTERN = "['\"]{}['\"]"
 
 
 class SwitchRenamer(Loggable):
@@ -63,10 +72,11 @@ class SwitchRenamer(Loggable):
         super(SwitchRenamer, self).__init__(*args, **kw)
 
         if not self.valves_path:
-            bind_preference(self, 'valves_path', 'pychron.extraction_line.valves_path')
+            bind_preference(self, "valves_path", "pychron.extraction_line.valves_path")
 
         if not self.script_root:
             from pychron.paths import paths
+
             self.script_root = paths.scripts_dir
 
         self._load_descriptions()
@@ -74,10 +84,10 @@ class SwitchRenamer(Loggable):
     # private
     def _selected_changed(self, new):
         if len(new) == 1:
-            with open(new[0].path, 'r') as rfile:
+            with open(new[0].path, "r") as rfile:
                 self.script_text = rfile.read()
         else:
-            self.script_text = ''
+            self.script_text = ""
 
     def _apply_button_fired(self):
         sel = self.selected
@@ -86,32 +96,32 @@ class SwitchRenamer(Loggable):
 
         for s in sel:
             root = self.script_root
-            dest = os.path.join(root, 'backup', os.path.relpath(s.directory, root))
+            dest = os.path.join(root, "backup", os.path.relpath(s.directory, root))
             r_mkdir(dest)
 
             destpath = os.path.join(dest, s.name)
 
-            self.info('backup script to {}'.format(destpath))
+            self.info("backup script to {}".format(destpath))
             shutil.copyfile(s.path, destpath)
 
             self._modify_file(s.path)
 
-            self.info('updated script {}'.format(s.path))
+            self.info("updated script {}".format(s.path))
 
         self._update_valve()
         self._scan()
 
     def _update_valve(self):
         src = self.valves_path
-        dest = os.path.join(os.path.dirname(src), '~{}'.format(os.path.basename(src)))
+        dest = os.path.join(os.path.dirname(src), "~{}".format(os.path.basename(src)))
         shutil.copyfile(src, dest)
         self._modify_file(src)
 
     def _modify_file(self, path):
-        with open(path, 'r') as rfile:
+        with open(path, "r") as rfile:
             text = rfile.read()
 
-        with open(path, 'w') as wfile:
+        with open(path, "w") as wfile:
             pattern = PATTERN.format(self.description)
             re.sub(pattern, '"{}"'.format(self.new_description), text)
             wfile.write(text)
@@ -121,13 +131,13 @@ class SwitchRenamer(Loggable):
 
     def _scan(self):
         found = []
-        exclude = ['zobs', 'zbos', 'backup']
-        self.info('scanning {}'.format(self.script_root))
+        exclude = ["zobs", "zbos", "backup"]
+        self.info("scanning {}".format(self.script_root))
         for root, subdirs, files in os.walk(self.script_root, topdown=True):
             subdirs[:] = [d for d in subdirs if d not in exclude]
 
             for file in files:
-                if file.endswith('.py'):
+                if file.endswith(".py"):
                     path = os.path.join(root, file)
                     if self._find_description(path):
                         found.append(ScriptItem(path))
@@ -137,7 +147,7 @@ class SwitchRenamer(Loggable):
 
     def _find_description(self, path):
         pattern = re.compile(PATTERN.format(self.description))
-        with open(path, 'r') as rfile:
+        with open(path, "r") as rfile:
             for line in rfile:
                 if pattern.search(line):
                     return True
@@ -150,7 +160,7 @@ class SwitchRenamer(Loggable):
         else:
 
             for v in parser.get_all_switches():
-                d = v.find('description')
+                d = v.find("description")
                 if d is not None:
                     descriptions.append(d.text)
 
@@ -159,27 +169,45 @@ class SwitchRenamer(Loggable):
         self.descriptions = descriptions
 
     def traits_view(self):
-        v = View(VGroup(HGroup(UItem('description', editor=EnumEditor(name='descriptions')),
-                               Item('new_description', width=-250)),
-                        HGroup(icon_button_editor('scan_button', 'foo',
-                                                  tooltip='Scan pyscripts for occurences of the valve/switch '
-                                                          'description'),
-                               icon_button_editor('apply_button', 'bar', enabled_when='new_description')),
-                        UItem('found', editor=TabularEditor(selected='selected',
-                                                            multi_select=True,
-                                                            adapter=ScriptItemAdapter())),
-                        UItem('script_text',
-                              style='custom',
-                              editor=TextEditor(read_only=True))),
-                 title='Switch Renamer',
-                 resizable=True, width=700, height=500)
+        v = View(
+            VGroup(
+                HGroup(
+                    UItem("description", editor=EnumEditor(name="descriptions")),
+                    Item("new_description", width=-250),
+                ),
+                HGroup(
+                    icon_button_editor(
+                        "scan_button",
+                        "foo",
+                        tooltip="Scan pyscripts for occurences of the valve/switch "
+                        "description",
+                    ),
+                    icon_button_editor(
+                        "apply_button", "bar", enabled_when="new_description"
+                    ),
+                ),
+                UItem(
+                    "found",
+                    editor=TabularEditor(
+                        selected="selected",
+                        multi_select=True,
+                        adapter=ScriptItemAdapter(),
+                    ),
+                ),
+                UItem("script_text", style="custom", editor=TextEditor(read_only=True)),
+            ),
+            title="Switch Renamer",
+            resizable=True,
+            width=700,
+            height=500,
+        )
         return v
 
 
-if __name__ == '__main__':
-    vp = '/Users/ross/Pychron3/setupfiles/extractionline/valves.xml'
-    sp = '/Users/ross/Pychron3/scripts'
-    v = SwitchRenamer(valves_path=vp, script_root=sp, new_description='foo')
-    v.description = 'Outer Pipette 2'
+if __name__ == "__main__":
+    vp = "/Users/ross/Pychron3/setupfiles/extractionline/valves.xml"
+    sp = "/Users/ross/Pychron3/scripts"
+    v = SwitchRenamer(valves_path=vp, script_root=sp, new_description="foo")
+    v.description = "Outer Pipette 2"
     v.configure_traits()
 # ============= EOF =============================================

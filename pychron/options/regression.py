@@ -21,11 +21,13 @@ from pychron.pychron_constants import MAIN, APPEARANCE
 
 
 class RegressionOptions(FigureOptions):
-    regressor = Enum('NewYork')
+    regressor = Enum("NewYork")
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]
 
     def _get_subview(self, name):
         return VIEWS[name]
+
+
 # ============= EOF =============================================

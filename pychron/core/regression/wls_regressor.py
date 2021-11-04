@@ -20,6 +20,7 @@ from __future__ import absolute_import
 from numpy import delete, hstack
 
 from statsmodels.api import WLS
+
 # ============= local library imports  ==========================
 # from pychron.core.regression.base_regressor import BaseRegressor
 
@@ -80,8 +81,11 @@ class WeightedPolynomialRegressor(OLSRegressor):
         return es ** -2
 
 
-class WeightedMultipleLinearRegressor(WeightedPolynomialRegressor, MultipleLinearRegressor):
+class WeightedMultipleLinearRegressor(
+    WeightedPolynomialRegressor, MultipleLinearRegressor
+):
     pass
+
 
 # def calculate_var_covar(self):
 #        '''

@@ -35,7 +35,7 @@ def get_resource_root():
     from pychron.globals import globalv
 
     if not globalv.debug:
-        while os.path.basename(path) != 'Resources':
+        while os.path.basename(path) != "Resources":
             path = os.path.dirname(path)
     return path
 
@@ -45,24 +45,24 @@ def get_resource_root():
 
 def revision_str(rev):
     if rev is None:
-        rev = ''
+        rev = ""
     else:
         if not isinstance(rev, str):
             t = datetime.fromtimestamp(rev.committed_date)
-            h, b = rev.name_rev.split(' ')
-            rev = '{} ({}) {}'.format(b, h[:8], t.strftime('%m-%d-%Y'))
+            h, b = rev.name_rev.split(" ")
+            rev = "{} ({}) {}".format(b, h[:8], t.strftime("%m-%d-%Y"))
     return rev
 
 
 class PychronApplication(BaseTasksApplication):
     about_additions = List
-    shortname = ''
+    shortname = ""
     environment = Str
 
     def __init__(self, *args, **kw):
         super(PychronApplication, self).__init__(*args, **kw)
 
-        bind_preference(self, 'environment', 'pychron.general.environment')
+        bind_preference(self, "environment", "pychron.general.environment")
 
     def _initialize_application_home(self):
         """
@@ -74,9 +74,12 @@ class PychronApplication(BaseTasksApplication):
     def _environment_changed(self, old, new):
         if new:
             from pychron.environment.util import set_environment
+
             set_environment(self.name.lower(), new)
             if old:
-                if self.confirmation_dialog('Restart for changes to take effect. Restart now?'):
+                if self.confirmation_dialog(
+                    "Restart for changes to take effect. Restart now?"
+                ):
                     os.execl(sys.executable, *([sys.executable] + sys.argv))
 
     def exit(self, **kw):
@@ -89,13 +92,14 @@ class PychronApplication(BaseTasksApplication):
         # set_last_login(globalv.username)
 
         import threading
-        self.debug('------------------- Alive Threads -------------------')
+
+        self.debug("------------------- Alive Threads -------------------")
         for t in threading.enumerate():
             try:
                 self.debug(str(t))
             except AssertionError:
                 continue
-        self.debug('-----------------------------------------------------')
+        self.debug("-----------------------------------------------------")
 
         return super(BaseTasksApplication, self).stop()
 
@@ -111,8 +115,8 @@ class PychronApplication(BaseTasksApplication):
 
     def _about_dialog_default(self):
         about_dialog = myAboutDialog(
-            image=ImageResource(name='about.png',
-                                search_path=about_search_path))
+            image=ImageResource(name="about.png", search_path=about_search_path)
+        )
 
         about_dialog.version_info = self.get_version_info()
         about_dialog.additions = self.about_additions
@@ -125,9 +129,10 @@ class PychronApplication(BaseTasksApplication):
     def get_version_info(self):
         from pychron import version
 
-        return '{} {}'.format(self.name, version.__version__)
+        return "{} {}".format(self.name, version.__version__)
 
     def get_service_by_name(self, protocol, name):
         return self.get_service(protocol, 'name=="{}"'.format(name))
+
 
 # ============= EOF ====================================

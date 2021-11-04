@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # @PydevCodeAnalysisIgnore
 
 # ============= enthought library imports =======================
@@ -23,7 +22,10 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 from tables import Float32Col, StringCol, IsDescription
+
+
 # ============= local library imports  ==========================
+
 
 class TimeSeriesTableDescription(IsDescription):
     time = Float32Col()
@@ -31,8 +33,8 @@ class TimeSeriesTableDescription(IsDescription):
 
 
 class CameraScanTableDescription(IsDescription):
-    """
-    """
+    """ """
+
     setpoint = Float32Col()
     frame_path = StringCol(140)
     ravg = Float32Col()
@@ -43,33 +45,30 @@ class CameraScanTableDescription(IsDescription):
 
 
 class DiodePowerScanTableDescription(IsDescription):
-    """
-    """
+    """ """
+
     setpoint = Float32Col()
     eq_time = Float32Col()
 
 
 class TimestampTableDescription(IsDescription):
-    """
+    """ """
 
-    """
     timestamp = StringCol(24)
     value = Float32Col()
 
 
 class PowerScanTableDescription(IsDescription):
-    """
+    """ """
 
-    """
     power_requested = Float32Col()
     power_achieved = Float32Col()
     voltage = Float32Col()
 
 
 class PowerMapTableDescription(IsDescription):
-    """
+    """ """
 
-    """
     row = Float32Col()
     col = Float32Col()
     x = Float32Col()
@@ -88,9 +87,9 @@ class PowerCalibrationTableDescription(IsDescription):
 
 
 def table_description_factory(table_name):
-    """
-    """
-    n = '{}TableDescription'.format(table_name)
+    """ """
+    n = "{}TableDescription".format(table_name)
     return globals()[n]
+
 
 # ============= EOF ====================================

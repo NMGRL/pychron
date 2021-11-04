@@ -22,6 +22,7 @@ from traits.api import HasTraits, Int, Float
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class LinearMapper(HasTraits):
     low_step = Int(0)
     high_step = Int(1)
@@ -42,5 +43,6 @@ class LinearMapper(HasTraits):
         data_range = self.high_data - self.low_data
         step_range = self.high_step - self.low_step
         self._scale = step_range / data_range
+
 
 # ============= EOF =============================================

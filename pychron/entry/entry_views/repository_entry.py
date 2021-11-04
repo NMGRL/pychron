@@ -22,27 +22,33 @@ from pychron.entry.entry_views.entry import BaseEntry, OKButton, STYLESHEET
 
 
 class RepositoryIdentifierEntry(BaseEntry):
-    tag = 'Repository Identifier'
+    tag = "Repository Identifier"
     principal_investigator = Str
     principal_investigators = List
     value = SpacelessStr
 
     def _add_item(self):
         with self.dvc.session_ctx(use_parent_session=False):
-            if self.dvc.check_restricted_name(self.value, 'repository_identifier', check_principal_investigator=False):
-                self.error_message = '{} is a restricted!.'.format(self.value)
-                if not self.confirmation_dialog('{} is a restricted!.\n Are you certain you want to add this '
-                                                'Repository?'.format(self.value)):
+            if self.dvc.check_restricted_name(
+                self.value, "repository_identifier", check_principal_investigator=False
+            ):
+                self.error_message = "{} is a restricted!.".format(self.value)
+                if not self.confirmation_dialog(
+                    "{} is a restricted!.\n Are you certain you want to add this "
+                    "Repository?".format(self.value)
+                ):
                     return
 
             if not self.principal_investigator:
-                self.information_dialog('You must select a Principal Investigator')
+                self.information_dialog("You must select a Principal Investigator")
                 return
 
             ret = True
             if not self.dvc.add_repository(self.value, self.principal_investigator):
                 ret = False
-                if not self.confirmation_dialog('Could not add "{}". Try a different name?'.format(self.value)):
+                if not self.confirmation_dialog(
+                    'Could not add "{}". Try a different name?'.format(self.value)
+                ):
                     ret = None
 
         return ret
@@ -50,13 +56,18 @@ class RepositoryIdentifierEntry(BaseEntry):
     def traits_view(self):
         # style_sheet='QLabel {font-size: 10px} QLineEdit {font-size: 10px}'
 
-        a = VGroup(Item('value', label='Repository Name'),
-                   Item('principal_investigator', editor=EnumEditor(name='principal_investigators')),
-                   UItem('error_message', style='readonly', style_sheet=STYLESHEET))
-        buttons = [OKButton(), 'Cancel']
-        return self._new_view(a,
-                              width=400,
-                              title='Add {}'.format(self.tag),
-                              buttons=buttons)
+        a = VGroup(
+            Item("value", label="Repository Name"),
+            Item(
+                "principal_investigator",
+                editor=EnumEditor(name="principal_investigators"),
+            ),
+            UItem("error_message", style="readonly", style_sheet=STYLESHEET),
+        )
+        buttons = [OKButton(), "Cancel"]
+        return self._new_view(
+            a, width=400, title="Add {}".format(self.tag), buttons=buttons
+        )
+
 
 # ============= EOF =============================================

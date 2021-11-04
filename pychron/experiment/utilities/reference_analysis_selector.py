@@ -25,16 +25,18 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 
 class SelectorAdapter(TabularAdapter):
-    columns = [('RunID', 'record_id'),
-               ('Analysis Time', 'rundate'),
-               ('Irradiation', 'irradiation_info'),
-               ('Mass Spec.', 'mass_spectrometer'),
-               ('Type', 'analysis_type'),
-               ('Project', 'project'),
-               ('Measurement', 'meas_script_name'),
-               ('Extraction', 'extract_script_name')]
+    columns = [
+        ("RunID", "record_id"),
+        ("Analysis Time", "rundate"),
+        ("Irradiation", "irradiation_info"),
+        ("Mass Spec.", "mass_spectrometer"),
+        ("Type", "analysis_type"),
+        ("Project", "project"),
+        ("Measurement", "meas_script_name"),
+        ("Extraction", "extract_script_name"),
+    ]
 
-    font = '10'
+    font = "10"
     rid_text = Property
     mass_spectrometer_width = Int(90)
     analysis_type_width = Int(100)
@@ -45,7 +47,7 @@ class SelectorAdapter(TabularAdapter):
 
 
 class ReferenceAnalysisSelector(ColumnSorterMixin):
-    db = Instance('pychron.dvc.dvc.DVC')
+    db = Instance("pychron.dvc.dvc.DVC")
     title = Str
     items = List
     selected = Any
@@ -58,12 +60,18 @@ class ReferenceAnalysisSelector(ColumnSorterMixin):
         self.selected = ans[-1]
 
     def traits_view(self):
-        g = UItem('items', editor=TabularEditor(adapter=SelectorAdapter(),
-                                                scroll_to_row='scroll_to_row',
-                                                column_clicked='column_clicked',
-                                                editable=False,
-                                                selected='selected'))
+        g = UItem(
+            "items",
+            editor=TabularEditor(
+                adapter=SelectorAdapter(),
+                scroll_to_row="scroll_to_row",
+                column_clicked="column_clicked",
+                editable=False,
+                selected="selected",
+            ),
+        )
         v = okcancel_view(g, title=self.title, width=750)
         return v
+
 
 # ============= EOF =============================================

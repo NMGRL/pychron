@@ -22,14 +22,14 @@ from pychron.furnace.ifurnace_manager import IFurnaceManager
 
 
 class BaseFurnacePlugin(BaseTaskPlugin):
-    id = 'pychron.furnace.base.plugin'
-    managers = List(contributes_to='pychron.hardware.managers')
+    id = "pychron.furnace.base.plugin"
+    managers = List(contributes_to="pychron.hardware.managers")
     klass = None
     task_klass = None
 
-    panes = List(contributes_to='pychron.experiment.dock_pane_factories')
-    activations = List(contributes_to='pychron.experiment.activations')
-    deactivations = List(contributes_to='pychron.experiment.deactivations')
+    panes = List(contributes_to="pychron.experiment.dock_pane_factories")
+    activations = List(contributes_to="pychron.experiment.activations")
+    deactivations = List(contributes_to="pychron.experiment.deactivations")
 
     def _manager_factory(self):
         factory = __import__(self.klass[0], fromlist=[self.klass[1]])
@@ -46,31 +46,46 @@ class BaseFurnacePlugin(BaseTaskPlugin):
         if self.task_klass is None:
             raise NotImplementedError
 
-        return self.task_klass(manager=self._get_manager(),
-                               application=self.application)
+        return self.task_klass(
+            manager=self._get_manager(), application=self.application
+        )
 
     def _get_manager(self):
-        return self.application.get_service(IFurnaceManager, 'name=="{}"'.format(self.name))
+        return self.application.get_service(
+            IFurnaceManager, 'name=="{}"'.format(self.name)
+        )
 
     def _managers_default(self):
         d = []
 
         if self.klass is not None:
-            d = [dict(name=self.name,
-                      plugin_name=self.name,
-                      manager=self.application.get_service(IFurnaceManager, 'name=="{}"'.format(self.name)))]
+            d = [
+                dict(
+                    name=self.name,
+                    plugin_name=self.name,
+                    manager=self.application.get_service(
+                        IFurnaceManager, 'name=="{}"'.format(self.name)
+                    ),
+                )
+            ]
 
         return d
 
     def _service_offers_default(self):
-        so = self.service_offer_factory(protocol=IFurnaceManager,
-                                        factory=self._manager_factory)
+        so = self.service_offer_factory(
+            protocol=IFurnaceManager, factory=self._manager_factory
+        )
         return [so]
 
     def _tasks_default(self):
-        return [TaskFactory(name='Furnace',
-                            task_group='hardware',
-                            factory=self._task_factory,
-                            protocol=self.task_klass)]
+        return [
+            TaskFactory(
+                name="Furnace",
+                task_group="hardware",
+                factory=self._task_factory,
+                protocol=self.task_klass,
+            )
+        ]
+
 
 # ============= EOF =============================================

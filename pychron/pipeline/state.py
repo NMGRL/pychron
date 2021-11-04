@@ -25,7 +25,9 @@ def get_detector_set(ans):
 
 
 def get_isotope_pairs_set(ans):
-    return {'{}:{}'.format(iso.name, iso.detector) for ai in ans for iso in ai.itervalues()}
+    return {
+        "{}:{}".format(iso.name, iso.detector) for ai in ans for iso in ai.itervalues()
+    }
 
 
 def get_isotope_set(ans):
@@ -70,4 +72,6 @@ class EngineState(HasTraits):
     arar_calculation_options = None
 
     correlation_ellipses = None
+
+
 # ============= EOF =============================================

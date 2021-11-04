@@ -29,12 +29,14 @@ from pychron.paths import paths
 
 
 class FilePathAdapter(TabularAdapter):
-    columns = [('Name', 'name'),
-               ('Create', 'create_date'),
-               ('Modified', 'modified_date')]
+    columns = [
+        ("Name", "name"),
+        ("Create", "create_date"),
+        ("Modified", "modified_date"),
+    ]
 
     name_text = Property
-    font = '10'
+    font = "10"
 
     def _get_name_text(self):
         return os.path.relpath(self.item.path, paths.labbook_dir)
@@ -48,7 +50,7 @@ class FilePath(HasTraits):
     @property
     def path(self):
         """
-            recursively assemble the path to this resource
+        recursively assemble the path to this resource
         """
         if self.root:
             return os.path.join(self.root.path, self.name)
@@ -101,4 +103,6 @@ class Hierarchy(FilePath):
     # def low_post(self):
     #     c=self._get_chronology()
     #     return c[-1]
+
+
 # ============= EOF =============================================

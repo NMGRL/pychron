@@ -43,19 +43,18 @@ class DetectorBlockScene(Scene):
         self._load_detectors(parser)
 
     def _load_detectors(self, parser):
-        for det in parser.get_elements('detector'):
+        for det in parser.get_elements("detector"):
             self._add_detector(det)
 
     def _add_detector(self, elem):
-        x, y = self._get_floats(elem, 'translation')
-        mid, mad = self._get_floats(elem, 'deflection_range')
+        x, y = self._get_floats(elem, "translation")
+        mid, mad = self._get_floats(elem, "deflection_range")
         w, h = 5, 5
         name = elem.text.strip()
-        det = Detector(x, y,
-                       width=w, height=h,
-                       min_deflection=mid,
-                       max_deflection=mad,
-                       name=name)
+        det = Detector(
+            x, y, width=w, height=h, min_deflection=mid, max_deflection=mad, name=name
+        )
         self.add_item(det)
+
 
 # ============= EOF =============================================

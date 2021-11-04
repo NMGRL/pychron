@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Str, Int
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.headless_config_loadable import HeadlessConfigLoadable
@@ -42,9 +43,9 @@ class DHT11(HeadlessConfigLoadable):
         return self.load_additional_args(self.get_configuration())
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'pin', 'General', 'pin', cast='int')
-        self.set_attribute(config, 'units', 'General', 'units')
-        self.debug('pin={}, units={}'.format(self.pin, self.units))
+        self.set_attribute(config, "pin", "General", "pin", cast="int")
+        self.set_attribute(config, "units", "General", "units")
+        self.debug("pin={}, units={}".format(self.pin, self.units))
         return True
 
     def initialize(self, *args, **kw):
@@ -54,12 +55,12 @@ class DHT11(HeadlessConfigLoadable):
     def update(self):
         if self._sensor:
             self._humidity, temp = read_retry(self._sensor, self.pin)
-            if self.units == 'F':
-                temp = temp * 9 / 5. + 32
+            if self.units == "F":
+                temp = temp * 9 / 5.0 + 32
             self._temperature = temp
-            self.debug('update temp={}, hum={}'.format(temp, self._humidity))
+            self.debug("update temp={}, hum={}".format(temp, self._humidity))
         else:
-            self.critical('no sensor')
+            self.critical("no sensor")
 
     @property
     def humidity(self):
@@ -68,5 +69,6 @@ class DHT11(HeadlessConfigLoadable):
     @property
     def temperature(self):
         return self._temperature
+
 
 # ============= EOF =============================================

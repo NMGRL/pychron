@@ -28,52 +28,55 @@ class TextView(HasTraits):
     text = Str
     attribute = Str
     fontsize = Int(10)
+
     def __init__(self, analysis, *args, **kw):
         super(TextView, self).__init__(*args, **kw)
         self._load(analysis)
 
     def _load(self, an):
         try:
-            self.text = getattr(an, self.attribute)  #an.experiment_txt
+            self.text = getattr(an, self.attribute)  # an.experiment_txt
         except TraitError:
             pass
 
     def traits_view(self):
-        editor = myTextEditor(bgcolor='#F7F6D0',
-                              fontsize=10,
-                              fontsize_name='fontsize',
-                              wrap=False,
-                              tab_width=15)
-        v = View(UItem('text', style='custom', editor=editor))
+        editor = myTextEditor(
+            bgcolor="#F7F6D0",
+            fontsize=10,
+            fontsize_name="fontsize",
+            wrap=False,
+            tab_width=15,
+        )
+        v = View(UItem("text", style="custom", editor=editor))
         return v
 
 
 class ExperimentView(TextView):
-    name = 'Experiment'
-    attribute = 'experiment_txt'
+    name = "Experiment"
+    attribute = "experiment_txt"
 
 
 class MeasurementView(TextView):
-    name = 'Measurement'
-    attribute = 'measurement_script_blob'
+    name = "Measurement"
+    attribute = "measurement_script_blob"
 
 
 # class ExtractionView(TextView):
 #     name = 'Extraction'
 #     attribute = 'extraction_script_blob'
-    # def __init__(self, analysis, *args, **kw):
-    #     super(ExperimentView, self).__init__(*args, **kw)
-    #     self._load(analysis)
-    #
-    # def _load(self, an):
-    #     self.text = an.experiment_txt
-    #
-    # def traits_view(self):
-    #     editor = myTextEditor(bgcolor='#F7F6D0',
-    #                           fontsize=10,
-    #                           wrap=False,
-    #                           tab_width=15)
-    #     v = View(UItem('text', style='custom', editor=editor))
-    #     return v
-    #
-    # ============= EOF =============================================
+# def __init__(self, analysis, *args, **kw):
+#     super(ExperimentView, self).__init__(*args, **kw)
+#     self._load(analysis)
+#
+# def _load(self, an):
+#     self.text = an.experiment_txt
+#
+# def traits_view(self):
+#     editor = myTextEditor(bgcolor='#F7F6D0',
+#                           fontsize=10,
+#                           wrap=False,
+#                           tab_width=15)
+#     v = View(UItem('text', style='custom', editor=editor))
+#     return v
+#
+# ============= EOF =============================================

@@ -18,17 +18,19 @@
 from __future__ import absolute_import
 from traits.api import HasTraits, List, Str, Instance, Any
 from traitsui.api import View, UItem, VGroup, TabularEditor, HSplit, Item
+
 # ============= standard library imports ========================
 from io import StringIO
 from PIL import Image
 from numpy import array
+
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.ui.image_editor import ImageEditor
 
 
 class SnapshotAdapter(TabularAdapter):
-    columns = [('Name', 'name')]
+    columns = [("Name", "name")]
 
 
 class Snapshot(HasTraits):
@@ -40,7 +42,7 @@ class Snapshot(HasTraits):
 
 class SnapshotView(HasTraits):
     names = List
-    name = 'Snapshots'
+    name = "Snapshots"
     selected = Instance(Snapshot)
     selected_path = Str
     selected_remote_path = Str
@@ -55,7 +57,7 @@ class SnapshotView(HasTraits):
                     buf = StringIO(new.image)
                     buf.seek(0)
                     img = Image.open(buf)
-                    self.selected_image = img.convert('RGBA')
+                    self.selected_image = img.convert("RGBA")
                 except IOError:
                     self.selected_image = array([])
 
@@ -67,15 +69,23 @@ class SnapshotView(HasTraits):
         super(SnapshotView, self).__init__(*args, **kw)
 
     def traits_view(self):
-        v = View(HSplit(UItem('snapshots', editor=TabularEditor(adapter=SnapshotAdapter(),
-                                                                editable=False,
-                                                                selected='selected'),
-                              width=200),
-                        VGroup(Item('selected_path', label='Local', style='readonly'),
-                               Item('selected_remote_path', label='Remote', style='readonly'),
-                               VGroup(UItem('selected_image',
-                                            width=500,
-                                            editor=ImageEditor())))))
+        v = View(
+            HSplit(
+                UItem(
+                    "snapshots",
+                    editor=TabularEditor(
+                        adapter=SnapshotAdapter(), editable=False, selected="selected"
+                    ),
+                    width=200,
+                ),
+                VGroup(
+                    Item("selected_path", label="Local", style="readonly"),
+                    Item("selected_remote_path", label="Remote", style="readonly"),
+                    VGroup(UItem("selected_image", width=500, editor=ImageEditor())),
+                ),
+            )
+        )
         return v
+
 
 # ============= EOF =============================================

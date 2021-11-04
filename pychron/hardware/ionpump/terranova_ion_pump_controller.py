@@ -27,7 +27,7 @@ from traitsui.api import View, VGroup
 from pychron.hardware.core.core_device import CoreDevice
 
 CR = chr(13)
-STX = '*'
+STX = "*"
 
 
 class TerraNovaIonPumpController(CoreDevice):
@@ -36,20 +36,20 @@ class TerraNovaIonPumpController(CoreDevice):
     current = Float
 
     def read_hv_state(self):
-        qry = 'HV'
+        qry = "HV"
         self._read_bool(qry)
 
     def read_pressure(self):
-        qry = 'PR'
-        self._update_value(qry, 'pressure')
+        qry = "PR"
+        self._update_value(qry, "pressure")
 
     def read_voltage(self):
-        qry = 'VO'
-        self._update_value(qry, 'voltage')
+        qry = "VO"
+        self._update_value(qry, "voltage")
 
     def read_current(self):
-        qry = 'CU'
-        self._update_value(qry, 'current')
+        qry = "CU"
+        self._update_value(qry, "current")
 
     def _update_value(self, qry, attr):
         r = self._read_float(qry)
@@ -59,31 +59,29 @@ class TerraNovaIonPumpController(CoreDevice):
 
     # ============= views ===================================
     def traits_view(self):
-        v = View(VGroup('pressure',
-                        'current',
-                        'voltage'))
+        v = View(VGroup("pressure", "current", "voltage"))
         return v
 
     def _build_commad(self, cmd, value):
-        cksum = '00'
-        cmd = ''.join([STX, self.address, cmd, ':', value, cksum, CR])
+        cksum = "00"
+        cmd = "".join([STX, self.address, cmd, ":", value, cksum, CR])
         return cmd
 
     def _build_query(self, qry):
-        cksum = '00'
-        qry = ''.join([STX, self.address, qry, '?,', cksum, CR])
+        cksum = "00"
+        qry = "".join([STX, self.address, qry, "?,", cksum, CR])
         return qry
 
-    def _parse_response(self, r, kind='float'):
+    def _parse_response(self, r, kind="float"):
         print(r)
 
-        args = r.split(':')
-        if args[0] == 'OK':
-            value = args[1].split(',')[0]
-            if kind == 'float':
+        args = r.split(":")
+        if args[0] == "OK":
+            value = args[1].split(",")[0]
+            if kind == "float":
                 resp = float(value)
-            elif kind == 'bool':
-                resp = value == 'On'
+            elif kind == "bool":
+                resp = value == "On"
             return resp
 
     def _read_float(self, qry):
@@ -95,11 +93,11 @@ class TerraNovaIonPumpController(CoreDevice):
     def _read_bool(self, qry):
         qry = self._build_query(qry)
         r = self.ask(qry)
-        r = self._parse_response(r, kind='bool')
+        r = self._parse_response(r, kind="bool")
         return r
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     t = TerraNovaIonPumpController()
     t.configure_traits()
 # ============= EOF ====================================

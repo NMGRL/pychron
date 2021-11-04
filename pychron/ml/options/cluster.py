@@ -33,6 +33,8 @@ class ClusterOptions(FigureOptions):
 
 
 class ClusterOptionsManager(FigureOptionsManager):
-    id = 'cluster'
+    id = "cluster"
     options_klass = ClusterOptions
+
+
 # ============= EOF =============================================

@@ -21,22 +21,25 @@ from traits.api import List, Instance
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.experiment.events import ExperimentEventAddition, START_QUEUE, END_QUEUE
 from pychron.social.google_calendar.client import GoogleCalendarClient
-from pychron.social.google_calendar.tasks.preferences import GoogleCalendarPreferencesPane, \
-    GoogleCalendarExperimentPreferencesPane
+from pychron.social.google_calendar.tasks.preferences import (
+    GoogleCalendarPreferencesPane,
+    GoogleCalendarExperimentPreferencesPane,
+)
 
 
 class GoogleCalendarPlugin(BaseTaskPlugin):
-    id = 'pychron.google_calendar.plugin'
-    name = 'GoogleCalendar'
+    id = "pychron.google_calendar.plugin"
+    name = "GoogleCalendar"
 
-    events = List(contributes_to='pychron.experiment.events')
+    events = List(contributes_to="pychron.experiment.events")
     client = Instance(GoogleCalendarClient)
 
     def _service_offers_default(self):
-        """
-        """
-        so = self.service_offer_factory(protocol='pychron.social.google_calendar.client.GoogleCalendarClient',
-                                        factory=GoogleCalendarClient)
+        """ """
+        so = self.service_offer_factory(
+            protocol="pychron.social.google_calendar.client.GoogleCalendarClient",
+            factory=GoogleCalendarClient,
+        )
         return [so]
 
     def test_api(self):
@@ -44,40 +47,55 @@ class GoogleCalendarPlugin(BaseTaskPlugin):
         return s.test_api()
 
     def _end_experiment_event(self, ctx):
-        self.debug('end experiment event')
-        d = {'end': 'now',
-             'summary': 'Experiment: {} {}'.format(ctx['experiment_name'],
-                                                   ctx['err_message'])}
+        self.debug("end experiment event")
+        d = {
+            "end": "now",
+            "summary": "Experiment: {} {}".format(
+                ctx["experiment_name"], ctx["err_message"]
+            ),
+        }
 
-        enabled = self.application.get_boolean_preference('pychron.google_calendar.experiment.enabled')
+        enabled = self.application.get_boolean_preference(
+            "pychron.google_calendar.experiment.enabled"
+        )
         if enabled:
-            run_delay = self.application.preferences.get('pychron.google_calendar.experiment.run_delay')
-            if ctx['nruns_finished'] >= run_delay:
+            run_delay = self.application.preferences.get(
+                "pychron.google_calendar.experiment.run_delay"
+            )
+            if ctx["nruns_finished"] >= run_delay:
                 self.client.edit_event(d)
 
     def _start_experiment_event(self, ctx):
-        self.debug('start experiment event')
+        self.debug("start experiment event")
 
-        enabled = self.application.get_boolean_preference('pychron.google_calendar.experiment.enabled')
+        enabled = self.application.get_boolean_preference(
+            "pychron.google_calendar.experiment.enabled"
+        )
         if enabled:
-            run_delay = self.application.preferences.get('pychron.google_calendar.experiment.run_delay')
-            self.debug('calendar enabled')
-            nfinished = ctx['nruns_finished']
+            run_delay = self.application.preferences.get(
+                "pychron.google_calendar.experiment.run_delay"
+            )
+            self.debug("calendar enabled")
+            nfinished = ctx["nruns_finished"]
             if nfinished >= run_delay:
-                summary = 'Experiment: {}'.format(ctx['experiment_name'])
-                description = ''
-                self.client.post_event(summary, description, ctx['etf_iso'])
+                summary = "Experiment: {}".format(ctx["experiment_name"])
+                description = ""
+                self.client.post_event(summary, description, ctx["etf_iso"])
 
     def _client_default(self):
         return GoogleCalendarClient()
 
     def _events_default(self):
-        e1 = ExperimentEventAddition(id='pychron.google_calendar.start_event',
-                                     level=START_QUEUE,
-                                     action=self._start_experiment_event)
-        e2 = ExperimentEventAddition(id='pychron.google_calendar.end_event',
-                                     level=END_QUEUE,
-                                     action=self._end_experiment_event)
+        e1 = ExperimentEventAddition(
+            id="pychron.google_calendar.start_event",
+            level=START_QUEUE,
+            action=self._start_experiment_event,
+        )
+        e2 = ExperimentEventAddition(
+            id="pychron.google_calendar.end_event",
+            level=END_QUEUE,
+            action=self._end_experiment_event,
+        )
         return [e1, e2]
 
     # def _preferences_default(self):
@@ -92,5 +110,6 @@ class GoogleCalendarPlugin(BaseTaskPlugin):
 
     def _preferences_panes_default(self):
         return [GoogleCalendarPreferencesPane, GoogleCalendarExperimentPreferencesPane]
+
 
 # ============= EOF =============================================

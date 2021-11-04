@@ -33,10 +33,10 @@ def _area(data):
     for i in range(n):
         p1 = data[i]
         p2 = data[j]
-        a += (p1[0] * p2[1])
-        a -= (p1[1] * p2[0])
+        a += p1[0] * p2[1]
+        a -= p1[1] * p2[0]
         j = i
-    return a / 2.
+    return a / 2.0
 
 
 def calculate_centroid(data):
@@ -53,6 +53,7 @@ def calculate_centroid(data):
         j = i
 
     a = _area(data)
-    return x / (6. * a), y / (6. * a)
+    return x / (6.0 * a), y / (6.0 * a)
+
 
 # ============= EOF =============================================

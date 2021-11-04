@@ -23,6 +23,7 @@ from traits.api import Any
 # from chaco.base_plot_container import BasePlotContainer
 from chaco.plot import Plot
 
+
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
@@ -31,7 +32,7 @@ from chaco.plot import Plot
 class ContextualMenuTool(Interactor):
     parent = Any
 
-    #def normal_mouse_move(self, event):
+    # def normal_mouse_move(self, event):
     #    if self.parent.plots:
     #        comps = self.component.components_at(event.x, event.y)
     #
@@ -47,12 +48,12 @@ class ContextualMenuTool(Interactor):
     #
     #            self.parent.status_text = 'x:%0.2f y:%0.2f' % (x, y)
 
-    #def normal_mouse_enter(self, event):
+    # def normal_mouse_enter(self, event):
     #    '''
     #    '''
     #    self.parent.status_text = ''
 
-    #def normal_mouse_leave(self, event):
+    # def normal_mouse_leave(self, event):
     #    '''
     #    '''
     #    self.parent.status_text = ''
@@ -73,7 +74,7 @@ class ContextualMenuTool(Interactor):
                     break
 
             self.parent.selected_plot = plot
-            #self.parent.close_popup()
+            # self.parent.close_popup()
 
             parent = self.parent
 
@@ -83,8 +84,7 @@ class ContextualMenuTool(Interactor):
         else:
             self.parent.selected_plot = None
 
-
-            #event.handled = True
+            # event.handled = True
 
     def _display_menu(self, event):
         control = event.window.control
@@ -100,5 +100,6 @@ class ContextualMenuTool(Interactor):
         menu.show()
         menu_manager.destroy()
         event.handled = True
+
 
 # ============= EOF ====================================

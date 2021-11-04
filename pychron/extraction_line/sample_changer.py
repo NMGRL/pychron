@@ -61,47 +61,47 @@ class SampleChanger(Loggable):
     def check_finish(self):
         msg = None
         if not self._isolated:
-            msg = '{} was never isolated'.format(self.chamber)
+            msg = "{} was never isolated".format(self.chamber)
         elif not self._evacuated:
-            msg = '{} is not evacuated'.format(self.chamber)
+            msg = "{} is not evacuated".format(self.chamber)
         return msg
 
     def check_evacuation(self):
         """
-            is it ok to evacuate the chamber
+        is it ok to evacuate the chamber
         """
         isolated_bit = self._isolated
 
         # verify valves are actually closed
-        rules = self._rules['isolate']
+        rules = self._rules["isolate"]
 
         opens = []
-        for v in self._get_valves(rules, 'close'):
+        for v in self._get_valves(rules, "close"):
             state = self.manager.get_valve_state(v)
             if state:
                 opens.append(v)
 
         if not isolated_bit:
-            return 'Chamber was not isolated'
+            return "Chamber was not isolated"
         elif opens:
-            return 'Chamber is not isolated. Valves {} open'.format(','.join(opens))
+            return "Chamber is not isolated. Valves {} open".format(",".join(opens))
 
     def isolate_chamber(self):
-        if self._execute_message('isolate', 'pre'):
+        if self._execute_message("isolate", "pre"):
             self._isolate_chamber()
             return True
             # t = Thread(target=self._isolate_chamber)
             # t.start()
 
     def evacuate_chamber(self):
-        if self._execute_message('evacuate', 'pre'):
+        if self._execute_message("evacuate", "pre"):
             self._evacuate_chamber()
             return True
             # t = Thread(target=self._evacuate_chamber)
             # t.start()
 
     def finish_chamber_change(self):
-        if self._execute_message('finish', 'pre'):
+        if self._execute_message("finish", "pre"):
             self._finish_chamber_change()
             return True
             # t = Thread(target=self._finish_chamber_change)
@@ -111,54 +111,54 @@ class SampleChanger(Loggable):
         self._isolated = False
         self._evacuated = False
 
-        self.info('========================== finish sample change')
-        rules = self._rules['finish']
+        self.info("========================== finish sample change")
+        rules = self._rules["finish"]
         self._execute_rules(rules)
-        self._execute_message('finish', 'post')
+        self._execute_message("finish", "post")
 
     def _evacuate_chamber(self):
         self._evacuated = True
 
-        self.info('========================== evacuate chamber')
-        rules = self._rules['evacuate']
+        self.info("========================== evacuate chamber")
+        rules = self._rules["evacuate"]
         self._execute_rules(rules)
-        self._execute_message('evacuate', 'post')
+        self._execute_message("evacuate", "post")
 
     def _isolate_chamber(self):
         self._evacuated = False
         self._isolated = True
 
-        self.info('========================== isolating chamber')
-        rules = self._rules['isolate']
+        self.info("========================== isolating chamber")
+        rules = self._rules["isolate"]
         self._execute_rules(rules)
-        self._execute_message('isolate', 'post')
+        self._execute_message("isolate", "post")
 
     def _execute_message(self, name, kind):
         rules = self._rules[name]
         try:
-            return self.confirmation_dialog(rules['{}_message'.format(kind)])
+            return self.confirmation_dialog(rules["{}_message".format(kind)])
         except KeyError:
             pass
 
         return True
 
     def _execute_rules(self, rules):
-        unlock_valves = self._get_valves(rules, 'unlock')
+        unlock_valves = self._get_valves(rules, "unlock")
         for v in unlock_valves:
             self.manager.set_software_lock(v, False)
 
-        close_valves = self._get_valves(rules, 'close')
+        close_valves = self._get_valves(rules, "close")
         for v in close_valves:
             self.manager.close_valve(v)
             time.sleep(0.25)
 
         time.sleep(1)
-        open_valves = self._get_valves(rules, 'open')
+        open_valves = self._get_valves(rules, "open")
         for v in open_valves:
             self.manager.open_valve(v)
             time.sleep(0.25)
 
-        lock_valves = self._get_valves(rules, 'lock')
+        lock_valves = self._get_valves(rules, "lock")
         for v in lock_valves:
             self.manager.set_software_lock(v, True)
 
@@ -169,14 +169,16 @@ class SampleChanger(Loggable):
         if key in rules:
             valves = rules[key]
             if valves:
-                v = valves.split(',')
+                v = valves.split(",")
         return v
 
     def _get_chambers(self, rules=None):
         if rules is None:
             rules = self._get_rules()
 
-        c = [NULL_STR, ]
+        c = [
+            NULL_STR,
+        ]
         if rules:
             c.extend(list(rules.keys()))
 
@@ -184,25 +186,25 @@ class SampleChanger(Loggable):
 
     def _load_chamber_rules(self, name):
         """
-            chamber_name:
-              isolate:
-               open:
-               close:
-               lock:
-               unlock:
-             evacuate:
-               ...
-             finish:
-               ...
+        chamber_name:
+          isolate:
+           open:
+           close:
+           lock:
+           unlock:
+         evacuate:
+           ...
+         finish:
+           ...
 
-            e.g
+        e.g
 
-            CO2:
-             isolate:
-              open: A,B,C
-              close: D,E,F
-              lock: A,B,C
-              unlock: D,E,F
+        CO2:
+         isolate:
+          open: A,B,C
+          close: D,E,F
+          lock: A,B,C
+          unlock: D,E,F
 
         """
         rules = self._get_rules()
@@ -210,21 +212,24 @@ class SampleChanger(Loggable):
             self._rules = rules[name]
 
     def _get_rules(self):
-        path = os.path.join(paths.scripts_dir, 'sample_change_rules.yaml')
+        path = os.path.join(paths.scripts_dir, "sample_change_rules.yaml")
         if os.path.isfile(path):
             return yload(path)
 
         else:
-            self.warning_dialog('No sample change rules defined at {}. \n\n'
-                                'Please see documentation for appropriate file format'.format(path))
+            self.warning_dialog(
+                "No sample change rules defined at {}. \n\n"
+                "Please see documentation for appropriate file format".format(path)
+            )
 
     def chamber_select_view(self):
-        v = View(Item('chamber', editor=EnumEditor(name='chambers')),
-                 kind='livemodal',
-                 title='Select Chamber',
-                 resizable=True,
-                 width=200,
-                 buttons=['OK', 'Cancel']
-                 )
+        v = View(
+            Item("chamber", editor=EnumEditor(name="chambers")),
+            kind="livemodal",
+            title="Select Chamber",
+            resizable=True,
+            width=200,
+            buttons=["OK", "Cancel"],
+        )
         return v
         # ============= EOF =============================================

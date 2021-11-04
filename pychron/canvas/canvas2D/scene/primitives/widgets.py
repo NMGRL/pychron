@@ -30,7 +30,9 @@ class Widget(ValueLabel):
     def update(self):
         v = self._update_function()
         if isinstance(v, float):
-            v = '{:0.3f}'.format(v)
+            v = "{:0.3f}".format(v)
 
         self.value = v
+
+
 # ============= EOF =============================================

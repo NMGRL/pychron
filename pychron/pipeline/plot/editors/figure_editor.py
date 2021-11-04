@@ -31,6 +31,7 @@ class FigureEditor(GraphEditor):
     # plotter_options_manager = Any
     # associated_editors = List
     plotter_options = Any
+
     # tool = Any
 
     # annotation_tool = Any
@@ -70,7 +71,7 @@ class FigureEditor(GraphEditor):
 
     def clear_aux_plot_limits(self):
         po = self.plotter_options
-        if hasattr(po, 'aux_plots'):
+        if hasattr(po, "aux_plots"):
             for ap in po.aux_plots:
                 ap.clear_ylimits()
                 ap.clear_xlimits()
@@ -103,18 +104,23 @@ class FigureEditor(GraphEditor):
             model = self.figure_model_klass()
             self.figure_model = model
 
-        model.trait_set(plot_options=self.plotter_options,
-                        # analysis_groups=self.analysis_groups,
-                        # titles=self.titles,
-                        analyses=self.items,
-                        references=self.references)
+        model.trait_set(
+            plot_options=self.plotter_options,
+            # analysis_groups=self.analysis_groups,
+            # titles=self.titles,
+            analyses=self.items,
+            references=self.references,
+        )
 
         return model
 
     def get_component_view(self):
-        return UItem('component',
-                     style='custom',
-                     width=-self.plotter_options.layout.fixed_width,
-                     editor=ComponentEditor())
+        return UItem(
+            "component",
+            style="custom",
+            width=-self.plotter_options.layout.fixed_width,
+            editor=ComponentEditor(),
+        )
+
 
 # ============= EOF =============================================

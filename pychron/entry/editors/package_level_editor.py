@@ -31,7 +31,7 @@ from pychron.loggable import Loggable
 
 
 class TrayAdapter(TabularAdapter):
-    columns = [('Name', 'name')]
+    columns = [("Name", "name")]
     name_text = Property
 
     def _get_name_text(self):
@@ -39,33 +39,44 @@ class TrayAdapter(TabularAdapter):
 
 
 class EditView(ModelView):
-    title = 'Edit Level'
+    title = "Edit Level"
 
     def traits_view(self):
-        editor = TabularEditor(adapter=TrayAdapter(),
-                               editable=False,
-                               selected='selected_tray')
-        tray_grp = VGroup(HGroup(icon_button_editor('add_tray_button', 'add',
-                                                    tooltip='Add a tray from file')),
-                          HSplit(UItem('trays', editor=editor, width=0.25),
-                                 UItem('canvas', editor=ComponentEditor(), width=0.75)),
-                          label='Tray')
+        editor = TabularEditor(
+            adapter=TrayAdapter(), editable=False, selected="selected_tray"
+        )
+        tray_grp = VGroup(
+            HGroup(
+                icon_button_editor(
+                    "add_tray_button", "add", tooltip="Add a tray from file"
+                )
+            ),
+            HSplit(
+                UItem("trays", editor=editor, width=0.25),
+                UItem("canvas", editor=ComponentEditor(), width=0.75),
+            ),
+            label="Tray",
+        )
 
-        v = okcancel_view(VGroup(HGroup(Item('name')),
-                                 BorderVGroup(UItem('level_note', style='custom'), label='Level Note'),
-                                 tray_grp),
-                          width=550,
-                          height=650,
-                          title=self.title)
+        v = okcancel_view(
+            VGroup(
+                HGroup(Item("name")),
+                BorderVGroup(UItem("level_note", style="custom"), label="Level Note"),
+                tray_grp,
+            ),
+            width=550,
+            height=650,
+            title=self.title,
+        )
         return v
 
 
 class AddView(EditView):
-    title = 'Add Level'
+    title = "Add Level"
 
 
 class PackageLevelEditor(Loggable):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance("pychron.dvc.dvc.DVC")
     level_note = Str
     name = SpacelessStr
     selected_tray = Str
@@ -77,9 +88,11 @@ class PackageLevelEditor(Loggable):
     _add_view_klass = AddView
     _edit_view_klass = EditView
 
-    _check_attrs = (('name', 'No name enter for this level. Would you like to enter one?'),
-                    ('selected_tray', 'No tray selected for this level. Would like to select one?'))
-    _tagname = 'Package'
+    _check_attrs = (
+        ("name", "No name enter for this level. Would you like to enter one?"),
+        ("selected_tray", "No tray selected for this level. Would like to select one?"),
+    )
+    _tagname = "Package"
 
     def edit(self):
         self._edit_level()
@@ -88,14 +101,12 @@ class PackageLevelEditor(Loggable):
         return self._add_level()
 
     def _save_level(self):
-        prname = 'NoProduction'
+        prname = "NoProduction"
         db = self.dvc.db
         # add to database
-        db.add_irradiation_level(self.name, self.irradiation,
-                                 self.selected_tray,
-                                 prname,
-                                 0,
-                                 self.level_note)
+        db.add_irradiation_level(
+            self.name, self.irradiation, self.selected_tray, prname, 0, self.level_note
+        )
 
         # add to repository
         meta_repo = self.dvc.meta_repo
@@ -103,7 +114,7 @@ class PackageLevelEditor(Loggable):
         meta_repo.update_productions(self.irradiation, self.name, prname)
         meta_repo.add_production_to_irradiation(self.irradiation, prname, {})
 
-        meta_repo.commit('Added level {} to {}'.format(self.name, self.irradiation))
+        meta_repo.commit("Added level {} to {}".format(self.name, self.irradiation))
         return True
 
     def _edit_level(self):
@@ -118,19 +129,24 @@ class PackageLevelEditor(Loggable):
                 if info.result:
                     for attr, msg in self._check_attrs:
                         info = self._check_attr_set(av, attr, msg)
-                        if info == 'break':
+                        if info == "break":
                             break
                         elif info is not None:
                             continue
 
-                    if not next((li for li in irrad.levels if li.name == self.name), None):
+                    if not next(
+                        (li for li in irrad.levels if li.name == self.name), None
+                    ):
                         if self._save_level():
                             return self.name
                         else:
                             break
                     else:
-                        self.warning_dialog('Level {} already exists for {} {}'.format(self.name, self._tagname,
-                                                                                       self.irradiation))
+                        self.warning_dialog(
+                            "Level {} already exists for {} {}".format(
+                                self.name, self._tagname, self.irradiation
+                            )
+                        )
                 else:
                     break
 
@@ -140,7 +156,7 @@ class PackageLevelEditor(Loggable):
                 info = av.edit_traits()
                 return info
             else:
-                return 'break'
+                return "break"
 
     def _pre_add_level(self):
         irrad = self.irradiation
@@ -153,7 +169,9 @@ class PackageLevelEditor(Loggable):
             self.z = level.z or 0
 
             if level.holder:
-                self.selected_tray = next((t for t in self.trays if t == level.holder), '')
+                self.selected_tray = next(
+                    (t for t in self.trays if t == level.holder), ""
+                )
 
             nind = alpha_to_int(level.name) + 1
             self.name = alphas(nind)
@@ -175,4 +193,6 @@ class PackageLevelEditor(Loggable):
 
     def load_trays(self):
         self.trays = self.dvc.meta_repo.get_irradiation_holder_names()
+
+
 # ============= EOF =============================================

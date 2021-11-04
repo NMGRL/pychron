@@ -23,6 +23,7 @@ from __future__ import absolute_import
 from traits.api import on_trait_change, Dict
 
 from pychron.pipeline.plot.models.figure_model import FigureModel
+
 # from pychron.processing.plot.panels.series_panel import SeriesPanel, DashboardSeriesPanel
 from pychron.pipeline.plot.panels.series_panel import SeriesPanel, DashboardSeriesPanel
 
@@ -35,7 +36,7 @@ class DashboardSeriesModel(SeriesModel):
     _panel_klass = DashboardSeriesPanel
     measurements = Dict
 
-    @on_trait_change('measurements')
+    @on_trait_change("measurements")
     def _measurements_changed(self):
         ps = self._make_panels()
         self.panels = ps
@@ -44,11 +45,13 @@ class DashboardSeriesModel(SeriesModel):
     def _make_panels(self):
         # key = lambda x: x.graph_id
         # ans = sorted(self.analyses, key=key)
-        gs = self._panel_klass(measurements=self.measurements,
-                               plot_options=self.plot_options,
-                               group_id=0)
+        gs = self._panel_klass(
+            measurements=self.measurements, plot_options=self.plot_options, group_id=0
+        )
         # for gid, ais in groupby(ans, key=key)]
 
-        return [gs, ]
+        return [
+            gs,
+        ]
 
         # ============= EOF =============================================

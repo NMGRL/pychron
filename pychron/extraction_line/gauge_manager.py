@@ -19,20 +19,23 @@
 from __future__ import absolute_import
 from traits.api import Int, Bool
 from traitsui.api import View, Item, ListEditor, InstanceEditor
+
 # ============= standard library imports ========================
 import time
+
 # ============= local library imports  ==========================
+from pychron.extraction_line.device_manager import DeviceManager
 from pychron.managers.manager import Manager
 
 
-class GaugeManager(Manager):
-    use_update = Bool
-    update_period = Int
+class GaugeManager(DeviceManager):
+    # use_update = Bool
+    # update_period = Int
 
     def finish_loading(self, *args, **kw):
         width = int(250 / float(len(self.devices)))
         for k in self.devices:
-            if hasattr(k, 'gauges'):
+            if hasattr(k, "gauges"):
                 for gi in k.gauges:
                     gi.width = width
                     # if gi.name in ('CG1', 'CG2'):
@@ -43,63 +46,79 @@ class GaugeManager(Manager):
     def get_pressure(self, controller, name):
         dev = next((di for di in self.devices if di.name == controller), None)
         if dev is None:
-            self.warning('Failed getting pressure for {} {}. '
-                         'Not a valid controller'.format(controller, name))
+            self.warning(
+                "Failed getting pressure for {} {}. "
+                "Not a valid controller".format(controller, name)
+            )
         else:
             return dev.get_pressure(name)
 
     def test_connection(self):
         for di in self.devices:
             if not di.test_connection():
-                self.debug('Failed connection to "{}" (display_name={})'.format(di.name, di.display_name))
+                self.debug(
+                    'Failed connection to "{}" (display_name={})'.format(
+                        di.name, di.display_name
+                    )
+                )
                 return
             else:
-                self.debug('Get pressures name={}, display_name={}, {}'.format(di.name,
-                                                                               di.display_name,
-                                                                               di.get_pressures(verbose=True)))
+                self.debug(
+                    "Get pressures name={}, display_name={}, {}".format(
+                        di.name, di.display_name, di.get_pressures(verbose=True)
+                    )
+                )
         else:
             return True
 
-    def stop_scans(self):
-        for k in self.devices:
-            if k.is_scanable:
-                k.stop_scan()
-
-    def start_scans(self):
-
-        self.info('starting gauge scans')
-        # stop scans first
-        self.stop_scans()
-
-        # sp = self.scan_period*1000
-        sp = None
-        if self.use_update:
-            sp = self.update_period*1000
-
-        sp = sp or None
-        for k in self.devices:
-            if k.is_scanable:
-                k.start_scan(sp)
-                # stagger starts to reduce collisions
-                time.sleep(0.25)
+    # def stop_scans(self):
+    #     for k in self.devices:
+    #         if k.is_scanable:
+    #             k.stop_scan()
+    #
+    # def start_scans(self):
+    #
+    #     self.info("starting gauge scans")
+    #     # stop scans first
+    #     self.stop_scans()
+    #
+    #     # sp = self.scan_period*1000
+    #     sp = None
+    #     if self.use_update:
+    #         sp = self.update_period * 1000
+    #
+    #     sp = sp or None
+    #     for k in self.devices:
+    #         if k.is_scanable:
+    #             k.start_scan(sp)
+    #             # stagger starts to reduce collisions
+    #             time.sleep(0.25)
 
     def traits_view(self):
         if self.devices:
-            v = View(Item('devices', style='custom',
-                          show_label=False,
-                          editor=ListEditor(mutable=False,
-                                            columns=len(self.devices),
-                                            style='custom',
-                                            editor=InstanceEditor(view='gauge_view'))),
-                     height=-100)
+            v = View(
+                Item(
+                    "devices",
+                    style="custom",
+                    show_label=False,
+                    editor=ListEditor(
+                        mutable=False,
+                        columns=len(self.devices),
+                        style="custom",
+                        editor=InstanceEditor(view="gauge_view"),
+                    ),
+                ),
+                height=-100,
+            )
         else:
-            v =View()
+            v = View()
         return v
 
     def _get_simulation(self):
         return any([dev.simulation for dev in self.devices])
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     g = GaugeManager()
     g.bootstrap()
     # g.configure_traits()

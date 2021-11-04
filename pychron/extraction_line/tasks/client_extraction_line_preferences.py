@@ -18,14 +18,17 @@
 from __future__ import absolute_import
 from traits.api import Bool, Int
 from traitsui.api import Item, VGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.extraction_line.tasks.extraction_line_preferences import ExtractionLinePreferencesPane, \
-    BaseExtractionLinePreferences
+from pychron.extraction_line.tasks.extraction_line_preferences import (
+    ExtractionLinePreferencesPane,
+    BaseExtractionLinePreferences,
+)
 
 
 class ClientExtractionLinePreferences(BaseExtractionLinePreferences):
-    name = 'ClientExtractionLine'
+    name = "ClientExtractionLine"
 
     use_status_monitor = Bool
     valve_state_frequency = Int(3)
@@ -37,34 +40,52 @@ class ClientExtractionLinePreferences(BaseExtractionLinePreferences):
 
 class ClientExtractionLinePreferencesPane(ExtractionLinePreferencesPane):
     model_factory = ClientExtractionLinePreferences
-    category = 'ExtractionLine'
+    category = "ExtractionLine"
 
     def _get_status_group(self):
-        s_grp = VGroup(Item('use_status_monitor'),
-                       VGroup(Item('update_period', tooltip='Delay between iterations in seconds'),
-                              VGroup(
-                                  Item('valve_state_frequency', label='State',
-                                       tooltip='Check Valve State, i.e Open or Closed every N iterations'),
-                                  Item('checksum_frequency', label='Checksum',
-                                       tooltip='Check the entire extraction line state every N iterations'),
-                                  Item('valve_lock_frequency', label='Lock',
-                                       tooltip='Check Valve Software Lock. i.e Locked or unlocked every N iterations'),
-                                  Item('valve_owner_frequency', label='Owner',
-                                       tooltip='Check Valve Owner every N iterations'),
-                                  label='Frequencies'),
-                              enabled_when='use_status_monitor'),
-                       label='Status Monitor')
+        s_grp = VGroup(
+            Item("use_status_monitor"),
+            VGroup(
+                Item("update_period", tooltip="Delay between iterations in seconds"),
+                VGroup(
+                    Item(
+                        "valve_state_frequency",
+                        label="State",
+                        tooltip="Check Valve State, i.e Open or Closed every N iterations",
+                    ),
+                    Item(
+                        "checksum_frequency",
+                        label="Checksum",
+                        tooltip="Check the entire extraction line state every N iterations",
+                    ),
+                    Item(
+                        "valve_lock_frequency",
+                        label="Lock",
+                        tooltip="Check Valve Software Lock. i.e Locked or unlocked every N iterations",
+                    ),
+                    Item(
+                        "valve_owner_frequency",
+                        label="Owner",
+                        tooltip="Check Valve Owner every N iterations",
+                    ),
+                    label="Frequencies",
+                ),
+                enabled_when="use_status_monitor",
+            ),
+            label="Status Monitor",
+        )
 
         return s_grp
 
     def _get_valve_group(self):
-        v_grp = VGroup(self._network_group(),
-                       show_border=True,
-                       label='Valves')
+        v_grp = VGroup(self._network_group(), show_border=True, label="Valves")
 
         return v_grp
 
     def _get_tabs(self):
-        return super(ClientExtractionLinePreferencesPane, self)._get_tabs() + (self._get_status_group(),)
+        return super(ClientExtractionLinePreferencesPane, self)._get_tabs() + (
+            self._get_status_group(),
+        )
+
 
 # ============= EOF =============================================

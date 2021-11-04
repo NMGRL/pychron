@@ -25,8 +25,8 @@ from pychron.managers.manager import Manager
 class BaseSpectrometerManager(Manager):
     spectrometer = Any
     spectrometer_klass = None
-    simulation = DelegatesTo('spectrometer')
-    name = Property(depends_on='spectrometer')
+    simulation = DelegatesTo("spectrometer")
+    name = Property(depends_on="spectrometer")
 
     def __init__(self, application, *args, **kw):
         self.application = application
@@ -81,12 +81,12 @@ class BaseSpectrometerManager(Manager):
 
     def load(self):
         spec = self.spectrometer
-        self.debug('******************************* LOAD Spec')
+        self.debug("******************************* LOAD Spec")
         spec.load()
         return True
 
     def finish_loading(self):
-        self.debug('Finish loading')
+        self.debug("Finish loading")
 
         # integration_time = 1.048576
 
@@ -110,7 +110,7 @@ class BaseSpectrometerManager(Manager):
         self.spectrometer.finish_loading()
 
     def _get_name(self):
-        r = ''
+        r = ""
         if self.spectrometer:
             if self.spectrometer.microcontroller:
                 r = self.spectrometer.microcontroller.name
@@ -118,5 +118,6 @@ class BaseSpectrometerManager(Manager):
 
     def _spectrometer_default(self):
         return self.spectrometer_klass(application=self.application)
+
 
 # ============= EOF =============================================

@@ -26,8 +26,8 @@ from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class ProjectTask(BaseManagerTask):
-    name = 'Project Database'
-    id = 'pychron.entry.project.task'
+    name = "Project Database"
+    id = "pychron.entry.project.task"
 
     def activated(self):
         self.manager.activated()
@@ -39,5 +39,6 @@ class ProjectTask(BaseManagerTask):
         dvc = self.application.get_service(DVC_PROTOCOL)
         dvc.connect()
         return ProjectManager(application=self.application, dvc=dvc)
+
 
 # ============= EOF =============================================

@@ -1,4 +1,4 @@
-'''
+"""
     National Control Devices
     
    http://www.controlanything.com/ 
@@ -6,7 +6,7 @@
    The Complete ProXR Command Set:
    http://www.controlanything.com/Relay/Device/A0010
    http://assets.controlanything.com/manuals/ProXR.pdf
-'''
+"""
 # ===============================================================================
 # Copyright 2012 Jake Ross
 #
@@ -25,6 +25,8 @@
 
 # ============= enthought library imports =======================
 from pychron.hardware.core.core_device import CoreDevice
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -40,5 +42,6 @@ class NCDDevice(CoreDevice):
         return bytes([int(a) for a in args])
         # formatter = lambda x:chr(x)
         # return b''.join(map(chr, args))
+
 
 # ============= EOF =============================================

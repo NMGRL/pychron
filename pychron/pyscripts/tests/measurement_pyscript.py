@@ -3,35 +3,38 @@ from pychron.core.ui import set_qt
 
 set_qt()
 
-__author__ = 'ross'
+__author__ = "ross"
 
 import unittest
 import os
-from pychron.pyscripts.measurement_pyscript import MeasurementPyScript, MeasurementCTXObject
+from pychron.pyscripts.measurement_pyscript import (
+    MeasurementPyScript,
+    MeasurementCTXObject,
+)
 
 
 class DocstrContextTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.script = MeasurementPyScript()
-        p = 'pychron/pyscripts/tests/data/measurement_script.txt'
+        p = "pychron/pyscripts/tests/data/measurement_script.txt"
         if not os.path.isfile(p):
-            p = './data/measurement_script.txt'
+            p = "./data/measurement_script.txt"
 
-        with open(p, 'r') as rfile:
+        with open(p, "r") as rfile:
             cls.script.text = rfile.read()
 
         cls.script.bootstrap()
         cls.script.setup_context()
 
     def test_mx(self):
-        self.assertIsInstance(self.script._ctx['mx'], MeasurementCTXObject)
+        self.assertIsInstance(self.script._ctx["mx"], MeasurementCTXObject)
 
     def test_mx_multicollect_counts(self):
-        self.assertEqual(self.script._ctx['mx'].multicollect.counts, 5)
+        self.assertEqual(self.script._ctx["mx"].multicollect.counts, 5)
 
     def test_mx_baseline_counts(self):
-        self.assertEqual(self.script._ctx['mx'].baseline.counts, 3)
+        self.assertEqual(self.script._ctx["mx"].baseline.counts, 3)
 
 
 class InterpolationTestCase(unittest.TestCase):
@@ -39,9 +42,9 @@ class InterpolationTestCase(unittest.TestCase):
     def setUpClass(cls):
         cls.script = MeasurementPyScript()
         cls.script.bootstrap()
-        p = 'pychron/pyscripts/tests/data/script_options.yaml'
+        p = "pychron/pyscripts/tests/data/script_options.yaml"
         if not os.path.isfile(p):
-            p = './data/script_options.yaml'
+            p = "./data/script_options.yaml"
         cls.script.interpolation_path = p
 
     def test_warm_cdd(self):
@@ -58,7 +61,7 @@ class InterpolationTestCase(unittest.TestCase):
         self.assertRaises(AttributeError, lambda: self.script.novalue)
 
     def test_execute_snippet(self):
-        snippet = '''def main(): a= float_value+2'''
+        snippet = """def main(): a= float_value+2"""
         v = self.script.execute_snippet(snippet)
         self.assertIs(v, None)
 
@@ -67,10 +70,10 @@ class InterpolationTestCase(unittest.TestCase):
         # self.assertIs(v, None)
 
     def test_execute_snippet_fail(self):
-        snippet = '''def main(): a= float_valufe+2'''
+        snippet = """def main(): a= float_valufe+2"""
         v = self.script.execute_snippet(snippet)
         self.assertIsInstance(v, str)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

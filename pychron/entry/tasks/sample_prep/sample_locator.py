@@ -26,7 +26,7 @@ from pychron.core.ui.combobox_editor import ComboboxEditor
 
 
 class SessionAdapter(TabularAdapter):
-    columns = [('Worker', 'worker_name'), ('Session', 'name'), ('Date', 'start_date')]
+    columns = [("Worker", "worker_name"), ("Session", "name"), ("Date", "start_date")]
 
 
 class SampleLocator(HasTraits):
@@ -34,13 +34,13 @@ class SampleLocator(HasTraits):
     principal_investigators = Property
 
     project = Str
-    projects = Property(depends_on='principal_investigator')
+    projects = Property(depends_on="principal_investigator")
 
     sample = Str
-    samples = Property(depends_on='project')
+    samples = Property(depends_on="project")
 
     session = Any
-    sessions = Property(depends_on='sample')
+    sessions = Property(depends_on="sample")
 
     @cached_property
     def _get_principal_investigators(self):
@@ -56,7 +56,9 @@ class SampleLocator(HasTraits):
     @cached_property
     def _get_projects(self):
         if self.principal_investigator:
-            return [p.name for p in self.dvc.get_projects((self.principal_investigator,))]
+            return [
+                p.name for p in self.dvc.get_projects((self.principal_investigator,))
+            ]
         else:
             return []
 
@@ -68,17 +70,23 @@ class SampleLocator(HasTraits):
             return []
 
     def traits_view(self):
-        agrp = HGroup(Item('principal_investigator', label='PI',
-                           editor=EnumEditor(name='principal_investigators')),
-                      Item('project', label='Project',
-                           editor=ComboboxEditor(name='projects')),
-                      Item('sample', label='Sample',
-                           editor=ComboboxEditor(name='samples')))
-        bgrp = VGroup(UItem('sessions', editor=TabularEditor(adapter=SessionAdapter(),
-                                                             selected='session')))
-        v = okcancel_view(VGroup(agrp,
-                                 bgrp),
-                          title='Locate Sample')
+        agrp = HGroup(
+            Item(
+                "principal_investigator",
+                label="PI",
+                editor=EnumEditor(name="principal_investigators"),
+            ),
+            Item("project", label="Project", editor=ComboboxEditor(name="projects")),
+            Item("sample", label="Sample", editor=ComboboxEditor(name="samples")),
+        )
+        bgrp = VGroup(
+            UItem(
+                "sessions",
+                editor=TabularEditor(adapter=SessionAdapter(), selected="session"),
+            )
+        )
+        v = okcancel_view(VGroup(agrp, bgrp), title="Locate Sample")
         return v
+
 
 # ============= EOF =============================================

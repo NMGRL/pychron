@@ -30,12 +30,20 @@ class CMDObject(CTXObject):
 
 class MeasurementCTXObject(object):
     def create(self, yd):
-        for k in ('baseline', 'multicollect', 'peakcenter', 'equilibration', 'whiff', 'peakhop'):
+        for k in (
+            "baseline",
+            "multicollect",
+            "peakcenter",
+            "equilibration",
+            "whiff",
+            "peakhop",
+        ):
             try:
                 c = CTXObject()
                 c.update(yd[k])
                 setattr(self, k, c)
             except KeyError:
                 pass
+
 
 # ============= EOF =============================================

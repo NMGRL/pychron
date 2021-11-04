@@ -22,37 +22,37 @@ from pychron.paths import paths
 
 
 def set_mftable_name(name):
-    ppath = os.path.join(paths.hidden_dir, 'mftable_name')
-    name = add_extension(name, '.csv')
-    with open(ppath, 'w') as wfile:
+    ppath = os.path.join(paths.hidden_dir, "mftable_name")
+    name = add_extension(name, ".csv")
+    with open(ppath, "w") as wfile:
         wfile.write(name)
 
 
 def get_mftable_name():
-    p = os.path.join(paths.hidden_dir, 'mftable_name')
+    p = os.path.join(paths.hidden_dir, "mftable_name")
     if os.path.isfile(p):
         with open(p) as rfile:
             n = rfile.read().strip()
             return n
     else:
-        return 'mftable.csv'
+        return "mftable.csv"
 
 
 def set_spectrometer_config_name(name):
-    ppath = os.path.join(paths.hidden_dir, 'spectrometer_config_name')
-    name = add_extension(name, '.cfg')
-    print('setting configureation name', name)
-    with open(ppath, 'w') as wfile:
+    ppath = os.path.join(paths.hidden_dir, "spectrometer_config_name")
+    name = add_extension(name, ".cfg")
+    print("setting configureation name", name)
+    with open(ppath, "w") as wfile:
         wfile.write(name)
 
 
 def get_spectrometer_config_name():
-    p = os.path.join(paths.hidden_dir, 'spectrometer_config_name')
+    p = os.path.join(paths.hidden_dir, "spectrometer_config_name")
     if os.path.isfile(p):
         with open(p) as rfile:
             return rfile.read().strip()
     else:
-        return 'config.cfg'
+        return "config.cfg"
 
 
 def get_spectrometer_config_path(name=None):

@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # =============enthought library imports=======================
 
 # =============standard library imports ========================
@@ -23,37 +22,38 @@
 # =============local library imports  ==========================
 from __future__ import absolute_import
 from .kerr_device import KerrDevice
+
+
 class KerrMicrocontroller(KerrDevice):
     """
-        Provides access to a `Kerr Controller board <http://www.jrkerr.com/boards.html>`_.
-        Used for controlling stepper motors and servos.
+    Provides access to a `Kerr Controller board <http://www.jrkerr.com/boards.html>`_.
+    Used for controlling stepper motors and servos.
     """
-    address = '00'
-    def initialize(self, *args, **kw):
-        """
-        """
-        # clear the buffers
-        self.info('init microcontroller')
-        self.parent.tell('0' * 40, is_hex=True)
 
-        cmd = self._build_command('FF', '0F')
+    address = "00"
+
+    def initialize(self, *args, **kw):
+        """ """
+        # clear the buffers
+        self.info("init microcontroller")
+        self.parent.tell("0" * 40, is_hex=True)
+
+        cmd = self._build_command("FF", "0F")
         self.ask(cmd, is_hex=True)
 
         # addr = self.address
-        commands = [('00', '2101FF', 100, 'setting module 1 address'),
-                    ('00', '2102FF', 100, 'setting module 2 address'),
-                    # ('00', '2103FF', 100, 'setting module 3 address')
-                    ]
+        commands = [
+            ("00", "2101FF", 100, "setting module 1 address"),
+            ("00", "2102FF", 100, "setting module 2 address"),
+            # ('00', '2103FF', 100, 'setting module 3 address')
+        ]
         self._execute_hex_commands(commands, delay=100)
 
         # verify number of modules found
-        commands = [
-                   ('01', '0E', 50, 'no op'),
-                   ('02', '0E', 50, 'no op')
-                   ]
+        commands = [("01", "0E", 50, "no op"), ("02", "0E", 50, "no op")]
         self._execute_hex_commands(commands)
 
-#        addr = self.address
+        #        addr = self.address
         #         cmd = '0E'
         #         for addr in ('01', '02'):
         #             c = self._build_command(addr, cmd)

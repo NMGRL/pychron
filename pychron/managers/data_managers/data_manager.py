@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Dict
@@ -31,12 +30,13 @@ from pychron.core.helpers.datetime_tools import generate_datetimestamp, time_gen
 
 
 class DataManager(Manager):
-    '''
-    '''
-    _extension = 'txt'
+    """ """
+
+    _extension = "txt"
     frames = Dict
-    _current_frame = ''
+    _current_frame = ""
     time_gen = None
+
     def get_current_path(self):
         pass
 
@@ -44,8 +44,7 @@ class DataManager(Manager):
         pass
 
     def new_frame(self, *args, **kw):
-        """
-        """
+        """ """
         p = self._new_frame_path(*args, **kw)
 
         name, _ext = os.path.splitext(os.path.basename(p))
@@ -54,34 +53,29 @@ class DataManager(Manager):
         self._current_frame = name
         return name
 
-    def _new_frame_path(self, path=None, directory='scans',
-                        offset=0,
-                        base_frame_name=None, verbose=True):
-        """
-
-        """
+    def _new_frame_path(
+        self, path=None, directory="scans", offset=0, base_frame_name=None, verbose=True
+    ):
+        """ """
         if base_frame_name is None:
-            base_frame_name = 'scan'
+            base_frame_name = "scan"
 
-        '''
+        """
             if directory is an absolute path paths.data_dir is not joined
-        '''
+        """
 
         base = os.path.join(paths.data_dir, directory)
         if not os.path.isdir(base):
             os.mkdir(base)
 
         if path is None:
-            path, _cnt = unique_path(base, base_frame_name,
-                                     extension=self._extension)
+            path, _cnt = unique_path(base, base_frame_name, extension=self._extension)
         if verbose:
-            self.info('New frame {}'.format(path))
+            self.info("New frame {}".format(path))
         return path
 
     def add_time_stamped_value(self, value, frame_key=None, rawtime=False):
-        '''
-
-        '''
+        """ """
         if frame_key is None:
             frame_key = self._current_frame
 
@@ -101,4 +95,6 @@ class DataManager(Manager):
     def _get_frame(self, key):
         if key in self.frames:
             return self.frames[key]
+
+
 # ============= EOF ====================================

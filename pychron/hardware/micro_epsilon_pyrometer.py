@@ -21,34 +21,36 @@ from pychron.hardware.pyrometer import Pyrometer
 def checksum(t):
     c = 0
     for i in range(0, len(t), 2):
-        tt = t[i:i + 2]
+        tt = t[i : i + 2]
         c ^= int(tt, 16)
-    return '{:02X}'.format(c)
+    return "{:02X}".format(c)
 
 
 class MicroEpsilonPyrometer(Pyrometer):
     def read_temperature(self):
-        cmd = '01'
+        cmd = "01"
         resp = self.ask(cmd, is_hex=True, nbytes=1)
-        t = (int(resp, 16)-1000)/10
+        t = (int(resp, 16) - 1000) / 10
         t = float(t)
         return t
 
     def set_laser_pointer(self, onoff):
-        cmd = 'A5'
+        cmd = "A5"
         data = int(onoff)
-        pc = '{}{:02X}'.format(cmd, data)
+        pc = "{}{:02X}".format(cmd, data)
         chk = checksum(pc)
 
-        c = '{}{}'.format(pc, chk)
+        c = "{}{}".format(pc, chk)
         self.ask(c, is_hex=True, nbytes=1)
 
     def traits_view(self):
-        v = View(UItem('pointer', editor=ButtonEditor(label_value='pointer_label')),)
+        v = View(
+            UItem("pointer", editor=ButtonEditor(label_value="pointer_label")),
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     m = MicroEpsilonPyrometer()
     m.set_laser_pointer(True)
     m.set_laser_pointer(False)

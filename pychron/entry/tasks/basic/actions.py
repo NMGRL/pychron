@@ -18,18 +18,19 @@ from traitsui.menu import Action
 
 
 class SaveAction(TaskAction):
-    name = 'Save'
-    method = 'save'
+    name = "Save"
+    method = "save"
 
 
 class BasicEntryAction(Action):
-    name = 'Basic Database'
-    dname = 'Basic Database'
-    id = 'pychron.basic.database'
+    name = "Basic Database"
+    dname = "Basic Database"
+    id = "pychron.basic.database"
 
     def perform(self, event):
-        pid = 'pychron.entry.basic.task'
+        pid = "pychron.entry.basic.task"
         app = event.task.window.application
         app.get_task(pid)
+
 
 # ============= EOF =============================================

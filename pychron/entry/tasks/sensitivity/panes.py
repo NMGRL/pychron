@@ -28,12 +28,13 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 
 class SensitivityAdapter(TabularAdapter):
     columns = [
-        ('Spectrometer', 'mass_spectrometer'),
-        ('Sensitivity', 'sensitivity'),
-        ('Units', 'units'),
-        ('User', 'user'),
-        ('Date', 'create_date'),
-        ('Note', 'note')]
+        ("Spectrometer", "mass_spectrometer"),
+        ("Sensitivity", "sensitivity"),
+        ("Units", "units"),
+        ("User", "user"),
+        ("Date", "create_date"),
+        ("Note", "note"),
+    ]
 
     create_date_text = Property
     create_date_width = Int(175)
@@ -41,14 +42,14 @@ class SensitivityAdapter(TabularAdapter):
     #     placeholder_text = Str('')
     #     placeholder_width = Int(2)
 
-    font = 'arial 11'
+    font = "arial 11"
 
     #    mass_spectrometer_width = Int(40)
     # def _set_create_date_text(self, v):
     #     pass
     #
     def _get_create_date_text(self, *args, **kw):
-        return str(self.item.create_date or '')
+        return str(self.item.create_date or "")
 
     #         return self.item.create_date or ''
     #
@@ -57,32 +58,47 @@ class SensitivityAdapter(TabularAdapter):
     #     return item.primary_key is None or item.editable
 
 
-SVIEW = View(HGroup(Item('mass_spectrometer'), Item('sensitivity'), Item('units')),
-             HGroup(UItem('note', style='custom'), label='Note', show_border=True))
+SVIEW = View(
+    HGroup(Item("mass_spectrometer"), Item("sensitivity"), Item("units")),
+    HGroup(UItem("note", style="custom"), label="Note", show_border=True),
+)
 
 
 class SensitivityPane(TraitsTaskPane):
-    id = 'pychron.entry.sensitivity'
+    id = "pychron.entry.sensitivity"
 
     def traits_view(self):
-        v = okcancel_view(VGroup(UItem('records',
-                                       editor=myTabularEditor(adapter=SensitivityAdapter(),
-                                                              editable=False,
-                                                              auto_update=True,
-                                                              selected='selected')),
-                                 UItem('selected', style='custom', editor=InstanceEditor(view=SVIEW))),
-                          width=600,
-                          title='Sensitivity')
+        v = okcancel_view(
+            VGroup(
+                UItem(
+                    "records",
+                    editor=myTabularEditor(
+                        adapter=SensitivityAdapter(),
+                        editable=False,
+                        auto_update=True,
+                        selected="selected",
+                    ),
+                ),
+                UItem("selected", style="custom", editor=InstanceEditor(view=SVIEW)),
+            ),
+            width=600,
+            title="Sensitivity",
+        )
         return v
 
     def readonly_view(self):
-        v = okcancel_view(Item('records',
-                               editor=myTabularEditor(adapter=SensitivityAdapter(),
-                                                      editable=False,
-                                                      selected='selected'),
-                               show_label=False),
-                          width=600,
-                          title='Sensitivity')
+        v = okcancel_view(
+            Item(
+                "records",
+                editor=myTabularEditor(
+                    adapter=SensitivityAdapter(), editable=False, selected="selected"
+                ),
+                show_label=False,
+            ),
+            width=600,
+            title="Sensitivity",
+        )
         return v
+
 
 # ============= EOF =============================================

@@ -22,7 +22,10 @@ from traits.api import List
 
 from pychron.canvas.canvas2D.scene.primitives.base import Connectable
 from pychron.canvas.canvas2D.scene.primitives.primitives import Bordered, Circle, Label
-from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle, rounded_rect
+from pychron.canvas.canvas2D.scene.primitives.rounded import (
+    RoundedRectangle,
+    rounded_rect,
+)
 
 
 # ============= standard library imports ========================
@@ -33,14 +36,17 @@ class Switch(Connectable, Circle):
     associations = List
 
     def set_label(self, label, offset_x, offset_y, **kw):
-        lb = Label(0, 0,
-                   text=label,
-                   hjustify='center',
-                   soffset_x=offset_x,
-                   soffset_y=offset_y,
-                   # font='modern 9',
-                   use_border=False,
-                   **kw)
+        lb = Label(
+            0,
+            0,
+            text=label,
+            hjustify="center",
+            soffset_x=offset_x,
+            soffset_y=offset_y,
+            # font='modern 9',
+            use_border=False,
+            **kw
+        )
 
         self.primitives.append(lb)
         return lb
@@ -55,7 +61,7 @@ class Switch(Connectable, Circle):
         else:
             gc.set_fill_color(self._convert_color(self.default_color))
 
-        gc.arc(x + r, y + r / 2., r, 0, 360)
+        gc.arc(x + r, y + r / 2.0, r, 0, 360)
         gc.set_stroke_color((0, 0, 0))
         gc.set_line_width(2)
         gc.draw_path()
@@ -68,29 +74,29 @@ class Switch(Connectable, Circle):
 
         x, y = self.get_xy()
         r = self.map_dimension(self.radius)
-        return ((x + r - sx) ** 2 + (y + r / 2. - sy) ** 2) ** 0.5 < r
+        return ((x + r - sx) ** 2 + (y + r / 2.0 - sy) ** 2) ** 0.5 < r
 
 
 class BaseValve(Connectable):
     soft_lock = False
     owned = False
     oactive_color = (0, 255, 0)
-    description = ''
+    description = ""
 
     def toyaml(self):
         y = super(BaseValve, self).toyaml()
-        del y['color']
-        del y['display_name']
-        del y['border_width']
-        del y['fill']
+        del y["color"]
+        del y["display_name"]
+        del y["border_width"]
+        del y["fill"]
 
         return y
 
     def get_tooltip_text(self):
-        state = 'Open' if self.state else 'Closed'
+        state = "Open" if self.state else "Closed"
         if self.soft_lock:
-            state = '{}(Locked)'.format(state)
-        return 'Valve={}\nDesc={}\nState={}'.format(self.name, self.description, state)
+            state = "{}(Locked)".format(state)
+        return "Valve={}\nDesc={}\nState={}".format(self.name, self.description, state)
 
 
 class ManualSwitch(BaseValve, RoundedRectangle):
@@ -103,7 +109,7 @@ class ManualSwitch(BaseValve, RoundedRectangle):
         x, y = self.get_xy()
         w, h = self.get_wh()
         xx = x + w / 2
-        yy = y + h / 2.
+        yy = y + h / 2.0
         gc.translate_ctm(xx, yy)
         gc.rotate_ctm(math.radians(angle))
         gc.translate_ctm(-xx, -yy)
@@ -120,7 +126,7 @@ class Valve(BaseValve, RoundedRectangle):
     corner_radius = 4
     use_border_gaps = False
     not_connected_color = (100, 100, 100)
-    tag = 'valve'
+    tag = "valve"
 
     def __init__(self, *args, **kw):
         super(Valve, self).__init__(*args, **kw)
@@ -128,7 +134,7 @@ class Valve(BaseValve, RoundedRectangle):
 
     def _get_border_color(self):
         c = self.get_color()
-        c = [ci / 2. for ci in c]
+        c = [ci / 2.0 for ci in c]
         if len(c) == 4:
             c[3] = 1
 
@@ -213,7 +219,7 @@ class Valve(BaseValve, RoundedRectangle):
 
 
 def rounded_triangle(gc, cx, cy, width, height, cr):
-    w2 = width / 2.
+    w2 = width / 2.0
     gc.translate_ctm(cx + cr / 3, cy)
 
     gc.begin_path()
@@ -290,11 +296,12 @@ class RoughValve(BaseValve, Bordered):
                 gc.line_to(w - o - cr - l, o + l - 3)
 
                 # upper center
-                w2 = w / 2. + 1
+                w2 = w / 2.0 + 1
                 gc.move_to(w2, h)
                 gc.line_to(w2, h - l)
 
                 gc.draw_path()
+
 
 # class RoughValve2(BaseValve):
 #     def _render_(self, gc):

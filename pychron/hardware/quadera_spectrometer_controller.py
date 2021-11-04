@@ -18,8 +18,10 @@
 # ============= enthought library imports =======================
 from traits.api import Str, HasTraits
 from apptools.preferences.preference_binding import bind_preference
+
 # ============= standard library imports ========================
 from threading import RLock, Lock
+
 # ============= local library imports  ==========================
 
 from pychron.hardware.core.core_device import CoreDevice

@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from PIL import Image as PILImage
 from pyface.image_resource import ImageResource
+
 # =============enthought library imports=======================
 from pyface.qt.QtGui import QLabel, QImage, QPixmap, QScrollArea
 from qimage2ndarray import array2qimage
@@ -35,9 +36,9 @@ def convert_bitmap(image, width=0, height=0):
         pix = traitsui_convert_bitmap(image)
     elif isinstance(image, (PILImage.Image,)):
         try:
-            data = image.tostring('raw', 'RGBA')
+            data = image.tostring("raw", "RGBA")
         except NotImplementedError:
-            data = image.tobytes('raw', 'RGBA')
+            data = image.tobytes("raw", "RGBA")
         im = QImage(data, image.size[0], image.size[1], QImage.Format_ARGB32)
         pix = QPixmap.fromImage(QImage.rgbSwapped(im))
     else:
@@ -98,7 +99,7 @@ class _ImageEditor(Editor):
             self.control = self.image_ctrl
 
         self.set_tooltip()
-        self.sync_value(self.factory.refresh, 'refresh', 'from')
+        self.sync_value(self.factory.refresh, "refresh", "from")
         self.update_editor()
 
     def _refresh_fired(self):
@@ -129,14 +130,14 @@ class _ImageEditor(Editor):
                 if im:
                     self.image_ctrl.setPixmap(im)
                 else:
-                    self.image_ctrl.setText('No Image')
+                    self.image_ctrl.setText("No Image")
             except ValueError:
                 pass
 
 
 class ImageEditor(BasicEditorFactory):
-    """
-    """
+    """ """
+
     klass = _ImageEditor
     image = Any
     scrollable = Bool(False)

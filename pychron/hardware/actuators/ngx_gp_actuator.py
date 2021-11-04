@@ -23,65 +23,64 @@ from pychron.hardware.actuators.ascii_gp_actuator import ASCIIGPActuator
 
 
 class NGXGPActuator(ASCIIGPActuator):
-    """
+    """ """
 
-    """
-    open_cmd = 'OpenValve'
-    close_cmd = 'CloseValve'
-    affirmative = 'E00'
+    open_cmd = "OpenValve"
+    close_cmd = "CloseValve"
+    affirmative = "E00"
 
     controller = None
 
     def ask(self, *args, **kw):
         if self.controller:
             return self.controller.ask(*args, **kw)
-        
+
     def initialize(self, *args, **kw):
-        service = 'pychron.hardware.isotopx_spectrometer_controller.NGXController'
+        service = "pychron.hardware.isotopx_spectrometer_controller.NGXController"
         s = self.application.get_service(service)
         if s is not None:
             self.controller = s
             return True
 
     def actuate(self, *args, **kw):
-        self.ask('StopAcq')
-        self.controller.canceled=True
+        self.ask("StopAcq")
+        self.controller.canceled = True
         time.sleep(1)
         return super(NGXGPActuator, self).actuate(*args, **kw)
-    
+
     def get_channel_state(self, obj, delay=False, verbose=False, **kw):
-        """
-        """
+        """ """
         if delay:
             if not isinstance(delay, (float, int)):
                 delay = 0.25
-        if delay:      
+        if delay:
             time.sleep(delay)
-            
-        #with self._lock:
-        #self.debug(f'acquired lock {self._lock}')
+
+        # with self._lock:
+        # self.debug(f'acquired lock {self._lock}')
         r = self._get_channel_state(obj, verbose=True, **kw)
-        #self.debug(f'lock released')
+        # self.debug(f'lock released')
         return r
-    
+
     def _get_channel_state(self, obj, verbose=False, **kw):
 
-        cmd = 'GetValveStatus {}'.format(get_switch_address(obj))
+        cmd = "GetValveStatus {}".format(get_switch_address(obj))
         s = self.ask(cmd, verbose=verbose)
 
         if s is not None:
-            for si in s.split('\r\n'):
+            for si in s.split("\r\n"):
                 if si.strip() == self.affirmative:
                     # time.sleep(0.2)
                     # recursively call get_channel_state
                     return self._get_channel_state(obj, verbose=verbose, **kw)
-            for si in s.split('\r\n'):
-                if si.strip() == 'OPEN':
+            for si in s.split("\r\n"):
+                if si.strip() == "OPEN":
                     return True
             else:
                 return False
 
         else:
             return False
-        
+
+
 # ============= EOF =====================================

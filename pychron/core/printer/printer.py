@@ -26,16 +26,24 @@ from pychron.core.ui.dialogs import PrinterDialog
 
 
 class PrinterGraphicsContext(GraphicsContext):
-    def __init__(self, component, pagesize,
-                 is_landscape=False, scale_to_fit=True,
-                 halign="center", valign="top", *args, **kw):
+    def __init__(
+        self,
+        component,
+        pagesize,
+        is_landscape=False,
+        scale_to_fit=True,
+        halign="center",
+        valign="top",
+        *args,
+        **kw
+    ):
         super(PrinterGraphicsContext, self).__init__(pagesize, *args, **kw)
 
         x, y = component.outer_position
         x = -x
         y = -y
         width, height = component.outer_bounds
-        print('asfdaf', is_landscape)
+        print("asfdaf", is_landscape)
         page_width, page_height = pagesize
         if is_landscape:
             width, height = height, width
@@ -82,7 +90,7 @@ class PrinterGraphicsContext(GraphicsContext):
             self.scale_ctm(scale, scale)
 
             # if is_landscape:
-                # self.rotate_ctm(-math.pi/2)
+            # self.rotate_ctm(-math.pi/2)
 
         self.clip_to_rect(-x, -y, width, height)
 
@@ -99,9 +107,9 @@ def print_component(component):
         # painter.begin(d.printer)
         # painter.drawImage()
         # painter.end()
-        PrinterGraphicsContext(component, d.pagesize(),
-                               is_landscape=d.is_landscape(),
-                               parent=d.printer)
+        PrinterGraphicsContext(
+            component, d.pagesize(), is_landscape=d.is_landscape(), parent=d.printer
+        )
 
         # gc = PdfPlotGraphicsContext(pagesize='landscape_letter', filename='fooprinter.pdf')
         # gc.render_component(component, valign='center')
@@ -116,5 +124,6 @@ def print_component(component):
         # image = QtGui.QImage(data, w, h, QtGui.QImage.Format_ARGB32)
         # rect = QtCore.QRect(0, 0, w, h)
         # painter.drawImage(rect, image)
+
 
 # ============= EOF =============================================

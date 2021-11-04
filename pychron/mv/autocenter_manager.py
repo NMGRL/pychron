@@ -18,7 +18,18 @@
 import os
 
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Float, Button, Bool, Any, Instance, Event, Int, HasTraits, Str, List
+from traits.api import (
+    Float,
+    Button,
+    Bool,
+    Any,
+    Instance,
+    Event,
+    Int,
+    HasTraits,
+    Str,
+    List,
+)
 from traitsui.api import View, Item, HGroup, RangeEditor
 from math import ceil
 
@@ -29,7 +40,7 @@ from pychron.paths import paths
 
 
 class AutoCenterConfig(HasTraits):
-    name = 'Default'
+    name = "Default"
     use_adaptive_threshold = Bool(False)
     blur = Int
     stretch_intensity = Bool(False)
@@ -47,13 +58,18 @@ class AutoCenterConfig(HasTraits):
 
     @property
     def preprop(self):
-        return {'stretch_intensity': self.stretch_intensity,
-                'blur': self.blur}
+        return {"stretch_intensity": self.stretch_intensity, "blur": self.blur}
 
     @property
     def search(self):
-        return {'n': self.search_n, 'step': self.search_step, 'width': self.search_width, 'blocksize': self.blocksize,
-                'blocksize_step': self.blocksize_step, 'use_adaptive_threshold': self.use_adaptive_threshold}
+        return {
+            "n": self.search_n,
+            "step": self.search_step,
+            "width": self.search_width,
+            "blocksize": self.blocksize,
+            "blocksize_step": self.blocksize_step,
+            "use_adaptive_threshold": self.use_adaptive_threshold,
+        }
 
 
 class AutoCenterManager(MachineVisionManager):
@@ -65,7 +81,7 @@ class AutoCenterManager(MachineVisionManager):
     # crop_size = Float(4)
     # target_radius = Float(1.0)
 
-    configure_button = Button('configure')
+    configure_button = Button("configure")
     use_autocenter = Bool
     # use_hough_circle = Bool(False)
 
@@ -99,11 +115,11 @@ class AutoCenterManager(MachineVisionManager):
         # bind_preference(self, 'blocksize_step', '{}.autocenter_blocksize_step'.format(pref_id))
 
     def cancel(self):
-        self.debug('canceling')
+        self.debug("canceling")
         if self.locator:
             self.locator.cancel()
 
-    def calculate_new_center(self, cx, cy, offx, offy, dim=1.0, shape='circle'):
+    def calculate_new_center(self, cx, cy, offx, offy, dim=1.0, shape="circle"):
         frame = self.new_image_frame()
         loc = self._get_locator(shape=shape)
         self.locator = loc
@@ -118,7 +134,9 @@ class AutoCenterManager(MachineVisionManager):
 
         config = self.selected_configuration
 
-        dx, dy = loc.find(im, frame, dim=dim, preprocess=config.preprop, search=config.search)
+        dx, dy = loc.find(
+            im, frame, dim=dim, preprocess=config.preprop, search=config.search
+        )
 
         if dx is None and dy is None:
             return
@@ -126,13 +144,15 @@ class AutoCenterManager(MachineVisionManager):
             # pdx, pdy = round(dx), round(dy)
             mdx = dx / self.pxpermm
             mdy = dy / self.pxpermm
-            self.info('calculated deviation px={:n},{:n}, '
-                      'mm={:0.3f},{:0.3f} ({})'.format(dx, dy, mdx, mdy, self.pxpermm))
+            self.info(
+                "calculated deviation px={:n},{:n}, "
+                "mm={:0.3f},{:0.3f} ({})".format(dx, dy, mdx, mdy, self.pxpermm)
+            )
             return cx + mdx, cy + mdy
 
     # private
     def _load_configuration(self):
-        p = os.path.join(paths.setup_dir, 'autocenter_configuration.yaml')
+        p = os.path.join(paths.setup_dir, "autocenter_configuration.yaml")
 
         # list of configurations
         yl = yload(p)
@@ -160,34 +180,34 @@ class AutoCenterManager(MachineVisionManager):
         if canvas:
             cx, cy = canvas.get_center_rect_position(w, h)
 
-            canvas.add_markup_rect(cx, cy, w, h, identifier='croprect')
+            canvas.add_markup_rect(cx, cy, w, h, identifier="croprect")
 
             cx, cy = canvas.get_screen_center()
             r = self.target_radius * self.pxpermm
-            canvas.add_markup_circle(cx, cy, r, identifier='target')
+            canvas.add_markup_circle(cx, cy, r, identifier="target")
 
-        self.edit_traits(view='configure_view', kind='livemodal')
+        self.edit_traits(view="configure_view", kind="livemodal")
         if canvas:
-            canvas.remove_item('croprect')
-            canvas.remove_item('target')
+            canvas.remove_item("croprect")
+            canvas.remove_item("target")
 
     def _crop_size_changed(self):
         canvas = self.canvas
         if canvas:
-            canvas.remove_item('croprect')
+            canvas.remove_item("croprect")
 
             w = h = self.crop_size * self.pxpermm
             cx, cy = canvas.get_center_rect_position(w, h)
 
-            canvas.add_markup_rect(cx, cy, w, h, identifier='croprect')
+            canvas.add_markup_rect(cx, cy, w, h, identifier="croprect")
 
     def _target_radius_changed(self):
         canvas = self.canvas
         if canvas:
-            canvas.remove_item('target')
+            canvas.remove_item("target")
             r = self.target_radius * self.pxpermm
             cx, cy = canvas.get_screen_center()
-            canvas.add_markup_circle(cx, cy, r, identifier='target')
+            canvas.add_markup_circle(cx, cy, r, identifier="target")
 
             # views
             # def configure_view(self):
@@ -208,6 +228,7 @@ class CO2AutocenterManager(AutoCenterManager):
     # private
     def _get_locator(self, *args, **kw):
         from pychron.mv.co2_locator import CO2Locator
+
         return CO2Locator(pxpermm=self.pxpermm, pixel_depth=self.video.pixel_depth)
 
 
@@ -215,6 +236,8 @@ class DiodeAutocenterManager(AutoCenterManager):
     # private
     def _get_locator(self, *args, **kw):
         from pychron.mv.diode_locator import DiodeLocator
+
         return DiodeLocator(pxpermm=self.pxpermm, pixel_depth=self.video.pixel_depth)
+
 
 # ============= EOF =============================================

@@ -23,8 +23,8 @@ from pychron.stage.maps.base_stage_map import BaseStageMap, SampleHole
 
 class FurnaceStageMap(BaseStageMap):
     def _hole_factory(self, hi, line, shape, dimension, valid_holes):
-        ah = ''
-        args = line.split(',')
+        ah = ""
+        args = line.split(",")
 
         y = 0
         if len(args) == 1:
@@ -35,15 +35,21 @@ class FurnaceStageMap(BaseStageMap):
             x = float(args[1])
         else:
             self.warning(
-                'invalid stage map file. {}. Problem with line {}: {}'.format(self.file_path, hi + 3, line))
+                "invalid stage map file. {}. Problem with line {}: {}".format(
+                    self.file_path, hi + 3, line
+                )
+            )
             return
 
-        return SampleHole(id=hole,
-                          x=float(x),
-                          y=float(y),
-                          associated_hole=ah,
-                          render='x' if hole in valid_holes else '',
-                          shape=shape,
-                          dimension=dimension)
+        return SampleHole(
+            id=hole,
+            x=float(x),
+            y=float(y),
+            associated_hole=ah,
+            render="x" if hole in valid_holes else "",
+            shape=shape,
+            dimension=dimension,
+        )
+
 
 # ============= EOF =============================================

@@ -35,11 +35,17 @@ from pychron.database.records.isotope_record import IsotopeRecordView
 from pychron.dvc import dvc_dump
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_persister import DVCPersister, format_repository_identifier
-from pychron.dvc.pychrondata_transfer_helpers import get_irradiation_timestamps, get_project_timestamps, \
-    set_spectrometer_files
+from pychron.dvc.pychrondata_transfer_helpers import (
+    get_irradiation_timestamps,
+    get_project_timestamps,
+    set_spectrometer_files,
+)
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
-from pychron.experiment.utilities.identifier import IDENTIFIER_REGEX, SPECIAL_IDENTIFIER_REGEX
+from pychron.experiment.utilities.identifier import (
+    IDENTIFIER_REGEX,
+    SPECIAL_IDENTIFIER_REGEX,
+)
 from pychron.experiment.utilities.runid import make_runid
 from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.github import Organization
@@ -47,14 +53,14 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pychron_constants import QTEGRA_SOURCE_KEYS
 
-ORG = 'NMGRLData'
+ORG = "NMGRLData"
 
 
 def create_github_repo(name):
     org = Organization(ORG)
     if not org.has_repo(name):
-        usr = os.environ.get('GITHUB_USER')
-        pwd = os.environ.get('GITHUB_PASSWORD')
+        usr = os.environ.get("GITHUB_USER")
+        pwd = os.environ.get("GITHUB_PASSWORD")
         org.create_repo(name, usr, pwd)
 
 
@@ -62,6 +68,7 @@ class IsoDBTransfer(Loggable):
     """
     transfer analyses from an isotope_db database to a dvc database
     """
+
     dvc = Instance(DVC)
     processor = Instance(IsotopeDatabaseManager)
     persister = Instance(DVCPersister)
@@ -69,32 +76,34 @@ class IsoDBTransfer(Loggable):
     quiet = False
 
     def init(self):
-        conn = dict(host=os.environ.get('ARGONSERVER_HOST'),
-                    username='jross',  # os.environ.get('ARGONSERVER_DB_USER'),
-                    password=os.environ.get('ARGONSERVER_DB_PWD'),
-                    kind='mysql')
+        conn = dict(
+            host=os.environ.get("ARGONSERVER_HOST"),
+            username="jross",  # os.environ.get('ARGONSERVER_DB_USER'),
+            password=os.environ.get("ARGONSERVER_DB_PWD"),
+            kind="mysql",
+        )
 
         use_local = False
         if use_local:
-            meta_name = 'MetaDataDev'
-            dest_conn = dict(host='localhost',
-                             username=os.environ.get('LOCALHOST_DB_USER'),
-                             password=os.environ.get('LOCALHOST_DB_PWD'),
-                             kind='mysql',
-                             # echo=True,
-                             name='pychrondvc_dev')
+            meta_name = "MetaDataDev"
+            dest_conn = dict(
+                host="localhost",
+                username=os.environ.get("LOCALHOST_DB_USER"),
+                password=os.environ.get("LOCALHOST_DB_PWD"),
+                kind="mysql",
+                # echo=True,
+                name="pychrondvc_dev",
+            )
         else:
-            meta_name = 'NMGRLMetaData'
+            meta_name = "NMGRLMetaData"
             dest_conn = conn.copy()
-            dest_conn['name'] = 'pychrondvc'
+            dest_conn["name"] = "pychrondvc"
 
-        self.dvc = DVC(bind=False,
-                       organization='NMGRLData',
-                       meta_repo_name=meta_name)
+        self.dvc = DVC(bind=False, organization="NMGRLData", meta_repo_name=meta_name)
         paths.meta_root = os.path.join(paths.dvc_dir, self.dvc.meta_repo_name)
         self.dvc.db.trait_set(**dest_conn)
         if not self.dvc.initialize():
-            self.warning_dialog('Failed to initialize DVC')
+            self.warning_dialog("Failed to initialize DVC")
             return
 
         self.dvc.meta_repo.smart_pull(quiet=self.quiet)
@@ -104,14 +113,16 @@ class IsoDBTransfer(Loggable):
 
         use_local_src = False
         if use_local_src:
-            conn = dict(host='localhost',
-                        username=os.environ.get('LOCALHOST_DB_USER'),
-                        password=os.environ.get('LOCALHOST_DB_PWD'),
-                        kind='mysql',
-                        # echo=True,
-                        name='pychrondata')
+            conn = dict(
+                host="localhost",
+                username=os.environ.get("LOCALHOST_DB_USER"),
+                password=os.environ.get("LOCALHOST_DB_PWD"),
+                kind="mysql",
+                # echo=True,
+                name="pychrondata",
+            )
         else:
-            conn['name'] = 'pychrondata'
+            conn["name"] = "pychrondata"
 
         proc.db.trait_set(**conn)
         src = proc.db
@@ -126,7 +137,7 @@ class IsoDBTransfer(Loggable):
             pr = src.get_irradiation_productions()
             for p in pr:
                 # copy to database
-                pname = p.name.replace(' ', '_')
+                pname = p.name.replace(" ", "_")
                 if not dest.get_production(pname):
                     dest.add_production(pname)
 
@@ -134,10 +145,12 @@ class IsoDBTransfer(Loggable):
                 dvc.copy_production(p)
 
     def set_spectrometer_files(self, repository):
-        set_spectrometer_files(self.processor.db,
-                               self.dvc.db,
-                               repository,
-                               os.path.join(paths.repository_dataset_dir, repository))
+        set_spectrometer_files(
+            self.processor.db,
+            self.dvc.db,
+            repository,
+            os.path.join(paths.repository_dataset_dir, repository),
+        )
 
     def bulk_import_irradiations(self, irradiations, creator, dry=True):
 
@@ -148,7 +161,7 @@ class IsoDBTransfer(Loggable):
         # for i in (266, 267, 268, 269):
         # for i in (270, 271, 272, 273):
         for i in irradiations:
-            irradname = 'NM-{}'.format(i)
+            irradname = "NM-{}".format(i)
             runs = self.bulk_import_irradiation(irradname, creator, dry=dry)
             # if runs:
             #     with open('/Users/ross/Sandbox/bulkimport/irradiation_runs.txt', 'a') as wfile:
@@ -159,11 +172,11 @@ class IsoDBTransfer(Loggable):
 
         src = self.processor.db
         tol_hrs = 6
-        self.debug('bulk import irradiation {}'.format(irradname))
+        self.debug("bulk import irradiation {}".format(irradname))
         oruns = []
         ts, idxs = self._get_irradiation_timestamps(irradname, tol_hrs=tol_hrs)
         print(ts)
-        repository_identifier = 'Irradiation-{}'.format(irradname)
+        repository_identifier = "Irradiation-{}".format(irradname)
 
         # add project
         with self.dvc.db.session_ctx():
@@ -181,27 +194,35 @@ class IsoDBTransfer(Loggable):
                 if not ed:
                     d = True
                 else:
-                    d = ed.name == 'Fusions CO2'
+                    d = ed.name == "Fusions CO2"
 
             return (a or b) and d
 
         # for ms in ('jan', 'obama'):
 
         # monitors not run on obama
-        for ms in ('jan',):
+        for ms in ("jan",):
             for i, ais in enumerate(array_split(ts, idxs + 1)):
                 if not ais.shape[0]:
-                    self.debug('skipping {}'.format(i))
+                    self.debug("skipping {}".format(i))
                     continue
 
-                low = get_datetime(ais[0]) - timedelta(hours=tol_hrs / 2.)
-                high = get_datetime(ais[-1]) + timedelta(hours=tol_hrs / 2.)
+                low = get_datetime(ais[0]) - timedelta(hours=tol_hrs / 2.0)
+                high = get_datetime(ais[-1]) + timedelta(hours=tol_hrs / 2.0)
                 with src.session_ctx():
-                    ans = src.get_analyses_date_range(low, high,
-                                                      mass_spectrometers=(ms,),
-                                                      samples=('FC-2',
-                                                               'blank_unknown', 'blank_air', 'blank_cocktail', 'air',
-                                                               'cocktail'))
+                    ans = src.get_analyses_date_range(
+                        low,
+                        high,
+                        mass_spectrometers=(ms,),
+                        samples=(
+                            "FC-2",
+                            "blank_unknown",
+                            "blank_air",
+                            "blank_cocktail",
+                            "air",
+                            "cocktail",
+                        ),
+                    )
 
                     # runs = filter(lambda x: x.labnumber.irradiation_position is None or
                     #                         x.labnumber.irradiation_position.level.irradiation.name == irradname, ans)
@@ -212,18 +233,29 @@ class IsoDBTransfer(Loggable):
                             oruns.append(ai.record_id)
                             print(ms, ai.record_id)
                     else:
-                        self.debug('================= Do Export i: {} low: {} high: {}'.format(i, low, high))
-                        self.debug('N runs: {}'.format(len(runs)))
-                        self.do_export([ai.record_id for ai in runs],
-                                       repository_identifier, creator,
-                                       monitor_mapping=('FC-2', 'Sanidine', repository_identifier))
+                        self.debug(
+                            "================= Do Export i: {} low: {} high: {}".format(
+                                i, low, high
+                            )
+                        )
+                        self.debug("N runs: {}".format(len(runs)))
+                        self.do_export(
+                            [ai.record_id for ai in runs],
+                            repository_identifier,
+                            creator,
+                            monitor_mapping=("FC-2", "Sanidine", repository_identifier),
+                        )
 
         return oruns
 
-    def bulk_import_project(self, project, principal_investigator, source_name=None, dry=True):
+    def bulk_import_project(
+        self, project, principal_investigator, source_name=None, dry=True
+    ):
         src = self.processor.db
         tol_hrs = 6
-        self.debug('bulk import project={}, pi={}'.format(project, principal_investigator))
+        self.debug(
+            "bulk import project={}, pi={}".format(project, principal_investigator)
+        )
         oruns = []
 
         repository_identifier = project
@@ -247,33 +279,48 @@ class IsoDBTransfer(Loggable):
         if source_name is None:
             source_name = project
 
-        for ms in ('jan', 'obama', 'felix'):
+        for ms in ("jan", "obama", "felix"):
             ts, idxs = self._get_project_timestamps(source_name, ms, tol_hrs=tol_hrs)
             for i, ais in enumerate(array_split(ts, idxs + 1)):
                 if not ais.shape[0]:
-                    self.debug('skipping {}'.format(i))
+                    self.debug("skipping {}".format(i))
                     continue
 
-                low = get_datetime(ais[0]) - timedelta(hours=tol_hrs / 2.)
-                high = get_datetime(ais[-1]) + timedelta(hours=tol_hrs / 2.)
+                low = get_datetime(ais[0]) - timedelta(hours=tol_hrs / 2.0)
+                high = get_datetime(ais[-1]) + timedelta(hours=tol_hrs / 2.0)
 
-                print('========{}, {}, {}'.format(ms, low, high))
+                print("========{}, {}, {}".format(ms, low, high))
                 with src.session_ctx():
-                    runs = src.get_analyses_date_range(low, high,
-                                                       # labnumber=(63630, 63632, 63634, 63636, 63638, 63646, 63648),
-                                                       projects=('REFERENCES',),
-                                                       # projects=('REFERENCES', source_name),
-                                                       mass_spectrometers=(ms,))
+                    runs = src.get_analyses_date_range(
+                        low,
+                        high,
+                        # labnumber=(63630, 63632, 63634, 63636, 63638, 63646, 63648),
+                        projects=("REFERENCES",),
+                        # projects=('REFERENCES', source_name),
+                        mass_spectrometers=(ms,),
+                    )
 
                     if dry:
                         for ai in runs:
                             oruns.append(ai.record_id)
-                            print(ai.measurement.mass_spectrometer.name, ai.record_id, ai.labnumber.sample.name, \
-                                  ai.analysis_timestamp)
+                            print(
+                                ai.measurement.mass_spectrometer.name,
+                                ai.record_id,
+                                ai.labnumber.sample.name,
+                                ai.analysis_timestamp,
+                            )
                     else:
-                        self.debug('================= Do Export i: {} low: {} high: {}'.format(i, low, high))
-                        self.debug('N runs: {}'.format(len(runs)))
-                        self.do_export([ai.record_id for ai in runs], repository_identifier, principal_investigator)
+                        self.debug(
+                            "================= Do Export i: {} low: {} high: {}".format(
+                                i, low, high
+                            )
+                        )
+                        self.debug("N runs: {}".format(len(runs)))
+                        self.do_export(
+                            [ai.record_id for ai in runs],
+                            repository_identifier,
+                            principal_investigator,
+                        )
 
         return oruns
 
@@ -283,21 +330,24 @@ class IsoDBTransfer(Loggable):
 
         pdict = {}
         for p in projects:
-            for ms in ('jan', 'obama'):
+            for ms in ("jan", "obama"):
                 ts, idxs = self._get_project_timestamps(p, ms, tol_hrs=tol_hrs)
                 for i, ais in enumerate(array_split(ts, idxs + 1)):
                     if not ais.shape[0]:
-                        self.debug('skipping {}'.format(i))
+                        self.debug("skipping {}".format(i))
                         continue
 
-                    low = get_datetime(ais[0]) - timedelta(hours=tol_hrs / 2.)
-                    high = get_datetime(ais[-1]) + timedelta(hours=tol_hrs / 2.)
+                    low = get_datetime(ais[0]) - timedelta(hours=tol_hrs / 2.0)
+                    high = get_datetime(ais[-1]) + timedelta(hours=tol_hrs / 2.0)
 
-                    print('========{}, {}, {}'.format(ms, low, high))
+                    print("========{}, {}, {}".format(ms, low, high))
                     with src.session_ctx():
-                        runs = src.get_analyses_date_range(low, high,
-                                                           projects=('REFERENCES',),
-                                                           mass_spectrometers=(ms,))
+                        runs = src.get_analyses_date_range(
+                            low,
+                            high,
+                            projects=("REFERENCES",),
+                            mass_spectrometers=(ms,),
+                        )
 
                         pdict[p] = [ai.record_id for ai in runs]
 
@@ -311,28 +361,38 @@ class IsoDBTransfer(Loggable):
                     if ai in oruns:
                         print(p, o, ai)
 
-    def import_date_range(self, low, high, spectrometer, repository_identifier, creator):
+    def import_date_range(
+        self, low, high, spectrometer, repository_identifier, creator
+    ):
         src = self.processor.db
         with src.session_ctx():
-            runs = src.get_analyses_date_range(low, high, mass_spectrometers=spectrometer)
+            runs = src.get_analyses_date_range(
+                low, high, mass_spectrometers=spectrometer
+            )
 
             ais = [ai.record_id for ai in runs]
         self.do_export(ais, repository_identifier, creator)
 
     def do_export_runlist(self):
-        path = '/Users/ross/Downloads/Nabro_data_2.csv'
-        with open(path, 'r') as rfile:
+        path = "/Users/ross/Downloads/Nabro_data_2.csv"
+        with open(path, "r") as rfile:
             next(rfile)
-            runs = [line.split(',')[:2] for line in rfile]
+            runs = [line.split(",")[:2] for line in rfile]
 
-        runs = sorted(runs, key=lambda x: x[1] if x[1] in ('Blank', 'air', 'cocktail', 'FC-2') else '0')
-        for sample, rs in groupby(runs, key=lambda x: x[1] if x[1] in ('Blank', 'air', 'cocktail', 'FC-2') else '0'):
+        runs = sorted(
+            runs,
+            key=lambda x: x[1] if x[1] in ("Blank", "air", "cocktail", "FC-2") else "0",
+        )
+        for sample, rs in groupby(
+            runs,
+            key=lambda x: x[1] if x[1] in ("Blank", "air", "cocktail", "FC-2") else "0",
+        ):
             rs = [r[0] for r in rs]
-            if sample in ('cocktail',):
+            if sample in ("cocktail",):
                 # for ri in rs:
                 #     print('asd', ri)
 
-                self.do_export(rs, 'Nabro', 'Iverson,N')
+                self.do_export(rs, "Nabro", "Iverson,N")
 
             # if sample in ('Blank', 'cocktail'):
             #     self.do_export([r[0] for r in rs], 'Nabro', 'Iverson,N')
@@ -342,17 +402,29 @@ class IsoDBTransfer(Loggable):
 
         # self.do_export(runs, '')
 
-    def do_export(self, runs, repository_identifier, creator, create_repo=False, monitor_mapping=None):
+    def do_export(
+        self,
+        runs,
+        repository_identifier,
+        creator,
+        create_repo=False,
+        monitor_mapping=None,
+    ):
 
         # self._init_src_dest()
         src = self.processor.db
         dest = self.dvc.db
 
         with src.session_ctx():
-            key = lambda x: x.split('-')[0]
+
+            def key(x):
+                return x.split("-")[0]
+
             runs = sorted(runs, key=key)
             with dest.session_ctx():
-                repo = self._add_repository(dest, repository_identifier, creator, create_repo)
+                repo = self._add_repository(
+                    dest, repository_identifier, creator, create_repo
+                )
 
             self.persister.active_repository = repo
             self.dvc.current_repository = repo
@@ -367,13 +439,22 @@ class IsoDBTransfer(Loggable):
                     with dest.session_ctx() as sess:
                         st = time.time()
                         try:
-                            if self._transfer_analysis(a, repository_identifier, monitor_mapping=monitor_mapping):
+                            if self._transfer_analysis(
+                                a,
+                                repository_identifier,
+                                monitor_mapping=monitor_mapping,
+                            ):
                                 j += 1
-                                self.debug('{}/{} transfer time {:0.3f}'.format(j, total, time.time() - st))
+                                self.debug(
+                                    "{}/{} transfer time {:0.3f}".format(
+                                        j, total, time.time() - st
+                                    )
+                                )
                         except BaseException as e:
                             import traceback
+
                             traceback.print_exc()
-                            self.warning('failed transfering {}. {}'.format(a, e))
+                            self.warning("failed transfering {}. {}".format(a, e))
 
     # private
     def _get_project_timestamps(self, project, mass_spectrometer, tol_hrs=6):
@@ -396,14 +477,14 @@ class IsoDBTransfer(Loggable):
             repo = GitRepoManager()
             repo.open_repo(proot)
 
-            repo.add_ignore('.DS_Store')
+            repo.add_ignore(".DS_Store")
             self.repo_man = repo
             if create_repo:
                 # add repo to central location
                 create_github_repo(repository_identifier)
 
-                url = 'https://github.com/{}/{}.git'.format(ORG, repository_identifier)
-                self.debug('Create repo at github. url={}'.format(url))
+                url = "https://github.com/{}/{}.git".format(ORG, repository_identifier)
+                self.debug("Create repo at github. url={}".format(url))
                 repo.create_remote(url)
         else:
             repo = GitRepoManager()
@@ -417,15 +498,15 @@ class IsoDBTransfer(Loggable):
 
     def _transfer_meta(self, dest, dban, monitor_mapping):
 
-        pi = 'Iverson,N'
+        pi = "Iverson,N"
 
-        self.debug('transfer meta {}'.format(monitor_mapping))
+        self.debug("transfer meta {}".format(monitor_mapping))
 
         dblab = dban.labnumber
         dbsam = dblab.sample
         material_name = dbsam.material.name
         project = dbsam.project.name
-        project_name = project.replace('/', '_').replace('\\', '_')
+        project_name = project.replace("/", "_").replace("\\", "_")
         sample_name = dbsam.name
         # if monitor_mapping is None:
         #     sample_name, material, project = monitor_mapping
@@ -436,29 +517,29 @@ class IsoDBTransfer(Loggable):
         sam = dest.get_sample(sample_name, project_name, pi, material_name)
         if not sam:
             if not dest.get_material(material_name):
-                self.debug('add material {}'.format(material_name))
+                self.debug("add material {}".format(material_name))
                 dest.add_material(material_name)
                 dest.flush()
 
             if not dest.get_project(project_name, pi):
-                self.debug('add project {}'.format(project_name))
+                self.debug("add project {}".format(project_name))
                 dest.add_project(project_name, pi)
                 dest.flush()
 
-            self.debug('add sample {}'.format(sample_name))
+            self.debug("add sample {}".format(sample_name))
             sam = dest.add_sample(sample_name, project_name, pi, material_name)
             dest.flush()
 
         dbirradpos = dblab.irradiation_position
         if not dbirradpos:
-            irradname = 'NoIrradiation'
-            levelname = 'A'
-            holder = 'Grid'
+            irradname = "NoIrradiation"
+            levelname = "A"
+            holder = "Grid"
             pos = None
             identifier = dblab.identifier
             doses = []
             prod = None
-            prodname = 'NoIrradiation'
+            prodname = "NoIrradiation"
 
             # geom = make_geom([(0, 0, 0.0175),
             #                   (1, 0, 0.0175),
@@ -498,17 +579,17 @@ class IsoDBTransfer(Loggable):
             irradname = dbirrad.name
             levelname = dblevel.name
 
-            holder = dblevel.holder.name if dblevel.holder else ''
+            holder = dblevel.holder.name if dblevel.holder else ""
             # geom = dblevel.holder.geometry if dblevel.holder else ''
-            prodname = dblevel.production.name if dblevel.production else ''
-            prodname = prodname.replace(' ', '_')
+            prodname = dblevel.production.name if dblevel.production else ""
+            prodname = prodname.replace(" ", "_")
             pos = dbirradpos.position
             doses = dbchron.get_doses()
 
         meta_repo = self.dvc.meta_repo
         # save db irradiation
         if not dest.get_irradiation(irradname):
-            self.debug('Add irradiation {}'.format(irradname))
+            self.debug("Add irradiation {}".format(irradname))
 
             self.dvc.add_irradiation(irradname, doses)
             dest.flush()
@@ -527,7 +608,7 @@ class IsoDBTransfer(Loggable):
 
         # save db level
         if not dest.get_irradiation_level(irradname, levelname):
-            self.debug('Add level irrad:{} level:{}'.format(irradname, levelname))
+            self.debug("Add level irrad:{} level:{}".format(irradname, levelname))
             dest.add_irradiation_level(levelname, irradname, holder, prodname)
             dest.flush()
 
@@ -542,9 +623,13 @@ class IsoDBTransfer(Loggable):
 
         # save db irradiation position
         if not dest.get_irradiation_position(irradname, levelname, pos):
-            self.debug('Add position irrad:{} level:{} pos:{}'.format(irradname, levelname, pos))
+            self.debug(
+                "Add position irrad:{} level:{} pos:{}".format(
+                    irradname, levelname, pos
+                )
+            )
             p = meta_repo.get_level_path(irradname, levelname)
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 yd = json.load(rfile)
 
             dd = dest.add_irradiation_position(irradname, levelname, pos)
@@ -557,10 +642,18 @@ class IsoDBTransfer(Loggable):
             except AttributeError:
                 j, e = 0, 0
 
-            ps = yd['positions']
-            ps.append({'j': j, 'j_err': e, 'position': pos, 'analyses': [],
-                       'identifier': idn, 'decay_constants': {}})
-            yd['positions'] = ps
+            ps = yd["positions"]
+            ps.append(
+                {
+                    "j": j,
+                    "j_err": e,
+                    "position": pos,
+                    "analyses": [],
+                    "identifier": idn,
+                    "decay_constants": {},
+                }
+            )
+            yd["positions"] = ps
             dvc_dump(yd, p)
 
         dest.commit()
@@ -584,31 +677,33 @@ class IsoDBTransfer(Loggable):
             m = SPECIAL_IDENTIFIER_REGEX.match(rec)
 
         if not m:
-            self.warning('invalid runid {}'.format(rec))
+            self.warning("invalid runid {}".format(rec))
             return
         else:
-            idn = m.group('identifier')
-            aliquot = m.group('aliquot')
+            idn = m.group("identifier")
+            aliquot = m.group("aliquot")
             try:
-                step = m.group('step') or None
+                step = m.group("step") or None
             except IndexError:
                 step = None
 
-        if idn == '4359':
-            idn = 'c-01-j'
-        elif idn == '4358':
-            idn = 'c-01-o'
+        if idn == "4359":
+            idn = "c-01-j"
+        elif idn == "4358":
+            idn = "c-01-o"
 
         # check if analysis already exists. skip if it does
         if dest.get_analysis_runid(idn, aliquot, step):
-            self.warning('{} already exists'.format(make_runid(idn, aliquot, step)))
+            self.warning("{} already exists".format(make_runid(idn, aliquot, step)))
             return
 
         dban = src.get_analysis_runid(idn, aliquot, step)
         iv = IsotopeRecordView()
         iv.uuid = dban.uuid
 
-        self.debug('make analysis idn:{}, aliquot:{} step:{}'.format(idn, aliquot, step))
+        self.debug(
+            "make analysis idn:{}, aliquot:{} step:{}".format(idn, aliquot, step)
+        )
         # try:
         an = proc.make_analysis(iv, unpack=True, use_cache=False, use_progress=False)
         # except BaseException as e:
@@ -626,24 +721,24 @@ class IsoDBTransfer(Loggable):
             level = dblab.irradiation_position.level.name
             irradpos = dblab.irradiation_position.position
         else:
-            irrad = 'NoIrradiation'
-            level = 'A'
+            irrad = "NoIrradiation"
+            level = "A"
             irradpos = self._get_irradpos(dest, irrad, level, dblab.identifier)
             # irrad, level, irradpos = '', '', 0
 
         extraction = dban.extraction
         ms = dban.measurement.mass_spectrometer.name
         if not dest.get_mass_spectrometer(ms):
-            self.debug('adding mass spectrometer {}'.format(ms))
+            self.debug("adding mass spectrometer {}".format(ms))
             dest.add_mass_spectrometer(ms)
             dest.commit()
 
         ed = extraction.extraction_device.name if extraction.extraction_device else None
         if not ed:
-            ed = 'No Extract Device'
+            ed = "No Extract Device"
 
         if not dest.get_extraction_device(ed):
-            self.debug('adding extract device {}'.format(ed))
+            self.debug("adding extract device {}".format(ed))
             dest.add_extraction_device(ed)
             dest.commit()
 
@@ -652,11 +747,11 @@ class IsoDBTransfer(Loggable):
         else:
             inc = alpha_to_int(step)
 
-        username = ''
+        username = ""
         if dban.user:
             username = dban.user.name
             if not dest.get_user(username):
-                self.debug('adding user. username:{}'.format(username))
+                self.debug("adding user. username:{}".format(username))
                 dest.add_user(username)
                 dest.commit()
 
@@ -668,34 +763,35 @@ class IsoDBTransfer(Loggable):
             material_name = dbsam.material.name
             project_name = format_repository_identifier(dbsam.project.name)
 
-        rs = AutomatedRunSpec(labnumber=idn,
-                              username=username,
-                              material=material_name,
-                              project=project_name,
-                              sample=sample_name,
-                              irradiation=irrad,
-                              irradiation_level=level,
-                              irradiation_position=irradpos,
-                              repository_identifier=exp,
-                              mass_spectrometer=ms,
-                              uuid=dban.uuid,
-                              _step=inc,
-                              comment=dban.comment.decode('utf-8') or '',
-                              aliquot=int(aliquot),
-                              extract_device=ed,
-                              duration=extraction.extract_duration,
-                              cleanup=extraction.cleanup_duration,
-                              beam_diameter=extraction.beam_diameter,
-                              extract_units=extraction.extract_units or '',
-                              extract_value=extraction.extract_value,
-                              pattern=extraction.pattern or '',
-                              weight=extraction.weight,
-                              ramp_duration=extraction.ramp_duration or 0,
-                              ramp_rate=extraction.ramp_rate or 0,
-
-                              collection_version='0.1:0.1',
-                              queue_conditionals_name='',
-                              tray='')
+        rs = AutomatedRunSpec(
+            labnumber=idn,
+            username=username,
+            material=material_name,
+            project=project_name,
+            sample=sample_name,
+            irradiation=irrad,
+            irradiation_level=level,
+            irradiation_position=irradpos,
+            repository_identifier=exp,
+            mass_spectrometer=ms,
+            uuid=dban.uuid,
+            _step=inc,
+            comment=dban.comment.decode("utf-8") or "",
+            aliquot=int(aliquot),
+            extract_device=ed,
+            duration=extraction.extract_duration,
+            cleanup=extraction.cleanup_duration,
+            beam_diameter=extraction.beam_diameter,
+            extract_units=extraction.extract_units or "",
+            extract_value=extraction.extract_value,
+            pattern=extraction.pattern or "",
+            weight=extraction.weight,
+            ramp_duration=extraction.ramp_duration or 0,
+            ramp_rate=extraction.ramp_rate or 0,
+            collection_version="0.1:0.1",
+            queue_conditionals_name="",
+            tray="",
+        )
 
         meas = dban.measurement
         # get spectrometer parameters
@@ -711,18 +807,20 @@ class IsoDBTransfer(Loggable):
         # source
         src = {k: getattr(meas.spectrometer_parameters, k) for k in QTEGRA_SOURCE_KEYS}
 
-        ps = PersistenceSpec(run_spec=rs,
-                             tag=an.tag.name,
-                             isotope_group=an,
-                             timestamp=dban.analysis_timestamp,
-                             defl_dict=deflections,
-                             gains=gains,
-                             spec_dict=src,
-                             use_repository_association=True,
-                             positions=[p.position for p in extraction.positions])
+        ps = PersistenceSpec(
+            run_spec=rs,
+            tag=an.tag.name,
+            isotope_group=an,
+            timestamp=dban.analysis_timestamp,
+            defl_dict=deflections,
+            gains=gains,
+            spec_dict=src,
+            use_repository_association=True,
+            positions=[p.position for p in extraction.positions],
+        )
 
-        self.debug('transfer analysis with persister')
-        self.persister.per_spec_save(ps, commit=False, commit_tag='Database Transfer')
+        self.debug("transfer analysis with persister")
+        self.persister.per_spec_save(ps, commit=False, commit_tag="Database Transfer")
         return True
 
     def _get_irradpos(self, dest, irradname, levelname, identifier):
@@ -739,11 +837,11 @@ class IsoDBTransfer(Loggable):
         return pos
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
 
-    paths.build('~/PychronDev')
-    logging_setup('de', root=os.path.join(os.path.expanduser('~'), 'Desktop', 'logs'))
+    paths.build("~/PychronDev")
+    logging_setup("de", root=os.path.join(os.path.expanduser("~"), "Desktop", "logs"))
 
     e = IsoDBTransfer()
     e.quiet = True

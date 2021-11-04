@@ -36,18 +36,18 @@ from pychron.hardware.ncd.ncd_device import NCDDevice
 
 class ProXR(NCDDevice):
     """
-        implement the actuator interface
-        open_channel
-        close_channel
-        get_channel_state
+    implement the actuator interface
+    open_channel
+    close_channel
+    get_channel_state
     """
 
     def open_channel(self, channel, *args, **kw):
         """
-            idx=1-255
-            32 banks of 8
+        idx=1-255
+        32 banks of 8
 
-            bank = idx/8
+        bank = idx/8
 
         """
         name = self._set_bank(channel)
@@ -81,7 +81,7 @@ class ProXR(NCDDevice):
             cmdstr = self._make_cmdstr(254, local_idx)
             resp = self.ask(cmdstr, nchars=1)  # returns 1 or 0
             resp = ord(resp)
-            self.debug('get changell state ={} {}'.format(bool(resp), resp))
+            self.debug("get changell state ={} {}".format(bool(resp), resp))
             return bool(resp)
 
     def get_channel_states(self, *args, **kw):
@@ -97,7 +97,7 @@ class ProXR(NCDDevice):
     # ===============================================================================
     def _ask_ok(self, *args):
         cmdstr = self._make_cmdstr(*args)
-        return self.ask(cmdstr, nchars=1) == 'U'
+        return self.ask(cmdstr, nchars=1) == "U"
 
     def _set_bank(self, channel):
         idx, bank = self._get_bank_idx(channel)
@@ -120,14 +120,14 @@ class ProXR(NCDDevice):
         return idx, bank
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.paths import paths
     from pychron.core.helpers.logger_setup import logging_setup
 
-    logging_setup('prox')
-    paths.build('_prox')
+    logging_setup("prox")
+    paths.build("_prox")
 
-    a = ProXR(name='proxr_actuator')
+    a = ProXR(name="proxr_actuator")
     a.bootstrap()
     #    a.open_channel(3)
     #    time.sleep(1)

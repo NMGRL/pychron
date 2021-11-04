@@ -20,26 +20,26 @@
 
 from __future__ import absolute_import
 from six.moves import zip
+
+
 def assemble_script_blob(scripts, kinds=None):
     """
-        make one blob of all the script text
+    make one blob of all the script text
 
-        return csv-list of names, blob
+    return csv-list of names, blob
     """
     if kinds is None:
-        kinds = ['extraction', 'measurement', 'post_equilibration', 'post_measurement']
+        kinds = ["extraction", "measurement", "post_equilibration", "post_measurement"]
 
     ts = []
     for (name, blob), kind in zip(scripts, kinds):
-        ts.append('#' + '=' * 79)
-        ts.append('# {} SCRIPT {}'.format(kind.replace('_', ' ').upper(), name))
-        ts.append('#' + '=' * 79)
+        ts.append("#" + "=" * 79)
+        ts.append("# {} SCRIPT {}".format(kind.replace("_", " ").upper(), name))
+        ts.append("#" + "=" * 79)
         if blob:
             ts.append(blob)
 
-    return 'Pychron Script', '\n'.join(ts)
+    return "Pychron Script", "\n".join(ts)
+
 
 # ============= EOF =============================================
-
-
-

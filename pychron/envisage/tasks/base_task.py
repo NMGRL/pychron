@@ -34,11 +34,28 @@ from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.resources import icon
-from pychron.envisage.tasks.actions import GenericSaveAction, GenericSaveAsAction, \
-    GenericFindAction, RaiseAction, RaiseUIAction, ResetLayoutAction, \
-    MinimizeAction, PositionAction, IssueAction, CloseAction, CloseOthersAction, AboutAction, OpenAdditionalWindow, \
-    NoteAction, RestartAction, DocumentationAction, ChangeLogAction, StartupTestsAction, \
-    ShareSettingsAction, ApplySettingsAction
+from pychron.envisage.tasks.actions import (
+    GenericSaveAction,
+    GenericSaveAsAction,
+    GenericFindAction,
+    RaiseAction,
+    RaiseUIAction,
+    ResetLayoutAction,
+    MinimizeAction,
+    PositionAction,
+    IssueAction,
+    CloseAction,
+    CloseOthersAction,
+    AboutAction,
+    OpenAdditionalWindow,
+    NoteAction,
+    RestartAction,
+    DocumentationAction,
+    ChangeLogAction,
+    StartupTestsAction,
+    ShareSettingsAction,
+    ApplySettingsAction,
+)
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -56,7 +73,9 @@ class WindowGroup(Group):
 
     def _items_default(self):
         application = self.manager.controller.task.window.application
-        application.on_trait_change(self._rebuild, 'active_window, window_opened, window_closed, windows, uis[]')
+        application.on_trait_change(
+            self._rebuild, "active_window, window_opened, window_closed, windows, uis[]"
+        )
         return []
 
     def _make_actions(self, vs):
@@ -65,26 +84,35 @@ class WindowGroup(Group):
             application = self.manager.controller.task.window.application
             added = []
             for vi in application.windows + vs:
-                if hasattr(vi, 'active_task'):
+                if hasattr(vi, "active_task"):
                     if vi.active_task:
                         if not vi.active_task.id in added:
                             checked = vi == application.active_window
-                            items.append(ActionItem(action=RaiseAction(window=vi,
-                                                                       checked=checked,
-                                                                       name=vi.active_task.name)))
+                            items.append(
+                                ActionItem(
+                                    action=RaiseAction(
+                                        window=vi,
+                                        checked=checked,
+                                        name=vi.active_task.name,
+                                    )
+                                )
+                            )
                             added.append(vi.active_task.id)
                 else:
-                    items.append(ActionItem(action=RaiseUIAction(
-                        name=vi.title or vi.id,
-                        ui=vi,
-                        checked=checked)))
+                    items.append(
+                        ActionItem(
+                            action=RaiseUIAction(
+                                name=vi.title or vi.id, ui=vi, checked=checked
+                            )
+                        )
+                    )
 
         return items
 
     def _rebuild(self, obj, name, old, vs):
         self.destroy()
 
-        if name == 'window_opened':
+        if name == "window_opened":
             vs = vs.window
         else:
             vs = []
@@ -98,11 +126,11 @@ class WindowGroup(Group):
 
 class MyTaskWindowLaunchAction(TaskWindowLaunchAction):
     """
-        modified TaskWIndowLaunchAction default behaviour
+    modified TaskWIndowLaunchAction default behaviour
 
-        .perform() previously created a new window on every event.
+    .perform() previously created a new window on every event.
 
-        now raise the window if its available else create it
+    now raise the window if its available else create it
     """
 
     # style = 'toggle'
@@ -112,13 +140,13 @@ class MyTaskWindowLaunchAction(TaskWindowLaunchAction):
         application.open_task(self.task_id)
         self.checked = True
 
-    @on_trait_change('task:window:opened')
+    @on_trait_change("task:window:opened")
     def _window_opened(self):
         if self.task:
             if self.task_id == self.task.id:
                 self.checked = True
 
-    @on_trait_change('task:window:closing')
+    @on_trait_change("task:window:closing")
     def _window_closed(self):
         if self.task:
             if self.task_id == self.task.id:
@@ -152,17 +180,17 @@ class BaseTask(Task, Loggable, PreferenceMixin):
     def toggle_full_window(self):
         if self._full_window:
             self.window.set_layout(self.default_layout)
-            self.debug('set to normal view')
+            self.debug("set to normal view")
         else:
             self.window.set_layout(TaskLayout())
-            self.debug('set full window view')
+            self.debug("set full window view")
 
         self._full_window = not self._full_window
 
     def show_pane(self, p):
         op = p
         if isinstance(p, str):
-            if '.' in p:
+            if "." in p:
                 for k in self.trait_names():
                     try:
                         v = getattr(self, k)
@@ -175,7 +203,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
             else:
                 p = getattr(self, p)
 
-        self.debug('showing pane {} ==> {}'.format(op, p))
+        self.debug("showing pane {} ==> {}".format(op, p))
         self._show_pane(p)
 
     def _show_pane(self, p):
@@ -186,25 +214,24 @@ class BaseTask(Task, Loggable, PreferenceMixin):
                     ctrl.show()
                 ctrl.raise_()
             else:
-                self.debug('No control for pane={}'.format(p.id))
+                self.debug("No control for pane={}".format(p.id))
 
         if p:
             # self.debug('$$$$$$$$$$$$$ show pane {}'.format(p.id))
             invoke_in_main_thread(do_later, _show)
 
     def _menu_bar_default(self):
-        view_menu = SMenu(*self._view_groups(),
-                          id='view.menu', name='&View')
+        view_menu = SMenu(*self._view_groups(), id="view.menu", name="&View")
         mb = SMenuBar(view_menu)
         return mb
 
     def _view_groups(self):
         def groupfunc(task_factory):
             gid = 0
-            if hasattr(task_factory, 'task_group'):
+            if hasattr(task_factory, "task_group"):
                 gid = task_factory.task_group
                 if gid:
-                    gid = ('hardware', 'experiment').index(gid) + 1
+                    gid = ("hardware", "experiment").index(gid) + 1
                 else:
                     gid = 0
 
@@ -214,7 +241,7 @@ class BaseTask(Task, Loggable, PreferenceMixin):
         groups = []
         for _, factories in groupby_key(application.task_factories, groupfunc):
             items = []
-            for factory in sorted(factories, key=attrgetter('id')):
+            for factory in sorted(factories, key=attrgetter("id")):
                 for win in application.windows:
                     if win.active_task:
                         if win.active_task.id == factory.id:
@@ -223,16 +250,15 @@ class BaseTask(Task, Loggable, PreferenceMixin):
                 else:
                     checked = False
 
-                action = MyTaskWindowLaunchAction(task_id=factory.id,
-                                                  checked=checked)
+                action = MyTaskWindowLaunchAction(task_id=factory.id, checked=checked)
 
-                if hasattr(factory, 'accelerator'):
+                if hasattr(factory, "accelerator"):
                     action.accelerator = factory.accelerator
                 add = True
-                if hasattr(factory, 'include_view_menu'):
+                if hasattr(factory, "include_view_menu"):
                     add = factory.include_view_menu
 
-                if hasattr(factory, 'image'):
+                if hasattr(factory, "image"):
                     if factory.image:
                         action.image = icon(factory.image)
 
@@ -243,40 +269,43 @@ class BaseTask(Task, Loggable, PreferenceMixin):
 
         return groups
 
-    def _confirmation(self, message='', title='Save Changes?'):
-        dialog = ConfirmationDialog(parent=self.window.control,
-                                    message=message, cancel=True,
-                                    default=CANCEL, title=title)
+    def _confirmation(self, message="", title="Save Changes?"):
+        dialog = ConfirmationDialog(
+            parent=self.window.control,
+            message=message,
+            cancel=True,
+            default=CANCEL,
+            title=title,
+        )
         return dialog.open()
 
-    @on_trait_change('window:opened')
+    @on_trait_change("window:opened")
     def _on_open(self, event):
         self._opened_hook()
 
     def _opened_hook(self):
         pass
 
-    @on_trait_change('window:closed')
+    @on_trait_change("window:closed")
     def _on_closed(self, event):
         self._closed_hook()
 
     def _closed_hook(self):
         pass
 
-    @on_trait_change('window:closing')
+    @on_trait_change("window:closing")
     def _on_close(self, event):
-        """ Prompt the user to save when exiting.
-        """
+        """Prompt the user to save when exiting."""
 
         close = self._prompt_for_save()
         event.veto = not close
 
-    def _handle_prompt_for_save(self, message, title='Save Changes?'):
+    def _handle_prompt_for_save(self, message, title="Save Changes?"):
         result = self._confirmation(message, title)
         if result == CANCEL:
             return False
         elif result == YES:
-            return 'save'
+            return "save"
 
         return True
 
@@ -286,49 +315,49 @@ class BaseTask(Task, Loggable, PreferenceMixin):
 
 class BaseManagerTask(BaseTask):
     default_directory = Unicode
-    default_open_action = 'open'
+    default_open_action = "open"
 
-    _default_extension = ''
+    _default_extension = ""
     wildcard = None
     manager = Any
 
     def view_pdf(self, p):
-        self.view_file(p, application='Preview')
+        self.view_file(p, application="Preview")
 
     def view_xls(self, p):
-        application = 'Microsoft Office 2011/Microsoft Excel'
+        application = "Microsoft Office 2011/Microsoft Excel"
         self.view_file(p, application)
 
     def view_csv(self, p):
-        application = 'TextWrangler'
+        application = "TextWrangler"
         self.view_file(p, application)
 
-    def view_file(self, p, application='Preview'):
+    def view_file(self, p, application="Preview"):
         view_file(p, application=application, logger=self)
 
     def open_directory_dialog(self, **kw):
-        if 'default_directory' not in kw:
-            kw['default_directory'] = self.default_directory
+        if "default_directory" not in kw:
+            kw["default_directory"] = self.default_directory
 
-        if 'wildcard' not in kw:
+        if "wildcard" not in kw:
             if self.wildcard:
-                kw['wildcard'] = self.wildcard
+                kw["wildcard"] = self.wildcard
 
-        dialog = DirectoryDialog(action='open', **kw)
+        dialog = DirectoryDialog(action="open", **kw)
         if dialog.open() == OK:
             r = dialog.path
             return r
 
     def open_file_dialog(self, action=None, wildcard_args=None, **kw):
-        if 'default_directory' not in kw:
-            kw['default_directory'] = self.default_directory
+        if "default_directory" not in kw:
+            kw["default_directory"] = self.default_directory
 
         if wildcard_args is None:
-            if 'wildcard' not in kw:
+            if "wildcard" not in kw:
                 if self.wildcard:
-                    kw['wildcard'] = self.wildcard
+                    kw["wildcard"] = self.wildcard
         else:
-            kw['wildcard'] = FileDialog.create_wildcard(*wildcard_args)
+            kw["wildcard"] = FileDialog.create_wildcard(*wildcard_args)
 
         if action is None:
             action = self.default_open_action
@@ -336,14 +365,14 @@ class BaseManagerTask(BaseTask):
         dialog = FileDialog(action=action, **kw)
         if dialog.open() == OK:
             r = dialog.path
-            if action == 'open files':
+            if action == "open files":
                 r = dialog.paths
             return r
 
     def save_file_dialog(self, ext=None, **kw):
-        if 'default_directory' not in kw:
-            kw['default_directory'] = self.default_directory
-        dialog = FileDialog(parent=self.window.control, action='save as', **kw)
+        if "default_directory" not in kw:
+            kw["default_directory"] = self.default_directory
+        dialog = FileDialog(parent=self.window.control, action="save as", **kw)
         if dialog.open() == OK:
             path = dialog.path
             if path:
@@ -353,11 +382,15 @@ class BaseManagerTask(BaseTask):
 
 
 class BaseExtractionLineTask(BaseManagerTask):
-    canvas_pane = Instance('pychron.extraction_line.tasks.extraction_line_pane.CanvasDockPane')
+    canvas_pane = Instance(
+        "pychron.extraction_line.tasks.extraction_line_pane.CanvasDockPane"
+    )
 
     def _get_el_manager(self):
         app = self.window.application
-        man = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+        man = app.get_service(
+            "pychron.extraction_line.extraction_line_manager.ExtractionLineManager"
+        )
         return man
 
     def prepare_destroy(self):
@@ -368,16 +401,19 @@ class BaseExtractionLineTask(BaseManagerTask):
     def _add_canvas_pane(self, panes):
         man = self._get_el_manager()
         if man:
-            from pychron.extraction_line.tasks.extraction_line_pane import CanvasDockPane
-            config = os.path.join(paths.canvas2D_dir, 'alt_config.xml')
+            from pychron.extraction_line.tasks.extraction_line_pane import (
+                CanvasDockPane,
+            )
+
+            config = os.path.join(paths.canvas2D_dir, "alt_config.xml")
             self.canvas_pane = CanvasDockPane(canvas=man.new_canvas(config=config))
             panes.append(self.canvas_pane)
 
         return panes
 
-    @on_trait_change('window:opened')
+    @on_trait_change("window:opened")
     def _window_opened(self):
-        self.debug('window opened')
+        self.debug("window opened")
         man = self._get_el_manager()
         if man:
             do_after(1000, man.activate)
@@ -385,5 +421,6 @@ class BaseExtractionLineTask(BaseManagerTask):
 
 class BaseHardwareTask(BaseManagerTask):
     pass
+
 
 # ============= EOF =============================================

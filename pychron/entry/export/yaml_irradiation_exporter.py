@@ -23,6 +23,8 @@ from pychron.entry.export.base_irradiation_exporter import BaseIrradiationExport
 
 class YAMLIrradiationExporter(BaseIrradiationExporter):
     """
-        export irradiations from pychron database to an YAML file
+    export irradiations from pychron database to an YAML file
     """
+
+
 # ============= EOF =============================================

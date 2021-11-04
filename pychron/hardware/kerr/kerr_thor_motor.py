@@ -22,14 +22,13 @@ from .kerr_motor import KerrMotor
 
 
 class KerrThorMotor(KerrMotor):
-    """
-    """
+    """ """
 
     # def _build_io(self):
     #     return '1800'
 
     def _build_gains(self):
-        return 'F6B0042003F401B004FF006400010101'
+        return "F6B0042003F401B004FF006400010101"
 
     def _wait_for_home(self, progress=None):
         """
@@ -41,5 +40,6 @@ class KerrThorMotor(KerrMotor):
         self.block(6, progress=progress, homing=True, verbose=False)
         # in an attempt to mitigate home false positives run the homing sequence twice
         self.block(6, progress=progress, homing=True, verbose=False)
+
 
 # =============EOF-==============================================

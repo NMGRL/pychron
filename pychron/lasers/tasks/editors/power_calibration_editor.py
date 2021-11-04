@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traitsui.api import View
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.lasers.tasks.editors.laser_editor import LaserEditor

@@ -19,8 +19,14 @@
 from __future__ import absolute_import
 from pyface.qt.QtCore import Qt
 from pyface.qt.QtGui import QColor, QWidget, QLabel
-from pyface.qt.QtGui import QGraphicsView, QGraphicsScene, QBrush, \
-    QPen, QRadialGradient, QVBoxLayout
+from pyface.qt.QtGui import (
+    QGraphicsView,
+    QGraphicsScene,
+    QBrush,
+    QPen,
+    QRadialGradient,
+    QVBoxLayout,
+)
 from traits.api import HasTraits, Int, Callable, Str, List
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
@@ -30,7 +36,7 @@ from traitsui.qt4.editor import Editor
 # ============= local library imports  ==========================
 
 
-COLORS = ['red', 'yellow', 'green', 'black']
+COLORS = ["red", "yellow", "green", "black"]
 QT_COLORS = [QColor(ci) for ci in COLORS]
 
 
@@ -85,8 +91,7 @@ class _LEDEditor(Editor):
         self._led_ellipse = None
 
     def init(self, parent):
-        """
-        """
+        """ """
         rad = self.factory.radius
 
         if not rad:
@@ -124,8 +129,7 @@ class _LEDEditor(Editor):
             self.control.setLayout(layout)
 
     def update_editor(self):
-        """
-        """
+        """ """
         if self.control is not None:
             rect = self._led_ellipse.rect()
             x = rect.x()
@@ -134,16 +138,19 @@ class _LEDEditor(Editor):
             x += r / DIAMETER_SCALAR
             y += r / DIAMETER_SCALAR
 
-            self._led_ellipse.setBrush(get_gradient(self.colors[self.value], x, y, r / 2))
+            self._led_ellipse.setBrush(
+                get_gradient(self.colors[self.value], x, y, r / 2)
+            )
 
 
 class LEDEditor(BasicEditorFactory):
-    """
-    """
+    """ """
+
     klass = _LEDEditor
     radius = Int(20)
     label = Str
-    colors = List(['red', 'yellow', 'green', 'black'])
+    colors = List(["red", "yellow", "green", "black"])
+
 
 # ============= EOF ====================================
 

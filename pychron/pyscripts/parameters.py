@@ -25,51 +25,57 @@ from pychron.pychron_constants import NULL_STR, FIT_TYPES
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class Detector(HasTraits):
     fit = Str
     use = Bool
     label = Str
     ref = Bool
     isotope = Str
-    isotopes = [NULL_STR, 'Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36']
+    isotopes = [NULL_STR, "Ar40", "Ar39", "Ar38", "Ar37", "Ar36"]
 
     def traits_view(self):
-        v = View(HGroup(
-            UItem('use'),
-            UItem('label',
-                  width=-30,
-                  style='readonly'),
-            UItem('isotope',
-                  editor=EnumEditor(name='isotopes'),
-                  enabled_when='use'),
-            UItem('fit',
-                  enabled_when='use',
-                  editor=EnumEditor(values=[NULL_STR] + FIT_TYPES))
-        )
+        v = View(
+            HGroup(
+                UItem("use"),
+                UItem("label", width=-30, style="readonly"),
+                UItem(
+                    "isotope", editor=EnumEditor(name="isotopes"), enabled_when="use"
+                ),
+                UItem(
+                    "fit",
+                    enabled_when="use",
+                    editor=EnumEditor(values=[NULL_STR] + FIT_TYPES),
+                ),
+            )
         )
         return v
 
     def _use_changed(self):
         if self.use and not self.fit:
-            self.fit = 'linear'
+            self.fit = "linear"
 
 
 class MeasurementConditional(HasTraits):
     name = Str
     use = Bool
-    key = Enum('age', )
-    comparator = Enum('<', '>', '<=', '>=')
+    key = Enum(
+        "age",
+    )
+    comparator = Enum("<", ">", "<=", ">=")
     criterion = Float(enter_set=True, auto_set=False)
     start_count = Int(enter_set=True, auto_set=False)
     frequency = Int(enter_set=True, auto_set=False)
 
     def to_string(self):
-        return "({}, ('{}','{}',{},{},{}))".format(self.use,
-                                                   self.key,
-                                                   self.comparator,
-                                                   self.criterion,
-                                                   self.start_count,
-                                                   self.frequency)
+        return "({}, ('{}','{}',{},{},{}))".format(
+            self.use,
+            self.key,
+            self.comparator,
+            self.criterion,
+            self.start_count,
+            self.frequency,
+        )
 
 
 class MeasurementAction(MeasurementConditional):
@@ -77,14 +83,16 @@ class MeasurementAction(MeasurementConditional):
     resume = Bool(True)
 
     def to_string(self):
-        return "({}, ('{}','{}',{},{},{},'{}',{}))".format(self.use,
-                                                           self.key,
-                                                           self.comparator,
-                                                           self.criterion,
-                                                           self.start_count,
-                                                           self.frequency,
-                                                           self.action,
-                                                           self.resume)
+        return "({}, ('{}','{}',{},{},{},'{}',{}))".format(
+            self.use,
+            self.key,
+            self.comparator,
+            self.criterion,
+            self.start_count,
+            self.frequency,
+            self.action,
+            self.resume,
+        )
 
 
 class MeasurementTruncation(MeasurementConditional):
@@ -95,7 +103,7 @@ class MeasurementTermination(MeasurementConditional):
     pass
 
 
-DETORDER = ['H2', 'H1', 'AX', 'L1', 'L2', 'CDD']
+DETORDER = ["H2", "H1", "AX", "L1", "L2", "CDD"]
 
 
 class Hop(HasTraits):
@@ -110,16 +118,16 @@ class Hop(HasTraits):
         import string
 
         rpos = self.position
-        k = ''
+        k = ""
         for pii in rpos:
             if pii in string.ascii_letters:
                 k += pii
 
         rrpos = rpos
         for ai in string.ascii_letters:
-            rrpos = rrpos.replace(ai, '')
+            rrpos = rrpos.replace(ai, "")
 
-        dets = self.detectors.split(',')
+        dets = self.detectors.split(",")
         rdet = dets[0]
         if not rdet in DETORDER:
             return
@@ -134,26 +142,28 @@ class Hop(HasTraits):
 
             moff = DETORDER.index(di)
             pos = int(rrpos) + refidx - moff
-            pos = '{}{}'.format(k, pos)
+            pos = "{}{}".format(k, pos)
             poss.append((pos, di))
 
         ss = []
         for i, (pi, di) in enumerate(poss):
-            si = '{}:{}'.format(pi, di)
+            si = "{}:{}".format(pi, di)
             if i < len(poss) - 1:
-                si += ','
-                si = '{:<10s}'.format(si)
+                si += ","
+                si = "{:<10s}".format(si)
             ss.append(si)
-        ss = ''.join(ss)
+        ss = "".join(ss)
 
         ss = "'{}',".format(ss)
         return "{:<30s}{}".format(ss, self.counts)
 
     def traits_view(self):
-        v = View(HGroup(UItem('position', width=-60),
-                        UItem('detectors', width=250),
-                        UItem('counts', width=-60)
-        )
+        v = View(
+            HGroup(
+                UItem("position", width=-60),
+                UItem("detectors", width=250),
+                UItem("counts", width=-60),
+            )
         )
         return v
 

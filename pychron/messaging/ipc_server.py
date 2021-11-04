@@ -27,14 +27,12 @@ from six.moves.socketserver import ThreadingUnixStreamServer
 from .messaging_server import MessagingServer
 from pychron.messaging.handlers.ipc_handler import IPCHandler
 
+
 class IPCServer(ThreadingUnixStreamServer, MessagingServer):
-    '''
-    '''
+    """ """
 
     def __init__(self, parent, processor_type, datasize, *args, **kw):
-        '''
-
-        '''
+        """ """
 
         self.parent = parent
         self.repeater = parent.repeater
@@ -50,7 +48,6 @@ class IPCServer(ThreadingUnixStreamServer, MessagingServer):
         except socket.error as e:
             self.warning(e)
             self.connected = False
-
 
 
 # ============= EOF ====================================

@@ -20,9 +20,19 @@ from __future__ import absolute_import
 # ============= standard library imports ========================
 from datetime import datetime
 
-from traits.api import HasTraits, List, Str, Int, Button, Property, Instance, \
-    Event
-from traitsui.api import View, Item, Controller, TabularEditor, UItem, spring, HGroup, VSplit, VGroup, InstanceEditor
+from traits.api import HasTraits, List, Str, Int, Button, Property, Instance, Event
+from traitsui.api import (
+    View,
+    Item,
+    Controller,
+    TabularEditor,
+    UItem,
+    spring,
+    HGroup,
+    VSplit,
+    VGroup,
+    InstanceEditor,
+)
 
 # ============= local library imports  ==========================
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -47,27 +57,29 @@ class BaseGitHistory(HasTraits):
             self.selected = self.items[0]
 
     def git_sha_object_factory(self, com):
-        return GitSha(hexsha=com.hexsha,
-                      message=com.message,
-                      active=com.hexsha == self.head_hexsha,
-                      date=datetime.fromtimestamp(float(com.committed_date)))
+        return GitSha(
+            hexsha=com.hexsha,
+            message=com.message,
+            active=com.hexsha == self.head_hexsha,
+            date=datetime.fromtimestamp(float(com.committed_date)),
+        )
 
 
 class GitArchiveHistory(BaseGitHistory):
-    checkout_button = Button('Checkout')
+    checkout_button = Button("Checkout")
     diff_button = Button
     limit = Int(100, enter_set=True, auto_set=False)
 
-    diffable = Property(depends_on='selected')
-    checkoutable = Property(depends_on='selected')
+    diffable = Property(depends_on="selected")
+    checkoutable = Property(depends_on="selected")
     checkout_event = Event
     diff_klass = DiffView
     auto_commit_checkouts = True
 
     selected = List
-    selected_commit = Property(depends_on='selected')
+    selected_commit = Property(depends_on="selected")
 
-    repo_man = Instance('pychron.git_archive.repo_manager.GitRepoManager')
+    repo_man = Instance("pychron.git_archive.repo_manager.GitRepoManager")
     _path = Str
 
     def __init__(self, path=None, root=None, *args, **kw):
@@ -91,11 +103,13 @@ class GitArchiveHistory(BaseGitHistory):
 
         if p:
             self._path = p
-            hx = self.repo_man.commits_iter(p, keys=['message', 'committed_date'],
-                                            limit=self.limit)
-            self.items = [GitSha(hexsha=a, message=b,
-                                 date=datetime.utcfromtimestamp(c),
-                                 name=p) for a, b, c in hx]
+            hx = self.repo_man.commits_iter(
+                p, keys=["message", "committed_date"], limit=self.limit
+            )
+            self.items = [
+                GitSha(hexsha=a, message=b, date=datetime.utcfromtimestamp(c), name=p)
+                for a, b, c in hx
+            ]
 
     def _selected_changed(self, new):
         if new:
@@ -111,12 +125,11 @@ class GitArchiveHistory(BaseGitHistory):
         self.load_history()
 
     def _checkout_button_fired(self):
-        with open(self._path, 'w') as wfile:
+        with open(self._path, "w") as wfile:
             wfile.write(self.selected_commit.blob)
 
         if self.auto_commit_checkouts:
-            self.repo_man.add(self._path,
-                              msg_prefix='checked out')
+            self.repo_man.add(self._path, msg_prefix="checked out")
             self.load_history()
 
         self.selected = self.items[:1]
@@ -131,21 +144,26 @@ class GitArchiveHistory(BaseGitHistory):
         if not b.blob:
             b.blob = self.repo_man.unpack_blob(b.hexsha, b.name)
 
-        ds = '\n'.join([li for li in d.split('\n')
-                        if li[0] in ('-', '+')])
+        ds = "\n".join([li for li in d.split("\n") if li[0] in ("-", "+")])
 
         lm = a.message
         n = 40
         if len(lm) > n:
-            lm = '{}...'.format(lm[:n])
+            lm = "{}...".format(lm[:n])
 
         rm = a.message
         if len(rm) > n:
-            rm = '{}...'.format(rm[:n])
+            rm = "{}...".format(rm[:n])
 
-        dd = self.diff_klass(left=a.blob, left_date=a.date.strftime('%m-%d-%Y %H:%M:%S'), left_message=lm,
-                             right=b.blob, right_date=b.date.strftime('%m-%d-%Y %H:%M:%S'), right_message=rm,
-                             diff=ds)
+        dd = self.diff_klass(
+            left=a.blob,
+            left_date=a.date.strftime("%m-%d-%Y %H:%M:%S"),
+            left_message=lm,
+            right=b.blob,
+            right_date=b.date.strftime("%m-%d-%Y %H:%M:%S"),
+            right_message=rm,
+            diff=ds,
+        )
 
         dd.edit_traits()
         # dd.configure_traits()
@@ -167,23 +185,41 @@ class GitArchiveHistoryView(Controller):
         self.model.close()
 
     def traits_view(self):
-        v = View(VGroup(HGroup(spring, Item('limit')),
-                        VSplit(UItem('items',
-                                     height=0.75,
-                                     editor=TabularEditor(adapter=CommitAdapter(),
-                                                          multi_select=True,
-                                                          selected='selected')),
-                               UItem('selected_commit',
-                                     editor=InstanceEditor(),
-                                     height=0.25,
-                                     style='custom')),
-                        HGroup(spring, icon_button_editor('diff_button', 'edit_diff',
-                                                          enabled_when='diffable'),
-                               UItem('checkout_button', enabled_when='checkoutable'))),
-                 width=400, height=400,
-                 title=self.title,
-                 resizable=True)
+        v = View(
+            VGroup(
+                HGroup(spring, Item("limit")),
+                VSplit(
+                    UItem(
+                        "items",
+                        height=0.75,
+                        editor=TabularEditor(
+                            adapter=CommitAdapter(),
+                            multi_select=True,
+                            selected="selected",
+                        ),
+                    ),
+                    UItem(
+                        "selected_commit",
+                        editor=InstanceEditor(),
+                        height=0.25,
+                        style="custom",
+                    ),
+                ),
+                HGroup(
+                    spring,
+                    icon_button_editor(
+                        "diff_button", "edit_diff", enabled_when="diffable"
+                    ),
+                    UItem("checkout_button", enabled_when="checkoutable"),
+                ),
+            ),
+            width=400,
+            height=400,
+            title=self.title,
+            resizable=True,
+        )
         return v
+
 
 # if __name__ == '__main__':
 # r = '/Users/ross/Sandbox/gitarchive'

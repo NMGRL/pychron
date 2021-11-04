@@ -24,14 +24,14 @@ def set_subgrouping_error(tag, selected, items):
     ss = []
     for s in selected:
         if s.subgroup:
-            s.subgroup['error_kind'] = tag
-            ss.append(s.subgroup['name'])
+            s.subgroup["error_kind"] = tag
+            ss.append(s.subgroup["name"])
 
     if ss:
         # ensure all items in the subgroup get updated
         for i in items:
-            if i.subgroup and i.subgroup['name'] in ss:
-                i.subgroup['error_kind'] = tag
+            if i.subgroup and i.subgroup["name"] in ss:
+                i.subgroup["error_kind"] = tag
 
 
 def apply_subgrouping(sg, selected, items=None, gid=None):
@@ -39,14 +39,14 @@ def apply_subgrouping(sg, selected, items=None, gid=None):
         return
 
     if items is None and gid is None:
-        raise ValueError('must set items or gid')
+        raise ValueError("must set items or gid")
 
     if items:
-        gs = {r.subgroup['name'] for r in items}
+        gs = {r.subgroup["name"] for r in items}
         gs = [int(gi) for gi in gs if gi]
         gid = max(gs) + 1 if gs else 0
 
-    sg['name'] = '{:02n}'.format(gid)
+    sg["name"] = "{:02n}".format(gid)
 
     for s in selected:
         s.subgroup = sg
@@ -64,9 +64,9 @@ def compress_groups(items):
             ans = list(ans)
             valid_ais = [a for a in ans if not a.is_omitted()]
             if len(valid_ais) > 1:
-                v = '{:02n}'.format(cnt)
+                v = "{:02n}".format(cnt)
                 for a in ans:
-                    a.subgroup['name'] = v
+                    a.subgroup["name"] = v
                 cnt += 1
 
             else:
@@ -78,8 +78,8 @@ def compress_groups(items):
 
 
 def subgrouping_key(x):
-    if hasattr(x, 'subgroup'):
-        return x.subgroup['name'] if x.subgroup else ''
+    if hasattr(x, "subgroup"):
+        return x.subgroup["name"] if x.subgroup else ""
 
 
 def make_interpreted_age_group(ans, gid):
@@ -91,18 +91,19 @@ def make_interpreted_age_group(ans, gid):
 def make_interpreted_age_groups(ans, group_id=0):
     groups = []
     analyses = []
-    for i, (subgroup, items) in enumerate(groupby(sorted(ans, key=subgrouping_key), key=subgrouping_key)):
+    for i, (subgroup, items) in enumerate(
+        groupby(sorted(ans, key=subgrouping_key), key=subgrouping_key)
+    ):
         items = list(items)
         if subgroup:
             item = items[0]
             sg = item.subgroup
 
             items = list(items)
-            ag = InterpretedAgeGroup(analyses=items,
-                                     group=sg)
+            ag = InterpretedAgeGroup(analyses=items, group=sg)
             ag.set_preferred_kinds(sg)
-            kind = ag.get_preferred_kind('age')
-            n = '{:02n}-{:02n}:{}'.format(group_id, ag.aliquot, kind[:2])
+            kind = ag.get_preferred_kind("age")
+            n = "{:02n}-{:02n}:{}".format(group_id, ag.aliquot, kind[:2])
             ag.label_name = n
             ag.record_id = n
             ag.subgroup_id = i
@@ -112,5 +113,6 @@ def make_interpreted_age_groups(ans, group_id=0):
             analyses.extend(items)
 
     return groups, analyses
+
 
 # ============= EOF =============================================

@@ -28,25 +28,26 @@ from traits.api import Float, Enum, Bool
 
 class SimpleCrosshairsOverlay(AbstractOverlay):
     radius = Float
-    constrain = Enum('', 'x', 'y')
+    constrain = Enum("", "x", "y")
     circle_only = Bool(True)
 
     def overlay(self, component, gc, *args, **kw):
         with gc:
-            gc.clip_to_rect(component.x, component.y,
-                            component.width, component.height)
+            gc.clip_to_rect(component.x, component.y, component.width, component.height)
             comp = self.component
 
             sdp = comp.show_desired_position
             dp = comp.desired_position
             if sdp and dp is not None:
-                self._draw_radius_ch(gc, component, dp, self.radius,
-                                     color=comp.desired_position_color)
+                self._draw_radius_ch(
+                    gc, component, dp, self.radius, color=comp.desired_position_color
+                )
 
             if comp.show_current_position:
                 pos = comp.stage_position
-                self._draw_radius_ch(gc, component, pos, self.radius,
-                                     color=comp.crosshairs_color)
+                self._draw_radius_ch(
+                    gc, component, pos, self.radius, color=comp.crosshairs_color
+                )
 
     def _draw_simple_ch(self, gc, pt, length=4, color=None):
         if color is not None:
@@ -65,8 +66,8 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
             if not isinstance(color, (list, tuple)):
                 color = color.red(), color.green(), color.blue(), color.alpha()
 
-            if not all([0 <= xx <= 1. for xx in color]):
-                color = [xx / 255. for xx in color]
+            if not all([0 <= xx <= 1.0 for xx in color]):
+                color = [xx / 255.0 for xx in color]
             if stroke:
                 gc.set_stroke_color(color)
 
@@ -80,10 +81,10 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
             color = self.set_color(gc, color)
 
         mx, my = pt
-        if self.constrain == 'x':
+        if self.constrain == "x":
             sx, sy = component.map_screen([(0, 0)])[0]
             mx = sx
-        elif self.constrain == 'y':
+        elif self.constrain == "y":
             sx, sy = component.map_screen([(0, 0)])[0]
             my = sy
 
@@ -95,8 +96,7 @@ class SimpleCrosshairsOverlay(AbstractOverlay):
             gc.arc(mx, my, radius, 0, 360)
 
             if not self.circle_only or not circle_only:
-                x, x2, y, y2 = component.x, component.x2, \
-                               component.y, component.y2
+                x, x2, y, y2 = component.x, component.x2, component.y, component.y2
                 gc.move_to(x, my)
                 gc.line_to(mx - radius, my)
 
@@ -119,8 +119,7 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
 
     def overlay(self, component, gc, *args, **kw):
         with gc:
-            gc.clip_to_rect(component.x, component.y,
-                            component.width, component.height)
+            gc.clip_to_rect(component.x, component.y, component.width, component.height)
             # if component.crosshairs_kind == 'UserRadius':
             #     radius = component.crosshairs_radius
             # else:
@@ -136,8 +135,13 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
 
             if sdp and dp is not None:
                 pos_off = dp[0] + ox, dp[1] + oy
-                self._draw_radius_ch(gc, component, pos_off, radius,
-                                     color=component.desired_position_color)
+                self._draw_radius_ch(
+                    gc,
+                    component,
+                    pos_off,
+                    radius,
+                    color=component.desired_position_color,
+                )
 
             mx = component.x + (component.x2 - component.x) / 2.0
             my = component.y + (component.y2 - component.y) / 2.0
@@ -147,14 +151,24 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
                 if ox or oy:
                     pos_off = mx + ox, my + oy
                     color = component.get_crosshairs_color(self.tag, True)
-                    self._draw_radius_ch(gc, component, pos_off, radius,
-                                         circle_only=circle_only,
-                                         color=color)
+                    self._draw_radius_ch(
+                        gc,
+                        component,
+                        pos_off,
+                        radius,
+                        circle_only=circle_only,
+                        color=color,
+                    )
                 else:
                     color = component.get_crosshairs_color(self.tag)
-                    self._draw_radius_ch(gc, component, (mx, my), radius,
-                                         circle_only=circle_only,
-                                         color=color)
+                    self._draw_radius_ch(
+                        gc,
+                        component,
+                        (mx, my),
+                        radius,
+                        circle_only=circle_only,
+                        color=color,
+                    )
 
             if component.show_hole_label:
                 h = component.get_current_hole()
@@ -166,5 +180,6 @@ class CrosshairsOverlay(SimpleCrosshairsOverlay):
                     gc.set_text_position(x, y)
                     gc.set_font(self.component.hole_label_font)
                     gc.show_text(h.id)
+
 
 # ============= EOF ============================================

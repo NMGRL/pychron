@@ -43,15 +43,22 @@ class BaseMatrixTable(HasTraits):
         self.recalculate()
 
     def _make_name(self, ag):
-        return '{}({})'.format(ag.identifier, ag.group_id)
+        return "{}({})".format(ag.identifier, ag.group_id)
 
     def recalculate(self):
-        results = [self.result_klass(ag, self.analysis_groups) for ag in self.analysis_groups[:-1]]
+        results = [
+            self.result_klass(ag, self.analysis_groups)
+            for ag in self.analysis_groups[:-1]
+        ]
         self.results = results
 
     def _make_adapter(self, ags):
         adp = ResultsAdapter()
-        cols = [(self._make_name(a), '{}_value'.format(a.identifier)) for a in ags[1:]]
-        adp.columns = [('Identifier', 'name'), ] + cols
+        cols = [(self._make_name(a), "{}_value".format(a.identifier)) for a in ags[1:]]
+        adp.columns = [
+            ("Identifier", "name"),
+        ] + cols
         return adp
+
+
 # ============= EOF =============================================

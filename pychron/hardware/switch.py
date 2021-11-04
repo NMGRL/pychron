@@ -16,6 +16,7 @@
 
 # ============= standard library imports ========================
 import time
+
 # ============= enthought library imports =======================
 from datetime import datetime
 
@@ -30,7 +31,7 @@ from pychron.pychron_constants import NULL_STR
 class BaseSwitch(Loggable):
     display_name = Str
     description = Str
-    prefix_name = 'BASE_SWITCH'
+    prefix_name = "BASE_SWITCH"
     state = Bool(False)
     software_lock = Bool(False)
     ignore_lock_warning = Bool(False)
@@ -43,10 +44,9 @@ class BaseSwitch(Loggable):
     use_state_word = Bool(False)
 
     def __init__(self, name, *args, **kw):
-        """
-        """
+        """ """
         self.display_name = name
-        kw['name'] = '{}-{}'.format(self.prefix_name, name)
+        kw["name"] = "{}-{}".format(self.prefix_name, name)
         super(BaseSwitch, self).__init__(*args, **kw)
 
     def _state_changed(self):
@@ -62,11 +62,11 @@ class BaseSwitch(Loggable):
         pass
 
     def lock(self):
-        self.debug('Locking')
+        self.debug("Locking")
         self.software_lock = True
 
     def unlock(self):
-        self.debug('Unlocking')
+        self.debug("Unlocking")
         self.software_lock = False
 
     def get_hardware_state(self, **kw):
@@ -80,10 +80,10 @@ class BaseSwitch(Loggable):
 
 
 class ManualSwitch(BaseSwitch):
-    prefix_name = 'MANUAL_SWITCH'
+    prefix_name = "MANUAL_SWITCH"
 
     def state_str(self):
-        return '{}{}'.format(self.name, self.state)
+        return "{}{}".format(self.name, self.state)
 
     def set_open(self, *args, **kw):
         self.state = True
@@ -105,7 +105,7 @@ class Switch(BaseSwitch):
     state_address = Str
     query_state = Bool(True)
 
-    prefix_name = 'SWITCH'
+    prefix_name = "SWITCH"
     parent = Str
     parent_inverted = Bool(False)
     interlocks = List
@@ -118,11 +118,14 @@ class Switch(BaseSwitch):
 
     def summary(self, widths, keys):
         vs = (getattr(self, k) for k in keys)
-        args = ['{{:<{}s}}'.format(w).format(str(v) if v not in (None, '') else NULL_STR) for w,v in zip(widths, vs)]
-        return ''.join(args)
+        args = [
+            "{{:<{}s}}".format(w).format(str(v) if v not in (None, "") else NULL_STR)
+            for w, v in zip(widths, vs)
+        ]
+        return "".join(args)
 
     def state_str(self):
-        return '{}{}{}'.format(self.name, self.state, self.software_lock)
+        return "{}{}{}".format(self.name, self.state, self.software_lock)
 
     def _state_call(self, func, *args, **kw):
         result = None
@@ -144,12 +147,12 @@ class Switch(BaseSwitch):
         return result
 
     def get_hardware_indicator_state(self, verbose=True):
-        msg = 'Get hardware indicator state err'
+        msg = "Get hardware indicator state err"
 
-        result = self._state_call('get_indicator_state', 'closed', verbose)
+        result = self._state_call("get_indicator_state", "closed", verbose)
         s = result
         if not isinstance(result, bool):
-            self.debug('{}: {}'.format(msg, result))
+            self.debug("{}: {}".format(msg, result))
             s = None
         else:
             if self.state_invert or self.inverted_logic:
@@ -163,43 +166,44 @@ class Switch(BaseSwitch):
         return result
 
     def get_hardware_state(self, verbose=True):
-        """
-        """
+        """ """
         result = None
-        msg = 'Get hardware state err'
+        msg = "Get hardware state err"
         if self.actuator is not None:
             result = self.actuator.get_channel_state(self.address, verbose=verbose)
 
         s = result
         if not isinstance(result, bool):
-            self.warning('{}: {}'.format(msg, result))
+            self.warning("{}: {}".format(msg, result))
             s = None
         self.set_state(s)
         return result
 
     def get_lock_state(self, **kw):
-        return self._state_call('get_lock_state')
+        return self._state_call("get_lock_state")
         # if self.actuator:
         #     return self.actuator.get_lock_state(self)
 
     def get_owner(self, **kw):
         return self.get_lock_state(**kw)
 
-    def set_open(self, mode='normal', force=False):
+    def set_open(self, mode="normal", force=False):
         return self._actuate_state(self._open, mode, True, True, force)
 
-    def set_closed(self, mode='normal', force=False):
+    def set_closed(self, mode="normal", force=False):
         return self._actuate_state(self._close, mode, True, False, force)
 
     # private
     def _actuate_state(self, func, mode, cur, set_value, force):
         """
-            func: self._close, self._open
-            mode: normal, client
-            cur: bool, not self.state if open, self.state if close
-            set_value: open-True, close-False
+        func: self._close, self._open
+        mode: normal, client
+        cur: bool, not self.state if open, self.state if close
+        set_value: open-True, close-False
         """
-        self.info('actuate state mode={}, software_lock={}'.format(mode, self.software_lock))
+        self.info(
+            "actuate state mode={}, software_lock={}".format(mode, self.software_lock)
+        )
         state_change = False
         success = True
         if self.software_lock:
@@ -214,16 +218,14 @@ class Switch(BaseSwitch):
 
         return success, state_change
 
-    def _open(self, mode='normal', force=False):
-        """
-        """
-        cmd = 'close_channel' if self.inverted_logic else 'open_channel'
+    def _open(self, mode="normal", force=False):
+        """ """
+        cmd = "close_channel" if self.inverted_logic else "open_channel"
         return self._act(mode, cmd, not self.state or force)
 
-    def _close(self, mode='normal', force=False):
-        """
-        """
-        cmd = 'open_channel' if self.inverted_logic else 'close_channel'
+    def _close(self, mode="normal", force=False):
+        """ """
+        cmd = "open_channel" if self.inverted_logic else "close_channel"
         return self._act(mode, cmd, self.state or force)
 
     def _act(self, mode, func, do_actuation):
@@ -234,10 +236,10 @@ class Switch(BaseSwitch):
         :param do_actuation:
         :return:
         """
-        self.debug('doing actuation mode={} func={}'.format(mode, func))
+        self.debug("doing actuation mode={} func={}".format(mode, func))
         r = True
         actuator = self.actuator
-        if mode == 'debug':
+        if mode == "debug":
             r = True
 
         elif actuator is not None:
@@ -252,10 +254,14 @@ class Switch(BaseSwitch):
     @property
     def state_device_obj(self):
         if self.state_device:
-            return '{}({})'.format(self.state_device.__class__.__name__, id(self.state_device))
+            return "{}({})".format(
+                self.state_device.__class__.__name__, id(self.state_device)
+            )
 
     @property
     def actuator_obj(self):
         if self.actuator:
-            return '{}({})'.format(self.actuator.__class__.__name__, id(self.actuator))
+            return "{}({})".format(self.actuator.__class__.__name__, id(self.actuator))
+
+
 # ============= EOF =============================================

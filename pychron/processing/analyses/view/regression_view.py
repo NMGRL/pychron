@@ -35,7 +35,7 @@ class AnalysisRegressionInspectorTool(RegressionInspectorTool):
 
         ef = errorfmt(a, an.age_err)
         ef_wo_j = errorfmt(a, an.age_err_wo_j)
-        lines.insert(0, 'Date={:0.4f} {}{} w/o_J={}'.format(a, PLUSMINUS, ef, ef_wo_j))
+        lines.insert(0, "Date={:0.4f} {}{} w/o_J={}".format(a, PLUSMINUS, ef, ef_wo_j))
         return lines
 
 
@@ -48,7 +48,7 @@ class AnalysisRegressionGraph(StackedRegressionGraph):
 
 
 class RegressionView(HasTraits):
-    name = 'Regressions'
+    name = "Regressions"
     container = Instance(HPlotContainer)
     analysis = Any
 
@@ -61,7 +61,7 @@ class RegressionView(HasTraits):
 
         container = HPlotContainer()
 
-        container_dict = {'spacing': 5, 'stack_order': 'top_to_bottom'}
+        container_dict = {"spacing": 5, "stack_order": "top_to_bottom"}
         sg = StackedGraph(container_dict=container_dict)
         bg = AnalysisRegressionGraph(container_dict=container_dict, analysis=an)
         ig = AnalysisRegressionGraph(container_dict=container_dict, analysis=an)
@@ -71,12 +71,12 @@ class RegressionView(HasTraits):
         sisos = [iso for iso in isos if iso.sniff.offset_xs.shape[0]]
         for i, iso in enumerate(sisos):
             sniff = iso.sniff
-            p = sg.new_plot(ytitle=iso.name, xtitle='Time (s)', title='Equilibration')
+            p = sg.new_plot(ytitle=iso.name, xtitle="Time (s)", title="Equilibration")
             sg.add_axis_tool(p, p.x_axis)
             sg.add_axis_tool(p, p.y_axis)
 
-            sg.new_series(sniff.offset_xs, sniff.ys, marker='circle', type='scatter')
-            sg.set_y_limits(pad='0.1', plotid=i)
+            sg.new_series(sniff.offset_xs, sniff.ys, marker="circle", type="scatter")
+            sg.set_y_limits(pad="0.1", plotid=i)
             sg.set_x_limits(min_=0, max_=max(sniff.offset_xs) * 1.05, plotid=i)
 
         iisos = [iso for iso in isos if iso.offset_xs.shape[0]]
@@ -85,32 +85,48 @@ class RegressionView(HasTraits):
             if iso.baseline.offset_xs.shape[0]:
                 baselines.append(iso.baseline)
 
-            p = ig.new_plot(ytitle='{}({})'.format(iso.name, iso.detector), xtitle='Time (s)', title='Isotope')
+            p = ig.new_plot(
+                ytitle="{}({})".format(iso.name, iso.detector),
+                xtitle="Time (s)",
+                title="Isotope",
+            )
             ig.add_axis_tool(p, p.x_axis)
             ig.add_axis_tool(p, p.y_axis)
 
-            ig.new_series(iso.offset_xs, iso.ys,
-                          display_filter_bounds=True,
-                          filter_outliers_dict=iso.filter_outliers_dict,
-                          color='blue', type='scatter', fit=iso.efit)
+            ig.new_series(
+                iso.offset_xs,
+                iso.ys,
+                display_filter_bounds=True,
+                filter_outliers_dict=iso.filter_outliers_dict,
+                color="blue",
+                type="scatter",
+                fit=iso.efit,
+            )
             ig.set_regressor(iso.regressor, i)
-            ig.set_y_limits(pad='0.1', plotid=i)
+            ig.set_y_limits(pad="0.1", plotid=i)
             ig.set_x_limits(min_=0, max_=max(iso.offset_xs) * 1.05, plotid=i)
 
         ig.refresh()
-        ig.on_trait_change(self.handle_regression, 'regression_results')
+        ig.on_trait_change(self.handle_regression, "regression_results")
 
         for i, baseline in enumerate(baselines):
-            p = bg.new_plot(ytitle=baseline.detector, xtitle='Time (s)', title='Baseline')
+            p = bg.new_plot(
+                ytitle=baseline.detector, xtitle="Time (s)", title="Baseline"
+            )
             bg.add_axis_tool(p, p.x_axis)
             bg.add_axis_tool(p, p.y_axis)
-            bg.new_series(baseline.offset_xs, baseline.ys,
-                          filter_outliers_dict=baseline.filter_outliers_dict,
-                          display_filter_bounds=True,
-                          color='red', type='scatter', fit=baseline.efit)
+            bg.new_series(
+                baseline.offset_xs,
+                baseline.ys,
+                filter_outliers_dict=baseline.filter_outliers_dict,
+                display_filter_bounds=True,
+                color="red",
+                type="scatter",
+                fit=baseline.efit,
+            )
             bg.set_regressor(baseline.regressor, i)
-            bg.set_y_limits(pad='0.1', plotid=i)
-            bg.set_x_limits(pad='0.025', plotid=i)
+            bg.set_y_limits(pad="0.1", plotid=i)
+            bg.set_x_limits(pad="0.025", plotid=i)
 
         bg.refresh()
 
@@ -125,7 +141,7 @@ class RegressionView(HasTraits):
             for plot, regressor in new:
                 for k, iso in self.analysis.isotopes.items():
                     yt = plot.y_axis.title
-                    if k == yt or '{}({})'.format(iso.name, iso.detector) == yt:
+                    if k == yt or "{}({})".format(iso.name, iso.detector) == yt:
                         iso.set_fit(regressor.get_fit_dict())
                         break
 
@@ -133,8 +149,10 @@ class RegressionView(HasTraits):
             self.analysis.analysis_view.refresh()
 
     def traits_view(self):
-        v = View(UItem('container', style='custom', editor=ComponentEditor()),
-                 resizable=True)
+        v = View(
+            UItem("container", style="custom", editor=ComponentEditor()), resizable=True
+        )
         return v
+
 
 # ============= EOF =============================================

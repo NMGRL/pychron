@@ -24,7 +24,8 @@ from pychron.pipeline.plot.models.xy_scatter_model import XYScatterModel
 
 class XYScatterEditor(FigureEditor):
     figure_model_klass = XYScatterModel
-    pickle_path = 'xyscatter'
-    basename = 'XYScatter'
+    pickle_path = "xyscatter"
+    basename = "XYScatter"
+
 
 # ============= EOF =============================================

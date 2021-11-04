@@ -26,29 +26,30 @@ from pychron.pipeline.nodes import NodeFactory
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-CLUSTER = '''required:
+CLUSTER = """required:
 nodes:
  - klass: UnknownNode
  - klass: ClusterNode
- '''
+ """
 
-CSVCLUSTER = '''
+CSVCLUSTER = """
 required:
 nodes:
   - klass: CSVClusterNode
   - klass: ClusterNode
-'''
+"""
 
 
 class MachineLearningPlugin(BaseTaskPlugin):
-    id = 'pychron.machinelearning.plugin'
-    node_factories = List(contributes_to='pychron.pipeline.node_factories')
-    predefined_templates = List(contributes_to='pychron.pipeline.predefined_templates')
-    pipeline_group_icon_map = List(contributes_to='pychron.pipeline.pipeline_group_icon_map')
+    id = "pychron.machinelearning.plugin"
+    node_factories = List(contributes_to="pychron.pipeline.node_factories")
+    predefined_templates = List(contributes_to="pychron.pipeline.predefined_templates")
+    pipeline_group_icon_map = List(
+        contributes_to="pychron.pipeline.pipeline_group_icon_map"
+    )
 
     def _service_offers_default(self):
-        """
-        """
+        """ """
         # so = self.service_offer_factory()
         return []
 
@@ -59,15 +60,16 @@ class MachineLearningPlugin(BaseTaskPlugin):
             # node.trait_set(service=service)
             return node
 
-        return [NodeFactory('ClusterNode', cluster_factory),
-                NodeFactory('CSVClusterNode', CSVClusterNode)]
+        return [
+            NodeFactory("ClusterNode", cluster_factory),
+            NodeFactory("CSVClusterNode", CSVClusterNode),
+        ]
 
     def _pipeline_group_icon_map_default(self):
-        return [('ML', 'bricks')]
+        return [("ML", "bricks")]
 
     def _predefined_templates_default(self):
-        return [('ML', (('Cluster', CLUSTER),
-                        ('CSV Cluster', CSVCLUSTER)))]
+        return [("ML", (("Cluster", CLUSTER), ("CSV Cluster", CSVCLUSTER)))]
 
     # def _preferences_default(self):
     #     return ['file://']
@@ -81,5 +83,6 @@ class MachineLearningPlugin(BaseTaskPlugin):
 
     def _preferences_panes_default(self):
         return [MachineLearningPreferencesPane]
+
 
 # ============= EOF =============================================

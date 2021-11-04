@@ -24,14 +24,19 @@ from pychron.pychron_constants import MAIN
 
 
 class MainView(SubOptions):
-
     def traits_view(self):
-        v = View(BorderVGroup(Item('basemap_uri_template', label='Base Map URI'),
-                              label='Web Map Services'),
-                 HGroup(spring, Heading('or'), spring),
-                 BorderVGroup(Item('basemap_path', editor=FileEditor(root_path=paths.data_dir)),
-                              label='Local Raster'),
-                 UItem('basemap_uri', style='custom'))
+        v = View(
+            BorderVGroup(
+                Item("basemap_uri_template", label="Base Map URI"),
+                label="Web Map Services",
+            ),
+            HGroup(spring, Heading("or"), spring),
+            BorderVGroup(
+                Item("basemap_path", editor=FileEditor(root_path=paths.data_dir)),
+                label="Local Raster",
+            ),
+            UItem("basemap_uri", style="custom"),
+        )
         return v
 
 
@@ -52,14 +57,20 @@ class GroupSubOptions(_GroupSubOptions):
 
 class LayersSubOptions(SubOptions):
     def traits_view(self):
-        v = View(VGroup(HGroup(UItem('add_layer_button')),
-                        UItem('layers', editor=ListEditor(mutable=True, style='custom',
-                                                          editor=InstanceEditor()))))
+        v = View(
+            VGroup(
+                HGroup(UItem("add_layer_button")),
+                UItem(
+                    "layers",
+                    editor=ListEditor(
+                        mutable=True, style="custom", editor=InstanceEditor()
+                    ),
+                ),
+            )
+        )
         return v
 
 
-VIEWS = {MAIN.lower(): MainView,
-         'groups': GroupSubOptions,
-         'layers': LayersSubOptions}
+VIEWS = {MAIN.lower(): MainView, "groups": GroupSubOptions, "layers": LayersSubOptions}
 
 # ============= EOF =============================================

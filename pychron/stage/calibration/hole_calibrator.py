@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Any
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.geometry.reference_point import ReferenceHole
@@ -39,5 +40,6 @@ class HoleCalibrator(FreeCalibrator):
                 h = smap.get_hole(hole)
                 refp = h.x, h.y
                 return refp, sp
+
 
 # ============= EOF =============================================

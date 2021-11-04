@@ -20,8 +20,19 @@ import os
 import time
 
 from pyface.timer.do_later import do_later
-from traits.api import Any, on_trait_change, Int, List, Bool, \
-    Instance, Property, Str, HasTraits, Event, Long
+from traits.api import (
+    Any,
+    on_trait_change,
+    Int,
+    List,
+    Bool,
+    Instance,
+    Property,
+    Str,
+    HasTraits,
+    Event,
+    Long,
+)
 from traits.trait_types import Date
 from traitsui.api import View, Item, UItem
 
@@ -47,10 +58,12 @@ class RepeatRunBlockView(HasTraits):
     value = Int
 
     def traits_view(self):
-        v = okcancel_view(Item('value', label='Repeat'),
-                          kind='modal',
-                          title='Repeat Selected Run Block',
-                          width=300)
+        v = okcancel_view(
+            Item("value", label="Repeat"),
+            kind="modal",
+            title="Repeat Selected Run Block",
+            width=300,
+        )
         return v
 
 
@@ -58,10 +71,7 @@ class NewRunBlockView(HasTraits):
     name = Str
 
     def traits_view(self):
-        v = okcancel_view(Item('name'),
-                          kind='modal',
-                          title='New Run Block',
-                          width=200)
+        v = okcancel_view(Item("name"), kind="modal", title="New Run Block", width=200)
         return v
 
 
@@ -69,7 +79,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     executed_selected = Any
     dclicked = Any
     database_identifier = Long
-    display_executed_runs = Property(depends_on='executed_runs[]')
+    display_executed_runs = Property(depends_on="executed_runs[]")
     n_executed_display = Int(5)
     executed_runs = List
     executed_runs_scroll_to_row = Int
@@ -85,7 +95,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
 
     refresh_blocks_needed = Event
 
-    default_attr = 'identifier'
+    default_attr = "identifier"
     patterns = List
 
     _auto_save_time = 0
@@ -98,23 +108,25 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         self._auto_save_time = time.time()
         path = self.path
         if os.path.isfile(path):
-            bk = os.path.join(paths.auto_save_experiment_dir, '{}.bak'.format(self.name))
+            bk = os.path.join(
+                paths.auto_save_experiment_dir, "{}.bak".format(self.name)
+            )
         else:
-            bk = os.path.join(paths.auto_save_experiment_dir, 'Untitled.bak')
+            bk = os.path.join(paths.auto_save_experiment_dir, "Untitled.bak")
 
-        self.debug('hAutosaving to {}'.format(bk))
-        with open(bk, 'w') as wfile:
+        self.debug("hAutosaving to {}".format(bk))
+        with open(bk, "w") as wfile:
             self.dump(wfile)
 
     def toggle_skip(self):
-        self.debug('Toggle skip')
+        self.debug("Toggle skip")
         for si in self.selected:
             si.skip = not si.skip
         self.selected = []
         self.refresh_table_needed = True
 
     def toggle_end_after(self):
-        self.debug('Toggle end after')
+        self.debug("Toggle end after")
         sel = self.selected
         for ai in self.automated_runs:
             if ai not in sel:
@@ -126,7 +138,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
 
         si.end_after = not si.end_after
 
-        self.debug('setting {} end_after to {}'.format(idx, si.end_after))
+        self.debug("setting {} end_after to {}".format(idx, si.end_after))
 
         self.selected = []
         self.refresh_table_needed = True
@@ -139,7 +151,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         stage_map_klass = LaserStageMap
 
         t = self.tray
-        path = os.path.join(paths.map_dir, add_extension(t, '.txt'))
+        path = os.path.join(paths.map_dir, add_extension(t, ".txt"))
         sm = stage_map_klass(file_path=path)
         if sm.load():
             new_pos = []
@@ -159,22 +171,26 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         open a txt file that contains the positions in execution order
         :return:
         """
-        self.warning_dialog('Order from file not yet implemented')
+        self.warning_dialog("Order from file not yet implemented")
         return
 
         p = self.open_file_dialog()
         if p is not None:
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
 
                 positions = reversed(rfile.readlines())
                 for cpos in positions:
-                    arun = next((a for a in self.automated_runs if a.position == cpos.strip()), None)
+                    arun = next(
+                        (a for a in self.automated_runs if a.position == cpos.strip()),
+                        None,
+                    )
                     if arun:
                         self.automated_runs.remove(arun)
                         self.automated_runs.insert(0, arun)
 
     def randomize_all(self):
         from random import shuffle
+
         aruns = self.automated_runs[:]
         shuffle(aruns)
         self.automated_runs = aruns
@@ -200,7 +216,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         aruns, skipped = partition(aruns, predicate=predicate)
 
         def predicate(x):
-            return x.analysis_type == 'unknown'
+            return x.analysis_type == "unknown"
 
         idx = [i for i, a in enumerate(aruns) if not predicate(a)]
 
@@ -230,7 +246,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
             gs = []
             for i, a in enumerate(self.automated_runs):
                 if a.extract_value == evs[0]:
-                    gs.extend(self.automated_runs[i:i + n])
+                    gs.extend(self.automated_runs[i : i + n])
 
             if gs:
                 for gi in gs:
@@ -269,14 +285,14 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
             if info.result:
                 self.add_runs(self.selected, freq=rbv.value, is_repeat_block=True)
         else:
-            self.information_dialog('Please select a set of analyses to repeat')
+            self.information_dialog("Please select a set of analyses to repeat")
 
     def make_run_block(self):
         nrbv = NewRunBlockView()
         info = nrbv.edit_traits()
         if info.result:
-            p = os.path.join(paths.run_block_dir, '{}.txt'.format(nrbv.name))
-            with open(p, 'w') as wfile:
+            p = os.path.join(paths.run_block_dir, "{}.txt".format(nrbv.name))
+            with open(p, "w") as wfile:
                 self.dump(wfile, runs=self.selected, include_meta=False)
             self.refresh_blocks_needed = True
 
@@ -318,13 +334,13 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
 
     def select_special(self):
         def test(ss):
-            return ss.analysis_type != 'unknown'
+            return ss.analysis_type != "unknown"
 
         self.selected = [si for si in self.cleaned_automated_runs if test(si)]
 
     def select_unknowns(self):
         def test(ss):
-            return ss.analysis_type == 'unknown'
+            return ss.analysis_type == "unknown"
 
         self.selected = [si for si in self.cleaned_automated_runs if test(si)]
 
@@ -340,10 +356,12 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         return list(attrs)
 
     def count_labnumber(self, ln):
-        ans = [ai for ai in self.automated_runs if ai.labnumber == ln and ai.is_step_heat()]
+        ans = [
+            ai for ai in self.automated_runs if ai.labnumber == ln and ai.is_step_heat()
+        ]
         i = 0
 
-        for _ in groupby_key(ans, 'user_defined_aliquot'):
+        for _ in groupby_key(ans, "user_defined_aliquot"):
             i += 1
         return i
 
@@ -356,7 +374,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
 
     def select_run_idx(self, idx):
         if self.automated_runs:
-            self.selected = self.automated_runs[idx:idx + 1]
+            self.selected = self.automated_runs[idx : idx + 1]
 
     def show_evolutions(self, isotopes=None, **kw):
         if self.executed_selected:
@@ -385,17 +403,23 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         """
         if self.executed_selected:
             from pychron.core.ui.text_editor import myTextEditor
-            v = View(UItem('summary', style='custom', editor=myTextEditor(editable=False,
-                                                                          fontsize=14)),
-                     title='Summary',
-                     width=900,
-                     kind='livemodal',
-                     resizable=True)
+
+            v = View(
+                UItem(
+                    "summary",
+                    style="custom",
+                    editor=myTextEditor(editable=False, fontsize=14),
+                ),
+                title="Summary",
+                width=900,
+                kind="livemodal",
+                resizable=True,
+            )
             open_view(self.executed_selected[0].result, view=v)
 
     def reset(self):
         """
-            clear the step from the run. increment the aliquot if a step heat and experiment completed.
+        clear the step from the run. increment the aliquot if a step heat and experiment completed.
         """
 
         ens = self.executed_runs
@@ -406,7 +430,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         nans = []
         # for ei in reversed(ens):
         for ei in ens:
-            ei.state = 'not run'
+            ei.state = "not run"
             if not ei.is_step_heat():
                 ei.aliquot = 0
             elif finished and ei.user_defined_aliquot:
@@ -436,10 +460,12 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
             self.executed_runs.append(run)
 
             idx = len(self.executed_runs) - 1
-            invoke_in_main_thread(do_later, lambda: self.trait_set(executed_runs_scroll_to_row=idx))
+            invoke_in_main_thread(
+                do_later, lambda: self.trait_set(executed_runs_scroll_to_row=idx)
+            )
             # self.debug('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ set ex scroll to {}'.format(idx))
         else:
-            self.debug('Problem removing {}'.format(aid))
+            self.debug("Problem removing {}".format(aid))
 
         self._no_update = False
 
@@ -450,7 +476,7 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
     def paste_function(self, obj):
 
         ci = obj.clone_traits()
-        ci.state = 'not run'
+        ci.state = "not run"
         ci.aliquot = 0
         ci.step = -1
         ci.conflicts_checked = False
@@ -498,31 +524,44 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
 
         spec_man = None
         if self.application:
-            from pychron.spectrometer.base_spectrometer_manager import BaseSpectrometerManager
+            from pychron.spectrometer.base_spectrometer_manager import (
+                BaseSpectrometerManager,
+            )
+
             spec_man = self.application.get_service(BaseSpectrometerManager)
 
         hec = klass(spectrometer_manager=spec_man)
         return hec
 
     def _find_run(self, aid):
-        return next((a for a in self.automated_runs
-                     if make_runid(a.labnumber, a.aliquot, a.step) == aid), None)
+        return next(
+            (
+                a
+                for a in self.automated_runs
+                if make_runid(a.labnumber, a.aliquot, a.step) == aid
+            ),
+            None,
+        )
 
     def _load_actions(self):
         pass
 
     def _load_meta_hook(self, meta):
         bool_default = lambda x: bool(x) if x else False
-        self._set_meta_param('auto_save_detector_ic', meta, bool_default)
-        self.debug('$$$$$$$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(self.auto_save_detector_ic))
+        self._set_meta_param("auto_save_detector_ic", meta, bool_default)
+        self.debug(
+            "$$$$$$$$$$$$$$$$$$$$$ auto_save_detector_ic={}".format(
+                self.auto_save_detector_ic
+            )
+        )
 
     def _get_display_executed_runs(self):
-        return self.executed_runs[-self.n_executed_display:]
+        return self.executed_runs[-self.n_executed_display :]
 
     def _get_execution_ratio(self):
         ex = len(self.executed_runs)
         tc = len(self.cleaned_automated_runs) + ex
-        return '{}/{}'.format(ex, tc)
+        return "{}/{}".format(ex, tc)
 
     def _copy_selected(self, idx):
         with no_update(self):
@@ -538,26 +577,27 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
                 self.automated_runs.insert(idx, si)
 
     def _extract_device_changed(self):
-        self.debug('extract device changed {}'.format(self.extract_device))
-        if 'uv' in self.extract_device.lower():
+        self.debug("extract device changed {}".format(self.extract_device))
+        if "uv" in self.extract_device.lower():
             k = UVHumanErrorChecker
         else:
             k = HumanErrorChecker
 
         self.human_error_checker = self._human_error_checker_factory(k)
 
-    @on_trait_change('automated_runs[]')
+    @on_trait_change("automated_runs[]")
     def _refresh_info(self, new):
         if new and not self._no_update:
             idx = self.automated_runs.index(new[-1])
-            self.debug('SSSSSSSSSSSSSS set AR scroll to {}'.format(idx))
+            self.debug("SSSSSSSSSSSSSS set AR scroll to {}".format(idx))
             self.refresh_info_needed = True
             self.automated_runs_scroll_to_row = idx
             # invoke_in_main_thread(do_later, lambda: self.trait_set(automated_runs_scroll_to_row=idx))
 
-    @on_trait_change('automated_runs:state')
+    @on_trait_change("automated_runs:state")
     def _refresh_table1(self):
         self.refresh_table_needed = True
+
 
 # ============= EOF =============================================
 # rgen = (r for r in newruns)

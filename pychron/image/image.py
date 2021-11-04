@@ -24,8 +24,8 @@ from scipy.ndimage.interpolation import rotate as srotate
 
 
 class Image(HasTraits):
-    """
-    """
+    """ """
+
     frames = List
     source_frame = Any
     width = Int
@@ -57,6 +57,7 @@ class Image(HasTraits):
     #
     def load(self, img, swap_rb=False, nchannels=3):
         from cv2 import imread
+
         img = imread(img)
         self.source_frame = img
 
@@ -87,8 +88,8 @@ class Image(HasTraits):
         self._cached_frame = frame
         if frame is not None:
             if len(frame.shape) == 2:
-                scalar = 255./self.pixel_depth
-                frame = gray2rgb(frame*scalar)
+                scalar = 255.0 / self.pixel_depth
+                frame = gray2rgb(frame * scalar)
 
         #     self._cached_frame = frame
         # else:
@@ -115,9 +116,18 @@ class Image(HasTraits):
     #     except AttributeError:
     #         pass
 
-    def modify_frame(self, frame, vflip=None, hflip=None, gray=False, swap_rb=None,
-                     clone=False, rotate=None):
+    def modify_frame(
+        self,
+        frame,
+        vflip=None,
+        hflip=None,
+        gray=False,
+        swap_rb=None,
+        clone=False,
+        rotate=None,
+    ):
         if frame is not None:
+
             def _get_param(param, p):
                 if param is None:
                     return getattr(self, p)
@@ -128,7 +138,7 @@ class Image(HasTraits):
                 frame = frame.clone()
 
             if len(frame.shape) == 3:
-                swap_rb = _get_param(swap_rb, 'swap_rb')
+                swap_rb = _get_param(swap_rb, "swap_rb")
                 if swap_rb:
                     red = frame[:, :, 2].copy()
                     blue = frame[:, :, 0].copy()
@@ -139,15 +149,15 @@ class Image(HasTraits):
             if gray:
                 frame = rgb2gray(frame)
 
-            vflip = _get_param(vflip, 'vflip')
-            hflip = _get_param(hflip, 'hflip')
+            vflip = _get_param(vflip, "vflip")
+            hflip = _get_param(hflip, "hflip")
 
             if vflip:
                 frame = flipud(frame)
             if hflip:
                 frame = fliplr(frame)
 
-            rotate = _get_param(rotate, 'rotate')
+            rotate = _get_param(rotate, "rotate")
             if rotate:
                 frame = srotate(frame, rotate)
                 # frame = trotate(frame, rotate, preserve_range=True)
@@ -157,10 +167,10 @@ class Image(HasTraits):
     def crop(self, src, ox, oy, cw, ch):
         h, w = src.shape[:2]
 
-        x = int((w - cw) / 2. + ox)
-        y = int((h - ch) / 2. + oy)
+        x = int((w - cw) / 2.0 + ox)
+        y = int((h - ch) / 2.0 + oy)
 
-        return src[y:y + ch, x:x + cw]
+        return src[y : y + ch, x : x + cw]
 
     def render(self):
         return self.frames[0]
@@ -190,5 +200,6 @@ class Image(HasTraits):
     #            [(w / 2 + r, h / 2), (w, h / 2)],
     #            ]
     #     draw_lines(src, pts, color=(0, 255, 255), thickness=1)
+
 
 # ======== EOF ================================

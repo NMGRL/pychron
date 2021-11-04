@@ -22,8 +22,23 @@ from datetime import datetime
 
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
-from traits.api import HasTraits, Str, Bool, Property, Button, on_trait_change, List, cached_property, \
-    Instance, Event, Date, Enum, Long, Any, Int
+from traits.api import (
+    HasTraits,
+    Str,
+    Bool,
+    Property,
+    Button,
+    on_trait_change,
+    List,
+    cached_property,
+    Instance,
+    Event,
+    Date,
+    Enum,
+    Long,
+    Any,
+    Int,
+)
 from traitsui.api import UItem, Item, EnumEditor
 
 from pychron.core.helpers.datetime_tools import get_date
@@ -40,6 +55,7 @@ DEBUG = False
 
 def get_sftp_client(host, user, password):
     import paramiko
+
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     print(host, user, password)
@@ -67,7 +83,13 @@ class SampleRecord(HasTraits):
                 return True
 
     def args(self):
-        return self.name, self.project, self.principal_investigator, self.material, self.grainsize
+        return (
+            self.name,
+            self.project,
+            self.principal_investigator,
+            self.material,
+            self.grainsize,
+        )
 
 
 class PrepStepRecord(HasTraits):
@@ -119,22 +141,24 @@ class PrepStepRecord(HasTraits):
     choices_bse = List
     choices_se = List
 
-    status = Enum('', 'Good', 'Bad', 'Use For Irradiation')
+    status = Enum("", "Good", "Bad", "Use For Irradiation")
     comment = Str
 
     edit_comment_button = Button
     crushed = Bool
     timestamp = Date
 
-    @on_trait_change('flag_+')
+    @on_trait_change("flag_+")
     def _handle_flag(self, name, new):
         attr = name[5:]
-        setattr(self, attr, 'X' if new else '')
+        setattr(self, attr, "X" if new else "")
 
     def _edit_comment_button_fired(self):
-        v = okcancel_view(UItem('comment', style='custom'),
-                          title='Edit Comment',
-                          buttons=['OK', 'Cancel', 'Revert'])
+        v = okcancel_view(
+            UItem("comment", style="custom"),
+            title="Edit Comment",
+            buttons=["OK", "Cancel", "Revert"],
+        )
 
         self.edit_traits(view=v)
 
@@ -142,17 +166,17 @@ class PrepStepRecord(HasTraits):
 class SamplePrep(DVCAble, PersistenceMixin):
     session = Str
     worker = Str
-    sessions = Property(depends_on='worker, refresh_sessions')
+    sessions = Property(depends_on="worker, refresh_sessions")
     refresh_sessions = Event
     workers = List
 
     project = Str
-    projects = Property(depends_on='principal_investigator')
+    projects = Property(depends_on="principal_investigator")
 
     principal_investigator = Str
     principal_investigators = List
 
-    samples = Property(depends_on='project')
+    samples = Property(depends_on="project")
 
     session_samples = List
     active_sample = Instance(SampleRecord, ())
@@ -160,7 +184,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
     prep_step = Instance(PrepStepRecord, ())
 
     selected = List
-    selection_enabled = Property(depends_on='worker, selected, session')
+    selection_enabled = Property(depends_on="worker, selected, session")
     add_selection_button = Button
     add_session_button = Button
     add_worker_button = Button
@@ -168,14 +192,14 @@ class SamplePrep(DVCAble, PersistenceMixin):
     clear_step_button = Button
     edit_session_button = Button
 
-    snapshot_button = Button('Snapshot')
+    snapshot_button = Button("Snapshot")
     view_image_button = Button
     view_camera_button = Button
     upload_image_button = Button
     selected_step = Instance(PrepStepRecord)
     dclicked = Event
 
-    pattributes = ('worker', 'session', 'principal_investigator', 'project')
+    pattributes = ("worker", "session", "principal_investigator", "project")
     move_to_session_name = Str
     move_to_sessions = List
 
@@ -186,11 +210,11 @@ class SamplePrep(DVCAble, PersistenceMixin):
     ffrantz = Bool
     fheavy_liquid = Bool
     fpick = Bool
-    fstatus = Enum('', 'Good', 'Bad', 'Use For Irradiation')
+    fstatus = Enum("", "Good", "Bad", "Use For Irradiation")
     camera = Any
     selected_image = Any
 
-    persistence_name = 'sample_prep'
+    persistence_name = "sample_prep"
 
     def activated(self):
 
@@ -201,14 +225,14 @@ class SamplePrep(DVCAble, PersistenceMixin):
         self.load()
 
         if self.worker not in self.workers:
-            self.worker = ''
+            self.worker = ""
         if self.session not in self.sessions:
-            self.session = ''
+            self.session = ""
 
         if DEBUG:
             self.worker = self.workers[0]
             self.session = self.sessions[0]
-            self.principal_investigator = 'MZimmerer'
+            self.principal_investigator = "MZimmerer"
             self.project = self.projects[0]
 
         self._load_session_samples()
@@ -236,7 +260,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
         nsession = self._get_new_session()
         if nsession:
             s = self.active_sample
-            sd = {'name': s.name, 'material': s.material, 'project': s.project}
+            sd = {"name": s.name, "material": s.material, "project": s.project}
 
             self.dvc.move_sample_to_session(self.session, sd, nsession, self.worker)
             self.active_sample = SampleRecord()
@@ -250,15 +274,16 @@ class SamplePrep(DVCAble, PersistenceMixin):
         # load choices
         for k in SAMPLE_PREP_STEPS:
             cs = self.dvc.get_sample_prep_choice_names(k)
-            setattr(self.prep_step, 'choices_{}'.format(k), cs)
+            setattr(self.prep_step, "choices_{}".format(k), cs)
 
     def _get_new_session(self):
 
         self.move_to_sessions = [s for s in self.sessions if s != self.session]
 
-        v = okcancel_view(Item('move_to_session_name',
-                               editor=EnumEditor(name='move_to_sessions')),
-                          title='Move to Session')
+        v = okcancel_view(
+            Item("move_to_session_name", editor=EnumEditor(name="move_to_sessions")),
+            title="Move to Session",
+        )
 
         info = self.edit_traits(v)
         if info.result:
@@ -268,11 +293,9 @@ class SamplePrep(DVCAble, PersistenceMixin):
         self.dvc.add_sample_prep_session(obj.name, worker, obj.comment)
 
     def _add_worker(self, obj):
-        self.dvc.add_sample_prep_worker(obj.name,
-                                        obj.fullname,
-                                        obj.email,
-                                        obj.phone,
-                                        obj.comment)
+        self.dvc.add_sample_prep_worker(
+            obj.name, obj.fullname, obj.email, obj.phone, obj.comment
+        )
 
     def _load_session_samples(self):
         if self.worker and self.session:
@@ -287,13 +310,15 @@ class SamplePrep(DVCAble, PersistenceMixin):
         self.principal_investigators = self.dvc.get_principal_investigator_names()
 
     def _sample_record_factory(self, s):
-        r = SampleRecord(name=s.name,
-                         project=s.project.name,
-                         principal_investigator=s.project.principal_investigator.name,
-                         material=s.material.name,
-                         grainsize=s.material.grainsize or '',
-                         worker=self.worker,
-                         session=self.session)
+        r = SampleRecord(
+            name=s.name,
+            project=s.project.name,
+            principal_investigator=s.project.principal_investigator.name,
+            material=s.material.name,
+            grainsize=s.material.grainsize or "",
+            worker=self.worker,
+            session=self.session,
+        )
         return r
 
     def _load_steps_for_sample(self, asample):
@@ -304,35 +329,44 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
             params = {}
             for k in SAMPLE_PREP_STEPS:
-                params[k] = getattr(s, k) or ''
+                params[k] = getattr(s, k) or ""
 
-            pstep = PrepStepRecord(id=s.id,
-                                   # crush=s.crush or '',
-                                   # sieve=s.sieve or '',
-                                   # wash=s.wash or '',
-                                   # acid=s.acid or '',
-                                   # frantz=s.frantz or '',
-                                   # pick=s.pick or '',
-                                   # heavy_liquid=s.heavy_liquid or '',
-                                   # mount=s.mount or '',
-                                   # gold_table=s.gold_table or '',
-                                   # us_wand=s.us_wand or '',
-                                   # eds=s.eds or '',
-                                   # cl=s.cl or '',
-                                   # bse=s.bse or '',
-                                   # se=s.se or '',
-                                   timestamp=ts,
-                                   nimages=len(s.images), **params)
+            pstep = PrepStepRecord(
+                id=s.id,
+                # crush=s.crush or '',
+                # sieve=s.sieve or '',
+                # wash=s.wash or '',
+                # acid=s.acid or '',
+                # frantz=s.frantz or '',
+                # pick=s.pick or '',
+                # heavy_liquid=s.heavy_liquid or '',
+                # mount=s.mount or '',
+                # gold_table=s.gold_table or '',
+                # us_wand=s.us_wand or '',
+                # eds=s.eds or '',
+                # cl=s.cl or '',
+                # bse=s.bse or '',
+                # se=s.se or '',
+                timestamp=ts,
+                nimages=len(s.images),
+                **params
+            )
             return pstep
 
-        asample.steps = [factory(i) for i in self.dvc.get_sample_prep_steps(asample.worker, asample.session,
-                                                                            asample.name,
-                                                                            asample.project,
-                                                                            asample.material,
-                                                                            asample.grainsize)]
+        asample.steps = [
+            factory(i)
+            for i in self.dvc.get_sample_prep_steps(
+                asample.worker,
+                asample.session,
+                asample.name,
+                asample.project,
+                asample.material,
+                asample.grainsize,
+            )
+        ]
 
     def _make_step(self):
-        attrs = SAMPLE_PREP_STEPS + ('status', 'comment')
+        attrs = SAMPLE_PREP_STEPS + ("status", "comment")
         d = {a: getattr(self.prep_step, a) for a in attrs}
         return d
 
@@ -347,13 +381,15 @@ class SamplePrep(DVCAble, PersistenceMixin):
     #     return ims
 
     # handlers
-    @on_trait_change('fcrush, fsieve, fwash, facid, ffrantz, fheavy_liquid, fpick, fstatus')
+    @on_trait_change(
+        "fcrush, fsieve, fwash, facid, ffrantz, fheavy_liquid, fpick, fstatus"
+    )
     def _handle_filter(self):
 
-        keys = SAMPLE_PREP_STEPS + ('status',)
+        keys = SAMPLE_PREP_STEPS + ("status",)
 
         def test(si):
-            r = [si.has_step(f) for f in keys if getattr(self, 'f{}'.format(f))]
+            r = [si.has_step(f) for f in keys if getattr(self, "f{}".format(f))]
             return all(r)
 
         self.session_samples = [s for s in self.osession_samples if test(s)]
@@ -363,14 +399,15 @@ class SamplePrep(DVCAble, PersistenceMixin):
             self._load_steps_for_sample(new)
 
     def _clear_step_button_fired(self):
-        for k in SAMPLE_PREP_STEPS + ('status', 'comment'):
-            setattr(self.prep_step, k, '')
+        for k in SAMPLE_PREP_STEPS + ("status", "comment"):
+            setattr(self.prep_step, k, "")
 
     def _add_step_button_fired(self):
         if self.active_sample:
             params = self._make_step()
-            self.dvc.add_sample_prep_step(self.active_sample.args(), self.worker, self.session,
-                                          **params)
+            self.dvc.add_sample_prep_step(
+                self.active_sample.args(), self.worker, self.session, **params
+            )
             self._load_steps_for_sample(self.active_sample)
             self._load_choices()
 
@@ -379,14 +416,17 @@ class SamplePrep(DVCAble, PersistenceMixin):
         if self.selected:
             dvc = self.dvc
             for s in self.selected:
-                dvc.add_sample_prep_step(s.args(), self.worker, self.session, added=True)
+                dvc.add_sample_prep_step(
+                    s.args(), self.worker, self.session, added=True
+                )
 
             self._load_session_samples()
 
     def _edit_session_button_fired(self):
         oname = self.session
         from pychron.entry.tasks.sample_prep.adder import AddSession
-        s = AddSession(title='Edit Selected Session')
+
+        s = AddSession(title="Edit Selected Session")
         obj = self.dvc.get_sample_prep_session(self.session, self.worker)
         s.name = obj.name
         s.comment = obj.comment
@@ -394,9 +434,9 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
         info = s.edit_traits()
         if info.result:
-            kw = {'comment': s.comment}
+            kw = {"comment": s.comment}
             if s.name != oname:
-                kw['name'] = s.name
+                kw["name"] = s.name
 
             self.dvc.update_sample_prep_session(oname, self.worker, **kw)
             self.refresh_sessions = True
@@ -404,6 +444,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
     def _add_session_button_fired(self):
         from pychron.entry.tasks.sample_prep.adder import AddSession
+
         s = AddSession()
         info = s.edit_traits()
         if info.result:
@@ -414,6 +455,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
 
     def _add_worker_button_fired(self):
         from pychron.entry.tasks.sample_prep.adder import AddWorker
+
         a = AddWorker()
         info = a.edit_traits()
         if info.result:
@@ -425,27 +467,34 @@ class SamplePrep(DVCAble, PersistenceMixin):
     def _session_changed(self):
         self._load_session_samples()
 
-    @on_trait_change('camera:snapshot_event')
+    @on_trait_change("camera:snapshot_event")
     def _handle_snapshot(self, meta):
         step, msm = self._pre_image()
-        sessionname = self.session.replace(' ', '_')
+        sessionname = self.session.replace(" ", "_")
 
         dvc = self.dvc
-        name = meta.get('name', True)
+        name = meta.get("name", True)
         if isinstance(name, bool):
-            name = '{}-{}-{}'.format(self.active_sample.name, step.id, get_date(fmt='%Y-%m-%d%H%M'))
+            name = "{}-{}-{}".format(
+                self.active_sample.name, step.id, get_date(fmt="%Y-%m-%d%H%M")
+            )
 
-        pp = os.path.join('images', 'sampleprep', sessionname, '{}.{}'.format(name, meta.get('extension',
-                                                                                             'jpg').lower()))
+        pp = os.path.join(
+            "images",
+            "sampleprep",
+            sessionname,
+            "{}.{}".format(name, meta.get("extension", "jpg").lower()),
+        )
         from tempfile import TemporaryFile
+
         p = TemporaryFile()
         # p='{}.jpg'.format(p)
-        self.camera.save(p, extension=meta.get('extension', 'JPEG'))
+        self.camera.save(p, extension=meta.get("extension", "JPEG"))
         p.seek(0)
         url = msm.put(p, pp)
-        dvc.add_sample_prep_image(step.id, msm.get_host(), url, meta.get('note', ''))
+        dvc.add_sample_prep_image(step.id, msm.get_host(), url, meta.get("note", ""))
         self._load_steps_for_sample(self.active_sample)
-        self.information_dialog('Snapshot saved')
+        self.information_dialog("Snapshot saved")
 
     def _view_camera_button_fired(self):
         # v = View(VGroup(UItem('camera',
@@ -486,9 +535,11 @@ class SamplePrep(DVCAble, PersistenceMixin):
                     # buf.seek(0)
                     # img = Image.open(buf)
                     # self.selected_image = img.convert('RGBA')
-                    v = ImageViewer(image_getter=msm,
-                                    title='{} Images'.format(self.active_sample.name))
-                    v.on_trait_change(self._handle_image_edit, 'edit_event')
+                    v = ImageViewer(
+                        image_getter=msm,
+                        title="{} Images".format(self.active_sample.name),
+                    )
+                    v.on_trait_change(self._handle_image_edit, "edit_event")
                     v.set_images([(img.path, img.note, img.id) for img in step.images])
                     v.edit_traits()
                     v.dclicked_enabled = True
@@ -504,9 +555,13 @@ class SamplePrep(DVCAble, PersistenceMixin):
             dvc.commit()
 
     def _get_msm(self):
-        msm = self.application.get_service('pychron.media_storage.manager.MediaStorageManager')
+        msm = self.application.get_service(
+            "pychron.media_storage.manager.MediaStorageManager"
+        )
         if not msm:
-            self.warning_dialog('Media Storage Plugin is required. Please enable and try again')
+            self.warning_dialog(
+                "Media Storage Plugin is required. Please enable and try again"
+            )
         return msm
 
     def _pre_image(self):
@@ -515,7 +570,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
             step = self.active_sample.steps[0]
 
         if not step:
-            self.warning_dialog('Select a prep step to associate with the image')
+            self.warning_dialog("Select a prep step to associate with the image")
 
             return
 
@@ -540,8 +595,8 @@ class SamplePrep(DVCAble, PersistenceMixin):
         #
         # client = ssh.open_sftp()
 
-        sessionname = self.session.replace(' ', '_')
-        dlg = FileDialog(action='open files')
+        sessionname = self.session.replace(" ", "_")
+        dlg = FileDialog(action="open files")
         if dlg.open() == OK:
             if not dlg.paths:
                 return
@@ -549,8 +604,8 @@ class SamplePrep(DVCAble, PersistenceMixin):
             # root = self.application.preferences.get('pychron.entry.sample_prep.root')
             dvc = self.dvc
             for p in dlg.paths:
-                pp = '{}/{}'.format(sessionname, os.path.basename(p))
-                self.debug('putting {} {}'.format(p, pp))
+                pp = "{}/{}".format(sessionname, os.path.basename(p))
+                self.debug("putting {} {}".format(p, pp))
                 url = msm.put(p, pp)
                 # client.put(p, pp)
                 dvc.add_sample_prep_image(step.id, msm.get_host(), url)
@@ -567,9 +622,11 @@ class SamplePrep(DVCAble, PersistenceMixin):
     @cached_property
     def _get_samples(self):
         if self.project:
-            ss = self.dvc.get_samples(projects=self.project,
-                                      principal_investigators=self.principal_investigator,
-                                      verbose_query=False)
+            ss = self.dvc.get_samples(
+                projects=self.project,
+                principal_investigators=self.principal_investigator,
+                verbose_query=False,
+            )
             return [self._sample_record_factory(si) for si in ss]
         else:
             return []
@@ -578,12 +635,14 @@ class SamplePrep(DVCAble, PersistenceMixin):
     def _get_projects(self):
         with self.dvc.session_ctx(use_parent_session=False):
 
-            ps = self.dvc.get_projects(principal_investigators=(self.principal_investigator,),
-                                       order='asc')
-            self.project = ''
+            ps = self.dvc.get_projects(
+                principal_investigators=(self.principal_investigator,), order="asc"
+            )
+            self.project = ""
             if ps:
                 return [p.name for p in ps]
             else:
                 return []
+
 
 # ============= EOF =============================================
