@@ -72,10 +72,16 @@ class Protocol:
         return t
 
     def ctof(self, c):
-        return c * 9 / 5.0 + 32
+        try:
+            return c * 9 / 5.0 + 32
+        except (ValueError, TypeError):
+            pass
 
     def ftoc(self, f):
-        return (f - 32) * 5 / 9.0
+        try:
+            return (f - 32) * 5 / 9.0
+        except (ValueError, TypeError):
+            return
 
 
 class StandardProtocol(Protocol):

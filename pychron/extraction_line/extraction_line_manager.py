@@ -130,6 +130,7 @@ class ExtractionLineManager(Manager, Consoleable):
         pass
 
     def activate(self):
+        self.bind_preferences()
         self._active = True
         self._load_additional_canvases()
         self._activate_hook()
@@ -143,7 +144,8 @@ class ExtractionLineManager(Manager, Consoleable):
         for t in ("gauge", "heater", "pump"):
             self.info("start {} scans".format(t))
             man = getattr(self, "{}_manager".format(t))
-            man.stop_scans()
+            if man:
+                man.stop_scans()
 
         if self.monitor:
             self.monitor.stop()
@@ -633,7 +635,8 @@ class ExtractionLineManager(Manager, Consoleable):
         for t in ("gauge", "heater", "pump"):
             self.info("start {} scans".format(t))
             man = getattr(self, "{}_manager".format(t))
-            man.start_scans()
+            if man:
+                man.start_scans()
 
         if self.switch_manager and self.use_hardware_update:
             do_after(1000, self._update)

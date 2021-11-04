@@ -13,9 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from datetime import time
 from threading import Thread
-
+import time
 from pychron.managers.manager import Manager
 from traits.api import Float, Bool
 from traitsui.api import View, UItem, Item, ListEditor, InstanceEditor
