@@ -24,12 +24,13 @@ from traitsui.api import View, Item, ListEditor, InstanceEditor
 import time
 
 # ============= local library imports  ==========================
+from pychron.extraction_line.device_manager import DeviceManager
 from pychron.managers.manager import Manager
 
 
-class GaugeManager(Manager):
-    use_update = Bool
-    update_period = Int
+class GaugeManager(DeviceManager):
+    # use_update = Bool
+    # update_period = Int
 
     def finish_loading(self, *args, **kw):
         width = int(250 / float(len(self.devices)))
@@ -70,28 +71,28 @@ class GaugeManager(Manager):
         else:
             return True
 
-    def stop_scans(self):
-        for k in self.devices:
-            if k.is_scanable:
-                k.stop_scan()
-
-    def start_scans(self):
-
-        self.info("starting gauge scans")
-        # stop scans first
-        self.stop_scans()
-
-        # sp = self.scan_period*1000
-        sp = None
-        if self.use_update:
-            sp = self.update_period * 1000
-
-        sp = sp or None
-        for k in self.devices:
-            if k.is_scanable:
-                k.start_scan(sp)
-                # stagger starts to reduce collisions
-                time.sleep(0.25)
+    # def stop_scans(self):
+    #     for k in self.devices:
+    #         if k.is_scanable:
+    #             k.stop_scan()
+    #
+    # def start_scans(self):
+    #
+    #     self.info("starting gauge scans")
+    #     # stop scans first
+    #     self.stop_scans()
+    #
+    #     # sp = self.scan_period*1000
+    #     sp = None
+    #     if self.use_update:
+    #         sp = self.update_period * 1000
+    #
+    #     sp = sp or None
+    #     for k in self.devices:
+    #         if k.is_scanable:
+    #             k.start_scan(sp)
+    #             # stagger starts to reduce collisions
+    #             time.sleep(0.25)
 
     def traits_view(self):
         if self.devices:
