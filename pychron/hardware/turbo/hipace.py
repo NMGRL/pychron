@@ -85,7 +85,7 @@ class HiPace(CoreDevice, OnOffMixin):
 
     onoff_state_name = "motor_pump"
     onoff_label_invert = True
-    
+
     def _get_standby_label(self):
         return "Standby Off" if self.standby else "Standby On"
 
@@ -176,7 +176,7 @@ class HiPace(CoreDevice, OnOffMixin):
             dl = match.group("datalength")
             pattern = make_pattern(dl)
             match = re.search(pattern, resp)
-            #self.debug("{} {}".format(match, pattern))
+            # self.debug("{} {}".format(match, pattern))
             if match:
                 if check_checksum(resp, match.group("checksum")):
                     data = match.group("data")
@@ -190,7 +190,8 @@ class HiPace(CoreDevice, OnOffMixin):
                         "onoff_button", editor=ButtonEditor(label_value="onoff_label")
                     ),
                     UItem(
-                        "standby_button", editor=ButtonEditor(label_value="standby_label")
+                        "standby_button",
+                        editor=ButtonEditor(label_value="standby_label"),
                     ),
                 ),
                 Item(
