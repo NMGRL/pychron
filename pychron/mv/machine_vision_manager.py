@@ -53,7 +53,7 @@ class MachineVisionManager(Loggable):
 
     def new_image_frame(self):
         if self.video:
-            src = self.video.get_cached_frame(force=True)
+            src = self.video.get_cached_frame()
             return src
 
     def new_image(self, frame=None, title='AutoCenter',
