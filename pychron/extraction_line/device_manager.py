@@ -21,6 +21,7 @@ from traitsui.api import View, UItem, Item, ListEditor, InstanceEditor
 
 
 class DeviceManager(Manager):
+
     period = Float(5)
     is_alive = Bool
     device_view_name = "device_view"
@@ -39,7 +40,7 @@ class DeviceManager(Manager):
             self._thread.start()
         else:
             self.warning(
-                "Not starting device updates. Updates enabled. enable in Preferences/ExtractionLine"
+                "Not starting device updates. Updates disabled. enable in Preferences/ExtractionLine"
             )
 
     def _scan(self):
