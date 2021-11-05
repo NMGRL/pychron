@@ -46,7 +46,7 @@ PARAMETERS = {
     "actual_speed": (309, int),
     "drive_current": (310, dt2),
     "motor_pump": (23, to_bool),
-    "standby": (2, to_bool)
+    "standby": (2, to_bool),
 }
 
 
@@ -83,7 +83,7 @@ class HiPace(CoreDevice, OnOffMixin):
     standby_button = Event
     standby_label = Property(depends_on="standby_state")
 
-    onoff_state_name = 'motor_pump'
+    onoff_state_name = "motor_pump"
 
     def _get_standby_label(self):
         return "Standby On" if self.standby else "Standby Off"
@@ -184,7 +184,8 @@ class HiPace(CoreDevice, OnOffMixin):
     def pump_view(self):
         v = View(
             BorderVGroup(
-                HGroup(UItem(
+                HGroup(
+                    UItem(
                         "onoff_button", editor=ButtonEditor(label_value="onoff_label")
                     ),
                     UItem(

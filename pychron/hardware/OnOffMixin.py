@@ -38,14 +38,14 @@ class OnOffMixin(HasTraits):
     def _set_onoff_state(self, v):
         name = self.onoff_state_name
         if not name:
-            name = 'onoff_state'
+            name = "onoff_state"
 
         return setattr(self, name, v)
 
     def _get_onoff_state(self):
         name = self.onoff_state_name
         if not name:
-            name = 'onoff_state'
+            name = "onoff_state"
 
         return getattr(self, name)
 
@@ -54,12 +54,18 @@ class OnOffMixin(HasTraits):
         if self.use_confirmation:
             state = not self._get_onoff_state()
             state = "On" if state else "Off"
-            if not confirm(None, "Are you sure you want to {} {}".format(state, self.name)) == YES:
+            if (
+                not confirm(
+                    None, "Are you sure you want to {} {}".format(state, self.name)
+                )
+                == YES
+            ):
                 return
 
         self._set_onoff_state(not self._get_onoff_state())
         self.debug("set state = {}".format(self._get_onoff_state()))
 
         self.set_active(self._get_onoff_state())
+
 
 # ============= EOF =============================================
