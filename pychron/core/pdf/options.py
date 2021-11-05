@@ -121,8 +121,10 @@ class BasePDFOptions(BasePersistenceOptions):
             page = landscape(page)
 
         if self.fit_to_page:
-            page[0] -= (self.left_margin + self.right_margin) * units
-            page[1] -= (self.top_margin + self.bottom_margin) * units
+            w, h = page
+            w -= (self.left_margin + self.right_margin) * units
+            h -= (self.top_margin + self.bottom_margin) * units
+            page = [w, h]
         elif self.use_column_width:
             width_margins = (self.left_margin + self.right_margin) * units
             height_margins = (self.top_margin + self.bottom_margin) * units
