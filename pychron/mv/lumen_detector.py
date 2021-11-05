@@ -37,6 +37,63 @@ def calc_area(a):
     return b.sum()
 
 
+def centroid_distance(t0, t1):
+    d = ((t0.centroid[0] - t1.centroid[0]) ** 0.5 + (t0.centroid[1] - t1.centroid[1]) ** 2) ** 0.5
+    return d
+
+
+def bounding_size(t0, t1):
+    return max((t0.bounding_rect.height, t0.bounding_rect.width,
+                t1.bounding_rect.height, t1.bounding_rect.width))/2*(2**0.5)
+
+
+def choose_target(src, targets, pixel_depth):
+    """
+        targets are sorted by area (increasing)
+        additional scoring is necessary. commonly there are 2 bright spots. dragonfly is currently prioritizing
+        the smallest target. but in the case with 2 bright spots the larger of the smallest bright spot should
+        be the chosen target. e.g. the first target in the list
+
+
+        sort by saturation take biggest most saturated target
+    """
+
+    # t0 = targets[0]
+    # t1 = targets[1]
+    # if t1.area / t0.area > 1.5 and centroid_distance(t0, t1) > bounding_size(t0, t1):
+    #     targets.pop(0)
+    #     targets.pop(1)
+    #     targets.insert(0, t0)
+    #     targets.insert(0, t1)
+    # idx = 0
+    # target = targets[0]
+    # ts = src[target.mask].sum()
+    # for ti in targets[1:]:
+    #     if src[ti.mask].sum() > ts:
+    #         pass
+
+    tsrc = src[::]
+    threshold = src.max() * 0.5
+    tsrc[src <= threshold] = 0
+
+    def func(ti):
+        area = (ti.area + ti.pactual / 2)
+        ilum = tsrc[ti.mask].sum()
+        sat = ilum / (area * pixel_depth)
+        return sat
+
+    scores = [func(ti) for ti in targets]
+    # if all targets same saturation take smallest
+    if len(set(scores)) == 1:
+        targets = sorted(targets, key=attrgetter('area'))
+    else:
+        targets = sorted(targets, key=func, reverse=True)
+
+    idx = 0
+    target = targets.pop(idx)
+    return target, func(target), targets
+
+
 class LumenDetector(Locator):
     threshold = 25
     pxpermm = 23
@@ -166,21 +223,22 @@ class LumenDetector(Locator):
         peak_img = zeros((h, w), dtype=uint8)
 
         if targets:
-            target = targets[0]
+            target, sat, targets = choose_target(lum, targets, pixel_depth)
+            # target = targets[0]
             px, py = target.centroid
             # self._draw_targets(img, targets)
-            self._draw_targets(img, targets[1:])
-            self._draw_targets(img, targets[:1], color=(252, 169, 3))
+            self._draw_targets(img, targets, color=(252, 169, 3))
+            self._draw_targets(img, [target], color=(3, 86, 252))
 
             peak_img[circle(py, px, min_distance)] = 255
 
-            ilum = lum[target.mask].sum()
-            area = (target.area + target.pactual / 2)
+            #ilum = lum[target.mask].sum()
+            #area = (target.area + target.pactual / 2)
             # else:
             #     ilum = lum.sum()
             #     area = mask.sum()
 
-            sat = ilum / (area * pixel_depth)
+            #sat = ilum / (area * pixel_depth)
             pt = px - w / 2, py - h / 2, sat
 
             # if pts.shape[0]:
