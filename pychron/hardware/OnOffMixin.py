@@ -24,6 +24,7 @@ class OnOffMixin(HasTraits):
     onoff_label = Property(depends_on="onoff_state")
     use_confirmation = True
     onoff_state_name = Str
+    onoff_label_invert = False
 
     def read_state(self):
         raise NotImplementedError
@@ -32,8 +33,10 @@ class OnOffMixin(HasTraits):
         raise NotImplementedError
 
     def _get_onoff_label(self):
-
-        return "Off" if self._get_onoff_state() else "On"
+        s = self._get_onoff_state()
+        if self.onoff_label_invert:
+            s = not s
+        return "Off" if s else "On"
 
     def _set_onoff_state(self, v):
         name = self.onoff_state_name
