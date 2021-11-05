@@ -19,16 +19,14 @@ from traitsui.api import View, Item, UItem, ButtonEditor, HGroup, VGroup
 from pychron.core.ui.lcd_editor import LCDEditor
 from pychron.graph.stream_graph import StreamGraph
 from pychron.hardware import get_float, get_boolean
+from pychron.hardware.OnOffMixin import OnOffMixin
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.modbus import ModbusMixin
 
 
-class HeaterMixin(HasTraits):
+class HeaterMixin(OnOffMixin):
     setpoint = Float(enter_set=True, auto_set=False)
     readback = Float
-    onoff_button = Event
-    onoff_state = Bool
-    onoff_label = Property(depends_on="onoff_state")
 
     use_pid = Bool
     graph = Instance(StreamGraph)
@@ -60,9 +58,6 @@ class HeaterMixin(HasTraits):
     def read_readback(self):
         raise NotImplementedError
 
-    def set_active(self, state):
-        raise NotImplementedError
-
     def set_use_pid(self, state):
         raise NotImplementedError
 
@@ -76,14 +71,6 @@ class HeaterMixin(HasTraits):
     def _use_pid_changed(self, v):
         self.debug("set use_pid={}".format(v))
         self.set_use_pid(v)
-
-    def _onoff_button_fired(self):
-        self.onoff_state = not self.onoff_state
-        self.debug("set state = {}".format(self.onoff_state))
-        self.set_active(self.onoff_state)
-
-    def _get_onoff_label(self):
-        return "Off" if self.onoff_state else "On"
 
     def _graph_default(self):
         g = StreamGraph()
