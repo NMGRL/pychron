@@ -128,16 +128,18 @@ class FigureLayout(HasTraits):
 
     def traits_view(self):
         rc_grp = VGroup(
-            HGroup(Item(
-                "fixed_width",
-                tooltip="You must remake the figure if you edit this value. The figure "
-                "will not automatically resize"),
+            HGroup(
                 Item(
-                "fixed_height",
-                tooltip="You must remake the figure if you edit this value. The figure "
-                "will not automatically resize",
-            )),
-
+                    "fixed_width",
+                    tooltip="You must remake the figure if you edit this value. The figure "
+                    "will not automatically resize",
+                ),
+                Item(
+                    "fixed_height",
+                    tooltip="You must remake the figure if you edit this value. The figure "
+                    "will not automatically resize",
+                ),
+            ),
             HGroup(
                 Item("rows", enabled_when="row_enabled"),
                 Item("columns", enabled_when="column_enabled"),
