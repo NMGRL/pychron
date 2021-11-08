@@ -83,7 +83,7 @@ class FigurePanel(HasTraits):
 
         po = self.plot_options
         g = self._graph_klass(
-            panel_height=200,
+            # panel_height=200,
             equi_stack=self.equi_stack,
             container_dict=dict(padding=0, spacing=po.plot_spacing, bgcolor=po.bgcolor),
         )
