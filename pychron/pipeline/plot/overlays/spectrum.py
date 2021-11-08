@@ -119,7 +119,7 @@ class SpectrumTool(AnalysisPointInspector, BasePlateauOverlay):
                     comp.container.y_axis.title,
                     floatfmt(v),
                     PLUSMINUS,
-                    floatfmt(e*self.nsigma),
+                    floatfmt(e * self.nsigma),
                     self.nsigma,
                     SIGMA,
                 ),
