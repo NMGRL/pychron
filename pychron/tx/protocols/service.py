@@ -110,8 +110,8 @@ class ServiceProtocol(LineReceiver):
         # d.addErrback(service_err)
         # d.addErrback(err)
 
-        def func():
-            resp = success()
+        def func(received_data):
+            resp = success(received_data)
             resp = self._prepare_response(resp)
             return self._send_response(resp)
 
