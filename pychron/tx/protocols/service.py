@@ -23,7 +23,6 @@ import traceback
 import json
 
 from twisted.internet import defer
-from twisted.internet.protocol import Protocol
 from twisted.protocols.basic import LineReceiver
 
 from pychron.tx.errors import InvalidArgumentsErrorCode
@@ -98,15 +97,25 @@ class ServiceProtocol(LineReceiver):
             err = default_err
 
         d = defer.Deferred()
-        if not isinstance(success, (list, tuple)):
-            success = (success,)
+        # if not isinstance(success, (list, tuple)):
+        #     success = (success,)
+        #
+        # for si in success:
+        #     d.addCallback(si)
+        #
+        # d.addCallback(self._prepare_response)
+        # d.addCallback(self._send_response)
+        #
+        # d.addErrback(nargs_err)
+        # d.addErrback(service_err)
+        # d.addErrback(err)
 
-        for si in success:
-            d.addCallback(si)
+        def func():
+            resp = success()
+            resp = self._prepare_response(resp)
+            return self._send_response(resp)
 
-        d.addCallback(self._prepare_response)
-        d.addCallback(self._send_response)
-
+        d.addCallback(func)
         d.addErrback(nargs_err)
         d.addErrback(service_err)
         d.addErrback(err)
