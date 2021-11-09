@@ -68,7 +68,7 @@ class GitHubService(GitHostService):
         return ret, rsha
 
     def post_issue(self, remote, issue):
-        url = '{}/repos/{}/issues'.format(API_URL, remote)
+        url = "{}/repos/{}/issues".format(API_URL, remote)
         return self._post(url, **issue)
 
     def get_labels(self, remote):

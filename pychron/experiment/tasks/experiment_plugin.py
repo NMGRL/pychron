@@ -46,7 +46,8 @@ from pychron.experiment.tasks.experiment_actions import (
     AcquireSpectrometerAction,
     ReleaseSpectrometerAction,
     RunHistoryAction,
-    MeltingPointCalibrationAction, AddExperimentNoteAction,
+    MeltingPointCalibrationAction,
+    AddExperimentNoteAction,
 )
 from pychron.experiment.tasks.experiment_preferences import (
     ExperimentPreferencesPane,
@@ -217,7 +218,7 @@ class ExperimentPlugin(BaseTaskPlugin):
                     (LastAnalysisRecoveryAction, "last_analysis_recovery"),
                     (RunHistoryAction, "run_history_view"),
                     (MeltingPointCalibrationAction, "melting_point_calibrator"),
-                    (AddExperimentNoteAction, 'experiment_note')
+                    (AddExperimentNoteAction, "experiment_note"),
                 ),
             ),
         ):

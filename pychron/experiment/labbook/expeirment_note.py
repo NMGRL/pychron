@@ -23,7 +23,7 @@ from pychron.core.pychron_traits import BorderVGroup
 
 
 class LabelAdapter(TabularAdapter):
-    columns = [('Name', 'name')]
+    columns = [("Name", "name")]
 
     def get_bg_color(self, obj, trait, row, column=0):
         return self.item.color
@@ -35,8 +35,8 @@ class Label(HasTraits):
 
     def __init__(self, gh_label, *args, **kw):
         super(Label, self).__init__(*args, **kw)
-        self.name = gh_label['name']
-        self.color = int(gh_label['color'], 16)
+        self.name = gh_label["name"]
+        self.color = int(gh_label["color"], 16)
 
 
 class ExperimentNote(HasTraits):
@@ -48,8 +48,8 @@ class ExperimentNote(HasTraits):
     selected_labels = List
     selected_applied_labels = List
 
-    add_label_button = Button('Add Label')
-    remove_label_button = Button('Remove Label')
+    add_label_button = Button("Add Label")
+    remove_label_button = Button("Remove Label")
 
     def _add_label_button_fired(self):
         if self.selected_labels:
@@ -73,32 +73,43 @@ class ExperimentNote(HasTraits):
         issue = {
             "title": self.title or "No Title Provided",
             "labels": [la.name for la in self.applied_labels],
-            "body": self.note
+            "body": self.note,
         }
         return issue
 
     def traits_view(self):
-        applied = VGroup(UItem('remove_label_button'),
-                         UItem('applied_labels',
-                               editor=TabularEditor(adapter=LabelAdapter(),
-                                                    multi_select=True,
-                                                    selected='selected_applied_labels')),
-                         )
-        avaliable = VGroup(UItem('add_label_button'),
-                           UItem('labels', editor=TabularEditor(adapter=LabelAdapter(),
-                                                                multi_select=True,
-                                                                selected='selected_labels'))
-                           )
+        applied = VGroup(
+            UItem("remove_label_button"),
+            UItem(
+                "applied_labels",
+                editor=TabularEditor(
+                    adapter=LabelAdapter(),
+                    multi_select=True,
+                    selected="selected_applied_labels",
+                ),
+            ),
+        )
+        avaliable = VGroup(
+            UItem("add_label_button"),
+            UItem(
+                "labels",
+                editor=TabularEditor(
+                    adapter=LabelAdapter(),
+                    multi_select=True,
+                    selected="selected_labels",
+                ),
+            ),
+        )
 
         labels = HGroup(avaliable, applied)
 
-        grp = VGroup(Item('title'),
-                     BorderVGroup(UItem('note', style='custom', width=500),
-                                  label='Note'),
-                     labels
-
-                     )
-        v = okcancel_view(grp, 'Experiment Note')
+        grp = VGroup(
+            Item("title"),
+            BorderVGroup(UItem("note", style="custom", width=500), label="Note"),
+            labels,
+        )
+        v = okcancel_view(grp, "Experiment Note")
         return v
+
 
 # ============= EOF =============================================

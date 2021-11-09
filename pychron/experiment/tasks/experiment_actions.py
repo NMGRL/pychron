@@ -355,7 +355,7 @@ class MeltingPointCalibrationAction(UIAction):
 
 
 class AddExperimentNoteAction(UIAction):
-    name = 'Add Experiment Note'
+    name = "Add Experiment Note"
     image = icon("insert-comment")
 
     def perform(self, event):
@@ -371,6 +371,7 @@ class AddExperimentNoteAction(UIAction):
         from pychron.experiment.labbook.expeirment_note import ExperimentNote
 
         from pychron.git.hosts import IGitHost
+
         service = app.get_service(IGitHost)
         m = ExperimentNote()
 
@@ -378,6 +379,7 @@ class AddExperimentNoteAction(UIAction):
         info = m.edit_traits()
         if info.result:
             if service.post_issue(remote, m.to_issue()):
-                information(None, 'Note added!')
+                information(None, "Note added!")
+
 
 # ============= EOF ====================================
