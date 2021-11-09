@@ -19,6 +19,9 @@
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 
+import json
+
+import requests
 from requests.exceptions import SSLError
 
 from pychron.git.hosts import GitHostService
@@ -63,6 +66,14 @@ class GitHubService(GitHostService):
         if close_at_end:
             self.close_session()
         return ret, rsha
+
+    def post_issue(self, remote, issue):
+        url = '{}/repos/{}/issues'.format(API_URL, remote)
+        return self._post(url, **issue)
+
+    def get_labels(self, remote):
+        cmd = "{}/repos/{}/labels".format(API_URL, remote)
+        return self._get(cmd)
 
     def get_repo(self, organization, name):
         cmd = "{}/repos/{}/{}".format(API_URL, organization, name)
