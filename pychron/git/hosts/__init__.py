@@ -273,6 +273,9 @@ class GitHostService(BaseGitHostService):
             kw["verify"] = globalv.cert_file
 
         r = requests.post(cmd, data=json.dumps(payload), headers=headers, **kw)
+        if not r.status_code == 201:
+            print(json.dumps(payload))
+            print(r.status_code, r.reason)
         return r
 
     def _put(self, cmd, **payload):

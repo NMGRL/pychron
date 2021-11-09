@@ -48,7 +48,6 @@ from pychron.envisage.tasks.actions import (
     CloseOthersAction,
     AboutAction,
     OpenAdditionalWindow,
-    NoteAction,
     RestartAction,
     DocumentationAction,
     ChangeLogAction,
