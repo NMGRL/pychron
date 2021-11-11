@@ -554,7 +554,11 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
     @property
     def cleaned_analyses(self):
         enabled_positions = [p.hole_id for p in self.monitor_positions if p.use]
-        vs = [a for a in zip(*self._analyses) if a[0].irradiation_position in enabled_positions]
+        vs = [
+            a
+            for a in zip(*self._analyses)
+            if a[0].irradiation_position in enabled_positions
+        ]
         return vs
 
     def _graph_linear_j(self, x, y, r, reg, refresh):
