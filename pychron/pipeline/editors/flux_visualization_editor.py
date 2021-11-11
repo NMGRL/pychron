@@ -551,6 +551,12 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
 
         cg.plotcontainer.add(gridcontainer)
 
+    @property
+    def cleaned_analyses(self):
+        enabled_positions = [p.hole_id for p in self.monitor_positions if p.use]
+        vs = [a for a in zip(*self._analyses) if a[0].irradiation_position in enabled_positions]
+        return vs
+
     def _graph_linear_j(self, x, y, r, reg, refresh):
 
         g = self.graph
@@ -589,7 +595,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         if self._individual_analyses_enabled:
             sel = [
                 i
-                for i, (a, x, y, e) in enumerate(zip(*self._analyses))
+                for i, (a, x, y, e) in enumerate(self.cleaned_analyses)
                 if a.is_omitted()
             ]
 
@@ -617,7 +623,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         if self._individual_analyses_enabled:
             sel = [
                 i
-                for i, (a, x, y, e) in enumerate(zip(*self._analyses))
+                for i, (a, x, y, e) in enumerate(self.cleaned_analyses)
                 if a.is_omitted()
             ]
 
@@ -796,7 +802,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         opt = self.plotter_options
         monage = opt.monitor_age * 1e6
         lk = nominal_value(opt.lambda_k)
-        ans = self._analyses[0]
+        ans = self.cleaned_analyses
         scale = opt.flux_scalar
         for r in range(nrows):
             for c in range(ncols):
@@ -842,7 +848,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                         continue
 
                     # get ip via x,y
-                    ais = [a for a in ans if a.irradiation_position == ip.hole_id]
+                    ais = [a[0] for a in ans if a[0].irradiation_position == ip.hole_id]
                     n = len(ais)
 
                     # plot mean value
@@ -907,7 +913,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
     def _graph_individual_analyses(self, *args, **kw):
         g = self.graph
 
-        ans, ixs, iys, ies = self._analyses
+        ans, ixs, iys, ies = zip(*self.cleaned_analyses)
 
         s, _p = g.new_series(
             ixs, iys, yerror=ies, type="scatter", marker="circle", marker_size=1.5, **kw
@@ -917,7 +923,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         s.underlays.append(ebo)
         s.error_bars = ebo
 
-        add_analysis_inspector(s, ans)
+        add_analysis_inspector(s, list(ans))
 
         s.index.on_trait_change(self._update_graph_metadata, "metadata_changed")
         return s, iys
