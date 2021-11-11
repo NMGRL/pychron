@@ -40,7 +40,7 @@ class ExperimentNotifier(Loggable):
 
     def notify(self, ctx, subject):
         mctx = self._assemble_ctx(**ctx)
-        self.debug('Notify with context={}'.format(mctx))
+        self.debug("Notify with context={}".format(mctx))
         message = email_template(**mctx)
         self.info(
             "Notifying user={} email={}".format(
