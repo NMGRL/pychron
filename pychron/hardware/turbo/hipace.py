@@ -41,12 +41,16 @@ def dt2(v):
     return float(v) / 100.0
 
 
+def tb(v):
+    return to_bool(int(v))
+
+
 PARAMETERS = {
     "set_speed": (308, int),
     "actual_speed": (309, int),
     "drive_current": (310, dt2),
-    "motor_pump": (23, to_bool),
-    "standby": (2, to_bool),
+    "motor_pump": (23, tb),
+    "standby": (2, tb),
 }
 
 
@@ -57,11 +61,11 @@ def make_pattern(dl):
 def check_checksum(resp, chksum):
     r = resp[:-3]
 
-    print(
-        "calc {} {}  {}".format(
-            calc_checksum(r) == int(chksum), r, calc_checksum(r), int(chksum)
-        )
-    )
+    # print(
+    #    "calc {} {}  {}".format(
+    #        calc_checksum(r) == int(chksum), r, calc_checksum(r), int(chksum)
+    #    )
+    # )
     return calc_checksum(r) == int(chksum)
 
 
@@ -81,23 +85,31 @@ class HiPace(CoreDevice, OnOffMixin):
     address = 1
 
     standby_button = Event
-    standby_label = Property(depends_on="standby_state")
+    standby_label = Property(depends_on="standby")
 
     onoff_state_name = "motor_pump"
     onoff_label_invert = True
+    onoff_label = Property(depends_on="motor_pump")
+
+    def _get_onoff_label(self):
+        s = self._get_onoff_state()
+        if self.onoff_label_invert:
+            s = not s
+        return "Off" if s else "On"
 
     def _get_standby_label(self):
-        return "Standby Off" if self.standby else "Standby On"
+        return "Standby Off" if not self.standby else "Standby On"
 
     def _standby_button_fired(self):
-        self.standby_state = not self.standby
-        self.debug("set state = {}".format(self.standby))
-        self.set_standby(self.standby)
+        # self.standby_state = not self.standby_state
+        self.debug("set state = {}".format(not self.standby))
+        self.set_standby(not self.standby)
+        self.update()
 
-    def _onoff_button_fired(self):
-        self.onoff_state = not self.onoff_state
-        self.debug("set state = {}".format(self.onoff_state))
-        self.set_active(self.onoff_state)
+    # def _onoff_button_fired(self):
+    #    self.onoff_state = not self.onoff_state
+    #    self.debug("set state = {}".format(self.onoff_state))
+    #    self.set_active(self.onoff_state)
 
     def update(self):
         self.debug("update")
@@ -128,7 +140,7 @@ class HiPace(CoreDevice, OnOffMixin):
     def read_actual_speed(self):
         return self._read_parameter("actual_speed")
 
-    def _set_parameter(self, attr, value, verbose=True):
+    def _set_parameter(self, attr, value, verbose=False):
         param, datatype = PARAMETERS[attr]
         cmd = self._assemble("set", param, value)
         resp = self.ask(cmd, verbose=verbose)
@@ -162,7 +174,7 @@ class HiPace(CoreDevice, OnOffMixin):
 
         if data is None:
             data = "=?"
-
+        data = str(data)
         data_len = len(data)
         msg = "{:03n}{:02n}{:03}{:02n}{}".format(
             self.address, action, parameter, data_len, data
