@@ -162,7 +162,7 @@ class HiPace(CoreDevice, OnOffMixin):
 
         if data is None:
             data = "=?"
-
+        data = str(data)
         data_len = len(data)
         msg = "{:03n}{:02n}{:03}{:02n}{}".format(
             self.address, action, parameter, data_len, data
