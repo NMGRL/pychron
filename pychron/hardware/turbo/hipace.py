@@ -40,6 +40,7 @@ RESPONSE_RE = re.compile(BASE)
 def dt2(v):
     return float(v) / 100.0
 
+
 def tb(v):
     return to_bool(int(v))
 
@@ -60,11 +61,11 @@ def make_pattern(dl):
 def check_checksum(resp, chksum):
     r = resp[:-3]
 
-    #print(
+    # print(
     #    "calc {} {}  {}".format(
     #        calc_checksum(r) == int(chksum), r, calc_checksum(r), int(chksum)
     #    )
-    #)
+    # )
     return calc_checksum(r) == int(chksum)
 
 
@@ -89,7 +90,7 @@ class HiPace(CoreDevice, OnOffMixin):
     onoff_state_name = "motor_pump"
     onoff_label_invert = True
     onoff_label = Property(depends_on="motor_pump")
-    
+
     def _get_onoff_label(self):
         s = self._get_onoff_state()
         if self.onoff_label_invert:
@@ -100,12 +101,12 @@ class HiPace(CoreDevice, OnOffMixin):
         return "Standby Off" if not self.standby else "Standby On"
 
     def _standby_button_fired(self):
-        #self.standby_state = not self.standby_state
+        # self.standby_state = not self.standby_state
         self.debug("set state = {}".format(not self.standby))
         self.set_standby(not self.standby)
         self.update()
 
-    #def _onoff_button_fired(self):
+    # def _onoff_button_fired(self):
     #    self.onoff_state = not self.onoff_state
     #    self.debug("set state = {}".format(self.onoff_state))
     #    self.set_active(self.onoff_state)
