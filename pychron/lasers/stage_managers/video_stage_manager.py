@@ -581,6 +581,7 @@ class VideoStageManager(StageManager):
             frame = video.get_cached_frame()
             if frame is not None:
                 if not len(frame.shape):
+                    print('not len frame', frame.shape, frame)
                     return
 
             frame = copy(frame)
@@ -590,7 +591,7 @@ class VideoStageManager(StageManager):
             if crop_to_hole:
                 frame = video.crop(frame, 0, 0, cropdim, cropdim)
 
-            if self.render_with_markup:
+            if self.render_with_markup and frame is not None:
                 # draw crosshairs
                 if len(frame.shape) == 2:
                     frame = gray2rgb(frame)
