@@ -82,10 +82,9 @@ class FusionsLaserMonitor(LaserMonitor):
 
                 if self._coolant_check_cnt > self.max_coolant_temp_tries:
                     manager.emergency_shutoff('Coolant over temp {:0.2f}'.format(ct))
+                    return True
                 else:
                     self._coolant_check_cnt += 1
-                return True
-
             else:
                 self._coolant_check_cnt = 0
 
@@ -115,7 +114,7 @@ class FusionsLaserMonitor(LaserMonitor):
                     manager.emergency_shutoff(reason)
                 else:
                     self._coolant_check_status_cnt += 1
-                return True
+                    return True
 
             else:
                 self._coolant_check_status_cnt = 0
