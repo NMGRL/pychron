@@ -530,7 +530,7 @@ class SwitchManager(Manager):
 
         for actuator, items in words.items():
             stateword = actuator.get_state_word()
-            print('statword', stateword)
+            print("statword", stateword)
             if stateword:
                 for k, address, ostate in items:
                     try:
@@ -731,12 +731,12 @@ class SwitchManager(Manager):
         d = {}
         if word is not None:
             try:
-                if '|' in word:
-                    keys, states = word.split('|')
+                if "|" in word:
+                    keys, states = word.split("|")
                     states = int(states, 16)
 
-                    for k in keys.split(',')[::-1]:
-                        if k.startswith('<') and k.endswith('>'):
+                    for k in keys.split(",")[::-1]:
+                        if k.startswith("<") and k.endswith(">"):
                             k = k[1:-1]
                         d[k] = bool(states & 1)
                         states = states >> 1

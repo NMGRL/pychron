@@ -57,11 +57,12 @@ class MessageFrame(object):
 
 class Handler(object):
     sock = None
-    datasize = 2**14
+    datasize = 2 ** 14
     address = None
     message_frame = None
     read_terminator = None
     keep_alive = False
+
     def set_frame(self, f):
         self.message_frame = MessageFrame()
         if f:
@@ -328,7 +329,7 @@ class EthernetCommunicator(Communicator):
                     h = TCPHandler()
 
                 if self.read_terminator:
-                    h.read_terminator = self.read_terminator.encode('utf-8')
+                    h.read_terminator = self.read_terminator.encode("utf-8")
                 # self.debug('get handler cmd={}, {},{} {}'.format(cmd.strip() if cmd is not None else '---', self.host,
                 #                                                  self.port, timeout))
                 h.keep_alive = not self.use_end
@@ -479,7 +480,11 @@ class EthernetCommunicator(Communicator):
                 return handler.get_packet(message_frame=message_frame)
             except socket.error as e:
                 self.debug_exception()
-                self.warning('ask. get packet for {}. error: {} address: {}'.format(cmd, e, handler.address))
+                self.warning(
+                    "ask. get packet for {}. error: {} address: {}".format(
+                        cmd, e, handler.address
+                    )
+                )
                 self.error_mode = True
         except socket.error as e:
             self.warning(
