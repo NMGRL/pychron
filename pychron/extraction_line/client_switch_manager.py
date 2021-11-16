@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
+import os
 from socket import gethostbyname, gethostname
 
 from pychron.extraction_line.switch_manager import SwitchManager

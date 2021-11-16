@@ -57,9 +57,11 @@ class MessageFrame(object):
 
 class Handler(object):
     sock = None
-    datasize = 2 ** 12
+    datasize = 2 ** 14
     address = None
     message_frame = None
+    read_terminator = None
+    keep_alive = False
 
     def set_frame(self, f):
         self.message_frame = MessageFrame()
@@ -88,7 +90,7 @@ class Handler(object):
         # if self.use_message_len_checking:
         # msg_len = 0
 
-        msg_len = 1
+        msg_len = None
         nm = -1
 
         if frame is None:
@@ -102,19 +104,28 @@ class Handler(object):
             datasize = self.datasize
 
         data = b""
+        rt = self.read_terminator
+
         while 1:
             s = recv(datasize)
 
             if not s:
                 break
 
-            if not msg_len:
+            if msg_len is not None:
                 msg_len = int(s[:nm], 16)
 
             sum += len(s)
             data += s
-            if sum >= msg_len:
-                break
+
+            if rt is not None:
+                if data.endswith(rt):
+                    break
+            else:
+                if msg_len and sum >= msg_len:
+                    break
+                else:
+                    break
 
         if frame.message_len:
             # trim off header
@@ -136,6 +147,7 @@ class TCPHandler(Handler):
     def open_socket(self, addr, timeout=1.0, **kw):
         self.address = addr
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, self.keep_alive)
         if globalv.communication_simulation:
             timeout = 0.01
 
@@ -316,8 +328,11 @@ class EthernetCommunicator(Communicator):
                 else:
                     h = TCPHandler()
 
+                if self.read_terminator:
+                    h.read_terminator = self.read_terminator.encode("utf-8")
                 # self.debug('get handler cmd={}, {},{} {}'.format(cmd.strip() if cmd is not None else '---', self.host,
                 #                                                  self.port, timeout))
+                h.keep_alive = not self.use_end
                 h.open_socket(addrs, timeout=timeout or 1, bind=bind)
                 h.set_frame(self.message_frame)
                 self.handler = h
@@ -466,7 +481,9 @@ class EthernetCommunicator(Communicator):
             except socket.error as e:
                 self.debug_exception()
                 self.warning(
-                    "ask. get packet. error: {} address: {}".format(e, handler.address)
+                    "ask. get packet for {}. error: {} address: {}".format(
+                        cmd, e, handler.address
+                    )
                 )
                 self.error_mode = True
         except socket.error as e:
