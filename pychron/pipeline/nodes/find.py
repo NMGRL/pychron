@@ -395,7 +395,7 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
         sgrp = BorderVGroup(
             Item("irradiation", editor=EnumEditor(name="irradiations")),
             Item("level", editor=EnumEditor(name="levels")),
-            label='Irradiation/Level'
+            label="Irradiation/Level",
         )
 
         bgrp = BorderHGroup(
@@ -404,9 +404,11 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
                 label="Use Browser",
                 tooltip="Use Browser to select monitor analyses manually",
             ),
-            Item("monitor_sample_name",
-                 enabled_when='not use_browser',
-                 editor=EnumEditor(name="samples")),
+            Item(
+                "monitor_sample_name",
+                enabled_when="not use_browser",
+                editor=EnumEditor(name="samples"),
+            ),
             label="Monitors",
         )
 
