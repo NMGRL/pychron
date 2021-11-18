@@ -23,7 +23,7 @@ http://mmrc.caltech.edu/Optical%20Furnace/Manuals/Pfeiffer%20TC%20110%20Elec.%20
 """
 
 from traitsui.api import View, UItem, HGroup, ButtonEditor, Item
-from traits.api import Float, Int, Bool, Event, Property
+from traits.api import Float, Int, Bool, Event, Property, Str
 
 from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.lcd_editor import LCDEditor
@@ -50,6 +50,7 @@ PARAMETERS = {
     "actual_speed": (309, int),
     "drive_current": (310, dt2),
     "motor_pump": (23, tb),
+    "pump_station": (10, tb),
     "standby": (2, tb),
 }
 
@@ -87,9 +88,14 @@ class HiPace(CoreDevice, OnOffMixin):
     standby_button = Event
     standby_label = Property(depends_on="standby")
 
+    onoff_command = Str
     onoff_state_name = "motor_pump"
     onoff_label_invert = True
     onoff_label = Property(depends_on="motor_pump")
+
+    def load_additional_args(self, config):
+        self.set_attribute(config, 'onoff_command', 'Commands', 'onoff', default='motor_pump')
+        return super(HiPace, self).load_additional_args(config)
 
     def _get_onoff_label(self):
         s = self._get_onoff_state()
@@ -123,7 +129,14 @@ class HiPace(CoreDevice, OnOffMixin):
         self._set_parameter("standby", int(state))
 
     def set_active(self, state):
-        self._set_parameter("motor_pump", int(state))
+        cmd = self.onoff_command
+        if ',' not in cmd:
+            cmd = (cmd,)
+        else:
+            cmd = cmd.split(',')
+
+        for ci in cmd:
+            self._set_parameter(ci, int(state))
 
     def read_state(self):
         return self._read_parameter("motor_pump", verbose=True)
