@@ -94,7 +94,9 @@ class HiPace(CoreDevice, OnOffMixin):
     onoff_label = Property(depends_on="motor_pump")
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'onoff_command', 'Commands', 'onoff', default='motor_pump')
+        self.set_attribute(
+            config, "onoff_command", "Commands", "onoff", default="motor_pump"
+        )
         return super(HiPace, self).load_additional_args(config)
 
     def _get_onoff_label(self):
@@ -130,10 +132,10 @@ class HiPace(CoreDevice, OnOffMixin):
 
     def set_active(self, state):
         cmd = self.onoff_command
-        if ',' not in cmd:
+        if "," not in cmd:
             cmd = (cmd,)
         else:
-            cmd = cmd.split(',')
+            cmd = cmd.split(",")
 
         for ci in cmd:
             self._set_parameter(ci, int(state))
