@@ -36,7 +36,6 @@ from pychron.canvas.canvas2D.scene.primitives.connections import (
 )
 from pychron.canvas.canvas2D.scene.primitives.primitives import (
     Line,
-    Label,
     Image,
     ValueLabel,
 )
@@ -565,3 +564,36 @@ class XMLLoader(BaseLoader):
             )
 
             scene.add_item(rect, layer="legend")
+
+    def load_stateables(self, scene):
+        color_dict = self._color_dict
+        cp = self._cp
+        for key in ('gate', 'funnel'):
+            for b in cp.get_elements(key):
+                if key in color_dict:
+                    c = color_dict[key]
+                else:
+                    c = (204, 204, 204)
+                rect = self._new_rectangle(scene, b, c, bw=5, type_tag=key)
+                self._load_states(rect, b)
+
+    def _load_states(self, item, elem):
+        closed_state = {'translation': (item.x, item.y), 'dimension': (item.width, item.height)}
+        states = {'closed': closed_state}
+        for state in elem.findall('state'):
+            try:
+                trans = self._get_floats(state, 'translation')
+            except:
+                trans = item.x, item.y
+            try:
+                dim = self._get_floats(state, 'dimension')
+            except:
+                dim = item.width, item.height
+
+            d = {'translation': trans,
+                 'dimension': dim}
+
+            states[state.text.strip()] = d
+
+        item.states = states
+
