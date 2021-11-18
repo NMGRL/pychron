@@ -34,7 +34,7 @@ class DumperScene(ExtractionLineScene):
         self.reset_layers()
 
         origin, color_dict, valve_dimension, _ = self._load_config(configpath, canvas)
-        if pathname.endswith('.yaml') or pathname.endswith('.yml'):
+        if pathname.endswith(".yaml") or pathname.endswith(".yml"):
             klass = YAMLLoader
         else:
             klass = XMLLoader

@@ -568,7 +568,7 @@ class XMLLoader(BaseLoader):
     def load_stateables(self, scene):
         color_dict = self._color_dict
         cp = self._cp
-        for key in ('gate', 'funnel'):
+        for key in ("gate", "funnel"):
             for b in cp.get_elements(key):
                 if key in color_dict:
                     c = color_dict[key]
@@ -578,22 +578,23 @@ class XMLLoader(BaseLoader):
                 self._load_states(rect, b)
 
     def _load_states(self, item, elem):
-        closed_state = {'translation': (item.x, item.y), 'dimension': (item.width, item.height)}
-        states = {'closed': closed_state}
-        for state in elem.findall('state'):
+        closed_state = {
+            "translation": (item.x, item.y),
+            "dimension": (item.width, item.height),
+        }
+        states = {"closed": closed_state}
+        for state in elem.findall("state"):
             try:
-                trans = self._get_floats(state, 'translation')
+                trans = self._get_floats(state, "translation")
             except:
                 trans = item.x, item.y
             try:
-                dim = self._get_floats(state, 'dimension')
+                dim = self._get_floats(state, "dimension")
             except:
                 dim = item.width, item.height
 
-            d = {'translation': trans,
-                 'dimension': dim}
+            d = {"translation": trans, "dimension": dim}
 
             states[state.text.strip()] = d
 
         item.states = states
-
