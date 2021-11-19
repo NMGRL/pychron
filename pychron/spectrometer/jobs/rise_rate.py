@@ -37,7 +37,7 @@ class ResultsAdapter(TabularAdapter):
         ("Endpoints", "endpoints"),
         ("Linear", "linear"),
         ("Duration (m)", "duration"),
-        ("Timestamp", "timestamp")
+        ("Timestamp", "timestamp"),
     ]
 
     endpoints_text = Property
@@ -61,7 +61,10 @@ class Result(HasTraits):
     timestamp = Str
 
     def to_json(self):
-        return {getattr(self, attr) for attr in ('linear', 'endpoints', 'duration', 'timestamp')}
+        return {
+            getattr(self, attr)
+            for attr in ("linear", "endpoints", "duration", "timestamp")
+        }
 
     def calculate(self, xs, ys, rise, starttime):
         ti = xs[-1]
@@ -135,14 +138,14 @@ class RiseRate(SpectrometerTask):
         self._save()
 
     def _save(self):
-        p = os.path.join(paths.appdata_dir, 'rise_rates.json')
+        p = os.path.join(paths.appdata_dir, "rise_rates.json")
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 obj = json.load(rfile)
         else:
             obj = []
 
-        with open(p, 'w') as wfile:
+        with open(p, "w") as wfile:
             obj.extend([ri.to_json() for ri in self.results])
             json.dump(obj, wfile)
 
