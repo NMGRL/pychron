@@ -22,6 +22,8 @@ from __future__ import absolute_import
 from pychron.canvas.canvas2D.scene.extraction_line_scene import ExtractionLineScene
 from pychron.canvas.canvas2D.scene.primitives.dumper_primitives import Gate, Funnel
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
+from pychron.canvas.canvas2D.scene.xml_scene_loader import XMLLoader
+from pychron.canvas.canvas2D.scene.yaml_scene_loader import YAMLLoader
 
 KLASS_MAP = {"gate": Gate, "funnel": Funnel}
 
@@ -31,13 +33,18 @@ class DumperScene(ExtractionLineScene):
         self.overlays = []
         self.reset_layers()
 
-        cp = self._get_canvas_parser(pathname)
-        origin, color_dict = self._load_config(configpath, canvas)
+        origin, color_dict, valve_dimension, _ = self._load_config(configpath, canvas)
+        if pathname.endswith(".yaml") or pathname.endswith(".yml"):
+            klass = YAMLLoader
+        else:
+            klass = XMLLoader
 
-        self._load_switchables(cp, origin, valvepath)
-        self._load_rects(cp, origin, color_dict)
-        self._load_stateables(cp, origin, color_dict)
-        self._load_markup(cp, origin, color_dict)
+        loader = klass(pathname, origin, color_dict, valve_dimension)
+
+        loader.load_switchables(self, valvepath)
+        loader.load_rects(self)
+        loader.load_markup(self)
+        loader.load_stateables(self)
 
     def _load_stateables(self, cp, origin, color_dict):
         for key in ("gate", "funnel"):
