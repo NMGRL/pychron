@@ -64,4 +64,5 @@ def sort_detectors(idets):
 
     return dets
 
+
 # ============= EOF =============================================

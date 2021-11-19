@@ -191,7 +191,7 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
 
             x, y = zip(*((getattr(r, self.xarg), getattr(r, self.yarg)) for r in rs))
 
-            self.debug('add plot {}, {}'.format(i, fit.name))
+            self.debug("add plot {}, {}".format(i, fit.name))
             p = g.new_plot()
             g.add_limit_tool(p, "x")
             g.add_limit_tool(p, "y")
