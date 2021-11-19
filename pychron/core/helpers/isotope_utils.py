@@ -17,7 +17,6 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
 
 import re
 
@@ -64,6 +63,5 @@ def sort_detectors(idets):
     dets = sorted(idets, key=f)
 
     return dets
-
 
 # ============= EOF =============================================
