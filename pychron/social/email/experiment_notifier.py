@@ -47,7 +47,7 @@ class ExperimentNotifier(Loggable):
                 ctx.get("username"), ctx.get("user_email")
             )
         )
-
+        subject = '{} {}'.format(subject, datetime.now().isoformat())
         self._send(ctx.get("user_email"), subject, message)
 
         if ctx.get("use_group_email"):
