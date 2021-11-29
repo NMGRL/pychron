@@ -185,16 +185,13 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
         # d = 0.015
         isos = len({r.isotope for r in results})
         g = Graph(container_dict={"kind": "g", "shape": filled_grid(isos)})
-        key = attrgetter("isotope")
-        for i, (iso, gg) in enumerate(
-            groupby(sort_isotopes(results, key=key), key=key)
-        ):
-            # fit = next((fi for fi in fits if fi.name == iso))
-            rs = list(gg)
-            x, y = zip(*((getattr(r, self.xarg), getattr(r, self.yarg)) for r in rs))
-            # xx = linspace(min(x), max(x))
-            # yy = fit.smart_filter_values(xx)
 
+        for i, fit in enumerate(self.fits):
+            rs = [ri for ri in results if ri.isotope == fit.name]
+
+            x, y = zip(*((getattr(r, self.xarg), getattr(r, self.yarg)) for r in rs))
+
+            self.debug("add plot {}, {}".format(i, fit.name))
             p = g.new_plot()
             g.add_limit_tool(p, "x")
             g.add_limit_tool(p, "y")
@@ -225,7 +222,7 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
             # g.new_series(xx, yy, plotid=i)
             g.set_x_title(self.xarg, plotid=i)
             g.set_y_title(self.yarg, plotid=i)
-            g.set_plot_title(iso, plotid=i)
+            g.set_plot_title(fit.name, plotid=i)
 
         self.graph = g
 
