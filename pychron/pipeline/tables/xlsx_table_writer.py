@@ -374,7 +374,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         )
 
     def _intercalibration_columns(
-        self, columns, detectors, ic_visible=True, disc_visible=True
+            self, columns, detectors, ic_visible=True, disc_visible=True
     ):
         disc = [
             SigFigColumn(
@@ -409,9 +409,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _signal_columns(self, columns, ibit, bkbit):
         isos = (("Ar", 40), ("Ar", 39), ("Ar", 38), ("Ar", 37), ("Ar", 36))
         for bit, tag in (
-            (True, "disc_ic_corrected"),
-            (ibit, "intercept"),
-            (bkbit, "blank"),
+                (True, "disc_ic_corrected"),
+                (ibit, "intercept"),
+                (bkbit, "blank"),
         ):
             cols = [
                 c
@@ -523,33 +523,66 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _get_irradiation_columns(self, ubit):
         fmt = "correction"
 
-        cols = [
-            c
-            for (ai, am), (bi, bm), e in (
-                (("Ar", 40), ("Ar", 39), "K"),
-                (("Ar", 38), ("Ar", 39), "K"),
-                (("Ar", 37), ("Ar", 39), "K"),
-                (("Ar", 39), ("Ar", 37), "Ca"),
-                (("Ar", 38), ("Ar", 37), "Ca"),
-                (("Ar", 36), ("Ar", 37), "Ca"),
-                (("Ar", 36), ("Ar", 38), "Cl"),
-            )
-            for c in (
-                Column(
-                    label=(
-                        "(",
-                        "<sup>{}</sup>".format(am),
-                        "{}/".format(ai),
-                        "<sup>{}</sup>".format(bm),
-                        "{})".format(bm),
-                        "<sub>{}</sub>".format(e),
-                    ),
-                    attr="{}{}{}".format(e, am, bm),
-                    sigformat=fmt,
+        cols = []
+        for am, bm, e in [(40, 39, "K"),
+                          (38, 38, "K"),
+                          (37, 39, "K"),
+                          (39, 37, "Ca"),
+                          (38, 37, "Ca"),
+                          (36, 37, "Ca"),
+                          (36, 38, "Cl")
+                          ]:
+            attr = "{}{}{}".format(e, am, bm)
+            c = Column(
+                label=(
+                    "(",
+                    "<sup>{}</sup>".format(am),
+                    "Ar/",
+                    "<sup>{}</sup>".format(bm),
+                    "Ar)",
+                    "<sub>{}</sub>".format(e),
                 ),
-                EColumn(attr="{}{}{}".format(e, am, bm), sigformat=fmt),
+                attr=attr,
+                sigformat=fmt,
             )
-        ]
+            ec = EColumn(attr=attr, sigformat=fmt)
+            cols.append(c)
+            cols.append(ec)
+
+        # cols = [c
+        #     for am, bm, e in [(40, 39, "K"),
+        #                       (38, 38, "K"),
+        #                       (37, 39, "K"),
+        #                       (39, 37, "Ca"),
+        #                       (38, 37, "Ca"),
+        #                       (36, 37, "Ca"),
+        #                       (36, 38, "Cl")
+        #                       ]
+        #     # for (ai, am), (bi, bm), e in (
+        #     #     (("Ar", 40), ("Ar", 39), "K"),
+        #     #     (("Ar", 38), ("Ar", 39), "K"),
+        #     #     (("Ar", 37), ("Ar", 39), "K"),
+        #     #     (("Ar", 39), ("Ar", 37), "Ca"),
+        #     #     (("Ar", 38), ("Ar", 37), "Ca"),
+        #     #     (("Ar", 36), ("Ar", 37), "Ca"),
+        #     #     (("Ar", 36), ("Ar", 38), "Cl"),
+        #     # )
+        #     for c in (
+        #         Column(
+        #             label=(
+        #                 "(",
+        #                 "<sup>{}</sup>".format(am),
+        #                 "Ar/",
+        #                 "<sup>{}</sup>".format(bm),
+        #                 "Ar)",
+        #                 "<sub>{}</sub>".format(e),
+        #             ),
+        #             attr="{}{}{}".format(e, am, bm),
+        #             sigformat=fmt,
+        #         ),
+        #         EColumn(attr="{}{}{}".format(e, am, bm), sigformat=fmt),
+        #     )
+        # ]
 
         cols.extend(
             [
@@ -609,8 +642,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         def get_age_error(attr):
             def f(ag, *args):
                 return (
-                    ag.scaled_age(std_dev(getattr(ag, attr)), opt.age_units)
-                    * opt.summary_age_nsigma
+                        ag.scaled_age(std_dev(getattr(ag, attr)), opt.age_units)
+                        * opt.summary_age_nsigma
                 )
 
             return f
@@ -753,11 +786,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         # hide extra age columns
         for hidden in (
-            "WeightedMeanAge",
-            "ArithmeticMeanAge",
-            "IsochronAge",
-            "PlateauAge",
-            "IntegratedAge",
+                "WeightedMeanAge",
+                "ArithmeticMeanAge",
+                "IsochronAge",
+                "PlateauAge",
+                "IntegratedAge",
         ):
             hc = next((i for i, c in enumerate(cols) if c.label == hidden), None)
             if hc is not None:
@@ -1027,8 +1060,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     args = []
                     for cii in ci:
                         for reg, fmt in (
-                            (supreg, self._superscript),
-                            (subreg, self._subscript),
+                                (supreg, self._superscript),
+                                (subreg, self._subscript),
                         ):
                             m = reg.match(cii)
                             if m:
@@ -1155,7 +1188,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return fn
 
     def _make_analysis(
-        self, sh, cols, item, is_last=False, is_plateau_step=None, cum=""
+            self, sh, cols, item, is_last=False, is_plateau_step=None, cum=""
     ):
         row = self._current_row
 
@@ -1520,7 +1553,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         if isinstance(v, Variable):
             v = nominal_value(v)
         return v
-
 
 # ============= EOF =============================================
 # if __name__ == '__main__':
