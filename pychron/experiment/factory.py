@@ -133,16 +133,25 @@ class ExperimentFactory(DVCAble):
 
         if v:
             self.debug("sync queue to factory {}>>{}".format(a, v))
-            setattr(qf, a, v)
+            try:
+                setattr(qf, a, v)
+            except BaseException:
+                self.debug('failed to sync queue to factory attr={} value={}'.format(a, v))
+                self.debug_exception()
             return True
 
     def _sync_factory_to_queue(self, eq, qf, a):
         v = getattr(qf, a)
         if isinstance(v, str):
             v = v.strip()
-            if v:
-                self.debug("sync factory to queue {}>>{}".format(a, v))
+
+        if v:
+            self.debug("sync factory to queue {}>>{}".format(a, v))
+            try:
                 setattr(eq, a, v)
+            except BaseException:
+                self.debug('failed to sync factory to queue attr={} value={}'.format(a, v))
+                self.debug_exception()
 
     def _add_run(self, *args, **kw):
 
