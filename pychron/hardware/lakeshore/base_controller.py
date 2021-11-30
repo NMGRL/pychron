@@ -138,7 +138,7 @@ class BaseLakeShoreController(CoreDevice):
         ):
             if setpoint is None:
                 continue
-                
+
             idx = i + 1
             v = self._read_input(key, self.units)
             if tag is not None:
