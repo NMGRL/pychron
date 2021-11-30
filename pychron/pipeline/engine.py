@@ -1167,7 +1167,7 @@ class PipelineEngine(Loggable):
         self.refresh_table_needed = True
 
     def _set_template(self, name, clear=True, exclude_klass=None):
-        self.debug('template set to ={}'.format(name))
+        self.debug("template set to ={}".format(name))
         if isinstance(name, (str, tuple)):
             pt = self.pipeline_template_root.get_template(name)
         else:

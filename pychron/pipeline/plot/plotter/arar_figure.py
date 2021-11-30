@@ -152,7 +152,7 @@ class BaseArArFigure(SelectionFigure):
                         height = po.height
                 else:
                     height = po.height
-                    if i==0:
+                    if i == 0:
                         r = "v"
 
                 kw["bounds"] = [fw, height]
@@ -167,7 +167,7 @@ class BaseArArFigure(SelectionFigure):
                 kw["bounds"] = [50, height]
             elif po.height:
                 kw["bounds"] = [50, po.height]
-                kw['resizable'] = 'h'
+                kw["resizable"] = "h"
 
             # if self.options.layout.fixed_width:
             #     kw['bounds'] = [self.options.layout.fixed_width, kw['bounds'][1]]
@@ -488,7 +488,7 @@ class BaseArArFigure(SelectionFigure):
         return self._plot_aux("Ar36", po, pid)
 
     def _plot_extract_value(self, po, pobj, pid):
-        return self._plot_aux('extract_value', po, pid)
+        return self._plot_aux("extract_value", po, pid)
 
     def _get_aux_plot_data(self, k, scalar=1):
         vs = list(self._unpack_attr(k, scalar=scalar))
