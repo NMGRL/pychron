@@ -48,6 +48,7 @@ from pychron.core.helpers.logger_setup import logging_setup
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.combobox_editor import ComboboxEditor
+from pychron.core.ui.strings import SpacelessStr
 from pychron.dvc.meta_repo import MetaRepo
 from pychron.entry.editors.base_editor import ModelView
 from pychron.entry.editors.package_level_editor import PackageLevelEditor, TrayAdapter
@@ -131,6 +132,13 @@ class EditView(ModelView):
                     enabled_when="selected_production",
                     tooltip="Edit Production Ratio",
                 ),
+                icon_button_editor(
+                    "save_as_production_button",
+                    "database_save_as",
+                    enabled_when="selected_production",
+                    tooltip="Production Ratio Save as"
+                ),
+
                 label="Production",
             ),
         )
@@ -191,7 +199,7 @@ class IrradiationLevelEditor(PackageLevelEditor):
     z = Float
     selected_production = Instance(IrradiationProduction, ())
 
-    new_production_name = Str
+    new_production_name = SpacelessStr
 
     productions = Dict
     production_names = List
@@ -203,6 +211,7 @@ class IrradiationLevelEditor(PackageLevelEditor):
 
     add_production_button = Button
     edit_production_button = Button
+    save_as_production_button = Button
 
     apply_selected_reactor = Button
     apply_selected_production = Button
@@ -243,7 +252,7 @@ class IrradiationLevelEditor(PackageLevelEditor):
     # private
     def _select_production(self):
         self.selected_production_name = ""
-        pname, prod = self.dvc.meta_repo.get_production(self.irradiation, self.name)
+        pname, prod = self.dvc.meta_repo.get_production(self.irradiation, self.name, allow_null=True)
         self.debug(
             "select production={} for {},{}".format(pname, self.irradiation, self.name)
         )
@@ -536,9 +545,15 @@ class IrradiationLevelEditor(PackageLevelEditor):
                     )
                 )
 
+    def _save_as_production_button_fired(self):
+        self._save_production_helper("Save As Production")
+
     def _add_production_button_fired(self):
+        self._save_production_helper("New Production")
+
+    def _save_production_helper(self, title):
         v = okcancel_view(
-            Item("new_production_name", label="Name"), title="New Production"
+            Item("new_production_name", label="Name"), title=title
         )
         info = self.edit_traits(v)
         if info.result:
