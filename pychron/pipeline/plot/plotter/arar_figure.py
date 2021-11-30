@@ -123,7 +123,6 @@ class BaseArArFigure(SelectionFigure):
 
         graph = self.graph
 
-        print([p.height for p in plots])
         vertical_resize = not all([p.height for p in plots[:-1]])
 
         graph.vertical_resize = vertical_resize
@@ -153,7 +152,8 @@ class BaseArArFigure(SelectionFigure):
                         height = po.height
                 else:
                     height = po.height
-                    r = "v"
+                    if i==0:
+                        r = "v"
 
                 kw["bounds"] = [fw, height]
                 kw["resizable"] = r
@@ -165,10 +165,9 @@ class BaseArArFigure(SelectionFigure):
                     height = po.height
 
                 kw["bounds"] = [50, height]
-
-            # if po.height:
-            #     kw["bounds"] = [, po.height]
-            #     kw['resizable'] = ''
+            elif po.height:
+                kw["bounds"] = [50, po.height]
+                kw['resizable'] = 'h'
 
             # if self.options.layout.fixed_width:
             #     kw['bounds'] = [self.options.layout.fixed_width, kw['bounds'][1]]
@@ -187,6 +186,7 @@ class BaseArArFigure(SelectionFigure):
                 kw["xtitle"] = self.xtitle
 
             kw["padding"] = self.options.get_paddings()
+
             p = graph.new_plot(**kw)
             if i == (len(plots) - 1):
                 p.title_font = self.options.title_font
@@ -488,8 +488,7 @@ class BaseArArFigure(SelectionFigure):
         return self._plot_aux("Ar36", po, pid)
 
     def _plot_extract_value(self, po, pobj, pid):
-        k = "extract_value"
-        return self._plot_aux("Extract Value", k, po, pid)
+        return self._plot_aux('extract_value', po, pid)
 
     def _get_aux_plot_data(self, k, scalar=1):
         vs = list(self._unpack_attr(k, scalar=scalar))
