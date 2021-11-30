@@ -136,7 +136,9 @@ class BaseLakeShoreController(CoreDevice):
         for i, (setpoint, tag, key) in enumerate(
             zip(setpoints, self.iomap, string.ascii_lowercase)
         ):
-
+            if setpoint is None:
+                continue
+                
             idx = i + 1
             v = self._read_input(key, self.units)
             if tag is not None:
