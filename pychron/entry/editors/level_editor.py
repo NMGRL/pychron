@@ -136,9 +136,8 @@ class EditView(ModelView):
                     "save_as_production_button",
                     "database_save_as",
                     enabled_when="selected_production",
-                    tooltip="Production Ratio Save as"
+                    tooltip="Production Ratio Save as",
                 ),
-
                 label="Production",
             ),
         )
@@ -252,7 +251,9 @@ class IrradiationLevelEditor(PackageLevelEditor):
     # private
     def _select_production(self):
         self.selected_production_name = ""
-        pname, prod = self.dvc.meta_repo.get_production(self.irradiation, self.name, allow_null=True)
+        pname, prod = self.dvc.meta_repo.get_production(
+            self.irradiation, self.name, allow_null=True
+        )
         self.debug(
             "select production={} for {},{}".format(pname, self.irradiation, self.name)
         )
@@ -552,9 +553,7 @@ class IrradiationLevelEditor(PackageLevelEditor):
         self._save_production_helper("New Production")
 
     def _save_production_helper(self, title):
-        v = okcancel_view(
-            Item("new_production_name", label="Name"), title=title
-        )
+        v = okcancel_view(Item("new_production_name", label="Name"), title=title)
         info = self.edit_traits(v)
         if info.result:
             name = self.new_production_name
