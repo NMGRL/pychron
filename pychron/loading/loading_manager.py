@@ -232,6 +232,9 @@ class LoadingManager(DVCIrradiationable):
         super(LoadingManager, self).__init__(*args, **kw)
         self.dvc.create_session()
 
+    def set_loaded_runs(self, runs):
+        pass
+
     def load(self):
         if self.canvas:
             self.canvas.editable = True

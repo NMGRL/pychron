@@ -555,6 +555,13 @@ class ExperimentEditorTask(EditorTask):
         else:
             self.manager.experiment_factory.edit_enabled = False
 
+    @on_trait_change("manager:experiment_queue:changed")
+    def _handle_queue_change(self, obj, name, old, new):
+        if self.loading_manager:
+            print("asdf", obj)
+            runs = obj.cleaned_automated_runs
+            self.loading_manager.set_loaded_runs(runs)
+
     @on_trait_change("loading_manager:group_positions")
     def _update_group_positions(self, new):
         # if not new:
