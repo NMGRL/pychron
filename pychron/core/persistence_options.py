@@ -33,7 +33,6 @@ try:
 
             self.persistence_path = os.path.join(paths.appdata_dir, name)
 
-
 except TypeError:
     # documentation auto doc hack
     class BasePersistenceOptions:
