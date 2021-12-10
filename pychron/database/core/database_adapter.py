@@ -539,7 +539,7 @@ host= {}\nurl= {}'.format(
 
         try:
             self.info("testing database connection {}".format(self.test_func))
-            vers = getattr(self, self.test_func)(reraise=True)
+            getattr(self, self.test_func)(reraise=True)
             if version_warn:
                 self._version_warn_hook()
 

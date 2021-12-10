@@ -685,13 +685,19 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_extraction_device(self, name):
         with self.session_ctx():
-            a = ExtractDeviceTbl(name=name)
-            return self._add_item(a)
+            a = self.get_extraction_device(name)
+            if not a:
+                a = ExtractDeviceTbl(name=name)
+                a = self._add_item(a)
+            return a
 
     def add_mass_spectrometer(self, name, kind="Argus"):
         with self.session_ctx():
-            a = MassSpectrometerTbl(name=name, kind=kind)
-            return self._add_item(a)
+            ms = self.get_mass_spectrometer(name)
+            if not ms:
+                ms = MassSpectrometerTbl(name=name, kind=kind)
+                ms = self._add_item(ms)
+            return ms
 
     def add_irradiation(self, name):
         with self.session_ctx():
@@ -740,7 +746,7 @@ class DVCDatabase(DatabaseAdapter):
             a = self.get_project(name, principal_investigator)
             if a is None:
                 self.debug("Adding project {} {}".format(name, principal_investigator))
-                a = ProjectTbl(name=name, checkin_date=datetime.now(), **kw)
+                a = ProjectTbl(name=name, checkin_date=datetime.now().date(), **kw)
                 if principal_investigator:
                     dbpi = self.get_principal_investigator(principal_investigator)
                     if dbpi:
