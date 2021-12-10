@@ -17,23 +17,34 @@
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import HasTraits, Str, Bool, Instance, Button, Any
+
 # ============= standard library imports ========================
 import struct
 from datetime import timedelta
 from sqlalchemy.sql.expression import and_, not_
 from sqlalchemy.orm.exc import NoResultFound
+
 # ============= local library imports  ==========================
 from pychron.database.adapters.isotope_adapter import IsotopeAdapter
 from pychron.loggable import Loggable
-from pychron.mass_spec.database.massspec_orm import AnalysesTable, MachineTable, \
-    LoginSessionTable, RunScriptTable
+from pychron.mass_spec.database.massspec_orm import (
+    AnalysesTable,
+    MachineTable,
+    LoginSessionTable,
+    RunScriptTable,
+)
 from pychron.core.helpers.filetools import unique_path
 from pychron.paths import paths
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 from pychron.database.database_connection_spec import DBConnectionSpec
 
-SAMPLE_DICT = {'ba': 'blank_air', 'bc': 'blank_cocktail', 'bu': 'blank_unknown',
-               'a': 'air', 'c': 'cocktail'}
+SAMPLE_DICT = {
+    "ba": "blank_air",
+    "bc": "blank_cocktail",
+    "bu": "blank_unknown",
+    "a": "air",
+    "c": "cocktail",
+}
 
 
 def convert_sample(sample):
@@ -49,10 +60,11 @@ class ImportName(HasTraits):
 
 class MassSpecExtractor(Loggable):
     """
-        Used to import data from MassSpec database to a Pychron database
+    Used to import data from MassSpec database to a Pychron database
     """
+
     dbconn_spec = Instance(DBConnectionSpec, ())
-    connect_button = Button('Connect')
+    connect_button = Button("Connect")
     db = Instance(MassSpecDatabaseAdapter, ())
     mapper = Any
 
@@ -61,11 +73,15 @@ class MassSpecExtractor(Loggable):
     def __init__(self, *args, **kw):
         super(MassSpecExtractor, self).__init__(*args, **kw)
 
-        self.db.kind = 'mysql'
-        bind_preference(self.dbconn_spec, 'username', 'pychron.massspec.database.username')
-        bind_preference(self.dbconn_spec, 'host', 'pychron.massspec.database.host')
-        bind_preference(self.dbconn_spec, 'password', 'pychron.massspec.database.password')
-        bind_preference(self.dbconn_spec, 'name', 'pychron.massspec.database.name')
+        self.db.kind = "mysql"
+        bind_preference(
+            self.dbconn_spec, "username", "pychron.massspec.database.username"
+        )
+        bind_preference(self.dbconn_spec, "host", "pychron.massspec.database.host")
+        bind_preference(
+            self.dbconn_spec, "password", "pychron.massspec.database.password"
+        )
+        bind_preference(self.dbconn_spec, "name", "pychron.massspec.database.name")
 
     def _connect_button_fired(self):
         self.connect()
@@ -80,15 +96,15 @@ class MassSpecExtractor(Loggable):
     def import_irradiation(self, dest, name, progress, dry_run=True, **kw):
 
         self.connect()
-        p, c = unique_path(paths.data_dir, 'import')
-        self._import_err_file = open(p, 'w')
+        p, c = unique_path(paths.data_dir, "import")
+        self._import_err_file = open(p, "w")
 
         # if isinstance(dest, IsotopeAdapter):
         #     added_to_db = self._do_isotope_db_import(dest, name, progress, dry_run=dry_run, **kw)
         # else:
         added_to_db = self._do_dvc_import(dest, name, progress, dry_run=dry_run)
 
-        self.debug('irradiation import dry_run={}'.format(dry_run))
+        self.debug("irradiation import dry_run={}".format(dry_run))
 
         self._import_err_file.close()
         return ImportName(name=name, skipped=not added_to_db)
@@ -160,7 +176,7 @@ class MassSpecExtractor(Loggable):
                 elif progress.accepted:
                     return True
 
-                progress.change_message('importing level {} {}'.format(name, mli.Level))
+                progress.change_message("importing level {} {}".format(name, mli.Level))
 
                 self._add_level_dvc(dest, progress, name, mli)
         return True
@@ -187,31 +203,41 @@ class MassSpecExtractor(Loggable):
 
                 ipos = dest.get_identifier(ip.IrradPosition)
                 if not ipos:
-                    self.debug('{} not in dest'.format(ip.IrradPosition))
-                    dest.add_irradiation_position(name, mli.Level, ip.HoleNumber,
-                                                  identifier=ip.IrradPosition,
-                                                  sample=sample)
-                    dest.update_flux(name, mli.Level, ip.HoleNumber, ip.IrradPosition,
-                                     ip.J, ip.JEr)
+                    self.debug("{} not in dest".format(ip.IrradPosition))
+                    dest.add_irradiation_position(
+                        name,
+                        mli.Level,
+                        ip.HoleNumber,
+                        identifier=ip.IrradPosition,
+                        sample=sample,
+                    )
+                    dest.update_flux(
+                        name, mli.Level, ip.HoleNumber, ip.IrradPosition, ip.J, ip.JEr
+                    )
 
-    def _add_levels(self, dest, progress, dbirrad, dbpr,
-                    include_analyses=False,
-                    include_blanks=False,
-                    include_airs=False,
-                    include_cocktails=False,
-                    include_list=None,
-                    dry_run=True):
+    def _add_levels(
+        self,
+        dest,
+        progress,
+        dbirrad,
+        dbpr,
+        include_analyses=False,
+        include_blanks=False,
+        include_airs=False,
+        include_cocktails=False,
+        include_list=None,
+        dry_run=True,
+    ):
         """
-            add all levels and positions for dbirrad
-            if include_analyses is True add all analyses
+        add all levels and positions for dbirrad
+        if include_analyses is True add all analyses
         """
         added_to_db = False
         db = self.db
 
         name = dbirrad.name
         with db.session_ctx() as sess:
-            levels = db.get_irradiation_levels(name,
-                                               levels=include_list)
+            levels = db.get_irradiation_levels(name, levels=include_list)
             # if not include_list:
             #    include_list = [li.Level for li in levels]
 
@@ -224,7 +250,7 @@ class MassSpecExtractor(Loggable):
                 elif progress.accepted:
                     break
 
-                progress.change_message('importing level {} {}'.format(name, mli.Level))
+                progress.change_message("importing level {} {}".format(name, mli.Level))
                 # print mli.Level, include_list
                 # if mli.Level not in include_list:
                 #    continue
@@ -238,9 +264,11 @@ class MassSpecExtractor(Loggable):
                     # check that irradiation holder is in the database
                     dbholder = dest.get_irradiation_holder(hname)
                     if not dbholder:
-                        self.warning_dialog('Irradiation Holder "{}" does not exist in the database\n'
-                                            'Contact an adminstrator or '
-                                            'add using "Edit/Import Irradaition Holder"'.format(hname))
+                        self.warning_dialog(
+                            'Irradiation Holder "{}" does not exist in the database\n'
+                            "Contact an adminstrator or "
+                            'add using "Edit/Import Irradaition Holder"'.format(hname)
+                        )
                         sess.rollback()
                         break
 
@@ -248,8 +276,7 @@ class MassSpecExtractor(Loggable):
                     added_to_db = True
 
                 # add all irradiation positions for this level
-                positions = self.db.get_irradiation_positions(name,
-                                                              mli.Level)
+                positions = self.db.get_irradiation_positions(name, mli.Level)
                 for ip in positions:
                     if progress.canceled:
                         sess.rollback()
@@ -261,12 +288,13 @@ class MassSpecExtractor(Loggable):
 
                     ln = dest.get_labnumber(ip.IrradPosition)
                     if not ln:
-                        self.debug('{} not in dest'.format(ip.IrradPosition))
+                        self.debug("{} not in dest".format(ip.IrradPosition))
                         ln = dest.add_labnumber(ip.IrradPosition, sample=sample)
                         # dest.sess.flush()
 
-                        dbpos = dest.add_irradiation_position(ip.HoleNumber, ln,
-                                                              name, mli.Level)
+                        dbpos = dest.add_irradiation_position(
+                            ip.HoleNumber, ln, name, mli.Level
+                        )
 
                         fh = dest.add_flux_history(dbpos, note=ip.Note)
                         ln.selected_flux_history = fh
@@ -280,7 +308,7 @@ class MassSpecExtractor(Loggable):
                     ln.note = ip.Note
 
                     if include_analyses:
-                        self.info('============ Adding Analyses ============')
+                        self.info("============ Adding Analyses ============")
                         for ai in ip.analyses:
                             if progress.canceled:
                                 sess.rollback()
@@ -311,126 +339,143 @@ class MassSpecExtractor(Loggable):
         ms = dba.login_session.machine
         if ms:
             ms = ms.Label
-            if ms not in ('Pychron Obama', 'Pychron Jan', 'Obama', 'Jan'):
+            if ms not in ("Pychron Obama", "Pychron Jan", "Obama", "Jan"):
                 return
 
-            self.info('============ Adding Associated Cocktails ============')
+            self.info("============ Adding Associated Cocktails ============")
 
             def add_hook(dest, bi):
                 self._add_cocktail_blanks(dest, bi)
 
             def make_labnumber(bi):
                 ln = bi.RID
-                if ln.startswith('c-'):
-                    ln = '-'.join(bi.RID.split('-')[:-1])
+                if ln.startswith("c-"):
+                    ln = "-".join(bi.RID.split("-")[:-1])
                 else:
                     msname = self._get_ms_identifier(bi)
-                    ln = 'c-00-{}'.format(msname)
+                    ln = "c-00-{}".format(msname)
                 return ln
 
-            return self._add_associated(dest, dba, make_labnumber,
-                                        atype=1,
-                                        add_hook=add_hook,
-                                        analysis_type='cocktail',
-                                        )
+            return self._add_associated(
+                dest,
+                dba,
+                make_labnumber,
+                atype=1,
+                add_hook=add_hook,
+                analysis_type="cocktail",
+            )
 
     def _add_associated_airs(self, dest, dba):
         ms = dba.login_session.machine
         if ms:
             ms = ms.Label
-            if ms not in ('Pychron Obama', 'Pychron Jan', 'Obama', 'Jan'):
+            if ms not in ("Pychron Obama", "Pychron Jan", "Obama", "Jan"):
                 return
 
-            self.info('============ Adding Associated Airs ============')
+            self.info("============ Adding Associated Airs ============")
 
             def add_hook(dest, bi):
                 self._add_air_blanks(dest, bi)
 
             def make_labnumber(bi):
                 ln = bi.RID
-                if ln.startswith('a-'):
-                    ln = '-'.join(ln.split('-')[:-1])
+                if ln.startswith("a-"):
+                    ln = "-".join(ln.split("-")[:-1])
                 else:
                     msname = self._get_ms_identifier(bi)
-                    ln = 'a-00-{}'.format(msname)
+                    ln = "a-00-{}".format(msname)
                 return ln
 
-            return self._add_associated(dest, dba, make_labnumber,
-                                        atype=2,
-                                        add_hook=add_hook,
-                                        analysis_type='air',
-                                        )
+            return self._add_associated(
+                dest,
+                dba,
+                make_labnumber,
+                atype=2,
+                add_hook=add_hook,
+                analysis_type="air",
+            )
 
     def _add_air_blanks(self, dest, dba):
         def make_labnumber(bi):
             ln = bi.RID
 
-            if not ln.startswith('ba'):
+            if not ln.startswith("ba"):
                 ms = self._get_ms_identifier(bi)
-                ln = 'ba-00-{}'.format(ms)
+                ln = "ba-00-{}".format(ms)
             else:
                 # remove aliquot
-                ln = '-'.join(ln.split('-')[:-1])
+                ln = "-".join(ln.split("-")[:-1])
             return ln
 
-        return self._add_associated(dest, dba, make_labnumber, atype=5,
-                                    analysis_type='blank_air',
-                                    )
+        return self._add_associated(
+            dest,
+            dba,
+            make_labnumber,
+            atype=5,
+            analysis_type="blank_air",
+        )
 
     def _add_cocktail_blanks(self, dest, dba):
         def make_labnumber(bi):
             ln = bi.RID
 
-            if not ln.startswith('bc'):
+            if not ln.startswith("bc"):
                 ms = self._get_ms_identifier(bi)
-                ln = 'bc-00-{}'.format(ms)
+                ln = "bc-00-{}".format(ms)
             else:
                 # remove aliquot
-                ln = '-'.join(ln.split('-')[:-1])
+                ln = "-".join(ln.split("-")[:-1])
             return ln
 
-        return self._add_associated(dest, dba, make_labnumber, atype=5,
-                                    analysis_type='blank_cocktail')
+        return self._add_associated(
+            dest, dba, make_labnumber, atype=5, analysis_type="blank_cocktail"
+        )
 
     def _add_associated_unknown_blanks(self, dest, dba):
         """
-            get blanks +/- Nhrs from dba run date
+        get blanks +/- Nhrs from dba run date
 
         """
-        self.info('============ Adding Associated Blanks ============')
+        self.info("============ Adding Associated Blanks ============")
 
         def make_labnumber(bi):
             ln = bi.RID
 
-            if not ln.startswith('bu'):
+            if not ln.startswith("bu"):
 
                 hid = bi.HeatingItemName
-                if hid in ('Eurotherm', 'Furnace'):
-                    ed = 'F'
+                if hid in ("Eurotherm", "Furnace"):
+                    ed = "F"
                 else:
-                    ed = 'CO2'
+                    ed = "CO2"
 
                 ms = self._get_ms_identifier(bi)
-                ln = 'bu-{}-{}'.format(ed, ms)
+                ln = "bu-{}-{}".format(ed, ms)
             else:
                 # remove aliquot
-                ln = '-'.join(ln.split('-')[:-1])
+                ln = "-".join(ln.split("-")[:-1])
             return ln
 
         def filter_func(q):
             q = q.join(RunScriptTable)
-            q = q.filter(not_(RunScriptTable.Label.in_(['Blank Pipette 1', 'Blank Pipette 2'])))
+            q = q.filter(
+                not_(RunScriptTable.Label.in_(["Blank Pipette 1", "Blank Pipette 2"]))
+            )
             return q
 
-        return self._add_associated(dest, dba, make_labnumber,
-                                    filter_hook=filter_func)
+        return self._add_associated(dest, dba, make_labnumber, filter_hook=filter_func)
 
-    def _add_associated(self, dest, dba, make_labnumber,
-                        _cache=[],
-                        atype=5,
-                        analysis_type='blank_unknown',
-                        add_hook=None,
-                        **kw):
+    def _add_associated(
+        self,
+        dest,
+        dba,
+        make_labnumber,
+        _cache=[],
+        atype=5,
+        analysis_type="blank_unknown",
+        add_hook=None,
+        **kw
+    ):
         added_to_db = False
         post = dba.RunDateTime
         ms = dba.login_session.machine.Label
@@ -446,8 +491,7 @@ class MassSpecExtractor(Loggable):
 
                 dest.sess.flush()
 
-            if self._add_analysis(dest, ln, bi,
-                                  analysis_type=analysis_type):
+            if self._add_analysis(dest, ln, bi, analysis_type=analysis_type):
                 if add_hook:
                     add_hook(dest, bi)
                 added_to_db = True
@@ -456,16 +500,16 @@ class MassSpecExtractor(Loggable):
 
     def _get_ms_identifier(self, ai):
         msname = ai.login_session.machine.Label
-        if msname == 'Pychron Obama':
-            msname = 'PO'
-        elif msname == 'Pychron Jan':
-            msname = 'PJ'
-        elif msname == 'Jan':
-            msname = 'J'
-        elif msname == 'NMGRL MAP':
-            msname = 'MAP'
+        if msname == "Pychron Obama":
+            msname = "PO"
+        elif msname == "Pychron Jan":
+            msname = "PJ"
+        elif msname == "Jan":
+            msname = "J"
+        elif msname == "NMGRL MAP":
+            msname = "MAP"
         else:
-            msname = 'O'
+            msname = "O"
         return msname
 
     def _find_analyses(self, ms, post, delta, atype, step=100, maxtries=10, **kw):
@@ -473,8 +517,7 @@ class MassSpecExtractor(Loggable):
             step = -step
 
         for i in range(maxtries):
-            rs = self._filter_analyses(ms, post, delta + i * step, 5, atype,
-                                       **kw)
+            rs = self._filter_analyses(ms, post, delta + i * step, 5, atype, **kw)
             if rs:
                 return rs
         else:
@@ -482,16 +525,16 @@ class MassSpecExtractor(Loggable):
 
     def _filter_analyses(self, ms, post, delta, lim, at, filter_hook=None):
         """
-            ms= spectrometer
-            post= timestamp
-            delta= time in hours
-            at=analysis type
+        ms= spectrometer
+        post= timestamp
+        delta= time in hours
+        at=analysis type
 
-            if delta is negative
-            get all before post and after post-delta
+        if delta is negative
+        get all before post and after post-delta
 
-            if delta is post
-            get all before post+delta and after post
+        if delta is post
+        get all before post+delta and after post
         """
         with self.db.session_ctx() as sess:
             #         sess = self.db.get_session()
@@ -507,11 +550,12 @@ class MassSpecExtractor(Loggable):
                 a, b = post, dt
 
             q = q.filter(MachineTable.Label == ms)
-            q = q.filter(and_(
-                AnalysesTable.SpecRunType == at,
-                AnalysesTable.RunDateTime >= a,
-                AnalysesTable.RunDateTime <= b,
-            )
+            q = q.filter(
+                and_(
+                    AnalysesTable.SpecRunType == at,
+                    AnalysesTable.RunDateTime >= a,
+                    AnalysesTable.RunDateTime <= b,
+                )
             )
 
             if filter_hook:
@@ -523,8 +567,15 @@ class MassSpecExtractor(Loggable):
             except NoResultFound:
                 pass
 
-    def _add_analysis(self, dest, dest_labnumber, dbanalysis,
-                      analysis_type='unknown', _ed_cache=[], _an_cache=[]):
+    def _add_analysis(
+        self,
+        dest,
+        dest_labnumber,
+        dbanalysis,
+        analysis_type="unknown",
+        _ed_cache=[],
+        _an_cache=[],
+    ):
 
         # =======================================================================
         # add analysis
@@ -536,8 +587,8 @@ class MassSpecExtractor(Loggable):
         try:
             al = int(aliquot)
         except ValueError:
-            if '-' in aliquot:
-                al = int(aliquot.split('-')[-1])
+            if "-" in aliquot:
+                al = int(aliquot.split("-")[-1])
             else:
                 al = id(aliquot)
 
@@ -546,12 +597,14 @@ class MassSpecExtractor(Loggable):
             #             self.debug('{}-{}{} already exists'.format(dest_labnumber, aliquot, step))
             return
 
-        dest_an = dest.add_analysis(dest_labnumber,
-                                    aliquot=al,
-                                    comment=changeable.Comment,
-                                    step=step,
-                                    analysis_timestamp=dbanalysis.RunDateTime,
-                                    tag='ok' if changeable.StatusLevel == 0 else 'invalid')
+        dest_an = dest.add_analysis(
+            dest_labnumber,
+            aliquot=al,
+            comment=changeable.Comment,
+            step=step,
+            analysis_timestamp=dbanalysis.RunDateTime,
+            tag="ok" if changeable.StatusLevel == 0 else "invalid",
+        )
         if dest_an is None:
             return
 
@@ -562,9 +615,9 @@ class MassSpecExtractor(Loggable):
         else:
             iden = dest_labnumber.identifier
 
-        identifier = '{}-{}{}'.format(iden, al, step)
+        identifier = "{}-{}{}".format(iden, al, step)
 
-        self.info('Adding analysis {}'.format(identifier))
+        self.info("Adding analysis {}".format(identifier))
 
         # =======================================================================
         # add measurement
@@ -572,12 +625,11 @@ class MassSpecExtractor(Loggable):
         ms = dbanalysis.login_session.machine
         if ms:
             ms = ms.Label.lower()
-            if ms == 'pychron obama':
-                ms = 'obama'
-            elif ms == 'pychron jan':
-                ms = 'jan'
-            dest.add_measurement(dest_an,
-                                 analysis_type, ms)
+            if ms == "pychron obama":
+                ms = "obama"
+            elif ms == "pychron jan":
+                ms = "jan"
+            dest.add_measurement(dest_an, analysis_type, ms)
 
         # =======================================================================
         # add extraction
@@ -589,11 +641,13 @@ class MassSpecExtractor(Loggable):
             _ed_cache.append(ed)
             # dest.sess.flush()
 
-        ext = dest.add_extraction(dest_an,
-                                  cleanup_duration=dbanalysis.FirstStageDly + dbanalysis.SecondStageDly,
-                                  extract_duration=dbanalysis.TotDurHeating,
-                                  extract_value=dbanalysis.FinalSetPwr,
-                                  extract_device=ed)
+        ext = dest.add_extraction(
+            dest_an,
+            cleanup_duration=dbanalysis.FirstStageDly + dbanalysis.SecondStageDly,
+            extract_duration=dbanalysis.TotDurHeating,
+            extract_value=dbanalysis.FinalSetPwr,
+            extract_device=ed,
+        )
 
         # dest.sess.flush()
         pos = sorted(dbanalysis.positions, key=lambda x: x.PositionOrder)
@@ -606,23 +660,29 @@ class MassSpecExtractor(Loggable):
         # =======================================================================
         fit_hist = None
         if len(dbanalysis.isotopes) < 4 or len(dbanalysis.isotopes) > 7:
-            self._import_err_file.write('{}\n'.format(identifier))
+            self._import_err_file.write("{}\n".format(identifier))
 
         ic_hist = None
         for iso in dbanalysis.isotopes:
 
             pkt = iso.peak_time_series[-1]
             blob = pkt.PeakTimeBlob
-            endianness = '>'
-            sy, sx = zip(*[struct.unpack('{}ff'.format(endianness),
-                                         blob[i:i + 8]) for i in range(0, len(blob), 8)])
+            endianness = ">"
+            sy, sx = zip(
+                *[
+                    struct.unpack("{}ff".format(endianness), blob[i : i + 8])
+                    for i in range(0, len(blob), 8)
+                ]
+            )
 
             blob = pkt.PeakNeverBslnCorBlob
             try:
-                noncor_y = [struct.unpack('{}f'.format(endianness),
-                                          blob[i:i + 4])[0] for i in range(0, len(blob), 4)]
+                noncor_y = [
+                    struct.unpack("{}f".format(endianness), blob[i : i + 4])[0]
+                    for i in range(0, len(blob), 4)
+                ]
             except Exception as e:
-                self._import_err_file.write('{}-{}\n'.format(identifier, e))
+                self._import_err_file.write("{}-{}\n".format(identifier, e))
                 continue
 
             det = None
@@ -633,7 +693,7 @@ class MassSpecExtractor(Loggable):
                     det = dest.add_detector(detname)
                     # dest.sess.flush()
             except AttributeError as e:
-                self.debug('mass spec extractor {}', e)
+                self.debug("mass spec extractor {}", e)
 
             # add ic factors
             if det:
@@ -641,34 +701,41 @@ class MassSpecExtractor(Loggable):
                     ic_hist = dest.add_detector_intercalibration_history(dest_an)
 
                 v, e = iso.detector.ICFactor, iso.detector.ICFactorEr
-                dest.add_detector_intercalibration(ic_hist, det,
-                                                   user_value=v,
-                                                   user_error=e)
+                dest.add_detector_intercalibration(
+                    ic_hist, det, user_value=v, user_error=e
+                )
 
-            '''
+            """
                 mass spec saves peak time with baseline correction.
                 pychron wants uncorrected
-            '''
-            baseline = ''
+            """
+            baseline = ""
             if iso.baseline:
                 dbbaseline = iso.baseline.PeakTimeBlob
-                '''
+                """
                     mass spec stores blobs as y,x
 
                     pychron stores as x,y
-                '''
+                """
                 try:
-                    ys, xs = zip(*[struct.unpack('{}ff'.format(endianness),
-                                                 dbbaseline[i:i + 8]) for i in range(0, len(dbbaseline), 8)])
+                    ys, xs = zip(
+                        *[
+                            struct.unpack(
+                                "{}ff".format(endianness), dbbaseline[i : i + 8]
+                            )
+                            for i in range(0, len(dbbaseline), 8)
+                        ]
+                    )
 
-                    baseline = ''.join([struct.pack('>ff', x, y) for x, y in zip(xs, ys)])
+                    baseline = "".join(
+                        [struct.pack(">ff", x, y) for x, y in zip(xs, ys)]
+                    )
                 except BaseException:
-                    self.debug('failed to read baseline {}'.format(dbbaseline))
+                    self.debug("failed to read baseline {}".format(dbbaseline))
 
                     # add baseline
-            data = ''.join([struct.pack('>ff', x, y) for x, y in zip(sx, noncor_y)])
-            for data, k in ((baseline, 'baseline'),
-                            (data, 'signal')):
+            data = "".join([struct.pack(">ff", x, y) for x, y in zip(sx, noncor_y)])
+            for data, k in ((baseline, "baseline"), (data, "signal")):
                 dbiso = dest.add_isotope(dest_an, iso.Label, det, kind=k)
                 # dest.sess.flush()
 
@@ -712,9 +779,11 @@ class MassSpecExtractor(Loggable):
         db = self.db
         with db.session_ctx():
             chrons = db.get_chronology_by_irradname(name)
-            chronblob = '$'.join(['{}%{}'.format(ci.StartTime, ci.EndTime) for ci in chrons])
+            chronblob = "$".join(
+                ["{}%{}".format(ci.StartTime, ci.EndTime) for ci in chrons]
+            )
 
-            self.info('adding irradiation and chronology for {}'.format(name))
+            self.info("adding irradiation and chronology for {}".format(name))
             return dest.add_irradiation_chronology(chronblob)
 
     def _add_production_ratios(self, dest, irrad, level):
@@ -727,23 +796,29 @@ class MassSpecExtractor(Loggable):
                 dbpr = dest.get_irradiation_production(prname)
                 if not dbpr:
                     kw = dict(name=prname)
-                    prs = ['K4039', 'K3839', 'K3739', 'Ca3937', 'Ca3837', 'Ca3637',
-                           ('P36Cl38Cl', 'Cl3638'),
-                           ('CaOverKMultiplier', 'Ca_K'),
-                           ('ClOverKMultiplier', 'Cl_K')
-                           ]
+                    prs = [
+                        "K4039",
+                        "K3839",
+                        "K3739",
+                        "Ca3937",
+                        "Ca3837",
+                        "Ca3637",
+                        ("P36Cl38Cl", "Cl3638"),
+                        ("CaOverKMultiplier", "Ca_K"),
+                        ("ClOverKMultiplier", "Cl_K"),
+                    ]
                     for k in prs:
                         if not isinstance(k, tuple):
                             ko = k
                         else:
                             k, ko = k
 
-                        ke = '{}Er'.format(k)
+                        ke = "{}Er".format(k)
                         v = getattr(production, k)
                         e = getattr(production, ke)
                         kw[ko] = v
-                        kw['{}_err'.format(ko)] = e
-                    self.info('adding production ratio {}'.format(prname))
+                        kw["{}_err".format(ko)] = e
+                    self.info("adding production ratio {}".format(prname))
                     dbpr = dest.add_irradiation_production(**kw)
                 return dbpr
 
@@ -759,5 +834,6 @@ class MassSpecExtractor(Loggable):
         self.connect()
         irs = [ImportName(name=i) for i in self.db.get_irradiation_names()]
         return irs
+
 
 # ============= EOF =============================================

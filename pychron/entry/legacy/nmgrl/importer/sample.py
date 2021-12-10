@@ -18,7 +18,12 @@ import xlrd
 from pychron.entry.legacy.nmgrl.importer import BaseImporter
 from pychron.entry.legacy.nmgrl.mappings import PIMAP, MATMAP
 from pychron.entry.legacy.util import XLSHeader, get_dvc
-from pychron.entry.tasks.sample.sample_entry import SampleSpec, ProjectSpec, PISpec, MaterialSpec
+from pychron.entry.tasks.sample.sample_entry import (
+    SampleSpec,
+    ProjectSpec,
+    PISpec,
+    MaterialSpec,
+)
 
 PIMAPPED = {}
 MATMAPPED = {}
@@ -29,7 +34,7 @@ NAMES = []
 
 class SampleImporter(BaseImporter):
     def _load(self):
-        dpath = '../tests/data/Database 1-209 compilation.xls'
+        dpath = "../tests/data/Database 1-209 compilation.xls"
         wb = xlrd.open_workbook(dpath)
         sh = wb.sheet_by_index(0)
         header = None
@@ -44,22 +49,26 @@ class SampleImporter(BaseImporter):
                 if isinstance(samplespec, list):
                     specs.extend(samplespec)
                 else:
-                    skipped.append('{},{}'.format(samplespec, ','.join([str(r.value) for r in row])))
+                    skipped.append(
+                        "{},{}".format(
+                            samplespec, ",".join([str(r.value) for r in row])
+                        )
+                    )
 
         self._header = header
         self._cache = specs
-        with open('./skipped_samples.csv', 'w') as wfile:
-            wfile.write('\n'.join(skipped))
+        with open("./skipped_samples.csv", "w") as wfile:
+            wfile.write("\n".join(skipped))
 
     def do_import(self, spec):
         return self._import_spec(spec)
 
     def fetch_irradiation_info(self, spec):
-        print('Sample: importing spec: {}'.format(spec))
+        print("Sample: importing spec: {}".format(spec))
         row = spec.source_row
-        irradiation = self.fetch(row, 'Irrad')
-        level = self.fetch(row, 'Tray')
-        position = self.fetch(row, 'Hole #', cast=int)
+        irradiation = self.fetch(row, "Irrad")
+        level = self.fetch(row, "Tray")
+        position = self.fetch(row, "Hole #", cast=int)
         return irradiation, level, position
 
     def fetch(self, row, key, **kw):
@@ -68,20 +77,20 @@ class SampleImporter(BaseImporter):
     def find_spec(self, run):
         runid = run.runid
         fc = runid[0]
-        if fc == 'A':
+        if fc == "A":
             # irrad info for airs
             return
-        elif fc == 'B':
+        elif fc == "B":
             return
-        elif fc == 'Z':
+        elif fc == "Z":
             return
-        print('     finding spec for: {}'.format(runid))
+        print("     finding spec for: {}".format(runid))
 
-        sln = int(runid.split('-')[0])
+        sln = int(runid.split("-")[0])
         for i, s in enumerate(self._cache):
             # irrad = self._header.get(s.source_row, 'Irrad')
             try:
-                ln = self._header.get(s.source_row, 'Run (L#)', int)
+                ln = self._header.get(s.source_row, "Run (L#)", int)
             except ValueError:
                 continue
 
@@ -92,7 +101,7 @@ class SampleImporter(BaseImporter):
         # add pi
         piname = s.project.principal_investigator.name
         if piname not in NAMES:
-            print('adding pi: {}'.format(piname))
+            print("adding pi: {}".format(piname))
             NAMES.append(piname)
 
         dvc = self._dvc
@@ -106,54 +115,59 @@ class SampleImporter(BaseImporter):
         # dont add material
 
         projectname = s.project.name
-        if projectname in ('J-Curve',):
+        if projectname in ("J-Curve",):
             return
 
         # add sample
-        args = (s.name,
+        args = (
+            s.name,
+            pname,
+            piname,
+            s.material.name,
+            s.material.grainsize or None,
+            s.igsn,
+            s.unit,
+            s.storage_location,
+            s.lithology,
+            s.lithology_class,
+            s.lithology_group,
+            s.lithology_type,
+            s.location,
+            s.approximate_age,
+            s.elevation,
+            s.lon,
+            s.note,
+        )
+
+        line = "".join(["{:<30s}".format(a or "---") for a in args])
+        print("adding {}".format(line))
+        print("dvc {}".format(dvc))
+        if dvc:
+            return dvc.add_sample(
+                s.name,
                 pname,
                 piname,
                 s.material.name,
                 s.material.grainsize or None,
-                s.igsn,
-                s.unit,
-                s.storage_location,
-                s.lithology,
-                s.lithology_class,
-                s.lithology_group,
-                s.lithology_type,
-                s.location,
-                s.approximate_age,
-                s.elevation,
-                s.lon,
-                s.note)
-
-        line = ''.join(['{:<30s}'.format(a or '---') for a in args])
-        print('adding {}'.format(line))
-        print('dvc {}'.format(dvc))
-        if dvc:
-            return dvc.add_sample(s.name,
-                                  pname,
-                                  piname,
-                                  s.material.name,
-                                  s.material.grainsize or None,
-                                  igsn=s.igsn,
-                                  unit=s.unit,
-                                  storage_location=s.storage_location,
-                                  lithology=s.lithology,
-                                  lithology_class=s.lithology_class,
-                                  lithology_group=s.lithology_group,
-                                  lithology_type=s.lithology_type,
-                                  location=s.location,
-                                  approximate_age=s.approximate_age,
-                                  elevation=s.elevation,
-                                  lat=s.lat, lon=s.lon,
-                                  note=s.note)
+                igsn=s.igsn,
+                unit=s.unit,
+                storage_location=s.storage_location,
+                lithology=s.lithology,
+                lithology_class=s.lithology_class,
+                lithology_group=s.lithology_group,
+                lithology_type=s.lithology_type,
+                location=s.location,
+                approximate_age=s.approximate_age,
+                elevation=s.elevation,
+                lat=s.lat,
+                lon=s.lon,
+                note=s.note,
+            )
 
 
 def get_piname(p):
-    if '/' in p:
-        ps = p.split('/')
+    if "/" in p:
+        ps = p.split("/")
     else:
         ps = (p,)
 
@@ -166,22 +180,22 @@ def get_piname(p):
 
 
 def process_row(header, r):
-    p = header.get(r, 'Person')
+    p = header.get(r, "Person")
     if not p:
-        p = 'NMGRL'
+        p = "NMGRL"
 
     p = p.strip().lower()
     piname = get_piname(p)
     if piname is None:
         if p not in BADNAMES:
             BADNAMES.append(p)
-        return 'Invalid pi: {}'.format(p)
+        return "Invalid pi: {}".format(p)
 
     pispec = PISpec(name=piname)
 
-    project = header.get(r, 'Project')
+    project = header.get(r, "Project")
     if not project:
-        return 'Missing Project'
+        return "Missing Project"
 
     pspec = ProjectSpec(name=project)
     pspec.principal_investigator = pispec
@@ -199,7 +213,9 @@ def process_row(header, r):
         mspecs = (mspecs,)
 
     for mspec in mspecs:
-        spec = SampleSpec(project=pspec, material=mspec, name=header.get(r, 'Sample ID'))
+        spec = SampleSpec(
+            project=pspec, material=mspec, name=header.get(r, "Sample ID")
+        )
         spec.source_row = r
         specs.append(spec)
 
@@ -221,13 +237,13 @@ def make_mspecs(header, r):
         mspec = MaterialSpec(name=MATMAP[mm])
         return mspec
 
-    m = header.get(r, 'Mineral')
+    m = header.get(r, "Mineral")
     if not m:
-        return 'Missing Material'
+        return "Missing Material"
 
-    if '/' in m:
+    if "/" in m:
         mspecs = []
-        for mi in m.split('/'):
+        for mi in m.split("/"):
             mi = make_mspec(mi)
             if not isinstance(mi, MaterialSpec):
                 return mi
@@ -237,6 +253,7 @@ def make_mspecs(header, r):
         return mspecs
     else:
         return make_mspec(m)
+
 
 # def import_spec(dvc, r, s):
 #     # add pi

@@ -5,7 +5,9 @@ __author__ = "ross"
 
 import unittest
 
-from pychron.entry.legacy.nmgrl.mass_spec_binary_extractor import MassSpecBinaryExtractor
+from pychron.entry.legacy.nmgrl.mass_spec_binary_extractor import (
+    MassSpecBinaryExtractor,
+)
 
 
 class Expected(object):
@@ -80,7 +82,6 @@ class Expected(object):
     }
 
     baselines = [{"ncnts": 42}]
-
 
 
 class MassSpecBinaryExtractorTestCase(unittest.TestCase):

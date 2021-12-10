@@ -21,13 +21,14 @@ import os
 import struct
 from numpy import array
 from datetime import datetime
+
 # ============= local library imports  ==========================
 
 from pychron.experiment.utilities.identifier import strip_runid
 from pychron.processing.isotope import Isotope
 from pychron.processing.isotope_group import IsotopeGroup
 
-FITS = {'L': 1, 'P': 2, 'A': 'average'}
+FITS = {"L": 1, "P": 2, "A": "average"}
 
 
 class BinarySpec(object):
@@ -45,7 +46,7 @@ class BinarySpec(object):
 
 
 class MeasurementObject(object):
-    name = ''
+    name = ""
     xs = None
     ys = None
     ncnts = 0
@@ -58,12 +59,12 @@ class Baseline(MeasurementObject):
 class MassSpecBinaryExtractor:
     def _get_next_str(self, rfile):
         def gen():
-            t = b''
-            a = b''
+            t = b""
+            a = b""
             while 1:
                 t += a
                 a = rfile.read(1)
-                if a == b'\t':
+                if a == b"\t":
                     break
             return t.decode()
             # t = b''
@@ -83,51 +84,51 @@ class MassSpecBinaryExtractor:
 
     def _get_single(self, rfile):
         def _gen():
-            t = struct.unpack('>f', rfile.read(4))[0]
+            t = struct.unpack(">f", rfile.read(4))[0]
             return t
 
         return _gen
 
     def _get_short(self, rfile):
         def _gen():
-            t = struct.unpack('>h', rfile.read(2))[0]
+            t = struct.unpack(">h", rfile.read(2))[0]
             return t
 
         return _gen
 
     def _get_long(self, rfile):
         def _gen():
-            t = struct.unpack('>l', rfile.read(4))[0]
+            t = struct.unpack(">l", rfile.read(4))[0]
             return t
 
         return _gen
 
     def _get_double(self, rfile):
         def _gen():
-            t = struct.unpack('>d', rfile.read(8))[0]
+            t = struct.unpack(">d", rfile.read(8))[0]
             return t
 
         return _gen
 
     def extract_analysis(self, p, start, runid):
         """
-            clone of RunData.Binary_Read from MassSpec 7.875
+        clone of RunData.Binary_Read from MassSpec 7.875
         """
         if not os.path.isfile(p):
-            print('invalid: {}'.format(p))
+            print("invalid: {}".format(p))
             return
 
-        with open(p, 'rb') as rfile:
+        with open(p, "rb") as rfile:
             rfile.seek((start - 1) * 256)
             return self._extract(rfile, runid)
 
     def _extract(self, rfile, runid):
         is_air, isref, isblank = False, False, False
         f = runid[0]
-        if f in ('A',):
+        if f in ("A",):
             is_air = True
             isref = True
-        elif f in ('B', 'P'):
+        elif f in ("B", "P"):
             isblank = True
 
         bspec = BinarySpec()
@@ -153,7 +154,7 @@ class MassSpecBinaryExtractor:
         bspec.rundate = gns()
         bspec.irradlabel = gns()
         bspec.fits = gns()
-        print('fits', bspec.fits)
+        print("fits", bspec.fits)
         bspec.comment = gns()
         bspec.runhour = gsingle()
 
@@ -178,7 +179,7 @@ class MassSpecBinaryExtractor:
             s1 = 0  # 10  10
 
         bspec.scalefactor = s1, s1
-        bspec.extract_device = gns() if ver >= 4.46 else ''
+        bspec.extract_device = gns() if ver >= 4.46 else ""
 
         extract_value = gsingle()
         fsp = extract_value
@@ -248,20 +249,20 @@ class MassSpecBinaryExtractor:
                 mol_ref_iso = gsingle()
 
         bspec.resistor_values = resistor_values
-        isogrp = 'Ar'
+        isogrp = "Ar"
         if 6.67 < ver < 7.245:
             isogrp = gns()
         elif ver >= 7.245:
             dum = gshort()
         elif 2.93 < ver <= 6.67:
-            grps = 'He,Ar,Ne,Kr,Xe'.split(',')
+            grps = "He,Ar,Ne,Kr,Xe".split(",")
 
             # Mass Spec is 1-indexed
             idx = gshort() - 1
             try:
                 isogrp = grps[idx]
             except IndexError:
-                isogrp = 'Ar'
+                isogrp = "Ar"
 
         bspec.isogrp = isogrp
 
@@ -279,7 +280,9 @@ class MassSpecBinaryExtractor:
                     dt = 1
                 dets.append(dt)
         else:
-            dets = [1, ] * niso
+            dets = [
+                1,
+            ] * niso
 
         bspec.detectors = [str(d) for d in dets]
         ndet = 1
@@ -311,11 +314,11 @@ class MassSpecBinaryExtractor:
 
         bspec.ncyc = gshort() if ver > 2.994 else -1
         if not bspec.ncyc:
-            print('ncycles', bspec.ncyc)
+            print("ncycles", bspec.ncyc)
         if ver > 2.994:
             isokeys = []
             for i in range(niso + nratio):
-                t = gns().replace(' ', '')
+                t = gns().replace(" ", "")
                 isokeys.append(t)
             # if ver > 3.121 and isref:
             #     if isokeys[1] == 'Ar40':
@@ -323,8 +326,8 @@ class MassSpecBinaryExtractor:
             #     if isokeys[2] == 'Ar40':
             #         isokeys[2] = 'Ar38'
 
-            if ver < 6 and isokeys and isokeys[0].index('40'):
-                isokeys[0] = 'Ar40'
+            if ver < 6 and isokeys and isokeys[0].index("40"):
+                isokeys[0] = "Ar40"
 
             numisokeys = []
             demisokeys = []
@@ -335,17 +338,23 @@ class MassSpecBinaryExtractor:
         else:
             niso = 5
             nratio = 4
-            isokeys = ['Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36',
-                       'Ar40/Ar39',
-                       'Ar38/Ar39',
-                       'Ar37/Ar39',
-                       'Ar36/Ar39',
-                       'Bsln']
+            isokeys = [
+                "Ar40",
+                "Ar39",
+                "Ar38",
+                "Ar37",
+                "Ar36",
+                "Ar40/Ar39",
+                "Ar38/Ar39",
+                "Ar37/Ar39",
+                "Ar36/Ar39",
+                "Bsln",
+            ]
             numisokeys = [0, 2, 3, 4]
             demisokeys = [1, 1, 1, 1]
             if isref:
-                isokeys[5] = 'Ar40/Ar36'
-                isokeys[6] = 'Ar40/Ar38'
+                isokeys[5] = "Ar40/Ar36"
+                isokeys[6] = "Ar40/Ar38"
                 numisokeys = [1, 1, None, None]
                 demisokeys = [5, 3, None, None]
 
@@ -363,8 +372,9 @@ class MassSpecBinaryExtractor:
         for i in range(niso):
             name = isokeys[i]
             det = bspec.detectors[i]
-            isod, v, iso = self._extract_isotope(name, det,
-                                                 ver, bspec.runday, ncnts[i], gsingle, gshort)
+            isod, v, iso = self._extract_isotope(
+                name, det, ver, bspec.runday, ncnts[i], gsingle, gshort
+            )
 
             # convert fit to something pychron can handle
             # L=1, P=2, A=average
@@ -372,7 +382,7 @@ class MassSpecBinaryExtractor:
             fit = FITS.get(bspec.fits[i], 1)
 
             iso.fit = fit
-            iso.error_type = 'SEM'
+            iso.error_type = "SEM"
 
             isotopes.append(isod)
             isobsln.append(v)
@@ -465,18 +475,19 @@ class MassSpecBinaryExtractor:
                 c = gsingle()
 
     def _extract_isotope(self, name, det, ver, runday, ncnts, gsingle, gshort):
-        """
-        """
+        """ """
 
-        isodict = {'background': gsingle(),
-                   'background_err': gsingle(),
-                   'intercept': gsingle(),
-                   'intercept_err': gsingle()}
+        isodict = {
+            "background": gsingle(),
+            "background_err": gsingle(),
+            "intercept": gsingle(),
+            "intercept_err": gsingle(),
+        }
 
         xs, ys = self._extract_data(ncnts, gsingle)
-        isodict['xs'] = xs
-        isodict['ys'] = ys
-        isodict['peak_height_change_percent'] = gsingle() if ver > 2.18 else 0
+        isodict["xs"] = xs
+        isodict["ys"] = ys
+        isodict["peak_height_change_percent"] = gsingle() if ver > 2.18 else 0
         bsln_n = 0
         c = -1
         if ver > 2.994:
@@ -485,7 +496,7 @@ class MassSpecBinaryExtractor:
                 bsln_n = 0
             c = gshort()
 
-        isodict['counts_per_cycle'] = c
+        isodict["counts_per_cycle"] = c
 
         if runday > 545.67 and ver > 1.03:
             bsln_n = max(bsln_n, 1)
@@ -493,10 +504,10 @@ class MassSpecBinaryExtractor:
         isotope = Isotope(name, det)
         isotope.xs = array(xs)
         isotope.ys = array(ys)
-        isotope.value = isodict['intercept']
-        isotope.error = isodict['intercept_err']
-        isotope.blank.value = isodict['background']
-        isotope.blank.error = isodict['background_err']
+        isotope.value = isodict["intercept"]
+        isotope.error = isodict["intercept_err"]
+        isotope.blank.value = isodict["background"]
+        isotope.blank.error = isodict["background_err"]
 
         return isodict, bsln_n, isotope
 
@@ -509,16 +520,17 @@ class MassSpecBinaryExtractor:
         return xs, ys
 
     def _calculate_days(self, bspec):
-        d = datetime.strptime(bspec.rundate, '%m/%d/%Y')
+        d = datetime.strptime(bspec.rundate, "%m/%d/%Y")
         rh = bspec.runhour
         # hours = int(rh)
-        minutes = (rh * 60) % 60.
-        seconds = (rh * 3600) % 60.
+        minutes = (rh * 60) % 60.0
+        seconds = (rh * 3600) % 60.0
 
         d = d.replace(hour=int(rh), minute=int(minutes), second=int(seconds))
         refdate = datetime(year=1987, month=1, day=1)
-        bspec.runday = (d - refdate).total_seconds() / 86400.
+        bspec.runday = (d - refdate).total_seconds() / 86400.0
 
         bspec.timestamp = d
+
 
 # ============= EOF =============================================

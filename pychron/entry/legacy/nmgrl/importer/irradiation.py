@@ -24,13 +24,13 @@ from pychron.entry.editors.production import IrradiationProduction
 from pychron.entry.legacy.nmgrl.importer import BaseImporter
 from pychron.entry.legacy.util import CSVHeader, get_dvc
 
-NMRE_NOLEVEL = re.compile(r'^NM-\d{3}$')
-NMRE_LEVEL = re.compile(r'^NM-\d{3}[A-Z]$')
+NMRE_NOLEVEL = re.compile(r"^NM-\d{3}$")
+NMRE_LEVEL = re.compile(r"^NM-\d{3}[A-Z]$")
 
 
 class IrradiationImporter(BaseImporter):
     def do_import(self, dbsam, run, j, irrad, level, position):
-        print('Irradiation doing import run: {}'.format(run.runid))
+        print("Irradiation doing import run: {}".format(run.runid))
 
         # get the irradiation info
         for c in self._cache:
@@ -39,14 +39,14 @@ class IrradiationImporter(BaseImporter):
                 break
         else:
             for c in self._cache:
-                if c[0] == irrad and c[1] == 'ALL':
+                if c[0] == irrad and c[1] == "ALL":
                     ir = c
                     break
             else:
-                print('failed to find irradiation info')
+                print("failed to find irradiation info")
                 return
 
-        print('irradiation: {}{}, {}, dbsam={}'.format(irrad, level, ir, dbsam))
+        print("irradiation: {}{}, {}, dbsam={}".format(irrad, level, ir, dbsam))
 
         dvc = self._dvc
         if dvc:
@@ -60,44 +60,50 @@ class IrradiationImporter(BaseImporter):
             dvc.add_production(irrad, prod.name, prod)
 
             # add level
-            dvc.add_irradiation_level(level, irrad, 'LegacyHolder', prod.name)
+            dvc.add_irradiation_level(level, irrad, "LegacyHolder", prod.name)
 
             # add position to level
             identifier = run.identifier
-            dvc.add_irradiation_position(irrad, level, position, identifier, sample=dbsam)
+            dvc.add_irradiation_position(
+                irrad, level, position, identifier, sample=dbsam
+            )
 
             # set j for position
             e, mj, me = 0, 0, 0
-            print('updating flux {}{} {} {} {}'.format(irrad, level, position, identifier, j))
+            print(
+                "updating flux {}{} {} {} {}".format(
+                    irrad, level, position, identifier, j
+                )
+            )
             dvc.update_flux(irrad, level, position, identifier, j, e, mj, me)
         return True
 
     # private
     def _load(self):
-        p = '../tests/data/IrradiationData.csv'
+        p = "../tests/data/IrradiationData.csv"
         skipping = []
-        with open(p, 'r') as rfile:
+        with open(p, "r") as rfile:
             header = None
             for line in rfile:
-                row = line.strip().split(',')
+                row = line.strip().split(",")
                 if header is None:
                     header = CSVHeader(row)
                 else:
                     err = self.process_row(header, row)
                     if isinstance(err, str):
-                        skipping.append('{},{}'.format(err, line))
+                        skipping.append("{},{}".format(err, line))
                     elif err:
                         self._cache.append(err)
 
-        op = 'skipping_irradiations.csv'
-        with open(op, 'w') as wfile:
-            wfile.write(''.join(skipping))
+        op = "skipping_irradiations.csv"
+        with open(op, "w") as wfile:
+            wfile.write("".join(skipping))
 
     def process_row(self, header, r):
         # only import NM- irradiations
-        irradname = header.get(r, 'Irradiation')
+        irradname = header.get(r, "Irradiation")
         if NMRE_NOLEVEL.match(irradname):
-            level = 'ALL'
+            level = "ALL"
             # print('no level xirradiation: {}'.format(irradname))
         elif NMRE_LEVEL.match(irradname):
             # print('44444444444444444444 irradiation: {}'.format(irradname))
@@ -130,44 +136,43 @@ class IrradiationImporter(BaseImporter):
 
 def make_production(header, row):
     p = Production(new=True)
-    p.name = 'LegacyProduction'
+    p.name = "LegacyProduction"
 
-    for k in ('Ca3637', 'Ca3937', 'K4039'):
-        p.setattr(k, header.get(row, k, float),
-                  header.get(row, '{}Er'.format(k), float))
+    for k in ("Ca3637", "Ca3937", "K4039"):
+        p.setattr(
+            k, header.get(row, k, float), header.get(row, "{}Er".format(k), float)
+        )
     return p
 
 
 def make_doses(header, row):
-    ndoses = header.get(row, 'NDoses', int)
-    starttime = header.get(row, 'starttime', float)
+    ndoses = header.get(row, "NDoses", int)
+    starttime = header.get(row, "starttime", float)
 
     def make_date(dt):
         try:
-            dt = datetime.strptime(dt, '%m/%d/%y')
+            dt = datetime.strptime(dt, "%m/%d/%y")
         except ValueError as e:
             try:
-                dt = datetime.strptime(dt, '%m/%d/%Y')
+                dt = datetime.strptime(dt, "%m/%d/%Y")
             except ValueError as e:
                 return 'invalid date "{}". exception={}'.format(dt, e)
         return dt
 
-    startdate = make_date(header.get(row, 'startdate'))
+    startdate = make_date(header.get(row, "startdate"))
     if isinstance(startdate, str):
         return startdate
 
     try:
-        duration = header.get(row, 'duration', float)
+        duration = header.get(row, "duration", float)
     except ValueError:
-        return 'invalid duration'
+        return "invalid duration"
 
     dose = IrradiationDosage()
     dose.start_date = startdate
 
     def make_time(t):
-        return time(hour=int(t),
-                    minute=int(t * 60) % 60,
-                    second=int(t * 3600) % 60)
+        return time(hour=int(t), minute=int(t * 60) % 60, second=int(t * 3600) % 60)
 
     try:
         dose.start_time = make_time(starttime)
@@ -177,7 +182,7 @@ def make_doses(header, row):
     dose.set_end(duration)
 
     doses = [dose]
-    idx = header.idx('startdate')
+    idx = header.idx("startdate")
 
     for i in range(1, ndoses):
         j = idx + 3 * i

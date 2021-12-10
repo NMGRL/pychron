@@ -14,15 +14,18 @@
 # limitations under the License.
 # ===============================================================================
 
+
 class JAdjustmentExtractor:
     def __init__(self):
         self._cache = {}
-        self.path = '../tests/data/J Adjustment Table Takahe.csv'
-        with open(self.path, 'r') as rfile:
+        self.path = "../tests/data/J Adjustment Table Takahe.csv"
+        with open(self.path, "r") as rfile:
             for line in rfile:
-                j, ln = line.strip().split(',')
+                j, ln = line.strip().split(",")
                 self._cache[ln.strip()] = float(j)
 
     def fetch_j(self, ln):
         return self._cache.get(ln, 0.01)
+
+
 # ============= EOF =============================================

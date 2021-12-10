@@ -37,7 +37,6 @@ class CSVHeader:
 
 
 class XLSHeader(CSVHeader):
-
     def get(self, row, key, cast=None):
         if cast is None:
             cast = str
@@ -47,21 +46,23 @@ class XLSHeader(CSVHeader):
 
 def get_dvc():
     from pychron.paths import paths
-    paths.build('~/PychronDev')
-    meta_name = 'NMGRLMetaDataLegacy'
-    dvc = DVC(bind=False,
-              organization='NMGRLDataDev',
-              meta_repo_name=meta_name)
+
+    paths.build("~/PychronDev")
+    meta_name = "NMGRLMetaDataLegacy"
+    dvc = DVC(bind=False, organization="NMGRLDataDev", meta_repo_name=meta_name)
 
     paths.meta_root = os.path.join(paths.dvc_dir, dvc.meta_repo_name)
-    dvc.db.trait_set(host='localhost',
-                     username='root',  # os.environ.get('ARGONSERVER_DB_USER'),
-                     password='geochr0n!!',
-                     name='pychrondvc_import',
-                     kind='mysql')
+    dvc.db.trait_set(
+        host="localhost",
+        username="root",  # os.environ.get('ARGONSERVER_DB_USER'),
+        password="geochr0n!!",
+        name="pychrondvc_import",
+        kind="mysql",
+    )
     if not dvc.initialize():
-        print('failed to initalize')
+        print("failed to initalize")
         return
     return dvc
+
 
 # ============= EOF =============================================
