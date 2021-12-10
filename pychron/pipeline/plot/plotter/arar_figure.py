@@ -231,9 +231,8 @@ class BaseArArFigure(SelectionFigure):
     def _setup_plot(self, i, pp, po):
 
         # add limit tools
-
-        self.graph.add_limit_tool(pp, "x", self._handle_xlimits)
-        self.graph.add_limit_tool(pp, "y", self._handle_ylimits)
+        # self.graph.add_limit_tool(pp, "x", self._handle_xlimits)
+        # self.graph.add_limit_tool(pp, "y", self._handle_ylimits)
 
         self.graph.add_axis_tool(pp, pp.x_axis)
         self.graph.add_axis_tool(pp, pp.y_axis)
@@ -494,11 +493,11 @@ class BaseArArFigure(SelectionFigure):
         vs = list(self._unpack_attr(k, scalar=scalar))
         return [nominal_value(vi) for vi in vs], [std_dev(vi) for vi in vs]
 
-    def _handle_ylimits(self):
-        pass
-
-    def _handle_xlimits(self):
-        pass
+    # def _handle_ylimits(self):
+    #     pass
+    #
+    # def _handle_xlimits(self):
+    #     pass
 
     def _add_point_labels(self, scatter, ans=None):
         f = self.options.analysis_label_format
