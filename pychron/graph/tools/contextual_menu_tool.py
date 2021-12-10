@@ -59,7 +59,7 @@ class ContextualMenuTool(Interactor):
     #    self.parent.status_text = ''
 
     def normal_right_down(self, event):
-        print('asdfasdf', event)
+        print("asdfasdf", event)
         if event.handled:
             return
 

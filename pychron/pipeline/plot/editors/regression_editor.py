@@ -74,8 +74,7 @@ rsquared={rsquared:}
             kw["yserr"] = ye
             yerror_bar = True
 
-        g.new_plot(ytitle=opt.ytitle, xtitle=opt.xtitle,
-                   padding=opt.get_paddings())
+        g.new_plot(ytitle=opt.ytitle, xtitle=opt.xtitle, padding=opt.get_paddings())
 
         reg_klass = NewYorkRegressor
         reg = reg_klass(
@@ -101,8 +100,9 @@ rsquared={rsquared:}
 
         scatter, plot = g.new_series(xs, ys, type="scatter")
 
-        g.new_series(fx, fy, color=opt.regression_color,
-                     line_width=opt.regression_width)
+        g.new_series(
+            fx, fy, color=opt.regression_color, line_width=opt.regression_width
+        )
 
         plot.bgcolor = opt.plot_bgcolor
         plot.x_grid.visible = opt.use_xgrid
@@ -165,5 +165,6 @@ rsquared={rsquared:}
             UItem("graph", style="custom"),
             UItem("result_str", style="custom", editor=TextEditor(read_only=True)),
         )
+
 
 # ============= EOF =============================================

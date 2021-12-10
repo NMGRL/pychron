@@ -144,13 +144,13 @@ class CSVIsochronRecord(CSVRecord):
 
     def valid(self):
         return (
-                self.runid
-                and self.ar40
-                and self.a40_err
-                and self.ar39
-                and self.ar39_err
-                and self.ar36
-                and self.ar36_err
+            self.runid
+            and self.ar40
+            and self.a40_err
+            and self.ar39
+            and self.ar39_err
+            and self.ar36
+            and self.ar36_err
         )
 
 
@@ -189,7 +189,7 @@ class CSVRecordGroup(HasTraits):
     max = Float
     dev = Float
     percent_dev = Float
-    calculate_name = 'records:[age,age_err,status]'
+    calculate_name = "records:[age,age_err,status]"
 
     def __init__(self, name, records, *args, **kw):
         super(CSVRecordGroup, self).__init__(*args, **kw)
@@ -243,10 +243,10 @@ class CSVDataSetFactoryHandler(Handler):
     def close(self, info, is_ok):
         if info.object.dirty:
             if (
-                    not confirm(
-                        None, "You have unsaved changes. Are you sure you want to continue"
-                    )
-                        == YES
+                not confirm(
+                    None, "You have unsaved changes. Are you sure you want to continue"
+                )
+                == YES
             ):
                 return False
 
@@ -254,7 +254,7 @@ class CSVDataSetFactoryHandler(Handler):
 
 
 class CSVRegressionRecordGroup(CSVRecordGroup):
-    calculate_name = 'records:[y,y_err,status]'
+    calculate_name = "records:[y,y_err,status]"
 
     def _get_data(self):
         return [(a.y, a.y_err) for a in self.records if a.status]
@@ -329,10 +329,10 @@ e.g.
         local_path = False
         if not self.repository:
             if YES == confirm(
-                    None,
-                    "Would you like to save the file locally?\n"
-                    "Otherwise please select a repository to save the data "
-                    "file",
+                None,
+                "Would you like to save the file locally?\n"
+                "Otherwise please select a repository to save the data "
+                "file",
             ):
 
                 dlg = FileDialog(action="save as", default_directory=paths.csv_data_dir)
@@ -430,7 +430,9 @@ e.g.
 
     def _make_groups(self):
         rs = [r for r in self.records if r.valid()]
-        self.groups = [self._group_klass(gid, rs) for gid, rs in groupby_key(rs, "group")]
+        self.groups = [
+            self._group_klass(gid, rs) for gid, rs in groupby_key(rs, "group")
+        ]
 
     def _load_csv_data(self, p):
         if os.path.isfile(p):
@@ -825,6 +827,7 @@ class CSVRegressionDataSetFactory(CSVDataSetFactory):
 
 
 if __name__ == "__main__":
+
     class DVC:
         def save_csv_dataset(self, name, repo, lines):
             p = "csv_dataset_test.csv"
@@ -836,7 +839,6 @@ if __name__ == "__main__":
 
         def get_csv_datasets(self, repo):
             return ["1", "2", "3", repo]
-
 
     c = CSVDataSetFactory()
     c.dvc = DVC()

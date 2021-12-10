@@ -22,8 +22,8 @@ from pychron.pychron_constants import MAIN, APPEARANCE
 
 class RegressionOptions(FigureOptions):
     regressor = Enum("NewYork")
-    xtitle = Str('X')
-    ytitle = Str('Y')
+    xtitle = Str("X")
+    ytitle = Str("Y")
     regression_color = Color
     regression_width = Int(1)
 
