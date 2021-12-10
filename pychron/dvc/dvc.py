@@ -1271,7 +1271,10 @@ class DVC(Loggable):
 
     def get_author(self, author=None):
         if not self.use_default_commit_author:
-            if author is None or not self._author:
+
+            if self._author:
+                author = self._author
+            elif author is None:
                 db = self.db
                 with db.session_ctx():
                     authors = [User(r) for r in db.get_users()]

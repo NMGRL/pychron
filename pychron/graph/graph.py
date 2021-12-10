@@ -288,6 +288,7 @@ class Graph(ContextMenuMixin):
     def rescale_x_axis(self):
         # l, h = self.selected_plot.default_index.get_bounds()
         # self.set_x_limits(l, h, plotid=self.selected_plotid)
+        print("asdf", self.selected_plot)
         r = self.selected_plot.index_range
         r.reset()
 
