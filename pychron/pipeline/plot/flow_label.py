@@ -40,7 +40,6 @@ try:
             w, h = self.get_preferred_size()
             return abs(x - self.x) < w and abs(y - self.y) < h
 
-
 except TypeError:
     # documentation auto doc hack
     class FlowPlotLabel:
