@@ -481,10 +481,17 @@ def initialize_version(appname, debug):
     paths.write_defaults()
 
     # setup logging. set a basename for log files and logging level
-    logging_setup('pychron', level='DEBUG')
 
     from pychron.core.helpers.exception_helper import set_exception_handler
     set_exception_handler()
+
+    try:
+        logging_setup('pychron', level='DEBUG')
+    except PermissionError as e:
+        warning(None, 'Failed to setup logging due to a PermissionError. '
+                      'Is Pychron already open? Please quit any running instance of Pychron '
+                      'before trying to relaunch.  Error: {}'.format(e))
+        return False
 
     return env
 
