@@ -145,8 +145,8 @@ class RemotePyScriptRunner(PyScriptRunner):
         self.frame = frame
 
         self.handle = self._handle_factory()
-        self.handle.write_terminator = '\r\n'
-        self.handle.read_terminator = '\r\n'
+        self.handle.write_terminator = "\r\n"
+        self.handle.read_terminator = "\r\n"
 
     def reset_connection(self):
         if self.handle.error:

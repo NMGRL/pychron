@@ -145,7 +145,7 @@ class RiseRate(SpectrometerTask):
                 try:
                     obj = json.load(rfile)
                 except BaseException as e:
-                    self.debug('Invalid file: {} error={}'.format(p, e))
+                    self.debug("Invalid file: {} error={}".format(p, e))
 
         with open(p, "w") as wfile:
             obj.extend([ri.to_json() for ri in self.results])

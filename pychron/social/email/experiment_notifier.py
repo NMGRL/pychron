@@ -41,7 +41,11 @@ class ExperimentNotifier(Loggable):
     def notify(self, ctx, subject):
         mctx = self._assemble_ctx(**ctx)
 
-        self.debug("Notify with context={}".format({k: v for k, v in mctx.items() if k != 'log'}))
+        self.debug(
+            "Notify with context={}".format(
+                {k: v for k, v in mctx.items() if k != "log"}
+            )
+        )
         message = email_template(**mctx)
         self.info(
             "Notifying user={} email={}".format(
@@ -107,5 +111,6 @@ class ExperimentNotifier(Loggable):
         from pychron.core.helpers.logger_setup import get_log_text
 
         return get_log_text(n) or "No log available"
+
 
 # ============= EOF =============================================
