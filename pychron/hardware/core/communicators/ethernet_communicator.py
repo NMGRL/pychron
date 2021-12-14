@@ -140,7 +140,7 @@ class Handler(object):
                 print("checksum fail computed={}, expected={}".format(comp, checksum))
                 return
 
-        return data.decode("utf-8")
+        return data.decode("utf-8").strip()
 
 
 class TCPHandler(Handler):
