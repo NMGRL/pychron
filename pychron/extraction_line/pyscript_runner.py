@@ -145,8 +145,6 @@ class RemotePyScriptRunner(PyScriptRunner):
         self.frame = frame
 
         self.handle = self._handle_factory()
-        self.handle.write_terminator = "\r\n"
-        self.handle.read_terminator = "\r\n"
 
     def reset_connection(self):
         if self.handle.error:
@@ -163,6 +161,8 @@ class RemotePyScriptRunner(PyScriptRunner):
         handle.kind = self.kind
         handle.message_frame = self.frame
         handle.use_end = True
+        handle.write_terminator = "\r\n"
+        handle.read_terminator = "\r\n"
         return handle
 
     def _get_resource(self, name):
