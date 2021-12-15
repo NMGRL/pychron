@@ -115,7 +115,8 @@ class RemoteResource(object):
     def _ping_loop(self):
         evt = self._ping_evt
         while not evt.is_set():
-            if self.ping() == "Complete":
+            ping = self.ping()
+            if ping and ping.strip() == "Complete":
                 break
 
             time.sleep(3)
@@ -125,7 +126,7 @@ class RemoteResource(object):
         if v:
             self._ping_evt = Event()
             self._ping_thread = Thread(target=self._ping_loop)
-            self._ping_thread.setDaemon(1)
+            self._ping_thread.setDaemon(True)
             self._ping_thread.start()
         else:
             if self._ping_evt:
@@ -144,6 +145,8 @@ class RemotePyScriptRunner(PyScriptRunner):
         self.frame = frame
 
         self.handle = self._handle_factory()
+        self.handle.write_terminator = "\r\n"
+        self.handle.read_terminator = "\r\n"
 
     def reset_connection(self):
         if self.handle.error:

@@ -62,7 +62,7 @@ class Result(HasTraits):
 
     def to_json(self):
         return {
-            getattr(self, attr)
+            attr: getattr(self, attr)
             for attr in ("linear", "endpoints", "duration", "timestamp")
         }
 
@@ -139,15 +139,17 @@ class RiseRate(SpectrometerTask):
 
     def _save(self):
         p = os.path.join(paths.appdata_dir, "rise_rates.json")
+        obj = []
         if os.path.isfile(p):
             with open(p, "r") as rfile:
-                obj = json.load(rfile)
-        else:
-            obj = []
+                try:
+                    obj = json.load(rfile)
+                except BaseException as e:
+                    self.debug("Invalid file: {} error={}".format(p, e))
 
         with open(p, "w") as wfile:
             obj.extend([ri.to_json() for ri in self.results])
-            json.dump(obj, wfile)
+            json.dump(obj, wfile, indent=2)
 
     def _get_intensity(self):
         return self.spectrometer.get_intensity(self.detector.name)
