@@ -196,32 +196,50 @@ def _analysis_path(
                 sublen = 4
             else:
                 sublen = 5
-    try:
-        root, tail = subdirize(root, runid, sublen=sublen, mode=mode)
-    except TypeError as e:
+    if isinstance(sublen, int):
+        sublen = (sublen, )
+
+    oroot = root
+    for si in sublen:
+        try:
+            root, tail = subdirize(oroot, runid, sublen=si, mode=mode)
+        except TypeError as e:
+            continue
+
+        if modifier:
+            d = os.path.join(root, modifier)
+            if not os.path.isdir(d):
+                if mode == "r":
+                    raise AnalysisNotAnvailableError(root, runid)
+
+                os.mkdir(d)
+
+            root = d
+            fmt = "{}.{}"
+            if modifier.startswith("."):
+                fmt = "{}{}"
+            tail = fmt.format(tail, modifier[:4])
+
+        name = add_extension(tail, extension)
+        path = os.path.join(root, name)
+        if mode == "r":
+            if not os.path.isfile(path):
+                # this can happen if there is overlap in the subdirs.
+                # for example the could be this structure
+                # cf
+                #  -529ae-34de-415b-ad8c-a27567b44fd8.json
+                # cff52
+                #  -7ab-86e8-4ccc-a6c5-118ff07c5083.json
+
+                # in this case pychron will fail to fine cf529ae... because subdirize will use a sublen of 5 first
+
+                # raise AnalysisNotAnvailableError(root, runid)
+                continue
+
+        return path
+    else:
         raise AnalysisNotAnvailableError(root, runid)
 
-    if modifier:
-        d = os.path.join(root, modifier)
-        if not os.path.isdir(d):
-            if mode == "r":
-                raise AnalysisNotAnvailableError(root, runid)
-
-            os.mkdir(d)
-
-        root = d
-        fmt = "{}.{}"
-        if modifier.startswith("."):
-            fmt = "{}{}"
-        tail = fmt.format(tail, modifier[:4])
-
-    name = add_extension(tail, extension)
-    path = os.path.join(root, name)
-    if mode == "r":
-        if not os.path.isfile(path):
-            raise AnalysisNotAnvailableError(root, runid)
-
-    return path
 
 
 def repository_path(*args):

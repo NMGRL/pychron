@@ -2145,6 +2145,7 @@ class DVC(Loggable):
             try:
                 a = DVCAnalysis(uuid, rid, expid)
             except AnalysisNotAnvailableError:
+                self.debug('uuid={}, rid={}, expid={}'.format(uuid, rid, expid))
                 self.warning_dialog(
                     "Analysis {} not in local repository {}. "
                     "You may need to pull changes. If local repository is up to date you may "
