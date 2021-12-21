@@ -197,7 +197,7 @@ def _analysis_path(
             else:
                 sublen = 5
     if isinstance(sublen, int):
-        sublen = (sublen, )
+        sublen = (sublen,)
 
     oroot = root
     for si in sublen:
@@ -239,7 +239,6 @@ def _analysis_path(
         return path
     else:
         raise AnalysisNotAnvailableError(root, runid)
-
 
 
 def repository_path(*args):
