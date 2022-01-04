@@ -102,6 +102,7 @@ class GitRepoManager(Loggable):
     refresh_commits_table_needed = Event
     path_dirty = Event
     remote = Str
+    pathname = Str
 
     def set_name(self, p):
         self.name = "{}<GitRepo>".format(os.path.basename(p))

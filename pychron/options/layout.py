@@ -76,6 +76,7 @@ class FigureLayout(HasTraits):
     columns = Int(2)
     fixed = Enum("column", "row", "filled_grid")
     fixed_width = Int(0)
+    fixed_height = Int(0)
 
     row_enabled = Property(depends_on="fixed")
     column_enabled = Property(depends_on="fixed")
@@ -127,10 +128,17 @@ class FigureLayout(HasTraits):
 
     def traits_view(self):
         rc_grp = VGroup(
-            Item(
-                "fixed_width",
-                tooltip="You must remake the figure if you edit this value. The figure "
-                "will not automatically resize",
+            HGroup(
+                Item(
+                    "fixed_width",
+                    tooltip="You must remake the figure if you edit this value. The figure "
+                    "will not automatically resize",
+                ),
+                Item(
+                    "fixed_height",
+                    tooltip="You must remake the figure if you edit this value. The figure "
+                    "will not automatically resize",
+                ),
             ),
             HGroup(
                 Item("rows", enabled_when="row_enabled"),

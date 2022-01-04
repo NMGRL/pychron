@@ -20,7 +20,14 @@ from traitsui.api import View, Item
 
 class RegressionMainOptions(SubOptions):
     def traits_view(self):
-        v = View(Item("regressor"))
+        v = View(
+            Item("regressor"),
+            Item("xtitle", label="X title"),
+            Item("ytitle", label="Y title"),
+            Item("regression_color", label="Regression Line"),
+            Item("regression_width", label="Line wt."),
+        )
+
         return v
 
 

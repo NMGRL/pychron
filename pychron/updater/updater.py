@@ -18,6 +18,7 @@ import os
 import subprocess
 import sys
 
+import git
 import requests
 
 # ============= enthought library imports =======================
@@ -462,7 +463,17 @@ class Updater(Loggable):
                     )
                     return
             else:
-                repo = Repo(p)
+                try:
+                    repo = Repo(p)
+                except git.GitError as e:
+                    self.information_dialog(
+                        "The build directory you have selected is invalid. {}".format(
+                            e
+                        ),
+                        position=STARTUP_MESSAGE_POSITION,
+                    )
+                    return
+
             self._repo = repo
         return self._repo
 

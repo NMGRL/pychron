@@ -78,14 +78,15 @@ class SessionCTX(object):
         self._psession = None
 
     def __enter__(self):
-        if self._use_parent_session:
-            self._parent.create_session()
-            return self._parent.session
-        else:
-            self._psession = self._parent.session
-            self._session = self._parent.session_factory()
-            self._parent.session = self._session
-            return self._session
+        if self._parent:
+            if self._use_parent_session:
+                self._parent.create_session()
+                return self._parent.session
+            else:
+                self._psession = self._parent.session
+                self._session = self._parent.session_factory()
+                self._parent.session = self._session
+                return self._session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._session:
@@ -538,7 +539,7 @@ host= {}\nurl= {}'.format(
 
         try:
             self.info("testing database connection {}".format(self.test_func))
-            vers = getattr(self, self.test_func)(reraise=True)
+            getattr(self, self.test_func)(reraise=True)
             if version_warn:
                 self._version_warn_hook()
 
