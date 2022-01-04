@@ -632,10 +632,10 @@ class ScanManager(StreamGraphManager):
         plot.x_axis.title = "Time"
         plot.y_axis.title = "Signal"
 
-        plot.x_axis.title_font = "Arial 14"
-        plot.x_axis.tick_label_font = "Arial 12"
-        plot.y_axis.title_font = "Arial 14"
-        plot.y_axis.tick_label_font = "Arial 12"
+        plot.x_axis.title_font = "modern 14"
+        plot.x_axis.tick_label_font = "modern 12"
+        plot.y_axis.title_font = "modern 14"
+        plot.y_axis.tick_label_font = "modern 12"
         plot.x_grid.visible = False
 
         for i, det in enumerate(self.detectors):
