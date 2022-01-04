@@ -595,8 +595,8 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if r.ys.shape[0] < minpoints:
             return
 
-        r.determine_fit()
         r.set_truncate(scatter.truncate)
+        r.determine_fit()
         r.calculate()
 
         self._set_excluded(scatter, r)
