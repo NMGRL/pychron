@@ -14,10 +14,10 @@
 # limitations under the License.
 # ===============================================================================
 from traitsui.api import View, UItem, TextEditor
-from traits.api import Instance, Str
+from traits.api import Instance, Str, Event, List
 from chaco.array_data_source import ArrayDataSource
 
-from numpy import linspace, ones_like
+from numpy import linspace, ones_like, array
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.regression.new_york_regressor import NewYorkRegressor
@@ -28,10 +28,17 @@ from pychron.graph.graph import Graph
 from pychron.graph.regression_graph import RegressionGraph
 from pychron.graph.tools.analysis_inspector import AnalysisPointInspector
 from pychron.graph.tools.point_inspector import PointInspectorOverlay
+from pychron.options.regression import RegressionOptions
+from pychron.processing.analysis_graph import AnalysisGraph
+
+
+class SimpleRegressionGraph(Graph):
+    pass
 
 
 class RegressionEditor(BaseTraitsEditor):
     graph = Instance(Graph)
+    plotter_options = Instance(RegressionOptions)
     result_str = Str
     result_template = """
 mswd={mswd:}
@@ -39,16 +46,70 @@ slope={slope:}
 intercept={intercept:}
 rsquared={rsquared:}
 """
+    refresh_needed = Event
+    _items = List
 
     def set_items(self, items):
-        xs = [r.x for r in items]
-        xe = [r.x_err for r in items]
-        ys = [r.y for r in items]
-        ye = [r.y_err for r in items]
+        self._items = items
+        self.refresh_needed = True
 
-        g = Graph()
-        g.new_plot(ytitle="Y", xtitle="X")
+    def _refresh_needed_fired(self):
+        items = self._items
+        xs = array([r.x for r in items])
+        xe = array([r.x_err for r in items])
+        ys = array([r.y for r in items])
+        ye = array([r.y_err for r in items])
+
+        opt = self.plotter_options
+        g = SimpleRegressionGraph(container_dict={"bgcolor": opt.bgcolor})
+
+        kw = {}
+        xerror_bar = False
+        if any(xe):
+            kw["xserr"] = xe
+            xerror_bar = True
+
+        yerror_bar = False
+        if any(ye):
+            kw["yserr"] = ye
+            yerror_bar = True
+
+        g.new_plot(ytitle=opt.ytitle, xtitle=opt.xtitle, padding=opt.get_paddings())
+
+        reg_klass = NewYorkRegressor
+        reg = reg_klass(
+            xns=xs,
+            yns=ys,
+            xs=xs,
+            ys=ys,
+            # xds=ones_like(xs),
+            # yds=ones_like(xs),
+            # xdes=ones_like(xs),
+            # ydes=ones_like(xs),
+            degree=1,
+            **kw
+        )
+        reg.calculate()
+
+        pad = (max(xs + xe) - min(xs - xe)) * 0.1
+        l = min(xs - xe) - pad
+        u = max(xs + xe) + pad
+        fx = linspace(l, u)
+        m, b = reg.get_slope(), reg.get_intercept()
+        fy = fx * m + b
+
         scatter, plot = g.new_series(xs, ys, type="scatter")
+
+        g.new_series(
+            fx, fy, color=opt.regression_color, line_width=opt.regression_width
+        )
+
+        plot.bgcolor = opt.plot_bgcolor
+        plot.x_grid.visible = opt.use_xgrid
+        plot.y_grid.visible = opt.use_ygrid
+
+        g.add_axis_tool(plot, plot.x_axis)
+        g.add_axis_tool(plot, plot.y_axis)
 
         inspector = AnalysisPointInspector(
             scatter,
@@ -67,10 +128,7 @@ rsquared={rsquared:}
         # broadcaster.tools.append(inspector)
         scatter.tools.append(inspector)
 
-        kw = {}
-        if any(xe):
-            kw["xserr"] = xe
-            # kw['xnes'] = xe
+        if xerror_bar:
             ebo = ErrorBarOverlay(
                 component=scatter,
                 orientation="x",
@@ -82,9 +140,7 @@ rsquared={rsquared:}
             scatter.underlays.append(ebo)
             setattr(scatter, "xerror", ArrayDataSource(xe))
 
-        if any(ye):
-            kw["yserr"] = ye
-            # kw['ynes'] = ye
+        if yerror_bar:
             ebo = ErrorBarOverlay(
                 component=scatter,
                 orientation="y",
@@ -95,33 +151,6 @@ rsquared={rsquared:}
             )
             scatter.underlays.append(ebo)
             setattr(scatter, "yerror", ArrayDataSource(ye))
-
-        reg_klass = NewYorkRegressor
-        reg = reg_klass(
-            xns=xs,
-            yns=ys,
-            xs=xs,
-            ys=ys,
-            # xds=ones_like(xs),
-            # yds=ones_like(xs),
-            # xdes=ones_like(xs),
-            # ydes=ones_like(xs),
-            degree=1,
-            **kw
-        )
-        reg.calculate()
-
-        pad = (max(xs) - min(xs)) * 0.1
-        l = min(xs) - pad
-        u = max(xs) + pad
-        fx = linspace(l, u)
-        m, b = reg.get_slope(), reg.get_intercept()
-        fy = fx * m + b
-        g.new_series(fx, fy)
-
-        # g = RegressionGraph()
-        # g.new_plot()
-        # g.new_series()
 
         self.result_str = self.result_template.format(
             mswd=reg.mswd,

@@ -687,7 +687,7 @@ class InverseIsochron(Isochron):
                 fit.error_envelope.upper = uci
 
         if self.options.display_inset and self.options.inset_link_status:
-            plot = self.graph.plots[self.group_id]
+            plot = self.graph.plots[0]
             if plot:
                 for o in plot.overlays:
                     if isinstance(o, InverseIsochronLineInset):

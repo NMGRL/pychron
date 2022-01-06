@@ -115,11 +115,12 @@ class SpectrumTool(AnalysisPointInspector, BasePlateauOverlay):
                 "RunID={}".format(an.record_id),
                 "Tag={}".format(an.tag),
                 "Status={}".format(an.status_text),
-                u"{}={} {} {} (1{})".format(
+                u"{}={} {} {} ({}{})".format(
                     comp.container.y_axis.title,
                     floatfmt(v),
                     PLUSMINUS,
-                    floatfmt(e),
+                    floatfmt(e * self.nsigma),
+                    self.nsigma,
                     SIGMA,
                 ),
                 "Cumulative. Ar39={}-{}".format(floatfmt(low_c), floatfmt(high_c)),

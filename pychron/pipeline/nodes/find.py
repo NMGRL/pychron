@@ -118,17 +118,18 @@ class BaseFindFluxNode(FindNode):
         self, geom, irradiation, level, identifier, sample, hole_id, fluxes
     ):
 
-        pp = next((p for p in fluxes if p["identifier"] == identifier))
-        j, j_err, mean_j, mean_j_err, model_kind = 0, 0, 0, 0, ""
-        if pp:
-            j = pp.get("j", 0)
-            j_err = pp.get("j_err", 0)
-            mean_j = pp.get("mean_j", 0)
-            mean_j_err = pp.get("mean_j_err", 0)
-            mean_j_mswd = pp.get("mean_j_mswd", 0)
-            options = pp.get("options")
-            if options:
-                model_kind = options.get("model_kind", "")
+        pp = next((p for p in fluxes if p["identifier"] == identifier), {})
+
+        # j, j_err, mean_j, mean_j_err, model_kind = 0, 0, 0, 0, ""
+        model_kind = ""
+        j = pp.get("j", 0)
+        j_err = pp.get("j_err", 0)
+        mean_j = pp.get("mean_j", 0)
+        mean_j_err = pp.get("mean_j_err", 0)
+        mean_j_mswd = pp.get("mean_j_mswd", 0)
+        options = pp.get("options")
+        if options:
+            model_kind = options.get("model_kind", "")
 
         x, y, r, idx = geom[hole_id - 1]
         fp = FluxPosition(
@@ -394,9 +395,7 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
         sgrp = BorderVGroup(
             Item("irradiation", editor=EnumEditor(name="irradiations")),
             Item("level", editor=EnumEditor(name="levels")),
-            Item("monitor_sample_name", editor=EnumEditor(name="samples")),
-            label="Auto Select",
-            enabled_when="not use_browser",
+            label="Irradiation/Level",
         )
 
         bgrp = BorderHGroup(
@@ -405,11 +404,16 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
                 label="Use Browser",
                 tooltip="Use Browser to select monitor analyses manually",
             ),
-            label="Manual Select",
+            Item(
+                "monitor_sample_name",
+                enabled_when="not use_browser",
+                editor=EnumEditor(name="samples"),
+            ),
+            label="Monitors",
         )
 
         v = self._view_factory(
-            VGroup(bgrp, sgrp), width=300, title="Select Irradiation and Level"
+            VGroup(sgrp, bgrp), width=300, title="Select Irradiation and Level"
         )
         return v
 

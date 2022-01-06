@@ -141,11 +141,14 @@ def analysis_path(analysis, *args, **kw):
     else:
         uuid, record_id = analysis.uuid, analysis.record_id
 
+    # using the uuid for the path identifiers is preferred.
+    # data should be saved this way. but for backwards compatibility
+    # analysis paths using the record_id/runid can also be handled
     try:
-        ret = _analysis_path(record_id, *args, **kw)
+        ret = _analysis_path(uuid, *args, **kw)
     except AnalysisNotAnvailableError:
         try:
-            ret = _analysis_path(uuid, *args, **kw)
+            ret = _analysis_path(record_id, *args, **kw)
         except AnalysisNotAnvailableError as e:
             if kw.get("mode", "r") == "r":
                 ret = None
@@ -182,6 +185,7 @@ def _analysis_path(
         if not os.path.isdir(root):
             os.mkdir(root)
 
+    # determine the length of dir name for subdirize
     if force_sublen:
         sublen = force_sublen
     elif UUID_RE.match(runid):
@@ -196,32 +200,52 @@ def _analysis_path(
                 sublen = 4
             else:
                 sublen = 5
-    try:
-        root, tail = subdirize(root, runid, sublen=sublen, mode=mode)
-    except TypeError as e:
+
+    # make sure sublen is iterable
+    if isinstance(sublen, int):
+        sublen = (sublen,)
+
+    # save root as oroot.  root is reused in the loop
+    oroot = root
+    for si in sublen:
+        try:
+            root, tail = subdirize(oroot, runid, sublen=si, mode=mode)
+        except TypeError as e:
+            continue
+
+        if modifier:
+            d = os.path.join(root, modifier)
+            if not os.path.isdir(d):
+                if mode == "r":
+                    raise AnalysisNotAnvailableError(root, runid)
+
+                os.mkdir(d)
+
+            root = d
+            fmt = "{}.{}"
+            if modifier.startswith("."):
+                fmt = "{}{}"
+            tail = fmt.format(tail, modifier[:4])
+
+        name = add_extension(tail, extension)
+        path = os.path.join(root, name)
+        if mode == "r":
+            if not os.path.isfile(path):
+                # this can happen if there is overlap in the subdirs.
+                # for example this could be the directory structure
+                # cf
+                #  -529ae-34de-415b-ad8c-a27567b44fd8.json
+                # cff52
+                #  -7ab-86e8-4ccc-a6c5-118ff07c5083.json
+
+                # in this case pychron will fail to find cf529ae... because subdirize will use a sublen of 5 first
+
+                # moving the sublen looping out of subdirize resolves this issue
+                continue
+
+        return path
+    else:
         raise AnalysisNotAnvailableError(root, runid)
-
-    if modifier:
-        d = os.path.join(root, modifier)
-        if not os.path.isdir(d):
-            if mode == "r":
-                raise AnalysisNotAnvailableError(root, runid)
-
-            os.mkdir(d)
-
-        root = d
-        fmt = "{}.{}"
-        if modifier.startswith("."):
-            fmt = "{}{}"
-        tail = fmt.format(tail, modifier[:4])
-
-    name = add_extension(tail, extension)
-    path = os.path.join(root, name)
-    if mode == "r":
-        if not os.path.isfile(path):
-            raise AnalysisNotAnvailableError(root, runid)
-
-    return path
 
 
 def repository_path(*args):

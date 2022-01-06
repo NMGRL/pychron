@@ -685,13 +685,19 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_extraction_device(self, name):
         with self.session_ctx():
-            a = ExtractDeviceTbl(name=name)
-            return self._add_item(a)
+            a = self.get_extraction_device(name)
+            if not a:
+                a = ExtractDeviceTbl(name=name)
+                a = self._add_item(a)
+            return a
 
     def add_mass_spectrometer(self, name, kind="Argus"):
         with self.session_ctx():
-            a = MassSpectrometerTbl(name=name, kind=kind)
-            return self._add_item(a)
+            ms = self.get_mass_spectrometer(name)
+            if not ms:
+                ms = MassSpectrometerTbl(name=name, kind=kind)
+                ms = self._add_item(ms)
+            return ms
 
     def add_irradiation(self, name):
         with self.session_ctx():
@@ -740,7 +746,7 @@ class DVCDatabase(DatabaseAdapter):
             a = self.get_project(name, principal_investigator)
             if a is None:
                 self.debug("Adding project {} {}".format(name, principal_investigator))
-                a = ProjectTbl(name=name, checkin_date=datetime.now(), **kw)
+                a = ProjectTbl(name=name, checkin_date=datetime.now().date(), **kw)
                 if principal_investigator:
                     dbpi = self.get_principal_investigator(principal_investigator)
                     if dbpi:
@@ -969,6 +975,29 @@ class DVCDatabase(DatabaseAdapter):
             q = q.order_by(AnalysisTbl.timestamp.desc())
             q = q.limit(limit)
             return self._query_all(q)
+
+    def get_repository_analyses_date_range(self, repo):
+        with self.session_ctx() as sess:
+            r = self.get_repository(repo)
+            ts = {a.analysis.timestamp for a in r.repository_associations}
+            return min(ts), max(ts)
+
+    def get_repository_mass_spectrometers(self, repo):
+        with self.session_ctx() as sess:
+            r = self.get_repository(repo)
+            return {a.analysis.mass_spectrometer for a in r.repository_associations}
+
+    def get_repository_irradiations(self, repo):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationTbl)
+            q = q.join(LevelTbl)
+            q = q.join(IrradiationPositionTbl)
+            q = q.join(AnalysisTbl)
+            q = q.join(RepositoryAssociationTbl)
+            q = q.filter(RepositoryAssociationTbl.repository == repo)
+            return [i.name for i in self._query_all(q)]
+            # r = self.get_repository(repo)
+            # return {a.analysis.irradiation for a in r.repository_associations}
 
     def get_repository_analyses(self, repo):
         with self.session_ctx():

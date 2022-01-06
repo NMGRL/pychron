@@ -117,6 +117,7 @@ class DVC(Loggable):
     use_cache = Bool
     max_cache_size = Int
     irradiation_prefix = Str
+    irradiation_project_prefix = Str
 
     _cache = None
     _uuid_runid_cache = None
@@ -369,6 +370,35 @@ class DVC(Loggable):
         #         r = an.record_id
         #         self._uuid_runid_cache[uuid] = r
         # return r
+
+    def find_reference_repos(self, repo):
+        irradiations = self.db.get_repository_irradiations(repo)
+        low, high = self.db.get_repository_analyses_date_range(repo)
+        mss = self.db.get_repository_mass_spectrometers(repo)
+        mss = [mi.capitalize() for mi in mss]
+
+        self.debug("{} {}".format(low, high))
+        repos = []
+        if low.month <= 6:
+            year = low.year
+            year = str(year)[-2:]
+            repos.extend(["{}_air{}0".format(mi, year) for mi in mss])
+            repos.extend(["{}_blank{}0".format(mi, year) for mi in mss])
+            repos.extend(["{}_cocktail{}0".format(mi, year) for mi in mss])
+
+        if high.month >= 6 or low.month >= 6:
+            year = high.year
+            year = str(year)[-2:]
+            repos.extend(["{}_air{}1".format(mi, year) for mi in mss])
+            repos.extend(["{}_blank{}1".format(mi, year) for mi in mss])
+            repos.extend(["{}_cocktail{}1".format(mi, year) for mi in mss])
+
+        irradiation_project_prefix = self.irradiation_project_prefix
+        repos.extend(
+            ["{}{}".format(irradiation_project_prefix, ir) for ir in irradiations]
+        )
+
+        return list(set(repos))
 
     def find_associated_identifiers(self, samples):
         from pychron.dvc.associated_identifiers import AssociatedIdentifiersView
@@ -1241,7 +1271,10 @@ class DVC(Loggable):
 
     def get_author(self, author=None):
         if not self.use_default_commit_author:
-            if author is None or not self._author:
+
+            if self._author:
+                author = self._author
+            elif author is None:
                 db = self.db
                 with db.session_ctx():
                     authors = [User(r) for r in db.get_users()]
@@ -1649,18 +1682,18 @@ class DVC(Loggable):
         else:
             self.warning_dialog(HOST_WARNING_MESSAGE)
 
-    def add_readme(self, identifier):
+    def add_readme(self, identifier, content=""):
         self.debug("adding readme to repository identifier={}".format(identifier))
         root = repository_path(identifier)
         if os.path.isdir(root):
             p = os.path.join(root, "README.md")
             if not os.path.isfile(p):
                 with open(p, "w") as wfile:
-                    wfile.write("{}\n###############".format(identifier))
+                    wfile.write("{}\n###############\n{}".format(identifier, content))
             repo = self._get_repository(identifier, as_current=False)
             repo.add(p)
             repo.commit("initial commit")
-
+            repo.push()
         else:
             self.critical("Repository does not exist {}. {}".format(identifier, root))
 
@@ -1668,7 +1701,9 @@ class DVC(Loggable):
         repo = self._get_repository(repo)
         repo.create_branch(branch, inform=False)
 
-    def add_repository(self, identifier, principal_investigator, inform=True):
+    def add_repository(
+        self, identifier, principal_investigator, inform=True, license_template=None
+    ):
         self.debug(
             "trying to add repository identifier={}, pi={}".format(
                 identifier, principal_investigator
@@ -1709,7 +1744,11 @@ class DVC(Loggable):
                             "Creating repository at {}. {}".format(gi.name, identifier)
                         )
 
-                        if gi.create_repo(identifier, organization=self.organization):
+                        if gi.create_repo(
+                            identifier,
+                            organization=self.organization,
+                            license_template=license_template,
+                        ):
                             ret = True
                             if isinstance(gi, LocalGitHostService):
                                 if i == 0:
@@ -2106,6 +2145,7 @@ class DVC(Loggable):
             try:
                 a = DVCAnalysis(uuid, rid, expid)
             except AnalysisNotAnvailableError:
+                self.debug("uuid={}, rid={}, expid={}".format(uuid, rid, expid))
                 self.warning_dialog(
                     "Analysis {} not in local repository {}. "
                     "You may need to pull changes. If local repository is up to date you may "
@@ -2292,6 +2332,12 @@ class DVC(Loggable):
         prefid = "pychron.entry"
         bind_preference(
             self, "irradiation_prefix", "{}.irradiation_prefix".format(prefid)
+        )
+
+        bind_preference(
+            self,
+            "irradiation_project_prefix",
+            "{}.irradiation_project_prefix".format(prefid),
         )
         if self.use_cache:
             self._use_cache_changed()

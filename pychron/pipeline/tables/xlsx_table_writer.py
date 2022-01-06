@@ -523,33 +523,67 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _get_irradiation_columns(self, ubit):
         fmt = "correction"
 
-        cols = [
-            c
-            for (ai, am), (bi, bm), e in (
-                (("Ar", 40), ("Ar", 39), "K"),
-                (("Ar", 38), ("Ar", 39), "K"),
-                (("Ar", 37), ("Ar", 39), "K"),
-                (("Ar", 39), ("Ar", 37), "Ca"),
-                (("Ar", 38), ("Ar", 37), "Ca"),
-                (("Ar", 36), ("Ar", 37), "Ca"),
-                (("Ar", 36), ("Ar", 38), "Cl"),
-            )
-            for c in (
-                Column(
-                    label=(
-                        "(",
-                        "<sup>{}</sup>".format(am),
-                        "{}/".format(ai),
-                        "<sup>{}</sup>".format(bm),
-                        "{})".format(bm),
-                        "<sub>{}</sub>".format(e),
-                    ),
-                    attr="{}{}{}".format(e, am, bm),
-                    sigformat=fmt,
+        cols = []
+        for am, bm, e in [
+            (40, 39, "K"),
+            (38, 38, "K"),
+            (37, 39, "K"),
+            (39, 37, "Ca"),
+            (38, 37, "Ca"),
+            (36, 37, "Ca"),
+            (36, 38, "Cl"),
+        ]:
+            attr = "{}{}{}".format(e, am, bm)
+            c = Column(
+                label=(
+                    "(",
+                    "<sup>{}</sup>".format(am),
+                    "Ar/",
+                    "<sup>{}</sup>".format(bm),
+                    "Ar)",
+                    "<sub>{}</sub>".format(e),
                 ),
-                EColumn(attr="{}{}{}".format(e, am, bm), sigformat=fmt),
+                attr=attr,
+                sigformat=fmt,
             )
-        ]
+            ec = EColumn(attr=attr, sigformat=fmt)
+            cols.append(c)
+            cols.append(ec)
+
+        # cols = [c
+        #     for am, bm, e in [(40, 39, "K"),
+        #                       (38, 38, "K"),
+        #                       (37, 39, "K"),
+        #                       (39, 37, "Ca"),
+        #                       (38, 37, "Ca"),
+        #                       (36, 37, "Ca"),
+        #                       (36, 38, "Cl")
+        #                       ]
+        #     # for (ai, am), (bi, bm), e in (
+        #     #     (("Ar", 40), ("Ar", 39), "K"),
+        #     #     (("Ar", 38), ("Ar", 39), "K"),
+        #     #     (("Ar", 37), ("Ar", 39), "K"),
+        #     #     (("Ar", 39), ("Ar", 37), "Ca"),
+        #     #     (("Ar", 38), ("Ar", 37), "Ca"),
+        #     #     (("Ar", 36), ("Ar", 37), "Ca"),
+        #     #     (("Ar", 36), ("Ar", 38), "Cl"),
+        #     # )
+        #     for c in (
+        #         Column(
+        #             label=(
+        #                 "(",
+        #                 "<sup>{}</sup>".format(am),
+        #                 "Ar/",
+        #                 "<sup>{}</sup>".format(bm),
+        #                 "Ar)",
+        #                 "<sub>{}</sub>".format(e),
+        #             ),
+        #             attr="{}{}{}".format(e, am, bm),
+        #             sigformat=fmt,
+        #         ),
+        #         EColumn(attr="{}{}{}".format(e, am, bm), sigformat=fmt),
+        #     )
+        # ]
 
         cols.extend(
             [

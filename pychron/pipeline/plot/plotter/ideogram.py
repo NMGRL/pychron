@@ -770,6 +770,7 @@ class Ideogram(BaseArArFigure):
                         line,
                         data_point=(xi, yi),
                         label_text=txt,
+                        font=opt.label_font,
                         border_visible=bool(border),
                         border_width=border,
                         border_color=border_color,

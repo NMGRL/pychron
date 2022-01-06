@@ -127,7 +127,7 @@ class Communicator(HeadlessConfigLoadable):
             optional=True,
         )
 
-        if self.write_terminator == chr(10):
+        if self.write_terminator == "chr(10)":
             self.write_terminator = chr(10)
         if self.write_terminator == "chr(0)":
             self.write_terminator = chr(0)

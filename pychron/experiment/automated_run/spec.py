@@ -126,7 +126,6 @@ class AutomatedRunSpec(HasTraits):
 
     skip = Bool(False)
     end_after = Bool(False)
-    collection_version = Str
     delay_after = Float
     # ===========================================================================
     # queue globals

@@ -68,7 +68,7 @@ class RString(String):
 
 
 PI_NAMES = ("NMGRL",)
-if os.path.isfile(paths.valid_pi_names):
+if paths.valid_pi_names and os.path.isfile(paths.valid_pi_names):
     PI_NAMES = yload(paths.valid_pi_names)
 
 
