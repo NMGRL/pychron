@@ -2546,38 +2546,40 @@ Use Last "blank_{}"= {}
     def _update_timeseries(self):
         if self.use_dvc_persistence:
             dvc = self.datahub.mainstore
-            if self.experiment_queue:
-                ms = self.experiment_queue.mass_spectrometer
-            else:
-                if not self.timeseries_mass_spectrometers:
-                    self.timeseries_mass_spectrometers = (
-                        dvc.get_mass_spectrometer_names()
-                    )
-
-                info = self.edit_traits(
-                    view=okcancel_view(
-                        UItem(
-                            "timeseries_mass_spectrometer",
-                            # label='Mass Spectrometer',
-                            editor=EnumEditor(name="timeseries_mass_spectrometers"),
-                        ),
-                        title="Please Select a Mass Spectrometer",
-                    )
-                )
-                if info.result:
-                    ms = self.timeseries_mass_spectrometer
+            with dvc.session_ctx():
+                if self.experiment_queue:
+                    ms = self.experiment_queue.mass_spectrometer
                 else:
-                    return
-            ans = dvc.get_last_n_analyses(
-                self.timeseries_n_recall,
-                mass_spectrometer=ms,
-                analysis_types=None,
-                verbose=False,
-            )
-            ans = dvc.make_analyses(ans, use_progress=False)
+                    if not self.timeseries_mass_spectrometers:
+                        self.timeseries_mass_spectrometers = (
+                            dvc.get_mass_spectrometer_names()
+                        )
 
-            self.timeseries_editor.set_items(ans)
-            self.timeseries_editor.refresh()
+                    info = self.edit_traits(
+                        view=okcancel_view(
+                            UItem(
+                                "timeseries_mass_spectrometer",
+                                # label='Mass Spectrometer',
+                                editor=EnumEditor(name="timeseries_mass_spectrometers"),
+                            ),
+                            title="Please Select a Mass Spectrometer",
+                            width=300
+                        )
+                    )
+                    if info.result:
+                        ms = self.timeseries_mass_spectrometer
+                    else:
+                        return
+                ans = dvc.get_last_n_analyses(
+                    self.timeseries_n_recall,
+                    mass_spectrometer=ms,
+                    analysis_types=None,
+                    verbose=False,
+                )
+                ans = dvc.make_analyses(ans, use_progress=False)
+
+                self.timeseries_editor.set_items(ans)
+                self.timeseries_editor.refresh()
 
     # ===============================================================================
     # handlers
