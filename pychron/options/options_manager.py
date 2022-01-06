@@ -70,9 +70,22 @@ from pychron.options.series import SeriesOptions
 from pychron.options.spectrum import SpectrumOptions
 from pychron.options.xy_scatter import XYScatterOptions
 from pychron.paths import paths
-from pychron.pipeline.plot.plotter.series import PEAK_CENTER, ANALYSIS_TYPE, LAB_TEMP, LAB_HUM, EXTRACT_DURATION, \
-    RADIOGENIC_YIELD, AGE
-from pychron.pychron_constants import EXTRACT_VALUE, CLEANUP, UNKNOWN, COCKTAIL, DETECTOR_IC
+from pychron.pipeline.plot.plotter.series import (
+    PEAK_CENTER,
+    ANALYSIS_TYPE,
+    LAB_TEMP,
+    LAB_HUM,
+    EXTRACT_DURATION,
+    RADIOGENIC_YIELD,
+    AGE,
+)
+from pychron.pychron_constants import (
+    EXTRACT_VALUE,
+    CLEANUP,
+    UNKNOWN,
+    COCKTAIL,
+    DETECTOR_IC,
+)
 
 
 class OptionsUnpickler(pickle.Unpickler):
@@ -165,7 +178,7 @@ class BaseOptionsManager(Loggable):
 
     def delete_selected(self):
         if self.confirmation_dialog(
-                'Are you sure you want to delete "{}"'.format(self.selected)
+            'Are you sure you want to delete "{}"'.format(self.selected)
         ):
             for ext in (".p", ".json"):
                 p = self._pname(self.selected, ext)
@@ -662,6 +675,7 @@ class OptionsController(Controller):
 
     def controller_factory_default_changed(self, info):
         self.model.factory_default()
+
 
 # if __name__ == '__main__':
 #     paths.build('_dev')

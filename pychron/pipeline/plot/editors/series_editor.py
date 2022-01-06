@@ -35,7 +35,7 @@ TOOLTIP_MAP = {
     "n": "Number of data points",
     "std": "Standard Deviation",
     "se": "Standard Error, aka Taylor error.  1/sqrt(sum(weights)). If data has no errors this column "
-          "will be a replica of SD column",
+    "will be a replica of SD column",
     "sem": "Standard Error of the Mean.  SD/sqrt(n)",
     "mswd": "MSWD of the current fit type",
     "mean_mswd": "MSWD of a mean fit to the data",
@@ -152,16 +152,20 @@ class AnalysisGroupedSeriesEditor(BaseTraitsEditor):
             ei.plotter_options = options
 
     def set_items(self, items, *args, **kw):
-        for atype, ans in groupby_key(items, 'analysis_type'):
+        for atype, ans in groupby_key(items, "analysis_type"):
             for ei in self.editors:
                 if ei.analysis_type == atype:
                     ei.set_items(list(ans))
                     break
 
     def traits_view(self):
-        return View(UItem('editors',
-                          style='custom',
-                          editor=ListEditor(use_notebook=True,
-                                            page_name='.analysis_type')))
+        return View(
+            UItem(
+                "editors",
+                style="custom",
+                editor=ListEditor(use_notebook=True, page_name=".analysis_type"),
+            )
+        )
+
 
 # ============= EOF =============================================

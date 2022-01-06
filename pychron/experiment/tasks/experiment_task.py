@@ -44,7 +44,8 @@ from pychron.experiment.tasks.experiment_panes import (
     ConnectionStatusPane,
     LoggerPane,
     ExplanationPane,
-    ConditionalsPane, TimeSeriesPane,
+    ConditionalsPane,
+    TimeSeriesPane,
 )
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog

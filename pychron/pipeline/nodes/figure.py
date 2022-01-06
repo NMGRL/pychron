@@ -297,7 +297,9 @@ class SeriesNode(FigureNode):
             isotopes = unk.isotopes
             dets = sort_detectors(list({i.detector for i in isotopes.values()}))
 
-            pom.set_names_via_keys(iso_keys, analysis_type=unk.analysis_type, detectors=dets)
+            pom.set_names_via_keys(
+                iso_keys, analysis_type=unk.analysis_type, detectors=dets
+            )
 
 
 class RegressionSeriesNode(SeriesNode):
