@@ -141,11 +141,14 @@ def analysis_path(analysis, *args, **kw):
     else:
         uuid, record_id = analysis.uuid, analysis.record_id
 
+    # using the uuid for the path identifiers is preferred.
+    # data should be saved this way. but for backwards compatibility
+    # analysis paths using the record_id/runid can also be handled
     try:
-        ret = _analysis_path(record_id, *args, **kw)
+        ret = _analysis_path(uuid, *args, **kw)
     except AnalysisNotAnvailableError:
         try:
-            ret = _analysis_path(uuid, *args, **kw)
+            ret = _analysis_path(record_id, *args, **kw)
         except AnalysisNotAnvailableError as e:
             if kw.get("mode", "r") == "r":
                 ret = None
@@ -182,6 +185,7 @@ def _analysis_path(
         if not os.path.isdir(root):
             os.mkdir(root)
 
+    # determine the length of dir name for subdirize
     if force_sublen:
         sublen = force_sublen
     elif UUID_RE.match(runid):
@@ -196,9 +200,12 @@ def _analysis_path(
                 sublen = 4
             else:
                 sublen = 5
+
+    # make sure sublen is iterable
     if isinstance(sublen, int):
         sublen = (sublen,)
 
+    # save root as oroot.  root is reused in the loop
     oroot = root
     for si in sublen:
         try:
@@ -225,15 +232,15 @@ def _analysis_path(
         if mode == "r":
             if not os.path.isfile(path):
                 # this can happen if there is overlap in the subdirs.
-                # for example the could be this structure
+                # for example this could be the directory structure
                 # cf
                 #  -529ae-34de-415b-ad8c-a27567b44fd8.json
                 # cff52
                 #  -7ab-86e8-4ccc-a6c5-118ff07c5083.json
 
-                # in this case pychron will fail to fine cf529ae... because subdirize will use a sublen of 5 first
+                # in this case pychron will fail to find cf529ae... because subdirize will use a sublen of 5 first
 
-                # raise AnalysisNotAnvailableError(root, runid)
+                # moving the sublen looping out of subdirize resolves this issue
                 continue
 
         return path

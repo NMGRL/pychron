@@ -489,6 +489,24 @@ class ConnectionStatusPane(TraitsDockPane):
         return v
 
 
+class TimeSeriesPane(TraitsDockPane):
+    id = "pychron.experiment.timeseries"
+    name = "TimeSeries"
+    executor = Any
+
+    def traits_view(self):
+        ggrp = VGroup(
+            HGroup(
+                Item("timeseries_n_recall", label="N. Analyses"),
+                spring,
+                icon_button_editor("timeseries_editor_button", "arrow_refresh"),
+                icon_button_editor("configure_timeseries_editor_button", "cog"),
+            ),
+            UItem("timeseries_editor", style="custom"),
+        )
+        return View(ggrp)
+
+
 class StatsPane(TraitsDockPane):
     id = "pychron.experiment.stats"
     name = "Stats"

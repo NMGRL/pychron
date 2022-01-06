@@ -40,13 +40,19 @@ class ExperimentNotifier(Loggable):
 
     def notify(self, ctx, subject):
         mctx = self._assemble_ctx(**ctx)
+
+        self.debug(
+            "Notify with context={}".format(
+                {k: v for k, v in mctx.items() if k != "log"}
+            )
+        )
         message = email_template(**mctx)
         self.info(
             "Notifying user={} email={}".format(
                 ctx.get("username"), ctx.get("user_email")
             )
         )
-
+        subject = "{} {}".format(subject, datetime.now().isoformat())
         self._send(ctx.get("user_email"), subject, message)
 
         if ctx.get("use_group_email"):

@@ -50,7 +50,7 @@ class PychronGPActuator(GPActuator, ClientMixin):
     def get_state_word(self, verbose=False):
         cmd = (
             "GetStateWord"
-            if os.getenv("PYCHRON_VALVE_VERSION", 0) == 1
+            if os.getenv("PYCHRON_VALVE_VERSION", 0) == "1"
             else "GetValveStates"
         )
         return self.ask(cmd, verbose=verbose)
@@ -59,7 +59,7 @@ class PychronGPActuator(GPActuator, ClientMixin):
     def get_lock_word(self, verbose=False):
         cmd = (
             "GetLockWord"
-            if os.getenv("PYCHRON_VALVE_VERSION", 0) == 1
+            if os.getenv("PYCHRON_VALVE_VERSION", 0) == "1"
             else "GetValveLockStates"
         )
         return self.ask(cmd, verbose=verbose)

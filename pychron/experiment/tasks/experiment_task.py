@@ -45,6 +45,7 @@ from pychron.experiment.tasks.experiment_panes import (
     LoggerPane,
     ExplanationPane,
     ConditionalsPane,
+    TimeSeriesPane,
 )
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
@@ -235,6 +236,7 @@ class ExperimentEditorTask(EditorTask):
         explanation_pane = ExplanationPane()
         explanation_pane.set_colors(self._assemble_state_colors())
         self.conditionals_pane = ConditionalsPane(model=ex)
+        timeseries_pane = TimeSeriesPane(model=ex)
 
         panes = [
             StatsPane(model=ex.stats, executor=ex),
@@ -247,6 +249,7 @@ class ExperimentEditorTask(EditorTask):
             self.isotope_evolution_pane,
             explanation_pane,
             wait_pane,
+            timeseries_pane,
         ]
 
         if self.loading_manager:
@@ -554,6 +557,13 @@ class ExperimentEditorTask(EditorTask):
             self._show_pane(self.experiment_factory_pane)
         else:
             self.manager.experiment_factory.edit_enabled = False
+
+    @on_trait_change("manager:experiment_queue:changed")
+    def _handle_queue_change(self, obj, name, old, new):
+        if self.loading_manager:
+            print("asdf", obj)
+            runs = obj.cleaned_automated_runs
+            self.loading_manager.set_loaded_runs(runs)
 
     @on_trait_change("loading_manager:group_positions")
     def _update_group_positions(self, new):

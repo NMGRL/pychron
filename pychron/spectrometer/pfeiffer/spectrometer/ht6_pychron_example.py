@@ -13,27 +13,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traitsui.api import View, Item, ListEditor, InstanceEditor, VGroup, UCustom
+import socket
+import struct
+import time
 
-from pychron.extraction_line.device_manager import DeviceManager
-from pychron.managers.manager import Manager
 
+def measure(n, measurement):
+    """
 
-class PumpManager(DeviceManager):
-    device_view_name = "pump_view"
+    n: number of cycles
+    measurement: either a name of a stored routine on client
+        or it could be the text of a .par file?
 
-    def get_pressure(self, idx=0):
-        try:
-            d = self.devices[idx]
-            self.debug("get pressure, idx={}, device={}".format(idx, d))
-            return d.get_pressure()
-        except IndexError:
-            self.warning(
-                "Invalid device index={}, totals devices={}".format(
-                    idx, len(self.devices)
-                )
-            )
-            return 0
+    """
+    # get client
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(("localhost", 8089))
+
+    # trigger measurement
+    client.send(f"trigger {measurement}")
+
+    records = []
+    # get the data
+    for i in range(int(n)):
+        size = client.recv(4)
+        size = struct.unpack("i", size)[0]
+        str_data = client.recv(size)
+        r = (time.time(), str_data.decode("ascii"))
+        records.append(r)
 
 
 # ============= EOF =============================================

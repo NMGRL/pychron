@@ -1720,7 +1720,7 @@ class DVC(Loggable):
 
         # names = self.remote_repository_names(ide)
         # if identifier in names:
-        if not self.check_remote_repository_exists(identifier):
+        if self.check_remote_repository_exists(identifier):
             # make sure also in the database
             self.db.add_repository(identifier, principal_investigator)
 

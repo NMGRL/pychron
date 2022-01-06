@@ -13,27 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traitsui.api import View, Item, ListEditor, InstanceEditor, VGroup, UCustom
-
-from pychron.extraction_line.device_manager import DeviceManager
-from pychron.managers.manager import Manager
-
-
-class PumpManager(DeviceManager):
-    device_view_name = "pump_view"
-
-    def get_pressure(self, idx=0):
-        try:
-            d = self.devices[idx]
-            self.debug("get pressure, idx={}, device={}".format(idx, d))
-            return d.get_pressure()
-        except IndexError:
-            self.warning(
-                "Invalid device index={}, totals devices={}".format(
-                    idx, len(self.devices)
-                )
-            )
-            return 0
 
 
 # ============= EOF =============================================

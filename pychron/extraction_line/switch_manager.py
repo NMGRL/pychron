@@ -512,6 +512,7 @@ class SwitchManager(Manager):
         words = {}
         for k, v in self.switches.items():
             a = (k, v.address, v.state)
+            print(a, v, v.use_state_word)
             if v.use_state_word:
                 if v.actuator not in words:
                     words[v.actuator] = [a]
@@ -529,6 +530,7 @@ class SwitchManager(Manager):
 
         for actuator, items in words.items():
             stateword = actuator.get_state_word()
+            print("statword", stateword)
             if stateword:
                 for k, address, ostate in items:
                     try:
@@ -674,66 +676,68 @@ class SwitchManager(Manager):
         :return:
         """
 
-        def tokenize(keys):
-            buf = ""
-            add = False
-            if "<" in keys:
-
-                for k in keys:
-                    if add:
-                        if k == ">":
-                            add = False
-                            yield buf
-                            buf = ""
-                            continue
-
-                        buf += k
-                        continue
-
-                    if "<" == k:
-                        add = True
-                        continue
-
-                    yield k
-            else:
-                cnt = 0
-                c = 0
-                for k in keys:
-                    if add:
-                        cnt += 1
-                        if cnt > c:
-                            yield buf
-
-                            buf = ""
-                            cnt = 0
-                            if k in digits:
-                                c = int(k)
-                            else:
-                                add = False
-                                yield k
-
-                            continue
-
-                        buf += k
-                        continue
-
-                    if k in digits:
-                        c = int(k)
-                        add = True
-                        continue
-                    yield k
-
-                if buf:
-                    yield buf
+        # def tokenize(keys):
+        #     buf = ""
+        #     add = False
+        #     if "<" in keys:
+        #
+        #         for k in keys:
+        #             if add:
+        #                 if k == ">":
+        #                     add = False
+        #                     yield buf
+        #                     buf = ""
+        #                     continue
+        #
+        #                 buf += k
+        #                 continue
+        #
+        #             if "<" == k:
+        #                 add = True
+        #                 continue
+        #
+        #             yield k
+        #     else:
+        #         cnt = 0
+        #         c = 0
+        #         for k in keys:
+        #             if add:
+        #                 cnt += 1
+        #                 if cnt > c:
+        #                     yield buf
+        #
+        #                     buf = ""
+        #                     cnt = 0
+        #                     if k in digits:
+        #                         c = int(k)
+        #                     else:
+        #                         add = False
+        #                         yield k
+        #
+        #                     continue
+        #
+        #                 buf += k
+        #                 continue
+        #
+        #             if k in digits:
+        #                 c = int(k)
+        #                 add = True
+        #                 continue
+        #             yield k
+        #
+        #         if buf:
+        #             yield buf
 
         d = {}
         if word is not None:
             try:
-                if ":" in word:
-                    keys, states = word.split(":")
+                if "|" in word:
+                    keys, states = word.split("|")
                     states = int(states, 16)
 
-                    for k in tokenize(keys):
+                    for k in keys.split(",")[::-1]:
+                        if k.startswith("<") and k.endswith(">"):
+                            k = k[1:-1]
                         d[k] = bool(states & 1)
                         states = states >> 1
 
@@ -909,8 +913,10 @@ class SwitchManager(Manager):
             if v.track_actuation:
                 self._update_actuation_tracker(v)
 
-        if result is None and globalv.communication_simulation:
-            result = action.lower() == "set_open"
+        if result is None and (
+            globalv.communication_simulation or globalv.experiment_debug
+        ):
+            result = True
             changed = True
 
         return result, changed

@@ -17,6 +17,7 @@
 # # ============= enthought library imports =======================
 
 import ast
+import datetime
 import importlib
 import os
 import re
@@ -43,7 +44,7 @@ from traits.api import (
 )
 from traits.trait_errors import TraitError
 
-from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.filetools import add_extension, unique_path2
 from pychron.core.helpers.filetools import get_path
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.strtools import to_bool
@@ -55,6 +56,7 @@ from pychron.core.yaml import yload
 from pychron.experiment import ExtractionException
 from pychron.experiment.automated_run.hop_util import parse_hops
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
+
 from pychron.experiment.conditional.conditional import (
     TruncationConditional,
     ActionConditional,
@@ -307,6 +309,29 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
+    def py_sink_data(self, n=100, delay=1):
+        """
+
+        new measurement interface for just sinking the data from a ring buffer
+        """
+        import csv
+
+        spec = self.spectrometer_manager.spectrometer
+        spec.set_data_pump_mode(1)
+        p, _ = unique_path2(paths.csv_data_dir, self.runid, extension=".csv")
+        with open(p, "w") as rfile:
+            writer = csv.writer(rfile)
+            ig = spec.sink_data(writer, n, delay)
+
+            if self.use_dvc_persistence:
+                pspec = self.persistence_spec
+                pspec.isotope_group = ig
+
+                # self.save()
+                # self.dvc_persister.per_spec_save(pspec)
+
+        spec.set_data_pump_mode(0)
+
     def py_measure(self):
         return self.spectrometer_manager.measure()
 
@@ -1431,6 +1456,7 @@ class AutomatedRun(Loggable):
         return self._start_script(EXTRACTION)
 
     def start_measurement(self):
+        self.persister.insure_run()
         return self._start_script(MEASUREMENT)
 
     def do_extraction(self):

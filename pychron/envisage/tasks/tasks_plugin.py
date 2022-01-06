@@ -49,7 +49,6 @@ from pychron.envisage.tasks.actions import (
     ResetLayoutAction,
     PositionAction,
     IssueAction,
-    NoteAction,
     AboutAction,
     DocumentationAction,
     ChangeLogAction,
@@ -225,7 +224,7 @@ class myTasksPlugin(TasksPlugin):
         def help_menu():
             return SMenu(
                 IssueAction(),
-                NoteAction(),
+                # NoteAction(),
                 AboutAction(),
                 DocumentationAction(),
                 ChangeLogAction(),

@@ -58,6 +58,9 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
     _no_response_counter = 0
     _scheduler_name = None
 
+    def load_from_device(self):
+        pass
+
     def send_email_notification(self, message):
         if self.application:
             tm = self.application.get_service("pychron.social.emailer.Emailer")

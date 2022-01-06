@@ -286,25 +286,25 @@ class ShareSettingsAction(SettingsAction):
         repo.share_settings()
 
 
-class NoteAction(WebAction):
-    name = "Add Laboratory Note"
-    image = icon("insert-comment")
-
-    def perform(self, event):
-        """
-        goto issues page add an request or report bug
-        """
-        app = event.task.window.application
-        name = app.preferences.get("pychron.general.remote")
-        if not name:
-            information(
-                event.task.window.control,
-                'Please set an "Laboratory Repo" in General Preferences',
-            )
-            return
-
-        url = "https://github.com/{}/issues/new".format(name)
-        self._open_url(url)
+# class NoteAction(WebAction):
+#     name = "Add Laboratory Note"
+#     image = icon("insert-comment")
+#
+#     def perform(self, event):
+#         """
+#         goto issues page add an request or report bug
+#         """
+#         app = event.task.window.application
+#         name = app.preferences.get("pychron.general.remote")
+#         if not name:
+#             information(
+#                 event.task.window.control,
+#                 'Please set an "Laboratory Repo" in General Preferences',
+#             )
+#             return
+#
+#         url = "https://github.com/{}/issues/new".format(name)
+#         self._open_url(url)
 
 
 class DocumentationAction(WebAction):

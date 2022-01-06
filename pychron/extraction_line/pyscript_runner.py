@@ -33,6 +33,12 @@ class LocalResource(Event):
     def read(self, *args, **kw):
         return self.is_set()
 
+    def set(self, value):
+        if value:
+            super(LocalResource, self).set()
+        else:
+            super(LocalResource, self).clear()
+
 
 @provides(IPyScriptRunner)
 class PyScriptRunner(Loggable):
@@ -115,7 +121,8 @@ class RemoteResource(object):
     def _ping_loop(self):
         evt = self._ping_evt
         while not evt.is_set():
-            if self.ping() == "Complete":
+            ping = self.ping()
+            if ping and ping.strip() == "Complete":
                 break
 
             time.sleep(3)
@@ -125,7 +132,7 @@ class RemoteResource(object):
         if v:
             self._ping_evt = Event()
             self._ping_thread = Thread(target=self._ping_loop)
-            self._ping_thread.setDaemon(1)
+            self._ping_thread.setDaemon(True)
             self._ping_thread.start()
         else:
             if self._ping_evt:
@@ -160,6 +167,8 @@ class RemotePyScriptRunner(PyScriptRunner):
         handle.kind = self.kind
         handle.message_frame = self.frame
         handle.use_end = True
+        handle.write_terminator = "\r\n"
+        handle.read_terminator = "\r\n"
         return handle
 
     def _get_resource(self, name):
