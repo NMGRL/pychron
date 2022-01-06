@@ -2563,7 +2563,7 @@ Use Last "blank_{}"= {}
                                 editor=EnumEditor(name="timeseries_mass_spectrometers"),
                             ),
                             title="Please Select a Mass Spectrometer",
-                            width=300
+                            width=300,
                         )
                     )
                     if info.result:
