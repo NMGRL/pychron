@@ -913,8 +913,8 @@ class SwitchManager(Manager):
             if v.track_actuation:
                 self._update_actuation_tracker(v)
 
-        if result is None and globalv.communication_simulation:
-            result = action.lower() == "set_open"
+        if result is None and (globalv.communication_simulation or globalv.experiment_debug):
+            result = True
             changed = True
 
         return result, changed

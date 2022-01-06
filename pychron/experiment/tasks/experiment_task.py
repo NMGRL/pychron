@@ -44,7 +44,7 @@ from pychron.experiment.tasks.experiment_panes import (
     ConnectionStatusPane,
     LoggerPane,
     ExplanationPane,
-    ConditionalsPane,
+    ConditionalsPane, TimeSeriesPane,
 )
 from pychron.experiment.utilities.identifier import convert_extract_device, is_special
 from pychron.experiment.utilities.save_dialog import ExperimentSaveDialog
@@ -235,6 +235,7 @@ class ExperimentEditorTask(EditorTask):
         explanation_pane = ExplanationPane()
         explanation_pane.set_colors(self._assemble_state_colors())
         self.conditionals_pane = ConditionalsPane(model=ex)
+        timeseries_pane = TimeSeriesPane(model=ex)
 
         panes = [
             StatsPane(model=ex.stats, executor=ex),
@@ -247,6 +248,7 @@ class ExperimentEditorTask(EditorTask):
             self.isotope_evolution_pane,
             explanation_pane,
             wait_pane,
+            timeseries_pane,
         ]
 
         if self.loading_manager:

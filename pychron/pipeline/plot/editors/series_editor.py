@@ -16,14 +16,15 @@
 
 # ============= enthought library imports =======================
 from pyface.timer.do_later import do_after
-from traits.api import List, Event
-from traitsui.api import View, UItem, Group, VSplit
-from traitsui.editors.api import TabularEditor
+from traits.api import List, Event, Str
+from traitsui.api import View, UItem, Group, VSplit, ListEditor, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.models.series_model import SeriesModel
 from pychron.pychron_constants import DELTA
@@ -34,7 +35,7 @@ TOOLTIP_MAP = {
     "n": "Number of data points",
     "std": "Standard Deviation",
     "se": "Standard Error, aka Taylor error.  1/sqrt(sum(weights)). If data has no errors this column "
-    "will be a replica of SD column",
+          "will be a replica of SD column",
     "sem": "Standard Error of the Mean.  SD/sqrt(n)",
     "mswd": "MSWD of the current fit type",
     "mean_mswd": "MSWD of a mean fit to the data",
@@ -130,5 +131,37 @@ class SeriesEditor(FigureEditor):
         v = View(VSplit(self.get_component_view(), tblgrp), resizable=True)
         return v
 
+
+class AnalysisTypeSeriesEditor(SeriesEditor):
+    analysis_type = Str
+
+
+class AnalysisGroupedSeriesEditor(BaseTraitsEditor):
+    editors = List
+
+    def init(self, atypes):
+        eds = [AnalysisTypeSeriesEditor(analysis_type=atype) for atype in atypes]
+        self.editors = eds
+
+    def refresh(self):
+        for ei in self.editors:
+            ei.refresh_needed = True
+
+    def set_options(self, options):
+        for ei in self.editors:
+            ei.plotter_options = options
+
+    def set_items(self, items, *args, **kw):
+        for atype, ans in groupby_key(items, 'analysis_type'):
+            for ei in self.editors:
+                if ei.analysis_type == atype:
+                    ei.set_items(list(ans))
+                    break
+
+    def traits_view(self):
+        return View(UItem('editors',
+                          style='custom',
+                          editor=ListEditor(use_notebook=True,
+                                            page_name='.analysis_type')))
 
 # ============= EOF =============================================

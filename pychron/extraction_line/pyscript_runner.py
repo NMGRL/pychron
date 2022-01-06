@@ -33,6 +33,12 @@ class LocalResource(Event):
     def read(self, *args, **kw):
         return self.is_set()
 
+    def set(self, value):
+        if value:
+            super(LocalResource, self).set()
+        else:
+            super(LocalResource, self).clear()
+
 
 @provides(IPyScriptRunner)
 class PyScriptRunner(Loggable):

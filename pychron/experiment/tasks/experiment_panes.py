@@ -316,7 +316,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                     "delay_after",
                     label="Delay After (s)",
                     tooltip="Time (s) to delay after this analysis. This value supersedes "
-                    '"Delay Between Analyses" or "Delay After Blank"',
+                            '"Delay Between Analyses" or "Delay After Blank"',
                 ),
                 spring,
             ),
@@ -351,12 +351,12 @@ class ExperimentFactoryPane(TraitsDockPane):
                     "weight",
                     label="Weight (mg)",
                     tooltip="(Optional) Enter the weight of the sample in mg. "
-                    "Will be saved in Database with analysis",
+                            "Will be saved in Database with analysis",
                 ),
                 run_factory_item(
                     "comment",
                     tooltip="(Optional) Enter a comment for this sample. "
-                    "Will be saved in Database with analysis",
+                            "Will be saved in Database with analysis",
                 ),
                 run_factory_uitem(
                     "auto_fill_comment",
@@ -425,7 +425,7 @@ class ExperimentFactoryPane(TraitsDockPane):
                     run_factory_name("new_conditionals_button"),
                     "table_add",
                     tooltip="Add a new conditionals file. Duplicated currently "
-                    "selected file if applicable",
+                            "selected file if applicable",
                 ),
                 icon_button_editor(
                     run_factory_name("apply_conditionals_button"),
@@ -487,6 +487,20 @@ class ConnectionStatusPane(TraitsDockPane):
             )
         )
         return v
+
+
+class TimeSeriesPane(TraitsDockPane):
+    id = 'pychron.experiment.timeseries'
+    name = 'TimeSeries'
+    executor = Any
+
+    def traits_view(self):
+        ggrp = VGroup(HGroup(Item('timeseries_n_recall', label='N. Analyses'),
+                             spring,
+                             icon_button_editor('timeseries_editor_button', 'arrow_refresh'),
+                             icon_button_editor('configure_timeseries_editor_button', 'cog'),),
+                      UItem('timeseries_editor', style='custom'))
+        return View(ggrp)
 
 
 class StatsPane(TraitsDockPane):
@@ -779,7 +793,7 @@ class IsotopeEvolutionPane(TraitsDockPane):
                             "continue_button",
                             "arrow-right-double-2",
                             tooltip="Continue to next measurement step. "
-                            'Simply sets "Counts" to 0',
+                                    'Simply sets "Counts" to 0',
                         ),
                         Spring(springy=False, width=-10),
                         CustomLabel(
@@ -823,6 +837,5 @@ class LoggerPane(TraitsDockPane):
         )
 
         return v
-
 
 # ============= EOF =============================================

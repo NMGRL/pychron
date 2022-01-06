@@ -24,6 +24,7 @@ from threading import Thread, Lock, currentThread
 
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
+from traitsui.api import View, EnumEditor, Item, UItem
 from traits.api import (
     Event,
     String,
@@ -49,7 +50,9 @@ from pychron.core.codetools.memory_usage import mem_available
 from pychron.core.helpers.filetools import add_extension, get_path, unique_path2
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.logger_setup import add_root_handler, remove_root_handler
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.progress import open_progress
+from pychron.core.pychron_traits import PositiveInteger
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.wait.wait_group import WaitGroup
@@ -82,7 +85,11 @@ from pychron.experiment.utilities.repository_identifier import (
 )
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
+from pychron.options.options_manager import SeriesOptionsManager, OptionsController
+from pychron.options.views.views import view
 from pychron.paths import paths
+from pychron.pipeline.plot.editors.series_editor import SeriesEditor, AnalysisGroupedSeriesEditor
+from pychron.pipeline.plot.plotter.series import Series
 from pychron.pychron_constants import (
     DEFAULT_INTEGRATION_TIME,
     AR_AR,
@@ -99,7 +106,7 @@ from pychron.pychron_constants import (
     FAILED,
     CANCELED,
     TRUNCATED,
-    SUCCESS,
+    SUCCESS, ARGON_KEYS,
 )
 
 
@@ -181,6 +188,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     scheduler = Instance(ExperimentScheduler)
 
     events = List
+
+    timeseries_editor = Instance(AnalysisGroupedSeriesEditor)
+    timeseries_editor_button = Event
+    configure_timeseries_editor_button = Event
+    timeseries_options = Instance(SeriesOptionsManager)
+    timeseries_n_recall = PositiveInteger(50)
+    timeseries_mass_spectrometer = Str
+    timeseries_mass_spectrometers = List
     # ===========================================================================
     #
     # ===========================================================================
@@ -428,8 +443,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.debug("abort run. Executor.isAlive={}".format(self.is_alive()))
         if self.is_alive():
             for crun, kind in (
-                (self.measuring_run, "measuring"),
-                (self.extracting_run, "extracting"),
+                    (self.measuring_run, "measuring"),
+                    (self.extracting_run, "extracting"),
             ):
                 if crun:
                     self.debug("abort {} run {}".format(kind, crun.runid))
@@ -702,9 +717,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 )
 
                 if (
-                    not run.is_last
-                    and run.spec.analysis_type == "unknown"
-                    and spec.overlap[0]
+                        not run.is_last
+                        and run.spec.analysis_type == "unknown"
+                        and spec.overlap[0]
                 ):
                     self.debug("waiting for extracting_run to finish")
                     self._wait_for(lambda x: self.extracting_run)
@@ -905,7 +920,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if not getattr(self, step)(run):
                 self.warning("{} did not complete successfully".format(step[1:]))
                 if (
-                    step != "_post_measurement"
+                        step != "_post_measurement"
                 ):  # save data even if post measurement fails
                     run.spec.state = FAILED
                 break
@@ -931,6 +946,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.warning("post run check failed")
             else:
                 self.heading("Post Run Check Passed")
+
+                # update the timeseries graph
+                try:
+                    self._update_timeseries()
+                except BaseException:
+                    self.debug('failed updating timeseries via experiment')
+                    self.debug_exception()
 
         t = time.time() - st
         self.info(
@@ -1021,7 +1043,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 arun.abort_run()
 
     def _cancel(
-        self, style="queue", cancel_run=False, msg=None, confirm=True, err=None
+            self, style="queue", cancel_run=False, msg=None, confirm=True, err=None
     ):
         self.debug(
             "_cancel. style={}, cancel_run={}, msg={}, confirm={}, err={}".format(
@@ -1102,7 +1124,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._set_message(msg, c)
 
     def _show_conditionals(
-        self, active_run=None, tripped=None, conditionals=None, kind="live"
+            self, active_run=None, tripped=None, conditionals=None, kind="live"
     ):
         try:
 
@@ -1328,19 +1350,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         )
 
         for k in (
-            "signal_color",
-            "sniff_color",
-            "baseline_color",
-            "ms_pumptime_start",
-            "datahub",
-            "console_display",
-            "experiment_queue",
-            "spectrometer_manager",
-            "extraction_line_manager",
-            "ion_optics_manager",
-            "use_db_persistence",
-            "use_dvc_persistence",
-            "use_xls_persistence",
+                "signal_color",
+                "sniff_color",
+                "baseline_color",
+                "ms_pumptime_start",
+                "datahub",
+                "console_display",
+                "experiment_queue",
+                "spectrometer_manager",
+                "extraction_line_manager",
+                "ion_optics_manager",
+                "use_db_persistence",
+                "use_dvc_persistence",
+                "use_xls_persistence",
         ):
             setattr(arun, k, getattr(self, k))
 
@@ -1803,10 +1825,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if self.application:
                 self.debug("get service name={}".format(extract_device))
                 for protocol in (
-                    ILASER_PROTOCOL,
-                    IFURNACE_PROTOCOL,
-                    IPIPETTE_PROTOCOL,
-                    CRYO_PROTOCOL,
+                        ILASER_PROTOCOL,
+                        IFURNACE_PROTOCOL,
+                        IPIPETTE_PROTOCOL,
+                        CRYO_PROTOCOL,
                 ):
 
                     man = self.application.get_service(
@@ -1904,7 +1926,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if no_repo:
                 if inform:
                     if not self.confirmation_dialog(
-                        "Missing repository identifiers. Automatically populate?"
+                            "Missing repository identifiers. Automatically populate?"
                     ):
                         return
 
@@ -1979,14 +2001,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return True
 
         if (
-            not self.use_db_persistence
-            and not self.use_xls_persistence
-            and not self.use_dvc_persistence
+                not self.use_db_persistence
+                and not self.use_xls_persistence
+                and not self.use_dvc_persistence
         ):
             if not self.confirmation_dialog(
-                "You do not have any Database or XLS saving enabled. "
-                "Are you sure you want to continue?\n\n"
-                "Enable analysis saving in Preferences>>Experiment>>Automated Run"
+                    "You do not have any Database or XLS saving enabled. "
+                    "Are you sure you want to continue?\n\n"
+                    "Enable analysis saving in Preferences>>Experiment>>Automated Run"
             ):
                 return
 
@@ -2054,22 +2076,22 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if conditionals:
                 self.info("testing user defined conditionals")
                 if self._test_conditionals(
-                    run,
-                    conditionals,
-                    "Checking user defined pre extraction terminations",
-                    "Pre Extraction Termination",
-                    data=data,
+                        run,
+                        conditionals,
+                        "Checking user defined pre extraction terminations",
+                        "Pre Extraction Termination",
+                        data=data,
                 ):
                     return True
 
             if default_conditionals:
                 self.info("testing system defined conditionals")
                 if self._test_conditionals(
-                    run,
-                    default_conditionals,
-                    "Checking default pre extraction terminations",
-                    "Pre Extraction Termination",
-                    data=data,
+                        run,
+                        default_conditionals,
+                        "Checking default pre extraction terminations",
+                        "Pre Extraction Termination",
+                        data=data,
                 ):
                     return True
 
@@ -2112,8 +2134,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                     ret = False
                                 else:
                                     if self.confirmation_dialog(
-                                        "Laser tray not necessarily setup correctly."
-                                        "\n\nAre you sure you want to continue?"
+                                            "Laser tray not necessarily setup correctly."
+                                            "\n\nAre you sure you want to continue?"
                                     ):
                                         ret = False
 
@@ -2248,10 +2270,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # conditionals = self._load_queue_conditionals('post_run_actions', klass='ActionConditional')
         conditionals = self._load_queue_conditionals("post_run_actions")
         if self._action_conditionals(
-            run,
-            conditionals,
-            "Checking user defined post run actions",
-            "Post Run Action",
+                run,
+                conditionals,
+                "Checking user defined post run actions",
+                "Post Run Action",
         ):
             return True
 
@@ -2259,29 +2281,29 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # conditionals = self._load_default_conditionals('post_run_actions', klass='ActionConditional')
         conditionals = self._load_system_conditionals("post_run_actions")
         if self._action_conditionals(
-            run, conditionals, "Checking default post run actions", "Post Run Action"
+                run, conditionals, "Checking default post run actions", "Post Run Action"
         ):
             return True
 
         # check queue defined terminations
         conditionals = self._load_queue_conditionals("post_run_terminations")
         if self._test_conditionals(
-            run,
-            conditionals,
-            "Checking user defined post run terminations",
-            "Post Run Termination",
-            cgroup="terminations",
+                run,
+                conditionals,
+                "Checking user defined post run terminations",
+                "Post Run Termination",
+                cgroup="terminations",
         ):
             return True
 
         # check default terminations
         conditionals = self._load_system_conditionals("post_run_terminations")
         if self._test_conditionals(
-            run,
-            conditionals,
-            "Checking default post run terminations",
-            "Post Run Termination",
-            cgroup="terminations",
+                run,
+                conditionals,
+                "Checking default post run terminations",
+                "Post Run Termination",
+                cgroup="terminations",
         ):
             return True
 
@@ -2356,7 +2378,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     return True
 
     def _test_conditionals(
-        self, run, conditionals, message1, message2, cgroup=None, data=None, cnt=True
+            self, run, conditionals, message1, message2, cgroup=None, data=None, cnt=True
     ):
         if not self.alive:
             return True
@@ -2517,9 +2539,47 @@ Use Last "blank_{}"= {}
         # invoke_in_main_thread(self.trait_set, extraction_state_label=msg,
         #                       extraction_state_color=color)
 
+    def _update_timeseries(self):
+        if self.use_dvc_persistence:
+            dvc = self.datahub.mainstore
+            if self.experiment_queue:
+                ms = self.experiment_queue.mass_spectrometer
+            else:
+                if not self.timeseries_mass_spectrometers:
+                    self.timeseries_mass_spectrometers = dvc.get_mass_spectrometer_names()
+
+                info = self.edit_traits(view=okcancel_view(UItem('timeseries_mass_spectrometer',
+                                                                # label='Mass Spectrometer',
+                                                                editor=EnumEditor(
+                                                                    name='timeseries_mass_spectrometers')),
+                                                           title='Please Select a Mass Spectrometer'))
+                if info.result:
+                    ms = self.timeseries_mass_spectrometer
+                else:
+                    return
+            ans = dvc.get_last_n_analyses(
+                self.timeseries_n_recall, mass_spectrometer=ms, analysis_types=None, verbose=False
+            )
+            ans = dvc.make_analyses(ans, use_progress=False)
+
+            self.timeseries_editor.set_items(ans)
+            self.timeseries_editor.refresh()
+
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _timeseries_editor_button_fired(self):
+        self._update_timeseries()
+
+    def _configure_timeseries_editor_button_fired(self):
+
+        info = OptionsController(model=self.timeseries_options).edit_traits(
+            view=view('Timeseries Options'), kind="livemodal"
+        )
+        if info.result:
+            self.timeseries_editor.set_options(self.timeseries_options.selected_options)
+            self.timeseries_editor.refresh()
+
     def _measuring_run_changed(self):
         if self.measuring_run:
             self.measuring_run.is_last = self.end_at_run_completion
@@ -2586,6 +2646,18 @@ Use Last "blank_{}"= {}
     # ===============================================================================
     # defaults
     # ===============================================================================
+    def _timeseries_options_default(self):
+        opt = SeriesOptionsManager()
+        opt.set_names_via_keys(ARGON_KEYS)
+        return opt
+
+    def _timeseries_editor_default(self):
+        ed = AnalysisGroupedSeriesEditor()
+        ed.init(atypes=['blank_unknown', 'air', 'cocktail', 'blank_air', 'blank_cocktail'])
+        ed.set_options(self.timeseries_options.selected_options)
+
+        return ed
+
     def _dashboard_client_default(self):
         if self.use_dashboard_client:
             return self.application.get_service(
@@ -2629,6 +2701,5 @@ Use Last "blank_{}"= {}
                     "no automated run monitor available. "
                     "Make sure config file is located at setupfiles/monitors/automated_run_monitor.cfg"
                 )
-
 
 # ============= EOF =============================================

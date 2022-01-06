@@ -24,6 +24,8 @@ from traits.api import Str, List, Button, Instance, Tuple, Property, cached_prop
 from traitsui.api import Controller, Item
 
 from pychron.core.helpers.filetools import glob_list_directory, add_extension
+from pychron.core.helpers.isotope_utils import sort_detectors
+from pychron.core.helpers.strtools import ratio
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.file_defaults import (
     SPECTRUM_PRESENTATION,
@@ -68,6 +70,9 @@ from pychron.options.series import SeriesOptions
 from pychron.options.spectrum import SpectrumOptions
 from pychron.options.xy_scatter import XYScatterOptions
 from pychron.paths import paths
+from pychron.pipeline.plot.plotter.series import PEAK_CENTER, ANALYSIS_TYPE, LAB_TEMP, LAB_HUM, EXTRACT_DURATION, \
+    RADIOGENIC_YIELD, AGE
+from pychron.pychron_constants import EXTRACT_VALUE, CLEANUP, UNKNOWN, COCKTAIL, DETECTOR_IC
 
 
 class OptionsUnpickler(pickle.Unpickler):
@@ -160,7 +165,7 @@ class BaseOptionsManager(Loggable):
 
     def delete_selected(self):
         if self.confirmation_dialog(
-            'Are you sure you want to delete "{}"'.format(self.selected)
+                'Are you sure you want to delete "{}"'.format(self.selected)
         ):
             for ext in (".p", ".json"):
                 p = self._pname(self.selected, ext)
@@ -526,6 +531,45 @@ class SeriesOptionsManager(FigureOptionsManager):
     _defaults = (("screen", SERIES_SCREEN),)
     _default_options_txt = SERIES_SCREEN
 
+    def set_names_via_keys(self, iso_keys, analysis_type=None, detectors=None):
+        names = []
+        if iso_keys:
+            names.extend(iso_keys)
+            names.extend(["{}bs".format(ki) for ki in iso_keys])
+            names.extend(["{}ic".format(ki) for ki in iso_keys])
+
+            names.extend(ratio(iso_keys))
+            names.extend(ratio(iso_keys, invert=True))
+
+            if analysis_type in (UNKNOWN, COCKTAIL):
+                names.append(AGE)
+                names.append(RADIOGENIC_YIELD)
+
+            if analysis_type in (DETECTOR_IC,):
+                for i, di in enumerate(detectors):
+                    for j, dj in enumerate(detectors):
+                        if j < i:
+                            continue
+
+                        if di == dj:
+                            continue
+
+                        names.append("{}/{} DetIC".format(di, dj))
+
+        names.extend(
+            [
+                PEAK_CENTER,
+                ANALYSIS_TYPE,
+                LAB_TEMP,
+                LAB_HUM,
+                EXTRACT_VALUE,
+                EXTRACT_DURATION,
+                CLEANUP,
+            ]
+        )
+
+        self.set_names(names)
+
 
 class RatioSeriesOptionsManager(FigureOptionsManager):
     id = "ratio_series"
@@ -618,7 +662,6 @@ class OptionsController(Controller):
 
     def controller_factory_default_changed(self, info):
         self.model.factory_default()
-
 
 # if __name__ == '__main__':
 #     paths.build('_dev')

@@ -293,47 +293,11 @@ class SeriesNode(FigureNode):
         pom = self.plotter_options_manager
         if self.unknowns:
             unk = self.unknowns[0]
-            names = []
             iso_keys = unk.isotope_keys
-            if iso_keys:
-                names.extend(iso_keys)
-                names.extend(["{}bs".format(ki) for ki in iso_keys])
-                names.extend(["{}ic".format(ki) for ki in iso_keys])
+            isotopes = unk.isotopes
+            dets = sort_detectors(list({i.detector for i in isotopes.values()}))
 
-                names.extend(ratio(iso_keys))
-                names.extend(ratio(iso_keys, invert=True))
-
-                if unk.analysis_type in (UNKNOWN, COCKTAIL):
-                    names.append(AGE)
-                    names.append(RADIOGENIC_YIELD)
-
-                if unk.analysis_type in (DETECTOR_IC,):
-                    isotopes = unk.isotopes
-                    dets = sort_detectors(list({i.detector for i in isotopes.values()}))
-
-                    for i, di in enumerate(dets):
-                        for j, dj in enumerate(dets):
-                            if j < i:
-                                continue
-
-                            if di == dj:
-                                continue
-
-                            names.append("{}/{} DetIC".format(di, dj))
-
-            names.extend(
-                [
-                    PEAK_CENTER,
-                    ANALYSIS_TYPE,
-                    LAB_TEMP,
-                    LAB_HUM,
-                    EXTRACT_VALUE,
-                    EXTRACT_DURATION,
-                    CLEANUP,
-                ]
-            )
-
-            pom.set_names(names)
+            pom.set_names_via_keys(iso_keys, analysis_type=unk.analysis_type, detectors=dets)
 
 
 class RegressionSeriesNode(SeriesNode):

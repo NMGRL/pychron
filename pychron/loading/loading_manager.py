@@ -516,6 +516,7 @@ class LoadingManager(DVCIrradiationable):
             except MetaObjectException as e:
                 self.warning(e)
             except BaseException:
+                self.debug_exception()
                 self.warning_dialog(
                     '"{}" is an invalid load holder file. '
                     "Holder unavailable until its fixed".format(ti)
