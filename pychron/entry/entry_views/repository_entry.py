@@ -21,6 +21,13 @@ from pychron.core.pychron_traits import BorderHGroup
 from pychron.core.ui.strings import SpacelessStr
 from pychron.entry.entry_views.entry import BaseEntry, OKButton, STYLESHEET
 
+LICENSES = {
+    "GNU General Public License v3.0": "gpl-3.0",
+    "Apache 2.0": "apache-2.0",
+    "Creative Commons Attribution 4.0": "cc-by-4.0",
+    "Academic Free License v3.0": "afl-3.0",
+}
+
 
 class RepositoryIdentifierEntry(BaseEntry):
     tag = "Repository Identifier"
@@ -28,14 +35,7 @@ class RepositoryIdentifierEntry(BaseEntry):
     principal_investigators = List
     value = SpacelessStr
     readme = Str
-    license_template_name = Enum(
-        {
-            "GNU General Public License v3.0": "gpl-3.0",
-            "Apache 2.0": "apache-2.0",
-            "Creative Commons Attribution 4.0": "cc-by-4.0",
-            "Academic Free License v3.0": "afl-3.0",
-        }
-    )
+    license_template_name = Enum(LICENSES.keys())
 
     def _add_item(self):
         with self.dvc.session_ctx(use_parent_session=False):
@@ -54,10 +54,15 @@ class RepositoryIdentifierEntry(BaseEntry):
                 return
 
             ret = True
+
+            template = LICENSES.get(self.license_template_name)
+            if not template:
+                template = "gpl-3.0"
+
             if not self.dvc.add_repository(
                 self.value,
                 self.principal_investigator,
-                license_template=self.license_template_name,
+                license_template=template,
             ):
                 ret = False
                 if not self.confirmation_dialog(
