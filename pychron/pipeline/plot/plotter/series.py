@@ -231,6 +231,11 @@ class BaseSeries(BaseArArFigure):
             #     mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
             #     graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
 
+            if self.options.guides:
+                for gi in self.options.guides:
+                    if gi.visible and gi.should_plot(pid):
+                        graph.add_guide(gi.value, **gi.to_kwargs(), plotid=pid)
+
         except (KeyError, ZeroDivisionError, AttributeError) as e:
             import traceback
 

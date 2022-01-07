@@ -500,7 +500,7 @@ class TimeSeriesPane(TraitsDockPane):
                 Item("timeseries_n_recall", label="N. Analyses"),
                 spring,
                 icon_button_editor("timeseries_editor_button", "arrow_refresh"),
-                icon_button_editor("configure_timeseries_editor_button", "cog"),
+                # icon_button_editor("configure_timeseries_editor_button", "cog"),
             ),
             UItem("timeseries_editor", style="custom"),
         )

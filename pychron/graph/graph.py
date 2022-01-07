@@ -917,13 +917,12 @@ class Graph(ContextMenuMixin):
 
         plot.overlays.append(RangeSelectionOverlay(component=plot))
 
-    def add_guide(self, value, orientation="h", plotid=0, color=(0, 0, 0)):
+    def add_guide(self, value, plotid=0, **kw):
         """ """
         plot = self.plots[plotid]
 
         from pychron.graph.guide_overlay import GuideOverlay
-
-        guide_overlay = GuideOverlay(component=plot, value=value, color=color)
+        guide_overlay = GuideOverlay(component=plot, value=value, **kw)
         plot.overlays.append(guide_overlay)
 
     def add_vertical_rule(self, v, **kw):

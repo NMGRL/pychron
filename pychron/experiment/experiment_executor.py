@@ -195,8 +195,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     timeseries_editor = Instance(AnalysisGroupedSeriesEditor)
     timeseries_editor_button = Event
-    configure_timeseries_editor_button = Event
-    timeseries_options = Instance(SeriesOptionsManager)
+    # configure_timeseries_editor_button = Event
+    # timeseries_options = Instance(SeriesOptionsManager)
     timeseries_n_recall = PositiveInteger(50)
     timeseries_mass_spectrometer = Str
     timeseries_mass_spectrometers = List
@@ -2587,14 +2587,14 @@ Use Last "blank_{}"= {}
     def _timeseries_editor_button_fired(self):
         self._update_timeseries()
 
-    def _configure_timeseries_editor_button_fired(self):
-
-        info = OptionsController(model=self.timeseries_options).edit_traits(
-            view=view("Timeseries Options"), kind="livemodal"
-        )
-        if info.result:
-            self.timeseries_editor.set_options(self.timeseries_options.selected_options)
-            self.timeseries_editor.refresh()
+    # def _configure_timeseries_editor_button_fired(self):
+    #
+    #     info = OptionsController(model=self.timeseries_options).edit_traits(
+    #         view=view("Timeseries Options"), kind="livemodal"
+    #     )
+    #     if info.result:
+    #         self.timeseries_editor.set_options(self.timeseries_options.selected_options)
+    #         self.timeseries_editor.refresh()
 
     def _measuring_run_changed(self):
         if self.measuring_run:
@@ -2662,17 +2662,17 @@ Use Last "blank_{}"= {}
     # ===============================================================================
     # defaults
     # ===============================================================================
-    def _timeseries_options_default(self):
-        opt = SeriesOptionsManager()
-        opt.set_names_via_keys(ARGON_KEYS)
-        return opt
+    # def _timeseries_options_default(self):
+    #     opt = SeriesOptionsManager()
+    #     opt.set_names_via_keys(ARGON_KEYS)
+    #     return opt
 
     def _timeseries_editor_default(self):
         ed = AnalysisGroupedSeriesEditor()
         ed.init(
-            atypes=["blank_unknown", "air", "cocktail", "blank_air", "blank_cocktail"]
+            atypes=["air", "cocktail", "blank_unknown", "blank_air", "blank_cocktail"]
         )
-        ed.set_options(self.timeseries_options.selected_options)
+        # ed.set_options(self.timeseries_options.selected_options)
 
         return ed
 
