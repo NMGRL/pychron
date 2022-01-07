@@ -1271,7 +1271,7 @@ class DVCDatabase(DatabaseAdapter):
                 q = analysis_type_filter(q, analysis_types)
             if exclude_types:
                 if not isinstance(exclude_types, (tuple, list)):
-                    exclude_types = (exclude_types, )
+                    exclude_types = (exclude_types,)
                 q = q.filter(AnalysisTbl.analysis_type.notin_(exclude_types))
 
             if excluded_uuids:
