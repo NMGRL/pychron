@@ -123,30 +123,45 @@ class GuidesOptions(SubOptions):
     def traits_view(self):
         cols = [
             CheckboxColumn(name="visible", label="Visible"),
-            ObjectColumn(name="value", label='Value', width=200),
-            ObjectColumn(name="orientation", label='Orientation'),
-            ObjectColumn(name='plotname',
-                         editor=EnumEditor(name='plotnames'),
-                         label='Plot')
+            ObjectColumn(name="value", label="Value", width=200),
+            ObjectColumn(name="orientation", label="Orientation"),
+            ObjectColumn(
+                name="plotname", editor=EnumEditor(name="plotnames"), label="Plot"
+            )
             # ObjectColumn(name="alpha", label="Opacity"),
             # ObjectColumn(name="color", label="Color"),
             # ObjectColumn(name="line_style", label='Style'),
             # ObjectColumn(name="line_width", label='Width'),
         ]
-        edit_view = View(Item('label', label='Label'),
-                         Item('alpha', label='Opacity'),
-                         UItem('color'),
-                         UItem("line_style", label='Style'),
-                         UItem("line_width", label='Width'),
-                         )
-        return self._make_view(VGroup(HGroup(icon_button_editor('controller.add_guide_button', 'add'),
-                                             icon_button_editor('controller.delete_guide_button', 'delete',
-                                                                enabled_when='controller.selected')),
-                                      UItem('guides', editor=TableEditor(columns=cols,
-                                                                         sortable=False,
-                                                                         edit_view=edit_view,
-                                                                         orientation="vertical",
-                                                                         selected='controller.selected'))))
+        edit_view = View(
+            Item("label", label="Label"),
+            Item("alpha", label="Opacity"),
+            UItem("color"),
+            UItem("line_style", label="Style"),
+            UItem("line_width", label="Width"),
+        )
+        return self._make_view(
+            VGroup(
+                HGroup(
+                    icon_button_editor("controller.add_guide_button", "add"),
+                    icon_button_editor(
+                        "controller.delete_guide_button",
+                        "delete",
+                        enabled_when="controller.selected",
+                    ),
+                ),
+                UItem(
+                    "guides",
+                    editor=TableEditor(
+                        columns=cols,
+                        sortable=False,
+                        edit_view=edit_view,
+                        orientation="vertical",
+                        selected="controller.selected",
+                    ),
+                ),
+            )
+        )
 
 
 # ===============================================================
@@ -155,7 +170,7 @@ VIEWS = {
     "main": SeriesMainOptions,
     "series": SeriesSubOptions,
     "appearance": SeriesAppearance,
-    'guides': GuidesOptions,
+    "guides": GuidesOptions,
 }
 # VIEWS['series'] = SeriesSubOptions
 # VIEWS['appearance'] = SeriesAppearance

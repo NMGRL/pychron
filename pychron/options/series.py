@@ -30,9 +30,9 @@ class SeriesFitAuxPlot(FitAuxPlot):
         key = self.name
 
         if self.use_dev:
-            key = '{} Dev'.format(key)
+            key = "{} Dev".format(key)
         elif self.use_percent_dev:
-            key = '{} %Dev'.format(key)
+            key = "{} %Dev".format(key)
 
         return key
 
@@ -79,7 +79,7 @@ class SeriesOptions(FitOptions):
 
     # use_restricted_references = Bool
     def initialize(self):
-        self.subview_names = [MAIN, "Series", APPEARANCE, 'Guides']
+        self.subview_names = [MAIN, "Series", APPEARANCE, "Guides"]
 
     def _get_subview(self, name):
         return VIEWS[name]

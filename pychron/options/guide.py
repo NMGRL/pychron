@@ -37,9 +37,10 @@ class Guide(HasTraits):
         return ret
 
     def to_kwargs(self):
-        return {attr: getattr(self, attr) for attr in ('orientation',
-                                                       'color',
-                                                       'line_style',
-                                                       'alpha',
-                                                       'line_width')}
+        return {
+            attr: getattr(self, attr)
+            for attr in ("orientation", "color", "line_style", "alpha", "line_width")
+        }
+
+
 # ============= EOF =============================================

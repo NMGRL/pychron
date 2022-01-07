@@ -922,6 +922,7 @@ class Graph(ContextMenuMixin):
         plot = self.plots[plotid]
 
         from pychron.graph.guide_overlay import GuideOverlay
+
         guide_overlay = GuideOverlay(component=plot, value=value, **kw)
         plot.overlays.append(guide_overlay)
 

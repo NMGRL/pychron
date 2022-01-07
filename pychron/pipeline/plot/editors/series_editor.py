@@ -38,7 +38,7 @@ TOOLTIP_MAP = {
     "n": "Number of data points",
     "std": "Standard Deviation",
     "se": "Standard Error, aka Taylor error.  1/sqrt(sum(weights)). If data has no errors this column "
-          "will be a replica of SD column",
+    "will be a replica of SD column",
     "sem": "Standard Error of the Mean.  SD/sqrt(n)",
     "mswd": "MSWD of the current fit type",
     "mean_mswd": "MSWD of a mean fit to the data",
@@ -133,7 +133,9 @@ class SeriesEditor(FigureEditor):
 
     def traits_view(self):
 
-        v = View(VSplit(self.get_component_view(), self.get_table_view()), resizable=True)
+        v = View(
+            VSplit(self.get_component_view(), self.get_table_view()), resizable=True
+        )
         return v
 
 
@@ -147,7 +149,7 @@ class AnalysisTypeSeriesEditor(SeriesEditor):
         self.plotter_options = self.options_manager.selected_options
 
     def _options_manager_default(self):
-        opt = SeriesOptionsManager(id='{}_series'.format(self.analysis_type))
+        opt = SeriesOptionsManager(id="{}_series".format(self.analysis_type))
         opt.set_names_via_keys(ARGON_KEYS)
         return opt
 
@@ -160,8 +162,13 @@ class AnalysisTypeSeriesEditor(SeriesEditor):
             self.refresh_needed = True
 
     def traits_view(self):
-        return View(VGroup(icon_button_editor('configure_plotter_options_button', 'cog'),
-                           VSplit(self.get_component_view(), self.get_table_view())), resizable=True)
+        return View(
+            VGroup(
+                icon_button_editor("configure_plotter_options_button", "cog"),
+                VSplit(self.get_component_view(), self.get_table_view()),
+            ),
+            resizable=True,
+        )
 
 
 class AnalysisGroupedSeriesEditor(BaseTraitsEditor):
@@ -194,5 +201,6 @@ class AnalysisGroupedSeriesEditor(BaseTraitsEditor):
                 editor=ListEditor(use_notebook=True, page_name=".analysis_type"),
             )
         )
+
 
 # ============= EOF =============================================
