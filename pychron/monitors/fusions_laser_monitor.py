@@ -53,6 +53,8 @@ class FusionsLaserMonitor(LaserMonitor):
         super(FusionsLaserMonitor, self).load_additional_args(self)
         self.set_attribute(config, 'max_coolant_temp',
                            'General', 'max_coolant_temp', cast='float', optional=True)
+        self.set_attribute(config, 'max_unavailable',
+                           'General', 'max_unavailable', cast='int', optional=True, default=3)
 
     def _fcheck_interlocks(self):
         """
