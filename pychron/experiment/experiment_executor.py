@@ -2573,7 +2573,7 @@ Use Last "blank_{}"= {}
                 ans = dvc.get_last_n_analyses(
                     self.timeseries_n_recall,
                     mass_spectrometer=ms,
-                    analysis_types=None,
+                    exclude_types=('unknown',),
                     verbose=False,
                 )
                 ans = dvc.make_analyses(ans, use_progress=False)
