@@ -731,7 +731,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                     self.info("overlaping")
 
-                    t = Thread(target=self._do_run, args=(run, delay_after_previous_analysis), name=run.runid)
+                    t = Thread(
+                        target=self._do_run,
+                        args=(run, delay_after_previous_analysis),
+                        name=run.runid,
+                    )
                     t.start()
 
                     run.wait_for_overlap()

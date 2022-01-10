@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from traits.api import List, Int, HasTraits, Str, Bool
 from traitsui.api import View, UItem, Item, HGroup, VGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -27,17 +28,17 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class WatchDogPreferences(BasePreferencesHelper):
-    id = 'pychron.watchdog'
+    id = "pychron.watchdog"
     host = HostStr
     port = Int
 
 
 class WatchDogPreferencesPane(PreferencesPane):
-    category = 'WatchDog'
+    category = "WatchDog"
     model_factory = WatchDogPreferences
 
     def traits_view(self):
-        v = View(Item('host'), Item('port'))
+        v = View(Item("host"), Item("port"))
         return v
 
 

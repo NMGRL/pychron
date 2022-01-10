@@ -16,20 +16,28 @@
 
 # ============= enthought library imports =======================
 from traits.api import List, Int, HasTraits, Str, Bool, Float, Instance
+
 # ============= standard library imports ========================
 import datetime
 import time
 import requests
+
 # ============= local library imports  ==========================
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.experiment.events import ExperimentEventAddition, START_QUEUE, END_QUEUE, START_RUN, END_RUN
+from pychron.experiment.events import (
+    ExperimentEventAddition,
+    START_QUEUE,
+    END_QUEUE,
+    START_RUN,
+    END_RUN,
+)
 from pychron.watchdog.tasks.preferences import WatchDogPreferencesPane
 from pychron.loggable import Loggable
 
 
 def make_exp_key(ctx):
-    return '{}.{}'.format(ctx['mass_spectrometer'], ctx['experiment_name'])
+    return "{}.{}".format(ctx["mass_spectrometer"], ctx["experiment_name"])
 
 
 class WatchDogWorker(Loggable):
@@ -42,55 +50,55 @@ class WatchDogWorker(Loggable):
         self._bind_preferences()
 
     def _bind_preferences(self):
-        prefid = 'pychron.watchdog'
-        bind_preference(self, 'host', '{}.host'.format(prefid))
-        bind_preference(self, 'port', '{}.port'.format(prefid))
-        bind_preference(self, 'pad', '{}.pad'.format(prefid))
+        prefid = "pychron.watchdog"
+        bind_preference(self, "host", "{}.host".format(prefid))
+        bind_preference(self, "port", "{}.port".format(prefid))
+        bind_preference(self, "pad", "{}.pad".format(prefid))
 
     def run_start(self, ctx):
-        self.debug('run start')
-        url = self._make_url('run_start')
+        self.debug("run start")
+        url = self._make_url("run_start")
 
         exp_id = make_exp_key(ctx)
-        expire = self._make_expire(ctx['current_run_duration'])
-        resp = requests.post(url, json={'key': exp_id, 'expire': expire})
-        self.debug('run start resp={}'.format(resp.json()))
+        expire = self._make_expire(ctx["current_run_duration"])
+        resp = requests.post(url, json={"key": exp_id, "expire": expire})
+        self.debug("run start resp={}".format(resp.json()))
 
     def run_end(self, ctx):
-        self.debug('run end')
-        url = self._make_url('run_end')
+        self.debug("run end")
+        url = self._make_url("run_end")
 
         exp_id = make_exp_key(ctx)
-        expire = self._make_expire(ctx['delay_after_run'])
-        resp = requests.post(url, json={'key': exp_id, 'expire': expire})
-        self.debug('run end resp={}'.format(resp.json()))
+        expire = self._make_expire(ctx["delay_after_run"])
+        resp = requests.post(url, json={"key": exp_id, "expire": expire})
+        self.debug("run end resp={}".format(resp.json()))
 
     def experiment_start(self, ctx):
-        self.debug('experiment start')
-        url = self._make_url('experiment_start')
+        self.debug("experiment start")
+        url = self._make_url("experiment_start")
 
         exp_id = make_exp_key(ctx)
-        expire = self._make_expire(ctx['exp'].delay_before_analyses)
-        resp = requests.post(url, json={'key': exp_id, 'expire': expire})
-        self.debug('experiment start resp={}'.format(resp.json()))
+        expire = self._make_expire(ctx["exp"].delay_before_analyses)
+        resp = requests.post(url, json={"key": exp_id, "expire": expire})
+        self.debug("experiment start resp={}".format(resp.json()))
 
     def experiment_end(self, ctx):
-        self.debug('experiment end')
-        url = self._make_url('experiment_end')
+        self.debug("experiment end")
+        url = self._make_url("experiment_end")
 
         exp_id = make_exp_key(ctx)
-        resp = requests.post(url, json={'key': exp_id})
-        self.debug('experiment end resp={}'.format(resp.json()))
+        resp = requests.post(url, json={"key": exp_id})
+        self.debug("experiment end resp={}".format(resp.json()))
 
     def _make_expire(self, value):
-        return time.time()+float(value)*self.pad
+        return time.time() + float(value) * self.pad
 
     def _make_url(self, tag):
-        return '{}:{}/{}'.format(self.host, self.port, tag)
+        return "{}:{}/{}".format(self.host, self.port, tag)
 
 
 class WatchDogPlugin(BaseTaskPlugin):
-    id = 'pychron.watchdog.plugin'
+    id = "pychron.watchdog.plugin"
     events = List(contributes_to="pychron.experiment.events")
     worker = Instance(WatchDogWorker, ())
 
@@ -98,7 +106,7 @@ class WatchDogPlugin(BaseTaskPlugin):
         e1 = ExperimentEventAddition(
             id="pychron.watchdog.experiment_start",
             action=self.worker.experiment_start,
-            level=START_QUEUE
+            level=START_QUEUE,
         )
         e2 = ExperimentEventAddition(
             id="pychron.watchdog.experiment_end",
@@ -135,5 +143,6 @@ class WatchDogPlugin(BaseTaskPlugin):
 
     def _preferences_panes_default(self):
         return [WatchDogPreferencesPane]
+
 
 # ============= EOF =============================================
