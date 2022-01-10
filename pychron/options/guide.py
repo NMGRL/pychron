@@ -30,7 +30,6 @@ class Guide(HasTraits):
 
     def should_plot(self, plot):
         ret = True
-        print(plot, self.plotname, self.plotnames)
         if self.plotname:
             ps = list(reversed(self.plotnames))
             ret = ps.index(self.plotname) == plot

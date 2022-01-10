@@ -2584,7 +2584,7 @@ Use Last "blank_{}"= {}
                 ans = dvc.make_analyses(ans, use_progress=False)
 
                 self.timeseries_editor.set_items(ans)
-                self.timeseries_editor.refresh()
+                invoke_in_main_thread(self.timeseries_editor, 'refresh')
 
     # ===============================================================================
     # handlers
