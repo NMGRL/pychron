@@ -28,7 +28,7 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class WatchDogPreferences(BasePreferencesHelper):
-    id = "pychron.watchdog"
+    preferences_path = "pychron.watchdog"
     host = HostStr
     port = Int
 

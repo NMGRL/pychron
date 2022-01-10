@@ -113,12 +113,12 @@ class GuidesOptions(SubOptions):
         else:
             g = Guide()
 
-        g.plotnames = self.model.get_aux_plot_names()
+        g.plotnames = list(reversed(self.model.get_aux_plot_names()))
         self.model.guides.append(g)
 
     def _delete_guide_button_fired(self):
         if self.selected:
-            self.model.guides.remote(self.selected)
+            self.model.guides.remove(self.selected)
 
     def traits_view(self):
         cols = [

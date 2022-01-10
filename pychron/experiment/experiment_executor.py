@@ -487,7 +487,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             exp = self.experiment_queue
 
         ctx = {
-            "current_run_duration": self.stats.current_run_duration,
+            "current_run_duration": self.stats.current_run_duration_f,
             "etf_iso": self.stats.etf_iso,
             "err_message": self._err_message,
             "canceled": self._canceled,
@@ -747,7 +747,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 else:
                     is_first_flag = True
                     last_runid = run.runid
-                    self._join_run(spec, run)
+                    self._join_run(spec, run, delay_after_previous_analysis)
 
                 # self.tracker.stats.print_summary()
 
@@ -856,9 +856,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ct = currentThread()
         ct.name = name
 
-    def _join_run(self, spec, run):
+    def _join_run(self, spec, run, delay_after_run):
         self.debug("join run")
-        self._do_run(run)
+        self._do_run(run, delay_after_run)
 
         self.debug("{} finished".format(run.runid))
         if self.is_alive():

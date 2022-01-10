@@ -78,7 +78,7 @@ class WatchDogWorker(Loggable):
         url = self._make_url("experiment_start")
 
         exp_id = make_exp_key(ctx)
-        expire = self._make_expire(ctx["exp"].delay_before_analyses)
+        expire = self._make_expire(60)
         resp = requests.post(url, json={"key": exp_id, "expire": expire})
         self.debug("experiment start resp={}".format(resp.json()))
 
@@ -91,10 +91,10 @@ class WatchDogWorker(Loggable):
         self.debug("experiment end resp={}".format(resp.json()))
 
     def _make_expire(self, value):
-        return time.time() + float(value) * self.pad
+        return float(value) * self.pad
 
     def _make_url(self, tag):
-        return "{}:{}/{}".format(self.host, self.port, tag)
+        return "http://{}:{}/{}".format(self.host, self.port, tag)
 
 
 class WatchDogPlugin(BaseTaskPlugin):
@@ -123,7 +123,7 @@ class WatchDogPlugin(BaseTaskPlugin):
             level=END_RUN,
             action=self.worker.run_end,
         )
-        return [e1, e2, e3]
+        return [e1, e2, e3, e4]
 
     # def _service_offers_default(self):
     #     """
