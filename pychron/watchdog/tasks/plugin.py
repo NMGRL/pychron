@@ -23,7 +23,7 @@ import requests
 # ============= local library imports  ==========================
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.experiment.events import ExperimentEventAddition, START_QUEUE, END_QUEUE, START_RUN
+from pychron.experiment.events import ExperimentEventAddition, START_QUEUE, END_QUEUE, START_RUN, END_RUN
 from pychron.watchdog.tasks.preferences import WatchDogPreferencesPane
 from pychron.loggable import Loggable
 
@@ -47,7 +47,7 @@ class WatchDogWorker(Loggable):
         bind_preference(self, 'port', '{}.port'.format(prefid))
         bind_preference(self, 'pad', '{}.pad'.format(prefid))
 
-    def _run_start(self, ctx):
+    def run_start(self, ctx):
         self.debug('run start')
         url = self._make_url('run_start')
 
@@ -56,7 +56,7 @@ class WatchDogWorker(Loggable):
         resp = requests.post(url, json={'key': exp_id, 'expire': expire})
         self.debug('run start resp={}'.format(resp.json()))
 
-    def _run_end(self, ctx):
+    def run_end(self, ctx):
         self.debug('run end')
         url = self._make_url('run_end')
 
@@ -65,7 +65,7 @@ class WatchDogWorker(Loggable):
         resp = requests.post(url, json={'key': exp_id, 'expire': expire})
         self.debug('run end resp={}'.format(resp.json()))
 
-    def _experiment_start(self, ctx):
+    def experiment_start(self, ctx):
         self.debug('experiment start')
         url = self._make_url('experiment_start')
 
@@ -74,7 +74,7 @@ class WatchDogWorker(Loggable):
         resp = requests.post(url, json={'key': exp_id, 'expire': expire})
         self.debug('experiment start resp={}'.format(resp.json()))
 
-    def _experiment_end(self, ctx):
+    def experiment_end(self, ctx):
         self.debug('experiment end')
         url = self._make_url('experiment_end')
 
@@ -85,10 +85,7 @@ class WatchDogWorker(Loggable):
     def _make_expire(self, value):
         return time.time()+float(value)*self.pad
 
-    
-
     def _make_url(self, tag):
-
         return '{}:{}/{}'.format(self.host, self.port, tag)
 
 
@@ -100,20 +97,24 @@ class WatchDogPlugin(BaseTaskPlugin):
     def _events_default(self):
         e1 = ExperimentEventAddition(
             id="pychron.watchdog.experiment_start",
-            action=self._experiment_start,
+            action=self.worker.experiment_start,
             level=START_QUEUE
         )
         e2 = ExperimentEventAddition(
             id="pychron.watchdog.experiment_end",
             level=END_QUEUE,
-            action=self._experiment_end,
+            action=self.worker.experiment_end,
         )
         e3 = ExperimentEventAddition(
             id="pychron.watchdog.run_start",
             level=START_RUN,
-            action=self._run_start,
+            action=self.worker.run_start,
         )
-
+        e4 = ExperimentEventAddition(
+            id="pychron.watchdog.run_end",
+            level=END_RUN,
+            action=self.worker.run_end,
+        )
         return [e1, e2, e3]
 
     # def _service_offers_default(self):
