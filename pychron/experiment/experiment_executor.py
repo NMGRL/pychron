@@ -487,6 +487,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             exp = self.experiment_queue
 
         ctx = {
+            "current_run_duration": self.stats.current_run_duration,
             "etf_iso": self.stats.etf_iso,
             "err_message": self._err_message,
             "canceled": self._canceled,
@@ -730,7 +731,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                     self.info("overlaping")
 
-                    t = Thread(target=self._do_run, args=(run,), name=run.runid)
+                    t = Thread(target=self._do_run, args=(run, delay_after_previous_analysis), name=run.runid)
                     t.start()
 
                     run.wait_for_overlap()
@@ -884,7 +885,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             self._prev_baselines = run.get_baselines()
 
-    def _do_run(self, run):
+    def _do_run(self, run, delay_after_run):
         self._set_thread_name(run.runid)
         # add a new log handler
 
@@ -990,7 +991,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # close conditionals view
         # self._close_cv()
 
-        self._do_event(events.END_RUN, run=run)
+        self._do_event(events.END_RUN, run=run, delay_after_run=delay_after_run)
 
         remove_root_handler(handler)
         run.post_finish()
