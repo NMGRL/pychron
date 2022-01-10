@@ -199,9 +199,7 @@ class StatsGroup(Loggable):
         self.current_run_duration = self.active_queue.stats.get_run_duration(
             run.spec, as_str=True
         )
-        self.current_run_duration_f = self.active_queue.stats.get_run_duration(
-            run.spec
-        )
+        self.current_run_duration_f = self.active_queue.stats.get_run_duration(run.spec)
 
     def finish_run(self):
         self._run_start = 0
