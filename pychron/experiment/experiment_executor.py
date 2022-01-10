@@ -195,8 +195,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     timeseries_editor = Instance(AnalysisGroupedSeriesEditor)
     timeseries_editor_button = Event
-    configure_timeseries_editor_button = Event
-    timeseries_options = Instance(SeriesOptionsManager)
+    # configure_timeseries_editor_button = Event
+    # timeseries_options = Instance(SeriesOptionsManager)
     timeseries_n_recall = PositiveInteger(50)
     timeseries_mass_spectrometer = Str
     timeseries_mass_spectrometers = List
@@ -487,6 +487,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             exp = self.experiment_queue
 
         ctx = {
+            "current_run_duration": self.stats.current_run_duration,
             "etf_iso": self.stats.etf_iso,
             "err_message": self._err_message,
             "canceled": self._canceled,
@@ -730,7 +731,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                     self.info("overlaping")
 
-                    t = Thread(target=self._do_run, args=(run,), name=run.runid)
+                    t = Thread(
+                        target=self._do_run,
+                        args=(run, delay_after_previous_analysis),
+                        name=run.runid,
+                    )
                     t.start()
 
                     run.wait_for_overlap()
@@ -884,7 +889,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             self._prev_baselines = run.get_baselines()
 
-    def _do_run(self, run):
+    def _do_run(self, run, delay_after_run):
         self._set_thread_name(run.runid)
         # add a new log handler
 
@@ -990,7 +995,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # close conditionals view
         # self._close_cv()
 
-        self._do_event(events.END_RUN, run=run)
+        self._do_event(events.END_RUN, run=run, delay_after_run=delay_after_run)
 
         remove_root_handler(handler)
         run.post_finish()
@@ -2587,14 +2592,14 @@ Use Last "blank_{}"= {}
     def _timeseries_editor_button_fired(self):
         self._update_timeseries()
 
-    def _configure_timeseries_editor_button_fired(self):
-
-        info = OptionsController(model=self.timeseries_options).edit_traits(
-            view=view("Timeseries Options"), kind="livemodal"
-        )
-        if info.result:
-            self.timeseries_editor.set_options(self.timeseries_options.selected_options)
-            self.timeseries_editor.refresh()
+    # def _configure_timeseries_editor_button_fired(self):
+    #
+    #     info = OptionsController(model=self.timeseries_options).edit_traits(
+    #         view=view("Timeseries Options"), kind="livemodal"
+    #     )
+    #     if info.result:
+    #         self.timeseries_editor.set_options(self.timeseries_options.selected_options)
+    #         self.timeseries_editor.refresh()
 
     def _measuring_run_changed(self):
         if self.measuring_run:
@@ -2662,17 +2667,17 @@ Use Last "blank_{}"= {}
     # ===============================================================================
     # defaults
     # ===============================================================================
-    def _timeseries_options_default(self):
-        opt = SeriesOptionsManager()
-        opt.set_names_via_keys(ARGON_KEYS)
-        return opt
+    # def _timeseries_options_default(self):
+    #     opt = SeriesOptionsManager()
+    #     opt.set_names_via_keys(ARGON_KEYS)
+    #     return opt
 
     def _timeseries_editor_default(self):
         ed = AnalysisGroupedSeriesEditor()
         ed.init(
-            atypes=["blank_unknown", "air", "cocktail", "blank_air", "blank_cocktail"]
+            atypes=["air", "cocktail", "blank_unknown", "blank_air", "blank_cocktail"]
         )
-        ed.set_options(self.timeseries_options.selected_options)
+        # ed.set_options(self.timeseries_options.selected_options)
 
         return ed
 

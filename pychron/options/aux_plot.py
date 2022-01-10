@@ -118,6 +118,9 @@ class AuxPlot(HasTraits):
 
     use_integer_ticks = False
 
+    def get_keyname(self):
+        return self.name
+
     def get_ytitle(self, k):
         t = self.ytitle
         if not t:

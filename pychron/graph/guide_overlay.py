@@ -78,16 +78,17 @@ class GuideOverlay(AbstractOverlay):
     line_style = LineStyle("dash")
     line_width = Float(1)
     display_value = False
-
+    alpha = Float(1)
     label = Instance(Label, ())
 
     def overlay(self, component, gc, view_bounds=None, mode="normal"):
         with gc:
             gc.clip_to_rect(component.x, component.y, component.width, component.height)
             with gc:
-                gc.set_line_dash(self.line_style_)
                 gc.set_line_width(self.line_width)
+                gc.set_line_dash(self.line_style_)
                 gc.set_stroke_color(self.color_)
+                gc.set_alpha(self.alpha)
                 gc.begin_path()
 
                 if self.orientation == "h":
@@ -101,7 +102,7 @@ class GuideOverlay(AbstractOverlay):
 
                 gc.move_to(x1, y1)
                 gc.line_to(x2, y2)
-                gc.stroke_path()
+                gc.draw_path()
 
             if self.display_value:
                 with gc:
