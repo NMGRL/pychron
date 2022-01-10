@@ -91,7 +91,7 @@ class WatchDogWorker(Loggable):
         self.debug("experiment end resp={}".format(resp.json()))
 
     def _make_expire(self, value):
-        return min(60, float(value)) * self.pad
+        return max(60, float(value)) * self.pad
 
     def _make_url(self, tag):
         return "http://{}:{}/{}".format(self.host, self.port, tag)
