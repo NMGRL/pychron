@@ -58,7 +58,7 @@ class WatchDogWorker(Loggable):
     def test_api(self):
         ret, err = True, ""
         try:
-            self._get('status')
+            self._get("status")
         except BaseException as e:
             ret = False
             err = str(e)
