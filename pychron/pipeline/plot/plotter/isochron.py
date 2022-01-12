@@ -610,7 +610,7 @@ class InverseIsochron(Isochron):
                     th += h + opt.results_info_spacing
 
             label = OffsetPlotLabel(
-                offset=(2, th+2),
+                offset=(2, th + 2),
                 component=plot,
                 overlay_position="inside bottom",
                 border_visible=False,

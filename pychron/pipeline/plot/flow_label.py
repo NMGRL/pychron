@@ -112,4 +112,5 @@ class FlowDataLabel(DataLabel):
             yd = self.component.y2 - h - 2 * self.border_padding - self.line_spacing
             self.y = min((self.y, yd))
 
+
 # ============= EOF =============================================
