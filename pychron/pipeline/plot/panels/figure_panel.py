@@ -50,8 +50,9 @@ class FigurePanel(HasTraits):
         self.figures = self._make_figures()
 
     def _figure_factory(self, *args, **kw):
-        return self._figure_klass(options=self.plot_options,
-                                  equi_stack=self.equi_stack, *args, **kw)
+        return self._figure_klass(
+            options=self.plot_options, equi_stack=self.equi_stack, *args, **kw
+        )
 
     def _make_figures(self, **kw):
         gs = [
