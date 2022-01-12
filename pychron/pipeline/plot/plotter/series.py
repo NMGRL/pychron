@@ -226,7 +226,7 @@ class BaseSeries(BaseArArFigure):
             if po.y_error and yerr is not None:
                 s = self.options.error_bar_nsigma
                 ec = self.options.end_caps
-                self._add_error_bars(scatter, yerr, "y", s, ec, visible=True)
+                self._add_error_bars(scatter, yerr, "y", s, end_caps=ec, visible=True)
 
             # if set_ylimits and not po.has_ylimits():
             #     mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
