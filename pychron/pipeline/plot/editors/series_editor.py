@@ -150,7 +150,12 @@ class AnalysisTypeSeriesEditor(SeriesEditor):
 
     def _options_manager_default(self):
         opt = SeriesOptionsManager(id="{}_series".format(self.analysis_type))
-        opt.set_names_via_keys(ARGON_KEYS, additional_names=['F',])
+        opt.set_names_via_keys(
+            ARGON_KEYS,
+            additional_names=[
+                "F",
+            ],
+        )
         return opt
 
     def _configure_plotter_options_button_fired(self):
