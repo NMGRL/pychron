@@ -111,6 +111,7 @@ class StatsGroup(Loggable):
     nruns_finished = Int
     run_duration = String
     current_run_duration = String
+    current_run_duration_f = Float
 
     _timer = Any
 
@@ -198,6 +199,7 @@ class StatsGroup(Loggable):
         self.current_run_duration = self.active_queue.stats.get_run_duration(
             run.spec, as_str=True
         )
+        self.current_run_duration_f = self.active_queue.stats.get_run_duration(run.spec)
 
     def finish_run(self):
         self._run_start = 0

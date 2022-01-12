@@ -544,7 +544,7 @@ class SeriesOptionsManager(FigureOptionsManager):
     _defaults = (("screen", SERIES_SCREEN),)
     _default_options_txt = SERIES_SCREEN
 
-    def set_names_via_keys(self, iso_keys, analysis_type=None, detectors=None):
+    def set_names_via_keys(self, iso_keys, analysis_type=None, detectors=None, additional_names=None):
         names = []
         if iso_keys:
             names.extend(iso_keys)
@@ -580,6 +580,8 @@ class SeriesOptionsManager(FigureOptionsManager):
                 CLEANUP,
             ]
         )
+        if additional_names:
+            names.extend(additional_names)
 
         self.set_names(names)
 

@@ -195,8 +195,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     timeseries_editor = Instance(AnalysisGroupedSeriesEditor)
     timeseries_editor_button = Event
-    configure_timeseries_editor_button = Event
-    timeseries_options = Instance(SeriesOptionsManager)
+    # configure_timeseries_editor_button = Event
+    # timeseries_options = Instance(SeriesOptionsManager)
     timeseries_n_recall = PositiveInteger(50)
     timeseries_mass_spectrometer = Str
     timeseries_mass_spectrometers = List
@@ -487,6 +487,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             exp = self.experiment_queue
 
         ctx = {
+            "current_run_duration": self.stats.current_run_duration_f,
             "etf_iso": self.stats.etf_iso,
             "err_message": self._err_message,
             "canceled": self._canceled,
@@ -730,7 +731,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                     self.info("overlaping")
 
-                    t = Thread(target=self._do_run, args=(run,), name=run.runid)
+                    t = Thread(
+                        target=self._do_run,
+                        args=(run, delay_after_previous_analysis),
+                        name=run.runid,
+                    )
                     t.start()
 
                     run.wait_for_overlap()
@@ -742,7 +747,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 else:
                     is_first_flag = True
                     last_runid = run.runid
-                    self._join_run(spec, run)
+                    self._join_run(spec, run, delay_after_previous_analysis)
 
                 # self.tracker.stats.print_summary()
 
@@ -851,9 +856,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ct = currentThread()
         ct.name = name
 
-    def _join_run(self, spec, run):
+    def _join_run(self, spec, run, delay_after_run):
         self.debug("join run")
-        self._do_run(run)
+        self._do_run(run, delay_after_run)
 
         self.debug("{} finished".format(run.runid))
         if self.is_alive():
@@ -884,7 +889,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             self._prev_baselines = run.get_baselines()
 
-    def _do_run(self, run):
+    def _do_run(self, run, delay_after_run):
         self._set_thread_name(run.runid)
         # add a new log handler
 
@@ -990,7 +995,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # close conditionals view
         # self._close_cv()
 
-        self._do_event(events.END_RUN, run=run)
+        self._do_event(events.END_RUN, run=run, delay_after_run=delay_after_run)
 
         remove_root_handler(handler)
         run.post_finish()
@@ -2546,38 +2551,40 @@ Use Last "blank_{}"= {}
     def _update_timeseries(self):
         if self.use_dvc_persistence:
             dvc = self.datahub.mainstore
-            if self.experiment_queue:
-                ms = self.experiment_queue.mass_spectrometer
-            else:
-                if not self.timeseries_mass_spectrometers:
-                    self.timeseries_mass_spectrometers = (
-                        dvc.get_mass_spectrometer_names()
-                    )
-
-                info = self.edit_traits(
-                    view=okcancel_view(
-                        UItem(
-                            "timeseries_mass_spectrometer",
-                            # label='Mass Spectrometer',
-                            editor=EnumEditor(name="timeseries_mass_spectrometers"),
-                        ),
-                        title="Please Select a Mass Spectrometer",
-                    )
-                )
-                if info.result:
-                    ms = self.timeseries_mass_spectrometer
+            with dvc.session_ctx():
+                if self.experiment_queue:
+                    ms = self.experiment_queue.mass_spectrometer
                 else:
-                    return
-            ans = dvc.get_last_n_analyses(
-                self.timeseries_n_recall,
-                mass_spectrometer=ms,
-                analysis_types=None,
-                verbose=False,
-            )
-            ans = dvc.make_analyses(ans, use_progress=False)
+                    if not self.timeseries_mass_spectrometers:
+                        self.timeseries_mass_spectrometers = (
+                            dvc.get_mass_spectrometer_names()
+                        )
 
-            self.timeseries_editor.set_items(ans)
-            self.timeseries_editor.refresh()
+                    info = self.edit_traits(
+                        view=okcancel_view(
+                            UItem(
+                                "timeseries_mass_spectrometer",
+                                # label='Mass Spectrometer',
+                                editor=EnumEditor(name="timeseries_mass_spectrometers"),
+                            ),
+                            title="Please Select a Mass Spectrometer",
+                            width=300,
+                        )
+                    )
+                    if info.result:
+                        ms = self.timeseries_mass_spectrometer
+                    else:
+                        return
+                ans = dvc.get_last_n_analyses(
+                    self.timeseries_n_recall,
+                    mass_spectrometer=ms,
+                    exclude_types=("unknown",),
+                    verbose=False,
+                )
+                ans = dvc.make_analyses(ans, use_progress=False)
+
+                self.timeseries_editor.set_items(ans)
+                invoke_in_main_thread(self.timeseries_editor.refresh)
 
     # ===============================================================================
     # handlers
@@ -2585,14 +2592,14 @@ Use Last "blank_{}"= {}
     def _timeseries_editor_button_fired(self):
         self._update_timeseries()
 
-    def _configure_timeseries_editor_button_fired(self):
-
-        info = OptionsController(model=self.timeseries_options).edit_traits(
-            view=view("Timeseries Options"), kind="livemodal"
-        )
-        if info.result:
-            self.timeseries_editor.set_options(self.timeseries_options.selected_options)
-            self.timeseries_editor.refresh()
+    # def _configure_timeseries_editor_button_fired(self):
+    #
+    #     info = OptionsController(model=self.timeseries_options).edit_traits(
+    #         view=view("Timeseries Options"), kind="livemodal"
+    #     )
+    #     if info.result:
+    #         self.timeseries_editor.set_options(self.timeseries_options.selected_options)
+    #         self.timeseries_editor.refresh()
 
     def _measuring_run_changed(self):
         if self.measuring_run:
@@ -2660,17 +2667,17 @@ Use Last "blank_{}"= {}
     # ===============================================================================
     # defaults
     # ===============================================================================
-    def _timeseries_options_default(self):
-        opt = SeriesOptionsManager()
-        opt.set_names_via_keys(ARGON_KEYS)
-        return opt
+    # def _timeseries_options_default(self):
+    #     opt = SeriesOptionsManager()
+    #     opt.set_names_via_keys(ARGON_KEYS)
+    #     return opt
 
     def _timeseries_editor_default(self):
         ed = AnalysisGroupedSeriesEditor()
         ed.init(
-            atypes=["blank_unknown", "air", "cocktail", "blank_air", "blank_cocktail"]
+            atypes=["air", "cocktail", "blank_unknown", "blank_air", "blank_cocktail"]
         )
-        ed.set_options(self.timeseries_options.selected_options)
+        # ed.set_options(self.timeseries_options.selected_options)
 
         return ed
 

@@ -862,7 +862,10 @@ class ExperimentEditorTask(EditorTask):
                     PaneItem("pychron.experiment.explanation", height=425),
                     PaneItem("pychron.experiment.connection_status"),
                 ),
-                PaneItem("pychron.extraction_line.canvas_dock"),
+                Tabbed(
+                    PaneItem("pychron.extraction_line.canvas_dock"),
+                    PaneItem("pychron.experiment.timeseries"),
+                ),
                 orientation="vertical",
             ),
             top=PaneItem("pychron.experiment.controls"),

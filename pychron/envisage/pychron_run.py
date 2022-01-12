@@ -60,6 +60,7 @@ PACKAGE_DICT = dict(
     EntryPlugin="pychron.entry.tasks.entry_plugin",
     ExperimentPlugin="pychron.experiment.tasks.experiment_plugin",
     PyScriptPlugin="pychron.pyscripts.tasks.pyscript_plugin",
+    WatchDogPlugin="pychron.watchdog.tasks.plugin",
     # hardware
     ClientExtractionLinePlugin="pychron.extraction_line.tasks.client_extraction_line_plugin",
     ExternalPipettePlugin="pychron.external_pipette.tasks.external_pipette_plugin",
