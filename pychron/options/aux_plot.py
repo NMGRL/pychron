@@ -58,6 +58,7 @@ YTITLES = {
     "moles_k39": "<sup>39</sup>Ar<sub>K</sub>(mol)",
     "Analysis Number": "Analysis #",
     "Analysis Number Nonsorted": "A# Nonsorted",
+    "F": '<sup>40</sup>Ar*/<sup>39</sup>Ar<sub>K</sub>'
 }
 
 

@@ -89,7 +89,11 @@ class WatchDogWorker(Loggable):
 
         exp_id = make_exp_key(ctx)
         expire = self._make_expire(60)
-        resp = requests.post(url, json={"key": exp_id, "expire": expire})
+        addresses = ctx['group_emails'][1]
+
+        resp = requests.post(url, json={"key": exp_id,
+                                        "expire": expire,
+                                        "addresses": addresses})
         self.debug("experiment start resp={}".format(resp.json()))
 
     def experiment_end(self, ctx):
@@ -106,7 +110,7 @@ class WatchDogWorker(Loggable):
         return resp.json()
 
     def _make_expire(self, value):
-        return max(60, float(value)) * self.pad
+        return max(120, float(value)) * self.pad
 
     def _make_url(self, tag):
         return "http://{}:{}/{}".format(self.host, self.port, tag)
