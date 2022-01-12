@@ -89,11 +89,11 @@ class WatchDogWorker(Loggable):
 
         exp_id = make_exp_key(ctx)
         expire = self._make_expire(60)
-        addresses = ctx['group_emails'][1]
+        addresses = ctx["group_emails"][1]
 
-        resp = requests.post(url, json={"key": exp_id,
-                                        "expire": expire,
-                                        "addresses": addresses})
+        resp = requests.post(
+            url, json={"key": exp_id, "expire": expire, "addresses": addresses}
+        )
         self.debug("experiment start resp={}".format(resp.json()))
 
     def experiment_end(self, ctx):
