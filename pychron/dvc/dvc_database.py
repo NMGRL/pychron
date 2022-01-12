@@ -1254,6 +1254,7 @@ class DVCDatabase(DatabaseAdapter):
         n,
         mass_spectrometer=None,
         analysis_types=None,
+        exclude_types=None,
         excluded_uuids=None,
         verbose=False,
     ):
@@ -1268,6 +1269,10 @@ class DVCDatabase(DatabaseAdapter):
 
             if analysis_types:
                 q = analysis_type_filter(q, analysis_types)
+            if exclude_types:
+                if not isinstance(exclude_types, (tuple, list)):
+                    exclude_types = (exclude_types,)
+                q = q.filter(AnalysisTbl.analysis_type.notin_(exclude_types))
 
             if excluded_uuids:
                 q = q.filter(not_(AnalysisTbl.uuid.in_(excluded_uuids)))

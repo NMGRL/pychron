@@ -54,6 +54,7 @@ ATTR_MAPPING = {
     EXTRACT_VALUE: "extract_value",
     EXTRACT_DURATION: "extract_duration",
     CLEANUP: "cleanup",
+    "F": "uF",
 }
 
 AR4039 = "Ar40/Ar39"
@@ -225,11 +226,16 @@ class BaseSeries(BaseArArFigure):
             if po.y_error and yerr is not None:
                 s = self.options.error_bar_nsigma
                 ec = self.options.end_caps
-                self._add_error_bars(scatter, yerr, "y", s, ec, visible=True)
+                self._add_error_bars(scatter, yerr, "y", s, end_caps=ec, visible=True)
 
             # if set_ylimits and not po.has_ylimits():
             #     mi, mx = min(ys - 2 * yerr), max(ys + 2 * yerr)
             #     graph.set_y_limits(min_=mi, max_=mx, pad='0.1', plotid=pid)
+
+            if self.options.guides:
+                for gi in self.options.guides:
+                    if gi.visible and gi.should_plot(pid):
+                        graph.add_guide(gi.value, **gi.to_kwargs(), plotid=pid)
 
         except (KeyError, ZeroDivisionError, AttributeError) as e:
             import traceback

@@ -394,7 +394,7 @@ class BaseOptions(HasTraits):
         except KeyError:
             pass
 
-        tags = ("groups", "aux_plots", "selected")
+        tags = ("groups", "aux_plots", "selected", "guides")
         atags = self._get_tags()
         if atags:
             tags += atags
@@ -448,7 +448,7 @@ class BaseOptions(HasTraits):
             except ValueError:
                 pass
 
-        tags = ("aux_plots", "groups", "selected")
+        tags = ("aux_plots", "groups", "selected", "guides")
         atags = self._get_tags()
         if atags:
             tags += atags
@@ -654,7 +654,7 @@ class FigureOptions(BaseOptions, GroupMixin):
     ytitle_fontname = Enum(*FONTS)
 
     layout = Instance(FigureLayout, ())
-
+    guides = List
     # group = Property
     # group_editor_klass = None
 
@@ -865,6 +865,8 @@ class AuxPlotFigureOptions(FigureOptions):
     # def get_loadable_aux_plots(self):
     #     return reversed([pi for pi in self.aux_plots
     #                      if pi.name and pi.name != NULL_STR and (pi.save_enabled or pi.plot_enabled)])
+    def get_aux_plot_names(self):
+        return [pi.get_keyname() for pi in self.get_plotable_aux_plots()]
 
     def get_saveable_aux_plots(self):
         return list(
