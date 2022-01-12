@@ -28,12 +28,19 @@ from pychron.pipeline.plot.overlays.mean_indicator_overlay import MovableMixin
 try:
 
     class FlowPlotLabel(PlotLabel, MovableMixin):
-        def overlay(self, component, gc, *args, **kw):
+        padx = None
+        pady = None
+
+        def do_layout(self):
             if self.ox:
                 self.x = self.ox - self.offset_x
                 self.y = self.oy - self.offset_y
-
-            super(FlowPlotLabel, self).overlay(component, gc, *args, **kw)
+            else:
+                super(FlowPlotLabel, self).do_layout()
+                if self.padx:
+                    self.x += self.padx
+                if self.pady:
+                    self.y += self.pady
 
         def hittest(self, pt):
             x, y = pt
@@ -104,6 +111,5 @@ class FlowDataLabel(DataLabel):
 
             yd = self.component.y2 - h - 2 * self.border_padding - self.line_spacing
             self.y = min((self.y, yd))
-
 
 # ============= EOF =============================================
