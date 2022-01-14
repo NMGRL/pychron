@@ -20,7 +20,7 @@ import os
 from datetime import datetime
 from math import isnan
 
-from git import Repo
+from git import Repo, GitCommandError
 from traits.api import Str, Bool, HasTraits
 from uncertainties import nominal_value, std_dev
 
@@ -30,18 +30,29 @@ from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.pychron_constants import SAMPLE_METADATA
 
 
-def repository_has_staged(ps, remote="origin", branch="master"):
+def repository_has_staged(ps, remote="origin", branch=None):
     if not hasattr(ps, "__iter__"):
         ps = (ps,)
 
     changed = []
     # repo = GitRepoManager()
+
     for p in ps:
         pp = repository_path(p)
         repo = Repo(pp)
+        if branch is None:
+            branch = repo.active_branch
 
-        if repo.git.log("{}/{}..HEAD".format(remote, branch), "--oneline"):
-            changed.append(p)
+        try:
+            if repo.git.log("{}/{}..HEAD".format(remote, branch), "--oneline"):
+                changed.append(p)
+        except GitCommandError:
+            if branch == 'master':
+                try:
+                    if repo.git.log("{}/{}..HEAD".format(remote, 'main'), "--oneline"):
+                        changed.append(p)
+                except GitCommandError:
+                    pass
 
     return changed
 
@@ -99,9 +110,9 @@ def get_review_status(record):
     if os.path.isdir(root):
         repo = Repo(root)
         for m, func in (
-            ("blanks", is_blank_reviewed),
-            ("intercepts", is_intercepts_reviewed),
-            ("icfactors", is_icfactors_reviewed),
+                ("blanks", is_blank_reviewed),
+                ("intercepts", is_intercepts_reviewed),
+                ("icfactors", is_icfactors_reviewed),
         ):
             p = analysis_path(record, record.repository_identifier, modifier=m)
             if os.path.isfile(p):
@@ -231,6 +242,5 @@ def make_interpreted_age_dict(ia):
     }
     d["session_metadata"] = {"date": datetime.now().isoformat()}
     return d
-
 
 # ============= EOF =============================================
