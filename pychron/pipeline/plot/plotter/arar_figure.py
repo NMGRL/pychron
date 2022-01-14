@@ -123,9 +123,10 @@ class BaseArArFigure(SelectionFigure):
 
         graph = self.graph
 
-        vertical_resize = not all([p.height for p in plots[:-1]])
+        if len(plots) > 1 and not self.equi_stack:
+            vertical_resize = not all([p.height for p in plots[:-1]])
+            graph.vertical_resize = vertical_resize
 
-        graph.vertical_resize = vertical_resize
         graph.clear_has_title()
 
         title = self.title
