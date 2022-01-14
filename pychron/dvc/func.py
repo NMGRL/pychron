@@ -47,9 +47,9 @@ def repository_has_staged(ps, remote="origin", branch=None):
             if repo.git.log("{}/{}..HEAD".format(remote, branch), "--oneline"):
                 changed.append(p)
         except GitCommandError:
-            if branch == 'master':
+            if branch == "master":
                 try:
-                    if repo.git.log("{}/{}..HEAD".format(remote, 'main'), "--oneline"):
+                    if repo.git.log("{}/{}..HEAD".format(remote, "main"), "--oneline"):
                         changed.append(p)
                 except GitCommandError:
                     pass
@@ -110,9 +110,9 @@ def get_review_status(record):
     if os.path.isdir(root):
         repo = Repo(root)
         for m, func in (
-                ("blanks", is_blank_reviewed),
-                ("intercepts", is_intercepts_reviewed),
-                ("icfactors", is_icfactors_reviewed),
+            ("blanks", is_blank_reviewed),
+            ("intercepts", is_intercepts_reviewed),
+            ("icfactors", is_icfactors_reviewed),
         ):
             p = analysis_path(record, record.repository_identifier, modifier=m)
             if os.path.isfile(p):
@@ -242,5 +242,6 @@ def make_interpreted_age_dict(ia):
     }
     d["session_metadata"] = {"date": datetime.now().isoformat()}
     return d
+
 
 # ============= EOF =============================================
