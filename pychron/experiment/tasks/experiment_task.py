@@ -311,14 +311,14 @@ class ExperimentEditorTask(EditorTask):
     def _assemble_state_colors(self):
         colors = {}
         for c in (
-                SUCCESS,
-                EXTRACTION,
-                MEASUREMENT,
-                CANCELED,
-                TRUNCATED,
-                FAILED,
-                END_AFTER,
-                INVALID,
+            SUCCESS,
+            EXTRACTION,
+            MEASUREMENT,
+            CANCELED,
+            TRUNCATED,
+            FAILED,
+            END_AFTER,
+            INVALID,
         ):
             v = self.application.preferences.get(
                 "pychron.experiment.{}_color".format(c)
@@ -612,7 +612,7 @@ class ExperimentEditorTask(EditorTask):
 
         if new == FUSIONS_UV:
             if self.active_editor and not isinstance(
-                    self.active_editor, UVExperimentEditor
+                self.active_editor, UVExperimentEditor
             ):
                 editor = UVExperimentEditor()
 
@@ -688,9 +688,9 @@ class ExperimentEditorTask(EditorTask):
         # self.debug('execute event {} {}'.format(id(self), id(obj))
         if globalv.experiment_debug:
             if not self.confirmation_dialog(
-                    "The Experiment Debug global flag is set. Are you sure you want to "
-                    "continue? If you have do not know what this means you likely do not want "
-                    "to continue and should contact an expert."
+                "The Experiment Debug global flag is set. Are you sure you want to "
+                "continue? If you have do not know what this means you likely do not want "
+                "to continue and should contact an expert."
             ):
                 return
 
@@ -851,7 +851,9 @@ class ExperimentEditorTask(EditorTask):
                 PaneItem("pychron.wait", height=50, width=600),
                 Tabbed(
                     PaneItem("pychron.experiment.factory", height=5000, width=600),
-                    PaneItem("pychron.experiment.isotope_evolution", height=5000, width=600),
+                    PaneItem(
+                        "pychron.experiment.isotope_evolution", height=5000, width=600
+                    ),
                 ),
                 orientation="vertical",
             ),
@@ -869,5 +871,6 @@ class ExperimentEditorTask(EditorTask):
             ),
             top=PaneItem("pychron.experiment.controls"),
         )
+
 
 # ============= EOF =============================================
