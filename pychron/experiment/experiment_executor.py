@@ -941,6 +941,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if run.spec.state not in (TRUNCATED, CANCELED, FAILED):
                 run.spec.state = SUCCESS
 
+        self._do_event(events.SAVE_RUN, run=run)
         if self.save_all_runs or run.spec.state in ("success", "truncated"):
             run.save()
 

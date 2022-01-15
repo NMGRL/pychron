@@ -15,7 +15,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import List, Int, HasTraits, Str, Bool
+from traits.api import List, Int, HasTraits, Str, Bool, Float
 from traitsui.api import View, UItem, Item, HGroup, VGroup
 
 # ============= standard library imports ========================
@@ -31,6 +31,7 @@ class WatchDogPreferences(BasePreferencesHelper):
     preferences_path = "pychron.watchdog"
     host = HostStr
     port = Int
+    pad = Float
 
 
 class WatchDogPreferencesPane(PreferencesPane):
@@ -38,7 +39,7 @@ class WatchDogPreferencesPane(PreferencesPane):
     model_factory = WatchDogPreferences
 
     def traits_view(self):
-        v = View(Item("host"), Item("port"))
+        v = View(Item("host"), Item("port"), Item("pad"))
         return v
 
 
