@@ -30,7 +30,7 @@ from pychron.experiment.events import (
     START_QUEUE,
     END_QUEUE,
     START_RUN,
-    END_RUN,
+    END_RUN, SAVE_RUN,
 )
 from pychron.watchdog.tasks.preferences import WatchDogPreferencesPane
 from pychron.loggable import Loggable
@@ -65,7 +65,7 @@ class WatchDogWorker(Loggable):
 
         return ret, err
 
-    def run_start(self, ctx):
+    def start_run_handler(self, ctx):
         self.debug("run start")
         url = self._make_url("run_start")
 
@@ -74,7 +74,7 @@ class WatchDogWorker(Loggable):
         resp = requests.post(url, json={"key": exp_id, "expire": expire})
         self.debug("run start resp={}".format(resp.json()))
 
-    def run_end(self, ctx):
+    def end_run_handler(self, ctx):
         self.debug("run end")
         url = self._make_url("run_end")
 
@@ -83,7 +83,15 @@ class WatchDogWorker(Loggable):
         resp = requests.post(url, json={"key": exp_id, "expire": expire})
         self.debug("run end resp={}".format(resp.json()))
 
-    def experiment_start(self, ctx):
+    def save_run_handler(self, ctx):
+        self.debug("save run")
+        url = self._make_url("run_save")
+        exp_id = make_exp_key(ctx)
+        expire = self._make_expire(180)
+        resp = requests.post(url, json={"key": exp_id, "expire": expire})
+        self.debug("run end resp={}".format(resp.json()))
+
+    def start_experiment_handler(self, ctx):
         self.debug("experiment start")
         url = self._make_url("experiment_start")
 
@@ -96,7 +104,7 @@ class WatchDogWorker(Loggable):
         )
         self.debug("experiment start resp={}".format(resp.json()))
 
-    def experiment_end(self, ctx):
+    def end_experiment_handler(self, ctx):
         self.debug("experiment end")
         url = self._make_url("experiment_end")
 
@@ -127,25 +135,30 @@ class WatchDogPlugin(BaseTaskPlugin):
     def _events_default(self):
         e1 = ExperimentEventAddition(
             id="pychron.watchdog.experiment_start",
-            action=self.worker.experiment_start,
+            action=self.worker.start_experiment_handler,
             level=START_QUEUE,
         )
         e2 = ExperimentEventAddition(
             id="pychron.watchdog.experiment_end",
             level=END_QUEUE,
-            action=self.worker.experiment_end,
+            action=self.worker.end_experiment_handler,
         )
         e3 = ExperimentEventAddition(
             id="pychron.watchdog.run_start",
             level=START_RUN,
-            action=self.worker.run_start,
+            action=self.worker.start_run_handler,
         )
         e4 = ExperimentEventAddition(
             id="pychron.watchdog.run_end",
             level=END_RUN,
-            action=self.worker.run_end,
+            action=self.worker.end_run_handler,
         )
-        return [e1, e2, e3, e4]
+        e5 = ExperimentEventAddition(
+            id="pychron.watchdog.run_save",
+            level=SAVE_RUN,
+            action=self.worker.save_run_handler,
+        )
+        return [e1, e2, e3, e4, e5]
 
     # def _service_offers_default(self):
     #     """
