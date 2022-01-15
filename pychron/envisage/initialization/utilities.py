@@ -109,7 +109,7 @@ DEFAULT_PLUGINS = (
             "MDD",
             "Auto",
             "Update",
-            "WatchDog",
+            ("WatchDog", ["test_api"]),
         ),
     ),
     ("Data", ("USGSVSCData", "WiscArData", ("Sparrow", ["test_api"]))),

@@ -695,9 +695,14 @@ class BaseSpectrometer(SpectrometerDevice):
 
         return keys, array(gsignals), t, inc
 
+    def _handle_no_intensity_change(self):
+        pass
+
     def _check_intensity_no_change(self, signals):
         if self.simulation:
             return
+
+        self._handle_no_intensity_change()
 
         if self._no_intensity_change_cnt > 25:
             self._no_intensity_change_cnt = 0

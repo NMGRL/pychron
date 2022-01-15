@@ -55,6 +55,16 @@ class WatchDogWorker(Loggable):
         bind_preference(self, "port", "{}.port".format(prefid))
         bind_preference(self, "pad", "{}.pad".format(prefid))
 
+    def test_api(self):
+        ret, err = True, ""
+        try:
+            self._get("status")
+        except BaseException as e:
+            ret = False
+            err = str(e)
+
+        return ret, err
+
     def run_start(self, ctx):
         self.debug("run start")
         url = self._make_url("run_start")
@@ -79,7 +89,11 @@ class WatchDogWorker(Loggable):
 
         exp_id = make_exp_key(ctx)
         expire = self._make_expire(60)
-        resp = requests.post(url, json={"key": exp_id, "expire": expire})
+        addresses = ctx["group_emails"][1]
+
+        resp = requests.post(
+            url, json={"key": exp_id, "expire": expire, "addresses": addresses}
+        )
         self.debug("experiment start resp={}".format(resp.json()))
 
     def experiment_end(self, ctx):
@@ -90,8 +104,13 @@ class WatchDogWorker(Loggable):
         resp = requests.post(url, json={"key": exp_id})
         self.debug("experiment end resp={}".format(resp.json()))
 
+    def _get(self, tag, **kw):
+        url = self._make_url(tag)
+        resp = requests.get(url)
+        return resp.json()
+
     def _make_expire(self, value):
-        return max(60, float(value)) * self.pad
+        return max(120, float(value)) * self.pad
 
     def _make_url(self, tag):
         return "http://{}:{}/{}".format(self.host, self.port, tag)
@@ -101,6 +120,9 @@ class WatchDogPlugin(BaseTaskPlugin):
     id = "pychron.watchdog.plugin"
     events = List(contributes_to="pychron.experiment.events")
     worker = Instance(WatchDogWorker, ())
+
+    def test_api(self):
+        return self.worker.test_api()
 
     def _events_default(self):
         e1 = ExperimentEventAddition(
