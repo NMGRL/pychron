@@ -30,7 +30,8 @@ from pychron.experiment.events import (
     START_QUEUE,
     END_QUEUE,
     START_RUN,
-    END_RUN, SAVE_RUN,
+    END_RUN,
+    SAVE_RUN,
 )
 from pychron.watchdog.tasks.preferences import WatchDogPreferencesPane
 from pychron.loggable import Loggable

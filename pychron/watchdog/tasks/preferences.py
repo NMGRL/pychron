@@ -39,7 +39,7 @@ class WatchDogPreferencesPane(PreferencesPane):
     model_factory = WatchDogPreferences
 
     def traits_view(self):
-        v = View(Item("host"), Item("port"), Item('pad'))
+        v = View(Item("host"), Item("port"), Item("pad"))
         return v
 
 
