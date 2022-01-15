@@ -122,7 +122,7 @@ class WatchDogWorker(Loggable):
         return max(120, float(value)) * self.pad
 
     def _make_url(self, tag):
-        return "http://{}:{}/{}".format(self.host, self.port, tag)
+        return "http://{}:{}/wd/{}".format(self.host, self.port, tag)
 
 
 class WatchDogPlugin(BaseTaskPlugin):
