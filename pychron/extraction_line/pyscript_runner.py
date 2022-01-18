@@ -125,7 +125,7 @@ class RemoteResource(object):
             if ping and ping.strip() == "Complete":
                 break
 
-            time.sleep(3)
+            evt.wait(3)
 
     def _set(self, v):
         self.handle.ask("Set {} {}".format(self.name, v))

@@ -702,8 +702,6 @@ class BaseSpectrometer(SpectrometerDevice):
         if self.simulation:
             return
 
-        self._handle_no_intensity_change()
-
         if self._no_intensity_change_cnt > 25:
             self._no_intensity_change_cnt = 0
             self._prev_signals = None
@@ -711,6 +709,8 @@ class BaseSpectrometer(SpectrometerDevice):
 
         if signals is None:
             self._no_intensity_change_cnt += 1
+            self._handle_no_intensity_change()
+
         elif self._prev_signals is not None:
             try:
                 test = (signals == self._prev_signals).all()
