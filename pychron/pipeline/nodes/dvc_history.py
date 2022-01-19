@@ -110,18 +110,18 @@ class DVCHistoryNode(BaseDVCNode):
             )
 
             pans = self.dvc.make_analyses(list(ans), reload=True)
+            if pans:
+                # only allow one history group for right now.
+                # in the future add a history_group_id
+                # analyses are then partitioned by group_id then history_group_id
+                for unk in pans:
+                    unk.group_id = 1
+                    unk.history_id = 1
 
-            # only allow one history group for right now.
-            # in the future add a history_group_id
-            # analyses are then partitioned by group_id then history_group_id
-            for unk in pans:
-                unk.group_id = 1
-                unk.history_id = 1
-
-            branch = repo.get_branch(abranch)
-            branch.checkout()
-            repo.delete_branch(branchname)
-            unks.extend(pans)
+                branch = repo.get_branch(abranch)
+                branch.checkout()
+                repo.delete_branch(branchname)
+                unks.extend(pans)
 
 
 # ============= EOF =============================================
