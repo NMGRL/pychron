@@ -80,6 +80,7 @@ class ScriptOptions(HasTraits):
 
 class Script(Loggable):
     # application = Any
+    default_event = Event
     edit_event = Event
     refresh_lists = Event
     label = Str
@@ -96,6 +97,7 @@ class Script(Loggable):
         depends_on="_name_prefix, directory, refresh_lists, mass_spectrometer"
     )
     edit = Button
+    default = Button
     editable = Bool(True)
     enabled = Property(depends_on="name")
     kind = "ExtractionLine"
@@ -137,6 +139,11 @@ class Script(Loggable):
 
         return p
 
+    def _default_fired(self):
+        if self.confirmation_dialog('Are you sure you want to make "{}" the default {} script'.format(self.name,
+                                                                                                      self.label)):
+            self.default_event = (self.name, self.label)
+
     def _edit_fired(self):
         self.edit_event = (self.script_path(), self.kind)
 
@@ -148,6 +155,7 @@ class Script(Loggable):
                 UItem("directory", width=-100, editor=myEnumEditor(name="directories")),
                 UItem("name", width=-200, editor=myEnumEditor(name="names")),
                 UItem("edit", visible_when="editable", enabled_when="enabled"),
+                UItem("default", visible_when="editable", enabled_when="enabled"),
             )
         )
 
@@ -165,7 +173,7 @@ class Script(Loggable):
 
     def _remove_name_prefix(self, name):
         if self.name_prefix:
-            name = name[len(self.name_prefix) :]
+            name = name[len(self.name_prefix):]
         return name
 
     def _get_root(self):
@@ -184,8 +192,8 @@ class Script(Loggable):
                     s
                     for s in os.listdir(p)
                     if not s.startswith(".")
-                    and s.endswith(".py")
-                    and s != "__init__.py"
+                       and s.endswith(".py")
+                       and s != "__init__.py"
                 ]
             )
         else:
@@ -194,10 +202,10 @@ class Script(Loggable):
     @cached_property
     def _get_enabled(self):
         return (
-            self.name
-            and self.name != NULL_STR
-            and self.name is not None
-            and self.name in self.names
+                self.name
+                and self.name != NULL_STR
+                and self.name is not None
+                and self.name in self.names
         )
 
     def _get_name_prefix(self):
