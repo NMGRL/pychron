@@ -1249,9 +1249,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ai: AutomatedRun
         extraction step
         """
-        if self._pre_extraction_check(ai):
-            self.heading("Pre Extraction Check Failed")
-            self._err_message = "Pre Extraction Check Failed"
+        if self._pre_step_check(ai, "Extraction"):
+            self._failed_execution_step("Pre Extraction Check Failed")
             return
 
         # make sure status monitor is running a
@@ -1276,6 +1275,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ai: AutomatedRun
         measurement step
         """
+        if self._pre_step_check(ai, "Measurement"):
+            self._failed_execution_step("Pre Measurement Check Failed")
+            return
+
         if self.send_config_before_run:
             self.info("Sending spectrometer configuration")
             man = self.spectrometer_manager
@@ -1315,6 +1318,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _failed_execution_step(self, msg):
         self.debug("failed execution step {}".format(msg))
         if not self._canceled:
+            self.heading(msg)
             self._err_message = msg
             self.alive = False
         return False
@@ -2058,16 +2062,21 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.debug("pre execute check complete")
         return True
 
-    def _pre_extraction_check(self, run):
+    def _pre_step_check(self, run, tag):
+
         """
         do pre_run_terminations
+
+        return True to fail
         """
 
         if not self.alive:
             return
 
         self.debug(
-            "============================= Pre Extraction Check ============================="
+            "============================= Pre {} Check =============================".format(
+                tag
+            )
         )
 
         conditionals = self._load_queue_conditionals("pre_run_terminations")

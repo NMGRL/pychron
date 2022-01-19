@@ -80,6 +80,7 @@ class ScriptOptions(HasTraits):
 
 class Script(Loggable):
     # application = Any
+    default_event = Event
     edit_event = Event
     refresh_lists = Event
     label = Str
@@ -96,6 +97,7 @@ class Script(Loggable):
         depends_on="_name_prefix, directory, refresh_lists, mass_spectrometer"
     )
     edit = Button
+    default = Button
     editable = Bool(True)
     enabled = Property(depends_on="name")
     kind = "ExtractionLine"
@@ -137,6 +139,14 @@ class Script(Loggable):
 
         return p
 
+    def _default_fired(self):
+        if self.confirmation_dialog(
+            'Are you sure you want to make "{}" the default {} script'.format(
+                self.name, self.label
+            )
+        ):
+            self.default_event = (self.name, self.label)
+
     def _edit_fired(self):
         self.edit_event = (self.script_path(), self.kind)
 
@@ -148,6 +158,7 @@ class Script(Loggable):
                 UItem("directory", width=-100, editor=myEnumEditor(name="directories")),
                 UItem("name", width=-200, editor=myEnumEditor(name="names")),
                 UItem("edit", visible_when="editable", enabled_when="enabled"),
+                UItem("default", visible_when="editable", enabled_when="enabled"),
             )
         )
 
