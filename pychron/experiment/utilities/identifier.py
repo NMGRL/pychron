@@ -150,10 +150,10 @@ def get_analysis_type(idn):
 
 def get_analysis_type_shortname(idn):
     at = get_analysis_type(idn)
-    if at != 'unknown':
+    if at != "unknown":
         at = SPECIAL_MAPPING[at]
     else:
-        at = 'u'
+        at = "u"
     return at
 
 
@@ -261,5 +261,6 @@ def pretty_extract_device(ident):
         else:
             n = " ".join([a.capitalize() for a in args])
     return n
+
 
 # ============= EOF =============================================

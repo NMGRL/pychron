@@ -140,8 +140,11 @@ class Script(Loggable):
         return p
 
     def _default_fired(self):
-        if self.confirmation_dialog('Are you sure you want to make "{}" the default {} script'.format(self.name,
-                                                                                                      self.label)):
+        if self.confirmation_dialog(
+            'Are you sure you want to make "{}" the default {} script'.format(
+                self.name, self.label
+            )
+        ):
             self.default_event = (self.name, self.label)
 
     def _edit_fired(self):
@@ -173,7 +176,7 @@ class Script(Loggable):
 
     def _remove_name_prefix(self, name):
         if self.name_prefix:
-            name = name[len(self.name_prefix):]
+            name = name[len(self.name_prefix) :]
         return name
 
     def _get_root(self):
@@ -192,8 +195,8 @@ class Script(Loggable):
                     s
                     for s in os.listdir(p)
                     if not s.startswith(".")
-                       and s.endswith(".py")
-                       and s != "__init__.py"
+                    and s.endswith(".py")
+                    and s != "__init__.py"
                 ]
             )
         else:
@@ -202,10 +205,10 @@ class Script(Loggable):
     @cached_property
     def _get_enabled(self):
         return (
-                self.name
-                and self.name != NULL_STR
-                and self.name is not None
-                and self.name in self.names
+            self.name
+            and self.name != NULL_STR
+            and self.name is not None
+            and self.name in self.names
         )
 
     def _get_name_prefix(self):
