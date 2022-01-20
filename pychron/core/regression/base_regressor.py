@@ -241,8 +241,11 @@ class BaseRegressor(HasTraits):
             m = re.match(r"[A-Za-z]+", self.truncate)
             if m:
                 k = m.group(0)
-                exclude = eval(self.truncate, {k: self.xs})
-                excludes = list(exclude.nonzero()[0])
+                if k.lower() == 'n':
+                    excludes = [i for i, _ in enumerate(self.xs) if eval(self.truncate, {k: i})]
+                else:
+                    exclude = eval(self.truncate, {k: self.xs})
+                    excludes = list(exclude.nonzero()[0])
                 self.truncate_excluded = excludes
                 self.dirty = True
             else:
@@ -547,7 +550,7 @@ class BaseRegressor(HasTraits):
         if self._check_integrity(ys, yserr):
             mswd = calculate_mswd(ys, yserr, k=self.degrees_of_freedom)
             self.valid_mswd = (
-                validate_mswd(mswd, len(ys), k=self.degrees_of_freedom) or False
+                    validate_mswd(mswd, len(ys), k=self.degrees_of_freedom) or False
             )
             return mswd
 
@@ -581,6 +584,5 @@ class BaseRegressor(HasTraits):
         if tn != fn:
             tn = "{}/{}".format(fn, tn)
         return tn
-
 
 # ============= EOF =============================================
