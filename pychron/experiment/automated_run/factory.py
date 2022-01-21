@@ -18,6 +18,7 @@
 import os
 import pickle
 
+import yaml
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import (
     String,
@@ -79,6 +80,7 @@ from pychron.experiment.utilities.identifier import (
     make_special_identifier,
     make_standard_identifier,
     SPECIAL_KEYS,
+    get_analysis_type_shortname,
 )
 from pychron.experiment.utilities.position_regex import (
     SLICE_REGEX,
@@ -1625,18 +1627,42 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     @on_trait_change(
         "[measurement_script, post_measurement_script, "
-        "post_equilibration_script, extraction_script]:edit_event"
+        "post_equilibration_script, extraction_script]:[edit_event, default_event]"
     )
-    def _handle_edit_script(self, new):
+    def _handle_script_events(self, obj, name, old, new):
         self._auto_save()
+        if name == "edit_event":
+            app = self.application
+            task = app.open_task("pychron.pyscript.task")
+            path, kind = new
+            task.kind = kind
+            task.open(path=path)
+            task.set_on_save_as_handler(self._update_script_lists)
+            task.set_on_close_handler(self._update_script_lists)
+        elif name == "default_event":
+            if not self.labnumber:
+                self.information_dialog(
+                    "Please select a labnumber/identifier before trying to set default scripts"
+                )
+                return
 
-        app = self.application
-        task = app.open_task("pychron.pyscript.task")
-        path, kind = new
-        task.kind = kind
-        task.open(path=path)
-        task.set_on_save_as_handler(self._update_script_lists)
-        task.set_on_close_handler(self._update_script_lists)
+            at = get_analysis_type_shortname(self.labnumber)
+            self.debug("{}".format(self.labnumber, at))
+            self._set_default_file(at, new[0], new[1])
+
+    def _set_default_file(self, at, name, scriptlabel):
+        defaults = self._load_default_file()
+        try:
+            for ai in (at, at.capitalize(), at.upper(), at.lower()):
+                atd = defaults[ai]
+        except KeyError:
+            pass
+
+        atd[scriptlabel.lower()] = name
+
+        p = os.path.join(paths.scripts_dir, "defaults.yaml")
+        with open(p, "w") as wfile:
+            yaml.dump(defaults, wfile)
 
     def _load_defaults_button_fired(self):
         if self.labnumber:

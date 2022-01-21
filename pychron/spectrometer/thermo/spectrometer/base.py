@@ -517,6 +517,9 @@ class ThermoSpectrometer(BaseSpectrometer):
     # ===============================================================================
     # private
     # ===============================================================================
+    def _handle_no_intensity_change(self):
+        return self.microcontroller.reset()
+
     def _parse_word(self, word):
         try:
             x = csv_to_floats(word)
