@@ -129,12 +129,16 @@ class RangeGuideOverlay(GuideOverlay):
 
             if self.orientation == "h":
                 x1 = component.x
-                y1, y2 = component.value_mapper.map_screen(array([self.minvalue, self.maxvalue]))
+                y1, y2 = component.value_mapper.map_screen(
+                    array([self.minvalue, self.maxvalue])
+                )
                 height = abs(y2 - y1)
                 width = component.width
             else:
                 y1 = component.y
-                x1, x2 = component.index_mapper.map_screen(array([self.minvalue, self.maxvalue]))
+                x1, x2 = component.index_mapper.map_screen(
+                    array([self.minvalue, self.maxvalue])
+                )
                 width = abs(x2 - x1)
                 height = component.height
 
@@ -145,4 +149,6 @@ class RangeGuideOverlay(GuideOverlay):
                 gc.draw_path()
 
                 self._overlay_value(gc)
+
+
 # ============= EOF =====================================

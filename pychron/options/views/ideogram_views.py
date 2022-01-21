@@ -23,14 +23,17 @@ from pychron.options.options import (
     AppearanceSubOptions,
     GroupSubOptions,
     MainOptions,
-    TitleSubOptions, GuidesOptions,
+    TitleSubOptions,
+    GuidesOptions,
 )
 from pychron.processing.j_error_mixin import J_ERROR_GROUP
 from pychron.pychron_constants import (
     MAIN,
     APPEARANCE,
     SCHAEN2020_3,
-    SCHAEN2020_3youngest, GROUPS, GUIDES,
+    SCHAEN2020_3youngest,
+    GROUPS,
+    GUIDES,
 )
 
 
@@ -402,7 +405,7 @@ VIEWS = {
     "calculations": CalculationSubOptions,
     "display": DisplaySubOptions,
     GROUPS.lower(): GroupSubOptions,
-    GUIDES.lower(): GuidesOptions
+    GUIDES.lower(): GuidesOptions,
 }
 
 # ===============================================================

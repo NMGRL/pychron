@@ -28,7 +28,8 @@ from pychron.options.options import (
     AppearanceSubOptions,
     MainOptions,
     object_column,
-    checkbox_column, GuidesOptions,
+    checkbox_column,
+    GuidesOptions,
 )
 
 SHOW_STATISTICS_GROUP = BorderVGroup(
@@ -95,8 +96,6 @@ class SeriesMainOptions(MainOptions):
         ]
 
         return cols
-
-
 
 
 # ===============================================================

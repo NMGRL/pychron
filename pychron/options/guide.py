@@ -31,7 +31,7 @@ class Guide(HasTraits):
 
     def should_plot(self, plot):
         ret = True
-        if not self.plotname == 'All Plots':
+        if not self.plotname == "All Plots":
             if self.plotname:
                 ps = list(reversed(self.plotnames))
                 ret = ps.index(self.plotname) == plot
@@ -42,14 +42,12 @@ class Guide(HasTraits):
         return ("orientation", "color", "line_style", "alpha", "line_width")
 
     def to_kwargs(self):
-        return {
-            attr: getattr(self, attr)
-            for attr in self.kwargs_keys()
-        }
+        return {attr: getattr(self, attr) for attr in self.kwargs_keys()}
 
 
 class RangeGuide(Guide):
     minvalue = Float
     maxvalue = Float
+
 
 # ============= EOF =============================================

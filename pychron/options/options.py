@@ -35,7 +35,7 @@ from traits.api import (
     Color,
     Button,
     Instance,
-    Any
+    Any,
 )
 from traits.trait_errors import TraitError
 from traitsui.api import (
@@ -406,6 +406,7 @@ class BaseOptions(HasTraits):
             try:
                 items = state.pop(tag)
                 if items:
+
                     def func(gi):
                         s = gi.__getstate__()
                         convert_color(s)
@@ -506,8 +507,8 @@ class BaseOptions(HasTraits):
             trait
             for trait in self.traits()
             if not trait.startswith("trait")
-               and not trait.endswith("button")
-               and self.to_dict_test(trait)
+            and not trait.endswith("button")
+            and self.to_dict_test(trait)
         ]
 
         return {key: self.formatted_attr(key) for key in keys}
@@ -988,7 +989,7 @@ class GuidesOptions(SubOptions):
 
     def __init__(self, *args, **kw):
         super(GuidesOptions, self).__init__(*args, **kw)
-        names = ['All Plots'] + list(reversed(self.model.get_aux_plot_names()))
+        names = ["All Plots"] + list(reversed(self.model.get_aux_plot_names()))
         for g in self.model.guides:
             g.plotnames = names
         for g in self.model.ranges:
@@ -1000,7 +1001,7 @@ class GuidesOptions(SubOptions):
         else:
             g = Guide()
 
-        g.plotnames = ['All Plots'] + list(reversed(self.model.get_aux_plot_names()))
+        g.plotnames = ["All Plots"] + list(reversed(self.model.get_aux_plot_names()))
         self.model.guides.append(g)
 
     def _delete_guide_button_fired(self):
@@ -1013,7 +1014,7 @@ class GuidesOptions(SubOptions):
         else:
             g = RangeGuide()
 
-        g.plotnames = ['All Plots'] + list(reversed(self.model.get_aux_plot_names()))
+        g.plotnames = ["All Plots"] + list(reversed(self.model.get_aux_plot_names()))
         self.model.ranges.append(g)
 
     def _delete_range_button_fired(self):
@@ -1077,7 +1078,7 @@ class GuidesOptions(SubOptions):
                             selected="controller.selected",
                         ),
                     ),
-                    label='Guides'
+                    label="Guides",
                 ),
                 BorderVGroup(
                     HGroup(
@@ -1098,9 +1099,10 @@ class GuidesOptions(SubOptions):
                             selected="controller.selected_range",
                         ),
                     ),
-                    label='Ranges'
-                )
+                    label="Ranges",
+                ),
             )
         )
+
 
 # ============= EOF =============================================

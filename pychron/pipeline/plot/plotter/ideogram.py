@@ -650,7 +650,9 @@ class Ideogram(BaseArArFigure):
 
         for gi in self.options.ranges:
             if gi.visible and gi.should_plot(pid):
-                graph.add_range_guide(gi.minvalue, gi.maxvalue, **gi.to_kwargs(), plotid=pid)
+                graph.add_range_guide(
+                    gi.minvalue, gi.maxvalue, **gi.to_kwargs(), plotid=pid
+                )
 
         if self.options.display_inset:
             xs = self.xs
