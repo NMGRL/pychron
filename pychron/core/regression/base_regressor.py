@@ -241,8 +241,13 @@ class BaseRegressor(HasTraits):
             m = re.match(r"[A-Za-z]+", self.truncate)
             if m:
                 k = m.group(0)
-                exclude = eval(self.truncate, {k: self.xs})
-                excludes = list(exclude.nonzero()[0])
+                if k.lower() == "n":
+                    excludes = [
+                        i for i, _ in enumerate(self.xs) if eval(self.truncate, {k: i})
+                    ]
+                else:
+                    exclude = eval(self.truncate, {k: self.xs})
+                    excludes = list(exclude.nonzero()[0])
                 self.truncate_excluded = excludes
                 self.dirty = True
             else:

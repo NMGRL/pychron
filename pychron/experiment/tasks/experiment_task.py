@@ -848,24 +848,25 @@ class ExperimentEditorTask(EditorTask):
     def _default_layout_default(self):
         return TaskLayout(
             left=Splitter(
-                PaneItem("pychron.wait", height=100),
+                PaneItem("pychron.wait", height=50, width=600),
                 Tabbed(
-                    PaneItem("pychron.experiment.factory"),
-                    PaneItem("pychron.experiment.isotope_evolution"),
+                    PaneItem("pychron.experiment.factory", height=5000, width=600),
+                    PaneItem(
+                        "pychron.experiment.isotope_evolution", height=5000, width=600
+                    ),
                 ),
                 orientation="vertical",
             ),
             right=Splitter(
                 Tabbed(
                     PaneItem("pychron.experiment.stats"),
-                    PaneItem("pychron.console", height=425),
-                    PaneItem("pychron.experiment.explanation", height=425),
-                    PaneItem("pychron.experiment.connection_status"),
-                ),
-                Tabbed(
-                    PaneItem("pychron.extraction_line.canvas_dock"),
+                    PaneItem("pychron.console"),
                     PaneItem("pychron.experiment.timeseries"),
+                    PaneItem("pychron.experiment.conditionals"),
+                    PaneItem("pychron.experiment.connection_status"),
+                    PaneItem("pychron.experiment.explanation"),
                 ),
+                PaneItem("pychron.extraction_line.canvas_dock", height=2000, width=300),
                 orientation="vertical",
             ),
             top=PaneItem("pychron.experiment.controls"),

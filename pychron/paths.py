@@ -236,6 +236,7 @@ class Paths(object):
     # ===========================================================================
     # files
     # ===========================================================================
+    checkpoint_file = None
     labspy_client_config = None
     template_manifest_file = None
     pipeline_template_file = None
