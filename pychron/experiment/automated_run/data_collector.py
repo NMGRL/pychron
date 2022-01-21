@@ -251,11 +251,12 @@ class DataCollector(Consoleable):
                         nkeys.append(k)
                         nsignals.append(s)
 
-                data = (nkeys, nsignals, ct, inc)
-                self._data = (nkeys, nsignals)
-            else:
-                self._data = (keys, signals)
+                ds = (nkeys, nsignals, ct, inc)
 
+            else:
+                ds = (keys, signals, ct, inc)
+
+            self._data = ds
             return data
 
     def _save_data(self, x, keys, signals):
