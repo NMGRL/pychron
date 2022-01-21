@@ -21,6 +21,7 @@ from enable.colors import ColorTrait
 from enable.enable_traits import LineStyle
 from enable.label import Label
 from enable.tools.drag_tool import DragTool
+from numpy import array
 from traits.api import Enum, Float, Instance
 
 
@@ -81,14 +82,26 @@ class GuideOverlay(AbstractOverlay):
     alpha = Float(1)
     label = Instance(Label, ())
 
+    def _overlay_value(self, gc):
+        if self.display_value:
+            with gc:
+                l = self.label
+                l.text = "{:0.5f}".format(self.value)
+                l.position = self.label_position
+                l.draw(gc)
+
+    def _setup_line(self, gc):
+        gc.set_line_width(self.line_width)
+        gc.set_line_dash(self.line_style_)
+        gc.set_stroke_color(self.color_)
+        gc.set_alpha(self.alpha)
+
     def overlay(self, component, gc, view_bounds=None, mode="normal"):
         with gc:
             gc.clip_to_rect(component.x, component.y, component.width, component.height)
             with gc:
-                gc.set_line_width(self.line_width)
-                gc.set_line_dash(self.line_style_)
+                self._setup_line(gc)
                 gc.set_stroke_color(self.color_)
-                gc.set_alpha(self.alpha)
                 gc.begin_path()
 
                 if self.orientation == "h":
@@ -104,12 +117,32 @@ class GuideOverlay(AbstractOverlay):
                 gc.line_to(x2, y2)
                 gc.draw_path()
 
-            if self.display_value:
-                with gc:
-                    l = self.label
-                    l.text = "{:0.5f}".format(self.value)
-                    l.position = self.label_position
-                    l.draw(gc)
+            self._overlay_value(gc)
 
 
+class RangeGuideOverlay(GuideOverlay):
+    def overlay(self, component, gc, view_bounds=None, mode="normal"):
+        gc.clip_to_rect(component.x, component.y, component.width, component.height)
+        with gc:
+            self._setup_line(gc)
+            gc.set_fill_color(self.color_)
+
+            if self.orientation == "h":
+                x1 = component.x
+                y1, y2 = component.value_mapper.map_screen(array([self.minvalue, self.maxvalue]))
+                height = abs(y2 - y1)
+                width = component.width
+            else:
+                y1 = component.y
+                x1, x2 = component.index_mapper.map_screen(array([self.minvalue, self.maxvalue]))
+                width = abs(x2 - x1)
+                height = component.height
+
+            with gc:
+                gc.translate_ctm(x1, y1)
+                gc.begin_path()
+                gc.rect(0, 0, width, height)
+                gc.draw_path()
+
+                self._overlay_value(gc)
 # ============= EOF =====================================
