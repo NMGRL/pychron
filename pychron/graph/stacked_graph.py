@@ -118,7 +118,7 @@ class StackedGraph(Graph):
         # kw['resizable'] = 'h'
         if "bounds" not in kw:
             # kw["bounds"] = (1, self.panel_height)
-            kw["resizable"] = kw.get('resizable', "hv")
+            kw["resizable"] = kw.get("resizable", "hv")
 
         p = super(StackedGraph, self).new_plot(**kw)
         # p.value_axis.ensure_labels_bounded = True
