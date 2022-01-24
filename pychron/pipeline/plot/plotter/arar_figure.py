@@ -231,7 +231,7 @@ class BaseArArFigure(SelectionFigure):
                     m = 10 ** math.floor(math.log10(min(ys)))
                     p.value_mapper.range.low = m
 
-                if hasattr(p, 'alt_axis'):
+                if hasattr(p, "alt_axis"):
                     p.alt_axis.mapper = p.value_mapper
 
     def _setup_plot(self, i, pp, po):
