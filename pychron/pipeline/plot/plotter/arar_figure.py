@@ -231,6 +231,9 @@ class BaseArArFigure(SelectionFigure):
                     m = 10 ** math.floor(math.log10(min(ys)))
                     p.value_mapper.range.low = m
 
+                if hasattr(p, 'alt_axis'):
+                    p.alt_axis.mapper = p.value_mapper
+
     def _setup_plot(self, i, pp, po):
 
         # add limit tools
@@ -276,9 +279,10 @@ class BaseArArFigure(SelectionFigure):
                     )
                     alt_axis.tick_label_formatter = lambda x: ""
                     alt_axis.axis_line_visible = False
-                    alt_axis.tick_in = options.ytick_in - 1
+                    alt_axis.tick_in = options.ytick_in
                     alt_axis.tick_out = options.ytick_out
                     pp.underlays.append(alt_axis)
+                    pp.alt_axis = alt_axis
 
             if not po.ytick_visible:
                 pp.y_axis.tick_visible = False
