@@ -602,6 +602,24 @@ class InverseIsochron(Isochron):
             mse_text,
         )
         mswd_line = "N={} MSWD={}".format(n, mswd)
+
+        if opt.show_results_info_location == 'Bottom Right':
+            overlay_position = 'inside bottom'
+            hjustify = 'right'
+            ox = -2
+        elif opt.show_results_info_location == 'Top Right':
+            overlay_position = 'inside top'
+            hjustify = 'right'
+            ox = -2
+        elif opt.show_results_info_location == 'Top Left':
+            overlay_position = 'inside top'
+            hjustify = 'inside left'
+            ox = 2
+        else:
+            overlay_position = 'inside bottom'
+            hjustify = 'left'
+            ox = 2
+
         if label is None:
             th = 0
             for overlay in plot.overlays:
@@ -610,11 +628,11 @@ class InverseIsochron(Isochron):
                     th += h + opt.results_info_spacing
 
             label = OffsetPlotLabel(
-                offset=(2, th + 2),
+                offset=(ox, th + 2),
                 component=plot,
-                overlay_position="inside bottom",
+                overlay_position=overlay_position,
                 border_visible=False,
-                hjustify="left",
+                hjustify=hjustify,
                 bgcolor="transparent",
                 font=opt.results_font,
                 color=text_color,
