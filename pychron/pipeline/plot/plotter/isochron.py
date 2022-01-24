@@ -603,21 +603,21 @@ class InverseIsochron(Isochron):
         )
         mswd_line = "N={} MSWD={}".format(n, mswd)
 
-        if opt.show_results_info_location == 'Bottom Right':
-            overlay_position = 'inside bottom'
-            hjustify = 'right'
+        if opt.show_results_info_location == "Bottom Right":
+            overlay_position = "inside bottom"
+            hjustify = "right"
             ox = -2
-        elif opt.show_results_info_location == 'Top Right':
-            overlay_position = 'inside top'
-            hjustify = 'right'
+        elif opt.show_results_info_location == "Top Right":
+            overlay_position = "inside top"
+            hjustify = "right"
             ox = -2
-        elif opt.show_results_info_location == 'Top Left':
-            overlay_position = 'inside top'
-            hjustify = 'inside left'
+        elif opt.show_results_info_location == "Top Left":
+            overlay_position = "inside top"
+            hjustify = "inside left"
             ox = 2
         else:
-            overlay_position = 'inside bottom'
-            hjustify = 'left'
+            overlay_position = "inside bottom"
+            hjustify = "left"
             ox = 2
 
         if label is None:
