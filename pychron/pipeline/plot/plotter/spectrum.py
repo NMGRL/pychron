@@ -297,7 +297,7 @@ class Spectrum(BaseArArFigure):
             ds.line_width = group.center_line_width
         else:
             ds.line_width = 0
-            ds.color = 'transparent'
+            ds.color = "transparent"
 
         ds.value_mapper.fill_value = 1e-20
         ds.index.on_trait_change(self.update_graph_metadata, "metadata_changed")
