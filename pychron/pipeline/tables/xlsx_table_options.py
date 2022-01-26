@@ -313,9 +313,11 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
             Item("summary_sheet_name", label="Summary"),
             label="Sheet Names",
         )
-        behavior_grp = BorderVGroup(Item("exclude_hidden_columns"),
-                                    Item('include_notes_border'),
-                                    label="Behavior")
+        behavior_grp = BorderVGroup(
+            Item("exclude_hidden_columns"),
+            Item("include_notes_border"),
+            label="Behavior",
+        )
 
         def note(name):
             tag = "{}s".format(name.capitalize())

@@ -374,7 +374,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         )
 
     def _intercalibration_columns(
-            self, columns, detectors, ic_visible=True, disc_visible=True
+        self, columns, detectors, ic_visible=True, disc_visible=True
     ):
         disc = [
             SigFigColumn(
@@ -409,9 +409,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _signal_columns(self, columns, ibit, bkbit):
         isos = (("Ar", 40), ("Ar", 39), ("Ar", 38), ("Ar", 37), ("Ar", 36))
         for bit, tag in (
-                (True, "disc_ic_corrected"),
-                (ibit, "intercept"),
-                (bkbit, "blank"),
+            (True, "disc_ic_corrected"),
+            (ibit, "intercept"),
+            (bkbit, "blank"),
         ):
             cols = [
                 c
@@ -643,8 +643,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         def get_age_error(attr):
             def f(ag, *args):
                 return (
-                        ag.scaled_age(std_dev(getattr(ag, attr)), opt.age_units)
-                        * opt.summary_age_nsigma
+                    ag.scaled_age(std_dev(getattr(ag, attr)), opt.age_units)
+                    * opt.summary_age_nsigma
                 )
 
             return f
@@ -787,11 +787,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         # hide extra age columns
         for hidden in (
-                "WeightedMeanAge",
-                "ArithmeticMeanAge",
-                "IsochronAge",
-                "PlateauAge",
-                "IntegratedAge",
+            "WeightedMeanAge",
+            "ArithmeticMeanAge",
+            "IsochronAge",
+            "PlateauAge",
+            "IntegratedAge",
         ):
             hc = next((i for i, c in enumerate(cols) if c.label == hidden), None)
             if hc is not None:
@@ -1061,8 +1061,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     args = []
                     for cii in ci:
                         for reg, fmt in (
-                                (supreg, self._superscript),
-                                (subreg, self._subscript),
+                            (supreg, self._superscript),
+                            (subreg, self._subscript),
                         ):
                             m = reg.match(cii)
                             if m:
@@ -1166,7 +1166,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         c = age_idx + 4
         while 1:
             if c < cum_idx:
-                sh.write(row, c, '', border)
+                sh.write(row, c, "", border)
                 c += 1
 
         if label == "plateau":
@@ -1196,7 +1196,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return fn
 
     def _make_analysis(
-            self, sh, cols, item, is_last=False, is_plateau_step=None, cum=""
+        self, sh, cols, item, is_last=False, is_plateau_step=None, cum=""
     ):
         row = self._current_row
 
@@ -1430,9 +1430,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._current_row += 1
 
     def _make_notes(self, groups, sh, ncols, key):
-        fmt = {'bold': True}
+        fmt = {"bold": True}
         if self._options.include_notes_border:
-            fmt['top'] = 1
+            fmt["top"] = 1
         top = self._workbook.add_format(fmt)
 
         sh.write_string(self._current_row, 0, "Notes:", top)
@@ -1564,6 +1564,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         if isinstance(v, Variable):
             v = nominal_value(v)
         return v
+
 
 # ============= EOF =============================================
 # if __name__ == '__main__':
