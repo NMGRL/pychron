@@ -48,3 +48,16 @@ class PreExecuteCheckException(CheckException):
         if r:
             r = "{} {}".format(r, self._error)
         return r
+
+
+class MessageException(BaseException):
+    def __init__(self, msg, error=None):
+        self.message = msg
+        self._error = error
+        super(MessageException, self).__init__(msg)
+
+    def __str__(self):
+        r = super(MessageException, self).__str__()
+        if r:
+            r = "msg={} error={}".format(r, self._error)
+        return r

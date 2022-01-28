@@ -1316,9 +1316,9 @@ class AutomatedRun(Loggable):
             else:
                 self.debug("no log path to save")
 
-    def save(self):
+    def save(self, exception_q=None, complete_event=None):
         self.debug(
-            "post measurement save measured={} aborted={}".format(
+            "post measurement save measured={} aborted={}, non_blocking={}".format(
                 self._measured, self._aborted
             )
         )
@@ -1351,25 +1351,31 @@ class AutomatedRun(Loggable):
                 **env
             )
 
-            # save to database
-            self._persister_save_action("post_measurement_save")
-
             self.spec.new_result(self)
 
-            if self.plot_panel:
-                self.plot_panel.analysis_view.refresh_needed = True
-
-            if self.persister.secondary_database_fail:
-                self.executor_event = {
-                    "kind": "cancel",
-                    "cancel_run": True,
-                    "msg": self.persister.secondary_database_fail,
-                }
-
+            # save to database
+            if exception_q:
+                t = Thread(target=self._persister_save_action,
+                           args="post_measurement_save", kwargs={'exception_q': exception_q,
+                                                                 'complete_event': complete_event})
+                t.start()
             else:
-                return True
-        else:
-            return True
+                self._persister_save_action("post_measurement_save")
+
+            # if self.plot_panel:
+            #     self.plot_panel.analysis_view.refresh_needed = True
+
+        #     if self.persister.secondary_database_fail:
+        #         self.executor_event = {
+        #             "kind": "cancel",
+        #             "cancel_run": True,
+        #             "msg": self.persister.secondary_database_fail,
+        #         }
+        #
+        #     else:
+        #         return True
+        # else:
+        #     return True
 
     # ===============================================================================
     # setup
