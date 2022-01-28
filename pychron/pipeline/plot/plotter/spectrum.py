@@ -242,7 +242,7 @@ class Spectrum(BaseArArFigure):
                 text,
                 font=op.integrated_font,
                 relative_position=self.group_id,
-                color=spec.color,
+                color=grp.line_color,
             )
         self._add_info(graph, plot)
 
