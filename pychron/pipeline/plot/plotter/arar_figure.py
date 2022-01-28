@@ -308,7 +308,9 @@ class BaseArArFigure(SelectionFigure):
                 try:
                     setattr(axis, attr, value)
                 except TraitError as e:
-                    print('error setting attr={},value={} error={}'.format(attr, value, e))
+                    print(
+                        "error setting attr={},value={} error={}".format(attr, value, e)
+                    )
 
             axis.tick_label_font = getattr(options, "{}tick_font".format(k))
 
