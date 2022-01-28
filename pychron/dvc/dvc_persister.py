@@ -100,7 +100,7 @@ class DVCPersister(BasePersister):
         return pspec
 
     def per_spec_save(
-            self, pr, repository_identifier=None, commit=False, commit_tag=None, push=True
+        self, pr, repository_identifier=None, commit=False, commit_tag=None, push=True
     ):
         self.per_spec = pr
 
@@ -243,8 +243,14 @@ class DVCPersister(BasePersister):
     def pre_measurement_save(self):
         pass
 
-    def post_measurement_save(self, commit=True, commit_tag="COLLECTION", push=True, exception_q=None,
-                              complete_event=None):
+    def post_measurement_save(
+        self,
+        commit=True,
+        commit_tag="COLLECTION",
+        push=True,
+        exception_q=None,
+        complete_event=None,
+    ):
         """
         save
             - analysis.json
@@ -295,8 +301,8 @@ class DVCPersister(BasePersister):
                 ar.smart_pull(accept_their=True)
 
                 paths = [
-                            spec_path,
-                        ] + [self._make_path(modifier=m) for m in NPATH_MODIFIERS]
+                    spec_path,
+                ] + [self._make_path(modifier=m) for m in NPATH_MODIFIERS]
 
                 for p in paths:
                     if os.path.isfile(p):
@@ -323,12 +329,12 @@ class DVCPersister(BasePersister):
                     ar.commit("<ISOEVO> default collection fits")
 
                 for pp, tag, msg in (
-                        (
-                                "blanks",
-                                "BLANKS",
-                                "preceding {}".format(self.per_spec.previous_blank_runid),
-                        ),
-                        ("icfactors", "ICFactor", "default"),
+                    (
+                        "blanks",
+                        "BLANKS",
+                        "preceding {}".format(self.per_spec.previous_blank_runid),
+                    ),
+                    ("icfactors", "ICFactor", "default"),
                 ):
                     p = self._make_path(pp)
                     if os.path.isfile(p):
@@ -342,17 +348,20 @@ class DVCPersister(BasePersister):
                     self.debug_exception()
                     self.warning(e)
                     if exception_q:
-                        exception_q.put(('NonFatal', "NON FATAL\n\n"
-                                                       "DVC/Git upload of analysis not successful."
-                                                       "Do you want to CANCEL the experiment?\n"))
+                        exception_q.put(
+                            (
+                                "NonFatal",
+                                "NON FATAL\n\n"
+                                "DVC/Git upload of analysis not successful."
+                                "Do you want to CANCEL the experiment?\n",
+                            )
+                        )
 
                 # update meta
                 dvc.meta_pull(accept_our=True)
 
                 dvc.meta_commit(
-                    "repo updated for analysis {}".format(
-                        self.per_spec.run_spec.runid
-                    )
+                    "repo updated for analysis {}".format(self.per_spec.run_spec.runid)
                 )
 
                 try:
@@ -363,9 +372,14 @@ class DVCPersister(BasePersister):
                     self.debug_exception()
                     self.warning(e)
                     if exception_q:
-                        exception_q.put(('NonFatal', "NON FATAL\n\n"
-                                                     "DVC/Git upload of analysis not successful."
-                                                     "Do you want to CANCEL the experiment?\n"))
+                        exception_q.put(
+                            (
+                                "NonFatal",
+                                "NON FATAL\n\n"
+                                "DVC/Git upload of analysis not successful."
+                                "Do you want to CANCEL the experiment?\n",
+                            )
+                        )
 
         with dvc.session_ctx():
             try:
@@ -374,7 +388,7 @@ class DVCPersister(BasePersister):
                 self.debug_exception()
                 self.warning(e)
                 if exception_q:
-                    exception_q.put(('Fatal', "DatabaseError. see log"))
+                    exception_q.put(("Fatal", "DatabaseError. see log"))
 
         self.info("================= post measurement save finished =================")
         if complete_event:
@@ -716,11 +730,11 @@ class DVCPersister(BasePersister):
         # save the scripts
         ms = per_spec.run_spec.mass_spectrometer
         for si in (
-                "measurement",
-                "extraction",
-                "post_measurement",
-                "post_equilibration",
-                "hops",
+            "measurement",
+            "extraction",
+            "post_measurement",
+            "post_equilibration",
+            "hops",
         ):
             name = getattr(per_spec, "{}_name".format(si))
             blob = getattr(per_spec, "{}_blob".format(si))

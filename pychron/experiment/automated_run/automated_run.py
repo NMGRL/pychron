@@ -1355,9 +1355,14 @@ class AutomatedRun(Loggable):
 
             # save to database
             if exception_q:
-                t = Thread(target=self._persister_save_action,
-                           args="post_measurement_save", kwargs={'exception_q': exception_q,
-                                                                 'complete_event': complete_event})
+                t = Thread(
+                    target=self._persister_save_action,
+                    args="post_measurement_save",
+                    kwargs={
+                        "exception_q": exception_q,
+                        "complete_event": complete_event,
+                    },
+                )
                 t.start()
             else:
                 self._persister_save_action("post_measurement_save")
