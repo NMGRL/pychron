@@ -199,11 +199,9 @@ class BaseArArFigure(SelectionFigure):
         self._fix_log_axes()
 
     def post_plot(self, plots):
-        pass
-
-    #     graph = self.graph
-    #     for (plotobj, po) in zip(graph.plots, plots):
-    #         self._apply_aux_plot_options(plotobj, po)
+        graph = self.graph
+        for (plotobj, po) in zip(graph.plots, plots):
+            self._apply_aux_plot_options(plotobj, po)
 
     def plot(self, *args, **kw):
         pass
@@ -247,20 +245,11 @@ class BaseArArFigure(SelectionFigure):
         pp.index_range.on_trait_change(lambda: self.update_options_limits(i), "updated")
         pp.value_range.tight_bounds = False
 
-        self._apply_aux_plot_options(pp, po)
+        # this needs to happen post_plot
+        # self._apply_aux_plot_options(pp, po)
 
     def _apply_aux_plot_options(self, pp, po):
         options = self.options
-
-        # pp.x_axis.title_font = options.xtitle_font
-        # pp.x_axis.tick_label_font = options.xtick_font
-        # pp.x_axis.tick_in = options.xtick_in
-        # pp.x_axis.tick_out = options.xtick_out
-        #
-        # pp.y_axis.title_font = options.ytitle_font
-        # pp.y_axis.tick_label_font = options.ytick_font
-        # pp.y_axis.tick_in = options.ytick_in
-        # pp.y_axis.tick_out = options.ytick_out
 
         pp.bgcolor = options.plot_bgcolor
         pp.x_grid.visible = options.use_xgrid
@@ -318,8 +307,8 @@ class BaseArArFigure(SelectionFigure):
                 value = getattr(options, "{}{}".format(k, attr))
                 try:
                     setattr(axis, attr, value)
-                except TraitError:
-                    pass
+                except TraitError as e:
+                    print('error setting attr={},value={} error={}'.format(attr, value, e))
 
             axis.tick_label_font = getattr(options, "{}tick_font".format(k))
 
