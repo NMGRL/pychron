@@ -413,7 +413,7 @@ class AutomatedRunConditional(BaseConditional):
 class TruncationConditional(AutomatedRunConditional):
     """
     stops the current measurement and continues to next step in pyscript.
-    If more measure calls are main use abbreviated_count_ratio to reduce
+    If more measure calls are made use abbreviated_count_ratio to reduce
     the number of counts. for example of abbreviated_count_ratio = 0.5 and
     the original baseline counts = 100, only 50 counts will be made for a truncated
     run.

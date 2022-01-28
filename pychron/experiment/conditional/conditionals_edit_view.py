@@ -150,7 +150,7 @@ class ConditionalsEditView(ConditionalsViewable):
     # pre_run_terminations_group = Any
 
     def __init__(self, detectors=None, *args, **kw):
-        attrs = ["", "age", "kca", "kcl", "cak", "clk", "radiogenic_yield"] + list(
+        attrs = ["", "age", "instant_age", "kca", "kcl", "cak", "clk", "radiogenic_yield"] + list(
             ARGON_KEYS
         )
 
