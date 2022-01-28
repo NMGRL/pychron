@@ -432,12 +432,14 @@ class ArArAge(IsotopeGroup):
         if not iso_intensities:
             return
 
-        f, f_wo_irrad, non_ar, computed, interference_corrected = self._calculate_f(iso_intensities=iso_intensities,
-                                                                                    set_attr=False)
+        f, f_wo_irrad, non_ar, computed, interference_corrected = self._calculate_f(
+            iso_intensities=iso_intensities, set_attr=False
+        )
         age = age_equation(
-            nominal_value(self.j), f,
+            nominal_value(self.j),
+            f,
             # include_decay_error=include_decay_error,
-            arar_constants=self.arar_constants
+            arar_constants=self.arar_constants,
         )
         return age
 
@@ -501,7 +503,10 @@ class ArArAge(IsotopeGroup):
         else:
             self._missing_isotope_warned = False
 
-        return [isotopes[self.arar_mapping[k]].get_intensity(window=window) for k in ARGON_KEYS]
+        return [
+            isotopes[self.arar_mapping[k]].get_intensity(window=window)
+            for k in ARGON_KEYS
+        ]
 
     def _assemble_isotope_intensities(self, window=None):
         iso_intensities = self._assemble_ar_ar_isotopes(window=window)
