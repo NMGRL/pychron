@@ -46,7 +46,7 @@ class IsoFilterFitAuxPlot(AuxPlot, IsoFilterFit):
 
     def smart_filter_values(self, xx):
         a, b, c, d = self.get_filter_coefficients()
-        return a * xx ** b + c * xx + d
+        return a * xx**b + c * xx + d
 
     def get_filter_coefficients(self):
         return (float(f) for f in self.filter_coefficients.split(","))

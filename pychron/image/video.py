@@ -62,8 +62,8 @@ def convert_to_video(
     subprocess.call(call_args)
 
 
-BIT_8 = 2 ** 8 - 1
-BIT_16 = 2 ** 16 - 1
+BIT_8 = 2**8 - 1
+BIT_16 = 2**16 - 1
 
 
 def pil_save(src, p):

@@ -256,7 +256,7 @@ Example 3. positions the magnet in DAC space.
 
 class SetTimeZero(Command):
     description = "Set Time Zero"
-    example = u"""set_time_zero()
+    example = """set_time_zero()
     
 set_time_zero allows fine grained control of the t\u2080.    
 """

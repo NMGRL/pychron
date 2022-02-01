@@ -311,10 +311,12 @@ class PipelineTask(BaseBrowserTask):
                     self.dvc.tag_items(tag, items, note)
                 except BaseException as e:
                     self.debug_exception()
-                    if self.confirmation_dialog('Any error occurred trying to tag the analyses. You may not have '
-                                                'sufficient privileges to UPDATE the database. Contact your DB '
-                                                'administrator. Would you like to try to report the error to Pychron '
-                                                'developers?'):
+                    if self.confirmation_dialog(
+                        "Any error occurred trying to tag the analyses. You may not have "
+                        "sufficient privileges to UPDATE the database. Contact your DB "
+                        "administrator. Would you like to try to report the error to Pychron "
+                        "developers?"
+                    ):
                         raise e
 
                 if use_filter:

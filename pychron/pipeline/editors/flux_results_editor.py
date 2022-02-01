@@ -490,7 +490,7 @@ class BracketingFluxResultsEditor(FluxResultsEditor):
                 if p.hole_id in (obj.bracket_a, obj.bracket_b)
             ]
 
-            ws = array([1 / a.mean_jerr ** 2, 1 / b.mean_jerr ** 2])
+            ws = array([1 / a.mean_jerr**2, 1 / b.mean_jerr**2])
             vs = array([a.mean_j, b.mean_j])
             if self.plotter_options.use_weighted_fit:
 

@@ -29,7 +29,7 @@ class VerticalFluxSubOptions(SubOptions):
             Item("use_j", label="Use J"),
             BorderVGroup(
                 Item("selected_monitor", label="Flux Const."),
-                Readonly("lambda_k", label=u"Total \u03BB K"),
+                Readonly("lambda_k", label="Total \u03BB K"),
                 Readonly("monitor_age", label="Monitor Age"),
                 label="Monitor",
                 enabled_when="use_j",
