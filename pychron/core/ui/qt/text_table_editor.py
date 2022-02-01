@@ -211,7 +211,7 @@ class _FastTextTableEditor(_TextTableEditor):
 
                 txt = "".join(
                     [
-                        u"{{:<{}s}}".format(cell.width).format(cell.text)
+                        "{{:<{}s}}".format(cell.width).format(cell.text)
                         for cell in row.cells
                     ]
                 )

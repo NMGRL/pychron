@@ -288,7 +288,7 @@ class IsotopeAdapter(DatabaseAdapter):
                 dbflux = self.add_flux(float(v), float(e))
                 dbflux.history = dbhist
                 dbln.selected_flux_history = dbhist
-                msg = u"Flux for {} {} \u00b1{} saved to database".format(
+                msg = "Flux for {} {} \u00b1{} saved to database".format(
                     identifier, v, e
                 )
                 if inform:

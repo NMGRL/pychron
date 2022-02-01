@@ -159,7 +159,7 @@ class BaseRegressor(HasTraits):
             # n = len(ys) - self.ddof
             n = ys.shape[0]
             if n > 0:
-                return self.std * n ** -0.5
+                return self.std * n**-0.5
             else:
                 return 0
         else:
@@ -340,7 +340,7 @@ class BaseRegressor(HasTraits):
 
         s = 0
         if residuals is not None:
-            ss_res = (residuals ** 2).sum()
+            ss_res = (residuals**2).sum()
 
             n = residuals.shape[0]
             q = len(self.coefficients)
@@ -409,10 +409,10 @@ class BaseRegressor(HasTraits):
             fmt = "{{:0.{}e}}" if abs(ei) < math.pow(10, -sig_figs) else "{{:0.{}f}}"
             ei = fmt.format(sig_figs).format(ei)
 
-            vfmt = u"{{}}= {{}} {} {{}} {{}}".format(PLUSMINUS)
+            vfmt = "{{}}= {{}} {} {{}} {{}}".format(PLUSMINUS)
             coeffs.append(vfmt.format(alphas(i), ci, ei, pp))
 
-        s = u", ".join(coeffs)
+        s = ", ".join(coeffs)
         return s
 
     def make_equation(self):
@@ -470,8 +470,8 @@ class BaseRegressor(HasTraits):
             ti = tinv(alpha, n - 1)
             syx = self.get_syx()
             ssx = self.get_ssx(xm)
-            d = n ** -1 + (rx - xm) ** 2 / ssx
-            cors = ti * syx * d ** 0.5
+            d = n**-1 + (rx - xm) ** 2 / ssx
+            cors = ti * syx * d**0.5
 
             return cors / 2.0
 

@@ -64,7 +64,7 @@ FITDEGREES = dict(Linear=1, Parabolic=2, Cubic=3)
 
 class DummyAPM:
     def read_power_meter(self, setpoint):
-        return setpoint ** 2 + random.randint(0, 5)
+        return setpoint**2 + random.randint(0, 5)
 
     def check_saturation(self, n=3):
         return False

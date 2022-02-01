@@ -38,7 +38,7 @@ class FluxSubOptions(SubOptions):
             Readonly(
                 "lambda_k",
                 format_func=lambda x: "{:0.3u}".format(x),
-                label=u"Total \u03BB K",
+                label="Total \u03BB K",
             ),
             Readonly("monitor_age"),
             BorderVGroup(

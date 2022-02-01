@@ -115,7 +115,7 @@ class SpectrumTool(AnalysisPointInspector, BasePlateauOverlay):
                 "RunID={}".format(an.record_id),
                 "Tag={}".format(an.tag),
                 "Status={}".format(an.status_text),
-                u"{}={} {} {} ({}{})".format(
+                "{}={} {} {} ({}{})".format(
                     comp.container.y_axis.title,
                     floatfmt(v),
                     PLUSMINUS,

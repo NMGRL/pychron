@@ -31,7 +31,6 @@ from yaml import YAMLError
 from pychron.core.helpers.binpack import encode_blob, pack
 from pychron.core.yaml import yload
 from pychron.dvc import dvc_dump, analysis_path, repository_path, NPATH_MODIFIERS
-from pychron.experiment import PersistenceError, NonFatalPersistenceError
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.automated_run.spec import AutomatedRunSpec

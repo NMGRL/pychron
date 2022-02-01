@@ -1164,7 +1164,7 @@ THIS CHANGE CANNOT BE UNDONE"
                 j = chron.duration * self.j_multiplier
                 self.total_irradiation_hours = "{:0.1f}".format(chron.duration)
                 self._estimated_j_value = j
-                self.estimated_j_value = u"{} {}{}".format(
+                self.estimated_j_value = "{} {}{}".format(
                     floatfmt(j), PLUSMINUS, floatfmt(j * 0.001)
                 )
                 items = [NeutronDose(*args) for args in chron.get_doses()]

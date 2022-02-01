@@ -255,7 +255,7 @@ class ReferencesSeries(BaseSeries):
                 v, e = self._get_interpolated_value(po, analysis)
                 s, se = self._get_signal_intensity(po, analysis)
                 return (
-                    u"Interpolated: {} {} {}".format(
+                    "Interpolated: {} {} {}".format(
                         floatfmt(v), PLUSMINUS, floatfmt(e)
                     ),
                     "Run Date: {}".format(analysis.rundate.strftime("%m-%d-%Y %H:%M")),

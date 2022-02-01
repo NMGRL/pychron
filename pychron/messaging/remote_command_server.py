@@ -199,7 +199,7 @@ class RemoteCommandServer(ConfigLoadable):
 
         #        server = gdict[server_class]
         if ds is None:
-            ds = 2 ** 10
+            ds = 2**10
         #        return server(self, ptype, ds, addr, handler_klass)
         return factory(self, ptype, ds, addr)
 

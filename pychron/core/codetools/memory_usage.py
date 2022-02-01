@@ -76,7 +76,7 @@ def mem_log_func(func, *args, **kw):
 def mem_available():
     if psutil:
         mem = psutil.virtual_memory().free
-        mem *= 1024.0 ** -2
+        mem *= 1024.0**-2
     else:
         mem = 16
     return mem
@@ -145,7 +145,7 @@ def _get_current_mem():
         PID = os.getpid()
         proc = psutil.Process(PID)
         mem = proc.get_memory_info()
-        return mem.rss / 1024.0 ** 2
+        return mem.rss / 1024.0**2
 
 
 class MemCTX(object):
@@ -365,7 +365,7 @@ def get_id(i):
 
 def get_size(cls, show=False):
     vs = (sys.getsizeof(o) for o in get_type(cls))
-    v = sum(vs) * 1024 ** -2
+    v = sum(vs) * 1024**-2
     if show:
         print("{:<30s} {}".format(cls, v))
     return v
@@ -384,7 +384,7 @@ def count_instances(inst=None, group=None, referrers=False, referents=False, pre
         n = group
         objs = list(filter(t, gc.get_objects()))
 
-        s = sum(sys.getsizeof(o) for o in objs) * 1024 ** -2
+        s = sum(sys.getsizeof(o) for o in objs) * 1024**-2
         nn = len(objs)
         print("{:<50s}:{} {} {} {}".format(n, nn, s, prev, nn - prev))
         return nn
@@ -393,7 +393,7 @@ def count_instances(inst=None, group=None, referrers=False, referents=False, pre
         t = lambda x: isinstance(x, inst)
         n = str(inst)
         objs = list(filter(t, gc.get_objects()))
-        s = sum(sys.getsizeof(o) for o in objs) * 1024 ** -2
+        s = sum(sys.getsizeof(o) for o in objs) * 1024**-2
         print("{:<50s}:{} {}".format(n, len(objs), s))
 
     else:

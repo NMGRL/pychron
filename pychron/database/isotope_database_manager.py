@@ -186,7 +186,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 dbflux.history = dbhist
                 dbln.selected_flux_history = dbhist
                 self.information_dialog(
-                    u"Flux for {} {} \u00b1{} saved to database".format(labnumber, v, e)
+                    "Flux for {} {} \u00b1{} saved to database".format(labnumber, v, e)
                 )
 
     def filter_analysis_tag(self, ans, exclude):

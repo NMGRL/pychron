@@ -124,7 +124,7 @@ class MainView(HasTraits):
             pe = format_percent_error(
                 nominal_value(j), std_dev(j), include_percent_sign=True
             )
-            jf = u"{} \u00b1{:0.2e}({})".format(jj, std_dev(j), pe)
+            jf = "{} \u00b1{:0.2e}({})".format(jj, std_dev(j), pe)
 
         a39 = ar.ar39decayfactor
         a37 = ar.ar37decayfactor
@@ -383,7 +383,7 @@ class MainView(HasTraits):
                 ci = self.computed_values[0]
                 v = ci.value
                 e = ci.error
-                ss = u"Ar40/Ar36={} {}{}({}%) IC={:0.5f}".format(
+                ss = "Ar40/Ar36={} {}{}({}%) IC={:0.5f}".format(
                     floatfmt(v),
                     PLUSMINUS,
                     floatfmt(e),
@@ -530,7 +530,7 @@ class MainView(HasTraits):
             age = an.uage
             nage, sage = nominal_value(age), std_dev(age)
             try:
-                ss = u"Age={} {}{}({}%) {}".format(
+                ss = "Age={} {}{}({}%) {}".format(
                     floatfmt(nage),
                     PLUSMINUS,
                     floatfmt(sage),

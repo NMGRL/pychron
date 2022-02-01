@@ -77,7 +77,7 @@ class BaseItem(HasTraits):
         if not isinstance(v, Paragraph):
             fmt = self.fmt
             if fmt is None:
-                fmt = u"{}"
+                fmt = "{}"
             if isinstance(fmt, (str, six.text_type)):
                 v = fmt.format(v)
             else:
@@ -99,10 +99,10 @@ class BaseItem(HasTraits):
                     frag.fontSize = size
         elif name:
             v = self._new_paragraph(
-                u'<font size="{}" name="{}">{}</font>'.format(size, name, v)
+                '<font size="{}" name="{}">{}</font>'.format(size, name, v)
             )
         else:
-            v = self._new_paragraph(u'<font size="{}">{}</font>'.format(size, v))
+            v = self._new_paragraph('<font size="{}">{}</font>'.format(size, v))
 
         return v
 
@@ -117,28 +117,28 @@ class RowItem(BaseItem):
 
 
 def Superscript(v):
-    return u"<super>{}</super>".format(v)
+    return "<super>{}</super>".format(v)
 
 
 def Subscript(v):
-    return u"<sub>{}</sub>".format(v)
+    return "<sub>{}</sub>".format(v)
 
 
 def NamedParameter(name, value):
-    return u"<b>{}</b>: {}".format(name, value)
+    return "<b>{}</b>: {}".format(name, value)
 
 
 def Anchor(tagname, num, s="Normal"):
     snum = Superscript(num)
-    link = u'{{}}<a href="#{}" color="green">{}</a>'.format(tagname, snum)
-    tag = u'{{}}{}: {{}}<a name="{}"/>'.format(snum, tagname)
+    link = '{{}}<a href="#{}" color="green">{}</a>'.format(tagname, snum)
+    tag = '{{}}{}: {{}}<a name="{}"/>'.format(snum, tagname)
 
     style = STYLES[s]
 
     def flink(x, extra=None):
         f = link.format(x)
         if extra:
-            f = u"{}{}".format(f, extra)
+            f = "{}{}".format(f, extra)
         return Paragraph(f, style)
 
     def p2(n, v):
