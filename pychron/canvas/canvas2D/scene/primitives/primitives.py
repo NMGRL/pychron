@@ -169,7 +169,7 @@ class Line(QPrimitive):
     def get_length(self):
         dx = self.start_point.x - self.end_point.x
         dy = self.start_point.y - self.end_point.y
-        return (dx ** 2 + dy ** 2) ** 0.5
+        return (dx**2 + dy**2) ** 0.5
 
     def calculate_rotation(self):
 
@@ -416,7 +416,7 @@ class LoadIndicator(Circle):
         if self.space == "data":
             r = self.map_dimension(r)
 
-        f = 2 ** 0.5 / 2
+        f = 2**0.5 / 2
         self.name_offsetx = (r * f) + 8
         self.name_offsety = (r * f) + 8
 

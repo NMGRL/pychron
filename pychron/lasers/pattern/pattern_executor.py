@@ -402,7 +402,7 @@ class PatternExecutor(Patternable):
             img_h / 2, img_w / 2, pattern.perimeter_radius * pxpermm
         )
 
-        color = 2 ** 15 - 1
+        color = 2**15 - 1
         per_img[perimeter_circle] = 50
         set_data("imagedata", gray2rgb(per_img.astype(uint8)))
 

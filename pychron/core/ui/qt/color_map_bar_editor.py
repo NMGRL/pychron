@@ -60,8 +60,8 @@ class Bar(QFrame):
         """
         if self.scale == "power":
             N = 1 / float(self.color_scalar)
-            A = 1 / self.high ** N
-            nv = A * v ** N
+            A = 1 / self.high**N
+            nv = A * v**N
         else:
             nv = min(1, max(0, (v - self.low) / (self.high - self.low)))
 
