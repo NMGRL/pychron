@@ -66,7 +66,7 @@ def interpolate2(y, t, e, yp):
 
     a = dyp / dy
     b = 1 - a
-    c = dt * dyp / (dy ** 2)
+    c = dt * dyp / (dy**2)
     d = dt / dy
     sy = 0.1 * dy
     syp = 0.1 * dyp
@@ -76,7 +76,7 @@ def interpolate2(y, t, e, yp):
     dy = y[0] - y[1]
     ee = dyp / dy
     f = 1 - ee
-    g = dt * dyp / (dy ** 2)
+    g = dt * dyp / (dy**2)
     e2 = ((ee * e[1]) ** 2 + (f * e[0] ** 2) + (g * sy) ** 2 + (d * syp) ** 2) ** 0.5
     return tp, e1, e2
 
@@ -98,7 +98,7 @@ def interpolate(y, t, e, yp):
 
     ee = dyp / dy
     f = 1 - ee
-    g = dt * dyp / dy ** 2
+    g = dt * dyp / dy**2
     # sy = 0.1 * dy
     # syp = 0.1 * dyp
     ep = ((ee * e[1]) ** 2 + (f * e[0]) ** 2 + (g * sy) ** 2 + (d * syp) ** 2) ** 0.5
@@ -106,7 +106,7 @@ def interpolate(y, t, e, yp):
     #
     a = dyp / dy
     b = 1 - a
-    c = dt * dyp / dy ** 2
+    c = dt * dyp / dy**2
     ep2 = ((a * e[0]) ** 2 + (b * e[1]) ** 2 + (c * sy) ** 2 + (d * syp) ** 2) ** 0.5
     ep4 = ((a * e[1]) ** 2 + (b * e[0]) ** 2 + (c * sy) ** 2 + (d * syp) ** 2) ** 0.5
     return tp, ep, ep3, ep2, ep4

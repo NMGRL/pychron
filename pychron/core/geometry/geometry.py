@@ -80,7 +80,7 @@ def calc_point_along_line(x1, y1, x2, y2, L):
 
         m = (y2 - y1) / float(run)
         b = y2 - m * x2
-        f = lambda x: (x - x1) ** 2 + (m * x + b - y1) ** 2 - L ** 2
+        f = lambda x: (x - x1) ** 2 + (m * x + b - y1) ** 2 - L**2
 
         # initial guess x 1/2 between x1 and x2
         x = fsolve(f, x1 + (x2 - x1) / 2.0)[0]
@@ -163,8 +163,8 @@ def calc_angle(p1, p2):
 def arc_cost_func(p, p1, p2, r):
     x0, y0 = p1
     x1, y1 = p2
-    e1 = (p[0] - x0) ** 2 + (p[1] - y0) ** 2 - r ** 2
-    e2 = (p[0] - x1) ** 2 + (p[1] - y1) ** 2 - r ** 2
+    e1 = (p[0] - x0) ** 2 + (p[1] - y0) ** 2 - r**2
+    e2 = (p[0] - x1) ** 2 + (p[1] - y1) ** 2 - r**2
     return [e1, e2]
 
 
@@ -198,7 +198,7 @@ def approximage_polygon_center2(pts, r, weight=True):
     """
 
     n = len(pts)
-    cs = zeros(n ** 2)
+    cs = zeros(n**2)
 
     for i, p0 in enumerate(pts):
         for j, p1 in enumerate(pts):
@@ -323,7 +323,7 @@ def approximate_polygon_center2(pts, r=None):
 def curvature(ys):
     d = gradient(ys)
     dd = gradient(d)
-    c = dd / (1 + d ** 2) ** 1.5
+    c = dd / (1 + d**2) ** 1.5
     cs = abs(c)
     return cs
 
@@ -338,8 +338,8 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     xs = linspace(0, 10, 100)
-    ys = 1 * xs ** 2
-    ys2 = 3 * xs ** 2
+    ys = 1 * xs**2
+    ys2 = 3 * xs**2
 
     plt.subplot(2, 1, 1)
     plt.plot(xs, curvature(ys))

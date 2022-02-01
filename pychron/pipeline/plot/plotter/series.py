@@ -317,7 +317,7 @@ class BaseSeries(BaseArArFigure):
         if self.group_id == 0:
             if self.options.show_info:
                 ts = [
-                    u"Data {}{}{}".format(
+                    "Data {}{}{}".format(
                         PLUSMINUS, self.options.error_bar_nsigma, SIGMA
                     )
                 ]

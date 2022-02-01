@@ -252,8 +252,8 @@ class Spectrum(BaseArArFigure):
         if self.group_id == 0:
             if self.options.show_info:
                 ts = [
-                    u"Ages {}{}{}".format(PLUSMINUS, self.options.nsigma, SIGMA),
-                    u"Error Env. {}{}{}".format(
+                    "Ages {}{}{}".format(PLUSMINUS, self.options.nsigma, SIGMA),
+                    "Error Env. {}{}{}".format(
                         PLUSMINUS, self.options.step_nsigma, SIGMA
                     ),
                 ]
@@ -484,7 +484,7 @@ class Spectrum(BaseArArFigure):
         n = self.options.nsigma
         a = 1
         if ec == MSEM and mswd > 1:
-            a = mswd ** 0.5
+            a = mswd**0.5
         return we * a * n
 
     # ===============================================================================
@@ -521,11 +521,11 @@ class Spectrum(BaseArArFigure):
 
         if op.include_plateau_sample:
             if op.include_plateau_identifier:
-                text = u"{}({}) {}".format(sample, identifier, text)
+                text = "{}({}) {}".format(sample, identifier, text)
             else:
-                text = u"{} {}".format(sample, text)
+                text = "{} {}".format(sample, text)
         elif op.include_plateau_identifier:
-            text = u"{} {}".format(identifier, text)
+            text = "{} {}".format(identifier, text)
 
         return text
 
@@ -547,7 +547,7 @@ class Spectrum(BaseArArFigure):
             mswd_sig_figs=op.mswd_sig_figs,
             sig_figs=op.weighted_mean_sig_figs,
         )
-        text = u"Weighted Mean= {}".format(text)
+        text = "Weighted Mean= {}".format(text)
         return text
 
     def _make_integrated_text(self):
@@ -569,7 +569,7 @@ class Spectrum(BaseArArFigure):
             if op.display_weighted_mean_info:
                 wmtext = self._make_weighted_mean_text()
                 if text:
-                    text = u"{}    {}".format(text, wmtext)
+                    text = "{}    {}".format(text, wmtext)
                 else:
                     text = wmtext
             return text
@@ -588,7 +588,7 @@ class Spectrum(BaseArArFigure):
                 sig_figs=self.options.integrated_sig_figs,
             )
 
-        return u"Integrated Age= {}".format(txt)
+        return "Integrated Age= {}".format(txt)
 
 
 # ============= EOF =============================================

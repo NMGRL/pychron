@@ -25,8 +25,8 @@ def ln_prior(params):
 
 
 def norm_dist(val, mean, sigma):
-    return (1.0 / sqrt(2.0 * pi * sigma ** 2)) * exp(
-        -((val - mean) ** 2) / (2.0 * sigma ** 2)
+    return (1.0 / sqrt(2.0 * pi * sigma**2)) * exp(
+        -((val - mean) ** 2) / (2.0 * sigma**2)
     )
 
 

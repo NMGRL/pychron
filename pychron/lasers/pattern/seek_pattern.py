@@ -61,13 +61,13 @@ def calculate_center(ps):
     (x1, y1), (x2, y2) = pts[:2]
     dy, dx = (y2 - y1), (x2 - x1)
     theta = math.atan2(dy, dx)
-    base = (dy ** 2 + dx ** 2) ** 0.5
+    base = (dy**2 + dx**2) ** 0.5
 
     spts = [rotate(*p, theta=-theta) for p in pts]
 
     x1, y1 = spts[0]
     b2 = base / 2.0
-    height = 3 ** 0.5 / 2 * base
+    height = 3**0.5 / 2 * base
     bx = x1 + b2
     by = y1 + 1 / 3.0 * height
 
@@ -105,7 +105,7 @@ def triangulator(pts, side):
     my = (y1 + y2) / 2.0
     v1 = mx - ox
     v2 = my - oy
-    l = (v1 ** 2 + v2 ** 2) ** 0.5
+    l = (v1**2 + v2**2) ** 0.5
 
     try:
         ux, uy = v1 / l, v2 / l
@@ -118,7 +118,7 @@ def triangulator(pts, side):
 
 
 def height(b):
-    return (3 ** 0.5) / 2.0 * b
+    return (3**0.5) / 2.0 * b
 
 
 class Point:
@@ -259,8 +259,8 @@ class SeekPattern(Pattern):
         r = self.perimeter_radius
         xs = linspace(-r, r)
         xs2 = xs[::-1]
-        ys = (r ** 2 - xs ** 2) ** 0.5
-        ys2 = -((r ** 2 - xs2 ** 2) ** 0.5)
+        ys = (r**2 - xs**2) ** 0.5
+        ys2 = -((r**2 - xs2**2) ** 0.5)
 
         g.new_series(x=hstack((xs, xs2)), y=hstack((ys, ys2)), type="line")
 
@@ -310,7 +310,7 @@ class SeekPattern(Pattern):
 
     def reduce_vector_magnitude(self, px, py, scalar=1.0):
         vx, vy = (px - self.cx), (py - self.cy)
-        mag = (vx ** 2 + vy ** 2) ** 0.5
+        mag = (vx**2 + vy**2) ** 0.5
         px = vx * self.perimeter_radius / mag * scalar
         py = vy * self.perimeter_radius / mag * scalar
         return px + self.cx, py + self.cy
@@ -382,7 +382,7 @@ class SeekPattern(Pattern):
         return gen()
 
     def _validate(self, pt):
-        return (pt.x ** 2 + pt.y ** 2) ** 0.5 <= self.perimeter_radius
+        return (pt.x**2 + pt.y**2) ** 0.5 <= self.perimeter_radius
 
     def current_points(self):
         return self._tri.xys()

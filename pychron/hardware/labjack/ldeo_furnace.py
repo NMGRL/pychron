@@ -45,7 +45,7 @@ class LamontFurnaceControl(CoreDevice):
 
     def to_double(self, buf):
         right, left = struct.unpack("<Ii", struct.pack("B" * 8, *buf[0:8]))
-        return float(left) + float(right) / (2 ** 32)
+        return float(left) + float(right) / (2**32)
 
     def return_sn(self):
         return self._device.serialNumber
