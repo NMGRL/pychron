@@ -20,7 +20,7 @@ import os
 import time
 from datetime import datetime
 from operator import itemgetter
-from queue import Queue
+from queue import Queue, Empty
 from threading import Thread, Lock, currentThread, Event as TEvent
 
 from pyface.constant import CANCEL, YES, NO
@@ -410,7 +410,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.critical("exception kills experiment queue")
                 return False
 
-        except Queue.Empty:
+        except Empty:
             return self.alive
 
     def continued(self):
