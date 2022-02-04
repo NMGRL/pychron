@@ -428,7 +428,7 @@ class ArArAge(IsotopeGroup):
             self.ar39decayfactor = a39df
 
     def instant_age(self, window):
-        iso_intensities = self._assemble_isotope_intensities(instant=window)
+        iso_intensities = self._assemble_isotope_intensities(window=window)
         if not iso_intensities:
             return
 
