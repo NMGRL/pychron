@@ -38,6 +38,7 @@ from pychron.experiment.conditional.regexes import (
     BETWEEN_REGEX,
     PRESSURE_REGEX,
     DEVICE_REGEX,
+    INSTANT_AGE_REGEX,
 )
 
 
@@ -60,6 +61,7 @@ def get_teststr_attr_func(token):
         (MIN_REGEX, "aa.get_values(attr, window or -1).min()"),
         (RATIO_REGEX, "aa.get_value(attr)", wrapper, ratio_teststr),
         (BETWEEN_REGEX, "aa.get_value(attr)", between_wrapper, between_teststr),
+        (INSTANT_AGE_REGEX, "aa.instant_age(window or -1)"),
     ):
 
         wfunc = wrapper

@@ -20,10 +20,12 @@ import os
 import time
 from datetime import datetime
 from operator import itemgetter
-from threading import Thread, Lock, currentThread
+from queue import Queue, Empty
+from threading import Thread, Lock, currentThread, Event as TEvent
 
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
+from sqlalchemy.exc import DatabaseError
 from traitsui.api import View, EnumEditor, Item, UItem
 from traits.api import (
     Event,
@@ -270,6 +272,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
+        self._exception_queue = Queue()
+        self._save_complete_evt = TEvent()
         # self.set_managers()
         # self.notification_manager = NotificationManager()
 
@@ -392,7 +396,22 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.queue_modified = True
 
     def is_alive(self):
-        return self.alive
+        try:
+            exc = self._exception_queue.get_nowait()
+            self.warning("exception queue. {}".format(exc))
+            if exc[0] == "NonFatal":
+                if self.confirmation_dialog(
+                    "{}\n\nDo you want to CANCEL the experiment?\n".format(exc[1]),
+                    timeout_ret=False,
+                    timeout=30,
+                ):
+                    return False
+            else:
+                self.critical("exception kills experiment queue")
+                return False
+
+        except Empty:
+            return self.alive
 
     def continued(self):
         self.stats.continue_run()
@@ -913,6 +932,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self.extracting_run = run
 
+        self.debug("waiting for save event to clear")
+        while self._save_evt.is_set():
+            self._save_evt.wait(1)
+        self.debug("waiting complete")
+
         for step in ("_start", "_extraction", "_measurement", "_post_measurement"):
 
             if not self.is_alive():
@@ -943,7 +967,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self._do_event(events.SAVE_RUN, run=run)
         if self.save_all_runs or run.spec.state in ("success", "truncated"):
-            run.save()
+            # this needs to be non-blocking
+            run.save(
+                exception_queue=self._exception_queue,
+                complete_event=self._save_complete_evt,
+            )
+            self._save_complete_evt.set()
 
         self.run_completed = run
 
