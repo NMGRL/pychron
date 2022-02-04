@@ -450,7 +450,9 @@ e.g.
                 self.dirty = False
             except BaseException:
                 self.debug_exception()
-                self.warning_dialog("Failed to load csv file '{}'. Please check its format!".format(p))
+                self.warning_dialog(
+                    "Failed to load csv file '{}'. Please check its format!".format(p)
+                )
 
     def _make_csv_data(self):
         header = self.records[0].header

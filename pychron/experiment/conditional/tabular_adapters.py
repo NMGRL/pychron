@@ -89,12 +89,14 @@ class EConditionalsAdapter(ConditionalsAdapter):
 
 
 class ETruncationConditionalsAdapter(ConditionalsAdapter):
-    columns = [("Attribute", "attr"),
-               ("Start", "start_count"),
-               ("Frequency", "frequency"),
-               ("N. trips", "ntrips"),
-               ("Check", "teststr"),
-               ("Trunc. Count Ratio", 'abbreviated_count_ratio')]
+    columns = [
+        ("Attribute", "attr"),
+        ("Start", "start_count"),
+        ("Frequency", "frequency"),
+        ("N. trips", "ntrips"),
+        ("Check", "teststr"),
+        ("Trunc. Count Ratio", "abbreviated_count_ratio"),
+    ]
 
 
 class EActionConditionalsAdapter(ConditionalsAdapter):
@@ -130,5 +132,6 @@ class EModificationConditionalsAdapter(ConditionalsAdapter):
 
     def _get_use_truncation_text(self):
         return "Yes" if self.item.use_truncation else "No"
+
 
 # ============= EOF =============================================

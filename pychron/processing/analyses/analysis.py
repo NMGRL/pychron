@@ -136,15 +136,15 @@ def show_equilibration_ages(record_id, ar_ar_age):
 
     ages = [nominal_value(a) for a in ages]
     # errors = [std_dev(a) for a in ages]
-    plot, scatter, line = g.new_series(counts, ages, fit='average')
+    plot, scatter, line = g.new_series(counts, ages, fit="average")
 
     g.add_axis_tool(plot, plot.y_axis)
     g.add_axis_tool(plot, plot.x_axis)
-    g.add_limit_tool(plot, 'x')
-    g.add_limit_tool(plot, 'y')
+    g.add_limit_tool(plot, "x")
+    g.add_limit_tool(plot, "y")
 
-    g.set_y_limits(pad='0.1')
-    g.set_x_limits(pad='0.1')
+    g.set_y_limits(pad="0.1")
+    g.set_x_limits(pad="0.1")
     g.refresh()
 
     return g
@@ -182,15 +182,15 @@ def show_residuals_factory(record_id, isotopes):
 
 
 def show_evolutions_factory(
-        record_id,
-        isotopes,
-        show_evo=True,
-        show_equilibration=False,
-        show_baseline=False,
-        show_statistics=False,
-        ncols=1,
-        scale_to_equilibration=False,
-        **kw
+    record_id,
+    isotopes,
+    show_evo=True,
+    show_equilibration=False,
+    show_baseline=False,
+    show_statistics=False,
+    ncols=1,
+    scale_to_equilibration=False,
+    **kw
 ):
     from pychron.graph.stacked_regression_graph import (
         ColumnStackedRegressionGraph,
@@ -208,7 +208,7 @@ def show_evolutions_factory(
         isotopes = sort_isotopes(isotopes, reverse=True, key=attrgetter("name"))
 
         def reorder(l, n):
-            l = [l[i: i + n] for i in range(0, len(l), n)]
+            l = [l[i : i + n] for i in range(0, len(l), n)]
             nl = []
             for ri in range(len(l[0])):
                 for col in l:
@@ -274,14 +274,14 @@ def make_title(record_id, isotopes):
 
 
 def make_graph(
-        g,
-        isotopes,
-        resizable,
-        show_evo=True,
-        show_equilibration=False,
-        show_baseline=False,
-        show_statistics=False,
-        scale_to_equilibration=False,
+    g,
+    isotopes,
+    resizable,
+    show_evo=True,
+    show_equilibration=False,
+    show_baseline=False,
+    show_statistics=False,
+    scale_to_equilibration=False,
 ):
     g.clear()
 
@@ -714,7 +714,7 @@ class Analysis(ArArAge, IdeogramPlotable):
             return show_inspection_factory(self.record_id, isotopes)
         elif kw.get("show_residuals"):
             return show_residuals_factory(self.record_id, isotopes)
-        elif kw.get('show_equilibration_ages'):
+        elif kw.get("show_equilibration_ages"):
             self.load_raw_data()
             return show_equilibration_ages(self.record_id, self)
         else:
@@ -835,5 +835,6 @@ class Analysis(ArArAge, IdeogramPlotable):
 
     def __str__(self):
         return "{}<{}>".format(self.record_id, self.__class__.__name__)
+
 
 # ============= EOF =============================================

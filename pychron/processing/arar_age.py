@@ -447,7 +447,7 @@ class ArArAge(IsotopeGroup):
     def equilibration_ages(self):
         self.calculate_decay_factors()
 
-        counts = list(range(1, self.isotopes['Ar40'].sniff.xs.shape[0]))
+        counts = list(range(1, self.isotopes["Ar40"].sniff.xs.shape[0]))
 
         ages = [self.instant_age(count=i) for i in counts]
         return counts, ages
@@ -512,10 +512,7 @@ class ArArAge(IsotopeGroup):
         else:
             self._missing_isotope_warned = False
 
-        return [
-            isotopes[self.arar_mapping[k]].get_intensity(**kw)
-            for k in ARGON_KEYS
-        ]
+        return [isotopes[self.arar_mapping[k]].get_intensity(**kw) for k in ARGON_KEYS]
 
     def _assemble_isotope_intensities(self, **kw):
         iso_intensities = self._assemble_ar_ar_isotopes(**kw)

@@ -639,7 +639,9 @@ class BaseIsotope(IsotopicMeasurement):
         IsotopicMeasurement.__init__(self, name, detector)
         self.baseline = Baseline("{} bs".format(name), detector)
 
-    def get_baseline_corrected_value(self, include_baseline_error=None, window=None, count=None):
+    def get_baseline_corrected_value(
+        self, include_baseline_error=None, window=None, count=None
+    ):
         if include_baseline_error is None:
             include_baseline_error = self.include_baseline_error
 

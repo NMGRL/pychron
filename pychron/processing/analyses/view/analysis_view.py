@@ -235,7 +235,7 @@ class AnalysisView(HasTraits):
         show_baseline=False,
         show_inspection=False,
         show_residuals=False,
-        show_equilibration_ages=False
+        show_equilibration_ages=False,
     ):
         isotopes = self.isotope_view.selected
         return self.model.show_isotope_evolutions(
@@ -245,7 +245,7 @@ class AnalysisView(HasTraits):
             show_baseline=show_baseline,
             show_inspection=show_inspection,
             show_residuals=show_residuals,
-            show_equilibration_ages=show_equilibration_ages
+            show_equilibration_ages=show_equilibration_ages,
         )
 
     def update_fontsize(self, view, size):
