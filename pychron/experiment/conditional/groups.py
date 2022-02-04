@@ -71,7 +71,7 @@ from pychron.experiment.conditional.tabular_adapters import (
     EConditionalsAdapter,
     EModificationConditionalsAdapter,
     PRConditionalsAdapter,
-    ConditionalsAdapter,
+    ConditionalsAdapter, ETruncationConditionalsAdapter,
 )
 from pychron.pychron_constants import ANALYSIS_TYPES
 
@@ -268,21 +268,21 @@ class ConditionalGroup(HasTraits):
                 self.modifier = ""
 
                 for r, a in (
-                    (CP_REGEX, "Current"),
-                    (STD_REGEX, "StdDev"),
-                    (ACTIVE_REGEX, "Inactive"),
-                    (BASELINECOR_REGEX, "BaselineCorrected"),
-                    (BASELINE_REGEX, "Baseline"),
+                        (CP_REGEX, "Current"),
+                        (STD_REGEX, "StdDev"),
+                        (ACTIVE_REGEX, "Inactive"),
+                        (BASELINECOR_REGEX, "BaselineCorrected"),
+                        (BASELINE_REGEX, "Baseline"),
                 ):
                     if r.search(teststr):
                         setattr(self, "modifier", a)
                         break
 
                 for r, a in (
-                    (MAX_REGEX, "Max"),
-                    (MIN_REGEX, "Min"),
-                    (AVG_REGEX, "Average"),
-                    (SLOPE_REGEX, "Slope"),
+                        (MAX_REGEX, "Max"),
+                        (MIN_REGEX, "Min"),
+                        (AVG_REGEX, "Average"),
+                        (SLOPE_REGEX, "Slope"),
                 ):
                     if r.search(teststr):
                         setattr(self, "function", a)
@@ -342,15 +342,15 @@ class ConditionalGroup(HasTraits):
                 "function",
                 editor=myEnumEditor(values=FUNCTIONS),
                 tooltip="Optional. Apply a predefined function to this attribute. "
-                "Functions include {}".format(",".join(FUNCTIONS[1:])),
+                        "Functions include {}".format(",".join(FUNCTIONS[1:])),
             ),
             Item("window", enabled_when="not modifier_enabled"),
             Item(
                 "modifier",
                 enabled_when="modifier_enabled",
                 tooltip="Optional. Apply a modifier to this attribute."
-                "For example to check if CDD is active use "
-                "Atttribute=CDD, Modifier=Inactive",
+                        "For example to check if CDD is active use "
+                        "Atttribute=CDD, Modifier=Inactive",
                 editor=myEnumEditor(
                     values=[
                         "",
@@ -373,7 +373,7 @@ class ConditionalGroup(HasTraits):
                 label="Operation",
                 enabled_when='not function=="Between"',
                 tooltip="Numeric and logical comparisons. Conditional trips when it "
-                "evaluates to True",
+                        "evaluates to True",
             ),
             Item("value"),
             Item("secondary_value", enabled_when='function=="Between"'),
@@ -394,7 +394,7 @@ class ConditionalGroup(HasTraits):
                 "ntrips",
                 label="N Trips",
                 tooltip="Number of trips (conditional evaluates True) "
-                "before action is taken. Default=1",
+                        "before action is taken. Default=1",
             ),
             label="Counts",
         )
@@ -542,11 +542,11 @@ class ModificationGroup(ConditionalGroup):
 
     def _selected_changed_hook(self):
         for a in (
-            "action",
-            "nskip",
-            "use_truncation",
-            "use_termination",
-            "extraction_str",
+                "action",
+                "nskip",
+                "use_truncation",
+                "use_termination",
+                "extraction_str",
         ):
             setattr(self, a, getattr(self.selected, a))
 
@@ -614,6 +614,46 @@ class CancelationGroup(EConditionalGroup):
 
 class TruncationGroup(EConditionalGroup):
     help_str = "Truncation: Stop current measurement and CONTINUE run"
+    tabular_adapter_klass = ETruncationConditionalsAdapter
+
+    abbreviated_count_ratio = Float
+
+    def __init__(self, *args, **kw):
+        super(TruncationGroup, self).__init__(*args, **kw)
+        self.dump_attrs.append(('abbreviated_count_ratio', ''))
+
+    @on_trait_change("abbreviated_count_ratio")
+    def _update_selected2(self, name, new):
+        self._update_selected(name, new)
+
+    def _selected_changed_hook(self):
+        for a in (
+               "abbreviated_count_ratio",
+        ):
+            setattr(self, a, getattr(self.selected, a))
+
+    def _get_cnt_grp(self):
+        cnt_grp = BorderVGroup(
+            Item(
+                "start_count",
+                tooltip="Number of counts to wait until performing check",
+                label="Start",
+            ),
+            Item("frequency", tooltip="Number of counts between each check"),
+            Item(
+                "ntrips",
+                label="N Trips",
+                tooltip="Number of trips (conditional evaluates True) "
+                        "before action is taken. Default=1",
+            ),
+            Item('abbreviated_count_ratio', label='Abbrev. Count Ratio',
+                 tooltip="""The number of counts of the succeeding measurement will be
+ncounts*abbreviated_count_ratio. For example, if the next measurement is a
+baseline for 100 seconds and the abbreviated_count_ratio is 0.5, then if this conditional
+trips the baseline measurement will be for only 100*0.5 or 50 seconds"""),
+            label="Counts",
+        )
+        return cnt_grp
 
 
 class EquilibrationGroup(EConditionalGroup):
@@ -628,6 +668,5 @@ class EPostRunGroup(PreRunGroup):
 class EPreRunGroup(PreRunGroup):
     tabular_adapter_klass = EPRConditionalsAdapter
     help_str = "PreRunTermination: Checked before run is started. Cancels experiment."
-
 
 # ============= EOF =============================================
