@@ -20,6 +20,7 @@ from math import ceil
 from operator import attrgetter
 
 import six
+from chaco.array_data_source import ArrayDataSource
 from numpy import Inf, polyfit, polyval, arange, argmin
 from pyface.message_dialog import information
 from pyface.qt import QtCore
@@ -35,6 +36,8 @@ from pychron.core.helpers.logger_setup import new_logger
 from pychron.core.regression.ols_regressor import PolynomialRegressor
 from pychron.envisage.view_util import open_view
 from pychron.experiment.utilities.runid import make_runid, make_aliquot_step
+from pychron.graph.error_bar_overlay import ErrorBarOverlay
+from pychron.graph.regression_graph import RegressionGraph
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope
@@ -122,6 +125,31 @@ def show_inspection_factory(record_id, isotopes):
     return g
 
 
+def show_equilibration_ages(record_id, ar_ar_age):
+    g = RegressionGraph()
+    g.new_plot(padding_right=75, padding_left=100)
+    g.set_x_title("N counts")
+    g.set_y_title("Age")
+    g.window_title = "{} Equilibration Ages".format(record_id)
+
+    counts, ages = ar_ar_age.equilibration_ages()
+
+    ages = [nominal_value(a) for a in ages]
+    # errors = [std_dev(a) for a in ages]
+    plot, scatter, line = g.new_series(counts, ages, fit='average')
+
+    g.add_axis_tool(plot, plot.y_axis)
+    g.add_axis_tool(plot, plot.x_axis)
+    g.add_limit_tool(plot, 'x')
+    g.add_limit_tool(plot, 'y')
+
+    g.set_y_limits(pad='0.1')
+    g.set_x_limits(pad='0.1')
+    g.refresh()
+
+    return g
+
+
 def show_residuals_factory(record_id, isotopes):
     from pychron.graph.residuals_graph import ResidualsGraph
 
@@ -154,15 +182,15 @@ def show_residuals_factory(record_id, isotopes):
 
 
 def show_evolutions_factory(
-    record_id,
-    isotopes,
-    show_evo=True,
-    show_equilibration=False,
-    show_baseline=False,
-    show_statistics=False,
-    ncols=1,
-    scale_to_equilibration=False,
-    **kw
+        record_id,
+        isotopes,
+        show_evo=True,
+        show_equilibration=False,
+        show_baseline=False,
+        show_statistics=False,
+        ncols=1,
+        scale_to_equilibration=False,
+        **kw
 ):
     from pychron.graph.stacked_regression_graph import (
         ColumnStackedRegressionGraph,
@@ -180,7 +208,7 @@ def show_evolutions_factory(
         isotopes = sort_isotopes(isotopes, reverse=True, key=attrgetter("name"))
 
         def reorder(l, n):
-            l = [l[i : i + n] for i in range(0, len(l), n)]
+            l = [l[i: i + n] for i in range(0, len(l), n)]
             nl = []
             for ri in range(len(l[0])):
                 for col in l:
@@ -246,14 +274,14 @@ def make_title(record_id, isotopes):
 
 
 def make_graph(
-    g,
-    isotopes,
-    resizable,
-    show_evo=True,
-    show_equilibration=False,
-    show_baseline=False,
-    show_statistics=False,
-    scale_to_equilibration=False,
+        g,
+        isotopes,
+        resizable,
+        show_evo=True,
+        show_equilibration=False,
+        show_baseline=False,
+        show_statistics=False,
+        scale_to_equilibration=False,
 ):
     g.clear()
 
@@ -686,6 +714,9 @@ class Analysis(ArArAge, IdeogramPlotable):
             return show_inspection_factory(self.record_id, isotopes)
         elif kw.get("show_residuals"):
             return show_residuals_factory(self.record_id, isotopes)
+        elif kw.get('show_equilibration_ages'):
+            self.load_raw_data()
+            return show_equilibration_ages(self.record_id, self)
         else:
             return show_evolutions_factory(self.record_id, isotopes, **kw)
 
@@ -804,6 +835,5 @@ class Analysis(ArArAge, IdeogramPlotable):
 
     def __str__(self):
         return "{}<{}>".format(self.record_id, self.__class__.__name__)
-
 
 # ============= EOF =============================================
