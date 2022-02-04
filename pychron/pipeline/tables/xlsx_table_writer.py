@@ -526,7 +526,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         cols = []
         for am, bm, e in [
             (40, 39, "K"),
-            (38, 38, "K"),
+            (38, 39, "K"),
             (37, 39, "K"),
             (39, 37, "Ca"),
             (38, 37, "Ca"),
@@ -1162,6 +1162,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         sh.write_number(row, age_idx + 2, nominal_value(ag.kca), kcafmt)
         sh.write_number(row, age_idx + 3, std_dev(ag.kca), kcafmt)
 
+        # need to fill in any gaps
+        c = age_idx + 4
+        while 1:
+            if c < cum_idx:
+                sh.write(row, c, "", border)
+                c += 1
+
         if label == "plateau":
             sh.write_number(row, cum_idx, ag.plateau_total_ar39(), fmt)
         else:
@@ -1423,7 +1430,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._current_row += 1
 
     def _make_notes(self, groups, sh, ncols, key):
-        top = self._workbook.add_format({"top": 1, "bold": True})
+        fmt = {"bold": True}
+        if self._options.include_notes_border:
+            fmt["top"] = 1
+        top = self._workbook.add_format(fmt)
 
         sh.write_string(self._current_row, 0, "Notes:", top)
         for i in range(1, ncols):

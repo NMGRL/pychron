@@ -159,7 +159,10 @@ class InverseIsochronMainOptions(TitleSubOptions):
         )
 
         results_grp = BorderVGroup(
-            Item("show_results_info", label="Display Results"),
+            HGroup(
+                Item("show_results_info", label="Display Results"),
+                Item("show_results_info_location", label="Location"),
+            ),
             VGroup(agrp, bgrp, enabled_when="show_results_info"),
             label="Results",
         )

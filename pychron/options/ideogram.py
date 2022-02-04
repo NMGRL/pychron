@@ -52,6 +52,7 @@ from pychron.pychron_constants import (
     SCHAEN2020_3,
     DEINO,
     SCHAEN2020_3youngest,
+    GUIDES,
 )
 
 
@@ -199,6 +200,7 @@ class IdeogramOptions(AgeOptions):
             "Calculations",
             DISPLAY,
             GROUPS,
+            GUIDES,
         ]
 
     def to_dict(self):

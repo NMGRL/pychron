@@ -100,28 +100,31 @@ class DVCHistoryNode(BaseDVCNode):
 
     def run(self, state):
         unks = state.unknowns
-
         for repo, ans in groupby_repo(unks):
             repo = self.dvc.get_repository(repo)
             abranch = repo.get_current_branch()
             branchname = "history"
-            repo.create_branch(
-                branchname, state.selected_commits[repo.name], inform=False
-            )
+            try:
+                repo.create_branch(
+                    branchname, state.selected_commits[repo.name], inform=False
+                )
 
-            pans = self.dvc.make_analyses(list(ans), reload=True)
+                pans = self.dvc.make_analyses(list(ans), reload=True)
+                if pans:
+                    # only allow one history group for right now.
+                    # in the future add a history_group_id
+                    # analyses are then partitioned by group_id then history_group_id
+                    for unk in pans:
+                        unk.group_id = 1
+                        unk.history_id = 1
 
-            # only allow one history group for right now.
-            # in the future add a history_group_id
-            # analyses are then partitioned by group_id then history_group_id
-            for unk in pans:
-                unk.group_id = 1
-                unk.history_id = 1
-
-            branch = repo.get_branch(abranch)
-            branch.checkout()
-            repo.delete_branch(branchname)
-            unks.extend(pans)
+                    unks.extend(pans)
+            except BaseException:
+                pass
+            finally:
+                branch = repo.get_branch(abranch)
+                branch.checkout()
+                repo.delete_branch(branchname)
 
 
 # ============= EOF =============================================

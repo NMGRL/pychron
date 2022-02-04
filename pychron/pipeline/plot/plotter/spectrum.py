@@ -242,7 +242,7 @@ class Spectrum(BaseArArFigure):
                 text,
                 font=op.integrated_font,
                 relative_position=self.group_id,
-                color=spec.color,
+                color=grp.line_color,
             )
         self._add_info(graph, plot)
 
@@ -294,9 +294,10 @@ class Spectrum(BaseArArFigure):
         ls = group.center_line_style
         if not ls == "No Line":
             ds.line_style = ls
-            ds.line_width = group.center_line_width
+            ds.line_width = group.center_line_widthh
         else:
             ds.line_width = 0
+            ds.color = "transparent"
 
         ds.value_mapper.fill_value = 1e-20
         ds.index.on_trait_change(self.update_graph_metadata, "metadata_changed")

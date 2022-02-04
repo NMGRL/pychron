@@ -352,7 +352,6 @@ class AnalysisGroup(IdeogramPlotable):
 
         exclude = [i for i, x in enumerate(ans) if test(x)]
         if ans:
-            print("faadfs", self.isochron_method, self.isochron_age_error_kind)
             return calculate_isochron(
                 ans,
                 self.isochron_age_error_kind,
@@ -372,7 +371,6 @@ class AnalysisGroup(IdeogramPlotable):
             reg = args[2]
             self.isochron_regressor = reg
             v, e = nominal_value(age), std_dev(age)
-            print(v, e)
             e = self._modify_error(v, e, self.isochron_age_error_kind, mswd=reg.mswd)
             return ufloat(v, e)
 

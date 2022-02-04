@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from enable.enable_traits import LineStyle
-from traits.api import HasTraits, Enum, Float, Color, RGBColor, Str, Range, List
+from traits.api import HasTraits, Enum, Float, Color, RGBColor, Str, Range, List, Bool
 
 
 class Guide(HasTraits):
@@ -27,20 +27,27 @@ class Guide(HasTraits):
     label = Str
     plotname = Str
     plotnames = List
+    visible = Bool
 
     def should_plot(self, plot):
         ret = True
-        if self.plotname:
-            ps = list(reversed(self.plotnames))
-            ret = ps.index(self.plotname) == plot
+        if not self.plotname == "All Plots":
+            if self.plotname:
+                ps = list(reversed(self.plotnames))
+                ret = ps.index(self.plotname) == plot
 
         return ret
 
+    def kwargs_keys(self):
+        return ("orientation", "color", "line_style", "alpha", "line_width")
+
     def to_kwargs(self):
-        return {
-            attr: getattr(self, attr)
-            for attr in ("orientation", "color", "line_style", "alpha", "line_width")
-        }
+        return {attr: getattr(self, attr) for attr in self.kwargs_keys()}
+
+
+class RangeGuide(Guide):
+    minvalue = Float
+    maxvalue = Float
 
 
 # ============= EOF =============================================

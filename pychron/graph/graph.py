@@ -917,6 +917,15 @@ class Graph(ContextMenuMixin):
 
         plot.overlays.append(RangeSelectionOverlay(component=plot))
 
+    def add_range_guide(self, minvalue, maxvalue, plotid=0, **kw):
+        plot = self.plots[plotid]
+        from pychron.graph.guide_overlay import RangeGuideOverlay
+
+        guide_overlay = RangeGuideOverlay(
+            component=plot, minvalue=minvalue, maxvalue=maxvalue, **kw
+        )
+        plot.overlays.append(guide_overlay)
+
     def add_guide(self, value, plotid=0, **kw):
         """ """
         plot = self.plots[plotid]

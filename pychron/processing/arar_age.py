@@ -427,8 +427,9 @@ class ArArAge(IsotopeGroup):
             self.ar37decayfactor = a37df
             self.ar39decayfactor = a39df
 
-    def instant_age(self, window):
-        iso_intensities = self._assemble_isotope_intensities(window=window)
+    def instant_age(self, window=None, count=None):
+
+        iso_intensities = self._assemble_isotope_intensities(window=window, count=count)
         if not iso_intensities:
             return
 
@@ -442,6 +443,14 @@ class ArArAge(IsotopeGroup):
             arar_constants=self.arar_constants,
         )
         return age
+
+    def equilibration_ages(self):
+        self.calculate_decay_factors()
+
+        counts = list(range(1, self.isotopes["Ar40"].sniff.xs.shape[0]))
+
+        ages = [self.instant_age(count=i) for i in counts]
+        return counts, ages
 
     # private
     def _calculate_kca(self):
@@ -490,7 +499,7 @@ class ArArAge(IsotopeGroup):
                 self._kcl_warning = True
                 self.warning("cl38 is zero. can't calculated k/cl")
 
-    def _assemble_ar_ar_isotopes(self, window=None):
+    def _assemble_ar_ar_isotopes(self, **kw):
         isotopes = self.isotopes
         for ik in self.arar_mapping.values():
             if ik not in isotopes:
@@ -503,13 +512,10 @@ class ArArAge(IsotopeGroup):
         else:
             self._missing_isotope_warned = False
 
-        return [
-            isotopes[self.arar_mapping[k]].get_intensity(window=window)
-            for k in ARGON_KEYS
-        ]
+        return [isotopes[self.arar_mapping[k]].get_intensity(**kw) for k in ARGON_KEYS]
 
-    def _assemble_isotope_intensities(self, window=None):
-        iso_intensities = self._assemble_ar_ar_isotopes(window=window)
+    def _assemble_isotope_intensities(self, **kw):
+        iso_intensities = self._assemble_ar_ar_isotopes(**kw)
         if not iso_intensities:
             self.debug("failed assembling isotopes")
             return
