@@ -1257,7 +1257,7 @@ class DVCDatabase(DatabaseAdapter):
         exclude_types=None,
         excluded_uuids=None,
         verbose=False,
-        low_post=None
+        low_post=None,
     ):
 
         with self.session_ctx() as sess:
@@ -1280,7 +1280,7 @@ class DVCDatabase(DatabaseAdapter):
 
             q = q.order_by(AnalysisTbl.timestamp.desc())
             if low_post:
-                q = q.filter(AnalysisTbl.timestamp>=low_post)
+                q = q.filter(AnalysisTbl.timestamp >= low_post)
             q = q.limit(n)
             return self._query_all(q, verbose_query=verbose)
 

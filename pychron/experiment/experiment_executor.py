@@ -402,9 +402,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.warning("exception queue. {}".format(exc))
             if exc[0] == "NonFatal":
                 if self.confirmation_dialog(
-                        "{}\n\nDo you want to CANCEL the experiment?\n".format(exc[1]),
-                        timeout_ret=False,
-                        timeout=30,
+                    "{}\n\nDo you want to CANCEL the experiment?\n".format(exc[1]),
+                    timeout_ret=False,
+                    timeout=30,
                 ):
                     return False
             else:
@@ -467,8 +467,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.debug("abort run. Executor.isAlive={}".format(self.is_alive()))
         if self.is_alive():
             for crun, kind in (
-                    (self.measuring_run, "measuring"),
-                    (self.extracting_run, "extracting"),
+                (self.measuring_run, "measuring"),
+                (self.extracting_run, "extracting"),
             ):
                 if crun:
                     self.debug("abort {} run {}".format(kind, crun.runid))
@@ -742,9 +742,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 )
 
                 if (
-                        not run.is_last
-                        and run.spec.analysis_type == "unknown"
-                        and spec.overlap[0]
+                    not run.is_last
+                    and run.spec.analysis_type == "unknown"
+                    and spec.overlap[0]
                 ):
                     self.debug("waiting for extracting_run to finish")
                     self._wait_for(lambda x: self.extracting_run)
@@ -954,7 +954,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if not getattr(self, step)(run):
                 self.warning("{} did not complete successfully".format(step[1:]))
                 if (
-                        step != "_post_measurement"
+                    step != "_post_measurement"
                 ):  # save data even if post measurement fails
                     run.spec.state = FAILED
                 break
@@ -1083,7 +1083,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 arun.abort_run()
 
     def _cancel(
-            self, style="queue", cancel_run=False, msg=None, confirm=True, err=None
+        self, style="queue", cancel_run=False, msg=None, confirm=True, err=None
     ):
         self.debug(
             "_cancel. style={}, cancel_run={}, msg={}, confirm={}, err={}".format(
@@ -1164,7 +1164,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._set_message(msg, c)
 
     def _show_conditionals(
-            self, active_run=None, tripped=None, conditionals=None, kind="live"
+        self, active_run=None, tripped=None, conditionals=None, kind="live"
     ):
         try:
 
@@ -1394,19 +1394,19 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         )
 
         for k in (
-                "signal_color",
-                "sniff_color",
-                "baseline_color",
-                "ms_pumptime_start",
-                "datahub",
-                "console_display",
-                "experiment_queue",
-                "spectrometer_manager",
-                "extraction_line_manager",
-                "ion_optics_manager",
-                "use_db_persistence",
-                "use_dvc_persistence",
-                "use_xls_persistence",
+            "signal_color",
+            "sniff_color",
+            "baseline_color",
+            "ms_pumptime_start",
+            "datahub",
+            "console_display",
+            "experiment_queue",
+            "spectrometer_manager",
+            "extraction_line_manager",
+            "ion_optics_manager",
+            "use_db_persistence",
+            "use_dvc_persistence",
+            "use_xls_persistence",
         ):
             setattr(arun, k, getattr(self, k))
 
@@ -1869,10 +1869,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if self.application:
                 self.debug("get service name={}".format(extract_device))
                 for protocol in (
-                        ILASER_PROTOCOL,
-                        IFURNACE_PROTOCOL,
-                        IPIPETTE_PROTOCOL,
-                        CRYO_PROTOCOL,
+                    ILASER_PROTOCOL,
+                    IFURNACE_PROTOCOL,
+                    IPIPETTE_PROTOCOL,
+                    CRYO_PROTOCOL,
                 ):
 
                     man = self.application.get_service(
@@ -1970,7 +1970,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if no_repo:
                 if inform:
                     if not self.confirmation_dialog(
-                            "Missing repository identifiers. Automatically populate?"
+                        "Missing repository identifiers. Automatically populate?"
                     ):
                         return
 
@@ -2045,14 +2045,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             return True
 
         if (
-                not self.use_db_persistence
-                and not self.use_xls_persistence
-                and not self.use_dvc_persistence
+            not self.use_db_persistence
+            and not self.use_xls_persistence
+            and not self.use_dvc_persistence
         ):
             if not self.confirmation_dialog(
-                    "You do not have any Database or XLS saving enabled. "
-                    "Are you sure you want to continue?\n\n"
-                    "Enable analysis saving in Preferences>>Experiment>>Automated Run"
+                "You do not have any Database or XLS saving enabled. "
+                "Are you sure you want to continue?\n\n"
+                "Enable analysis saving in Preferences>>Experiment>>Automated Run"
             ):
                 return
 
@@ -2125,22 +2125,22 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if conditionals:
                 self.info("testing user defined conditionals")
                 if self._test_conditionals(
-                        run,
-                        conditionals,
-                        "Checking user defined pre extraction terminations",
-                        "Pre Extraction Termination",
-                        data=data,
+                    run,
+                    conditionals,
+                    "Checking user defined pre extraction terminations",
+                    "Pre Extraction Termination",
+                    data=data,
                 ):
                     return True
 
             if default_conditionals:
                 self.info("testing system defined conditionals")
                 if self._test_conditionals(
-                        run,
-                        default_conditionals,
-                        "Checking default pre extraction terminations",
-                        "Pre Extraction Termination",
-                        data=data,
+                    run,
+                    default_conditionals,
+                    "Checking default pre extraction terminations",
+                    "Pre Extraction Termination",
+                    data=data,
                 ):
                     return True
 
@@ -2183,8 +2183,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                     ret = False
                                 else:
                                     if self.confirmation_dialog(
-                                            "Laser tray not necessarily setup correctly."
-                                            "\n\nAre you sure you want to continue?"
+                                        "Laser tray not necessarily setup correctly."
+                                        "\n\nAre you sure you want to continue?"
                                     ):
                                         ret = False
 
@@ -2319,10 +2319,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # conditionals = self._load_queue_conditionals('post_run_actions', klass='ActionConditional')
         conditionals = self._load_queue_conditionals("post_run_actions")
         if self._action_conditionals(
-                run,
-                conditionals,
-                "Checking user defined post run actions",
-                "Post Run Action",
+            run,
+            conditionals,
+            "Checking user defined post run actions",
+            "Post Run Action",
         ):
             return True
 
@@ -2330,29 +2330,29 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # conditionals = self._load_default_conditionals('post_run_actions', klass='ActionConditional')
         conditionals = self._load_system_conditionals("post_run_actions")
         if self._action_conditionals(
-                run, conditionals, "Checking default post run actions", "Post Run Action"
+            run, conditionals, "Checking default post run actions", "Post Run Action"
         ):
             return True
 
         # check queue defined terminations
         conditionals = self._load_queue_conditionals("post_run_terminations")
         if self._test_conditionals(
-                run,
-                conditionals,
-                "Checking user defined post run terminations",
-                "Post Run Termination",
-                cgroup="terminations",
+            run,
+            conditionals,
+            "Checking user defined post run terminations",
+            "Post Run Termination",
+            cgroup="terminations",
         ):
             return True
 
         # check default terminations
         conditionals = self._load_system_conditionals("post_run_terminations")
         if self._test_conditionals(
-                run,
-                conditionals,
-                "Checking default post run terminations",
-                "Post Run Termination",
-                cgroup="terminations",
+            run,
+            conditionals,
+            "Checking default post run terminations",
+            "Post Run Termination",
+            cgroup="terminations",
         ):
             return True
 
@@ -2427,7 +2427,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     return True
 
     def _test_conditionals(
-            self, run, conditionals, message1, message2, cgroup=None, data=None, cnt=True
+        self, run, conditionals, message1, message2, cgroup=None, data=None, cnt=True
     ):
         if not self.alive:
             return True
@@ -2629,7 +2629,6 @@ Use Last "blank_{}"= {}
                     exclude_types=("unknown",),
                     low_post=low_post,
                     verbose=False,
-
                 )
                 if ans:
                     ans = dvc.make_analyses(ans, use_progress=False)
@@ -2645,7 +2644,9 @@ Use Last "blank_{}"= {}
 
     def _timeseries_reset_button_fired(self):
         self._low_post = datetime.now()
-        self.information_dialog('Timeseries reset to {}'.format(self._low_post.strftime('%m/%d/%y %H:%M')))
+        self.information_dialog(
+            "Timeseries reset to {}".format(self._low_post.strftime("%m/%d/%y %H:%M"))
+        )
 
     # def _configure_timeseries_editor_button_fired(self):
     #
@@ -2779,5 +2780,6 @@ Use Last "blank_{}"= {}
                     "no automated run monitor available. "
                     "Make sure config file is located at setupfiles/monitors/automated_run_monitor.cfg"
                 )
+
 
 # ============= EOF =============================================
