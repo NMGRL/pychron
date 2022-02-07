@@ -263,7 +263,7 @@ class AnalysisView(HasTraits):
         self.groups = []
         self.model = an
         analysis_type = an.analysis_type
-        self.analysis_id = analysis_id = '{}({})'.format(an.record_id, an.sample)
+        self.analysis_id = analysis_id = "{}({})".format(an.record_id, an.sample)
 
         # main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
         self.main_view.trait_set(analysis_type=analysis_type, analysis_id=analysis_id)
