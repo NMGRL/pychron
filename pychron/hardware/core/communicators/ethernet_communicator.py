@@ -62,6 +62,7 @@ class Handler(object):
     message_frame = None
     read_terminator = None
     keep_alive = False
+    strip = True
 
     def set_frame(self, f):
         self.message_frame = MessageFrame()
@@ -140,7 +141,10 @@ class Handler(object):
                 print("checksum fail computed={}, expected={}".format(comp, checksum))
                 return
 
-        return data.decode("utf-8").strip()
+        data = data.decode("utf-8")
+        if self.strip:
+            data = data.strip()
+        return data
 
 
 class TCPHandler(Handler):
@@ -206,7 +210,7 @@ class EthernetCommunicator(Communicator):
     error_mode = False
     message_frame = ""
     timeout = Float(1.0)
-
+    strip = True
     default_timeout = 3
 
     _comms_report_attrs = ("host", "port", "read_port", "kind", "timeout")
@@ -335,6 +339,7 @@ class EthernetCommunicator(Communicator):
                 h.keep_alive = not self.use_end
                 h.open_socket(addrs, timeout=timeout or 1, bind=bind)
                 h.set_frame(self.message_frame)
+                h.strip = self.strip
                 self.handler = h
             return h
         except socket.error as e:

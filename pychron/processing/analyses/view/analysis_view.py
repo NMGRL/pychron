@@ -71,6 +71,9 @@ class AnalysisViewHandler(Handler):
     def show_residuals(self, uiinfo, obj):
         obj.updated = {"show_residuals": True}
 
+    def show_equilibration_ages(self, uiinfo, obj):
+        obj.updated = {"show_equilibration_ages": True}
+
     def show_inspection(self, uiinfo, obj):
         obj.updated = {"show_inspection": True}
 
@@ -232,6 +235,7 @@ class AnalysisView(HasTraits):
         show_baseline=False,
         show_inspection=False,
         show_residuals=False,
+        show_equilibration_ages=False,
     ):
         isotopes = self.isotope_view.selected
         return self.model.show_isotope_evolutions(
@@ -241,6 +245,7 @@ class AnalysisView(HasTraits):
             show_baseline=show_baseline,
             show_inspection=show_inspection,
             show_residuals=show_residuals,
+            show_equilibration_ages=show_equilibration_ages,
         )
 
     def update_fontsize(self, view, size):
@@ -258,8 +263,7 @@ class AnalysisView(HasTraits):
         self.groups = []
         self.model = an
         analysis_type = an.analysis_type
-        analysis_id = an.record_id
-        self.analysis_id = analysis_id
+        self.analysis_id = analysis_id = "{}({})".format(an.record_id, an.sample)
 
         # main_view = MainView(an, analysis_type=analysis_type, analysis_id=analysis_id)
         self.main_view.trait_set(analysis_type=analysis_type, analysis_id=analysis_id)
