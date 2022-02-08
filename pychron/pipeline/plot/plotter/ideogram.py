@@ -177,6 +177,15 @@ class Ideogram(BaseArArFigure):
             warning(None, "X Value not set. Defaulting to Age")
             index_attr = "uage"
 
+        if index_attr == "equilibration_age":
+            import time
+
+            st = time.time()
+            print("fffff")
+            for a in self.analyses:
+                a.load_raw_data()
+            print("sdffasdf", time.time() - st)
+
         graph = self.graph
 
         try:
