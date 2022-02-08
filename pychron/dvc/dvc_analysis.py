@@ -273,7 +273,6 @@ class DVCAnalysis(Analysis):
         jd = dvc_load(path)
         return jd
 
-
     def load_raw_data(self, keys=None, n_only=False, use_name_pairs=True, force=False):
         if self.has_raw_data and not force:
             return
