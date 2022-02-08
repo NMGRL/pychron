@@ -177,6 +177,14 @@ class Ideogram(BaseArArFigure):
             warning(None, "X Value not set. Defaulting to Age")
             index_attr = "uage"
 
+        if index_attr == 'equilibration_age':
+            import time
+            st = time.time()
+            print('fffff')
+            for a in self.analyses:
+                a.load_raw_data()
+            print('sdffasdf', time.time()-st)
+
         graph = self.graph
 
         try:
@@ -977,7 +985,7 @@ class Ideogram(BaseArArFigure):
         return xs
 
     def _add_aux_plot(
-        self, ys, title, po, pid, gid=None, es=None, type="scatter", xs=None, **kw
+            self, ys, title, po, pid, gid=None, es=None, type="scatter", xs=None, **kw
     ):
         if gid is None:
             gid = self.group_id
@@ -1031,7 +1039,7 @@ class Ideogram(BaseArArFigure):
         return s
 
     def _calculate_probability_curve(
-        self, ages, errors, calculate_limits=False, limits=None
+            self, ages, errors, calculate_limits=False, limits=None
     ):
         xmi, xma = None, None
         if limits:
@@ -1110,7 +1118,7 @@ class Ideogram(BaseArArFigure):
         return xs, ys, rx1, rx2
 
     def _calculate_asymptotic_limits2(
-        self, cfunc, max_iter=200, asymptotic_width=10, tol=10
+            self, cfunc, max_iter=200, asymptotic_width=10, tol=10
     ):
         """
         cfunc: callable that returns xs,ys and accepts xmin, xmax
@@ -1190,6 +1198,5 @@ class Ideogram(BaseArArFigure):
             wm, we = nominal_value(wage), std_dev(wage)
 
         return wm, we, mswd, valid_mswd, n, pvalue
-
 
 # ============= EOF =============================================

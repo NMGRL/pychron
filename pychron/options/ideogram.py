@@ -342,6 +342,7 @@ class IdeogramOptions(AgeOptions):
             "Ar37": "11:Ar37",
             "Ar36": "12:Ar36",
             "j": "13:J",
+            "equilibration_age": "14:Equilibration Age"
         }
 
 
