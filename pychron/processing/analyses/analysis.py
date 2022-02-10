@@ -160,7 +160,7 @@ def show_equilibration_inspector(record_id, ar_ar_age):
 
     else:
         for i, (num, den) in enumerate(
-            (("age", "age"), ("Ar40", "Ar39"), ("Ar40", "Ar36"))
+            (("age", "age"), ("Ar40", "Ar39"), ("Ar37", "Ar39"), ("Ar40", "Ar36"))
         ):
             g.new_plot(padding_right=75, padding_left=100)
 
