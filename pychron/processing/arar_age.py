@@ -26,8 +26,10 @@ from operator import itemgetter, attrgetter
 
 from uncertainties import ufloat, std_dev, nominal_value
 
+from pychron.core.codetools.simple_timeit import timethis
 from pychron.core.helpers.isotope_utils import sort_detectors
 from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.core.stats import calculate_weighted_mean
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.argon_calculations import (
     calculate_f,
@@ -313,6 +315,8 @@ class ArArAge(IsotopeGroup):
             r = self.computed[attr]
         elif attr in self.isotopes:
             r = self.isotopes[attr].get_intensity()
+        elif attr == "equilibration_age":
+            r = self.equilibration_age()
         else:
             if hasattr(self, attr):
                 r = getattr(self, attr)
@@ -427,8 +431,9 @@ class ArArAge(IsotopeGroup):
             self.ar37decayfactor = a37df
             self.ar39decayfactor = a39df
 
-    def instant_age(self, window):
-        iso_intensities = self._assemble_isotope_intensities(window=window)
+    def instant_age(self, window=None, count=None):
+
+        iso_intensities = self._assemble_isotope_intensities(window=window, count=count)
         if not iso_intensities:
             return
 
@@ -442,6 +447,41 @@ class ArArAge(IsotopeGroup):
             arar_constants=self.arar_constants,
         )
         return age
+
+    def equilibration_ratios(self, num, den):
+        num = self.isotopes[self.arar_mapping[num]]
+        den = self.isotopes[self.arar_mapping[den]]
+        counts = list(range(1, num.sniff.xs.shape[0]))
+
+        return counts, [
+            num.get_intensity(count=i) / den.get_intensity(count=i) for i in counts
+        ]
+
+    def equilibration_age(self, n=5):
+        """
+        this is the average of the last n equlibration ages
+        """
+
+        counts, ages = timethis(self.equilibration_ages)
+        ages = ages[-n:]
+        vs = [nominal_value(a) for a in ages]
+        es = [std_dev(a) for a in ages]
+        return ufloat(*calculate_weighted_mean(vs, es))
+
+    _eq_ages = None, None
+
+    def equilibration_ages(self, force=False):
+        counts, ages = self._eq_ages
+        if not ages or force:
+            self.calculate_decay_factors()
+
+            iso = self.isotopes[self.arar_mapping["Ar40"]]
+            counts = list(range(1, iso.sniff.xs.shape[0]))
+
+            ages = [self.instant_age(count=i) for i in counts]
+            self._eq_ages = counts, ages
+
+        return counts, ages
 
     # private
     def _calculate_kca(self):
@@ -490,7 +530,7 @@ class ArArAge(IsotopeGroup):
                 self._kcl_warning = True
                 self.warning("cl38 is zero. can't calculated k/cl")
 
-    def _assemble_ar_ar_isotopes(self, window=None):
+    def _assemble_ar_ar_isotopes(self, **kw):
         isotopes = self.isotopes
         for ik in self.arar_mapping.values():
             if ik not in isotopes:
@@ -503,13 +543,10 @@ class ArArAge(IsotopeGroup):
         else:
             self._missing_isotope_warned = False
 
-        return [
-            isotopes[self.arar_mapping[k]].get_intensity(window=window)
-            for k in ARGON_KEYS
-        ]
+        return [isotopes[self.arar_mapping[k]].get_intensity(**kw) for k in ARGON_KEYS]
 
-    def _assemble_isotope_intensities(self, window=None):
-        iso_intensities = self._assemble_ar_ar_isotopes(window=window)
+    def _assemble_isotope_intensities(self, **kw):
+        iso_intensities = self._assemble_ar_ar_isotopes(**kw)
         if not iso_intensities:
             self.debug("failed assembling isotopes")
             return

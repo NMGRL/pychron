@@ -59,6 +59,7 @@ from pychron.core.ui.dialogs import cinformation
 from pychron.core.ui.strings import SpacelessStr
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.processing.isotope import Isotope
@@ -260,7 +261,7 @@ class CSVRegressionRecordGroup(CSVRecordGroup):
         return [(a.y, a.y_err) for a in self.records if a.status]
 
 
-class CSVDataSetFactory(HasTraits):
+class CSVDataSetFactory(Loggable):
     records = List
     groups = List
 
@@ -436,16 +437,22 @@ e.g.
 
     def _load_csv_data(self, p):
         if os.path.isfile(p):
-            parser = CSVColumnParser()
-            parser.load(p)
+            try:
+                parser = CSVColumnParser()
+                parser.load(p)
 
-            records = [self._record_klass(**row) for row in parser.values()]
-            self.records = records
+                records = [self._record_klass(**row) for row in parser.values()]
+                self.records = records
 
-            self._make_groups()
+                self._make_groups()
 
-            self.data_path = p
-            self.dirty = False
+                self.data_path = p
+                self.dirty = False
+            except BaseException:
+                self.debug_exception()
+                self.warning_dialog(
+                    "Failed to load csv file '{}'. Please check its format!".format(p)
+                )
 
     def _make_csv_data(self):
         header = self.records[0].header

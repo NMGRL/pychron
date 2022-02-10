@@ -30,6 +30,7 @@ from pychron.processing.analysis_graph import ReferencesGraph
 class ReferencesPanel(FigurePanel):
     references = List
     _graph_klass = ReferencesGraph
+    equi_stack = True
 
     def _make_correlation(self, refplot, xtitle):
 

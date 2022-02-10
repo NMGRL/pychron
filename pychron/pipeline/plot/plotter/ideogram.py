@@ -177,6 +177,15 @@ class Ideogram(BaseArArFigure):
             warning(None, "X Value not set. Defaulting to Age")
             index_attr = "uage"
 
+        if index_attr == "equilibration_age":
+            import time
+
+            st = time.time()
+            print("fffff")
+            for a in self.analyses:
+                a.load_raw_data()
+            print("sdffasdf", time.time() - st)
+
         graph = self.graph
 
         try:
@@ -330,8 +339,8 @@ class Ideogram(BaseArArFigure):
                 offset, _ = calculate_weighted_mean(xs, es)
             xs -= offset
 
-            print("asfd", offset)
-        print(xs)
+            # print("asfd", offset)
+        # print(xs)
         return xs
 
     # ===============================================================================
@@ -643,6 +652,16 @@ class Ideogram(BaseArArFigure):
         # d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
         # if ogid == 0:
         plot.index_mapper.range.on_trait_change(self.update_index_mapper, "updated")
+
+        for gi in self.options.guides:
+            if gi.visible and gi.should_plot(pid):
+                graph.add_guide(gi.value, **gi.to_kwargs(), plotid=pid)
+
+        for gi in self.options.ranges:
+            if gi.visible and gi.should_plot(pid):
+                graph.add_range_guide(
+                    gi.minvalue, gi.maxvalue, **gi.to_kwargs(), plotid=pid
+                )
 
         if self.options.display_inset:
             xs = self.xs

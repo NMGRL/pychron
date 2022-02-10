@@ -60,7 +60,7 @@ class LabelsOverlay(AbstractOverlay):
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
-            gc.set_font(str_to_font(None, None, "7"))
+            gc.set_font(str_to_font("modern 7"))
 
             for x, y, l in self.labels:
                 ll = Label(x=x, y=y, text=l, font="modern 7")
@@ -252,7 +252,6 @@ class GraphicModel(HasTraits):
     def _reload(self):
         if self.initialized:
             self.container = self._container_factory()
-            print(os.path.isfile(self.srcpath), self.srcpath)
             if os.path.isfile(self.srcpath):
                 p = make_xml(
                     self.srcpath,
@@ -262,6 +261,7 @@ class GraphicModel(HasTraits):
                     convert_mm=True,
                 )
                 self.load(p)
+                os.remove(p)
 
     def _container_default(self):
         return self._container_factory()
@@ -279,6 +279,9 @@ def make_xml(
     make=True,
     use_label=True,
     rotate=0,
+    xindex=0,
+    yindex=1,
+    rindex=2,
 ):
     """
     convert a csv into an xml
@@ -331,6 +334,7 @@ def make_xml(
         nwriter.writerow(header)
 
     theta = math.radians(rotate)
+
     for k, row in enumerate(reader):
         # print k, row
         row = list(map(str.strip, row))
@@ -338,9 +342,13 @@ def make_xml(
             e = Element("point")
             x, y, l = Element("x"), Element("y"), Element("label")
 
-            xx, yy = float(row[1]), float(row[2])
             try:
-                r = float(row[4])
+                xx, yy = float(row[xindex]), float(row[yindex])
+            except IndexError:
+                pass
+
+            try:
+                r = float(row[rindex])
                 rr = Element("radius")
                 if convert_mm:
                     r *= 2.54

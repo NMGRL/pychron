@@ -50,7 +50,9 @@ class FigurePanel(HasTraits):
         self.figures = self._make_figures()
 
     def _figure_factory(self, *args, **kw):
-        return self._figure_klass(options=self.plot_options, *args, **kw)
+        return self._figure_klass(
+            options=self.plot_options, equi_stack=self.equi_stack, *args, **kw
+        )
 
     def _make_figures(self, **kw):
         gs = [
@@ -152,16 +154,16 @@ class FigurePanel(HasTraits):
             for i, p in enumerate(plots):
                 g.plots[i].value_scale = p.scale
                 if p.ymin or p.ymax:
-                    print("has ymin max set", p.ymin, p.ymax)
+                    # print("has ymin max set", p.ymin, p.ymax)
                     ymi, yma = p.ymin, p.ymax
                     if p.ymin > p.ymax:
                         yma = None
                     g.set_y_limits(ymi, yma, plotid=i)
                 elif p.has_ylimits():
-                    print("has ylimits", i, p.ylimits[0], p.ylimits[1])
+                    # print("has ylimits", i, p.ylimits[0], p.ylimits[1])
                     g.set_y_limits(p.ylimits[0], p.ylimits[1], plotid=i)
                 elif p.calculated_ymin or p.calculated_ymax:
-                    print("has calculated", p.calculated_ymin, p.calculated_ymax)
+                    # print("has calculated", p.calculated_ymin, p.calculated_ymax)
                     g.set_y_limits(p.calculated_ymin, p.calculated_ymax, plotid=i)
 
             if mi is None and ma is None:

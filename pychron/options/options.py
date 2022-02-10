@@ -35,6 +35,7 @@ from traits.api import (
     Color,
     Button,
     Instance,
+    Any,
 )
 from traits.trait_errors import TraitError
 from traitsui.api import (
@@ -43,6 +44,7 @@ from traitsui.api import (
     HGroup,
     VGroup,
     EnumEditor,
+    TableEditor,
     Spring,
     Group,
     spring,
@@ -65,6 +67,7 @@ from pychron.core.utils import alphas
 from pychron.core.yaml import yload
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.options.aux_plot import AuxPlot
+from pychron.options.guide import Guide, RangeGuide
 from pychron.options.layout import FigureLayout
 from pychron.processing.j_error_mixin import JErrorMixin
 from pychron.pychron_constants import NULL_STR, ERROR_TYPES, FONTS, SIZES, SIG_FIGS
@@ -394,7 +397,7 @@ class BaseOptions(HasTraits):
         except KeyError:
             pass
 
-        tags = ("groups", "aux_plots", "selected", "guides")
+        tags = ("groups", "aux_plots", "selected", "guides", "ranges")
         atags = self._get_tags()
         if atags:
             tags += atags
@@ -448,7 +451,7 @@ class BaseOptions(HasTraits):
             except ValueError:
                 pass
 
-        tags = ("aux_plots", "groups", "selected", "guides")
+        tags = ("aux_plots", "groups", "selected", "guides", "ranges")
         atags = self._get_tags()
         if atags:
             tags += atags
@@ -655,6 +658,7 @@ class FigureOptions(BaseOptions, GroupMixin):
 
     layout = Instance(FigureLayout, ())
     guides = List
+    ranges = List
     # group = Property
     # group_editor_klass = None
 
@@ -973,6 +977,132 @@ class AgeOptions(AuxPlotFigureOptions, JErrorMixin):
             self.analysis_label_format = lm.formatter
             self.analysis_label_display = lm.label
             # self.refresh_plot_needed = True
+
+
+class GuidesOptions(SubOptions):
+    add_guide_button = Button
+    delete_guide_button = Button
+    add_range_button = Button
+    delete_range_button = Button
+    selected = Any
+    selected_range = Any
+
+    def __init__(self, *args, **kw):
+        super(GuidesOptions, self).__init__(*args, **kw)
+        names = ["All Plots"] + list(reversed(self.model.get_aux_plot_names()))
+        for g in self.model.guides:
+            g.plotnames = names
+        for g in self.model.ranges:
+            g.plotnames = names
+
+    def _add_guide_button_fired(self):
+        if self.selected:
+            g = Guide(**self.selected.to_kwargs())
+        else:
+            g = Guide()
+
+        g.plotnames = ["All Plots"] + list(reversed(self.model.get_aux_plot_names()))
+        self.model.guides.append(g)
+
+    def _delete_guide_button_fired(self):
+        if self.selected:
+            self.model.guides.remove(self.selected)
+
+    def _add_range_button_fired(self):
+        if self.selected_range:
+            g = RangeGuide(**self.selected_range.to_kwargs())
+        else:
+            g = RangeGuide()
+
+        g.plotnames = ["All Plots"] + list(reversed(self.model.get_aux_plot_names()))
+        self.model.ranges.append(g)
+
+    def _delete_range_button_fired(self):
+        if self.selected_range:
+            self.model.ranges.remove(self.selected_range)
+
+    def traits_view(self):
+        cols = [
+            CheckboxColumn(name="visible", label="Visible"),
+            ObjectColumn(name="value", label="Value", width=200),
+            ObjectColumn(name="minvalue", label="Min", width=200),
+            ObjectColumn(name="maxvalue", label="Max", width=200),
+            ObjectColumn(name="orientation", label="Orientation"),
+            ObjectColumn(
+                name="plotname", editor=EnumEditor(name="plotnames"), label="Plot"
+            )
+            # ObjectColumn(name="alpha", label="Opacity"),
+            # ObjectColumn(name="color", label="Color"),
+            # ObjectColumn(name="line_style", label='Style'),
+            # ObjectColumn(name="line_width", label='Width'),
+        ]
+        edit_view = View(
+            Item("label", label="Label"),
+            Item("alpha", label="Opacity"),
+            UItem("color"),
+            UItem("line_style", label="Style"),
+            UItem("line_width", label="Width"),
+        )
+
+        rangecols = [
+            CheckboxColumn(name="visible", label="Visible"),
+            ObjectColumn(name="minvalue", label="Min", width=200),
+            ObjectColumn(name="maxvalue", label="Max", width=200),
+            ObjectColumn(name="orientation", label="Orientation"),
+            ObjectColumn(
+                name="plotname", editor=EnumEditor(name="plotnames"), label="Plot"
+            )
+            # ObjectColumn(name="alpha", label="Opacity"),
+            # ObjectColumn(name="color", label="Color"),
+            # ObjectColumn(name="line_style", label='Style'),
+            # ObjectColumn(name="line_width", label='Width'),
+        ]
+        return self._make_view(
+            VGroup(
+                BorderVGroup(
+                    HGroup(
+                        icon_button_editor("controller.add_guide_button", "add"),
+                        icon_button_editor(
+                            "controller.delete_guide_button",
+                            "delete",
+                            enabled_when="controller.selected",
+                        ),
+                    ),
+                    UItem(
+                        "guides",
+                        editor=TableEditor(
+                            columns=cols,
+                            sortable=False,
+                            edit_view=edit_view,
+                            orientation="vertical",
+                            selected="controller.selected",
+                        ),
+                    ),
+                    label="Guides",
+                ),
+                BorderVGroup(
+                    HGroup(
+                        icon_button_editor("controller.add_range_button", "add"),
+                        icon_button_editor(
+                            "controller.delete_range_button",
+                            "delete",
+                            enabled_when="controller.selected",
+                        ),
+                    ),
+                    UItem(
+                        "ranges",
+                        editor=TableEditor(
+                            columns=rangecols,
+                            sortable=False,
+                            edit_view=edit_view,
+                            orientation="vertical",
+                            selected="controller.selected_range",
+                        ),
+                    ),
+                    label="Ranges",
+                ),
+            )
+        )
 
 
 # ============= EOF =============================================

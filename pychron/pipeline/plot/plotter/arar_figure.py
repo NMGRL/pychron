@@ -123,9 +123,10 @@ class BaseArArFigure(SelectionFigure):
 
         graph = self.graph
 
-        vertical_resize = not all([p.height for p in plots[:-1]])
+        if len(plots) > 1 and not self.equi_stack:
+            vertical_resize = not all([p.height for p in plots[:-1]])
+            graph.vertical_resize = vertical_resize
 
-        graph.vertical_resize = vertical_resize
         graph.clear_has_title()
 
         title = self.title
@@ -228,11 +229,14 @@ class BaseArArFigure(SelectionFigure):
                     m = 10 ** math.floor(math.log10(min(ys)))
                     p.value_mapper.range.low = m
 
+                if hasattr(p, "alt_axis"):
+                    p.alt_axis.mapper = p.value_mapper
+
     def _setup_plot(self, i, pp, po):
 
         # add limit tools
-        # self.graph.add_limit_tool(pp, "x", self._handle_xlimits)
-        # self.graph.add_limit_tool(pp, "y", self._handle_ylimits)
+        self.graph.add_limit_tool(pp, "x", self._handle_xlimits)
+        self.graph.add_limit_tool(pp, "y", self._handle_ylimits)
 
         self.graph.add_axis_tool(pp, pp.x_axis)
         self.graph.add_axis_tool(pp, pp.y_axis)
@@ -241,20 +245,11 @@ class BaseArArFigure(SelectionFigure):
         pp.index_range.on_trait_change(lambda: self.update_options_limits(i), "updated")
         pp.value_range.tight_bounds = False
 
-        self._apply_aux_plot_options(pp, po)
+        # this needs to happen post_plot
+        # self._apply_aux_plot_options(pp, po)
 
     def _apply_aux_plot_options(self, pp, po):
         options = self.options
-
-        # pp.x_axis.title_font = options.xtitle_font
-        # pp.x_axis.tick_label_font = options.xtick_font
-        # pp.x_axis.tick_in = options.xtick_in
-        # pp.x_axis.tick_out = options.xtick_out
-        #
-        # pp.y_axis.title_font = options.ytitle_font
-        # pp.y_axis.tick_label_font = options.ytick_font
-        # pp.y_axis.tick_in = options.ytick_in
-        # pp.y_axis.tick_out = options.ytick_out
 
         pp.bgcolor = options.plot_bgcolor
         pp.x_grid.visible = options.use_xgrid
@@ -273,11 +268,10 @@ class BaseArArFigure(SelectionFigure):
                     )
                     alt_axis.tick_label_formatter = lambda x: ""
                     alt_axis.axis_line_visible = False
-                    alt_axis.tick_in = options.ytick_in - 1
+                    alt_axis.tick_in = options.ytick_in
                     alt_axis.tick_out = options.ytick_out
-
                     pp.underlays.append(alt_axis)
-                    pp.add(alt_axis)
+                    pp.alt_axis = alt_axis
 
             if not po.ytick_visible:
                 pp.y_axis.tick_visible = False
@@ -313,8 +307,10 @@ class BaseArArFigure(SelectionFigure):
                 value = getattr(options, "{}{}".format(k, attr))
                 try:
                     setattr(axis, attr, value)
-                except TraitError:
-                    pass
+                except TraitError as e:
+                    print(
+                        "error setting attr={},value={} error={}".format(attr, value, e)
+                    )
 
             axis.tick_label_font = getattr(options, "{}tick_font".format(k))
 
@@ -493,11 +489,11 @@ class BaseArArFigure(SelectionFigure):
         vs = list(self._unpack_attr(k, scalar=scalar))
         return [nominal_value(vi) for vi in vs], [std_dev(vi) for vi in vs]
 
-    # def _handle_ylimits(self):
-    #     pass
-    #
-    # def _handle_xlimits(self):
-    #     pass
+    def _handle_ylimits(self):
+        pass
+
+    def _handle_xlimits(self):
+        pass
 
     def _add_point_labels(self, scatter, ans=None):
         f = self.options.analysis_label_format
@@ -635,8 +631,11 @@ class BaseArArFigure(SelectionFigure):
         ov = FlowPlotLabel(
             text="\n".join(text_lines),
             overlay_position="inside top",
+            padx=3,
+            pady=-3,
             hjustify="left",
             bgcolor=plot.bgcolor,
+            border_visible=False,
             font=font,
             component=plot,
         )

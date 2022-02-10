@@ -420,7 +420,7 @@ class TruncationConditional(AutomatedRunConditional):
 
     """
 
-    abbreviated_count_ratio = 1.0
+    abbreviated_count_ratio = Float(1.0)
 
     def _from_dict_hook(self, cd):
         for tag in ("abbreviated_count_ratio",):
