@@ -130,20 +130,33 @@ def show_equilibration_inspector(record_id, ar_ar_age):
     g = StackedRegressionGraph()
     g.plotcontainer.spacing = 10
     g.window_title = "{} Equilibration Inspector".format(record_id)
-    if ar_ar_age.analysis_type == "air":
-        g.new_plot(padding_right=75, padding_left=100)
-        g.set_y_title("Ar40/Ar36")
-        counts, ratios = ar_ar_age.equilibration_ratios("Ar40", "Ar36")
-        ratios = [nominal_value(a) for a in ratios]
-        # errors = [std_dev(a) for a in ages]
-        plot, scatter, line = g.new_series(counts, ratios, fit="average")
+    at = ar_ar_age.analysis_type
+    if at == "air" or at.startswith("blank"):
+        if at == "air":
+            args = (("Ar40", "Ar38"), ("Ar40", "Ar36"))
+        else:
+            args = (
+                ("Ar40", "Ar39"),
+                ("Ar40", "Ar38"),
+                ("Ar40", "Ar37"),
+                ("Ar40", "Ar36"),
+            )
 
-        g.add_axis_tool(plot, plot.y_axis)
-        g.add_axis_tool(plot, plot.x_axis)
-        g.add_limit_tool(plot, "x")
-        g.add_limit_tool(plot, "y")
-        g.set_y_limits(pad="0.1")
-        g.set_x_limits(pad="0.1")
+        for i, (num, den) in enumerate(args):
+            g.new_plot(padding_right=75, padding_left=100)
+            g.set_y_title("{}/{}".format(num, den))
+
+            counts, ratios = ar_ar_age.equilibration_ratios(num, den)
+            ratios = [nominal_value(a) for a in ratios]
+            # errors = [std_dev(a) for a in ages]
+            plot, scatter, line = g.new_series(counts, ratios, fit="average")
+
+            g.add_axis_tool(plot, plot.y_axis)
+            g.add_axis_tool(plot, plot.x_axis)
+            g.add_limit_tool(plot, "x")
+            g.add_limit_tool(plot, "y")
+            g.set_y_limits(pad="0.1", plotid=i)
+            g.set_x_limits(pad="0.05", plotid=i)
 
     else:
         for i, (num, den) in enumerate(
