@@ -132,10 +132,15 @@ def show_equilibration_inspector(record_id, ar_ar_age):
     g.window_title = "{} Equilibration Inspector".format(record_id)
     at = ar_ar_age.analysis_type
     if at == "air" or at.startswith("blank"):
-        if at == 'air':
+        if at == "air":
             args = (("Ar40", "Ar38"), ("Ar40", "Ar36"))
         else:
-            args = (("Ar40", "Ar39"), ("Ar40", "Ar38"), ("Ar40", "Ar37"), ("Ar40", "Ar36"))
+            args = (
+                ("Ar40", "Ar39"),
+                ("Ar40", "Ar38"),
+                ("Ar40", "Ar37"),
+                ("Ar40", "Ar36"),
+            )
 
         for i, (num, den) in enumerate(args):
             g.new_plot(padding_right=75, padding_left=100)
@@ -155,7 +160,7 @@ def show_equilibration_inspector(record_id, ar_ar_age):
 
     else:
         for i, (num, den) in enumerate(
-                (("age", "age"), ("Ar40", "Ar39"), ("Ar40", "Ar36"))
+            (("age", "age"), ("Ar40", "Ar39"), ("Ar40", "Ar36"))
         ):
             g.new_plot(padding_right=75, padding_left=100)
 
@@ -226,15 +231,15 @@ def show_residuals_factory(record_id, isotopes):
 
 
 def show_evolutions_factory(
-        record_id,
-        isotopes,
-        show_evo=True,
-        show_equilibration=False,
-        show_baseline=False,
-        show_statistics=False,
-        ncols=1,
-        scale_to_equilibration=False,
-        **kw
+    record_id,
+    isotopes,
+    show_evo=True,
+    show_equilibration=False,
+    show_baseline=False,
+    show_statistics=False,
+    ncols=1,
+    scale_to_equilibration=False,
+    **kw
 ):
     from pychron.graph.stacked_regression_graph import (
         ColumnStackedRegressionGraph,
@@ -252,7 +257,7 @@ def show_evolutions_factory(
         isotopes = sort_isotopes(isotopes, reverse=True, key=attrgetter("name"))
 
         def reorder(l, n):
-            l = [l[i: i + n] for i in range(0, len(l), n)]
+            l = [l[i : i + n] for i in range(0, len(l), n)]
             nl = []
             for ri in range(len(l[0])):
                 for col in l:
@@ -318,14 +323,14 @@ def make_title(record_id, isotopes):
 
 
 def make_graph(
-        g,
-        isotopes,
-        resizable,
-        show_evo=True,
-        show_equilibration=False,
-        show_baseline=False,
-        show_statistics=False,
-        scale_to_equilibration=False,
+    g,
+    isotopes,
+    resizable,
+    show_evo=True,
+    show_equilibration=False,
+    show_baseline=False,
+    show_statistics=False,
+    scale_to_equilibration=False,
 ):
     g.clear()
 
@@ -879,5 +884,6 @@ class Analysis(ArArAge, IdeogramPlotable):
 
     def __str__(self):
         return "{}<{}>".format(self.record_id, self.__class__.__name__)
+
 
 # ============= EOF =============================================

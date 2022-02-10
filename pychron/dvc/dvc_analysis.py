@@ -274,11 +274,14 @@ class DVCAnalysis(Analysis):
         return jd
 
     def load_raw_data(self, keys=None, n_only=False, use_name_pairs=True, force=False):
-        self.debug('loading raw data, keys={}, n_only={}, use_name_pairs={}, force={}'.format(keys, n_only,
-                                                                                              use_name_pairs, force))
+        self.debug(
+            "loading raw data, keys={}, n_only={}, use_name_pairs={}, force={}".format(
+                keys, n_only, use_name_pairs, force
+            )
+        )
         if self.has_raw_data and not force:
-            self.debug('already has raw data {}, {}'.format(self.has_raw_data, force))
-            print(self.isotopes['Ar40'].sniff.xs)
+            self.debug("already has raw data {}, {}".format(self.has_raw_data, force))
+            print(self.isotopes["Ar40"].sniff.xs)
             return
 
         path = self._analysis_path(modifier=".data")
