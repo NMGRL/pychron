@@ -177,13 +177,14 @@ class Ideogram(BaseArArFigure):
             warning(None, "X Value not set. Defaulting to Age")
             index_attr = "uage"
 
-        if index_attr == 'equilibration_age':
+        if index_attr == "equilibration_age":
             import time
+
             st = time.time()
-            print('fffff')
+            print("fffff")
             for a in self.analyses:
                 a.load_raw_data()
-            print('sdffasdf', time.time()-st)
+            print("sdffasdf", time.time() - st)
 
         graph = self.graph
 
@@ -243,6 +244,8 @@ class Ideogram(BaseArArFigure):
             if args:
                 scatter, aux_selection, invalid = args
                 selection.extend(aux_selection)
+
+            self._add_guides(pid)
 
         t = index_attr
         if index_attr == "uF":
@@ -379,6 +382,9 @@ class Ideogram(BaseArArFigure):
             scatter = self._add_aux_plot(
                 ys, title, po, pid, gid=self.group_id or aux_id, es=yes, xs=xs
             )
+            func = self._get_index_attr_label_func()
+            self._add_scatter_inspector(scatter, items=items, additional_info=func)
+
             nsigma = self.options.error_bar_nsigma
             if xes:
                 self._add_error_bars(
@@ -405,9 +411,6 @@ class Ideogram(BaseArArFigure):
                 self._add_point_labels(scatter, ans=items)
             if self.options.show_subgroup_indicators:
                 self._add_subgroup_overlay(scatter, items)
-
-            func = self._get_index_attr_label_func()
-            self._add_scatter_inspector(scatter, items=items, additional_info=func)
 
         # return scatter, selection, invalid
 
@@ -652,16 +655,6 @@ class Ideogram(BaseArArFigure):
         # if ogid == 0:
         plot.index_mapper.range.on_trait_change(self.update_index_mapper, "updated")
 
-        for gi in self.options.guides:
-            if gi.visible and gi.should_plot(pid):
-                graph.add_guide(gi.value, **gi.to_kwargs(), plotid=pid)
-
-        for gi in self.options.ranges:
-            if gi.visible and gi.should_plot(pid):
-                graph.add_range_guide(
-                    gi.minvalue, gi.maxvalue, **gi.to_kwargs(), plotid=pid
-                )
-
         if self.options.display_inset:
             xs = self.xs
             n = xs.shape[0]
@@ -755,6 +748,18 @@ class Ideogram(BaseArArFigure):
         )
 
         plot.overlays.append(legend)
+
+    def _add_guides(self, pid):
+        graph = self.graph
+        for gi in self.options.guides:
+            if gi.visible and gi.should_plot(pid):
+                graph.add_guide(gi.value, **gi.to_kwargs(), plotid=pid)
+
+        for gi in self.options.ranges:
+            if gi.visible and gi.should_plot(pid):
+                graph.add_range_guide(
+                    gi.minvalue, gi.maxvalue, **gi.to_kwargs(), plotid=pid
+                )
 
     def _add_peak_labels(self, line, fxs):
         opt = self.options
@@ -985,7 +990,7 @@ class Ideogram(BaseArArFigure):
         return xs
 
     def _add_aux_plot(
-            self, ys, title, po, pid, gid=None, es=None, type="scatter", xs=None, **kw
+        self, ys, title, po, pid, gid=None, es=None, type="scatter", xs=None, **kw
     ):
         if gid is None:
             gid = self.group_id
@@ -1039,7 +1044,7 @@ class Ideogram(BaseArArFigure):
         return s
 
     def _calculate_probability_curve(
-            self, ages, errors, calculate_limits=False, limits=None
+        self, ages, errors, calculate_limits=False, limits=None
     ):
         xmi, xma = None, None
         if limits:
@@ -1118,7 +1123,7 @@ class Ideogram(BaseArArFigure):
         return xs, ys, rx1, rx2
 
     def _calculate_asymptotic_limits2(
-            self, cfunc, max_iter=200, asymptotic_width=10, tol=10
+        self, cfunc, max_iter=200, asymptotic_width=10, tol=10
     ):
         """
         cfunc: callable that returns xs,ys and accepts xmin, xmax
@@ -1198,5 +1203,6 @@ class Ideogram(BaseArArFigure):
             wm, we = nominal_value(wage), std_dev(wage)
 
         return wm, we, mswd, valid_mswd, n, pvalue
+
 
 # ============= EOF =============================================

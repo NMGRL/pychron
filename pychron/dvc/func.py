@@ -57,7 +57,7 @@ def repository_has_staged(ps, remote="origin", branch=None):
     return changed
 
 
-def push_repositories(ps, host=None, remote="origin", branch="master", quiet=True):
+def push_repositories(ps, host=None, remote="origin", branch=None, quiet=True):
     for p in ps:
         pp = repository_path(p)
 
@@ -66,6 +66,12 @@ def push_repositories(ps, host=None, remote="origin", branch="master", quiet=Tru
 
         if host is not None:
             remote = host.default_remote_name
+
+        if branch is None:
+            branch = repo.active_repo.active_branch
+
+        if not branch:
+            branch = "main"
 
         if repo.smart_pull(remote=remote, branch=branch, quiet=quiet):
             repo.push(remote=remote, branch=branch)

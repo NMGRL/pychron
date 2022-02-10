@@ -315,7 +315,7 @@ class ArArAge(IsotopeGroup):
             r = self.computed[attr]
         elif attr in self.isotopes:
             r = self.isotopes[attr].get_intensity()
-        elif attr == 'equilibration_age':
+        elif attr == "equilibration_age":
             r = self.equilibration_age()
         else:
             if hasattr(self, attr):
@@ -453,7 +453,9 @@ class ArArAge(IsotopeGroup):
         den = self.isotopes[self.arar_mapping[den]]
         counts = list(range(1, num.sniff.xs.shape[0]))
 
-        return counts, [num.get_intensity(count=i)/den.get_intensity(count=i) for i in counts]
+        return counts, [
+            num.get_intensity(count=i) / den.get_intensity(count=i) for i in counts
+        ]
 
     def equilibration_age(self, n=5):
         """
@@ -467,6 +469,7 @@ class ArArAge(IsotopeGroup):
         return ufloat(*calculate_weighted_mean(vs, es))
 
     _eq_ages = None, None
+
     def equilibration_ages(self, force=False):
         counts, ages = self._eq_ages
         if not ages or force:
