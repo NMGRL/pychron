@@ -426,6 +426,7 @@ class BaseBrowserTask(BaseEditorTask):
                         self.browser_model.recall_editor = editor
                     else:
                         editor.init(rec, av)
+                    editor.set_name(editor.basename)
                     break
                 else:
                     editor = RecallEditor(rec, av)
@@ -434,7 +435,7 @@ class BaseBrowserTask(BaseEditorTask):
                     # editor.basename = rec.record_id
                     if existing and editor.basename in existing:
                         editor.instance_id = existing.count(editor.basename)
-                    editor.set_name(rec.record_id)
+                    editor.set_name(editor.basename)
 
                     self._open_editor(editor, activate=False)
 
