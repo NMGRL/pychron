@@ -57,7 +57,7 @@ def repository_has_staged(ps, remote="origin", branch=None):
     return changed
 
 
-def push_repositories(ps, host=None, remote="origin", branch="master", quiet=True):
+def push_repositories(ps, host=None, remote="origin", branch=None, quiet=True):
     for p in ps:
         pp = repository_path(p)
 
@@ -66,6 +66,12 @@ def push_repositories(ps, host=None, remote="origin", branch="master", quiet=Tru
 
         if host is not None:
             remote = host.default_remote_name
+
+        if branch is None:
+            branch = repo.active_repo.active_branch
+
+        if not branch:
+            branch = "main"
 
         if repo.smart_pull(remote=remote, branch=branch, quiet=quiet):
             repo.push(remote=remote, branch=branch)
@@ -110,9 +116,9 @@ def get_review_status(record):
     if os.path.isdir(root):
         repo = Repo(root)
         for m, func in (
-            ("blanks", is_blank_reviewed),
-            ("intercepts", is_intercepts_reviewed),
-            ("icfactors", is_icfactors_reviewed),
+                ("blanks", is_blank_reviewed),
+                ("intercepts", is_intercepts_reviewed),
+                ("icfactors", is_icfactors_reviewed),
         ):
             p = analysis_path(record, record.repository_identifier, modifier=m)
             if os.path.isfile(p):
@@ -242,6 +248,5 @@ def make_interpreted_age_dict(ia):
     }
     d["session_metadata"] = {"date": datetime.now().isoformat()}
     return d
-
 
 # ============= EOF =============================================
