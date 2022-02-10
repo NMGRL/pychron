@@ -226,8 +226,11 @@ class BaseArArFigure(SelectionFigure):
                 if p.value_mapper.range.low < 0:
                     ys = self.graph.get_data(plotid=i, axis=1)
                     ys = ys[ys > 0]
-                    m = 10 ** math.floor(math.log10(min(ys)))
-                    p.value_mapper.range.low = m
+                    try:
+                        m = 10 ** math.floor(math.log10(min(ys)))
+                        p.value_mapper.range.low = m
+                    except ValueError:
+                        continue
 
                 if hasattr(p, "alt_axis"):
                     p.alt_axis.mapper = p.value_mapper
