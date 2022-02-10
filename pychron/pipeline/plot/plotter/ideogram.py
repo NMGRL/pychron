@@ -412,8 +412,6 @@ class Ideogram(BaseArArFigure):
             if self.options.show_subgroup_indicators:
                 self._add_subgroup_overlay(scatter, items)
 
-
-
         # return scatter, selection, invalid
 
     def _plot_analysis_number(self, *args, **kw):
