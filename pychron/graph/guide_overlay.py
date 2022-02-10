@@ -97,33 +97,33 @@ class GuideOverlay(AbstractOverlay):
         gc.set_alpha(self.alpha)
 
     def overlay(self, component, gc, view_bounds=None, mode="normal"):
+
         with gc:
             gc.clip_to_rect(component.x, component.y, component.width, component.height)
-            with gc:
-                self._setup_line(gc)
-                gc.set_stroke_color(self.color_)
-                gc.begin_path()
+            self._setup_line(gc)
+            gc.set_stroke_color(self.color_)
+            gc.begin_path()
 
-                if self.orientation == "h":
-                    x1 = component.x
-                    x2 = component.x2
-                    y1 = y2 = component.value_mapper.map_screen(self.value)
-                else:
-                    y1 = component.y
-                    y2 = component.y2
-                    x1 = x2 = component.index_mapper.map_screen(self.value)
+            if self.orientation == "h":
+                x1 = component.x
+                x2 = component.x2
+                y1 = y2 = component.value_mapper.map_screen(self.value)
+            else:
+                y1 = component.y
+                y2 = component.y2
+                x1 = x2 = component.index_mapper.map_screen(self.value)
 
-                gc.move_to(x1, y1)
-                gc.line_to(x2, y2)
-                gc.draw_path()
+            gc.move_to(x1, y1)
+            gc.line_to(x2, y2)
+            gc.draw_path()
 
-            self._overlay_value(gc)
+        self._overlay_value(gc)
 
 
 class RangeGuideOverlay(GuideOverlay):
     def overlay(self, component, gc, view_bounds=None, mode="normal"):
-        gc.clip_to_rect(component.x, component.y, component.width, component.height)
         with gc:
+            gc.clip_to_rect(component.x, component.y, component.width, component.height)
             self._setup_line(gc)
             gc.set_fill_color(self.color_)
 

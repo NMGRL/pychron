@@ -245,6 +245,8 @@ class Ideogram(BaseArArFigure):
                 scatter, aux_selection, invalid = args
                 selection.extend(aux_selection)
 
+            self._add_guides(pid)
+
         t = index_attr
         if index_attr == "uF":
             t = "Ar40*/Ar39k"
@@ -380,6 +382,9 @@ class Ideogram(BaseArArFigure):
             scatter = self._add_aux_plot(
                 ys, title, po, pid, gid=self.group_id or aux_id, es=yes, xs=xs
             )
+            func = self._get_index_attr_label_func()
+            self._add_scatter_inspector(scatter, items=items, additional_info=func)
+
             nsigma = self.options.error_bar_nsigma
             if xes:
                 self._add_error_bars(
@@ -407,8 +412,7 @@ class Ideogram(BaseArArFigure):
             if self.options.show_subgroup_indicators:
                 self._add_subgroup_overlay(scatter, items)
 
-            func = self._get_index_attr_label_func()
-            self._add_scatter_inspector(scatter, items=items, additional_info=func)
+
 
         # return scatter, selection, invalid
 
@@ -653,16 +657,6 @@ class Ideogram(BaseArArFigure):
         # if ogid == 0:
         plot.index_mapper.range.on_trait_change(self.update_index_mapper, "updated")
 
-        for gi in self.options.guides:
-            if gi.visible and gi.should_plot(pid):
-                graph.add_guide(gi.value, **gi.to_kwargs(), plotid=pid)
-
-        for gi in self.options.ranges:
-            if gi.visible and gi.should_plot(pid):
-                graph.add_range_guide(
-                    gi.minvalue, gi.maxvalue, **gi.to_kwargs(), plotid=pid
-                )
-
         if self.options.display_inset:
             xs = self.xs
             n = xs.shape[0]
@@ -756,6 +750,18 @@ class Ideogram(BaseArArFigure):
         )
 
         plot.overlays.append(legend)
+
+    def _add_guides(self, pid):
+        graph = self.graph
+        for gi in self.options.guides:
+            if gi.visible and gi.should_plot(pid):
+                graph.add_guide(gi.value, **gi.to_kwargs(), plotid=pid)
+
+        for gi in self.options.ranges:
+            if gi.visible and gi.should_plot(pid):
+                graph.add_range_guide(
+                    gi.minvalue, gi.maxvalue, **gi.to_kwargs(), plotid=pid
+                )
 
     def _add_peak_labels(self, line, fxs):
         opt = self.options
