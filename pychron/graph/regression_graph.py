@@ -457,7 +457,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
                 except IndexError:
                     break
 
-        print("asfasfd", regs)
         self.regression_results = regs
 
         # force layout updates. i.e for ErrorBarOverlay
