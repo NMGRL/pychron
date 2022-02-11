@@ -576,7 +576,6 @@ class NewportMotionController(MotionController):
                 try:
                     error_code = int(eargs[0])
                     if error_code == 0:
-                        error = None
                         break
                     else:
                         error = error_code
@@ -820,7 +819,7 @@ class NewportMotionController(MotionController):
                 return a
 
     def _linear_move(self, kwargs, block=False, grouped_move=True,
-                     sign_correct=True, start_timer=False, **kw):
+                     sign_correct=True, start_timer=False, rflag=0, **kw):
         """
         """
 
@@ -838,10 +837,6 @@ class NewportMotionController(MotionController):
 
             gid = self.groupobj.id
             st = '{:n}HL{x:0.5f},{y:0.5f}'.format(gid, **kwargs)
-            #            this switch is accomplished by the group_parameter axes orer
-            #            axes=2,1
-            #            if self.axes['x'].id == 2:
-            #                st = '{:n}HL{y:0.3f},{x:0.3f}'.format(id, **kwargs)
 
             self.tell(st, verbose=True)
         else:
@@ -849,31 +844,38 @@ class NewportMotionController(MotionController):
             self.multiple_axis_move([(self.axes['y'].id, kwargs['y']),
                                      (self.axes['x'].id, kwargs['x'])])
 
-        self.read_error()
+        error_code = self.read_error()
+        self.debug('error code={}'.format(error_code))
+        if error_code and error_code == 51:
+            if rflag < 4:
+                kw['velocity_scalar'] = 0.5
+                self._linear_move(kwargs, block=block, grouped_move=grouped_move,
+                                  sign_correct=sign_correct, start_timer=start_timer, rflag=rflag + 1, **kw)
+        else:
+            if block or start_timer:
+                self.start_timer()
 
-        if block or start_timer:
-            self.start_timer()
+            if block:
 
-        if block:
+                self.info('moving to {x:0.5f},{y:0.5f}'.format(**kwargs))
+                self._block()
+                self.info('move to {x:0.5f},{y:0.5f} complete'.format(**kwargs))
+                self.update_axes()
 
-            self.info('moving to {x:0.5f},{y:0.5f}'.format(**kwargs))
-            self._block()
-            self.info('move to {x:0.5f},{y:0.5f} complete'.format(**kwargs))
-            self.update_axes()
+                if not self._stopped:
+                    tol = 0.1
+                    x, y = self._x_position, self._y_position
 
-            if not self._stopped:
-                tol = 0.1
-                x, y = self._x_position, self._y_position
-
-                if abs(x - target_x) > tol or abs(y - target_y) > tol:
-                    self.warning('TargetPosition warning:  '
-                                 'current={},{}  target={},{}'.format(x, y, target_x, target_y))
-                    self.read_error()
-                    tol = 0.5
                     if abs(x - target_x) > tol or abs(y - target_y) > tol:
-                        raise TargetPositionError(x, y, target_x, target_y)
-            else:
-                self.debug('motion stopped. not checking for TargetPositionError')
+                        self.warning('TargetPosition warning:  '
+                                     'current={},{}  target={},{}'.format(x, y, target_x, target_y))
+
+                        xtol = (self.xaxes_max-self.xaxes_min)
+                        ytol = (self.yaxes_max-self.yaxes_min)
+                        if abs(x - target_x) > xtol or abs(y - target_y) > ytol:
+                            raise TargetPositionError(x, y, target_x, target_y)
+                else:
+                    self.debug('motion stopped. not checking for TargetPositionError')
 
     def start_timer(self):
         self.timer = self.timer_factory()

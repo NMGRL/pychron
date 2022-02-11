@@ -28,15 +28,14 @@ from pychron.headless_config_loadable import HeadlessConfigLoadable
 
 
 def prep_str(s):
-    """
-    """
-    ns = ''
+    """ """
+    ns = ""
     if s is None:
-        s = ''
+        s = ""
     for c in s:
         oc = ord(c)
         if not 0x20 <= oc <= 0x7E:
-            c = '[{:02d}]'.format(ord(c))
+            c = "[{:02d}]".format(ord(c))
         ns += c
     return ns
 
@@ -45,12 +44,12 @@ def convert(re):
     if re is not None:
         if isinstance(re, bytes):
             try:
-                re = re.decode('utf-8')
+                re = re.decode("utf-8")
             except UnicodeDecodeError:
                 try:
-                    re = codecs.decode(re, 'hex')
+                    re = codecs.decode(re, "hex")
                 except binascii.Error:
-                    re = ''.join(('[{}]'.format(str(b)) for b in re))
+                    re = "".join(("[{}]".format(str(b)) for b in re))
 
         return re
 
@@ -58,22 +57,20 @@ def convert(re):
 def replace_eol_func(s):
     s = convert(s)
     if s is not None:
-        s = s.replace('\r', '[13]')
-        s = s.replace('\n', '[10]')
+        s = s.replace("\r", "[13]")
+        s = s.replace("\n", "[10]")
         return s
 
 
 def remove_eol_func(re):
-    """
-    """
+    """ """
     re = convert(re)
     if re is not None:
         return re.strip()
 
 
 def process_response(re, replace=None, remove_eol=True):
-    """
-    """
+    """ """
     if remove_eol:
         re = remove_eol_func(re)
 
@@ -91,33 +88,65 @@ class Communicator(HeadlessConfigLoadable):
     _lock = None
     simulation = True
     write_terminator = chr(13)  # '\r'
+    read_terminator = ""
     handle = None
     scheduler = None
     address = None
+    _comms_report_attrs = None
 
     def __init__(self, *args, **kw):
-        """
-        """
+        """ """
         super(Communicator, self).__init__(*args, **kw)
         self._lock = RLock()
 
     def load(self, config, path):
-        self.set_attribute(config, 'verbose', 'Communications', 'verbose', default=False, optional=True, cast='boolean')
-        self.set_attribute(config, 'write_terminator', 'Communications', 'write_terminator',
-                           default=chr(13),
-                           optional=True)
+        self.set_attribute(
+            config,
+            "verbose",
+            "Communications",
+            "verbose",
+            default=False,
+            optional=True,
+            cast="boolean",
+        )
+        self.set_attribute(
+            config,
+            "write_terminator",
+            "Communications",
+            "write_terminator",
+            default=chr(13),
+            optional=True,
+        )
 
-        if self.write_terminator == 'chr(10)':
+        self.set_attribute(
+            config,
+            "read_terminator",
+            "Communications",
+            "read_terminator",
+            default="",
+            optional=True,
+        )
+
+        if self.write_terminator == chr(10):
             self.write_terminator = chr(10)
-        if self.write_terminator == 'chr(0)':
+        if self.write_terminator == "chr(0)":
             self.write_terminator = chr(0)
+        if self.write_terminator == "CRLF":
+            self.write_terminator = "\r\n"
+
+        if self.read_terminator == "chr(10)":
+            self.read_terminator = chr(10)
+        if self.read_terminator == "chr(0)":
+            self.read_terminator = chr(0)
+        if self.read_terminator == "CRLF":
+            self.read_terminator = "\r\n"
 
         return True
 
     def report(self):
-        self.debug('============ Communications Report ==============')
+        self.debug("============ Communications Report ==============")
         self._generate_comms_report()
-        self.debug('=================================================')
+        self.debug("=================================================")
 
     def close(self):
         pass
@@ -151,7 +180,7 @@ class Communicator(HeadlessConfigLoadable):
             cmd = ncmd
 
         if info is not None:
-            msg = '{}    {}'.format(info, cmd)
+            msg = "{}    {}".format(info, cmd)
         else:
             msg = cmd
 
@@ -168,12 +197,12 @@ class Communicator(HeadlessConfigLoadable):
             cmd = ncmd
 
         if re and len(re) > 100:
-            re = '{}...'.format(re[:97])
+            re = "{}...".format(re[:97])
 
-        if info and info != '':
-            msg = '{}    {} ===>> {}'.format(info, cmd, re)
+        if info and info != "":
+            msg = "{}    {} ===>> {}".format(info, cmd, re)
         else:
-            msg = '{} ===>> {}'.format(cmd, re)
+            msg = "{} ===>> {}".format(cmd, re)
 
         self.info(msg)
 
@@ -184,16 +213,21 @@ class Communicator(HeadlessConfigLoadable):
     # private
     def _get_report_value(self, key):
         c = getattr(self, key)
-        value = '---'
+        value = "---"
         return c, value
 
     def _generate_comms_report(self):
         if self._comms_report_attrs:
-            self.debug('{:<10s} {:<20s}          Value'.format('Param:', 'Config:'))
+            self.debug("{:<10s} {:<20s}          Value".format("Param:", "Config:"))
             for key in self._comms_report_attrs:
                 c, value = self._get_report_value(key)
-                self.debug('{:<10s} {:<30s} {}'.format('{}:'.format(key.capitalize()),
-                                                       str(c), value))
+                self.debug(
+                    "{:<10s} {:<30s} {}".format(
+                        "{}:".format(key.capitalize()), str(c), value
+                    )
+                )
         else:
-            self.debug('Comms report not yet implemented')
+            self.debug("Comms report not yet implemented")
+
+
 # ============= EOF ====================================

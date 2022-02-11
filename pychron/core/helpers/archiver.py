@@ -15,26 +15,27 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import Range, Bool, Str, HasTraits
 # ============= standard library imports ========================
 import os
 import shutil
 from datetime import datetime, timedelta
 # ============= local library imports  ==========================
-# from logger_setup import simple_logger
 from pychron.core.helpers.logger_setup import simple_logger
 
 MONTH_NAMES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY',
                'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 
-# logger = logging.getLogger('Archiver')
-# logger.setLevel(logging.DEBUG)
-# h = logging.StreamHandler()
-# h.setFormatter(logging.Formatter('%(name)-40s: %(asctime)s %(levelname)-7s (%(threadName)-10s) %(message)s'))
-# logger.addHandler(h)
-
 logger = simple_logger('Archiver')
+
+
+def get_dirs(root):
+    return (p for p in os.listdir(root) if not p.startswith('.') and os.path.isdir(os.path.join(root, p)))
+
+
+def get_files(root):
+    return (p for p in os.listdir(root)
+            if not p.startswith('.') and os.path.isfile(os.path.join(root, p)))
 
 
 class Archiver(HasTraits):
@@ -47,10 +48,10 @@ class Archiver(HasTraits):
     def info(self, msg, *args, **kw):
         logger.info(msg)
 
-    def clean(self, exclude=None):
-        self._clean(exclude)
+    def clean(self, exclude=None, **kw):
+        self._clean(exclude, **kw)
 
-    def _clean(self, exclude):
+    def _clean(self, exclude, use_dirs=False):
         """
             1. find all files older than archive_days+archive_hours
                 - move to archive
@@ -67,7 +68,10 @@ class Archiver(HasTraits):
                                                     hours=self.archive_hours)
         self.info('Files older than {} will be archived'.format(archive_date))
         cnt = 0
-        for p in self._get_files(root):
+
+        f = get_dirs if use_dirs else get_files
+
+        for p in f(root):
             rp = os.path.join(root, p)
             if p in exclude or rp in exclude:
                 continue
@@ -86,10 +90,6 @@ class Archiver(HasTraits):
         if self.clean_archives:
             self._clean_archive(root)
         self.info('Archive cleaning complete')
-
-    def _get_files(self, root):
-        return (p for p in os.listdir(root)
-                if not p.startswith('.') and os.path.isfile(os.path.join(root, p)))
 
     def _clean_archive(self, root):
         self.info('Archives older than {} months will be deleted'.format(self.archive_months))

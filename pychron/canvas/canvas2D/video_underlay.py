@@ -51,7 +51,7 @@ class VideoUnderlay(AbstractOverlay):
                     try:
                         gc.draw_image(asarray(resize(img, (int(h), int(w)), preserve_range=True),
                                               dtype=uint8))
-                    except IndexError:
+                    except (IndexError, ValueError):
                         pass
 
 # ============= EOF ====================================

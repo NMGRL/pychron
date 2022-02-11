@@ -17,9 +17,12 @@
 # =============enthought library imports=======================
 # =============standard library imports ========================
 from __future__ import absolute_import
+
+import glob
 import logging
 import os
 import shutil
+from datetime import datetime
 from logging.handlers import RotatingFileHandler
 
 from pychron.core.helpers.filetools import list_directory, unique_path2
@@ -102,15 +105,15 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
     # if not os.path.isdir(bdir):
     #     os.mkdir(bdir)
 
-    if use_archiver:
-        # archive logs older than 1 month
-        # lazy load Archive because of circular dependency
-        from pychron.core.helpers.archiver import Archiver
-
-        a = Archiver(archive_days=14,
-                     archive_months=1,
-                     root=bdir)
-        a.clean()
+    # if use_archiver:
+    #     # archive logs older than 1 month
+    #     # lazy load Archive because of circular dependency
+    #     from pychron.core.helpers.archiver import Archiver
+    #
+    #     a = Archiver(archive_days=14,
+    #                  archive_months=1,
+    #                  root=bdir)
+    #     a.clean(use_dirs=True)
 
     if use_file:
         # create a new logging file
@@ -118,17 +121,16 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
         logpath = os.path.join(bdir, logname)
 
         if os.path.isfile(logpath):
-            backup_logpath, _cnt = unique_path2(bdir, name, delimiter='-', extension='.log', width=5)
+            # move all log files there own directory
+            # name directory based on logpath create date
+            result = os.stat(logpath)
+            mt = result.st_mtime
+            creation_date = datetime.fromtimestamp(mt)
 
-            shutil.copyfile(logpath, backup_logpath)
-            os.remove(logpath)
-
-            ps = list_directory(bdir, filtername=logname, remove_extension=False)
-            for pi in ps:
-                _h, t = os.path.splitext(pi)
-                v = os.path.join(bdir, pi)
-                shutil.copyfile(v, '{}{}'.format(backup_logpath, t))
-                os.remove(v)
+            bk = os.path.join(bdir, creation_date.strftime('%y%m%d%H%M%S'))
+            os.mkdir(bk)
+            for src in glob.glob(os.path.join(bdir, '{}*'.format(logname))):
+                shutil.move(src, bk)
 
     root = logging.getLogger()
     root.setLevel(gLEVEL)
@@ -137,7 +139,7 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
     handlers = [shandler]
     if use_file:
         rhandler = RotatingFileHandler(
-            logpath, maxBytes=1e7, backupCount=50)
+            logpath, maxBytes=1e8, backupCount=50)
         handlers.append(rhandler)
 
     fmt = logging.Formatter(gFORMAT)

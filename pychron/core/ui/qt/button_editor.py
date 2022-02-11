@@ -15,7 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from pyface.qt.QtGui import QSizePolicy
 from traits.api import Property, Enum, Range, Str, Trait, Bool
 from traitsui.api import View
@@ -23,6 +22,8 @@ from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.button_editor import CustomEditor
 from traitsui.ui_traits import AView, Image
 import six
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -38,8 +39,8 @@ class _ButtonEditor(CustomEditor):
 
 
 class ButtonEditor(BasicEditorFactory):
-    """ Editor factory for buttons.
-    """
+    """Editor factory for buttons."""
+
     klass = _ButtonEditor
 
     # ---------------------------------------------------------------------------
@@ -63,6 +64,7 @@ class ButtonEditor(BasicEditorFactory):
 
     # (Optional) Image to display on the button
     image = Image
+    image_value = Str
 
     # Extra padding to add to both the left and the right sides
     width_padding = Range(0, 31, 7)
@@ -71,10 +73,10 @@ class ButtonEditor(BasicEditorFactory):
     height_padding = Range(0, 31, 5)
 
     # Presentation style
-    style = Enum('button', 'radio', 'toolbar', 'checkbox')
+    style = Enum("button", "radio", "toolbar", "checkbox")
 
     # Orientation of the text relative to the image
-    orientation = Enum('vertical', 'horizontal')
+    orientation = Enum("vertical", "horizontal")
 
     # The optional view to display when the button is clicked:
     view = AView
@@ -83,9 +85,10 @@ class ButtonEditor(BasicEditorFactory):
     #  Traits view definition:
     # ---------------------------------------------------------------------------
 
-    traits_view = View(['label', 'value', '|[]'])
+    traits_view = View(["label", "value", "|[]"])
 
     flat = Bool(False)
+
     # ---------------------------------------------------------------------------
     #  Implementation of the 'value' property:
     # ---------------------------------------------------------------------------
@@ -104,7 +107,5 @@ class ButtonEditor(BasicEditorFactory):
                 except:
                     pass
 
+
 # ============= EOF =============================================
-
-
-

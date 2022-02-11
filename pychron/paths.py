@@ -79,7 +79,7 @@ class Paths(object):
 
     root = None
     bundle_root = None
-    home = None
+    home = path.expanduser('~')
 
     icons = ''
     images = ''
@@ -313,7 +313,6 @@ class Paths(object):
     def build(self, root):
         join = path.join
 
-        self.home = path.expanduser('~')
         # self.version = version
         if root.startswith('_'):
             root = join(self.home, 'Pychron{}'.format(root))

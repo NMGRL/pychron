@@ -86,7 +86,11 @@ class BaslerPylonCamera(Loggable):
     def read(self):
         ok, img = False, None
         if self._cam and not self._setting_config:
-            res = self._cam.RetrieveResult(0, pylon.TimeoutHandling_Return)
+            try:
+                res = self._cam.RetrieveResult(0, pylon.TimeoutHandling_Return)
+            except RuntimeError:
+                pass
+
             if res.IsValid():
                 ok = True
                 img = res.Array

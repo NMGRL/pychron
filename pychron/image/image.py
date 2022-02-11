@@ -159,8 +159,13 @@ class Image(HasTraits):
 
         x = int((w - cw) / 2. + ox)
         y = int((h - ch) / 2. + oy)
-
-        return src[y:y + ch, x:x + cw]
+        try:
+            return src[y:int(y + ch), x:int(x + cw)]
+        except TypeError as e:
+            print('crop', e)
+            print('src', src)
+            print('p', x, y, w,h,cw,ch)
+            return
 
     def render(self):
         return self.frames[0]

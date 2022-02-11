@@ -20,12 +20,19 @@ import math
 import os
 
 import six
-from chaco.api import OverlayPlotContainer, \
-    VPlotContainer, HPlotContainer, GridPlotContainer, \
-    BasePlotContainer, Plot, ArrayPlotData
+from chaco.api import (
+    OverlayPlotContainer,
+    VPlotContainer,
+    HPlotContainer,
+    GridPlotContainer,
+    BasePlotContainer,
+    Plot,
+    ArrayPlotData,
+)
 from chaco.array_data_source import ArrayDataSource
 from chaco.axis import PlotAxis
 from enable.component_editor import ComponentEditor
+from enable.container import Container
 from numpy import array, hstack, Inf, column_stack
 from pyface.timer.api import do_after as do_after_timer
 from traits.api import Instance, List, Str, Property, Dict, Event, Bool
@@ -156,7 +163,7 @@ class Graph(ContextMenuMixin):
     """
     """
     name = Str
-    plotcontainer = Instance(BasePlotContainer)
+    plotcontainer = Instance(Container)
     container_dict = Dict
     plots = List(Plot)
 
