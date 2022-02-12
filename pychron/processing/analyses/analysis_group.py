@@ -234,19 +234,19 @@ class AnalysisGroup(IdeogramPlotable):
             self.age_units = self.arar_constants.age_units
 
     def trigger_omit(self):
-        self._handle_trigger('omit')
+        self._handle_trigger("omit")
 
     def trigger_tag(self):
-        self._handle_trigger('tag')
+        self._handle_trigger("tag")
 
     def trigger_recall(self):
-        self._handle_trigger('recall')
+        self._handle_trigger("recall")
 
     def trigger_invalid(self):
-        self._handle_trigger('invalid')
+        self._handle_trigger("invalid")
 
     def _handle_trigger(self, tag):
-        f = 'trigger_{}'.format(tag)
+        f = "trigger_{}".format(tag)
         a = self.analyses[0]
         getattr(a, f)(analyses=self.analyses)
 
