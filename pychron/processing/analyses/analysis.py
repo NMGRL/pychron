@@ -19,7 +19,6 @@ from collections import namedtuple
 from math import ceil
 from operator import attrgetter
 
-import six
 from chaco.array_data_source import ArrayDataSource
 from numpy import Inf, polyfit, polyval, arange, argmin
 from pyface.message_dialog import information
@@ -160,7 +159,7 @@ def show_equilibration_inspector(record_id, ar_ar_age):
 
     else:
         for i, (num, den) in enumerate(
-            (("age", "age"), ("Ar40", "Ar39"), ("Ar37", "Ar39"), ("Ar40", "Ar36"))
+                (("age", "age"), ("Ar40", "Ar39"), ("Ar37", "Ar39"), ("Ar40", "Ar36"))
         ):
             g.new_plot(padding_right=75, padding_left=100)
 
@@ -231,15 +230,15 @@ def show_residuals_factory(record_id, isotopes):
 
 
 def show_evolutions_factory(
-    record_id,
-    isotopes,
-    show_evo=True,
-    show_equilibration=False,
-    show_baseline=False,
-    show_statistics=False,
-    ncols=1,
-    scale_to_equilibration=False,
-    **kw
+        record_id,
+        isotopes,
+        show_evo=True,
+        show_equilibration=False,
+        show_baseline=False,
+        show_statistics=False,
+        ncols=1,
+        scale_to_equilibration=False,
+        **kw
 ):
     from pychron.graph.stacked_regression_graph import (
         ColumnStackedRegressionGraph,
@@ -257,7 +256,7 @@ def show_evolutions_factory(
         isotopes = sort_isotopes(isotopes, reverse=True, key=attrgetter("name"))
 
         def reorder(l, n):
-            l = [l[i : i + n] for i in range(0, len(l), n)]
+            l = [l[i: i + n] for i in range(0, len(l), n)]
             nl = []
             for ri in range(len(l[0])):
                 for col in l:
@@ -323,14 +322,14 @@ def make_title(record_id, isotopes):
 
 
 def make_graph(
-    g,
-    isotopes,
-    resizable,
-    show_evo=True,
-    show_equilibration=False,
-    show_baseline=False,
-    show_statistics=False,
-    scale_to_equilibration=False,
+        g,
+        isotopes,
+        resizable,
+        show_evo=True,
+        show_equilibration=False,
+        show_baseline=False,
+        show_statistics=False,
+        scale_to_equilibration=False,
 ):
     g.clear()
 
@@ -455,6 +454,18 @@ class IdeogramPlotable(HasTraits):
         super(IdeogramPlotable, self).__init__(*args, **kw)
         if make_arar_constants:
             self.arar_constants = ArArConstants()
+
+    def trigger_invalid(self):
+        raise NotImplementedError
+
+    def trigger_omit(self):
+        raise NotImplementedError
+
+    def trigger_recall(self):
+        raise NotImplementedError
+
+    def trigger_tag(self):
+        raise NotImplementedError
 
     def baseline_corrected_intercepts_to_dict(self):
         pass
@@ -735,7 +746,7 @@ class Analysis(ArArAge, IdeogramPlotable):
 
     def get_isotope_evolutions(self, isotopes=None, load_data=True, **kw):
         if isotopes:
-            if isinstance(isotopes[0], (str, six.text_type)):
+            if isinstance(isotopes[0], str):
                 nisotopes = []
                 for i in isotopes:
                     try:
@@ -884,6 +895,5 @@ class Analysis(ArArAge, IdeogramPlotable):
 
     def __str__(self):
         return "{}<{}>".format(self.record_id, self.__class__.__name__)
-
 
 # ============= EOF =============================================
