@@ -27,9 +27,9 @@ Pychron aims to augment and replace the current widely used program Mass Spec by
 
 Give it a try
 ====================
-Interesting in seeing pychron in action? Don't want to/can't install all the required dependencies? 
+Interested in seeing pychron in action? Don't want to/can't install all the required dependencies? 
 
-A demo version of Pychron Data Reduction aka PyCrunch is now available via a docker image. Checkout https://github.com/NMGRL/pychron_docker for more details
+A demo version of Pychron Data Reduction aka PyCrunch is now available via a docker image. Checkout [Pychron Docker](https://github.com/NMGRL/pychron_docker) for more details
 
 **NOTE: this is an experimental feature and is likely to evolve over time**
 
@@ -47,15 +47,17 @@ A number of Ar/Ar Geochronology and noble gas laboratories are using Pychron to 
  - MNGRL, NASA-Goddard Space Flight Center
  - AEL-AMS, Ottawa
  - ANGL, University of Arizona
- - TAP, Purdue University
-
+ 
 Installation of Pychron at other laboratories is ongoing. Current interested labs are
   
   - University of Florida
   - CAMS, Lawrence Livermore National Laboratory
   - University of Alaska, Fairbanks
-
-Additionally, Remote Control Server, a script made by the pychron developers, is used extensively 
+  - Arizona State University
+  - USGS Reston
+  - Geomar
+  
+Additionally, [Remote Control Server](https://github.com/NMGRL/qtegra), a script made by the pychron developers, is used extensively 
 by the international community to interface third-party software with Thermo Scientific's Mass Spectrometer control software.
 
 pyValve
@@ -90,5 +92,5 @@ To turn off App Nap system wide use
 
 
 # Citing Pychron 
-Are you using pychron for data collection and/or data reduction of published data please cite it by including as much
+Are you using pychron for data collection and/or data reduction of published data? Please cite it by including as much
 information as possible from the following: *Jake Ross. (2019). NMGRL/pychron v18.2 (v18.2). Zenodo. https://doi.org/10.5281/zenodo.3237834*
