@@ -417,7 +417,7 @@ class SerialCommunicator(Communicator):
                 self.handle.write(command)
             except (serial.serialutil.SerialException, OSError, IOError, ValueError) as e:
                 self.warning('Serial Communicator write execption: {}'.format(e))
-                if isinstance(e, serial.serialutil.SerialException):
+                if isinstance(e, serial.serialutil.SerialException) and retry_on_exception:
                     self.open()
                     return self._write(cmd, is_hex, retry_on_exception=False)
                 return
