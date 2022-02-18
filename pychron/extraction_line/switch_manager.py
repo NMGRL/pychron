@@ -35,7 +35,7 @@ from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.hardware.switch import Switch, ManualSwitch
-from pychron.hardware.valve import HardwareValve
+from pychron.hardware.valve import HardwareValve, DoubleActuationValve
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
@@ -979,6 +979,7 @@ class SwitchManager(Manager):
             for klass, func in (
                 (Switch, parser.get_switches),
                 (ManualSwitch, parser.get_manual_valves),
+                (DoubleActuationValve, parser.get_double_actuation_valves)
             ):
                 for s in func():
                     factory(s, use_explanation=False, klass=klass)

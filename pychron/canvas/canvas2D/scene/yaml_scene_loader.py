@@ -200,6 +200,42 @@ class YAMLLoader(BaseLoader):
         pass
 
     # private
+    def _new_fork(self, scene, klass, conn):
+        left = conn.get("left")
+        right = conn.get("right")
+        mid = conn.get("mid")
+        lname = left['name'].strip()
+        mname = mid['name'].strip()
+        rname = right['name'].strip()
+        key = "{}-{}-{}".format(lname,
+                                mname,
+                                rname)
+
+        height = 4
+        dim = conn.get("dimension")
+        if dim is not None:
+            height = float(dim.strip())
+        # klass = BorderLine
+        tt = klass(0, 0, default_color=(204, 204, 204), name=key, height=height)
+
+        lf = scene.get_item(lname)
+        rt = scene.get_item(rname)
+        mm = scene.get_item(mname)
+        lf.connections.append(("left", tt))
+        rt.connections.append(("right", tt))
+        mm.connections.append(("mid", tt))
+
+        def get_xy(item, elem):
+            default = item.width / 2.0, item.height / 2.0
+            ox, oy, txt = get_offset(elem, default=default)
+            return item.x + ox, item.y + oy
+
+        lx, ly = get_xy(lf, left)
+        rx, ry = get_xy(rt, right)
+        mx, my = get_xy(mm, mid)
+        tt.set_points(lx, ly, rx, ry, mx, my)
+        scene.add_item(tt, layer=0)
+
     def _new_rectangle(
         self, scene, elem, c, bw=3, layer=1, origin=None, klass=None, type_tag=""
     ):

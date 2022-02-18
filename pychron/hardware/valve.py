@@ -15,12 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Str, Float, Int, Property, Bool
+from traits.api import Str, Float, Int, Property, Bool, Instance
 from traitsui.api import View, Item, VGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.switch import Switch
+import time
 
 
 class HardwareValve(Switch):
@@ -80,5 +81,54 @@ class HardwareValve(Switch):
             title="{} Properties".format(self.name),
         )
 
+
+class DoubleActuationValve(HardwareValve):
+    open_delay = Float(0)
+    close_delay = Float(0)
+
+    primary_switch = Instance(Switch)
+    secondary_switch = Instance(Switch)
+
+    def __init__(self, *args, **kw):
+        super(DoubleActuationValve, self).__init__(*args, **kw)
+        address = kw['address']
+        paddress, saddress = address.split(',')
+        del kw['address']
+        self.primary_switch = Switch('{}primary'.format(self.name), address=paddress,
+                                     **kw)
+        self.secondary_switch = Switch('{}secondary'.format(self.name), address=saddress,
+                                       **kw)
+
+    def _act(self, mode, func, do_actuation):
+        """
+
+        :param mode:
+        :param func:
+        :param do_actuation:
+        :return:
+        """
+        self.debug("doing actuation mode={} func={}".format(mode, func))
+        r = True
+        actuator = self.actuator
+        if mode == "debug":
+            r = True
+        elif actuator is not None:
+            close_ = getattr(actuator, 'close_channel')
+            open_ = getattr(actuator, 'open_channel')
+            if func == 'open_channel':
+                open_(self.primary_switch)
+                if self.open_delay:
+                    time.sleep(self.open_delay)
+                r = close_(self.secondary_switch)
+            else:
+                open_(self.secondary_switch)
+                if self.close_delay:
+                    time.sleep(self.close_delay)
+                r = close_(self.primary_switch)
+
+        if self.settling_time:
+            time.sleep(self.settling_time)
+
+        return r
 
 # ============= EOF ====================================
