@@ -979,6 +979,7 @@ class SwitchManager(Manager):
             for klass, func in (
                 (Switch, parser.get_switches),
                 (ManualSwitch, parser.get_manual_valves),
+                (DoubleActuationValve, parser.get_double_actuation_valves())
             ):
                 for s in func():
                     factory(s, use_explanation=False, klass=klass)
