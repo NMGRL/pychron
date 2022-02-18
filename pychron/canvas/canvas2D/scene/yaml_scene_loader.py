@@ -204,12 +204,10 @@ class YAMLLoader(BaseLoader):
         left = conn.get("left")
         right = conn.get("right")
         mid = conn.get("mid")
-        lname = left['name'].strip()
-        mname = mid['name'].strip()
-        rname = right['name'].strip()
-        key = "{}-{}-{}".format(lname,
-                                mname,
-                                rname)
+        lname = left["name"].strip()
+        mname = mid["name"].strip()
+        rname = right["name"].strip()
+        key = "{}-{}-{}".format(lname, mname, rname)
 
         height = 4
         dim = conn.get("dimension")

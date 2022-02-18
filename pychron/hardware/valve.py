@@ -91,13 +91,15 @@ class DoubleActuationValve(HardwareValve):
 
     def __init__(self, *args, **kw):
         super(DoubleActuationValve, self).__init__(*args, **kw)
-        address = kw['address']
-        paddress, saddress = address.split(',')
-        del kw['address']
-        self.primary_switch = Switch('{}primary'.format(self.name), address=paddress,
-                                     **kw)
-        self.secondary_switch = Switch('{}secondary'.format(self.name), address=saddress,
-                                       **kw)
+        address = kw["address"]
+        paddress, saddress = address.split(",")
+        del kw["address"]
+        self.primary_switch = Switch(
+            "{}primary".format(self.name), address=paddress, **kw
+        )
+        self.secondary_switch = Switch(
+            "{}secondary".format(self.name), address=saddress, **kw
+        )
 
     def _act(self, mode, func, do_actuation):
         """
@@ -113,9 +115,9 @@ class DoubleActuationValve(HardwareValve):
         if mode == "debug":
             r = True
         elif actuator is not None:
-            close_ = getattr(actuator, 'close_channel')
-            open_ = getattr(actuator, 'open_channel')
-            if func == 'open_channel':
+            close_ = getattr(actuator, "close_channel")
+            open_ = getattr(actuator, "open_channel")
+            if func == "open_channel":
                 open_(self.primary_switch)
                 if self.open_delay:
                     time.sleep(self.open_delay)
@@ -130,5 +132,6 @@ class DoubleActuationValve(HardwareValve):
             time.sleep(self.settling_time)
 
         return r
+
 
 # ============= EOF ====================================
