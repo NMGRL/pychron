@@ -15,17 +15,21 @@
 # ===============================================================================
 from pychron.hardware.actuators.client_gp_actuator import ClientMixin
 from pychron.hardware.actuators.gp_actuator import GPActuator
-
+from traits.api import Dict
 
 class MCCGPActuator(GPActuator, ClientMixin):
+    local_states = Dict
     def _actuate(self, obj, action):
         addr = obj.address
         state = action.lower() == 'open'
-        self.debug('actuate. write digital out {} {}'.format(addr, state))
+        print('actuate. write digital out {} {}'.format(addr, state))
         self.communicator.d_out(addr, state)
+        self.local_states[addr] = state
+        return True
 
     def get_channel_state(self, address, *args, **kw):
-        addr = obj.address
-        return self.communciator.d_in(addr)
+        print(self.local_states)
+        return self.local_states.get(address, False)
+        #return self.communicator.d_in(address)
 
 # ============= EOF =============================================

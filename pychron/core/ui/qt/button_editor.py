@@ -63,7 +63,8 @@ class ButtonEditor(BasicEditorFactory):
 
     # (Optional) Image to display on the button
     image = Image
-
+    image_value = Str
+    
     # Extra padding to add to both the left and the right sides
     width_padding = Range(0, 31, 7)
 
