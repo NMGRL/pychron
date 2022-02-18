@@ -75,9 +75,11 @@ class MccCommunicator(Communicator):
     https://github.com/mccdaq/mcculw
     """
     board_num = 0
-
+    config_on_startup = True
     def load(self, config, path):
         self.board_num = self.config_get(config, 'Communications', 'board_num', cast='int')
+        #self.config_on_startup = self.config_get(config, 'General',  'config_on_startup', cast='boolean')
+        
         return super(MccCommunicator, self).load(config, path)
 
     def open(self, *args, **kw):
@@ -86,8 +88,12 @@ class MccCommunicator(Communicator):
     def initialize(self, *args, **kw):
         config_first_detected_device(self.board_num)
         self.port_bits={}
-        port = DigitalPortType.FIRSTPORTA
-        ul.d_config_port(self.board_num, port, DigitalIODirection.OUT)
+        if self.config_on_startup:
+            port = self._get_port('10-0')
+            ul.d_config_port(self.board_num, port.type, DigitalIODirection.OUT)
+            port = self._get_port('11-0')
+            ul.d_config_port(self.board_num, port.type, DigitalIODirection.OUT)
+
         return True
 
     def a_in(self, channel, ai_range=None):
@@ -106,12 +112,13 @@ class MccCommunicator(Communicator):
             bit_num = self._get_bit_num(channel)
 
             self.debug('channel={}, bit_num={}, bit_value={}'.format(channel, bit_num, bit_value))
-            if port.is_port_configurable:
-                self.debug('configuring {} to OUT'.format(port.type))
-                ul.d_config_port(self.board_num, port.type, DigitalIODirection.OUT)
+            #if port.is_port_configurable:
+            #    self.debug('configuring {} to OUT'.format(port.type))
+            #    ul.d_config_port(self.board_num, port.type, DigitalIODirection.OUT)
             # Output the value to the bit
+
             try:
-                ul.d_bit_out(self.board_num, DigitalPortType.FIRSTPORTA, bit_num, bit_value)
+                ul.d_bit_out(self.board_num, port.type, bit_num, bit_value)
             except BaseException:
                 self.debug_exception()
 
@@ -142,8 +149,8 @@ class MccCommunicator(Communicator):
 
         dio_info = daq_dev_info.get_dio_info()
         
-        #for i, p in enumerate(dio_info.port_info):
-        #    self.debug('{} {} {} {} {}'.format(i, p,p.type, p.num_bits, p.supports_output))
+        for i, p in enumerate(dio_info.port_info):
+            self.debug('{} {} {} {} {}'.format(i, p,p.type, p.num_bits, p.supports_output))
             
             
         for p in dio_info.port_info:

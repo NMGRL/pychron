@@ -16,20 +16,49 @@
 from pychron.hardware.actuators.client_gp_actuator import ClientMixin
 from pychron.hardware.actuators.gp_actuator import GPActuator
 from traits.api import Dict
+import json
+import os
+from pychron.paths import paths
 
 class MCCGPActuator(GPActuator, ClientMixin):
-    local_states = Dict
+    def __init__(self, *args, **kw):
+        super(MCCGPActuator, self).__init__(*args, **kw)
+        self._persistence_path = os.path.join(paths.appdata_dir, 'valve_states.json')
+        self._local_states = {}
+
     def _actuate(self, obj, action):
         addr = obj.address
         state = action.lower() == 'open'
         print('actuate. write digital out {} {}'.format(addr, state))
         self.communicator.d_out(addr, state)
-        self.local_states[addr] = state
+        self._local_states[addr] = state
+
+        self._dump_states()
         return True
 
+    def _dump_states(self):
+        p = self._persistence_path
+        with open(p, 'w') as wfile:
+            json.dump(self._local_states, wfile)
+
+    def _load_states(self):
+        p = self._persistence_path
+        if os.path.isfile(p):
+            with open(p, 'r') as rfile:
+                self._local_states = json.load(rfile)
+
     def get_channel_state(self, address, *args, **kw):
-        print(self.local_states)
-        return self.local_states.get(address, False)
-        #return self.communicator.d_in(address)
+
+        read_states_from_mcc = False
+        if read_states_from_mcc:
+            ret = self.communicator.d_in(address)
+        else:
+            if not self._local_states:
+                self._load_states()
+            ret = self._local_states.get(address, False)
+
+        #print(self.local_states)
+        #return self.local_states.get(address, False)
+        return ret
 
 # ============= EOF =============================================
