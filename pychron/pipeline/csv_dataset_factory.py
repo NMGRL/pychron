@@ -489,9 +489,13 @@ e.g.
 
     def traits_view(self):
         def paste_factory(runid, row):
-            vs = row.split("\t")
+            if ',' in row:
+                vs = row.split(',')
+            else:
+                vs = row.split("\t")
+
             n = len(vs)
-            group, aliquot, sample, label_name = 0, 0, "", ""
+            age, err, group, aliquot, sample, label_name = 0, 0, 0, 0, "", ""
             if n == 2:
                 age, err = vs
             elif n == 3:

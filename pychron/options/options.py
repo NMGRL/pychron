@@ -317,7 +317,7 @@ class MainOptions(SubOptions):
 
     def _get_edit_view(self):
         v = View(
-            BorderVGroup(
+            VGroup(
                 self._get_name_grp(),
                 self._get_yticks_grp(),
                 self._get_ylimits_group(),
@@ -406,7 +406,6 @@ class BaseOptions(HasTraits):
             try:
                 items = state.pop(tag)
                 if items:
-
                     def func(gi):
                         s = gi.__getstate__()
                         convert_color(s)
@@ -507,8 +506,8 @@ class BaseOptions(HasTraits):
             trait
             for trait in self.traits()
             if not trait.startswith("trait")
-            and not trait.endswith("button")
-            and self.to_dict_test(trait)
+               and not trait.endswith("button")
+               and self.to_dict_test(trait)
         ]
 
         return {key: self.formatted_attr(key) for key in keys}
@@ -1103,6 +1102,5 @@ class GuidesOptions(SubOptions):
                 ),
             )
         )
-
 
 # ============= EOF =============================================
