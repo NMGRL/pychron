@@ -489,8 +489,8 @@ e.g.
 
     def traits_view(self):
         def paste_factory(runid, row):
-            if ',' in row:
-                vs = row.split(',')
+            if "," in row:
+                vs = row.split(",")
             else:
                 vs = row.split("\t")
 

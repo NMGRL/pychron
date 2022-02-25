@@ -299,7 +299,7 @@ class ArArAge(IsotopeGroup):
             numkey, denkey = ratio.split("/")
 
             for name, isos in groupby_key(
-                    self.isotopes.values(), key=attrgetter("name")
+                self.isotopes.values(), key=attrgetter("name")
             ):
                 num, den = None, None
                 for iso in isos:
@@ -455,19 +455,23 @@ class ArArAge(IsotopeGroup):
         self.calculate_decay_factors()
 
         numscalar = 1
-        if num == 'Ar37':
+        if num == "Ar37":
             numscalar = self.ar37decayfactor
-        elif num == 'Ar39':
+        elif num == "Ar39":
             numscalar = self.ar39decayfactor
 
         denscalar = 1
-        if num == 'Ar37':
+        if num == "Ar37":
             denscalar = self.ar37decayfactor
-        elif num == 'Ar39':
+        elif num == "Ar39":
             denscalar = self.ar39decayfactor
 
         return counts, [
-            num.get_intensity(count=i) * numscalar / den.get_intensity(count=i) * denscalar for i in counts
+            num.get_intensity(count=i)
+            * numscalar
+            / den.get_intensity(count=i)
+            * denscalar
+            for i in counts
         ]
 
     def equilibration_age(self, n=5):
@@ -702,5 +706,6 @@ class ArArAge(IsotopeGroup):
     @property
     def moles_Ar40(self):
         return self.sensitivity * self.get_isotope("Ar40").get_intensity()
+
 
 # ============= EOF =============================================
