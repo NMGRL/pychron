@@ -181,7 +181,7 @@ if __name__ == "__main__":
                 }
             )
             p = g.new_plot(padding=[80, 10, 10, 40], resizable="", bounds=(100, 100))
-            txt = "gooiooi \N{Plus-minus sign} \N{Greek Small Letter Sigma} \u03AE \u00ae \u00a3"
+            txt = "gooiooi \u03AE \u00ae \u00a3"
             txt2 = "aaaaaa \xb1 \u00b1"
 
             pl = PlotLabel(txt, overlay_position="inside bottom", font="Helvetica 12")

@@ -62,10 +62,12 @@ TTF_FONTS = [
 FONTS = TTF_FONTS
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
-PLUSMINUS = "\N{Plus-minus sign}"
-SIGMA = "\N{Greek Small Letter Sigma}"
+
 LAMBDA = "\u03BB"
-DELTA = "\N{Greek Capital Letter Delta}"
+PLUSMINUS = "\u00b1"  
+SIGMA = "\u03c3" #greek small letter sigma
+DELTA = "\u0394" #greek capital letter delta
+
 
 PLUSMINUS_NSIGMA = "{}{{}}{}".format(PLUSMINUS, SIGMA)
 PLUSMINUS_ONE_SIGMA = PLUSMINUS_NSIGMA.format(1)
