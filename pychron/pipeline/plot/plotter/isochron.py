@@ -593,7 +593,7 @@ class InverseIsochron(Isochron):
             p = format_percent_error(v, e)
             pe = " ({})%".format(p)
 
-        age_line = "Age={} {} {}{} {}{}".format(
+        age_line = "Age= {} {} {}{} {}{}".format(
             floatfmt(v, n=af),
             PLUSMINUS,
             floatfmt(e, n=af, s=3),
@@ -601,7 +601,8 @@ class InverseIsochron(Isochron):
             ag.age_units,
             mse_text,
         )
-        mswd_line = "N={} MSWD={}".format(n, mswd)
+        nt = self._build_n_label_text(n)
+        mswd_line = "{} MSWD= {}".format(nt, mswd)
 
         if opt.show_results_info_location == "Bottom Right":
             overlay_position = "inside bottom"

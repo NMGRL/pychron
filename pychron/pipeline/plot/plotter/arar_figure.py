@@ -329,7 +329,7 @@ class BaseArArFigure(SelectionFigure):
         return x.timestamp or 0
 
     def _unpack_attr(
-        self, attr, scalar=1, exclude_omit=False, nonsorted=False, ans=None
+            self, attr, scalar=1, exclude_omit=False, nonsorted=False, ans=None
     ):
         if ans is None:
             ans = self.sorted_analyses
@@ -528,7 +528,7 @@ class BaseArArFigure(SelectionFigure):
         scatter.underlays.append(ov)
 
     def _add_error_bars(
-        self, scatter, errors, axis, nsigma, line_width=1, end_caps=True, visible=True
+            self, scatter, errors, axis, nsigma, line_width=1, end_caps=True, visible=True
     ):
         ebo = ErrorBarOverlay(
             component=scatter,
@@ -544,18 +544,18 @@ class BaseArArFigure(SelectionFigure):
         return ebo
 
     def _add_scatter_inspector(
-        self,
-        scatter,
-        inspector=None,
-        add_tool=True,
-        add_selection=True,
-        value_format=None,
-        additional_info=None,
-        index_tag=None,
-        index_attr=None,
-        convert_index=None,
-        items=None,
-        update_meta_func=None,
+            self,
+            scatter,
+            inspector=None,
+            add_tool=True,
+            add_selection=True,
+            value_format=None,
+            additional_info=None,
+            index_tag=None,
+            index_attr=None,
+            convert_index=None,
+            items=None,
+            update_meta_func=None,
     ):
         if add_tool:
             # broadcaster = BroadcasterTool()
@@ -563,12 +563,10 @@ class BaseArArFigure(SelectionFigure):
 
             if inspector is None:
                 if value_format is None:
-
                     def value_format(x):
                         return "{:0.5f}".format(x)
 
                 if convert_index is None:
-
                     def convert_index(x):
                         return "{:0.3f}".format(x)
 
@@ -646,15 +644,15 @@ class BaseArArFigure(SelectionFigure):
         plot.tools.append(OverlayMoveTool(component=ov))
 
     def _add_data_label(
-        self,
-        s,
-        text,
-        point,
-        bgcolor="transparent",
-        label_position="top right",
-        color=None,
-        append=True,
-        **kw
+            self,
+            s,
+            text,
+            point,
+            bgcolor="transparent",
+            label_position="top right",
+            color=None,
+            append=True,
+            **kw
     ):
         if color is None:
             color = s.color
@@ -684,27 +682,31 @@ class BaseArArFigure(SelectionFigure):
         label.on_trait_change(self._handle_overlay_move, "label_position")
         return label
 
+    def _build_n_label_text(self, n):
+        total_n = self.analysis_group.total_n
+        n = "n={}".format(n)
+        if total_n and n != total_n:
+            n = "{}/{}".format(n, total_n)
+        return n
+
     def _build_label_text(
-        self,
-        x,
-        we,
-        n,
-        mswd_args=None,
-        display_n=True,
-        display_mswd=True,
-        display_mswd_pvalue=False,
-        percent_error=False,
-        sig_figs=3,
-        mswd_sig_figs=3,
+            self,
+            x,
+            we,
+            n,
+            mswd_args=None,
+            display_n=True,
+            display_mswd=True,
+            display_mswd_pvalue=False,
+            percent_error=False,
+            sig_figs=3,
+            mswd_sig_figs=3,
     ):
 
         display_mswd = n >= 2 and display_mswd
 
         if display_n:
-            total_n = self.analysis_group.total_n
-            n = "n= {}".format(n)
-            if total_n:
-                n = "{}/{}".format(n, total_n)
+            n = self._build_n_label_text(n)
         else:
             n = ""
 
@@ -798,6 +800,5 @@ class BaseArArFigure(SelectionFigure):
 
     def _set_analysis_group(self, v):
         self._analysis_group = v
-
 
 # ============= EOF =============================================
