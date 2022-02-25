@@ -197,7 +197,7 @@ def format_mswd(m, v, n=3, include_tag=False):
         if isinstance(include_tag, str):
             tag = include_tag
         else:
-            tag = "MSWD="
+            tag = "MSWD = "
 
     return "{}{}{}".format(tag, "" if v else INVALID_MSWD_CHR, floatfmt(m, n=n))
 

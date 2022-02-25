@@ -252,8 +252,8 @@ class Spectrum(BaseArArFigure):
         if self.group_id == 0:
             if self.options.show_info:
                 ts = [
-                    "Ages {}{}{}".format(PLUSMINUS, self.options.nsigma, SIGMA),
-                    "Error Env. {}{}{}".format(
+                    "Ages {} {}{}".format(PLUSMINUS, self.options.nsigma, SIGMA),
+                    "Error Env. {} {}{}".format(
                         PLUSMINUS, self.options.step_nsigma, SIGMA
                     ),
                 ]
