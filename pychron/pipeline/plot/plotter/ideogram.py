@@ -612,7 +612,7 @@ class Ideogram(BaseArArFigure):
         else:
             name = ia
 
-        return lambda i, x, y, ai: "{}= {}".format(name, ai.value_string(ia))
+        return lambda i, x, y, ai: "{} = {}".format(name, ai.value_string(ia))
 
     def _plot_relative_probability(self, po, plot, pid):
         graph = self.graph
@@ -772,7 +772,7 @@ class Ideogram(BaseArArFigure):
             for xmin, xmax in xr:
                 ans = [a for a in fxs if xmin <= a <= xmax]
                 n = len(ans)
-                ntxt = " n={}".format(n)
+                ntxt = " n = {}".format(n)
 
             self.peaks = xp
 

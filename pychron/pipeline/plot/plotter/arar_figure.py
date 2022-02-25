@@ -686,7 +686,7 @@ class BaseArArFigure(SelectionFigure):
 
     def _build_n_label_text(self, n):
         total_n = self.analysis_group.total_n
-        n = "n={}".format(n)
+        n = "n = {}".format(n)
         if total_n and n != total_n:
             n = "{}/{}".format(n, total_n)
         return n
@@ -716,7 +716,7 @@ class BaseArArFigure(SelectionFigure):
             mswd, valid_mswd, _, pvalue = mswd_args
             mswd = format_mswd(mswd, valid_mswd, n=mswd_sig_figs, include_tag=True)
             if display_mswd_pvalue:
-                mswd = "{} pvalue={:0.2f}".format(mswd, pvalue)
+                mswd = "{} pvalue = {:0.2f}".format(mswd, pvalue)
         else:
             mswd = ""
 

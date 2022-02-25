@@ -518,7 +518,7 @@ class Spectrum(BaseArArFigure):
             if fixed_steps[0] or fixed_steps[1]:
                 fixed = "Fixed ({}-{})".format(*fixed_steps)
 
-        text = "{}Plateau= {}".format(fixed, text)
+        text = "{}Plateau = {}".format(fixed, text)
 
         if op.include_plateau_sample:
             if op.include_plateau_identifier:
@@ -548,7 +548,7 @@ class Spectrum(BaseArArFigure):
             mswd_sig_figs=op.mswd_sig_figs,
             sig_figs=op.weighted_mean_sig_figs,
         )
-        text = "Weighted Mean= {}".format(text)
+        text = "Weighted Mean = {}".format(text)
         return text
 
     def _make_integrated_text(self):
@@ -589,7 +589,7 @@ class Spectrum(BaseArArFigure):
                 sig_figs=self.options.integrated_sig_figs,
             )
 
-        return "Integrated Age= {}".format(txt)
+        return "Integrated Age = {}".format(txt)
 
 
 # ============= EOF =============================================
