@@ -19,37 +19,45 @@
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 
+import json
+
+import requests
 from requests.exceptions import SSLError
 
 from pychron.git.hosts import GitHostService
 
-BASE_URL = 'github.com'
-API_URL = 'https://api.github.com'
+BASE_URL = "github.com"
+API_URL = "https://api.github.com"
 
 
 class GitHubService(GitHostService):
-    preference_path = 'pychron.github'
-    name = 'GitHub'
+    preference_path = "pychron.github"
+    name = "GitHub"
     _has_access = True
-    protocol = 'https'
+    protocol = "https"
 
     def _set_authentication_windows_hook(self):
         if not self.disable_authentication_message:
-            self.information_dialog('Please follow the directions at https://github.com/NMGRL/pychron/wiki/Windows-Setup '
-                                    'to ensure you can share your changes to github. Use Preferences/Github to hide '
-                                    'this message')
+            self.information_dialog(
+                "Please follow the directions at https://github.com/NMGRL/pychron/wiki/Windows-Setup "
+                "to ensure you can share your changes to github. Use Preferences/Github to hide "
+                "this message"
+            )
+
     @property
     def remote_url(self):
-        return '{}://{}'.format(self.protocol, BASE_URL)
+        return "{}://{}".format(self.protocol, BASE_URL)
 
-    def up_to_date(self, organization, name, sha, branch='master'):
-        cmd = '{}/repos/{}/{}/commits/{}'.format(API_URL, organization, name, branch)
+    def up_to_date(self, organization, name, sha, branch="master"):
+        cmd = "{}/repos/{}/{}/commits/{}".format(API_URL, organization, name, branch)
         close_at_end = False
         if not self._session:
             self.new_session()
             close_at_end = True
 
-        self._session.headers.update(ETag=sha, Accept='application/vnd.github.VERSION.sha')
+        self._session.headers.update(
+            ETag=sha, Accept="application/vnd.github.VERSION.sha"
+        )
 
         r = self._session.get(cmd)
         rsha = r.text
@@ -59,8 +67,16 @@ class GitHubService(GitHostService):
             self.close_session()
         return ret, rsha
 
+    def post_issue(self, remote, issue):
+        url = "{}/repos/{}/issues".format(API_URL, remote)
+        return self._post(url, **issue)
+
+    def get_labels(self, remote):
+        cmd = "{}/repos/{}/labels".format(API_URL, remote)
+        return self._get(cmd)
+
     def get_repo(self, organization, name):
-        cmd = '{}/repos/{}/{}'.format(API_URL, organization, name)
+        cmd = "{}/repos/{}/{}".format(API_URL, organization, name)
         resp = self._get(cmd)
         try:
             return resp[0]
@@ -68,40 +84,40 @@ class GitHubService(GitHostService):
             pass
 
     def test_api(self):
-        ret, err = True, ''
+        ret, err = True, ""
         try:
             self._get(API_URL)
         except BaseException as e:
             ret = False
-            err = e
+            err = str(e)
 
         return ret, err
 
     def set_team(self, team, organization, repo, permission=None):
         if permission is None:
-            permission = 'pull'
+            permission = "pull"
 
         team_id = self.get_team_id(team, organization)
         if team_id:
-            cmd = '{}/teams/{}/repos/{}/{}'.format(API_URL, team_id, organization, repo)
+            cmd = "{}/teams/{}/repos/{}/{}".format(API_URL, team_id, organization, repo)
             self._put(cmd, permission=permission)
 
     def get_team_id(self, name, organization):
-        for td in self._get('{}/orgs/{}/teams'.format(API_URL, organization)):
-            if td['name'] == name:
-                return td['id']
+        for td in self._get("{}/orgs/{}/teams".format(API_URL, organization)):
+            if td["name"] == name:
+                return td["id"]
 
     def create_repo(self, name, organization, **kw):
         if self._has_access:
             try:
-                cmd = '{}/orgs/{}/repos'.format(API_URL, organization)
+                cmd = "{}/orgs/{}/repos".format(API_URL, organization)
                 resp = self._post(cmd, name=name, **kw)
                 if resp:
-                    self.debug('Create repo response {}'.format(resp.status_code))
-                    self._clear_cached_repo_names = True
+                    self.debug("Create repo response {}".format(resp.status_code))
+                    self._cached_repos = []
                     return resp.status_code == 201
             except SSLError as e:
-                self.warning('SSL Error. {}'.format(e))
+                self.warning("SSL Error. {}".format(e))
                 self._has_access = False
         else:
             return True
@@ -110,36 +126,42 @@ class GitHubService(GitHostService):
         if protocol is None:
             protocol = self.protocol
 
-        auth = ''
+        auth = ""
         # including the authenitcation when cloning presents an issue when cloning a repository
         # you only have read-only access to
         if organization == self.organization:
             if self.oauth_token:
-                auth = '{}@'.format(self.oauth_token)
+                auth = "{}@".format(self.oauth_token)
             elif self.username and self.password:
-                auth = '{}:{}@'.format(self.username, self.password)
+                auth = "{}:{}@".format(self.username, self.password)
 
-        url = '{}://{}{}/{}/{}.git'.format(protocol, auth, BASE_URL, organization, name)
+        url = "{}://{}{}/{}/{}.git".format(protocol, auth, BASE_URL, organization, name)
         return url
 
     def get_repos(self, organization):
         if self._has_access:
-            try:
-                cmd = '{}/orgs/{}/repos'.format(API_URL, organization)
-                return self._get(cmd)
-            except SSLError as e:
-                self.warning('SSL Error. {}'.format(e))
-                self._has_access = False
-                return []
+            if not self._cached_repos:
+                try:
+                    cmd = "{}/orgs/{}/repos".format(API_URL, organization)
+                    repos = self._get(cmd)
+                    self._cached_repos = repos
+                    return repos
+                except SSLError as e:
+                    self.warning("SSL Error. {}".format(e))
+                    self._has_access = False
+                    return []
+            else:
+                return self._cached_repos
         else:
             return []
 
     def get_info(self, organization):
-        cmd = '{}/{}'.format(API_URL, organization)
+        cmd = "{}/{}".format(API_URL, organization)
         return self._get(cmd)
 
     # private
     def _get_oauth_token(self):
-        return 'token {}'.format(self.oauth_token)
+        return "token {}".format(self.oauth_token)
+
 
 # ============= EOF =============================================

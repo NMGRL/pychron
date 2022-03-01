@@ -26,41 +26,45 @@ from traits.api import Float, Event, String, Any, Enum, Button, List, Instance
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.stage.calibration.auto_calibrator import SemiAutoCalibrator, AutoCalibrator
-from pychron.stage.calibration.calibrator import TrayCalibrator, \
-    LinearCalibrator, BaseCalibrator
+from pychron.stage.calibration.calibrator import (
+    TrayCalibrator,
+    LinearCalibrator,
+    BaseCalibrator,
+)
 from pychron.stage.calibration.free_calibrator import FreeCalibrator
 from pychron.stage.calibration.hole_calibrator import HoleCalibrator
 from pychron.stage.calibration.irregular_hole_calibrator import IrregularHoleCalibrator
 
-TRAY_HELP = '''1. Locate center hole
+TRAY_HELP = """1. Locate center hole
 2. Locate right hole
-'''
+"""
 
 HELP_DICT = {
-    'Free': '''1. Move to Point, Click "Accept Point" to enter Reference Position. Repeat at least 2X
+    "Free": """1. Move to Point, Click "Accept Point" to enter Reference Position. Repeat at least 2X
 2. Click "End Calibrate" to finish and compute parameters
-''',
-    'Hole': '''1. Move to Hole,  Click "Accept Point" to enter Reference Hole. Repeat at least 2X
-2. Click "End Calibrate" to finish and compute parameters''',
-    'Linear': '1. Locate Origin (i.e. 0)',
-    'Irregular': '''1. Move to Point,  Click "Accept Point" to manually define x,y for hole.'''
-
+""",
+    "Hole": """1. Move to Hole,  Click "Accept Point" to enter Reference Hole. Repeat at least 2X
+2. Click "End Calibrate" to finish and compute parameters""",
+    "Linear": "1. Locate Origin (i.e. 0)",
+    "Irregular": """1. Move to Point,  Click "Accept Point" to manually define x,y for hole.""",
 }
 
-STYLE_DICT = {'Free': FreeCalibrator,
-              'Hole': HoleCalibrator,
-              'Irregular': IrregularHoleCalibrator,
-              'Linear': LinearCalibrator,
-              'SemiAuto': SemiAutoCalibrator,
-              'Auto': AutoCalibrator}
+STYLE_DICT = {
+    "Free": FreeCalibrator,
+    "Hole": HoleCalibrator,
+    "Irregular": IrregularHoleCalibrator,
+    "Linear": LinearCalibrator,
+    "SemiAuto": SemiAutoCalibrator,
+    "Auto": AutoCalibrator,
+}
 
 
 def get_hole_calibration(name, hole):
-    root = os.path.join(paths.hidden_dir, '{}_calibrations'.format(name))
+    root = os.path.join(paths.hidden_dir, "{}_calibrations".format(name))
     if os.path.isdir(root):
         hole = int(hole)
         for pp in os.listdir(root):
-            with open(os.path.join(root, pp), 'rb') as rfile:
+            with open(os.path.join(root, pp), "rb") as rfile:
                 _, holes, ca = pickle.load(rfile)
                 if hole in holes:
                     return ca
@@ -74,27 +78,27 @@ class TrayCalibrationManager(Loggable):
     error = Float
 
     calibrate = Event
-    calibration_step = String('Calibrate')
+    calibration_step = String("Calibrate")
     calibration_help = String(TRAY_HELP)
-    style = Enum('Tray', 'Free', 'Hole', 'Irregular', 'Linear', 'SemiAuto')
+    style = Enum("Tray", "Free", "Hole", "Irregular", "Linear", "SemiAuto")
     canvas = Any
     calibrator = Instance(BaseCalibrator)
     # calibrator = Property(depends_on='style')
 
-    cancel_button = Button('Cancel')
-    add_holes_button = Button('Add Holes')
-    reset_holes_button = Button('Reset Holes')
+    cancel_button = Button("Cancel")
+    add_holes_button = Button("Add Holes")
+    reset_holes_button = Button("Reset Holes")
     holes_list = List
-    set_center_button = Button('Set Center Guess')
+    set_center_button = Button("Set Center Guess")
 
     def isCalibrating(self):
-        return self.calibration_step != 'Calibrate'
+        return self.calibration_step != "Calibrate"
 
     def load_calibration(self, stage_map=None):
         if stage_map is None:
             stage_map = self.parent.stage_map_name
 
-        self.debug('loading calibration for {}'.format(stage_map))
+        self.debug("loading calibration for {}".format(stage_map))
 
         self._load_holes_calibrations(stage_map)
 
@@ -106,7 +110,7 @@ class TrayCalibrationManager(Loggable):
                 self.scale = calobj.scale
                 self.style = calobj.style
             except AttributeError:
-                self.debug('calibration file is an older incompatible version')
+                self.debug("calibration file is an older incompatible version")
                 return
 
             self.canvas.calibration_item = calobj
@@ -114,7 +118,7 @@ class TrayCalibrationManager(Loggable):
             self._style_changed()
 
     def save_calibration(self, name=None, clear_corrections=True, reload=True):
-        pickle_path = os.path.join(paths.hidden_dir, '{}_stage_calibration')
+        pickle_path = os.path.join(paths.hidden_dir, "{}_stage_calibration")
         if name is None:
             name = self.parent.stage_map_name
 
@@ -124,8 +128,8 @@ class TrayCalibrationManager(Loggable):
                 self.parent.stage_map.clear_correction_file()
             ca.style = self.style
             p = pickle_path.format(name)
-            self.info('saving calibration {}'.format(p))
-            with open(p, 'wb') as f:
+            self.info("saving calibration {}".format(p))
+            with open(p, "wb") as f:
                 pickle.dump(ca, f)
 
             if reload:
@@ -133,10 +137,10 @@ class TrayCalibrationManager(Loggable):
 
     def _load_holes_calibrations(self, sm):
         self.holes_list = []
-        root = os.path.join(paths.hidden_dir, '{}_calibrations'.format(sm))
+        root = os.path.join(paths.hidden_dir, "{}_calibrations".format(sm))
         if os.path.isdir(root):
             for pp in os.listdir(root):
-                with open(os.path.join(root, pp), 'rb') as rfile:
+                with open(os.path.join(root, pp), "rb") as rfile:
                     hs, _, _ = pickle.load(rfile)
                     self.holes_list.append(hs)
 
@@ -149,12 +153,12 @@ class TrayCalibrationManager(Loggable):
 
     def _set_center_button_fired(self):
         x, y = self.parent.get_current_position()
-        self.info('setting center guess x={}, y={}'.format(x, y))
+        self.info("setting center guess x={}, y={}".format(x, y))
         self.parent.stage_map.set_center_guess(x, y)
 
     def _reset_holes_button_fired(self):
         name = self.parent.stage_map_name
-        root = os.path.join(paths.hidden_dir, '{}_calibrations'.format(name))
+        root = os.path.join(paths.hidden_dir, "{}_calibrations".format(name))
         if os.path.isdir(root):
             shutil.rmtree(root)
 
@@ -162,12 +166,12 @@ class TrayCalibrationManager(Loggable):
 
     def _add_holes_button_fired(self):
         from pychron.stage.calibration.add_holes_view import AddHolesView
+
         ahv = AddHolesView()
-        info = ahv.edit_traits(kind='livemodal')
+        info = ahv.edit_traits(kind="livemodal")
         if info.result:
             name = self.parent.stage_map_name
-            root = os.path.join(paths.hidden_dir,
-                                '{}_calibrations'.format(name))
+            root = os.path.join(paths.hidden_dir, "{}_calibrations".format(name))
             if not os.path.isdir(root):
                 os.mkdir(root)
 
@@ -175,7 +179,7 @@ class TrayCalibrationManager(Loggable):
 
             holes = ahv.holes
             p = os.path.join(root, ahv.holes_id)
-            with open(p, 'wb') as wfile:
+            with open(p, "wb") as wfile:
                 ca = self.canvas.calibration_item
                 pickle.dump((ahv.hole_str, holes, ca), wfile)
 
@@ -191,38 +195,44 @@ class TrayCalibrationManager(Loggable):
         x, y = self.parent.get_current_position()
         self.rotation = 0
         if self.calibrator is None:
-            self.style = 'Tray'
+            self.style = "Tray"
             self.calibrator = self._calibrator_factory()
 
-        kw = self.calibrator.handle(self.calibration_step,
-                                    x, y, self.canvas)
+        kw = self.calibrator.handle(self.calibration_step, x, y, self.canvas)
         if kw:
-            for a in ('calibration_step', 'cx', 'cy',
-                      'scale', 'error', 'rotation'):
+            for a in ("calibration_step", "cx", "cy", "scale", "error", "rotation"):
                 if a in kw:
                     setattr(self, a, kw[a])
 
-            cc = kw.get('clear_corrections', True)
-            self.save_calibration(clear_corrections=cc, reload=kw.get('reload', True))
+            cc = kw.get("clear_corrections", True)
+            self.save_calibration(clear_corrections=cc, reload=kw.get("reload", True))
 
     def _destroy_calibrator(self):
         if self.calibrator:
             self.calibrator.stage_manager = None
             self.calibrator.stage_map = None
-            self.calibrator.on_trait_change(self._handle_step,
-                                            'calibration_step', remove=True)
-            self.calibrator.on_trait_change(self._handle_rotation,
-                                            'rotation', remove=True)
-            self.calibrator.on_trait_change(self._handle_save,
-                                            'save_event', remove=True)
+            self.calibrator.on_trait_change(
+                self._handle_step, "calibration_step", remove=True
+            )
+            self.calibrator.on_trait_change(
+                self._handle_rotation, "rotation", remove=True
+            )
+            self.calibrator.on_trait_change(
+                self._handle_save, "save_event", remove=True
+            )
 
     def _calibrator_factory(self):
         self._destroy_calibrator()
-        self.debug('New calibrator {} for stage_map={}'.format(self.style,
-                                                               self.parent.stage_map_name))
-        kw = dict(name=self.parent.stage_map_name or '',
-                  stage_manager=self.parent,
-                  stage_map=self.parent.stage_map)
+        self.debug(
+            "New calibrator {} for stage_map={}".format(
+                self.style, self.parent.stage_map_name
+            )
+        )
+        kw = dict(
+            name=self.parent.stage_map_name or "",
+            stage_manager=self.parent,
+            stage_map=self.parent.stage_map,
+        )
 
         if self.style in STYLE_DICT:
             klass = STYLE_DICT[self.style]
@@ -230,15 +240,15 @@ class TrayCalibrationManager(Loggable):
             klass = TrayCalibrator
 
         cal = klass(**kw)
-        cal.on_trait_change(self._handle_step, 'calibration_step')
-        cal.on_trait_change(self._handle_rotation, 'rotation')
-        cal.on_trait_change(self._handle_save, 'save_event')
+        cal.on_trait_change(self._handle_step, "calibration_step")
+        cal.on_trait_change(self._handle_rotation, "rotation")
+        cal.on_trait_change(self._handle_save, "save_event")
         cal.manager = self.parent
 
         return cal
 
     def _handle_save(self, obj):
-        cc = obj.get('clear_corrections', False)
+        cc = obj.get("clear_corrections", False)
         self.save_calibration(clear_corrections=cc, reload=False)
 
     def _handle_step(self, new):
@@ -261,5 +271,6 @@ class TrayCalibrationManager(Loggable):
         #         klass = TrayCalibrator
         #
         #     return klass(**kw)
+
 
 # ============= EOF =============================================

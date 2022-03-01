@@ -26,19 +26,22 @@ from pychron.envisage.resources import icon
 
 class MItem(Item):
     def get_label(self, ui):
-        return ''
+        return ""
 
 
 def icon_button_editor(trait, name, label=None, editor_kw=None, **kw):
     if editor_kw is None:
         editor_kw = {}
 
-    name = add_extension(name, '.png')
+    name = add_extension(name, ".png")
     # name = '{}.png'.format(name)
-    kw['show_label'] = label is not None
-    kw['label'] = label or ''
+    kw["show_label"] = label is not None
+    kw["label"] = label or ""
     image = icon(name)
 
-    return MItem(trait, style='custom', editor=ButtonEditor(image=image, **editor_kw), **kw)
+    return MItem(
+        trait, style="custom", editor=ButtonEditor(image=image, **editor_kw), **kw
+    )
+
 
 # ============= EOF =============================================

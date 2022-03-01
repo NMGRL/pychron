@@ -19,11 +19,12 @@ from __future__ import absolute_import
 from pygments.lexers.agile import PythonLexer
 from pygments.token import Name
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class PyScriptLexer(PythonLexer):
     def __init__(self, commands, **kw):
-        self._extra_commands=commands.script_commands
+        self._extra_commands = commands.script_commands
         super(PyScriptLexer, self).__init__(**kw)
 
     def get_tokens_unprocessed(self, text):
@@ -35,4 +36,3 @@ class PyScriptLexer(PythonLexer):
 
 
 # ============= EOF =============================================
-

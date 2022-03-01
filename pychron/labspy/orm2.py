@@ -19,6 +19,7 @@ from __future__ import absolute_import
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, BLOB, func
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -40,21 +41,21 @@ class Version(Base, BaseMixin):
 class Device(Base, BaseMixin):
     DeviceID = Column(Integer, primary_key=True)
     Name = stringcolumn()
-    processes = relationship('ProcessInfo', backref='device')
+    processes = relationship("ProcessInfo", backref="device")
 
 
 class ProcessInfo(Base, BaseMixin):
     ProcessInfoID = Column(Integer, primary_key=True)
     Name = stringcolumn()
     Units = stringcolumn()
-    DeviceID = Column(Integer, ForeignKey('Device.DeviceID'))
-    measurements = relationship('Measurement', backref='process')
+    DeviceID = Column(Integer, ForeignKey("Device.DeviceID"))
+    measurements = relationship("Measurement", backref="process")
 
 
 class Measurement(Base, BaseMixin):
     MeasureID = Column(Integer, primary_key=True)
     Value = Column(Float(32))
-    ProcessInfoID = Column(Integer, ForeignKey('ProcessInfo.ProcessInfoID'))
+    ProcessInfoID = Column(Integer, ForeignKey("ProcessInfo.ProcessInfoID"))
 
 
 class Experiment(Base, BaseMixin):
@@ -64,18 +65,18 @@ class Experiment(Base, BaseMixin):
     ExtractionDevice = stringcolumn()
     StartTime = Column(DateTime)
     EndTime = Column(DateTime)
-    State = stringcolumn(default='Running')
+    State = stringcolumn(default="Running")
     LastUpdate = Column(DateTime, default=func.now())
     User = stringcolumn()
 
     HashID = stringcolumn()
-    analyses = relationship('Analysis', backref='experiment')
+    analyses = relationship("Analysis", backref="experiment")
 
 
 class AnalysisType(Base, BaseMixin):
     AnalysisTypeID = Column(Integer, primary_key=True)
     Name = stringcolumn(45)
-    analyses = relationship('Analysis', backref='analysis_type')
+    analyses = relationship("Analysis", backref="analysis_type")
 
 
 class Analysis(Base, BaseMixin):
@@ -98,8 +99,8 @@ class Analysis(Base, BaseMixin):
     PostEquilibration = stringcolumn(100)
     Extraction = stringcolumn(100)
 
-    ExpID = Column(Integer, ForeignKey('Experiment.ExpID'))
-    AnalysisTypeID = Column(Integer, ForeignKey('AnalysisType.AnalysisTypeID'))
+    ExpID = Column(Integer, ForeignKey("Experiment.ExpID"))
+    AnalysisTypeID = Column(Integer, ForeignKey("AnalysisType.AnalysisTypeID"))
 
 
 class Status(Base, BaseMixin):
@@ -108,5 +109,6 @@ class Status(Base, BaseMixin):
     Error = stringcolumn(140)
     Message = Column(BLOB)
     LastUpdate = Column(DateTime, default=func.now())
+
 
 # ============= EOF =============================================

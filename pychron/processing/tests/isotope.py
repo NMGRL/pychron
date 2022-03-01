@@ -1,5 +1,6 @@
 from __future__ import absolute_import
-__author__ = 'ross'
+
+__author__ = "ross"
 
 import unittest
 
@@ -20,7 +21,7 @@ class IsotopeTestCase(unittest.TestCase):
         ys = a * xs * xs + b * xs + c
 
         self.iso.trait_set(xs=xs, ys=ys)
-        self.iso.fit = 'parabolic'
+        self.iso.fit = "parabolic"
 
     def test_value(self):
         v = self.iso.value
@@ -29,9 +30,11 @@ class IsotopeTestCase(unittest.TestCase):
     def test_filtered_value(self):
         self.iso.ys[[1, 2, 3]] = [0, 1, 1]
 
-        d = {'filter_outliers': True,
-             'filter_outliers_iteration': 1,
-             'filter_outliers_std_dev': 2}
+        d = {
+            "filter_outliers": True,
+            "filter_outliers_iteration": 1,
+            "filter_outliers_std_dev": 2,
+        }
 
         self.iso.set_filtering(d)
         v = self.iso.value
@@ -39,5 +42,5 @@ class IsotopeTestCase(unittest.TestCase):
         # self.assertEqual(v, 99)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

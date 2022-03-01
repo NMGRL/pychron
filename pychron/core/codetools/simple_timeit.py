@@ -23,7 +23,9 @@ from __future__ import print_function
 import time
 
 
-def timethis(func, msg=None, log=None, args=None, kwargs=None, decorate='$', rettime=False):
+def timethis(
+    func, msg=None, log=None, args=None, kwargs=None, decorate="$", rettime=False
+):
     if args is None:
         args = tuple()
     if kwargs is None:
@@ -32,22 +34,22 @@ def timethis(func, msg=None, log=None, args=None, kwargs=None, decorate='$', ret
     st = time.time()
     r = func(*args, **kwargs)
     et = time.time() - st
-    s = '{:0.5f}s'.format(et)
+    s = "{:0.5f}s".format(et)
 
     if msg is None:
-        if hasattr(func, 'func_name'):
+        if hasattr(func, "func_name"):
             msg = func.__name__
         else:
-            msg = ''
+            msg = ""
     # if msg:
-    s = '{} {}'.format(msg, s)
+    s = "{} {}".format(msg, s)
     if decorate:
-        s = '{} {}'.format(decorate * 20, s)
+        s = "{} {}".format(decorate * 20, s)
 
     if log:
         log(s)
     else:
-        print('timethis', s)
+        print("timethis", s)
     if rettime:
         return et
     return r
@@ -82,9 +84,10 @@ class TimerCTX(object):
     def __exit__(self, *args, **kw):
         dur = time.time() - self._st
         msg = self._msg
-        s = '{} {}'.format(self._funcname, dur)
+        s = "{} {}".format(self._funcname, dur)
         if msg:
-            s = '{} - {}'.format(s, msg)
+            s = "{} - {}".format(s, msg)
         print(s)
+
 
 # ============= EOF =============================================

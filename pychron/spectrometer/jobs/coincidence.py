@@ -24,6 +24,7 @@ from random import random
 from six.moves.configparser import ConfigParser
 from traits.api import List, HasTraits, Str, Bool, Float, Property
 from traitsui.api import UItem, TableEditor
+
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
@@ -37,20 +38,23 @@ from pychron.spectrometer.jobs.peak_center import calculate_peak_center, BasePea
 
 class ResultsView(HasTraits):
     results = List
-    clean_results = Property(depends_on='results')
+    clean_results = Property(depends_on="results")
 
     def _get_clean_results(self):
         return [c for c in self.results if c.enabled]
 
     def traits_view(self):
-        cols = [CheckboxColumn(name='enabled'),
-                ObjectColumn(name='name'),
-                ObjectColumn(name='old_deflection'),
-                ObjectColumn(name='new_deflection')]
+        cols = [
+            CheckboxColumn(name="enabled"),
+            ObjectColumn(name="name"),
+            ObjectColumn(name="old_deflection"),
+            ObjectColumn(name="new_deflection"),
+        ]
 
-        v = okcancel_view(UItem('results', editor=TableEditor(columns=cols,
-                                                              sortable=False)),
-                          title='Deflection Results')
+        v = okcancel_view(
+            UItem("results", editor=TableEditor(columns=cols, sortable=False)),
+            title="Deflection Results",
+        )
         return v
 
 
@@ -68,7 +72,7 @@ class DeflectionResult(HasTraits):
 
 
 class Coincidence(BasePeakCenter, MagnetSweep):
-    title = 'Coincidence'
+    title = "Coincidence"
     inform = False
 
     def __init__(self, *args, **kw):
@@ -83,10 +87,10 @@ class Coincidence(BasePeakCenter, MagnetSweep):
 
     def _post_execute(self):
         """
-            calculate all peak centers
+        calculate all peak centers
 
-            calculate relative shifts to a reference detector. not necessarily the same
-            as the reference detector used for setting the magnet
+        calculate relative shifts to a reference detector. not necessarily the same
+        as the reference detector used for setting the magnet
         """
         graph = self.graph
         plot = graph.plots[0]
@@ -101,7 +105,7 @@ class Coincidence(BasePeakCenter, MagnetSweep):
             try:
                 lp = plot.plots[di][0]
             except KeyError:
-                lp = plot.plots['*{}'.format(di)][0]
+                lp = plot.plots["*{}".format(di)][0]
 
             xs = lp.index.get_data()
             ys = lp.value.get_data()
@@ -112,7 +116,7 @@ class Coincidence(BasePeakCenter, MagnetSweep):
                     result = calculate_peak_center(xs, ys)
                     cx = result[0][1]
                 except PeakCenterError:
-                    self.warning('no peak center for {}'.format(di))
+                    self.warning("no peak center for {}".format(di))
 
             return cx
 
@@ -142,11 +146,15 @@ class Coincidence(BasePeakCenter, MagnetSweep):
                 dac_dev = -random()
 
             if abs(dac_dev) < 0.001:
-                self.info('no offset detected between {} and {}'.format(ref, di.name))
+                self.info("no offset detected between {} and {}".format(ref, di.name))
                 continue
 
             defl = sign * di.map_dac_to_deflection(abs(dac_dev))
-            self.info('{} dac dev. {:0.5f}. converted to deflection voltage {:0.1f}.'.format(di.name, dac_dev, defl))
+            self.info(
+                "{} dac dev. {:0.5f}. converted to deflection voltage {:0.1f}.".format(
+                    di.name, dac_dev, defl
+                )
+            )
 
             curdefl = di.deflection
             newdefl = int(curdefl + defl)
@@ -156,7 +164,7 @@ class Coincidence(BasePeakCenter, MagnetSweep):
                 results.append(DeflectionResult(di.name, curdefl, newdefl))
 
         if not results:
-            self.information_dialog('no deflection changes needed')
+            self.information_dialog("no deflection changes needed")
         else:
             rv = ResultsView(results=results)
             info = rv.edit_traits()
@@ -166,15 +174,22 @@ class Coincidence(BasePeakCenter, MagnetSweep):
                 p = get_spectrometer_config_path()
                 config.read(p)
                 for v in rv.clean_results:
-                    config.set('Deflections', v.name, v.new_deflection)
-                    det = next((d for d in self.active_detectors if d.lower() == v.name.lower()))
+                    config.set("Deflections", v.name, v.new_deflection)
+                    det = next(
+                        (
+                            d
+                            for d in self.active_detectors
+                            if d.lower() == v.name.lower()
+                        )
+                    )
                     det = spec.get_detector(det)
                     det.deflection = v.new_deflection
 
-                with open(p, 'w') as wfile:
+                with open(p, "w") as wfile:
                     config.write(wfile)
 
                 self.spectrometer.clear_cached_config()
+
 
 # ============= EOF =============================================
 

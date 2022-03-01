@@ -22,9 +22,7 @@ from pychron.core.templater.templater_view import BaseTemplateView
 
 
 class CommentTemplateView(BaseTemplateView):
-    view_title = 'Comment Maker'
+    view_title = "Comment Maker"
+
 
 # ============= EOF =============================================
-
-
-

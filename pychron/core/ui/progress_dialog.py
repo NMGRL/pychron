@@ -20,5 +20,5 @@
 from __future__ import absolute_import
 from pychron.core.ui.factory import toolkit_factory
 
-myProgressDialog = toolkit_factory('progress_dialog', 'myProgressDialog')
+myProgressDialog = toolkit_factory("progress_dialog", "myProgressDialog")
 # ============= EOF =============================================

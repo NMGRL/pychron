@@ -22,21 +22,18 @@ from pychron.hardware.core.core_device import CoreDevice
 
 
 class ChannelSelect(CoreDevice):
-    prefix = ''
-    suffix = ''
+    prefix = ""
+    suffix = ""
 
     def load_additional_args(self, config):
-        self.config_get(config, 'Communication', 'prefix', optional=False)
-        self.config_get(config, 'Communication', 'suffix', optional=False)
+        self.config_get(config, "Communication", "prefix", optional=False)
+        self.config_get(config, "Communication", "suffix", optional=False)
 
         return True
 
     def set_channel(self, ch):
-        cmd = '{}{}{}'.format(self.prefix, ch, self.suffix)
+        cmd = "{}{}{}".format(self.prefix, ch, self.suffix)
         self.tell(cmd)
 
 
 # ============= EOF =============================================
-
-
-

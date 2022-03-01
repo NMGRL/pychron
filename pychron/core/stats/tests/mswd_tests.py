@@ -1,6 +1,6 @@
 from pychron.core.stats import calculate_mswd_probability
 
-__author__ = 'ross'
+__author__ = "ross"
 
 import unittest
 
@@ -18,5 +18,5 @@ class MSWDTestCase(unittest.TestCase):
         self.assertAlmostEqual(p, 0.443263278, places=9)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

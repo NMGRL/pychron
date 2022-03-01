@@ -24,8 +24,8 @@ from pychron.furnace.tasks.task import BaseFurnaceTask
 
 
 class NMGRLFurnaceTask(BaseFurnaceTask):
-    id = 'pychron.furnace.task'
-    name = 'Furnace'
+    id = "pychron.furnace.task"
+    name = "Furnace"
 
     def create_dock_panes(self):
         return [ControlPane(model=self.manager)]
@@ -34,7 +34,7 @@ class NMGRLFurnaceTask(BaseFurnaceTask):
         return FurnacePane(model=self.manager)
 
     def _default_layout_default(self):
-        return TaskLayout(left=PaneItem('pychron.nmgrlfurnace.controls'))
+        return TaskLayout(left=PaneItem("pychron.nmgrlfurnace.controls"))
 
 
 # ============= EOF =============================================

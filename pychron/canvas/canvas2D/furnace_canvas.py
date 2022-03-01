@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from pyface.timer.do_later import do_after
 from traits.api import Any
+
 # from traitsui.api import View, Item, VGroup, HGroup, ColorEditor
 # =============standard library imports ========================
 # import math
@@ -25,19 +26,18 @@ from traits.api import Any
 from pychron.canvas.canvas2D.crosshairs_overlay import SimpleCrosshairsOverlay
 from pychron.canvas.canvas2D.stage_canvas import StageCanvas
 
-DIRECTIONS = {'Left': ('x', -1), 'Right': ('x', 1),
-              'Down': ('y', -1), 'Up': ('y', 1)}
+DIRECTIONS = {"Left": ("x", -1), "Right": ("x", 1), "Down": ("y", -1), "Up": ("y", 1)}
 
 
 class FurnaceCanvas(StageCanvas):
-    """
-    """
+    """ """
+
     render_map = True
-    bgcolor = 'mediumturquoise'
+    bgcolor = "mediumturquoise"
 
     feeder = Any
 
-    aspect_ratio = 3.
+    aspect_ratio = 3.0
 
     def __init__(self, *args, **kw):
 
@@ -48,7 +48,7 @@ class FurnaceCanvas(StageCanvas):
 
         self._add_crosshairs(klass=SimpleCrosshairsOverlay)
         self.crosshairs_overlay.radius = 0.5
-        self.crosshairs_overlay.constrain = 'y'
+        self.crosshairs_overlay.constrain = "y"
         # self.show_laser_position = False
         # self.show_current_position = False
 
@@ -72,8 +72,7 @@ class FurnaceCanvas(StageCanvas):
         self.scene.reset_layers()
 
     def valid_position(self, x, y):
-        """
-        """
+        """ """
         between = lambda mi, v, ma: mi < v <= ma
         return between(self.x, x, self.x2) and between(self.y, y, self.y2)
 
@@ -91,8 +90,7 @@ class FurnaceCanvas(StageCanvas):
     # interactor
     # ===============================================================================
     def normal_left_down(self, event):
-        """
-        """
+        """ """
         x = event.x
         y = event.y
 
@@ -100,32 +98,32 @@ class FurnaceCanvas(StageCanvas):
             x, y = self.map_data((x, y))
             self.set_desired_position(x, y)
 
-            self.feeder.set_position(x, units='mm')
+            self.feeder.set_position(x, units="mm")
             do_after(50, self._update_position)
             event.handled = True
 
     def normal_key_pressed(self, event):
         c = event.character
-        if c in ('Left', 'Right'):
+        if c in ("Left", "Right"):
             ax_key, direction = DIRECTIONS[c]
             distance = 5 if event.shift_down else 1
             self.feeder.slew(direction * distance)
             event.handled = True
-            self.event_state = 'slew'
+            self.event_state = "slew"
 
     def key_released(self, char):
         """
-            called from outside by StageCompnentEditor
+        called from outside by StageCompnentEditor
         """
         self.feeder.stop()
         self._update_stage_position()
-        self.event_state = 'normal'
+        self.event_state = "normal"
 
     # ===============================================================================
     # private
     # ===============================================================================
     def _update_stage_position(self):
-        pos = self.feeder.get_position(units='mm')
+        pos = self.feeder.get_position(units="mm")
         self.set_stage_position(pos, 0)
 
     def _update_position(self):
@@ -140,5 +138,6 @@ class FurnaceCanvas(StageCanvas):
             # ===============================================================================
             # defaults
             # ===============================================================================
+
 
 # ========================EOF====================================================

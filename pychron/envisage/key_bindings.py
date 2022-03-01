@@ -25,6 +25,7 @@ set_qt()
 # ============= enthought library imports =======================
 import os
 from traits.api import HasTraits, Str
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 import yaml
@@ -40,7 +41,7 @@ from pychron.paths import paths
 
 
 def key_bindings_path():
-    return os.path.join(paths.appdata_dir, 'key_bindings')
+    return os.path.join(paths.appdata_dir, "key_bindings")
     # return os.path.join(paths.hidden_dir, 'key_bindings.{}'.format(globalv.username))
 
 
@@ -69,7 +70,7 @@ def update_key_bindings(actions):
 
 def dump_key_bindings(obj):
     p = key_bindings_path()
-    with open(p, 'w') as wfile:
+    with open(p, "w") as wfile:
         yaml.dump(obj, wfile)
 
 
@@ -82,7 +83,7 @@ def keybinding_exists(key):
 def clear_keybinding(desc):
     for k, (b, d) in user_key_map.items():
         if d == desc:
-            user_key_map[k] = ('', d)
+            user_key_map[k] = ("", d)
             dump_key_bindings(user_key_map)
             return
 
@@ -118,9 +119,10 @@ class mKeyBindings(HasTraits):
 def edit_key_bindings():
     from pychron.core.ui.qt.keybinding_editor import KeyBindingsEditor
 
-    ks = [mKeyBinding(id=k,
-                      binding=v[0],
-                      description=v[1]) for k, v in user_key_map.items()]
+    ks = [
+        mKeyBinding(id=k, binding=v[0], description=v[1])
+        for k, v in user_key_map.items()
+    ]
     kb = mKeyBindings(bindings=ks)
     # kb.handle()
 
@@ -128,11 +130,11 @@ def edit_key_bindings():
     info = ed.edit_traits()
     if info.result:
         dump_key_bindings(kb.dump())
-        information(None, 'Changes take effect on Restart')
+        information(None, "Changes take effect on Restart")
         # ed.edit_traits()
         # kb.edit_traits()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     edit_key_bindings()
 # ============= EOF =============================================

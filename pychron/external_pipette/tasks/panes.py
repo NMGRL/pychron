@@ -26,31 +26,43 @@ from pychron.envisage.icon_button_editor import icon_button_editor
 
 class ExternalPipettePane(TraitsTaskPane):
     def traits_view(self):
-        command_entry = HGroup(UItem('test_command'),
-                               UItem('test_button', enabled_when='test_enabled'),
-                               UItem('test_command',
-                                     editor=EnumEditor(values={'100': '01:List blanks',
-                                                               '101': '02:List airs',
-                                                               '102': '03:Last runid',
-                                                               '103': '04:Get record',
-                                                               '104': '05:Status',
-                                                               '105,': '06:Load blank',
-                                                               '106,': '07:Load air',
-                                                               '107': '08:Cancel',
-                                                               '108': '09:Set external pumping', })))
+        command_entry = HGroup(
+            UItem("test_command"),
+            UItem("test_button", enabled_when="test_enabled"),
+            UItem(
+                "test_command",
+                editor=EnumEditor(
+                    values={
+                        "100": "01:List blanks",
+                        "101": "02:List airs",
+                        "102": "03:Last runid",
+                        "103": "04:Get record",
+                        "104": "05:Status",
+                        "105,": "06:Load blank",
+                        "106,": "07:Load air",
+                        "107": "08:Cancel",
+                        "108": "09:Set external pumping",
+                    }
+                ),
+            ),
+        )
 
-        response = VGroup(UItem('test_command_response', style='custom'),
-                          HGroup(UItem('test_script_button',
-                                       enabled_when='not testing'), spring),
-                          HGroup(icon_button_editor('clear_test_response_button',
-                                                    'clear', tooltip='Clear console'),
-                                 Item('display_response_info', label='Display Debug Info.'),
-                                 spring))
+        response = VGroup(
+            UItem("test_command_response", style="custom"),
+            HGroup(UItem("test_script_button", enabled_when="not testing"), spring),
+            HGroup(
+                icon_button_editor(
+                    "clear_test_response_button", "clear", tooltip="Clear console"
+                ),
+                Item("display_response_info", label="Display Debug Info."),
+                spring,
+            ),
+        )
 
-        connection_grp = Item('object.controller.connection_url', style='readonly', label='URL')
-        v = View(VGroup(connection_grp,
-                        command_entry,
-                        response))
+        connection_grp = Item(
+            "object.controller.connection_url", style="readonly", label="URL"
+        )
+        v = View(VGroup(connection_grp, command_entry, response))
 
         # testing_grp = VGroup(HGroup(UItem('test_load_1', ),
         #                             UItem('test_script_button', ),
@@ -65,5 +77,5 @@ class ExternalPipettePane(TraitsTaskPane):
         #                       editor=ComponentEditor())))
         return v
 
-# ============= EOF =============================================
 
+# ============= EOF =============================================

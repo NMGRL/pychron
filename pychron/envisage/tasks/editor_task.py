@@ -30,25 +30,28 @@ from pychron.envisage.tasks.base_task import BaseManagerTask, BaseExtractionLine
 
 
 class BaseEditorTask(BaseManagerTask):
-    active_editor = Property(Instance(IEditor),
-                             depends_on='editor_area.active_editor')
+    active_editor = Property(Instance(IEditor), depends_on="editor_area.active_editor")
     editor_area = Instance(IEditorAreaPane)
 
     def set_editor_layout(self, layout):
         ea = self.editor_area
         ea.set_layout(layout)
 
-    def split_editors(self, a, b, h1=-1, h2=-1, orientation='horizontal'):
-        layout = Splitter(PaneItem(id=a, height=h1),
-                          PaneItem(id=b, height=h2),
-                          orientation=orientation)
+    def split_editors(self, a, b, h1=-1, h2=-1, orientation="horizontal"):
+        layout = Splitter(
+            PaneItem(id=a, height=h1),
+            PaneItem(id=b, height=h2),
+            orientation=orientation,
+        )
         self.set_editor_layout(layout)
 
     def db_save_info(self):
-        self.information_dialog('Changes saved to the database')
+        self.information_dialog("Changes saved to the database")
 
-    def get_editor(self, name, key='name'):
-        return next((e for e in self.editor_area.editors if getattr(e, key) == name), None)
+    def get_editor(self, name, key="name"):
+        return next(
+            (e for e in self.editor_area.editors if getattr(e, key) == name), None
+        )
 
     def get_editor_names(self):
         return [e.name for e in self.editor_area.editors]
@@ -58,11 +61,13 @@ class BaseEditorTask(BaseManagerTask):
 
     def has_active_editor(self, klass=None):
         if not self.active_editor:
-            self.information_dialog('No active tab. Please open a tab')
+            self.information_dialog("No active tab. Please open a tab")
         elif klass:
             if not isinstance(self.active_editor, klass):
-                name = str(klass).split('.')[-1][:-2].replace('Editor', '')
-                self.information_dialog('No active tab. Please open a "{}" tab'.format(name))
+                name = str(klass).split(".")[-1][:-2].replace("Editor", "")
+                self.information_dialog(
+                    'No active tab. Please open a "{}" tab'.format(name)
+                )
                 return
 
         return self.active_editor
@@ -90,7 +95,7 @@ class BaseEditorTask(BaseManagerTask):
 
     def open(self, path=None, **kw):
         """
-            Shows a dialog to open a file.
+        Shows a dialog to open a file.
         """
         if path is None or not os.path.isfile(path):
             path = self.open_file_dialog()
@@ -102,12 +107,12 @@ class BaseEditorTask(BaseManagerTask):
 
     def save(self, path=None):
         """
-            if the active_editor doesnt have a path e.g not yet saved
-            do a save as
+        if the active_editor doesnt have a path e.g not yet saved
+        do a save as
         """
         if self.active_editor:
             if not path:
-                if hasattr(self.active_editor, 'path'):
+                if hasattr(self.active_editor, "path"):
                     if self.active_editor.path:
                         path = self.active_editor.path
                 else:
@@ -127,7 +132,7 @@ class BaseEditorTask(BaseManagerTask):
         kw = {}
         df = self._generate_default_filename()
         if df:
-            kw['default_filename'] = df
+            kw["default_filename"] = df
 
         path = self._get_save_path(**kw)
         if path:
@@ -176,15 +181,19 @@ class BaseEditorTask(BaseManagerTask):
         if self.editor_area is None:
             return True
 
-        dirty_editors = dict([(editor.name, editor)
-                              for editor in self.editor_area.editors
-                              if editor.dirty])
+        dirty_editors = dict(
+            [
+                (editor.name, editor)
+                for editor in self.editor_area.editors
+                if editor.dirty
+            ]
+        )
         if not dirty_editors:
             return True
 
-        message = 'You have unsaved files. Would you like to save them?'
+        message = "You have unsaved files. Would you like to save them?"
         ret = self._handle_prompt_for_save(message)
-        if ret == 'save':
+        if ret == "save":
             for _, editor in dirty_editors.items():
                 editor.save(editor.path)
 
@@ -193,5 +202,6 @@ class BaseEditorTask(BaseManagerTask):
 
 class EditorTask(BaseExtractionLineTask, BaseEditorTask):
     pass
+
 
 # ============= EOF =============================================

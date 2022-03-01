@@ -14,7 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 import re
-WISCAR_DET_RE = re.compile(r'^S\d\d\d(?P<detector>[A-Za-z]{2}\d)-')
-WISCAR_ID_RE = re.compile(r'^[A-Z]{3}[0-9]{4}$', re.IGNORECASE)
+
+WISCAR_DET_RE = re.compile(r"^S\d\d\d(?P<detector>[A-Za-z]{2}\d)-")
+WISCAR_ID_RE = re.compile(r"^[A-Z]{3}[0-9]{4}$", re.IGNORECASE)
 
 # ============= EOF =============================================

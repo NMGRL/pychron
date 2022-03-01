@@ -32,7 +32,9 @@ class DataCollector(Consoleable):
     """
 
     measurement_script = Any
-    automated_run = Instance('pychron.experiment.automated_run.automated_run.AutomatedRun')
+    automated_run = Instance(
+        "pychron.experiment.automated_run.automated_run.AutomatedRun"
+    )
     measurement_result = Str
 
     detectors = List
@@ -72,7 +74,11 @@ class DataCollector(Consoleable):
 
     def __init__(self, *args, **kw):
         super(DataCollector, self).__init__(*args, **kw)
-        bind_preference(self, 'plot_panel_update_period', 'pychron.experiment.plot_panel_update_period')
+        bind_preference(
+            self,
+            "plot_panel_update_period",
+            "pychron.experiment.plot_panel_update_period",
+        )
 
     # def wait(self):
     #     st = time.time()
@@ -100,7 +106,7 @@ class DataCollector(Consoleable):
         if self.canceled:
             return
 
-        self.measurement_result = ''
+        self.measurement_result = ""
         self.terminated = False
         self._truncate_signal = False
         self._warned_no_fit = []
@@ -117,7 +123,7 @@ class DataCollector(Consoleable):
         self._measure()
 
         tt = time.time() - self.starttime
-        self.debug('estimated time: {:0.3f} actual time: :{:0.3f}'.format(et, tt))
+        self.debug("estimated time: {:0.3f} actual time: :{:0.3f}".format(et, tt))
 
     # def plot_data(self, *args, **kw):
     #     from pychron.core.ui.gui import invoke_in_main_thread
@@ -131,7 +137,7 @@ class DataCollector(Consoleable):
 
     # private
     def _measure(self):
-        self.debug('starting measurement')
+        self.debug("starting measurement")
 
         self._evt = evt = Event()
 
@@ -149,7 +155,7 @@ class DataCollector(Consoleable):
         # # t.setDaemon(True)
         # t.start()
 
-        self.debug('measurement period (ms) = {}'.format(self.period_ms))
+        self.debug("measurement period (ms) = {}".format(self.period_ms))
         period = self.period_ms * 0.001
         i = 1
 
@@ -172,9 +178,9 @@ class DataCollector(Consoleable):
                 if inc:
                     i += 1
             else:
-                if result == 'cancel':
+                if result == "cancel":
                     self.canceled = True
-                elif result == 'terminate':
+                elif result == "terminate":
                     self.terminated = True
                 break
 
@@ -182,7 +188,7 @@ class DataCollector(Consoleable):
         # self.debug('waiting for write to finish')
         # t.join()
 
-        self.debug('measurement finished')
+        self.debug("measurement finished")
 
     def _pre_trigger_hook(self):
         return True
@@ -205,7 +211,7 @@ class DataCollector(Consoleable):
 
             k, s, t, inc = data
         except (AttributeError, TypeError, ValueError) as e:
-            self.debug('failed getting data {}'.format(e))
+            self.debug("failed getting data {}".format(e))
             return
 
         if k is not None and s is not None:
@@ -233,7 +239,7 @@ class DataCollector(Consoleable):
         try:
             data = next(self.data_generator)
         except StopIteration:
-            self.debug('data generator stopped')
+            self.debug("data generator stopped")
             return
         if data:
             keys, signals, ct, inc = data
@@ -245,11 +251,12 @@ class DataCollector(Consoleable):
                         nkeys.append(k)
                         nsignals.append(s)
 
-                data = (nkeys, nsignals, ct, inc)
-                self._data = (nkeys, nsignals)
-            else:
-                self._data = (keys, signals)
+                ds = (nkeys, nsignals, ct, inc)
 
+            else:
+                ds = (keys, signals, ct, inc)
+
+            self._data = ds
             return data
 
     def _save_data(self, x, keys, signals):
@@ -267,9 +274,11 @@ class DataCollector(Consoleable):
         for iso in ig.itervalues():
             signal = self._get_signal(keys, signals, iso.detector)
             if signal is not None:
-                if not ig.append_data(iso.name, iso.detector, x, signal, 'baseline'):
-                    self.debug('baselines - failed appending data for {}. '
-                               'not a current isotope {}'.format(iso, ig.isotope_keys))
+                if not ig.append_data(iso.name, iso.detector, x, signal, "baseline"):
+                    self.debug(
+                        "baselines - failed appending data for {}. "
+                        "not a current isotope {}".format(iso, ig.isotope_keys)
+                    )
 
     def _update_isotopes(self, x, keys, signals):
         a = self.isotope_group
@@ -282,23 +291,25 @@ class DataCollector(Consoleable):
                 signal = self._get_signal(keys, signals, dn.name)
                 if signal is not None:
                     if not a.append_data(iso, dn.name, x, signal, kind):
-                        self.debug('{} - failed appending data for {}. not a current isotope {}'.format(kind, iso,
-                                                                                                        a.isotope_keys))
+                        self.debug(
+                            "{} - failed appending data for {}. not a current isotope {}".format(
+                                kind, iso, a.isotope_keys
+                            )
+                        )
 
     def _get_signal(self, keys, signals, det):
         try:
             return signals[keys.index(det)]
         except ValueError:
             if det not in self._warned_no_det:
-                self.warning('Detector {} is not available'.format(det))
+                self.warning("Detector {} is not available".format(det))
                 self._warned_no_det.append(det)
                 self.canceled = True
                 self.stop()
 
     def _get_detector(self, d):
         if isinstance(d, str):
-            d = next((di for di in self.detectors
-                      if di.name == d), None)
+            d = next((di for di in self.detectors if di.name == d), None)
         return d
 
     def _plot_data(self, cnt, x, keys, signals):
@@ -317,34 +328,48 @@ class DataCollector(Consoleable):
         ypadding = det.ypadding
 
         if self.collection_kind == SNIFF:
-            gs = [(self.plot_panel.sniff_graph, iso, None, 0, 0),
-                  (self.plot_panel.isotope_graph, iso, None, 0, 0)]
+            gs = [
+                (self.plot_panel.sniff_graph, iso, None, 0, 0),
+                (self.plot_panel.isotope_graph, iso, None, 0, 0),
+            ]
 
         elif self.collection_kind == BASELINE:
-            iso = self.isotope_group.get_isotope(detector=detname, kind='baseline')
+            iso = self.isotope_group.get_isotope(detector=detname, kind="baseline")
             if iso is not None:
                 fit = iso.get_fit(cnt)
             else:
-                fit = 'average'
+                fit = "average"
             gs = [(self.plot_panel.baseline_graph, detname, fit, 0, 0)]
         else:
             title = self.isotope_group.get_isotope_title(name=iso, detector=detname)
             iso = self.isotope_group.get_isotope(name=iso, detector=detname)
             fit = iso.get_fit(cnt)
-            gs = [(self.plot_panel.isotope_graph, title, fit, self.series_idx, self.fit_series_idx)]
+            gs = [
+                (
+                    self.plot_panel.isotope_graph,
+                    title,
+                    fit,
+                    self.series_idx,
+                    self.fit_series_idx,
+                )
+            ]
 
         for g, name, fit, series, fit_series in gs:
 
             pid = g.get_plotid_by_ytitle(name)
             if pid is None:
-                self.critical('failed to locate {}, ytitles={}'.format(name, g.get_plot_ytitles()))
+                self.critical(
+                    "failed to locate {}, ytitles={}".format(name, g.get_plot_ytitles())
+                )
                 continue
 
-            g.add_datum((x, signal),
-                        series=series,
-                        plotid=pid,
-                        update_y_limits=True,
-                        ypadding=ypadding)
+            g.add_datum(
+                (x, signal),
+                series=series,
+                plotid=pid,
+                update_y_limits=True,
+                ypadding=ypadding,
+            )
             if fit:
                 g.set_fit(fit, plotid=pid, series=fit_series)
 
@@ -364,10 +389,10 @@ class DataCollector(Consoleable):
     #             return self._set_run_truncated()
 
     def _check_conditionals(self, conditionals, cnt):
-        self.err_message = ''
+        self.err_message = ""
         for ti in conditionals:
             if ti.check(self.automated_run, self._data, cnt):
-                m = 'Conditional tripped: {}'.format(ti.to_string())
+                m = "Conditional tripped: {}".format(ti.to_string())
                 self.info(m)
                 self.err_message = m
                 return ti
@@ -377,7 +402,7 @@ class DataCollector(Consoleable):
             self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
             return self._set_truncated()
         elif tr.use_termination:
-            return 'terminate'
+            return "terminate"
 
     def _modification_func(self, tr):
         run = self.automated_run
@@ -389,7 +414,7 @@ class DataCollector(Consoleable):
         if tr.use_truncation:
             return self._set_truncated()
         elif tr.use_termination:
-            return 'terminate'
+            return "terminate"
 
     def _truncation_func(self, tr):
         self.measurement_script.abbreviated_count_ratio = tr.abbreviated_count_ratio
@@ -398,24 +423,26 @@ class DataCollector(Consoleable):
     def _action_func(self, tr):
         tr.perform(self.measurement_script)
         if not tr.resume:
-            return 'break'
+            return "break"
 
     def _set_truncated(self):
-        self.state = 'truncated'
+        self.state = "truncated"
         self.automated_run.truncated = True
-        self.automated_run.spec.state = 'truncated'
-        return 'break'
+        self.automated_run.spec.state = "truncated"
+        return "break"
 
     def _check_iteration(self, i):
         if self._temp_conds:
             ti = self._check_conditionals(self._temp_conds, i)
             if ti:
                 self.measurement_result = ti.action
-                return 'break'
+                return "break"
 
         j = i - 1
         user_counts = 0 if self.plot_panel is None else self.plot_panel.ncounts
-        script_counts = 0 if self.measurement_script is None else self.measurement_script.ncounts
+        script_counts = (
+            0 if self.measurement_script is None else self.measurement_script.ncounts
+        )
         original_counts = self.ncounts
         count_args = (j, original_counts)
 
@@ -424,47 +451,65 @@ class DataCollector(Consoleable):
         #                                                                          original_counts))
 
         if not self._alive:
-            self.info('measurement iteration executed {}/{} counts'.format(*count_args))
-            return 'cancel'
+            self.info("measurement iteration executed {}/{} counts".format(*count_args))
+            return "cancel"
 
         if user_counts != original_counts:
             if i > user_counts:
-                self.info('user termination. measurement iteration executed {}/{} counts'.format(*count_args))
-                self.plot_panel.total_counts -= (original_counts - i)
+                self.info(
+                    "user termination. measurement iteration executed {}/{} counts".format(
+                        *count_args
+                    )
+                )
+                self.plot_panel.total_counts -= original_counts - i
                 return self._set_truncated()
 
         elif script_counts != original_counts:
             if i > script_counts:
-                self.info('script termination. measurement iteration executed {}/{} counts'.format(*count_args))
+                self.info(
+                    "script termination. measurement iteration executed {}/{} counts".format(
+                        *count_args
+                    )
+                )
                 return self._set_truncated()
 
         elif i > original_counts:
-            return 'break'
+            return "break"
 
         if self._truncate_signal:
-            self.info('measurement iteration executed {}/{} counts'.format(*count_args))
+            self.info("measurement iteration executed {}/{} counts".format(*count_args))
             self._truncate_signal = False
             return self._set_truncated()
 
         if self.check_conditionals:
-            for tag, func, conditionals in (('modification', self._modification_func, self.modification_conditionals),
-                                            ('truncation', self._truncation_func, self.truncation_conditionals),
-                                            ('action', self._action_func, self.action_conditionals),
-                                            ('termination', lambda x: 'terminate', self.termination_conditionals),
-                                            ('cancelation', lambda x: 'cancel', self.cancelation_conditionals),
-                                            ('equilibration', self._equilibration_func,
-                                             self.equilibration_conditionals)):
+            for tag, func, conditionals in (
+                (
+                    "modification",
+                    self._modification_func,
+                    self.modification_conditionals,
+                ),
+                ("truncation", self._truncation_func, self.truncation_conditionals),
+                ("action", self._action_func, self.action_conditionals),
+                ("termination", lambda x: "terminate", self.termination_conditionals),
+                ("cancelation", lambda x: "cancel", self.cancelation_conditionals),
+                (
+                    "equilibration",
+                    self._equilibration_func,
+                    self.equilibration_conditionals,
+                ),
+            ):
 
-                if tag == 'equilibration' and self.collection_kind != SNIFF:
+                if tag == "equilibration" and self.collection_kind != SNIFF:
                     continue
 
                 tripped = self._check_conditionals(conditionals, i)
                 if tripped:
-                    self.info('{} conditional {}. measurement iteration executed {}/{} counts'.format(tag,
-                                                                                                      tripped.message,
-                                                                                                      j,
-                                                                                                      original_counts),
-                              color='red')
+                    self.info(
+                        "{} conditional {}. measurement iteration executed {}/{} counts".format(
+                            tag, tripped.message, j, original_counts
+                        ),
+                        color="red",
+                    )
                     self.automated_run.show_conditionals(tripped=tripped)
                     return func(tripped)
 
@@ -507,5 +552,6 @@ class DataCollector(Consoleable):
     def equilibration_conditionals(self):
         if self.automated_run:
             return self.automated_run.equilibration_conditionals
+
 
 # ============= EOF =============================================

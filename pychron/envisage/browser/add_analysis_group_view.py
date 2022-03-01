@@ -33,18 +33,22 @@ class AddAnalysisGroupView(HasTraits):
     def save(self, ans, db):
         append = False
         if not self.name:
-            warning(None, 'Please specify a name for the analysis group')
+            warning(None, "Please specify a name for the analysis group")
             return
 
         if not self.project:
-            warning(None, 'Please specify an associated project for the analysis group')
+            warning(None, "Please specify an associated project for the analysis group")
             return
 
         gdb = db.get_analysis_groups_by_name(self.name, self.project)
         ok = True
         if gdb:
             gdb = gdb[-1]
-            if db.confirmation_dialog('"{}" already exists? Would you like to append your selection'.format(gdb.name)):
+            if db.confirmation_dialog(
+                '"{}" already exists? Would you like to append your selection'.format(
+                    gdb.name
+                )
+            ):
                 append = True
             else:
                 ok = False
@@ -57,9 +61,12 @@ class AddAnalysisGroupView(HasTraits):
         return True
 
     def traits_view(self):
-        v = okcancel_view(Item('name'),
-                          Item('project', editor=EnumEditor(name='projects')),
-                          title='Add Analysis Group')
+        v = okcancel_view(
+            Item("name"),
+            Item("project", editor=EnumEditor(name="projects")),
+            title="Add Analysis Group",
+        )
         return v
+
 
 # ============= EOF =============================================

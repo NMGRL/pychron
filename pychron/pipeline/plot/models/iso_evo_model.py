@@ -25,4 +25,5 @@ from pychron.pipeline.plot.panels.iso_evo_panel import IsoEvoPanel
 class IsoEvoModel(FigureModel):
     _panel_klass = IsoEvoPanel
 
+
 # ============= EOF =============================================

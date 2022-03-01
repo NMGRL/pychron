@@ -17,6 +17,7 @@
 import six
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus.paragraph import Paragraph
+
 # ============= enthought library imports =======================
 from traits.api import HasTraits, List, Int, Str, Any, Either, Callable
 
@@ -36,8 +37,8 @@ class Row(HasTraits):
         return [it.render() for it in self.items]
 
     def add_item(self, span=1, blank_fill=True, **kw):
-        if 'fontsize' not in kw and self.fontsize:
-            kw['fontsize'] = self.fontsize
+        if "fontsize" not in kw and self.fontsize:
+            kw["fontsize"] = self.fontsize
 
         self.items.append(RowItem(**kw))
         ss = len(self.items) - 1
@@ -50,7 +51,7 @@ class Row(HasTraits):
 
     def add_blank_item(self, n=1):
         for _ in range(n):
-            self.add_item(value='')
+            self.add_item(value="")
 
     def __iter__(self):
         return (it.render() for it in self.items)
@@ -63,7 +64,7 @@ class BaseItem(HasTraits):
     value = Any
     fmt = Either(Str, Callable)
     fontsize = Int(10)
-    fontname = Str#'Helvetica'
+    fontname = Str  # 'Helvetica'
     italic = False
 
     def __init__(self, value=None, *args, **kw):
@@ -76,7 +77,7 @@ class BaseItem(HasTraits):
         if not isinstance(v, Paragraph):
             fmt = self.fmt
             if fmt is None:
-                fmt = u'{}'
+                fmt = "{}"
             if isinstance(fmt, (str, six.text_type)):
                 v = fmt.format(v)
             else:
@@ -90,18 +91,22 @@ class BaseItem(HasTraits):
         if isinstance(v, Paragraph):
             for frag in v.frags:
 
-                if (hasattr(frag, 'super') and frag.super) or (hasattr(frag, 'sub') and frag.sub):
+                if (hasattr(frag, "super") and frag.super) or (
+                    hasattr(frag, "sub") and frag.sub
+                ):
                     frag.fontSize = size - 2
                 else:
                     frag.fontSize = size
         elif name:
-            v = self._new_paragraph(u'<font size="{}" name="{}">{}</font>'.format(size, name, v))
+            v = self._new_paragraph(
+                '<font size="{}" name="{}">{}</font>'.format(size, name, v)
+            )
         else:
-            v = self._new_paragraph(u'<font size="{}">{}</font>'.format(size, v))
+            v = self._new_paragraph('<font size="{}">{}</font>'.format(size, v))
 
         return v
 
-    def _new_paragraph(self, t, s='Normal'):
+    def _new_paragraph(self, t, s="Normal"):
         style = STYLES[s]
         p = Paragraph(t, style)
         return p
@@ -112,28 +117,28 @@ class RowItem(BaseItem):
 
 
 def Superscript(v):
-    return u'<super>{}</super>'.format(v)
+    return "<super>{}</super>".format(v)
 
 
 def Subscript(v):
-    return u'<sub>{}</sub>'.format(v)
+    return "<sub>{}</sub>".format(v)
 
 
 def NamedParameter(name, value):
-    return u'<b>{}</b>: {}'.format(name, value)
+    return "<b>{}</b>: {}".format(name, value)
 
 
-def Anchor(tagname, num, s='Normal'):
+def Anchor(tagname, num, s="Normal"):
     snum = Superscript(num)
-    link = u'{{}}<a href="#{}" color="green">{}</a>'.format(tagname, snum)
-    tag = u'{{}}{}: {{}}<a name="{}"/>'.format(snum, tagname)
+    link = '{{}}<a href="#{}" color="green">{}</a>'.format(tagname, snum)
+    tag = '{{}}{}: {{}}<a name="{}"/>'.format(snum, tagname)
 
     style = STYLES[s]
 
     def flink(x, extra=None):
         f = link.format(x)
         if extra:
-            f = u'{}{}'.format(f, extra)
+            f = "{}{}".format(f, extra)
         return Paragraph(f, style)
 
     def p2(n, v):
@@ -151,5 +156,6 @@ class FootNoteRow(Row):
 
 class FooterRow(Row):
     pass
+
 
 # ============= EOF =============================================

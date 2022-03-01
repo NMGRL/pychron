@@ -20,15 +20,26 @@ from uncertainties import ufloat
 
 from pychron.options.aux_plot import AuxPlot
 from pychron.options.options import FigureOptions
-from pychron.pychron_constants import FLUX_CONSTANTS, ERROR_TYPES, MAIN, APPEARANCE, FLUX_MODEL_KINDS, RBF, BSPLINE, \
-    BOWL, PLANE, GRIDDATA, IDW
+from pychron.pychron_constants import (
+    FLUX_CONSTANTS,
+    ERROR_TYPES,
+    MAIN,
+    APPEARANCE,
+    FLUX_MODEL_KINDS,
+    RBF,
+    BSPLINE,
+    BOWL,
+    PLANE,
+    GRIDDATA,
+    IDW,
+)
 
 
 class BaseFluxOptions(FigureOptions):
-    color_map_name = Str('jet')
+    color_map_name = Str("jet")
     marker_size = Int(5)
     levels = Int(50, auto_set=False, enter_set=True)
-    plot_kind = Enum('1D', '2D', 'Grid')
+    plot_kind = Enum("1D", "2D", "Grid")
     use_weighted_fit = Bool(False)
     monte_carlo_ntrials = Int(10)
     use_monte_carlo = Bool(False)
@@ -41,63 +52,67 @@ class MonitorMixin(HasTraits):
     error_kind = Enum(*ERROR_TYPES)
 
     selected_monitor = Enum(list(FLUX_CONSTANTS.keys()))
-    lambda_k = Property(depends_on='selected_monitor')
-    monitor_age = Property(depends_on='selected_monitor')
-    monitor_name = Property(depends_on='selected_monitor')
-    monitor_material = Property(depends_on='selected_monitor')
+    lambda_k = Property(depends_on="selected_monitor")
+    monitor_age = Property(depends_on="selected_monitor")
+    monitor_name = Property(depends_on="selected_monitor")
+    monitor_material = Property(depends_on="selected_monitor")
 
     def _get_lambda_k(self):
         dc = FLUX_CONSTANTS[self.selected_monitor]
-        b = ufloat(*dc['lambda_b'])
-        ec = ufloat(*dc['lambda_ec'])
+        b = ufloat(*dc["lambda_b"])
+        ec = ufloat(*dc["lambda_ec"])
         return b + ec
 
     def _get_monitor_name(self):
-        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_name', '')
+        return FLUX_CONSTANTS[self.selected_monitor].get("monitor_name", "")
 
     def _get_monitor_age(self):
-        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_age', 0)
+        return FLUX_CONSTANTS[self.selected_monitor].get("monitor_age", 0)
 
     def _get_monitor_material(self):
-        return FLUX_CONSTANTS[self.selected_monitor].get('monitor_material', '')
+        return FLUX_CONSTANTS[self.selected_monitor].get("monitor_material", "")
 
 
 class FluxOptions(BaseFluxOptions, MonitorMixin):
     model_kind = Enum(FLUX_MODEL_KINDS)
     n_neighbors = Int(2)
 
-    least_squares_fit = Enum('Linear', 'Parabolic', 'Cubic', 'Quartic')
-    one_d_axis = Enum('X', 'Y')
+    least_squares_fit = Enum("Linear", "Parabolic", "Cubic", "Quartic")
+    one_d_axis = Enum("X", "Y")
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]
 
     def _get_subview(self, name):
         from pychron.options.views.flux_views import VIEWS
+
         return VIEWS[name]
 
 
 class FluxVisualizationOptions(BaseFluxOptions):
     model_kind = Enum(PLANE, BOWL, BSPLINE, RBF, GRIDDATA, IDW)
-    rbf_kind = Enum('multiquadric',
-                    'inverse',
-                    'gaussian',
-                    'linear',
-                    'cubic',
-                    'quintic',
-                    'thin_plate')
-    griddata_method = Enum('linear', 'nearest', 'cubic')
+    rbf_kind = Enum(
+        "multiquadric",
+        "inverse",
+        "gaussian",
+        "linear",
+        "cubic",
+        "quintic",
+        "thin_plate",
+    )
+    griddata_method = Enum("linear", "nearest", "cubic")
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]
 
     def _get_subview(self, name):
         from pychron.options.views.flux_visualization_views import VIEWS
+
         return VIEWS[name]
 
 
 class VerticalFluxAuxPlot(AuxPlot):
-    name = 'Height (mm)'
+    name = "Height (mm)"
 
 
 class VerticalFluxOptions(FigureOptions, MonitorMixin):
@@ -106,9 +121,9 @@ class VerticalFluxOptions(FigureOptions, MonitorMixin):
 
     @property
     def x_title(self):
-        t = 'J'
+        t = "J"
         if self.use_f_enabled:
-            t = 'J' if self.use_j else '<sup>40</sup>Ar*/<sup>Ar</sub>39<sub>K</sub>'
+            t = "J" if self.use_j else "<sup>40</sup>Ar*/<sup>Ar</sub>39<sub>K</sub>"
         return t
 
     def initialize(self):
@@ -119,5 +134,8 @@ class VerticalFluxOptions(FigureOptions, MonitorMixin):
 
     def _get_subview(self, name):
         from pychron.options.views.vertical_flux_views import VIEWS
+
         return VIEWS[name]
+
+
 # ============= EOF =============================================

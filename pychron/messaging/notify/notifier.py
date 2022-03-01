@@ -36,9 +36,9 @@ class Notifier(Broadcaster):
             self._setup_publish(context, port)
 
             self._req_sock = context.socket(zmq.REP)
-            self._req_sock.bind('tcp://*:{}'.format(port + 1))
+            self._req_sock.bind("tcp://*:{}".format(port + 1))
             #
-            t = Thread(name='ping_replier', target=self._handle_request)
+            t = Thread(name="ping_replier", target=self._handle_request)
             t.setDaemon(1)
             t.start()
 
@@ -57,14 +57,14 @@ class Notifier(Broadcaster):
                 self._req_sock.close()
                 self._req_sock = None
 
-    def send_notification(self, uuid, tag='RunAdded'):
-        msg = '{} {}'.format(tag, uuid)
-        self.info('pushing notification - {}'.format(msg))
+    def send_notification(self, uuid, tag="RunAdded"):
+        msg = "{} {}".format(tag, uuid)
+        self.info("pushing notification - {}".format(msg))
         self._send(msg)
 
-    def send_console_message(self, msg, tag='ConsoleMessage'):
-        msg = '{} {}'.format(tag, msg)
-        self.info('push console message - {}'.format(msg))
+    def send_console_message(self, msg, tag="ConsoleMessage"):
+        msg = "{} {}".format(tag, msg)
+        self.info("push console message - {}".format(msg))
         self._send(msg)
 
     # private
@@ -84,8 +84,8 @@ class Notifier(Broadcaster):
                 try:
                     if socks.get(sock) == zmq.POLLIN:
                         req = sock.recv()
-                        if req == 'ping':
-                            sock.send('echo')
+                        if req == "ping":
+                            sock.send("echo")
                         elif req in self._handlers:
                             func = self._handlers[req]
                             sock.send(func())
@@ -93,7 +93,6 @@ class Notifier(Broadcaster):
                     pass
 
         poll.unregister(self._req_sock)
-
 
 
 # ============= EOF =============================================

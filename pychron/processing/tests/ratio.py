@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from pychron.processing.ratio import Ratio
 
-__author__ = 'ross'
+__author__ = "ross"
 
 import unittest
 
@@ -32,5 +32,5 @@ class RatioTestCase(unittest.TestCase):
         self.assertEqual(r.value, 0.5)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

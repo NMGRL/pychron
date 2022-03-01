@@ -23,33 +23,32 @@ from pychron.logger.tasks.logger_panes import DisplayPane
 
 
 class LoggerTask(BaseTask):
-    name = 'Logger'
-    id = 'pychron.logger.task'
+    name = "Logger"
+    id = "pychron.logger.task"
 
     display_pane = Instance(DisplayPane)
     warning_display = Any
 
-    @on_trait_change('warning_display:text_added')
+    @on_trait_change("warning_display:text_added")
     def _handle_warning(self, obj, name, old, new):
         self.display_pane.selected = obj.model
 
     def create_central_pane(self):
         self.warning_display = gWarningDisplay
-        self.display_pane = DisplayPane(loggers=[gLoggerDisplay,
-                                                 gWarningDisplay])
+        self.display_pane = DisplayPane(loggers=[gLoggerDisplay, gWarningDisplay])
         return self.display_pane
 
-    @on_trait_change('window:opening')
+    @on_trait_change("window:opening")
     def _handle_window_open(self, evt):
         """
-            ensure only one logger window open at a time
+        ensure only one logger window open at a time
 
-            veto the opening evt if there is a logger window already open
+        veto the opening evt if there is a logger window already open
         """
         app = self.window.application
         for win in app.windows:
             if win.active_task:
-                if win.active_task.id == 'pychron.logger.task':
+                if win.active_task.id == "pychron.logger.task":
                     evt.veto = True
                     break
 

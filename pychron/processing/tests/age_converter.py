@@ -44,5 +44,5 @@ class AgeConverterTestCase(unittest.TestCase):
         self.assertAlmostEqual(nerror, e)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

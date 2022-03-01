@@ -23,13 +23,14 @@ import subprocess
 
 # ============= local library imports  ==========================
 
+
 def convert_pdf_eps(p):
     h, _ = os.path.splitext(p)
-    subprocess.call(['./pdf2eps.sh', '1', h])
+    subprocess.call(["./pdf2eps.sh", "1", h])
 
 
-if __name__ == '__main__':
-    p = '/Users/Ross/Sandbox/aaatable.pdf'
+if __name__ == "__main__":
+    p = "/Users/Ross/Sandbox/aaatable.pdf"
     convert_pdf_eps(p)
 
 # ============= EOF =============================================

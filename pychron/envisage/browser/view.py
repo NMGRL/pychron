@@ -20,15 +20,18 @@ from traitsui.api import View, UItem, HGroup, VGroup, Group, spring, EnumEditor
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.envisage.browser.sample_view import BrowserSampleView, BrowserInterpretedAgeView
+from pychron.envisage.browser.sample_view import (
+    BrowserSampleView,
+    BrowserInterpretedAgeView,
+)
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class BrowserView(HasTraits):
-    name = 'Browser'
-    id = 'pychron.browser'
+    name = "Browser"
+    id = "pychron.browser"
     multi_select = True
-    analyses_defined = Str('1')
+    analyses_defined = Str("1")
     is_append = False
 
     model = Instance(HasTraits)
@@ -39,10 +42,9 @@ class BrowserView(HasTraits):
         return self._view_klass(model=self.model, pane=self)
 
     def trait_context(self):
-        """ Use the model object for the Traits UI context, if appropriate.
-        """
+        """Use the model object for the Traits UI context, if appropriate."""
         if self.model:
-            return {'object': self.model, 'pane': self}
+            return {"object": self.model, "pane": self}
         return super(BrowserView, self).trait_context()
 
     def _get_browser_group(self):
@@ -53,34 +55,49 @@ class BrowserView(HasTraits):
         #                   style='custom',
         #                   visible_when='not sample_view_active'))
         # return grp
-        return Group(UItem('pane._view', style='custom'))
+        return Group(UItem("pane._view", style="custom"))
 
     def _get_browser_tool_group(self):
-        hgrp = HGroup(icon_button_editor('filter_by_button',
-                                         'find',
-                                         tooltip='Search for analyses using defined criteria'),
-                      icon_button_editor('advanced_filter_button', 'magnifier',
-                                         tooltip='Advanced Search. e.g. search by intensity'),
-                      icon_button_editor('load_recent_button', 'edit-history-2', tooltip='Load recent analyses'),
-                      icon_button_editor('find_references_button',
-                                         '3d_glasses',
-                                         enabled_when='find_references_enabled',
-                                         tooltip='Find references associated with current selection'),
-                      icon_button_editor('refresh_selectors_button', 'arrow_refresh',
-                                         tooltip='Refresh the database selectors'
-                                                 ' e.g PI, Project, Load, Irradiation, etc'),
-                      UItem('object.dvc.data_source', editor=EnumEditor(name='object.dvc.data_sources')),
-                      spring,
-                      CustomLabel('datasource_url', color='maroon'),
-                      show_border=True)
+        hgrp = HGroup(
+            icon_button_editor(
+                "filter_by_button",
+                "find",
+                tooltip="Search for analyses using defined criteria",
+            ),
+            icon_button_editor(
+                "advanced_filter_button",
+                "magnifier",
+                tooltip="Advanced Search. e.g. search by intensity",
+            ),
+            icon_button_editor(
+                "load_recent_button", "edit-history-2", tooltip="Load recent analyses"
+            ),
+            icon_button_editor(
+                "find_references_button",
+                "3d_glasses",
+                enabled_when="find_references_enabled",
+                tooltip="Find references associated with current selection",
+            ),
+            icon_button_editor(
+                "refresh_selectors_button",
+                "arrow_refresh",
+                tooltip="Refresh the database selectors"
+                " e.g PI, Project, Load, Irradiation, etc",
+            ),
+            UItem(
+                "object.dvc.data_source",
+                editor=EnumEditor(name="object.dvc.data_sources"),
+            ),
+            spring,
+            CustomLabel("datasource_url", color="maroon"),
+            show_border=True,
+        )
         return hgrp
 
     def traits_view(self):
         main_grp = self._get_browser_group()
         tool_grp = self._get_browser_tool_group()
-        v = okcancel_view(VGroup(tool_grp, main_grp),
-                          title=self.name,
-                          width=0.75)
+        v = okcancel_view(VGroup(tool_grp, main_grp), title=self.name, width=0.75)
         return v
 
 
@@ -104,22 +121,34 @@ class InterpretedAgeBrowserView(BrowserView):
     _view_klass = BrowserInterpretedAgeView
 
     def traits_view(self):
-        tool_grp = HGroup(icon_button_editor('filter_by_button',
-                                             'find',
-                                             tooltip='Search for analyses using defined criteria'),
-                          icon_button_editor('refresh_selectors_button', 'arrow_refresh',
-                                             tooltip='Refresh the database selectors'
-                                                     ' e.g PI, Project, Load, Irradiation, etc'),
-                          UItem('object.dvc.data_source', editor=EnumEditor(name='object.dvc.data_sources')),
-                          spring,
-                          CustomLabel('datasource_url', color='maroon'),
-                          show_border=True)
+        tool_grp = HGroup(
+            icon_button_editor(
+                "filter_by_button",
+                "find",
+                tooltip="Search for analyses using defined criteria",
+            ),
+            icon_button_editor(
+                "refresh_selectors_button",
+                "arrow_refresh",
+                tooltip="Refresh the database selectors"
+                " e.g PI, Project, Load, Irradiation, etc",
+            ),
+            UItem(
+                "object.dvc.data_source",
+                editor=EnumEditor(name="object.dvc.data_sources"),
+            ),
+            spring,
+            CustomLabel("datasource_url", color="maroon"),
+            show_border=True,
+        )
 
-        v = okcancel_view(VGroup(tool_grp,
-                                 UItem('pane._view', style='custom')),
-                          title='Interpreted Age Browser',
-                          width=900)
+        v = okcancel_view(
+            VGroup(tool_grp, UItem("pane._view", style="custom")),
+            title="Interpreted Age Browser",
+            width=900,
+        )
 
         return v
+
 
 # ============= EOF =============================================

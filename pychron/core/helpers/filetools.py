@@ -28,16 +28,16 @@ import yaml
 from pychron.core.yaml import yload
 
 
-def subdirize(root, name, sublen=2, mode='r'):
-    if not isinstance(sublen,  (tuple, list)):
-        sublen = (sublen, )
+def subdirize(root, name, sublen=2, mode="r"):
+    if not isinstance(sublen, (tuple, list)):
+        sublen = (sublen,)
 
     oroot = root
     for si in sublen:
         d, nname = name[:si], name[si:]
         path = os.path.join(oroot, d)
         if not os.path.isdir(path):
-            if mode == 'r':
+            if mode == "r":
                 root = None
                 continue
 
@@ -46,7 +46,7 @@ def subdirize(root, name, sublen=2, mode='r'):
         root = path
         # use the first sublen if in write mode
         # if in read mode need to continue checking other sublens
-        if mode != 'r' or os.path.isdir(root):
+        if mode != "r" or os.path.isdir(root):
             break
 
     if root:
@@ -70,50 +70,50 @@ def backup(p, backupdir, **kw):
     return bp, pp
 
 
-def modified_datetime(path, strformat='%m-%d-%Y %H:%M:%S'):
+def modified_datetime(path, strformat="%m-%d-%Y %H:%M:%S"):
     dt = datetime.fromtimestamp(os.path.getmtime(path))
     if strformat:
         dt = dt.strftime(strformat)
     return dt
 
 
-def created_datetime(path, strformat='%m-%d-%Y %H:%M:%S'):
+def created_datetime(path, strformat="%m-%d-%Y %H:%M:%S"):
     dt = datetime.fromtimestamp(os.path.getctime(path))
     if strformat:
         dt = dt.strftime(strformat)
     return dt
 
 
-def view_file(p, application='Preview', logger=None):
-    if sys.platform == 'darwin':
-        if application == 'Excel':
-            application = 'Microsoft Office 2011/Microsoft Excel'
+def view_file(p, application="Preview", logger=None):
+    if sys.platform == "darwin":
+        if application == "Excel":
+            application = "Microsoft Office 2011/Microsoft Excel"
 
-        app_path = '/Applications/{}.app'.format(application)
+        app_path = "/Applications/{}.app".format(application)
         if not os.path.exists(app_path):
-            app_path = '/Applications/Preview.app'
+            app_path = "/Applications/Preview.app"
             if not os.path.exists(app_path):
-                app_path = '/System/Applications/Preview.app'
+                app_path = "/System/Applications/Preview.app"
 
         try:
-            subprocess.call(['open', '-a', app_path, p])
+            subprocess.call(["open", "-a", app_path, p])
         except OSError:
             if logger:
-                logger.debug('failed opening {} using {}'.format(p, app_path))
-            subprocess.call(['open', p])
+                logger.debug("failed opening {} using {}".format(p, app_path))
+            subprocess.call(["open", p])
 
 
 def ilist_directory(root, extension=None, filtername=None, remove_extension=False):
     """
-        uses glob
-        root: directory to list
-        extension: only return files of this file type e.g .txt or txt
-                extension can be list, tuple or str
+    uses glob
+    root: directory to list
+    extension: only return files of this file type e.g .txt or txt
+            extension can be list, tuple or str
 
-        return iterator
+    return iterator
     """
     if filtername is None:
-        filtername = ''
+        filtername = ""
 
     def gen(gf):
         for p in glob.iglob(gf):
@@ -128,19 +128,23 @@ def ilist_directory(root, extension=None, filtername=None, remove_extension=Fals
             extension = (extension,)
 
         for ext in extension:
-            if not ext.startswith('.'):
-                ext = '.{}'.format(ext)
-            gfilter = '{}/{}*{}'.format(root, filtername, ext)
+            if not ext.startswith("."):
+                ext = ".{}".format(ext)
+            gfilter = "{}/{}*{}".format(root, filtername, ext)
             # print gfilter
             for yi in gen(gfilter):
                 yield yi
     else:
-        for yi in gen('{}/*'.format(gfilter)):
+        for yi in gen("{}/*".format(gfilter)):
             yield yi
 
 
 def list_subdirectories(root):
-    return [di for di in os.listdir(root) if os.path.isdir(os.path.join(root, di)) and not di.startswith('.')]
+    return [
+        di
+        for di in os.listdir(root)
+        if os.path.isdir(os.path.join(root, di)) and not di.startswith(".")
+    ]
 
 
 def glob_list_directory(root, extension=None, filtername=None, remove_extension=False):
@@ -153,7 +157,7 @@ def glob_list_directory(root, extension=None, filtername=None, remove_extension=
 
 def ilist_gits(root):
     for p in os.listdir(root):
-        pp = os.path.join(root, p, '.git')
+        pp = os.path.join(root, p, ".git")
         if os.path.isdir(pp):
             yield p
 
@@ -171,7 +175,7 @@ def list_directory(p, extension=None, filtername=None, remove_extension=False):
             extension = extension.lower()
 
             def test(path):
-                for ext in extension.split(','):
+                for ext in extension.split(","):
                     if path.lower().endswith(ext):
                         return True
 
@@ -185,12 +189,12 @@ def list_directory(p, extension=None, filtername=None, remove_extension=False):
     return ds
 
 
-def replace_extension(p, ext='.txt'):
+def replace_extension(p, ext=".txt"):
     head, _ = os.path.splitext(p)
     return add_extension(head, ext)
 
 
-def add_extension(p, ext='.txt'):
+def add_extension(p, ext=".txt"):
     if not isinstance(ext, (list, tuple)):
         ext = (ext,)
 
@@ -201,7 +205,7 @@ def add_extension(p, ext='.txt'):
         #     p = '{}{}'.format(p, ext)
 
     else:
-        p = '{}{}'.format(p, ext[0])
+        p = "{}{}".format(p, ext[0])
 
     return p
 
@@ -212,10 +216,10 @@ def remove_extension(p):
 
 
 def unique_dir(root, base, make=True):
-    p = os.path.join(root, '{}001'.format(base))
+    p = os.path.join(root, "{}001".format(base))
     i = 2
     while os.path.exists(p):
-        p = os.path.join(root, '{}{:03d}'.format(base, i))
+        p = os.path.join(root, "{}{:03d}".format(base, i))
         i += 1
 
     if make:
@@ -224,29 +228,33 @@ def unique_dir(root, base, make=True):
     return p
 
 
-def unique_date_path(root, base, extension='.txt'):
+def unique_date_path(root, base, extension=".txt"):
     """
-        make a unique path with the a timestamp appended
-        e.g foo_11-01-2012-001
+    make a unique path with the a timestamp appended
+    e.g foo_11-01-2012-001
     """
-    base = '{}_{}'.format(base, datetime.now().strftime('%m-%d-%Y'))
+    base = "{}_{}".format(base, datetime.now().strftime("%m-%d-%Y"))
     p, _ = unique_path2(root, base, extension=extension)
     return p
 
 
-def unique_path2(root, base, delimiter='-', extension='.txt', width=3):
+def unique_path2(root, base, delimiter="-", extension=".txt", width=3):
     """
-        unique_path suffers from the fact that it starts at 001.
-        this is a problem for log files because the logs are periodically archived which means
-        low paths are removed.
+    unique_path suffers from the fact that it starts at 001.
+    this is a problem for log files because the logs are periodically archived which means
+    low paths are removed.
 
-        unique_path2 solves this by finding the max path then incrementing by 1
+    unique_path2 solves this by finding the max path then incrementing by 1
     """
-    if not extension.startswith('.'):
-        extension = '.{}'.format(extension)
+    if not extension.startswith("."):
+        extension = ".{}".format(extension)
 
-    cnt = max_path_cnt(root, base, delimiter=delimiter, extension=extension)
-    p = os.path.join(root, '{{}}-{{:0{}d}}{{}}'.format(width).format(base, cnt, extension))
+    cnt = max_path_cnt(
+        root, base, delimiter=delimiter, extension=extension, ndigits=width
+    )
+    p = os.path.join(
+        root, "{{}}-{{:0{}d}}{{}}".format(width).format(base, cnt, extension)
+    )
     return p, cnt
 
 
@@ -263,7 +271,7 @@ def max_file_cnt(root, excludes=None):
     return len(ps) + 1
 
 
-def max_path_cnt(root, base, delimiter='-', extension='.txt', ndigits=5):
+def max_path_cnt(root, base, delimiter="-", extension=".txt", ndigits=5):
     """
 
     :param root:
@@ -272,8 +280,8 @@ def max_path_cnt(root, base, delimiter='-', extension='.txt', ndigits=5):
     :return: int max+1
     """
 
-    ndigits = '[0-9]'*ndigits
-    basename = '{}{}{}{}'.format(base, delimiter, ndigits, extension)
+    ndigits = "[0-9]" * ndigits
+    basename = "{}{}{}{}".format(base, delimiter, ndigits, extension)
     cnt = 0
     for p in glob.glob(os.path.join(root, basename)):
         p = os.path.basename(p)
@@ -284,32 +292,30 @@ def max_path_cnt(root, base, delimiter='-', extension='.txt', ndigits=5):
     return cnt
 
 
-def unique_path(root, base, extension='.txt'):
-    """
-
-    """
+def unique_path(root, base, extension=".txt"):
+    """ """
     if extension:
-        if not extension.startswith('.'):
-            extension = '.{}'.format(extension)
+        if not extension.startswith("."):
+            extension = ".{}".format(extension)
     else:
-        extension = ''
+        extension = ""
 
-    p = os.path.join(root, '{}-001{}'.format(base, extension))
+    p = os.path.join(root, "{}-001{}".format(base, extension))
     cnt = 1
     i = 2
     while os.path.isfile(p):
-        p = os.path.join(root, '{}-{:03d}{}'.format(base, i, extension))
+        p = os.path.join(root, "{}-{:03d}{}".format(base, i, extension))
         i += 1
         cnt += 1
 
     return p, cnt
 
 
-def unique_path_from_manifest(root, base, extension='.txt'):
-    if not extension.startswith('.'):
-        extension = '.{}'.format(extension)
+def unique_path_from_manifest(root, base, extension=".txt"):
+    if not extension.startswith("."):
+        extension = ".{}".format(extension)
     p = None
-    mp = os.path.join(root, 'manifest.yaml')
+    mp = os.path.join(root, "manifest.yaml")
     yd = {}
     if os.path.isfile(mp):
         yd = yload(mp)
@@ -320,22 +326,21 @@ def unique_path_from_manifest(root, base, extension='.txt'):
             v = yd.get(base, None)
             if v:
                 cnt = v + 1
-                p = os.path.join(root, '{}-{:03d}{}'.format(base, cnt, extension))
+                p = os.path.join(root, "{}-{:03d}{}".format(base, cnt, extension))
                 yd[base] = cnt
 
     if not p:
         p, cnt = unique_path2(root, base, extension=extension)
         yd[base] = cnt
 
-    with open(mp, 'w') as wfile:
+    with open(mp, "w") as wfile:
         yaml.dump(yd, wfile)
 
     return p
 
 
-def parse_xy(p, delimiter=','):
-    """
-    """
+def parse_xy(p, delimiter=","):
+    """ """
     data = parse_file(p)
     if data:
         func = lambda i, data: [float(l.split(delimiter)[i]) for l in data]
@@ -344,9 +349,8 @@ def parse_xy(p, delimiter=','):
 
 
 def commented_line(l):
-    """
-    """
-    if l[:1] == '#':
+    """ """
+    if l[:1] == "#":
         return True
     else:
         return False
@@ -354,13 +358,13 @@ def commented_line(l):
 
 def parse_file(p, delimiter=None, cast=None):
     """
-        p: absolute path
-        delimiter: str
-        cast: callable. applied to each delimited field
+    p: absolute path
+    delimiter: str
+    cast: callable. applied to each delimited field
 
     """
     if os.path.exists(p) and os.path.isfile(p):
-        with open(p, 'U') as rfile:
+        with open(p, "U") as rfile:
             r = filetolist(rfile)
             if delimiter:
                 if cast is None:
@@ -408,21 +412,22 @@ def parse_file(p, delimiter=None, cast=None):
 #             return indices
 #
 
+
 def pathtolist(p, **kw):
     """
-        p: absolute path to file
+    p: absolute path to file
 
-        kw: same keyword arguments accepted by filetolist
-        return: list
+    kw: same keyword arguments accepted by filetolist
+    return: list
     """
-    with open(p, 'r') as rfile:
+    with open(p, "r") as rfile:
         return filetolist(rfile, **kw)
 
 
-def filetolist(f, commentchar='#'):
+def filetolist(f, commentchar="#"):
     """
-        f: file-like object
-        return list
+    f: file-like object
+    return list
     """
 
     def isNewLine(c):
@@ -446,9 +451,9 @@ def filetolist(f, commentchar='#'):
     return r
 
 
-def fileiter(rfile, commentchar='#', strip=False):
+def fileiter(rfile, commentchar="#", strip=False):
     def isNewLine(c):
-        return c in ('\r', '\n')
+        return c in ("\r", "\n")
 
     def test(li):
         cc = li[:1]
@@ -463,12 +468,12 @@ def fileiter(rfile, commentchar='#', strip=False):
 
 def get_path(root, name, extensions):
     """
-        return a valid file path ``p``
-        where ``p`` == root/name.extension
+    return a valid file path ``p``
+    where ``p`` == root/name.extension
 
-        root: str. directory path
-        name: str. basename for file
-        extensions: list or tuple. list of file extensions to try e.g. ('.yml','.yaml')
+    root: str. directory path
+    name: str. basename for file
+    extensions: list or tuple. list of file extensions to try e.g. ('.yml','.yaml')
 
     """
     for ext in extensions:
@@ -476,6 +481,7 @@ def get_path(root, name, extensions):
             ni = add_extension(name, ext)
             if re.match(ni, f):
                 return os.path.join(root, f)
+
 
 # if __name__ == '__main__':
 #     name = 'b60a449a-0f15-4554-a517-e0b421aaca97.h5'

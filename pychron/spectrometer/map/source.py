@@ -18,6 +18,8 @@
 from __future__ import absolute_import
 from traits.api import Float, HasTraits
 from traitsui.api import View, Item
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
@@ -27,12 +29,12 @@ class MapSource(HasTraits):
     current_hv = Float(4500)
 
     def read_hv(self):
-        return self._read_value('GetHighVoltage', 'current_hv')
+        return self._read_value("GetHighVoltage", "current_hv")
 
     def _set_value(self, name, v):
-        r = self.ask('{} {}'.format(name, v))
+        r = self.ask("{} {}".format(name, v))
         if r is not None:
-            if r.lower().strip() == 'ok':
+            if r.lower().strip() == "ok":
                 return True
 
     def _read_value(self, name, value):
@@ -47,11 +49,12 @@ class MapSource(HasTraits):
         self.read_hv()
 
     def traits_view(self):
-        v = View(Item('nominal_hv'),
-                 Item('current_hv', style='readonly'))
+        v = View(Item("nominal_hv"), Item("current_hv", style="readonly"))
         return v
 
     # ===============================================================================
     # property get/set
     # ===============================================================================
+
+
 # ============= EOF =============================================

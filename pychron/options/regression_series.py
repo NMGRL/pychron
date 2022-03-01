@@ -30,16 +30,18 @@ class RegressionSeriesOptions(AgeOptions):
     show_statistics = Bool(False)
 
     def initialize(self):
-        self.subview_names = [MAIN, 'Regression Series', APPEARANCE, DISPLAY, GROUPS]
+        self.subview_names = [MAIN, "Regression Series", APPEARANCE, DISPLAY, GROUPS]
 
     def set_names(self, names, clear_missing=True):
         for ai in self.aux_plots:
             if clear_missing and ai.name not in names:
                 ai.plot_enabled = False
                 ai.save_enabled = False
-                ai.name = ''
+                ai.name = ""
             ai.names = names
 
     def _get_subview(self, name):
         return VIEWS[name]
+
+
 # ============= EOF =============================================

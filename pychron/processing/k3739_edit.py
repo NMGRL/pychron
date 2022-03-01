@@ -22,6 +22,7 @@ import pickle
 
 from traits.api import HasTraits, Bool, List, Any, Float
 from traitsui.api import Item, UItem, Controller, VGroup, HGroup, TabularEditor
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import ufloat
@@ -30,6 +31,7 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.progress_dialog import myProgressDialog
 from pychron.envisage.browser.adapters import AnalysisAdapter
 from pychron.paths import paths
+
 # from pychron.processing.tasks.browser.panes import AnalysisAdapter
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
@@ -56,7 +58,7 @@ class K3739EditModel(HasTraits):
         pd.open()
 
         for ai in ans:
-            pd.change_message('Modifying k3739 for {}'.format(ai.record_id))
+            pd.change_message("Modifying k3739 for {}".format(ai.record_id))
             ai.fixed_k3739 = v
             ai.calculate_age(force=True)
         pd.close()
@@ -68,7 +70,7 @@ class K3739EditModel(HasTraits):
         p = self.pickle_path
         if os.path.isfile(p):
             try:
-                with open(p, 'rb') as rfile:
+                with open(p, "rb") as rfile:
                     d = pickle.load(rfile)
                     self.trait_set(**d)
             except BaseException:
@@ -77,21 +79,21 @@ class K3739EditModel(HasTraits):
     def dump(self):
         d = dict(k3739=self.k3739, k3739_err=self.k3739_err)
         try:
-            with open(self.pickle_path, 'wb') as wfile:
+            with open(self.pickle_path, "wb") as wfile:
                 pickle.dump(d, wfile)
         except BaseException:
             pass
 
     @property
     def pickle_path(self):
-        return os.path.join(paths.hidden_dir, 'modified_k3739')
+        return os.path.join(paths.hidden_dir, "modified_k3739")
 
     @property
     def value_str(self):
         if self.normal_k3739:
-            return 'normal'
+            return "normal"
         else:
-            return 'fixed ({}+/-{})'.format(self.k3739, self.k3739_err)
+            return "fixed ({}+/-{})".format(self.k3739, self.k3739_err)
 
 
 class K3739EditView(Controller):
@@ -102,15 +104,21 @@ class K3739EditView(Controller):
     #         self.model.apply_modified()
 
     def traits_view(self):
-        v = okcancel_view(VGroup(Item('normal_k3739', label='Normal (37/39)K'),
-                                 HGroup(
-                                     Item('k3739', label='(37/39)K'),
-                                     Item('k3739_err', label=PLUSMINUS_ONE_SIGMA),
-                                     show_border=True,
-                                     enabled_when='not normal_k3739')),
-                          UItem('analyses', editor=TabularEditor(adapter=AnalysisAdapter())),
-                          HGroup(Item('save_to_db', label='Save to Database')),
-                          title='Edit (37/39)K')
+        v = okcancel_view(
+            VGroup(
+                Item("normal_k3739", label="Normal (37/39)K"),
+                HGroup(
+                    Item("k3739", label="(37/39)K"),
+                    Item("k3739_err", label=PLUSMINUS_ONE_SIGMA),
+                    show_border=True,
+                    enabled_when="not normal_k3739",
+                ),
+            ),
+            UItem("analyses", editor=TabularEditor(adapter=AnalysisAdapter())),
+            HGroup(Item("save_to_db", label="Save to Database")),
+            title="Edit (37/39)K",
+        )
         return v
+
 
 # ============= EOF =============================================

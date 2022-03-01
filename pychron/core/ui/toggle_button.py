@@ -27,13 +27,17 @@ from pychron.core.ui.qt.toggle_button_editor import ToggleButtonEditor
 
 
 class ToggleButton(Event):
-    def __init__(self, label='',
-                 image_on=None,
-                 image_off=None,
-                 tooltip_on='',
-                 tooltip_off='',
-                 width=60, height=20,
-                 **metadata):
+    def __init__(
+        self,
+        label="",
+        image_on=None,
+        image_off=None,
+        tooltip_on="",
+        tooltip_off="",
+        width=60,
+        height=20,
+        **metadata
+    ):
         self.editor = ToggleButtonEditor(
             label=label,
             # filename=filename,
@@ -56,5 +60,6 @@ class ToggleButton(Event):
         )
 
         super(ToggleButton, self).__init__(**metadata)
+
 
 # ============= EOF =============================================

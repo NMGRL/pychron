@@ -23,36 +23,38 @@ from pychron.hardware.adc.adc_device import ADCDevice
 
 class Transducer(ADCDevice):
     """
-        abstract device the reads an input voltage and maps to an output value
+    abstract device the reads an input voltage and maps to an output value
     """
+
     pass
 
 
 class AirTransducer(ADCDevice):
     def get_pressure(self, force=True):
-        v=self.get_output(force=force)
+        v = self.get_output(force=force)
         return v
 
 
 class ThermocoupleTransducer(Transducer):
     """
-        ADCThermocouple is a simple device that reads a voltage
-        and maps it to a temperature
+    ADCThermocouple is a simple device that reads a voltage
+    and maps it to a temperature
     """
 
     def get_temperature(self, force=False):
         return self.get_output(force=force)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
 
-    logging_setup('adc')
+    logging_setup("adc")
     from pychron.paths import paths
 
-    paths.build('_dev')
-    aa = ThermocoupleTransducer(name='thermocouple_transducer',
-                                configuration_dir_name='sandbox')
+    paths.build("_dev")
+    aa = ThermocoupleTransducer(
+        name="thermocouple_transducer", configuration_dir_name="sandbox"
+    )
     aa.bootstrap()
     aa.get_temperature()
     # mapped_name = Str

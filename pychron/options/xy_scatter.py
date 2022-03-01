@@ -34,15 +34,16 @@ class XYScatterAuxPlot(FitAuxPlot):
     x_key = Str
     y_key = Str
     available_names = List
+
     def _get_fit_types(self):
         return SERIES_FIT_TYPES
 
     def _make_ratio(self, axis):
-        d = getattr(self, '{}_d'.format(axis))
-        n = getattr(self, '{}_n'.format(axis))
+        d = getattr(self, "{}_d".format(axis))
+        n = getattr(self, "{}_n".format(axis))
         if d:
             if n:
-                r = '{}/{}'.format(n, d)
+                r = "{}/{}".format(n, d)
             else:
                 r = d
         elif n:
@@ -52,29 +53,29 @@ class XYScatterAuxPlot(FitAuxPlot):
 
     @property
     def ytitle(self):
-        r = ''
+        r = ""
         name = self.name
-        if name == 'Ratio':
-            r = self._make_ratio('y')
-        elif name == 'Scatter':
+        if name == "Ratio":
+            r = self._make_ratio("y")
+        elif name == "Scatter":
             r = self.y_key
         return r
 
     @property
     def xtitle(self):
-        r = ''
+        r = ""
         name = self.name
-        if name == 'TimeSeries':
-            r = 'Time (hrs)'
-        elif name == 'Ratio':
-            r = self._make_ratio('x')
-        elif name == 'Scatter':
+        if name == "TimeSeries":
+            r = "Time (hrs)"
+        elif name == "Ratio":
+            r = self._make_ratio("x")
+        elif name == "Scatter":
             r = self.x_key
 
         return r
 
 
-NAMES = ['Ratio', 'TimeSeries', 'Scatter']
+NAMES = ["Ratio", "TimeSeries", "Scatter"]
 
 
 class XYScatterOptions(AuxPlotFigureOptions):
@@ -84,22 +85,31 @@ class XYScatterOptions(AuxPlotFigureOptions):
     show_statistics = Bool
 
     def initialize(self):
-        self.subview_names = [MAIN, 'Options', APPEARANCE]
+        self.subview_names = [MAIN, "Options", APPEARANCE]
 
     def set_names(self, isotope_keys):
         nn = isotope_keys + NAMES
-        anames = isotope_keys + ['age', 'f', 'j', 'kca', 'kcl',
-                                 'extract_value', 'extract_duration', 'cleanup_duration']
+        anames = isotope_keys + [
+            "age",
+            "f",
+            "j",
+            "kca",
+            "kcl",
+            "extract_value",
+            "extract_duration",
+            "cleanup_duration",
+        ]
         for ai in self.aux_plots:
             if ai.name not in nn:
                 ai.plot_enabled = False
                 ai.save_enabled = False
-                ai.name = ''
+                ai.name = ""
 
             ai.names = NAMES
             ai.available_names = anames
 
     def _get_subview(self, name):
         return VIEWS[name]
+
 
 # ============= EOF =============================================

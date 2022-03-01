@@ -24,33 +24,46 @@ from pychron.experiment.automated_run.factory_view import FactoryView, POSITION_
 
 
 class UVFactoryView(FactoryView):
-    model = Instance('pychron.experiment.automated_run.uv.factory.UVAutomatedRunFactory')
+    model = Instance(
+        "pychron.experiment.automated_run.uv.factory.UVAutomatedRunFactory"
+    )
 
     def _get_group(self):
         sspring = lambda width=17: Spring(springy=False, width=width)
         extract_grp = VGroup(
-            HGroup(sspring(width=33),
-                   Item('extract_value', label='Extract',
-                        tooltip='Set the extract value in extract units',
-                        enabled_when='extractable'),
-                   Item('extract_units',
-                        show_label=False,
-                        editor=myEnumEditor(name='extract_units_names'))),
-
             HGroup(
-                Item('cleanup', label='Cleanup (s)',
-                     tooltip='Set the number of seconds to getter the sample gas')),
+                sspring(width=33),
+                Item(
+                    "extract_value",
+                    label="Extract",
+                    tooltip="Set the extract value in extract units",
+                    enabled_when="extractable",
+                ),
+                Item(
+                    "extract_units",
+                    show_label=False,
+                    editor=myEnumEditor(name="extract_units_names"),
+                ),
+            ),
             HGroup(
-                Item('mask', editor=myEnumEditor(name='masks')),
-                UItem('mask'),
-                Item('attenuator'),
-                Item('reprate')),
+                Item(
+                    "cleanup",
+                    label="Cleanup (s)",
+                    tooltip="Set the number of seconds to getter the sample gas",
+                )
+            ),
             HGroup(
-                Item('position',
-                     tooltip=POSITION_TOOLTIP)),
-            label='Extract',
-            show_border=True)
+                Item("mask", editor=myEnumEditor(name="masks")),
+                UItem("mask"),
+                Item("attenuator"),
+                Item("reprate"),
+            ),
+            HGroup(Item("position", tooltip=POSITION_TOOLTIP)),
+            label="Extract",
+            show_border=True,
+        )
 
         return extract_grp
+
 
 # ============= EOF =============================================

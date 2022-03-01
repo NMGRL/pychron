@@ -24,11 +24,11 @@ from pychron.pipeline.results.base_matrix_result import BaseMatrixResult
 
 class Results(BaseMatrixResult):
     def _calculate_values(self, ag, others):
-        vs = ['']
+        vs = [""]
         aa = [nominal_value(a.uage) for a in ag.clean_analyses()]
         for other in others:
             if other == ag:
-                pv = ''
+                pv = ""
             else:
                 bb = [nominal_value(a.uage) for a in other.clean_analyses()]
                 tstat, pv = ttest_ind(aa, bb, equal_var=False)
@@ -41,18 +41,22 @@ class TTestTable(BaseMatrixTable):
     result_klass = Results
 
     def traits_view(self):
-        v = View(BorderVGroup(UItem('results', editor=TabularEditor(adapter=self.adapter)),
-                              label='T-test Probabilities'))
+        v = View(
+            BorderVGroup(
+                UItem("results", editor=TabularEditor(adapter=self.adapter)),
+                label="T-test Probabilities",
+            )
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+
     class AGroup:
         def __init__(self, identiifer):
             self.identifier = identiifer
 
-
-    ags = [AGroup('foo1'), AGroup('bar2')]
+    ags = [AGroup("foo1"), AGroup("bar2")]
     t = TTestTable(ags)
     t.configure_traits()
 # ============= EOF =============================================

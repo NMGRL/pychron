@@ -15,10 +15,10 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Interface
+
 
 # ============= standard library imports ========================
 
@@ -27,15 +27,14 @@ from traits.api import Interface
 
 class ICoreDevice(Interface):
     def get(self, *args, **kw):
-        """
-        """
+        """ """
 
     def set(self, v):
-        """
-        """
+        """ """
 
     def close(self):
-        """
-        """
+        """ """
+
+
 # ============= views ===================================
 # ============= EOF ====================================

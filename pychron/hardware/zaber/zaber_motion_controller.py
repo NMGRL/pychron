@@ -15,6 +15,7 @@
 # ===============================================================================
 from traits.api import Str, CInt, Enum
 from zaber.serial import BinarySerial, BinaryDevice
+
 # from zaber_motion import Library
 
 # Library.enable_device_db_store()
@@ -47,6 +48,7 @@ from pychron.hardware.zaber.axis import ZaberAxis
 #     def is_busy(self):
 #         return any((d.is_busy() for d in self._devices))
 
+
 class LegacyBinaryZaberMotionController(MotionController):
     port = Str
     device_id = CInt
@@ -59,10 +61,14 @@ class LegacyBinaryZaberMotionController(MotionController):
 
         config = self.get_configuration()
         if config:
-            section = 'Communications'
-            self.set_attribute(config, 'port', section, 'port')
-            self.set_attribute(config, 'device_id', section, 'device_id', optional=True, default=0)
-            self.set_attribute(config, 'baudrate', section, 'baudrate', optional=True, default=9600)
+            section = "Communications"
+            self.set_attribute(config, "port", section, "port")
+            self.set_attribute(
+                config, "device_id", section, "device_id", optional=True, default=0
+            )
+            self.set_attribute(
+                config, "baudrate", section, "baudrate", optional=True, default=9600
+            )
 
             self.axes_factory(config)
 
@@ -72,7 +78,7 @@ class LegacyBinaryZaberMotionController(MotionController):
         return True
 
     def open(self, *args, **kw):
-        self.debug('scanning port {}'.format(self.port))
+        self.debug("scanning port {}".format(self.port))
         bs = BinarySerial(self.port, timeout=200, inter_char_timeout=2)
 
         for a in self.axes.values():
@@ -84,15 +90,15 @@ class LegacyBinaryZaberMotionController(MotionController):
         return False
 
     def linear_move(self, x, y, block=True, *args, **kw):
-        if kw.get('source') != 'laser_canvas':
-            xaxis = self.single_axis_move('x', x, block=False)
-            yaxis = self.single_axis_move('y', y, block=False)
+        if kw.get("source") != "laser_canvas":
+            xaxis = self.single_axis_move("x", x, block=False)
+            yaxis = self.single_axis_move("y", y, block=False)
             self.update_axes()
 
     def single_axis_move(self, key, value, block=True, *args, **kw):
         axis = self.axes[key]
         steps = axis.convert_to_steps(value)
-        self.debug('calculated steps={} value={}'.format(steps, value))
+        self.debug("calculated steps={} value={}".format(steps, value))
         axis.device.move_abs(steps)
         if block:
             self.update_axes()
@@ -122,6 +128,7 @@ class LegacyBinaryZaberMotionController(MotionController):
         a = ZaberAxis(parent=self, **kw)
         a.load(path)
         return a
+
 
 # class ZaberMotionController(MotionController):
 #     port = Str

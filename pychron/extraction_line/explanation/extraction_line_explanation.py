@@ -18,6 +18,8 @@
 from traits.api import HasTraits, Any, Event, List, Bool, Property, Int
 from traitsui.api import View, Item, Handler, TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
+
+
 # =============standard library imports ========================
 
 # =============local library imports  ==========================
@@ -30,14 +32,18 @@ class ELEHandler(Handler):
 
 
 class ExplanationAdapter(TabularAdapter):
-    columns = [('Name', 'name'), ('Description', 'description'),
-               ('State', 'state'), ('Lock', 'lock'),
-               ('Actuations', 'actuations'),
-               ('Last', 'last_actuation')]
+    columns = [
+        ("Name", "name"),
+        ("Description", "description"),
+        ("State", "state"),
+        ("Lock", "lock"),
+        ("Actuations", "actuations"),
+        ("Last", "last_actuation"),
+    ]
 
     lock_text = Property
     state_text = Property
-    font = '12'
+    font = "12"
     name_width = Int(40)
     description_width = Int(175)
     state_width = Int(50)
@@ -45,28 +51,28 @@ class ExplanationAdapter(TabularAdapter):
 
     def get_bg_color(self, obj, trait, row, column):
         item = self.item
-        color = 'white'
+        color = "white"
         #         color='#0000FF'
         if item.software_lock:
-            color = '#CCE5FF'
+            color = "#CCE5FF"
         elif item.state:
-            color = 'lightgreen'
+            color = "lightgreen"
 
         return color
 
     def _get_lock_text(self):
-        return 'Yes' if self.item.software_lock else 'No'
+        return "Yes" if self.item.software_lock else "No"
 
     def _get_state_text(self):
-        return 'Open' if self.item.state else 'Closed'
+        return "Open" if self.item.state else "Closed"
 
 
 class ExtractionLineExplanation(HasTraits):
-    """
-    """
+    """ """
+
     explanable_items = List
     show_hide = Event
-    label = Property(depends_on='identify')
+    label = Property(depends_on="identify")
 
     identify = Bool(False)
     selected = Any
@@ -74,32 +80,36 @@ class ExtractionLineExplanation(HasTraits):
     refresh_needed = Event
 
     def _get_label(self):
-        return 'Hide All' if self.identify else 'Show All'
+        return "Hide All" if self.identify else "Show All"
 
     def refresh(self):
         self.refresh_needed = True
 
     def load(self, switches):
-        """
-        """
+        """ """
 
         vs = [s for s in switches.values() if s.explain_enabled]
         self.explanable_items.extend(vs)
 
     def traits_view(self):
-        """
-        """
-        v = View(Item('explanable_items',
-                      editor=TabularEditor(auto_update=True,
-                                           adapter=ExplanationAdapter(),
-                                           editable=False,
-                                           refresh='refresh_needed',
-                                           selected='selected'),
-                      style='custom',
-                      show_label=False),
-                 width=500,
-                 height=500,
-                 id='pychron.explanation',
-                 resizable=True,
-                 title='Explanation')
+        """ """
+        v = View(
+            Item(
+                "explanable_items",
+                editor=TabularEditor(
+                    auto_update=True,
+                    adapter=ExplanationAdapter(),
+                    editable=False,
+                    refresh="refresh_needed",
+                    selected="selected",
+                ),
+                style="custom",
+                show_label=False,
+            ),
+            width=500,
+            height=500,
+            id="pychron.explanation",
+            resizable=True,
+            title="Explanation",
+        )
         return v

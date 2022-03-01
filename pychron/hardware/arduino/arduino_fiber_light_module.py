@@ -14,15 +14,17 @@
 # limitations under the License.
 # ===============================================================================
 
+
 # ============= enthought library imports =======================
 from traits.api import provides
+
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
 from pychron.hardware.core.arduino_core_device import ArduinoCoreDevice
 from pychron.hardware.ifiberlight import IFiberLight
 
-'''
+"""
 Arduino Sketch fiberlightbox
 
 FiberLight Protocol ver 0.2
@@ -33,7 +35,8 @@ FiberLight Protocol ver 0.2
 8; get state          return 1,state,v
 9; get version        return 1,0.2
 
-'''
+"""
+
 
 @provides(IFiberLight)
 class ArduinoFiberLightModule(ArduinoCoreDevice):
@@ -53,7 +56,7 @@ class ArduinoFiberLightModule(ArduinoCoreDevice):
         self.ask(cmd)
 
     def read_intensity(self):
-        resp = self.ask('7;')
+        resp = self.ask("7;")
         v = self._parse_response(resp)
         if self.simulation:
             v = 50
@@ -63,25 +66,26 @@ class ArduinoFiberLightModule(ArduinoCoreDevice):
         return v / 255.0 * 100
 
     def read_state(self):
-        resp = self.ask('8;')
+        resp = self.ask("8;")
         v = self._parse_response(resp)
         return bool(v)
 
     def _parse_response(self, resp):
         if resp is not None:
             try:
-                cmd, v = resp.split(',')
-                v = v.strip(';')
+                cmd, v = resp.split(",")
+                v = v.strip(";")
 
-                if cmd == '1':
+                if cmd == "1":
                     return int(v)
             except Exception as err:
-                print('parse_response {}'.format(resp), err)
+                print("parse_response {}".format(resp), err)
 
     def _build_command(self, cmd, value=None):
         if value is not None:
-            return'{},{};'.format(cmd, value)
+            return "{},{};".format(cmd, value)
         else:
-            return '{};'.format(cmd)
+            return "{};".format(cmd)
+
 
 # ============= EOF ====================================

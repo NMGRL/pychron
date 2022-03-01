@@ -22,29 +22,29 @@ from pychron.lasers.laser_managers.base_lase_manager import BaseLaserManager
 
 class RemoteLaserManager(BaseLaserManager):
     position = String(enter_set=True, auto_set=False)
-    x = Property(depends_on='_x')
-    y = Property(depends_on='_y')
-    z = Property(depends_on='_z')
+    x = Property(depends_on="_x")
+    y = Property(depends_on="_y")
+    z = Property(depends_on="_z")
     _x = Float
     _y = Float
     _z = Float
     connected = Bool
-    test_connection_button = Button('Test Connection')
-    snapshot_button = Button('Test Snapshot')
+    test_connection_button = Button("Test Connection")
+    snapshot_button = Button("Test Snapshot")
     use_autocenter = Bool(False)
 
     output_power = Float(enter_set=True, auto_set=False)
     fire_laser_button = Button
-    fire_label = Property(depends_on='_firing')
-    units = Enum('watts', 'percent')
+    fire_label = Property(depends_on="_firing")
+    units = Enum("watts", "percent")
 
     _patterning = False
     _firing = Bool(False)
     _is_moving = Bool(False)
 
-    stage_stop_button = Button('Stage Stop')
-    move_enabled_button = Button('Enable Move')
-    move_enabled_label = Property(depends_on='_move_enabled')
+    stage_stop_button = Button("Stage Stop")
+    move_enabled_button = Button("Enable Move")
+    move_enabled_label = Property(depends_on="_move_enabled")
     _move_enabled = Bool(False)
 
     update_position_button = Button
@@ -53,7 +53,7 @@ class RemoteLaserManager(BaseLaserManager):
         raise NotImplementedError
 
     def opened(self):
-        self.debug('opened')
+        self.debug("opened")
         if self.update_position():
             self._opened_hook()
             return True
@@ -61,7 +61,7 @@ class RemoteLaserManager(BaseLaserManager):
     def update_position(self):
         pos = super(RemoteLaserManager, self).update_position()
         if pos:
-            self.trait_set(**dict(zip(('_x', '_y', '_z'), pos)))
+            self.trait_set(**dict(zip(("_x", "_y", "_z"), pos)))
             return True
 
     # private
@@ -85,13 +85,14 @@ class RemoteLaserManager(BaseLaserManager):
             if self.setup_communicator():
                 self._test_connection_hook()
 
-            self.debug('test connection. connected= {}'.format(self.connected))
+            self.debug("test connection. connected= {}".format(self.connected))
             return self.connected, None
 
     def _position_changed(self):
         if self.position is not None:
-            t = Thread(target=self._move_to_position,
-                       args=(self.position, self.use_autocenter))
+            t = Thread(
+                target=self._move_to_position, args=(self.position, self.use_autocenter)
+            )
             t.start()
             self._position_thread = t
 
@@ -104,10 +105,10 @@ class RemoteLaserManager(BaseLaserManager):
                 self.enabled = True
 
     def _get_move_enabled_label(self):
-        return 'Enable Axis Moves' if not self._move_enabled else 'Disable Axis Moves'
+        return "Enable Axis Moves" if not self._move_enabled else "Disable Axis Moves"
 
     def _get_fire_label(self):
-        return 'Fire' if not self._firing else 'Stop'
+        return "Fire" if not self._firing else "Stop"
 
     def _move_enabled_button_fired(self):
         self._move_enabled = not self._move_enabled
@@ -123,4 +124,6 @@ class RemoteLaserManager(BaseLaserManager):
 
     def _get_z(self):
         return self._z
+
+
 # ============= EOF =============================================

@@ -21,7 +21,8 @@ from pychron.envisage.tasks.base_task import BaseTask
 
 
 class MediaStorageTask(BaseTask):
-    name = 'Media Storage'
-    id = 'pychron.media_storage.task'
+    name = "Media Storage"
+    id = "pychron.media_storage.task"
+
 
 # ============= EOF =============================================

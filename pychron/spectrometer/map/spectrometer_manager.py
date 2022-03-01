@@ -24,13 +24,12 @@ from pychron.spectrometer.map.spectrometer import MapSpectrometer
 
 class MapSpectrometerManager(BaseSpectrometerManager):
     spectrometer_klass = MapSpectrometer
+
     def load(self, *args, **kw):
         self.spectrometer.load()
 
     def finish_loading(self):
         self.spectrometer.finish_loading()
 
+
 # ============= EOF =============================================
-
-
-

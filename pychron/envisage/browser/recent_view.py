@@ -21,7 +21,7 @@ from pychron.core.pychron_traits import BorderHGroup
 from pychron.persistence_loggable import PersistenceMixin
 from pychron.pychron_constants import ANALYSIS_TYPES, NULL_STR
 
-PREFIX = {'Last Day': 24, 'Last Week': 24 * 7, 'Last Month': 24 * 30}
+PREFIX = {"Last Day": 24, "Last Week": 24 * 7, "Last Month": 24 * 30}
 
 
 class RecentView(HasTraits, PersistenceMixin):
@@ -32,33 +32,60 @@ class RecentView(HasTraits, PersistenceMixin):
     nhours = Float(dump=True)
     ndays = Float(dump=True)
 
-    presets = Enum(NULL_STR, 'Last Day', 'Last Week', 'Last Month', dump=True)
+    presets = Enum(NULL_STR, "Last Day", "Last Week", "Last Month", dump=True)
 
     analysis_types = List(ANALYSIS_TYPES, dump=True)
     available_analysis_types = List(ANALYSIS_TYPES)
 
-    persistence_name = 'recent_view'
+    persistence_name = "recent_view"
 
     def traits_view(self):
-        v = okcancel_view(VGroup(HGroup(BorderHGroup(UItem('presets', ),
-                                                     label='Presets'),
-                                        BorderHGroup(Item('ndays', label='Days',
-                                                          tooltip='Number of days. Set Presets to --- to enable',
-                                                          enabled_when='presets=="---"'),
-                                                     UItem('nhours',
-                                                           tooltip='Number of hours. Set Presets to --- to enable',
-                                                           enabled_when='presets=="---"'),
-                                                     label='Time')),
-                                 BorderHGroup(UItem('mass_spectrometers',
-                                                    style='custom',
-                                                    editor=CheckListEditor(name='available_mass_spectrometers',
-                                                                           cols=5)),
-                                              defined_when='use_mass_spectrometers',
-                                              label='Mass Spectrometers'),
-                                 BorderHGroup(UItem('analysis_types', style='custom',
-                                                    editor=CheckListEditor(name='available_analysis_types', cols=5)),
-                                              label='Analysis Types')),
-                          title='Recent Analyses')
+        v = okcancel_view(
+            VGroup(
+                HGroup(
+                    BorderHGroup(
+                        UItem(
+                            "presets",
+                        ),
+                        label="Presets",
+                    ),
+                    BorderHGroup(
+                        Item(
+                            "ndays",
+                            label="Days",
+                            tooltip="Number of days. Set Presets to --- to enable",
+                            enabled_when='presets=="---"',
+                        ),
+                        UItem(
+                            "nhours",
+                            tooltip="Number of hours. Set Presets to --- to enable",
+                            enabled_when='presets=="---"',
+                        ),
+                        label="Time",
+                    ),
+                ),
+                BorderHGroup(
+                    UItem(
+                        "mass_spectrometers",
+                        style="custom",
+                        editor=CheckListEditor(
+                            name="available_mass_spectrometers", cols=5
+                        ),
+                    ),
+                    defined_when="use_mass_spectrometers",
+                    label="Mass Spectrometers",
+                ),
+                BorderHGroup(
+                    UItem(
+                        "analysis_types",
+                        style="custom",
+                        editor=CheckListEditor(name="available_analysis_types", cols=5),
+                    ),
+                    label="Analysis Types",
+                ),
+            ),
+            title="Recent Analyses",
+        )
         return v
 
     def _presets_changed(self, new):
@@ -69,5 +96,6 @@ class RecentView(HasTraits, PersistenceMixin):
         if new:
             self.presets = NULL_STR
             self.nhours = new * 24
+
 
 # ============= EOF =============================================

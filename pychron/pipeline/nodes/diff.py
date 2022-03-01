@@ -22,7 +22,7 @@ from pychron.pipeline.nodes.mass_spec import BaseMassSpecNode
 
 
 class DiffNode(BaseMassSpecNode):
-    name = 'Diff'
+    name = "Diff"
 
     configurable = False
     auto_configure = False
@@ -37,4 +37,6 @@ class DiffNode(BaseMassSpecNode):
                 if editor.setup(left):
                     editor.set_diff(left)
                     state.editors.append(editor)
+
+
 # ============= EOF =============================================

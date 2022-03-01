@@ -21,7 +21,6 @@ from pychron.core.yaml import yload
 
 
 class SwitchParser(XMLParser):
-
     def load(self, path):
         self.path = path
         if self.is_yaml:
@@ -36,7 +35,7 @@ class SwitchParser(XMLParser):
 
     @property
     def is_yaml(self):
-        return self.path and (self.path.endswith('.yaml') or self.path.endswith('.yml'))
+        return self.path and (self.path.endswith(".yaml") or self.path.endswith(".yml"))
 
     def get_all_switches(self):
         switches = []
@@ -55,49 +54,57 @@ class SwitchParser(XMLParser):
         return switches
 
     def get_manual_valve(self, *args, **kw):
-        return self._get_item('manual_valve', *args, **kw)
+        return self._get_item("manual_valve", *args, **kw)
 
     def get_valve(self, *args, **kw):
-        return self._get_item('valve', *args, **kw)
+        return self._get_item("valve", *args, **kw)
 
     def _get_item(self, attr, name, groups=None, element=True):
         if groups is None:
             groups = self.get_groups()
 
-        return next((v if element else v.text.strip()
-                     for gi in groups
-                     for v in gi.findall(attr) if v.text.strip() == name), None)
+        return next(
+            (
+                v if element else v.text.strip()
+                for gi in groups
+                for v in gi.findall(attr)
+                if v.text.strip() == name
+            ),
+            None,
+        )
 
     def get_groups(self, element=True):
         ret = []
         if not self.is_yaml:
             tree = self.get_root()
             if tree:
-                ret = [g if element else g.text.strip() for g in tree.findall('group')]
+                ret = [g if element else g.text.strip() for g in tree.findall("group")]
 
         return ret
 
     def get_manual_valves(self, **kw):
-        return self._get_items('manual_valve', **kw)
+        return self._get_items("manual_valve", **kw)
 
     def get_switches(self, **kw):
-        return self._get_items('switch', **kw)
+        return self._get_items("switch", **kw)
 
     def get_valves(self, **kw):
-        return self._get_items('valve', **kw)
+        return self._get_items("valve", **kw)
 
     def get_pipettes(self, **kw):
-        return self._get_items('pipette', **kw)
+        return self._get_items("pipette", **kw)
+
+    def get_double_actuation_valves(self):
+        return self._get_items("double_actuation_valve")
 
     def _get_items(self, attr, group=None, element=True):
 
         if self.is_yaml:
-            return [i for i in self._yobj if i.get('kind', 'valve') == attr]
+            return [i for i in self._yobj if i.get("kind", "valve") == attr]
         else:
             if group is None:
                 group = self.get_root()
-            return [v if element else v.text.strip()
-                    for v in group.findall(attr)]
+            return [v if element else v.text.strip() for v in group.findall(attr)]
+
 
 # ============= EOF =============================================
-

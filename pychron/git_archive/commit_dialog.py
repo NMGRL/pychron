@@ -17,17 +17,16 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
-from pychron.core.ui import set_qt
 from pychron.envisage.icon_button_editor import icon_button_editor
-
-set_qt()
 
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Button, Str, Bool, List, String
 from traitsui.api import UItem, TableEditor, HGroup, VSplit, Handler, VGroup
 from pyface.message_dialog import information
+
 # ============= standard library imports ========================
 import os
+
 # ============= local library imports  ==========================
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
@@ -48,10 +47,10 @@ class ModifiedPath(HasTraits):
 
 class CommitDialogHandler(Handler):
     def close(self, info, is_ok):
-        print('asdf', info.object, info.object.commit_message)
+        print("asdf", info.object, info.object.commit_message)
 
         if is_ok and not info.object.commit_message:
-            information(None, 'Please enter a commit message')
+            information(None, "Please enter a commit message")
             return False
 
         return True
@@ -66,9 +65,10 @@ class CommitDialog(HasTraits):
 
     def __init__(self, ps, *args, **kw):
         super(CommitDialog, self).__init__(*args, **kw)
-        self.paths = sorted((ModifiedPath(pp) for pp in ps),
-                            key=lambda x: x.directory)
-        self.commit_message = 'Updated {}'.format(','.format([pp.name for pp in self.paths]))
+        self.paths = sorted((ModifiedPath(pp) for pp in ps), key=lambda x: x.directory)
+        self.commit_message = "Updated {}".format(
+            ",".format([pp.name for pp in self.paths])
+        )
 
     def _toggle_use_fired(self):
         rows = self.paths
@@ -83,25 +83,42 @@ class CommitDialog(HasTraits):
             ri.use = func(ri)
 
     def traits_view(self):
-        cols = [CheckboxColumn(name='use'),
-                ObjectColumn(name='name'),
-                ObjectColumn(name='directory', width=250)]
+        cols = [
+            CheckboxColumn(name="use"),
+            ObjectColumn(name="name"),
+            ObjectColumn(name="directory", width=250),
+        ]
 
-        v = okcancel_view(VGroup(HGroup(icon_button_editor('toggle_use', 'tick')),
-                                 VSplit(UItem('paths',
-                                              editor=TableEditor(columns=cols,
-                                                                 selection_mode='rows',
-                                                                 selected='selected',
-                                                                 editable=False,
-                                                                 sortable=False, deletable=False)),
-                                        VGroup(UItem('commit_message', style='custom'),
-                                               label='Commit', show_border=True))),
-                          title='Select Files to Commit',
-                          width=400,
-                          handler=CommitDialogHandler())
+        v = okcancel_view(
+            VGroup(
+                HGroup(icon_button_editor("toggle_use", "tick")),
+                VSplit(
+                    UItem(
+                        "paths",
+                        editor=TableEditor(
+                            columns=cols,
+                            selection_mode="rows",
+                            selected="selected",
+                            editable=False,
+                            sortable=False,
+                            deletable=False,
+                        ),
+                    ),
+                    VGroup(
+                        UItem("commit_message", style="custom"),
+                        label="Commit",
+                        show_border=True,
+                    ),
+                ),
+            ),
+            title="Select Files to Commit",
+            width=400,
+            handler=CommitDialogHandler(),
+        )
         return v
 
     def valid_paths(self):
         return [pp for pp in self.paths if pp.use]
+
 
 # ============= EOF =============================================

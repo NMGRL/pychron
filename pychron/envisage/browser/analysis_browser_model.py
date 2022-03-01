@@ -37,7 +37,7 @@ class AnalysisBrowserModel(BrowserModel):
     advanced_filter_button = Button
     add_analysis_group_button = Button
 
-    find_references_enabled = Property(depends_on='table:analyses[]')
+    find_references_enabled = Property(depends_on="table:analyses[]")
 
     def add_analysis_set(self):
         self.table.add_analysis_set()
@@ -51,16 +51,16 @@ class AnalysisBrowserModel(BrowserModel):
         return bool(self.table.analyses)
 
     def _advanced_filter_button_fired(self):
-        self.debug('advanced filter')
+        self.debug("advanced filter")
         # self.warning_dialog('Advanced filtering currently disabled')
         attrs = self.dvc.get_search_attributes()
         if attrs:
-            attrs = sort_isotopes(list({a[0].split('_')[0] for a in attrs}))
+            attrs = sort_isotopes(list({a[0].split("_")[0] for a in attrs}))
 
         m = self.advanced_filter
         m.attributes = attrs
         m.demo()
-        info = m.edit_traits(kind='livemodal')
+        info = m.edit_traits(kind="livemodal")
         if info.result:
             uuids = None
             at = self.table
@@ -78,11 +78,15 @@ class AnalysisBrowserModel(BrowserModel):
             if m.apply_to_current_samples:
                 identifiers = [si.identifier for si in self.samples]
 
-            ans = self.dvc.get_analyses_advanced(m, uuids=uuids, identifiers=identifiers,
-                                                 include_invalid=not m.omit_invalid,
-                                                 limit=m.limit)
+            ans = self.dvc.get_analyses_advanced(
+                m,
+                uuids=uuids,
+                identifiers=identifiers,
+                include_invalid=not m.omit_invalid,
+                limit=m.limit,
+            )
             if m.apply_to_current_selection and not ans:
-                self.warning_dialog('No analyses match criteria')
+                self.warning_dialog("No analyses match criteria")
                 return
 
             ans = self._make_records(ans)
@@ -94,29 +98,36 @@ class AnalysisBrowserModel(BrowserModel):
             self.add_analysis_group(ans)
 
     def _find_references_button_fired(self):
-        self.debug('find references button fired')
+        self.debug("find references button fired")
         if self.sample_view_active:
             self._find_references_hook()
 
     def _load_recent_button_fired(self):
-        self.debug('load recent button fired')
+        self.debug("load recent button fired")
         self._load_recent()
 
     def _table_default(self):
         at = AnalysisTable(dvc=self.dvc)
 
-        prefid = 'pychron.browser'
-        bind_preference(at, 'max_history', '{}.max_history'.format(prefid))
+        prefid = "pychron.browser"
+        bind_preference(at, "max_history", "{}.max_history".format(prefid))
 
         adapter = at.tabular_adapter
-        bind_preference(adapter, 'use_analysis_colors', '{}.use_analysis_colors'.format(prefid))
+        bind_preference(
+            adapter, "use_analysis_colors", "{}.use_analysis_colors".format(prefid)
+        )
 
-        from pychron.experiment.utilities.identifier import ANALYSIS_MAPPING_UNDERSCORE_KEY
+        from pychron.experiment.utilities.identifier import (
+            ANALYSIS_MAPPING_UNDERSCORE_KEY,
+        )
+
         for analysis_type in ANALYSIS_MAPPING_UNDERSCORE_KEY.keys():
-            key = '{}_color'.format(analysis_type)
+            key = "{}_color".format(analysis_type)
             if not hasattr(adapter, key):
                 adapter.add_trait(key, Color)
-            bind_preference(adapter, key, '{}.{}_color'.format(prefid, analysis_type))
+            bind_preference(adapter, key, "{}.{}_color".format(prefid, analysis_type))
 
         return at
+
+
 # ============= EOF =============================================

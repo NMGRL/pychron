@@ -16,6 +16,7 @@
 import os
 
 from traits.api import File, Directory
+
 # ============= standard library imports ========================
 from uncertainties import ufloat
 
@@ -44,18 +45,18 @@ def get_ufloat(f):
 class FileSource(DVCSource):
     selectable = False
     path = File
-    _delimiter = ','
+    _delimiter = ","
     directory = Directory
 
     def url(self):
-        return '{}:{}'.format(self.__class__.__name__, self.path)
+        return "{}:{}".format(self.__class__.__name__, self.path)
 
     def file_gen(self, delimiter):
         if delimiter is None:
             delim = self._delimiter
 
         def gen():
-            with open(self.path, 'r') as rfile:
+            with open(self.path, "r") as rfile:
                 for line in rfile:
                     yield line.strip().split(delim)
 
@@ -79,4 +80,6 @@ class FileSource(DVCSource):
 
     # def traits_view(self):
     #     return View(VGroup(UItem('path'), show_border=True, label='File'))
+
+
 # ============= EOF =============================================

@@ -28,4 +28,6 @@ class RecentRunsNode(DVCNode):
     def _editor_factory(self):
         ed = RecentRunsEditor(dvc=self.dvc)
         return ed
+
+
 # ============= EOF =============================================

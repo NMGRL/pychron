@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from traits.api import HasTraits, Str, Int, Bool, Any, Float, Property, on_trait_change
 from traitsui.api import View, UItem, Item, HGroup, VGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware import get_float
@@ -27,10 +28,11 @@ from pychron.hardware.core.core_device import CoreDevice
 class NMGRLFurnace(CoreDevice):
     @get_float(default=0)
     def get_temperature(self):
-        return self.ask('GetLabTemperature')
+        return self.ask("GetLabTemperature")
 
     @get_float(default=0)
     def get_humidity(self):
-        return self.ask('GetLabHumidity')
+        return self.ask("GetLabHumidity")
+
 
 # ============= EOF =============================================

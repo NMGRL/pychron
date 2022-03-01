@@ -32,4 +32,6 @@ class MultiCollector(DataCollector):
     """
 
     pass
+
+
 # ============= EOF =============================================

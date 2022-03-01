@@ -24,7 +24,6 @@ from pychron.hardware.labjack.base_u3_lv import BaseU3LV
 
 class HeadlessU3LV(BaseU3LV, HeadlessCoreDevice):
     pass
+
+
 # ============= EOF =============================================
-
-
-

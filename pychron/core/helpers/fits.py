@@ -22,7 +22,7 @@ import six
 
 from pychron.pychron_constants import AUTO_LINEAR_PARABOLIC, EXPONENTIAL
 
-FITS = ['linear', 'parabolic', 'cubic', 'quartic']
+FITS = ["linear", "parabolic", "cubic", "quartic"]
 
 
 def fit_to_degree(f):
@@ -37,26 +37,32 @@ def natural_name_fit(f):
 
 
 def convert_fit(f):
-    err = 'SEM'
+    err = "SEM"
     if isinstance(f, tuple):
         f, err = f
     if isinstance(f, (str, six.text_type)):
         f = f.lower()
-        if '_' in f:
+        if "_" in f:
             try:
-                f, err = f.split('_')
+                f, err = f.split("_")
                 err = err.upper()
             except ValueError:
                 return None, None
 
         if f in FITS:
             f = FITS.index(f) + 1
-        elif f in ('average', 'weighted mean', EXPONENTIAL, AUTO_LINEAR_PARABOLIC.lower()) or f.startswith('custom:'):
+        elif f in (
+            "average",
+            "weighted mean",
+            EXPONENTIAL,
+            AUTO_LINEAR_PARABOLIC.lower(),
+        ) or f.startswith("custom:"):
             if not err:
-                err = 'SEM' if 'sem' in f else 'SD'
+                err = "SEM" if "sem" in f else "SD"
         else:
             f = None
 
     return f, err
+
 
 # ============= EOF =============================================

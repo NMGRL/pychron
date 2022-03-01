@@ -19,9 +19,21 @@
 from __future__ import absolute_import
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import hot
-from numpy import invert, zeros_like, asarray, max, copy, ones_like, zeros, uint8, average, ravel_multi_index
+from numpy import (
+    invert,
+    zeros_like,
+    asarray,
+    max,
+    copy,
+    ones_like,
+    zeros,
+    uint8,
+    average,
+    ravel_multi_index,
+)
 from skimage.color import rgb2gray, gray2rgb
 from skimage.draw import circle, polygon
+
 # ============= local library imports  ==========================
 from skimage.feature import peak_local_max
 from skimage.filters import gaussian
@@ -38,7 +50,7 @@ class LumenDetector(Locator):
     threshold = 25
     pxpermm = 23
 
-    mask_kind = 'Hole'
+    mask_kind = "Hole"
     beam_radius = 0
     custom_mask_radius = 0
     hole_radius = 0
@@ -83,12 +95,12 @@ class LumenDetector(Locator):
         src[src <= threshold] = 0
 
         if not self._target:
-            targets = self.find_targets(None, src, dim, search={'n': 2})
+            targets = self.find_targets(None, src, dim, search={"n": 2})
             marea = m.sum()
 
             area = 0
             if targets:
-                self.debug('found targets={}'.format(len(targets)))
+                self.debug("found targets={}".format(len(targets)))
                 for t in targets:
                     if t.area > marea * 0.15:
                         if t.area > area:
@@ -114,16 +126,23 @@ class LumenDetector(Locator):
         if area:
             ss = tsrc.sum()
             v = ss / (area * pd)
-            self.debug('v={}, sum={}, area={}, pd={}, mask={}'.format(v, ss, area, pd, m.sum()))
+            self.debug(
+                "v={}, sum={}, area={}, pd={}, mask={}".format(v, ss, area, pd, m.sum())
+            )
 
         return src, v, targets
 
     def find_targets(self, image, src, dim, mask=False, search=None):
-        targets = self._find_targets(image, src, dim,
-                                     filter_targets=False,
-                                     inverted=True,
-                                     convexity_filter=0.75,
-                                     mask=mask, search=search)
+        targets = self._find_targets(
+            image,
+            src,
+            dim,
+            filter_targets=False,
+            inverted=True,
+            convexity_filter=0.75,
+            mask=mask,
+            search=search,
+        )
         self.active_targets = None
         if targets:
             targets = self._filter(targets, self._target_near_center, src)
@@ -139,13 +158,13 @@ class LumenDetector(Locator):
         if self.grain_measuring:
             targets = self.active_targets
             if targets is not None:
-                self.debug('active targets={}'.format(len(targets)))
+                self.debug("active targets={}".format(len(targets)))
             else:
-                self.debug('no active targets')
+                self.debug("no active targets")
         else:
-            targets = self.find_targets(None, lum, dim, mask=mask_dim, search={'n': 2})
+            targets = self.find_targets(None, lum, dim, mask=mask_dim, search={"n": 2})
             if targets:
-                self.debug('found targets={}'.format(len(targets)))
+                self.debug("found targets={}".format(len(targets)))
 
         src = gaussian(lum, blur) * pixel_depth
         # mask = self._mask(lum)
@@ -165,7 +184,7 @@ class LumenDetector(Locator):
             peak_img[circle(py, px, min_distance)] = 255
 
             ilum = lum[target.mask].sum()
-            area = (target.area + target.pactual / 2)
+            area = target.area + target.pactual / 2
             # else:
             #     ilum = lum.sum()
             #     area = mask.sum()
@@ -218,14 +237,15 @@ class LumenDetector(Locator):
 
     @property
     def mask_radius(self):
-        if self.mask_kind == 'Hole':
+        if self.mask_kind == "Hole":
             d = self.hole_radius
-        elif self.mask_kind == 'Beam':
+        elif self.mask_kind == "Beam":
             d = max(0.1, self.beam_radius * 1.1)
         else:
             d = self.custom_mask_radius
 
         return d
+
 
 # ============= EOF =============================================
 #

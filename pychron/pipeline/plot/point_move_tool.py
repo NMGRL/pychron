@@ -23,8 +23,8 @@ from traits.api import Enum, CArray
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-normal_pointer = Pointer('normal')
-hand_pointer = Pointer('hand')
+normal_pointer = Pointer("normal")
+hand_pointer = Pointer("hand")
 
 
 class PointMoveTool(DragTool):
@@ -32,7 +32,7 @@ class PointMoveTool(DragTool):
     _prev_pt = CArray
     _start_pt = None
 
-    constrain = Enum(None, 'x', 'y')
+    constrain = Enum(None, "x", "y")
 
     def is_draggable(self, x, y):
         return self.component.hittest((x, y))
@@ -48,9 +48,9 @@ class PointMoveTool(DragTool):
         dy = cur_pt[1] - self._prev_pt[1]
         dx = cur_pt[0] - self._prev_pt[0]
 
-        if self.constrain == 'x':
+        if self.constrain == "x":
             dy = 0
-        elif self.constrain == 'y':
+        elif self.constrain == "y":
             dx = 0
 
         index = plot.index.get_data() + dx
@@ -60,12 +60,12 @@ class PointMoveTool(DragTool):
 
         xy = plot.map_data((0, 0), all_values=True)
         xy2 = plot.map_data((pad, pad), all_values=True)
-        if self.constrain == 'y':
+        if self.constrain == "y":
             dd = xy2[1] - xy[1]
             value[value < dd] = dd
             h = plot.map_data((0, plot.y2 - pad), all_values=True)[1]
             value[value > h] = h
-        elif self.constrain == 'x':
+        elif self.constrain == "x":
             dd = xy2[0] - xy[0]
             index[index < dd] = dd
             w = plot.map_data((plot.x2 - pad, 0), all_values=True)[1]
@@ -98,9 +98,9 @@ class OverlayMoveTool(PointMoveTool):
 
     def dragging(self, event):
         cpx, cpy = self.component.get_current_point()
-        if self.constrain == 'x':
+        if self.constrain == "x":
             ax, ay = cpx, event.y
-        elif self.constrain == 'y':
+        elif self.constrain == "y":
             ax, ay = event.x, cpy
         else:
             ax, ay = event.x, event.y
@@ -111,7 +111,7 @@ class OverlayMoveTool(PointMoveTool):
             dx, dy = px - event.x, py - event.y
             self._start_pt = event.x, event.y
             self.component.update_offset(dx, dy)
-
+            self.component.do_layout()
         except ValueError:
             pass
 
@@ -122,7 +122,7 @@ class OverlayMoveTool(PointMoveTool):
 
 class LabelMoveTool(OverlayMoveTool):
     def drag_start(self, event):
-        event.window.set_pointer('hand')
+        event.window.set_pointer("hand")
         x, y = self.component.get_current_point()
         self._offset = (event.x - x, event.y - y)
         event.handled = True

@@ -60,10 +60,10 @@ class StepRamper(object):
 class Ramper(object):
     def ramp(self, func, start, end, duration, rate=0, period=1):
         """
-            rate = units/s
-            duration= s
+        rate = units/s
+        duration= s
 
-            use rate if specified
+        use rate if specified
         """
         st = time.time()
         if end is not None:
@@ -89,5 +89,6 @@ class Ramper(object):
                 i += 1
             else:
                 break
+
 
 # ============= EOF =============================================

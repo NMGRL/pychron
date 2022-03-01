@@ -32,18 +32,20 @@ class TwitterClient(Loggable):
         api = self.connect()
         user = api.VerifyCredentials()
         if user is None:
-            connected, err = False, 'Invalid credentials'
+            connected, err = False, "Invalid credentials"
         else:
-            connected, err = True, ''
+            connected, err = True, ""
 
         return connected, err
 
     def connect(self):
         if self._api is None:
-            api = twitter.Api(consumer_key=self.consumer_key,
-                              consumer_secret=self.consumer_secret,
-                              access_token_key=self.access_key,
-                              access_token_secret=self.access_secret)
+            api = twitter.Api(
+                consumer_key=self.consumer_key,
+                consumer_secret=self.consumer_secret,
+                access_token_key=self.access_key,
+                access_token_secret=self.access_secret,
+            )
             self._api = api
 
         return self._api
@@ -51,4 +53,6 @@ class TwitterClient(Loggable):
     def twit(self, msg):
         api = self.connect()
         api.PostUpdate(msg)
+
+
 # ============= EOF =============================================

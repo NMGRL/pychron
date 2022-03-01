@@ -19,4 +19,6 @@ from pychron.hardware.labjack.base_t4 import BaseT4
 
 class T4(BaseT4, CoreDevice):
     pass
+
+
 # ============= EOF =============================================

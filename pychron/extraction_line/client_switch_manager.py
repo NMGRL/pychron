@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
+
+import os
 from socket import gethostbyname, gethostname
 
 from pychron.extraction_line.switch_manager import SwitchManager
@@ -69,7 +71,7 @@ class ClientSwitchManager(SwitchManager):
     def load_valve_lock_states(self, refresh=True, force=False):
         word = self.get_lock_word()
         if globalv.valve_debug:
-            self.debug('valve lock word={}'.format(word))
+            self.debug("valve lock word={}".format(word))
 
         changed = False
         if word is not None:
@@ -90,8 +92,8 @@ class ClientSwitchManager(SwitchManager):
 
     def load_valve_owners(self, refresh=True):
         """
-            needs to return all valves
-            not just ones that are owned
+        needs to return all valves
+        not just ones that are owned
         """
         # elm = self.extraction_line_manager
         owners = self.get_owners_word()
@@ -124,8 +126,8 @@ class ClientSwitchManager(SwitchManager):
                 if self._validate_checksum(word):
                     d = self._parse_word(word[:-4])
                     if globalv.valve_debug:
-                        self.debug('Get State Word: {}'.format(word.strip()))
-                        self.debug('Parsed State Word: {}'.format(d))
+                        self.debug("Get State Word: {}".format(word.strip()))
+                        self.debug("Parsed State Word: {}".format(d))
             except BaseException:
                 pass
 
@@ -142,20 +144,20 @@ class ClientSwitchManager(SwitchManager):
                 if self._validate_checksum(word):
                     d = self._parse_word(word[:-4])
                     if globalv.valve_debug:
-                        self.debug('Get Lock Word: {}'.format(word))
-                        self.debug('Parsed Lock Word: {}'.format(d))
+                        self.debug("Get Lock Word: {}".format(word))
+                        self.debug("Parsed Lock Word: {}".format(d))
 
         return d
 
     def get_owners_word(self):
         """
-         eg.
-                1. 129.128.12.141-A,B,C:D,E,F
-                2. A,B,C,D,E,F
-                3. 129.128.12.141-A,B,C:129.138.12.150-D,E:F
-                    A,B,C owned by 141,
-                    D,E owned by 150
-                    F free
+        eg.
+               1. 129.128.12.141-A,B,C:D,E,F
+               2. A,B,C,D,E,F
+               3. 129.128.12.141-A,B,C:129.138.12.150-D,E:F
+                   A,B,C owned by 141,
+                   D,E owned by 150
+                   F free
         """
         if self.actuators:
             rs = []
@@ -164,18 +166,20 @@ class ClientSwitchManager(SwitchManager):
             if func:
                 word = func()
                 if word:
-                    groups = word.split(':')
+                    groups = word.split(":")
                     if len(groups) > 1:
                         for gi in groups:
-                            if '-' in gi:
-                                owner, vs = gi.split('-')
+                            if "-" in gi:
+                                owner, vs = gi.split("-")
                             else:
-                                owner, vs = '', gi
+                                owner, vs = "", gi
 
-                            rs.append((owner, vs.split(',')))
+                            rs.append((owner, vs.split(",")))
 
                     else:
-                        rs = [('', groups[0].split(',')), ]
+                        rs = [
+                            ("", groups[0].split(",")),
+                        ]
             return rs
 
     # private
@@ -186,7 +190,7 @@ class ClientSwitchManager(SwitchManager):
         self.load_valve_lock_states()
 
     def _save_soft_lock_states(self):
-        self.debug('Client Mode. Not saving lock states')
+        self.debug("Client Mode. Not saving lock states")
 
     @property
     def state_checksum(self):
@@ -202,7 +206,9 @@ class ClientSwitchManager(SwitchManager):
         if local == remote:
             return True
         else:
-            self.warning('State checksums do not match. Local:{} Remote:{}'.format(local, remote))
+            self.warning(
+                "State checksums do not match. Local:{} Remote:{}".format(local, remote)
+            )
 
             # if remote is None:
             #     return
@@ -240,7 +246,5 @@ class ClientSwitchManager(SwitchManager):
             #         self.debug(tmpl.format(vi, state, lock, fail, statew, lockw, failw))
             #     self.debug('===============================================================')
 
+
 # ============= EOF =============================================
-
-
-

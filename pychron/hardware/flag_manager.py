@@ -17,8 +17,8 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import HasTraits, List
-from traitsui.api import View, Item, ListEditor, InstanceEditor, \
-    Group, VGroup
+from traitsui.api import View, Item, ListEditor, InstanceEditor, Group, VGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.flag import Flag, TimedFlag
@@ -42,42 +42,50 @@ class FlagManager(Viewable):
     def traits_view(self):
         v = View(
             VGroup(
-                self._flag_item_factory('flags', 'Flags'),
-                self._flag_item_factory('timed_flags', 'Timed Flags'),
-                self._flag_item_factory('valve_flags', 'Valve Flags')),
-            title='Flag Manager',
+                self._flag_item_factory("flags", "Flags"),
+                self._flag_item_factory("timed_flags", "Timed Flags"),
+                self._flag_item_factory("valve_flags", "Valve Flags"),
+            ),
+            title="Flag Manager",
             width=300,
             handler=self.handler_klass,
-            resizable=True)
+            resizable=True,
+        )
         return v
 
     def _flag_item_factory(self, name, label):
-        return Group(Item(name, show_label=False,
-                          style='readonly',
-                          editor=ListEditor(editor=InstanceEditor(editable=True),
-                                            style='custom')),
-                     show_border=True,
-                     label=label)
+        return Group(
+            Item(
+                name,
+                show_label=False,
+                style="readonly",
+                editor=ListEditor(editor=InstanceEditor(editable=True), style="custom"),
+            ),
+            show_border=True,
+            label=label,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from traits.api import Button
 
     class Demo(HasTraits):
         test = Button
 
         def traits_view(self):
-            return View(Item('test'))
+            return View(Item("test"))
 
         def _test_fired(self):
             fm = FlagManager()
-            fm.flags = [Flag('ObamaPipetteFlag'),
-                        Flag('JanPipetteFlag')]
-            fm.timed_flags = [TimedFlag('ObamaPipetteFlag'),
-                              TimedFlag('JanPipetteFlag')]
+            fm.flags = [Flag("ObamaPipetteFlag"), Flag("JanPipetteFlag")]
+            fm.timed_flags = [
+                TimedFlag("ObamaPipetteFlag"),
+                TimedFlag("JanPipetteFlag"),
+            ]
 
             fm.timed_flags[0].set(100)
             fm.edit_traits()
+
     #    fm = FlagManager()
     #    fm.flags = [Flag('ObamaPipetteFlag'),
     #                Flag('JanPipetteFlag')]

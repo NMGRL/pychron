@@ -16,21 +16,29 @@
 from traitsui.api import View, VGroup, HGroup, Item, EnumEditor, RangeEditor
 
 from pychron.core.pychron_traits import BorderVGroup
-from pychron.options.options import MainOptions, object_column, checkbox_column, SubOptions
+from pychron.options.options import (
+    MainOptions,
+    object_column,
+    checkbox_column,
+    SubOptions,
+)
 
 
 class DefineEquilibrationMainOptions(MainOptions):
     def _get_columns(self):
-        cols = [object_column(name='name', editable=False),
-                # checkbox_column(name='plot_enabled', label='Plot'),
-                checkbox_column(name='save_enabled', label='Enabled'),
-                object_column(name='equilibration_time', label='Eq. Time'),
-                ]
+        cols = [
+            object_column(name="name", editable=False),
+            # checkbox_column(name='plot_enabled', label='Plot'),
+            checkbox_column(name="save_enabled", label="Enabled"),
+            object_column(name="equilibration_time", label="Eq. Time"),
+        ]
         return cols
 
     def _get_edit_view(self):
-        g1 = HGroup(Item('name', editor=EnumEditor(name='names')),
-                    Item('equilibration_time', label='Eq. Time'))
+        g1 = HGroup(
+            Item("name", editor=EnumEditor(name="names")),
+            Item("equilibration_time", label="Eq. Time"),
+        )
 
         v = View(VGroup(g1, show_border=True))
         return v
@@ -38,12 +46,17 @@ class DefineEquilibrationMainOptions(MainOptions):
 
 class DefineEquilibrationSubOptions(SubOptions):
     def traits_view(self):
-        v = View(BorderVGroup(Item('show_statistics'),
-                              Item('ncols',
-                                   editor=RangeEditor(mode='text'), label='N. Columns')))
+        v = View(
+            BorderVGroup(
+                Item("show_statistics"),
+                Item("ncols", editor=RangeEditor(mode="text"), label="N. Columns"),
+            )
+        )
         return v
 
 
-VIEWS = {'main': DefineEquilibrationMainOptions,
-         'display': DefineEquilibrationSubOptions}
+VIEWS = {
+    "main": DefineEquilibrationMainOptions,
+    "display": DefineEquilibrationSubOptions,
+}
 # ============= EOF =============================================

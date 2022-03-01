@@ -21,22 +21,24 @@ from traitsui.api import View, FileEditor, VGroup, Item
 
 # ============= standard library imports ========================
 import os
+
 # ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class ThermoFurnacePreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.thermo.furnace'
+    preferences_path = "pychron.thermo.furnace"
 
 
 class ThermoFurnacePreferencesPane(PreferencesPane):
-    category = 'Thermo Furnace'
+    category = "Thermo Furnace"
     model_factory = ThermoFurnacePreferences
 
     def traits_view(self):
         v = View()
         return v
+
 
 # class NMGRLFurnaceControlPreferences(BasePreferencesHelper):
 #     preferences_path = 'pychron.nmgrlfurnace.control'

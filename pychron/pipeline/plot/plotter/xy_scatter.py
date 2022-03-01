@@ -18,6 +18,7 @@
 
 # ============= standard library imports ========================
 from numpy import array
+
 # ============= local library imports  ==========================
 from uncertainties import nominal_value, std_dev
 
@@ -41,9 +42,9 @@ class XYScatter(BaseArArFigure):
         opt = self.options
         if plots:
             for i, po in enumerate(plots):
-                if po.name in ('Ratio', 'Scatter'):
+                if po.name in ("Ratio", "Scatter"):
                     self._plot_ratio(po, i)
-                elif po.name == 'TimeSeries':
+                elif po.name == "TimeSeries":
                     self._plot_series(po, i)
 
                 if opt.show_statistics:
@@ -53,25 +54,29 @@ class XYScatter(BaseArArFigure):
         xs = [nominal_value(ai) for ai in self._unpack_attr(po.xtitle)]
         ys = [nominal_value(ai) for ai in self._unpack_attr(po.ytitle)]
 
-        plot, scatter, line = self.graph.new_series(x=array(xs), y=array(ys),
-                                                    fit=po.fit,
-                                                    add_inspector=False,
-                                                    marker=po.marker,
-                                                    marker_size=po.marker_size)
+        plot, scatter, line = self.graph.new_series(
+            x=array(xs),
+            y=array(ys),
+            fit=po.fit,
+            add_inspector=False,
+            marker=po.marker,
+            marker_size=po.marker_size,
+        )
 
         opt = self.options
         nsigma = opt.error_bar_nsigma
-        for axk in 'xy':
-            caps = getattr(opt, '{}_end_caps'.format(axk))
-            visible = getattr(po, '{}_error'.format(axk))
+        for axk in "xy":
+            caps = getattr(opt, "{}_end_caps".format(axk))
+            visible = getattr(po, "{}_error".format(axk))
 
-            attr = getattr(po, '{}title'.format(axk))
+            attr = getattr(po, "{}title".format(axk))
             es = [std_dev(ai) for ai in self._unpack_attr(attr)]
-            self._add_error_bars(scatter, es, axk, nsigma,
-                                 end_caps=caps,
-                                 visible=visible)
+            self._add_error_bars(
+                scatter, es, axk, nsigma, end_caps=caps, visible=visible
+            )
 
     def _plot_series(self, po, i):
         pass
+
 
 # ============= EOF =============================================

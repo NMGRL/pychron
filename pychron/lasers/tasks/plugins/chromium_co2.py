@@ -20,12 +20,15 @@ from pychron.lasers.tasks.plugins.chromium import ChromiumPlugin
 
 
 class ChromiumCO2Plugin(ChromiumPlugin):
-    id = 'pychron.chromium.co2'
-    name = 'ChromiumCO2'
-    klass = ('pychron.lasers.laser_managers.chromium_laser_manager', 'ChromiumCO2Manager')
-    task_name = 'Chromium CO2'
-    accelerator = 'Ctrl+Shift+]'
-    task_klass = ('pychron.lasers.tasks.laser_task', 'ChromiumCO2Task')
+    id = "pychron.chromium.co2"
+    name = "ChromiumCO2"
+    klass = (
+        "pychron.lasers.laser_managers.chromium_laser_manager",
+        "ChromiumCO2Manager",
+    )
+    task_name = "Chromium CO2"
+    accelerator = "Ctrl+Shift+]"
+    task_klass = ("pychron.lasers.tasks.laser_task", "ChromiumCO2Task")
 
 
 # ============= EOF =============================================

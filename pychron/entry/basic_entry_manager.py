@@ -22,12 +22,11 @@ from pychron.loggable import Loggable
 
 
 class EDAdapter(TabularAdapter):
-    columns = [('Name', 'name')]
+    columns = [("Name", "name")]
 
 
 class MSAdapter(TabularAdapter):
-    columns = [('Name', 'name'),
-               ('Kind', 'kind')]
+    columns = [("Name", "name"), ("Kind", "kind")]
 
 
 class Named(HasTraits):
@@ -112,10 +111,16 @@ class MSEntry(NamedEntry):
         dvc.add_mass_spectrometer(self.name, self.kind)
 
     def traits_view(self):
-        return View(BorderVGroup(HGroup(Item('name'), Item('kind')),
-                                 UItem('items', editor=TabularEditor(selected='selected',
-                                                                              adapter=MSAdapter())),
-                                 label='Mass Spectrometer'))
+        return View(
+            BorderVGroup(
+                HGroup(Item("name"), Item("kind")),
+                UItem(
+                    "items",
+                    editor=TabularEditor(selected="selected", adapter=MSAdapter()),
+                ),
+                label="Mass Spectrometer",
+            )
+        )
 
 
 class EDEntry(NamedEntry):
@@ -131,14 +136,20 @@ class EDEntry(NamedEntry):
         dvc.add_extraction_device(self.name)
 
     def traits_view(self):
-        return View(BorderVGroup(HGroup(Item('name')),
-                                 UItem('items', editor=TabularEditor(selected='selected',
-                                                                     adapter=EDAdapter())),
-                                 label='Extract Device'))
+        return View(
+            BorderVGroup(
+                HGroup(Item("name")),
+                UItem(
+                    "items",
+                    editor=TabularEditor(selected="selected", adapter=EDAdapter()),
+                ),
+                label="Extract Device",
+            )
+        )
 
 
 class BasicEntryManager(Loggable):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance("pychron.dvc.dvc.DVC")
     ms = Instance(MSEntry, ())
     ed = Instance(EDEntry, ())
 
@@ -153,9 +164,11 @@ class BasicEntryManager(Loggable):
         if self.ms.name:
             self.ms.save(self.dvc)
         else:
-            self.info('Skipping Mass Spectrometer')
+            self.info("Skipping Mass Spectrometer")
         if self.ed.name:
             self.ed.save(self.dvc)
         else:
-            self.info('Skipping Extract Device')
+            self.info("Skipping Extract Device")
+
+
 # ============= EOF =============================================

@@ -24,7 +24,7 @@ from pychron.hardware.polyinomial_mapper import PolynomialMapperMixin
 class ADCDevice(AbstractDevice, PolynomialMapperMixin):
     _rvoltage = None
     channel = None
-    scan_func = 'read_voltage'
+    scan_func = "read_voltage"
 
     # def __init__(self, *args, **kw):
     # """
@@ -37,31 +37,34 @@ class ADCDevice(AbstractDevice, PolynomialMapperMixin):
     #     self.poly_mapper = PolynomialMapper()
 
     def load_additional_args(self, config):
-        adc = 'ADC'
+        adc = "ADC"
         if config.has_section(adc):
-            klass = self.config_get(config, adc, 'klass')
-            name = self.config_get(config, adc, 'name', default=klass)
+            klass = self.config_get(config, adc, "klass")
+            name = self.config_get(config, adc, "name", default=klass)
 
-            pkgs = ('pychron.hardware.adc.analog_digital_converter',
-                    'pychron.hardware.agilent.agilent_multiplexer',
-                    'pychron.hardware.remote.agilent_multiplexer',
-                    'pychron.hardware.ncd.adc')
+            pkgs = (
+                "pychron.hardware.adc.analog_digital_converter",
+                "pychron.hardware.agilent.agilent_multiplexer",
+                "pychron.hardware.remote.agilent_multiplexer",
+                "pychron.hardware.ncd.adc",
+            )
 
             for pi in pkgs:
                 factory = self.get_factory(pi, klass)
                 if factory:
                     break
 
-            self.set_attribute(config, 'channel', adc, 'channel')
-            self._cdevice = factory(name=name,
-                                    configuration_dir_name=self.configuration_dir_name)
+            self.set_attribute(config, "channel", adc, "channel")
+            self._cdevice = factory(
+                name=name, configuration_dir_name=self.configuration_dir_name
+            )
 
             self.load_mapping(config)
             return True
 
     def read_voltage(self, **kw):
         """
-            red the voltage from the actual device
+        red the voltage from the actual device
         """
         if self._cdevice is not None:
             if self.channel:
@@ -82,10 +85,10 @@ class ADCDevice(AbstractDevice, PolynomialMapperMixin):
 
     def get_output(self, force=False):
         """
-            get a mapped output value e.g Temperature
+        get a mapped output value e.g Temperature
 
-            if force is True, force a query to the device, otherwise
-            use the stored value
+        if force is True, force a query to the device, otherwise
+        use the stored value
         """
         if force or self._rvoltage is None:
             v = self.read_voltage()

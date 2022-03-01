@@ -19,4 +19,6 @@ from pychron.hardware.core.core_device import CoreDevice
 class ThermoFurnaceFeeder(CoreDevice):
     def get_position(self, *args, **kw):
         return 0
+
+
 # ============= EOF =============================================

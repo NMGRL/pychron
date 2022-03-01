@@ -8,22 +8,28 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 class BaseView(ColumnSorterMixin):
     selected = Any
-    title = ''
+    title = ""
     _tabular_adapter_klass = TabularAdapter
     width = 500
     height = 300
 
     def traits_view(self):
-        v = okcancel_view(UItem('records', editor=self._get_editor()),
-                          title=self.title,
-                          kind='livemodal',
-                          resizable=True, width=self.width, height=self.height)
+        v = okcancel_view(
+            UItem("records", editor=self._get_editor()),
+            title=self.title,
+            kind="livemodal",
+            resizable=True,
+            width=self.width,
+            height=self.height,
+        )
         return v
 
     def _get_editor(self):
-        ed = TabularEditor(selected='selected',
-                           column_clicked='column_clicked',
-                           adapter=self._get_adapter())
+        ed = TabularEditor(
+            selected="selected",
+            column_clicked="column_clicked",
+            adapter=self._get_adapter(),
+        )
         return ed
 
     def _get_adapter(self):
@@ -38,15 +44,17 @@ class LoadAdapter(TabularAdapter):
     username_text = Property
 
     def _get_username_text(self):
-        return self.item.username or ''
+        return self.item.username or ""
 
 
 class LoadView(BaseView):
-    title = 'Loads'
+    title = "Loads"
     _tabular_adapter_klass = LoadAdapter
 
     def _get_columns(self):
-        return [('Load Name', 'name'),
-                ('Holder', 'holderName'),
-                ('Date', 'create_date'),
-                ('User', 'username')]
+        return [
+            ("Load Name", "name"),
+            ("Holder", "holderName"),
+            ("Date", "create_date"),
+            ("User", "username"),
+        ]

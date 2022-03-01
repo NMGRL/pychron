@@ -19,6 +19,7 @@ from pychron.lasers.tasks.plugins.remote_laser_plugin import RemoteLaserPlugin
 
 
 class ChromiumPlugin(RemoteLaserPlugin):
-
     pass
+
+
 # ============= EOF =============================================

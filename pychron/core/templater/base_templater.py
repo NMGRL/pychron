@@ -19,36 +19,38 @@ from __future__ import absolute_import
 from traits.has_traits import HasTraits
 from traits.trait_types import Button, List, String, Any, Str, Dict
 from traits.traits import Property
+
 # ============= standard library imports ========================
 import os
 import pickle
+
 # ============= local library imports  ==========================
 from pychron.paths import paths
 
 
 class BaseTemplater(HasTraits):
-    formatter = Property(depends_on='label')
+    formatter = Property(depends_on="label")
     clear_button = Button
     keywords = List
     non_keywords = List
     label = String
     activated = Any
-    example = Property(depends_on='label')
+    example = Property(depends_on="label")
     view_title = Str
 
     predefined_label = Str
-    predefined_labels = Property(depends_on='user_predefined_labels')
-    base_predefined_labels = List([''])
+    predefined_labels = Property(depends_on="user_predefined_labels")
+    base_predefined_labels = List([""])
     user_predefined_labels = List
 
-    add_enabled = Property(depends_on='label')
-    delete_enabled = Property(depends_on='label')
+    add_enabled = Property(depends_on="label")
+    delete_enabled = Property(depends_on="label")
     add_label_button = Button
     delete_label_button = Button
 
-    attribute_keys = Property(depends_on='label')
+    attribute_keys = Property(depends_on="label")
 
-    persistence_name = ''
+    persistence_name = ""
 
     attributes = List
     example_context = Dict
@@ -58,19 +60,20 @@ class BaseTemplater(HasTraits):
         super(BaseTemplater, self).__init__(*args, **kw)
         self.load()
 
-    #persistence
+    # persistence
     def load(self):
-        p = os.path.join(paths.hidden_dir, self.persistence_name)
-        if os.path.isfile(p):
-            with open(p, 'r') as rfile:
-                try:
-                    self.user_predefined_labels = pickle.load(rfile)
-                except BaseException:
-                    pass
+        if paths.hidden_dir:
+            p = os.path.join(paths.hidden_dir, self.persistence_name)
+            if os.path.isfile(p):
+                with open(p, "r") as rfile:
+                    try:
+                        self.user_predefined_labels = pickle.load(rfile)
+                    except BaseException:
+                        pass
 
     def dump(self):
         p = os.path.join(paths.hidden_dir, self.persistence_name)
-        with open(p, 'w') as wfile:
+        with open(p, "w") as wfile:
             try:
                 pickle.dump(self.user_predefined_labels, wfile)
             except BaseException:
@@ -78,7 +81,7 @@ class BaseTemplater(HasTraits):
 
     def _get_attribute_keys(self):
         ks = []
-        for k in self.label.split(' '):
+        for k in self.label.split(" "):
             if k in self.attributes:
                 ks.append(k.lower())
 
@@ -86,20 +89,20 @@ class BaseTemplater(HasTraits):
 
     def _get_formatter(self):
         ns = []
-        for k in self.label.split(' '):
+        for k in self.label.split(" "):
             if k in self.attributes:
-                if k == '<SPACE>':
-                    k = ' '
+                if k == "<SPACE>":
+                    k = " "
                 else:
                     k = k.lower()
                     try:
                         f = self.attribute_formats[k]
                     except KeyError:
-                        f='s'
+                        f = "s"
 
-                    k = '{{{}:{}}}'.format(k, f)
+                    k = "{{{}:{}}}".format(k, f)
             ns.append(k)
-        s = ''.join(ns)
+        s = "".join(ns)
         return s
 
     def _get_example(self):
@@ -120,9 +123,9 @@ class BaseTemplater(HasTraits):
             self.user_predefined_labels.remove(self.label)
             self.dump()
             self.load()
-            self.label = ''
+            self.label = ""
 
-    #handlers
+    # handlers
     def _add_label_button_fired(self):
         if self.label not in self.predefined_labels:
             self.user_predefined_labels.append(self.label)
@@ -130,14 +133,14 @@ class BaseTemplater(HasTraits):
             self.load()
 
     def _clear_button_fired(self):
-        self.label = ''
-        self.predefined_label = ''
+        self.label = ""
+        self.predefined_label = ""
 
     def _activated_changed(self, new):
         if new:
             self.keywords.append(new)
             if self.label:
-                self.label += ' {}'.format(new)
+                self.label += " {}".format(new)
             else:
                 self.label = new
 

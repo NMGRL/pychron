@@ -20,13 +20,16 @@ from pychron.git.hosts.local import LocalGitHostService
 
 class LocalGitPlugin(BasePlugin):
     def _service_offers_default(self):
-        so = self.service_offer_factory(protocol=IGitHost,
-                                        factory=self._factory)
+        so = self.service_offer_factory(protocol=IGitHost, factory=self._factory)
 
-        return [so, ]
+        return [
+            so,
+        ]
 
     def _factory(self):
         c = LocalGitHostService()
         c.bind_preferences()
         return c
+
+
 # ============= EOF =============================================

@@ -27,8 +27,15 @@ from pychron.classifier.base_classifier import BaseClassifier
 
 def make_sample(iso):
     # print 'make sample {} {} {}'.format(iso.mass, iso.n, iso.intercept_percent_error)
-    return iso.mass, iso.n, iso.value, iso.intercept_percent_error, iso.get_slope(), iso.standard_fit_error(), \
-           iso.noutliers()
+    return (
+        iso.mass,
+        iso.n,
+        iso.value,
+        iso.intercept_percent_error,
+        iso.get_slope(),
+        iso.standard_fit_error(),
+        iso.noutliers(),
+    )
 
 
 class IsotopeClassifier(BaseClassifier):
@@ -37,12 +44,15 @@ class IsotopeClassifier(BaseClassifier):
             0= Bad
             1= Good
     """
+
     _clf = None
-    _persistence_name = 'clf.isotope.p'
+    _persistence_name = "clf.isotope.p"
 
     def classifier_factory(self, klass=None, *args, **kw):
-        kw['n_neighbors'] = 3
-        return super(IsotopeClassifier, self).classifier_factory(klass=klass, *args, **kw)
+        kw["n_neighbors"] = 3
+        return super(IsotopeClassifier, self).classifier_factory(
+            klass=klass, *args, **kw
+        )
 
     def predict_isotope(self, iso):
         return self.predict(make_sample(iso))
@@ -79,7 +89,7 @@ class IsotopeClassifier(BaseClassifier):
         return klass, prob
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     ic = IsotopeClassifier()
 
     nsamples = 20

@@ -21,6 +21,8 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor
 
 class ReportEditor(BaseTraitsEditor):
     def traits_view(self):
-        v = View(Item(''))
+        v = View(Item(""))
         return v
+
+
 # ============= EOF =============================================

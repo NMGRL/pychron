@@ -22,6 +22,7 @@ from traits.api import Str, Int
 
 # ============= standard library imports ========================
 import os
+
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -33,13 +34,14 @@ class PipetteTracker(Loggable):
     outer = Str
     counts = Int
     _shot_loaded = False
+
     #     def __init__(self, *args, **kw):
     #         super(PipetteTracker, self).__init__(*args, **kw)
     #         self.load()
 
     def check_shot(self, name):
         """
-            check shot called only when valve opens
+        check shot called only when valve opens
         """
         if name == self.inner:
             self._shot_loaded = True
@@ -55,7 +57,7 @@ class PipetteTracker(Loggable):
 
         self.counts += 1
 
-        self.debug('increment shot count {}'.format(self.counts))
+        self.debug("increment shot count {}".format(self.counts))
         self.dump()
 
     # ===============================================================================
@@ -64,7 +66,7 @@ class PipetteTracker(Loggable):
     def load(self):
         p = self._get_path_id()
         if os.path.isfile(p):
-            with open(p, 'rb') as rfile:
+            with open(p, "rb") as rfile:
                 try:
                     params = pickle.load(rfile)
                     self._load(params)
@@ -73,35 +75,41 @@ class PipetteTracker(Loggable):
 
     def dump(self):
         p = self._get_path_id()
-        with open(p, 'wb') as wfile:
+        with open(p, "wb") as wfile:
             pickle.dump(self._dump(), wfile)
-            self.debug('saved current shot count {}'.format(self.counts))
+            self.debug("saved current shot count {}".format(self.counts))
 
     def _load(self, params):
         if params:
             try:
-                cnts = params['counts']
-                last_shot_time = params['last_shot_time']
+                cnts = params["counts"]
+                last_shot_time = params["last_shot_time"]
             except KeyError:
                 cnts = 0
 
             self.counts = cnts
-            self.debug('loaded current shot count {} time:{}'.format(self.counts,
-                                                                     last_shot_time))
+            self.debug(
+                "loaded current shot count {} time:{}".format(
+                    self.counts, last_shot_time
+                )
+            )
 
     def _dump(self):
-        d = dict(
-            counts=self.counts,
-            last_shot_time=generate_datetimestamp())
+        d = dict(counts=self.counts, last_shot_time=generate_datetimestamp())
 
         return d
 
     def _get_path_id(self):
-        #handle legacy format
-        p = os.path.join(paths.hidden_dir, 'pipette-{}_{}'.format(self.inner, self.outer))
+        # handle legacy format
+        p = os.path.join(
+            paths.hidden_dir, "pipette-{}_{}".format(self.inner, self.outer)
+        )
         if not os.path.isfile(p):
-            p = os.path.join(paths.hidden_dir, '{}_{}-{}'.format(self.name, self.inner, self.outer))
+            p = os.path.join(
+                paths.hidden_dir, "{}_{}-{}".format(self.name, self.inner, self.outer)
+            )
 
         return p
+
 
 # ============= EOF =============================================

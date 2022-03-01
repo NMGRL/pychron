@@ -24,7 +24,5 @@ from pychron.spectrometer.thermo.magnet.base import ThermoMagnet
 class HelixMagnet(ThermoMagnet):
     pass
 
+
 # ============= EOF =============================================
-
-
-

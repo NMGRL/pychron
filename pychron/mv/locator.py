@@ -17,10 +17,25 @@
 import time
 
 from traits.api import Float
+
 # ============= standard library imports ========================
 
-from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
-    nonzero, max, arange, argsort, invert, median, mean, zeros_like
+from numpy import (
+    array,
+    histogram,
+    argmax,
+    zeros,
+    asarray,
+    ones_like,
+    nonzero,
+    max,
+    arange,
+    argsort,
+    invert,
+    median,
+    mean,
+    zeros_like,
+)
 from operator import attrgetter
 from skimage.morphology import watershed
 from skimage.draw import polygon, circle, circle_perimeter, circle_perimeter_aa
@@ -28,16 +43,25 @@ from scipy import ndimage
 from skimage.exposure import rescale_intensity
 from skimage.filters import gaussian
 from skimage import feature
+
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.mv.segment.region import RegionSegmenter
-from pychron.image.cv_wrapper import grayspace, draw_contour_list, contour, \
-    colorspace, get_polygons, get_size, new_point, draw_rectangle, \
-    draw_lines, \
-    draw_polygons, crop
+from pychron.image.cv_wrapper import (
+    grayspace,
+    draw_contour_list,
+    contour,
+    colorspace,
+    get_polygons,
+    get_size,
+    new_point,
+    draw_rectangle,
+    draw_lines,
+    draw_polygons,
+    crop,
+)
 from pychron.mv.target import Target
-from pychron.core.geometry.geometry import approximate_polygon_center, \
-    calc_length
+from pychron.core.geometry.geometry import approximate_polygon_center, calc_length
 
 
 def _coords_inside_image(rr, cc, shape):
@@ -68,7 +92,7 @@ class Locator(Loggable):
     alive = True
 
     def cancel(self):
-        self.debug('canceling')
+        self.debug("canceling")
         self.alive = False
 
     def wait(self):
@@ -82,27 +106,31 @@ class Locator(Loggable):
         ch_px = int(ch * self.pxpermm)
         w, h = get_size(src)
 
-        x = int((w - cw_px) / 2. + ox)
-        y = int((h - ch_px) / 2. - oy)
+        x = int((w - cw_px) / 2.0 + ox)
+        y = int((h - ch_px) / 2.0 - oy)
 
         # r = 4 - cw_px % 4
         # cw_px = ch_px = cw_px + r
         if verbose:
-            self.debug('Crop: x={},y={}, cw={}, ch={}, '
-                       'width={}, height={}, ox={}, oy={}'.format(x, y, cw_px, ch_px, w, h, ox, oy))
+            self.debug(
+                "Crop: x={},y={}, cw={}, ch={}, "
+                "width={}, height={}, ox={}, oy={}".format(
+                    x, y, cw_px, ch_px, w, h, ox, oy
+                )
+            )
         return asarray(crop(src, x, y, cw_px, ch_px))
 
-    def find(self, image, frame, dim, shape='circle', **kw):
+    def find(self, image, frame, dim, shape="circle", **kw):
         """
-            image is a stand alone image
-            dim = float. radius or half length of a square in pixels
+        image is a stand alone image
+        dim = float. radius or half length of a square in pixels
 
-            find the hole in the image
+        find the hole in the image
 
-            return the offset from the center of the image
+        return the offset from the center of the image
 
-            0. image is alredy cropped
-            1. find polygons
+        0. image is alredy cropped
+        1. find polygons
 
         """
         self.alive = True
@@ -111,16 +139,16 @@ class Locator(Loggable):
         targets = self._find_targets(image, frame, dim, shape=shape, **kw)
 
         if targets:
-            self.info('found {} potential targets'.format(len(targets)))
+            self.info("found {} potential targets".format(len(targets)))
 
             # draw center indicator
             src = image.source_frame
-            self._draw_center_indicator(src, size=2, shape='rect', radius=round(dim))
+            self._draw_center_indicator(src, size=2, shape="rect", radius=round(dim))
 
             # draw targets
             self._draw_targets(src, targets)
 
-            if shape == 'circle':
+            if shape == "circle":
                 if self.use_arc_approximation:
                     # calculate circle_minimization position
                     dx, dy = self._arc_approximation(src, targets[0], dim)
@@ -133,17 +161,25 @@ class Locator(Loggable):
 
                 # image.set_frame(src[:])
 
-        self.info('dx={}, dy={}'.format(dx, dy))
+        self.info("dx={}, dy={}".format(dx, dy))
         return dx, dy
 
-    def _find_targets(self, image, frame, dim, shape='circle',
-                      search=None, preprocess=True,
-                      filter_targets=True,
-                      convexity_filter=False,
-                      mask=False,
-                      set_image=True, inverted=False):
+    def _find_targets(
+        self,
+        image,
+        frame,
+        dim,
+        shape="circle",
+        search=None,
+        preprocess=True,
+        filter_targets=True,
+        convexity_filter=False,
+        mask=False,
+        set_image=True,
+        inverted=False,
+    ):
         """
-            use a segmentor to segment the image
+        use a segmentor to segment the image
         """
 
         if search is None:
@@ -157,7 +193,7 @@ class Locator(Loggable):
             src = grayspace(frame)
 
         if src is None:
-            self.debug('Locator: src is None')
+            self.debug("Locator: src is None")
             return
 
         if mask:
@@ -166,18 +202,20 @@ class Locator(Loggable):
         if inverted:
             src = invert(src)
 
-        blocksize_step = search.get('blocksize_step', 5)
-        seg = RegionSegmenter(use_adaptive_threshold=search.get('use_adaptive_threshold', False),
-                              blocksize=search.get('blocksize', 20))
+        blocksize_step = search.get("blocksize_step", 5)
+        seg = RegionSegmenter(
+            use_adaptive_threshold=search.get("use_adaptive_threshold", False),
+            blocksize=search.get("blocksize", 20),
+        )
         fa = self._get_filter_target_area(shape, dim)
         phigh, plow = None, None
 
         for low, high in self._generate_steps(src, search)():
             if not self.alive:
-                self.debug('canceled')
+                self.debug("canceled")
                 return
 
-            self.debug('bandwidth low={}, high={}'.format(low, high))
+            self.debug("bandwidth low={}, high={}".format(low, high))
 
             if inverted:
                 low = 255 - low
@@ -210,21 +248,25 @@ class Locator(Loggable):
                 elif convexity_filter:
                     # for t in targets:
                     #     print t.convexity, t.area, t.min_enclose_area, t.perimeter_convexity
-                    targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
+                    targets = [
+                        t for t in targets if t.perimeter_convexity > convexity_filter
+                    ]
 
             if targets:
-                return sorted(targets, key=attrgetter('area'), reverse=True)
+                return sorted(targets, key=attrgetter("area"), reverse=True)
                 # time.sleep(0.5)
 
     def _generate_steps(self, src, search):
-        if search.get('use_adaptive_threshold'):
+        if search.get("use_adaptive_threshold"):
+
             def func():
                 yield 0, 255
 
-        elif search.get('use_new_style', True):
+        elif search.get("use_new_style", True):
+
             def func():
                 me = int(mean(src[src > 0]))
-                bands = [2 ** n for n in range(7, 1, -1)]
+                bands = [2**n for n in range(7, 1, -1)]
                 shifts = [2, 4, 8]
 
                 for band in bands:
@@ -238,15 +280,20 @@ class Locator(Loggable):
                                     break
 
                                 yield low, high
-        else:
-            def func():
-                start = search.get('start')
-                if start is None:
-                    w = search.get('width', 10)
-                    start = int(mean(src[src > 0])) - search.get('start_offset_scalar', 3) * w
 
-                step = search.get('step', 2)
-                n = search.get('n', 20)
+        else:
+
+            def func():
+                start = search.get("start")
+                if start is None:
+                    w = search.get("width", 10)
+                    start = (
+                        int(mean(src[src > 0]))
+                        - search.get("start_offset_scalar", 3) * w
+                    )
+
+                step = search.get("step", 2)
+                n = search.get("n", 20)
 
                 for j in range(n):
                     ww = w * (j + 1)
@@ -261,7 +308,7 @@ class Locator(Loggable):
 
         radius *= self.pxpermm
         h, w = src.shape[:2]
-        c = circle(h / 2., w / 2., radius, shape=(h, w))
+        c = circle(h / 2.0, w / 2.0, radius, shape=(h, w))
         mask = ones_like(src, dtype=bool)
         mask[c] = False
         src[mask] = 0
@@ -274,33 +321,33 @@ class Locator(Loggable):
 
     def _filter_targets(self, image, frame, dim, targets, fa, threshold=0.85):
         """
-            filter targets using the _filter_test function
+        filter targets using the _filter_test function
 
-            return list of Targets that pass _filter_test
+        return list of Targets that pass _filter_test
         """
 
-        ts = [self._filter_test(image, frame, ti, dim, threshold, fa[0], fa[1])
-              for ti in targets]
+        ts = [
+            self._filter_test(image, frame, ti, dim, threshold, fa[0], fa[1])
+            for ti in targets
+        ]
         return [ta[0] for ta in ts if ta[1]]
 
     def _filter_test(self, image, frame, target, dim, cthreshold, mi, ma):
         """
-            if the convexity of the target is <threshold try to do a watershed segmentation
+        if the convexity of the target is <threshold try to do a watershed segmentation
 
-            make black image with white polygon
-            do watershed segmentation
-            find polygon center
+        make black image with white polygon
+        do watershed segmentation
+        find polygon center
 
         """
-        ctest, centtest, atest = self._test_target(frame, target,
-                                                   cthreshold, mi, ma)
+        ctest, centtest, atest = self._test_target(frame, target, cthreshold, mi, ma)
         # print('ctest', ctest, cthreshold, 'centtest', centtest, 'atereat', atest, mi, ma)
         result = ctest and atest and centtest
         if not ctest and (atest and centtest):
-            target = self._segment_polygon(image, frame,
-                                           target,
-                                           dim,
-                                           cthreshold, mi, ma)
+            target = self._segment_polygon(
+                image, frame, target, dim, cthreshold, mi, ma
+            )
             result = True if target else False
 
         return target, result
@@ -343,7 +390,7 @@ class Locator(Loggable):
         local_maxi = feature.peak_local_max(distance, labels=im, indices=False)
         markers, ns = ndimage.label(local_maxi)
         wsrc = watershed(-distance, markers, mask=im)
-        wsrc = wsrc.astype('uint8')
+        wsrc = wsrc.astype("uint8")
 
         #         self.test_image.setup_images(3, wh)
         #         self.test_image.set_image(distance, idx=0)
@@ -360,11 +407,11 @@ class Locator(Loggable):
             values, bins = values[1:], bins[1:]
             idxs = nonzero(values)[0]
 
-            '''
+            """
                 polygon is now segmented into multiple regions
                 consectutively remove a region and find targets
-            '''
-            nimage = ones_like(wsrc, dtype='uint8') * 255
+            """
+            nimage = ones_like(wsrc, dtype="uint8") * 255
             nimage[wsrc == 0] = 0
             for idx in idxs:
                 bl = bins[idx]
@@ -381,8 +428,7 @@ class Locator(Loggable):
     def _test_targets(self, src, targets, ct, mi, ma):
         if targets:
             for ti in targets:
-                if all(self._test_target(src,
-                                         ti, ct, mi, ma)):
+                if all(self._test_target(src, ti, ct, mi, ma)):
                     return ti
 
     # ===============================================================================
@@ -390,16 +436,16 @@ class Locator(Loggable):
     # ===============================================================================
     def _preprocess(self, frame, stretch_intensity=True, blur=1, denoise=0):
         """
-            1. convert frame to grayscale
-            2. remove noise from frame. increase denoise value for more noise filtering
-            3. stretch contrast
+        1. convert frame to grayscale
+        2. remove noise from frame. increase denoise value for more noise filtering
+        3. stretch contrast
         """
         if len(frame.shape) != 2:
             frm = grayspace(frame) * 255
         else:
             frm = frame / self.pixel_depth * 255
 
-        frm = frm.astype('uint8')
+        frm = frm.astype("uint8")
 
         # self.preprocessed_frame = frame
         # if denoise:
@@ -407,7 +453,7 @@ class Locator(Loggable):
         # print 'gray', frm.shape
         if blur:
             frm = gaussian(frm, blur) * 255
-            frm = frm.astype('uint8')
+            frm = frm.astype("uint8")
 
             # frm1 = gaussian(self.preprocessed_frame, blur,
             #                 multichannel=True) * 255
@@ -422,17 +468,17 @@ class Locator(Loggable):
 
     def _denoise(self, img, weight):
         """
-            use TV-denoise to remove noise
+        use TV-denoise to remove noise
 
-            http://scipy-lectures.github.com/advanced/image_processing/
-            http://en.wikipedia.org/wiki/Total_variation_denoising
+        http://scipy-lectures.github.com/advanced/image_processing/
+        http://en.wikipedia.org/wiki/Total_variation_denoising
         """
 
         from skimage.filters import denoise_tv_chambolle
 
         img = denoise_tv_chambolle(img, weight=weight) * 255
 
-        return img.astype('uint8')
+        return img.astype("uint8")
 
     # def _contrast_equalization(self, img):
     #     """
@@ -461,15 +507,15 @@ class Locator(Loggable):
 
     def _arc_approximation(self, src, target, dim):
         """
-            find cx,cy of a circle with r radius using the arc center method
+        find cx,cy of a circle with r radius using the arc center method
 
-            only preform if target has high convexity
-            convexity is simply defined as ratio of area to convex hull area
+        only preform if target has high convexity
+        convexity is simply defined as ratio of area to convex hull area
 
         """
         tol = 0.8
         if target.convexity > tol:
-            self.info('doing arc approximation radius={}'.format(dim))
+            self.info("doing arc approximation radius={}".format(dim))
             tx, ty = self._get_frame_center(src)
             pts = target.poly_points
             pts[:, 1] = pts[:, 1] - ty
@@ -478,7 +524,7 @@ class Locator(Loggable):
             cx, cy = dx + tx, dy + ty
             dy = -dy
 
-            self._draw_indicator(src, (cx, cy), color=(255, 0, 128), shape='crosshairs')
+            self._draw_indicator(src, (cx, cy), color=(255, 0, 128), shape="crosshairs")
             draw_circle_perimeter(src, cx, cy, round(dim), color=(255, 0, 128))
 
         else:
@@ -488,8 +534,8 @@ class Locator(Loggable):
 
     def _calculate_error(self, targets):
         """
-            calculate the dx,dy
-            deviation of the targets centroid from the center of the image
+        calculate the dx,dy
+        deviation of the targets centroid from the center of the image
         """
 
         def hist(d):
@@ -503,6 +549,7 @@ class Locator(Loggable):
             dx = hist(devxs)
             dy = hist(devys)
         else:
+
             def avg(s):
                 return sum(s) / len(s)
 
@@ -516,7 +563,7 @@ class Locator(Loggable):
     # ===============================================================================
     def _make_targets(self, pargs, origin):
         """
-         convenience function for assembling target list
+        convenience function for assembling target list
         """
         targets = []
         for pi, ai, co, ci, pa, pch, mask in pargs:
@@ -545,7 +592,7 @@ class Locator(Loggable):
 
     def _near_center(self, xy, frame, tol=0.75):
         """
-            is the point xy within tol distance of the center
+        is the point xy within tol distance of the center
         """
         cxy = self._get_frame_center(frame)
         d = calc_length(xy, cxy)
@@ -554,13 +601,13 @@ class Locator(Loggable):
 
     def _get_filter_target_area(self, shape, dim):
         """
-            calculate min and max bounds of valid polygon areas
+        calculate min and max bounds of valid polygon areas
         """
-        if shape == 'circle':
+        if shape == "circle":
             miholedim = 0.5 * dim
             maholedim = 1.25 * dim
-            mi = miholedim ** 2 * 3.1415
-            ma = maholedim ** 2 * 3.1415
+            mi = miholedim**2 * 3.1415
+            ma = maholedim**2 * 3.1415
         else:
             d = (2 * dim) ** 2
             mi = 0.5 * d
@@ -570,7 +617,7 @@ class Locator(Loggable):
 
     def _get_frame_center(self, src):
         """
-            convenience function for geting center of image in c,r from
+        convenience function for geting center of image in c,r from
         """
         w, h = get_size(src)
         x = w / 2
@@ -583,57 +630,70 @@ class Locator(Loggable):
     # ===============================================================================
     def _draw_targets(self, src, targets):
         """
-            draw a crosshairs indicator
+        draw a crosshairs indicator
         """
         if targets:
             for ta in targets:
                 pt = new_point(*ta.centroid)
-                self._draw_indicator(src, pt,
-                                     color=(0, 255, 0),
-                                     size=10,
-                                     shape='crosshairs')
+                self._draw_indicator(
+                    src, pt, color=(0, 255, 0), size=10, shape="crosshairs"
+                )
                 # draw_circle(src, pt,
                 #             color=(0,255,0),
                 #             radius=int(dim))
 
                 draw_polygons(src, [ta.poly_points], color=(255, 255, 255))
 
-    def _draw_center_indicator(self, src, color=(0, 0, 255), shape='crosshairs',
-                               size=10, radius=1):
+    def _draw_center_indicator(
+        self, src, color=(0, 0, 255), shape="crosshairs", size=10, radius=1
+    ):
         """
-            draw indicator at center of frame
+        draw indicator at center of frame
         """
         cpt = self._get_frame_center(src)
-        self._draw_indicator(src, new_point(*cpt),
-                             #                             shape='crosshairs',
-                             shape=shape,
-                             color=color,
-                             size=size)
+        self._draw_indicator(
+            src,
+            new_point(*cpt),
+            #                             shape='crosshairs',
+            shape=shape,
+            color=color,
+            size=size,
+        )
 
         # draw_circle_perimeter(src, cpt[0], cpt[1], radius, color=color)
 
-    def _draw_indicator(self, src, center, color=(255, 0, 0), shape='circle',
-                        size=4, thickness=-1):
+    def _draw_indicator(
+        self, src, center, color=(255, 0, 0), shape="circle", size=4, thickness=-1
+    ):
         """
-            convenience function for drawing indicators
+        convenience function for drawing indicators
         """
         if isinstance(center, tuple):
             center = new_point(*center)
         r = size
-        if shape == 'rect':
-            draw_rectangle(src, center.x - r / 2., center.y - r / 2., r, r,
-                           color=color,
-                           thickness=thickness)
-        elif shape == 'crosshairs':
-            draw_lines(src,
-                       [[(center.x - size, center.y),
-                         (center.x + size, center.y)],
-                        [(center.x, center.y - size),
-                         (center.x, center.y + size)]],
-                       color=color,
-                       thickness=1)
+        if shape == "rect":
+            draw_rectangle(
+                src,
+                center.x - r / 2.0,
+                center.y - r / 2.0,
+                r,
+                r,
+                color=color,
+                thickness=thickness,
+            )
+        elif shape == "crosshairs":
+            draw_lines(
+                src,
+                [
+                    [(center.x - size, center.y), (center.x + size, center.y)],
+                    [(center.x, center.y - size), (center.x, center.y + size)],
+                ],
+                color=color,
+                thickness=1,
+            )
         else:
             draw_circle(src, center[0], center[1], r, color=color)
+
 
 # ============= EOF =============================================
 #  def _segment_polygon2(self, image, frame, target,

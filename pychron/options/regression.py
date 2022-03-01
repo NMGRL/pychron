@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Enum
+from traits.api import Enum, Str, Color, Int
 
 from pychron.options.options import FigureOptions
 from pychron.options.views.regression_views import VIEWS
@@ -21,11 +21,17 @@ from pychron.pychron_constants import MAIN, APPEARANCE
 
 
 class RegressionOptions(FigureOptions):
-    regressor = Enum('NewYork')
+    regressor = Enum("NewYork")
+    xtitle = Str("X")
+    ytitle = Str("Y")
+    regression_color = Color
+    regression_width = Int(1)
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]
 
     def _get_subview(self, name):
         return VIEWS[name]
+
+
 # ============= EOF =============================================

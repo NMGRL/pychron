@@ -26,4 +26,5 @@ class IrradiationScene(LoadingScene):
     def _get_holes(self, t):
         return t
 
+
 # ============= EOF =============================================

@@ -45,8 +45,8 @@ class PieChart(QPrimitive):
 
         r = self.map_dimension(22, keep_square=True)
         r2 = self.map_dimension(25, keep_square=True)
-        s = pi2 / 4.
-        gc.set_font(str_to_font(None, None, '12'))
+        s = pi2 / 4.0
+        gc.set_font(str_to_font(None, None, "12"))
         for i, (ni, a, pp) in enumerate(zip(names, angles, percents)):
             with gc:
                 with gc:
@@ -58,7 +58,7 @@ class PieChart(QPrimitive):
                     gc.fill_path()
 
                 if pp > 0.01:
-                    txt = '{} {:n}%'.format(ni, int(pp * 100))
+                    txt = "{} {:n}%".format(ni, int(pp * 100))
                     theta = a / 2.0 + s
                     gc.translate_ctm(-10, 0)
                     x, y = r2 * math.cos(theta), r2 * math.sin(theta)
@@ -79,5 +79,6 @@ class PieChartScene(Scene):
         self.reset_layers()
         v = PieChart(error_components)
         self.add_item(v)
+
 
 # ============= EOF =============================================

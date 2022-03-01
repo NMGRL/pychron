@@ -29,8 +29,8 @@ class IrregularHoleCalibrator(HoleCalibrator):
             sm.set_hole_correction(pos, x, y)
 
         sm.dump_correction_file()
-        self.info('updated {} correction file'.format(sm.name))
-        d['clear_corrections'] = False
+        self.info("updated {} correction file".format(sm.name))
+        d["clear_corrections"] = False
         return d
 
     def _get_point(self, sp):
@@ -45,4 +45,6 @@ class IrregularHoleCalibrator(HoleCalibrator):
             #     h = smap.get_hole(hole)
             #     refp = h.x, h.y
             #     return refp, sp
+
+
 # ============= EOF =============================================

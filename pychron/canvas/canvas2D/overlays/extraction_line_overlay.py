@@ -33,10 +33,10 @@ class ExtractionLineInfoTool(InfoInspector):
 
     active = Bool(False)
     display_volume = Bool(False)
-    volume_key = Str('v')
+    volume_key = Str("v")
 
     def assemble_lines(self):
-        return [self.name, 'volume= {}'.format(self.volume)]
+        return [self.name, "volume= {}".format(self.volume)]
 
     def normal_mouse_move(self, event):
         if self.active:
@@ -75,5 +75,6 @@ class ExtractionLineInfoTool(InfoInspector):
 
 class ExtractionLineInfoOverlay(InfoOverlay):
     tool = Instance(ExtractionLineInfoTool)
+
 
 # ============= EOF =============================================

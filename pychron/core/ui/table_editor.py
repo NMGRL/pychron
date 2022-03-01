@@ -21,5 +21,5 @@
 from __future__ import absolute_import
 from .factory import toolkit_factory
 
-myTableEditor = toolkit_factory('table_editor', 'myTableEditor')
+myTableEditor = toolkit_factory("table_editor", "myTableEditor")
 # ============= EOF =============================================

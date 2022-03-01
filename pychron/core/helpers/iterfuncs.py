@@ -25,13 +25,13 @@ from operator import attrgetter, itemgetter
 
 
 def partition(seq, predicate):
-    '''
-        http://stackoverflow.com/questions/949098/python-split-a-list-based-on-a-condition
-        partition seqeunce based on evaluation of predicate(i)
+    """
+    http://stackoverflow.com/questions/949098/python-split-a-list-based-on-a-condition
+    partition seqeunce based on evaluation of predicate(i)
 
-        returns 2 generators
-        True_eval, False_eval
-    '''
+    returns 2 generators
+    True_eval, False_eval
+    """
 
     l1, l2 = tee((predicate(item), item) for item in seq)
     return (i for p, i in l1 if p), (i for p, i in l2 if not p)
@@ -52,9 +52,11 @@ def groupby_idx(items, key, reverse=False):
 
 
 def groupby_group_id(items):
-    return groupby_key(items, 'group_id')
+    return groupby_key(items, "group_id")
 
 
 def groupby_repo(items):
-    return groupby_key(items, 'repository_identifier')
+    return groupby_key(items, "repository_identifier")
+
+
 # ============= EOF =============================================

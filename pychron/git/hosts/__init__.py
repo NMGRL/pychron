@@ -20,9 +20,10 @@ import stat
 import subprocess
 
 import requests
+
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
-from traits.api import Str, Interface, Password, provides, Dict, Bool
+from traits.api import Str, Interface, Password, provides, Dict, Bool, List
 
 from pychron import json
 from pychron.git_archive.repo_manager import GitRepoManager
@@ -71,27 +72,27 @@ class IGitHost(Interface):
 
 class CredentialException(BaseException):
     def __init__(self, d):
-        self._auth = d['Authorization']
+        self._auth = d["Authorization"]
 
     def __str__(self):
-        return 'Invalid user/password combination. {}'.format(self._auth)
+        return "Invalid user/password combination. {}".format(self._auth)
 
 
 def authorization(username, password, oauth_token):
     if oauth_token:
         auth = oauth_token
     else:
-        auth = '{}:{}'.format(username, password).encode('utf-8')
+        auth = "{}:{}".format(username, password).encode("utf-8")
         auth = base64.encodebytes(auth)
-        auth = auth.replace(b'\n', b'')
-        auth = 'Basic {}'.format(auth)
+        auth = auth.replace(b"\n", b"")
+        auth = "Basic {}".format(auth)
 
     return {"Authorization": auth}
 
 
 @provides(IGitHost)
 class BaseGitHostService(Loggable):
-    default_remote_name = Str('origin')
+    default_remote_name = Str("origin")
     remote_url = Str
 
     def make_url(self, *args, **kw):
@@ -113,55 +114,71 @@ class BaseGitHostService(Loggable):
 class GitHostService(BaseGitHostService):
     username = Str
     password = Password
-    preference_path = ''
+    preference_path = ""
     oauth_token = Str
-    _cached_repo_names = Dict
-    _clear_cached_repo_names = False
+    _cached_repos = List
     _session = None
     organization = Str
     disable_authentication_message = Bool
 
     def bind_preferences(self):
-        bind_preference(self, 'organization', '{}.organization'.format(self.preference_path))
-        bind_preference(self, 'username', '{}.username'.format(self.preference_path))
-        bind_preference(self, 'password', '{}.password'.format(self.preference_path))
-        bind_preference(self, 'oauth_token', '{}.oauth_token'.format(self.preference_path))
-        bind_preference(self, 'default_remote_name', '{}.default_remote_name'.format(self.preference_path))
-        bind_preference(self, 'disable_authentication_message',
-                        '{}.disable_authentication_message'.format(self.preference_path))
+        bind_preference(
+            self, "organization", "{}.organization".format(self.preference_path)
+        )
+        bind_preference(self, "username", "{}.username".format(self.preference_path))
+        bind_preference(self, "password", "{}.password".format(self.preference_path))
+        bind_preference(
+            self, "oauth_token", "{}.oauth_token".format(self.preference_path)
+        )
+        bind_preference(
+            self,
+            "default_remote_name",
+            "{}.default_remote_name".format(self.preference_path),
+        )
+        bind_preference(
+            self,
+            "disable_authentication_message",
+            "{}.disable_authentication_message".format(self.preference_path),
+        )
 
     def set_authentication(self):
-        if platform.system() == 'Windows':
+        if platform.system() == "Windows":
             # askpass = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'askpass.bat')
             self._set_authentication_windows_hook()
         else:
-            self.info('setting authentication')
-            askpass = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'askpass.sh')
+            self.info("setting authentication")
+            askpass = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "askpass.sh"
+            )
 
-            os.environ['GIT_ASKPASS'] = askpass
+            os.environ["GIT_ASKPASS"] = askpass
             st = os.stat(askpass)
             os.chmod(askpass, st.st_mode | stat.S_IXUSR)
 
             if self.oauth_token:
                 u = self.oauth_token
-                p = ''
+                p = ""
             else:
                 u = self.username
                 p = self.password
 
-            os.environ['GIT_ASKPASS_USERNAME'] = u
-            os.environ['GIT_ASKPASS_PASSWORD'] = p
-            self.debug('Environ:{}'.format(os.environ))
+            os.environ["GIT_ASKPASS_USERNAME"] = u
+            os.environ["GIT_ASKPASS_PASSWORD"] = p
+            self.debug("Environ:{}".format(os.environ))
 
-    def up_to_date(self, organization, name, sha, branch='master'):
+    def up_to_date(self, organization, name, sha, branch="master"):
         return True, None
 
     def remote_exists(self, organization, name):
         try:
-            cmd = ['git', 'ls-remote', '{}/{}/{}'.format(self.remote_url, organization, name)]
-            self.debug('remote exists cmd={}'.format(' '.join(cmd)))
+            cmd = [
+                "git",
+                "ls-remote",
+                "{}/{}/{}".format(self.remote_url, organization, name),
+            ]
+            self.debug("remote exists cmd={}".format(" ".join(cmd)))
             out = subprocess.check_output(cmd)
-            self.debug('remote exists: out={}'.format(out))
+            self.debug("remote exists: out={}".format(out))
             if out:
                 ret = GITREFREGEX.match(out.decode())
             else:
@@ -173,7 +190,7 @@ class GitHostService(BaseGitHostService):
     def manual_remote_exists(self, organization, name):
         repo = self.get_repo(organization, name)
         if repo:
-            return repo.get('name', '').lower() == name.lower()
+            return repo.get("name", "").lower() == name.lower()
 
     def get_repo(self, organization, name):
         raise NotImplementedError
@@ -183,14 +200,15 @@ class GitHostService(BaseGitHostService):
 
     def get_repository_names(self, organization):
         repos = self.get_repos(organization)
-        return [r for r in (repo.get('name', '') for repo in repos) if r]
+        return [r for r in (repo.get("name", "") for repo in repos) if r]
 
     def test_connection(self, organization):
         return bool(self.get_info(organization))
 
     def clone_from(self, name, root, organization):
         url = self.make_url(name, organization)
-        GitRepoManager.clone_from(url, root)
+        repo = GitRepoManager.clone_from(url, root)
+        return repo
 
     def get_repos(self, org):
         pass
@@ -203,7 +221,6 @@ class GitHostService(BaseGitHostService):
         pass
 
     def _get(self, cmd, verbose=False):
-
         def func(s):
             s.headers.update(self._get_authorization())
             if globalv.cert_file:
@@ -223,7 +240,7 @@ class GitHostService(BaseGitHostService):
                     result.append(d)
 
                 try:
-                    dd = _rget(r.links['next']['url'])
+                    dd = _rget(r.links["next"]["url"])
                 except KeyError:
                     return result
 
@@ -253,16 +270,19 @@ class GitHostService(BaseGitHostService):
         headers = self._get_authorization()
         kw = {}
         if globalv.cert_file:
-            kw['verify'] = globalv.cert_file
+            kw["verify"] = globalv.cert_file
 
         r = requests.post(cmd, data=json.dumps(payload), headers=headers, **kw)
+        if not r.status_code == 201:
+            print(json.dumps(payload))
+            print(r.status_code, r.reason)
         return r
 
     def _put(self, cmd, **payload):
         headers = self._get_authorization()
         kw = {}
         if globalv.cert_file:
-            kw['verify'] = globalv.cert_file
+            kw["verify"] = globalv.cert_file
 
         r = requests.put(cmd, data=json.dumps(payload), headers=headers, **kw)
         return r
@@ -283,5 +303,6 @@ class GitHostService(BaseGitHostService):
         #     auth = 'Basic {}'.format(auth)
         #
         # return {"Authorization": auth}
+
 
 # ============= EOF =============================================

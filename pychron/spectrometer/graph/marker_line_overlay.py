@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
 from traits.trait_types import List
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.spectrometer.graph.marker_line import MarkerLine
@@ -26,10 +27,11 @@ from pychron.spectrometer.graph.marker_line import MarkerLine
 class MarkerLineOverlay(AbstractOverlay):
     lines = List
     _cached_lines = List
-    def add_marker_line(self, x, bgcolor='black'):
-        l = MarkerLine(data_x=self.component.index_mapper.map_data(x),
-                       x=x,
-                       bgcolor=bgcolor)
+
+    def add_marker_line(self, x, bgcolor="black"):
+        l = MarkerLine(
+            data_x=self.component.index_mapper.map_data(x), x=x, bgcolor=bgcolor
+        )
         self.lines.append(l)
         self._layout_needed = True
         self.do_layout()
@@ -38,9 +40,12 @@ class MarkerLineOverlay(AbstractOverlay):
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
-            gc.clip_to_rect(other_component.x, other_component.y,
-                            other_component.width,
-                            other_component.height)
+            gc.clip_to_rect(
+                other_component.x,
+                other_component.y,
+                other_component.width,
+                other_component.height,
+            )
             gc.set_stroke_color((1, 0, 0, 0.75))
             gc.set_line_dash((12, 6))
             gc.translate_ctm(0, other_component.y)
@@ -59,5 +64,6 @@ class MarkerLineOverlay(AbstractOverlay):
                     ci.visible = bool(ci.x > 0)
 
             self._layout_needed = False
+
 
 # ============= EOF =============================================

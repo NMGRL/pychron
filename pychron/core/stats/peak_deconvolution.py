@@ -53,6 +53,7 @@ plt.plot(xs, sys3)
 # p = [1, 1, 5, 10, 1, 1]
 # plsq = leastsq(res, p, args=(sys3, xs))
 
+
 def res(p, y, x):
     yfit = None
     n = p.shape[0] / 3

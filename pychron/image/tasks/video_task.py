@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Splitter
 from traits.api import Instance, on_trait_change, List
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task import BaseManagerTask
@@ -26,8 +27,8 @@ from pychron.image.video_source import VideoSource, parse_url
 
 
 class VideoTask(BaseManagerTask):
-    id = 'pychron.extraction_line'
-    name = 'Video Display'
+    id = "pychron.extraction_line"
+    name = "Video Display"
     video_source = Instance(VideoSource, ())
     source_pane = Instance(SourcePane)
     controls_pane = Instance(ControlsPane)
@@ -35,19 +36,19 @@ class VideoTask(BaseManagerTask):
 
     def _default_layout_default(self):
         return TaskLayout(
-#                           top=PaneItem('pychron.extraction_line.gauges'),
-                        left=Splitter(
-                                      PaneItem('pychron.video.source'),
-                                      PaneItem('pychron.video.controls'),
-                                      orientation='vertical'
-                                      ),
-
-#                          width=500,
-#                          height=500
-                          )
+            #                           top=PaneItem('pychron.extraction_line.gauges'),
+            left=Splitter(
+                PaneItem("pychron.video.source"),
+                PaneItem("pychron.video.controls"),
+                orientation="vertical",
+            ),
+            #                          width=500,
+            #                          height=500
+        )
 
     def new_video_dock_pane(self, video=None):
         from pychron.image.tasks.video_pane import VideoDockPane
+
         if video is None:
             video = self.video_source
 
@@ -58,37 +59,31 @@ class VideoTask(BaseManagerTask):
 
     def create_central_pane(self):
         self.video_pane = VideoPane(
-                                    video=self.video_source,
-
-                                    )
+            video=self.video_source,
+        )
 
         return self.video_pane
 
     def create_dock_panes(self):
-        self.source_pane = SourcePane(
-                                      connections=dict(self.available_connections)
-                                      )
+        self.source_pane = SourcePane(connections=dict(self.available_connections))
 
         self.controls_pane = ControlsPane()
         self.video_source.set_url(self.source_pane.source.url())
-        panes = [
-                 self.source_pane,
-                 self.controls_pane
-                 ]
+        panes = [self.source_pane, self.controls_pane]
         return panes
 
-    @on_trait_change('controls_pane:[show_grids,fps, quality]')
+    @on_trait_change("controls_pane:[show_grids,fps, quality]")
     def _update_control(self, name, new):
-        if name == 'show_grids':
+        if name == "show_grids":
             self.video_pane.component.show_grids = new
-        elif name == 'fps':
+        elif name == "fps":
             self.video_pane.component.fps = new
-        elif name == 'quality':
+        elif name == "quality":
             self.video_source.quality = new
 
-    @on_trait_change('source_pane:[selected_connection, source:+]')
+    @on_trait_change("source_pane:[selected_connection, source:+]")
     def _update_source(self, name, new):
-        if name == 'selected_connection':
+        if name == "selected_connection":
             islocal, r = parse_url(new)
             if islocal:
                 pass
@@ -99,6 +94,8 @@ class VideoTask(BaseManagerTask):
             url = self.source_pane.source.url()
 
             self.video_source.set_url(url)
+
+
 #         if name == 'source':
 #             self.video_source.image_path = new
 

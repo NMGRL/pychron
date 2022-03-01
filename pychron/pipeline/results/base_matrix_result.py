@@ -27,7 +27,7 @@ class BaseMatrixResult(HasTraits):
         self._set_name(ag)
 
     def _set_name(self, ag):
-        self.name = '{}({})'.format(ag.identifier, ag.group_id)
+        self.name = "{}({})".format(ag.identifier, ag.group_id)
 
     def _calculate_values(self, ag, others):
         raise NotImplementedError
@@ -36,7 +36,7 @@ class BaseMatrixResult(HasTraits):
         if column == 0:
             return self.name
         elif column < row:
-            return ''
+            return ""
         else:
             ret = self.values[column + 1]
             if ret:
@@ -49,11 +49,12 @@ class BaseMatrixResult(HasTraits):
 
     def get_color(self, row, column):
         if column == 0:
-            return 'white'
+            return "white"
         elif column < row:
-            return 'white'
+            return "white"
         else:
             v = self.values[column + 1]
-            return 'white' if not v or v < 0.05 else 'lightgreen'
+            return "white" if not v or v < 0.05 else "lightgreen"
+
 
 # ============= EOF =============================================

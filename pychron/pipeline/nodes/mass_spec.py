@@ -21,4 +21,6 @@ from pychron.pipeline.nodes.data import BaseDVCNode
 
 class BaseMassSpecNode(BaseDVCNode):
     recaller = Instance(MassSpecRecaller)
+
+
 # ============= EOF =============================================

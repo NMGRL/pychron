@@ -26,40 +26,39 @@ except ImportError:
 
 
 class BaseT4(BaseLabjack, HasTraits):
-
-    connection_type = Enum('ANY', 'USB', 'TCP', 'ETHERNET',  'WIFI')
+    connection_type = Enum("ANY", "USB", "TCP", "ETHERNET", "WIFI")
     identifier = Str
     dio = Str
-    
+
     def load(self, *args, **kw):
         config = self.get_configuration()
         if config:
             return self.load_additional_args(config)
 
     def open(self, *args, **kw):
-        self._device = ljm.openS('T4', self.connection_type, self.identifier)
+        self._device = ljm.openS("T4", self.connection_type, self.identifier)
         return True
 
     def load_additional_args(self, config):
-        
-        ct = self.config_get(config, 'Communications', 'type')
+
+        ct = self.config_get(config, "Communications", "type")
         if ct:
             try:
                 self.connection_type = ct.upper()
             except TraitError:
-                self.warning('Invalid connection type. {}'.format(ct))
-                
-        self.set_attribute(config, 'identifier', 'Communications', 'identifier')
-        self.set_attribute(config, 'dio', 'General', 'dio')
+                self.warning("Invalid connection type. {}".format(ct))
+
+        self.set_attribute(config, "identifier", "Communications", "identifier")
+        self.set_attribute(config, "dio", "General", "dio")
 
         return True
 
     def initialize(self, *args, **kw):
         if self.dio:
-            for dio in self.dio.split(','):
+            for dio in self.dio.split(","):
                 # read from the dio
                 self.get_channel_state(dio)
-        
+
         return True
 
     def set_channel_state(self, ch, state):
@@ -73,21 +72,22 @@ class BaseT4(BaseLabjack, HasTraits):
 
     def get_channel_state(self, ch):
         ret = None
-        if ch.lower().startswith('eio'):
+        if ch.lower().startswith("eio"):
             ret = self._get_eio_state(ch)
-    
+
         return ret
-    
+
     def read_dac_channel(self, ch):
         pass
 
     # private
     def _get_eio_state(self, ch):
-        v = ljm.eReadName(self._device, 'EIO_STATE')
+        v = ljm.eReadName(self._device, "EIO_STATE")
         ba = make_bitarray(int(v))
-        self.debug('eio state={} ba={}, ch={}'.format(int(v), ba, ch))
-        
+        self.debug("eio state={} ba={}, ch={}".format(int(v), ba, ch))
+
         idx = 7 - int(ch[3:])
         return bool(int(ba[idx]))
-        
+
+
 # ============= EOF =============================================

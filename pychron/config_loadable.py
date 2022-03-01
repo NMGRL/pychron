@@ -17,6 +17,7 @@
 
 # ============= enthought library imports =======================
 from pychron.base_config_loadable import BaseConfigLoadable
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
@@ -29,4 +30,6 @@ class ConfigLoadable(BaseConfigLoadable, Loggable):
     # def __init__(self, *args, **kw):
     #     super().__init__(*args, **kw)
     #     self.init_logger()
+
+
 # ============= EOF =============================================

@@ -27,13 +27,13 @@ from pychron.paths import global_hidden
 
 
 def get_path(appname):
-    return os.path.join(global_hidden, '{}.active_env'.format(appname))
+    return os.path.join(global_hidden, "{}.active_env".format(appname))
 
 
 def get_environment(appname):
     p = get_path(appname)
     if os.path.isfile(p):
-        with open(p, 'r') as rfile:
+        with open(p, "r") as rfile:
             env = rfile.readline()
             return env.strip()
 
@@ -43,8 +43,8 @@ def set_environment(appname, env_path):
     if not os.path.isdir(os.path.dirname(p)):
         os.mkdir(os.path.dirname(p))
 
-    with open(p, 'w') as wfile:
-        wfile.write('{}\n'.format(env_path))
+    with open(p, "w") as wfile:
+        wfile.write("{}\n".format(env_path))
 
     set_application_home(appname, env_path)
 
@@ -54,11 +54,12 @@ def set_application_home(appname, env=None):
         env = get_environment(appname)
 
     if env:
-        p = os.path.join(env, '.appdata', appname)
-        print('setting application home to {}'.format(p))
+        p = os.path.join(env, ".appdata", appname)
+        print("setting application home to {}".format(p))
         ETSConfig.application_home = p
 
         if not os.path.exists(ETSConfig.application_home):
             os.makedirs(ETSConfig.application_home)
+
 
 # ============= EOF =============================================

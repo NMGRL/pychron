@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 
 # ============= standard library imports ========================
@@ -27,15 +26,13 @@ from six.moves.socketserver import ThreadingUDPServer
 from .messaging_server import MessagingServer
 from pychron.messaging.handlers.udp_handler import UDPHandler
 
+
 class UDPServer(ThreadingUDPServer, MessagingServer):
-# class UDPServer(_UDPServer, MessagingServer):
-    '''
-    '''
+    # class UDPServer(_UDPServer, MessagingServer):
+    """ """
 
-    def __init__(self, parent, processor_type, datasize, * args, **kw):
-        '''
-
-        '''
+    def __init__(self, parent, processor_type, datasize, *args, **kw):
+        """ """
         self.repeater = parent.repeater
         self.datasize = datasize
         self.processor_type = processor_type

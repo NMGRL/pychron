@@ -51,29 +51,34 @@ class CommitSelector(HasTraits):
 
     def set_paths(self, unks):
         self.paths = [a.make_path(p) for a in unks for p in HISTORY_PATHS]
-        greps = ['--grep=^<{}>'.format(t) for t in HISTORY_TAGS]
+        greps = ["--grep=^<{}>".format(t) for t in HISTORY_TAGS]
         self.greps = greps
 
     def load_commits(self):
-        cs = get_commits(self.repo.path, self.branch, self.paths, '', greps=self.greps)
+        cs = get_commits(self.repo.path, self.branch, self.paths, "", greps=self.greps)
         self.commits = cs
 
     def traits_view(self):
-        v = okcancel_view(VGroup(UItem('branch',
-                                       editor=EnumEditor(name='branches')),
-                                 UItem('commits',
-                                       editor=TabularEditor(adapter=CommitAdapter(),
-                                                            editable=False,
-                                                            selected='selected'))),
-                          title='Change Selector',
-                          height=600,
-                          width=700)
+        v = okcancel_view(
+            VGroup(
+                UItem("branch", editor=EnumEditor(name="branches")),
+                UItem(
+                    "commits",
+                    editor=TabularEditor(
+                        adapter=CommitAdapter(), editable=False, selected="selected"
+                    ),
+                ),
+            ),
+            title="Change Selector",
+            height=600,
+            width=700,
+        )
         return v
 
 
 class DVCHistoryNode(BaseDVCNode):
     options_klass = CommitSelector
-    name = 'History Select'
+    name = "History Select"
 
     def pre_run(self, state, configure=True):
         unks = state.unknowns
@@ -84,7 +89,7 @@ class DVCHistoryNode(BaseDVCNode):
             repo = self.dvc.get_repository(repo)
             cv = CommitSelector(repo, unks)
 
-            info = cv.edit_traits(kind='livemodal')
+            info = cv.edit_traits(kind="livemodal")
             if not info.result:
                 return
 
@@ -95,25 +100,31 @@ class DVCHistoryNode(BaseDVCNode):
 
     def run(self, state):
         unks = state.unknowns
-
         for repo, ans in groupby_repo(unks):
             repo = self.dvc.get_repository(repo)
             abranch = repo.get_current_branch()
-            branchname = 'history'
-            repo.create_branch(branchname, state.selected_commits[repo.name], inform=False)
+            branchname = "history"
+            try:
+                repo.create_branch(
+                    branchname, state.selected_commits[repo.name], inform=False
+                )
 
-            pans = self.dvc.make_analyses(list(ans), reload=True)
+                pans = self.dvc.make_analyses(list(ans), reload=True)
+                if pans:
+                    # only allow one history group for right now.
+                    # in the future add a history_group_id
+                    # analyses are then partitioned by group_id then history_group_id
+                    for unk in pans:
+                        unk.group_id = 1
+                        unk.history_id = 1
 
-            # only allow one history group for right now.
-            # in the future add a history_group_id
-            # analyses are then partitioned by group_id then history_group_id
-            for unk in pans:
-                unk.group_id = 1
-                unk.history_id = 1
+                    unks.extend(pans)
+            except BaseException:
+                pass
+            finally:
+                branch = repo.get_branch(abranch)
+                branch.checkout()
+                repo.delete_branch(branchname)
 
-            branch = repo.get_branch(abranch)
-            branch.checkout()
-            repo.delete_branch(branchname)
-            unks.extend(pans)
 
 # ============= EOF =============================================

@@ -20,20 +20,24 @@ from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.action.task_action import TaskAction
 from pyface.tasks.task_layout import TaskLayout, PaneItem, VSplitter
 
-from pychron.entry.tasks.sample_prep.panes import SamplePrepPane, SamplePrepFilterPane, SamplePrepSessionPane
+from pychron.entry.tasks.sample_prep.panes import (
+    SamplePrepPane,
+    SamplePrepFilterPane,
+    SamplePrepSessionPane,
+)
 from pychron.entry.tasks.sample_prep.sample_prep import SamplePrep
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class LocateSampleAction(TaskAction):
-    name = 'Locate Sample'
-    method = 'locate_sample'
+    name = "Locate Sample"
+    method = "locate_sample"
 
 
 class SamplePrepTask(BaseManagerTask):
-    name = 'Sample Prep'
-    id = 'pychron.entry.sample.prep.task'
+    name = "Sample Prep"
+    id = "pychron.entry.sample.prep.task"
 
     tool_bars = [SToolBar(LocateSampleAction())]
 
@@ -47,12 +51,14 @@ class SamplePrepTask(BaseManagerTask):
         return SamplePrepPane(model=self.manager)
 
     def create_dock_panes(self):
-        panes = [SamplePrepFilterPane(model=self.manager),
-                 SamplePrepSessionPane(model=self.manager)]
+        panes = [
+            SamplePrepFilterPane(model=self.manager),
+            SamplePrepSessionPane(model=self.manager),
+        ]
         return panes
 
     def locate_sample(self):
-        self.debug('locate sample')
+        self.debug("locate sample")
         self.manager.locate_sample()
 
     def _manager_default(self):
@@ -61,7 +67,12 @@ class SamplePrepTask(BaseManagerTask):
         return SamplePrep(application=self.application, dvc=dvc)
 
     def _default_layout_default(self):
-        return TaskLayout(left=VSplitter(PaneItem('pychron.entry.sample.session'),
-                                         PaneItem('pychron.entry.sample.filter')))
+        return TaskLayout(
+            left=VSplitter(
+                PaneItem("pychron.entry.sample.session"),
+                PaneItem("pychron.entry.sample.filter"),
+            )
+        )
+
 
 # ============= EOF =============================================

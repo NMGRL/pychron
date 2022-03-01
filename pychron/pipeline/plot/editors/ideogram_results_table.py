@@ -20,21 +20,26 @@ from uncertainties import std_dev, nominal_value
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.core.pychron_traits import BorderVGroup
-from pychron.processing.analyses.analysis_group import AnalysisGroup, InterpretedAgeGroup
+from pychron.processing.analyses.analysis_group import (
+    AnalysisGroup,
+    InterpretedAgeGroup,
+)
 from pychron.pychron_constants import format_mswd, NULL_STR, WEIGHTED_MEAN, MSEM
 
 
 class IdeogramResultsAdapter(TabularAdapter):
-    columns = [('GroupID', 'group_id'),
-               ('Identifier', 'identifier'),
-               ('Sample', 'sample'),
-               ('Age Span', 'age_span'),
-               ('Weighted Mean Age', 'weighted_mean_age'),
-               ('Weighted Mean Age Err.', 'weighted_mean_age_error'),
-               ('N', 'nanalyses'),
-               ('MSWD', 'mswd'),
-               ('Shapiro-Wilk', 'shapiro_wilk_pvalue'),
-               ('Skewness', 'skewness')]
+    columns = [
+        ("GroupID", "group_id"),
+        ("Identifier", "identifier"),
+        ("Sample", "sample"),
+        ("Age Span", "age_span"),
+        ("Weighted Mean Age", "weighted_mean_age"),
+        ("Weighted Mean Age Err.", "weighted_mean_age_error"),
+        ("N", "nanalyses"),
+        ("MSWD", "mswd"),
+        ("Shapiro-Wilk", "shapiro_wilk_pvalue"),
+        ("Skewness", "skewness"),
+    ]
 
     group_id_width = Int(50)
     identifier_width = Int(75)
@@ -61,15 +66,15 @@ class IdeogramResultsAdapter(TabularAdapter):
 
         txt = floatfmt(self.item.skewness, n=3)
         if txt:
-            smi = self.item.outlier_options.get('skew_min', -0.02)
-            sma = self.item.outlier_options.get('skew_max', 0.02)
-            txt = '{} ({},{})'.format(txt, smi, sma)
+            smi = self.item.outlier_options.get("skew_min", -0.02)
+            sma = self.item.outlier_options.get("skew_max", 0.02)
+            txt = "{} ({},{})".format(txt, smi, sma)
         return txt
 
     def _get_shapiro_wilk_pvalue_text(self):
         txt = floatfmt(self.item.shapiro_wilk_pvalue, n=5)
         if txt:
-            txt = '{} (>{})'.format(txt, self.item.outlier_options.get('alpha', 0.05))
+            txt = "{} (>{})".format(txt, self.item.outlier_options.get("alpha", 0.05))
 
         return txt
 
@@ -98,15 +103,20 @@ class IdeogramResultsTable(HasTraits):
         sgroup = InterpretedAgeGroup(analyses=analysis_groups)
         sgroup.set_preferred_age(WEIGHTED_MEAN, MSEM)
         sgroup.sample = NULL_STR
-        sgroup.identifier = 'Summary'
+        sgroup.identifier = "Summary"
 
         analysis_groups.append(sgroup)
         self.analysis_groups = analysis_groups
         self.adapter = IdeogramResultsAdapter(nsigma=nsigma)
 
     def traits_view(self):
-        v = View(BorderVGroup(UItem('analysis_groups',
-                                    editor=TabularEditor(adapter=self.adapter)),
-                              label='Summary'))
+        v = View(
+            BorderVGroup(
+                UItem("analysis_groups", editor=TabularEditor(adapter=self.adapter)),
+                label="Summary",
+            )
+        )
         return v
+
+
 # ============= EOF =============================================

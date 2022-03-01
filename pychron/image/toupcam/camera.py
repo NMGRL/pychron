@@ -21,11 +21,19 @@ import os
 from io import StringIO
 from PIL import Image
 from numpy import zeros, uint8, uint32
+
 # ============= enthought library imports =======================
 from traits.api import provides
+
 # ============= local library imports  ==========================
 from pychron.image.i_camera import ICamera
-from pychron.image.toupcam import lib, success, HToupCam, TOUPCAM_EVENT_STILLIMAGE, TOUPCAM_EVENT_IMAGE
+from pychron.image.toupcam import (
+    lib,
+    success,
+    HToupCam,
+    TOUPCAM_EVENT_STILLIMAGE,
+    TOUPCAM_EVENT_IMAGE,
+)
 
 
 @provides(ICamera)
@@ -37,14 +45,14 @@ class ToupCamCamera(object):
 
     def __init__(self, resolution=2, bits=32):
         if bits not in (32,):
-            raise ValueError('Bits needs to by 8 or 32')
+            raise ValueError("Bits needs to by 8 or 32")
         # bits = 8
         self.resolution = resolution
         self.cam = self.get_camera()
         self.bits = bits
 
     # icamera interface
-    def save(self, p, extension='JPEG', *args, **kw):
+    def save(self, p, extension="JPEG", *args, **kw):
         # self._save_path = p
         # lib.Toupcam_Snap(self.cam, self.resolution)
         image = self.get_pil_image()
@@ -66,18 +74,18 @@ class ToupCamCamera(object):
 
     def save_jpeg(self, p, quality=100):
         im = self.get_pil_image()
-        im.save(p, 'JPEG', quality=quality)
+        im.save(p, "JPEG", quality=quality)
 
     def save_tiff(self, p):
         im = self.get_pil_image()
-        im.save(p, 'TIFF')
+        im.save(p, "TIFF")
 
     def get_jpeg_data(self, data=None, quality=75):
 
         im = self.get_pil_image(data)
 
         s = StringIO()
-        im.save(s, 'JPEG', quality=quality)
+        im.save(s, "JPEG", quality=quality)
         s.seek(0, os.SEEK_END)
 
         return s.getvalue()
@@ -89,9 +97,9 @@ class ToupCamCamera(object):
 
         raw = data.view(uint8).reshape(data.shape + (-1,))
         bgr = raw[..., :3]
-        image = Image.fromarray(bgr, 'RGB')
+        image = Image.fromarray(bgr, "RGB")
         b, g, r = image.split()
-        return Image.merge('RGB', (r, g, b))
+        return Image.merge("RGB", (r, g, b))
 
     def get_image_data(self, *args, **kw):
         d = self._data
@@ -124,9 +132,13 @@ class ToupCamCamera(object):
                 w, h = ctypes.c_uint(), ctypes.c_uint()
                 bits = ctypes.c_int(self.bits)
 
-                lib.Toupcam_PullImage(self.cam, ctypes.c_void_p(self._data.ctypes.data), bits,
-                                      ctypes.byref(w),
-                                      ctypes.byref(h))
+                lib.Toupcam_PullImage(
+                    self.cam,
+                    ctypes.c_void_p(self._data.ctypes.data),
+                    bits,
+                    ctypes.byref(w),
+                    ctypes.byref(h),
+                )
 
             elif nEvent == TOUPCAM_EVENT_STILLIMAGE:
                 w, h = self.get_size()
@@ -137,7 +149,9 @@ class ToupCamCamera(object):
 
                 still = zeros(shape, dtype=dtype)
                 bits = ctypes.c_int(self.bits)
-                lib.Toupcam_PullStillImage(self.cam, ctypes.c_void_p(still.ctypes.data), bits, None, None)
+                lib.Toupcam_PullStillImage(
+                    self.cam, ctypes.c_void_p(still.ctypes.data), bits, None, None
+                )
                 self._do_save(still)
 
         CB = ctypes.CFUNCTYPE(None, ctypes.c_uint, ctypes.c_void_p)
@@ -150,52 +164,52 @@ class ToupCamCamera(object):
 
     # ToupCam interface
     def _lib_func(self, func, *args, **kw):
-        ff = getattr(lib, 'Toupcam_{}'.format(func))
+        ff = getattr(lib, "Toupcam_{}".format(func))
         result = ff(self.cam, *args, **kw)
         return success(result)
 
     def _lib_get_func(self, func):
         v = ctypes.c_int()
-        if self._lib_func('get_{}'.format(func), ctypes.byref(v)):
+        if self._lib_func("get_{}".format(func), ctypes.byref(v)):
             return v.value
 
     # setters
     def set_gamma(self, v):
-        self._lib_func('put_Gamma', ctypes.c_int(v))
+        self._lib_func("put_Gamma", ctypes.c_int(v))
 
     def set_contrast(self, v):
-        self._lib_func('put_Contrast', ctypes.c_int(v))
+        self._lib_func("put_Contrast", ctypes.c_int(v))
 
     def set_brightness(self, v):
-        self._lib_func('put_Brightness', ctypes.c_int(v))
+        self._lib_func("put_Brightness", ctypes.c_int(v))
 
     def set_saturation(self, v):
-        self._lib_func('put_Saturation', ctypes.c_int(v))
+        self._lib_func("put_Saturation", ctypes.c_int(v))
 
     def set_hue(self, v):
-        self._lib_func('put_Hue', ctypes.c_int(v))
+        self._lib_func("put_Hue", ctypes.c_int(v))
 
     def set_exposure_time(self, v):
-        self._lib_func('put_ExpoTime', ctypes.c_ulong(v))
+        self._lib_func("put_ExpoTime", ctypes.c_ulong(v))
 
     # getters
     def get_gamma(self):
-        return self._lib_get_func('Gamma')
+        return self._lib_get_func("Gamma")
 
     def get_contrast(self):
-        return self._lib_get_func('Contrast')
+        return self._lib_get_func("Contrast")
 
     def get_brightness(self):
-        return self._lib_get_func('Brightness')
+        return self._lib_get_func("Brightness")
 
     def get_saturation(self):
-        return self._lib_get_func('Saturation')
+        return self._lib_get_func("Saturation")
 
     def get_hue(self):
-        return self._lib_get_func('Hue')
+        return self._lib_get_func("Hue")
 
     def get_exposure_time(self):
-        return self._lib_get_func('ExpoTime')
+        return self._lib_get_func("ExpoTime")
 
     def do_awb(self, callback=None):
         """
@@ -210,7 +224,7 @@ class ToupCamCamera(object):
         CB = ctypes.CFUNCTYPE(None, ctypes.c_uint, ctypes.c_void_p)
         self._temptint_cb = CB(temptint_cb)
 
-        return self._lib_func('AwbOnePush', self._temptint_cb)
+        return self._lib_func("AwbOnePush", self._temptint_cb)
 
     def set_temperature_tint(self, temp, tint):
         lib.Toupcam_put_TempTint(self.cam, temp, tint)
@@ -218,7 +232,7 @@ class ToupCamCamera(object):
     def get_temperature_tint(self):
         temp = ctypes.c_int()
         tint = ctypes.c_int()
-        if self._lib_func('get_TempTint', ctypes.byref(temp), ctypes.byref(tint)):
+        if self._lib_func("get_TempTint", ctypes.byref(temp), ctypes.byref(tint)):
             return temp.value, tint.value
 
     def get_auto_exposure(self):
@@ -272,13 +286,13 @@ class ToupCamCamera(object):
         lib.Toupcam_put_eSize(self.cam, ctypes.c_ulong(nres))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import time
 
     cam = ToupCamCamera()
     cam.open()
     time.sleep(1)
 
-    cam.save('foo.jpg')
+    cam.save("foo.jpg")
 
 # ============= EOF =============================================

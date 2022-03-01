@@ -24,11 +24,27 @@ from traits.api import Str, List, Button, Instance, Tuple, Property, cached_prop
 from traitsui.api import Controller, Item
 
 from pychron.core.helpers.filetools import glob_list_directory, add_extension
+from pychron.core.helpers.isotope_utils import sort_detectors
+from pychron.core.helpers.strtools import ratio
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
-from pychron.file_defaults import SPECTRUM_PRESENTATION, RADIAL_SCREEN, REGRESSION_SERIES_SCREEN, \
-    DEFINE_EQUILIBRATION_SCREEN
-from pychron.file_defaults import SPECTRUM_SCREEN, IDEOGRAM_SCREEN, IDEOGRAM_PRESENTATION, SERIES_SCREEN, BLANKS_SCREEN, \
-    ICFACTOR_SCREEN, INVERSE_ISOCHRON_SCREEN, INVERSE_ISOCHRON_PRESENTATION, ISO_EVO_SCREEN, BLANKS_PRESENTATION
+from pychron.file_defaults import (
+    SPECTRUM_PRESENTATION,
+    RADIAL_SCREEN,
+    REGRESSION_SERIES_SCREEN,
+    DEFINE_EQUILIBRATION_SCREEN,
+)
+from pychron.file_defaults import (
+    SPECTRUM_SCREEN,
+    IDEOGRAM_SCREEN,
+    IDEOGRAM_PRESENTATION,
+    SERIES_SCREEN,
+    BLANKS_SCREEN,
+    ICFACTOR_SCREEN,
+    INVERSE_ISOCHRON_SCREEN,
+    INVERSE_ISOCHRON_PRESENTATION,
+    ISO_EVO_SCREEN,
+    BLANKS_PRESENTATION,
+)
 from pychron.globals import globalv
 from pychron.loggable import Loggable
 from pychron.mdd.tasks.mdd_figure import MDDFigureOptions
@@ -36,7 +52,11 @@ from pychron.options.arar_calculations import ArArCalculationsOptions
 from pychron.options.blanks import BlanksOptions
 from pychron.options.composite import CompositeOptions
 from pychron.options.define_equilibration import DefineEquilibrationOptions
-from pychron.options.flux import FluxOptions, VerticalFluxOptions, FluxVisualizationOptions
+from pychron.options.flux import (
+    FluxOptions,
+    VerticalFluxOptions,
+    FluxVisualizationOptions,
+)
 from pychron.options.icfactor import ICFactorOptions
 from pychron.options.ideogram import IdeogramOptions
 from pychron.options.iso_evo import IsotopeEvolutionOptions
@@ -50,14 +70,30 @@ from pychron.options.series import SeriesOptions
 from pychron.options.spectrum import SpectrumOptions
 from pychron.options.xy_scatter import XYScatterOptions
 from pychron.paths import paths
+from pychron.pipeline.plot.plotter.series import (
+    PEAK_CENTER,
+    ANALYSIS_TYPE,
+    LAB_TEMP,
+    LAB_HUM,
+    EXTRACT_DURATION,
+    RADIOGENIC_YIELD,
+    AGE,
+)
+from pychron.pychron_constants import (
+    EXTRACT_VALUE,
+    CLEANUP,
+    UNKNOWN,
+    COCKTAIL,
+    DETECTOR_IC,
+)
 
 
 class OptionsUnpickler(pickle.Unpickler):
     def __init__(self, *args, **kw):
         super(OptionsUnpickler, self).__init__(*args, **kw)
         try:
-            self.dispatch['oreduce'] = self.dispatch[pickle.REDUCE[0]]
-            self.dispatch['obuild'] = self.dispatch[pickle.BUILD[0]]
+            self.dispatch["oreduce"] = self.dispatch[pickle.REDUCE[0]]
+            self.dispatch["obuild"] = self.dispatch[pickle.BUILD[0]]
             self.dispatch[pickle.REDUCE[0]] = self.load_reduce
             self.dispatch[pickle.BUILD[0]] = self.load_build
         except AttributeError:
@@ -65,14 +101,15 @@ class OptionsUnpickler(pickle.Unpickler):
 
     def destroy(self):
         try:
-            self.dispatch[pickle.REDUCE[0]] = self.dispatch['oreduce']
-            self.dispatch[pickle.BUILD[0]] = self.dispatch['obuild']
+            self.dispatch[pickle.REDUCE[0]] = self.dispatch["oreduce"]
+            self.dispatch[pickle.BUILD[0]] = self.dispatch["obuild"]
         except AttributeError:
             pass
 
     def find_class(self, mod, klass):
-        if klass == 'QColor':
+        if klass == "QColor":
             from pyface.qt.QtGui import QColor
+
             r = QColor
         else:
             r = super(OptionsUnpickler, self).find_class(mod, klass)
@@ -84,11 +121,12 @@ class OptionsUnpickler(pickle.Unpickler):
         stack = obj.stack
         args = stack.pop()
         func = stack[-1]
-        if args and args[0] == 'PyQt4.QtGui':
+        if args and args[0] == "PyQt4.QtGui":
             try:
                 stack[-1] = func(*args)
             except ModuleNotFoundError:
                 from pyface.qt.QtGui import QColor
+
                 stack[-1] = QColor(*args[2])
         else:
             stack[-1] = func(*args)
@@ -106,7 +144,7 @@ class OptionsUnpickler(pickle.Unpickler):
         if isinstance(state, tuple) and len(state) == 2:
             state, slotstate = state
 
-        if state == 'setRgbF':
+        if state == "setRgbF":
             inst.setRgbF(*slotstate)
         else:
             if state:
@@ -129,9 +167,9 @@ class BaseOptionsManager(Loggable):
     _defaults = None
     new_name = Property
     _new_name = Str
-    delete_enabled = Property(depends_on='names')
+    delete_enabled = Property(depends_on="names")
 
-    id = ''
+    id = ""
 
     def __init__(self, *args, **kw):
         super(BaseOptionsManager, self).__init__(*args, **kw)
@@ -139,8 +177,10 @@ class BaseOptionsManager(Loggable):
         self._initialize()
 
     def delete_selected(self):
-        if self.confirmation_dialog('Are you sure you want to delete "{}"'.format(self.selected)):
-            for ext in ('.p', '.json'):
+        if self.confirmation_dialog(
+            'Are you sure you want to delete "{}"'.format(self.selected)
+        ):
+            for ext in (".p", ".json"):
                 p = self._pname(self.selected, ext)
                 if os.path.isfile(p):
                     os.remove(p)
@@ -160,10 +200,10 @@ class BaseOptionsManager(Loggable):
                 os.mkdir(self.persistence_root)
 
         if self.selected:
-            with open(self._pname('selected', '.json'), 'w') as wfile:
-                json.dump({'selected': self.selected}, wfile)
+            with open(self._pname("selected", ".json"), "w") as wfile:
+                json.dump({"selected": self.selected}, wfile)
 
-            p = self._pname('selected')
+            p = self._pname("selected")
             if os.path.isfile(p):
                 os.remove(p)
 
@@ -188,25 +228,25 @@ class BaseOptionsManager(Loggable):
         self._save(name, obj)
         self._load_names()
 
-    def _pname(self, name, ext='.p'):
+    def _pname(self, name, ext=".p"):
         name = add_extension(name, ext)
         return os.path.join(self.persistence_root, name)
 
     def _initialize(self):
-        p = self._pname('selected', '.json')
-        n = 'Default'
+        p = self._pname("selected", ".json")
+        n = "Default"
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 obj = json.load(rfile)
-                n = obj['selected']
+                n = obj["selected"]
         else:
-            p = self._pname('selected')
+            p = self._pname("selected")
             if os.path.isfile(p):
-                with open(p, 'rb') as rfile:
+                with open(p, "rb") as rfile:
                     try:
                         n = pickle.load(rfile)
                     except (pickle.PickleError, EOFError):
-                        n = 'Default'
+                        n = "Default"
 
         self.selected = n
 
@@ -223,11 +263,15 @@ class BaseOptionsManager(Loggable):
         self._load_names()
 
     def _load_names(self):
-        ps = glob_list_directory(self.persistence_root, extension='.p', remove_extension=True)
-        js = glob_list_directory(self.persistence_root, extension='.json', remove_extension=True)
+        ps = glob_list_directory(
+            self.persistence_root, extension=".p", remove_extension=True
+        )
+        js = glob_list_directory(
+            self.persistence_root, extension=".json", remove_extension=True
+        )
 
         ps.extend(js)
-        self.names = [ni for ni in ps if ni != 'selected']
+        self.names = [ni for ni in ps if ni != "selected"]
 
     @cached_property
     def _get_delete_enabled(self):
@@ -240,7 +284,7 @@ class BaseOptionsManager(Loggable):
         self._new_name = v
 
     def _validate_new_name(self, v):
-        if all((a not in v) for a in ('\\', ' ', '/')):
+        if all((a not in v) for a in ("\\", " ", "/")):
             if v not in self.names:
                 return v
 
@@ -250,13 +294,13 @@ class BaseOptionsManager(Loggable):
 
 
 def options_load_json(p):
-    with open(p, 'r') as rfile:
+    with open(p, "r") as rfile:
         try:
             j = json.load(rfile)
         except json.JSONDecodeError:
             return
 
-    klass = j.get('klass')
+    klass = j.get("klass")
     if klass is None:
         return
 
@@ -340,13 +384,13 @@ class OptionsManager(BaseOptionsManager):
         self.selected = name
 
     def factory_default(self):
-        self.debug('set factory default')
+        self.debug("set factory default")
         if self._defaults:
             options_name = self.selected.lower()
             for name, txt in self._defaults:
                 if name == options_name:
-                    self.selected = ''
-                    self.debug('set factory default for {}'.format(name))
+                    self.selected = ""
+                    self.debug("set factory default for {}".format(name))
                     dp = self._pname(name)
                     os.remove(dp)
 
@@ -357,11 +401,13 @@ class OptionsManager(BaseOptionsManager):
                     self.selected = name
                     break
             else:
-                self.information_dialog('Factory Defaults not available for "{}". '
-                                        'Not a factory provided options set'.format(options_name))
+                self.information_dialog(
+                    'Factory Defaults not available for "{}". '
+                    "Not a factory provided options set".format(options_name)
+                )
 
         else:
-            self.information_dialog('Not Factory Defaults available')
+            self.information_dialog("Not Factory Defaults available")
 
     def _selected_subview_changed(self, new):
         if new:
@@ -369,14 +415,14 @@ class OptionsManager(BaseOptionsManager):
             self.subview = v
 
     def _save(self, name, obj):
-        p = self._pname(name, '.json')
-        with open(p, 'w') as wfile:
+        p = self._pname(name, ".json")
+        with open(p, "w") as wfile:
             obj.dump(wfile)
 
         # for backwards compatiblity keep this for now
         p = self._pname(name)
         if os.path.isfile(p):
-            dp = self._pname(name, '.p.bak')
+            dp = self._pname(name, ".p.bak")
             shutil.move(p, dp)
 
         # p = self._pname(name)
@@ -388,14 +434,14 @@ class OptionsManager(BaseOptionsManager):
             obj = None
             name = new.lower()
 
-            yp = self._pname(name, '.json')
+            yp = self._pname(name, ".json")
             if os.path.isfile(yp):
                 obj = options_load_json(yp)
-                obj.manager_id = self.id
                 if obj:
+                    obj.manager_id = self.id
                     p = self._pname(name)
                     if os.path.isfile(p):
-                        dp = self._pname(name, '.p.bak')
+                        dp = self._pname(name, ".p.bak")
                         shutil.move(p, dp)
 
             if obj is None:
@@ -403,7 +449,7 @@ class OptionsManager(BaseOptionsManager):
                 if os.path.isfile(p):
                     unp = None
                     try:
-                        with open(p, 'rb') as rfile:
+                        with open(p, "rb") as rfile:
                             unp = OptionsUnpickler(rfile)
                             obj = unp.load()
                     except BaseException as e:
@@ -426,7 +472,7 @@ class OptionsManager(BaseOptionsManager):
             if not o:
                 o = self.subview_names[0]
 
-            self.selected_subview = ''
+            self.selected_subview = ""
             self.selected_subview = o
 
         else:
@@ -438,7 +484,7 @@ class OptionsManager(BaseOptionsManager):
 
 
 class ArArCalculationsOptionsManager(OptionsManager):
-    id = 'arar_calculations'
+    id = "arar_calculations"
     options_klass = ArArCalculationsOptions
 
 
@@ -447,114 +493,156 @@ class FigureOptionsManager(OptionsManager):
 
 
 class IsotopeEvolutionOptionsManager(FigureOptionsManager):
-    id = 'iso_evo'
+    id = "iso_evo"
     options_klass = IsotopeEvolutionOptions
     _default_options_txt = ISO_EVO_SCREEN
 
 
 class DefineEquilibrationOptionsManager(FigureOptionsManager):
-    id = 'define_equilibration'
+    id = "define_equilibration"
     options_klass = DefineEquilibrationOptions
     _default_options_txt = DEFINE_EQUILIBRATION_SCREEN
 
 
 class FluxOptionsManager(FigureOptionsManager):
-    id = 'flux'
+    id = "flux"
     options_klass = FluxOptions
 
 
 class VerticalFluxOptionsManager(FigureOptionsManager):
-    id = 'vertical_flux'
+    id = "vertical_flux"
     options_klass = VerticalFluxOptions
 
 
 class FluxVisualizationOptionsManager(FigureOptionsManager):
-    id = 'flux_visualization'
+    id = "flux_visualization"
     options_klass = FluxVisualizationOptions
 
 
 class XYScatterOptionsManager(FigureOptionsManager):
-    id = 'xy_scatter'
+    id = "xy_scatter"
     options_klass = XYScatterOptions
 
 
 class IdeogramOptionsManager(FigureOptionsManager):
-    id = 'ideogram'
+    id = "ideogram"
     options_klass = IdeogramOptions
-    _defaults = (('screen', IDEOGRAM_SCREEN),
-                 ('presentation', IDEOGRAM_PRESENTATION))
+    _defaults = (("screen", IDEOGRAM_SCREEN), ("presentation", IDEOGRAM_PRESENTATION))
     _default_options_txt = IDEOGRAM_SCREEN
 
 
 class SpectrumOptionsManager(FigureOptionsManager):
-    id = 'spectrum'
+    id = "spectrum"
     options_klass = SpectrumOptions
-    _defaults = (('screen', SPECTRUM_SCREEN),
-                 ('presentation', SPECTRUM_PRESENTATION))
+    _defaults = (("screen", SPECTRUM_SCREEN), ("presentation", SPECTRUM_PRESENTATION))
     _default_options_txt = SPECTRUM_SCREEN
 
 
 class SeriesOptionsManager(FigureOptionsManager):
-    id = 'series'
+    id = "series"
     options_klass = SeriesOptions
-    _defaults = (('screen', SERIES_SCREEN),)
+    _defaults = (("screen", SERIES_SCREEN),)
     _default_options_txt = SERIES_SCREEN
+
+    def set_names_via_keys(
+        self, iso_keys, analysis_type=None, detectors=None, additional_names=None
+    ):
+        names = []
+        if iso_keys:
+            names.extend(iso_keys)
+            names.extend(["{}bs".format(ki) for ki in iso_keys])
+            names.extend(["{}ic".format(ki) for ki in iso_keys])
+
+            names.extend(ratio(iso_keys))
+            names.extend(ratio(iso_keys, invert=True))
+
+            if analysis_type in (UNKNOWN, COCKTAIL):
+                names.append(AGE)
+                names.append(RADIOGENIC_YIELD)
+
+            if analysis_type in (DETECTOR_IC,):
+                for i, di in enumerate(detectors):
+                    for j, dj in enumerate(detectors):
+                        if j < i:
+                            continue
+
+                        if di == dj:
+                            continue
+
+                        names.append("{}/{} DetIC".format(di, dj))
+
+        names.extend(
+            [
+                PEAK_CENTER,
+                ANALYSIS_TYPE,
+                LAB_TEMP,
+                LAB_HUM,
+                EXTRACT_VALUE,
+                EXTRACT_DURATION,
+                CLEANUP,
+            ]
+        )
+        if additional_names:
+            names.extend(additional_names)
+
+        self.set_names(names)
 
 
 class RatioSeriesOptionsManager(FigureOptionsManager):
-    id = 'ratio_series'
+    id = "ratio_series"
     options_klass = RatioSeriesOptions
 
 
 class RegressionOptionsManager(FigureOptionsManager):
-    id = 'regression'
+    id = "regression"
     options_klass = RegressionOptions
 
 
 class BlanksOptionsManager(FigureOptionsManager):
-    id = 'blanks'
+    id = "blanks"
     options_klass = BlanksOptions
-    _defaults = (('screen', BLANKS_SCREEN),
-                 ('presentation', BLANKS_PRESENTATION))
+    _defaults = (("screen", BLANKS_SCREEN), ("presentation", BLANKS_PRESENTATION))
     _default_options_txt = BLANKS_SCREEN
 
 
 class ICFactorOptionsManager(FigureOptionsManager):
-    id = 'icfactor'
+    id = "icfactor"
     options_klass = ICFactorOptions
-    _defaults = (('screen', ICFACTOR_SCREEN),)
+    _defaults = (("screen", ICFACTOR_SCREEN),)
     _default_options_txt = ICFACTOR_SCREEN
 
 
 class InverseIsochronOptionsManager(FigureOptionsManager):
-    id = 'inverse_isochron'
+    id = "inverse_isochron"
     options_klass = InverseIsochronOptions
-    _defaults = (('screen', INVERSE_ISOCHRON_SCREEN),
-                 ('presentation', INVERSE_ISOCHRON_PRESENTATION))
+    _defaults = (
+        ("screen", INVERSE_ISOCHRON_SCREEN),
+        ("presentation", INVERSE_ISOCHRON_PRESENTATION),
+    )
     _default_options_txt = INVERSE_ISOCHRON_SCREEN
 
 
 class RegressionSeriesOptionsManager(FigureOptionsManager):
-    id = 'regression_series'
+    id = "regression_series"
     options_klass = RegressionSeriesOptions
-    _defaults = (('screen', REGRESSION_SERIES_SCREEN),)
+    _defaults = (("screen", REGRESSION_SERIES_SCREEN),)
     _default_options_txt = REGRESSION_SERIES_SCREEN
 
 
 class RadialOptionsManager(FigureOptionsManager):
-    id = 'radial'
+    id = "radial"
     options_klass = RadialOptions
-    _defaults = (('screen', RADIAL_SCREEN),)
+    _defaults = (("screen", RADIAL_SCREEN),)
     _default_options_txt = RADIAL_SCREEN
 
 
 class MDDFigureOptionsManager(FigureOptionsManager):
-    id = 'mdd'
+    id = "mdd"
     options_klass = MDDFigureOptions
 
 
 class CompositeOptionsManager(FigureOptionsManager):
-    id = 'composite'
+    id = "composite"
     options_klass = CompositeOptions
 
 
@@ -573,8 +661,9 @@ class OptionsController(Controller):
         self.model.delete_selected()
 
     def controller_add_options_changed(self, info):
-        info = self.edit_traits(view=okcancel_view(Item('new_name', label='Name'),
-                                                   title='New Options'))
+        info = self.edit_traits(
+            view=okcancel_view(Item("new_name", label="Name"), title="New Options")
+        )
         if info.result:
             self.model.add(self.model.new_name)
 
@@ -582,13 +671,15 @@ class OptionsController(Controller):
         self.model.save()
 
     def controller_save_as_options_changed(self, info):
-        info = self.edit_traits(view=okcancel_view(Item('new_name', label='Name'),
-                                                   title='New Options'))
+        info = self.edit_traits(
+            view=okcancel_view(Item("new_name", label="Name"), title="New Options")
+        )
         if info.result:
             self.model.save_selected_as()
 
     def controller_factory_default_changed(self, info):
         self.model.factory_default()
+
 
 # if __name__ == '__main__':
 #     paths.build('_dev')

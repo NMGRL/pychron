@@ -22,7 +22,7 @@ class Pyrometer(CoreDevice):
 
     pointer = Button
     pointing = Bool
-    pointer_label = Property(depends_on='pointing')
+    pointer_label = Property(depends_on="pointing")
 
     def read_temperature(self):
         raise NotImplementedError
@@ -31,15 +31,14 @@ class Pyrometer(CoreDevice):
         raise NotImplementedError
 
     def _get_pointer_label(self):
-        """
-        """
-        return 'Pointer ON' if not self.pointing else 'Pointer OFF'
+        """ """
+        return "Pointer ON" if not self.pointing else "Pointer OFF"
 
     def _pointer_fired(self):
-        """
-        """
+        """ """
         self.pointing = not self.pointing
 
         self.set_laser_pointer(self.pointing)
+
 
 # ============= EOF =============================================

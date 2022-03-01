@@ -18,19 +18,21 @@
 from __future__ import absolute_import
 from traits.api import Str, Property, cached_property
 from traitsui.api import Item, EnumEditor, VGroup
+
 # ============= standard library imports ========================
 import os
 import re
+
 # ============= local library imports  ==========================
 from pychron.pyscripts.commands.core import Command
 from pychron.paths import paths
 from pychron.extraction_line.switch_parser import SwitchParser
 import six
 
+name_re = re.compile(r"""name\s*=\s*["']+\w+["']""")
+desc_re = re.compile(r"""description\s*=\s*["']+[\w\s]+["']""")
+attr_re = re.compile(r"""["']+[\w\s]+["']""")
 
-name_re=re.compile(r'''name\s*=\s*["']+\w+["']''')
-desc_re=re.compile(r'''description\s*=\s*["']+[\w\s]+["']''')
-attr_re=re.compile(r'''["']+[\w\s]+["']''')
 
 class ValveCommand(Command):
     valve = Str
@@ -48,7 +50,9 @@ class ValveCommand(Command):
         m = desc_re.match(txt)
         if m:
             a = self._extract_attr(m)
-            v = next((k for k, v in six.iteritems(self.valve_name_dict) if v == a), None)
+            v = next(
+                (k for k, v in six.iteritems(self.valve_name_dict) if v == a), None
+            )
             if v:
                 self.valve = v
                 return
@@ -67,14 +71,15 @@ class ValveCommand(Command):
 
     @cached_property
     def _get_valve_names(self):
-        setup_file = os.path.join(paths.extraction_line_dir, 'valves.xml')
+        setup_file = os.path.join(paths.extraction_line_dir, "valves.xml")
         if os.path.isfile(setup_file):
             parser = SwitchParser(setup_file)
 
-            valves = [(v.text.strip(),
-                          v.find('description').text.strip())
-                            for g in parser.get_groups() + [None]
-                                for v in parser.get_valves(group=g) ]
+            valves = [
+                (v.text.strip(), v.find("description").text.strip())
+                for g in parser.get_groups() + [None]
+                for v in parser.get_valves(group=g)
+            ]
             self.valve = valves[0][0]
         else:
             valves = []
@@ -82,14 +87,16 @@ class ValveCommand(Command):
         return valves
 
     def _get_view(self):
-        return VGroup(Item('valve', editor=EnumEditor(name='valve_name_dict')),
-                      Item('valve', style='readonly', label='Name')
-                      )
+        return VGroup(
+            Item("valve", editor=EnumEditor(name="valve_name_dict")),
+            Item("valve", style="readonly", label="Name"),
+        )
 
     def _to_string(self):
-        return self._keywords([('name', self.valve),
-                               ('description', self.valve_name_dict[self.valve])
-                               ])
+        return self._keywords(
+            [("name", self.valve), ("description", self.valve_name_dict[self.valve])]
+        )
+
 
 #        return 'name{}, description={}'.format(self._quote(self.item),
 #                                           self._quote(self.items[self.item]))

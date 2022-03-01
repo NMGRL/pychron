@@ -47,6 +47,7 @@ from traitsui.table_column import ObjectColumn
 # class MagnitudeEditor(BasicEditorFactory):
 #     klass = _MagnitudeEditor
 
+
 class MagnitudeRenderer(TableDelegate):
     bar_width = 50
 
@@ -68,19 +69,17 @@ class MagnitudeRenderer(TableDelegate):
         w = rect.width()
 
         rect.setWidth(w * min(1.0, v))
-        painter.fillRect(rect,
-                         brush)
+        painter.fillRect(rect, brush)
         painter.restore()
 
 
 class MagnitudeColumn(ObjectColumn):
     def __init__(self, **traits):
-        """ Initializes the object.
-        """
+        """Initializes the object."""
         super(MagnitudeColumn, self).__init__(**traits)
 
         # force the renderer to be a magnitude renderer
         self.renderer = MagnitudeRenderer()
 
-# ============= EOF =============================================
 
+# ============= EOF =============================================

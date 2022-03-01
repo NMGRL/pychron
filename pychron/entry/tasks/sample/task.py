@@ -23,8 +23,15 @@ import os
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import TaskLayout, PaneItem
 
-from pychron.entry.tasks.sample.actions import DumpAction, LoadAction, RecoverAction, SaveAction, ClearAction, \
-    ImportSamplesAction
+from pychron.entry.tasks.sample.actions import (
+    DumpAction,
+    LoadAction,
+    RecoverAction,
+    SaveAction,
+    ClearAction,
+    ImportSamplesAction,
+    MakeSampleTemplateAction,
+)
 from pychron.entry.tasks.sample.panes import SampleEntryPane, SampleEditorPane
 from pychron.entry.tasks.sample.sample_entry import SampleEntry
 from pychron.envisage.tasks.base_task import BaseManagerTask
@@ -33,13 +40,14 @@ from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class SampleEntryTask(BaseManagerTask):
-    name = 'Sample'
-    id = 'pychron.entry.sample.task'
-    tool_bars = [SToolBar(SaveAction()),
-                 SToolBar(DumpAction(), LoadAction(), RecoverAction()),
-                 SToolBar(ClearAction()),
-                 SToolBar(ImportSamplesAction())]
-
+    name = "Sample"
+    id = "pychron.entry.sample.task"
+    tool_bars = [
+        SToolBar(SaveAction()),
+        SToolBar(DumpAction(), LoadAction(), RecoverAction()),
+        SToolBar(ClearAction()),
+        SToolBar(ImportSamplesAction(), MakeSampleTemplateAction()),
+    ]
 
     def activated(self):
         self.manager.activated()
@@ -57,6 +65,9 @@ class SampleEntryTask(BaseManagerTask):
     def import_sample_from_file(self):
         self.manager.import_sample_from_file()
 
+    def make_sample_template_file(self):
+        self.manager.make_sample_template_file()
+
     def clear(self):
         self.manager.clear()
 
@@ -69,7 +80,7 @@ class SampleEntryTask(BaseManagerTask):
             self.manager.load(p)
 
     def recover(self):
-        p = os.path.join(paths.sample_dir, '.last.yaml')
+        p = os.path.join(paths.sample_dir, ".last.yaml")
         if os.path.isfile(p):
             self.manager.load(p)
 
@@ -86,6 +97,7 @@ class SampleEntryTask(BaseManagerTask):
         return SampleEntry(application=self.application, dvc=dvc)
 
     def _default_layout_default(self):
-        return TaskLayout(left=PaneItem('pychron.entry.sample.editor'))
+        return TaskLayout(left=PaneItem("pychron.entry.sample.editor"))
+
 
 # ============= EOF =============================================

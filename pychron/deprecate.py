@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-'''
+"""
     http://code.activestate.com/recipes/391367-deprecated/
-'''
+"""
 
 from __future__ import absolute_import
 import inspect
@@ -34,10 +34,12 @@ def deprecated(func):
 
     def newFunc(*args, **kwargs):
         caller = inspect.getframeinfo(inspect.currentframe().f_back)[2]
-        warnings.warn("Call to deprecated function {}. From {}. {}".format(func.__name__,
-                                                                           caller,
-                                                                           message),
-                      category=DeprecationWarning)
+        warnings.warn(
+            "Call to deprecated function {}. From {}. {}".format(
+                func.__name__, caller, message
+            ),
+            category=DeprecationWarning,
+        )
         return func(*args, **kwargs)
 
     newFunc.__name__ = func.__name__
@@ -54,10 +56,12 @@ def deprecated_message(message):
 
         def newFunc(*args, **kwargs):
             caller = inspect.getframeinfo(inspect.currentframe().f_back)[2]
-            warnings.warn("Call to deprecated function {}. From {}. {}".format(func.__name__,
-                                                                               caller,
-                                                                               message),
-                          category=DeprecationWarning)
+            warnings.warn(
+                "Call to deprecated function {}. From {}. {}".format(
+                    func.__name__, caller, message
+                ),
+                category=DeprecationWarning,
+            )
             return func(*args, **kwargs)
 
         newFunc.__name__ = func.__name__
@@ -76,5 +80,6 @@ def deprecate_klass():
         return cls
 
     return decorate
+
 
 # ============= EOF =============================================

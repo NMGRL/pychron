@@ -22,7 +22,17 @@ import pickle
 from datetime import datetime, timedelta
 
 from pyface.action.menu_manager import MenuManager
-from traits.api import HasTraits, Str, Int, Any, on_trait_change, List, Event, Button, Date
+from traits.api import (
+    HasTraits,
+    Str,
+    Int,
+    Any,
+    on_trait_change,
+    List,
+    Event,
+    Button,
+    Date,
+)
 from traitsui.api import View, UItem, Item, HGroup, VGroup, EnumEditor, spring
 from traitsui.editors.api import DateEditor
 from traitsui.handler import Controller, Handler
@@ -37,14 +47,16 @@ from pychron.pychron_constants import NULL_STR
 
 
 class TimeViewAdapter(TabularAdapter):
-    columns = [('Date', 'rundate'),
-               ('RunID', 'record_id'),
-               ('Type', 'analysis_type'),
-               ('Sample', 'sample'),
-               ('Spectrometer', 'mass_spectrometer'),
-               ('Project', 'project'),
-               ('Irrad.', 'irradiation_info'),
-               ('Device', 'extract_device')]
+    columns = [
+        ("Date", "rundate"),
+        ("RunID", "record_id"),
+        ("Type", "analysis_type"),
+        ("Sample", "sample"),
+        ("Spectrometer", "mass_spectrometer"),
+        ("Project", "project"),
+        ("Irrad.", "irradiation_info"),
+        ("Device", "extract_device"),
+    ]
 
     record_id_width = Int(80)
     analysis_type_width = Int(80)
@@ -54,16 +66,18 @@ class TimeViewAdapter(TabularAdapter):
     irradiation_info_width = Int(60)
     mass_spectrometer_width = Int(80)
     extract_device_width = Int(95)
-    font = 'Helvetica 9'
+    font = "Helvetica 9"
 
     def get_menu(self, obj, trait, row, column):
         if obj.context_menu_enabled:
             e = obj.append_replace_enabled
-            actions = [Action(name='Unselect', action='unselect_analyses'),
-                       Action(name='Replace', action='replace_items', enabled=e),
-                       Action(name='Append', action='append_items', enabled=e),
-                       Action(name='Open', action='recall_items'),
-                       Action(name='Open Copy', action='recall_copies')]
+            actions = [
+                Action(name="Unselect", action="unselect_analyses"),
+                Action(name="Replace", action="replace_items", enabled=e),
+                Action(name="Append", action="append_items", enabled=e),
+                Action(name="Open", action="recall_items"),
+                Action(name="Open Copy", action="recall_copies"),
+            ]
 
             return MenuManager(*actions)
 
@@ -71,47 +85,72 @@ class TimeViewAdapter(TabularAdapter):
 class TVHandler(Handler):
     def recall_copies(self, info, obj):
         if obj.selected:
-            obj.context_menu_event = ('open', {'open_copy': True})
+            obj.context_menu_event = ("open", {"open_copy": True})
 
     def recall_items(self, info, obj):
         if obj.selected:
-            obj.context_menu_event = ('open', {'open_copy': False})
+            obj.context_menu_event = ("open", {"open_copy": False})
 
     def unselect_analyses(self, info, obj):
         obj.selected = []
 
     def replace_items(self, info, obj):
         if obj.selected:
-            obj.context_menu_event = ('replace', None)
+            obj.context_menu_event = ("replace", None)
 
     def append_items(self, info, obj):
         if obj.selected:
-            obj.context_menu_event = ('append', None)
+            obj.context_menu_event = ("append", None)
 
 
-ATimeView = View(VGroup(icon_button_editor('clear_filter_button', 'clear'),
-                        HGroup(UItem('help_str', style='readonly'), label='Help', show_border=True),
-                        VGroup(
-                            HGroup(UItem('mass_spectrometer', editor=EnumEditor(name='available_mass_spectrometers')),
-                                   UItem('analysis_type', editor=EnumEditor(name='available_analysis_types')),
-                                   UItem('extract_device', editor=EnumEditor(name='available_extract_devices'))),
-                            HGroup(Item('lowdays', label='Greater Than'),
-                                   UItem('lowdate', editor=DateEditor(strftime='%m/%d/%Y'),
-                                         style='readonly'),
-                                   spring,
-                                   Item('highdays', label='Less Than'),
-                                   UItem('highdate', editor=DateEditor(strftime='%m/%d/%Y'),
-                                         style='readonly'),
-                                   spring,
-                                   Item('limit')),
-                            label='Filter', show_border=True),
-                        UItem('analyses', editor=myTabularEditor(adapter=TimeViewAdapter(),
-                                                                 column_clicked='column_clicked',
-                                                                 selected='selected',
-                                                                 multi_select=True,
-                                                                 refresh='refresh_table_needed',
-                                                                 dclicked='dclicked',
-                                                                 editable=False))))
+ATimeView = View(
+    VGroup(
+        icon_button_editor("clear_filter_button", "clear"),
+        HGroup(UItem("help_str", style="readonly"), label="Help", show_border=True),
+        VGroup(
+            HGroup(
+                UItem(
+                    "mass_spectrometer",
+                    editor=EnumEditor(name="available_mass_spectrometers"),
+                ),
+                UItem(
+                    "analysis_type", editor=EnumEditor(name="available_analysis_types")
+                ),
+                UItem(
+                    "extract_device",
+                    editor=EnumEditor(name="available_extract_devices"),
+                ),
+            ),
+            HGroup(
+                Item("lowdays", label="Greater Than"),
+                UItem(
+                    "lowdate", editor=DateEditor(strftime="%m/%d/%Y"), style="readonly"
+                ),
+                spring,
+                Item("highdays", label="Less Than"),
+                UItem(
+                    "highdate", editor=DateEditor(strftime="%m/%d/%Y"), style="readonly"
+                ),
+                spring,
+                Item("limit"),
+            ),
+            label="Filter",
+            show_border=True,
+        ),
+        UItem(
+            "analyses",
+            editor=myTabularEditor(
+                adapter=TimeViewAdapter(),
+                column_clicked="column_clicked",
+                selected="selected",
+                multi_select=True,
+                refresh="refresh_table_needed",
+                dclicked="dclicked",
+                editable=False,
+            ),
+        ),
+    )
+)
 
 
 class TimeViewModel(HasTraits):
@@ -123,13 +162,13 @@ class TimeViewModel(HasTraits):
     selected = List
     refresh_table_needed = Event
     clear_filter_button = Button
-    help_str = 'Select an analysis. Click on the column label to filter results by the selected value'
+    help_str = "Select an analysis. Click on the column label to filter results by the selected value"
 
     mass_spectrometer = Str
     analysis_type = Str
     extract_device = Str
     available_mass_spectrometers = List
-    available_analysis_types = List([NULL_STR, 'Unknown', 'Blank', 'Air', 'Cocktail'])
+    available_analysis_types = List([NULL_STR, "Unknown", "Blank", "Air", "Cocktail"])
     available_extract_devices = List
 
     highdays = Int(0, enter_set=True, auto_set=False)
@@ -150,7 +189,9 @@ class TimeViewModel(HasTraits):
         else:
             return self.analyses
 
-    @on_trait_change('mass_spectrometer, analysis_type, extract_device, lowdate, highdate, limit')
+    @on_trait_change(
+        "mass_spectrometer, analysis_type, extract_device, lowdate, highdate, limit"
+    )
     def _handle_filter(self):
         ms = self.mass_spectrometer
         at = self.analysis_type
@@ -171,7 +212,9 @@ class TimeViewModel(HasTraits):
                 name, field = event.editor.adapter.columns[event.column]
 
                 sattrs = {getattr(s, field) for s in self.selected}
-                self.analyses = [ai for ai in self.analyses if getattr(ai, field) in sattrs]
+                self.analyses = [
+                    ai for ai in self.analyses if getattr(ai, field) in sattrs
+                ]
 
             self.refresh_table_needed = True
 
@@ -182,17 +225,25 @@ class TimeViewModel(HasTraits):
         self.lowdate = datetime.now().date() - timedelta(days=self.lowdays)
 
     def dump_filter(self):
-        p = os.path.join(paths.hidden_dir, 'time_view.p')
-        with open(p, 'wb') as wfile:
-            obj = {k: getattr(self, k) for k in
-                   ('mass_spectrometer', 'analysis_type', 'extract_device',
-                    'lowdays', 'highdays', 'limit')}
+        p = os.path.join(paths.hidden_dir, "time_view.p")
+        with open(p, "wb") as wfile:
+            obj = {
+                k: getattr(self, k)
+                for k in (
+                    "mass_spectrometer",
+                    "analysis_type",
+                    "extract_device",
+                    "lowdays",
+                    "highdays",
+                    "limit",
+                )
+            }
             pickle.dump(obj, wfile)
 
     def load_filter(self):
-        p = os.path.join(paths.hidden_dir, 'time_view.p')
+        p = os.path.join(paths.hidden_dir, "time_view.p")
         if os.path.isfile(p):
-            with open(p, 'rb') as rfile:
+            with open(p, "rb") as rfile:
                 obj = pickle.load(rfile)
                 self._suppress_load_analyses = True
                 self.trait_set(**obj)
@@ -217,13 +268,17 @@ class TimeViewModel(HasTraits):
 
     def _load_available(self):
         db = self.db
-        for attr in ('mass_spectrometer', 'extract_device'):
-            func = getattr(db, 'get_{}s'.format(attr))
+        for attr in ("mass_spectrometer", "extract_device"):
+            func = getattr(db, "get_{}s".format(attr))
             ms = func()
             ms.sort()
-            setattr(self, 'available_{}s'.format(attr), [NULL_STR] + [mi.name for mi in ms])
+            setattr(
+                self, "available_{}s".format(attr), [NULL_STR] + [mi.name for mi in ms]
+            )
 
-    def _load_analyses(self, mass_spectrometer=None, analysis_type=None, extract_device=None):
+    def _load_analyses(
+        self, mass_spectrometer=None, analysis_type=None, extract_device=None
+    ):
         if self._suppress_load_analyses:
             return
 
@@ -238,18 +293,22 @@ class TimeViewModel(HasTraits):
         if extract_device == NULL_STR:
             extract_device = None
 
-        ans = db.get_analyses_by_date_range(mi, ma,
-                                            mass_spectrometers=mass_spectrometer,
-                                            analysis_types=analysis_type,
-                                            extract_devices=extract_device,
-                                            limit=self.limit, order='desc')
+        ans = db.get_analyses_by_date_range(
+            mi,
+            ma,
+            mass_spectrometers=mass_spectrometer,
+            analysis_types=analysis_type,
+            extract_devices=extract_device,
+            limit=self.limit,
+            order="desc",
+        )
         self.oanalyses = self._make_records(ans)
         self.analyses = self.oanalyses[:]
 
     def _make_records(self, ans):
         def func(xi, prog, i, n):
             if prog:
-                prog.change_message('Loading {}'.format(xi.record_id))
+                prog.change_message("Loading {}".format(xi.record_id))
             return xi
 
         return progress_loader(ans, func, threshold=25)
@@ -270,10 +329,8 @@ class TimeView(Controller):
     def traits_view(self):
         v = ATimeView
 
-        v.trait_set(resizable=True,
-                    width=900,
-                    height=500,
-                    title='Analysis Time View')
+        v.trait_set(resizable=True, width=900, height=500, title="Analysis Time View")
         return v
+
 
 # ============= EOF =============================================

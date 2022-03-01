@@ -47,7 +47,7 @@ class _CheckListEditor(CustomEditor):
                         #             'values %s', cur_value[i], values)
             if modified:
                 if isinstance(self.value, six.string_types):
-                    cur_value = ','.join(cur_value)
+                    cur_value = ",".join(cur_value)
                 self.value = cur_value
 
             self.rebuild_editor()
@@ -57,11 +57,13 @@ class CheckListEditor(tCheckListEditor):
     capitalize = Bool(True)
 
     def _get_custom_editor_class(self):
-        """ Returns the editor class to use for "custom" style views.
+        """Returns the editor class to use for "custom" style views.
         The default implementation tries to import the CustomEditor class in the
         editor file in the backend package, and if such a class is not to found
         it returns simple_editor_class.
 
         """
         return _CheckListEditor
+
+
 # ============= EOF =============================================

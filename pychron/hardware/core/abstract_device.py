@@ -17,6 +17,7 @@
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from traits.api import Property, DelegatesTo, Instance, provides, CStr
+
 # =============standard library imports ========================
 # =============local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
@@ -26,38 +27,41 @@ from pychron.has_communicator import HasCommunicator
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.scanable_device import ScanableDevice
 
-PACKAGES = dict(ProXRADC='pychron.hardware.ncd.adc',
-                Eurotherm='pychron.hardware.eurotherm',
-                NMGRLFurnaceFeeder='pychron.hardware.furnace.nmgrl.feeder',
-                ThermoFurnaceFeeder='pychron.hardware.furnace.thermo.feeder',
-                NMGRLFurnaceFunnel='pychron.hardware.furnace.nmgrl.funnel',
-                NMGRLFurnaceEurotherm='pychron.hardware.furnace.nmgrl.eurotherm',
-                MDriveMotor='pychron.hardware.mdrive',
-                RPiGPIO='pychron.hardware.rpi_gpio')
+PACKAGES = dict(
+    ProXRADC="pychron.hardware.ncd.adc",
+    Eurotherm="pychron.hardware.eurotherm",
+    NMGRLFurnaceFeeder="pychron.hardware.furnace.nmgrl.feeder",
+    ThermoFurnaceFeeder="pychron.hardware.furnace.thermo.feeder",
+    NMGRLFurnaceFunnel="pychron.hardware.furnace.nmgrl.funnel",
+    NMGRLFurnaceEurotherm="pychron.hardware.furnace.nmgrl.eurotherm",
+    MDriveMotor="pychron.hardware.mdrive",
+    RPiGPIO="pychron.hardware.rpi_gpio",
+)
 
 
 @provides(ICoreDevice)
 class AbstractDevice(ScanableDevice, ConfigLoadable, HasCommunicator):
     _cdevice = Instance(CoreDevice)
-    communicator = DelegatesTo('_cdevice')
+    communicator = DelegatesTo("_cdevice")
 
-    dev_klass = Property(depends_on='_cdevice')
-    graph = DelegatesTo('_cdevice')
-    last_command = DelegatesTo('_cdevice')
-    last_response = DelegatesTo('_cdevice')
-    timestamp = DelegatesTo('_cdevice')
-    current_scan_value = DelegatesTo('_cdevice')
+    dev_klass = Property(depends_on="_cdevice")
+    graph = DelegatesTo("_cdevice")
+    last_command = DelegatesTo("_cdevice")
+    last_response = DelegatesTo("_cdevice")
+    timestamp = DelegatesTo("_cdevice")
+    current_scan_value = DelegatesTo("_cdevice")
 
     def load_additional_args(self, config):
-        """
-
-        """
-        cklass = self.config_get(config, 'General', 'type')
+        """ """
+        cklass = self.config_get(config, "General", "type")
 
         factory = self.get_factory(PACKAGES[cklass], cklass)
         # self.debug('constructing cdevice: name={}, klass={}'.format(name, klass))
-        self._cdevice = factory(name=cklass, application=self.application,
-                                configuration_dir_name=self.configuration_dir_name)
+        self._cdevice = factory(
+            name=cklass,
+            application=self.application,
+            configuration_dir_name=self.configuration_dir_name,
+        )
         return True
 
     @property
@@ -103,9 +107,12 @@ class AbstractDevice(ScanableDevice, ConfigLoadable, HasCommunicator):
     def load(self, *args, **kw):
         if self._cdevice:
             if not self._check_cdevice():
-                self.warning('Invalid device '
-                             '"{}" for abstract device "{}"'.format(self._cdevice.name,
-                                                                    self.name))
+                self.warning(
+                    "Invalid device "
+                    '"{}" for abstract device "{}"'.format(
+                        self._cdevice.name, self.name
+                    )
+                )
                 return
 
         config = self.get_configuration()
@@ -116,10 +123,10 @@ class AbstractDevice(ScanableDevice, ConfigLoadable, HasCommunicator):
                 return True
 
     def open(self, *args, **kw):
-        self.debug('open device')
+        self.debug("open device")
         if self._cdevice:
             return self._cdevice.open(*args, **kw)
-        
+
         return HasCommunicator.open(self, **kw)
 
     def __getattr__(self, attr):
@@ -137,7 +144,7 @@ class AddressableAbstractDevice(AbstractDevice):
     address = CStr
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'address', 'General', 'address')
+        self.set_attribute(config, "address", "General", "address")
         return super(AddressableAbstractDevice, self).load_additional_args(config)
 
     def get(self, force=False, *args, **kw):
@@ -146,9 +153,10 @@ class AddressableAbstractDevice(AbstractDevice):
 
     def _check_cdevice(self):
         if self._cdevice:
-            if hasattr(self._cdevice, 'read_channel'):
+            if hasattr(self._cdevice, "read_channel"):
                 return True
         else:
             return True
+
 
 # ============= EOF =====================================

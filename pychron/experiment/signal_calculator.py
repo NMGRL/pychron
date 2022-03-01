@@ -19,8 +19,7 @@ from __future__ import absolute_import
 import math
 
 import numpy as np
-from traits.api import HasTraits, Str, Float, on_trait_change, Instance, Enum, \
-    String
+from traits.api import HasTraits, Str, Float, on_trait_change, Instance, Enum, String
 from traitsui.api import View, Item, HGroup, VGroup
 
 from pychron.core.ui.enum_editor import myEnumEditor
@@ -62,40 +61,56 @@ class Index(HasTraits):
         e39 = powerlaw(p, n39)
         e40 = powerlaw(p, n40) * e40_scalar
 
-        es = (e39 ** 2 + e40 ** 2) ** 0.5
+        es = (e39**2 + e40**2) ** 0.5
         #        es = age * 1e3 * es
         #        es = 0.2 * nys ** (-0.5)
 
         return xs, ys, n40, es * 100
 
     def _calculate(self, w, age, sensitivity, k2o, c):
-        moles_40k = w / 1000. * k2o / 100. * 1 / c.mK * (2 * c.mK) / (2 * c.mK + c.mO) * c.abundance_40K
-        moles_40Ar = moles_40k * (math.exp(c.lambda_k.nominal_value * age * 1e6) - 1) * (
-            c.lambda_e_v / c.lambda_k.nominal_value)
+        moles_40k = (
+            w
+            / 1000.0
+            * k2o
+            / 100.0
+            * 1
+            / c.mK
+            * (2 * c.mK)
+            / (2 * c.mK + c.mO)
+            * c.abundance_40K
+        )
+        moles_40Ar = (
+            moles_40k
+            * (math.exp(c.lambda_k.nominal_value * age * 1e6) - 1)
+            * (c.lambda_e_v / c.lambda_k.nominal_value)
+        )
         return moles_40Ar / sensitivity
 
 
 class WeightIndex(Index):
-    name = 'Weight'
+    name = "Weight"
 
     def traits_view(self):
-        v = View(Item('start', label='Weight Start (mg)'),
-                 #                        spring,
-                 Item('end', label='Weight End (mg)'))
+        v = View(
+            Item("start", label="Weight Start (mg)"),
+            #                        spring,
+            Item("end", label="Weight End (mg)"),
+        )
         return v
 
 
 class VolumeIndex(Index):
-    name = 'Volume'
+    name = "Volume"
     depth = Float(0.1)  # mm
     rho = 2580  # kg/m^3
-    shape = Enum('circle', 'square')
+    shape = Enum("circle", "square")
 
     def traits_view(self):
-        v = View(Item('start', label='Dimension Start (mm)'),
-                 Item('end', label='Dimension End (mm)'),
-                 HGroup(Item('shape'), Item('depth', label='Depth (mm)')),
-                 )
+        v = View(
+            Item("start", label="Dimension Start (mm)"),
+            Item("end", label="Dimension End (mm)"),
+            HGroup(Item("shape"), Item("depth", label="Depth (mm)")),
+        )
         return v
 
     def calculate(self, age, sensitivity, k2o):
@@ -103,18 +118,18 @@ class VolumeIndex(Index):
         xs = np.linspace(self.start, self.end)
 
         def to_weight(d, depth, rho):
-            '''
-                d== mm
-                depth==mm
-                rho==kg/m^3
-            '''
+            """
+            d== mm
+            depth==mm
+            rho==kg/m^3
+            """
             # convert dimension to meters
-            d = d / 1000.
-            depth = depth / 1000.
-            if self.shape == 'circle':
-                v = math.pi * (d / 2.) ** 2 * depth
+            d = d / 1000.0
+            depth = depth / 1000.0
+            if self.shape == "circle":
+                v = math.pi * (d / 2.0) ** 2 * depth
             else:
-                v = d ** 2 * depth
+                v = d**2 * depth
 
             m = rho * v
             # convert mass to mg 1e6 mg in 1 kg
@@ -127,15 +142,15 @@ class VolumeIndex(Index):
         return xs, ys, xs, ws
 
     def _shape_default(self):
-        return 'circle'
+        return "circle"
 
 
 class IndexSelector(HasTraits):
-    name = String('Weight')
-    names = ['Volume', 'Weight']
+    name = String("Weight")
+    names = ["Volume", "Weight"]
 
     def traits_view(self):
-        v = View(Item('name', editor=myEnumEditor(name='names')))
+        v = View(Item("name", editor=myEnumEditor(name="names")))
         return v
 
 
@@ -165,23 +180,23 @@ class SignalCalculator(HasTraits):
     def _r4039_changed(self):
         self.index.r4039 = self.r4039
 
-    @on_trait_change('x:name')
+    @on_trait_change("x:name")
     def _update_index_kind(self):
-        if self.x.name == 'Weight':
+        if self.x.name == "Weight":
             self.index = WeightIndex()
         else:
             self.index = VolumeIndex()
 
-    @on_trait_change('index:+, index:+, sensitivity, k2o, age')
+    @on_trait_change("index:+, index:+, sensitivity, k2o, age")
     def _calculate(self):
-        '''
-            calculate signal size for n mg of sample with m k2o of age p 
-        '''
-        if self.x.name == 'weight':
+        """
+        calculate signal size for n mg of sample with m k2o of age p
+        """
+        if self.x.name == "weight":
             #            attr = self.weight_index
-            self.graph.set_x_title('weight (mg)')
+            self.graph.set_x_title("weight (mg)")
         else:
-            self.graph.set_x_title('dimension (mm)')
+            self.graph.set_x_title("dimension (mm)")
         # attr = self.volume_index
 
         xs, ys, xx, yy = self.index.calculate(self.age, self.sensitivity, self.k2o)
@@ -197,46 +212,43 @@ class SignalCalculator(HasTraits):
 
     def traits_view(self):
         cntrl_grp = VGroup(
-            Item('age', label='Age (Ma)'),
-            HGroup(Item('k2o', label='K2O %'),
-                   Item('r4039', label='(Ar40*/Ar39K)std'),
-                   #                                  spring,
-                   Item('sensitivity', label='Sensitivity (mol/fA)')),
-
-            Item('x', style='custom', show_label=False),
-            Item('index', style='custom', show_label=False),
+            Item("age", label="Age (Ma)"),
+            HGroup(
+                Item("k2o", label="K2O %"),
+                Item("r4039", label="(Ar40*/Ar39K)std"),
+                #                                  spring,
+                Item("sensitivity", label="Sensitivity (mol/fA)"),
+            ),
+            Item("x", style="custom", show_label=False),
+            Item("index", style="custom", show_label=False),
             #                           Item('kind'),
             #                           Item('volume_index', show_label=False, style='custom',
             #                                visible_when='kind=="volume"'),
             #                           Item('weight_index', show_label=False, style='custom',
             #                                visible_when='kind=="weight"'),
-
         )
 
-        graph_grp = VGroup(Item('graph',
-                                width=800,
-                                height=500,
-                                show_label=False, style='custom'), )
+        graph_grp = VGroup(
+            Item("graph", width=800, height=500, show_label=False, style="custom"),
+        )
         v = View(
-            VGroup(cntrl_grp, graph_grp),
-            resizable=True,
-            title='Signal Calculator'
+            VGroup(cntrl_grp, graph_grp), resizable=True, title="Signal Calculator"
         )
         return v
 
     def _graph_default(self):
-        g = Graph(container_dict=dict(padding=5,
-
-                                      kind='h'))
-        g.new_plot(xtitle='weight (mg)', ytitle='40Ar* (fA)',
-                   padding=[60, 20, 60, 60]
-                   #                   padding=60
-                   )
+        g = Graph(container_dict=dict(padding=5, kind="h"))
+        g.new_plot(
+            xtitle="weight (mg)",
+            ytitle="40Ar* (fA)",
+            padding=[60, 20, 60, 60]
+            #                   padding=60
+        )
 
         g.new_series()
-        g.new_plot(xtitle='40Ar* (fA)', ytitle='%Error in Age',
-                   padding=[30, 30, 60, 60]
-                   )
+        g.new_plot(
+            xtitle="40Ar* (fA)", ytitle="%Error in Age", padding=[30, 30, 60, 60]
+        )
         g.new_series()
         #        fp = create_line_plot(([], []), color='red')
         #        left, bottom = add_default_axes(fp)
@@ -271,7 +283,7 @@ class SignalCalculator(HasTraits):
 # def _kind_default(self):
 #        return 'weight'
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sc = SignalCalculator()
     sc.configure_traits()
 # ============= EOF =============================================

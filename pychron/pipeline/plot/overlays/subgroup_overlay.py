@@ -19,7 +19,6 @@ from chaco.scatterplot import render_markers
 
 
 class SubGroupPointOverlay(AbstractOverlay):
-
     def overlay(self, oc, gc, view_bounds=None, mode="normal"):
         with gc:
             gc.clip_to_rect(oc.x, oc.y, oc.x2, oc.y2)
@@ -37,8 +36,10 @@ class SubGroupPointOverlay(AbstractOverlay):
             marker_size = self.component.marker_size
             color = self.component.color
             line_width = 2
-            outline_color = [1.0-ci for ci in color[:3]]
-            render_markers(gc, points, cmarker, marker_size,
-                           color, line_width, outline_color)
+            outline_color = [1.0 - ci for ci in color[:3]]
+            render_markers(
+                gc, points, cmarker, marker_size, color, line_width, outline_color
+            )
+
 
 # ============= EOF =============================================

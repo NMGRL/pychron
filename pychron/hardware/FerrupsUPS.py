@@ -19,33 +19,34 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from datetime import datetime
+
 # ============= local library imports  ==========================
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.core.properties import DeviceProperty
 
 
 class FerrupsUPS(CoreDevice):
-    scan_func = 'power_outage_scan'
+    scan_func = "power_outage_scan"
     _power_out = False
     min_voltage_in = 5
 
     def set_password(self, pwd):
-        qry = 'password {}'.format(pwd)
+        qry = "password {}".format(pwd)
         resp = self.ask(qry)
         return self._parse_response(resp)
 
     def get_parameter(self, pname, **kw):
-        qry = 'pa {}'.format(pname)
+        qry = "pa {}".format(pname)
         resp = self.ask(qry, **kw)
         return self._parse_response(resp)
 
     def get_parameters(self, start=1, end=2):
-        qry = 'pa {} {}'.format(start, end)
+        qry = "pa {} {}".format(start, end)
         resp = self.ask(qry)
         return self._parse_response(resp)
 
     def get_status(self):
-        qry = 'status'
+        qry = "status"
         resp = self.ask(qry)
         return self._parse_response(resp)
 
@@ -56,34 +57,38 @@ class FerrupsUPS(CoreDevice):
 
         if vin < self.min_voltage_in:
             self._power_out = True
-            self.send_email_notification('{} Power Outage. Vin= {}'.format(datetime.isoformat(), vin))
+            self.send_email_notification(
+                "{} Power Outage. Vin= {}".format(datetime.isoformat(), vin)
+            )
 
         elif self._power_out:
             self._power_out = False
-            self.send_email_notification('{} Power Returned. Vin= {}'.format(datetime.isoformat(), vin))
+            self.send_email_notification(
+                "{} Power Returned. Vin= {}".format(datetime.isoformat(), vin)
+            )
 
         return vin
 
     @DeviceProperty(float)
     def ambient_temperature(self):
-        qry = 'ambtemp'
+        qry = "ambtemp"
         resp = self.ask(qry)
         return self._parse_response(resp)
 
     @DeviceProperty(float)
     def voltage_in(self):
         _query, resp = self.get_parameter(1, verbose=False)
-        vin = resp.split(' ')[-1]
+        vin = resp.split(" ")[-1]
         return vin
 
     # private
     def _parse_response(self, resp):
         if resp is not None:
             resp = resp.strip()
-            if '\n' in resp:
-                eof = '\n'
+            if "\n" in resp:
+                eof = "\n"
             else:
-                eof = '\r'
+                eof = "\r"
             resp = resp.split(eof)
         return resp
         # if self.simulation:
@@ -99,8 +104,8 @@ class FerrupsUPS(CoreDevice):
         # return resp
 
 
-if __name__ == '__main__':
-    f = FerrupsUPS(name='ups')
+if __name__ == "__main__":
+    f = FerrupsUPS(name="ups")
     f.bootstrap()
 
     print(f.check_power_outage())

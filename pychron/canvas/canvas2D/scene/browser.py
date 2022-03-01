@@ -18,23 +18,28 @@
 from __future__ import absolute_import
 from traits.api import HasTraits, List
 from traitsui.api import View
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class SceneBrowser(HasTraits):
     layers = List
-#    def _update_layers(self, obj, name, old, new):
-#        print obj, name, old, new
 
-#    def _layers_changed(self):
-#        print 'layers change'
+    #    def _update_layers(self, obj, name, old, new):
+    #        print obj, name, old, new
 
-#    @on_trait_change('layers, layers[]')
-#    def layers_change(self, obj, name, old, new):
-#        print obj, name, old, new
+    #    def _layers_changed(self):
+    #        print 'layers change'
+
+    #    @on_trait_change('layers, layers[]')
+    #    def layers_change(self, obj, name, old, new):
+    #        print obj, name, old, new
 
     def traits_view(self):
         v = View()
         return v
+
 
 # ============= EOF =============================================

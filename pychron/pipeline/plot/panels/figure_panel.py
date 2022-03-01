@@ -31,7 +31,7 @@ class FigurePanel(HasTraits):
     plot_options = Any
     equi_stack = False
 
-    _index_attr = ''
+    _index_attr = ""
     _graph_klass = AnalysisStackedGraph
     _figure_klass = Any
 
@@ -50,11 +50,15 @@ class FigurePanel(HasTraits):
         self.figures = self._make_figures()
 
     def _figure_factory(self, *args, **kw):
-        return self._figure_klass(options=self.plot_options, *args, **kw)
+        return self._figure_klass(
+            options=self.plot_options, equi_stack=self.equi_stack, *args, **kw
+        )
 
     def _make_figures(self, **kw):
-        gs = [self._figure_factory(analyses=list(ais), group_id=gid, **kw)
-              for gid, ais in groupby_group_id(self.analyses)]
+        gs = [
+            self._figure_factory(analyses=list(ais), group_id=gid, **kw)
+            for gid, ais in groupby_group_id(self.analyses)
+        ]
         return gs
 
     # def dump_metadata(self):
@@ -80,13 +84,13 @@ class FigurePanel(HasTraits):
     def make_graph(self):
 
         po = self.plot_options
-        g = self._graph_klass(panel_height=200,
-                              equi_stack=self.equi_stack,
-                              container_dict=dict(padding=0,
-                                                  spacing=po.plot_spacing,
-                                                  bgcolor=po.bgcolor))
+        g = self._graph_klass(
+            # panel_height=200,
+            equi_stack=self.equi_stack,
+            container_dict=dict(padding=0, spacing=po.plot_spacing, bgcolor=po.bgcolor),
+        )
 
-        g.on_trait_change(self._handle_rescale, 'rescale_event')
+        g.on_trait_change(self._handle_rescale, "rescale_event")
         center, mi, ma = self._get_init_xlimits()
 
         plots = list(po.get_plotable_aux_plots())
@@ -96,8 +100,8 @@ class FigurePanel(HasTraits):
             if po.include_legend:
 
                 align = po.legend_location
-                a, b = align.split(' ')
-                align = '{}{}'.format(a[0].lower(), b[0].lower())
+                a, b = align.split(" ")
+                align = "{}{}".format(a[0].lower(), b[0].lower())
                 legend = Legend(align=align)
             else:
                 legend = None
@@ -106,13 +110,17 @@ class FigurePanel(HasTraits):
             update_dict = {}
             self._suppress_limits(True)
             for i, fig in enumerate(self.figures):
-                fig.trait_set(xma=ma, xmi=mi,
-                              ymas=ymas, ymis=ymis,
-                              center=center,
-                              # options=po,
-                              graph=g,
-                              title=self.title,
-                              **update_dict)
+                fig.trait_set(
+                    xma=ma,
+                    xmi=mi,
+                    ymas=ymas,
+                    ymis=ymis,
+                    center=center,
+                    # options=po,
+                    graph=g,
+                    title=self.title,
+                    **update_dict
+                )
 
                 if i == 0:
                     fig.build(plots)
@@ -146,16 +154,16 @@ class FigurePanel(HasTraits):
             for i, p in enumerate(plots):
                 g.plots[i].value_scale = p.scale
                 if p.ymin or p.ymax:
-                    print('has ymin max set', p.ymin, p.ymax)
+                    # print("has ymin max set", p.ymin, p.ymax)
                     ymi, yma = p.ymin, p.ymax
                     if p.ymin > p.ymax:
                         yma = None
                     g.set_y_limits(ymi, yma, plotid=i)
                 elif p.has_ylimits():
-                    print('has ylimits', i, p.ylimits[0], p.ylimits[1])
+                    # print("has ylimits", i, p.ylimits[0], p.ylimits[1])
                     g.set_y_limits(p.ylimits[0], p.ylimits[1], plotid=i)
                 elif p.calculated_ymin or p.calculated_ymax:
-                    print('has calculated', p.calculated_ymin, p.calculated_ymax)
+                    # print("has calculated", p.calculated_ymin, p.calculated_ymax)
                     g.set_y_limits(p.calculated_ymin, p.calculated_ymax, plotid=i)
 
             if mi is None and ma is None:

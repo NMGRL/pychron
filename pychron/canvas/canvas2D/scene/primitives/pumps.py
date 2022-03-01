@@ -16,10 +16,14 @@
 
 # ============= enthought library imports =======================
 import math
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.primitives.primitives import Animation
-from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle, rounded_rect
+from pychron.canvas.canvas2D.scene.primitives.rounded import (
+    RoundedRectangle,
+    rounded_rect,
+)
 
 
 class Pump(RoundedRectangle):
@@ -42,7 +46,6 @@ class Pump(RoundedRectangle):
 
 
 class IonPump(Pump):
-
     def _render(self, gc):
         super(IonPump, self)._render(gc)
         if self.use_symbol:
@@ -74,10 +77,10 @@ class IonPump(Pump):
                     gc.rotate_ctm(math.radians(120 * i))
                     # with gc:
                     gc.move_to(0, 0)
-                    gc.line_to(w2-2, 0)
+                    gc.line_to(w2 - 2, 0)
                     gc.stroke_path()
                     gc.move_to(w2 - 6, 6)
-                    gc.line_to(w2-2, 0)
+                    gc.line_to(w2 - 2, 0)
                     gc.line_to(w2 - 6, -6)
                     gc.stroke_path()
 
@@ -105,9 +108,8 @@ class Turbo(Pump):
 
             gc.set_fill_color(self._convert_color(self.name_color))
             if self.display_name:
-                self._render_textbox(gc, x, y, width, height,
-                                     self.display_name)
-            elif not self.display_name == '':
+                self._render_textbox(gc, x, y, width, height, self.display_name)
+            elif not self.display_name == "":
                 self._render_name(gc, x, y, width, height)
 
         # super(Turbo, self)._render(gc)
@@ -163,5 +165,6 @@ class Turbo(Pump):
     #         gc.draw_path()
     # self.increment_cnt(15)
     # if self.refresh_required():
+
 
 # ============= EOF =============================================

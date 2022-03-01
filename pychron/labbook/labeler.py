@@ -83,8 +83,10 @@ class Labeler(Loggable):
     def get_path(self, p):
         dp = self.db.get_path(p)
         if dp:
-            return Path(relpath=dp.relpath, labels=[(Label(text=lb.text,
-                                                           color=lb.color)) for lb in dp.labels])
+            return Path(
+                relpath=dp.relpath,
+                labels=[(Label(text=lb.text, color=lb.color)) for lb in dp.labels],
+            )
 
     def new_label(self):
         v = NewLabelView()
@@ -132,17 +134,13 @@ class Labeler(Loggable):
     # private
     def _refresh_labels(self):
         labels = self.db.get_labels()
-        self.labels = [Label(text=li.text,
-                             color=li.color,
-                             cnt=li.cnt) for li in labels]
+        self.labels = [Label(text=li.text, color=li.color, cnt=li.cnt) for li in labels]
 
     def _db_default(self):
-        path = os.path.join(paths.labbook_dir, 'labels.db')
+        path = os.path.join(paths.labbook_dir, "labels.db")
         ldb = LabelAdapter(path=path)
         ldb.build_database()
         return ldb
 
+
 # ============= EOF =============================================
-
-
-

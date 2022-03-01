@@ -1,10 +1,8 @@
-
 from __future__ import absolute_import
 from .gp_actuator import GPActuator
 
 
 class DummyGPActuator(GPActuator):
-
     def __init__(self, *args, **kw):
         super(DummyGPActuator, self).__init__(*args, **kw)
         self._states = {}
@@ -24,11 +22,9 @@ class DummyGPActuator(GPActuator):
         return 0
 
     def get_open_indicator_state(self, *args, **kw):
-        """
-        """
+        """ """
         return self.get_channel_state(*args, **kw)
 
     def get_closed_indicator_state(self, *args, **kw):
-        """
-        """
+        """ """
         return not self.get_channel_state(*args, **kw)

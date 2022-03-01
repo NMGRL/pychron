@@ -19,7 +19,7 @@ from pychron.envisage.tasks.base_editor import BaseTraitsEditor, grouped_name
 
 
 class BaseEditor(BaseTraitsEditor):
-    basename = ''
+    basename = ""
     items = List
 
     def _items_changed(self):
@@ -34,7 +34,7 @@ class BaseEditor(BaseTraitsEditor):
     def _set_name(self):
         na = sorted(list(set([ni.identifier for ni in self.items])))
         na = grouped_name(na)
-        self.name = '{} {}'.format(na, self.basename)
+        self.name = "{} {}".format(na, self.basename)
 
 
 # ============= EOF =============================================

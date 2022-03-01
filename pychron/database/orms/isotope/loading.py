@@ -17,8 +17,16 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 from __future__ import absolute_import
-from sqlalchemy import Column, Integer, String, \
-    ForeignKey, BLOB, Float, DateTime, Boolean
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    ForeignKey,
+    BLOB,
+    Float,
+    DateTime,
+    Boolean,
+)
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import func
@@ -35,21 +43,22 @@ class loading_LoadTable(Base):
 
     name = Column(String(80), primary_key=True)
     create_date = Column(DateTime, default=func.now())
-    holder = Column(String(80), ForeignKey('gen_LoadHolderTable.name'))
+    holder = Column(String(80), ForeignKey("gen_LoadHolderTable.name"))
 
     archived = Column(Boolean, default=False)
 
-    measured_positions = relationship('meas_PositionTable')
-    loaded_positions = relationship('loading_PositionsTable')
+    measured_positions = relationship("meas_PositionTable")
+    loaded_positions = relationship("loading_PositionsTable")
 
 
 class loading_PositionsTable(Base, BaseMixin):
-    load_identifier = Column(String(80), ForeignKey('loading_LoadTable.name'))
-    lab_identifier = foreignkey('gen_LabTable')
+    load_identifier = Column(String(80), ForeignKey("loading_LoadTable.name"))
+    lab_identifier = foreignkey("gen_LabTable")
 
     # lab_identifier = Column(Integer, ForeignKey('gen_LabTable.id'))
     position = Column(Integer)
     weight = Column(Float)
     note = Column(BLOB)
+
 
 # ============= EOF =============================================

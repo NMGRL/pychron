@@ -16,7 +16,17 @@
 # ============= enthought library imports =======================
 import logging
 
-from numpy import asarray, column_stack, sqrt, dot, linalg, zeros_like, hstack, ones_like, array
+from numpy import (
+    asarray,
+    column_stack,
+    sqrt,
+    dot,
+    linalg,
+    zeros_like,
+    hstack,
+    ones_like,
+    array,
+)
 from statsmodels.api import OLS
 from traits.api import Int, Property
 
@@ -25,11 +35,11 @@ from pychron.core.helpers.fits import FITS, fit_to_degree
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.pychron_constants import MSEM, SEM, AUTO_LINEAR_PARABOLIC
 
-logger = logging.getLogger('Regressor')
+logger = logging.getLogger("Regressor")
 
 
 class OLSRegressor(BaseRegressor):
-    degree = Property(depends_on='_degree')
+    degree = Property(depends_on="_degree")
     _degree = Int
     constant = None
     _ols = None
@@ -74,29 +84,28 @@ class OLSRegressor(BaseRegressor):
 
         currently useful for monte_carlo_estimation
         """
-        if not hasattr(self, 'pinv_wexog'):
+        if not hasattr(self, "pinv_wexog"):
             self.pinv_wexog = linalg.pinv(self._ols.wexog)
         beta = dot(self.pinv_wexog, endog)
 
         return dot(exog, beta)
 
     def determine_fit(self):
-        if self._fit == AUTO_LINEAR_PARABOLIC:
-            self.set_degree('linear', refresh=False)
+        if self._fit == AUTO_LINEAR_PARABOLIC.lower():
+            self.set_degree("linear", refresh=False)
             self.calculate()
-
             linear_r = self.rsquared_adj
 
-            self.set_degree('parabolic', refresh=False)
+            self.set_degree("parabolic", refresh=False)
             self.calculate()
             parabolic_r = self.rsquared_adj
 
             if linear_r > parabolic_r:
-                self.fit = 'linear'
-                self.set_degree('linear')
+                self.fit = "linear"
+                self.set_degree("linear")
             else:
-                self.fit = 'parabolic'
-                self.set_degree('parabolic')
+                self.fit = "parabolic"
+                self.set_degree("parabolic")
 
         return self.fit
 
@@ -113,7 +122,7 @@ class OLSRegressor(BaseRegressor):
                 # cys.append(cys[0])
             else:
                 self._result = None
-                logger.debug('A integrity check failed')
+                logger.debug("A integrity check failed")
                 # import traceback
                 # traceback.print_stack()
                 return
@@ -132,7 +141,7 @@ class OLSRegressor(BaseRegressor):
         if X is not None:
             if integrity_check and not self._check_integrity(X, fy):
                 self._result = None
-                logger.debug('B integrity check failed')
+                logger.debug("B integrity check failed")
                 # self.debug('B integrity check failed')
                 return
 
@@ -184,9 +193,9 @@ class OLSRegressor(BaseRegressor):
 
         x = asarray(x)
 
-        if not error_calc or error_calc == 'CI':
+        if not error_calc or error_calc == "CI":
             e = self.calculate_ci_error(x)
-        elif error_calc == 'MC':
+        elif error_calc == "MC":
             e = self.calculate_mc_error(x)
         else:
             e = self.predict_error_matrix(x, error_calc)
@@ -198,7 +207,7 @@ class OLSRegressor(BaseRegressor):
                 e = 0
         return e
 
-    def predict_error_algebraic(self, x, error_calc='SEM'):
+    def predict_error_algebraic(self, x, error_calc="SEM"):
         """
         draper and smith 24
 
@@ -220,12 +229,12 @@ class OLSRegressor(BaseRegressor):
 
         return [calc_error(xi) for xi in x]
 
-    def predict_error_matrix(self, x, error_calc='SEM'):
+    def predict_error_matrix(self, x, error_calc="SEM"):
         """
-            predict the error in y using matrix math
-            draper and smith chapter 2.4 page 56
+        predict the error in y using matrix math
+        draper and smith chapter 2.4 page 56
 
-            Xk'=(1, x, x**2...x)
+        Xk'=(1, x, x**2...x)
 
         """
         x = asarray(x)
@@ -235,25 +244,29 @@ class OLSRegressor(BaseRegressor):
 
         def calc_hat(xi):
             Xk = self._get_X(xi).T
-            varY_hat = (Xk.T.dot(covarM).dot(Xk))
+            varY_hat = Xk.T.dot(covarM).dot(Xk)
             return varY_hat[0, 0]
 
         error_calc = error_calc.lower()
         if error_calc == SEM.lower():
+
             def func(xi):
                 varY_hat = calc_hat(xi)
                 return sef * sqrt(varY_hat)
+
         elif error_calc == MSEM.lower():
             mswd = self.mswd
 
             def func(xi):
                 varY_hat = calc_hat(xi)
-                m = mswd ** 0.5 if mswd > 1 else 1
+                m = mswd**0.5 if mswd > 1 else 1
                 return sef * sqrt(varY_hat) * m
+
         else:
+
             def func(xi):
                 varY_hat = calc_hat(xi)
-                return sqrt(sef ** 2 + sef ** 2 * varY_hat)
+                return sqrt(sef**2 + sef**2 * varY_hat)
 
         if not self._result:
             return zeros_like(x)
@@ -262,11 +275,11 @@ class OLSRegressor(BaseRegressor):
             # func = calc_sem if error_calc == 'SEM' else calc_sd
             # return [func(xi) for xi in x]
 
-    def predict_error_al(self, x, error_calc='sem'):
+    def predict_error_al(self, x, error_calc="sem"):
         """
-            predict error in y using MassSpec Algorithm
+        predict error in y using MassSpec Algorithm
 
-            only here for verification
+        only here for verification
 
         """
         cov_varM = array(self.var_covar)
@@ -274,16 +287,16 @@ class OLSRegressor(BaseRegressor):
 
         def predict_yi_err(xi):
             """
-                bx= x**0,x**1,x**n where n= degree of fit linear=2, parabolic=3 etc
+            bx= x**0,x**1,x**n where n= degree of fit linear=2, parabolic=3 etc
             """
             bx = asarray([pow(xi, i) for i in range(self.degree + 1)])
             bx_covar = bx.dot(cov_varM)
             bx_covar = asarray(bx_covar)[0]
             var = sum(bx * bx_covar)
             #            print var
-            s = se * var ** 0.5
-            if error_calc == 'sd':
-                s = (se ** 2 + s ** 2) ** 0.5
+            s = se * var**0.5
+            if error_calc == "sd":
+                s = (se**2 + s**2) ** 0.5
 
             return s
 
@@ -315,8 +328,8 @@ class OLSRegressor(BaseRegressor):
 
     def _calculate_coefficients(self):
         """
-            params = [c,b,a]
-            where y=ax**2+bx+c
+        params = [c,b,a]
+        where y=ax**2+bx+c
         """
         if self._result:
             return self._result.params
@@ -363,13 +376,13 @@ class OLSRegressor(BaseRegressor):
 
     def _get_X(self, xs=None):
         """
-            returns X matrix
-            X=[[1,xi,xi^2,...]
-                .
-                .
-                .
-                [1,xj,xj^2,...]
-                ]
+        returns X matrix
+        X=[[1,xi,xi^2,...]
+            .
+            .
+            .
+            [1,xj,xj^2,...]
+            ]
         """
         if xs is None:
             xs = self.clean_xs
@@ -384,13 +397,13 @@ class PolynomialRegressor(OLSRegressor):
 
 class MultipleLinearRegressor(OLSRegressor):
     """
-        xs=[(x1,y1),(x2,y2),...,(xn,yn)]
-        ys=[z1,z2,z3,...,zn]
+    xs=[(x1,y1),(x2,y2),...,(xn,yn)]
+    ys=[z1,z2,z3,...,zn]
 
-        if you have a list of x's and y's
-        X=array(zip(x,y))
-        if you have a tuple of x,y pairs
-        X=array(xy)
+    if you have a list of x's and y's
+    X=array(zip(x,y))
+    if you have a tuple of x,y pairs
+    X=array(xy)
     """
 
     def fast_predict2(self, endog, pexog, **kw):
@@ -408,7 +421,7 @@ class MultipleLinearRegressor(OLSRegressor):
         return xs
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     #    xs = np.linspace(0, 10, 20)
     #    bo = 4
     #    b1 = 3
@@ -422,7 +435,7 @@ if __name__ == '__main__':
     #    print m.calculate_y(0)
     xs = [(0, 0), (1, 0), (2, 0)]
     ys = [0, 1, 2.01]
-    r = MultipleLinearRegressor(xs=xs, ys=ys, fit='linear')
+    r = MultipleLinearRegressor(xs=xs, ys=ys, fit="linear")
     print(r.predict([(0, 1)]))
     print(r.predict_error([(0, 2)]))
     print(r.predict_error([(0.1, 1)]))

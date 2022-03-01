@@ -19,6 +19,8 @@ from traits.api import HasTraits, Str, Either, Float, Int, Property, Bool, Any
 
 # ============= standard library imports ========================
 from uncertainties import std_dev, nominal_value
+
+
 # ============= local library imports  ==========================
 
 
@@ -46,7 +48,7 @@ class DetectorRatio(ComputedValue):
     detectors = Str
     noncorrected_value = Float
     noncorrected_error = Float
-    calc_ic = Property(depends_on='value')
+    calc_ic = Property(depends_on="value")
     ref_ratio = Float
 
     def _get_calc_ic(self):
@@ -59,5 +61,6 @@ class ExtractionValue(NamedValue):
 
 class MeasurementValue(NamedValue):
     pass
+
 
 # ============= EOF =============================================

@@ -32,10 +32,14 @@ class DashboardServerPlugin(BaseTaskPlugin):
     dashboard_server = Instance(DashboardServer)
 
     def _tasks_default(self):
-        return [TaskFactory(id='pychron.dashboard.server',
-                            name='Dashboard Server',
-                            accelerator='Ctrl+4',
-                            factory=self._factory)]
+        return [
+            TaskFactory(
+                id="pychron.dashboard.server",
+                name="Dashboard Server",
+                accelerator="Ctrl+4",
+                factory=self._factory,
+            )
+        ]
 
     def _factory(self):
         f = DashboardServerTask(server=self.dashboard_server)
@@ -43,12 +47,14 @@ class DashboardServerPlugin(BaseTaskPlugin):
 
     def start(self):
         app = self.application
-        elm = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
-        labspy = app.get_service('pychron.labspy.client.LabspyClient')
+        elm = app.get_service(
+            "pychron.extraction_line.extraction_line_manager.ExtractionLineManager"
+        )
+        labspy = app.get_service("pychron.labspy.client.LabspyClient")
 
-        self.dashboard_server = DashboardServer(application=app,
-                                                labspy_client=labspy,
-                                                extraction_line_manager=elm)
+        self.dashboard_server = DashboardServer(
+            application=app, labspy_client=labspy, extraction_line_manager=elm
+        )
         self.dashboard_server.bind_preferences()
 
     def _preferences_panes_default(self):
@@ -57,9 +63,10 @@ class DashboardServerPlugin(BaseTaskPlugin):
     def stop(self):
         self.dashboard_server.deactivate()
 
-    @on_trait_change('application:started')
+    @on_trait_change("application:started")
     def start_server(self):
         do_after(5000, self.dashboard_server.activate)
         # self.dashboard_server.activate()
+
 
 # ============= EOF =============================================

@@ -24,7 +24,7 @@ from pychron.external_pipette.tasks.panes import ExternalPipettePane
 
 
 class ExternalPipetteTask(BaseManagerTask):
-    name = 'External Pipette'
+    name = "External Pipette"
 
     def create_central_pane(self):
         return ExternalPipettePane(model=self.manager)
@@ -32,5 +32,5 @@ class ExternalPipetteTask(BaseManagerTask):
         # def _default_layout_default(self):
         #     return TaskLayout()
 
-# ============= EOF =============================================
 
+# ============= EOF =============================================

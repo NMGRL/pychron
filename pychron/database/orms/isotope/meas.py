@@ -20,8 +20,17 @@ from __future__ import absolute_import
 import uuid
 from time import mktime
 
-from sqlalchemy import Column, Integer, String, \
-    ForeignKey, BLOB, Float, Time, Boolean, DateTime
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    ForeignKey,
+    BLOB,
+    Float,
+    Time,
+    Boolean,
+    DateTime,
+)
 from sqlalchemy.orm import relationship, deferred
 from sqlalchemy.sql.expression import func
 
@@ -33,18 +42,18 @@ from .util import Base
 
 class meas_SignalTable(Base, BaseMixin):
     data = Column(BLOB)
-    isotope_id = foreignkey('meas_IsotopeTable')
+    isotope_id = foreignkey("meas_IsotopeTable")
 
 
 class meas_AnalysisTable(Base, BaseMixin):
-    lab_id = foreignkey('gen_LabTable')
-    extraction_id = foreignkey('meas_ExtractionTable')
-    measurement_id = foreignkey('meas_MeasurementTable')
-    experiment_id = foreignkey('meas_ExperimentTable')
-    import_id = foreignkey('gen_ImportTable')
-    user_id = foreignkey('gen_UserTable')
-    gain_history_id = foreignkey('meas_GainHistoryTable')
-    data_reduction_tag_id = foreignkey('proc_DataReductionTagTable')
+    lab_id = foreignkey("gen_LabTable")
+    extraction_id = foreignkey("meas_ExtractionTable")
+    measurement_id = foreignkey("meas_MeasurementTable")
+    experiment_id = foreignkey("meas_ExperimentTable")
+    import_id = foreignkey("gen_ImportTable")
+    user_id = foreignkey("gen_UserTable")
+    gain_history_id = foreignkey("meas_GainHistoryTable")
+    data_reduction_tag_id = foreignkey("proc_DataReductionTagTable")
 
     uuid = stringcolumn(40, default=lambda: str(uuid.uuid4()))
     analysis_timestamp = Column(DateTime, default=func.now())
@@ -57,48 +66,58 @@ class meas_AnalysisTable(Base, BaseMixin):
 
     comment = Column(BLOB)
 
-    tag = Column(String(40),
-                 ForeignKey('proc_TagTable.name'), default='ok')
+    tag = Column(String(40), ForeignKey("proc_TagTable.name"), default="ok")
 
     # meas relationships
-    isotopes = relationship('meas_IsotopeTable',
-                            # lazy='dynamic',
-                            backref='analysis')
-    peak_center = relationship('meas_PeakCenterTable', backref='analysis', uselist=False)
+    isotopes = relationship(
+        "meas_IsotopeTable",
+        # lazy='dynamic',
+        backref="analysis",
+    )
+    peak_center = relationship(
+        "meas_PeakCenterTable", backref="analysis", uselist=False
+    )
 
     # proc relationships
-    blanks_histories = relationship('proc_BlanksHistoryTable', backref='analysis')
-    blanks_sets = relationship('proc_BlanksSetTable', backref='analysis')
-    blanks_values = relationship('proc_BlanksSetValueTable', backref='analysis')
-    preceding_blanks = relationship('proc_BlanksTable', backref='preceding_analysis')
+    blanks_histories = relationship("proc_BlanksHistoryTable", backref="analysis")
+    blanks_sets = relationship("proc_BlanksSetTable", backref="analysis")
+    blanks_values = relationship("proc_BlanksSetValueTable", backref="analysis")
+    preceding_blanks = relationship("proc_BlanksTable", backref="preceding_analysis")
 
-    interpreted_age_sets = relationship('proc_InterpretedAgeSetTable', backref='analysis')
+    interpreted_age_sets = relationship(
+        "proc_InterpretedAgeSetTable", backref="analysis"
+    )
 
-    backgrounds_histories = relationship('proc_BackgroundsHistoryTable', backref='analysis')
-    backgrounds_sets = relationship('proc_BackgroundsSetTable', backref='analysis')
+    backgrounds_histories = relationship(
+        "proc_BackgroundsHistoryTable", backref="analysis"
+    )
+    backgrounds_sets = relationship("proc_BackgroundsSetTable", backref="analysis")
 
-    detector_intercalibration_histories = relationship('proc_DetectorIntercalibrationHistoryTable',
-                                                       backref='analysis')
-    detector_intercalibration_sets = relationship('proc_DetectorIntercalibrationSetTable',
-                                                  backref='analysis')
+    detector_intercalibration_histories = relationship(
+        "proc_DetectorIntercalibrationHistoryTable", backref="analysis"
+    )
+    detector_intercalibration_sets = relationship(
+        "proc_DetectorIntercalibrationSetTable", backref="analysis"
+    )
 
-    detector_param_histories = relationship('proc_DetectorParamHistoryTable',
-                                            backref='analysis')
+    detector_param_histories = relationship(
+        "proc_DetectorParamHistoryTable", backref="analysis"
+    )
 
-    fit_histories = relationship('proc_FitHistoryTable',
-                                 backref='analysis')
+    fit_histories = relationship("proc_FitHistoryTable", backref="analysis")
 
-    selected_histories = relationship('proc_SelectedHistoriesTable',
-                                      backref='analysis', uselist=False)
-    arar_histories = relationship('proc_ArArHistoryTable', backref='analysis')
+    selected_histories = relationship(
+        "proc_SelectedHistoriesTable", backref="analysis", uselist=False
+    )
+    arar_histories = relationship("proc_ArArHistoryTable", backref="analysis")
     #     figure_analyses = relationship('proc_FigureAnalysisTable', backref='analysis')
-    notes = relationship('proc_NotesTable', backref='analysis')
-    group_sets = relationship('proc_AnalysisGroupSetTable', backref='analysis')
-    dr_sets = relationship('proc_DataReductionTagSetTable', backref='analysis')
+    notes = relationship("proc_NotesTable", backref="analysis")
+    group_sets = relationship("proc_AnalysisGroupSetTable", backref="analysis")
+    dr_sets = relationship("proc_DataReductionTagSetTable", backref="analysis")
 
-    monitors = relationship('meas_MonitorTable', backref='analysis')
+    monitors = relationship("meas_MonitorTable", backref="analysis")
 
-    whiff_result = ''
+    whiff_result = ""
 
     @property
     def timestamp(self):
@@ -114,7 +133,7 @@ class meas_AnalysisTable(Base, BaseMixin):
 
 
 class meas_ExperimentTable(Base, NameMixin):
-    analyses = relationship('meas_AnalysisTable', backref='experiment')
+    analyses = relationship("meas_AnalysisTable", backref="experiment")
 
 
 class meas_ExtractionTable(Base, BaseMixin):
@@ -146,32 +165,30 @@ class meas_ExtractionTable(Base, BaseMixin):
     response_blob = deferred(Column(BLOB))
     output_blob = deferred(Column(BLOB))
 
-    sensitivity_id = foreignkey('gen_SensitivityTable')
-    extract_device_id = foreignkey('gen_ExtractionDeviceTable')
-    script_id = foreignkey('meas_ScriptTable')
-    experiment_blob_id = foreignkey('meas_ScriptTable')
-    image_id = foreignkey('med_ImageTable')
+    sensitivity_id = foreignkey("gen_SensitivityTable")
+    extract_device_id = foreignkey("gen_ExtractionDeviceTable")
+    script_id = foreignkey("meas_ScriptTable")
+    experiment_blob_id = foreignkey("meas_ScriptTable")
+    image_id = foreignkey("med_ImageTable")
 
-    analysis = relationship('meas_AnalysisTable',
-                            uselist=False,
-                            backref='extraction')
-    positions = relationship('meas_PositionTable', backref='extraction')
-    snapshots = relationship('med_SnapshotTable', backref='extraction')
+    analysis = relationship("meas_AnalysisTable", uselist=False, backref="extraction")
+    positions = relationship("meas_PositionTable", backref="extraction")
+    snapshots = relationship("med_SnapshotTable", backref="extraction")
 
 
 class meas_GainHistoryTable(Base, UserMixin):
     create_date = Column(DateTime, default=func.now())
     applied_date = Column(DateTime, default=func.now())
     hash = stringcolumn(32)
-    gains = relationship('meas_GainTable')
-    analyses = relationship('meas_AnalysisTable', backref='gain_history')
+    gains = relationship("meas_GainTable")
+    analyses = relationship("meas_AnalysisTable", backref="gain_history")
     save_type = Column(String(20), default=1)
 
 
 class meas_GainTable(Base, BaseMixin):
     value = Column(Float(32))
-    detector_id = foreignkey('gen_DetectorTable')
-    history_id = foreignkey('meas_GainHistoryTable')
+    detector_id = foreignkey("gen_DetectorTable")
+    history_id = foreignkey("meas_GainHistoryTable")
 
 
 class meas_PositionTable(Base, BaseMixin):
@@ -181,75 +198,79 @@ class meas_PositionTable(Base, BaseMixin):
     z = Column(Float)
 
     is_degas = Column(Boolean)
-    extraction_id = foreignkey('meas_ExtractionTable')
-    load_identifier = Column(String(80), ForeignKey('loading_LoadTable.name'))
+    extraction_id = foreignkey("meas_ExtractionTable")
+    load_identifier = Column(String(80), ForeignKey("loading_LoadTable.name"))
 
 
 class meas_SpectrometerParametersTable(Base, BaseMixin):
-    extraction_lens = Column('extraction_lens', Float)
+    extraction_lens = Column("extraction_lens", Float)
     ysymmetry = Column(Float)
     zsymmetry = Column(Float)
     zfocus = Column(Float)
     hash = Column(String(32))
-    measurements = relationship('meas_MeasurementTable', backref='spectrometer_parameters')
+    measurements = relationship(
+        "meas_MeasurementTable", backref="spectrometer_parameters"
+    )
 
 
 class meas_SpectrometerDeflectionsTable(Base, BaseMixin):
-    detector_id = foreignkey('gen_DetectorTable')
-    measurement_id = foreignkey('meas_MeasurementTable')
+    detector_id = foreignkey("gen_DetectorTable")
+    measurement_id = foreignkey("meas_MeasurementTable")
     deflection = Column(Float)
 
 
 class meas_IsotopeTable(Base, BaseMixin):
-    molecular_weight_id = foreignkey('gen_MolecularWeightTable')
-    analysis_id = foreignkey('meas_AnalysisTable')
-    detector_id = foreignkey('gen_DetectorTable')
+    molecular_weight_id = foreignkey("gen_MolecularWeightTable")
+    analysis_id = foreignkey("meas_AnalysisTable")
+    detector_id = foreignkey("gen_DetectorTable")
     kind = stringcolumn()
 
-    signal = relationship('meas_SignalTable',
-                          backref='isotope',
-                          uselist=False)
+    signal = relationship("meas_SignalTable", backref="isotope", uselist=False)
 
-    fits = relationship('proc_FitTable',
-                        backref='isotope')
+    fits = relationship("proc_FitTable", backref="isotope")
 
-    results = relationship('proc_IsotopeResultsTable',
-                           backref='isotope')
+    results = relationship("proc_IsotopeResultsTable", backref="isotope")
 
 
 class meas_MeasurementTable(Base, BaseMixin):
     time_zero_offset = deferred(Column(Float))
 
-    mass_spectrometer_id = foreignkey('gen_MassSpectrometerTable')
-    analysis_type_id = foreignkey('gen_AnalysisTypeTable')
-    spectrometer_parameters_id = foreignkey('meas_SpectrometerParametersTable')
-    script_id = foreignkey('meas_ScriptTable')
+    mass_spectrometer_id = foreignkey("gen_MassSpectrometerTable")
+    analysis_type_id = foreignkey("gen_AnalysisTypeTable")
+    spectrometer_parameters_id = foreignkey("meas_SpectrometerParametersTable")
+    script_id = foreignkey("meas_ScriptTable")
     #    spectrometer_parameters = relationship('meas_SpectrometerParametersTable',
     #                                         backref='measurement',
     #                                         uselist=False
     #                                         )
-    analyses = relationship('meas_AnalysisTable', backref='measurement')
-    deflections = relationship('meas_SpectrometerDeflectionsTable', backref='measurement')
+    analyses = relationship("meas_AnalysisTable", backref="measurement")
+    deflections = relationship(
+        "meas_SpectrometerDeflectionsTable", backref="measurement"
+    )
 
 
 class meas_PeakCenterTable(Base, BaseMixin):
     # detector = stringcolumn()
     center = Column(Float(32))
     points = Column(BLOB)
-    analysis_id = foreignkey('meas_AnalysisTable')
+    analysis_id = foreignkey("meas_AnalysisTable")
 
 
 class meas_ScriptTable(Base, NameMixin):
     hash = deferred(Column(String(32)))
     blob = deferred(Column(BLOB))
-    measurements = relationship('meas_MeasurementTable', backref='script')
-    extractions = relationship('meas_ExtractionTable',
-                               primaryjoin='meas_ExtractionTable.script_id==meas_ScriptTable.id',
-                               backref='script')
+    measurements = relationship("meas_MeasurementTable", backref="script")
+    extractions = relationship(
+        "meas_ExtractionTable",
+        primaryjoin="meas_ExtractionTable.script_id==meas_ScriptTable.id",
+        backref="script",
+    )
 
-    experiments = relationship('meas_ExtractionTable',
-                               primaryjoin='meas_ExtractionTable.experiment_blob_id==meas_ScriptTable.id',
-                               backref='experiment')
+    experiments = relationship(
+        "meas_ExtractionTable",
+        primaryjoin="meas_ExtractionTable.experiment_blob_id==meas_ScriptTable.id",
+        backref="experiment",
+    )
 
 
 class meas_MonitorTable(Base, NameMixin):
@@ -261,7 +282,8 @@ class meas_MonitorTable(Base, NameMixin):
     action = stringcolumn()
     tripped = Column(Boolean)
 
-    analysis_id = foreignkey('meas_AnalysisTable')
+    analysis_id = foreignkey("meas_AnalysisTable")
+
 
 # class meas_PositionsTable(Base, BaseMixin):
 #     load_identifier = Column(String(80), ForeignKey('loading_LoadTable.name'))

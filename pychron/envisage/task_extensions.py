@@ -31,6 +31,7 @@ from traitsui.api import UItem, VGroup, TreeNode, Handler, HGroup, TextEditor
 from traitsui.menu import Action
 
 from pychron.core.helpers.strtools import to_bool
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.tree_editor import TreeEditor
@@ -42,12 +43,12 @@ from pychron.paths import paths
 
 class AdditionTreeNode(TreeNode):
     def get_icon(self, obj, is_expanded):
-        return icon('tick' if obj.enabled else 'cancel')
+        return icon("tick" if obj.enabled else "cancel")
 
 
 class TETreeNode(TreeNode):
     def get_icon(self, obj, is_expanded):
-        return icon('package-green')
+        return icon("package-green")
 
 
 class ViewModel(HasTraits):
@@ -75,13 +76,13 @@ class ViewModel(HasTraits):
         self.task_extensions = exs
 
     def set_states(self, modename):
-        if modename == 'simple':
+        if modename == "simple":
             enables = []
             try:
                 enables = yload(paths.simple_ui_file)
             except BaseException as e:
-                print('ViewModel.set states', e)
-        elif modename == 'advanced':
+                print("ViewModel.set states", e)
+        elif modename == "advanced":
             enables = None
         else:
             enables = None
@@ -97,8 +98,15 @@ class ViewModel(HasTraits):
 
             # enable specified ids
             for ei in enables:
-                te = next((a for t in self.task_extensions
-                           for a in t.additions if a.model.id == ei), None)
+                te = next(
+                    (
+                        a
+                        for t in self.task_extensions
+                        for a in t.additions
+                        if a.model.id == ei
+                    ),
+                    None,
+                )
                 if not te:
                     pass
                     # print 'aaaaaasdfsdf', ei
@@ -110,11 +118,13 @@ class ViewModel(HasTraits):
         if os.path.isfile(p):
             yl = yload(p)
             for te in self.task_extensions:
-                yd = next((d for d in yl if d['plugin_id'] == te.id), None)
+                yd = next((d for d in yl if d["plugin_id"] == te.id), None)
                 if yd:
-                    for ai in yd['actions']:
-                        action, enabled = ai.split(',')
-                        tt = next((ta for ta in te.additions if ta.model.id == action), None)
+                    for ai in yd["actions"]:
+                        action, enabled = ai.split(",")
+                        tt = next(
+                            (ta for ta in te.additions if ta.model.id == action), None
+                        )
                         if tt:
                             tt.enabled = to_bool(enabled)
 
@@ -122,7 +132,7 @@ class ViewModel(HasTraits):
         p = paths.task_extensions_file
         obj = [te.dump() for te in self.task_extensions]
 
-        with open(p, 'w') as wfile:
+        with open(p, "w") as wfile:
             yaml.dump(obj, wfile)
 
     def get_te_model(self, tid):
@@ -132,7 +142,7 @@ class ViewModel(HasTraits):
         h = hashlib.md5()
         for te in self.task_extensions:
             for a in te.additions:
-                h.update('{}{}'.format(a.model.id, a.enabled).encode('utf-8'))
+                h.update("{}{}".format(a.model.id, a.enabled).encode("utf-8"))
         return h.hexdigest()
 
 
@@ -144,9 +154,11 @@ class TaskExtensionModel(HasTraits):
     task_id = Str
 
     def dump(self):
-        return {'plugin_id': self.id,
-                'task_id': self.task_id,
-                'actions': ['{}, {}'.format(a.model.id, a.enabled) for a in self.additions]}
+        return {
+            "plugin_id": self.id,
+            "task_id": self.task_id,
+            "actions": ["{}, {}".format(a.model.id, a.enabled) for a in self.additions],
+        }
 
     def enable_all(self, v):
         for a in self.additions:
@@ -185,7 +197,7 @@ class EEHandler(Handler):
 
 class EditExtensionsView(HasTraits):
     view_model = Instance(ViewModel, ())
-    predefined = Enum('', 'Simple', 'Advanced')
+    predefined = Enum("", "Simple", "Advanced")
     selected = Any
     filter_value = Str
     description = Str
@@ -202,7 +214,7 @@ class EditExtensionsView(HasTraits):
     def update(self):
         self.refresh_all_needed = True
         if self._predefined_hash != self.view_model.calc_hash():
-            self.predefined = ''
+            self.predefined = ""
 
     def load(self):
         self.view_model.load()
@@ -211,7 +223,7 @@ class EditExtensionsView(HasTraits):
                 d = yload(paths.edit_ui_defaults)
                 self.trait_set(**d)
             except BaseException as e:
-                print('exception', e)
+                print("exception", e)
 
     def dump(self):
         self.view_model.dump()
@@ -220,19 +232,14 @@ class EditExtensionsView(HasTraits):
     def add_additions(self, tid, task_id, name, a):
         adds = []
         for ai in a:
-            d = ''
-            if hasattr(ai.factory, 'ddescription'):
+            d = ""
+            if hasattr(ai.factory, "ddescription"):
                 d = ai.factory.ddescription
 
-            adds.append(AdditionModel(model=ai,
-                                      name=ai.factory.dname,
-                                      description=d))
+            adds.append(AdditionModel(model=ai, name=ai.factory.dname, description=d))
         te = self.view_model.get_te_model(tid)
         if te is None:
-            te = TaskExtensionModel(name=name,
-                                    task_id=task_id,
-                                    id=tid,
-                                    additions=adds)
+            te = TaskExtensionModel(name=name, task_id=task_id, id=tid, additions=adds)
             self.view_model.otask_extensions.append(te)
             self.view_model.task_extensions.append(te)
         else:
@@ -243,10 +250,10 @@ class EditExtensionsView(HasTraits):
     # private
     def _dump(self):
         if self._predefined_hash != self.view_model.calc_hash():
-            self.predefined = ''
+            self.predefined = ""
 
-        with open(paths.edit_ui_defaults, 'w') as wfile:
-            d = {k: getattr(self, k) for k in ('predefined',)}
+        with open(paths.edit_ui_defaults, "w") as wfile:
+            d = {k: getattr(self, k) for k in ("predefined",)}
             yaml.dump(d, wfile)
 
     # handlers
@@ -278,7 +285,7 @@ class EditExtensionsView(HasTraits):
         try:
             self.description = new.description
         except AttributeError:
-            self.description = ''
+            self.description = ""
 
 
 def edit_task_extensions(ts):
@@ -287,64 +294,90 @@ def edit_task_extensions(ts):
         e.add_additions(*args)
     e.load()
 
-    nodes = [TreeNode(node_for=[ViewModel],
-                      icon_open='',
-                      children='task_extensions'),
-             TETreeNode(node_for=[TaskExtensionModel],
-                        auto_open=False,
-                        children='additions',
-                        label='name',
-                        menu=MenuManager(Action(name='Enable All',
-                                                visible_when='not object.all_enabled',
-                                                action='set_all_enabled'),
-                                         Action(name='Disable All',
-                                                visible_when='object.all_enabled',
-                                                action='set_all_disabled'))),
-             AdditionTreeNode(node_for=[AdditionModel],
-                              label='name',
-                              menu=MenuManager(Action(name='Enable',
-                                                      action='set_enabled',
-                                                      visible_when='not object.enabled'),
-                                               Action(name='Disable',
-                                                      visible_when='object.enabled',
-                                                      action='set_disabled')))]
-    tgrp = VGroup(UItem('predefined', tooltip='List of Predefined UI configurations'),
-                  UItem('filter_value',
-                        tooltip='Filter items by name. Show only items where NAME starts with the specified value'),
+    nodes = [
+        TreeNode(node_for=[ViewModel], icon_open="", children="task_extensions"),
+        TETreeNode(
+            node_for=[TaskExtensionModel],
+            auto_open=False,
+            children="additions",
+            label="name",
+            menu=MenuManager(
+                Action(
+                    name="Enable All",
+                    visible_when="not object.all_enabled",
+                    action="set_all_enabled",
+                ),
+                Action(
+                    name="Disable All",
+                    visible_when="object.all_enabled",
+                    action="set_all_disabled",
+                ),
+            ),
+        ),
+        AdditionTreeNode(
+            node_for=[AdditionModel],
+            label="name",
+            menu=MenuManager(
+                Action(
+                    name="Enable",
+                    action="set_enabled",
+                    visible_when="not object.enabled",
+                ),
+                Action(
+                    name="Disable", visible_when="object.enabled", action="set_disabled"
+                ),
+            ),
+        ),
+    ]
+    tgrp = VGroup(
+        UItem("predefined", tooltip="List of Predefined UI configurations"),
+        UItem(
+            "filter_value",
+            tooltip="Filter items by name. Show only items where NAME starts with the specified value",
+        ),
+        HGroup(
+            icon_button_editor("collapse_all", "collapse"),
+            icon_button_editor("expand_all", "collapse"),
+        ),
+        UItem(
+            "view_model",
+            height=-400,
+            editor=TreeEditor(
+                nodes=nodes,
+                # selection_mode='extended',
+                hide_root=True,
+                selected="selected",
+                dclick="dclicked",
+                show_disabled=True,
+                collapse_all="collapse_all",
+                expand_all="expand_all",
+                refresh="refresh_needed",
+                refresh_all_icons="refresh_all_needed",
+                editable=False,
+            ),
+        ),
+    )
+    dgrp = VGroup(
+        UItem(
+            "description",
+            style="custom",
+            # height=-100,
+            editor=TextEditor(read_only=True),
+        ),
+        show_border=True,
+        label="Description",
+    )
 
-                  HGroup(icon_button_editor('collapse_all', 'collapse'),
-                         icon_button_editor('expand_all', 'collapse'), ),
-
-                  UItem('view_model',
-                        height=-400,
-                        editor=TreeEditor(nodes=nodes,
-                                          # selection_mode='extended',
-                                          hide_root=True,
-                                          selected='selected',
-                                          dclick='dclicked',
-                                          show_disabled=True,
-                                          collapse_all='collapse_all',
-                                          expand_all='expand_all',
-                                          refresh='refresh_needed',
-                                          refresh_all_icons='refresh_all_needed',
-                                          editable=False)))
-    dgrp = VGroup(UItem('description',
-                        style='custom',
-                        # height=-100,
-                        editor=TextEditor(read_only=True)),
-                  show_border=True, label='Description')
-
-    av = okcancel_view(VGroup(tgrp, dgrp),
-                       title='Edit UI',
-                       width=500,
-                       height=700,
-                       handler=EEHandler())
+    av = okcancel_view(
+        VGroup(tgrp, dgrp), title="Edit UI", width=500, height=700, handler=EEHandler()
+    )
 
     # info = e.configure_traits(view=AView)
     info = e.edit_traits(view=av)
     if info.result:
         e.dump()
-        return confirm(None, 'Restart?') == YES
+        return confirm(None, "Restart?") == YES
+
 
 # if __name__ == '__main__':
 #     from traits.api import Button

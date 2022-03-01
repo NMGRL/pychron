@@ -22,13 +22,18 @@ from pyface.action.api import Action
 from pyface.tasks.action.task_action import TaskAction
 from pyface.timer.do_later import do_later
 from traits.api import Property
+
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.envisage.tasks.actions import myTaskAction
 from pychron.envisage.view_util import open_view
 from pychron.paths import paths
-from pychron.pychron_constants import SPECTROMETER_PROTOCOL, EL_PROTOCOL, ION_OPTICS_PROTOCOL
+from pychron.pychron_constants import (
+    SPECTROMETER_PROTOCOL,
+    EL_PROTOCOL,
+    ION_OPTICS_PROTOCOL,
+)
 
 
 # ============= standard library imports ========================
@@ -59,25 +64,28 @@ def get_manager(event, protocol):
 #        manager = app.get_service(SPECTROMETER_PROTOCOL)
 #        manager.peak_center(update_mftable=True)
 
+
 class AutoMFTableAction(Action):
-    name = 'Auto MFTable'
+    name = "Auto MFTable"
 
     def perform(self, event):
         app = event.task.window.application
 
         kw = {}
-        for attr, prot, msg in (('spectrometer_manager', SPECTROMETER_PROTOCOL, 'Spectrometer Manager'),
-                                ('ion_optics_manager', ION_OPTICS_PROTOCOL, 'Ion Optics Manager'),
-                                ('el_manager', EL_PROTOCOL, 'Extraction Line Manager')):
+        for attr, prot, msg in (
+            ("spectrometer_manager", SPECTROMETER_PROTOCOL, "Spectrometer Manager"),
+            ("ion_optics_manager", ION_OPTICS_PROTOCOL, "Ion Optics Manager"),
+            ("el_manager", EL_PROTOCOL, "Extraction Line Manager"),
+        ):
             srv = app.get_service(prot)
             if not srv:
-                app.warning('No {} available'.format(msg))
+                app.warning("No {} available".format(msg))
                 return
             kw[attr] = srv
 
-        pyscript_task = app.get_task('pychron.pyscript.task', activate=False)
+        pyscript_task = app.get_task("pychron.pyscript.task", activate=False)
         if not pyscript_task:
-            app.warning('PyScript Plugin not available')
+            app.warning("PyScript Plugin not available")
 
         from pychron.spectrometer.auto_mftable import AutoMFTable
 
@@ -87,11 +95,11 @@ class AutoMFTableAction(Action):
 
 
 class RVAdapter(TabularAdapter):
-    columns = [('Name', 'name'), ('Value', 'value')]
+    columns = [("Name", "name"), ("Value", "value")]
 
 
 class ViewReadoutAction(Action):
-    name = 'View Readout'
+    name = "View Readout"
 
     def perform(self, event):
         app = event.task.window.application
@@ -99,30 +107,34 @@ class ViewReadoutAction(Action):
 
         from pychron.spectrometer.readout_view import new_readout_view
 
-        rv = app.get_service('pychron.spectrometer.readout_view.ReadoutView')
+        rv = app.get_service("pychron.spectrometer.readout_view.ReadoutView")
         v = new_readout_view(rv)
         open_view(rv, view=v)
 
 
 class SendConfigAction(myTaskAction):
-    name = 'Send Configuration'
-    method = 'send_configuration'
-    task_ids = ['pychron.spectrometer']
+    name = "Send Configuration"
+    method = "send_configuration"
+    task_ids = ["pychron.spectrometer"]
 
 
 class PopulateMFTableAction(myTaskAction):
-    name = 'Populate MF Table'
-    method = 'populate_mftable'
-    task_ids = ['pychron.spectrometer']
+    name = "Populate MF Table"
+    method = "populate_mftable"
+    task_ids = ["pychron.spectrometer"]
 
 
 class EditGainsAction(Action):
-    name = 'Edit Gains...'
+    name = "Edit Gains..."
 
     def perform(self, event):
         from pyface.message_dialog import warning
-        warning(None, 'Editing detector gains directly from pychron is currently disabled. '
-                      'Contact pychron developers to request that this feature be enabled and fully implemented')
+
+        warning(
+            None,
+            "Editing detector gains directly from pychron is currently disabled. "
+            "Contact pychron developers to request that this feature be enabled and fully implemented",
+        )
         # from pychron.spectrometer.gains_edit_view import GainsModel, GainsEditView
         #
         # app = event.task.window.application
@@ -141,21 +153,24 @@ class EditGainsAction(Action):
 
 
 class ToggleSpectrometerTask(TaskAction):
-    name = Property(depends_on='task')
+    name = Property(depends_on="task")
 
     def _get_name(self):
         if self.task:
-            return 'Switch to Scan' if self.task.id == 'pychron.spectrometer.scan_inspector' \
-                else 'Switch to Inspector'
+            return (
+                "Switch to Scan"
+                if self.task.id == "pychron.spectrometer.scan_inspector"
+                else "Switch to Inspector"
+            )
         else:
-            return ''
+            return ""
 
     def perform(self, event):
         window = event.task.window
-        if event.task.id == 'pychron.spectrometer':
-            tid = 'pychron.spectrometer.scan_inspector'
+        if event.task.id == "pychron.spectrometer":
+            tid = "pychron.spectrometer.scan_inspector"
         else:
-            tid = 'pychron.spectrometer'
+            tid = "pychron.spectrometer"
 
         task = window.application.create_task(tid)
         window.add_task(task)
@@ -163,9 +178,9 @@ class ToggleSpectrometerTask(TaskAction):
 
 
 class SpectrometerParametersAction(Action):
-    name = 'Spectrometer Parameters...'
-    description = 'View/Set spectrometer parameters'
-    accelerator = 'Alt+Ctrl+S'
+    name = "Spectrometer Parameters..."
+    description = "View/Set spectrometer parameters"
+    accelerator = "Alt+Ctrl+S"
 
     def perform(self, event):
         man = get_manager(event, SPECTROMETER_PROTOCOL)
@@ -173,7 +188,7 @@ class SpectrometerParametersAction(Action):
 
 
 class ReloadMFTableAction(Action):
-    name = 'Reload MFTable'
+    name = "Reload MFTable"
 
     def perform(self, event):
         man = get_manager(event, SPECTROMETER_PROTOCOL)
@@ -181,9 +196,9 @@ class ReloadMFTableAction(Action):
 
 
 class PeakCenterAction(TaskAction):
-    description = 'Calculate peak center'
-    name = 'Peak Center...'
-    method = 'do_peak_center'
+    description = "Calculate peak center"
+    name = "Peak Center..."
+    method = "do_peak_center"
     # def perform(self, event):
     # man = get_manager(event, SCAN_PROTOCOL)
     # man.peak_center()
@@ -193,14 +208,14 @@ class PeakCenterAction(TaskAction):
 
 
 class DefinePeakCenterAction(TaskAction):
-    description = 'Set peak center to specific DAC value'
-    name = 'Define Peak Center...'
-    method = 'define_peak_center'
+    description = "Set peak center to specific DAC value"
+    name = "Define Peak Center..."
+    method = "define_peak_center"
 
 
 class CoincidenceScanAction(TaskAction):
-    name = 'Coincidence...'
-    method = 'do_coincidence'
+    name = "Coincidence..."
+    method = "do_coincidence"
     # def perform(self, event):
     #     man = get_manager(event, ION_OPTICS_PROTOCOL)
     #     man.do_coincidence_scan()
@@ -208,9 +223,9 @@ class CoincidenceScanAction(TaskAction):
 
 
 class StopScanAction(TaskAction):
-    name = 'Stop Scan'
-    method = 'stop_scan'
-    tooltip = 'Stop the current scan'
+    name = "Stop Scan"
+    method = "stop_scan"
+    tooltip = "Stop the current scan"
 
 
 # class RelativePositionsAction(Action):
@@ -225,15 +240,19 @@ class CDDOperateVoltageAction(Action):
 
 
 class MagnetFieldTableAction(Action):
-    name = 'Edit MF Table...'
+    name = "Edit MF Table..."
 
     def perform(self, event):
         man = get_manager(event, SPECTROMETER_PROTOCOL)
         if man.spectrometer:
             from pyface.message_dialog import warning
-            warning(None, 'Editing MF Table is in beta mode. This procedure will not directly modify the existing '
-                          'table. An edited copy is created instead. Contact pychron developers to request this '
-                          'feature be fully implemented')
+
+            warning(
+                None,
+                "Editing MF Table is in beta mode. This procedure will not directly modify the existing "
+                "table. An edited copy is created instead. Contact pychron developers to request this "
+                "feature be fully implemented",
+            )
 
             mft = man.spectrometer.magnet.field_table
 
@@ -244,7 +263,7 @@ class MagnetFieldTableAction(Action):
 
 
 class MagnetFieldTableHistoryAction(Action):
-    name = 'Local MFTable History...'
+    name = "Local MFTable History..."
 
     def perform(self, event):
         man = get_manager(event, SPECTROMETER_PROTOCOL)
@@ -253,31 +272,41 @@ class MagnetFieldTableHistoryAction(Action):
 
             mft = man.spectrometer.magnet.mftable
             archive_root = mft.mftable_archive_path
-            if os.path.isfile(os.path.join(archive_root, os.path.basename(paths.mftable))):
+            if os.path.isfile(
+                os.path.join(archive_root, os.path.basename(paths.mftable))
+            ):
                 # from pychron.git_archive.history import GitArchiveHistory, GitArchiveHistoryView
-                from pychron.spectrometer.local_mftable_history_view import LocalMFTableHistory, LocalMFTableHistoryView
+                from pychron.spectrometer.local_mftable_history_view import (
+                    LocalMFTableHistory,
+                    LocalMFTableHistoryView,
+                )
 
                 gh = LocalMFTableHistory(paths.mftable, archive_root)
                 gh.load_history(paths.mftable)
                 # gh.load_history(os.path.basename(mft.mftable_path))
-                ghv = LocalMFTableHistoryView(model=gh, title='MFTable Archive')
-                ghv.edit_traits(kind='livemodal')
+                ghv = LocalMFTableHistoryView(model=gh, title="MFTable Archive")
+                ghv.edit_traits(kind="livemodal")
             else:
-                man.warning_dialog('No MFTable History')
+                man.warning_dialog("No MFTable History")
 
 
 class DBMagnetFieldTableHistoryAction(Action):
-    name = 'DB MFTable History...'
+    name = "DB MFTable History..."
 
     def perform(self, event):
         man = get_manager(event, SPECTROMETER_PROTOCOL)
         if man.spectrometer:
-            from pychron.spectrometer.mftable_history_view import MFTableHistory, MFTableHistoryView
+            from pychron.spectrometer.mftable_history_view import (
+                MFTableHistory,
+                MFTableHistoryView,
+            )
 
-            mfh = MFTableHistory(checkout_path=paths.mftable,
-                                 spectrometer=man.spectrometer.name)
+            mfh = MFTableHistory(
+                checkout_path=paths.mftable, spectrometer=man.spectrometer.name
+            )
             mfh.load_history()
             mv = MFTableHistoryView(model=mfh)
             mv.edit_traits()
+
 
 # ============= EOF ====================================

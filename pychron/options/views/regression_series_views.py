@@ -15,7 +15,13 @@
 # ===============================================================================
 from traitsui.api import View, Item
 
-from pychron.options.options import MainOptions, SubOptions, AppearanceSubOptions, TitleSubOptions, GroupSubOptions
+from pychron.options.options import (
+    MainOptions,
+    SubOptions,
+    AppearanceSubOptions,
+    TitleSubOptions,
+    GroupSubOptions,
+)
 from pychron.pychron_constants import MAIN, APPEARANCE
 
 
@@ -25,7 +31,7 @@ class RegressionSeriesMainOptions(MainOptions):
 
 class RegressionSeriesSubOptions(SubOptions):
     def traits_view(self):
-        v = View(Item('show_statistics'))
+        v = View(Item("show_statistics"))
         return v
 
 
@@ -41,10 +47,12 @@ class DisplaySubOptions(TitleSubOptions):
     pass
 
 
-VIEWS = {MAIN.lower(): RegressionSeriesMainOptions,
-         'regression series': RegressionSeriesSubOptions,
-         APPEARANCE.lower(): RegressionSeriesAppearance,
-         'display': DisplaySubOptions,
-         'groups': GroupSubOptions}
+VIEWS = {
+    MAIN.lower(): RegressionSeriesMainOptions,
+    "regression series": RegressionSeriesSubOptions,
+    APPEARANCE.lower(): RegressionSeriesAppearance,
+    "display": DisplaySubOptions,
+    "groups": GroupSubOptions,
+}
 
 # ============= EOF =============================================

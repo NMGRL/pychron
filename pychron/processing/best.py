@@ -25,7 +25,9 @@ def ln_prior(params):
 
 
 def norm_dist(val, mean, sigma):
-    return (1.0 / sqrt(2.0 * pi * sigma ** 2)) * exp(-(val - mean) ** 2 / (2.0 * sigma ** 2))
+    return (1.0 / sqrt(2.0 * pi * sigma**2)) * exp(
+        -((val - mean) ** 2) / (2.0 * sigma**2)
+    )
 
 
 def ln_likelihood(param, vs, es):
@@ -39,11 +41,10 @@ def sortedDataPlot(Ages, errors, ylims=[0, 1], **kwargs):
     errors = errors[srtIdx]
 
     ys = linspace(ylims[0] * 1.1, ylims[1] * 0.9, len(Ages))
-    plt.errorbar(Ages, ys, xerr=errors, fmt='o', **kwargs)
+    plt.errorbar(Ages, ys, xerr=errors, fmt="o", **kwargs)
 
 
 class BESTModeler:
-
     def setup(self):
         n = 20
 
@@ -54,8 +55,8 @@ class BESTModeler:
 
         tu_obs = normal(tu, dtu, n)
         ts_obs = normal(ts, dts, n)
-        dtu_obs = tu_obs * .1
-        dts_obs = ts_obs * .1
+        dtu_obs = tu_obs * 0.1
+        dts_obs = ts_obs * 0.1
 
         self.tu_obs = tu_obs
         self.ts_obs = ts_obs
@@ -88,7 +89,7 @@ class BESTModeler:
         sampler.run_mcmc(guesses, nburn + niter)
 
         samples = sampler.chain[:, nburn].reshape((-1, ndim))
-        names = [r'$t_u$', r'$t_s$']
+        names = [r"$t_u$", r"$t_s$"]
         # self.plot_walk(names, sampler, ndim, nwalk)
         self.plot_corner(names, samples)
         self.plot(samples)
@@ -101,39 +102,75 @@ class BESTModeler:
         f, axs = plt.subplots(ndim, 1, figsize=[7, 3])
         for i in range(ndim):
             for j in range(nwalk):
-                axs[i].plot(sampler.chain[j, :, i], '-k', alpha=0.05)
+                axs[i].plot(sampler.chain[j, :, i], "-k", alpha=0.05)
             axs[i].set_ylabel(names[i], fontsize=14)
 
     def plot(self, samples):
 
         # f = plt.figure(figsize=[7, 3])
         plt.subplot(1, 2, 1)
-        plt.hist(samples[:, 0], bins=50, histtype='stepfilled', normed=True, alpha=0.5, color='dodgerblue')
-        plt.hist(samples[:, 1], bins=50, histtype='stepfilled', normed=True, alpha=0.5, color='mediumseagreen')
+        plt.hist(
+            samples[:, 0],
+            bins=50,
+            histtype="stepfilled",
+            normed=True,
+            alpha=0.5,
+            color="dodgerblue",
+        )
+        plt.hist(
+            samples[:, 1],
+            bins=50,
+            histtype="stepfilled",
+            normed=True,
+            alpha=0.5,
+            color="mediumseagreen",
+        )
 
         ylims = plt.ylim()
-        sortedDataPlot(self.tu_obs, self.dtu_obs, label=r'$t_u$', ylims=ylims, color='dodgerblue')
-        sortedDataPlot(self.ts_obs, self.dts_obs, label=r'$t_s$', ylims=ylims, color='mediumseagreen')
+        sortedDataPlot(
+            self.tu_obs, self.dtu_obs, label=r"$t_u$", ylims=ylims, color="dodgerblue"
+        )
+        sortedDataPlot(
+            self.ts_obs,
+            self.dts_obs,
+            label=r"$t_s$",
+            ylims=ylims,
+            color="mediumseagreen",
+        )
 
         plt.gca().set_yticks([])  # a y-axis has no name
-        plt.legend(fontsize='medium')
-        plt.xlabel('Age')
+        plt.legend(fontsize="medium")
+        plt.xlabel("Age")
 
         # To look at the modelled difference, we just difference the models
         plt.subplot(1, 2, 2)
         ageDiff = samples[:, 0] - samples[:, 1]
         ageDiffPercentiles = percentile(ageDiff, [2.5, 50, 97.5])
-        resultsSummary = '{:.2f} ({:.2f} - {:.2f})'.format(ageDiffPercentiles[1], ageDiffPercentiles[0],
-                                                           ageDiffPercentiles[2])
-        plt.hist(ageDiff, bins=50, histtype='stepfilled', normed=True, alpha=0.5, color='gray', label=resultsSummary)
+        resultsSummary = "{:.2f} ({:.2f} - {:.2f})".format(
+            ageDiffPercentiles[1], ageDiffPercentiles[0], ageDiffPercentiles[2]
+        )
+        plt.hist(
+            ageDiff,
+            bins=50,
+            histtype="stepfilled",
+            normed=True,
+            alpha=0.5,
+            color="gray",
+            label=resultsSummary,
+        )
         ylim = plt.ylim()
-        plt.plot([ageDiffPercentiles[0], ageDiffPercentiles[0]], ylim, '--k')
-        plt.plot([ageDiffPercentiles[2], ageDiffPercentiles[2]], ylim, '--k', label='95% credible interval')
-        plt.xlabel(r'$t_u - t_s$')
-        plt.legend(fontsize='medium', loc='upper center')
+        plt.plot([ageDiffPercentiles[0], ageDiffPercentiles[0]], ylim, "--k")
+        plt.plot(
+            [ageDiffPercentiles[2], ageDiffPercentiles[2]],
+            ylim,
+            "--k",
+            label="95% credible interval",
+        )
+        plt.xlabel(r"$t_u - t_s$")
+        plt.legend(fontsize="medium", loc="upper center")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     b = BESTModeler()
     b.setup()
     b.run()

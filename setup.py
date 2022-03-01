@@ -16,6 +16,7 @@ os.environ['TRAVIS_CI'] = 'True'
 setup(name='pychron',
       version='16.7',
       setup_requires=['nose>=1.0'],
+      entry_points={'enthought_app_metadata': ['example_app = eam.info:info']},
       py_modules=['pychron.pychron_constants',
                   'pychron.paths',
                   'pychron.processing.plateau',

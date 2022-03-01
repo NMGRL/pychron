@@ -16,77 +16,79 @@
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from traits.api import List, Str, HasTraits, Float, Int
+
 # =============standard library imports ========================
 from numpy import random, char
 import time
-
 
 # =============local library imports  ==========================
 from pychron.hardware.gauges.base_controller import BaseGaugeController
 
 
 class BaseMicroIonController(BaseGaugeController):
-    address = '01'
-    mode = 'rs485'
+    address = "01"
+    mode = "rs485"
 
     def load_additional_args(self, config, *args, **kw):
-        self.address = self.config_get(config, 'General', 'address', optional=False)
-        self.display_name = self.config_get(config, 'General', 'display_name', default=self.name)
-        self.mode = self.config_get(config, 'Communications', 'mode', default='rs485')
+        self.address = self.config_get(config, "General", "address", optional=False)
+        self.display_name = self.config_get(
+            config, "General", "display_name", default=self.name
+        )
+        self.mode = self.config_get(config, "Communications", "mode", default="rs485")
         self._load_gauges(config)
         return True
 
     def get_pressures(self, verbose=False):
-        kw = {'verbose': verbose, 'force': True}
+        kw = {"verbose": verbose, "force": True}
         b = self.get_convectron_b_pressure(**kw)
-        self._set_gauge_pressure('CG2', b)
+        self._set_gauge_pressure("CG2", b)
         time.sleep(0.05)
         a = self.get_convectron_a_pressure(**kw)
-        self._set_gauge_pressure('CG1', a)
+        self._set_gauge_pressure("CG1", a)
         time.sleep(0.05)
 
         ig = self.get_ion_pressure(**kw)
-        self._set_gauge_pressure('IG', ig)
+        self._set_gauge_pressure("IG", ig)
 
         return ig, a, b
 
     def set_degas(self, state):
-        key = 'DG'
-        value = 'ON' if state else 'OFF'
+        key = "DG"
+        value = "ON" if state else "OFF"
         cmd = self._build_command(key, value)
         r = self.ask(cmd)
         r = self._parse_response(r)
         return r
 
     def get_degas(self):
-        key = 'DGS'
+        key = "DGS"
         cmd = self._build_command(key)
         r = self.ask(cmd)
         r = self._parse_response(r)
         return r
 
     def get_ion_pressure(self, **kw):
-        name = 'IG'
+        name = "IG"
         return self._get_pressure(name, **kw)
 
     def get_convectron_a_pressure(self, **kw):
-        name = 'CG1'
+        name = "CG1"
         return self._get_pressure(name, **kw)
 
     def get_convectron_b_pressure(self, **kw):
-        name = 'CG2'
+        name = "CG2"
         return self._get_pressure(name, **kw)
 
     def set_ion_gauge_state(self, state):
-        key = 'IG1'
-        value = 'ON' if state else 'OFF'
+        key = "IG1"
+        value = "ON" if state else "OFF"
         cmd = self._build_command(key, value)
         r = self.ask(cmd)
         r = self._parse_response(r)
         return r
 
     def get_process_control_status(self, channel=None):
-        key = 'PCS'
+        key = "PCS"
 
         cmd = self._build_command(key, channel)
 
@@ -97,9 +99,9 @@ class BaseMicroIonController(BaseGaugeController):
             if r is None:
                 # from numpy import random,char
                 r = random.randint(0, 2, 6)
-                r = ','.join(char.array(r))
+                r = ",".join(char.array(r))
 
-            r = r.split(',')
+            r = r.split(",")
         return r
 
     def _read_pressure(self, gauge, verbose=False):
@@ -108,7 +110,7 @@ class BaseMicroIonController(BaseGaugeController):
         else:
             name = gauge.name
 
-        key = 'DS'
+        key = "DS"
         cmd = self._build_command(key, name)
 
         r = self.ask(cmd, verbose=verbose)
@@ -121,14 +123,14 @@ class BaseMicroIonController(BaseGaugeController):
         # example of new string formating
         # see http://docs.python.org/library/string.html#formatspec
 
-        if self.mode == 'rs485':
-            key = '#{}{}'.format(self.address, key)
+        if self.mode == "rs485":
+            key = "#{}{}".format(self.address, key)
 
         if value is not None:
             args = (key, value)
         else:
             args = (key,)
-        c = ' '.join(args)
+        c = " ".join(args)
 
         return c
 
@@ -136,12 +138,13 @@ class BaseMicroIonController(BaseGaugeController):
         if self.simulation or r is None:
             from numpy.random import normal
 
-            if name == 'IG':
+            if name == "IG":
                 loc, scale = 1e-9, 5e-9
             else:
                 loc, scale = 1e-2, 5e-3
             return abs(normal(loc, scale))
 
         return r
+
 
 # ============= EOF ====================================

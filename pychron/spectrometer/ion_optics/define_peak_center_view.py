@@ -24,6 +24,7 @@ from traitsui.api import View, UItem, Item, VGroup, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class DefinePeakCenterView(HasTraits):
     detector = Str
     isotope = Str
@@ -32,10 +33,15 @@ class DefinePeakCenterView(HasTraits):
     dac = Float
 
     def traits_view(self):
-        v = View(VGroup(UItem('detector', editor=EnumEditor(name='detectors')),
-                        UItem('isotope', editor=EnumEditor(name='isotopes')),
-                        Item('dac', label='DAC')),
-                 title='Define Peak Center')
+        v = View(
+            VGroup(
+                UItem("detector", editor=EnumEditor(name="detectors")),
+                UItem("isotope", editor=EnumEditor(name="isotopes")),
+                Item("dac", label="DAC"),
+            ),
+            title="Define Peak Center",
+        )
         return v
+
 
 # ============= EOF =============================================

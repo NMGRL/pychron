@@ -24,20 +24,33 @@ from pychron.furnace.tasks.nmgrl.preferences import NMGRLFurnaceControlPreferenc
 
 
 class NMGRLFurnaceControlPlugin(BaseTaskPlugin):
-    canvases = List(contributes_to='pychron.extraction_line.plugin_canvases')
+    canvases = List(contributes_to="pychron.extraction_line.plugin_canvases")
 
     # def __init__(self, *args, **kw):
     #     super(NMGRLFurnaceControlPlugin, self).__init__(*args, **kw)
     #
     def _canvases_default(self):
-        c = {'display_name': 'Furnace',
-             'valve_path': self.application.preferences.get('pychron.nmgrlfurnace.control.valve_path'),
-             'canvas_path': self.application.preferences.get('pychron.nmgrlfurnace.control.canvas_path'),
-             'config_path': self.application.preferences.get('pychron.nmgrlfurnace.control.canvas_config_path')}
+        c = {
+            "display_name": "Furnace",
+            "valve_path": self.application.preferences.get(
+                "pychron.nmgrlfurnace.control.valve_path"
+            ),
+            "canvas_path": self.application.preferences.get(
+                "pychron.nmgrlfurnace.control.canvas_path"
+            ),
+            "config_path": self.application.preferences.get(
+                "pychron.nmgrlfurnace.control.canvas_config_path"
+            ),
+        }
 
-        return [c, ]
+        return [
+            c,
+        ]
 
     def _preferences_panes_default(self):
-        return [NMGRLFurnaceControlPreferencesPane, ]
+        return [
+            NMGRLFurnaceControlPreferencesPane,
+        ]
+
 
 # ============= EOF =============================================

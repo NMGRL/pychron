@@ -24,15 +24,17 @@ class VideoPlayer(HasTraits):
     title = Str
 
     def traits_view(self):
-        v = View(UItem('video_path', editor=VideoEditor(), width=640, height=480),
-                 title = self.title,
-                 resizable=True)
+        v = View(
+            UItem("video_path", editor=VideoEditor(), width=640, height=480),
+            title=self.title,
+            resizable=True,
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     vp = VideoPlayer()
-    vp.video_path = '/Users/ross/Desktop/67900-83-001.avi'
+    vp.video_path = "/Users/ross/Desktop/67900-83-001.avi"
     vp.configure_traits()
 
 # ============= EOF =============================================

@@ -21,5 +21,5 @@
 from __future__ import absolute_import
 from pychron.core.ui.factory import toolkit_factory
 
-myDirectoryEditor = toolkit_factory('directory_editor', 'myDirectoryEditor')
+myDirectoryEditor = toolkit_factory("directory_editor", "myDirectoryEditor")
 # ============= EOF =============================================

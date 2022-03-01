@@ -28,9 +28,9 @@ class IsochronEditor(FigureEditor):
 
 class InverseIsochronEditor(FigureEditor):
     # plotter_options_manager = Instance(InverseIsochronOptionsManager, ())
-    basename = 'isochron'
+    basename = "isochron"
     figure_model_klass = InverseIsochronModel
-    pickle_path = 'isochron'
+    pickle_path = "isochron"
 
     # parent_editor = None
     #
@@ -78,5 +78,6 @@ class InverseIsochronEditor(FigureEditor):
     # def _set_preferred_age_kind(self, ias):
     #     for ia in ias:
     #         ia.preferred_age_kind = 'Isochron'
+
 
 # ============= EOF =============================================

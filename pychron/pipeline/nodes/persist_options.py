@@ -24,7 +24,7 @@ from pychron.paths import paths
 
 
 class InterpretedAgePersistOptions(SaveModel):
-    extension = Enum('xlsx', 'pdf')
+    extension = Enum("xlsx", "pdf")
     show_grid = Bool
     show_outline = Bool
     include_weighted_mean = Bool
@@ -37,17 +37,18 @@ class InterpretedAgePersistOptions(SaveModel):
 class InterpretedAgePersistOptionsView(SaveController):
     def traits_view(self):
         path_grp = self._get_path_group(show_border=True)
-        view_grp = VGroup(Item('show_grid'),
-                          Item('show_outline'),
-                          show_border=True,
-                          label='Appearance')
-        opt_grp = VGroup(view_grp, Item('include_weighted_mean'),
-                         label='Options')
-        v = okcancel_view(Tabbed(VGroup(UItem('extension', label='Output Mode'),
-                                        path_grp),
-
-                                 opt_grp),
-                          title='Save Interpreted Age Table')
+        view_grp = VGroup(
+            Item("show_grid"),
+            Item("show_outline"),
+            show_border=True,
+            label="Appearance",
+        )
+        opt_grp = VGroup(view_grp, Item("include_weighted_mean"), label="Options")
+        v = okcancel_view(
+            Tabbed(VGroup(UItem("extension", label="Output Mode"), path_grp), opt_grp),
+            title="Save Interpreted Age Table",
+        )
         return v
+
 
 # # ============= EOF =============================================

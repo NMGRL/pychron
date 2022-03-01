@@ -19,6 +19,7 @@ from __future__ import absolute_import
 
 from traits.api import Int, Property, List
 from traitsui.api import VGroup, UItem, HGroup, Group, Tabbed
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors.api import TabularEditor
@@ -42,14 +43,13 @@ class UpdateGitHistory(BaseGitHistory):
             obj.name = t.name
             return obj
 
-        self.tags = sorted([factory(ti) for ti in tags], key=lambda x: x.date,
-                           reverse=True)
+        self.tags = sorted(
+            [factory(ti) for ti in tags], key=lambda x: x.date, reverse=True
+        )
 
 
 class CommitAdapter(TabularAdapter):
-    columns = [('Message', 'message'),
-               ('Date', 'date'),
-               ('SHA', 'hexsha')]
+    columns = [("Message", "message"), ("Date", "date"), ("SHA", "hexsha")]
     message_width = Int(500)
     date_width = Int(185)
     hexsha_text = Property
@@ -59,14 +59,16 @@ class CommitAdapter(TabularAdapter):
 
     def get_bg_color(self, obj, trait, row, column=0):
         item = getattr(obj, trait)[row]
-        return LIGHT_YELLOW if item.active else 'white'
+        return LIGHT_YELLOW if item.active else "white"
 
 
 class TagAdapter(CommitAdapter):
-    columns = [('Tag', 'name'),
-               ('Message', 'message'),
-               ('Date', 'date'),
-               ('SHA', 'hexsha')]
+    columns = [
+        ("Tag", "name"),
+        ("Message", "message"),
+        ("Date", "date"),
+        ("SHA", "hexsha"),
+    ]
     name_width = Int(100)
 
 
@@ -74,36 +76,45 @@ class BaseCommitsView(Controller):
     model = BaseGitHistory
 
     def traits_view(self):
-        v = okcancel_view(VGroup(*self._groups()),
-                          width=900,
-                          height=400,
-                          title='Available Updates- Branch= {}'.format(self.model.branchname))
+        v = okcancel_view(
+            VGroup(*self._groups()),
+            width=900,
+            height=400,
+            title="Available Updates- Branch= {}".format(self.model.branchname),
+        )
         return v
 
     def _groups(self):
         raise NotImplementedError
 
     def _items_grp(self):
-        return UItem('items',
-                     editor=TabularEditor(adapter=CommitAdapter(),
-                                          editable=False,
-                                          selected='selected'))
+        return UItem(
+            "items",
+            editor=TabularEditor(
+                adapter=CommitAdapter(), editable=False, selected="selected"
+            ),
+        )
 
     def _info_grp(self):
         return HGroup(
-            Readonly('local_commit', label='Your Version'),
-            Readonly('latest_remote_commit', label='Latest Version'),
-            Readonly('n', label='Commits Behind',
-                     visible_when='show_behind'))
+            Readonly("local_commit", label="Your Version"),
+            Readonly("latest_remote_commit", label="Latest Version"),
+            Readonly("n", label="Commits Behind", visible_when="show_behind"),
+        )
 
 
 class ManageCommitsView(BaseCommitsView):
     def _groups(self):
-        igrp = Group(self._items_grp(), label='Commits')
-        tgrp = VGroup(UItem('tags', editor=TabularEditor(adapter=TagAdapter(),
-                                                         editable=False,
-                                                         selected='selected')),
-                      label='Tags')
+        igrp = Group(self._items_grp(), label="Commits")
+        tgrp = VGroup(
+            UItem(
+                "tags",
+                editor=TabularEditor(
+                    adapter=TagAdapter(), editable=False, selected="selected"
+                ),
+            ),
+            label="Tags",
+        )
         return [self._info_grp(), Tabbed(tgrp, igrp)]
 
 
@@ -123,5 +134,6 @@ class CommitView(BaseCommitsView):
         #              title='Available Updates- Branch= {}'.format(self.model.branchname),
         #              resizable=True)
         #     return v
+
 
 # ============= EOF =============================================

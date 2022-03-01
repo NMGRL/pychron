@@ -23,11 +23,13 @@ class BaseFurnaceStageManager(BaseStageManager):
 
     def __init__(self, *args, **kw):
         super(BaseFurnaceStageManager, self).__init__(*args, **kw)
-        self.tray_calibration_manager.style = 'Linear'
+        self.tray_calibration_manager.style = "Linear"
 
     def get_sample_states(self):
         return [h.id for h in self.stage_map.sample_holes if h.analyzed]
 
     def _root_default(self):
         return paths.furnace_map_dir
+
+
 # ============= EOF =============================================

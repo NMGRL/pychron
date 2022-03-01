@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 """
 Eurotherm 2000 series device abstraction
 
@@ -33,8 +32,7 @@ from pychron.hardware.eurotherm.base import BaseEurotherm
 
 
 class Eurotherm(BaseEurotherm, CoreDevice):
-    """
-    """
+    """ """
 
 
 # ============= EOF ====================================

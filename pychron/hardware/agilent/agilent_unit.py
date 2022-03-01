@@ -33,32 +33,35 @@ class AgilentUnit(CoreDevice, AgilentMixin):
     trigger_count = Int
 
     def load_additional_args(self, config):
-        self.slot = self.config_get(config, 'General', 'slot', cast='int', default=1)
-        self.trigger_count = self.config_get(config, 'General', 'trigger_count', cast='int', default=1)
+        self.slot = self.config_get(config, "General", "slot", cast="int", default=1)
+        self.trigger_count = self.config_get(
+            config, "General", "trigger_count", cast="int", default=1
+        )
         return True
 
     def _get_initialization_commands(self):
-        cmds = ('*CLS',
-                'FORM:READING:ALARM OFF',
-                'FORM:READING:CHANNEL ON',
-                'FORM:READING:TIME OFF',
-                'FORM:READING:UNIT OFF',
-                'TRIG:SOURCE TIMER',
-                'TRIG:TIMER 0',
-                'TRIG:COUNT {}'.format(self.trigger_count),
-                #              # 'ROUT:CHAN:DELAY {} {}'.format(0.05, self._make_scan_list()),
-                'ROUT:SCAN {}'.format(self.make_scan_list()))
+        cmds = (
+            "*CLS",
+            "FORM:READING:ALARM OFF",
+            "FORM:READING:CHANNEL ON",
+            "FORM:READING:TIME OFF",
+            "FORM:READING:UNIT OFF",
+            "TRIG:SOURCE TIMER",
+            "TRIG:TIMER 0",
+            "TRIG:COUNT {}".format(self.trigger_count),
+            #              # 'ROUT:CHAN:DELAY {} {}'.format(0.05, self._make_scan_list()),
+            "ROUT:SCAN {}".format(self.make_scan_list()),
+        )
         return cmds
 
     def make_scan_list(self, *args, **kw):
         raise NotImplementedError
 
     def _trigger(self, verbose=False):
-        """
-        """
-        self.tell('ABORT', verbose=verbose)
+        """ """
+        self.tell("ABORT", verbose=verbose)
         # time.sleep(0.05)
-        self.tell('INIT', verbose=verbose)
+        self.tell("INIT", verbose=verbose)
 
     #        time.sleep(0.075)
 
@@ -73,12 +76,13 @@ class AgilentUnit(CoreDevice, AgilentMixin):
             time.sleep(0.005)
         else:
             if verbose:
-                self.warning('no points in memory')
+                self.warning("no points in memory")
 
     def _points_available(self, verbose=False):
-        resp = self.ask('DATA:POINTS?', verbose=verbose)
+        resp = self.ask("DATA:POINTS?", verbose=verbose)
         if resp is not None and resp:
             return int(resp)
+
 
 # ============= EOF =============================================
 #    def read_device(self, **kw):

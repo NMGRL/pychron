@@ -20,9 +20,6 @@
 from __future__ import absolute_import
 from pychron.core.ui.factory import toolkit_factory
 
-LabelEditor = toolkit_factory('label_editor', 'LabelEditor')
+LabelEditor = toolkit_factory("label_editor", "LabelEditor")
 
 # ============= EOF =============================================
-
-
-

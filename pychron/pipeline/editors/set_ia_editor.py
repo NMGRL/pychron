@@ -19,5 +19,7 @@ from pychron.pipeline.tasks.interpreted_age_factory import VIEW
 
 class SetInterpretedAgeEditor(BaseEditor):
     traits_view = VIEW
-    basename = 'IA'
+    basename = "IA"
+
+
 # ============= EOF =============================================

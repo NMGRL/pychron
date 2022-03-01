@@ -23,35 +23,39 @@ from pychron.core.utils import get_display_size
 ds = get_display_size()
 
 gWarningDisplay = DisplayController(
-    title='Warnings',
+    title="Warnings",
     width=450,
-    default_color='red',
-    bgcolor='light grey',
-    max_blocks=300)
+    default_color="red",
+    bgcolor="light grey",
+    max_blocks=300,
+)
 
 gLoggerDisplay = DisplayController(
-    title='Info',
+    title="Info",
     width=700,
     x=ds.width - 650,
     y=20,
     font_size=10,
-    default_color='black',
-    bgcolor='light grey',
-    max_blocks=300)
+    default_color="black",
+    bgcolor="light grey",
+    max_blocks=300,
+)
 
 gMessageDisplay = DisplayController(
-    title='Messages',
+    title="Messages",
     width=480,
     y=100,
-    default_color='darkgreen',
-    bgcolor='light grey',
-    max_blocks=300)
+    default_color="darkgreen",
+    bgcolor="light grey",
+    max_blocks=300,
+)
 
 gTraceDisplay = ErrorDisplay(
-    title='Error Stack',
+    title="Error Stack",
     width=825,
     x=int((ds.width - 825) / 2),
     y=100,
-    default_color='black')
+    default_color="black",
+)
 
 # ============= EOF =============================================

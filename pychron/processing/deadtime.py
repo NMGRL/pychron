@@ -21,7 +21,6 @@ import six
 from six.moves import range
 from six.moves import zip
 
-
 set_qt()
 
 from itertools import groupby
@@ -46,13 +45,13 @@ class DeadTimeModel(HasTraits):
 
     def get_raw(self):
         """
-            return NShots vs 40/36
+        return NShots vs 40/36
         """
         xs = []
         ys = []
         for r in six.itervalues(self._cp):
-            xs.append(int(r['NShots']))
-            ys.append(float(r['Ar40']) / float(r['Ar36']))
+            xs.append(int(r["NShots"]))
+            ys.append(float(r["Ar40"]) / float(r["Ar36"]))
 
         return xs, ys
 
@@ -63,9 +62,9 @@ class DeadTimeModel(HasTraits):
         vs = []
         corrfunc = self._deadtime_correct
         for r in six.itervalues(self._cp):
-            n = int(r['NShots'])
-            nv = ufloat(float(r['Ar40']), float(r['Ar40err'])) * 6240
-            dv = ufloat(float(r['Ar36']), float(r['Ar36err'])) * 6240
+            n = int(r["NShots"])
+            nv = ufloat(float(r["Ar40"]), float(r["Ar40err"])) * 6240
+            dv = ufloat(float(r["Ar36"]), float(r["Ar36err"])) * 6240
             if tau:
                 dv = corrfunc(dv, tau * 1e-9)
 
@@ -97,8 +96,8 @@ class DeadTimeModel(HasTraits):
 
     def calculate_deadtime(self, taus, ms):
         """
-            min at dy=0   (ax2+bx+c)dx=dy==2ax+b
-            2ax+b=0 , x=-b/(2a)
+        min at dy=0   (ax2+bx+c)dx=dy==2ax+b
+        2ax+b=0 , x=-b/(2a)
         """
 
         coeffs = polyfit(taus, ms, 2)
@@ -122,51 +121,48 @@ class DeadTimeGrapher(HasTraits):
         g = self.graph
         m = self.deadtime_model
 
-        #plot raw data
+        # plot raw data
         p = g.new_plot()
         self._set_padding(p)
         xs, ys = m.get_raw()
-        g.new_series(xs, ys, type='scatter')
-        g.set_x_title('NShots')
-        g.set_y_title('40/36')
+        g.new_series(xs, ys, type="scatter")
+        g.set_x_title("NShots")
+        g.set_y_title("40/36")
 
-        #plot nshots vs mean
+        # plot nshots vs mean
         p = g.new_plot()
         self._set_padding(p)
         xs, ys, _ = m.get_mean_raw()
-        g.new_series(xs, ys, type='scatter', plotid=1)
-        g.set_x_title('NShots', plotid=1)
-        g.set_y_title('Mean 40/36', plotid=1)
+        g.new_series(xs, ys, type="scatter", plotid=1)
+        g.set_x_title("NShots", plotid=1)
+        g.set_y_title("Mean 40/36", plotid=1)
 
-        #plot tau vs mswd
+        # plot tau vs mswd
         p = g.new_plot()
         p.value_range.tight_bounds = False
         self._set_padding(p)
         xs, ys = m.get_deadtime_vs_mswd()
 
-        g.new_series(xs, ys, type='scatter', plotid=2)
+        g.new_series(xs, ys, type="scatter", plotid=2)
 
         fxs, fys, dt = m.calculate_deadtime(xs, ys)
         g.new_series(fxs, fys, plotid=2)
         g.add_vertical_rule(dt, plotid=2)
 
-        g.set_x_title('deadtime (ns)', plotid=2)
-        g.set_y_title('MSWD', plotid=2)
+        g.set_x_title("deadtime (ns)", plotid=2)
+        g.set_y_title("MSWD", plotid=2)
 
     def traits_view(self):
-        v = View(UItem('graph', style='custom'), resizable=True)
+        v = View(UItem("graph", style="custom"), resizable=True)
         return v
 
 
-if __name__ == '__main__':
-    p = '/Users/ross/Sandbox/deadtime_template.txt'
+if __name__ == "__main__":
+    p = "/Users/ross/Sandbox/deadtime_template.txt"
     d = DeadTimeModel()
     d.load(p)
     dtg = DeadTimeGrapher(deadtime_model=d)
     dtg.rebuild()
     dtg.configure_traits()
 
-
-
 # ============= EOF =============================================
-

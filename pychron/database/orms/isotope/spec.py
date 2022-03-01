@@ -30,19 +30,20 @@ class spec_MassCalHistoryTable(Base, BaseMixin):
     create_date = Column(DateTime, default=func.now())
     spectrometer_id = Column(Integer)
 
-    scans = relationship('spec_MassCalScanTable', backref='history')
+    scans = relationship("spec_MassCalScanTable", backref="history")
 
 
 class spec_MassCalScanTable(Base, BaseMixin):
-    history_id = foreignkey('spec_MassCalHistoryTable')
+    history_id = foreignkey("spec_MassCalHistoryTable")
     blob = Column(BLOB)
     center = Column(Float)
-    molecular_weight_id = foreignkey('gen_MolecularWeightTable')
+    molecular_weight_id = foreignkey("gen_MolecularWeightTable")
 
 
 class spec_MFTableTable(Base, BaseMixin):
-    spectrometer_id = foreignkey('gen_MassSpectrometerTable')
+    spectrometer_id = foreignkey("gen_MassSpectrometerTable")
     blob = Column(BLOB)
     create_date = Column(DateTime, default=func.now())
+
 
 # ============= EOF =============================================

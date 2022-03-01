@@ -26,28 +26,37 @@ import pandas as pd
 from six.moves import zip
 
 
-def get_all_temp_data(low='2017-06-14 12:00'):
+def get_all_temp_data(low="2017-06-14 12:00"):
     db = LabspyDatabaseAdapter(bind=False)
-    db.host = os.getenv('LABSPY_HOST')
-    db.username = os.getenv('LABSPY_USER')
-    db.password = os.getenv('LABSPY_PWD')
-    db.name = os.getenv('LABSPY_NAME')
+    db.host = os.getenv("LABSPY_HOST")
+    db.username = os.getenv("LABSPY_USER")
+    db.password = os.getenv("LABSPY_PWD")
+    db.name = os.getenv("LABSPY_NAME")
     if db.connect():
         db.create_session()
         data = {}
         columns = []
-        for device, process, name in (('EnvironmentalMonitor', 'Lab Temp.', 'lab'),
-                                      ('RPiWeather', 'Lab Temp. 3', 'air_in'),
-                                      ('RPiWeather', 'Lab Temp. 4', 'air_out'),
-                                      ('RPiWeather', 'Lab Temp. 7', 'south_window'),
-                                      ('NOAA', 'Outside Temp', 'outside')):
+        for device, process, name in (
+            ("EnvironmentalMonitor", "Lab Temp.", "lab"),
+            ("RPiWeather", "Lab Temp. 3", "air_in"),
+            ("RPiWeather", "Lab Temp. 4", "air_out"),
+            ("RPiWeather", "Lab Temp. 7", "south_window"),
+            ("NOAA", "Outside Temp", "outside"),
+        ):
             records = db.get_measurements(device, process, low=low)
             print(device, process)
-            ts, xs, ys = list(zip(*[(r.pub_date, time.mktime(r.pub_date.timetuple()), r.value) for r in records]))
+            ts, xs, ys = list(
+                zip(
+                    *[
+                        (r.pub_date, time.mktime(r.pub_date.timetuple()), r.value)
+                        for r in records
+                    ]
+                )
+            )
 
-            tk = '{}_t'.format(name)
-            xk = '{}_x'.format(name)
-            yk = '{}_y'.format(name)
+            tk = "{}_t".format(name)
+            xk = "{}_x".format(name)
+            yk = "{}_y".format(name)
 
             data[tk] = pd.Series(ts)
             data[xk] = pd.Series(xs)
@@ -61,15 +70,16 @@ def get_all_temp_data(low='2017-06-14 12:00'):
 
 
 def get_data():
-
     db = LabspyDatabaseAdapter(bind=False)
-    db.host = os.getenv('Labspy_HOST')
-    db.username = os.getenv('Labspy_USER')
-    db.password = os.getenv('Labspy_PWD')
-    db.name = os.getenv('Labspy_NAME')
+    db.host = os.getenv("Labspy_HOST")
+    db.username = os.getenv("Labspy_USER")
+    db.password = os.getenv("Labspy_PWD")
+    db.name = os.getenv("Labspy_NAME")
     if db.connect():
         db.create_session()
-        records = db.get_measurements('EnvironmentalMonitor', 'Lab Temp.', low='2017-06-14 12:00')
+        records = db.get_measurements(
+            "EnvironmentalMonitor", "Lab Temp.", low="2017-06-14 12:00"
+        )
         xs, ys = list(zip(*[(r.pub_date, r.value) for r in records]))
         return xs, ys
 
@@ -83,14 +93,19 @@ def plot(xs, ys):
 
 
 def write(p, xs, ys):
-    with open(p, 'w') as wfile:
+    with open(p, "w") as wfile:
         for xi, yi in zip(xs, ys):
-            wfile.write('{},{},{}\n'.format(xi.strftime('%m/%d/%Y %H:%M:%S'), time.mktime(xi.timetuple()), yi))
+            wfile.write(
+                "{},{},{}\n".format(
+                    xi.strftime("%m/%d/%Y %H:%M:%S"), time.mktime(xi.timetuple()), yi
+                )
+            )
 
 
 # xx,yy =get_data()
 # write('/Users/ross/Desktop/temp.csv', xx, yy)
 # plot(xx,yy)
+
 
 def write_all_temperature_data(p):
     data = get_all_temp_data()
@@ -101,5 +116,5 @@ def write_all_temperature_data(p):
     #     wfile.write('{},{},{}\n'.format(xi.strftime('%m/%d/%Y %H:%M:%S'), time.mktime(xi.timetuple()), yi))
 
 
-write_all_temperature_data('/Users/ross/Desktop/alltemp.csv')
+write_all_temperature_data("/Users/ross/Desktop/alltemp.csv")
 # ============= EOF =============================================

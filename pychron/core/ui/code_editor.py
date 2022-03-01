@@ -21,5 +21,5 @@
 from __future__ import absolute_import
 from pychron.core.ui.factory import toolkit_factory
 
-PyScriptCodeEditor = toolkit_factory('code_editor', 'PyScriptCodeEditor')
+PyScriptCodeEditor = toolkit_factory("code_editor", "PyScriptCodeEditor")
 # ============= EOF =============================================

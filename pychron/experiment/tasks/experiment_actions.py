@@ -30,7 +30,7 @@ from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
 from pychron.paths import paths
 
-EXP_ID = 'pychron.experiment.task'
+EXP_ID = "pychron.experiment.task"
 
 
 class ExperimentAction(UIAction):
@@ -49,8 +49,8 @@ class ExperimentAction(UIAction):
 
 
 class ConfigureEditorTableAction(UITaskAction):
-    name = 'Experiment Table Configuration'
-    method = 'configure_experiment_table'
+    name = "Experiment Table Configuration"
+    method = "configure_experiment_table"
 
 
 class BasePatternAction(UITaskAction):
@@ -58,12 +58,13 @@ class BasePatternAction(UITaskAction):
 
     def _task_changed(self):
         if self.task:
-            if hasattr(self.task, 'open_pattern'):
+            if hasattr(self.task, "open_pattern"):
                 enabled = True
                 if self.enabled_name:
                     if self.object:
-                        enabled = bool(self._get_attr(self.object,
-                                                      self.enabled_name, False))
+                        enabled = bool(
+                            self._get_attr(self.object, self.enabled_name, False)
+                        )
                 if enabled:
                     self._enabled = True
             else:
@@ -71,12 +72,13 @@ class BasePatternAction(UITaskAction):
 
     def _enabled_update(self):
         """
-             reimplement ListeningAction's _enabled_update
+        reimplement ListeningAction's _enabled_update
         """
         if self.enabled_name:
             if self.object:
-                self.enabled = bool(self._get_attr(self.object,
-                                                   self.enabled_name, False))
+                self.enabled = bool(
+                    self._get_attr(self.object, self.enabled_name, False)
+                )
             else:
                 self.enabled = False
         elif self._enabled is not None:
@@ -86,43 +88,46 @@ class BasePatternAction(UITaskAction):
 
 
 class OpenPatternAction(BasePatternAction):
-    name = 'Open Pattern...'
-    method = 'open_pattern'
+    name = "Open Pattern..."
+    method = "open_pattern"
 
 
 class NewPatternAction(BasePatternAction):
-    name = 'New Pattern...'
-    method = 'new_pattern'
+    name = "New Pattern..."
+    method = "new_pattern"
 
 
 class DeselectAction(UITaskAction):
-    name = 'Deselect'
-    method = 'deselect'
-    tooltip = 'Deselect the selected run(s)'
-    id = 'pychron.deselect'
+    name = "Deselect"
+    method = "deselect"
+    tooltip = "Deselect the selected run(s)"
+    id = "pychron.deselect"
 
 
 class UndoAction(UITaskAction):
-    name = 'Undo'
-    method = 'undo'
-    accelerator = 'Ctrl+Z'
+    name = "Undo"
+    method = "undo"
+    accelerator = "Ctrl+Z"
 
 
 class QueueConditionalsAction(UIAction):
-    name = 'Edit Queue Conditionals'
+    name = "Edit Queue Conditionals"
 
     def perform(self, event):
         task = event.task
-        if hasattr(task, 'edit_queue_conditionals'):
+        if hasattr(task, "edit_queue_conditionals"):
             # edit the current queue's conditionals
             task.edit_queue_conditionals()
         else:
             # choose a conditionals file to edit
-            from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
+            from pychron.experiment.conditional.conditionals_edit_view import (
+                edit_conditionals,
+            )
 
             dnames = None
             spec = task.application.get_service(
-                'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+                "pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager"
+            )
             if spec:
                 dnames = spec.spectrometer.detector_names
 
@@ -130,23 +135,26 @@ class QueueConditionalsAction(UIAction):
 
 
 class SystemConditionalsAction(UIAction):
-    name = 'Edit System Conditionals'
+    name = "Edit System Conditionals"
 
     def perform(self, event):
-        from pychron.experiment.conditional.conditionals_edit_view import edit_conditionals
+        from pychron.experiment.conditional.conditionals_edit_view import (
+            edit_conditionals,
+        )
 
         task = event.task
         dnames = None
         spec = task.application.get_service(
-            'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+            "pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager"
+        )
         if spec:
             dnames = spec.spectrometer.detector_names
 
-        p = get_path(paths.spectrometer_dir, '.*conditionals', ('.yaml', '.yml'))
+        p = get_path(paths.spectrometer_dir, ".*conditionals", (".yaml", ".yml"))
         if p:
             edit_conditionals(p, detectors=dnames)
         else:
-            warning(None, 'No system conditionals file at {}'.format(p))
+            warning(None, "No system conditionals file at {}".format(p))
 
 
 def open_experiment(event, path=None):
@@ -166,9 +174,9 @@ def open_experiment(event, path=None):
 
 
 class NewExperimentQueueAction(ExperimentAction):
-    description = 'Create a new experiment queue'
-    name = 'New Experiment'
-    id = 'pychron.new_experiment'
+    description = "Create a new experiment queue"
+    name = "New Experiment"
+    id = "pychron.new_experiment"
 
     def perform(self, event):
         if event.task.id == EXP_ID:
@@ -182,16 +190,16 @@ class NewExperimentQueueAction(ExperimentAction):
 
 
 class RunHistoryAction(UIAction):
-    name = 'Run History'
+    name = "Run History"
 
     def perform(self, event):
         app = event.task.window.application
-        v = app.get_service('pychron.experiment.run_history_view.RunHistoryView')
+        v = app.get_service("pychron.experiment.run_history_view.RunHistoryView")
         open_view(v)
 
 
 class OpenExperimentHistoryAction(UIAction):
-    name = 'Experiment Launch History'
+    name = "Experiment Launch History"
 
     def perform(self, event):
         from pychron.experiment.experiment_launch_history import ExperimentLaunchHistory
@@ -205,9 +213,9 @@ class OpenExperimentHistoryAction(UIAction):
 
 
 class OpenLastExperimentQueueAction(ExperimentAction):
-    description = 'Open last executed experiment'
-    name = 'Open Last Experiment...'
-    id = 'pychron.open_last_experiment'
+    description = "Open last executed experiment"
+    name = "Open Last Experiment..."
+    id = "pychron.open_last_experiment"
 
     def __init__(self, *args, **kw):
         super(OpenLastExperimentQueueAction, self).__init__(*args, **kw)
@@ -218,7 +226,7 @@ class OpenLastExperimentQueueAction(ExperimentAction):
         if path:
             open_experiment(event, path)
         else:
-            warning(None, 'No last experiment available')
+            warning(None, "No last experiment available")
             # if os.path.isfile(paths.last_experiment):
             # with open(paths.last_experiment, 'r') as rfile:
             #         path = fp.readline()
@@ -231,72 +239,76 @@ class OpenLastExperimentQueueAction(ExperimentAction):
 
     def _get_last_experiment(self):
         if os.path.isfile(paths.last_experiment):
-            with open(paths.last_experiment, 'r') as rfile:
+            with open(paths.last_experiment, "r") as rfile:
                 path = rfile.readline()
                 if os.path.isfile(path):
                     return path
 
 
 class OpenExperimentQueueAction(ExperimentAction):
-    description = 'Open experiment'
-    name = 'Open Experiment...'
-    image = icon('project-open')
-    id = 'pychron.open_experiment'
+    description = "Open experiment"
+    name = "Open Experiment..."
+    image = icon("project-open")
+    id = "pychron.open_experiment"
 
     def perform(self, event):
         open_experiment(event)
 
 
 class OpenCurrentExperimentQueueAction(ExperimentAction):
-    description = 'Open Current Experiment'
-    name = 'Open Current Experiment...'
-    image = icon('project-open')
-    id = 'pychron.open_current_experiment'
+    description = "Open Current Experiment"
+    name = "Open Current Experiment..."
+    image = icon("project-open")
+    id = "pychron.open_current_experiment"
 
     def perform(self, event):
-        name = 'CurrentExperiment.txt'
+        name = "CurrentExperiment.txt"
         path = os.path.join(paths.experiment_dir, name)
 
         if not os.path.isfile(path):
-            information(None, 'No experiment called {}'.format(name))
+            information(None, "No experiment called {}".format(name))
         open_experiment(event, path)
 
 
 class SaveAsCurrentExperimentAction(UITaskAction):
-    description = 'Save As Current Experiment'
-    name = 'Save As Current Experiment...'
-    image = icon('document-save-as')
-    id = 'pychron.experiment.save_as_current_experiment'
-    method = 'save_as_current_experiment'
+    description = "Save As Current Experiment"
+    name = "Save As Current Experiment..."
+    image = icon("document-save-as")
+    id = "pychron.experiment.save_as_current_experiment"
+    method = "save_as_current_experiment"
 
 
 # ===============================================================================
 # Utilities
 # ===============================================================================
 
+
 class SignalCalculatorAction(ExperimentAction):
-    name = 'Signal Calculator'
+    name = "Signal Calculator"
 
     def perform(self, event):
-        obj = self._get_service(event, 'pychron.experiment.signal_calculator.SignalCalculator')
+        obj = self._get_service(
+            event, "pychron.experiment.signal_calculator.SignalCalculator"
+        )
         open_view(obj)
 
 
 class ResetQueuesAction(UITaskAction):
-    method = 'reset_queues'
-    name = 'Reset Queues'
+    method = "reset_queues"
+    name = "Reset Queues"
 
 
 class SyncQueueAction(UITaskAction):
-    method = 'sync_queue'
-    name = 'Sync Queue'
+    method = "sync_queue"
+    name = "Sync Queue"
 
 
 class LastAnalysisRecoveryAction(UIAction):
-    name = 'Recover Last Analysis'
+    name = "Recover Last Analysis"
 
     def perform(self, event):
         from pychron.experiment.analysis_recovery import AnalysisRecoverer
+
         a = AnalysisRecoverer()
         a.recover_last_analysis()
 
@@ -306,7 +318,7 @@ class RunnerAction(TaskAction):
         app = event.task.application
         runner = app.get_service(IPyScriptRunner)
         if not runner:
-            warning(None, 'No runner available')
+            warning(None, "No runner available")
 
         return runner
 
@@ -316,7 +328,7 @@ class AcquireSpectrometerAction(RunnerAction):
         runner = self._get_runner()
         if runner:
             if not runner.acquire(globalv.own_spectrometer):
-                warning(None, 'Failed to acquire {}'.format(globalv.spectrometer))
+                warning(None, "Failed to acquire {}".format(globalv.spectrometer))
 
 
 class ReleaseSpectrometerAction(RunnerAction):
@@ -327,14 +339,47 @@ class ReleaseSpectrometerAction(RunnerAction):
 
 
 class MeltingPointCalibrationAction(UIAction):
-    name = 'Melting Point Calibration'
+    name = "Melting Point Calibration"
 
     def perform(self, event):
         from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
+
         app = event.task.window.application
-        spec = app.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+        spec = app.get_service(
+            "pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager"
+        )
         laser = app.get_service(ILaserManager)
 
         mpc = MeltingPointCalibrator(spectrometer_manager=spec, laser=laser)
         mpc.edit_traits()
+
+
+class AddExperimentNoteAction(UIAction):
+    name = "Add Experiment Note"
+    image = icon("insert-comment")
+
+    def perform(self, event):
+        app = event.task.window.application
+        remote = app.preferences.get("pychron.general.remote")
+        if not remote:
+            information(
+                event.task.window.control,
+                'Please set an "Laboratory Repo" in General Preferences',
+            )
+            return
+
+        from pychron.experiment.labbook.expeirment_note import ExperimentNote
+
+        from pychron.git.hosts import IGitHost
+
+        service = app.get_service(IGitHost)
+        m = ExperimentNote()
+
+        m.set_labels(service.get_labels(remote))
+        info = m.edit_traits()
+        if info.result:
+            if service.post_issue(remote, m.to_issue()):
+                information(None, "Note added!")
+
+
 # ============= EOF ====================================

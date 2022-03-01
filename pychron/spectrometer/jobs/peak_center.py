@@ -25,8 +25,12 @@ from six.moves import range
 from traits.api import Float, Str, Int, List, Enum, HasTraits
 
 from pychron.core.helpers.color_generators import colornames
-from pychron.core.stats.peak_detection import calculate_peak_center, PeakCenterError, calculate_resolution, \
-    calculate_resolving_power
+from pychron.core.stats.peak_detection import (
+    calculate_peak_center,
+    PeakCenterError,
+    calculate_resolution,
+    calculate_resolving_power,
+)
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.graph.graph import Graph
 from .magnet_sweep import MagnetSweep, AccelVoltageSweep
@@ -53,28 +57,36 @@ class PeakCenterResult:
 
     @property
     def attrs(self):
-        return ('low_dac', 'center_dac', 'high_dac',
-                'low_signal', 'center_signal', 'high_signal')
+        return (
+            "low_dac",
+            "center_dac",
+            "high_dac",
+            "low_signal",
+            "center_signal",
+            "high_signal",
+        )
 
 
 class BasePeakCenter(HasTraits):
-    title = 'Base Peak Center'
+    title = "Base Peak Center"
     center_dac = Float
-    dataspace = Enum('dac', 'mass')
+    dataspace = Enum("dac", "mass")
     reference_isotope = Str
     window = Float  # (0.015)
     step_width = Float  # (0.0005)
     min_peak_height = Float(5.0)
     percent = Int
     use_interpolation = False
-    interpolation_kind = Enum('linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic')
+    interpolation_kind = Enum(
+        "linear", "nearest", "zero", "slinear", "quadratic", "cubic"
+    )
     n_peaks = 1
     select_peak = 1
     use_dac_offset = False
     dac_offset = 0
     calculate_all_peaks = False
-    reference_plot_kind = Enum('line_scatter', 'line', 'scatter')
-    additional_plot_kind = Enum('line_scatter', 'line', 'scatter')
+    reference_plot_kind = Enum("line_scatter", "line", "scatter")
+    additional_plot_kind = Enum("line_scatter", "line", "scatter")
 
     canceled = False
     show_label = False
@@ -97,7 +109,11 @@ class BasePeakCenter(HasTraits):
         self.canceled = False
 
         center_dac = self.center_dac
-        self.info('starting peak center. center dac= {} step_width={}'.format(center_dac, self.step_width))
+        self.info(
+            "starting peak center. center dac= {} step_width={}".format(
+                center_dac, self.step_width
+            )
+        )
 
         # self.graph = self._graph_factory()
 
@@ -105,7 +121,7 @@ class BasePeakCenter(HasTraits):
         smart_shift = False
         center = None
 
-        self.debug('width = {}'.format(width))
+        self.debug("width = {}".format(width))
         for i in range(ntries):
             if not self.isAlive():
                 break
@@ -113,9 +129,13 @@ class BasePeakCenter(HasTraits):
             self._reset_graph()
 
             if i == 0:
-                self.graph.add_vertical_rule(self.center_dac, line_style='solid', color='black', line_width=1.5)
+                self.graph.add_vertical_rule(
+                    self.center_dac, line_style="solid", color="black", line_width=1.5
+                )
             else:
-                self.graph.add_vertical_rule(center, line_style='solid', color='black', line_width=1.5)
+                self.graph.add_vertical_rule(
+                    center, line_style="solid", color="black", line_width=1.5
+                )
 
             start, end = self._get_scan_parameters(i, center, smart_shift)
 
@@ -160,18 +180,19 @@ class BasePeakCenter(HasTraits):
 
     def iteration(self, start, end, width):
         """
-            returns center, success (float/None, bool)
+        returns center, success (float/None, bool)
         """
 
         graph = self.graph
 
         spec = self.spectrometer
 
-        graph.set_x_limits(min_=min([start, end]),
-                           max_=max([start, end]))
+        graph.set_x_limits(min_=min([start, end]), max_=max([start, end]))
 
         def get_reference_intensity():
-            keys, signals, t, inc = spec.get_intensities(trigger=True, integrated_intensity=True)
+            keys, signals, t, inc = spec.get_intensities(
+                trigger=True, integrated_intensity=True
+            )
 
             idx = keys.index(self.reference_detector.name)
             return signals[idx]
@@ -185,37 +206,41 @@ class BasePeakCenter(HasTraits):
         cur_intensity = get_reference_intensity()
 
         # move to start position
-        self.info('Moving to starting dac {}'.format(start))
+        self.info("Moving to starting dac {}".format(start))
         spec.magnet.set_dac(start)
         time.sleep(spec.integration_time * 2)
 
         # tol = min(0, cur_intensity * (1 - self.percent / 100.))
-        tol = cur_intensity * (1 - self.percent / 100.) / 2.
+        tol = cur_intensity * (1 - self.percent / 100.0) / 2.0
         # print('asfasdf', cur_intensity, 1-self.percent/100., tol)
         timeout = 1 if spec.simulation else 10
-        self.info('Wait until signal near baseline. tol= {}. timeout= {}'.format(tol, timeout))
+        self.info(
+            "Wait until signal near baseline. tol= {}. timeout= {}".format(tol, timeout)
+        )
 
         st = time.time()
         while 1:
             signal = get_reference_intensity()
             time.sleep(spec.integration_time)
             if signal <= tol:
-                self.info('Peak center baseline intensity achieved')
+                self.info("Peak center baseline intensity achieved")
                 break
 
             et = time.time() - st
             if et > timeout:
-                self.warning('Peak center failed to move to a baseline position')
+                self.warning("Peak center failed to move to a baseline position")
                 break
 
         center, smart_shift, success = None, False, False
-        self.debug('pre sweep, dataspace={}'.format(self.dataspace))
+        self.debug("pre sweep, dataspace={}".format(self.dataspace))
 
         # ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=self.dataspace == 'mass')
-        ok = self._do_sweep(start, end, width, directions=self.directions, map_mass=False)
-        self.debug('result of _do_sweep={}'.format(ok))
+        ok = self._do_sweep(
+            start, end, width, directions=self.directions, map_mass=False
+        )
+        self.debug("result of _do_sweep={}".format(ok))
 
-        if ok and self.directions != 'Oscillate':
+        if ok and self.directions != "Oscillate":
             if not self.canceled:
                 dac_values = graph.get_data()
                 intensities = graph.get_data(axis=1)
@@ -245,7 +270,7 @@ class BasePeakCenter(HasTraits):
     # private
     def _prepare_result(self, dac_values, intensities):
         result = self._calculate_peak_center(dac_values, intensities)
-        self.debug('result of _calculate_peak_center={}'.format(result))
+        self.debug("result of _calculate_peak_center={}".format(result))
         self.result = result
         if result is not None:
             xs, ys, mx, my = result
@@ -264,10 +289,10 @@ class BasePeakCenter(HasTraits):
 
         if isinstance(self.directions, str):
             mid = len(ys) / 2
-            if self.directions.lower() == 'increase':
+            if self.directions.lower() == "increase":
                 comp = idx >= mid
                 start = xs[-1] + step_width
-            elif self.directions.lower() == 'decrease':
+            elif self.directions.lower() == "decrease":
                 comp = idx < mid
                 start = xs[0] - step_width
                 step_width = -step_width
@@ -283,7 +308,7 @@ class BasePeakCenter(HasTraits):
 
     def _get_result(self, i, det):
         xs = self.graph.get_data(series=i)
-        ys = getattr(self.graph.plots[0], 'odata{}'.format(i))
+        ys = getattr(self.graph.plots[0], "odata{}".format(i))
 
         if xs.shape == ys.shape:
             pts = vstack((xs, ys)).T
@@ -324,25 +349,28 @@ class BasePeakCenter(HasTraits):
 
         d = wnd * (i * scalar + 1)
         start = center_dac - d
-        self.debug('get scan parameters. half-width={},window={}, i={}, scalar={}'.format(d, wnd, i, scalar))
+        self.debug(
+            "get scan parameters. half-width={},window={}, i={}, scalar={}".format(
+                d, wnd, i, scalar
+            )
+        )
         end = center_dac + d
 
         dev = abs(start - end)
         self.info(
-            'Scan parameters center={:0.5f} width={:0.5f} ({:0.5f} - {:0.5f})'.format(center_dac, dev, start, end))
+            "Scan parameters center={:0.5f} width={:0.5f} ({:0.5f} - {:0.5f})".format(
+                center_dac, dev, start, end
+            )
+        )
         return start, end
 
     def _plot_center(self, xs, ys, mx, my, center):
         graph = self.graph
 
         s1 = len(graph.series[0])
-        graph.new_series(type='scatter', marker='circle',
-                         marker_size=4,
-                         color='green')
+        graph.new_series(type="scatter", marker="circle", marker_size=4, color="green")
 
-        graph.new_series(type='scatter', marker='circle',
-                         marker_size=4,
-                         color='orange')
+        graph.new_series(type="scatter", marker="circle", marker_size=4, color="orange")
 
         graph.set_data(xs, series=s1)
         graph.set_data(ys, series=s1, axis=1)
@@ -372,7 +400,9 @@ class BasePeakCenter(HasTraits):
         graph.add_vertical_rule(center)
 
         if self.use_dac_offset:
-            l = graph.add_vertical_rule(center + self.dac_offset, color='blue', add_move_tool=True)
+            l = graph.add_vertical_rule(
+                center + self.dac_offset, color="blue", add_move_tool=True
+            )
             self._offset_rule = l
 
         graph.redraw()
@@ -384,7 +414,11 @@ class BasePeakCenter(HasTraits):
             fx = linspace(x.min(), x.max(), 500)
             fy = f(fx)
         except ValueError as e:
-            self.warning('interpolation failed: error={}. x.shape={}, y.shape={}'.format(e, x.shape, y.shape))
+            self.warning(
+                "interpolation failed: error={}. x.shape={}, y.shape={}".format(
+                    e, x.shape, y.shape
+                )
+            )
 
         return fx, fy
 
@@ -392,7 +426,7 @@ class BasePeakCenter(HasTraits):
         if self.use_interpolation:
             x, y = self._interpolate(x, y)
         if self.n_peaks > 1:
-            self.warning('peak deconvolution disabled')
+            self.warning("peak deconvolution disabled")
             # def res(p, y, x):
             #     yfit = None
             #     n = p.shape[0] / 3
@@ -418,12 +452,12 @@ class BasePeakCenter(HasTraits):
             # return c[1 + 3 * (self.select_peak - 1)]
 
         try:
-            result = calculate_peak_center(x, y,
-                                           min_peak_height=self.min_peak_height,
-                                           percent=self.percent)
+            result = calculate_peak_center(
+                x, y, min_peak_height=self.min_peak_height, percent=self.percent
+            )
             return result
         except PeakCenterError as e:
-            self.warning('Failed to find a valid peak. {}'.format(e))
+            self.warning("Failed to find a valid peak. {}".format(e))
 
     # ===============================================================================
     # factories
@@ -434,39 +468,51 @@ class BasePeakCenter(HasTraits):
 
     def _graph_factory(self, graph=None):
         if graph is None:
-            graph = Graph(window_title=self.title,
-                          container_dict=dict(padding=5, bgcolor='lightgray'))
+            graph = Graph(
+                window_title=self.title,
+                container_dict=dict(padding=5, bgcolor="lightgray"),
+            )
 
-        graph.new_plot(padding=[50, 5, 5, 50],
-                       xtitle='DAC (V)' if self.dataspace == 'dac' else 'Mass (AMU)',
-                       ytitle='Intensity',
-                       zoom=False,
-                       show_legend='ul',
-                       legend_kw=dict(font='modern 8', line_spacing=1))
+        graph.new_plot(
+            padding=[50, 5, 5, 50],
+            xtitle="DAC (V)" if self.dataspace == "dac" else "Mass (AMU)",
+            ytitle="Intensity",
+            zoom=False,
+            show_legend="ul",
+            legend_kw=dict(font="modern 8", line_spacing=1),
+        )
 
         # kind = 'line'
         # if self.use_interpolation:
         #     kind = 'scatter'
 
-        self._series_factory(graph, kind=self.reference_plot_kind or 'line_scatter')
+        self._series_factory(graph, kind=self.reference_plot_kind or "line_scatter")
 
-        graph.set_series_label('*{}'.format(self.reference_detector.name))
+        graph.set_series_label("*{}".format(self.reference_detector.name))
         spec = self.spectrometer
         for di in self.additional_detectors:
             det = spec.get_detector(di)
-            self._series_factory(graph, line_color=det.color, kind=self.additional_plot_kind or 'line_scatter')
+            self._series_factory(
+                graph,
+                line_color=det.color,
+                kind=self.additional_plot_kind or "line_scatter",
+            )
             graph.set_series_label(di)
 
         if self.show_label:
-            graph.add_plot_label('{}@{}'.format(self.reference_isotope,
-                                                self.reference_detector), hjustify='center')
+            graph.add_plot_label(
+                "{}@{}".format(self.reference_isotope, self.reference_detector),
+                hjustify="center",
+            )
         return graph
 
 
 class PeakCenter(BasePeakCenter, MagnetSweep):
-    title = 'Peak Center'
+    title = "Peak Center"
 
 
 class AccelVoltagePeakCenter(BasePeakCenter, AccelVoltageSweep):
-    title = 'Accel Voltage Peak Center'
+    title = "Accel Voltage Peak Center"
+
+
 # ============= EOF =============================================

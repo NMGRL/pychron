@@ -18,9 +18,11 @@
 from __future__ import absolute_import
 from traits.api import Array, Event, Range, Bool
 from traitsui.api import UItem, Item, VGroup
+
 # ============= standard library imports ========================
 from numpy import asarray, array, ndarray
 from PIL import Image
+
 # ============= local library imports  ==========================
 from pychron.viewable import Viewable
 from pychron.core.ui.image_editor import ImageEditor
@@ -72,12 +74,13 @@ class FrameImage(Viewable):
 
 class StandAloneImage(FrameImage):
     def traits_view(self):
-        img = UItem('source_frame', editor=ImageEditor(refresh='refresh'))
+        img = UItem("source_frame", editor=ImageEditor(refresh="refresh"))
         if self.alpha_enabled:
-            vv = VGroup(Item('alpha'), img)
+            vv = VGroup(Item("alpha"), img)
         else:
             vv = img
         v = self.view_factory(VGroup(vv))
         return v
+
 
 # ============= EOF =============================================
