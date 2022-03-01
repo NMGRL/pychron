@@ -22,8 +22,9 @@ import time
 from operator import itemgetter
 from pickle import PickleError
 from string import digits
-
+import json
 import yaml
+
 from traits.api import Any, Dict, List, Bool, Event, Str
 
 from pychron.core.helpers.iterfuncs import groupby_key
@@ -925,6 +926,9 @@ class SwitchManager(Manager):
         obj = self._load_actuation_tracker()
 
         vobj = obj.get(v.name, {})
+        if "start" not in vobj:
+            vobj["start"] = v.last_actuation
+            vobj["start_count"] = vobj.get("count", 1)
 
         vobj["count"] = a = vobj.get("count", 0) + 1
 
@@ -934,14 +938,21 @@ class SwitchManager(Manager):
         obj[v.name] = vobj
 
         p = paths.actuation_tracker_file
+
         with open(p, "w") as wfile:
-            yaml.dump(obj, wfile)
+            json.dump(obj, wfile)
 
     def _load_actuation_tracker(self):
         p = paths.actuation_tracker_file
         obj = {}
-        if p and os.path.isfile(p):
-            obj = yload(p)
+        if p:
+            if os.path.isfile(p):
+                with open(p, 'r') as rfile:
+                    obj = json.load(rfile)
+            else:
+                p = paths.actuation_tracker_file_yaml
+                if p and os.path.isfile(p):
+                    obj = yload(p)
 
         return obj or {}
 
