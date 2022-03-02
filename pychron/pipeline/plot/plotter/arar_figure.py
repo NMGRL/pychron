@@ -684,6 +684,13 @@ class BaseArArFigure(SelectionFigure):
         label.on_trait_change(self._handle_overlay_move, "label_position")
         return label
 
+    def _build_n_label_text(self, n):
+        total_n = self.analysis_group.total_n
+        n = "n = {}".format(n)
+        if total_n and n != total_n:
+            n = "{}/{}".format(n, total_n)
+        return n
+
     def _build_label_text(
         self,
         x,
@@ -701,10 +708,7 @@ class BaseArArFigure(SelectionFigure):
         display_mswd = n >= 2 and display_mswd
 
         if display_n:
-            total_n = self.analysis_group.total_n
-            n = "n= {}".format(n)
-            if total_n:
-                n = "{}/{}".format(n, total_n)
+            n = self._build_n_label_text(n)
         else:
             n = ""
 
@@ -712,7 +716,7 @@ class BaseArArFigure(SelectionFigure):
             mswd, valid_mswd, _, pvalue = mswd_args
             mswd = format_mswd(mswd, valid_mswd, n=mswd_sig_figs, include_tag=True)
             if display_mswd_pvalue:
-                mswd = "{} pvalue={:0.2f}".format(mswd, pvalue)
+                mswd = "{} pvalue = {:0.2f}".format(mswd, pvalue)
         else:
             mswd = ""
 

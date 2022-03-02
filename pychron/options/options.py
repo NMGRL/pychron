@@ -317,7 +317,7 @@ class MainOptions(SubOptions):
 
     def _get_edit_view(self):
         v = View(
-            BorderVGroup(
+            VGroup(
                 self._get_name_grp(),
                 self._get_yticks_grp(),
                 self._get_ylimits_group(),

@@ -535,6 +535,7 @@ class UnknownsAdapter(BaseAnalysesAdapter):
 
         return MenuManager(
             Action(name="Recall", action="recall_unknowns"),
+            Action(name="Tag", action="tag_analyses"),
             Action(
                 name="Graph Group Selected", action="unknowns_graph_group_by_selected"
             ),
@@ -652,6 +653,10 @@ class AnalysesPaneHandler(Handler):
     def unknowns_toggle_status(self, info, obj):
         obj = info.ui.context["object"]
         obj.unknowns_toggle_status()
+
+    def tag_analyses(self, info, obj):
+        obj = info.ui.context["object"]
+        obj.tag_event = obj.selected_unknowns
 
     def save_analysis_group(self, info, obj):
         obj = info.ui.context["object"]

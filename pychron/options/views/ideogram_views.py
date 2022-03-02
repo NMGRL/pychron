@@ -385,7 +385,7 @@ Additional examples
         )
 
         v = View(
-            BorderVGroup(
+            VGroup(
                 self._get_name_grp(),
                 self._get_yticks_grp(),
                 self._get_ylimits_group(),

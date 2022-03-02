@@ -432,7 +432,7 @@ class ArArAge(IsotopeGroup):
             self.ar39decayfactor = a39df
 
     def instant_age(self, window=None, count=None):
-
+        self.calculate_decay_factors()
         iso_intensities = self._assemble_isotope_intensities(window=window, count=count)
         if not iso_intensities:
             return
@@ -452,9 +452,26 @@ class ArArAge(IsotopeGroup):
         num = self.isotopes[self.arar_mapping[num]]
         den = self.isotopes[self.arar_mapping[den]]
         counts = list(range(1, num.sniff.xs.shape[0]))
+        self.calculate_decay_factors()
+
+        numscalar = 1
+        if num == "Ar37":
+            numscalar = self.ar37decayfactor
+        elif num == "Ar39":
+            numscalar = self.ar39decayfactor
+
+        denscalar = 1
+        if num == "Ar37":
+            denscalar = self.ar37decayfactor
+        elif num == "Ar39":
+            denscalar = self.ar39decayfactor
 
         return counts, [
-            num.get_intensity(count=i) / den.get_intensity(count=i) for i in counts
+            num.get_intensity(count=i)
+            * numscalar
+            / den.get_intensity(count=i)
+            * denscalar
+            for i in counts
         ]
 
     def equilibration_age(self, n=5):
