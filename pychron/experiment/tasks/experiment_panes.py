@@ -499,7 +499,14 @@ class TimeSeriesPane(TraitsDockPane):
             HGroup(
                 Item("timeseries_n_recall", label="N. Analyses"),
                 spring,
-                icon_button_editor("timeseries_editor_button", "arrow_refresh"),
+                icon_button_editor(
+                    "timeseries_refresh_button",
+                    "arrow_refresh",
+                    tooltip="Refresh Timeseries",
+                ),
+                icon_button_editor(
+                    "timeseries_reset_button", "arrow_right", tooltip="Reset Timeseries"
+                ),
                 # icon_button_editor("configure_timeseries_editor_button", "cog"),
             ),
             UItem("timeseries_editor", style="custom"),

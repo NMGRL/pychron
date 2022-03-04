@@ -117,6 +117,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
 
                 with gc:
                     for t, c in self.connections:
+                        cw4 = c.width / 4
                         with gc:
                             w2 = self.border_width
                             gc.set_line_width(self.border_width + 1)
@@ -125,8 +126,8 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
 
                                 if p1.y < p2.y:
                                     p1x, p1y = p1.get_xy()
-                                    gc.move_to(p1x - 5, y + height)
-                                    gc.line_to(p1x + 5, y + height)
+                                    gc.move_to(p1x - cw4, y + height)
+                                    gc.line_to(p1x + cw4, y + height)
 
                                 else:
                                     if c.corner == "ll":
@@ -140,11 +141,10 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
 
                                         if p1.x >= self.x:
                                             xx = x + width
-                                        gc.move_to(xx, p2y - 5)
-                                        gc.line_to(xx, p2y + 5)
+                                        gc.move_to(xx, p2y - cw4)
+                                        gc.line_to(xx, p2y + cw4)
 
                             elif isinstance(c, BorderLine):
-                                w2 = c.width / 2
                                 p1, p2 = c.start_point, c.end_point
                                 p2x, p2y = p2.get_xy()
                                 if p1.x == p2.x:
@@ -154,30 +154,29 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                             yy = y + height
 
                                     p1x, p1y = p1.get_xy()
-                                    gc.move_to(p1x - w2, yy)
-                                    gc.line_to(p1x + w2, yy)
+                                    gc.move_to(p1x - cw4, yy)
+                                    gc.line_to(p1x + cw4, yy)
                                 else:
                                     xx = x
 
                                     if p1.x >= self.x:
                                         xx = x + width
-                                    gc.move_to(xx, p2y - w2)
-                                    gc.line_to(xx, p2y + w2)
+                                    gc.move_to(xx, p2y - cw4)
+                                    gc.line_to(xx, p2y + cw4)
 
                             elif isinstance(c, Tee):
-
                                 if t == "mid":
                                     # tee is vertical
                                     if abs(c.left.x - c.right.x) <= 1:
                                         xx = x if c.left.x < self.x else x + width
                                         yy = y + height / 2
-                                        gc.move_to(xx, yy - w2)
-                                        gc.line_to(xx, yy + w2)
+                                        gc.move_to(xx, yy - cw4)
+                                        gc.line_to(xx, yy + cw4)
                                     else:
                                         mx = c.get_midx()
                                         yy = y if c.left.y < self.y else y + height
-                                        gc.move_to(mx - w2, yy)
-                                        gc.line_to(mx + w2, yy)
+                                        gc.move_to(mx - cw4, yy)
+                                        gc.line_to(mx + cw4, yy)
                                 else:
                                     gc.set_line_width(self.border_width + 2)
                                     # gc.set_stroke_color((1,0,0))
@@ -187,13 +186,13 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                     else:
                                         xx, yy = c.right.get_xy()
 
-                                    gc.move_to(xx, yy - w2)
-                                    gc.line_to(xx, yy + w2)
+                                    gc.move_to(xx, yy - cw4)
+                                    gc.line_to(xx, yy + cw4)
                             elif isinstance(c, Fork):
                                 yy = y if c.left.y < self.y else y + height
                                 mx = c.get_midx()
-                                gc.move_to(mx - w2, yy)
-                                gc.line_to(mx + w2, yy)
+                                gc.move_to(mx - cw4, yy)
+                                gc.line_to(mx + cw4, yy)
 
                             gc.draw_path()
 
