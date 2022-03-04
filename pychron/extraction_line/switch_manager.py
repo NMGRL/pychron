@@ -1040,7 +1040,7 @@ class SwitchManager(Manager):
         outer = pobj.get("outer")
         if inner in self.switches and outer in self.switches:
             return PipetteTracker(
-                name=pobj.get("name", "Pipette"), inner=inner, outer=outer
+                name=pobj.get("name", "Pipette"), inner=str(inner), outer=str(outer)
             )
 
     def _pipette_factory_xml(self, p):

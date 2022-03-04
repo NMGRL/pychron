@@ -96,7 +96,7 @@ class YAMLLoader(BaseLoader):
             pass
 
         for v in self._yd.get("valve") or []:
-            key = v["name"].strip()
+            key = str(v["name"]).strip()
             # x, y = self._get_floats(v, 'translation')
             x, y = self._get_translation(v)
             w, h = self._get_floats(v, "dimension", default=self._valve_dimension)
@@ -204,9 +204,9 @@ class YAMLLoader(BaseLoader):
         left = conn.get("left")
         right = conn.get("right")
         mid = conn.get("mid")
-        lname = left["name"].strip()
-        mname = mid["name"].strip()
-        rname = right["name"].strip()
+        lname = str(left["name"]).strip()
+        mname = str(mid["name"]).strip()
+        rname = str(right["name"]).strip()
         key = "{}-{}-{}".format(lname, mname, rname)
 
         height = 4
@@ -310,8 +310,8 @@ class YAMLLoader(BaseLoader):
         start = conn.get("start")
         end = conn.get("end")
 
-        skey = start["name"].strip()
-        ekey = end["name"].strip()
+        skey = str(start["name"]).strip()
+        ekey = str(end["name"]).strip()
         key = "{}_{}".format(skey, ekey)
 
         orient = conn.get("orientation")
@@ -344,6 +344,7 @@ class YAMLLoader(BaseLoader):
         elif orient == "horizontal":
             y1 = y
 
+        dimension = float(conn.get('dimension', self._connection_dimension))
         connection = klass(
             (x, y),
             (x1, y1),
@@ -354,7 +355,7 @@ class YAMLLoader(BaseLoader):
             end_offset=end_offset,
             default_color=(204, 204, 204),
             name=key,
-            width=10,
+            width=dimension,
         )
 
         if sanchor:
