@@ -49,15 +49,21 @@ class ExtractionLineScene(Scene):
     def load(self, pathname, configpath, valvepath, canvas):
         self.overlays = []
         self.reset_layers()
-        origin, color_dict, valve_dimension, images, connection_dimension = self._load_config(
-            configpath, canvas
-        )
+        (
+            origin,
+            color_dict,
+            valve_dimension,
+            images,
+            connection_dimension,
+        ) = self._load_config(configpath, canvas)
         if pathname.endswith(".yaml") or pathname.endswith(".yml"):
             klass = YAMLLoader
         else:
             klass = XMLLoader
 
-        loader = klass(pathname, origin, color_dict, valve_dimension, connection_dimension)
+        loader = klass(
+            pathname, origin, color_dict, valve_dimension, connection_dimension
+        )
 
         loader.load_switchables(self, valvepath)
         loader.load_rects(self)

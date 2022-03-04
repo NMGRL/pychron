@@ -344,7 +344,7 @@ class YAMLLoader(BaseLoader):
         elif orient == "horizontal":
             y1 = y
 
-        dimension = float(conn.get('dimension', self._connection_dimension))
+        dimension = float(conn.get("dimension", self._connection_dimension))
         connection = klass(
             (x, y),
             (x1, y1),

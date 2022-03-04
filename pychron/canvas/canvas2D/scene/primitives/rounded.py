@@ -117,7 +117,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
 
                 with gc:
                     for t, c in self.connections:
-                        cw4 = c.width/4
+                        cw4 = c.width / 4
                         with gc:
                             w2 = self.border_width
                             gc.set_line_width(self.border_width + 1)
@@ -154,8 +154,8 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                             yy = y + height
 
                                     p1x, p1y = p1.get_xy()
-                                    gc.move_to(p1x-cw4, yy)
-                                    gc.line_to(p1x+cw4, yy)
+                                    gc.move_to(p1x - cw4, yy)
+                                    gc.line_to(p1x + cw4, yy)
                                 else:
                                     xx = x
 
