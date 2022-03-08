@@ -1357,7 +1357,7 @@ class AutomatedRun(Loggable):
             if exception_queue:
                 t = Thread(
                     target=self._persister_save_action,
-                    args="post_measurement_save",
+                    args=("post_measurement_save",)
                     kwargs={
                         "exception_queue": exception_queue,
                         "complete_event": complete_event,
