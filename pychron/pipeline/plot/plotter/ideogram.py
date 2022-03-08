@@ -177,6 +177,15 @@ class Ideogram(BaseArArFigure):
             warning(None, "X Value not set. Defaulting to Age")
             index_attr = "uage"
 
+        if index_attr == "equilibration_age":
+            import time
+
+            st = time.time()
+            print("fffff")
+            for a in self.analyses:
+                a.load_raw_data()
+            print("sdffasdf", time.time() - st)
+
         graph = self.graph
 
         try:
@@ -330,8 +339,8 @@ class Ideogram(BaseArArFigure):
                 offset, _ = calculate_weighted_mean(xs, es)
             xs -= offset
 
-            print("asfd", offset)
-        print(xs)
+            # print("asfd", offset)
+        # print(xs)
         return xs
 
     # ===============================================================================
@@ -601,7 +610,7 @@ class Ideogram(BaseArArFigure):
         else:
             name = ia
 
-        return lambda i, x, y, ai: u"{}= {}".format(name, ai.value_string(ia))
+        return lambda i, x, y, ai: "{}= {}".format(name, ai.value_string(ia))
 
     def _plot_relative_probability(self, po, plot, pid):
         graph = self.graph
@@ -643,6 +652,16 @@ class Ideogram(BaseArArFigure):
         # d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
         # if ogid == 0:
         plot.index_mapper.range.on_trait_change(self.update_index_mapper, "updated")
+
+        for gi in self.options.guides:
+            if gi.visible and gi.should_plot(pid):
+                graph.add_guide(gi.value, **gi.to_kwargs(), plotid=pid)
+
+        for gi in self.options.ranges:
+            if gi.visible and gi.should_plot(pid):
+                graph.add_range_guide(
+                    gi.minvalue, gi.maxvalue, **gi.to_kwargs(), plotid=pid
+                )
 
         if self.options.display_inset:
             xs = self.xs
@@ -787,12 +806,12 @@ class Ideogram(BaseArArFigure):
                     s = self.options.nsigma
                     es = self.options.error_bar_nsigma
                     ts.append(
-                        u"Mean: {} {} {}{} Data: {} {}{}".format(
+                        "Mean: {} {} {}{} Data: {} {}{}".format(
                             m, PLUSMINUS, s, SIGMA, PLUSMINUS, es, SIGMA
                         )
                     )
                 if self.options.show_error_type_info:
-                    ts.append(u"Error Type: {}".format(self.options.error_calc_method))
+                    ts.append("Error Type: {}".format(self.options.error_calc_method))
 
                 if ts:
                     self._add_info_label(plot, ts)
@@ -959,7 +978,7 @@ class Ideogram(BaseArArFigure):
             }
 
             tag = f.format(**ctx)
-            text = u"{} {}".format(tag, text)
+            text = "{} {}".format(tag, text)
         return text
 
     def _get_xs(self, key="age", nonsorted=False):

@@ -266,7 +266,7 @@ class Locator(Loggable):
 
             def func():
                 me = int(mean(src[src > 0]))
-                bands = [2 ** n for n in range(7, 1, -1)]
+                bands = [2**n for n in range(7, 1, -1)]
                 shifts = [2, 4, 8]
 
                 for band in bands:
@@ -606,8 +606,8 @@ class Locator(Loggable):
         if shape == "circle":
             miholedim = 0.5 * dim
             maholedim = 1.25 * dim
-            mi = miholedim ** 2 * 3.1415
-            ma = maholedim ** 2 * 3.1415
+            mi = miholedim**2 * 3.1415
+            ma = maholedim**2 * 3.1415
         else:
             d = (2 * dim) ** 2
             mi = 0.5 * d

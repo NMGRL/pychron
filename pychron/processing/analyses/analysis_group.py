@@ -352,7 +352,6 @@ class AnalysisGroup(IdeogramPlotable):
 
         exclude = [i for i, x in enumerate(ans) if test(x)]
         if ans:
-            print("faadfs", self.isochron_method, self.isochron_age_error_kind)
             return calculate_isochron(
                 ans,
                 self.isochron_age_error_kind,
@@ -372,7 +371,6 @@ class AnalysisGroup(IdeogramPlotable):
             reg = args[2]
             self.isochron_regressor = reg
             v, e = nominal_value(age), std_dev(age)
-            print(v, e)
             e = self._modify_error(v, e, self.isochron_age_error_kind, mswd=reg.mswd)
             return ufloat(v, e)
 
@@ -560,7 +558,7 @@ class AnalysisGroup(IdeogramPlotable):
 
         if self.include_j_error_in_mean:
             v, e, pa = func(wa)
-            ne = (pa ** 2 + self.j_err ** 2) ** 0.5
+            ne = (pa**2 + self.j_err**2) ** 0.5
             wa = ufloat(v, ne * v)
 
         if self.include_decay_error_mean:
@@ -572,7 +570,7 @@ class AnalysisGroup(IdeogramPlotable):
             except ZeroDivisionError:
                 pass
 
-            ne = (pa ** 2 + de ** 2) ** 0.5
+            ne = (pa**2 + de**2) ** 0.5
             wa = ufloat(v, ne * v)
 
         return wa
@@ -583,7 +581,7 @@ class AnalysisGroup(IdeogramPlotable):
             mswd = self.mswd
 
         if kind in (MSE, MSEM):
-            e *= mswd ** 0.5 if mswd > 1 else 1
+            e *= mswd**0.5 if mswd > 1 else 1
 
         return e
 
@@ -662,14 +660,14 @@ class AnalysisGroup(IdeogramPlotable):
             vpercent = ks / sks
             weights = [nominal_value(wi) for wi in (vpercent * errors) ** 2]
         elif weighting == "Variance":
-            weights = 1 / errors ** 2
+            weights = 1 / errors**2
 
         if weights is not None:
             wmean, sum_weights = average(values, weights=weights, returned=True)
             if weighting == "Volume":
-                werr = sum_weights ** 0.5
+                werr = sum_weights**0.5
             else:
-                werr = sum_weights ** -0.5
+                werr = sum_weights**-0.5
 
             f = ufloat(wmean, werr)
         else:

@@ -199,8 +199,8 @@ class PyScriptEditor(Editor, PyScriptEdit):
                     "# Date: {}\n".format(datetime.now().strftime("%m-%d-%Y %H:%M"))
                 )
                 wfile.write("def main():\n")
-                for li in selection.split(u"\u2029"):
-                    wfile.write(u"    {}\n".format(li.lstrip()))
+                for li in selection.split("\u2029"):
+                    wfile.write("    {}\n".format(li.lstrip()))
 
             p = remove_extension(p)
             rp = os.path.relpath(p, self.path)

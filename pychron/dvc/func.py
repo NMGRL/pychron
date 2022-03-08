@@ -20,7 +20,7 @@ import os
 from datetime import datetime
 from math import isnan
 
-from git import Repo
+from git import Repo, GitCommandError
 from traits.api import Str, Bool, HasTraits
 from uncertainties import nominal_value, std_dev
 
@@ -37,14 +37,23 @@ def repository_has_staged(ps, remote="origin", branch=None):
     
     changed = []
     # repo = GitRepoManager()
+
     for p in ps:
         pp = repository_path(p)
         repo = Repo(pp)
         if branch is None:
-            branch = repo.active_branch.name
-            
-        if repo.git.log("{}/{}..HEAD".format(remote, branch), "--oneline"):
-            changed.append(p)
+            branch = repo.active_branch
+
+        try:
+            if repo.git.log("{}/{}..HEAD".format(remote, branch), "--oneline"):
+                changed.append(p)
+        except GitCommandError:
+            if branch == "master":
+                try:
+                    if repo.git.log("{}/{}..HEAD".format(remote, "main"), "--oneline"):
+                        changed.append(p)
+                except GitCommandError:
+                    pass
 
     return changed
 
@@ -60,7 +69,15 @@ def push_repositories(ps, host=None, remote="origin", branch=None, quiet=True):
             remote = host.default_remote_name
 
         if branch is None:
+<<<<<<< HEAD
             branch = repo.active_branch.name
+=======
+            branch = repo.active_repo.active_branch
+
+        if not branch:
+            branch = "main"
+
+>>>>>>> e59ffe8cf4d59d38db38c9c8e79a007e87c6dacf
         if repo.smart_pull(remote=remote, branch=branch, quiet=quiet):
             repo.push(remote=remote, branch=branch)
 

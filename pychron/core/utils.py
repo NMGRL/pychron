@@ -88,7 +88,7 @@ def alpha_to_int(l):
         return int(l) - 1
 
     s = sum(
-        (ord(li) - A_UPPERCASE + 1) * BASE ** i
+        (ord(li) - A_UPPERCASE + 1) * BASE**i
         for i, li in enumerate(reversed(l.upper()))
     )
 

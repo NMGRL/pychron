@@ -76,7 +76,7 @@ class AgilentMultifunction(AgilentMixin, GPActuator):
                 resp = resp.split(",")[0]
                 word = fmt.format(int(float(resp)))
                 if self.invert:
-                    word = fmt.format(int(word, 2) ^ (2 ** nbits - 1))
+                    word = fmt.format(int(word, 2) ^ (2**nbits - 1))
 
                 self._state_word = list(word)[::-1]
                 return True

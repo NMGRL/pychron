@@ -61,7 +61,7 @@ class Index(HasTraits):
         e39 = powerlaw(p, n39)
         e40 = powerlaw(p, n40) * e40_scalar
 
-        es = (e39 ** 2 + e40 ** 2) ** 0.5
+        es = (e39**2 + e40**2) ** 0.5
         #        es = age * 1e3 * es
         #        es = 0.2 * nys ** (-0.5)
 
@@ -129,7 +129,7 @@ class VolumeIndex(Index):
             if self.shape == "circle":
                 v = math.pi * (d / 2.0) ** 2 * depth
             else:
-                v = d ** 2 * depth
+                v = d**2 * depth
 
             m = rho * v
             # convert mass to mg 1e6 mg in 1 kg

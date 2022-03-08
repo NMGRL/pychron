@@ -131,7 +131,7 @@ sem={}
         if error_calc == SEM.lower():
             e = self.sem
         elif error_calc in (MSEM.lower(), "msem"):
-            e = self.se * (self.mswd ** 0.5 if self.mswd > 1 else 1)
+            e = self.se * (self.mswd**0.5 if self.mswd > 1 else 1)
         else:
             e = self.std
 
@@ -192,7 +192,7 @@ class WeightedMeanRegressor(MeanRegressor):
     def _get_weights(self):
         e = self.clean_yserr
         if self._check_integrity(e, e):
-            return 1 / e ** 2
+            return 1 / e**2
 
 
 # ============= EOF =============================================

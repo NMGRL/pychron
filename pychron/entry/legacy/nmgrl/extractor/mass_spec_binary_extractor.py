@@ -239,7 +239,7 @@ class MassSpecBinaryExtractor:
         bspec.j = j
         bspec.j_err = j_err
 
-        resistor_values = [1, 1, 10 ** 11]
+        resistor_values = [1, 1, 10**11]
         if ver > 4.02:
             resistor_values[2] = gsingle()
             resistor_values[0] = gsingle()

@@ -20,10 +20,12 @@ import os
 import time
 from datetime import datetime
 from operator import itemgetter
-from threading import Thread, Lock, currentThread
+from queue import Queue, Empty
+from threading import Thread, Lock, currentThread, Event as TEvent
 
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
+from sqlalchemy.exc import DatabaseError
 from traitsui.api import View, EnumEditor, Item, UItem
 from traits.api import (
     Event,
@@ -194,7 +196,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     events = List
 
     timeseries_editor = Instance(AnalysisGroupedSeriesEditor)
-    timeseries_editor_button = Event
+    timeseries_refresh_button = Event
+    timeseries_reset_button = Event
     # configure_timeseries_editor_button = Event
     # timeseries_options = Instance(SeriesOptionsManager)
     timeseries_n_recall = PositiveInteger(50)
@@ -270,6 +273,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
+        self._exception_queue = Queue()
+        self._save_complete_evt = TEvent()
         # self.set_managers()
         # self.notification_manager = NotificationManager()
 
@@ -392,7 +397,22 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.queue_modified = True
 
     def is_alive(self):
-        return self.alive
+        try:
+            exc = self._exception_queue.get_nowait()
+            self.warning("exception queue. {}".format(exc))
+            if exc[0] == "NonFatal":
+                if self.confirmation_dialog(
+                    "{}\n\nDo you want to CANCEL the experiment?\n".format(exc[1]),
+                    timeout_ret=False,
+                    timeout=30,
+                ):
+                    return False
+            else:
+                self.critical("exception kills experiment queue")
+                return False
+
+        except Empty:
+            return self.alive
 
     def continued(self):
         self.stats.continue_run()
@@ -914,6 +934,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self.extracting_run = run
 
+        self.debug("waiting for save event to clear")
+        while self._save_evt.is_set():
+            self._save_evt.wait(1)
+        self.debug("waiting complete")
+
         for step in ("_start", "_extraction", "_measurement", "_post_measurement"):
 
             if not self.is_alive():
@@ -944,7 +969,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self._do_event(events.SAVE_RUN, run=run)
         if self.save_all_runs or run.spec.state in ("success", "truncated"):
-            run.save()
+            # this needs to be non-blocking
+            run.save(
+                exception_queue=self._exception_queue,
+                complete_event=self._save_complete_evt,
+            )
+            self._save_complete_evt.set()
 
         self.run_completed = run
 
@@ -2559,8 +2589,16 @@ Use Last "blank_{}"= {}
         # invoke_in_main_thread(self.trait_set, extraction_state_label=msg,
         #                       extraction_state_color=color)
 
-    def _update_timeseries(self):
+    _low_post = None
+
+    def _update_timeseries(self, low_post=None):
         if self.use_dvc_persistence:
+
+            if low_post is None:
+                low_post = self._low_post
+            else:
+                self._low_post = low_post
+
             dvc = self.datahub.mainstore
             with dvc.session_ctx():
                 if self.experiment_queue:
@@ -2590,18 +2628,26 @@ Use Last "blank_{}"= {}
                     self.timeseries_n_recall,
                     mass_spectrometer=ms,
                     exclude_types=("unknown",),
+                    low_post=low_post,
                     verbose=False,
                 )
-                ans = dvc.make_analyses(ans, use_progress=False)
+                if ans:
+                    ans = dvc.make_analyses(ans, use_progress=False)
 
-                self.timeseries_editor.set_items(ans)
-                invoke_in_main_thread(self.timeseries_editor.refresh)
+                    self.timeseries_editor.set_items(ans)
+                    invoke_in_main_thread(self.timeseries_editor.refresh)
 
     # ===============================================================================
     # handlers
     # ===============================================================================
-    def _timeseries_editor_button_fired(self):
+    def _timeseries_refresh_button_fired(self):
         self._update_timeseries()
+
+    def _timeseries_reset_button_fired(self):
+        self._low_post = datetime.now()
+        self.information_dialog(
+            "Timeseries reset to {}".format(self._low_post.strftime("%m/%d/%y %H:%M"))
+        )
 
     # def _configure_timeseries_editor_button_fired(self):
     #

@@ -242,7 +242,14 @@ class DVCPersister(BasePersister):
     def pre_measurement_save(self):
         pass
 
-    def post_measurement_save(self, commit=True, commit_tag="COLLECTION", push=True):
+    def post_measurement_save(
+        self,
+        commit=True,
+        commit_tag="COLLECTION",
+        push=True,
+        exception_q=None,
+        complete_event=None,
+    ):
         """
         save
             - analysis.json
@@ -254,7 +261,6 @@ class DVCPersister(BasePersister):
         :return:
         """
         self.info("================= post measurement save started =================")
-        ret = True
 
         ar = self.active_repository
 
@@ -291,88 +297,101 @@ class DVCPersister(BasePersister):
 
         if self.stage_files:
             if commit:
+                ar.smart_pull(accept_their=True)
+
+                paths = [
+                    spec_path,
+                ] + [self._make_path(modifier=m) for m in NPATH_MODIFIERS]
+
+                for p in paths:
+                    if os.path.isfile(p):
+                        ar.add(p, commit=False)
+                    else:
+                        self.debug("not at valid file {}".format(p))
+
+                # commit files
+                ar.commit("<{}>".format(commit_tag))
+
+                # commit default data reduction
+                add = False
+                p = self._make_path("intercepts")
+                if os.path.isfile(p):
+                    ar.add(p, commit=False)
+                    add = True
+
+                p = self._make_path("baselines")
+                if os.path.isfile(p):
+                    ar.add(p, commit=False)
+                    add = True
+
+                if add:
+                    ar.commit("<ISOEVO> default collection fits")
+
+                for pp, tag, msg in (
+                    (
+                        "blanks",
+                        "BLANKS",
+                        "preceding {}".format(self.per_spec.previous_blank_runid),
+                    ),
+                    ("icfactors", "ICFactor", "default"),
+                ):
+                    p = self._make_path(pp)
+                    if os.path.isfile(p):
+                        ar.add(p, commit=False)
+                        ar.commit("<{}> {}".format(tag, msg))
                 try:
-                    ar.smart_pull(accept_their=True)
-
-                    paths = [
-                        spec_path,
-                    ] + [self._make_path(modifier=m) for m in NPATH_MODIFIERS]
-
-                    for p in paths:
-                        if os.path.isfile(p):
-                            ar.add(p, commit=False)
-                        else:
-                            self.debug("not at valid file {}".format(p))
-
-                    # commit files
-                    ar.commit("<{}>".format(commit_tag))
-
-                    # commit default data reduction
-                    add = False
-                    p = self._make_path("intercepts")
-                    if os.path.isfile(p):
-                        ar.add(p, commit=False)
-                        add = True
-
-                    p = self._make_path("baselines")
-                    if os.path.isfile(p):
-                        ar.add(p, commit=False)
-                        add = True
-
-                    if add:
-                        ar.commit("<ISOEVO> default collection fits")
-
-                    for pp, tag, msg in (
-                        (
-                            "blanks",
-                            "BLANKS",
-                            "preceding {}".format(self.per_spec.previous_blank_runid),
-                        ),
-                        ("icfactors", "ICFactor", "default"),
-                    ):
-                        p = self._make_path(pp)
-                        if os.path.isfile(p):
-                            ar.add(p, commit=False)
-                            ar.commit("<{}> {}".format(tag, msg))
                     if push:
                         # push changes
                         dvc.push_repository(ar)
-
-                    # update meta
-                    dvc.meta_pull(accept_our=True)
-
-                    dvc.meta_commit(
-                        "repo updated for analysis {}".format(
-                            self.per_spec.run_spec.runid
+                except GitCommandError as e:
+                    self.debug_exception()
+                    self.warning(e)
+                    if exception_q:
+                        exception_q.put(
+                            (
+                                "NonFatal",
+                                "NON FATAL\n\n"
+                                "DVC/Git upload of analysis not successful."
+                                "Do you want to CANCEL the experiment?\n",
+                            )
                         )
-                    )
 
+                # update meta
+                dvc.meta_pull(accept_our=True)
+
+                dvc.meta_commit(
+                    "repo updated for analysis {}".format(self.per_spec.run_spec.runid)
+                )
+
+                try:
                     if push:
                         # push commit
                         dvc.meta_push()
                 except GitCommandError as e:
+                    self.debug_exception()
                     self.warning(e)
-                    if self.confirmation_dialog(
-                        "NON FATAL\n\n"
-                        "DVC/Git upload of analysis not successful."
-                        "Do you want to CANCEL the experiment?\n",
-                        timeout_ret=False,
-                        timeout=30,
-                    ):
-                        ret = False
+                    if exception_q:
+                        exception_q.put(
+                            (
+                                "NonFatal",
+                                "NON FATAL\n\n"
+                                "DVC/Git upload of analysis not successful."
+                                "Do you want to CANCEL the experiment?\n",
+                            )
+                        )
 
         with dvc.session_ctx():
             try:
-                ret = self._save_analysis_db(timestamp) and ret
+                self._save_analysis_db(timestamp)
             except DatabaseError as e:
-                self.warning_dialog(
-                    "Fatal Error. Cannot save analysis to database. Cancelling "
-                    "experiment.  {}".format(e)
-                )
-                ret = False
+                self.debug_exception()
+                self.warning(e)
+                if exception_q:
+                    exception_q.put(("Fatal", "DatabaseError. see log"))
 
         self.info("================= post measurement save finished =================")
-        return ret
+        if complete_event:
+            complete_event.clear()
 
     def save_run_log_file(self, path):
         if self.save_enabled and self.save_log_enabled:

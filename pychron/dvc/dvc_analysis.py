@@ -273,7 +273,17 @@ class DVCAnalysis(Analysis):
         jd = dvc_load(path)
         return jd
 
-    def load_raw_data(self, keys=None, n_only=False, use_name_pairs=True):
+    def load_raw_data(self, keys=None, n_only=False, use_name_pairs=True, force=False):
+        self.debug(
+            "loading raw data, keys={}, n_only={}, use_name_pairs={}, force={}".format(
+                keys, n_only, use_name_pairs, force
+            )
+        )
+        if self.has_raw_data and not force:
+            self.debug("already has raw data {}, {}".format(self.has_raw_data, force))
+            print(self.isotopes["Ar40"].sniff.xs)
+            return
+
         path = self._analysis_path(modifier=".data")
 
         jd = dvc_load(path)
@@ -343,6 +353,9 @@ class DVCAnalysis(Analysis):
             for iso in self.itervalues():
                 if iso.detector == det:
                     iso.sniff.unpack_data(data, n_only)
+
+        if not n_only and not keys:
+            self.has_raw_data = True
 
     def set_production(self, prod, r):
         self.production_obj = r

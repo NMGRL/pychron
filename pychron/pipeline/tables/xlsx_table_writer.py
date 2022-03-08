@@ -352,7 +352,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 ),
                 Column(
                     visible=options.include_time_delta,
-                    label=(u"\u0394t", "<sup>3</sup>"),
+                    label=("\u0394t", "<sup>3</sup>"),
                     units="(days)",
                     attr="decay_days",
                 ),
@@ -526,7 +526,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         cols = []
         for am, bm, e in [
             (40, 39, "K"),
-            (38, 38, "K"),
+            (38, 39, "K"),
             (37, 39, "K"),
             (39, 37, "Ca"),
             (38, 37, "Ca"),
@@ -1162,6 +1162,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         sh.write_number(row, age_idx + 2, nominal_value(ag.kca), kcafmt)
         sh.write_number(row, age_idx + 3, std_dev(ag.kca), kcafmt)
 
+        # need to fill in any gaps
+        c = age_idx + 4
+        while 1:
+            if c < cum_idx:
+                sh.write(row, c, "", border)
+                c += 1
+
         if label == "plateau":
             sh.write_number(row, cum_idx, ag.plateau_total_ar39(), fmt)
         else:
@@ -1271,7 +1278,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             sh.write_string(
                 self._current_row,
                 start_col,
-                u"{} {} {}".format(label, kcalabel, pmsigma),
+                "{} {} {}".format(label, kcalabel, pmsigma),
                 fmt,
             )
 
@@ -1305,7 +1312,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         sh.write_string(
             self._current_row,
             start_col,
-            u"{} Age {}".format(ageobj.computed_kind.capitalize(), pmsigma),
+            "{} Age {}".format(ageobj.computed_kind.capitalize(), pmsigma),
             fmt,
         )
         sh.write_number(self._current_row, idx, nominal_value(age), nfmt)
@@ -1346,7 +1353,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             sh.write_string(
                 self._current_row,
                 start_col,
-                u"Total Integrated Age {}".format(pmsigma),
+                "Total Integrated Age {}".format(pmsigma),
                 fmt,
             )
             sh.write_number(self._current_row, idx, nominal_value(integrated_age), nfmt)
@@ -1373,7 +1380,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         trapped_value, trapped_error = nominal_value(t), std_dev(t)
         if self._options.include_isochron_age:
             sh.write_string(
-                self._current_row, start_col, u"Isochron Age {}".format(pmsigma), fmt
+                self._current_row, start_col, "Isochron Age {}".format(pmsigma), fmt
             )
 
             iage = group.scaled_age(group.isochron_age, self._options.age_units)
@@ -1423,7 +1430,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._current_row += 1
 
     def _make_notes(self, groups, sh, ncols, key):
-        top = self._workbook.add_format({"top": 1, "bold": True})
+        fmt = {"bold": True}
+        if self._options.include_notes_border:
+            fmt["top"] = 1
+        top = self._workbook.add_format(fmt)
 
         sh.write_string(self._current_row, 0, "Notes:", top)
         for i in range(1, ncols):

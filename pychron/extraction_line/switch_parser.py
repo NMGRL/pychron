@@ -94,6 +94,9 @@ class SwitchParser(XMLParser):
     def get_pipettes(self, **kw):
         return self._get_items("pipette", **kw)
 
+    def get_double_actuation_valves(self):
+        return self._get_items("double_actuation_valve")
+
     def _get_items(self, attr, group=None, element=True):
 
         if self.is_yaml:
