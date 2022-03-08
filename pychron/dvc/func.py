@@ -69,15 +69,11 @@ def push_repositories(ps, host=None, remote="origin", branch=None, quiet=True):
             remote = host.default_remote_name
 
         if branch is None:
-<<<<<<< HEAD
-            branch = repo.active_branch.name
-=======
             branch = repo.active_repo.active_branch
 
         if not branch:
             branch = "main"
 
->>>>>>> e59ffe8cf4d59d38db38c9c8e79a007e87c6dacf
         if repo.smart_pull(remote=remote, branch=branch, quiet=quiet):
             repo.push(remote=remote, branch=branch)
 
