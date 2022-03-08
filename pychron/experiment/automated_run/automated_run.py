@@ -1316,10 +1316,10 @@ class AutomatedRun(Loggable):
             else:
                 self.debug("no log path to save")
 
-    def save(self, exception_q=None, complete_event=None):
+    def save(self, exception_queue=None, complete_event=None):
         self.debug(
-            "post measurement save measured={} aborted={}, non_blocking={}".format(
-                self._measured, self._aborted
+            "post measurement save measured={} aborted={}, exception_queue={}, complete_event={}".format(
+                self._measured, self._aborted, exception_queue, complete_event
             )
         )
         if self._measured and not self._aborted:
@@ -1354,12 +1354,12 @@ class AutomatedRun(Loggable):
             self.spec.new_result(self)
 
             # save to database
-            if exception_q:
+            if exception_queue:
                 t = Thread(
                     target=self._persister_save_action,
                     args="post_measurement_save",
                     kwargs={
-                        "exception_q": exception_q,
+                        "exception_queue": exception_queue,
                         "complete_event": complete_event,
                     },
                 )
