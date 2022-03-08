@@ -30,23 +30,26 @@ from pychron.git_archive.repo_manager import GitRepoManager
 from pychron.pychron_constants import SAMPLE_METADATA
 
 
-def repository_has_staged(ps, remote="origin", branch="master"):
+def repository_has_staged(ps, remote="origin", branch=None):
     if not hasattr(ps, "__iter__"):
         ps = (ps,)
 
+    
     changed = []
     # repo = GitRepoManager()
     for p in ps:
         pp = repository_path(p)
         repo = Repo(pp)
-
+        if branch is None:
+            branch = repo.active_branch.name
+            
         if repo.git.log("{}/{}..HEAD".format(remote, branch), "--oneline"):
             changed.append(p)
 
     return changed
 
 
-def push_repositories(ps, host=None, remote="origin", branch="master", quiet=True):
+def push_repositories(ps, host=None, remote="origin", branch=None, quiet=True):
     for p in ps:
         pp = repository_path(p)
 
@@ -56,6 +59,8 @@ def push_repositories(ps, host=None, remote="origin", branch="master", quiet=Tru
         if host is not None:
             remote = host.default_remote_name
 
+        if branch is None:
+            branch = repo.active_branch.name
         if repo.smart_pull(remote=remote, branch=branch, quiet=quiet):
             repo.push(remote=remote, branch=branch)
 

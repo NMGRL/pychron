@@ -807,14 +807,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         path = os.path.join(paths.setup_dir, "users.yaml")
         if os.path.isfile(path):
             yl = yload(path)
-            items = [
-                (i["name"], i["email"])
-                for i in yl
-                if i["enabled"] and i["email"] != email
-            ]
+            if yl:
+                items = [
+                    (i["name"], i["email"])
+                    for i in yl
+                    if i["enabled"] and i["email"] != email
+                ]
 
-            if items:
-                names, addrs = list(zip(*items))
+                if items:
+                    names, addrs = list(zip(*items))
         return names, addrs
 
     def _wait_for(self, predicate, period=1, invert=False):
