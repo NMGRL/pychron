@@ -50,9 +50,9 @@ def parse_interlocks(vobj, tag):
         vs = vobj.get("{}s".format(tag))
 
     if isinstance(vs, (tuple, list)):
-        interlocks = [i.strip() for i in vs]
+        interlocks = [str(i).strip() for i in vs]
     else:
-        interlocks = [vs.strip()]
+        interlocks = [str(vs).strip()]
 
     return interlocks
 
