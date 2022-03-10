@@ -31,7 +31,7 @@ class AgilentMixin:
 
         for dev in self.application.get_services(ICoreDevice):
             if isinstance(dev, AgilentMixin):
-                addr = self.config_get('Communications', 'address')
+                addr = self.config_get("Communications", "address")
                 if dev.communicator.address == addr:
                     self.communicator = dev.communicator
         else:
