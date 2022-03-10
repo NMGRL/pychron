@@ -2294,16 +2294,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 return True
 
     def _sync_repositories(self, prog):
-        experiment_ids = {
-            a.repository_identifier
-            for q in self.experiment_queues
-            for a in q.cleaned_automated_runs
-        }
-        for e in experiment_ids:
-            if prog:
-                prog.change_message("Syncing {}".format(e))
-                if not self.datahub.mainstore.sync_repo(e, use_progress=False):
-                    return e
+        if self.use_dvc_persistence:
+            experiment_ids = {
+                a.repository_identifier
+                for q in self.experiment_queues
+                for a in q.cleaned_automated_runs
+            }
+            for e in experiment_ids:
+                if prog:
+                    prog.change_message("Syncing {}".format(e))
+                    if not self.datahub.mainstore.sync_repo(e, use_progress=False):
+                        return e
 
     def _post_run_check(self, run):
         """

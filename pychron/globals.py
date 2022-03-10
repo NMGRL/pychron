@@ -22,6 +22,7 @@ from pychron.core.helpers.strtools import to_bool
 
 class Globals(object):
     cert_file = None
+    verify_ssl = True
     prev_db_kind = None
     dev_pwd = "6e06f5d370baef1a115ae2f134fae22fbfbe79dc"  # Argon
     # use_shared_memory = False
@@ -112,7 +113,6 @@ class Globals(object):
     own_spectrometer = None
 
     laser_version = 1
-    VERIFY_SSL = True
 
     def build(self, ip):
         for attr, func in [
@@ -161,7 +161,7 @@ class Globals(object):
             ("client_only_locking", to_bool),
             ("cert_file", str),
             ("laser_version", int),
-            ("VERIFY_SSL", to_bool),
+            ("verify_ssl", to_bool),
         ]:
             a = ip.get_global(attr)
             if a is not None:
