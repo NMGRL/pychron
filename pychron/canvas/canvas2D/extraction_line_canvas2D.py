@@ -206,6 +206,27 @@ class ExtractionLineCanvas2D(SceneCanvas):
 
     def select_left_down(self, event):
         """ """
+
+        def set_state(state):
+            ok, change = True, True
+            if self.manager is not None:
+                mode = "normal"
+                if event.shift_down:
+                    mode = "shift_select"
+
+                if state:
+                    # ok, change = self.manager.open_valve(item.name, mode=mode)
+                    func = self.manager.open_valve
+                else:
+                    # ok, change = self.manager.close_valve(item.name, mode=mode)
+                    func = self.manager.close_valve
+
+                args = func(item.name, mode=mode)
+                if args:
+                    ok, change = args
+
+            return ok, change
+
         event.handled = True
 
         item = self.active_item
@@ -221,17 +242,18 @@ class ExtractionLineCanvas2D(SceneCanvas):
             self._toggle_laser_state(item)
             return
 
+        state = item.state
+        nstate = not state
         if isinstance(item, Switch):
-            state = item.state
-            state = not state
-            mode = "normal"
-            # try:
-            if state:
-                ok, change = self.manager.open_valve(item.name, mode=mode)
-            else:
-                ok, change = self.manager.close_valve(item.name, mode=mode)
-                # except TypeError, e:
-                # ok, change = True, True
+            # mode = "normal"
+            # # try:
+            # if state:
+            #     ok, change = self.manager.open_valve(item.name, mode=mode)
+            # else:
+            #     ok, change = self.manager.close_valve(item.name, mode=mode)
+            #     # except TypeError, e:
+            #     # ok, change = True, True
+            set_state(nstate)
 
         else:
             if not isinstance(item, BaseValve):
@@ -240,7 +262,6 @@ class ExtractionLineCanvas2D(SceneCanvas):
             if item.soft_lock:
                 return
 
-            state = item.state
             if self.confirm_open:
                 from pychron.core.ui.dialogs import myConfirmationDialog
                 from pyface.api import NO
@@ -260,22 +281,10 @@ class ExtractionLineCanvas2D(SceneCanvas):
                     if retval == NO:
                         return
 
-            state = not state
-
-            change = False
-            ok = True
-            if self.manager is not None:
-                mode = "normal"
-                if event.shift_down:
-                    mode = "shift_select"
-
-                if state:
-                    ok, change = self.manager.open_valve(item.name, mode=mode)
-                else:
-                    ok, change = self.manager.close_valve(item.name, mode=mode)
+            ok, change = set_state(nstate)
 
         if ok:
-            item.state = state
+            item.state = nstate
 
         if change and ok:
             self._select_hook(item)
