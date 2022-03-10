@@ -54,13 +54,9 @@ class VideoUnderlay(AbstractOverlay):
                     gc.clip_to_rect(x, y, w, h)
                     gc.translate_ctm(x, y)
                     try:
-                        gc.draw_image(
-                            asarray(
-                                resize(img, (int(h), int(w)), preserve_range=True),
-                                dtype=uint8,
-                            )
-                        )
-                    except IndexError:
+                        gc.draw_image(asarray(resize(img, (int(h), int(w)), preserve_range=True),
+                                              dtype=uint8))
+                    except (IndexError, ValueError):
                         pass
 
 

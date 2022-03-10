@@ -111,7 +111,7 @@ class MotionController(CoreDevice):
         #        print self._x_position, self._y_position
         self.parent.canvas.set_stage_position(self._x_position, self._y_position)
 
-    @caller
+    # @caller
     def timer_factory(self, func=None, period=150):
         """
 
@@ -135,8 +135,8 @@ class MotionController(CoreDevice):
         else:
             timer.stop()
             self._not_moving_count = 0
-            time.sleep(period / 1000.0)
-            timer = Timer(period, func)
+            # time.sleep(period / 1000.)
+            timer = Timer(period, func, delay=period)
 
         timer.set_interval(period)
         return timer
@@ -180,14 +180,14 @@ class MotionController(CoreDevice):
             self.info("loading axis {},{}".format(i, a))
             limits = csv_to_floats(config.get("Axes Limits", a))
 
-            na = self._axis_factory(
-                config_path,
-                name=a,
-                id=i + 1,
-                negative_limit=limits[0],
-                positive_limit=limits[1],
-                loadposition=loadposition[i],
-            )
+            na = self._axis_factory(config_path,
+                                    name=a,
+                                    id=i + 1,
+                                    negative_limit=limits[0],
+                                    positive_limit=limits[1],
+                                    loadposition=loadposition[i],
+                                    min_velocity=self.motion_profiler.min_velocity,
+                                    max_velocity=self.motion_profiler.max_velocity)
 
             self.axes[a] = na
             self.debug("asdfasdfsafsadf {}".format(self.axes))
@@ -342,18 +342,17 @@ class MotionController(CoreDevice):
         timer = self.timer
 
         if timer is not None:
-            self.debug("using existing timer")
-            period = 0.01
+            self.debug('using existing timer')
+            period = 0.15
 
             def func():
-                return self.timer.isActive()
-
+                return timer.isActive()
         else:
             self.debug("check moving={}".format(axis))
             period = 0.15
 
             def func():
-                return self._moving(axis=axis, verbose=False)
+                return self._moving(axis=axis, verbose=True)
 
         cnt = 0
         threshold = 0 if timer else 1

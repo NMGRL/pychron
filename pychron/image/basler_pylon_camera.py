@@ -97,12 +97,13 @@ class BaslerPylonCamera(Loggable):
         if self._cam and not self._setting_config:
             try:
                 res = self._cam.RetrieveResult(0, pylon.TimeoutHandling_Return)
-                if res.IsValid():
-                    ok = True
-                    img = res.Array
-                res.Release()
-            except GenericException:
+            except RuntimeError:
                 pass
+
+            if res.IsValid():
+                ok = True
+                img = res.Array
+            res.Release()
 
         return ok, img
 

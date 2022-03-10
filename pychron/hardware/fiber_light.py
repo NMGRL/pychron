@@ -59,9 +59,12 @@ class FiberLight(AbstractDevice):
             return True
 
     def initialize(self, *args, **kw):
+        import time
+        time.sleep(1)
         # if self._cdevice:
         #     self._cdevice.setup_consumer(self._write_intensity)
-
+        self.power_on()
+        self.intensity = 55
         return True
 
     def _write_intensity(self, v):

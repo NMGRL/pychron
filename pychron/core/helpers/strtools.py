@@ -33,12 +33,13 @@ def camel_case(name, delimiters=None):
     return name
 
 
-def to_list(a, delimiter=",", mapping=None):
-    l = a.split(delimiter)
-    if mapping:
-        l = [mapping[li] for li in l]
+def to_list(a, delimiter=',', mapping=None):
+    if a is not None:
+        la = a.split(delimiter)
+        if mapping:
+            la = [mapping[li] for li in la]
 
-    return l
+        return la
 
 
 def to_terminator(t):

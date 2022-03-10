@@ -14,37 +14,25 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-import time
-
+from skimage.transform import rescale
 from traits.api import Float
 
 # ============= standard library imports ========================
 
-from numpy import (
-    array,
-    histogram,
-    argmax,
-    zeros,
-    asarray,
-    ones_like,
-    nonzero,
-    max,
-    arange,
-    argsort,
-    invert,
-    median,
-    mean,
-    zeros_like,
-)
+import time
 from operator import attrgetter
-from skimage.morphology import watershed
-from skimage.draw import polygon, circle, circle_perimeter, circle_perimeter_aa
+from collections import deque, OrderedDict
+from numpy import array, histogram, argmax, zeros, asarray, ones_like, \
+    nonzero, arange, argsort, invert, median, mean, zeros_like, ones, count_nonzero, unique, isnan
 from scipy import ndimage
+from skimage.morphology import watershed, disk
+from skimage.draw import polygon, circle, circle_perimeter, circle_perimeter_aa
 from skimage.exposure import rescale_intensity
-from skimage.filters import gaussian
+from skimage.filters import gaussian, rank
 from skimage import feature
 
 # ============= local library imports  ==========================
+from pychron.core.geometry.convex_hull import convex_hull
 from pychron.loggable import Loggable
 from pychron.mv.segment.region import RegionSegmenter
 from pychron.image.cv_wrapper import (
@@ -61,7 +49,8 @@ from pychron.image.cv_wrapper import (
     crop,
 )
 from pychron.mv.target import Target
-from pychron.core.geometry.geometry import approximate_polygon_center, calc_length
+from pychron.core.geometry.geometry import approximate_polygon_center, \
+    calc_length, approximate_polygon_center3
 
 
 def _coords_inside_image(rr, cc, shape):
@@ -76,9 +65,27 @@ def draw_circle(frame, center_x, center_y, radius, color, **kw):
 
 def draw_circle_perimeter(frame, center_x, center_y, radius, color):
     cy, cx = circle_perimeter(int(center_y), int(center_x), int(radius))
-
     cy, cx = _coords_inside_image(cy, cx, frame.shape)
     frame[cy, cx] = color
+
+
+def _binary_percent(src):
+    return count_nonzero(src) / src.size
+
+
+def _arc_approximation_filter(src, targets, dim, tol=0.5):
+    dim = round(dim)
+    nt = []
+    dim *= 1.1
+    for target in targets:
+        if target.convexity > tol:
+            # self.info('doing arc approximation radius={}'.format(dim))
+            pts = target.poly_points
+            h, w = src.shape[0], src.shape[1]
+            args = approximate_polygon_center3(pts, dim, w, h)
+            if args:
+                nt.append(target)
+    return nt
 
 
 class Locator(Loggable):
@@ -91,6 +98,13 @@ class Locator(Loggable):
 
     alive = True
 
+    # class level _cache
+    _cached_threshold = deque()
+
+    # @classmethod
+    # def clear_cache(cls):
+    #     cls._cached_threshold = deque()
+
     def cancel(self):
         self.debug("canceling")
         self.alive = False
@@ -99,6 +113,9 @@ class Locator(Loggable):
         if self.step_signal:
             self.step_signal.wait()
             self.step_signal.clear()
+
+    def rescale(self, src, v):
+        return rescale(src, v, preserve_range=True)
 
     def crop(self, src, cw, ch, ox=0, oy=0, verbose=True):
 
@@ -112,15 +129,12 @@ class Locator(Loggable):
         # r = 4 - cw_px % 4
         # cw_px = ch_px = cw_px + r
         if verbose:
-            self.debug(
-                "Crop: x={},y={}, cw={}, ch={}, "
-                "width={}, height={}, ox={}, oy={}".format(
-                    x, y, cw_px, ch_px, w, h, ox, oy
-                )
-            )
+            self.debug('Crop: x={},y={}, cw={}, ch={}, '
+                       'width={}, height={}, ox={}, oy={}, pxpermm={}'.format(x, y, cw_px, ch_px, w, h, ox, oy,
+                                                                              self.pxpermm))
         return asarray(crop(src, x, y, cw_px, ch_px))
 
-    def find(self, image, frame, dim, shape="circle", **kw):
+    def find2(self, image, frame, dim, shape='circle', confirm=False, **kw):
         """
         image is a stand alone image
         dim = float. radius or half length of a square in pixels
@@ -136,14 +150,14 @@ class Locator(Loggable):
         self.alive = True
         dx, dy = None, None
 
-        targets = self._find_targets(image, frame, dim, shape=shape, **kw)
-
+        st = time.time()
+        targets = self._find_targets(image, frame, dim, shape=shape, do_arc_filter=self.use_arc_approximation, **kw)
+        self.debug('time to find targets={:0.5f}'.format(time.time() - st))
         if targets:
             self.info("found {} potential targets".format(len(targets)))
 
             # draw center indicator
             src = image.source_frame
-            self._draw_center_indicator(src, size=2, shape="rect", radius=round(dim))
 
             # draw targets
             self._draw_targets(src, targets)
@@ -161,29 +175,151 @@ class Locator(Loggable):
 
                 # image.set_frame(src[:])
 
-        self.info("dx={}, dy={}".format(dx, dy))
+            self._draw_center_indicator(src, size=max(10, int(src.shape[0] * 0.25)),
+                                        shape='crosshairs')
+
+        image.refresh_needed = True
+        self.info('dx={}, dy={}'.format(dx, dy))
+        if confirm:
+            if not self.confirmation_dialog('Move to position'):
+                dx, dy = None, None
+        self.debug('total find time={:0.5f}'.format(time.time() - st))
         return dx, dy
 
-    def _find_targets(
-        self,
-        image,
-        frame,
-        dim,
-        shape="circle",
-        search=None,
-        preprocess=True,
-        filter_targets=True,
-        convexity_filter=False,
-        mask=False,
-        set_image=True,
-        inverted=False,
-    ):
+    def find(self, image, frame, dim, shape='circle', confirm=False, **kw):
+        self.alive = True
+        dx, dy = None, None
+
+        st = time.time()
+        targets = self._find_targets_bs(image, frame, dim, shape=shape, **kw)
+        self.debug('time to find targets={:0.5f}'.format(time.time() - st))
+        if targets:
+            self.info('found {} potential targets'.format(len(targets)))
+            src = image.source_frame
+
+            self._draw_center_indicator(src, size=max(10, int(src.shape[0] * 0.25)),
+                                        shape='crosshairs')
+
+            # draw targets
+            self._draw_targets(src, targets)
+
+            dx, dy = self._calculate_error(targets)
+            self._draw_center_indicator(src, size=max(10, int(src.shape[0] * 0.25)),
+                                        shape='crosshairs')
+
+        image.refresh_needed = True
+        self.info('dx={}, dy={}'.format(dx, dy))
+        if confirm:
+            if not self.confirmation_dialog('Move to position'):
+                dx, dy = None, None
+        self.debug('total find time={:0.5f}'.format(time.time() - st))
+        return dx, dy
+
+    def _find_targets_bs(self, image, frame, dim, shape, preprocess, mask=False, inverted=False,
+                         search_depth=6, min_targets=3,
+                         threshold_limiting=True,
+                         filter_targets=True,
+                         search_start=False, **kw):
+        if preprocess:
+            if not isinstance(preprocess, dict):
+                preprocess = {}
+            src = self._preprocess(frame, **preprocess)
+        else:
+            src = grayspace(frame) * 255
+
+        if mask:
+            self._mask(src, mask)
+
+        if inverted:
+            src = invert(src)
+
+        # image.set_frame(colorspace(frame / self.pixel_depth * 255))
+        if image:
+            image.set_frame(colorspace(src))
+        seg = RegionSegmenter()
+        fa = self._get_filter_target_area(shape, dim)
+
+        if search_start:
+            sm = search_start
+        else:
+            sm = src.mean()
+
+        low = sm / 2
+        if threshold_limiting:
+            high = 255 - low
+        else:
+            high = 255
+        # step = 5
+
+        self.debug('src mean={}, {}, {}'.format(sm, low, high))
+
+        def find(t):
+
+            nsrc = seg.segment(src, t)
+            per = _binary_percent(nsrc)
+            if threshold_limiting and (per > 0.85 or per < 0.25):
+                return []
+
+            ts = self._find_polygon_targets(nsrc)
+            # self.debug('t={} polygons={}'.format(t, len(ts) if ts else 0))
+            if filter_targets:
+                ts = self._filter_targets(image, frame, dim, ts, fa, use_segmentation=False)
+                # self.debug('t={} filtered poly={}'.format(t, len(ts) if ts else 0))
+            # ts = _arc_approximation_filter(frame, ts, dim)
+
+            return ts
+
+        visited = OrderedDict()
+
+        def find_bs(threshold, depth):
+            # self.debug('find bs {} {}'.format(threshold, depth))
+
+            if threshold in visited:
+                # self.debug('visited {}'.format(threshold))
+                return []
+
+            if threshold > high or threshold < low:
+                # self.debug('outbounds {}'.format(threshold))
+                return []
+
+            if depth > search_depth:
+                return []
+
+            tt = find(threshold)
+            visited[threshold] = len(tt) if tt else 0
+            if tt or sum(visited.values()) < min_targets:
+
+                at = find_bs(int(threshold / 2), depth + 1)
+                if not at:
+                    at = find_bs(int(threshold / 1.5), depth + 1)
+
+                if at:
+                    tt.extend(at)
+
+                bt = find_bs(int(threshold * 1.5), depth + 1)
+                if not bt:
+                    bt = find_bs(int(threshold * 1.25), depth + 1)
+
+                if bt:
+                    tt.extend(bt)
+
+            return tt
+
+        ts = find_bs(int(sm), 0)
+        self.debug('visited n={} thresholds={}'.format(len(visited), visited))
+        return ts
+
+    def _find_targets(self, image, frame, dim, shape='circle',
+                      search=None, preprocess=True,
+                      filter_targets=True,
+                      convexity_filter=False,
+                      mask=False,
+                      set_image=True, inverted=False,
+                      use_threshold_caching=False, dual_search=False, do_arc_filter=False, recurse=False):
         """
         use a segmentor to segment the image
         """
-
-        if search is None:
-            search = {}
+        # self.debug('use threshold caching={}'.format(use_threshold_caching))
 
         if preprocess:
             if not isinstance(preprocess, dict):
@@ -202,107 +338,108 @@ class Locator(Loggable):
         if inverted:
             src = invert(src)
 
-        blocksize_step = search.get("blocksize_step", 5)
-        seg = RegionSegmenter(
-            use_adaptive_threshold=search.get("use_adaptive_threshold", False),
-            blocksize=search.get("blocksize", 20),
-        )
+        seg = RegionSegmenter()
         fa = self._get_filter_target_area(shape, dim)
-        phigh, plow = None, None
 
-        for low, high in self._generate_steps(src, search)():
-            if not self.alive:
-                self.debug("canceled")
-                return
-
-            self.debug("bandwidth low={}, high={}".format(low, high))
-
-            if inverted:
-                low = 255 - low
-                high = 255 - high
-
-            seg.threshold_low = low
-            seg.threshold_high = high
-
-            if seg.threshold_low == plow and seg.threshold_high == phigh:
-                return
-
-            plow = seg.threshold_low
-            phigh = seg.threshold_high
-
-            nsrc = seg.segment(src)
-            seg.blocksize += blocksize_step
-
-            nf = colorspace(nsrc)
-
-            # draw contours
-            targets = self._find_polygon_targets(nsrc, frame=nf)
-            if set_image and image is not None:
-                image.set_frame(nf)
-
-            if targets:
-
-                # filter targets
-                if filter_targets:
-                    targets = self._filter_targets(image, frame, dim, targets, fa)
-                elif convexity_filter:
-                    # for t in targets:
-                    #     print t.convexity, t.area, t.min_enclose_area, t.perimeter_convexity
-                    targets = [
-                        t for t in targets if t.perimeter_convexity > convexity_filter
-                    ]
-
-            if targets:
-                return sorted(targets, key=attrgetter("area"), reverse=True)
-                # time.sleep(0.5)
-
-    def _generate_steps(self, src, search):
-        if search.get("use_adaptive_threshold"):
-
-            def func():
-                yield 0, 255
-
-        elif search.get("use_new_style", True):
-
-            def func():
-                me = int(mean(src[src > 0]))
-                bands = [2**n for n in range(7, 1, -1)]
-                shifts = [2, 4, 8]
-
-                for band in bands:
-                    for shift in shifts:
-                        for shift_dir in (1, -1):
-                            for i in range(1, 128):
-                                m = me - shift * i * shift_dir
-                                low = m - band / 2
-                                high = low + band
-                                if low < 0 or high > 255:
-                                    break
-
-                                yield low, high
+        stargets = []
+        sm = src.mean()
+        self.debug('recurse= {}'.format(recurse))
+        if isinstance(recurse, float):
+            othreshold = recurse + 10
+            sm = max(255, othreshold + 32)
+            recurse = False
 
         else:
+            othreshold = None
+            if use_threshold_caching and self._cached_threshold:
+                othreshold = self._cached_threshold.pop()
 
-            def func():
-                start = search.get("start")
-                if start is None:
-                    w = search.get("width", 10)
-                    start = (
-                        int(mean(src[src > 0]))
-                        - search.get("start_offset_scalar", 3) * w
-                    )
+            if othreshold is None:
+                othreshold = sm - 32
 
-                step = search.get("step", 2)
-                n = search.get("n", 20)
+        for step in (1, -1):
 
-                for j in range(n):
-                    ww = w * (j + 1)
-                    for i in range(n):
-                        low = max((0, start + i * step - ww))
-                        high = max((1, min((255, start + i * step + ww))))
-                        yield low, high
+            if step == -1:
+                othreshold = sm + 32
 
-        return func
+            for i in range(255):
+                st = time.time()
+                if not self.alive:
+                    self.debug('canceled')
+                    return
+
+                threshold = othreshold + (2 * step) * i
+                # if inverted:
+                #     # low = 255 - low
+                #     # high = 255 - high
+                #     threshold = 255 - threshold
+
+                if threshold > 255 or threshold < 0:
+                    break
+
+                nsrc = seg.segment(src, threshold)
+                per = _binary_percent(nsrc)
+                self.debug('threshold={} step={} i={} per={}'.format(threshold, step, i, per))
+                if per > 0.85 and step == 1:
+                    self.debug('image too bright binary percent {}'.format(per))
+                    if i:
+                        break
+                    else:
+                        continue
+
+                if per < 0.25 and step == -1:
+                    self.debug('image too dark binary percent {}'.format(per))
+                    if i:
+                        break
+                    else:
+                        continue
+
+                nf = colorspace(nsrc)
+                targets = self._find_polygon_targets(nsrc, frame=nf)
+                if set_image and image is not None:
+                    image.set_frame(nf)
+
+                if targets:
+                    # filter targets
+                    if filter_targets:
+                        targets = self._filter_targets(image, frame, dim, targets, fa)
+                    elif convexity_filter:
+                        targets = [t for t in targets if t.perimeter_convexity > convexity_filter]
+
+                if targets and shape == 'circle' and do_arc_filter:
+                    on = len(targets)
+                    targets = _arc_approximation_filter(frame, targets, dim)
+                    self.debug('arc filter. otargets={}. targets={}'.format(on, len(targets)))
+
+                # et = time.time() - st
+                # self.debug('targets={} et={}'.format(len(targets), et))
+                if targets:
+                    # remember this thresholding for the next time
+                    if use_threshold_caching:
+                        self.debug('appending cached_threshold {}, {}'.format(threshold, id(self)))
+                        self._cached_threshold.append(threshold)
+
+                    stargets.extend(sorted(targets, key=attrgetter('area'), reverse=step == 1))
+                    if dual_search:
+                        break
+                    else:
+                        self.debug('stargets.b={}, recurse={}'.format(len(stargets), recurse))
+                        if recurse:
+                            stargets += self._find_targets(image, frame, dim,
+                                                           shape=shape,
+                                                           search=search, preprocess=preprocess,
+                                                           filter_targets=filter_targets,
+                                                           convexity_filter=convexity_filter,
+                                                           mask=mask,
+                                                           set_image=set_image, inverted=inverted,
+                                                           dual_search=dual_search,
+                                                           do_arc_filter=do_arc_filter,
+                                                           recurse=float(threshold)
+                                                           )
+                        return stargets
+
+        self.debug('stargets.a={}'.format(len(stargets)))
+        return stargets
 
     def _mask(self, src, radius=None):
 
@@ -319,20 +456,18 @@ class Locator(Loggable):
     # filter
     # ===============================================================================
 
-    def _filter_targets(self, image, frame, dim, targets, fa, threshold=0.85):
+    def _filter_targets(self, image, frame, dim, targets, fa, threshold=0.5, use_segmentation=True):
         """
         filter targets using the _filter_test function
 
         return list of Targets that pass _filter_test
         """
 
-        ts = [
-            self._filter_test(image, frame, ti, dim, threshold, fa[0], fa[1])
-            for ti in targets
-        ]
+        ts = [self._filter_test(image, frame, ti, dim, threshold, fa[0], fa[1], use_segmentation=use_segmentation)
+              for ti in targets]
         return [ta[0] for ta in ts if ta[1]]
 
-    def _filter_test(self, image, frame, target, dim, cthreshold, mi, ma):
+    def _filter_test(self, image, frame, target, dim, cthreshold, mi, ma, use_segmentation=True):
         """
         if the convexity of the target is <threshold try to do a watershed segmentation
 
@@ -341,32 +476,42 @@ class Locator(Loggable):
         find polygon center
 
         """
-        ctest, centtest, atest = self._test_target(frame, target, cthreshold, mi, ma)
+        ctest, centtest, atest = self._test_target(frame, target,
+                                                   cthreshold, mi, ma)
+        result = atest and centtest
         # print('ctest', ctest, cthreshold, 'centtest', centtest, 'atereat', atest, mi, ma)
-        result = ctest and atest and centtest
-        if not ctest and (atest and centtest):
-            target = self._segment_polygon(
-                image, frame, target, dim, cthreshold, mi, ma
-            )
-            result = True if target else False
+        # result = ctest and atest and centtest
+        # if not ctest and (atest and centtest):
+        # print(ctest, centtest, atest)
+        if use_segmentation:
+            if (not ctest or not atest) and centtest:
+                target = self._segment_polygon(image, frame,
+                                               target,
+                                               dim,
+                                               cthreshold, mi, ma)
+                result = True if target else False
 
         return target, result
 
-    def _test_target(self, frame, ti, cthreshold, mi, ma):
+    def _test_target(self, frame, ti, cthreshold, mi, ma, use_centest=True):
         # print('converasdf', ti.convexity, 'ara', ti.area)
         ctest = ti.convexity > cthreshold
         centtest = self._near_center(ti.centroid, frame)
         atest = ma > ti.area > mi
 
-        return ctest, centtest, atest
+        return ctest, centtest or not use_centest, atest
 
     def _find_polygon_targets(self, src, frame=None):
-        src, contours, hieararchy = contour(src)
+        args = contour(src)
+        try:
+            contours, hieararchy = args
+        except ValueError:
+            src, contours, hieararchy = args
         # contours, hieararchy = find_contours(src)
 
         # convert to color for display
-        if frame is not None:
-            draw_contour_list(frame, contours, hieararchy)
+        # if frame is not None:
+        #     draw_contour_list(frame, contours, hieararchy)
 
         # do polygon approximation
         origin = self._get_frame_center(src)
@@ -374,67 +519,116 @@ class Locator(Loggable):
         return self._make_targets(pargs, origin)
 
     def _segment_polygon(self, image, frame, target, dim, cthreshold, mi, ma):
+        self.debug('trying to segment polygon')
+        # src = frame[:]
 
-        src = frame[:]
-
-        wh = get_size(src)
+        wh = get_size(frame)
         # make image with polygon
         im = zeros(wh)
         points = asarray(target.poly_points)
-
         rr, cc = polygon(*points.T)
-        im[cc, rr] = 255
+        im[cc, rr] = 1
 
         # do watershedding
         distance = ndimage.distance_transform_edt(im)
-        local_maxi = feature.peak_local_max(distance, labels=im, indices=False)
-        markers, ns = ndimage.label(local_maxi)
+        coords = feature.peak_local_max(distance, footprint=ones((9, 9)), labels=im)
+        # print(coords)
+        mask = zeros(distance.shape, dtype=bool)
+        mask[tuple(coords.T)] = True
+        markers, ns = ndimage.label(mask)
+        # print('m', nf, markers)
         wsrc = watershed(-distance, markers, mask=im)
-        wsrc = wsrc.astype("uint8")
 
+        # markers, ns = ndimage.label(local_maxi)
+        # wsrc = watershed(-distance, markers, mask=im)
+        # wsrc = wsrc.astype('uint8')
+        # print(nonzero(im))
+        # wsrc = im.astype('uint8')
         #         self.test_image.setup_images(3, wh)
         #         self.test_image.set_image(distance, idx=0)
         #         self.test_image.set_image(wsrc, idx=1)
 
         #         self.wait()
+        # image.set_frame(colorspace(wsrc))
+        # wsrc = wsrc.astype('uint8')
+        # m = max(wsrc)
+        # wsrc[wsrc < m] = 0
+        # wsrc[wsrc == m] = 255
 
-        targets = self._find_polygon_targets(wsrc)
-        ct = cthreshold * 0.75
-        target = self._test_targets(wsrc, targets, ct, mi, ma)
-        if not target:
-            values, bins = histogram(wsrc, bins=max((10, ns)))
-            # assume 0 is the most abundant pixel. ie the image is mostly background
-            values, bins = values[1:], bins[1:]
-            idxs = nonzero(values)[0]
+        # wsrc=invert(wsrc)*255
+        # image.set_frame(colorspace(wsrc))
+        # time.sleep(2)
 
-            """
-                polygon is now segmented into multiple regions
-                consectutively remove a region and find targets
-            """
-            nimage = ones_like(wsrc, dtype="uint8") * 255
-            nimage[wsrc == 0] = 0
-            for idx in idxs:
-                bl = bins[idx]
-                bu = bins[idx + 1]
-                nimage[((wsrc >= bl) & (wsrc <= bu))] = 0
+        # return []
+        # self.wait()
+        self.debug('number markers={}'.format(ns))
+        for i in range(1, ns):
+            target = None
+            tsrc = zeros_like(wsrc, dtype='uint8')
+            mask = wsrc == i
+            tsrc[mask] = 255
 
-                targets = self._find_polygon_targets(nimage)
-                target = self._test_targets(nimage, targets, ct, mi, ma)
+            # csrc = colorspace(tsrc)
+            # csrc[mask] = (240, 0, 255)
+            # image.set_frame(csrc)
+            # time.sleep(1)
+
+            # bp = _binary_percent(tsrc)
+            # self.debug('binary percent {} {}'.format(i, bp))
+            # if bp < 0.20:
+            #     continue
+            # per = count_nonzero(nsrc) / nsrc.size
+
+            targets = self._find_polygon_targets(tsrc)
+            self.debug('polygon targets={}'.format(targets))
+
+            if targets:
+                csrc = colorspace(tsrc)
+                csrc[mask] = (240, 50, 255)
+                image.set_frame(csrc)
+                # print('found target={}'.format(targets))
+                ct = cthreshold * 0.75
+                target = self._test_targets(tsrc, targets, ct, mi, ma * 1.1, use_centest=False)
+                # print('filterd {}'.format(target))
+                # time.sleep(1)
                 if target:
+                    self.debug('target found for segment {}, ns={}'.format(i, ns))
                     break
+        # if not target:
+        #     values, bins = histogram(wsrc, bins=max((10, ns)))
+        #     # assume 0 is the most abundant pixel. ie the image is mostly background
+        #     values, bins = values[1:], bins[1:]
+        #     idxs = nonzero(values)[0]
+        #
+        #     '''
+        #         polygon is now segmented into multiple regions
+        #         consectutively remove a region and find targets
+        #     '''
+        #     nimage = ones_like(wsrc, dtype='uint8') * 255
+        #     nimage[wsrc == 0] = 0
+        #     for idx in idxs:
+        #         bl = bins[idx]
+        #         bu = bins[idx + 1]
+        #         nimage[((wsrc >= bl) & (wsrc <= bu))] = 0
+        #
+        #         targets = self._find_polygon_targets(nimage)
+        #         target = self._test_targets(nimage, targets, ct, mi, ma, use_centest=False)
+        #         if target:
+        #             break
 
         return target
 
-    def _test_targets(self, src, targets, ct, mi, ma):
+    def _test_targets(self, src, targets, ct, mi, ma, **kw):
         if targets:
             for ti in targets:
-                if all(self._test_target(src, ti, ct, mi, ma)):
+                if all(self._test_target(src,
+                                         ti, ct, mi, ma, **kw)):
                     return ti
 
     # ===============================================================================
     # preprocessing
     # ===============================================================================
-    def _preprocess(self, frame, stretch_intensity=True, blur=1, denoise=0):
+    def _preprocess(self, frame, stretch_intensity=True, blur=0, denoise=0):
         """
         1. convert frame to grayscale
         2. remove noise from frame. increase denoise value for more noise filtering
@@ -447,22 +641,14 @@ class Locator(Loggable):
 
         frm = frm.astype("uint8")
 
-        # self.preprocessed_frame = frame
-        # if denoise:
-        #     frm = self._denoise(frm, weight=denoise)
-        # print 'gray', frm.shape
         if blur:
             frm = gaussian(frm, blur) * 255
             frm = frm.astype("uint8")
 
-            # frm1 = gaussian(self.preprocessed_frame, blur,
-            #                 multichannel=True) * 255
-            # self.preprocessed_frame = frm1.astype('uint8')
-
         if stretch_intensity:
             frm = rescale_intensity(frm)
-            # frm = self._contrast_equalization(frm)
-            # self.preprocessed_frame = self._contrast_equalization(self.preprocessed_frame)
+        #     d = disk(int(frm.shape[0]/2))
+        #     frm = rank.equalize(frm, d)
 
         return frm
 
@@ -505,7 +691,7 @@ class Locator(Loggable):
     #
     # return dx, dy
 
-    def _arc_approximation(self, src, target, dim):
+    def _arc_approximation(self, src, target, dim, tol=0.5):
         """
         find cx,cy of a circle with r radius using the arc center method
 
@@ -513,22 +699,51 @@ class Locator(Loggable):
         convexity is simply defined as ratio of area to convex hull area
 
         """
-        tol = 0.8
+        dim = round(dim)
+        self.debug('target convexity={}'.format(target.convexity))
+        tx, ty = self._get_frame_center(src)
+        dx, dy = None, None
+        color = (150, 100, 50)
+
         if target.convexity > tol:
-            self.info("doing arc approximation radius={}".format(dim))
-            tx, ty = self._get_frame_center(src)
+            dim *= 1.1
+            # self.info('doing arc approximation radius={}'.format(dim))
             pts = target.poly_points
-            pts[:, 1] = pts[:, 1] - ty
-            pts[:, 0] = pts[:, 0] - tx
-            dx, dy = approximate_polygon_center(pts, dim)
-            cx, cy = dx + tx, dy + ty
-            dy = -dy
+            # pts[:, 1] = pts[:, 1] - ty
+            # pts[:, 0] = pts[:, 0] - tx
+            # args = approximate_polygon_center(pts, dim)
+            h, w = src.shape[0], src.shape[1]
 
-            self._draw_indicator(src, (cx, cy), color=(255, 0, 128), shape="crosshairs")
-            draw_circle_perimeter(src, cx, cy, round(dim), color=(255, 0, 128))
+            pts = list(reversed(convex_hull(pts)))
+            draw_polygons(src, [pts], color=(0, 200, 0), thickness=1)
 
+            args = approximate_polygon_center3(pts, dim, w, h)
+            if args:
+                cx, cy, cpts = args
+                self.debug('arc_approximation cx={}, cy={}, cpts={}'.format(cx, cy, cpts))
+
+                if cx is not None and not isnan(cx) and cy is not None and not isnan(cy):
+
+                    for cpt in cpts:
+                        self._draw_indicator(src, cpt, size=1)
+
+                    dx = cx - tx
+                    dy = cy - ty
+
+                    dy = -dy
+                    color = (255, 0, 128)
+            else:
+                self.debug('arc approximation failed')
+                dx, dy = self._calculate_error([target])
+                cx, cy = dx + tx, -dy + ty
         else:
+            self.debug('target convexity too low')
             dx, dy = self._calculate_error([target])
+            cx, cy = dx + tx, dy + ty
+
+        if target.convexity > tol and dx is not None and dy is not None:
+            draw_circle_perimeter(src, cx, cy, dim, color)
+            self._draw_indicator(src, (cx, cy), color=color, shape='crosshairs', size=round(dim), thickness=1)
 
         return dx, dy
 
@@ -628,71 +843,76 @@ class Locator(Loggable):
     # ===============================================================================
     # draw
     # ===============================================================================
-    def _draw_targets(self, src, targets):
+    def _draw_targets(self, src, targets, include_indicator=True, color=None):
         """
         draw a crosshairs indicator
         """
+        # color = (255, 165, 0)
         if targets:
+
+            size = 20
+            sstep = 0
+            start = 100
+            n = len(targets)
+            if n == 1:
+                g = 225
+                step = 0
+                size = 4
+            else:
+                step = (255 - start) / n
+                g = start
+                sstep = 20 / (n + 1)
+
             for ta in targets:
-                pt = new_point(*ta.centroid)
-                self._draw_indicator(
-                    src, pt, color=(0, 255, 0), size=10, shape="crosshairs"
-                )
-                # draw_circle(src, pt,
-                #             color=(0,255,0),
-                #             radius=int(dim))
+                g += step
+                _color = color
+                if _color is None:
+                    _color = (0, int(min(g, 255)), 0)
 
-                draw_polygons(src, [ta.poly_points], color=(255, 255, 255))
+                if include_indicator:
+                    size -= sstep
+                    pt = new_point(*ta.centroid)
+                    # print('fff',n, color, size, sstep)
+                    self._draw_indicator(src, pt,
+                                         color=_color,
+                                         size=max(2, size),
+                                         thickness=1,
+                                         shape='crosshairs')
 
-    def _draw_center_indicator(
-        self, src, color=(0, 0, 255), shape="crosshairs", size=10, radius=1
-    ):
+                draw_polygons(src, [ta.poly_points], color=_color, thickness=1)
+
+    def _draw_center_indicator(self, src, color=(0, 0, 255), shape='crosshairs',
+                               size=10, thickness=1):
         """
         draw indicator at center of frame
         """
         cpt = self._get_frame_center(src)
-        self._draw_indicator(
-            src,
-            new_point(*cpt),
-            #                             shape='crosshairs',
-            shape=shape,
-            color=color,
-            size=size,
-        )
+        self._draw_indicator(src, new_point(*cpt),
+                             shape=shape,
+                             color=color,
+                             size=size, thickness=thickness)
 
-        # draw_circle_perimeter(src, cpt[0], cpt[1], radius, color=color)
-
-    def _draw_indicator(
-        self, src, center, color=(255, 0, 0), shape="circle", size=4, thickness=-1
-    ):
+    def _draw_indicator(self, src, center, color=(255, 0, 0), shape='circle',
+                        size=4, thickness=1):
         """
         convenience function for drawing indicators
         """
         if isinstance(center, tuple):
             center = new_point(*center)
-        r = size
-        if shape == "rect":
-            draw_rectangle(
-                src,
-                center.x - r / 2.0,
-                center.y - r / 2.0,
-                r,
-                r,
-                color=color,
-                thickness=thickness,
-            )
-        elif shape == "crosshairs":
-            draw_lines(
-                src,
-                [
-                    [(center.x - size, center.y), (center.x + size, center.y)],
-                    [(center.x, center.y - size), (center.x, center.y + size)],
-                ],
-                color=color,
-                thickness=1,
-            )
+        if shape == 'rect':
+            draw_rectangle(src, center.x - size / 2., center.y - size / 2., size, size,
+                           color=color,
+                           thickness=thickness)
+        elif shape == 'crosshairs':
+            draw_lines(src,
+                       [[(center.x - size, center.y),
+                         (center.x + size, center.y)],
+                        [(center.x, center.y - size),
+                         (center.x, center.y + size)]],
+                       color=color,
+                       thickness=thickness)
         else:
-            draw_circle(src, center[0], center[1], r, color=color)
+            draw_circle(src, center[0], center[1], size, color=color)
 
 
 # ============= EOF =============================================

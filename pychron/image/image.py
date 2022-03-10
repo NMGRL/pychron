@@ -97,8 +97,8 @@ class Image(HasTraits):
 
         return frame
 
-    def get_cached_frame(self):
-        if self._cached_frame is None:
+    def get_cached_frame(self, force=False):
+        if self._cached_frame is None or force:
             self.get_frame()
 
         return self._cached_frame
@@ -167,10 +167,15 @@ class Image(HasTraits):
     def crop(self, src, ox, oy, cw, ch):
         h, w = src.shape[:2]
 
-        x = int((w - cw) / 2.0 + ox)
-        y = int((h - ch) / 2.0 + oy)
-
-        return src[y : y + ch, x : x + cw]
+        x = int((w - cw) / 2. + ox)
+        y = int((h - ch) / 2. + oy)
+        try:
+            return src[y:int(y + ch), x:int(x + cw)]
+        except TypeError as e:
+            print('crop', e)
+            print('src', src)
+            print('p', x, y, w,h,cw,ch)
+            return
 
     def render(self):
         return self.frames[0]

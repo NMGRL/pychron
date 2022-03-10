@@ -429,7 +429,7 @@ class SerialCommunicator(Communicator):
                     self.warning(v)
                 self.warning("=============================")
 
-    def _write(self, cmd, is_hex=False):
+    def _write(self, cmd, is_hex=False, retry_on_exception=True):
         """
         use the serial handle to write the cmd to the serial buffer
         return True if there is an exception writing cmd
@@ -456,13 +456,11 @@ class SerialCommunicator(Communicator):
 
             try:
                 self.handle.write(command)
-            except (
-                serial.serialutil.SerialException,
-                OSError,
-                IOError,
-                ValueError,
-            ) as e:
-                self.warning("Serial Communicator write execption: {}".format(e))
+            except (serial.serialutil.SerialException, OSError, IOError, ValueError) as e:
+                self.warning('Serial Communicator write execption: {}'.format(e))
+                if isinstance(e, serial.serialutil.SerialException) and retry_on_exception:
+                    self.open()
+                    return self._write(cmd, is_hex, retry_on_exception=False)
                 return
 
         return cmd

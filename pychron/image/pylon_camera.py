@@ -87,16 +87,7 @@ class PylonCamera(Loggable):
             except BaseException:
                 pass
 
-            # if self._grabber is None:
-            #     self._grabber = self._cam.grab_images(-1, 1)
-            #
-            # try:
-            #     img = next(self._grabber)
-            #     return True, img
-            # except (StopIteration, RuntimeError, ValueError) as e:
-            #     self._grabber = None
-            #     print('read', e)
-            #     return False, None
+        return False, None
 
     def release(self):
         self._cam.close()

@@ -266,7 +266,7 @@ class FusionsLaserManager(LaserManager):
             klass = "NewportMotionControllerManager"
             package += ".newport_motion_controller_manager"
 
-        module = __import__(package, globals(), locals(), [klass], -1)
+        module = __import__(package, globals(), locals(), [klass])
         factory = getattr(module, klass)
         m = factory(motion_controller=stage_controller)
         self.open_view(m)

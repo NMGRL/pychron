@@ -273,6 +273,10 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         verbose=True,
         **kw
     ):
+    def repeat_command(self, cmd, ntries=2, check_val=None, check_type=None,
+                       break_val=None,
+                       verbose=True,
+                       delay=None, **kw):
 
         if isinstance(cmd, tuple):
             cmd = self._build_command(*cmd)
@@ -283,9 +287,10 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         for i in range(ntries + 1):
             resp = self._parse_response(self.ask(cmd, verbose=verbose))
             if verbose:
-                m = "repeat command {} response = {} len={} ".format(
-                    i + 1, resp, len(str(resp)) if resp is not None else None
-                )
+                resp = resp or ''
+                resp = resp.strip()
+                n = len(str(resp))
+                m = 'repeat command {} response = {} len={} '.format(i + 1, resp, n)
                 self.debug(m)
 
             if break_val and resp == break_val:
@@ -298,6 +303,8 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
                 if resp == check_val:
                     break
                 else:
+                    if delay:
+                        time.sleep(delay)
                     continue
 
             if check_type is not None:

@@ -207,9 +207,8 @@ class FusionsLogicBoard(CoreDevice):
         """ """
         interlocks = self.check_interlocks()
         if not interlocks:
-
-            resp = self.repeat_command("ENBL 1", check_val="OK")
-            if resp == "OK" or self.simulation:
+            resp = self.repeat_command('ENBL 1', check_val='OK', ntries=200, delay=3)
+            if resp == 'OK' or self.simulation:
                 return True
 
         else:

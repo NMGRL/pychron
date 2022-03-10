@@ -15,51 +15,31 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool
-
+# from traits.api import Bool
 # ============= standard library imports ========================
-from numpy import zeros_like, invert, uint8
-
-try:
-    from skimage.filters import threshold_adaptive
-except ImportError:
-    from skimage.filters import threshold_local as threshold_adaptive
-
-from skimage.feature import canny
-from skimage.morphology import watershed
+from numpy import zeros_like, invert, uint8, zeros, ones
+# from skimage.filters import threshold_adaptive
+# from skimage.feature import canny, peak_local_max
+# from skimage.morphology import watershed
+# from scipy import ndimage as ndi
 
 # ============= local library imports  ==========================
+from scipy.ndimage import binary_fill_holes
+from skimage.morphology import binary_closing
+
 from pychron.mv.segment.base import BaseSegmenter
 
 
 class RegionSegmenter(BaseSegmenter):
-    use_adaptive_threshold = Bool(True)
-    threshold_low = 0
-    threshold_high = 255
-    blocksize = 20
-    use_watershed = Bool(True)
 
-    def segment(self, image):
-        """ """
-        if self.use_adaptive_threshold:
-            bs = self.blocksize
-            if not bs % 2:
-                bs += 1
+    def segment(self, image, threshold):
+        """
+        """
+        nimage = zeros_like(image, dtype='uint8')
+        nimage[image >= threshold] = 255
+        nimage = invert(nimage)
+        nimage = binary_fill_holes(nimage).astype('uint8')*255
 
-            markers = threshold_adaptive(image, bs)
-            n = markers.astype("uint8")
-            return n
-        else:
-            markers = zeros_like(image)
-            markers[image <= self.threshold_low] = 1
-            markers[image >= self.threshold_high] = 255
-
-        if self.use_watershed:
-            elmap = canny(image, sigma=1)
-            wsrc = watershed(elmap, markers, mask=image)
-            return invert(wsrc.astype(uint8))
-        else:
-            return invert(markers)
-
+        return nimage
 
 # ============= EOF =============================================
