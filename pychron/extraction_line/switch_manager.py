@@ -947,7 +947,7 @@ class SwitchManager(Manager):
         obj = {}
         if p:
             if os.path.isfile(p):
-                with open(p, 'r') as rfile:
+                with open(p, "r") as rfile:
                     obj = json.load(rfile)
             else:
                 p = paths.actuation_tracker_file_yaml
