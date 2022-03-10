@@ -215,7 +215,7 @@ class Locator(Loggable):
         self.debug('total find time={:0.5f}'.format(time.time() - st))
         return dx, dy
 
-    def _find_targets_bs(self, image, frame, dim, shape, preprocess, mask=False, inverted=False,
+    def _find_targets_bs(self, image, frame, dim, shape, preprocess, mask=False, inverted=True,
                          search_depth=6, min_targets=3,
                          threshold_limiting=True,
                          filter_targets=True,

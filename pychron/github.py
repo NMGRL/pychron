@@ -25,6 +25,7 @@ import requests
 # ============= local library imports  ==========================
 from pychron import json
 from pychron.core.helpers.datetime_tools import format_iso_datetime
+from pychron.globals import globalv
 
 GITHUB_API_URL = "https://api.github.com"
 
@@ -42,7 +43,7 @@ def get_list(cmd, attr="name", headers=None):
     with requests.Session() as s:
 
         def _rget(ci):
-            r = s.get(ci, headers=headers, verify=globalv.verify_ssl)
+            r = s.get(ci, headers=headers, verify=globalv.cert_file)
 
             result = r.json()
             if attr:
