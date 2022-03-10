@@ -326,7 +326,7 @@ class Updater(Loggable):
         try:
             kw = {}
             if globalv.cert_file:
-                kw['verify'] = globalv.cert_file
+                kw["verify"] = globalv.cert_file
             requests.get(cmd, **kw)
             return True
         except BaseException as e:

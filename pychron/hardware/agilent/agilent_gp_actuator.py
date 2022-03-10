@@ -27,6 +27,7 @@ class AgilentGPActuator(AgilentMixin, GPActuator):
     Abstract module for the Agilent 34903A GP AgilentGPActuator
 
     """
+
     # def get_indicator_state(self, obj, *args, **kw):
     #     """
     #     state word is a list of 16 bits
@@ -61,9 +62,9 @@ class AgilentGPActuator(AgilentMixin, GPActuator):
     #             print('asdf', word)
     #             #self._state_word = list(word)[::-1]
     #             return True
-    #def get_indicator_state(self, obj, *args, **kw):
+    # def get_indicator_state(self, obj, *args, **kw):
 
-     #   return self.get_channel_state(obj)
+    #   return self.get_channel_state(obj)
 
     def get_channel_state(self, obj, verbose=True, **kw):
         """

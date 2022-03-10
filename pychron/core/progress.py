@@ -91,7 +91,7 @@ def progress_loader(
                 try:
                     r = func(x, prog, i, n)
                 except BaseException as e:
-                    print('progress loader exception={}'.format(e))
+                    print("progress loader exception={}".format(e))
                     r = None
                 if r:
                     if hasattr(r, "__iter__") and unpack:

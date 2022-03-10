@@ -161,7 +161,7 @@ class Globals(object):
             ("client_only_locking", to_bool),
             ("cert_file", str),
             ("laser_version", int),
-            ("VERIFY_SSL", to_bool)
+            ("VERIFY_SSL", to_bool),
         ]:
             a = ip.get_global(attr)
             if a is not None:

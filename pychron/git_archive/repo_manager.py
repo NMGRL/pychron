@@ -338,8 +338,8 @@ class GitRepoManager(Loggable):
 
     def clone(self, url, path, reraise=False, **kw):
 
-        #config = 'http.sslVerify={}'.format(globalv.VERIFY_SSL)
-        #kw['config'] = config
+        # config = 'http.sslVerify={}'.format(globalv.VERIFY_SSL)
+        # kw['config'] = config
         try:
             self._repo = Repo.clone_from(url, path, **kw)
             return True
@@ -806,7 +806,6 @@ class GitRepoManager(Loggable):
     def push(self, branch=None, remote=None, inform=False):
         if remote is None:
             remote = "origin"
-       
 
         rr = self._get_remote(remote)
         if rr:

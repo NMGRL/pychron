@@ -193,7 +193,7 @@ class ThermoSpectrometer(BaseSpectrometer):
         return it
 
     def set_parameter(self, name, v, post_delay=None):
-        if name.lower() == 'hv':
+        if name.lower() == "hv":
             cmd = "SetHV {}".format(v)
         elif not name.startswith("Set"):
             mk = self.hardware_names()
