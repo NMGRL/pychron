@@ -121,16 +121,17 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
             backup_logpath, _cnt = unique_path2(
                 bdir, name, delimiter="-", extension=".log", width=5
             )
-
-            shutil.copyfile(logpath, backup_logpath)
-            os.remove(logpath)
+            os.replace(logpath, backup_logpath)
+            # shutil.copyfile(logpath, backup_logpath)
+            # os.remove(logpath)
 
             ps = list_directory(bdir, filtername=logname, remove_extension=False)
             for pi in ps:
                 _h, t = os.path.splitext(pi)
                 v = os.path.join(bdir, pi)
-                shutil.copyfile(v, "{}{}".format(backup_logpath, t))
-                os.remove(v)
+                os.replace(v, "{}{}".format(backup_logpath, t))
+                # shutil.copyfile(v, "{}{}".format(backup_logpath, t))
+                # os.remove(v)
 
     root = logging.getLogger()
     root.setLevel(gLEVEL)
