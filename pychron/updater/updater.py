@@ -35,6 +35,7 @@ from pychron.loggable import Loggable
 from pychron.paths import r_mkdir
 from pychron.pychron_constants import STARTUP_MESSAGE_POSITION
 from pychron.updater.commit_view import CommitView, UpdateGitHistory
+from pychron.globals import globalv
 
 
 def gitcommand(repo, name, tag, func):
@@ -323,7 +324,10 @@ class Updater(Loggable):
     def _validate_origin(self, name):
         cmd = "https://github.com/{}".format(name)
         try:
-            requests.get(cmd)
+            kw = {}
+            if globalv.cert_file:
+                kw['verify'] = globalv.cert_file
+            requests.get(cmd, **kw)
             return True
         except BaseException as e:
             print("excepiton validating origin", cmd, e)

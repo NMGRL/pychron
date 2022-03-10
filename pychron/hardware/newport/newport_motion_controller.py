@@ -384,7 +384,7 @@ class NewportMotionController(MotionController):
         cmd = ";".join(
             [
                 self._build_command(
-                    "OR", a.id, nn=search_mode if a.name.lower() != "z" else 3
+                    "OR", a.id, nn=a._home_search_mode
                 )
                 for a in self.axes.values()
                 if a.name in axes

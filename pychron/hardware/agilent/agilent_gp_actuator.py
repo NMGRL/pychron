@@ -27,8 +27,45 @@ class AgilentGPActuator(AgilentMixin, GPActuator):
     Abstract module for the Agilent 34903A GP AgilentGPActuator
 
     """
+    # def get_indicator_state(self, obj, *args, **kw):
+    #     """
+    #     state word is a list of 16 bits
+    #     return True if read properly
+    #
+    #     :return:
+    #     """
+    #     # if port not in (1, 2):
+    #     #     self.warning("Invalid port number {}. defaulting to port 1".format(port))
+    #     #     port = 1
+    #
+    #     #base = "SENS:DIG:DATA:{}? (@{}{:02n})"
+    #     datatype = "BYTE"
+    #     #datatype = "WORD"
+    #     # if as_word:
+    #     #     datatype = "WORD"
+    #     #     port = 1
+    #     addr = get_switch_address(obj)
+    #     cmd = "SENS:DIG:DATA:{}? (@{})".format(datatype, addr)
+    #     resp = self.ask(cmd, verbose=True)
+    #     if resp:
+    #         resp = resp.strip()
+    #         if resp:
+    #             nbits = 16
+    #             fmt = "{{:0{}b}}".format(nbits)
+    #
+    #             resp = resp.split(",")[0]
+    #             word = fmt.format(int(float(resp)))
+    #             if self.invert:
+    #                 word = fmt.format(int(word, 2) ^ (2 ** nbits - 1))
+    #
+    #             print('asdf', word)
+    #             #self._state_word = list(word)[::-1]
+    #             return True
+    #def get_indicator_state(self, obj, *args, **kw):
 
-    def get_channel_state(self, obj, verbose=False, **kw):
+     #   return self.get_channel_state(obj)
+
+    def get_channel_state(self, obj, verbose=True, **kw):
         """
         Query the hardware for the channel state
         """

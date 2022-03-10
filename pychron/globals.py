@@ -112,6 +112,7 @@ class Globals(object):
     own_spectrometer = None
 
     laser_version = 1
+    VERIFY_SSL = True
 
     def build(self, ip):
         for attr, func in [
@@ -160,6 +161,7 @@ class Globals(object):
             ("client_only_locking", to_bool),
             ("cert_file", str),
             ("laser_version", int),
+            ("VERIFY_SSL", to_bool)
         ]:
             a = ip.get_global(attr)
             if a is not None:

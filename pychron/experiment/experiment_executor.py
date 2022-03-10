@@ -827,14 +827,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         path = os.path.join(paths.setup_dir, "users.yaml")
         if os.path.isfile(path):
             yl = yload(path)
-            items = [
-                (i["name"], i["email"])
-                for i in yl
-                if i["enabled"] and i["email"] != email
-            ]
+            if yl:
+                items = [
+                    (i["name"], i["email"])
+                    for i in yl
+                    if i["enabled"] and i["email"] != email
+                ]
 
-            if items:
-                names, addrs = list(zip(*items))
+                if items:
+                    names, addrs = list(zip(*items))
         return names, addrs
 
     def _wait_for(self, predicate, period=1, invert=False):
@@ -933,10 +934,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self.extracting_run = run
 
-        self.debug("waiting for save event to clear")
-        while self._save_evt.is_set():
-            self._save_evt.wait(1)
-        self.debug("waiting complete")
+        self.debug('parallel saving currently disabled')
+        # if self._save_complete_evt:
+        #     self.debug("waiting for save event to clear")
+        #     while self._save_complete_evt.is_set():
+        #         self._save_complete_evt.wait(1)
+        #     self.debug("waiting complete")
 
         for step in ("_start", "_extraction", "_measurement", "_post_measurement"):
 

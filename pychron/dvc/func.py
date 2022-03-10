@@ -34,6 +34,7 @@ def repository_has_staged(ps, remote="origin", branch=None):
     if not hasattr(ps, "__iter__"):
         ps = (ps,)
 
+    
     changed = []
     # repo = GitRepoManager()
 

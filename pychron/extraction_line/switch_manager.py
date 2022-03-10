@@ -50,9 +50,9 @@ def parse_interlocks(vobj, tag):
         vs = vobj.get("{}s".format(tag))
 
     if isinstance(vs, (tuple, list)):
-        interlocks = [i.strip() for i in vs]
+        interlocks = [str(i).strip() for i in vs]
     else:
-        interlocks = [vs.strip()]
+        interlocks = [str(vs).strip()]
 
     return interlocks
 
@@ -1115,9 +1115,11 @@ class SwitchManager(Manager):
         state_invert = False
         if klass != ManualSwitch:
             if state_dev_obj is not None:
-                state_dev_name = state_dev_obj.get("name")
-                state_address = state_dev_obj.get("address")
-                state_invert = to_bool(state_dev_obj.get("inverted"))
+                state_dev_name = state_dev_obj.get("name", "")
+                state_address = state_dev_obj.get("address", "")
+                state_invert = to_bool(state_dev_obj.get("inverted", False))
+            else:
+                state_address = vobj.get("state_address", "")
 
         parent = vobj.get("parent")
         parent_name = ""
@@ -1137,7 +1139,7 @@ class SwitchManager(Manager):
             check_actuation_delay=float(vobj.get("check_actuation_delay", 0)),
             actuator_name=actuator_name,
             state_device_name=state_dev_name,
-            state_address=state_address,
+            state_address=str(state_address),
             state_invert=state_invert,
             description=str(vobj.get("description", "")),
             query_state=to_bool(vobj.get("query_state", True)),

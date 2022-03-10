@@ -90,7 +90,8 @@ def progress_loader(
                     prog = None if i % step else progress
                 try:
                     r = func(x, prog, i, n)
-                except BaseException:
+                except BaseException as e:
+                    print('progress loader exception={}'.format(e))
                     r = None
                 if r:
                     if hasattr(r, "__iter__") and unpack:
