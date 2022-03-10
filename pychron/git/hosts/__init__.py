@@ -176,7 +176,7 @@ class GitHostService(BaseGitHostService):
                 "-c",
                 "http.sslVerify={}".format(globalv.verify_ssl),
                 "ls-remote",
-                "{}/{}/{}".format(self.remote_url, organization, name)
+                "{}/{}/{}".format(self.remote_url, organization, name),
             ]
             self.debug("remote exists cmd={}".format(" ".join(cmd)))
             out = subprocess.check_output(cmd)
@@ -276,7 +276,7 @@ class GitHostService(BaseGitHostService):
         if globalv.cert_file:
             kw["verify"] = globalv.cert_file
         else:
-            kw['verify'] = globalv.verify_ssl
+            kw["verify"] = globalv.verify_ssl
 
         r = requests.post(cmd, data=json.dumps(payload), headers=headers, **kw)
         if not r.status_code == 201:

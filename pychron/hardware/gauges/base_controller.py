@@ -35,7 +35,7 @@ class BaseGauge(HasTraits):
     def voltage_to_pressure(self, v):
         # convert a voltage to a pressure
         if self.map_function:
-            tag = 'x' if 'x' in self.map_function else 'v'
+            tag = "x" if "x" in self.map_function else "v"
             v = eval(self.map_function, {tag: v})
         return v
 

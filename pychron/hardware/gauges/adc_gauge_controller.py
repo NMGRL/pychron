@@ -29,8 +29,14 @@ class ADCGaugeController(AbstractDevice, BaseGaugeController):
                 if g:
                     g.map_function = config.get(tag, opt)
                 else:
-                    self.warning('Invalid gauge name {}. not adding map_function'.format(opt))
-                    self.debug('available gauges {}'.format(','.join([g.name for g in self.gauges])))
+                    self.warning(
+                        "Invalid gauge name {}. not adding map_function".format(opt)
+                    )
+                    self.debug(
+                        "available gauges {}".format(
+                            ",".join([g.name for g in self.gauges])
+                        )
+                    )
 
         adc = "ADC"
         if config.has_section(adc):
@@ -56,5 +62,6 @@ class ADCGaugeController(AbstractDevice, BaseGaugeController):
 
     def _read_pressure(self, gauge, *args, **kw):
         return gauge.voltage_to_pressure(self._cdevice.read_channel(gauge.channel))
+
 
 # ============= EOF =====================================
