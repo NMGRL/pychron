@@ -140,8 +140,12 @@ class AutoCenterManager(MachineVisionManager):
         config = self.selected_configuration
 
         dx, dy = loc.find(
-            im, frame, dim=dim, preprocess=config.preprop, search=config.search,
-            inverted=config.inverted
+            im,
+            frame,
+            dim=dim,
+            preprocess=config.preprop,
+            search=config.search,
+            inverted=config.inverted,
         )
 
         if dx is None and dy is None:
