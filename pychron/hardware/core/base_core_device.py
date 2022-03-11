@@ -263,16 +263,6 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         if self.communicator is not None:
             self.communicator.scheduler = s
 
-    def repeat_command(
-        self,
-        cmd,
-        ntries=2,
-        check_val=None,
-        check_type=None,
-        break_val=None,
-        verbose=True,
-        **kw
-    ):
     def repeat_command(self, cmd, ntries=2, check_val=None, check_type=None,
                        break_val=None,
                        verbose=True,

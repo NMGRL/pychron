@@ -190,7 +190,7 @@ class ConditionalsEditView(ConditionalsViewable):
             if p:
                 if not save_as:
                     self.path = p
-
+                print('loading', p)
                 yd = yload(p)
 
         ps = "{}s".format(PRE_RUN_TERMINATION)

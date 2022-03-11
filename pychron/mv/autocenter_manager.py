@@ -94,7 +94,7 @@ class AutoCenterManager(MachineVisionManager):
     # blocksize = Int
     # blocksize_step = Int
 
-    selected_configuration = Instance(AutoCenterConfig)
+    selected_configuration = Instance(AutoCenterConfig, ())
     configuration_names = List
     configuration_name = Str
 
@@ -103,8 +103,7 @@ class AutoCenterManager(MachineVisionManager):
     locator = None
 
     def bind_preferences(self, pref_id):
-        pass
-        # bind_preference(self, 'use_autocenter', '{}.use_autocenter'.format(pref_id))
+        bind_preference(self, 'use_autocenter', '{}.use_autocenter'.format(pref_id))
         # bind_preference(self, 'blur', '{}.autocenter_blur'.format(pref_id))
         # bind_preference(self, 'stretch_intensity', '{}.autocenter_stretch_intensity'.format(pref_id))
         # bind_preference(self, 'use_adaptive_threshold', '{}.autocenter_use_adaptive_threshold'.format(pref_id))

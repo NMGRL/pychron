@@ -150,7 +150,7 @@ class SystemConditionalsAction(UIAction):
         if spec:
             dnames = spec.spectrometer.detector_names
 
-        p = get_path(paths.spectrometer_dir, ".*conditionals", (".yaml", ".yml"))
+        p = get_path(paths.spectrometer_dir, "default_conditionals", (".yaml", ".yml"))
         if p:
             edit_conditionals(p, detectors=dnames)
         else:

@@ -407,7 +407,7 @@ class NewportMotionController(MotionController):
         axis_objs = [a for a in self.axes.values() if a.name in axes]
 
         cmd = ';'.join([self._build_command('OR', a.id,
-                                            nn=search_mode) for a in axis_objs])
+                                            nn=a._home_search_mode) for a in axis_objs])
         # force z axis home positive
         # cmd = '1OR{};2OR{};3OR{}' .format(search_mode, search_mode, 3)
         #        cmd = cmd.format(*[search_mode if v.id != 3 else 3 for k, v in self.axes.iteritems()])

@@ -300,7 +300,7 @@ class LaserPreferencesPane(PreferencesPane):
         return [canvasgrp, videogrp, autocenter_grp, patgrp, powergrp]
 
 
-class FusionsLaserPreferencesPane(PreferencesPane):
+class FusionsLaserPreferencesPane(LaserPreferencesPane):
     pass
 
 

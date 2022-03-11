@@ -993,6 +993,7 @@ class SwitchManager(Manager):
                 (DoubleActuationValve, parser.get_double_actuation_valves),
             ):
                 for s in func():
+                    print(s, klass)
                     factory(s, use_explanation=False, klass=klass)
 
             ps = []

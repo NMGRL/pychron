@@ -101,6 +101,28 @@ class DoubleActuationValve(HardwareValve):
             "{}secondary".format(self.name), address=saddress, **kw
         )
 
+    def _state_call(self, func, *args, **kw):
+        result = None
+        dev = None
+        if self.state_device is not None:
+            dev = self.state_device
+            address = self.state_address
+        elif self.state_address:
+            address = self.state_address
+            dev = self.actuator
+            # result = self.state_device.get_indicator_state(self, 'closed', **kw)
+        elif self.actuator is not None:
+            dev = self.actuator
+            address = self.primary_switch.address
+            # result = self.actuator.get_indicator_state(self, 'closed', **kw)
+
+        if dev:
+            func = getattr(dev, func)
+            if func:
+                result = func(address, *args, **kw)
+
+        return result
+
     def _act(self, mode, func, do_actuation):
         """
 
