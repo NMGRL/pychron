@@ -64,7 +64,7 @@ class RepositoryIdentifierEntry(BaseEntry):
                 self.value,
                 self.principal_investigator,
                 license_template=template,
-                private=self.private
+                private=self.private,
             ):
                 ret = False
                 if not self.confirmation_dialog(
@@ -87,7 +87,7 @@ class RepositoryIdentifierEntry(BaseEntry):
             ),
             BorderHGroup(UItem("readme", style="custom"), label="ReadMe"),
             Item("license_template_name", label="License"),
-            Item("private", label="Private", tooltip='Use a private repo'),
+            Item("private", label="Private", tooltip="Use a private repo"),
             UItem("error_message", style="readonly", style_sheet=STYLESHEET),
         )
         buttons = [OKButton(), "Cancel"]
