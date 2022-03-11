@@ -1690,10 +1690,12 @@ class DVC(Loggable):
             if not os.path.isfile(p):
                 with open(p, "w") as wfile:
                     wfile.write("{}\n###############\n{}".format(identifier, content))
-            repo = self._get_repository(identifier, as_current=False)
-            repo.add(p)
-            repo.commit("initial commit")
-            repo.push()
+                repo = self._get_repository(identifier, as_current=False)
+                repo.add(p)
+                repo.commit("initial commit")
+                repo.push()
+            else:
+                self.debug("readme already exists")
         else:
             self.critical("Repository does not exist {}. {}".format(identifier, root))
 
@@ -1702,7 +1704,12 @@ class DVC(Loggable):
         repo.create_branch(branch, inform=False)
 
     def add_repository(
-        self, identifier, principal_investigator, inform=True, license_template=None
+        self,
+        identifier,
+        principal_investigator,
+        inform=True,
+        license_template=None,
+        private=True,
     ):
         self.debug(
             "trying to add repository identifier={}, pi={}".format(
@@ -1748,6 +1755,7 @@ class DVC(Loggable):
                             identifier,
                             organization=self.organization,
                             license_template=license_template,
+                            private=private,
                         ):
                             ret = True
                             if isinstance(gi, LocalGitHostService):
