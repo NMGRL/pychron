@@ -49,6 +49,7 @@ class AutoCenterConfig(HasTraits):
     search_width = Int
     blocksize = Int
     blocksize_step = Int
+    inverted = Bool(False)
 
     def __init__(self, yd=None, *args, **kw):
         if yd is not None:
@@ -139,7 +140,8 @@ class AutoCenterManager(MachineVisionManager):
         config = self.selected_configuration
 
         dx, dy = loc.find(
-            im, frame, dim=dim, preprocess=config.preprop, search=config.search
+            im, frame, dim=dim, preprocess=config.preprop, search=config.search,
+            inverted=config.inverted
         )
 
         if dx is None and dy is None:
