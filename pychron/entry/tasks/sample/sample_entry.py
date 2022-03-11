@@ -545,6 +545,8 @@ class SampleEntry(DVCAble):
     @on_trait_change("sample_filter_attr, sample_filter")
     def _handle_sample_filter(self):
         if self.sample_filter and self.sample_filter_attr:
+            self.dvc.close_session()
+            self.dvc.create_session()
             sams = self.dvc.get_samples_filter(
                 self.sample_filter_attr, self.sample_filter
             )
