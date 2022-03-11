@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from __future__ import absolute_import
-from traits.api import Str, List, Enum
+from traits.api import Str, List, Enum, Bool
 from traitsui.api import VGroup, UItem, Item, EnumEditor
 
 from pychron.core.pychron_traits import BorderHGroup
@@ -36,6 +36,7 @@ class RepositoryIdentifierEntry(BaseEntry):
     value = SpacelessStr
     readme = Str
     license_template_name = Enum(LICENSES.keys())
+    private = Bool(True)
 
     def _add_item(self):
         with self.dvc.session_ctx(use_parent_session=False):
@@ -63,6 +64,7 @@ class RepositoryIdentifierEntry(BaseEntry):
                 self.value,
                 self.principal_investigator,
                 license_template=template,
+                private=self.private
             ):
                 ret = False
                 if not self.confirmation_dialog(
@@ -85,6 +87,7 @@ class RepositoryIdentifierEntry(BaseEntry):
             ),
             BorderHGroup(UItem("readme", style="custom"), label="ReadMe"),
             Item("license_template_name", label="License"),
+            Item("private", label="Private", tooltip='Use a private repo'),
             UItem("error_message", style="readonly", style_sheet=STYLESHEET),
         )
         buttons = [OKButton(), "Cancel"]
