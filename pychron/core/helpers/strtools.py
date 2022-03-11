@@ -33,7 +33,7 @@ def camel_case(name, delimiters=None):
     return name
 
 
-def to_list(a, delimiter=',', mapping=None):
+def to_list(a, delimiter=",", mapping=None):
     if a is not None:
         la = a.split(delimiter)
         if mapping:

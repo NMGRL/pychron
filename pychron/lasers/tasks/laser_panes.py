@@ -157,36 +157,60 @@ class StageControlPane(TraitsDockPane):
                 show_border=True,
             )
 
-            mvgrp = VGroup(VGroup(UItem('stage_manager.autocenter_manager.display_image',
-                                        width=-400, height=-400,
-                                        editor=ImageEditor(refresh='stage_manager.autocenter_manager.'
-                                                                   'display_image.refresh_needed'))),
-                           label='Machine Vision', show_border=True)
+            mvgrp = VGroup(
+                VGroup(
+                    UItem(
+                        "stage_manager.autocenter_manager.display_image",
+                        width=-400,
+                        height=-400,
+                        editor=ImageEditor(
+                            refresh="stage_manager.autocenter_manager."
+                            "display_image.refresh_needed"
+                        ),
+                    )
+                ),
+                label="Machine Vision",
+                show_border=True,
+            )
 
-            recgrp = VGroup(HGroup(icon_button_editor('stage_manager.snapshot_button',
-                                                      'camera',
-                                                      tooltip='Take a snapshot'),
-                                   Item('stage_manager.snapshot_mode', label='Mode')),
-                            HGroup(icon_button_editor('stage_manager.record',
-                                                      'media-record',
-                                                      tooltip='Record video'),
-                                   CustomLabel('stage_manager.record_label',
-                                               color='red')),
-                            HGroup(Item('stage_manager.auto_save_snapshot', label='Auto Save'),
-                                   Item('stage_manager.render_with_markup', label='Add Markup')),
-                            show_border=True,
-                            label='Recording')
+            recgrp = VGroup(
+                HGroup(
+                    icon_button_editor(
+                        "stage_manager.snapshot_button",
+                        "camera",
+                        tooltip="Take a snapshot",
+                    ),
+                    Item("stage_manager.snapshot_mode", label="Mode"),
+                ),
+                HGroup(
+                    icon_button_editor(
+                        "stage_manager.record", "media-record", tooltip="Record video"
+                    ),
+                    CustomLabel("stage_manager.record_label", color="red"),
+                ),
+                HGroup(
+                    Item("stage_manager.auto_save_snapshot", label="Auto Save"),
+                    Item("stage_manager.render_with_markup", label="Add Markup"),
+                ),
+                show_border=True,
+                label="Recording",
+            )
 
-            cfggrp = VGroup(Item('stage_manager.camera_zoom_coefficients',
-                                 label='Coeff.'),
-                            icon_button_editor('stage_manager.configure_camera_device_button', 'cog',
-                                               tooltip='Reload camera configuration file'),
-                            show_border=True, label='Zoom')
+            cfggrp = VGroup(
+                Item("stage_manager.camera_zoom_coefficients", label="Coeff."),
+                icon_button_editor(
+                    "stage_manager.configure_camera_device_button",
+                    "cog",
+                    tooltip="Reload camera configuration file",
+                ),
+                show_border=True,
+                label="Zoom",
+            )
             # camera_grp.content.extend((HGroup(cfggrp, recgrp), mvgrp))
 
-            camera_grp = VGroup(HGroup(cfggrp, recgrp),
-                                mvgrp,
-                                visible_when='use_video', label='Camera')
+            camera_grp = VGroup(
+                HGroup(cfggrp, recgrp), mvgrp, visible_when="use_video", label="Camera"
+            )
             # tabs.content.append(camera_grp)
             tabs.content.insert(0, camera_grp)
             tabs.content.append(degasser_grp)

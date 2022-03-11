@@ -43,10 +43,16 @@ class MotionProfiler(ConfigLoadable):
     max_acceleration = Float(50)
 
     def load(self, p):
-        attrs = ['max_velocity', 'min_velocity', 'max_transit_time',
-                 'min_acceleration_time', 'velocity_tol',
-                 'acceleration_tol', 'deceleration_tol',
-                 'max_acceleration']
+        attrs = [
+            "max_velocity",
+            "min_velocity",
+            "max_transit_time",
+            "min_acceleration_time",
+            "velocity_tol",
+            "acceleration_tol",
+            "deceleration_tol",
+            "max_acceleration",
+        ]
         self.config_path = p
         if os.path.isfile(p):
             config = self.get_configuration(self.config_path)

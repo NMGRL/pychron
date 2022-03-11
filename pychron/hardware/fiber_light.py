@@ -60,6 +60,7 @@ class FiberLight(AbstractDevice):
 
     def initialize(self, *args, **kw):
         import time
+
         time.sleep(1)
         # if self._cdevice:
         #     self._cdevice.setup_consumer(self._write_intensity)

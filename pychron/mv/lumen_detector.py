@@ -50,24 +50,37 @@ def calc_area(a):
 
 
 def centroid_distance(t0, t1):
-    d = ((t0.centroid[0] - t1.centroid[0]) ** 0.5 + (t0.centroid[1] - t1.centroid[1]) ** 2) ** 0.5
+    d = (
+        (t0.centroid[0] - t1.centroid[0]) ** 0.5
+        + (t0.centroid[1] - t1.centroid[1]) ** 2
+    ) ** 0.5
     return d
 
 
 def bounding_size(t0, t1):
-    return max((t0.bounding_rect.height, t0.bounding_rect.width,
-                t1.bounding_rect.height, t1.bounding_rect.width))/2*(2**0.5)
+    return (
+        max(
+            (
+                t0.bounding_rect.height,
+                t0.bounding_rect.width,
+                t1.bounding_rect.height,
+                t1.bounding_rect.width,
+            )
+        )
+        / 2
+        * (2**0.5)
+    )
 
 
 def choose_target(src, targets, pixel_depth):
     """
-        targets are sorted by area (increasing)
-        additional scoring is necessary. commonly there are 2 bright spots. dragonfly is currently prioritizing
-        the smallest target. but in the case with 2 bright spots the larger of the smallest bright spot should
-        be the chosen target. e.g. the first target in the list
+    targets are sorted by area (increasing)
+    additional scoring is necessary. commonly there are 2 bright spots. dragonfly is currently prioritizing
+    the smallest target. but in the case with 2 bright spots the larger of the smallest bright spot should
+    be the chosen target. e.g. the first target in the list
 
 
-        sort by saturation take biggest most saturated target
+    sort by saturation take biggest most saturated target
     """
 
     # t0 = targets[0]
@@ -89,7 +102,7 @@ def choose_target(src, targets, pixel_depth):
     tsrc[src <= threshold] = 0
 
     def func(ti):
-        area = (ti.area + ti.pactual / 2)
+        area = ti.area + ti.pactual / 2
         ilum = tsrc[ti.mask].sum()
         sat = ilum / (area * pixel_depth)
         return sat
@@ -97,7 +110,7 @@ def choose_target(src, targets, pixel_depth):
     scores = [func(ti) for ti in targets]
     # if all targets same saturation take smallest
     if len(set(scores)) == 1:
-        targets = sorted(targets, key=attrgetter('area'))
+        targets = sorted(targets, key=attrgetter("area"))
     else:
         targets = sorted(targets, key=func, reverse=True)
 
@@ -162,7 +175,7 @@ class LumenDetector(Locator):
             if targets:
                 self.debug("found targets={}".format(len(targets)))
                 for t in targets:
-                    self.debug('t.area={}, marea={}'.format(t.area, marea * 0.15))
+                    self.debug("t.area={}, marea={}".format(t.area, marea * 0.15))
                     if t.area > marea * 0.15:
                         if t.area > area:
                             area = t.area
@@ -194,21 +207,26 @@ class LumenDetector(Locator):
         return src, v, targets
 
     def find_targets(self, image, src, dim, mask=False):
-        targets = self._find_targets_bs(image, src, dim, 'circle',
-                                        True,
-                                        filter_targets=False,
-                                        inverted=True,
-                                        threshold_limiting=False,
-                                        min_targets=2,
-                                        search_depth=5,
-                                        search_start=254,
-                                        # convexity_filter=0.75,
-                                        mask=mask)
+        targets = self._find_targets_bs(
+            image,
+            src,
+            dim,
+            "circle",
+            True,
+            filter_targets=False,
+            inverted=True,
+            threshold_limiting=False,
+            min_targets=2,
+            search_depth=5,
+            search_start=254,
+            # convexity_filter=0.75,
+            mask=mask,
+        )
         self.active_targets = None
         if targets:
             targets = self._filter(targets, self._target_near_center, src)
             if targets:
-                targets = sorted(targets, key=attrgetter('area'))
+                targets = sorted(targets, key=attrgetter("area"))
                 self.active_targets = targets
                 if image is not None:
                     self._draw_targets(image.source_frame, targets)
@@ -246,13 +264,13 @@ class LumenDetector(Locator):
 
             peak_img[circle(py, px, min_distance)] = 255
 
-            #ilum = lum[target.mask].sum()
-            #area = (target.area + target.pactual / 2)
+            # ilum = lum[target.mask].sum()
+            # area = (target.area + target.pactual / 2)
             # else:
             #     ilum = lum.sum()
             #     area = mask.sum()
 
-            #sat = ilum / (area * pixel_depth)
+            # sat = ilum / (area * pixel_depth)
             pt = px - w / 2, py - h / 2, sat
 
             # if pts.shape[0]:

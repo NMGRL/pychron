@@ -46,13 +46,13 @@ def computeBCC(data_str):
 
 
 def __generate_crc16_table(poly, reflect=True):
-    """ Generates a crc16 lookup table
+    """Generates a crc16 lookup table
 
     .. note:: This will only be generated once
     """
 
     if reflect:
-        poly = int('{:016b}'.format(poly)[::-1], 2)
+        poly = int("{:016b}".format(poly)[::-1], 2)
 
     table = []
     for i in range(0x100):  # 256
@@ -85,11 +85,11 @@ def computeCRC(data, start_crc=0xFFFF):
         data = [ord(d) for d in data]
 
     for a in data:
-        crc = ((crc >> 8) & 0xff) ^ MODBUS_CRC_TABLE[(crc ^ a) & 0xff]
+        crc = ((crc >> 8) & 0xFF) ^ MODBUS_CRC_TABLE[(crc ^ a) & 0xFF]
 
     # flip lo and hi bits
-    crc = '{:04x}'.format(crc)
-    crc = '{}{}'.format(crc[2:], crc[:2])
+    crc = "{:04x}".format(crc)
+    crc = "{}{}".format(crc[2:], crc[:2])
     return crc
 
 
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     # print chr(computeBCC(s))
 
     # print(computeCRC('A1,B0'))
-    c = computeCRC('hi!a')
+    c = computeCRC("hi!a")
 
-    print(c, '{:04b}'.format(int(c, 16)))
+    print(c, "{:04b}".format(int(c, 16)))
 # ============= EOF ====================================

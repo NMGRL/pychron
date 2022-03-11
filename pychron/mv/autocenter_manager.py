@@ -103,7 +103,7 @@ class AutoCenterManager(MachineVisionManager):
     locator = None
 
     def bind_preferences(self, pref_id):
-        bind_preference(self, 'use_autocenter', '{}.use_autocenter'.format(pref_id))
+        bind_preference(self, "use_autocenter", "{}.use_autocenter".format(pref_id))
         # bind_preference(self, 'blur', '{}.autocenter_blur'.format(pref_id))
         # bind_preference(self, 'stretch_intensity', '{}.autocenter_stretch_intensity'.format(pref_id))
         # bind_preference(self, 'use_adaptive_threshold', '{}.autocenter_use_adaptive_threshold'.format(pref_id))
@@ -123,7 +123,9 @@ class AutoCenterManager(MachineVisionManager):
         loc = self._get_locator(shape=shape)
         self.locator = loc
 
-        self.debug('dim={} pxpermm={}, loc.pxpermm={}'.format(dim, self.pxpermm, loc.pxpermm))
+        self.debug(
+            "dim={} pxpermm={}, loc.pxpermm={}".format(dim, self.pxpermm, loc.pxpermm)
+        )
         cropdim = ceil(dim * 2.55)
 
         # frame = loc.rescale(frame, 1.5)
@@ -233,6 +235,7 @@ class CO2AutocenterManager(AutoCenterManager):
             loc = self.locator
         else:
             from pychron.mv.co2_locator import CO2Locator
+
             loc = CO2Locator(pxpermm=self.pxpermm, pixel_depth=self.video.pixel_depth)
         loc.pxpermm = self.pxpermm
         loc.pixel_depth = self.video.pixel_depth

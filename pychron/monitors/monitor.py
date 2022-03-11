@@ -112,8 +112,7 @@ class Monitor(ConfigLoadable):
         ]
 
     def _monitor_(self):
-        """
-        """
+        """ """
 
         # load before every monitor call so that changes to the config file
         # are incorpoated
@@ -135,8 +134,6 @@ class Monitor(ConfigLoadable):
                 fi()
                 if stop_signal.isSet():
                     break
-
-
 
 
 # ============= EOF ====================================

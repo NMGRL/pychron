@@ -167,14 +167,14 @@ class Image(HasTraits):
     def crop(self, src, ox, oy, cw, ch):
         h, w = src.shape[:2]
 
-        x = int((w - cw) / 2. + ox)
-        y = int((h - ch) / 2. + oy)
+        x = int((w - cw) / 2.0 + ox)
+        y = int((h - ch) / 2.0 + oy)
         try:
-            return src[y:int(y + ch), x:int(x + cw)]
+            return src[y : int(y + ch), x : int(x + cw)]
         except TypeError as e:
-            print('crop', e)
-            print('src', src)
-            print('p', x, y, w,h,cw,ch)
+            print("crop", e)
+            print("src", src)
+            print("p", x, y, w, h, cw, ch)
             return
 
     def render(self):

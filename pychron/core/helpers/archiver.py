@@ -40,16 +40,23 @@ MONTH_NAMES = [
     "DEC",
 ]
 
-logger = simple_logger('Archiver')
+logger = simple_logger("Archiver")
 
 
 def get_dirs(root):
-    return (p for p in os.listdir(root) if not p.startswith('.') and os.path.isdir(os.path.join(root, p)))
+    return (
+        p
+        for p in os.listdir(root)
+        if not p.startswith(".") and os.path.isdir(os.path.join(root, p))
+    )
 
 
 def get_files(root):
-    return (p for p in os.listdir(root)
-            if not p.startswith('.') and os.path.isfile(os.path.join(root, p)))
+    return (
+        p
+        for p in os.listdir(root)
+        if not p.startswith(".") and os.path.isfile(os.path.join(root, p))
+    )
 
 
 class Archiver(HasTraits):

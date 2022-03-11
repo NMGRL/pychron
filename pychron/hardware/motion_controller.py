@@ -180,14 +180,16 @@ class MotionController(CoreDevice):
             self.info("loading axis {},{}".format(i, a))
             limits = csv_to_floats(config.get("Axes Limits", a))
 
-            na = self._axis_factory(config_path,
-                                    name=a,
-                                    id=i + 1,
-                                    negative_limit=limits[0],
-                                    positive_limit=limits[1],
-                                    loadposition=loadposition[i],
-                                    min_velocity=self.motion_profiler.min_velocity,
-                                    max_velocity=self.motion_profiler.max_velocity)
+            na = self._axis_factory(
+                config_path,
+                name=a,
+                id=i + 1,
+                negative_limit=limits[0],
+                positive_limit=limits[1],
+                loadposition=loadposition[i],
+                min_velocity=self.motion_profiler.min_velocity,
+                max_velocity=self.motion_profiler.max_velocity,
+            )
 
             self.axes[a] = na
             self.debug("asdfasdfsafsadf {}".format(self.axes))
@@ -342,11 +344,12 @@ class MotionController(CoreDevice):
         timer = self.timer
 
         if timer is not None:
-            self.debug('using existing timer')
+            self.debug("using existing timer")
             period = 0.15
 
             def func():
                 return timer.isActive()
+
         else:
             self.debug("check moving={}".format(axis))
             period = 0.15

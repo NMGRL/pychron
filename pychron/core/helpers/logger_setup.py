@@ -157,7 +157,7 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
     #             shutil.move(src, bk)
     if use_file:
         # create a new logging file
-        logname = '{}.current.log'.format(name)
+        logname = "{}.current.log".format(name)
         logpath = os.path.join(bdir, logname)
 
         if os.path.isfile(logpath):
@@ -167,9 +167,9 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
             mt = result.st_mtime
             creation_date = datetime.fromtimestamp(mt)
 
-            bk = os.path.join(bdir, creation_date.strftime('%y%m%d%H%M%S'))
+            bk = os.path.join(bdir, creation_date.strftime("%y%m%d%H%M%S"))
             os.mkdir(bk)
-            for src in glob.glob(os.path.join(bdir, '{}*'.format(logname))):
+            for src in glob.glob(os.path.join(bdir, "{}*".format(logname))):
                 shutil.move(src, bk)
 
     root = logging.getLogger()
@@ -178,8 +178,7 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
 
     handlers = [shandler]
     if use_file:
-        rhandler = RotatingFileHandler(
-            logpath, maxBytes=1e8, backupCount=50)
+        rhandler = RotatingFileHandler(logpath, maxBytes=1e8, backupCount=50)
         handlers.append(rhandler)
 
     fmt = logging.Formatter(gFORMAT)

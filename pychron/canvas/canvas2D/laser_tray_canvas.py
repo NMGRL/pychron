@@ -228,8 +228,8 @@ class LaserTrayCanvas(StageCanvas):
             radius = self.beam_radius
 
         if screen:
-            w,h = self.get_wh(radius, radius)
-            radius = (w+h)/2.
+            w, h = self.get_wh(radius, radius)
+            radius = (w + h) / 2.0
 
         return radius
 

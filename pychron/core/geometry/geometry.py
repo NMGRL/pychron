@@ -18,7 +18,20 @@
 # ============= standard library imports ========================
 import math
 
-from numpy import array, vstack, mean, average, hstack, zeros, gradient, asarray, ones_like, column_stack, ones
+from numpy import (
+    array,
+    vstack,
+    mean,
+    average,
+    hstack,
+    zeros,
+    gradient,
+    asarray,
+    ones_like,
+    column_stack,
+    ones,
+)
+
 # ============= local library imports  ==========================
 from numpy.linalg import norm
 
@@ -180,7 +193,10 @@ def find_arc_center(p1, p2, r):
     """
 
     from scipy.optimize import fsolve
-    x, info, status, message = fsolve(arc_cost_func, [0, 0], args=(p1, p2, r), full_output=True)
+
+    x, info, status, message = fsolve(
+        arc_cost_func, [0, 0], args=(p1, p2, r), full_output=True
+    )
     if status == 1:
         return x
 
@@ -285,7 +301,7 @@ def get_intersections(p0, r0, p1, r1):
     # circle 2: (x1, y1), radius r1
     dx = x1 - x0
     dy = y1 - y0
-    d = (dx ** 2 + dy ** 2) ** 0.5
+    d = (dx**2 + dy**2) ** 0.5
     # d = math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
 
     # non intersecting
@@ -298,8 +314,8 @@ def get_intersections(p0, r0, p1, r1):
     if d == 0 and r0 == r1:
         return None
     else:
-        a = (r0 ** 2 - r1 ** 2 + d ** 2) / (2 * d)
-        h = (r0 ** 2 - a ** 2) ** 0.5
+        a = (r0**2 - r1**2 + d**2) / (2 * d)
+        h = (r0**2 - a**2) ** 0.5
         # h = math.sqrt(r0 ** 2 - a ** 2)
         # x2 = x0 + a * (x1 - x0) / d
         # y2 = y0 + a * (y1 - y0) / d
@@ -346,8 +362,12 @@ def approximate_polygon_center3(pts, r, width, height, weight=True, k=3, freq=6)
     for i, p_i in enumerate(pts):
         j = int((i + m) % n)
         p_j = pts[j]
-        if pad < p_i[0] < width - pad and pad < p_i[1] < height - pad and \
-                pad < p_j[0] < width - pad and pad < p_j[1] < height - pad:
+        if (
+            pad < p_i[0] < width - pad
+            and pad < p_i[1] < height - pad
+            and pad < p_j[0] < width - pad
+            and pad < p_j[1] < height - pad
+        ):
             npts = get_intersections(p_i, r, p_j, r)
             if npts:
                 # x3, y3, x4, y4 = npts
@@ -369,7 +389,7 @@ def approximate_polygon_center3(pts, r, width, height, weight=True, k=3, freq=6)
                 cys = ones(rpts.shape[0]) * ys.mean()
 
                 ds = calc_distances(rpts, column_stack((cxs, cys))).T[0]
-                ws = 1 / ds ** 2
+                ws = 1 / ds**2
 
         mcx = average(xs, weights=ws)
         mcy = average(ys, weights=ws)

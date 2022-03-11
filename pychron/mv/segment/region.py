@@ -18,6 +18,7 @@
 # from traits.api import Bool
 # ============= standard library imports ========================
 from numpy import zeros_like, invert, uint8, zeros, ones
+
 # from skimage.filters import threshold_adaptive
 # from skimage.feature import canny, peak_local_max
 # from skimage.morphology import watershed
@@ -31,15 +32,14 @@ from pychron.mv.segment.base import BaseSegmenter
 
 
 class RegionSegmenter(BaseSegmenter):
-
     def segment(self, image, threshold):
-        """
-        """
-        nimage = zeros_like(image, dtype='uint8')
+        """ """
+        nimage = zeros_like(image, dtype="uint8")
         nimage[image >= threshold] = 255
         nimage = invert(nimage)
-        nimage = binary_fill_holes(nimage).astype('uint8')*255
+        nimage = binary_fill_holes(nimage).astype("uint8") * 255
 
         return nimage
+
 
 # ============= EOF =============================================

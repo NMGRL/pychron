@@ -49,10 +49,23 @@ class FusionsLaserMonitor(LaserMonitor):
     def load_additional_args(self, config):
         """ """
         super(FusionsLaserMonitor, self).load_additional_args(self)
-        self.set_attribute(config, 'max_coolant_temp',
-                           'General', 'max_coolant_temp', cast='float', optional=True)
-        self.set_attribute(config, 'max_unavailable',
-                           'General', 'max_unavailable', cast='int', optional=True, default=3)
+        self.set_attribute(
+            config,
+            "max_coolant_temp",
+            "General",
+            "max_coolant_temp",
+            cast="float",
+            optional=True,
+        )
+        self.set_attribute(
+            config,
+            "max_unavailable",
+            "General",
+            "max_unavailable",
+            cast="int",
+            optional=True,
+            default=3,
+        )
 
     def _fcheck_interlocks(self):
         """ """
@@ -79,7 +92,7 @@ class FusionsLaserMonitor(LaserMonitor):
             if ct > self.max_coolant_temp:
 
                 if self._coolant_check_cnt > self.max_coolant_temp_tries:
-                    manager.emergency_shutoff('Coolant over temp {:0.2f}'.format(ct))
+                    manager.emergency_shutoff("Coolant over temp {:0.2f}".format(ct))
                     return True
                 else:
                     self._coolant_check_cnt += 1

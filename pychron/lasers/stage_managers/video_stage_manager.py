@@ -128,7 +128,7 @@ class VideoStageManager(StageManager):
         if name == "zoom":
             self._update_zoom(value)
 
-    #def fiber_light_changed(self, v):
+    # def fiber_light_changed(self, v):
     #    self.autocenter_manager.clear_cache()
 
     def bind_preferences(self, pref_id):
@@ -625,7 +625,7 @@ class VideoStageManager(StageManager):
             frame = video.get_cached_frame()
             if frame is not None:
                 if not len(frame.shape):
-                    print('not len frame', frame.shape, frame)
+                    print("not len frame", frame.shape, frame)
                     return
 
             frame = copy(frame)
@@ -673,7 +673,7 @@ class VideoStageManager(StageManager):
                 self._autocenter(holenum=holenum, ntries=ntries, save=True)
             except BaseException as e:
                 self.debug_exception()
-                self.critical('Autocentering failed. {}'.format(e))
+                self.critical("Autocentering failed. {}".format(e))
 
             self._auto_correcting = False
 
@@ -720,7 +720,7 @@ class VideoStageManager(StageManager):
                     shape = hole.shape
 
             ox, oy = self.canvas.get_screen_offset()
-            mxs, mys = [],[]
+            mxs, mys = [], []
             n = max(1, ntries)
             for ti in range(n):
                 # use machine vision to calculate positioning error
@@ -734,12 +734,15 @@ class VideoStageManager(StageManager):
                 )
 
                 if rpos is not None:
-                    if ti < n-1:
-                        self.linear_move(*rpos, block=True,
-                                         source='autocenter',
-                                         use_calibration=False,
-                                         update_hole=False,
-                                         velocity_scalar=0.5)
+                    if ti < n - 1:
+                        self.linear_move(
+                            *rpos,
+                            block=True,
+                            source="autocenter",
+                            use_calibration=False,
+                            update_hole=False,
+                            velocity_scalar=0.5
+                        )
                     mxs.append(rpos[0])
                     mys.append(rpos[1])
 
@@ -753,21 +756,24 @@ class VideoStageManager(StageManager):
 
             if mxs:
                 n = len(mxs)
-                rpos = sum(mxs)/n, sum(mys)/n
-                self.linear_move(*rpos, block=True,
-                                 source='autocenter',
-                                 use_calibration=False,
-                                 update_hole=False,
-                                 velocity_scalar=0.1)
-                    # if use_interpolation and rpos is None:
-                    #     self.info('trying to get interpolated position')
-                    #     rpos = sm.get_interpolated_position(holenum)
-                    #     if rpos:
-                    #         s = '{:0.3f},{:0.3f}'
-                    #         interp = True
-                    #     else:
-                    #         s = 'None'
-                    #     self.info('interpolated position= {}'.format(s))
+                rpos = sum(mxs) / n, sum(mys) / n
+                self.linear_move(
+                    *rpos,
+                    block=True,
+                    source="autocenter",
+                    use_calibration=False,
+                    update_hole=False,
+                    velocity_scalar=0.1
+                )
+                # if use_interpolation and rpos is None:
+                #     self.info('trying to get interpolated position')
+                #     rpos = sm.get_interpolated_position(holenum)
+                #     if rpos:
+                #         s = '{:0.3f},{:0.3f}'
+                #         interp = True
+                #     else:
+                #         s = 'None'
+                #     self.info('interpolated position= {}'.format(s))
 
         if rpos:
             corrected = True

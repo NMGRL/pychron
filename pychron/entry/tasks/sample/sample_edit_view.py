@@ -16,7 +16,18 @@
 import re
 
 import pyproj as pyproj
-from traits.api import HasTraits, Instance, List, Str, Long, Float, BaseFloat, Enum, Int, CStr
+from traits.api import (
+    HasTraits,
+    Instance,
+    List,
+    Str,
+    Long,
+    Float,
+    BaseFloat,
+    Enum,
+    Int,
+    CStr,
+)
 from traitsui.api import View, UItem, Item, VGroup, EnumEditor, HGroup
 from traitsui.menu import Action
 

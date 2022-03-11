@@ -38,9 +38,10 @@ from pychron.pychron_constants import NULL_STR
 
 class PatternExecutor(Patternable):
     """
-         a pattern is only good for one execution.
-         self.pattern needs to be reset after stop or finish using load_pattern(name_or_pickle)
+    a pattern is only good for one execution.
+    self.pattern needs to be reset after stop or finish using load_pattern(name_or_pickle)
     """
+
     controller = Any
     laser_manager = Any
     show_patterning = Bool(False)
@@ -65,7 +66,9 @@ class PatternExecutor(Patternable):
 
     def finish(self):
         if self.pattern and self.controller:
-            self.controller.linear_move(self.pattern.cx, self.pattern.cy, source='pattern stop')
+            self.controller.linear_move(
+                self.pattern.cx, self.pattern.cy, source="pattern stop"
+            )
 
         self._alive = False
         self.close_pattern()
@@ -87,9 +90,9 @@ class PatternExecutor(Patternable):
 
     def load_pattern(self, name_or_pickle):
         """
-            look for name_or_pickle in local pattern dir
+        look for name_or_pickle in local pattern dir
 
-            if not found try interpreting name_or_pickle is a pickled name_or_pickle
+        if not found try interpreting name_or_pickle is a pickled name_or_pickle
 
         """
         if name_or_pickle is None:
@@ -100,7 +103,7 @@ class PatternExecutor(Patternable):
             path = self.is_local_pattern(name_or_pickle)
 
         if path:
-            wfile = open(path, 'rb')
+            wfile = open(path, "rb")
         else:
             # convert name_or_pickle into a file like obj
             wfile = StringIO(name_or_pickle)
@@ -108,17 +111,16 @@ class PatternExecutor(Patternable):
         # self._load_pattern sets self.pattern
         pattern = self._load_pattern(wfile, path)
 
-        self.on_trait_change(self.stop, 'canceled')
+        self.on_trait_change(self.stop, "canceled")
         return pattern
 
     def is_local_pattern(self, name):
-
         def test_name(ni):
             path = os.path.join(paths.pattern_dir, ni)
             if os.path.isfile(path):
                 return path
 
-        for ni in (name, name + '.lp'):
+        for ni in (name, name + ".lp"):
             p = test_name(ni)
             if p:
                 return p
@@ -130,14 +132,14 @@ class PatternExecutor(Patternable):
             self.laser_manager.stage_manager.cancel()
 
         if self.controller:
-            self.info('User requested stop')
+            self.info("User requested stop")
             self.controller.stop()
 
         if self.pattern is not None:
             # if self.controller:
             #     self.controller.linear_move(self.pattern.cx, self.pattern.cy, source='pattern stop')
             # self.pattern.close_ui()
-            self.info('Pattern {} stopped'.format(self.pattern_name))
+            self.info("Pattern {} stopped".format(self.pattern_name))
 
             # prevent future stops (AbortJogs from massspec) from executing
             self.pattern = None
@@ -151,12 +153,12 @@ class PatternExecutor(Patternable):
     def show_pattern(self):
         self.pattern.window_x = 50
         self.pattern.window_y = 50
-        open_view(self.pattern, view='graph_view')
+        open_view(self.pattern, view="graph_view")
 
     def execute(self, block=False, duration=None, thread_safe=True):
         """
-            if block is true wait for patterning to finish
-            before returning
+        if block is true wait for patterning to finish
+        before returning
         """
         if not self.pattern:
             return
@@ -172,7 +174,7 @@ class PatternExecutor(Patternable):
         else:
             self._pre_execute(evt)
 
-        self.debug('execute xy pattern')
+        self.debug("execute xy pattern")
 
         xyp = self.pattern.xy_pattern_enabled
         if duration:
@@ -184,14 +186,14 @@ class PatternExecutor(Patternable):
 
         pp = self.pattern.power_pattern
         if pp:
-            self.debug('execute power pattern')
+            self.debug("execute power pattern")
             self._power_thread = Thread(target=self._execute_power_pattern)
             self._power_thread.start()
 
         zp = self.pattern.z_pattern
 
         if zp:
-            self.debug('execute z pattern')
+            self.debug("execute z pattern")
             self._z_thread = Thread(target=self._execute_z_pattern)
             self._z_thread.start()
 
@@ -206,34 +208,36 @@ class PatternExecutor(Patternable):
             self.finish()
 
     def _pre_execute(self, evt):
-        self.debug('pre execute')
+        self.debug("pre execute")
         pattern = self.pattern
 
         kind = pattern.kind
-        if kind in ('SeekPattern', 'DragonFlyPeakPattern'):
-            self._info = open_view(pattern, view='execution_graph_view')
+        if kind in ("SeekPattern", "DragonFlyPeakPattern"):
+            self._info = open_view(pattern, view="execution_graph_view")
 
         if evt is not None:
             evt.set()
-        self.debug('pre execute finished')
+        self.debug("pre execute finished")
 
     def _execute_power_pattern(self):
         pat = self.pattern
-        self.info('starting power pattern {}'.format(pat.name))
+        self.info("starting power pattern {}".format(pat.name))
 
         def func(v):
             self.laser_manager.set_laser_power(v)
 
-        self._execute_(func, pat.power_values(), pat.power_sample, 'power pattern setpoint={value}')
+        self._execute_(
+            func, pat.power_values(), pat.power_sample, "power pattern setpoint={value}"
+        )
 
     def _execute_z_pattern(self):
         pat = self.pattern
-        self.info('starting power pattern {}'.format(pat.name))
+        self.info("starting power pattern {}".format(pat.name))
 
         def func(v):
             self.controller.set_z(v)
 
-        self._execute_(func, pat.z_values(), pat.z_sample, 'z pattern z={value}')
+        self._execute_(func, pat.z_values(), pat.z_sample, "z pattern z={value}")
 
     def _execute_(self, func, vs, period, msg):
         for v in vs:
@@ -247,7 +251,7 @@ class PatternExecutor(Patternable):
 
     def _execute_xy_pattern(self):
         pat = self.pattern
-        self.info('starting pattern {}'.format(pat.name))
+        self.info("starting pattern {}".format(pat.name))
         st = time.time()
         self.controller.update_position()
         time.sleep(1)
@@ -257,18 +261,22 @@ class PatternExecutor(Patternable):
                 if not self.isPatterning():
                     break
 
-                self.info('doing pattern iteration {}'.format(ni))
+                self.info("doing pattern iteration {}".format(ni))
                 self._execute_iteration(ni)
 
             self.controller.nonstoppable = True
-            self.controller.linear_move(pat.cx, pat.cy, block=True, source='execute_xy_pattern')
+            self.controller.linear_move(
+                pat.cx, pat.cy, block=True, source="execute_xy_pattern"
+            )
             self.controller.nonstoppable = False
 
             if pat.disable_at_end:
                 self.laser_manager.disable_device()
 
             self.finish()
-            self.info('finished pattern: transit time={:0.1f}s'.format(time.time() - st))
+            self.info(
+                "finished pattern: transit time={:0.1f}s".format(time.time() - st)
+            )
 
         except (TargetPositionError, PositionError) as e:
             self.finish()
@@ -281,11 +289,11 @@ class PatternExecutor(Patternable):
         if controller is not None:
 
             kind = pattern.kind
-            if kind == 'ArcPattern':
+            if kind == "ArcPattern":
                 self._execute_arc(controller, pattern)
-            elif kind == 'CircularContourPattern':
+            elif kind == "CircularContourPattern":
                 self._execute_contour(controller, pattern)
-            elif kind in ('SeekPattern', 'DragonFlyPeakPattern'):
+            elif kind in ("SeekPattern", "DragonFlyPeakPattern"):
                 self._execute_seek(controller, pattern)
             else:
                 self._execute_points(controller, pattern, iteration, multipoint=False)
@@ -296,18 +304,17 @@ class PatternExecutor(Patternable):
             controller.multiple_point_move(pts, velocity=pattern.velocity)
         else:
             for i, (x, y) in enumerate(pts):
-                self.debug('Pattern Point. {},{}'.format(iteration, i))
+                self.debug("Pattern Point. {},{}".format(iteration, i))
                 if not self.isPatterning():
                     break
 
                 # skip first point after first iteration
                 if iteration and not i:
-                    self.debug('skipping first point')
+                    self.debug("skipping first point")
                     continue
 
-                self.debug('Pattern Point. {},{}: {},{}'.format(iteration, i, x, y))
-                controller.linear_move(x, y, block=True,
-                                       velocity=pattern.velocity)
+                self.debug("Pattern Point. {},{}: {},{}".format(iteration, i, x, y))
+                controller.linear_move(x, y, block=True, velocity=pattern.velocity)
 
     def _execute_contour(self, controller, pattern):
         for ni in range(pattern.nsteps):
@@ -315,15 +322,13 @@ class PatternExecutor(Patternable):
                 break
 
             r = pattern.radius * (1 + ni * pattern.percent_change)
-            self.info('doing circular contour {} {}'.format(ni + 1, r))
-            controller.single_axis_move('x', pattern.cx + r,
-                                        block=True)
-            controller.arc_move(pattern.cx, pattern.cy, 360,
-                                block=True)
+            self.info("doing circular contour {} {}".format(ni + 1, r))
+            controller.single_axis_move("x", pattern.cx + r, block=True)
+            controller.arc_move(pattern.cx, pattern.cy, 360, block=True)
             time.sleep(0.1)
 
     def _execute_arc(self, controller, pattern):
-        controller.single_axis_move('x', pattern.radius, block=True)
+        controller.single_axis_move("x", pattern.radius, block=True)
         controller.arc_move(pattern.cx, pattern.cy, pattern.degrees, block=True)
 
     def _execute_seek(self, controller, pattern):
@@ -342,18 +347,18 @@ class PatternExecutor(Patternable):
         sm.canvas.show_desired_position = False
 
         st = time.time()
-        self.debug('Pre seek delay {}'.format(pattern.pre_seek_delay))
+        self.debug("Pre seek delay {}".format(pattern.pre_seek_delay))
         time.sleep(pattern.pre_seek_delay)
 
-        self.debug('starting seek')
-        self.debug('total duration {}'.format(total_duration))
-        self.debug('dwell duration {}'.format(duration))
+        self.debug("starting seek")
+        self.debug("total duration {}".format(total_duration))
+        self.debug("dwell duration {}".format(duration))
 
-        if pattern.kind == 'DragonFlyPeakPattern':
+        if pattern.kind == "DragonFlyPeakPattern":
             try:
                 self._dragonfly_peak(st, pattern, lm, controller)
             except BaseException as e:
-                self.critical('Dragonfly exception. {}'.format(e))
+                self.critical("Dragonfly exception. {}".format(e))
                 self.debug_exception()
         else:
             self._hill_climber(st, controller, pattern)
@@ -361,6 +366,7 @@ class PatternExecutor(Patternable):
         sm.canvas.show_desired_position = osdp
 
         from pyface.gui import GUI
+
         GUI.invoke_later(self._info.dispose)
 
     def _dragonfly_peak(self, st, pattern, lm, controller):
@@ -386,7 +392,7 @@ class PatternExecutor(Patternable):
         total_duration = pattern.total_duration
         min_distance = pattern.min_distance
         aggressiveness = pattern.aggressiveness
-        update_period = pattern.update_period / 1000.
+        update_period = pattern.update_period / 1000.0
         move_threshold = pattern.move_threshold
         blur = pattern.blur
         px, py = cx, cy
@@ -396,17 +402,17 @@ class PatternExecutor(Patternable):
         cnt = 0
         # peak = None
         oimg = sm.get_preprocessed_src()
-        pos_img = zeros_like(oimg, dtype='int16')
-        per_img = zeros_like(oimg, dtype='int16')
+        pos_img = zeros_like(oimg, dtype="int16")
+        per_img = zeros_like(oimg, dtype="int16")
 
         img_h, img_w = pos_img.shape
         pcx, pcy = circle(img_h / 2, img_w / 2, pattern.perimeter_radius * pxpermm)
 
-        color = 2 ** 15 - 1
+        color = 2**15 - 1
 
         perimeter_circle = _coords_inside_image(pcx, pcy, per_img.shape)
         per_img[perimeter_circle] = 50
-        set_data('imagedata', gray2rgb(per_img.astype(uint8)))
+        set_data("imagedata", gray2rgb(per_img.astype(uint8)))
 
         while time.time() - st < total_duration:
             if not self._alive:
@@ -416,7 +422,7 @@ class PatternExecutor(Patternable):
             pts = []
             ist = time.time()
             npt = None
-            self.debug('starting iteration={}, in_motion={}'.format(cnt, in_motion()))
+            self.debug("starting iteration={}, in_motion={}".format(cnt, in_motion()))
             while time.time() - ist < duration:
                 if not self._alive:
                     break
@@ -433,22 +439,26 @@ class PatternExecutor(Patternable):
                 # src = gray2rgb(src).astype(uint8)
                 if pt:
                     pts.append(pt)
-                    #c = circle(peakrow, peakcol, 2)
+                    # c = circle(peakrow, peakcol, 2)
                     # img[c] = (255, 0, 0)
-                    #src[c] = (225, 0, 225)
+                    # src[c] = (225, 0, 225)
 
-                set_data2('imagedata', src)
+                set_data2("imagedata", src)
 
                 sleep(update_period)
 
-            self.debug('iteration {} finished, npts={}'.format(cnt, len(pts)))
+            self.debug("iteration {} finished, npts={}".format(cnt, len(pts)))
 
             pattern.position_str = NULL_STR
 
             if pts:
                 w = array(sats)
                 avg_sat_score = w.mean()
-                self.debug('Average Saturation: {} threshold={}'.format(avg_sat_score, sat_threshold))
+                self.debug(
+                    "Average Saturation: {} threshold={}".format(
+                        avg_sat_score, sat_threshold
+                    )
+                )
                 pattern.average_saturation = avg_sat_score
                 if avg_sat_score < sat_threshold:
                     # pts = array(pts)
@@ -456,7 +466,7 @@ class PatternExecutor(Patternable):
                     ws = w.sum()
                     nx = (x * w).sum() / ws
                     ny = (y * w).sum() / ws
-                    self.debug('New point {},{}'.format(nx, ny))
+                    self.debug("New point {},{}".format(nx, ny))
                     npt = nx, ny, 1
                 else:
                     continue
@@ -467,7 +477,7 @@ class PatternExecutor(Patternable):
                 # wait = False
                 x, y = next(point_gen)
                 px, py = ncx + x, ncy + y
-                self.debug('generating new point={},{} ---- {},{}'.format(x, y, px, py))
+                self.debug("generating new point={},{} ---- {},{}".format(x, y, px, py))
 
             else:
 
@@ -492,19 +502,25 @@ class PatternExecutor(Patternable):
                 dx = npt[0] / pxpermm * ascalar
                 dy = npt[1] / pxpermm * ascalar
                 if abs(dx) < move_threshold or abs(dy) < move_threshold:
-                    self.debug('Deviation too small dx={},dy={}'.format(dx, dy, move_threshold))
-                    pattern.position_str = 'Deviation too small'
+                    self.debug(
+                        "Deviation too small dx={},dy={}".format(dx, dy, move_threshold)
+                    )
+                    pattern.position_str = "Deviation too small"
                     continue
 
                 px += dx
                 py -= dy
-                self.debug('i: {}. point={},{}. '
-                           'Intensitiy Scalar={}, Modified Scalar={}'.format(cnt, px, py, scalar, ascalar))
+                self.debug(
+                    "i: {}. point={},{}. "
+                    "Intensitiy Scalar={}, Modified Scalar={}".format(
+                        cnt, px, py, scalar, ascalar
+                    )
+                )
 
                 ncx, ncy = px, py
 
             if not pattern.validate(px, py):
-                self.debug('invalid position. {},{}'.format(px, py))
+                self.debug("invalid position. {},{}".format(px, py))
 
                 curx = px - dx
                 cury = py + dy
@@ -515,28 +531,40 @@ class PatternExecutor(Patternable):
                 px = vx * aggressiveness + cx
                 py = vy * aggressiveness + cy
 
-                self.debug('reduced vector magnitude. new pos={},{}'.format(px, py))
+                self.debug("reduced vector magnitude. new pos={},{}".format(px, py))
 
                 # for safety validate this new position
                 # if above calculation is correct the new position should always be valid
                 if not pattern.validate(px, py):
-                    self.debug('vector calculations incorrect. moving to center position')
+                    self.debug(
+                        "vector calculations incorrect. moving to center position"
+                    )
                     px, py = cx, cy
 
                 ncx, ncy = px, py
 
-            pattern.position_str = '{:0.5f},{:0.5f}'.format(px, py)
+            pattern.position_str = "{:0.5f},{:0.5f}".format(px, py)
 
             # if there is less than 1 duration left then block is true
             # block = total_duration - (time.time() - st) < duration
             block = True
-            self.debug('move to {}, {} blocking ={}, alive={}'.format(px, py, block, self._alive))
+            self.debug(
+                "move to {}, {} blocking ={}, alive={}".format(
+                    px, py, block, self._alive
+                )
+            )
             if self._alive:
                 try:
-                    linear_move(px, py, source='dragonfly{}'.format(cnt), block=block, velocity=pattern.velocity,
-                                use_calibration=False)
+                    linear_move(
+                        px,
+                        py,
+                        source="dragonfly{}".format(cnt),
+                        block=block,
+                        velocity=pattern.velocity,
+                        use_calibration=False,
+                    )
                 except TargetPositionError as e:
-                    self.debug('Target position error: {}'.format(e))
+                    self.debug("Target position error: {}".format(e))
                     break
 
                 ay, ax = py - cy, px - cx
@@ -552,13 +580,13 @@ class PatternExecutor(Patternable):
                 cxx, cyy = circle(ay, ax, 2)
                 c = _coords_inside_image(cxx, cyy, pos_img.shape)
                 pos_img[c] = color - 60
-                nimg = ((pos_img + per_img).astype(uint8))
+                nimg = (pos_img + per_img).astype(uint8)
 
-                set_data('imagedata', gray2rgb(nimg))
+                set_data("imagedata", gray2rgb(nimg))
 
                 cnt += 1
 
-        self.debug('dragonfly complete')
+        self.debug("dragonfly complete")
         controller.block()
 
     def _hill_climber(self, st, controller, pattern):
@@ -596,12 +624,17 @@ class PatternExecutor(Patternable):
             if avg_sat_score < sat_threshold:
                 # use_update_point = False
                 # current_x, current_y = x, y
-                linear_move(ax, ay, block=False, velocity=pattern.velocity,
-                            use_calibration=False,
-                            update=False,
-                            immediate=True)
+                linear_move(
+                    ax,
+                    ay,
+                    block=False,
+                    velocity=pattern.velocity,
+                    use_calibration=False,
+                    update=False,
+                    immediate=True,
+                )
             else:
-                self.debug('Saturation target reached. not moving')
+                self.debug("Saturation target reached. not moving")
                 update_plot = False
 
             density_scores = []
@@ -619,7 +652,7 @@ class PatternExecutor(Patternable):
                 density_scores.append(score_density)
                 saturation_scores.append(score_saturation)
 
-                set_data('imagedata', img)
+                set_data("imagedata", img)
                 ts.append(time.time() - st)
                 time.sleep(0.1)
 
@@ -636,7 +669,10 @@ class PatternExecutor(Patternable):
                 density_scores = array(density_scores)
                 saturation_scores = array(saturation_scores)
 
-                weights = [1 / (max(0.0001, ((xi - ax) ** 2 + (yi - ay) ** 2)) ** 0.5) for xi, yi in positions]
+                weights = [
+                    1 / (max(0.0001, ((xi - ax) ** 2 + (yi - ay) ** 2)) ** 0.5)
+                    for xi, yi in positions
+                ]
 
                 avg_score = average(density_scores, weights=weights)
                 avg_sat_score = average(saturation_scores, weights=weights)
@@ -644,14 +680,16 @@ class PatternExecutor(Patternable):
 
                 m, b = polyfit(ts, density_scores, 1)
                 if m > 0:
-                    score *= (1 + m)
+                    score *= 1 + m
 
                 pattern.set_point(score, pt)
 
-                self.debug('i:{} XY:({:0.5f},{:0.5f})'.format(i, x, y))
-                self.debug('Density. AVG:{:0.3f} N:{} Slope:{:0.3f}'.format(avg_score, n, m))
-                self.debug('Modified Density Score: {:0.3f}'.format(score))
-                self.debug('Saturation. AVG:{:0.3f}'.format(avg_sat_score))
+                self.debug("i:{} XY:({:0.5f},{:0.5f})".format(i, x, y))
+                self.debug(
+                    "Density. AVG:{:0.3f} N:{} Slope:{:0.3f}".format(avg_score, n, m)
+                )
+                self.debug("Modified Density Score: {:0.3f}".format(score))
+                self.debug("Saturation. AVG:{:0.3f}".format(avg_sat_score))
                 if update_plot:
                     cp.add_point((x, y))
                     g.add_datum((x, y), plotid=0)
@@ -661,11 +699,15 @@ class PatternExecutor(Patternable):
 
                 # g.add_bulk_data(ts, density_scores, plotid=1, series=1)
 
-                g.add_datum((t, score),
-                            ypadding='0.1',
-                            ymin_anchor=-0.1,
-                            update_y_limits=True, plotid=1)
+                g.add_datum(
+                    (t, score),
+                    ypadding="0.1",
+                    ymin_anchor=-0.1,
+                    update_y_limits=True,
+                    plotid=1,
+                )
 
             update_axes()
+
 
 # ============= EOF =============================================

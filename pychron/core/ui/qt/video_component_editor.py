@@ -45,15 +45,15 @@ class _VideoComponentEditor(_LaserComponentEditor):
         self.playTimer = QTimer(self.control)
         self.playTimer.timeout.connect(self.update)
         # self.control.connect(self.playTimer, SIGNAL('timeout()'), self.update)
-        print('fffffffffff', self.value.fps)
+        print("fffffffffff", self.value.fps)
         if self.value.fps:
             self.playTimer.setInterval(1000 / float(self.value.fps))
         self.playTimer.start()
 
         self.value.on_trait_change(self.stop, "closed_event")
 
-        self.value.on_trait_change(self._update_fps, 'fps')
-        self.sync_value('stop_timer', 'stop_timer', mode='from')
+        self.value.on_trait_change(self._update_fps, "fps")
+        self.sync_value("stop_timer", "stop_timer", mode="from")
         # self._prev_time = time.time()
         self._alive = True
         # QTimer.singleShot(self._get_interval(), lambda: self.update(-1))
@@ -63,8 +63,8 @@ class _VideoComponentEditor(_LaserComponentEditor):
             self.playTimer.setInterval(1000 / float(self.value.fps))
 
     # def _get_interval(self):
-        # if self.value.fps:
-        #     return 1000 / float(self.value.fps)
+    # if self.value.fps:
+    #     return 1000 / float(self.value.fps)
 
     def stop(self):
         print("VideoComponentEditor stop")

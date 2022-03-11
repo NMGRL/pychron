@@ -74,6 +74,7 @@ class Axis(ConfigLoadable):
     @property
     def calibrated_velocity(self):
         return min(self.max_velocity, max(self.min_velocity, self.velocity))
+
     # private
     def _get_velocity(self):
         return self._velocity
