@@ -49,7 +49,7 @@ class AutoCenterConfig(HasTraits):
     search_width = Int
     blocksize = Int
     blocksize_step = Int
-    inverted = Bool(False)
+    inverted = Bool(True)
 
     def __init__(self, yd=None, *args, **kw):
         if yd is not None:
