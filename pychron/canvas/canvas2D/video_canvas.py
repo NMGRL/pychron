@@ -29,7 +29,7 @@ class VideoCanvas(SceneCanvas):
     video = Any
     padding = 0
     closed_event = Event
-    fps = Int(24)
+    fps = Int(5)
     video_underlay = Instance(VideoUnderlay)
 
     def __init__(self, *args, **kw):

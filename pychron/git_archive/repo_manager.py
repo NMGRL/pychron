@@ -40,6 +40,7 @@ from pychron.git_archive.views import NewBranchView
 from pychron.loggable import Loggable
 from pychron.pychron_constants import DATE_FORMAT, NULL_STR
 from pychron.updater.commit_view import CommitView
+from pychron.globals import globalv
 
 
 def get_repository_branch(path):
@@ -335,9 +336,12 @@ class GitRepoManager(Loggable):
         #     #     time.sleep(max(0, period - time.time() + st))
         #     # prog.close()
 
-    def clone(self, url, path, reraise=False):
+    def clone(self, url, path, reraise=False, **kw):
+
+        # config = 'http.sslVerify={}'.format(globalv.VERIFY_SSL)
+        # kw['config'] = config
         try:
-            self._repo = Repo.clone_from(url, path)
+            self._repo = Repo.clone_from(url, path, **kw)
             return True
         except GitCommandError as e:
             self.warning_dialog(
@@ -799,13 +803,14 @@ class GitRepoManager(Loggable):
     def has_remote(self, remote="origin"):
         return bool(self._get_remote(remote))
 
-    def push(self, branch="master", remote=None, inform=False):
+    def push(self, branch=None, remote=None, inform=False):
         if remote is None:
             remote = "origin"
 
         rr = self._get_remote(remote)
         if rr:
-
+            if branch is None:
+                branch = self._repo.active_branch.name
             try:
                 self._repo.git.push(remote, branch)
                 if inform:

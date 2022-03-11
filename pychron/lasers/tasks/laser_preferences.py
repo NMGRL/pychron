@@ -76,9 +76,11 @@ class LaserPreferences(BasePreferencesHelper):
     crosshairs_offset_color = Color("blue")
     crosshairs_line_width = Float(1.0)
 
+    aux_crosshairs_kind = Enum("BeamRadius", "UserRadius", "MaskRadius")
     aux_crosshairs_radius = Range(0.0, 10.0, 1.0)
     aux_crosshairs_offsetx = Float(0)
     aux_crosshairs_offsety = Float(0)
+    aux_crosshairs_offset_color = Color("red")
     aux_crosshairs_color = Color("red")
     aux_crosshairs_line_width = Float(1.0)
 
@@ -298,7 +300,7 @@ class LaserPreferencesPane(PreferencesPane):
         return [canvasgrp, videogrp, autocenter_grp, patgrp, powergrp]
 
 
-class FusionsLaserPreferencesPane(PreferencesPane):
+class FusionsLaserPreferencesPane(LaserPreferencesPane):
     pass
 
 

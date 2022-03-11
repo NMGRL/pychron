@@ -371,7 +371,7 @@ class NewportAxis(Axis):
                     value = int(value)
                 else:
                     value = float(value)
-            # print 'setting', self.name, key, value
+            # print('setting', self.name, key, value)
             setattr(self, key, value)
 
         self.nominal_velocity = self.velocity

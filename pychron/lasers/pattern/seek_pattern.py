@@ -304,6 +304,7 @@ class SeekPattern(Pattern):
         return imgplot, cp
 
     def validate(self, xx, yy):
+        print("validate", xx, yy, self.cy, self.cy, self.perimeter_radius)
         return (
             (xx - self.cx) ** 2 + (yy - self.cy) ** 2
         ) ** 0.5 <= self.perimeter_radius

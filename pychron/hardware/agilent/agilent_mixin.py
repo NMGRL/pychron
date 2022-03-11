@@ -13,10 +13,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.hardware.core.i_core_device import ICoreDevice
 
 
 class AgilentMixin:
     id_query = "*TST?"
+
+    def _load_communicator(self, config, comtype):
+        """
+        its very likely that a communicator is already open
+
+        we can search all the registered devices and check if they match.
+
+        the use case for this is for the becker box.
+        it uses a single agilent device for multiple purposes
+
+        """
+
+        for dev in self.application.get_services(ICoreDevice):
+            if isinstance(dev, AgilentMixin):
+                addr = self.config_get("Communications", "address")
+                if dev.communicator.address == addr:
+                    self.communicator = dev.communicator
+        else:
+
+            communicator = self._communicator_factory(comtype)
+            if communicator is not None:
+                # give the _communicator the config object so it can load its args
+                communicator.load(config, self.config_path)
+
+                if hasattr(self, "id_query"):
+                    communicator.id_query = getattr(self, "id_query")
+                self.communicator = communicator
+
+        if self.communicator:
+            return True
 
     def id_response(self, response):
         if response.strip() == "0":

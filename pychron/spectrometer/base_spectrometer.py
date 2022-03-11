@@ -536,6 +536,7 @@ class BaseSpectrometer(SpectrometerDevice):
             yaml.dump(dets, wfile)
 
     def _load_detectors_yaml(self, ypath):
+        self.debug("loading detectors yaml {}".format(ypath))
         with open(ypath, "r") as rfile:
             for i, det in enumerate(yaml.load(rfile, Loader=SafeLoader)):
                 name = det.get("name")

@@ -161,8 +161,8 @@ class StageControlPane(TraitsDockPane):
                 VGroup(
                     UItem(
                         "stage_manager.autocenter_manager.display_image",
-                        width=240,
-                        height=240,
+                        width=-400,
+                        height=-400,
                         editor=ImageEditor(
                             refresh="stage_manager.autocenter_manager."
                             "display_image.refresh_needed"
@@ -181,6 +181,8 @@ class StageControlPane(TraitsDockPane):
                         tooltip="Take a snapshot",
                     ),
                     Item("stage_manager.snapshot_mode", label="Mode"),
+                ),
+                HGroup(
                     icon_button_editor(
                         "stage_manager.record", "media-record", tooltip="Record video"
                     ),
@@ -209,7 +211,8 @@ class StageControlPane(TraitsDockPane):
             camera_grp = VGroup(
                 HGroup(cfggrp, recgrp), mvgrp, visible_when="use_video", label="Camera"
             )
-            tabs.content.append(camera_grp)
+            # tabs.content.append(camera_grp)
+            tabs.content.insert(0, camera_grp)
             tabs.content.append(degasser_grp)
 
         mode = self.model.mode

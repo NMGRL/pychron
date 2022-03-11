@@ -113,6 +113,7 @@ class Monitor(ConfigLoadable):
 
     def _monitor_(self):
         """ """
+
         # load before every monitor call so that changes to the config file
         # are incorpoated
         if self.manager is not None:
@@ -124,14 +125,15 @@ class Monitor(ConfigLoadable):
         #             funcs = [getattr(self, h) for h in dir(self)
         #                      if '_fcheck' in h and h not in self._invalid_checks]
         stop_signal = self._stop_signal
+
         while not stop_signal.isSet():
+            # sleep before running monitor again
+            time.sleep(self.sample_delay)
+
             for fi in self._get_checks():
                 fi()
                 if stop_signal.isSet():
                     break
-
-            # sleep before running monitor again
-            time.sleep(self.sample_delay)
 
 
 # ============= EOF ====================================

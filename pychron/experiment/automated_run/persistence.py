@@ -141,7 +141,7 @@ class ExcelPersister(BasePersister):
     #     """
     #     self.info('pre measurement save')
 
-    def post_measurement_save(self):
+    def post_measurement_save(self, **kw):
         if DEBUG:
             self.debug("Not measurement saving to xls")
             return
@@ -460,7 +460,7 @@ class AutomatedRunPersister(BasePersister):
 
         dm.close_file()
 
-    def post_measurement_save(self, save_local=True):
+    def post_measurement_save(self, save_local=True, **kw):
         """
         check for runid conflicts. automatically update runid if conflict
 
