@@ -1526,6 +1526,13 @@ class DVC(Loggable):
     def get_repository(self, exp):
         return self._get_repository(exp)
 
+    def get_version(self):
+        bd = str(self.application.preferences.get('pychron.update.build_repo'))
+        self.debug("get version {}".format(bd))
+        if os.path.isdir(bd):
+            repo = Repo(bd)
+            return repo.head.commit.hexsha
+
     def get_meta_head(self):
         return self.meta_repo.get_head()
 

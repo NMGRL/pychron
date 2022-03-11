@@ -756,8 +756,9 @@ class DVCPersister(BasePersister):
         self._save_macrochron(obj)
 
         hexsha = str(self.dvc.get_meta_head())
-        obj["commit"] = hexsha
-
+        obj["meta_commit"] = hexsha
+        dchexsha = str(self.dvc.get_version())
+        obj["data_collection_commit"] = dchexsha
         # dump runid.json
         p = self._make_path()
         dvc_dump(obj, p)
@@ -778,7 +779,7 @@ class DVCPersister(BasePersister):
         # dump runid.data.json
         p = self._make_path(modifier=".data")
         data = {
-            "commit": hexsha,
+            "data_collection_commit": dchexsha,
             "encoding": "base64",
             "format": "{}ff".format(endianness),
             "signals": signals,
