@@ -161,7 +161,7 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
         logpath = os.path.join(bdir, logname)
 
         if os.path.isfile(logpath):
-            # move all log files there own directory
+            # move all log files their own directory
             # name directory based on logpath create date
             result = os.stat(logpath)
             mt = result.st_mtime
@@ -246,4 +246,4 @@ def wrap(items, width=40, indent=90, delimiter=","):
 
     return ",\n{}".format(" " * indent).join(rs)
 
-    # ============================== EOF ===================================
+# ============================== EOF ===================================
