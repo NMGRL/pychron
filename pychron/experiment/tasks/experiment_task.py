@@ -850,7 +850,9 @@ class ExperimentEditorTask(EditorTask):
             left=Splitter(
                 PaneItem("pychron.wait"),
                 Tabbed(
-                    PaneItem("pychron.experiment.factory",),
+                    PaneItem(
+                        "pychron.experiment.factory",
+                    ),
                     PaneItem("pychron.experiment.isotope_evolution"),
                 ),
                 orientation="vertical",

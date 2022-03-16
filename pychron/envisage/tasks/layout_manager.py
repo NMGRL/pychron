@@ -105,9 +105,9 @@ class LayoutManager(Loggable):
                     break
                 else:
                     if not self.confirmation_dialog(
-                            "Name {} already exists. Choose a different name (Yes/No)?".format(
-                                name
-                            )
+                        "Name {} already exists. Choose a different name (Yes/No)?".format(
+                            name
+                        )
                     ):
                         break
 
@@ -118,7 +118,7 @@ class LayoutManager(Loggable):
                 d[str(li.name)] = li.layouts
 
         p = os.path.join(paths.hidden_dir, "window_positions")
-        with open(p, 'wb') as wfile:
+        with open(p, "wb") as wfile:
             pickle.dump(d, wfile)
 
         # d = shelve.open(p, writeback=True)
@@ -138,7 +138,7 @@ class LayoutManager(Loggable):
         p = os.path.join(paths.hidden_dir, "window_positions")
         if os.path.isfile(p):
             try:
-                with open(p, 'rb') as rfile:
+                with open(p, "rb") as rfile:
                     return pickle.load(rfile)
             except pickle.PickleError:
                 pass
@@ -173,5 +173,6 @@ class LayoutManager(Loggable):
             buttons=["OK"],
         )
         return v
+
 
 # ============= EOF =============================================

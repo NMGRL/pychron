@@ -59,7 +59,7 @@ class WaitPane(TraitsDockPane):
                     ),
                     UItem("continue_button"),
                 ),
-                show_border=True
+                show_border=True,
             ),
         )
 
@@ -87,5 +87,6 @@ class WaitPane(TraitsDockPane):
             ),
         )
         return v
+
 
 # ============= EOF =============================================
