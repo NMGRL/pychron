@@ -247,7 +247,7 @@ class DVCPersister(BasePersister):
         commit=True,
         commit_tag="COLLECTION",
         push=True,
-        exception_q=None,
+        exception_queue=None,
         complete_event=None,
     ):
         """
@@ -258,6 +258,8 @@ class DVCPersister(BasePersister):
         check if unique spectrometer.json
         commit changes
         push changes
+
+
         :return:
         """
         self.info("================= post measurement save started =================")
@@ -285,6 +287,15 @@ class DVCPersister(BasePersister):
         self._check_repository_identifier()
 
         self._save_analysis(timestamp)
+        dvc = self.dvc
+        with dvc.session_ctx():
+            try:
+                self._save_analysis_db(timestamp)
+            except DatabaseError as e:
+                self.debug_exception()
+                self.warning(e)
+                if exception_queue:
+                    exception_queue.put(("Fatal", "DatabaseError. see log"))
 
         # save monitor
         self._save_monitor()
@@ -293,7 +304,6 @@ class DVCPersister(BasePersister):
         self._save_peak_center(self.per_spec.peak_center)
 
         # stage files
-        dvc = self.dvc
 
         if self.stage_files:
             if commit:
@@ -346,8 +356,8 @@ class DVCPersister(BasePersister):
                 except GitCommandError as e:
                     self.debug_exception()
                     self.warning(e)
-                    if exception_q:
-                        exception_q.put(
+                    if exception_queue:
+                        exception_queue.put(
                             (
                                 "NonFatal",
                                 "NON FATAL\n\n"
@@ -370,8 +380,8 @@ class DVCPersister(BasePersister):
                 except GitCommandError as e:
                     self.debug_exception()
                     self.warning(e)
-                    if exception_q:
-                        exception_q.put(
+                    if exception_queue:
+                        exception_queue.put(
                             (
                                 "NonFatal",
                                 "NON FATAL\n\n"
@@ -380,17 +390,9 @@ class DVCPersister(BasePersister):
                             )
                         )
 
-        with dvc.session_ctx():
-            try:
-                self._save_analysis_db(timestamp)
-            except DatabaseError as e:
-                self.debug_exception()
-                self.warning(e)
-                if exception_q:
-                    exception_q.put(("Fatal", "DatabaseError. see log"))
-
         self.info("================= post measurement save finished =================")
         if complete_event:
+            self.debug("clear save flag")
             complete_event.clear()
 
     def save_run_log_file(self, path):

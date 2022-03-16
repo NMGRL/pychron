@@ -1354,7 +1354,7 @@ class AutomatedRun(Loggable):
             self.spec.new_result(self)
 
             # save to database
-            if exception_queue and 0:  # parallel save not currently working
+            if exception_queue:  # parallel save not currently working
                 t = Thread(
                     target=self._persister_save_action,
                     args=("post_measurement_save",),
