@@ -149,7 +149,7 @@ sem={}
         return self.std
 
     def _check_integrity(self, x, y):
-        nx, ny = x.shape[0], y.shape[0]
+        nx, ny = x.shape[0] if x is not None else None, y.shape[0] if y is not None else None
         if not nx or not ny:
             return
         if nx != ny:

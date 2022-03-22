@@ -348,6 +348,7 @@ class ReferencesSeries(BaseSeries):
                     bind_id = hash(tuple([r.uuid for r in refs]))
 
                 ffit = "{}_{}".format(po.fit, po.error_type)
+
                 _, scatter, l = graph.new_series(
                     r_xs,
                     r_ys,
