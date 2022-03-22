@@ -48,6 +48,7 @@ from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.dvc.meta_object import MetaObjectException
 from pychron.envisage.view_util import open_view
+from pychron.lasers.stage_managers.stage_manager import StageManager
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
 
@@ -89,6 +90,10 @@ class LoadSelection(HasTraits):
             title="Select Loads to Unarchive",
         )
         return v
+
+
+class NamedPosition(HasTraits):
+    name = Str
 
 
 class LoadPosition(HasTraits):
@@ -221,12 +226,14 @@ class LoadingManager(DVCIrradiationable):
 
     cmap_name = Enum(sorted(list(color_map_name_dict.keys())))
     use_cmap = Bool(True)
-    interaction_mode = Enum("Entry", "Info", "Edit")
+    interaction_mode = Enum("Entry", "Info", "Edit", "Goto", "GotoEntry", "FootPedal")
     suppress_update = False
 
     use_measured = Bool(False)
 
     _suppress_edit = Bool(False)
+
+    stage_manager = Instance(StageManager)
 
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
@@ -569,10 +576,14 @@ class LoadingManager(DVCIrradiationable):
         # clear fill
         canvas_hole.fill = False
         canvas_hole.clear_text()
+        self._active_position_idx = pid
 
     def _new_position(self, canvas_hole):
         pid = int(canvas_hole.name)
+        self._new_position_factory(pid)
+        self._set_canvas_hole_selected(canvas_hole)
 
+    def _new_position_factory(self, pid):
         lp = LoadPosition(
             identifier=self.identifier,
             irradiation=self.irradiation,
@@ -587,8 +598,6 @@ class LoadingManager(DVCIrradiationable):
             note=self.note,
         )
         self.positions.append(lp)
-
-        self._set_canvas_hole_selected(canvas_hole)
 
     def _auto_increment_identifier(self):
         if self.auto_increment and self.identifier:
@@ -775,7 +784,7 @@ class LoadingManager(DVCIrradiationable):
             return
 
         if self.confirmation_dialog(
-            "Are you sure you want to Archive the selected Loads?"
+                "Are you sure you want to Archive the selected Loads?"
         ):
             self.dvc.archive_loads([li.name for li in self.selected_instances])
             self._refresh_loads()
@@ -812,7 +821,7 @@ class LoadingManager(DVCIrradiationable):
         if self.load_instance:
             ln = self.load_instance.name
             if not self.confirmation_dialog(
-                "Are you sure you want to delete {}?".format(ln)
+                    "Are you sure you want to delete {}?".format(ln)
             ):
                 return
 
@@ -916,6 +925,22 @@ class LoadingManager(DVCIrradiationable):
                 sel.nxtals = self.nxtals
                 sel.nxtals_label.text = self.nxtals
 
+    _active_position_idx = 1
+    @on_trait_change("canvas:increment_event")
+    def _increment(self):
+        self.debug('increment')
+        item = self.canvas.scene.get_item(self._active_position_idx)
+        if item:
+            item.fill = True
+
+            self._goto(self._active_position_idx)
+            self._new_position_factory(self._active_position_idx)
+
+            self.canvas.set_last_position(self._active_position_idx)
+
+            self._active_position_idx += 1
+            self.canvas.request_redraw()
+
     @on_trait_change("canvas:selected")
     def _update_selected(self, new):
         if not new:
@@ -925,6 +950,33 @@ class LoadingManager(DVCIrradiationable):
             self.warning_dialog("Select a load")
             return
 
+        if self.interaction_mode == 'Goto':
+            self._goto(new)
+        else:
+            self._interact(new)
+
+    def set_interaction_mode(self, mode):
+        if self.interaction_mode == mode:
+            self.interaction_mode = 'Entry'
+        else:
+            self.interaction_mode = mode
+
+    def _interaction_mode_changed(self, new):
+        self.debug('interaction mode {}'.format(new))
+        self.canvas.mode_overlay.mode = new
+        self.canvas.set_foot_pedal_mode(new == 'FootPedal')
+        self.canvas.request_redraw()
+
+    def _goto(self, new):
+        self.debug("goto {}".format(new))
+        if not self.stage_manager:
+            # self.warning_dialog('No Stage Manager')
+            return
+
+        if not self.stage_manager.moving():
+            self.stage_manager.move_to_hole(int(new.name))
+
+    def _interact(self, new):
         if not self.canvas.editable:
             if self.use_measured:
                 if new.measured_indicator:
@@ -1001,7 +1053,6 @@ class LoadingManager(DVCIrradiationable):
         # self.refresh_table = True
         self.dirty = True
         self.canvas.request_redraw()
-
 
 # ============= EOF =============================================
 

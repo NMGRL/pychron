@@ -25,7 +25,7 @@ from pychron.globals import globalv
 from pychron.loading.tasks.actions import (
     SaveLoadingPDFAction,
     ConfigurePDFAction,
-    SaveLoadingDBAction,
+    SaveLoadingDBAction, GotoModeAction, GotoEntryModeAction, FootPedalModeAction,
 )
 from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane
 
@@ -41,6 +41,7 @@ class LoadingTask(BaseManagerTask):
     tool_bars = [
         SToolBar(SaveLoadingPDFAction(), ConfigurePDFAction()),
         SToolBar(SaveLoadingDBAction()),
+        SToolBar(GotoModeAction(), GotoEntryModeAction(), FootPedalModeAction())
     ]
 
     def activated(self):
@@ -83,6 +84,14 @@ class LoadingTask(BaseManagerTask):
     #
     # def set_edit(self):
     #     self.manager.set_edit()
+    def goto_mode(self):
+        self.manager.set_interaction_mode('Goto')
+
+    def goto_entry_mode(self):
+        self.manager.set_interaction_mode('GotoEntry')
+
+    def foot_pedal_mode(self):
+        self.manager.set_interaction_mode('FootPedal')
 
     def configure_pdf(self):
         self.manager.configure_pdf()

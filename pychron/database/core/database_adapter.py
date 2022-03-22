@@ -225,6 +225,7 @@ class DatabaseAdapter(Loggable):
             else:
                 self.warning("no session factory")
         else:
+            self.critical('using Mock session')
             self.session = MockSession()
 
     def close_session(self):

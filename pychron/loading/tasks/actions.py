@@ -24,6 +24,23 @@ from pychron.envisage.resources import icon
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+class GotoModeAction(TaskAction):
+    name = "Goto"
+    method = "goto_mode"
+    image = icon("")
+
+
+class GotoEntryModeAction(TaskAction):
+    name = "GotoEntry"
+    method = "goto_entry_mode"
+    image = icon("")
+
+
+class FootPedalModeAction(TaskAction):
+    name = "FootPedal"
+    method = "foot_pedal_mode"
+    image = icon("")
+
 
 class SaveLoadingDBAction(TaskAction):
     name = "Save DB"
@@ -67,6 +84,5 @@ class EditAction(TaskAction):
 class GenerateResultsAction(TaskAction):
     name = "Generate Results"
     method = "generate_results"
-
 
 # ============= EOF =============================================

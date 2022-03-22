@@ -368,5 +368,4 @@ class LoadControlPane(TraitsDockPane):
         v = View(VFold(load_grp, samplegrp, notegrp, viewgrp))
         return v
 
-
 # ============= EOF =============================================
