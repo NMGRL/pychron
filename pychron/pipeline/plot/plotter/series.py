@@ -43,6 +43,7 @@ AGE = "Age"
 EXTRACT_VALUE = "Extract Value"
 EXTRACT_DURATION = "Extract Duration"
 CLEANUP = "Cleanup"
+F = 'F'
 
 ATTR_MAPPING = {
     PEAK_CENTER: "peak_center",
@@ -54,7 +55,7 @@ ATTR_MAPPING = {
     EXTRACT_VALUE: "extract_value",
     EXTRACT_DURATION: "extract_duration",
     CLEANUP: "cleanup",
-    "F": "uF",
+    F: "uF",
 }
 
 AR4039 = "Ar40/Ar39"

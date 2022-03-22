@@ -77,7 +77,7 @@ from pychron.pipeline.plot.plotter.series import (
     LAB_HUM,
     EXTRACT_DURATION,
     RADIOGENIC_YIELD,
-    AGE,
+    AGE, F,
 )
 from pychron.pychron_constants import (
     EXTRACT_VALUE,
@@ -559,6 +559,7 @@ class SeriesOptionsManager(FigureOptionsManager):
             if analysis_type in (UNKNOWN, COCKTAIL):
                 names.append(AGE)
                 names.append(RADIOGENIC_YIELD)
+                names.append(F)
 
             if analysis_type in (DETECTOR_IC,):
                 for i, di in enumerate(detectors):
