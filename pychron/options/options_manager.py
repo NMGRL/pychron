@@ -77,7 +77,8 @@ from pychron.pipeline.plot.plotter.series import (
     LAB_HUM,
     EXTRACT_DURATION,
     RADIOGENIC_YIELD,
-    AGE, F,
+    AGE,
+    F,
 )
 from pychron.pychron_constants import (
     EXTRACT_VALUE,
