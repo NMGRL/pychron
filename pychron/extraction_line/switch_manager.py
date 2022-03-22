@@ -22,8 +22,9 @@ import time
 from operator import itemgetter
 from pickle import PickleError
 from string import digits
-
+import json
 import yaml
+
 from traits.api import Any, Dict, List, Bool, Event, Str
 
 from pychron.core.helpers.iterfuncs import groupby_key
@@ -35,7 +36,7 @@ from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.hardware.switch import Switch, ManualSwitch
-from pychron.hardware.valve import HardwareValve
+from pychron.hardware.valve import HardwareValve, DoubleActuationValve
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
@@ -50,9 +51,9 @@ def parse_interlocks(vobj, tag):
         vs = vobj.get("{}s".format(tag))
 
     if isinstance(vs, (tuple, list)):
-        interlocks = [i.strip() for i in vs]
+        interlocks = [str(i).strip() for i in vs]
     else:
-        interlocks = [vs.strip()]
+        interlocks = [str(vs).strip()]
 
     return interlocks
 
@@ -925,6 +926,9 @@ class SwitchManager(Manager):
         obj = self._load_actuation_tracker()
 
         vobj = obj.get(v.name, {})
+        if "start" not in vobj:
+            vobj["start"] = v.last_actuation
+            vobj["start_count"] = vobj.get("count", 1)
 
         vobj["count"] = a = vobj.get("count", 0) + 1
 
@@ -934,14 +938,21 @@ class SwitchManager(Manager):
         obj[v.name] = vobj
 
         p = paths.actuation_tracker_file
+
         with open(p, "w") as wfile:
-            yaml.dump(obj, wfile)
+            json.dump(obj, wfile)
 
     def _load_actuation_tracker(self):
         p = paths.actuation_tracker_file
         obj = {}
-        if p and os.path.isfile(p):
-            obj = yload(p)
+        if p:
+            if os.path.isfile(p):
+                with open(p, "r") as rfile:
+                    obj = json.load(rfile)
+            else:
+                p = paths.actuation_tracker_file_yaml
+                if p and os.path.isfile(p):
+                    obj = yload(p)
 
         return obj or {}
 
@@ -979,8 +990,10 @@ class SwitchManager(Manager):
             for klass, func in (
                 (Switch, parser.get_switches),
                 (ManualSwitch, parser.get_manual_valves),
+                (DoubleActuationValve, parser.get_double_actuation_valves),
             ):
                 for s in func():
+                    print(s, klass)
                     factory(s, use_explanation=False, klass=klass)
 
             ps = []
@@ -1039,7 +1052,7 @@ class SwitchManager(Manager):
         outer = pobj.get("outer")
         if inner in self.switches and outer in self.switches:
             return PipetteTracker(
-                name=pobj.get("name", "Pipette"), inner=inner, outer=outer
+                name=pobj.get("name", "Pipette"), inner=str(inner), outer=str(outer)
             )
 
     def _pipette_factory_xml(self, p):
@@ -1114,9 +1127,11 @@ class SwitchManager(Manager):
         state_invert = False
         if klass != ManualSwitch:
             if state_dev_obj is not None:
-                state_dev_name = state_dev_obj.get("name")
-                state_address = state_dev_obj.get("address")
-                state_invert = to_bool(state_dev_obj.get("inverted"))
+                state_dev_name = state_dev_obj.get("name", "")
+                state_address = state_dev_obj.get("address", "")
+                state_invert = to_bool(state_dev_obj.get("inverted", False))
+            else:
+                state_address = vobj.get("state_address", "")
 
         parent = vobj.get("parent")
         parent_name = ""
@@ -1136,7 +1151,7 @@ class SwitchManager(Manager):
             check_actuation_delay=float(vobj.get("check_actuation_delay", 0)),
             actuator_name=actuator_name,
             state_device_name=state_dev_name,
-            state_address=state_address,
+            state_address=str(state_address),
             state_invert=state_invert,
             description=str(vobj.get("description", "")),
             query_state=to_bool(vobj.get("query_state", True)),

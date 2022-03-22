@@ -49,6 +49,7 @@ class AutoCenterConfig(HasTraits):
     search_width = Int
     blocksize = Int
     blocksize_step = Int
+    inverted = Bool(False)
 
     def __init__(self, yd=None, *args, **kw):
         if yd is not None:
@@ -94,7 +95,7 @@ class AutoCenterManager(MachineVisionManager):
     # blocksize = Int
     # blocksize_step = Int
 
-    selected_configuration = Instance(AutoCenterConfig)
+    selected_configuration = Instance(AutoCenterConfig, ())
     configuration_names = List
     configuration_name = Str
 
@@ -103,8 +104,7 @@ class AutoCenterManager(MachineVisionManager):
     locator = None
 
     def bind_preferences(self, pref_id):
-        pass
-        # bind_preference(self, 'use_autocenter', '{}.use_autocenter'.format(pref_id))
+        bind_preference(self, "use_autocenter", "{}.use_autocenter".format(pref_id))
         # bind_preference(self, 'blur', '{}.autocenter_blur'.format(pref_id))
         # bind_preference(self, 'stretch_intensity', '{}.autocenter_stretch_intensity'.format(pref_id))
         # bind_preference(self, 'use_adaptive_threshold', '{}.autocenter_use_adaptive_threshold'.format(pref_id))
@@ -124,18 +124,28 @@ class AutoCenterManager(MachineVisionManager):
         loc = self._get_locator(shape=shape)
         self.locator = loc
 
+        self.debug(
+            "dim={} pxpermm={}, loc.pxpermm={}".format(dim, self.pxpermm, loc.pxpermm)
+        )
         cropdim = ceil(dim * 2.55)
 
+        # frame = loc.rescale(frame, 1.5)
         frame = loc.crop(frame, cropdim, cropdim, offx, offy)
+
+        dim = self.pxpermm * dim
 
         im = self.display_image
         im.source_frame = frame
-        dim = self.pxpermm * dim
 
         config = self.selected_configuration
 
         dx, dy = loc.find(
-            im, frame, dim=dim, preprocess=config.preprop, search=config.search
+            im,
+            frame,
+            dim=dim,
+            preprocess=config.preprop,
+            search=config.search,
+            inverted=config.inverted,
         )
 
         if dx is None and dy is None:
@@ -227,9 +237,15 @@ class AutoCenterManager(MachineVisionManager):
 class CO2AutocenterManager(AutoCenterManager):
     # private
     def _get_locator(self, *args, **kw):
-        from pychron.mv.co2_locator import CO2Locator
+        if self.locator:
+            loc = self.locator
+        else:
+            from pychron.mv.co2_locator import CO2Locator
 
-        return CO2Locator(pxpermm=self.pxpermm, pixel_depth=self.video.pixel_depth)
+            loc = CO2Locator(pxpermm=self.pxpermm, pixel_depth=self.video.pixel_depth)
+        loc.pxpermm = self.pxpermm
+        loc.pixel_depth = self.video.pixel_depth
+        return loc
 
 
 class DiodeAutocenterManager(AutoCenterManager):

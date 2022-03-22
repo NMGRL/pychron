@@ -57,7 +57,7 @@ class MessageFrame(object):
 
 class Handler(object):
     sock = None
-    datasize = 2**14
+    datasize = 2**12
     address = None
     message_frame = None
     read_terminator = None
@@ -109,7 +109,6 @@ class Handler(object):
 
         while 1:
             s = recv(datasize)
-
             if not s:
                 break
 

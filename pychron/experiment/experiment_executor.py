@@ -196,7 +196,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     events = List
 
     timeseries_editor = Instance(AnalysisGroupedSeriesEditor)
-    timeseries_editor_button = Event
+    timeseries_refresh_button = Event
+    timeseries_reset_button = Event
     # configure_timeseries_editor_button = Event
     # timeseries_options = Instance(SeriesOptionsManager)
     timeseries_n_recall = PositiveInteger(50)
@@ -826,14 +827,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         path = os.path.join(paths.setup_dir, "users.yaml")
         if os.path.isfile(path):
             yl = yload(path)
-            items = [
-                (i["name"], i["email"])
-                for i in yl
-                if i["enabled"] and i["email"] != email
-            ]
+            if yl:
+                items = [
+                    (i["name"], i["email"])
+                    for i in yl
+                    if i["enabled"] and i["email"] != email
+                ]
 
-            if items:
-                names, addrs = list(zip(*items))
+                if items:
+                    names, addrs = list(zip(*items))
         return names, addrs
 
     def _wait_for(self, predicate, period=1, invert=False):
@@ -932,10 +934,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self.extracting_run = run
 
-        self.debug("waiting for save event to clear")
-        while self._save_evt.is_set():
-            self._save_evt.wait(1)
-        self.debug("waiting complete")
+        self.debug("parallel saving currently disabled")
+        # if self._save_complete_evt:
+        #     self.debug("waiting for save event to clear")
+        #     while self._save_complete_evt.is_set():
+        #         self._save_complete_evt.wait(1)
+        #     self.debug("waiting complete")
 
         for step in ("_start", "_extraction", "_measurement", "_post_measurement"):
 
@@ -2290,16 +2294,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 return True
 
     def _sync_repositories(self, prog):
-        experiment_ids = {
-            a.repository_identifier
-            for q in self.experiment_queues
-            for a in q.cleaned_automated_runs
-        }
-        for e in experiment_ids:
-            if prog:
-                prog.change_message("Syncing {}".format(e))
-                if not self.datahub.mainstore.sync_repo(e, use_progress=False):
-                    return e
+        if self.use_dvc_persistence:
+            experiment_ids = {
+                a.repository_identifier
+                for q in self.experiment_queues
+                for a in q.cleaned_automated_runs
+            }
+            for e in experiment_ids:
+                if prog:
+                    prog.change_message("Syncing {}".format(e))
+                    if not self.datahub.mainstore.sync_repo(e, use_progress=False):
+                        return e
 
     def _post_run_check(self, run):
         """
@@ -2587,8 +2592,16 @@ Use Last "blank_{}"= {}
         # invoke_in_main_thread(self.trait_set, extraction_state_label=msg,
         #                       extraction_state_color=color)
 
-    def _update_timeseries(self):
+    _low_post = None
+
+    def _update_timeseries(self, low_post=None):
         if self.use_dvc_persistence:
+
+            if low_post is None:
+                low_post = self._low_post
+            else:
+                self._low_post = low_post
+
             dvc = self.datahub.mainstore
             with dvc.session_ctx():
                 if self.experiment_queue:
@@ -2618,18 +2631,26 @@ Use Last "blank_{}"= {}
                     self.timeseries_n_recall,
                     mass_spectrometer=ms,
                     exclude_types=("unknown",),
+                    low_post=low_post,
                     verbose=False,
                 )
-                ans = dvc.make_analyses(ans, use_progress=False)
+                if ans:
+                    ans = dvc.make_analyses(ans, use_progress=False)
 
-                self.timeseries_editor.set_items(ans)
-                invoke_in_main_thread(self.timeseries_editor.refresh)
+                    self.timeseries_editor.set_items(ans)
+                    invoke_in_main_thread(self.timeseries_editor.refresh)
 
     # ===============================================================================
     # handlers
     # ===============================================================================
-    def _timeseries_editor_button_fired(self):
+    def _timeseries_refresh_button_fired(self):
         self._update_timeseries()
+
+    def _timeseries_reset_button_fired(self):
+        self._low_post = datetime.now()
+        self.information_dialog(
+            "Timeseries reset to {}".format(self._low_post.strftime("%m/%d/%y %H:%M"))
+        )
 
     # def _configure_timeseries_editor_button_fired(self):
     #

@@ -45,6 +45,7 @@ class MotionProfiler(ConfigLoadable):
     def load(self, p):
         attrs = [
             "max_velocity",
+            "min_velocity",
             "max_transit_time",
             "min_acceleration_time",
             "velocity_tol",
@@ -107,6 +108,7 @@ class MotionProfiler(ConfigLoadable):
 
         vel = (displacement * 2 * acc / 3.0) ** 0.5
         vel = min(self.max_velocity, vel)
+        vel = max(self.min_velocity, vel)
 
         if cnt > 200 or acc >= self.max_acceleration or dec >= self.max_acceleration:
             acc = min(acc, self.max_acceleration)

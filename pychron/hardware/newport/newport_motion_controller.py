@@ -53,14 +53,13 @@ class NewportMotionController(MotionController):
 
     group_commands = True
     _trajectory_mode = None
+    use_hack_axis = True
 
     def initialize(self, *args, **kw):
         """ """
 
         # try to get x position to test comms
         if super(NewportMotionController, self).initialize(*args, **kw):
-            r = True if self.get_current_position("x") is not None else False
-
             # force group destruction
             self.destroy_group(force=True)
 
@@ -68,6 +67,11 @@ class NewportMotionController(MotionController):
             self.read_error()
 
             self.setup_consumer()
+            r = (
+                True
+                if self.get_current_position("x", verbose=True) is not None
+                else False
+            )
             return r
 
     def load_additional_args(self, config):
@@ -152,7 +156,45 @@ class NewportMotionController(MotionController):
         if "x" in self.axes:
             return self.axes["x"].id == 2
 
-    def get_current_position(self, aid):
+    def get_current_xy(self):
+        # x, y = None, None
+        # if self.mode == 'grouped':
+        #     f = self.ask('{}HP'.format(self.groupobj.id), verbose=True)
+        #     # cmd = '{}TP?;{}TP?'.format(self.axes['x'].id, self.axes['y'].id)
+        #     # f = self.ask(cmd, verbose=True)
+        #     # args = f.split(',')[:2]
+        #     try:
+        #         f = f.strip()
+        #         args = f.split('\n')
+        #         x, y = map(float, map(str.strip, args))
+        #
+        #         ax = self.axes['x']
+        #         x = self._sign_correct(x, 'x', ratio=False) / ax.drive_ratio
+        #
+        #         ax = self.axes['y']
+        #         y = self._sign_correct(y, 'y', ratio=False) / ax.drive_ratio
+        #     except BaseException, e:
+        #         # import traceback
+        #         # traceback.print_exc()
+        #         self.warning('get_current_xy failed. {}'.format(e))
+        #         x = self.get_current_position('x')
+        #         y = self.get_current_position('y')
+        #
+        # else:
+        x = self.get_current_position("x")
+        y = self.get_current_position("y")
+        if x is None or y is None:
+            return
+
+        return x, y
+
+        # cmd = '{}TP?;{}TP?'.format(self.axes['x'].id, self.axes['y'].id)
+        # # cmd = self._build_query('TP')
+        # f = self.ask(cmd, verbose=True)
+
+        # args = f.split(',')[:2]
+
+    def get_current_position(self, aid, verbose=False):
         if isinstance(aid, str):
             if aid in self.axes:
                 ax = self.axes[aid]
@@ -165,7 +207,7 @@ class NewportMotionController(MotionController):
             axis = ax.name
 
         cmd = self._build_query("TP", xx=aid)
-        f = self.ask(cmd, verbose=False)
+        f = self.ask(cmd, verbose=verbose)
 
         aname = "_{}_position".format(axis)
         if f != "simulation" and f is not None:
@@ -260,23 +302,24 @@ class NewportMotionController(MotionController):
                 raise ZeroDisplacementException()
             return
 
-        tol = 0.033
+        # tol = 0.033
+        if self.use_hack_axis:
+            tol = 0.001
+            if abs(dx) < tol:
+                if "grouped_move" in kw:
+                    kw.pop("grouped_move")
 
-        if abs(dx) < tol:
-            if "grouped_move" in kw:
-                kw.pop("grouped_move")
-
-            self.info("x displacement {} doing a hack axis move".format(dx))
-            self.single_axis_move("y", y, **kw)
-            # self._y_position = y
-            return
-        if abs(dy) < tol:
-            if "grouped_move" in kw:
-                kw.pop("grouped_move")
-            self.info("y displacement {} doing a hack axis move".format(dy))
-            self.single_axis_move("x", x, **kw)
-            # self._x_position = x
-            return
+                self.info("x displacement {} doing a hack axis move".format(dx))
+                self.single_axis_move("y", y, **kw)
+                # self._y_position = y
+                return
+            if abs(dy) < tol:
+                if "grouped_move" in kw:
+                    kw.pop("grouped_move")
+                self.info("y displacement {} doing a hack axis move".format(dy))
+                self.single_axis_move("x", x, **kw)
+                # self._x_position = x
+                return
 
         errx = self._validate(x, "x", cur=self._x_position)
         erry = self._validate(y, "y", cur=self._y_position)
@@ -305,7 +348,7 @@ class NewportMotionController(MotionController):
         mode="absolute",
         velocity=None,
         velocity_scalar=None,
-        update=250,
+        update=25,
         immediate=False,
         **kw
     ):
@@ -381,14 +424,11 @@ class NewportMotionController(MotionController):
         #        cmd = ';'.join(['{}OR{{}}'.format(k.id) for k in self.axes.itervalues()])
         # if all:
         #            cmd = ';'.join(['{}OR{{}}'.format(k.id) for k in self.axes.itervalues()])
+
+        axis_objs = [a for a in self.axes.values() if a.name in axes]
+
         cmd = ";".join(
-            [
-                self._build_command(
-                    "OR", a.id, nn=search_mode if a.name.lower() != "z" else 3
-                )
-                for a in self.axes.values()
-                if a.name in axes
-            ]
+            [self._build_command("OR", a.id, nn=a._home_search_mode) for a in axis_objs]
         )
         # force z axis home positive
         # cmd = '1OR{};2OR{};3OR{}' .format(search_mode, search_mode, 3)
@@ -400,7 +440,17 @@ class NewportMotionController(MotionController):
 
         #            cmd = self._build_command('OR', xx = axis, nn = )
         self._homing = True
-        self.timer = self.timer_factory()
+
+        def is_homing():
+            for a in axis_objs:
+                m = self._moving(a.id, verbose=False)
+                if m:
+                    self.update_axes()
+                    break
+            else:
+                self.timer.stop()
+
+        self.timer = self.timer_factory(func=is_homing, period=50)
 
         if self.group_commands:
             self.tell(cmd)
@@ -410,6 +460,8 @@ class NewportMotionController(MotionController):
 
         if block:
             self._block()
+
+        self.timer = None
         self._homing = False
 
     def block_group(self, n=10):
@@ -456,6 +508,8 @@ class NewportMotionController(MotionController):
         self.set_trajectory_mode(mode)
         self.mode = "normal"
 
+        self.read_error()
+
     #            if self.speed_mode == 'low':
     #                self.set_low_speed()
 
@@ -468,6 +522,7 @@ class NewportMotionController(MotionController):
                 cmd.append(self._build_command("SH", xx=aid, nn=kw[k]))
 
         self.tell(";".join(cmd))
+        self.read_error()
 
     def define_home(self, axis=None):
         """ """
@@ -523,24 +578,32 @@ class NewportMotionController(MotionController):
 
         return r
 
-    def read_error(self):
+    def read_error(self, read_all=True):
         error = None
-        #        cmd = 'TB?'
         cmd = self._build_query("TB")
-        r = self.ask(cmd)
-        if r is not None and r != "simulation":
-            eargs = r.split(",")
-            try:
-                error_code = int(eargs[0])
-                #                error_msg = eargs[-1]
-                if error_code == 0:
-                    error = None
-                else:
-                    error = error_code
-                    self.warning("Newport Motion Controller:{} {}".format(self.name, r))
-                    #                    gWarningDisplay.add_text('%s - %s' % (self.name, error_msg))
-            except:
-                pass
+
+        n = 10 if read_all else 1
+        has_error = False
+        for i in range(n):
+            r = self.ask(cmd)
+            if r is not None and r != "simulation":
+
+                if not i:
+                    self.debug("------------- Errors ------------")
+                    has_error = True
+                r = r.strip()
+                eargs = r.split(",")
+                try:
+                    error_code = int(eargs[0])
+                    if error_code == 0:
+                        break
+                    else:
+                        error = error_code
+                        self.warning("Newport Motion Controller: i={} {}".format(i, r))
+                except Exception:
+                    pass
+        if has_error:
+            self.debug("---------------------------------")
         return error
 
     def set_group_motion_parameters(
@@ -638,7 +701,7 @@ class NewportMotionController(MotionController):
                 ("AG", "deceleration"),
             ]
             pdict = dict(
-                velocity=axis.velocity,
+                velocity=axis.calibrated_velocity,
                 acceleration=axis.acceleration,
                 deceleration=axis.deceleration,
             )
@@ -678,6 +741,7 @@ class NewportMotionController(MotionController):
                 time.sleep(0.1)
                 # self.read_error()
                 # time.sleep(0.1)
+        self.read_error()
 
     def _single_axis_move(self, *args):
         key, value, block, mode, velocity, velocity_scalar, update, kw = args
@@ -793,6 +857,7 @@ class NewportMotionController(MotionController):
         grouped_move=True,
         sign_correct=True,
         start_timer=False,
+        rflag=0,
         **kw
     ):
         """ """
@@ -811,10 +876,6 @@ class NewportMotionController(MotionController):
 
             gid = self.groupobj.id
             st = "{:n}HL{x:0.5f},{y:0.5f}".format(gid, **kwargs)
-            #            this switch is accomplished by the group_parameter axes orer
-            #            axes=2,1
-            #            if self.axes['x'].id == 2:
-            #                st = '{:n}HL{y:0.3f},{x:0.3f}'.format(id, **kwargs)
 
             self.tell(st, verbose=True)
         else:
@@ -823,30 +884,49 @@ class NewportMotionController(MotionController):
                 [(self.axes["y"].id, kwargs["y"]), (self.axes["x"].id, kwargs["x"])]
             )
 
-        if block or start_timer:
-            self.start_timer()
+        error_code = self.read_error()
+        self.debug("error code={}".format(error_code))
+        if error_code and error_code == 51:
+            if rflag < 4:
+                kw["velocity_scalar"] = 0.5
+                self._linear_move(
+                    kwargs,
+                    block=block,
+                    grouped_move=grouped_move,
+                    sign_correct=sign_correct,
+                    start_timer=start_timer,
+                    rflag=rflag + 1,
+                    **kw
+                )
+        else:
+            if block or start_timer:
+                self.start_timer()
 
-        if block:
+            if block:
 
-            self.info("moving to {x:0.5f},{y:0.5f}".format(**kwargs))
-            self._block()
-            self.info("move to {x:0.5f},{y:0.5f} complete".format(**kwargs))
-            self.update_axes()
+                self.info("moving to {x:0.5f},{y:0.5f}".format(**kwargs))
+                self._block()
+                self.info("move to {x:0.5f},{y:0.5f} complete".format(**kwargs))
+                self.update_axes()
 
-            if not self._stopped:
-                tol = 0.1
-                x, y = self._x_position, self._y_position
+                if not self._stopped:
+                    tol = 0.1
+                    x, y = self._x_position, self._y_position
 
-                if abs(x - target_x) > tol or abs(y - target_y) > tol:
-                    self.warning(
-                        "TargetPosition warning:  "
-                        "current={},{}  target={},{}".format(x, y, target_x, target_y)
-                    )
-                    tol = 0.5
                     if abs(x - target_x) > tol or abs(y - target_y) > tol:
-                        raise TargetPositionError(x, y, target_x, target_y)
-            else:
-                self.debug("motion stopped. not checking for TargetPositionError")
+                        self.warning(
+                            "TargetPosition warning:  "
+                            "current={},{}  target={},{}".format(
+                                x, y, target_x, target_y
+                            )
+                        )
+
+                        xtol = self.xaxes_max - self.xaxes_min
+                        ytol = self.yaxes_max - self.yaxes_min
+                        if abs(x - target_x) > xtol or abs(y - target_y) > ytol:
+                            raise TargetPositionError(x, y, target_x, target_y)
+                else:
+                    self.debug("motion stopped. not checking for TargetPositionError")
 
     def start_timer(self):
         self.timer = self.timer_factory()
@@ -859,6 +939,7 @@ class NewportMotionController(MotionController):
             for c in com.split(";"):
                 self.tell(c)
                 time.sleep(0.1)
+
         if update:
             func, update = update
             if update:
@@ -892,16 +973,18 @@ class NewportMotionController(MotionController):
                 r = self.repeat_command(
                     ("MD?", axis), 5, check_type=int, verbose=verbose
                 )
-                if r is not None:
+                if r is not None and r != "":
                     # stage is moving if r==0
                     moving = not int(r)
 
         elif not self.simulation:
-            r = self.repeat_command("TX", 5, check_type=str, verbose=verbose)
+            # r = self.repeat_command('TX', 5, check_type=str, verbose=verbose)
+            r = self.repeat_command("TS", 5, check_type=str, verbose=verbose)
             if r is not None and len(r) > 0:
                 controller_state = ord(r[0])
-                cs = make_bitarray(controller_state, width=8)
-                moving = cs[3] == "1"
+                cs = make_bitarray(controller_state, width=8)[::-1]
+                self.debug("r={} cs={}".format(r, cs))
+                moving = any(cs[i] == "1" for i in (0, 1, 2))
         else:
             time.sleep(0.5)
 
@@ -912,18 +995,26 @@ class NewportMotionController(MotionController):
         if isinstance(nn, list):
             nn = to_csv_str(nn)
 
-        cmd = "{}"
         args = (command,)
         if xx is not None:
-            cmd += "{}"
             args = (xx, command)
+
         if nn is not None:
-            cmd += "{}"
-            args = (xx, command, nn)
+            args += (nn,)
 
-        return cmd.format(*args)
+        return "".join((str(a) for a in args))
+        # cmd = '{}'
+        # args = (command,)
+        # if xx is not None:
+        #     cmd += '{}'
+        #     args = (xx, command)
+        # if nn is not None:
+        #     cmd += '{}'
+        #     args = (xx, command, nn)
+        #
+        # return cmd.format(*args)
 
-    def _build_query(self, command, xx=" "):
+    def _build_query(self, command, xx=None):
         return self._build_command(command, xx=xx, nn="?")
 
     def _axis_factory(self, path, **kw):
@@ -944,6 +1035,18 @@ class NewportMotionController(MotionController):
             setattr(self, "_%s_position" % a, val)
 
         self.parent.canvas.set_stage_position(self._x_position, self._y_position)
+
+
+class ESP301(NewportMotionController):
+    pass
+
+
+class ESP302(ESP301):
+    def set_home_position(self, **kw):
+        self.debug("set home position obsolete")
+
+    def set_trajectory_mode(self, mode):
+        self.debug("set trajectory mode obsolete")
 
 
 # ======================EOF========================================

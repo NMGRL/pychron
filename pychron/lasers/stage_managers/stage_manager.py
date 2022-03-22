@@ -102,6 +102,9 @@ class StageManager(BaseStageManager):
         super(StageManager, self).__init__(*args, **kw)
         self.stage_controller = self._stage_controller_factory()
 
+    # def fiber_light_changed(self, v):
+    #    pass
+
     def measure_grain_polygon(self):
         pass
 
@@ -143,6 +146,9 @@ class StageManager(BaseStageManager):
                     self._cached_position = pos
 
         return self._cached_current_hole
+
+    def cancel(self):
+        pass
 
     def is_auto_correcting(self):
         return False
@@ -456,9 +462,10 @@ class StageManager(BaseStageManager):
         self.info(msg)
 
         # if define_home:
-        self.stage_controller.set_home_position(**home_kwargs)
+        # self.stage_controller.set_home_position(**home_kwargs)
 
         self.stage_controller.home(homed)
+        # self.stage_controller.set_home_position(**home_kwargs)
 
         # explicitly block
         #        self.stage_controller.block()

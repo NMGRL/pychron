@@ -128,6 +128,9 @@ class VideoStageManager(StageManager):
         if name == "zoom":
             self._update_zoom(value)
 
+    # def fiber_light_changed(self, v):
+    #    self.autocenter_manager.clear_cache()
+
     def bind_preferences(self, pref_id):
         self.debug("binding preferences")
         super(VideoStageManager, self).bind_preferences(pref_id)
@@ -442,6 +445,9 @@ class VideoStageManager(StageManager):
     def is_auto_correcting(self):
         return self._auto_correcting
 
+    def cancel(self):
+        return self.cancel_auto_correcting()
+
     def cancel_auto_correcting(self):
         self.autocenter_manager.cancel()
         return True
@@ -619,6 +625,7 @@ class VideoStageManager(StageManager):
             frame = video.get_cached_frame()
             if frame is not None:
                 if not len(frame.shape):
+                    print("not len frame", frame.shape, frame)
                     return
 
             frame = copy(frame)
@@ -628,7 +635,7 @@ class VideoStageManager(StageManager):
             if crop_to_hole:
                 frame = video.crop(frame, 0, 0, cropdim, cropdim)
 
-            if self.render_with_markup:
+            if self.render_with_markup and frame is not None:
                 # draw crosshairs
                 if len(frame.shape) == 2:
                     frame = gray2rgb(frame)
@@ -665,6 +672,7 @@ class VideoStageManager(StageManager):
             try:
                 self._autocenter(holenum=holenum, ntries=ntries, save=True)
             except BaseException as e:
+                self.debug_exception()
                 self.critical("Autocentering failed. {}".format(e))
 
             self._auto_correcting = False
@@ -712,7 +720,9 @@ class VideoStageManager(StageManager):
                     shape = hole.shape
 
             ox, oy = self.canvas.get_screen_offset()
-            for ti in range(max(1, ntries)):
+            mxs, mys = [], []
+            n = max(1, ntries)
+            for ti in range(n):
                 # use machine vision to calculate positioning error
                 rpos = self.autocenter_manager.calculate_new_center(
                     self.stage_controller.x,
@@ -724,15 +734,18 @@ class VideoStageManager(StageManager):
                 )
 
                 if rpos is not None:
-                    self.linear_move(
-                        *rpos,
-                        block=True,
-                        source="autocenter",
-                        use_calibration=False,
-                        update_hole=False,
-                        velocity_scalar=0.1
-                    )
-                    time.sleep(0.1)
+                    if ti < n - 1:
+                        self.linear_move(
+                            *rpos,
+                            block=True,
+                            source="autocenter",
+                            use_calibration=False,
+                            update_hole=False,
+                            velocity_scalar=0.5
+                        )
+                    mxs.append(rpos[0])
+                    mys.append(rpos[1])
+
                 else:
                     self.snapshot(
                         auto=True,
@@ -741,15 +754,26 @@ class VideoStageManager(StageManager):
                     )
                     break
 
-                    # if use_interpolation and rpos is None:
-                    #     self.info('trying to get interpolated position')
-                    #     rpos = sm.get_interpolated_position(holenum)
-                    #     if rpos:
-                    #         s = '{:0.3f},{:0.3f}'
-                    #         interp = True
-                    #     else:
-                    #         s = 'None'
-                    #     self.info('interpolated position= {}'.format(s))
+            if mxs:
+                n = len(mxs)
+                rpos = sum(mxs) / n, sum(mys) / n
+                self.linear_move(
+                    *rpos,
+                    block=True,
+                    source="autocenter",
+                    use_calibration=False,
+                    update_hole=False,
+                    velocity_scalar=0.1
+                )
+                # if use_interpolation and rpos is None:
+                #     self.info('trying to get interpolated position')
+                #     rpos = sm.get_interpolated_position(holenum)
+                #     if rpos:
+                #         s = '{:0.3f},{:0.3f}'
+                #         interp = True
+                #     else:
+                #         s = 'None'
+                #     self.info('interpolated position= {}'.format(s))
 
         if rpos:
             corrected = True

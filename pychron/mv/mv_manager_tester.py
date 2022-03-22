@@ -53,6 +53,9 @@ class TestAutocenter(HasTraits):
         self.display_image = a.display_image
         self.manager = a
 
+    def _test_co2_locator(self):
+        self.manager.calculate_new_center(0, 0, 0, 0, 1)
+
     def _test1(self):
         print("test1")
         ld = LumenDetector()
@@ -67,16 +70,7 @@ class TestAutocenter(HasTraits):
             cropdim = dim * 2.5
             src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
 
-            ld.find_targets(
-                self.display_image,
-                src,
-                dim,
-                mask=mask_dim,
-                search={
-                    "start_offset_scalar": 1,
-                    # 'width': 2
-                },
-            )
+            ld.find_targets(self.display_image, src, dim, mask=mask_dim)
             # self.manager.calculate_new_center(0, 0, 0, 0, dim=1.25)
 
         t = Thread(target=func)
@@ -98,7 +92,8 @@ class TestAutocenter(HasTraits):
 
     def _test1_button_fired(self):
         self._set_test_image()
-        self._test1()
+        # self._test1()
+        self._test_co2_locator()
 
 
 if __name__ == "__main__":
