@@ -1038,7 +1038,7 @@ class DVC(Loggable):
         pull_frequency=None,
         use_cached=True,
         sync_repo=True,
-        use_flux_histories=True
+        use_flux_histories=True,
     ):
         if not records:
             return []
@@ -1157,7 +1157,9 @@ class DVC(Loggable):
                             v = None
                             if c:
                                 c = c[0]
-                                v = "{} ({})".format(c.date.strftime(DATE_FORMAT), c.author)
+                                v = "{} ({})".format(
+                                    c.date.strftime(DATE_FORMAT), c.author
+                                )
                             flux_histories[key] = v
 
                 if (
