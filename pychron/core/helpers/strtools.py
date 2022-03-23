@@ -142,6 +142,10 @@ def to_int(i):
     return i
 
 
+def streq(a, b):
+    return a and b and a.lower() == b.lower()
+
+
 if __name__ == "__main__":
     for ret in ratio("abc"):
         print(ret)

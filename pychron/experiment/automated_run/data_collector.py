@@ -288,14 +288,15 @@ class DataCollector(Consoleable):
             dn = self._get_detector(dn)
             if dn:
                 iso = dn.isotope
-                signal = self._get_signal(keys, signals, dn.name)
-                if signal is not None:
-                    if not a.append_data(iso, dn.name, x, signal, kind):
-                        self.debug(
-                            "{} - failed appending data for {}. not a current isotope {}".format(
-                                kind, iso, a.isotope_keys
+                if iso:
+                    signal = self._get_signal(keys, signals, dn.name)
+                    if signal is not None:
+                        if not a.append_data(iso, dn.name, x, signal, kind):
+                            self.debug(
+                                "{} - failed appending data for {}. not a current isotope {}".format(
+                                    kind, iso, a.isotope_keys
+                                )
                             )
-                        )
 
     def _get_signal(self, keys, signals, det):
         try:
