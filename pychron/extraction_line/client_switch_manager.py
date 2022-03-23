@@ -101,7 +101,7 @@ class ClientSwitchManager(SwitchManager):
             return
 
         changed = False
-        ip = gethostbyname('')
+        ip = gethostbyname("")
         for owner, valves in owners:
             if owner != ip:
                 for k in valves:
