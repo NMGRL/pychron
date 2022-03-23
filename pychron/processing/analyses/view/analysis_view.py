@@ -114,10 +114,11 @@ class MetaView(HasTraits):
                     show_border=True,
                     label="Reactor",
                 ),
-                VGroup(UItem('sample', style="custom"),
-                       show_border=True,
-                       label="Sample",
-                       )
+                VGroup(
+                    UItem("sample", style="custom"),
+                    show_border=True,
+                    label="Sample",
+                ),
             )
         )
         return v
@@ -323,7 +324,7 @@ class AnalysisView(HasTraits):
         view = MetaView(
             interference=InterferencesView(an),
             spectrometer=SpectrometerView(an),
-            sample=SampleView(an)
+            sample=SampleView(an),
         )
         gs.append(view)
 

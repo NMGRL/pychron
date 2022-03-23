@@ -30,7 +30,7 @@ from traits.api import (
     Either,
     Float,
     on_trait_change,
-    Instance
+    Instance,
 )
 from traitsui.api import (
     View,
@@ -216,8 +216,8 @@ class DiffView(BaseDiffView):
         self.ovalues = vs
 
     def diff_analyses(self, la, ra):
-        a = DiffValue('Age', la.age, ra.age)
-        b = DiffValue('Age Err', la.age_err, ra.age_err)
+        a = DiffValue("Age", la.age, ra.age)
+        b = DiffValue("Age Err", la.age_err, ra.age_err)
         self.ovalues.append(a)
         self.ovalues.append(b)
         self.set_analysis_icfactors(la, ra)
@@ -244,17 +244,19 @@ class DiffView(BaseDiffView):
             self.isoevos = self.oisoevos[:]
 
     def set_analysis_intercepts(self, la, ra):
-        vs = self._set_analysis_values(la, ra, '', lambda x: x.uvalue, lambda x: x.fit)
+        vs = self._set_analysis_values(la, ra, "", lambda x: x.uvalue, lambda x: x.fit)
         self.oisoevos = vs
 
     def set_analysis_blanks(self, la, ra):
-        vs = self._set_analysis_values(la, ra, 'Blank', lambda x: x.blank.uvalue,
-                                       lambda x: x.blank.fit)
+        vs = self._set_analysis_values(
+            la, ra, "Blank", lambda x: x.blank.uvalue, lambda x: x.blank.fit
+        )
         self.oblanks = vs
 
     def set_analysis_icfactors(self, la, ra):
-        icfs = self._set_analysis_values(la, ra, 'IC', lambda x: x.ic_factor,
-                                         lambda x: x.ic_factor_fit)
+        icfs = self._set_analysis_values(
+            la, ra, "IC", lambda x: x.ic_factor, lambda x: x.ic_factor_fit
+        )
         self.oicfactors = icfs
 
     def _set_analysis_values(self, la, ra, tag, getter, fit_getter):
@@ -266,7 +268,9 @@ class DiffView(BaseDiffView):
             lv = getter(liso)
             rv = getter(riso)
 
-            a = DiffValue('{} {}'.format(name, tag), nominal_value(lv), nominal_value(rv))
+            a = DiffValue(
+                "{} {}".format(name, tag), nominal_value(lv), nominal_value(rv)
+            )
             vs.append(a)
             a = DiffValue(PLUSMINUS_ONE_SIGMA, std_dev(lv), std_dev(rv))
             vs.append(a)
@@ -324,9 +328,11 @@ class DiffView(BaseDiffView):
                 VGroup(
                     UItem(
                         "values",
-                        editor=TabularEditor(adapter=DiffAdapter(),
-                                             stretch_last_section=False,
-                                             editable=False),
+                        editor=TabularEditor(
+                            adapter=DiffAdapter(),
+                            stretch_last_section=False,
+                            editable=False,
+                        ),
                         # height=-100,
                     )
                 ),
@@ -360,7 +366,7 @@ class DiffView(BaseDiffView):
                         editor=TabularEditor(
                             adapter=DiffAdapter(color_first=False),
                             stretch_last_section=False,
-                            editable=False
+                            editable=False,
                         ),
                         # height=-100,
                     ),
@@ -457,7 +463,7 @@ class DVCCommitView(HasTraits):
                 v.finish()
                 open_view(v)
             else:
-                information(None, 'Select an earlier commit')
+                information(None, "Select an earlier commit")
                 # information(
                 #     None, "No Differences between {} and {}".format(lhsid, rhsid)
                 # )
@@ -500,7 +506,7 @@ class HistoryView(DVCCommitView):
     name = "History"
     _paths = None
 
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance("pychron.dvc.dvc.DVC")
     _analysis = None
 
     def _diff_hook(self, v):
@@ -514,26 +520,35 @@ class HistoryView(DVCCommitView):
         ps = [p for p in self._paths if p]
         try:
             if self.selected_rhs.hexsha != abranch.commit.hexsha:
-                branch = repo.create_head('rhs')
+                branch = repo.create_head("rhs")
                 branch.checkout()
-                repo.git.checkout(self.selected_rhs.hexsha, '--', ps)
+                repo.git.checkout(self.selected_rhs.hexsha, "--", ps)
 
-                rhs_an = self.dvc.make_analysis(self._analysis, use_cached=False, reload=True, sync_repo=False,
-                                                use_flux_histories=False)
-                deletes.append('rhs')
+                rhs_an = self.dvc.make_analysis(
+                    self._analysis,
+                    use_cached=False,
+                    reload=True,
+                    sync_repo=False,
+                    use_flux_histories=False,
+                )
+                deletes.append("rhs")
 
             # branch = repo.create_head(branchname, self.selected_lhs.hexsha)
             branch = repo.create_head(branchname)
             branch.checkout()
-            repo.git.checkout(self.selected_lhs.hexsha, '--', ps)
-            lhs_an = self.dvc.make_analysis(self._analysis, use_cached=False,
-                                            reload=True, sync_repo=False,
-                                            use_flux_histories=False)
+            repo.git.checkout(self.selected_lhs.hexsha, "--", ps)
+            lhs_an = self.dvc.make_analysis(
+                self._analysis,
+                use_cached=False,
+                reload=True,
+                sync_repo=False,
+                use_flux_histories=False,
+            )
 
             v.diff_analyses(lhs_an, rhs_an)
 
         except BaseException as e:
-            print('asdf', e)
+            print("asdf", e)
         finally:
             abranch.checkout()
             for d in deletes:
@@ -609,5 +624,6 @@ class HistoryView(DVCCommitView):
             )
         )
         return v
+
 
 # ============= EOF =============================================

@@ -29,7 +29,13 @@ class SampleView(HasTraits):
         self.sample_note = an.sample_note
 
     def traits_view(self):
-        v = View(VGroup(BorderHGroup(UItem("sample_note"), label="Sample Note"),
-                        BorderHGroup(UItem("sample_prep_comment"), label="Sample Prep")))
+        v = View(
+            VGroup(
+                BorderHGroup(UItem("sample_note"), label="Sample Note"),
+                BorderHGroup(UItem("sample_prep_comment"), label="Sample Prep"),
+            )
+        )
         return v
+
+
 # ============= EOF =============================================
