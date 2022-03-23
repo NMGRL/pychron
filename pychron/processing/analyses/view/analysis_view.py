@@ -49,6 +49,7 @@ from pychron.processing.analyses.view.interferences_view import InterferencesVie
 from pychron.processing.analyses.view.main_view import MainView
 from pychron.processing.analyses.view.peak_center_view import PeakCenterView
 from pychron.processing.analyses.view.regression_view import RegressionView
+from pychron.processing.analyses.view.sample_view import SampleView
 from pychron.processing.analyses.view.snapshot_view import SnapshotView
 from pychron.processing.analyses.view.spectrometer_view import SpectrometerView
 from pychron.processing.analyses.view.text_view import ExperimentView, MeasurementView
@@ -98,6 +99,7 @@ class MetaView(HasTraits):
     name = "Meta"
     spectrometer = Instance(SpectrometerView)
     interference = Instance(InterferencesView)
+    sample = Instance(SampleView)
 
     def traits_view(self):
         v = View(
@@ -112,6 +114,10 @@ class MetaView(HasTraits):
                     show_border=True,
                     label="Reactor",
                 ),
+                VGroup(UItem('sample', style="custom"),
+                       show_border=True,
+                       label="Sample",
+                       )
             )
         )
         return v
@@ -306,6 +312,7 @@ class AnalysisView(HasTraits):
     def _selected_tab_changed(self, new):
         if isinstance(new, HistoryView):
             new.initialize(self.model)
+            new.dvc = self.dvc
         elif isinstance(new, RegressionView):
             new.initialize(self.model)
 
@@ -314,7 +321,9 @@ class AnalysisView(HasTraits):
         gs.append(view)
 
         view = MetaView(
-            interference=InterferencesView(an), spectrometer=SpectrometerView(an)
+            interference=InterferencesView(an),
+            spectrometer=SpectrometerView(an),
+            sample=SampleView(an)
         )
         gs.append(view)
 

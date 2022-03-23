@@ -418,7 +418,7 @@ class BaseBrowserTask(BaseEditorTask):
 
                 self.recall_configurer.set_fonts(av)
                 av.main_view.set_options(rec, self.recall_configurer.recall_options)
-
+                av.dvc = self.dvc
                 if quick:
                     editor = self.browser_model.recall_editor
                     if not editor:

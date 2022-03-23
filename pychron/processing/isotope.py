@@ -192,6 +192,7 @@ class IsotopicMeasurement(BaseMeasurement):
     use_stored_value = False
     reviewed = False
     ic_factor_reviewed = False
+    ic_factor_fit = None
 
     _value = 0
     _error = 0

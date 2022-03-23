@@ -149,20 +149,20 @@ def get_repo(repo):
 def fu(repo, text):
     for header in Diff.re_header.finditer(text):
         groups = header.groups()
-
-        a_path_fallback = groups[0]
-        b_path_fallback = groups[1]
+        # a_path_fallback = groups[0]
+        # b_path_fallback = groups[1]
         old_mode = groups[2]
         new_mode = groups[3]
-        rename_from = groups[4]
-        rename_to = groups[5]
+        # rename_from = groups[4]
+        # rename_to = groups[5]
         new_file_mode = groups[6]
         deleted_file_mode = groups[7]
-        a_blob_id = groups[8]
-        b_blob_id = groups[9]
-        b_mode = groups[10]
-        a_path = groups[11]
-        b_path = groups[12]
+        # copied_file_name = groups[8]
+        a_blob_id = groups[9]
+        b_blob_id = groups[10]
+        b_mode = groups[11]
+        a_path = groups[12]
+        b_path = groups[13]
 
         # print groups
         # print len(groups)
@@ -182,9 +182,9 @@ def fu(repo, text):
         # Make sure the mode is set if the path is set. Otherwise the resulting blob is invalid
         # We just use the one mode we should have parsed
         a_mode = (
-            old_mode
-            or deleted_file_mode
-            or (a_path and (b_mode or new_mode or new_file_mode))
+                old_mode
+                or deleted_file_mode
+                or (a_path and (b_mode or new_mode or new_file_mode))
         )
         b_mode = b_mode or new_mode or new_file_mode or (b_path and a_mode)
         ablob = Blob(repo, hex_to_bin(a_blob_id), mode=a_mode, path=a_path)
