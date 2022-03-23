@@ -93,8 +93,8 @@ SIMPLE = "simple"
 SE = "SE"
 SD = "SD"
 SEM = "SEM"
-MSEM = "SEM, but if MSWD>1 use SEM * sqrt(MSWD)"
-MSE = "SE but if MSWD>1 use SE * sqrt(MSWD)"
+MSE = "{} but if MSWD>1 use {} * sqrt(MSWD)".format(SE, SE)
+MSEM = MSE
 
 ERROR_TYPES = [MSEM, SEM, SD]
 SIG_FIGS = range(0, 15)
@@ -127,7 +127,7 @@ FIT_TYPES = [
     AUTO_LINEAR_PARABOLIC,
 ]
 
-FIT_ERROR_TYPES = [SD, SEM, MSEM, "CI", "MonteCarlo"]
+FIT_ERROR_TYPES = [SD, SEM, MSEM, SE, "CI", "MonteCarlo"]
 SERIES_FIT_TYPES = [NULL_STR] + FIT_TYPES
 ISOCHRON_ERROR_TYPES = [SE, MSE]
 ISOCHRON_METHODS = ["NewYork", "York", "Reed"]

@@ -1036,6 +1036,9 @@ class DVC(Loggable):
         quick=False,
         use_progress=True,
         pull_frequency=None,
+        use_cached=True,
+        sync_repo=True,
+        use_flux_histories=True
     ):
         if not records:
             return []
@@ -1045,7 +1048,7 @@ class DVC(Loggable):
         # load repositories
         st = time.time()
 
-        if self.use_cache:
+        if self.use_cache and use_cached:
             cached_records = []
             nrecords = []
             cache = self._cache
@@ -1079,7 +1082,7 @@ class DVC(Loggable):
             records = [r for r in records if r.repository_identifier is not None]
 
         if not records:
-            if self.use_cache:
+            if self.use_cache and use_cached:
                 cache.clean()
                 return cached_records
             else:
@@ -1087,11 +1090,12 @@ class DVC(Loggable):
 
         exps = {r.repository_identifier for r in records}
 
-        if use_progress:
-            progress_iterator(exps, func, threshold=1)
-        else:
-            for ei in exps:
-                self.sync_repo(ei, use_progress=False)
+        if sync_repo:
+            if use_progress:
+                progress_iterator(exps, func, threshold=1)
+            else:
+                for ei in exps:
+                    self.sync_repo(ei, use_progress=False)
         try:
             branches = {ei: get_repository_branch(repository_path(ei)) for ei in exps}
         except NoSuchPathError:
@@ -1146,14 +1150,15 @@ class DVC(Loggable):
                         fluxes[irrad] = flux_levels
                         productions[irrad] = prod_levels
 
-                    key = "{}{}".format(irrad, level)
-                    if key not in flux_histories:
-                        c = meta_repo.get_flux_history(irrad, level, max_count=1)
-                        v = None
-                        if c:
-                            c = c[0]
-                            v = "{} ({})".format(c.date.strftime(DATE_FORMAT), c.author)
-                        flux_histories[key] = v
+                    if use_flux_histories:
+                        key = "{}{}".format(irrad, level)
+                        if key not in flux_histories:
+                            c = meta_repo.get_flux_history(irrad, level, max_count=1)
+                            v = None
+                            if c:
+                                c = c[0]
+                                v = "{} ({})".format(c.date.strftime(DATE_FORMAT), c.author)
+                            flux_histories[key] = v
 
                 if (
                     use_cocktail_irradiation
@@ -2146,6 +2151,9 @@ class DVC(Loggable):
         if isinstance(record, DVCAnalysis) and not reload:
             a = record
         else:
+            if isinstance(record, DVCAnalysis):
+                record = self.db.get_analysis_uuid(record.uuid)
+
             # self.debug('use_repo_suffix={} record_id={}'.format(record.use_repository_suffix, record.record_id))
             rid = record.record_id
             uuid = record.uuid

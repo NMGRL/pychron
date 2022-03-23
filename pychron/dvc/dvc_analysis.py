@@ -713,6 +713,7 @@ class DVCAnalysis(Analysis):
                 for iso in self.get_isotopes_for_detector(key):
                     iso.ic_factor = ufloat(vv, ee, tag="{} IC".format(iso.name))
                     iso.ic_factor_reviewed = r
+                    iso.ic_factor_fit = v.get('fit')
 
     def _get_json(self, modifier):
         path = self._analysis_path(modifier=modifier)

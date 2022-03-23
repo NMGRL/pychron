@@ -20,7 +20,7 @@
 from numpy import average, where, full
 
 from pychron.core.helpers.formatting import floatfmt
-from pychron.pychron_constants import SEM, MSEM
+from pychron.pychron_constants import SEM, MSEM, SE
 from .base_regressor import BaseRegressor
 
 
@@ -132,6 +132,8 @@ sem={}
             e = self.sem
         elif error_calc in (MSEM.lower(), "msem"):
             e = self.se * (self.mswd**0.5 if self.mswd > 1 else 1)
+        elif error_calc == SE.lower():
+            e = self.se
         else:
             e = self.std
 

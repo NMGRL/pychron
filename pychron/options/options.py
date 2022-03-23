@@ -440,6 +440,8 @@ class BaseOptions(HasTraits):
             if key == "aux_plots":
                 if "_plot_names" in ctx:
                     ctx.pop("_plot_names")
+                elif "error_types" in ctx:
+                    ctx.pop("error_types")
 
             return cls(**ctx)
 
