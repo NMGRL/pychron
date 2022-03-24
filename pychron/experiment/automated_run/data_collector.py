@@ -362,7 +362,9 @@ class DataCollector(Consoleable):
                 # the sniff graph and the signal graph have different plots and its ok not to warn about this
                 if not self.collection_kind == SNIFF:
                     self.critical(
-                        "failed to locate {}, ytitles={}".format(name, g.get_plot_ytitles())
+                        "failed to locate {}, ytitles={}".format(
+                            name, g.get_plot_ytitles()
+                        )
                     )
                 continue
 
@@ -486,20 +488,20 @@ class DataCollector(Consoleable):
 
         if self.check_conditionals:
             for tag, func, conditionals in (
-                    (
-                            "modification",
-                            self._modification_func,
-                            self.modification_conditionals,
-                    ),
-                    ("truncation", self._truncation_func, self.truncation_conditionals),
-                    ("action", self._action_func, self.action_conditionals),
-                    ("termination", lambda x: "terminate", self.termination_conditionals),
-                    ("cancelation", lambda x: "cancel", self.cancelation_conditionals),
-                    (
-                            "equilibration",
-                            self._equilibration_func,
-                            self.equilibration_conditionals,
-                    ),
+                (
+                    "modification",
+                    self._modification_func,
+                    self.modification_conditionals,
+                ),
+                ("truncation", self._truncation_func, self.truncation_conditionals),
+                ("action", self._action_func, self.action_conditionals),
+                ("termination", lambda x: "terminate", self.termination_conditionals),
+                ("cancelation", lambda x: "cancel", self.cancelation_conditionals),
+                (
+                    "equilibration",
+                    self._equilibration_func,
+                    self.equilibration_conditionals,
+                ),
             ):
 
                 if tag == "equilibration" and self.collection_kind != SNIFF:
@@ -555,5 +557,6 @@ class DataCollector(Consoleable):
     def equilibration_conditionals(self):
         if self.automated_run:
             return self.automated_run.equilibration_conditionals
+
 
 # ============= EOF =============================================
