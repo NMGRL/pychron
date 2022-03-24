@@ -111,11 +111,14 @@ class DVCHistoryNode(BaseDVCNode):
 
                 ps = [an.make_path(p) for an in ans for p in HISTORY_PATHS]
 
-                repo.checkout(state.selected_commits[repo.name], '--', ps)
-                pans = self.dvc.make_analyses(list(ans), reload=True,
-                                              use_cached=False,
-                                              sync_repo=False,
-                                              use_flux_histories=False)
+                repo.checkout(state.selected_commits[repo.name], "--", ps)
+                pans = self.dvc.make_analyses(
+                    list(ans),
+                    reload=True,
+                    use_cached=False,
+                    sync_repo=False,
+                    use_flux_histories=False,
+                )
                 if pans:
                     # only allow one history group for right now.
                     # in the future add a history_group_id
@@ -132,5 +135,6 @@ class DVCHistoryNode(BaseDVCNode):
                 # branch = repo.get_branch(abranch)
                 # branch.checkout()
                 # repo.delete_branch(branchname)
+
 
 # ============= EOF =============================================

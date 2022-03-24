@@ -628,7 +628,7 @@ class GitRepoManager(Loggable):
         return repo.active_branch.name
 
     def restore_branch(self, ps):
-        self._repo.git.restore('--staged', ps)
+        self._repo.git.restore("--staged", ps)
         self._repo.git.restore(ps)
 
     def checkout(self, *args, **kw):
