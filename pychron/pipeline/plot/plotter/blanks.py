@@ -48,7 +48,9 @@ class Blanks(ReferencesSeries):
 
         xs = self._get_xs([po], ans, tzero=mx)
 
-        ys = [self._get_isotope(po, ai) for ai in ans]
+        unk = self.sorted_analyses[0]
+
+        ys = [self._get_isotope(po, ai, unk) for ai in ans]
         ys = [yi.get_baseline_corrected_value() if yi else ufloat(0, 0) for yi in ys]
 
         return ans, xs, ys

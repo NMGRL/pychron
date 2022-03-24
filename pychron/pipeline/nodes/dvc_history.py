@@ -102,14 +102,20 @@ class DVCHistoryNode(BaseDVCNode):
         unks = state.unknowns
         for repo, ans in groupby_repo(unks):
             repo = self.dvc.get_repository(repo)
-            abranch = repo.get_current_branch()
-            branchname = "history"
-            try:
-                repo.create_branch(
-                    branchname, state.selected_commits[repo.name], inform=False
-                )
+            # abranch = repo.get_current_branch()
 
-                pans = self.dvc.make_analyses(list(ans), reload=True)
+            try:
+                # repo.create_branch(
+                #     branchname, state.selected_commits[repo.name], inform=False
+                # )
+
+                ps = [an.make_path(p) for an in ans for p in HISTORY_PATHS]
+
+                repo.checkout(state.selected_commits[repo.name], '--', ps)
+                pans = self.dvc.make_analyses(list(ans), reload=True,
+                                              use_cached=False,
+                                              sync_repo=False,
+                                              use_flux_histories=False)
                 if pans:
                     # only allow one history group for right now.
                     # in the future add a history_group_id
@@ -122,9 +128,9 @@ class DVCHistoryNode(BaseDVCNode):
             except BaseException:
                 pass
             finally:
-                branch = repo.get_branch(abranch)
-                branch.checkout()
-                repo.delete_branch(branchname)
-
+                repo.restore_branch(ps)
+                # branch = repo.get_branch(abranch)
+                # branch.checkout()
+                # repo.delete_branch(branchname)
 
 # ============= EOF =============================================

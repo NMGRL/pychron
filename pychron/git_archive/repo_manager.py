@@ -518,9 +518,6 @@ class GitRepoManager(Loggable):
         # return index, patches
         #
 
-    def get_head_object(self):
-        return get_head_commit(self._repo)
-
     def get_head(self, commit=True, hexsha=True):
         head = self._repo
         if commit:
@@ -629,6 +626,13 @@ class GitRepoManager(Loggable):
     def get_current_branch(self):
         repo = self._repo
         return repo.active_branch.name
+
+    def restore_branch(self, ps):
+        self._repo.git.restore('--staged', ps)
+        self._repo.git.restore(ps)
+
+    def checkout(self, *args, **kw):
+        self._repo.git.checkout(*args, **kw)
 
     def checkout_branch(self, name, inform=True):
         repo = self._repo
