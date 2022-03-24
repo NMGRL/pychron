@@ -512,47 +512,39 @@ class HistoryView(DVCCommitView):
     def _diff_hook(self, v):
         repo = self.repo
         abranch = repo.active_branch
-        branchname = "history"
+        # branchname = "history"
 
-        deletes = [branchname]
+        # deletes = [branchname]
         rhs_an = self._analysis
+        ps = self._paths
 
-        ps = [p for p in self._paths if p]
         try:
             if self.selected_rhs.hexsha != abranch.commit.hexsha:
-                branch = repo.create_head("rhs")
-                branch.checkout()
-                repo.git.checkout(self.selected_rhs.hexsha, "--", ps)
+                # branch = repo.create_head('rhs')
+                # branch.checkout()
+                repo.git.checkout(self.selected_rhs.hexsha, '--', ps)
 
-                rhs_an = self.dvc.make_analysis(
-                    self._analysis,
-                    use_cached=False,
-                    reload=True,
-                    sync_repo=False,
-                    use_flux_histories=False,
-                )
-                deletes.append("rhs")
+                rhs_an = self.dvc.make_analysis(self._analysis, use_cached=False, reload=True, sync_repo=False,
+                                                use_flux_histories=False)
+                # deletes.append('rhs')
 
-            # branch = repo.create_head(branchname, self.selected_lhs.hexsha)
-            branch = repo.create_head(branchname)
-            branch.checkout()
-            repo.git.checkout(self.selected_lhs.hexsha, "--", ps)
-            lhs_an = self.dvc.make_analysis(
-                self._analysis,
-                use_cached=False,
-                reload=True,
-                sync_repo=False,
-                use_flux_histories=False,
-            )
+            # branch = repo.create_head(branchname)
+            # branch.checkout()
+            repo.git.checkout(self.selected_lhs.hexsha, '--', ps)
+            lhs_an = self.dvc.make_analysis(self._analysis, use_cached=False,
+                                            reload=True, sync_repo=False,
+                                            use_flux_histories=False)
 
             v.diff_analyses(lhs_an, rhs_an)
 
         except BaseException as e:
             print("asdf", e)
         finally:
-            abranch.checkout()
-            for d in deletes:
-                repo.delete_head(d)
+            # abranch.checkout()
+            repo.git.restore('--staged', ps)
+            repo.git.restore(ps)
+            # for d in deletes:
+            #     repo.delete_head(d)
 
     def _show_all_commits_changed(self):
         self._load_commits()
@@ -569,6 +561,7 @@ class HistoryView(DVCCommitView):
         self._analysis = an
 
         ps = [an.make_path(p) for p in HISTORY_PATHS]
+        ps = [pi for pi in ps if pi is not None]
         self._paths = ps
         if not self.commits or force:
             self._load_commits()
