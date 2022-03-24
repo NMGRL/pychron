@@ -41,7 +41,7 @@ from traits.api import (
 
 from pychron.canvas.canvas2D.camera import Camera, YamlCamera, BaseCamera
 from pychron.core.helpers.binpack import pack, encode_blob
-from pychron.core.helpers.filetools import unique_path, unique_path_from_manifest
+from pychron.core.helpers.filetools import unique_path, unique_path_from_manifest, add_extension
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 from pychron.core.ui.thread import Thread as QThread
 from pychron.core.ui.thread import sleep
@@ -343,6 +343,7 @@ class VideoStageManager(StageManager):
         path=None,
         name=None,
         auto=False,
+        directory=None,
         inform=True,
         return_blob=False,
         pic_format=".jpg",
@@ -359,8 +360,14 @@ class VideoStageManager(StageManager):
         """
 
         if path is None:
-            if self.auto_save_snapshot or auto:
-
+            if directory:
+                if not os.path.isdir(directory):
+                    os.makedirs(directory)
+                if name is None:
+                    name = "snapshot"
+                path = os.path.join(directory, name)
+                path = add_extension(path, pic_format)
+            elif self.auto_save_snapshot or auto:
                 if name is None:
                     name = "snapshot"
                 path = unique_path_from_manifest(paths.snapshot_dir, name, pic_format)

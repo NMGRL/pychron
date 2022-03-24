@@ -25,13 +25,14 @@ from pychron.globals import globalv
 from pychron.loading.tasks.actions import (
     SaveLoadingPDFAction,
     ConfigurePDFAction,
-    SaveLoadingDBAction, GotoModeAction, GotoEntryModeAction, FootPedalModeAction,
+    SaveLoadingDBAction, GotoModeAction, GotoEntryModeAction, FootPedalModeAction, CheckTrayAction,
 )
 from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane
 
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.loading.tray_checker import TrayChecker
 
 
 class LoadingTask(BaseManagerTask):
@@ -41,7 +42,10 @@ class LoadingTask(BaseManagerTask):
     tool_bars = [
         SToolBar(SaveLoadingPDFAction(), ConfigurePDFAction()),
         SToolBar(SaveLoadingDBAction()),
-        SToolBar(GotoModeAction(), GotoEntryModeAction(), FootPedalModeAction())
+        SToolBar(GotoModeAction(),
+                 GotoEntryModeAction(),
+                 FootPedalModeAction()),
+        SToolBar(CheckTrayAction())
     ]
 
     def activated(self):
@@ -84,6 +88,10 @@ class LoadingTask(BaseManagerTask):
     #
     # def set_edit(self):
     #     self.manager.set_edit()
+    def check_tray(self):
+        tray_checker = TrayChecker(self.manager)
+        tray_checker.check()
+
     def goto_mode(self):
         self.manager.set_interaction_mode('Goto')
 

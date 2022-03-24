@@ -23,6 +23,11 @@ from pychron.envisage.resources import icon
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+class CheckTrayAction(TaskAction):
+    name = "Check Tray"
+    method = "check_tray"
+    image = icon("")
+
 
 class GotoModeAction(TaskAction):
     name = "Goto"

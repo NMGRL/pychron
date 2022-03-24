@@ -20,10 +20,12 @@ from traits.api import Array, Event, Range, Bool
 from traitsui.api import UItem, Item, VGroup
 
 # ============= standard library imports ========================
-from numpy import asarray, array, ndarray
+from numpy import asarray, array, ndarray, hstack, resize, zeros, reshape, ones
 from PIL import Image
 
 # ============= local library imports  ==========================
+from pychron.image.cv_wrapper import colorspace, grayspace
+from pychron.options.layout import filled_grid
 from pychron.viewable import Viewable
 from pychron.core.ui.image_editor import ImageEditor
 
@@ -34,10 +36,46 @@ class FrameImage(Viewable):
     alpha = Range(0.0, 1.0)
     overlays = None
     alpha_enabled = Bool(True)
+    osource_frame = None
+    tiles = None
+
+    def clear(self):
+        self.tiles = []
+        self.osource_frame = None
 
     def load(self, frame, swap_rb=False):
         self.source_frame = array(frame)
         self.refresh_needed = True
+
+    def tile(self, frame):
+        if not self.tiles:
+            self.tiles = []
+
+        self.tiles.append(colorspace(frame))
+
+    def tilify(self):
+        if self.osource_frame is None:
+            self.osource_frame = self.source_frame[:]
+            # self.osource_frame = reshape(self.osource_frame, (1000, 1000, 3))
+
+        r, c = filled_grid(len(self.tiles) + 1)
+        r += 1
+        c += 1
+        th, tw, _ = self.osource_frame.shape
+        nf = ones((th * r, tw * c, 3))
+        nf[:] = (100, 100, 100)
+        h, w, _ = self.osource_frame.shape
+        nf[0:h, 0:w] = self.osource_frame
+        starth, endh, startw, endw = 0, h, w + 5, 2 * w
+        for i, t in enumerate(self.tiles):
+            if startw + w >= tw * c:
+                startw = 0
+                starth += h + 5
+
+            nf[starth:starth + h, startw:startw + w] = t
+            startw += w + 5
+
+        self.source_frame = colorspace(nf)
 
     def set_frame(self, frame):
         if not isinstance(frame, ndarray):
@@ -81,6 +119,5 @@ class StandAloneImage(FrameImage):
             vv = img
         v = self.view_factory(VGroup(vv))
         return v
-
 
 # ============= EOF =============================================

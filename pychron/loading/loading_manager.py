@@ -15,6 +15,7 @@
 # ===============================================================================
 
 import os
+import time
 from datetime import datetime
 
 from chaco.data_range_1d import DataRange1D
@@ -513,7 +514,28 @@ class LoadingManager(DVCIrradiationable):
 
         return True
 
+    def goto(self, hole, block=False, capture=False):
+        self.debug("goto {}".format(hole))
+        if not self.stage_manager:
+            self.warning_dialog('No Stage Manager')
+            return
+
+        if not self.stage_manager.moving():
+            self.stage_manager.move_to_hole(int(hole.name))
+            if block:
+                while self.stage_manager.moving():
+                    time.sleep(1)
+
+                if capture:
+                    self._capture(hole)
+
     # private
+    def _capture(self, hole):
+        loadname = self.load_instance.name
+        dirpath = os.path.join(paths.loading_dir, loadname)
+        self.stage_manager.snapshot(name=hole.name,
+                                    directory=dirpath)
+
     def _check_load_holders(self, ts):
         ns = []
         for ti in ts:
@@ -933,10 +955,11 @@ class LoadingManager(DVCIrradiationable):
         if item:
             item.fill = True
 
-            self._goto(self._active_position_idx)
-            self._new_position_factory(self._active_position_idx)
+            self.goto(self._active_position_idx,
+                      block=True, capture=True)
 
-            self.canvas.set_last_position(self._active_position_idx)
+            self._new_position_factory(self._active_position_idx)
+            # self.canvas.set_last_position(self._active_position_idx)
 
             self._active_position_idx += 1
             self.canvas.request_redraw()
@@ -951,7 +974,7 @@ class LoadingManager(DVCIrradiationable):
             return
 
         if self.interaction_mode == 'Goto':
-            self._goto(new)
+            self.goto(new)
         else:
             self._interact(new)
 
@@ -966,15 +989,6 @@ class LoadingManager(DVCIrradiationable):
         self.canvas.mode_overlay.mode = new
         self.canvas.set_foot_pedal_mode(new == 'FootPedal')
         self.canvas.request_redraw()
-
-    def _goto(self, new):
-        self.debug("goto {}".format(new))
-        if not self.stage_manager:
-            # self.warning_dialog('No Stage Manager')
-            return
-
-        if not self.stage_manager.moving():
-            self.stage_manager.move_to_hole(int(new.name))
 
     def _interact(self, new):
         if not self.canvas.editable:
