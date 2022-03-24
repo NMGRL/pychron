@@ -51,7 +51,7 @@ class RatioItem(HasTraits):
         for det in DETECTOR_ORDER:
             try:
                 v = getattr(self, det)
-                ve = getattr(self, '{}_err'.format(det))
+                ve = getattr(self, "{}_err".format(det))
                 vs.append(v)
                 vs.append(ve)
             except AttributeError:
@@ -63,7 +63,9 @@ class RatioItem(HasTraits):
 def make_items(isotopes):
     items = []
     for di in DETECTOR_ORDER:
-        ai = next((aii for aii in isotopes.values() if aii.detector.upper() == di), None)
+        ai = next(
+            (aii for aii in isotopes.values() if aii.detector.upper() == di), None
+        )
         if ai:
             rv = ai.get_non_detector_corrected_value()
             r = RatioItem(
@@ -73,7 +75,10 @@ def make_items(isotopes):
                 intensity_err=floatfmt(std_dev(rv)),
             )
             for dj in DETECTOR_ORDER:
-                bi = next((aii for aii in isotopes.values() if aii.detector.upper() == dj), None)
+                bi = next(
+                    (aii for aii in isotopes.values() if aii.detector.upper() == dj),
+                    None,
+                )
                 if bi:
                     r.add_ratio(bi.detector, bi.get_non_detector_corrected_value())
 
@@ -86,7 +91,7 @@ def save_csv(record_id, items):
     with open(path, "w") as wfile:
         wrt = csv.writer(wfile, delimiter="\t")
 
-        ds = [(det, '{}_err'.format(det)) for det in DETECTOR_ORDER]
+        ds = [(det, "{}_err".format(det)) for det in DETECTOR_ORDER]
         ds = [dj for di in ds for dj in di]
         wrt.writerow(["#det", "intensity", "err"] + ds)
         for i in items:
@@ -100,7 +105,7 @@ def get_columns(isos):
             iso = next((iso for iso in isos if streq(iso.detector, det)), None)
             if iso:
                 yield det, iso.detector
-                yield PLUSMINUS_ONE_SIGMA, '{}_err'.format(det)
+                yield PLUSMINUS_ONE_SIGMA, "{}_err".format(det)
 
     return list(closure())
 

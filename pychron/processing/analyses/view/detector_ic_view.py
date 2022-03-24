@@ -70,8 +70,12 @@ class DetectorICView(HasTraits):
         v = View(
             VGroup(
                 HGroup(spring, UItem("export_button")),
-                UItem("items", editor=TabularEditor(adapter=self.tabular_adapter,
-                                                    stretch_last_section=False)),
+                UItem(
+                    "items",
+                    editor=TabularEditor(
+                        adapter=self.tabular_adapter, stretch_last_section=False
+                    ),
+                ),
                 VGroup(
                     UItem("helpstr", style="readonly"), show_border=True, label="Info."
                 ),
