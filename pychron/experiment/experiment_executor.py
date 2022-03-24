@@ -778,10 +778,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug("end at run completion")
                     break
 
-                if spec.state in ("success", "truncated"):
-                    if self._ratio_change_detection(spec):
-                        self.warning("Ratio Change Detected")
-                        break
+                # if spec.state in ("success", "truncated"):
+                #     if self._ratio_change_detection(spec):
+                #         self.warning("Ratio Change Detected")
+                #         break
 
             self.debug(
                 "run loop exited. end at completion:{}".format(
@@ -2318,6 +2318,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self.alive:
             return
         self.heading("Post Run Check")
+
+        if self._ratio_change_detection(run.spec):
+            self.warning("Ratio Change Detected")
+            return True
 
         # check user defined post run actions
         # conditionals = self._load_queue_conditionals('post_run_actions', klass='ActionConditional')

@@ -231,8 +231,8 @@ class AutomatedRun(Loggable):
     action_conditionals = List
     cancelation_conditionals = List
     modification_conditionals = List
-    # pre_run_termination_conditionals = List
-    # post_run_termination_conditionals = List
+    pre_run_termination_conditionals = List
+    post_run_termination_conditionals = List
 
     tripped_conditional = Instance(
         "pychron.experiment.conditional.conditional.BaseConditional"

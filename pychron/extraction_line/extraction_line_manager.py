@@ -775,6 +775,8 @@ class ExtractionLineManager(Manager, Consoleable):
 
             return result
 
+        return True, True
+
     def _change_switch_state(self, name, mode, action, sender_address=None, **kw):
         result, change = False, False
         if self._check_ownership(name, sender_address):

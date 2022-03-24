@@ -327,13 +327,13 @@ class DataCollector(Consoleable):
         iso = det.isotope
         detname = det.name
         ypadding = det.ypadding
-
+        gs = []
         if self.collection_kind == SNIFF:
-            gs = [
-                (self.plot_panel.sniff_graph, iso, None, 0, 0),
-                (self.plot_panel.isotope_graph, iso, None, 0, 0),
-            ]
-
+            if iso:
+                gs = [
+                    (self.plot_panel.sniff_graph, iso, None, 0, 0),
+                    (self.plot_panel.isotope_graph, iso, None, 0, 0),
+                ]
         elif self.collection_kind == BASELINE:
             iso = self.isotope_group.get_isotope(detector=detname, kind="baseline")
             if iso is not None:
@@ -341,7 +341,7 @@ class DataCollector(Consoleable):
             else:
                 fit = "average"
             gs = [(self.plot_panel.baseline_graph, detname, fit, 0, 0)]
-        else:
+        elif iso:
             title = self.isotope_group.get_isotope_title(name=iso, detector=detname)
             iso = self.isotope_group.get_isotope(name=iso, detector=detname)
             fit = iso.get_fit(cnt)
@@ -356,12 +356,14 @@ class DataCollector(Consoleable):
             ]
 
         for g, name, fit, series, fit_series in gs:
-
             pid = g.get_plotid_by_ytitle(name)
             if pid is None:
-                self.critical(
-                    "failed to locate {}, ytitles={}".format(name, g.get_plot_ytitles())
-                )
+                # this case arises when doing a sniff and a peakhop.
+                # the sniff graph and the signal graph have different plots and its ok not to warn about this
+                if not self.collection_kind == SNIFF:
+                    self.critical(
+                        "failed to locate {}, ytitles={}".format(name, g.get_plot_ytitles())
+                    )
                 continue
 
             g.add_datum(
@@ -484,20 +486,20 @@ class DataCollector(Consoleable):
 
         if self.check_conditionals:
             for tag, func, conditionals in (
-                (
-                    "modification",
-                    self._modification_func,
-                    self.modification_conditionals,
-                ),
-                ("truncation", self._truncation_func, self.truncation_conditionals),
-                ("action", self._action_func, self.action_conditionals),
-                ("termination", lambda x: "terminate", self.termination_conditionals),
-                ("cancelation", lambda x: "cancel", self.cancelation_conditionals),
-                (
-                    "equilibration",
-                    self._equilibration_func,
-                    self.equilibration_conditionals,
-                ),
+                    (
+                            "modification",
+                            self._modification_func,
+                            self.modification_conditionals,
+                    ),
+                    ("truncation", self._truncation_func, self.truncation_conditionals),
+                    ("action", self._action_func, self.action_conditionals),
+                    ("termination", lambda x: "terminate", self.termination_conditionals),
+                    ("cancelation", lambda x: "cancel", self.cancelation_conditionals),
+                    (
+                            "equilibration",
+                            self._equilibration_func,
+                            self.equilibration_conditionals,
+                    ),
             ):
 
                 if tag == "equilibration" and self.collection_kind != SNIFF:
@@ -553,6 +555,5 @@ class DataCollector(Consoleable):
     def equilibration_conditionals(self):
         if self.automated_run:
             return self.automated_run.equilibration_conditionals
-
 
 # ============= EOF =============================================

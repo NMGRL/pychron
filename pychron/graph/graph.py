@@ -237,8 +237,8 @@ class Graph(ContextMenuMixin):
         for po in self.plots:
             if is_equal(po.y_axis.title):
                 return po
-        else:
-            print("plot titles txt={} {}".format(txt, self.get_plot_ytitles()))
+        # else:
+        #     print("plot titles txt={} {}".format(txt, self.get_plot_ytitles()))
 
     def get_plot_ytitles(self):
         return [po.y_axis.title for po in self.plots]
