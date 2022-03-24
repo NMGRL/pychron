@@ -16,6 +16,8 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+from pyface.message_dialog import information
 from traits.api import HasTraits, List, Button, Int
 from traitsui.api import View, UItem, TabularEditor, VGroup, HGroup, spring
 from traitsui.tabular_adapter import TabularAdapter
@@ -61,13 +63,15 @@ class DetectorICView(HasTraits):
     def _export_button_fired(self):
         from pychron.experiment.utilities.detector_ic import save_csv
 
-        save_csv(self.record_id, self.items)
+        p = save_csv(self.record_id, self.items)
+        information(None, "Detector IC values saved to {}".format(p))
 
     def traits_view(self):
         v = View(
             VGroup(
                 HGroup(spring, UItem("export_button")),
-                UItem("items", editor=TabularEditor(adapter=self.tabular_adapter)),
+                UItem("items", editor=TabularEditor(adapter=self.tabular_adapter,
+                                                    stretch_last_section=False)),
                 VGroup(
                     UItem("helpstr", style="readonly"), show_border=True, label="Info."
                 ),
