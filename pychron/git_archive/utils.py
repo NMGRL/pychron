@@ -198,13 +198,13 @@ if __name__ == "__main__":
     #     print c.hexsha, c.date, c.message
     # get_diff(repo, 'HEAD', '0ed461408fc8939909a907a73d2d991efc334eec')
     # get_diff(repo, '0ed461408fc8939909a907a73d2d991efc334eec', 'HEAD')
-    repo = '/Users/ross/PychronDev/data/.dvc/repositories/GeometricProgression/.git'
-    a = 'ce34b8861e558c60d0eeb13dc970b85a7e1a192e'
-    a = '7a41f191db9de477b85578e71bee994a30172f5a'
+    repo = "/Users/ross/PychronDev/data/.dvc/repositories/GeometricProgression/.git"
+    a = "ce34b8861e558c60d0eeb13dc970b85a7e1a192e"
+    a = "7a41f191db9de477b85578e71bee994a30172f5a"
 
-    b = 'a0a5b9232984f7b8425f173e80226584656f5a65'
+    b = "a0a5b9232984f7b8425f173e80226584656f5a65"
 
-    p = '/Users/ross/PychronDev/data/.dvc/repositories/GeometricProgression/670/icfactors/24-03.icfa.json'
+    p = "/Users/ross/PychronDev/data/.dvc/repositories/GeometricProgression/670/icfactors/24-03.icfa.json"
     get_diff(repo, a, b, p)
 
 # ============= EOF =============================================

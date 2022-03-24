@@ -522,18 +522,27 @@ class HistoryView(DVCCommitView):
             if self.selected_rhs.hexsha != abranch.commit.hexsha:
                 # branch = repo.create_head('rhs')
                 # branch.checkout()
-                repo.git.checkout(self.selected_rhs.hexsha, '--', ps)
+                repo.git.checkout(self.selected_rhs.hexsha, "--", ps)
 
-                rhs_an = self.dvc.make_analysis(self._analysis, use_cached=False, reload=True, sync_repo=False,
-                                                use_flux_histories=False)
+                rhs_an = self.dvc.make_analysis(
+                    self._analysis,
+                    use_cached=False,
+                    reload=True,
+                    sync_repo=False,
+                    use_flux_histories=False,
+                )
                 # deletes.append('rhs')
 
             # branch = repo.create_head(branchname)
             # branch.checkout()
-            repo.git.checkout(self.selected_lhs.hexsha, '--', ps)
-            lhs_an = self.dvc.make_analysis(self._analysis, use_cached=False,
-                                            reload=True, sync_repo=False,
-                                            use_flux_histories=False)
+            repo.git.checkout(self.selected_lhs.hexsha, "--", ps)
+            lhs_an = self.dvc.make_analysis(
+                self._analysis,
+                use_cached=False,
+                reload=True,
+                sync_repo=False,
+                use_flux_histories=False,
+            )
 
             v.diff_analyses(lhs_an, rhs_an)
 
@@ -541,7 +550,7 @@ class HistoryView(DVCCommitView):
             print("asdf", e)
         finally:
             # abranch.checkout()
-            repo.git.restore('--staged', ps)
+            repo.git.restore("--staged", ps)
             repo.git.restore(ps)
             # for d in deletes:
             #     repo.delete_head(d)
