@@ -396,7 +396,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
             p.use = not p.use
 
         self._suppress_predict = False
-        self.predict_values(refresh=True)
+        self.predict_values()
 
     def _toggle_save_unknowns_button_fired(self):
         for p in self.selected_unknowns:
