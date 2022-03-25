@@ -58,7 +58,7 @@ class DetectorICView(HasTraits):
         ] + detcols
 
         # self.items = items
-        self.items = make_items(an.isotopes)
+        self.items = make_items(isotopes)
 
     def _export_button_fired(self):
         from pychron.experiment.utilities.detector_ic import save_csv
