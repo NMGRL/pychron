@@ -63,9 +63,7 @@ class RatioItem(HasTraits):
 def make_items(isotopes):
     items = []
     for di in DETECTOR_ORDER:
-        ai = next(
-            (aii for aii in isotopes if aii.detector.upper() == di), None
-        )
+        ai = next((aii for aii in isotopes if aii.detector.upper() == di), None)
         if ai:
             rv = ai.get_non_detector_corrected_value()
             r = RatioItem(
@@ -76,7 +74,7 @@ def make_items(isotopes):
             )
             for dj in DETECTOR_ORDER:
                 bi = next(
-                    (aii for aii in isotopes  if aii.detector.upper() == dj),
+                    (aii for aii in isotopes if aii.detector.upper() == dj),
                     None,
                 )
                 if bi:
