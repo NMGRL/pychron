@@ -651,7 +651,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         yserr = reg.yserr
         lyy = ys - yserr
         uyy = ys + yserr
-        a = max((abs(min(xs)), abs(max(xs))))*1.1
+        a = max((abs(min(xs)), abs(max(xs)))) * 1.1
         fxs = linspace(-a, a, 100)
 
         a = r * sin(fxs)
