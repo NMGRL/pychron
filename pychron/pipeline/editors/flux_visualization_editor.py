@@ -164,6 +164,12 @@ def add_axes_tools(g, p):
     g.add_axis_tool(p, p.y_axis)
 
 
+def get_geom_radius(g):
+    xs = [x for x, y, r, _ in g]
+    xg = (max(xs) - min(xs)) / 2
+    return xg
+
+
 class BaseFluxVisualizationEditor(BaseTraitsEditor):
     graph = Instance("pychron.graph.graph.Graph")
     levels = Int(10)
@@ -225,7 +231,8 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             BRACKETING,
         ):
             # n = z.shape[0] * 10
-            r = max((max(abs(x)), max(abs(y))))
+            # r = max((max(abs(x)), max(abs(y))))
+            r = get_geom_radius(self.geometry)
             # r *= 1.25
             reg = self._regressor_factory(x, y, z, ze)
             self._regressor = reg
@@ -644,8 +651,8 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         yserr = reg.yserr
         lyy = ys - yserr
         uyy = ys + yserr
-        a = max((abs(min(xs)), abs(max(xs))))
-        fxs = linspace(-a, a, 200)
+        a = max((abs(min(xs)), abs(max(xs))))*1.1
+        fxs = linspace(-a, a, 100)
 
         a = r * sin(fxs)
         b = r * cos(fxs)
