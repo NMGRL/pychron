@@ -76,7 +76,8 @@ class Handler(object):
         raise NotImplementedError
 
     def end(self):
-        pass
+        if self.sock:
+            self.sock.close()
 
     # private
     def _recvall(self, recv, datasize=None, frame=None):
@@ -163,9 +164,6 @@ class TCPHandler(Handler):
     def send_packet(self, p):
         self.sock.send(p.encode("utf-8"))
 
-    def end(self):
-        self.sock.close()
-
 
 class UDPHandler(Handler):
     def open_socket(self, addr, timeout=1.0, bind=False):
@@ -202,9 +200,10 @@ class EthernetCommunicator(Communicator):
     port = None
     read_port = None
     handler = None
+    read_handler = None
     kind = "UDP"
     test_cmd = None
-    use_end = False
+    use_end = True
     verbose = False
     error_mode = False
     message_frame = ""
@@ -253,7 +252,7 @@ class EthernetCommunicator(Communicator):
             "use_end",
             cast="boolean",
             optional=True,
-            default=False,
+            default=True,
         )
         self.message_frame = self.config_get(
             config, "Communications", "message_frame", optional=True, default=""
@@ -310,9 +309,13 @@ class EthernetCommunicator(Communicator):
     def get_read_handler(self, handler, **kw):
 
         if self.read_port:
-            handler = self.get_handler(
-                addrs=(self.host, self.read_port), bind=True, **kw
-            )
+            if self.read_handler:
+                handler = self.read_handler
+            else:
+                handler = self.get_handler(
+                    addrs=(self.host, self.read_port), bind=True, **kw
+                )
+                self.read_handler = handler
 
         return handler
 
@@ -420,6 +423,8 @@ class EthernetCommunicator(Communicator):
                 # self.debug('ending connection. Handler: {}, cmd={}'.format(self.handler, cmd))
                 if self.handler:
                     self.handler.end()
+                if self.read_handler:
+                    self.read_handler.end()
                 self._reset_connection()
 
             if verbose or (self.verbose and not quiet):
@@ -460,9 +465,16 @@ class EthernetCommunicator(Communicator):
         self, cmd, timeout=None, message_frame=None, delay=None, use_error_mode=True
     ):
         if self.error_mode:
+            if self.handler:
+                self.handler.end()
+            if self.read_handler:
+                self.read_handler.end()
+
             self.handler = None
+            self.read_handler = None
+
             if use_error_mode:
-                timeout = 0.25
+                timeout = 0.5
 
         if timeout is None:
             timeout = self.default_timeout

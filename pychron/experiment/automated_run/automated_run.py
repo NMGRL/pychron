@@ -1116,6 +1116,8 @@ class AutomatedRun(Loggable):
         #     self.plot_panel.automated_run = None
 
         self._persister_action("trait_set", persistence_spec=None, monitor=None)
+        if self.runner:
+            self.runner.clear()
 
     def finish(self):
         self.debug("----------------- finish -----------------")
