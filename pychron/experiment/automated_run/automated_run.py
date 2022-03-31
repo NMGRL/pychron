@@ -2219,7 +2219,7 @@ anaylsis_type={}
     def _load_previous(self):
         # this is necessary for measuring the baseline before doing a peakhop or multicollect
         if self._previous_loaded:
-            self.debug('previous blanks and baselines already loaded')
+            self.debug("previous blanks and baselines already loaded")
             return
 
         self._previous_loaded = True
