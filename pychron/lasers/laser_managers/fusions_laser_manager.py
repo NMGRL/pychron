@@ -308,6 +308,9 @@ class FusionsLaserManager(LaserManager):
                         self.stage_manager.set_z(position[2])
             else:
                 self.stage_manager.move_to_hole(position, correct_position=autocenter)
+                if kw.get('block'):
+                    self.stage_manager.block()
+
             return True
 
     def _disable_hook(self):

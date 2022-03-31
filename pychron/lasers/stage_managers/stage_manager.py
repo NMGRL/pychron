@@ -104,6 +104,12 @@ class StageManager(BaseStageManager):
 
     # def fiber_light_changed(self, v):
     #    pass
+    def block(self):
+        self.debug('blocking')
+        while self.moving():
+            time.sleep(1)
+
+        self.debug('blocking complete')
 
     def measure_grain_polygon(self):
         pass
