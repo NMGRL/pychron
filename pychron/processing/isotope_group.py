@@ -316,7 +316,7 @@ class IsotopeGroup(HasTraits):
         det, name = det.name, det.isotope
 
         if name in self.isotopes:
-            iso = self.isotopes.pop(name)
+            iso = self.isotopes[name]
             if add:
                 if iso.detector != det:
                     nn = "{}{}".format(iso.name, iso.detector)
@@ -324,8 +324,6 @@ class IsotopeGroup(HasTraits):
 
                     iso = Isotope(name, det)
                     name = "{}{}".format(name, det)
-                    self.isotopes[name] = iso
-                else:
                     self.isotopes[name] = iso
         else:
             iso = Isotope(name, det)
