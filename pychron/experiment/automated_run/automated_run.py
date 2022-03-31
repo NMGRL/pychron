@@ -258,6 +258,7 @@ class AutomatedRun(Loggable):
     _truncate_signal = Bool
     _equilibration_done = False
     _integration_seconds = Float(1.1)
+    _previous_loaded = False
 
     min_ms_pumptime = Int(60)
     overlap_evt = None
@@ -1103,6 +1104,9 @@ class AutomatedRun(Loggable):
 
     def teardown(self):
         self.debug("tear down")
+
+        self._previous_loaded = False
+
         if self.measurement_script:
             self.measurement_script.automated_run = None
 
@@ -2213,6 +2217,13 @@ anaylsis_type={}
         self.plot_panel = p
 
     def _load_previous(self):
+        # this is necessary for measuring the baseline before doing a peakhop or multicollect
+        if self._previous_loaded:
+            self.debug('previous blanks and baselines already loaded')
+            return
+
+        self._previous_loaded = True
+
         if not self.spec.analysis_type.startswith(
             "blank"
         ) and not self.spec.analysis_type.startswith("background"):
