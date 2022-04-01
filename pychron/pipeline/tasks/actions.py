@@ -162,6 +162,11 @@ class RecallAction(PipelineAction):
     action = "pipeline_recall"
 
 
+class DVCRecallAction(PipelineAction):
+    name = "DVC Recall..."
+    action = "pipeline_dvc_recall"
+
+
 class InterpretedAgeRecallAction(PipelineAction):
     name = "Interpreted Age Recall..."
     action = "pipeline_interpreted_age_recall"
