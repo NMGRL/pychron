@@ -230,18 +230,26 @@ class PipelineTask(BaseBrowserTask):
                 potential = self.dvc.find_record(record)
                 if potential:
                     if len(potential) > 1:
-                        self.warning_dialog('More than one analysis matches the entered uuid "{}".'
-                                            'Please enter more characters of the uuid'.format(record.uuid))
+                        self.warning_dialog(
+                            'More than one analysis matches the entered uuid "{}".'
+                            "Please enter more characters of the uuid".format(
+                                record.uuid
+                            )
+                        )
                     else:
-                        self.debug('Found record. RunID={}, UUID={}'.format(record.record_id, record.uuid))
-                        self.recall((record, ), use_quick=False)
+                        self.debug(
+                            "Found record. RunID={}, UUID={}".format(
+                                record.record_id, record.uuid
+                            )
+                        )
+                        self.recall((record,), use_quick=False)
                         break
                 else:
-                    self.warning_dialog('No records found matching {}'.format(record.uuid))
+                    self.warning_dialog(
+                        "No records found matching {}".format(record.uuid)
+                    )
             else:
                 break
-
-
 
     def pipeline_recall(self):
         if self._browser_info:

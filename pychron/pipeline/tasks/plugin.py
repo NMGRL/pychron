@@ -49,7 +49,8 @@ from pychron.pipeline.tasks.actions import (
     MassSpecReducedAction,
     InterpretedAgeRecallAction,
     IdentifyPeaksDemoAction,
-    ImportOptionsActions, DVCRecallAction,
+    ImportOptionsActions,
+    DVCRecallAction,
 )
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 

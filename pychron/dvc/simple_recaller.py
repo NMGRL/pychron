@@ -44,16 +44,23 @@ class SimpleDVCRecaller(Loggable):
         repo = self.repository
         root = os.path.dirname(repo)
         name = os.path.basename(repo)
-        return SimpleDVCRecord(uuid=self.uuid,
-                               repository_root=root,
-                               repository_identifier=name,
-                               group_id=0,
-                               tag='OK')
+        return SimpleDVCRecord(
+            uuid=self.uuid,
+            repository_root=root,
+            repository_identifier=name,
+            group_id=0,
+            tag="OK",
+        )
 
     def traits_view(self):
-        v = VGroup(Item('uuid'),
-                   Item('repository'),
-                   )
+        v = VGroup(
+            Item("uuid"),
+            Item("repository"),
+        )
 
-        return okcancel_view(v, title='Enter Full or Partial UUID', width=500, height=100)
+        return okcancel_view(
+            v, title="Enter Full or Partial UUID", width=500, height=100
+        )
+
+
 # ============= EOF =============================================
