@@ -106,7 +106,10 @@ class StageManager(BaseStageManager):
     #    pass
     def block(self):
         self.debug("blocking")
-        while self.moving():
+
+        # if self.move_thread and self.move_thread.isRunning():
+        time.sleep(1)
+        while self.move_thread.isRunning():
             time.sleep(1)
 
         self.debug("blocking complete")
