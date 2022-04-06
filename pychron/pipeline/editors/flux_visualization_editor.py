@@ -762,7 +762,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         self.min_j = fys.min()
 
     def _additional_info(self, ind):
-        fm = self.monitor_positions[ind]
+        fm = [mi for mi in self.monitor_positions if mi.use][ind]
         # 'MSWD={}'.format(format_mswd(fm.mean_j_mswd, fm.mean_j_valid_mswd)),
         return [
             format_mswd(fm.mean_j_mswd, fm.mean_j_valid_mswd, include_tag=True),
