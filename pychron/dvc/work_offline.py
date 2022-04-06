@@ -330,7 +330,9 @@ class WorkOffline(Loggable):
 
         with dest.session_ctx(use_parent_session=False) as dest_sess:
             keys = list(table.__table__.columns.keys())
-            mappings = ({k: getattr(row, k) for k in keys} for row in records if row is not None)
+            mappings = (
+                {k: getattr(row, k) for k in keys} for row in records if row is not None
+            )
             dest_sess.bulk_insert_mappings(table, mappings)
             dest_sess.commit()
         self.debug("copy finished et={:0.5f}".format(time.time() - st))
