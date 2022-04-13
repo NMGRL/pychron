@@ -1569,6 +1569,7 @@ class DVCDatabase(DatabaseAdapter):
         order="asc",
         limit=None,
         verbose_query=True,
+        count_only=False
     ):
 
         with self.session_ctx() as sess:
@@ -1607,8 +1608,10 @@ class DVCDatabase(DatabaseAdapter):
 
             if limit:
                 q = q.limit(limit)
-
             tc = q.count()
+            if count_only:
+                return tc
+
             return self._query_all(q, verbose_query=verbose_query), tc
 
     def get_repository_date_range(self, names):
@@ -2530,6 +2533,9 @@ class DVCDatabase(DatabaseAdapter):
             return self._query_all(q)
 
     # update/delete
+    def delete_irradiation_position(self, p):
+        self._delete_item(p)
+
     def delete_tag(self, name):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl.id)
