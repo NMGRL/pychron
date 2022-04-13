@@ -96,7 +96,7 @@ class EditView(ModelView):
                 "add_reactor_button",
                 "add",
                 tooltip="Add Default Production for the selected "
-                        "Reactor to this Irradiation level",
+                "Reactor to this Irradiation level",
             ),
             icon_button_editor(
                 "update_reactor_default_button",
@@ -379,8 +379,8 @@ class IrradiationLevelEditor(PackageLevelEditor):
                     break
             else:
                 if self.confirmation_dialog(
-                        "You are about to delete {} irradiation positions. "
-                        "Are you sure you want to continue?".format(on - n)
+                    "You are about to delete {} irradiation positions. "
+                    "Are you sure you want to continue?".format(on - n)
                 ):
 
                     for p in level.positions[n:]:
@@ -616,7 +616,6 @@ if __name__ == "__main__":
     mr = MetaRepo()
     mr.open_repo(paths.meta_root)
 
-
     class Demo(HasTraits):
         test = Button
         traits_view = View("test")
@@ -626,7 +625,6 @@ if __name__ == "__main__":
                 db=dbt, meta_repo=mr, irradiation="NM-274", name="H"
             )
             e.edit()
-
 
     d = Demo()
     d.configure_traits()

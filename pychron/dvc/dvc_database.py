@@ -1569,7 +1569,7 @@ class DVCDatabase(DatabaseAdapter):
         order="asc",
         limit=None,
         verbose_query=True,
-        count_only=False
+        count_only=False,
     ):
 
         with self.session_ctx() as sess:

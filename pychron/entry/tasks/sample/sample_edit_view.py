@@ -148,7 +148,7 @@ class SampleEditItem(HasTraits):
                         setattr(self, attr, v)
                         setattr(self, "_{}".format(attr), v)
                     except (TraitError, ValueError) as e:
-                        print('unable to set attribute', attr, v, e)
+                        print("unable to set attribute", attr, v, e)
                         pass
 
     @property
