@@ -157,6 +157,7 @@ class LoadingCanvas(SceneCanvas):
     _last_position = 1
     _foot_pedal_mode = False
 
+    mode_overlay_enabled = True
     mode_overlay = None
 
     def load_scene(self, t, **kw):
@@ -170,8 +171,9 @@ class LoadingCanvas(SceneCanvas):
         self.popup = LoadingOverlay()
         self.popup.visible = False
 
-        self.mode_overlay = ModeOverlay()
-        self.overlays.append(self.mode_overlay)
+        if self.mode_overlay_enabled:
+            self.mode_overlay = ModeOverlay()
+            self.overlays.append(self.mode_overlay)
         self.overlays.append(self.popup)
 
     def set_foot_pedal_mode(self, v):

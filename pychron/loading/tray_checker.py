@@ -19,7 +19,7 @@ import os
 from math import ceil
 
 import joblib
-from numpy import hstack, column_stack, savetxt, savez, save, load
+from numpy import hstack, column_stack, savetxt, savez, save, load, asarray
 from skimage.exposure import adjust_gamma
 from sklearn import metrics, svm
 from sklearn.model_selection import train_test_split
@@ -32,7 +32,7 @@ from traitsui.api import View, UItem, Item, VGroup, HGroup
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.image_editor import ImageEditor
-from pychron.image.cv_wrapper import grayspace
+from pychron.image.cv_wrapper import grayspace, get_size, crop
 from pychron.image.standalone_image import FrameImage
 from pychron.loggable import Loggable
 from pychron.mv.grain_locator import GrainLocator
@@ -77,20 +77,21 @@ class TrayChecker(MachineVisionManager):
         self._loading_manager = loading_manager
         self.video = loading_manager.stage_manager.video
 
-        loc = GrainLocator()
-        self.locator = loc
-        self.locator.pxpermm = loading_manager.stage_manager.pxpermm
-
     def check(self):
-        # pipe = self._get_classifier()
+        use_ml = True
+
+        if use_ml:
+            pipe = self._get_classifier()
         self.edit_traits(view=View(UItem('object.display_image.source_frame',
                                          editor=ImageEditor(refresh='refresh_image'))),
                          kind='live')
 
         for pos in self._loading_manager.positions:
             self._loading_manager.goto(pos, block=True)
-            # self._check_position_ml(pipe, pos)
-            self._check_position(pos)
+            if use_ml:
+                self._check_position_ml(pipe, pos)
+            else:
+                self._check_position(pos)
 
     def train(self):
         xs = []
@@ -173,11 +174,6 @@ class TrayChecker(MachineVisionManager):
         p = os.path.join(paths.loading_dir, loadname, '{}.loaded.jpg'.format(pos))
         imsave(p, frame)
 
-    def _make_vector(self, pos, frame):
-        f = frame.flatten()
-        return f
-        # return hstack((pos, f))
-
     def _get_classifier(self):
         loadname = self._loading_manager.load_instance.name
         tp = os.path.join(paths.loading_dir, '{}.clf.joblib'.format(loadname))
@@ -201,8 +197,15 @@ class TrayChecker(MachineVisionManager):
             hole = self._loading_manager.stage_manager.stage_map.get_hole(pos)
             dim = hole.dimension
 
-        cropdim = ceil(dim * 2.55)
-        return self.locator.crop(frame, cropdim, cropdim)
+        cw, ch = ceil(dim * 2.55)
+        pxpermm = self._loading_manager.stage_manager.pxpermm
+        cw_px = int(cw * pxpermm)
+        ch_px = int(ch * pxpermm)
+        w, h = get_size(frame)
+
+        x = int((w - cw_px) / 2.0)
+        y = int((h - ch_px) / 2.0)
+        return asarray(crop(frame, x, y, cw_px, ch_px))
 
     def _check_position(self, pos):
         self.debug('check position {}'.format(pos))
