@@ -107,7 +107,7 @@ class FluxEstimator(MonteCarloEstimator):
     def estimate(self, pts):
         reg = self.regressor
         pexog = reg.get_exog(pts)
-
+        print('asdf', len(pts), pexog.shape)
         return self._estimate(pts, pexog)
 
 

@@ -87,6 +87,7 @@ class OLSRegressor(BaseRegressor):
         """
         if not hasattr(self, "pinv_wexog"):
             self.pinv_wexog = linalg.pinv(self._ols.wexog)
+
         beta = dot(self.pinv_wexog, endog)
 
         return dot(exog, beta)

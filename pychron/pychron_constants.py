@@ -368,6 +368,8 @@ FLUX_MODEL_KINDS = (
     BRACKETING,
     LEAST_SQUARES_1D,
     WEIGHTED_MEAN_1D,
+    RBF,
+    GRIDDATA,
 )
 
 if paths.setup_dir:

@@ -511,7 +511,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         )[0]
         ss.orientation = "v"
 
-        ebo = ErrorBarOverlay(component=ss, orientation="x", use_component=False)
+        ebo = ErrorBarOverlay(component=ss, orientation="x", data_orientation="y", use_component=False)
         ss.underlays.append(ebo)
         # x, y = reg.xs.T
         ebo.index, ebo.value, ebo.error = y, reg.ys, reg.yserr
@@ -981,6 +981,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
     ring_graph = Instance(StackedGraph)
     deviation_graph = Instance(StackedGraph)
     spoke_graph = Instance(StackedGraph)
+    cross_validation_graph = Instance(Graph)
     export_table_button = Button
     _individual_analyses_enabled = False
 
@@ -1053,6 +1054,11 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
             mx = arctan2(x, y)
             ys = (unkj - my) / unkj * 100
             s = g.new_series(mx, ys)[0]
+
+    def _update_cross_validation(self):
+        self.cross_validation_graph = g = Graph()
+        reg = self._regressor
+        # print(reg._result.params)
 
     def _update_ring_graph(self):
         self.ring_graph = g = StackedGraph()
@@ -1170,6 +1176,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
 
         # calculate gradients
         self.calculate_gradients()
+        self._update_cross_validation()
         # self._update_ring_graph()
         # self._update_half_ring_graph()
 
@@ -1273,6 +1280,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
 
         rings = VGroup(
             HGroup(
+                UItem("cross_validation_graph",style="custom"),
                 UItem("ring_graph", style="custom"),
                 UItem("deviation_graph", style="custom"),
                 UItem("spoke_graph", style="custom"),

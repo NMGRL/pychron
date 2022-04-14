@@ -17,7 +17,7 @@
 # ============= standard library imports ========================
 from operator import itemgetter
 
-from numpy import asarray, column_stack, ones_like, array, average, ravel, zeros_like
+from numpy import asarray, column_stack, ones_like, array, average, ravel, zeros_like, sin, cos
 
 # ============= local library imports  ==========================
 from scipy.interpolate import Rbf, bisplrep, bisplev, griddata
@@ -53,6 +53,12 @@ class SpecialFluxRegressor(BaseRegressor):
 
 class InterpolationRegressor(SpecialFluxRegressor):
     def predict(self, pts):
+        return self.predict_grid(*pts.T)
+
+    def fast_predict2(self, endog, exog):
+        pass
+
+    def predict_grid(self, pts):
         return zeros_like(pts)
 
     def predict_error(self, pts, **kw):
@@ -60,6 +66,7 @@ class InterpolationRegressor(SpecialFluxRegressor):
 
 
 class BSplineRegressor(InterpolationRegressor):
+
     def calculate(self):
         x, y = self.clean_xs.T
 
@@ -85,6 +92,13 @@ class RBFRegressor(InterpolationRegressor):
     def predict_grid(self, x, y):
         return self.rbf(x, y)
 
+    def fast_predict2(self, endog, exog):
+        x, y = exog.T
+        # print(x.shape, y.shape, endog.shape)
+        fx, fy = self.clean_xs.T
+        self.rbf = Rbf(fx, fy, endog, function=self.rbf_kind)
+        return self.rbf(x, y)
+
 
 class GridDataRegressor(InterpolationRegressor):
     method = "cubic"
@@ -93,7 +107,18 @@ class GridDataRegressor(InterpolationRegressor):
         pass
 
     def predict_grid(self, x, y):
-        return griddata(self.clean_xs, self.clean_ys, (x, y), method=self.method)
+        z = griddata(self.clean_xs, self.clean_ys, (x, y), method=self.method)
+        print('pasdf', z)
+        return z
+        # return griddata(self.clean_xs, self.clean_ys, (x, y), method=self.method)
+
+    def fast_predict2(self, endog, exog):
+        x, y = exog.T
+        # print(x.shape, y.shape, endog.shape)
+        # fx, fy = self.clean_xs.T
+        # self.rbf = Rbf(fx, fy, endog, function=self.rbf_kind)
+        # return self.rbf(x, y)
+        return griddata(self.clean_xs, endog, (x, y), method=self.method)
 
 
 class IDWRegressor(InterpolationRegressor):
@@ -132,7 +157,7 @@ class NearestNeighborFluxRegressor(SpecialFluxRegressor):
 
                 if self.use_weighted_fit:
                     es = self.clean_yserr[idx]
-                    ws = es**-2
+                    ws = es ** -2
                     if return_error:
                         v = ws.sum()
                     else:
@@ -204,19 +229,28 @@ class NearestNeighborFluxRegressor(SpecialFluxRegressor):
 
 
 class BowlFluxRegressor(MultipleLinearRegressor):
+
     def _get_X(self, xs=None):
         if xs is None:
             xs = self.xs
         xs = asarray(xs)
         x1, x2 = xs.T
+        # cols =[pow(xi, i+1) for i in range(self.degree) for xi in xs.T]
+        # cols.append(ones_like(x1))
 
+        # return column_stack(cols)
         return column_stack(
             (
+                # x1 ** 6,
+                # x2 ** 6,
+                # x1 ** 5,
+                # x2 ** 5,
+                x1 ** 4,
+                x2 ** 4,
+                x1**3,
+                x2**3,
                 x1**2,
                 x2**2,
-                x1**2 * x2,
-                x2**2 * x1,
-                x1 * x2,
                 x1,
                 x2,
                 ones_like(x1),
@@ -239,6 +273,5 @@ class PlaneFluxRegressor(MultipleLinearRegressor):
             return WLS(fy, X, weights=self._get_weights())
         else:
             return OLS(fy, X)
-
 
 # ============= EOF =============================================

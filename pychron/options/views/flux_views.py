@@ -105,6 +105,8 @@ class FluxAppearanceSubOptions(AppearanceSubOptions):
                     editor=EnumEditor(values=sorted(color_map_name_dict.keys())),
                 ),
                 Item("levels"),
+                Item("rbf_kind", visible_when='model_kind="RBF"'),
+                Item("griddata_method", visible_when='model_kind="GridData"'),
             ),
             visible_when='plot_kind=="2D"',
             label="Options",

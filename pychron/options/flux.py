@@ -79,6 +79,16 @@ class FluxOptions(BaseFluxOptions, MonitorMixin):
 
     least_squares_fit = Enum("Linear", "Parabolic", "Cubic", "Quartic")
     one_d_axis = Enum("X", "Y")
+    rbf_kind = Enum(
+        "multiquadric",
+        "inverse",
+        "gaussian",
+        "linear",
+        "cubic",
+        "quintic",
+        "thin_plate",
+    )
+    griddata_method = Enum("linear", "nearest", "cubic")
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]
