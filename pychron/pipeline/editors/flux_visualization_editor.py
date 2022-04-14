@@ -511,7 +511,9 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         )[0]
         ss.orientation = "v"
 
-        ebo = ErrorBarOverlay(component=ss, orientation="x", data_orientation="y", use_component=False)
+        ebo = ErrorBarOverlay(
+            component=ss, orientation="x", data_orientation="y", use_component=False
+        )
         ss.underlays.append(ebo)
         # x, y = reg.xs.T
         ebo.index, ebo.value, ebo.error = y, reg.ys, reg.yserr
@@ -1280,7 +1282,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
 
         rings = VGroup(
             HGroup(
-                UItem("cross_validation_graph",style="custom"),
+                UItem("cross_validation_graph", style="custom"),
                 UItem("ring_graph", style="custom"),
                 UItem("deviation_graph", style="custom"),
                 UItem("spoke_graph", style="custom"),

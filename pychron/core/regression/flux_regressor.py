@@ -17,7 +17,17 @@
 # ============= standard library imports ========================
 from operator import itemgetter
 
-from numpy import asarray, column_stack, ones_like, array, average, ravel, zeros_like, sin, cos
+from numpy import (
+    asarray,
+    column_stack,
+    ones_like,
+    array,
+    average,
+    ravel,
+    zeros_like,
+    sin,
+    cos,
+)
 
 # ============= local library imports  ==========================
 from scipy.interpolate import Rbf, bisplrep, bisplev, griddata
@@ -66,7 +76,6 @@ class InterpolationRegressor(SpecialFluxRegressor):
 
 
 class BSplineRegressor(InterpolationRegressor):
-
     def calculate(self):
         x, y = self.clean_xs.T
 
@@ -108,7 +117,7 @@ class GridDataRegressor(InterpolationRegressor):
 
     def predict_grid(self, x, y):
         z = griddata(self.clean_xs, self.clean_ys, (x, y), method=self.method)
-        print('pasdf', z)
+        print("pasdf", z)
         return z
         # return griddata(self.clean_xs, self.clean_ys, (x, y), method=self.method)
 
@@ -157,7 +166,7 @@ class NearestNeighborFluxRegressor(SpecialFluxRegressor):
 
                 if self.use_weighted_fit:
                     es = self.clean_yserr[idx]
-                    ws = es ** -2
+                    ws = es**-2
                     if return_error:
                         v = ws.sum()
                     else:
@@ -229,7 +238,6 @@ class NearestNeighborFluxRegressor(SpecialFluxRegressor):
 
 
 class BowlFluxRegressor(MultipleLinearRegressor):
-
     def _get_X(self, xs=None):
         if xs is None:
             xs = self.xs
@@ -245,8 +253,8 @@ class BowlFluxRegressor(MultipleLinearRegressor):
                 # x2 ** 6,
                 # x1 ** 5,
                 # x2 ** 5,
-                x1 ** 4,
-                x2 ** 4,
+                x1**4,
+                x2**4,
                 x1**3,
                 x2**3,
                 x1**2,
@@ -273,5 +281,6 @@ class PlaneFluxRegressor(MultipleLinearRegressor):
             return WLS(fy, X, weights=self._get_weights())
         else:
             return OLS(fy, X)
+
 
 # ============= EOF =============================================
