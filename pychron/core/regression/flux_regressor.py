@@ -253,10 +253,10 @@ class BowlFluxRegressor(MultipleLinearRegressor):
                 # x2 ** 6,
                 # x1 ** 5,
                 # x2 ** 5,
-                x1**4,
-                x2**4,
-                x1**3,
-                x2**3,
+                # x1**4,
+                # x2**4,
+                # x1**3,
+                # x2**3,
                 x1**2,
                 x2**2,
                 x1,
@@ -266,6 +266,55 @@ class BowlFluxRegressor(MultipleLinearRegressor):
         )
         # return column_stack((x1, x2, x1 ** 2, x2 ** 2, x1 * x2, x1**2*x2, x2**2*x1, ones_like(x1)))
         # return column_stack((x1**2, x2**2, x1, x2, ones_like(x1)))
+
+
+class HighOrderPolynominalFluxRegressor(MultipleLinearRegressor):
+    def _get_X(self, xs=None):
+        if xs is None:
+            xs = self.xs
+        xs = asarray(xs)
+        x1, x2 = xs.T
+        cols = [xi**(i+1) for i in range(self.degree) for xi in xs.T]
+        cols.append(ones_like(x1))
+        cols = column_stack(cols)
+        # print(cols)
+
+        # column_stack(
+        #     (
+        #         # x1 ** 6,
+        #         # x2 ** 6,
+        #         # x1 ** 5,
+        #         # x2 ** 5,
+        #         x1**4,
+        #         x2**4,
+        #         x1**3,
+        #         x2**3,
+        #         x1**2,
+        #         x2**2,
+        #         x1,
+        #         x2,
+        #         ones_like(x1),
+        #     )
+        # )
+
+        return cols
+        # return column_stack(
+        #     (
+        #         # x1 ** 6,
+        #         # x2 ** 6,
+        #         # x1 ** 5,
+        #         # x2 ** 5,
+        #         # x1**4,
+        #         # x2**4,
+        #         # x1**3,
+        #         # x2**3,
+        #         x1**2,
+        #         x2**2,
+        #         x1,
+        #         x2,
+        #         ones_like(x1),
+        #     )
+        # )
 
 
 class PlaneFluxRegressor(MultipleLinearRegressor):

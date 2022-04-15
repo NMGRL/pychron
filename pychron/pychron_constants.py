@@ -359,9 +359,12 @@ BSPLINE = "BSpline"
 RBF = "RBF"
 GRIDDATA = "GridData"
 IDW = "IDW"
+HIGH_ORDER_POLY = "Order 5 Polynomial"
+
 FLUX_MODEL_KINDS = (
     PLANE,
     BOWL,
+    HIGH_ORDER_POLY,
     WEIGHTED_MEAN,
     MATCHING,
     NN,

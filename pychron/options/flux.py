@@ -47,6 +47,17 @@ class BaseFluxOptions(FigureOptions):
     predicted_j_error_type = Enum(*ERROR_TYPES)
     flux_scalar = Float(1000)
 
+    rbf_kind = Enum(
+        "multiquadric",
+        "inverse",
+        "gaussian",
+        "linear",
+        "cubic",
+        "quintic",
+        "thin_plate",
+    )
+    griddata_method = Enum("linear", "nearest", "cubic")
+
 
 class MonitorMixin(HasTraits):
     error_kind = Enum(*ERROR_TYPES)
@@ -79,16 +90,7 @@ class FluxOptions(BaseFluxOptions, MonitorMixin):
 
     least_squares_fit = Enum("Linear", "Parabolic", "Cubic", "Quartic")
     one_d_axis = Enum("X", "Y")
-    rbf_kind = Enum(
-        "multiquadric",
-        "inverse",
-        "gaussian",
-        "linear",
-        "cubic",
-        "quintic",
-        "thin_plate",
-    )
-    griddata_method = Enum("linear", "nearest", "cubic")
+    degree = Int(3)
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]
@@ -101,16 +103,7 @@ class FluxOptions(BaseFluxOptions, MonitorMixin):
 
 class FluxVisualizationOptions(BaseFluxOptions):
     model_kind = Enum(PLANE, BOWL, BSPLINE, RBF, GRIDDATA, IDW)
-    rbf_kind = Enum(
-        "multiquadric",
-        "inverse",
-        "gaussian",
-        "linear",
-        "cubic",
-        "quintic",
-        "thin_plate",
-    )
-    griddata_method = Enum("linear", "nearest", "cubic")
+
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]

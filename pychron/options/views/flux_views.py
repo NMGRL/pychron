@@ -27,7 +27,7 @@ from pychron.pychron_constants import (
     WEIGHTED_MEAN_1D,
     BRACKETING,
     NN,
-    MATCHING,
+    MATCHING, HIGH_ORDER_POLY, RBF, GRIDDATA,
 )
 
 
@@ -105,9 +105,11 @@ class FluxAppearanceSubOptions(AppearanceSubOptions):
                     editor=EnumEditor(values=sorted(color_map_name_dict.keys())),
                 ),
                 Item("levels"),
-                Item("rbf_kind", visible_when='model_kind="RBF"'),
-                Item("griddata_method", visible_when='model_kind="GridData"'),
+
             ),
+            Item("rbf_kind", visible_when='model_kind="{}"'.format(RBF)),
+            Item("griddata_method", visible_when='model_kind="{}"'.format(GRIDDATA)),
+            Item("degree", visible_when='model_kind="{}"'.format(HIGH_ORDER_POLY)),
             visible_when='plot_kind=="2D"',
             label="Options",
             show_border=True,
