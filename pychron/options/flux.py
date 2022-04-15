@@ -104,7 +104,6 @@ class FluxOptions(BaseFluxOptions, MonitorMixin):
 class FluxVisualizationOptions(BaseFluxOptions):
     model_kind = Enum(PLANE, BOWL, BSPLINE, RBF, GRIDDATA, IDW)
 
-
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]
 

@@ -274,7 +274,7 @@ class HighOrderPolynominalFluxRegressor(MultipleLinearRegressor):
             xs = self.xs
         xs = asarray(xs)
         x1, x2 = xs.T
-        cols = [xi**(i+1) for i in range(self.degree) for xi in xs.T]
+        cols = [xi ** (i + 1) for i in range(self.degree) for xi in xs.T]
         cols.append(ones_like(x1))
         cols = column_stack(cols)
         # print(cols)
