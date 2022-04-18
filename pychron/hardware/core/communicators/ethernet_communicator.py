@@ -254,6 +254,14 @@ class EthernetCommunicator(Communicator):
             optional=True,
             default=True,
         )
+        self.strip = self.config_get(
+            config,
+            "Communications",
+            "strip",
+            cast="boolean",
+            optional=True,
+            default=True,
+        )
         self.message_frame = self.config_get(
             config, "Communications", "message_frame", optional=True, default=""
         )
