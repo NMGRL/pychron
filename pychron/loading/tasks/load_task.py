@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from pyface.tasks.action.schema import SToolBar
-from pyface.tasks.task_layout import PaneItem, TaskLayout
+from pyface.tasks.task_layout import PaneItem, TaskLayout, VSplitter
 from traits.api import Any
 
 from pychron.envisage.tasks.base_task import BaseManagerTask
@@ -59,7 +59,8 @@ class LoadingTask(BaseManagerTask):
     def _default_layout_default(self):
         return TaskLayout(
             left=PaneItem("pychron.loading.controls"),
-            right=PaneItem("pychron.loading.positions"),
+            right=VSplitter(PaneItem("pychron.loading.positions"),
+                           PaneItem("pychron.loading.stage"))
         )
 
     def prepare_destroy(self):

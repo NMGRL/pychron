@@ -229,7 +229,7 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
             (
                 h.corrected_position if h.has_correction else h.nominal_position
                 for h in self.sample_holes
-                if h.id == key
+                if int(h.id) == int(key)
             ),
             None,
         )

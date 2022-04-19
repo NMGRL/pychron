@@ -42,8 +42,13 @@ from numpy import (
     isnan,
 )
 from scipy import ndimage
-from skimage.morphology import watershed, disk
-from skimage.draw import polygon, circle, circle_perimeter, circle_perimeter_aa
+
+try:
+    from skimage.morphology import watershed
+except ImportError:
+    from skimage.segmentation import watershed
+
+from skimage.draw import polygon, disk, circle_perimeter
 from skimage.exposure import rescale_intensity
 from skimage.filters import gaussian, rank
 from skimage import feature
@@ -523,7 +528,7 @@ class Locator(Loggable):
 
         radius *= self.pxpermm
         h, w = src.shape[:2]
-        c = circle(h / 2.0, w / 2.0, radius, shape=(h, w))
+        c = disk((h / 2.0, w / 2.0), radius, shape=(h, w))
         mask = ones_like(src, dtype=bool)
         mask[c] = False
         src[mask] = 0

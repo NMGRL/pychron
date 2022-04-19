@@ -39,7 +39,9 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
-from pychron.core.helpers.traitsui_shortcuts import okcancel_view, VFold
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view, VFold, rfloatitem
+from pychron.core.ui.button_editor import ButtonEditor
+from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.core.ui.table_configurer import TableConfigurer, TableConfigurerHandler
 from pychron.envisage.icon_button_editor import icon_button_editor
@@ -256,11 +258,79 @@ class StageManagerPane(TraitsDockPane):
     name = "Stage"
     id = "pychron.loading.stage"
 
+    def trait_context(self):
+        return {
+            "canvas": self.model.canvas,
+            "stage_manager": self.model,
+            "tray_calibration": self.model.tray_calibration_manager,
+            "object": self.model,
+        }
+
+    def calibration_view(self):
+        cal_help_grp = VGroup(
+            CustomLabel("tray_calibration.calibration_help", color="green"),
+            label="Help",
+            show_border=True,
+        )
+
+        cal_results_grp = VGroup(
+            HGroup(
+                rfloatitem("tray_calibration.cx"), rfloatitem("tray_calibration.cy")
+            ),
+            rfloatitem("tray_calibration.rotation"),
+            rfloatitem("tray_calibration.scale", sigfigs=4),
+            rfloatitem("tray_calibration.error", sigfigs=2),
+            label="Results",
+            show_border=True,
+        )
+
+        # holes_grp = VGroup(HGroup(UItem('tray_calibration.add_holes_button',
+        #                                 tooltip='Add Holes'),
+        #                           UItem('tray_calibration.reset_holes_button',
+        #                                 tooltip='Reset Holes')),
+        #                    UItem('tray_calibration.holes_list',
+        #                          editor=ListStrEditor()))
+
+        cal_grp = HGroup(
+            UItem(
+                "tray_calibration.style",
+                enabled_when="not tray_calibration.isCalibrating()",
+            ),
+            UItem(
+                "stage_manager.stage_map_name",
+                editor=EnumEditor(name="stage_manager.stage_map_names"),
+            ),
+            UItem(
+                "tray_calibration.calibrate",
+                enabled_when="tray_calibration.calibration_enabled",
+                editor=ButtonEditor(
+                    label_value="tray_calibration.calibration_step"
+                ),
+                width=-125,
+            ),
+            UItem(
+                "tray_calibration.cancel_button",
+                enabled_when="tray_calibration.isCalibrating()",
+            ),
+            UItem("tray_calibration.set_center_button"),
+        )
+        tc_grp = VGroup(
+            cal_grp,
+            UItem("tray_calibration.calibrator", style="custom"),
+            HGroup(cal_results_grp, cal_help_grp),
+            label="Calibration",
+        )
+        return tc_grp
+
     def traits_view(self):
         v = View(
-            # UItem('canvas', style='custom'),
-                 UItem('stage_controller', style='custom')
-                 )
+            VGroup(UItem("calibrated_position_entry",
+                         tooltip="Enter a position e.g 1 for a hole, " "or 3,4 for X,Y"),
+                   UItem('stage_controller', style='custom'),
+                   self.calibration_view()
+                   )
+
+        )
         return v
 
 

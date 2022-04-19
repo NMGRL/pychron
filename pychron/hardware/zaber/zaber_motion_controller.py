@@ -55,6 +55,7 @@ class ZaberMotionController(MotionController):
     device_id = CInt
     baudrate = CInt
     _device = None
+
     # _units = Units.LENGTH_MILLIMETRES
     # _wrapper = None
 
@@ -86,15 +87,21 @@ class ZaberMotionController(MotionController):
             return
 
         self.debug('opened connection {}'.format(conn))
-        self._device = conn.get_device(1)
-        self.debug('opened device  {}'.format(self._device))
-        self._connection = conn
-        # bs = BinarySerial(self.port, timeout=200, inter_char_timeout=2)
-        #
-        # for a in self.axes.values():
-        #     a.device = conn.get_device(a.device_id)
+        devs = conn.detect_devices(True)
+        self.debug('detecting connected devices')
+        if devs:
+            for d in devs:
+                self.debug('found device: {}'.format(d))
 
-        return True
+            self._device = devs[0]
+            self.debug('opened device  {}'.format(self._device))
+            self._connection = conn
+            # bs = BinarySerial(self.port, timeout=200, inter_char_timeout=2)
+            #
+            for a in self.axes.values():
+                a.device = self._device.get_axis(a.id)
+
+            return True
 
     def _get_simulation(self):
         return False
@@ -103,24 +110,32 @@ class ZaberMotionController(MotionController):
         if kw.get("source") != "laser_canvas":
             xaxis = self.single_axis_move("x", x, block=False)
             yaxis = self.single_axis_move("y", y, block=False)
+
+            xaxis.wait_until_idle()
+            yaxis.wait_until_idle()
             self.update_axes()
 
     def single_axis_move(self, key, value, block=True, *args, **kw):
         axis = self.axes[key]
+        dev = axis.device
+
+        if axis.sign == -1:
+            value = self.xaxes_max - value
         # steps = axis.convert_to_steps(value)
         # self.debug("calculated steps={} value={}".format(steps, value))
         # axis.device.move_abs(steps)
-        axis = self._device.get_axis(axis.id)
-        axis.move_absolute(value, Units.LENGTH_MILLIMETRES)
+        # axis = self._device.get_axis(axis.id)
+        dev.move_absolute(value, Units.LENGTH_MILLIMETRES, wait_until_idle=block)
         if block:
             self.update_axes()
-        return axis
+        return dev
 
     def home(self, axes, block=True, *args, **kw):
         for a in self.axes.values():
             if a.name in axes:
-                axis = self._device.get_axis(a.id)
-                axis.home()
+                a.device.home()
+                # axis = self._device.get_axis(a.id)
+                # axis.home()
                 # a.device.home()
             #     axis = self._wrapper.get_axis(a.device_id)
             #     axis.home(wait_until_idle=block)
@@ -142,7 +157,6 @@ class ZaberMotionController(MotionController):
         a = ZaberAxis(parent=self, **kw)
         a.load(path)
         return a
-
 
 # class ZaberMotionController(MotionController):
 #     port = Str

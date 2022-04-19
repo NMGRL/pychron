@@ -243,8 +243,11 @@ class LoadingManager(DVCIrradiationable):
 
         if self.use_stage:
             self.stage_manager = StageManager(parent=self,
+                                              name='loader',
                                               stage_controller_klass='ZaberMotion')
+            self.stage_manager.load()
             self.stage_manager.stage_controller.bootstrap()
+            self.stage_manager.stage_controller.update_axes()
 
     def set_loaded_runs(self, runs):
         pass
@@ -527,7 +530,11 @@ class LoadingManager(DVCIrradiationable):
             return
 
         if not self.stage_manager.moving():
-            self.stage_manager.move_to_hole(int(hole.name))
+            print(self.stage_manager.stage_map, self.stage_manager.stage_map_name)
+
+            if not isinstance(hole, int):
+                hole = int(hole.name)
+            self.stage_manager.move_to_hole(hole)
             if block:
                 while self.stage_manager.moving():
                     time.sleep(1)
@@ -945,6 +952,10 @@ class LoadingManager(DVCIrradiationable):
                 sel.weight = self.weight
                 sel.weight_label.text = self.weight
 
+    def _tray_changed(self, new):
+        if self.use_stage and new:
+            self.stage_manager.stage_map_name = new
+
     def _nxtals_changed(self):
         if self._suppress_edit:
             return
@@ -964,7 +975,7 @@ class LoadingManager(DVCIrradiationable):
             item.fill = True
 
             self.goto(self._active_position_idx,
-                      block=True, capture=True)
+                      block=True, capture=False)
 
             self._new_position_factory(self._active_position_idx)
             # self.canvas.set_last_position(self._active_position_idx)
