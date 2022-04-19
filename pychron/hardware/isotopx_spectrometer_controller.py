@@ -61,7 +61,6 @@ class NGXController(CoreDevice):
     def initialize(self, *args, **kw):
         ret = super(NGXController, self).initialize(*args, **kw)
 
-        self.communicator.strip = False
         # trying a new locking mechanism see ngx.trigger for more details
         self.lock = Lock()
         #   self.event_buffer = Queue()
