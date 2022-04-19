@@ -241,13 +241,26 @@ class LoadTablePane(BaseLoadPane):
 
 
 class LoadInstanceAdapter(TabularAdapter):
-    columns = [("Load", "name"), ("Create Date", "create_date")]
+    columns = [("Load", "name"), ("Create Date", "create_date"),
+               ("Tray", "tray")]
     font = "modern 10"
 
 
 class LoadPane(TraitsTaskPane):
     def traits_view(self):
         v = View(VGroup(UItem("canvas", style="custom", editor=ComponentEditor())))
+        return v
+
+
+class StageManagerPane(TraitsDockPane):
+    name = "Stage"
+    id = "pychron.loading.stage"
+
+    def traits_view(self):
+        v = View(
+            # UItem('canvas', style='custom'),
+                 UItem('stage_controller', style='custom')
+                 )
         return v
 
 

@@ -1099,11 +1099,17 @@ class StageManager(BaseStageManager):
 
             factory = AerotechMotionController
         elif self.stage_controller_klass == "Zaber":
-            from pychron.hardware.zaber.zaber_motion_controller import (
+            from pychron.hardware.zaber.legacy_zaber_motion_controller import (
                 LegacyBinaryZaberMotionController,
             )
 
             factory = LegacyBinaryZaberMotionController
+        elif self.stage_controller_klass == "ZaberMotion":
+            from pychron.hardware.zaber.zaber_motion_controller import (
+                ZaberMotionController,
+            )
+
+            factory = ZaberMotionController
 
         m = factory(
             name="{}controller".format(self.name),

@@ -27,8 +27,7 @@ from pychron.loading.tasks.actions import (
     ConfigurePDFAction,
     SaveLoadingDBAction, GotoModeAction, GotoEntryModeAction, FootPedalModeAction, CheckTrayAction,
 )
-from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane
-
+from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane, StageManagerPane
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -69,8 +68,8 @@ class LoadingTask(BaseManagerTask):
     def create_dock_panes(self):
         control_pane = LoadControlPane(model=self.manager)
         table_pane = LoadTablePane(model=self.manager)
-
-        return [control_pane, table_pane]
+        stage_pane = StageManagerPane(model=self.manager.stage_manager)
+        return [control_pane, table_pane, stage_pane]
 
     def create_central_pane(self):
         self.load_pane = LoadPane(model=self.manager)

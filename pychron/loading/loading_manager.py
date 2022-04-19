@@ -235,10 +235,16 @@ class LoadingManager(DVCIrradiationable):
     _suppress_edit = Bool(False)
 
     stage_manager = Instance(StageManager)
+    use_stage = Bool(True)
 
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
         self.dvc.create_session()
+
+        if self.use_stage:
+            self.stage_manager = StageManager(parent=self,
+                                              stage_controller_klass='ZaberMotion')
+            self.stage_manager.stage_controller.bootstrap()
 
     def set_loaded_runs(self, runs):
         pass
@@ -558,7 +564,9 @@ class LoadingManager(DVCIrradiationable):
             loads = []
 
         return [
-            Load(name=li.name, create_date=li.create_date.strftime("%m/%d/%Y"))
+            Load(name=li.name,
+                 tray=li.holderName,
+                 create_date=li.create_date.strftime("%m/%d/%Y"))
             for li in loads
         ]
 

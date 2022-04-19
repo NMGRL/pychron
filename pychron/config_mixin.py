@@ -63,6 +63,16 @@ class YAMLParser:
 class ParserWrapper:
     _parser = None
 
+    def add_section(self, name):
+        if self._parser is None:
+            self._parser = ConfigParser()
+        self._parser.add_section(name)
+
+    def set(self, *args, **kw):
+        if self._parser is None:
+            self._parser = ConfigParser()
+        self._parser.set(*args, **kw)
+
     def read(self, path):
         if path.endswith(".cfg"):
             p = ConfigParser()
@@ -94,7 +104,7 @@ class ConfigMixin:
         return r
 
     def config_get(
-        self, config, section, option, cast=None, optional=False, default=None
+            self, config, section, option, cast=None, optional=False, default=None
     ):
 
         if cast is not None:
@@ -166,6 +176,5 @@ class ConfigMixin:
             config.read(p)
 
         return config
-
 
 # ============= EOF =============================================

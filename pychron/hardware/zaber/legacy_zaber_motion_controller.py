@@ -14,12 +14,11 @@
 # limitations under the License.
 # ===============================================================================
 from traits.api import Str, CInt, Enum
-# from zaber.serial import BinarySerial, BinaryDevice
+from zaber.serial import BinarySerial, BinaryDevice
 
-from zaber_motion import Library, Units, ConnectionFailedException
-from zaber_motion.ascii import Connection
+# from zaber_motion import Library
 
-Library.enable_device_db_store()
+# Library.enable_device_db_store()
 
 from pychron.hardware.motion_controller import MotionController
 from pychron.hardware.zaber.axis import ZaberAxis
@@ -50,7 +49,7 @@ from pychron.hardware.zaber.axis import ZaberAxis
 #         return any((d.is_busy() for d in self._devices))
 
 
-class ZaberMotionController(MotionController):
+class LegacyBinaryZaberMotionController(MotionController):
     port = Str
     device_id = CInt
     baudrate = CInt
@@ -59,6 +58,7 @@ class ZaberMotionController(MotionController):
     # _wrapper = None
 
     def load(self, *args, **kw):
+
         config = self.get_configuration()
         if config:
             section = "Communications"
@@ -78,21 +78,11 @@ class ZaberMotionController(MotionController):
         return True
 
     def open(self, *args, **kw):
-        self.debug("opening port {}".format(self.port))
-        try:
-            conn = Connection.open_serial_port(self.port)
-        except ConnectionFailedException as e:
-            self.critical('failed to connect. exception={}'.format(e))
-            return
+        self.debug("scanning port {}".format(self.port))
+        bs = BinarySerial(self.port, timeout=200, inter_char_timeout=2)
 
-        self.debug('opened connection {}'.format(conn))
-        self._device = conn.get_device(1)
-        self.debug('opened device  {}'.format(self._device))
-        self._connection = conn
-        # bs = BinarySerial(self.port, timeout=200, inter_char_timeout=2)
-        #
-        # for a in self.axes.values():
-        #     a.device = conn.get_device(a.device_id)
+        for a in self.axes.values():
+            a.device = BinaryDevice(bs, a.device_id)
 
         return True
 
@@ -107,11 +97,9 @@ class ZaberMotionController(MotionController):
 
     def single_axis_move(self, key, value, block=True, *args, **kw):
         axis = self.axes[key]
-        # steps = axis.convert_to_steps(value)
-        # self.debug("calculated steps={} value={}".format(steps, value))
-        # axis.device.move_abs(steps)
-        axis = self._device.get_axis(axis.id)
-        axis.move_absolute(value, Units.LENGTH_MILLIMETRES)
+        steps = axis.convert_to_steps(value)
+        self.debug("calculated steps={} value={}".format(steps, value))
+        axis.device.move_abs(steps)
         if block:
             self.update_axes()
         return axis
@@ -119,9 +107,7 @@ class ZaberMotionController(MotionController):
     def home(self, axes, block=True, *args, **kw):
         for a in self.axes.values():
             if a.name in axes:
-                axis = self._device.get_axis(a.id)
-                axis.home()
-                # a.device.home()
+                a.device.home()
             #     axis = self._wrapper.get_axis(a.device_id)
             #     axis.home(wait_until_idle=block)
 

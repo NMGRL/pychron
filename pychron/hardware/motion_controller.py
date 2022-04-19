@@ -164,10 +164,9 @@ class MotionController(CoreDevice):
             config = self.get_configuration(self.config_path)
 
         mapping = self.config_get(config, "General", "mapping")
-        if mapping is not None:
-            mapping = mapping.split(",")
-        else:
+        if mapping is None:
             mapping = "x,y,z"
+        mapping = mapping.split(",")
 
         lp = self.config_get(config, "General", "loadposition")
         if lp is not None:
