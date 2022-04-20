@@ -88,7 +88,8 @@ class BaseStageMap(Loggable):
 
                 if cnt == 0:
                     # line 0 shape, dimension
-                    shape, dimension = line.split(",")
+                    args = line.split(",")
+                    shape, dimension = args[:2]
                     self.g_shape = shape
                     self.g_dimension = dimension = float(dimension)
                 elif cnt == 1:

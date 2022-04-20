@@ -259,11 +259,14 @@ class StageManagerPane(TraitsDockPane):
     id = "pychron.loading.stage"
 
     def trait_context(self):
+
+        sm = self.model.stage_manager
         return {
-            "canvas": self.model.canvas,
-            "stage_manager": self.model,
-            "tray_calibration": self.model.tray_calibration_manager,
-            "object": self.model,
+            "canvas": sm.canvas,
+            "stage_manager": sm,
+            "tray_calibration": sm.tray_calibration_manager,
+            "object": sm,
+            "foot_pedal": self.model.foot_pedal
         }
 
     def calibration_view(self):
@@ -322,12 +325,19 @@ class StageManagerPane(TraitsDockPane):
         )
         return tc_grp
 
+    def counter_view(self):
+        g = HGroup(Item('foot_pedal.max_count'),
+                   CustomLabel('foot_pedal.counter', style='readonly')
+                   )
+        return g
+
     def traits_view(self):
         v = View(
             VGroup(UItem("calibrated_position_entry",
                          tooltip="Enter a position e.g 1 for a hole, " "or 3,4 for X,Y"),
                    UItem('stage_controller', style='custom'),
-                   self.calibration_view()
+                   self.calibration_view(),
+                   self.counter_view()
                    )
 
         )

@@ -22,16 +22,14 @@ from pychron.hardware.axis import Axis
 import os
 
 
-class ZaberAxis(Axis):
+class LegacyZaberAxis(Axis):
     device_id = None
     microstep_size = 0.1905
     device = None
 
     def get_position(self):
-        mm = self.device.get_position( Units.LENGTH_MILLIMETRES)
-        self.debug('got position {}'.format(mm))
-        # mm = self.convert_to_mm(steps)
-        return mm
+        steps = self.device.get_position()
+        return self.convert_to_mm(steps)
 
     def convert_to_mm(self, steps):
         return float(steps * self.microstep_size / 1000.0)
@@ -49,6 +47,16 @@ class ZaberAxis(Axis):
         self.set_attribute(
             config, "microstep_size", "General", "microstep_size", cast="float"
         )
+
+
+class ZaberAxis(LegacyZaberAxis):
+    def get_position(self):
+        mm = 0
+        if self.device:
+            mm = self.device.get_position(Units.LENGTH_MILLIMETRES)
+        return mm
+
+
 
 
 # ============= EOF =============================================

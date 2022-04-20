@@ -19,6 +19,7 @@ from apptools.preferences.preference_binding import bind_preference
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import PaneItem, TaskLayout, VSplitter
 from traits.api import Any
+from traits.trait_types import DelegatesTo
 
 from pychron.envisage.tasks.base_task import BaseManagerTask
 from pychron.globals import globalv
@@ -41,11 +42,12 @@ class LoadingTask(BaseManagerTask):
     tool_bars = [
         SToolBar(SaveLoadingPDFAction(), ConfigurePDFAction()),
         SToolBar(SaveLoadingDBAction()),
-        SToolBar(GotoModeAction(),
-                 GotoEntryModeAction(),
-                 FootPedalModeAction()),
+        SToolBar(GotoModeAction(enabled_name='interaction_mode_enabled'),
+                 GotoEntryModeAction(enabled_name='interaction_mode_enabled'),
+                 FootPedalModeAction(enabled_name='interaction_mode_enabled')),
         SToolBar(CheckTrayAction())
     ]
+    interaction_mode_enabled = DelegatesTo('manager')
 
     def activated(self):
         if self.manager.verify_database_connection(inform=True):
@@ -60,7 +62,7 @@ class LoadingTask(BaseManagerTask):
         return TaskLayout(
             left=PaneItem("pychron.loading.controls"),
             right=VSplitter(PaneItem("pychron.loading.positions"),
-                           PaneItem("pychron.loading.stage"))
+                            PaneItem("pychron.loading.stage"))
         )
 
     def prepare_destroy(self):
@@ -69,7 +71,7 @@ class LoadingTask(BaseManagerTask):
     def create_dock_panes(self):
         control_pane = LoadControlPane(model=self.manager)
         table_pane = LoadTablePane(model=self.manager)
-        stage_pane = StageManagerPane(model=self.manager.stage_manager)
+        stage_pane = StageManagerPane(model=self.manager)
         return [control_pane, table_pane, stage_pane]
 
     def create_central_pane(self):
@@ -124,6 +126,5 @@ class LoadingTask(BaseManagerTask):
                 return self.manager.save()
             return ret
         return True
-
 
 # ============= EOF =============================================

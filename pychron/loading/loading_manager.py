@@ -50,6 +50,7 @@ from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.dvc.meta_object import MetaObjectException
 from pychron.envisage.view_util import open_view
 from pychron.lasers.stage_managers.stage_manager import StageManager
+from pychron.loading.foot_pedal import FootPedal
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
 
@@ -236,6 +237,8 @@ class LoadingManager(DVCIrradiationable):
 
     stage_manager = Instance(StageManager)
     use_stage = Bool(True)
+    foot_pedal = Instance(FootPedal, ())
+    interaction_mode_enabled = Bool(False)
 
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
@@ -302,6 +305,7 @@ class LoadingManager(DVCIrradiationable):
         self.load_load_by_name()
 
     def load_load_by_name(self):
+        self.interaction_mode_enabled = False
         self.tray = ""
         if not self.load_instance:
             return
@@ -376,6 +380,7 @@ class LoadingManager(DVCIrradiationable):
         self.positions = pos
         self._set_group_colors()
         self.canvas.request_redraw()
+        self.interaction_mode_enabled = True
 
     def make_canvas(self, new, editable=True):
         db = self.dvc.db
@@ -613,7 +618,7 @@ class LoadingManager(DVCIrradiationable):
         # clear fill
         canvas_hole.fill = False
         canvas_hole.clear_text()
-        self._active_position_idx = pid
+        self.foot_pedal.active_idx = pid
 
     def _new_position(self, canvas_hole):
         pid = int(canvas_hole.name)
@@ -966,21 +971,19 @@ class LoadingManager(DVCIrradiationable):
                 sel.nxtals = self.nxtals
                 sel.nxtals_label.text = self.nxtals
 
-    _active_position_idx = 1
     @on_trait_change("canvas:increment_event")
     def _increment(self):
         self.debug('increment')
-        item = self.canvas.scene.get_item(self._active_position_idx)
+        idx = self.foot_pedel.active_idx
+        item = self.canvas.scene.get_item(idx)
         if item:
             item.fill = True
-
-            self.goto(self._active_position_idx,
+            self.goto(idx,
                       block=True, capture=False)
 
-            self._new_position_factory(self._active_position_idx)
+            self._new_position_factory(idx)
             # self.canvas.set_last_position(self._active_position_idx)
-
-            self._active_position_idx += 1
+            self.foot_pedal.increment()
             self.canvas.request_redraw()
 
     @on_trait_change("canvas:selected")
@@ -1005,9 +1008,15 @@ class LoadingManager(DVCIrradiationable):
 
     def _interaction_mode_changed(self, new):
         self.debug('interaction mode {}'.format(new))
-        self.canvas.mode_overlay.mode = new
-        self.canvas.set_foot_pedal_mode(new == 'FootPedal')
-        self.canvas.request_redraw()
+        if self.canvas:
+            self.canvas.mode_overlay.mode = new
+            if new == 'FootPedal':
+                info = self.foot_pedal.edit_traits()
+                if info.result:
+                    self.canvas.set_foot_pedal_mode(new == 'FootPedal')
+            self.canvas.request_redraw()
+        else:
+            self.information_dialog('Please select a load')
 
     def _interact(self, new):
         if not self.canvas.editable:
