@@ -224,7 +224,7 @@ class BaseBrowserTask(BaseEditorTask):
             self._open_recall_editors(records, use_quick=use_quick)
         else:
             self.warning_dialog(
-                "Failed to the requested analyses. Please check the log for more details"
+                "Failed to recall the requested analyses. Please check the log for more details"
             )
 
     def interpreted_age_recall(self, record):

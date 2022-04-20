@@ -687,10 +687,19 @@ class MetaRepo(GitRepoManager):
 
     # @cached('clear_cache')
     def get_production(self, irrad, level, allow_null=False, **kw):
-        path = os.path.join(paths.meta_root, irrad, "productions.json")
-        obj = dvc_load(path)
+        iroot = os.path.join(paths.meta_root, irrad)
+        if not os.path.isdir(iroot):
+            self.warning('The irradiation {} does not exist. Please check your Database and MetaRepo for '
+                         'typos'.format(irrad))
 
-        pname = obj.get(level, "")
+        ppath = os.path.join(iroot, "productions.json")
+        obj = dvc_load(ppath)
+        try:
+            pname = obj[level]
+        except KeyError:
+            pname = ""
+            self.warning('The irradiation level "{}" is not listed in your {}/productions.json file'.format(level, irrad))
+
         p = os.path.join(
             paths.meta_root, irrad, "productions", add_extension(pname, ext=".json")
         )
