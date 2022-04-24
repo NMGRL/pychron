@@ -43,13 +43,14 @@ class AutoCenterConfig(HasTraits):
     name = "Default"
     use_adaptive_threshold = Bool(False)
     blur = Int
-    stretch_intensity = Bool(False)
+    stretch_intensity = Bool(True)
     search_step = Int
     search_n = Int
     search_width = Int
     blocksize = Int
     blocksize_step = Int
-    inverted = Bool(True)
+    inverted = Bool(False)
+    low_rank = Int(0)
 
     def __init__(self, yd=None, *args, **kw):
         if yd is not None:
@@ -59,7 +60,9 @@ class AutoCenterConfig(HasTraits):
 
     @property
     def preprop(self):
-        return {"stretch_intensity": self.stretch_intensity, "blur": self.blur}
+        return {"stretch_intensity": self.stretch_intensity,
+                "blur": self.blur,
+                "low_rank": self.low_rank}
 
     @property
     def search(self):
@@ -135,6 +138,7 @@ class AutoCenterManager(MachineVisionManager):
         dim = self.pxpermm * dim
 
         im = self.display_image
+        self.display_image.clear()
         im.source_frame = frame
 
         config = self.selected_configuration
