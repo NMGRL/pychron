@@ -91,12 +91,11 @@ class TestAutocenter(HasTraits):
         from pychron.globals import globalv
 
         # p = '/Users/ross/Sandbox/test_target.jpg'
-        # p = '/Users/jakeross/Programming/Sandbox/pos_err/pos_err_200_0-002.jpg'
-        p = "/Users/jakeross/Programming/Sandbox/poserror/pos_err_221_0-007.jpg"
-        # p = "/Users/jakeross/Programming/Sandbox/poserror/pos_err_60_0-002.jpg"
-        p = "/Users/jakeross/Programming/pos_err_215_0-001.tif"
-        # p = "/Users/jakeross/Programming/Sandbox/poserror/snapshot009.jpg"
-        # p = "/Users/jakeross/Sandbox/graintest/image0269.png"
+        # p = '/Users/ross/Sandbox/pos_err/pos_err_200_0-002.jpg'
+        p = "/Users/ross/Sandbox/poserror/pos_err_221_0-007.jpg"
+        p = "/Users/ross/Sandbox/poserror/snapshot009.jpg"
+        p = "/Users/ross/Sandbox/graintest/image0269.png"
+        p = "/home/pyvalve/Pychron/data/snapshots/pos_err_215_0-001.tif"
         # p = '/Users/argonlab3/Pychron_co2/data/snapshots/pos_err_220_0--001.jpg'
 
         globalv.video_test_path = p

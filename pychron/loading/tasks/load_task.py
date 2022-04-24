@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from pyface.tasks.action.schema import SToolBar
-from pyface.tasks.task_layout import PaneItem, TaskLayout, VSplitter
+from pyface.tasks.task_layout import PaneItem, TaskLayout, VSplitter, HSplitter, Tabbed
 from traits.api import Any
 from traits.trait_types import DelegatesTo
 
@@ -28,7 +28,8 @@ from pychron.loading.tasks.actions import (
     ConfigurePDFAction,
     SaveLoadingDBAction, GotoModeAction, GotoEntryModeAction, FootPedalModeAction, CheckTrayAction,
 )
-from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane, StageManagerPane
+from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane, StageManagerPane, VideoPane, \
+    MachineVisionPane
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -60,8 +61,11 @@ class LoadingTask(BaseManagerTask):
 
     def _default_layout_default(self):
         return TaskLayout(
-            left=PaneItem("pychron.loading.controls"),
-            right=VSplitter(PaneItem("pychron.loading.positions"),
+            left=Tabbed(PaneItem("pychron.loading.controls"),
+                        PaneItem("pychron.loading.machine_vision"),
+                        ),
+            right=PaneItem("pychron.loading.video"),
+            bottom=HSplitter(PaneItem("pychron.loading.positions"),
                             PaneItem("pychron.loading.stage"))
         )
 
@@ -72,7 +76,9 @@ class LoadingTask(BaseManagerTask):
         control_pane = LoadControlPane(model=self.manager)
         table_pane = LoadTablePane(model=self.manager)
         stage_pane = StageManagerPane(model=self.manager)
-        return [control_pane, table_pane, stage_pane]
+        video_pane = VideoPane(model=self.manager.stage_manager)
+        mv_pane = MachineVisionPane(model=self.manager.stage_manager)
+        return [control_pane, table_pane, stage_pane, video_pane, mv_pane]
 
     def create_central_pane(self):
         self.load_pane = LoadPane(model=self.manager)

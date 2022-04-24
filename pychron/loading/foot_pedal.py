@@ -23,7 +23,6 @@ class FootPedal(Loggable):
     max_count = Int
     count = Int(0)
     active_idx = Int
-    counter = Int(0)
 
     def traits_view(self):
         return okcancel_view(Item('active_idx', label='Starting Hole'),
@@ -32,5 +31,8 @@ class FootPedal(Loggable):
     def increment(self):
         self.active_idx += 1
         self.count += 1
-        return self.count > self.max_count
+        if self.max_count:
+            if self.count >= self.max_count:
+                self.count = 0
+                return True
 # ============= EOF =============================================

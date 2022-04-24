@@ -218,6 +218,8 @@ class Locator(Loggable):
             self._draw_center_indicator(
                 src, size=max(10, int(src.shape[0] * 0.25)), shape="crosshairs"
             )
+            image.tile(src)
+
         if self.use_tile:
             image.tilify()
 

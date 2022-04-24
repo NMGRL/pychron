@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 import os
+import time
 from math import ceil
 
 import joblib
@@ -26,12 +27,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from traits.api import Any, Instance, HasTraits, Dict, Enum, Event
+from traits.api import Any, Instance, HasTraits, Dict, Enum, Event, Button
 from traitsui.api import View, UItem, Item, VGroup, HGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.image_editor import ImageEditor
+from pychron.core.ui.thread import Thread
 from pychron.image.cv_wrapper import grayspace, get_size, crop
 from pychron.image.standalone_image import FrameImage
 from pychron.loggable import Loggable
@@ -71,27 +74,51 @@ class TrayChecker(MachineVisionManager):
     positions = Dict
     display_image = Instance(FrameImage, ())
     refresh_image = Event
+    stop_button = Button('Stop')
+    post_move_delay = 0.125
+    post_check_delay = 1
 
     def __init__(self, loading_manager, *args, **kw):
         super(TrayChecker, self).__init__(*args, **kw)
         self._loading_manager = loading_manager
         self.video = loading_manager.stage_manager.video
 
+    def stop(self):
+        self.debug('stop fired')
+        self._alive = False
+
     def check(self):
         use_ml = True
-
+        pipe = None
         if use_ml:
             pipe = self._get_classifier()
-        self.edit_traits(view=View(UItem('object.display_image.source_frame',
-                                         editor=ImageEditor(refresh='refresh_image'))),
-                         kind='live')
+        self.edit_traits(view=View(UItem('stop_button'),
+                                   UItem('object.display_image.source_frame',
+                                         width=640,
+                                         height=480,
+                                         editor=ImageEditor(refresh='object.display_image.refresh_needed')),
+                                   # width=900,
+                                   # height=900,
+                                   ))
+        self._thread = Thread(target=self._check, args=(pipe, ))
+        self._thread.start()
 
-        for pos in self._loading_manager.positions:
+    def _check(self, pipe):
+        self._alive = True
+        for hole in self._loading_manager.stage_manager.stage_map.sample_holes:
+            if not self._alive:
+                self.debug('exiting check loop')
+                break
+
+            pos = hole.id
+        # for pos in self._loading_manager.positions:
             self._loading_manager.goto(pos, block=True)
-            if use_ml:
+            time.sleep(self.post_move_delay)
+            if pipe is not None:
                 self._check_position_ml(pipe, pos)
             else:
                 self._check_position(pos)
+            time.sleep(self.post_check_delay)
 
     def train(self):
         xs = []
@@ -159,14 +186,14 @@ class TrayChecker(MachineVisionManager):
             return [t.blank_state, t.loaded_state], blank_vector, loaded_vector
 
     def new_image_frame(self, pos):
-        frame = super(TrayChecker, self).new_image_frame()
+        frame = super(TrayChecker, self).new_image_frame(force=True)
         frame = self._preprocess(frame)
         return self._crop(frame, pos=pos)
 
     def _preprocess(self, frame, gamma=2):
-        frame = grayspace(frame)
-        if gamma:
-            frame = adjust_gamma(frame, gamma)
+        # frame = grayspace(frame)
+        # if gamma:
+        #     frame = adjust_gamma(frame, gamma)
         return frame
 
     def _save_image(self, pos, frame):
@@ -177,19 +204,21 @@ class TrayChecker(MachineVisionManager):
     def _get_classifier(self):
         loadname = self._loading_manager.load_instance.name
         tp = os.path.join(paths.loading_dir, '{}.clf.joblib'.format(loadname))
-        return joblib.load(tp)
+        if os.path.isfile(tp):
+            return joblib.load(tp)
 
     def _get_blankframe(self, pos):
         p = self._image_path(pos)
-        blankframe = imread(p)
-        blankframe = self._preprocess(blankframe)
-        blankframe = self._crop(blankframe, pos=pos)
-        return blankframe
+        if os.path.isfile(p):
+            blankframe = imread(p)
+            blankframe = self._preprocess(blankframe)
+            blankframe = self._crop(blankframe, pos=pos)
+            return blankframe
 
     def _image_path(self, pos):
         loadname = self._loading_manager.load_instance.name
         dirname = os.path.join(paths.loading_dir, loadname)
-        p = os.path.join(dirname, '{}.jpg'.format(pos))
+        p = os.path.join(dirname, '{}.empty.tif'.format(pos))
         return p
 
     def _crop(self, frame, dim=None, pos=1):
@@ -197,12 +226,11 @@ class TrayChecker(MachineVisionManager):
             hole = self._loading_manager.stage_manager.stage_map.get_hole(pos)
             dim = hole.dimension
 
-        cw, ch = ceil(dim * 2.55)
-        pxpermm = self._loading_manager.stage_manager.pxpermm
+        cw = ch = ceil(dim * 2.55)
+        pxpermm = self._loading_manager.stage_manager.autocenter_manager.pxpermm
         cw_px = int(cw * pxpermm)
         ch_px = int(ch * pxpermm)
         w, h = get_size(frame)
-
         x = int((w - cw_px) / 2.0)
         y = int((h - ch_px) / 2.0)
         return asarray(crop(frame, x, y, cw_px, ch_px))
@@ -212,22 +240,33 @@ class TrayChecker(MachineVisionManager):
         frame = self.new_image_frame(pos)
         blankframe = self._get_blankframe(pos)
 
-        diff = frame - blankframe
-        # self.display_image.tile(diff)
+        self.display_image.clear()
         self.display_image.tile(frame)
-        self.display_image.tile(blankframe)
-        self.display_image.tile(diff)
+        if blankframe is not None:
+            diff = frame - blankframe
+            self.display_image.tile(blankframe)
+            self.display_image.tile(diff)
+            # self.display_image.tile(diff)
         self.display_image.tilify()
+        # invoke_in_main_thread(self.trait_set, refresh_image=True)
+        # self.refresh_image = True
+        self.display_image.refresh_needed = True
 
     def _check_position_ml(self, pipe, pos):
         self.debug('check position nn {}'.format(pos))
 
         frame = self.new_image_frame(pos)
-        result = pipe.predict(frame.flatten())
-        self.info('check_position result={}'.format(result))
+        if pipe is not None:
+            result = pipe.predict(frame.flatten())
+            self.info('check_position result={}'.format(result))
+
+        else:
+            self.debug('dumb position check')
+            self._check_position(pos)
 
         # blankframe = self._get_blankframe(pos)
         # if not self.locator.find_grain(im, blankframe, frame, dim):
         #     self.debug('no grain found {}'.format(pos))
-
+    def _stop_button_fired(self):
+        self.stop()
 # ============= EOF =============================================

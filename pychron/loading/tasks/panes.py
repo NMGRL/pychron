@@ -40,10 +40,13 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= local library imports  ==========================
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view, VFold, rfloatitem
+from pychron.core.pychron_traits import BorderHGroup
 from pychron.core.ui.button_editor import ButtonEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
+from pychron.core.ui.image_editor import ImageEditor
 from pychron.core.ui.qt.tabular_editors import FilterTabularEditor
 from pychron.core.ui.table_configurer import TableConfigurer, TableConfigurerHandler
+from pychron.core.ui.video_editor import VideoEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
@@ -70,16 +73,36 @@ class PositionsAdapter(TabularAdapter, ConfigurableMixin):
         ("Note", "note"),
     ]
     font = "arial 12"
+    identifier_width = Int(80)
+    irradiation_str_width = Int(80)
+    sample_width = Int(80)
+    position_str_width = Int(80)
+    configure_name = "configure_position_table"
 
     def get_menu(self, obj, trait, row, column):
         actions = [
-            Action(name="Configure", action="configure_position_table"),
+            Action(name="Configure", action=self.configure_name),
         ]
         mm = MenuManager(*actions)
         return mm
 
+    def get_bg_color(self, obj, trait, row, column=0):
+        item = getattr(obj, trait)[row]
+        c = item.color
+        if isinstance(c, (list, tuple)):
+            c = [x * 255 for x in c]
+        return c
 
-class GroupedPositionsAdapter(TabularAdapter, ConfigurableMixin):
+    def get_text_color(self, obj, trait, row, column=0):
+        item = getattr(obj, trait)[row]
+        color = "black"
+        if isinstance(item.color, (list, tuple)):
+            if sum(item.color[:3]) < 1.5:
+                color = "white"
+        return color
+
+
+class GroupedPositionsAdapter(PositionsAdapter, ConfigurableMixin):
     columns = [
         ("Identifier", "identifier"),
         ("Irradiation", "irradiation_str"),
@@ -96,33 +119,14 @@ class GroupedPositionsAdapter(TabularAdapter, ConfigurableMixin):
         ("Material", "material"),
         ("Positions", "position_str"),
     ]
-    font = "arial 12"
-    identifier_width = Int(80)
-    irradiation_str_width = Int(80)
-    sample_width = Int(80)
-    position_str_width = Int(80)
 
-    def get_menu(self, obj, trait, row, column):
-        actions = [
-            Action(name="Configure", action="configure_grouped_position_table"),
-        ]
-        mm = MenuManager(*actions)
-        return mm
-
-    def get_bg_color(self, obj, trait, row, column=0):
-        item = getattr(obj, trait)[row]
-        c = item.color
-        if hasattr(c, "__iter__"):
-            c = [x * 255 for x in c]
-        return c
-
-    def get_text_color(self, obj, trait, row, column=0):
-        item = getattr(obj, trait)[row]
-        color = "black"
-        if hasattr(item.color, "__iter__"):
-            if sum(item.color[:3]) < 1.5:
-                color = "white"
-        return color
+    configure_name = "configure_grouped_position_table"
+    # def get_menu(self, obj, trait, row, column):
+    #     actions = [
+    #         Action(name="Configure", action="configure_grouped_position_table"),
+    #     ]
+    #     mm = MenuManager(*actions)
+    #     return mm
 
 
 class BaseLoadPane(TraitsDockPane):
@@ -230,12 +234,15 @@ class LoadTablePane(BaseLoadPane):
 
         b = UItem(
             "positions",
-            editor=TabularEditor(adapter=self.position_adapter, multi_select=True),
+            editor=TabularEditor(adapter=self.position_adapter,
+                                 refresh="refresh_table",
+                                 multi_select=True),
         )
         c = UItem(
             "grouped_positions",
             label="Grouped Positions",
-            editor=TabularEditor(adapter=self.grouped_position_adapter),
+            editor=TabularEditor(adapter=self.grouped_position_adapter,
+                                 refresh="refresh_table"),
         )
 
         v = View(VGroup(spring, a, Tabbed(b, c)), handler=LoadTableHandler())
@@ -254,15 +261,49 @@ class LoadPane(TraitsTaskPane):
         return v
 
 
+class MachineVisionPane(TraitsDockPane):
+    name = "Machine Vision"
+    id = "pychron.loading.machine_vision"
+
+    def traits_view(self):
+        v = View(VGroup(UItem('object.autocenter_manager.pxpermm'),
+                        UItem(
+                            "object.autocenter_manager.display_image",
+                            width=-400,
+                            height=-400,
+                            editor=ImageEditor(
+                                refresh="object.autocenter_manager."
+                                        "display_image.refresh_needed"
+                            )),
+                        ))
+        return v
+
+
+class VideoPane(TraitsDockPane):
+    name = "Video"
+    id = "pychron.loading.video"
+
+    # def trait_context(self):
+    #     return {'object': self.model.stage_manager}
+
+    def traits_view(self):
+        v = View(VGroup(UItem("video",
+                              width=320,
+                              height=240,
+                              resizable=True,
+                              style="custom", editor=VideoEditor())),
+                 )
+
+        return v
+
+
 class StageManagerPane(TraitsDockPane):
     name = "Stage"
     id = "pychron.loading.stage"
 
     def trait_context(self):
-
         sm = self.model.stage_manager
         return {
-            "canvas": sm.canvas,
             "stage_manager": sm,
             "tray_calibration": sm.tray_calibration_manager,
             "object": sm,
@@ -326,9 +367,15 @@ class StageManagerPane(TraitsDockPane):
         return tc_grp
 
     def counter_view(self):
-        g = HGroup(Item('foot_pedal.max_count'),
-                   CustomLabel('foot_pedal.counter', style='readonly')
-                   )
+        g = BorderHGroup(Item('foot_pedal.max_count'),
+                         CustomLabel('foot_pedal.count',
+                                     size=20,
+                                     color='orange',
+                                     bgcolor='black',
+                                     use_color_background=True,
+                                     style='readonly'),
+                         label="Foot Pedal"
+                         )
         return g
 
     def traits_view(self):
@@ -336,6 +383,8 @@ class StageManagerPane(TraitsDockPane):
             VGroup(UItem("calibrated_position_entry",
                          tooltip="Enter a position e.g 1 for a hole, " "or 3,4 for X,Y"),
                    UItem('stage_controller', style='custom'),
+                   HGroup(UItem('home'),
+                          icon_button_editor("snapshot_button", "camera"), spring),
                    self.calibration_view(),
                    self.counter_view()
                    )
@@ -359,7 +408,7 @@ class LoadDockPane(BaseLoadPane):
 
 
 class LoadControlPane(TraitsDockPane):
-    name = "Load"
+    name = "Load Editor"
     id = "pychron.loading.controls"
 
     def traits_view(self):

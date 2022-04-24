@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import time
+
 from traits.api import Str, CInt, Enum
 # from zaber.serial import BinarySerial, BinaryDevice
 
@@ -114,6 +116,9 @@ class ZaberMotionController(MotionController):
             xaxis.wait_until_idle()
             yaxis.wait_until_idle()
             self.update_axes()
+            # if kw.get("source") == "autocenter":
+            #     print('warint')
+            #     time.sleep(0.25)
 
     def single_axis_move(self, key, value, block=True, *args, **kw):
         axis = self.axes[key]

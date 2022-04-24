@@ -30,6 +30,8 @@ from pychron.core.yaml import yload
 from pychron.globals import globalv
 from pychron.image.image import Image
 from .cv_wrapper import get_capture_device
+from .toupcam.camera_v2 import ToupCamCamera
+from .toupcam.toupcam import Toupcam
 
 
 def convert_to_video(
@@ -106,7 +108,7 @@ class Video(Image):
     output_pic_mode = Enum("jpg", "tif")
     ffmpeg_path = Str
     fps = Int
-    identifier = 0
+    identifier = 'toupcam'
     max_recording_duration = Float
 
     @property
@@ -123,6 +125,7 @@ class Video(Image):
         return self.cap is not None
 
     def load_configuration(self, p):
+        print('asdfsda', p)
         if os.path.isfile(p):
             cfg = yload(p)
 
@@ -139,7 +142,7 @@ class Video(Image):
                 self.ffmpeg_path = vid.get("ffmpeg_path", "")
                 self.fps = vid.get("fps")
                 self.max_recording_duration = vid.get("max_recording_duration", 30)
-
+            print(self.cap, hasattr(self.cap, "load_configuration"))
             if hasattr(self.cap, "load_configuration"):
                 self.cap.load_configuration(cfg)
 
@@ -158,7 +161,6 @@ class Video(Image):
             else:
                 if identifier is None:
                     identifier = self.identifier
-
                 if isinstance(identifier, str):
                     if identifier.startswith("pvs"):
                         self.cap = self._get_remote_device(identifier)
@@ -169,6 +171,8 @@ class Video(Image):
                         _, i = identifier.split(":")
                         self.cap = self._get_pylon_device(i)
                         # identifier is a url
+                    elif identifier.startswith('toupcam'):
+                        self.cap = ToupCamCamera()
                 else:
 
                     # ideally an identifier is passed in

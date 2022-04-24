@@ -29,6 +29,7 @@ from traits.api import (
     HasTraits,
     Str,
     List,
+    on_trait_change
 )
 from traitsui.api import View, Item, HGroup, RangeEditor
 from math import ceil
@@ -132,6 +133,8 @@ class AutoCenterManager(MachineVisionManager):
         )
         cropdim = ceil(dim * 2.55)
 
+        # if self.offsetx or self.offsety:
+        #     offx,offy = self.offsetx, self.offsety
         # frame = loc.rescale(frame, 1.5)
         frame = loc.crop(frame, cropdim, cropdim, offx, offy)
 
@@ -162,7 +165,7 @@ class AutoCenterManager(MachineVisionManager):
                 "calculated deviation px={:n},{:n}, "
                 "mm={:0.3f},{:0.3f} ({})".format(dx, dy, mdx, mdy, self.pxpermm)
             )
-            return cx + mdx, cy + mdy
+            return cx - mdx, cy - mdy
 
     # private
     def _load_configuration(self):

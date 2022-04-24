@@ -35,7 +35,7 @@ from enable.abstract_overlay import AbstractOverlay
 from kiva import Font
 from kiva.fonttools import str_to_font
 from traits.api import Any, Event, Enum
-
+import time
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.loading_scene import LoadingScene
@@ -74,7 +74,7 @@ class ModeOverlay(AbstractOverlay):
             w = other_component.width
             states = ('Entry', 'Goto', 'GotoEntry', 'FootPedal')
             n = len(states)
-            ww = n*100+5*n/2
+            ww = n * 100 + 5 * n / 2
             gc.translate_ctm((w - ww) / 2 + x, y2 - 20)
             for i, state in enumerate(states):
                 with gc:
@@ -229,9 +229,19 @@ class LoadingCanvas(SceneCanvas):
     def set_last_position(self, pos):
         self._last_position = pos
 
+    _last_key_press = 0
+
+    def normal_key_released(self, event):
+        if not self._last_key_press or time.time() - self._last_key_press > 1:
+            self._last_key_press = time.time()
+            if event.character == 'b' and self._foot_pedal_mode:
+                self.increment_event = True
+                return
+        else:
+            self._last_key_press = time.time()
+
     def normal_key_pressed(self, event):
         if self._foot_pedal_mode:
-            self.increment_event = True
             return
 
         if event.character == "Enter":

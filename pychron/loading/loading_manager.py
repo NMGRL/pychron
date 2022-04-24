@@ -36,6 +36,7 @@ from traits.api import (
     on_trait_change,
     Enum,
     RGBColor,
+    Event
 )
 from traitsui.api import Item, EnumEditor, UItem, ListStrEditor
 
@@ -50,6 +51,7 @@ from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.dvc.meta_object import MetaObjectException
 from pychron.envisage.view_util import open_view
 from pychron.lasers.stage_managers.stage_manager import StageManager
+from pychron.lasers.stage_managers.video_stage_manager import VideoStageManager
 from pychron.loading.foot_pedal import FootPedal
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.paths import paths
@@ -240,15 +242,21 @@ class LoadingManager(DVCIrradiationable):
     foot_pedal = Instance(FootPedal, ())
     interaction_mode_enabled = Bool(False)
 
+    refresh_table = Event
+    mode = 'normal'
+
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
         self.dvc.create_session()
 
         if self.use_stage:
-            self.stage_manager = StageManager(parent=self,
-                                              name='loader',
-                                              stage_controller_klass='ZaberMotion')
+            self.stage_manager = VideoStageManager(parent=self,
+                                                   name='loader',
+                                                   stage_controller_klass='ZaberMotion')
+            self.stage_manager.autocenter_manager.use_autocenter = True
+            self.stage_manager.autocenter_manager.pxpermm = 32
             self.stage_manager.load()
+            self.stage_manager.initialize_video()
             self.stage_manager.stage_controller.bootstrap()
             self.stage_manager.stage_controller.update_axes()
 
@@ -535,24 +543,32 @@ class LoadingManager(DVCIrradiationable):
             return
 
         if not self.stage_manager.moving():
-            print(self.stage_manager.stage_map, self.stage_manager.stage_map_name)
+            if isinstance(hole, str):
+                hole = int(hole)
 
             if not isinstance(hole, int):
                 hole = int(hole.name)
+
             self.stage_manager.move_to_hole(hole)
             if block:
-                while self.stage_manager.moving():
-                    time.sleep(1)
+                time.sleep(0.05)
+                while self.stage_manager.move_thread.isRunning():
+                    time.sleep(0.05)
 
                 if capture:
-                    self._capture(hole)
+                    name = hole
+                    if isinstance(capture, str):
+                        name = '{}{}'.format(hole, capture)
+                    self._capture(name)
 
     # private
-    def _capture(self, hole):
+    def _capture(self, name):
         loadname = self.load_instance.name
         dirpath = os.path.join(paths.loading_dir, loadname)
-        self.stage_manager.snapshot(name=hole.name,
-                                    directory=dirpath)
+        self.stage_manager.snapshot(name=name,
+                                    directory=dirpath,
+                                    render_canvas=False,
+                                    inform=False)
 
     def _check_load_holders(self, ts):
         ns = []
@@ -641,8 +657,8 @@ class LoadingManager(DVCIrradiationable):
         )
         self.positions.append(lp)
 
-    def _auto_increment_identifier(self):
-        if self.auto_increment and self.identifier:
+    def _auto_increment_identifier(self, force=False):
+        if (force or self.auto_increment) and self.identifier:
             idx = self.identifiers.index(self.identifier)
             try:
                 self.identifier = self.identifiers[idx + 1]
@@ -973,18 +989,27 @@ class LoadingManager(DVCIrradiationable):
 
     @on_trait_change("canvas:increment_event")
     def _increment(self):
+        """
+        First this after the crystal is loaded into the hole.
+        take a picture then move to the next hole
+
+        """
         self.debug('increment')
-        idx = self.foot_pedel.active_idx
+        idx = self.foot_pedal.active_idx
         item = self.canvas.scene.get_item(idx)
         if item:
             item.fill = True
-            self.goto(idx,
-                      block=True, capture=False)
+            self._capture('{}.loaded'.format(idx))
 
             self._new_position_factory(idx)
-            # self.canvas.set_last_position(self._active_position_idx)
-            self.foot_pedal.increment()
+            self._set_group_colors()
             self.canvas.request_redraw()
+            self.goto(idx + 1,
+                      block=True, capture='.empty')
+
+            if self.foot_pedal.increment():
+                if self.confirmation_dialog('Max count reached. Increment Identifier?'):
+                    self._auto_increment_identifier(force=True)
 
     @on_trait_change("canvas:selected")
     def _update_selected(self, new):
@@ -1013,6 +1038,7 @@ class LoadingManager(DVCIrradiationable):
             if new == 'FootPedal':
                 info = self.foot_pedal.edit_traits()
                 if info.result:
+                    self.goto(self.foot_pedal.active_idx, block=True, capture='.empty')
                     self.canvas.set_foot_pedal_mode(new == 'FootPedal')
             self.canvas.request_redraw()
         else:

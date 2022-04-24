@@ -47,6 +47,7 @@ class LegacyZaberAxis(Axis):
         self.set_attribute(
             config, "microstep_size", "General", "microstep_size", cast="float"
         )
+        self.set_attribute(config, "positive_limit", "Motion", "positive_limit", cast="float", default=50)
 
 
 class ZaberAxis(LegacyZaberAxis):
@@ -54,9 +55,9 @@ class ZaberAxis(LegacyZaberAxis):
         mm = 0
         if self.device:
             mm = self.device.get_position(Units.LENGTH_MILLIMETRES)
+
+        if self.sign == -1:
+            mm = self.positive_limit - mm
         return mm
-
-
-
 
 # ============= EOF =============================================

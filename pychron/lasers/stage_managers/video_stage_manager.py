@@ -348,6 +348,8 @@ class VideoStageManager(StageManager):
         return_blob=False,
         pic_format=".jpg",
         include_raw=True,
+        render_canvas=True,
+        use_cached=False
     ):
         """
         path: abs path to use
@@ -386,13 +388,16 @@ class VideoStageManager(StageManager):
             self.info("saving snapshot {}".format(path))
             # play camera shutter sound
             # play_sound('shutter')
+
             if include_raw:
-                frame = self.video.get_cached_frame()
+                frame = self.video.get_cached_frame(force=not use_cached)
                 head, _ = os.path.splitext(path)
                 raw_path = "{}.tif".format(head)
                 pil_save(frame, raw_path)
 
-            self._render_snapshot(path)
+            if render_canvas:
+                self._render_snapshot(path)
+
             if self.auto_upload:
                 if include_raw:
                     self._upload(raw_path)
@@ -672,12 +677,11 @@ class VideoStageManager(StageManager):
             "move to hole hook holenum={}, "
             "correct={}, autocentered_position={}".format(*args)
         )
-        if correct:
-            ntries = 1 if autocentered_position else 3
-
+        if correct and not autocentered_position:
+            # ntries = 1 if autocentered_position else 3
             self._auto_correcting = True
             try:
-                self._autocenter(holenum=holenum, ntries=ntries, save=True)
+                self._autocenter(holenum=holenum, save=True)
             except BaseException as e:
                 self.debug_exception()
                 self.critical("Autocentering failed. {}".format(e))
@@ -709,7 +713,7 @@ class VideoStageManager(StageManager):
     #         src = self.autocenter_manager.crop(src)
     #         return self.lumen_detector.find_best_target(src)
 
-    def _autocenter(self, holenum=None, ntries=3, save=False, inform=False):
+    def _autocenter(self, holenum=None, ntries=4, save=False, inform=False):
         self.debug("do autocenter")
         rpos = None
         interp = False

@@ -54,21 +54,25 @@ class FrameImage(Viewable):
         self.tiles.append(colorspace(frame))
 
     def tilify(self):
-        if self.osource_frame is None:
-            self.osource_frame = self.source_frame[:]
-            # self.osource_frame = reshape(self.osource_frame, (1000, 1000, 3))
+        # if self.osource_frame is None:
+        #     self.osource_frame = self.source_frame[:]
+        # self.osource_frame = reshape(self.osource_frame, (1000, 1000, 3))
 
         r, c = filled_grid(len(self.tiles) + 1)
         r += 1
         c += 1
-        th, tw, _ = self.osource_frame.shape
-        nf = ones((th * r, tw * c, 3))
+        # th, tw, _ = self.osource_frame.shape
+        oframe = self.tiles[0]
+        h, w = oframe.shape[:2]
+        nf = ones((h * r, w * c, 3))
         nf[:] = (100, 100, 100)
-        h, w, _ = self.osource_frame.shape
-        nf[0:h, 0:w] = self.osource_frame
-        starth, endh, startw, endw = 0, h, w + 5, 2 * w
+        # h, w, _ = self.osource_frame.shape
+        # nf[0:h, 0:w] = self.osource_frame
+        # starth, endh, startw, endw = 0, h, w + 5, 2 * w
+        # starth, endh, startw, endw = 0, h, 0, 2 * w
+        starth, startw = 0, 0
         for i, t in enumerate(self.tiles):
-            if startw + w >= tw * c:
+            if startw + w >= w * c:
                 startw = 0
                 starth += h + 5
 

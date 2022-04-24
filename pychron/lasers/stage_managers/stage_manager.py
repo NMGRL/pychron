@@ -351,7 +351,7 @@ class StageManager(BaseStageManager):
             moving = self.stage_controller.moving(**kw)
         elif self.stage_controller.timer is not None:
             moving = self.stage_controller.timer.isActive()
-
+            print('asdf', moving)
         return moving
 
     def get_brightness(self, **kw):
@@ -507,9 +507,11 @@ class StageManager(BaseStageManager):
     # ===============================================================================
     def _stop(self, ax_key=None, verbose=False):
         self.stage_controller.stop(ax_key=ax_key, verbose=verbose)
-        if self.parent.pattern_executor:
-            self.parent.pattern_executor.stop()
-
+        try:
+            if self.parent.pattern_executor:
+                self.parent.pattern_executor.stop()
+        except AttributeError:
+            pass
     # def _move(self, func, pos, name=None, *args, **kw):
     #     if pos is None:
     #         return

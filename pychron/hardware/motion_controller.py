@@ -246,6 +246,8 @@ class MotionController(CoreDevice):
     def set_single_axis_motion_parameters(self, *args, **kw):
         pass
 
+    def stop(self, *args, **kw):
+        pass
     # ===============================================================================
     # private
     # ===============================================================================
