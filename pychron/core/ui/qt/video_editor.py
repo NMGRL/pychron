@@ -88,7 +88,8 @@ class _VideoEditor(Editor):
 
         frame.resize(width, height)
         video = self.value
-        video.cap.hooks = [self._update]
+        if video.cap:
+            video.cap.hooks = [self._update]
 
         return frame
 

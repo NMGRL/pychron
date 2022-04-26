@@ -257,7 +257,8 @@ class LoadInstanceAdapter(TabularAdapter):
 
 class LoadPane(TraitsTaskPane):
     def traits_view(self):
-        v = View(VGroup(UItem("canvas", style="custom", editor=ComponentEditor())))
+        v = View(Tabbed(VGroup(UItem("canvas", style="custom", editor=ComponentEditor()), label='Canvas'),
+                        VGroup(UItem("mv_canvas", style="custom", editor=ComponentEditor()), label='MV')))
         return v
 
 

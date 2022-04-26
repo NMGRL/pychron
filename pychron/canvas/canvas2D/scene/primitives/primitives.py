@@ -169,7 +169,7 @@ class Line(QPrimitive):
     def get_length(self):
         dx = self.start_point.x - self.end_point.x
         dy = self.start_point.y - self.end_point.y
-        return (dx**2 + dy**2) ** 0.5
+        return (dx ** 2 + dy ** 2) ** 0.5
 
     def calculate_rotation(self):
 
@@ -325,6 +325,7 @@ class Span(Line):
 
 
 class LoadIndicator(Circle):
+    corrected_position = None
     degas_indicator = False
     measured_indicator = False
     monitor_indicator = False
@@ -416,7 +417,7 @@ class LoadIndicator(Circle):
         if self.space == "data":
             r = self.map_dimension(r)
 
-        f = 2**0.5 / 2
+        f = 2 ** 0.5 / 2
         self.name_offsetx = (r * f) + 8
         self.name_offsety = (r * f) + 8
 
@@ -430,6 +431,13 @@ class LoadIndicator(Circle):
         nr = r * 0.25
 
         super(LoadIndicator, self)._render(gc)
+        if self.corrected_position:
+            ox, oy = self.canvas.map_screen([self.corrected_position])[0]
+            with gc:
+                gc.set_stroke_color((0, 1, 1))
+                gc.arc(x + ox, y + oy, r, 0, 360)
+                gc.stroke_path()
+
         if self.monitor_indicator:
             with gc:
                 gc.set_line_width(1)
@@ -673,7 +681,7 @@ class PolyLine(QPrimitive):
         self.primitives.append(p2)
 
     def add_point(
-        self, x, y, z=0, point_color=(1, 0, 0), line_color=(1, 0, 0), **ptargs
+            self, x, y, z=0, point_color=(1, 0, 0), line_color=(1, 0, 0), **ptargs
     ):
         p2 = Dot(x, y, z=z, default_color=point_color, **ptargs)
         self._add_point(p2, line_color)
@@ -842,6 +850,5 @@ class Animation(object):
         if not self._last_refresh or time.time() - self._last_refresh > self.tol:
             self._last_refresh = time.time()
             return True
-
 
 # ============= EOF ====================================

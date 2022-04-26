@@ -22,7 +22,7 @@ import os
 
 from scipy import stats
 from skimage import feature
-from skimage.transform._hough_transform import probabilistic_hough_line
+# from skimage.transform._hough_transform import probabilistic_hough_line
 
 # ============= standard library imports ========================
 from PIL import Image
@@ -31,6 +31,7 @@ import matplotlib.pyplot as plt
 
 
 # ============= local library imports  ==========================
+from skimage.transform import probabilistic_hough_line
 
 
 def calc_rotation(x1, y1, x2, y2):

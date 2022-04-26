@@ -743,6 +743,7 @@ class VideoStageManager(StageManager):
                     dim=dim,
                     shape=shape,
                 )
+                rpos = rpos[0]*0.75, rpos[1]*0.75
 
                 if rpos is not None:
                     if ti < n - 1:

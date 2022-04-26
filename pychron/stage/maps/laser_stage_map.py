@@ -163,6 +163,7 @@ class LaserStageMap(BaseStageMap):
             h.corrected = False
             h.interpolated = False
 
+        self.secondary_calibration = None
         return p
 
     def clear_interpolations(self):
@@ -187,6 +188,7 @@ class LaserStageMap(BaseStageMap):
             hole.x_cor = x_cor
             hole.y_cor = y_cor
             hole.corrected = True
+            self.update_secondary_calibration(hole)
 
     def _get_hole_by_position(self, x, y, tol=None):
         return self._get_hole_by_pos(x, y, "x", "y", tol)

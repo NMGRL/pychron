@@ -61,6 +61,7 @@ class TestAutocenter(HasTraits):
     def _test_co2_locator(self):
         self._set_test_image()
         self.manager.pxpermm = self.pxpermm
+        # self.manager.selected_configuration.low_rank = 50
         loc = self.manager._get_locator(shape='circle')
         loc.use_tile = True
         self.manager.locator = loc
@@ -95,7 +96,7 @@ class TestAutocenter(HasTraits):
         p = "/Users/ross/Sandbox/poserror/pos_err_221_0-007.jpg"
         p = "/Users/ross/Sandbox/poserror/snapshot009.jpg"
         p = "/Users/ross/Sandbox/graintest/image0269.png"
-        p = "/home/pyvalve/Pychron/data/snapshots/pos_err_215_0-001.tif"
+        p = "/Users/jakeross/Programming/pos_err_215_0-001.tif"
         # p = '/Users/argonlab3/Pychron_co2/data/snapshots/pos_err_220_0--001.jpg'
 
         globalv.video_test_path = p

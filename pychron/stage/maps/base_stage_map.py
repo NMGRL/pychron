@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
+import math
 import os
 
 from traits.api import HasTraits, Str, CFloat, Float, Property, List, Enum
@@ -24,6 +25,7 @@ from traits.api import HasTraits, Str, CFloat, Float, Property, List, Enum
 from pychron.core.geometry.affine import transform_point, itransform_point
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.loggable import Loggable
+from pychron.mv.zoom.zoom import calc_rotation
 
 
 class SampleHole(HasTraits):
@@ -44,6 +46,14 @@ class SampleHole(HasTraits):
     corrected_position = Property(depends_on="x_cor,y_cor")
 
     associated_hole = Str
+
+    @property
+    def deviation(self):
+        dx,dy = 0,0
+        if self.corrected:
+            dx = self.x_cor - self.x
+            dy = self.y_cor - self.y
+        return dx,dy
 
     def _get_corrected_position(self):
         return self.x_cor, self.y_cor
@@ -70,7 +80,7 @@ class BaseStageMap(Loggable):
 
     # should always be N,E,S,W,center
     calibration_holes = None
-
+    secondary_calibration = None
     # def __init__(self, *args, **kw):
     #     super(BaseStageMap, self).__init__(*args, **kw)
     #     self.load()
@@ -192,7 +202,30 @@ class BaseStageMap(Loggable):
                 pos, cpos, rot, pt
             )
         )
+        if self.secondary_calibration:
+            c, r, s = self.secondary_calibration
+            npt = transform_point(pt, c, r, s)
+            self.debug('secondary calibration pos={}, cpos={}, rot={}, new pos={}'.format(pt, c, r, npt))
+            pt = npt
+
         return pt
+
+    def update_secondary_calibration(self, h):
+        """
+        """
+        h = self.get_hole(h)
+        if h.corrected_position:
+            nx, ny = h.nominal_position
+            cx, cy = h.corrected_position
+            dx = nx-cx
+            dy = ny-cy
+            # r = math.degrees(math.atan2(dy, dx))
+            # nominal_rotation = math.degrees(math.atan2(ny, nx))
+            # corrected_rotation = math.degrees(math.atan2(cy, cx))
+            # r = corrected_rotation - nominal_rotation
+            self.secondary_calibration = ((dx, dy), 1, 1)
+
+            # c, r, s = calculate_transform(h.nominal_position, h.corrected_position)
 
     def get_hole(self, key):
         return next((h for h in self.sample_holes if h.id == str(key)), None)
@@ -332,6 +365,5 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
         lines[0] = "{},{}\n".format(self.g_shape, self.g_dimension)
         with open(self.file_path, "w") as f:
             f.writelines(lines)
-
 
 # ============= EOF =============================================

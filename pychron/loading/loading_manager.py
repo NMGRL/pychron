@@ -40,6 +40,7 @@ from traits.api import (
 )
 from traitsui.api import Item, EnumEditor, UItem, ListStrEditor
 
+from pychron.canvas.canvas2D.calibration_canvas import CalibrationCanvas
 from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas, group_position
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
 from pychron.canvas.utils import load_holder_canvas
@@ -201,6 +202,7 @@ class LoadingManager(DVCIrradiationable):
     selected_instances = List
 
     canvas = Any
+    mv_canvas = Any
 
     add_button = Button
     delete_button = Button
@@ -256,7 +258,7 @@ class LoadingManager(DVCIrradiationable):
             self.stage_manager.autocenter_manager.use_autocenter = True
             self.stage_manager.autocenter_manager.pxpermm = 32
             self.stage_manager.load()
-            self.stage_manager.initialize_video()
+            # self.stage_manager.initialize_video()
             self.stage_manager.stage_controller.bootstrap()
             self.stage_manager.stage_controller.update_axes()
 
@@ -320,6 +322,8 @@ class LoadingManager(DVCIrradiationable):
 
         load_name = self.load_instance.name
         self.canvas = self.make_canvas(load_name)
+        self.mv_canvas = self.make_canvas(load_name, klass=CalibrationCanvas)
+
         loadtable = self.dvc.db.get_loadtable(load_name)
         self.positions = []
         if not loadtable:
@@ -390,18 +394,27 @@ class LoadingManager(DVCIrradiationable):
         self.canvas.request_redraw()
         self.interaction_mode_enabled = True
 
-    def make_canvas(self, new, editable=True):
+    def make_canvas(self, new, editable=True, klass=None, **kw):
+        if klass is None:
+            klass = LoadingCanvas
+
         db = self.dvc.db
 
         lt = db.get_loadtable(new)
-        c = self.canvas
-        if not c:
-            c = LoadingCanvas(
-                view_x_range=(-2, 2),
-                view_y_range=(-2, 2),
-                bgcolor="lightgray",
-                editable=editable,
-            )
+        if 'view_x_range' not in kw:
+            kw['view_x_range'] = (-2, 2)
+        if 'view_y_range' not in kw:
+            kw['view_y_range'] = (-2, 2)
+        if "bgcolor" not in kw:
+            kw["bgcolor"] = "lightgray"
+
+        c = klass(
+            # view_x_range=(-2, 2),
+            # view_y_range=(-2, 2),
+            # bgcolor="lightgray",
+            editable=editable,
+            **kw
+        )
         if lt and lt.holderName and lt.holderName != NULL_STR:
             self.tray = lt.holderName
             holes = self.dvc.get_load_holder_holes(lt.holderName)
@@ -560,6 +573,9 @@ class LoadingManager(DVCIrradiationable):
                     if isinstance(capture, str):
                         name = '{}{}'.format(hole, capture)
                     self._capture(name)
+
+                    hole = self.stage_manager.get_hole(hole)
+                    self.mv_canvas.update_hole(hole)
 
     # private
     def _capture(self, name):

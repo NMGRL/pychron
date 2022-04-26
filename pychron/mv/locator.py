@@ -57,7 +57,7 @@ except ImportError:
 from skimage.draw import polygon, disk, circle_perimeter
 from skimage.exposure import rescale_intensity, adjust_gamma, adjust_log
 from skimage.filters import gaussian, rank, sobel, unsharp_mask, window, difference_of_gaussians
-from skimage import feature, segmentation, color, filters, morphology
+from skimage import feature, segmentation, color, filters, morphology, exposure
 
 # ============= local library imports  ==========================
 from pychron.core.geometry.convex_hull import convex_hull
@@ -594,7 +594,7 @@ class Locator(Loggable):
         2. remove noise from frame. increase denoise value for more noise filtering
         3. stretch contrast
         """
-
+        self.debug('preprocess ==================')
         # labels1 = segmentation.slic(frame, compactness=30, n_segments=400, start_label=1)
         # frame = color.label2rgb(labels1, frame, kind='avg', bg_label=0)
 
@@ -603,58 +603,75 @@ class Locator(Loggable):
         # frame = color.label2rgb(labels2, frame, kind='avg', bg_label=0)
 
         if len(frame.shape) != 2:
-            frm = grayspace(frame) * 255
+            frm = grayspace(frame)
         else:
-            frm = frame / self.pixel_depth * 255
-
-        frm = frm.astype("uint8")
+            frm = frame / self.pixel_depth
+        # frm = frame
+        # frm = frm.astype("uint8")
+        self._tile(image, frm*255)
 
         if blur:
+            self.debug('blurring: {}'.format(blur))
             frm = gaussian(frm, blur) * 255
             frm = frm.astype("uint8")
-
-        if stretch_intensity:
-            frm = rescale_intensity(frm)
         #     d = disk(int(frm.shape[0]/2))
         #     frm = rank.equalize(frm, d)
         if low_rank:
+            self.debug('low_rank')
             u, s, vh = linalg.svd(frm, full_matrices=False)
             k = low_rank
             s = diag(s)
             frm = u[:, :k] @ s[0:k, :k] @ vh[:k, :]
-
             self._tile(image, frm)
 
         wavelet = ''
         if wavelet:
+            self.debug('wavelet: {}'.format(wavelet))
             coeffs2 = pywt.dwt2(frm, wavelet)
             LL, (LH, HL, HH) = coeffs2
             frm = LL
             frm = (frm - frm.min()) / frm.max() * 255
 
+        gamma = 0
+        # gamma = 1
         gamma = 2
-        # gamma = 0
+        log = 0
+
         if gamma:
+            self.debug('gamma {}'.format(gamma))
             frm = adjust_gamma(frm, gamma)
+            self._tile(image, frm*255)
+
+        elif log:
+            self.debug('log {}'.format(log))
+            frm = adjust_log(frm, log)
             self._tile(image, frm)
 
-        sharpen = {'radius': 3,
-                   'amount': 2}
+        sharpen = {'radius': 10,
+                   'amount': 3}
         # sharpen = False
         if sharpen:
-            sfrm = unsharp_mask(frm, **sharpen) * 255
-            frm = sfrm
-            self._tile(image, frm)
+            self.debug('sharpen {}'.format(sharpen))
+            frm = unsharp_mask(frm, **sharpen)
+            self._tile(image, frm*255)
 
-        gaussian_filter = {'low_sigma': 0.05, 'high_sigma': 10}
-        gaussian_filter = None
-        if gaussian_filter:
-            filtered_image = difference_of_gaussians(frm, **gaussian_filter)
+        if stretch_intensity:
+            self.debug('stretch intensity')
+            frm = rescale_intensity(frm)*255
+        # frm = frm*255
+        # frm = exposure.equalize_adapthist(frm/255, clip_limit=0.03)*255
+        # self._tile(image, frm)
 
-            # filtered_wimage = filtered_image * window('hann', frm.shape)
-            ffrm = rescale_intensity(filtered_image) * 255
-            frm = ffrm
-            self._tile(image, frm)
+        # gaussian_filter = {'low_sigma': 0.05, 'high_sigma': 10}
+        # gaussian_filter = None
+        # if gaussian_filter:
+        #     self.debug('gaussian filter')
+        #     filtered_image = difference_of_gaussians(frm, **gaussian_filter)
+        #
+        #     # filtered_wimage = filtered_image * window('hann', frm.shape)
+        #     ffrm = rescale_intensity(filtered_image) * 255
+        #     frm = ffrm
+        #     self._tile(image, frm)
 
         # frm = denoise_wavelet(frm, sigma=0.25)
         # image.tile(frm)
@@ -685,6 +702,7 @@ class Locator(Loggable):
         #     frm = adjust_log(frm, log)
         #     image.tile(frm)
 
+        self.debug('=============================')
         return frm
 
     def _tile(self, image, frame):
