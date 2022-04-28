@@ -26,7 +26,7 @@ from pychron.globals import globalv
 from pychron.loading.tasks.actions import (
     SaveLoadingPDFAction,
     ConfigurePDFAction,
-    SaveLoadingDBAction, GotoModeAction, GotoEntryModeAction, FootPedalModeAction, CheckTrayAction,
+    SaveLoadingDBAction, GotoModeAction, GotoEntryModeAction, FootPedalModeAction, CheckTrayAction, MapTrayAction,
 )
 from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane, StageManagerPane, VideoPane, \
     MachineVisionPane
@@ -46,7 +46,8 @@ class LoadingTask(BaseManagerTask):
         SToolBar(GotoModeAction(enabled_name='interaction_mode_enabled'),
                  GotoEntryModeAction(enabled_name='interaction_mode_enabled'),
                  FootPedalModeAction(enabled_name='interaction_mode_enabled')),
-        SToolBar(CheckTrayAction())
+        SToolBar(CheckTrayAction(),
+                 MapTrayAction())
     ]
     interaction_mode_enabled = DelegatesTo('manager')
 
@@ -96,6 +97,10 @@ class LoadingTask(BaseManagerTask):
     #
     # def set_edit(self):
     #     self.manager.set_edit()
+    def map_tray(self):
+        tray_checker = TrayChecker(self.manager)
+        tray_checker.map()
+
     def check_tray(self):
         tray_checker = TrayChecker(self.manager)
         tray_checker.check()

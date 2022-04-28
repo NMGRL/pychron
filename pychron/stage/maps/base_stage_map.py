@@ -41,19 +41,11 @@ class SampleHole(HasTraits):
     corrected = False
     interpolation_holes = None
     analyzed = False
-
+    deviation = None
     nominal_position = Property(depends_on="x,y")
     corrected_position = Property(depends_on="x_cor,y_cor")
 
     associated_hole = Str
-
-    @property
-    def deviation(self):
-        dx,dy = 0,0
-        if self.corrected:
-            dx = self.x_cor - self.x
-            dy = self.y_cor - self.y
-        return dx,dy
 
     def _get_corrected_position(self):
         return self.x_cor, self.y_cor
@@ -81,6 +73,7 @@ class BaseStageMap(Loggable):
     # should always be N,E,S,W,center
     calibration_holes = None
     secondary_calibration = None
+
     # def __init__(self, *args, **kw):
     #     super(BaseStageMap, self).__init__(*args, **kw)
     #     self.load()
@@ -193,7 +186,7 @@ class BaseStageMap(Loggable):
         # pos = a.transform(*pos)
         # return pos
 
-    def map_to_calibration(self, pos, cpos=None, rot=None, scale=None):
+    def map_to_calibration(self, pos, cpos=None, rot=None, scale=None, include_secondary=True):
         cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)
 
         pt = transform_point(pos, cpos, rot, scale)
@@ -202,7 +195,7 @@ class BaseStageMap(Loggable):
                 pos, cpos, rot, pt
             )
         )
-        if self.secondary_calibration:
+        if self.secondary_calibration and include_secondary:
             c, r, s = self.secondary_calibration
             npt = transform_point(pt, c, r, s)
             self.debug('secondary calibration pos={}, cpos={}, rot={}, new pos={}'.format(pt, c, r, npt))
@@ -210,25 +203,39 @@ class BaseStageMap(Loggable):
 
         return pt
 
+    _bufx = None
     def update_secondary_calibration(self, h):
         """
         """
-        h = self.get_hole(h)
         if h.corrected_position:
-            nx, ny = h.nominal_position
+            # nx, ny = h.nominal_position
+            nx, ny = h.calibrated_position
             cx, cy = h.corrected_position
-            dx = nx-cx
-            dy = ny-cy
+            dx = nx - cx
+            dy = ny - cy
+
+            # if self._bufx is None:
+            #     self._bufx = []
+            #     self._bufy = []
+            # self._bufx.append(dx)
+            # self._bufy.append(dy)
+            #
+            # dx = sum(self._bufx) / len(self._bufx)
+            # dy = sum(self._bufy) / len(self._bufy)
+
             # r = math.degrees(math.atan2(dy, dx))
             # nominal_rotation = math.degrees(math.atan2(ny, nx))
             # corrected_rotation = math.degrees(math.atan2(cy, cx))
             # r = corrected_rotation - nominal_rotation
-            self.secondary_calibration = ((dx, dy), 1, 1)
-
+            # self.secondary_calibration = ((-dx, dy), 1, 1)
+            self.debug('nx {} {} {} {} dx={} dy={}'.format(nx, cx, ny, cy, dx, dy))
             # c, r, s = calculate_transform(h.nominal_position, h.corrected_position)
 
     def get_hole(self, key):
-        return next((h for h in self.sample_holes if h.id == str(key)), None)
+        r = key
+        if not isinstance(key, SampleHole):
+            r = next((h for h in self.sample_holes if h.id == str(key)), None)
+        return r
 
     def get_hole_pos(self, key):
         """

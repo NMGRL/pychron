@@ -79,7 +79,8 @@ class ToupCamCamera(object):
                 for h in self.hooks:
                     try:
                         h(img)
-                    except RuntimeError:
+                    except RuntimeError as e:
+                        print(e)
                         # self.hooks = None
                         break
 

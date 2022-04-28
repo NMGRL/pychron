@@ -358,6 +358,7 @@ class StageManagerPane(TraitsDockPane):
                 enabled_when="tray_calibration.isCalibrating()",
             ),
             UItem("tray_calibration.set_center_button"),
+            UItem("tray_calibration.clear_corrections_button")
         )
         tc_grp = VGroup(
             cal_grp,

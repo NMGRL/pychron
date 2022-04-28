@@ -47,10 +47,9 @@ from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 class CalibrationCanvas(LoadingCanvas):
     mode_overlay_enabled = False
 
-    def update_hole(self, hole):
+    def update_hole(self, hole, unmapped_corrected_position):
         item = self.scene.get_item(hole.id)
-        sx, sy = hole.deviation
-        item.corrected_position = (sx, sy)
+        item.corrected_position = unmapped_corrected_position
         self.request_redraw()
 
 # ============= EOF =============================================

@@ -90,6 +90,7 @@ class TrayCalibrationManager(Loggable):
     reset_holes_button = Button("Reset Holes")
     holes_list = List
     set_center_button = Button("Set Center Guess")
+    clear_corrections_button = Button("Clear Corrections")
 
     def isCalibrating(self):
         return self.calibration_step != "Calibrate"
@@ -116,6 +117,9 @@ class TrayCalibrationManager(Loggable):
             self.canvas.calibration_item = calobj
             # force style change update
             self._style_changed()
+
+    def clear_corrections(self):
+        self.parent.stage_map.clear_correction_file()
 
     def save_calibration(self, name=None, clear_corrections=True, reload=True):
         pickle_path = os.path.join(paths.hidden_dir, "{}_stage_calibration")
@@ -147,6 +151,9 @@ class TrayCalibrationManager(Loggable):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _clear_corrections_button_fired(self):
+        self.clear_corrections()
+
     def _cancel_button_fired(self):
         if self.calibrator:
             self.calibrator.cancel()

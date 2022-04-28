@@ -31,6 +31,7 @@ from traits.api import Any, Instance, HasTraits, Dict, Enum, Event, Button
 from traitsui.api import View, UItem, Item, VGroup, HGroup
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.core.helpers.filetools import unique_path2
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.image_editor import ImageEditor
@@ -88,6 +89,10 @@ class TrayChecker(MachineVisionManager):
         self._alive = False
 
     def check(self):
+        self._iter()
+    def map(self):
+        self._iter(map_positions=True)
+    def _iter(self, map_positions=False):
         use_ml = True
         pipe = None
         if use_ml:
@@ -100,8 +105,45 @@ class TrayChecker(MachineVisionManager):
                                    # width=900,
                                    # height=900,
                                    ))
-        self._thread = Thread(target=self._check, args=(pipe, ))
+
+        if map_positions:
+            func = self._map_positions
+        else:
+            func = self._check
+
+        self._thread = Thread(target=func, args=(pipe, ))
         self._thread.start()
+
+    def _map_positions(self, pipe):
+        self._alive = True
+        results = []
+        for hole in self._loading_manager.stage_manager.stage_map.sample_holes:
+            if not self._alive:
+                self.debug('exiting check loop')
+                break
+
+            pos = hole.id
+            # for pos in self._loading_manager.positions:
+            self._loading_manager.goto(pos, block=True)
+            # time.sleep(self.post_move_delay)
+            # if pipe is not None:
+            #     self._check_position_ml(pipe, pos)
+            # else:
+            #     self._check_position(pos)
+            x = self._loading_manager.stage_manager.stage_controller.x
+            y = self._loading_manager.stage_manager.stage_controller.y
+            results.append((hole, pos, (x,y)))
+            self.debug('map position result {}'.format(results[-1]))
+            time.sleep(self.post_check_delay)
+
+        name = self._loading_manager.stage_manager.stage_map.name
+        p, cnt = unique_path2(paths.csv_data_dir, '{}.corrected_positions.txt'.format(name))
+        with open(p, 'w') as wfile:
+            for r in results:
+                print(r)
+                line = ','.join([str(ri) for ri in r])
+                line = '{}\n'.format(line)
+                wfile.write(line)
 
     def _check(self, pipe):
         self._alive = True
@@ -238,6 +280,8 @@ class TrayChecker(MachineVisionManager):
     def _check_position(self, pos):
         self.debug('check position {}'.format(pos))
         frame = self.new_image_frame(pos)
+        self._loading_manager.stage_manager.snapshot(name='{}.tc'.format(pos),
+                                                     render_canvas=False, inform=False)
         blankframe = self._get_blankframe(pos)
 
         self.display_image.clear()

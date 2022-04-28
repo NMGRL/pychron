@@ -434,8 +434,8 @@ class LoadIndicator(Circle):
         if self.corrected_position:
             ox, oy = self.canvas.map_screen([self.corrected_position])[0]
             with gc:
-                gc.set_stroke_color((0, 1, 1))
-                gc.arc(x + ox, y + oy, r, 0, 360)
+                gc.set_stroke_color((0, 0.75, 0))
+                gc.arc(ox, oy, r, 0, 360)
                 gc.stroke_path()
 
         if self.monitor_indicator:

@@ -134,8 +134,12 @@ class BaseStageManager(Manager):
                         rot, cpos, scale
                     )
                 )
-                pos = smap.map_to_calibration(pos, cpos=cpos, rot=rot, scale=scale)
-
+                npos = smap.map_to_calibration(pos, cpos=cpos, rot=rot, scale=scale)
+                if key:
+                    hole = smap.get_hole(key)
+                    hole.calibrated_position = smap.map_to_calibration(pos, cpos=cpos, rot=rot, scale=scale,
+                                                                      include_secondary=False)
+                pos = npos
         return pos
 
     def update_axes(self):

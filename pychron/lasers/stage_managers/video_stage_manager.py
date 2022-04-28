@@ -713,14 +713,13 @@ class VideoStageManager(StageManager):
     #         src = self.autocenter_manager.crop(src)
     #         return self.lumen_detector.find_best_target(src)
 
-    def _autocenter(self, holenum=None, ntries=4, save=False, inform=False):
+    def _autocenter(self, holenum=None, ntries=2, save=False, inform=False):
         self.debug("do autocenter")
         rpos = None
         interp = False
         sm = self.stage_map
         st = time.time()
         if self.autocenter_manager.use_autocenter:
-            time.sleep(0.1)
 
             dim = self.get_target_dimension()
             shape = sm.g_shape
@@ -734,6 +733,7 @@ class VideoStageManager(StageManager):
             mxs, mys = [], []
             n = max(1, ntries)
             for ti in range(n):
+                # time.sleep(0.5)
                 # use machine vision to calculate positioning error
                 rpos = self.autocenter_manager.calculate_new_center(
                     self.stage_controller.x,
@@ -743,7 +743,7 @@ class VideoStageManager(StageManager):
                     dim=dim,
                     shape=shape,
                 )
-                rpos = rpos[0]*0.75, rpos[1]*0.75
+                # rpos = rpos[0]*0.75, rpos[1]*0.75
 
                 if rpos is not None:
                     if ti < n - 1:

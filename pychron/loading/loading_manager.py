@@ -256,9 +256,9 @@ class LoadingManager(DVCIrradiationable):
                                                    name='loader',
                                                    stage_controller_klass='ZaberMotion')
             self.stage_manager.autocenter_manager.use_autocenter = True
-            self.stage_manager.autocenter_manager.pxpermm = 32
+            self.stage_manager.autocenter_manager.pxpermm = 52
             self.stage_manager.load()
-            # self.stage_manager.initialize_video()
+            self.stage_manager.initialize_video()
             self.stage_manager.stage_controller.bootstrap()
             self.stage_manager.stage_controller.update_axes()
 
@@ -393,6 +393,17 @@ class LoadingManager(DVCIrradiationable):
         self._set_group_colors()
         self.canvas.request_redraw()
         self.interaction_mode_enabled = True
+
+        if self.stage_manager:
+            for hole in self.stage_manager.stage_map.sample_holes:
+                self._update_mv_canvas(hole)
+
+    def _update_mv_canvas(self, hole):
+        hole = self.stage_manager.stage_map.get_hole(hole)
+        pos = hole.corrected_position
+        if pos[0] or pos[1]:
+            unmapped_pos = self.stage_manager.get_uncalibrated_xy(pos)
+            self.mv_canvas.update_hole(hole, unmapped_pos)
 
     def make_canvas(self, new, editable=True, klass=None, **kw):
         if klass is None:
@@ -574,8 +585,7 @@ class LoadingManager(DVCIrradiationable):
                         name = '{}{}'.format(hole, capture)
                     self._capture(name)
 
-                    hole = self.stage_manager.get_hole(hole)
-                    self.mv_canvas.update_hole(hole)
+                self._update_mv_canvas(hole)
 
     # private
     def _capture(self, name):

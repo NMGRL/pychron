@@ -162,6 +162,7 @@ class LaserStageMap(BaseStageMap):
             h.y_cor = 0
             h.corrected = False
             h.interpolated = False
+            h.calibrated_position = None
 
         self.secondary_calibration = None
         return p
@@ -179,9 +180,10 @@ class LaserStageMap(BaseStageMap):
         self.info("saved correction file {}".format(p))
 
     def set_hole_correction(self, hole, x_cor, y_cor):
+        hole = self.get_hole(hole)
         self.debug("set hole correction {}, x={}, y={}".format(hole, x_cor, y_cor))
-        if not isinstance(hole, SampleHole):
-            hole = next((h for h in self.sample_holes if h.id == hole), None)
+        # if not isinstance(hole, SampleHole):
+        #     hole = next((h for h in self.sample_holes if int(h.id) == int(hole)), None)
 
         if hole is not None:
             self.debug("setting correction {}".format(hole.id))
