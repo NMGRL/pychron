@@ -204,6 +204,7 @@ class BaseStageMap(Loggable):
         return pt
 
     _bufx = None
+
     def update_secondary_calibration(self, h):
         """
         """
@@ -211,8 +212,11 @@ class BaseStageMap(Loggable):
             # nx, ny = h.nominal_position
             nx, ny = h.calibrated_position
             cx, cy = h.corrected_position
-            dx = nx - cx
-            dy = ny - cy
+
+            # nx -= self.cpos[0]
+            # ny -= self.cpos[1]
+            # dx = nx - cx
+            # dy = ny - cy
 
             # if self._bufx is None:
             #     self._bufx = []
@@ -224,11 +228,13 @@ class BaseStageMap(Loggable):
             # dy = sum(self._bufy) / len(self._bufy)
 
             # r = math.degrees(math.atan2(dy, dx))
-            # nominal_rotation = math.degrees(math.atan2(ny, nx))
-            # corrected_rotation = math.degrees(math.atan2(cy, cx))
-            # r = corrected_rotation - nominal_rotation
-            # self.secondary_calibration = ((-dx, dy), 1, 1)
-            self.debug('nx {} {} {} {} dx={} dy={}'.format(nx, cx, ny, cy, dx, dy))
+            nominal_rotation = math.degrees(math.atan2(ny, nx))
+            corrected_rotation = math.degrees(math.atan2(cy, cx))
+            r = corrected_rotation - nominal_rotation
+
+            self.debug('secondary rotation calibration {}'.format(ny, nx, cy, cx, r))
+            #self.secondary_calibration = ((0, 0), r, 1)
+            # self.debug('nx {} {} {} {} dx={} dy={}'.format(nx, cx, ny, cy, dx, dy))
             # c, r, s = calculate_transform(h.nominal_position, h.corrected_position)
 
     def get_hole(self, key):
@@ -348,10 +354,14 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
     def _get_calibration_params(self, cpos, rot, scale):
         if cpos is None:
             cpos = self.cpos if self.cpos else (0, 0)
+            self.cpos = cpos
         if rot is None:
             rot = self.rotation if self.rotation else 0
+            self.rotation = rot
         if scale is None:
             scale = 1
+            self.scale = scale
+
         return cpos, rot, scale
 
     # handlers
