@@ -105,6 +105,7 @@ HEADER_KEYS = [
     "min_j",
     "max_j",
     "variation_percent_j",
+    "residual"
 ]
 
 
@@ -235,7 +236,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             # n = z.shape[0] * 10
             # r = max((max(abs(x)), max(abs(y))))
             r = get_geom_radius(self.geometry)
-            r *= 0.75
+            r *= 1.1
             reg = self._regressor_factory(x, y, z, ze)
             self._regressor = reg
         else:
@@ -291,7 +292,6 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                 p.jerr = float(je)
 
                 p.dev = (p.saved_j - j) / j * 100
-                p.mean_dev = (p.mean_j - j) / j * 100
 
         if options.plot_kind == "2D":
             self._graph_contour(x, y, z, r, reg, refresh)
@@ -1282,8 +1282,8 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
             ObjectColumn(name="mean_j", format="%0.5e"),
             ObjectColumn(name="mean_jerr", format="%0.5e"),
             ObjectColumn(name="mean_j_mswd", format="%0.5e"),
-            ObjectColumn(name="j", label="Pred. J", format="%0.5e"),
-            ObjectColumn(name="mean_dev", label="Mean Dev.", format="%0.2f"),
+            ObjectColumn(name="saved_j", label="Saved J", format="%0.5e"),
+            ObjectColumn(name="residual", label="Residual %", format="%0.5f"),
             ObjectColumn(name="variation_percent_j", label="J Var. %", format="%0.3f"),
             ObjectColumn(name="min_j", label="J Min", format="%0.5e"),
             ObjectColumn(name="max_j", label="J Max", format="%0.5e"),

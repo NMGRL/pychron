@@ -164,6 +164,10 @@ class FluxPosition(HasTraits):
     bracket_b = Int
     available_positions = List
 
+    @property
+    def residual(self):
+        return (self.mean_j - self.saved_j)/self.saved_j * 100
+
     def set_mean_j(self, use_weights):
 
         ans = [a for a in self.analyses if not a.is_omitted()]
@@ -211,6 +215,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
     selected_unknowns = List
     toggle_use_button = Button("Toggle Use")
     toggle_save_button = Button("Toggle Save")
+    toggle_save_predicted_button = Button("Toggle Save Predicted")
     toggle_save_unknowns_button = Button("Toggle Save")
     save_monitor_flux_csv_button = Button("Monitor Fluxes CSV")
     recalculate_button = Button("Calculate")
@@ -406,6 +411,10 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
         for p in self.selected_monitors:
             p.save = not p.save
 
+    def _toggle_save_predicted_button_fired(self):
+        for p in self.selected_monitors:
+            p.save_predicted = not p.save_predicted
+
     def _save_monitor_flux_csv_button_fired(self):
         self._save_monitor_flux_csv()
 
@@ -441,6 +450,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
             HGroup(
                 UItem("toggle_use_button"),
                 UItem("toggle_save_button"),
+                UItem("toggle_save_predicted_button"),
                 UItem("save_monitor_flux_csv_button"),
             ),
             BorderHGroup(

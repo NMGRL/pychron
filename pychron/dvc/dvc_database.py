@@ -2516,9 +2516,13 @@ class DVCDatabase(DatabaseAdapter):
                 IrradiationPositionTbl,
                 LevelTbl,
                 IrradiationTbl,
-                SampleTbl,
-                AnalysisChangeTbl,
+                # SampleTbl,
+                # AnalysisChangeTbl,
             )
+            if sample:
+                q = q.join(SampleTbl)
+
+            q = q.join(AnalysisChangeTbl)
 
             q = q.filter(IrradiationTbl.name == irradiation)
 
@@ -2527,7 +2531,9 @@ class DVCDatabase(DatabaseAdapter):
             else:
                 q = q.filter(LevelTbl.name == levels)
 
-            q = q.filter(SampleTbl.name == sample)
+            if sample:
+                q = q.filter(SampleTbl.name == sample)
+
             q = q.filter(AnalysisChangeTbl.tag != "invalid")
 
             return self._query_all(q)

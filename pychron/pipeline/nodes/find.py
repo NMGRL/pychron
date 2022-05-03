@@ -71,6 +71,7 @@ class BaseFindFluxNode(FindNode):
     monitor_sample_name = Str(DEFAULT_MONITOR_NAME)
     dirty = Event
     exclude = "%_MST"
+    include_all_positions = Bool
 
     def load(self, nodedict):
         self.irradiation = nodedict.get("irradiation", "")
@@ -241,7 +242,6 @@ class TransferFluxMonitorMeansNode(FindIrradiationNode):
 class FindFluxMonitorMeansNode(BaseFindFluxNode):
     name = "Find Flux Monitor Means"
     exclude = None
-    include_all_positions = Bool
 
     def _load_hook(self, nodedict):
         self.irradiation = nodedict.get("irradiation", "")
@@ -372,6 +372,8 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
                 is_append, monitors = self.get_browser_analyses(
                     irradiation=self.irradiation, level=self.level
                 )
+            elif self.include_all_positions:
+                monitors = self.dvc.find_flux_monitors(self.irradiation, self.level, None)
             else:
                 monitors = self.dvc.find_flux_monitors(
                     self.irradiation, self.level, self.monitor_sample_name
@@ -404,6 +406,7 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
                 label="Use Browser",
                 tooltip="Use Browser to select monitor analyses manually",
             ),
+            Item("include_all_positions", label="Include All Positions"),
             Item(
                 "monitor_sample_name",
                 enabled_when="not use_browser",
