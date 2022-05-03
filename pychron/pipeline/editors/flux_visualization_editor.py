@@ -105,7 +105,7 @@ HEADER_KEYS = [
     "min_j",
     "max_j",
     "variation_percent_j",
-    "residual"
+    "residual",
 ]
 
 

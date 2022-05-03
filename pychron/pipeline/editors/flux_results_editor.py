@@ -166,7 +166,7 @@ class FluxPosition(HasTraits):
 
     @property
     def residual(self):
-        return (self.mean_j - self.saved_j)/self.saved_j * 100
+        return (self.mean_j - self.saved_j) / self.saved_j * 100
 
     def set_mean_j(self, use_weights):
 

@@ -164,7 +164,7 @@ class MetaRepo(GitRepoManager):
             self.warning_dialog("Invalid production name".format(prname))
 
     def update_level_monitor(
-            self, irradiation, level, monitor_name, monitor_material, monitor_age, lambda_k
+        self, irradiation, level, monitor_name, monitor_material, monitor_age, lambda_k
     ):
         obj, path = self.get_level_obj(irradiation, level)
         positions = self._get_level_positions(irradiation, level)
@@ -185,7 +185,7 @@ class MetaRepo(GitRepoManager):
         self.add(path)
 
     def add_production_to_irradiation(
-            self, irrad, name, params, add=True, commit=False
+        self, irrad, name, params, add=True, commit=False
     ):
         self.debug("adding production {} to irradiation={}".format(name, irrad))
 
@@ -443,23 +443,23 @@ class MetaRepo(GitRepoManager):
                 self.add(p, commit=False)
 
     def update_flux(
-            self,
-            irradiation,
-            level,
-            pos,
-            identifier,
-            j,
-            e,
-            mj=0,
-            me=0,
-            mmwsd=0,
-            decay=None,
-            position_jerr=None,
-            analyses=None,
-            options=None,
-            add=True,
-            save_predicted=True,
-            jd=None,
+        self,
+        irradiation,
+        level,
+        pos,
+        identifier,
+        j,
+        e,
+        mj=0,
+        me=0,
+        mmwsd=0,
+        decay=None,
+        position_jerr=None,
+        analyses=None,
+        options=None,
+        add=True,
+        save_predicted=True,
+        jd=None,
     ):
 
         self.info(
@@ -492,7 +492,7 @@ class MetaRepo(GitRepoManager):
         if not save_predicted:
             j, e = 0, 0
             for p in positions:
-                if p['identifier'] == identifier:
+                if p["identifier"] == identifier:
                     j, e = p.get("j", 0), p.get("j_err", 0)
 
         npos = {
@@ -775,5 +775,6 @@ class MetaRepo(GitRepoManager):
                 wfile.write(path_or_blob)
 
         self.add(p, commit=False)
+
 
 # ============= EOF =============================================

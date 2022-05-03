@@ -373,7 +373,9 @@ class FindFluxMonitorsNode(BaseFindFluxNode):
                     irradiation=self.irradiation, level=self.level
                 )
             elif self.include_all_positions:
-                monitors = self.dvc.find_flux_monitors(self.irradiation, self.level, None)
+                monitors = self.dvc.find_flux_monitors(
+                    self.irradiation, self.level, None
+                )
             else:
                 monitors = self.dvc.find_flux_monitors(
                     self.irradiation, self.level, self.monitor_sample_name
