@@ -236,7 +236,6 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             # n = z.shape[0] * 10
             # r = max((max(abs(x)), max(abs(y))))
             r = get_geom_radius(self.geometry)
-            r *= 1.1
             reg = self._regressor_factory(x, y, z, ze)
             self._regressor = reg
         else:
