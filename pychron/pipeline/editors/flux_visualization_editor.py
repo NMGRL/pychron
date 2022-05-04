@@ -127,7 +127,7 @@ def add_inspector(scatter, func, **kw):
 
 
 def add_analysis_inspector(
-    scatter, items, add_selection=True, value_format=None, convert_index=None
+        scatter, items, add_selection=True, value_format=None, convert_index=None
 ):
     from chaco.tools.broadcaster import BroadcasterTool
     from pychron.graph.tools.rect_selection_tool import RectSelectionTool
@@ -229,13 +229,12 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         # print(ze)
         n = x.shape[0]
         if n >= 3 or self.plotter_options.model_kind in (
-            WEIGHTED_MEAN,
-            MATCHING,
-            BRACKETING,
+                WEIGHTED_MEAN,
+                MATCHING,
+                BRACKETING,
         ):
             # n = z.shape[0] * 10
             # r = max((max(abs(x)), max(abs(y))))
-            r = get_geom_radius(self.geometry)
             reg = self._regressor_factory(x, y, z, ze)
             self._regressor = reg
         else:
@@ -256,9 +255,9 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             pts = array([[p.x, p.y] for p in ipositions])
 
         if options.use_monte_carlo and options.model_kind not in (
-            MATCHING,
-            BRACKETING,
-            NN,
+                MATCHING,
+                BRACKETING,
+                NN,
         ):
             fe = FluxEstimator(options.monte_carlo_ntrials, reg)
 
@@ -270,8 +269,8 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                 pos_errors = zeros(pts.shape[0])
 
             for positions, s, e in (
-                (self.unknown_positions, 0, split),
-                (self.monitor_positions, split, None),
+                    (self.unknown_positions, 0, split),
+                    (self.monitor_positions, split, None),
             ):
                 noms, es, ps = nominals[s:e], errors[s:e], pos_errors[s:e]
                 for p, j, je, pe in zip(positions, noms, es, ps):
@@ -291,6 +290,8 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                 p.jerr = float(je)
 
                 p.dev = (p.saved_j - j) / j * 100
+
+        r = get_geom_radius(self.geometry)
 
         if options.plot_kind == "2D":
             self._graph_contour(x, y, z, r, reg, refresh)
@@ -420,6 +421,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         self.irradiation_tray_overlay = ito
         center_plot.underlays.append(ito)
 
+        r *= 1.125
         gx, gy, m, me = self._model_flux(reg, r)
         # self._visualization_update(gx, gy, m, me, reg.xs, reg.ys)
 
@@ -655,7 +657,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         po = self.plotter_options
         render_style = "connectedhold"
         kind = "line"
-        if po.model_kind == BRACKETING:
+        if po.model_kind in (BRACKETING, NN):
             kind = "scatter"
             xx, yy = zip(*[(p.x, p.y) for p in self.unknown_positions])
             fxs = sorted(arctan2(xx, yy))
@@ -1148,7 +1150,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
         for spoke, poss in self._group_spokes():
             print(spoke)
             x, y, z, ze, j, je, sj, sje = self._extract_position_arrays(poss)
-            x = (x**2 + y**2) ** 0.5
+            x = (x ** 2 + y ** 2) ** 0.5
             plot = sg.new_plot(
                 padding_left=100, padding_top=20, padding_right=10, padding_bottom=30
             )
@@ -1182,7 +1184,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
         return [s for s in spokes if len(s[1]) > 1]
 
     def _group_rings(self):
-        rs = array([p.x**2 + p.y**2 for p in self.monitor_positions])
+        rs = array([p.x ** 2 + p.y ** 2 for p in self.monitor_positions])
         split_idx = abs(diff(rs)) > 1e-2
 
         pidx = 0
@@ -1190,7 +1192,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
             idx = idx[0]
 
             yield sorted(
-                self.monitor_positions[pidx : idx + 1], key=lambda p: arctan2(p.x, p.y)
+                self.monitor_positions[pidx: idx + 1], key=lambda p: arctan2(p.x, p.y)
             )
             pidx = idx + 1
 
@@ -1313,6 +1315,5 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
             label="Aux Plots",
         )
         return View(Tabbed(g3d, rings))
-
 
 # ============= EOF =============================================

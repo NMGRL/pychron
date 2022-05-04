@@ -90,7 +90,7 @@ class FluxOptions(BaseFluxOptions, MonitorMixin):
 
     least_squares_fit = Enum("Linear", "Parabolic", "Cubic", "Quartic")
     one_d_axis = Enum("X", "Y")
-    degree = Int(3)
+    degree = Int(5)
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]

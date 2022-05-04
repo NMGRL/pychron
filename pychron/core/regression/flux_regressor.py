@@ -168,7 +168,7 @@ class NearestNeighborFluxRegressor(SpecialFluxRegressor):
                     es = self.clean_yserr[idx]
                     ws = es**-2
                     if return_error:
-                        v = ws.sum()
+                        v = ws.sum()**-0.5
                     else:
                         v = average(vs, weights=ws)
                 else:

@@ -65,6 +65,9 @@ class FluxSubOptions(SubOptions):
                     label="N. Neighbors",
                     visible_when='model_kind == "{}"'.format(NN),
                 ),
+                Item("degree",
+                     label='Polynominal Degree',
+                     visible_when='model_kind == "{}"'.format(HIGH_ORDER_POLY)),
                 label="Model",
             ),
             VGroup(
