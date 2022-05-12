@@ -50,7 +50,7 @@ from pychron.pipeline.tasks.actions import (
     InterpretedAgeRecallAction,
     IdentifyPeaksDemoAction,
     ImportOptionsActions,
-    DVCRecallAction,
+    DVCRecallAction, SignalEstimatorAction,
 )
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
@@ -180,6 +180,7 @@ class PipelinePlugin(BaseTaskPlugin):
         debug_additions = [
             SchemaAddition(factory=IdentifyPeaksDemoAction, path="MenuBar/tools.menu"),
             SchemaAddition(factory=ImportOptionsActions, path="MenuBar/tools.menu"),
+            SchemaAddition(factory=SignalEstimatorAction, path="MenuBar/tools.menu"),
         ]
         extensions.append(
             TaskExtension(actions=debug_additions, task_id="pychron.pipeline.task")
