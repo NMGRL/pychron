@@ -45,9 +45,10 @@ class SignalEstimatorAction(Action):
 
     def perform(self, event):
         app = event.task.window.application
-        v = app.preferences.get('pychron.entry.j_multiplier', 0.0002)
+        v = app.preferences.get("pychron.entry.j_multiplier", 0.0002)
 
         from pychron.processing.signal_estimator import SignalEstimator
+
         s = SignalEstimator()
         s.j_per_hour = float(v)
         s.edit_traits()
@@ -243,8 +244,8 @@ class ClearAnalysisSetsAction(UIAction):
         p = paths.hidden_path("analysis_sets")
         if os.path.isfile(p):
             if (
-                    confirm(None, "Are you sure you want to clear the Analysis Sets?")
-                    == YES
+                confirm(None, "Are you sure you want to clear the Analysis Sets?")
+                == YES
             ):
                 os.remove(p)
         else:
@@ -422,5 +423,6 @@ class SaveTableAction(TaskAction):
     method = "save_table"
     image = icon("table_save")
     enabled_name = "set_interpreted_enabled"
+
 
 # ============= EOF =============================================

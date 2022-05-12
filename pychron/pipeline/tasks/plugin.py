@@ -50,7 +50,8 @@ from pychron.pipeline.tasks.actions import (
     InterpretedAgeRecallAction,
     IdentifyPeaksDemoAction,
     ImportOptionsActions,
-    DVCRecallAction, SignalEstimatorAction,
+    DVCRecallAction,
+    SignalEstimatorAction,
 )
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 

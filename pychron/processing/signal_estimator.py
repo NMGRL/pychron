@@ -30,7 +30,7 @@ LAMBDA_T = 5.81e-11  # 1/a
 class SignalEstimator(Loggable):
     radius = Int  # um
     height = Float  # um
-    shape = Enum('sphere', 'cylinder')
+    shape = Enum("sphere", "cylinder")
     approx_age = Float(36)  # in ma
     k2o = Float(8.75)
     density = Float(2.52)  # g/cm3
@@ -48,17 +48,19 @@ class SignalEstimator(Loggable):
 
     def get_volume(self):
         r = self.radius / 10000
-        if self.shape == 'sphere':
-            v = 4 / 3 * math.pi * r ** 3
-        elif self.shape == 'cylinder':
-            v = math.pi * r ** 2 * self.height / 10000
+        if self.shape == "sphere":
+            v = 4 / 3 * math.pi * r**3
+        elif self.shape == "cylinder":
+            v = math.pi * r**2 * self.height / 10000
         self.volume = v
         return v
 
     def get_mass(self):
         return self.get_volume() * self.density
 
-    @on_trait_change('radius,height,shape,k2o,density,approx_age,target_ratio,j_per_hour')
+    @on_trait_change(
+        "radius,height,shape,k2o,density,approx_age,target_ratio,j_per_hour"
+    )
     def calculate(self):
         """
         given grain size, approximate age, k2o
@@ -78,35 +80,50 @@ class SignalEstimator(Loggable):
         self.hours = self.j / self.j_per_hour
 
     def traits_view(self):
-        v = View(VGroup(
-                        Item('shape'),
-                        Item('radius', label='Radius (um)'),
-                        Item('height', label='Height (um)', visible_when='shape=="cylinder"'),
-                        Item('k2o', format_str='%0.2f', label='K2O (wt %)'),
-                        Item('approx_age', format_str='%0.3f', label='Approx Age (ma)'),
-                        show_border=True),
-                 Item('sensitivity', format_str='%0.3e', label='Sensitivity (mol/fA)'),
-                 VGroup(Item('j_per_hour'),
-                        HGroup(Item('target_ratio'),
-                               Item('hours', format_str='%0.2f', editor=TextEditor(read_only=True))),
-                        show_border=True),
-                 VGroup(
-                     Item('volume', format_str='%0.3e', label='Volume (cm3)'),
-                     Item('density', format_str='%0.2f', label='Density (g/cm3)'),
-                     Item('mass', format_str='%0.3e', label='Mass (g)'),
-                     show_border=True),
-                 VGroup(Item('rad40',
-                             label='40Ar* (fA)',
-                             format_str='%0.3f', editor=TextEditor(read_only=True)),
-                        show_border=True),
-                 width=500,
-                 resizable=True,
-                 title='Signal Estimator',
-                 buttons=['OK'])
+        v = View(
+            VGroup(
+                Item("shape"),
+                Item("radius", label="Radius (um)"),
+                Item("height", label="Height (um)", visible_when='shape=="cylinder"'),
+                Item("k2o", format_str="%0.2f", label="K2O (wt %)"),
+                Item("approx_age", format_str="%0.3f", label="Approx Age (ma)"),
+                show_border=True,
+            ),
+            Item("sensitivity", format_str="%0.3e", label="Sensitivity (mol/fA)"),
+            VGroup(
+                Item("j_per_hour"),
+                HGroup(
+                    Item("target_ratio"),
+                    Item(
+                        "hours", format_str="%0.2f", editor=TextEditor(read_only=True)
+                    ),
+                ),
+                show_border=True,
+            ),
+            VGroup(
+                Item("volume", format_str="%0.3e", label="Volume (cm3)"),
+                Item("density", format_str="%0.2f", label="Density (g/cm3)"),
+                Item("mass", format_str="%0.3e", label="Mass (g)"),
+                show_border=True,
+            ),
+            VGroup(
+                Item(
+                    "rad40",
+                    label="40Ar* (fA)",
+                    format_str="%0.3f",
+                    editor=TextEditor(read_only=True),
+                ),
+                show_border=True,
+            ),
+            width=500,
+            resizable=True,
+            title="Signal Estimator",
+            buttons=["OK"],
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     c = SignalEstimator()
     c.configure_traits()
 # ============= EOF =============================================
