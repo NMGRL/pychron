@@ -103,12 +103,13 @@ class Emailer(Loggable):
                     creds.refresh(Request())
                 else:
 
-                    self.information_dialog('Pychron needs authorization to send emails. You will now be redirected '
-                                            'to your browser to complete the authorization process')
+                    self.information_dialog(
+                        "Pychron needs authorization to send emails. You will now be redirected "
+                        "to your browser to complete the authorization process"
+                    )
 
-                    cred_path = os.path.join(paths.hidden_dir, 'credentials.json')
-                    flow = InstalledAppFlow.from_client_secrets_file(
-                        cred_path, SCOPES)
+                    cred_path = os.path.join(paths.hidden_dir, "credentials.json")
+                    flow = InstalledAppFlow.from_client_secrets_file(cred_path, SCOPES)
                     creds = flow.run_local_server(port=0)
                 # Save the credentials for the next run
                 with open(token_path, "w") as token:
@@ -117,7 +118,7 @@ class Emailer(Loggable):
             service = None
             try:
                 # Call the Gmail API
-                service = build('gmail', 'v1', credentials=creds)
+                service = build("gmail", "v1", credentials=creds)
 
             except HttpError as error:
                 # TODO(developer) - Handle errors from gmail API.
@@ -223,5 +224,6 @@ class Emailer(Loggable):
                     )
                     msg.attach(part)
         return msg
+
 
 # ============= EOF =============================================
