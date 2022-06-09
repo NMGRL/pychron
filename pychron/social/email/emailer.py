@@ -44,8 +44,10 @@ from googleapiclient.errors import HttpError
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
-SCOPES = ['https://www.googleapis.com/auth/gmail.readonly',
-          'https://www.googleapis.com/auth/gmail.send']
+SCOPES = [
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/gmail.send",
+]
 
 
 class User(HasTraits):
@@ -92,7 +94,7 @@ class Emailer(Loggable):
             # The file token.json stores the user's access and refresh tokens, and is
             # created automatically when the authorization flow completes for the first
             # time.
-            token_path = os.path.join(paths.hidden_dir, 'token.json')
+            token_path = os.path.join(paths.hidden_dir, "token.json")
             if os.path.exists(token_path):
                 creds = Credentials.from_authorized_user_file(token_path, SCOPES)
             # If there are no (valid) credentials available, let the user log in.
@@ -100,18 +102,17 @@ class Emailer(Loggable):
                 if creds and creds.expired and creds.refresh_token:
                     creds.refresh(Request())
                 else:
-                    cred_path = os.path.join(paths.hidden_dir, 'credentials.json')
-                    flow = InstalledAppFlow.from_client_secrets_file(
-                        cred_path, SCOPES)
+                    cred_path = os.path.join(paths.hidden_dir, "credentials.json")
+                    flow = InstalledAppFlow.from_client_secrets_file(cred_path, SCOPES)
                     creds = flow.run_local_server(port=0)
                 # Save the credentials for the next run
-                with open(token_path, 'w') as token:
+                with open(token_path, "w") as token:
                     token.write(creds.to_json())
 
             service = None
             try:
                 # Call the Gmail API
-                service = build('gmail', 'v1', credentials=creds)
+                service = build("gmail", "v1", credentials=creds)
                 # results = service.users().labels().list(userId='me').execute()
                 # labels = results.get('labels', [])
 
@@ -124,7 +125,7 @@ class Emailer(Loggable):
 
             except HttpError as error:
                 # TODO(developer) - Handle errors from gmail API.
-                print(f'An error occurred: {error}')
+                print(f"An error occurred: {error}")
 
             return service
         else:
@@ -171,8 +172,7 @@ class Emailer(Loggable):
 
             if self.use_gmail:
                 msg = self._gmail_message_factory(addrs, sub, msg, paths)
-                server.users().messages().send(userId='me',
-                                                       body=msg).execute()
+                server.users().messages().send(userId="me", body=msg).execute()
             else:
                 msg = self._message_factory(addrs, sub, msg, paths)
                 try:
@@ -191,26 +191,23 @@ class Emailer(Loggable):
 
         message.set_content(msg)
 
-        message['To'] = ','.join(addrs)
-        message['From'] = self.sender
-        message['Subject'] = sub
+        message["To"] = ",".join(addrs)
+        message["From"] = self.sender
+        message["Subject"] = sub
         if paths:
             for p in paths:
                 attachment_filename = os.path.basename(p)
                 type_subtype, _ = mimetypes.guess_type(attachment_filename)
-                maintype, subtype = type_subtype.split('/')
+                maintype, subtype = type_subtype.split("/")
 
-                with open(attachment_filename, 'rb') as fp:
+                with open(attachment_filename, "rb") as fp:
                     attachment_data = fp.read()
                 message.add_attachment(attachment_data, maintype, subtype)
 
         # encoded message
         encoded_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
 
-        return {
-            'raw': encoded_message
-        }
-
+        return {"raw": encoded_message}
 
     def _message_factory(self, addrs, sub, txt, paths):
         msg = MIMEMultipart()
