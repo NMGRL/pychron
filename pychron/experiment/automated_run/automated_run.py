@@ -336,6 +336,9 @@ class AutomatedRun(Loggable):
     def py_measure(self):
         return self.spectrometer_manager.measure()
 
+    def py_get_deflection(self, detector):
+        return self.get_deflection(detector, current=True)
+
     def py_get_intensity(self, detector):
         if self._intensities:
             try:
@@ -1637,8 +1640,10 @@ class AutomatedRun(Loggable):
             return True
         else:
             if use_post_on_fail:
-                self.do_post_equilibration()
-                self.do_post_measurement()
+                if not self._aborted:
+                    self.do_post_equilibration()
+                    self.do_post_measurement()
+
             self.finish()
 
             self.heading(

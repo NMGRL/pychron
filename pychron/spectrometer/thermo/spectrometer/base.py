@@ -95,6 +95,8 @@ class ThermoSpectrometer(BaseSpectrometer):
         if key in d:
             d[key] = float("{:0.2f}".format(d[key]))
 
+        return d
+
     def make_gains_dict(self):
         return {di.name: di.get_gain() for di in self.detectors}
 
@@ -213,7 +215,9 @@ class ThermoSpectrometer(BaseSpectrometer):
         if hasattr(self.source, "read_{}".format(cmd.lower())):
             return getattr(self.source, "read_{}".format(cmd.lower()))()
         else:
-            return self.ask("GetParameter {}".format(cmd))
+            if not cmd.startswith('Get'):
+                cmd = "GetParameter {}".format(cmd)
+            return self.ask(cmd)
 
     def set_deflection(self, name, value):
         det = self.get_detector(name)
@@ -599,6 +603,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                     self.set_parameter(cmd, v, post_delay=0.05)
 
                 for k, v in config["source"].items():
+
                     try:
                         mk = hardware_names[k]
                     except KeyError:
@@ -628,8 +633,8 @@ class ThermoSpectrometer(BaseSpectrometer):
 
                 trap = config["trap"]
                 for tag, func in (
-                    ("voltage", self.source.read_trap_voltage),
-                    ("current", self.source.read_trap_current),
+                        ("voltage", self.source.read_trap_voltage),
+                        ("current", self.source.read_trap_current),
                 ):
                     # set trap voltage
                     v = trap.get(tag)
@@ -678,7 +683,7 @@ class ThermoSpectrometer(BaseSpectrometer):
                 self.source.sync_parameters()
 
     def _ramp_trap_current(
-        self, v, step, period, use_ramp=False, tol=10, confirm=False
+            self, v, step, period, use_ramp=False, tol=10, confirm=False
     ):
         if use_ramp:
             self.debug("ramping trap current")
@@ -745,7 +750,6 @@ class ThermoSpectrometer(BaseSpectrometer):
     def _set_sub_cup_configuration(self, v):
         self._sub_cup_configuration = v
         self.ask("SetSubCupConfiguration {}".format(v))
-
 
 # if __name__ == '__main__':
 # s = Spectrometer()

@@ -86,7 +86,7 @@ class Emailer(Loggable):
             self.server_port = 587
 
     def test_email_server(self):
-        return bool(self.connect(warn=False, test=True))
+        return bool(self.connect(warn=False, test=True)), 'No Error Message'
 
     def connect(self, warn=True, test=False):
         if self.use_gmail:
@@ -118,7 +118,7 @@ class Emailer(Loggable):
             service = None
             try:
                 # Call the Gmail API
-                service = build("gmail", "v1", credentials=creds)
+                service = build("gmail", "v1", credentials=creds, cache_discovery=False)
 
             except HttpError as error:
                 # TODO(developer) - Handle errors from gmail API.
@@ -170,6 +170,7 @@ class Emailer(Loggable):
             if self.use_gmail:
                 msg = self._gmail_message_factory(addrs, sub, msg, paths)
                 server.users().messages().send(userId="me", body=msg).execute()
+                return True
             else:
                 msg = self._message_factory(addrs, sub, msg, paths)
                 try:
