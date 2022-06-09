@@ -86,7 +86,7 @@ class Emailer(Loggable):
             self.server_port = 587
 
     def test_email_server(self):
-        return bool(self.connect(warn=False, test=True)), 'No Error Message'
+        return bool(self.connect(warn=False, test=True)), "No Error Message"
 
     def connect(self, warn=True, test=False):
         if self.use_gmail:

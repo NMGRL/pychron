@@ -274,4 +274,5 @@ class BaseEurotherm(HasTraits):
         if self.setpoint_min <= v < self.setpoint_max:
             return v
 
+
 # ============= EOF =============================================

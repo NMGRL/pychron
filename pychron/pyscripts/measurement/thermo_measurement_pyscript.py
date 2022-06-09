@@ -64,7 +64,7 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
         try:
             v = float(v)
         except (TypeError, ValueError):
-            self.warning('error getting deflection')
+            self.warning("error getting deflection")
             self.debug_exception()
             v = 0
 

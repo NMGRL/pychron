@@ -64,7 +64,7 @@ class MeasurementPyScript(ValvePyScript):
     def abort(self):
         if not self.is_aborted():
             super(MeasurementPyScript, self).abort()
-            self._automated_run_call('abort_run', do_post_equilibration=False)
+            self._automated_run_call("abort_run", do_post_equilibration=False)
 
     def gosub(self, *args, **kw):
         kw["automated_run"] = self.automated_run
