@@ -647,6 +647,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         exp.start_timestamp = datetime.now()
 
+        self._save_complete_evt.clear()
+
         self._do_event(events.START_QUEUE)
 
         # save experiment to database
@@ -976,8 +978,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 exception_queue=self._exception_queue,
                 complete_event=self._save_complete_evt,
             )
-            self._save_complete_evt.set()
 
+        self._save_complete_evt.set()
         self.run_completed = run
 
         remove_backup(run.uuid)
