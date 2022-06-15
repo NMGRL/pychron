@@ -44,9 +44,12 @@ try:
     USE_GMAIL = True
 except ImportError:
     USE_GMAIL = False
-    information(None, 'No all packages installed for the email plugin.  Disable Email plugin in ' \
-                      'initialization.xml or ' \
-                      'install the necessary packages. See https://developers.google.com/gmail/api/quickstart/python')
+    information(
+        None,
+        "No all packages installed for the email plugin.  Disable Email plugin in "
+        "initialization.xml or "
+        "install the necessary packages. See https://developers.google.com/gmail/api/quickstart/python",
+    )
 
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
@@ -94,6 +97,7 @@ class Emailer(Loggable):
             self.server_port = 587
 
         self.use_gmail = USE_GMAIL
+
     def test_email_server(self):
         return bool(self.connect(warn=False, test=True))
 
@@ -233,5 +237,6 @@ class Emailer(Loggable):
                     )
                     msg.attach(part)
         return msg
+
 
 # ============= EOF =============================================
