@@ -30,15 +30,23 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from apptools.preferences.preference_binding import bind_preference
+from pyface.message_dialog import information
 from traits.api import HasTraits, Str, Enum, Bool, Int
 from traitsui.api import View
 
+try:
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
+    USE_GMAIL = True
+except ImportError:
+    USE_GMAIL = False
+    information(None, 'No all packages installed for the email plugin.  Disable Email plugin in ' \
+                      'initialization.xml or ' \
+                      'install the necessary packages. See https://developers.google.com/gmail/api/quickstart/python')
 
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
@@ -85,6 +93,7 @@ class Emailer(Loggable):
         if not self.server_port:
             self.server_port = 587
 
+        self.use_gmail = USE_GMAIL
     def test_email_server(self):
         return bool(self.connect(warn=False, test=True))
 
@@ -224,6 +233,5 @@ class Emailer(Loggable):
                     )
                     msg.attach(part)
         return msg
-
 
 # ============= EOF =============================================
