@@ -46,7 +46,7 @@ except ImportError:
     USE_GMAIL = False
     information(
         None,
-        "No all packages installed for the email plugin.  Disable Email plugin in "
+        "Not all packages installed for the email plugin.  Disable Email plugin in "
         "initialization.xml or "
         "install the necessary packages. See https://developers.google.com/gmail/api/quickstart/python",
     )
