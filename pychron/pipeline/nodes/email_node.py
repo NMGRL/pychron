@@ -27,15 +27,20 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
+
 try:
     from pychron.social.email.emailer import Emailer
 except ImportError:
+
     class Emailer:
         def send(self, *args, **kw):
-            information(None, 'Not all packages that a required to send emails are installed. Please ' 
-                              'install the necessary packages. '
-                              '\n'
-                              'See https://developers.google.com/gmail/api/quickstart/python')
+            information(
+                None,
+                "Not all packages that a required to send emails are installed. Please "
+                "install the necessary packages. "
+                "\n"
+                "See https://developers.google.com/gmail/api/quickstart/python",
+            )
 
 
 class Emailee(HasTraits):
