@@ -211,17 +211,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     try:
                         args = line.split(",")
 
-                        ct = datetime.strptime(args[4], "%H:%M:%S.%f")
+                        cd = datetime.today()
+                        ct = datetime.strptime(args[4], "%H:%M:%S.%f").time()
 
-                        collection_time = datetime.now()
-
-                        # copy to collection time
-                        collection_time.replace(
-                            hour=ct.hour,
-                            minute=ct.minute,
-                            second=ct.second,
-                            microsecond=ct.microsecond,
-                        )
+                        collection_time = datetime.combine(cd, ct)
                         signals = [float(i.strip()) for i in args[5:]]
 
                         if line.startswith(targeta):

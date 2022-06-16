@@ -38,7 +38,7 @@ from pychron.pychron_constants import (
     REPOSITORY_IDENTIFIER,
     OVERLAP,
     EXTRACT_UNITS,
-    CRYO_TEMP,
+    CRYO_TEMP, DISABLE_BETWEEN_POSITIONS, AUTOCENTER,
 )
 from pychron.regex import ALIQUOT_REGEX
 
@@ -140,9 +140,9 @@ class RunParser(Loggable):
     def _load_booleans(self, header, args, params):
 
         for attr in [
-            "autocenter",
+            AUTOCENTER,
             USE_CDD_WARMING,
-            ("disable_between_positions", "dis_btw_pos"),
+            (DISABLE_BETWEEN_POSITIONS, "dis_btw_pos"),
         ]:
             v = self._get_attr_value(
                 header, args, attr, cast=lambda x: to_bool(x.strip())

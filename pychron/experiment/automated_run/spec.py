@@ -400,7 +400,7 @@ class AutomatedRunSpec(HasTraits):
         )
 
         for attr in (
-            "disable_between_positions",
+            DISABLE_BETWEEN_POSITIONS,
             TRAY,
             DURATION,
             EXTRACT_VALUE,

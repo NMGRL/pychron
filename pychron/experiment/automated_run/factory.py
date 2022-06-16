@@ -137,7 +137,7 @@ from pychron.pychron_constants import (
     CRYO_TEMP,
     TEMPLATE,
     USERNAME,
-    EDITABLE_RUN_CONDITIONALS,
+    EDITABLE_RUN_CONDITIONALS, DISABLE_BETWEEN_POSITIONS,
 )
 
 
@@ -240,6 +240,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     pre_cleanup = EKlass(Float)
     post_cleanup = EKlass(Float)
     cryo_temperature = EKlass(Float)
+    disable_between_positions = EKlass(Bool)
     light_value = EKlass(Float)
     beam_diameter = Property(EKlass(String), depends_on="_beam_diameter")
     _beam_diameter = String
@@ -361,6 +362,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         "conditionals_path",
         "use_project_based_repository_identifier",
         "delay_after",
+        DISABLE_BETWEEN_POSITIONS
     )
 
     use_name_prefix = Bool
@@ -1767,6 +1769,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 SKIP,
                 USE_CDD_WARMING,
                 WEIGHT,
+                DISABLE_BETWEEN_POSITIONS
             )
         )
     )
