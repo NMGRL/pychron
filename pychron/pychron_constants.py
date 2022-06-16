@@ -472,6 +472,7 @@ TEMPLATE = "template"
 DISABLE_BETWEEN_POSITIONS = "disable_between_positions"
 AUTOCENTER = "autocenter"
 
+
 def duration(k):
     return "{}_duration".format(k)
 

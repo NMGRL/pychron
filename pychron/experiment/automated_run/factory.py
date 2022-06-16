@@ -137,7 +137,8 @@ from pychron.pychron_constants import (
     CRYO_TEMP,
     TEMPLATE,
     USERNAME,
-    EDITABLE_RUN_CONDITIONALS, DISABLE_BETWEEN_POSITIONS,
+    EDITABLE_RUN_CONDITIONALS,
+    DISABLE_BETWEEN_POSITIONS,
 )
 
 
@@ -362,7 +363,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         "conditionals_path",
         "use_project_based_repository_identifier",
         "delay_after",
-        DISABLE_BETWEEN_POSITIONS
+        DISABLE_BETWEEN_POSITIONS,
     )
 
     use_name_prefix = Bool
@@ -1769,7 +1770,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 SKIP,
                 USE_CDD_WARMING,
                 WEIGHT,
-                DISABLE_BETWEEN_POSITIONS
+                DISABLE_BETWEEN_POSITIONS,
             )
         )
     )

@@ -423,19 +423,21 @@ class StatefullConditional(AutomatedRunConditional):
     def _load_state(self):
         p = self.persistence_path
         if os.path.isfile(p):
-            self.debug('dump state from {}'.format(p))
-            with open(p, 'r') as rfile:
+            self.debug("dump state from {}".format(p))
+            with open(p, "r") as rfile:
                 self._state = json.load(rfile)
 
     def _dump_state(self):
         p = self.persistence_path
-        self.debug('dump state to {}'.format(p))
-        with open(p, 'w') as wfile:
+        self.debug("dump state to {}".format(p))
+        with open(p, "w") as wfile:
             json.dump(self._state, wfile)
 
     @property
     def persistence_path(self):
-        return os.path.join(paths.appdata_dir, '{}.conditional.json'.format(self._hash_id()))
+        return os.path.join(
+            paths.appdata_dir, "{}.conditional.json".format(self._hash_id())
+        )
 
 
 class TruncationConditional(AutomatedRunConditional):
@@ -639,6 +641,7 @@ class QueueModificationConditional(AutomatedRunConditional):
                     r.extract_value += nstep
             except StopIteration:
                 break
+
 
 # ============= EOF =============================================
 # attr = extract_attr(token)

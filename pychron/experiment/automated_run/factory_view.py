@@ -37,7 +37,8 @@ from pychron.pychron_constants import (
     RAMP_DURATION,
     DURATION,
     BEAM_DIAMETER,
-    TEMPLATE, DISABLE_BETWEEN_POSITIONS,
+    TEMPLATE,
+    DISABLE_BETWEEN_POSITIONS,
 )
 
 POSITION_TOOLTIP = """Set the position for this analysis or group of analyses.
@@ -99,25 +100,31 @@ class FactoryView(HasTraits):
             self._step_heat_group(),
             self._position_group(),
             BorderHGroup(
-                VGroup(HGroup(Item(
-                    USE_CDD_WARMING,
-                    label="CDD Warm",
-                    tooltip="Use the CDD warming routine at end of measurement",
-                ),
-                    # Item('collection_time_zero_offset',
-                    #      label='T_o offset (s)',
-                    #      tooltip='# of seconds afer inlet opens to set time zero'),
-                    Item(
-                        OVERLAP,
-                        label="Overlap (s)",
-                        tooltip="Duration to wait before staring next run",
+                VGroup(
+                    HGroup(
+                        Item(
+                            USE_CDD_WARMING,
+                            label="CDD Warm",
+                            tooltip="Use the CDD warming routine at end of measurement",
+                        ),
+                        # Item('collection_time_zero_offset',
+                        #      label='T_o offset (s)',
+                        #      tooltip='# of seconds afer inlet opens to set time zero'),
+                        Item(
+                            OVERLAP,
+                            label="Overlap (s)",
+                            tooltip="Duration to wait before staring next run",
+                        ),
+                        Item(LIGHT_VALUE, label="Lighting"),
+                        Item(CRYO_TEMP, label="Cryo Temp. (K)"),
                     ),
-                    Item(LIGHT_VALUE, label="Lighting"),
-                    Item(CRYO_TEMP, label="Cryo Temp. (K)")),
-                    Item(DISABLE_BETWEEN_POSITIONS,
-                         tooltip='Disable the extraction device when moving between positions.  WARNING this will only '
-                                 'work if the extraction script is configured properly.',
-                         label='Disable Between Positions'), ),
+                    Item(
+                        DISABLE_BETWEEN_POSITIONS,
+                        tooltip="Disable the extraction device when moving between positions.  WARNING this will only "
+                        "work if the extraction script is configured properly.",
+                        label="Disable Between Positions",
+                    ),
+                ),
                 label="Extras",
             ),
             label="Extract",

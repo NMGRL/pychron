@@ -38,7 +38,9 @@ from pychron.pychron_constants import (
     REPOSITORY_IDENTIFIER,
     OVERLAP,
     EXTRACT_UNITS,
-    CRYO_TEMP, DISABLE_BETWEEN_POSITIONS, AUTOCENTER,
+    CRYO_TEMP,
+    DISABLE_BETWEEN_POSITIONS,
+    AUTOCENTER,
 )
 from pychron.regex import ALIQUOT_REGEX
 
