@@ -100,11 +100,13 @@ class Emailer(Loggable):
             # If there are no (valid) credentials available, let the user log in.
             if not creds or not creds.valid:
                 if creds:
-                    self.debug('credentials expired {}'.format(creds.expired))
-                    self.debug('credentials refresh_token {}'.format(creds.refresh_token))
+                    self.debug("credentials expired {}".format(creds.expired))
+                    self.debug(
+                        "credentials refresh_token {}".format(creds.refresh_token)
+                    )
 
                 if creds and creds.expired and creds.refresh_token:
-                    self.debug('refreshing credentials')
+                    self.debug("refreshing credentials")
                     creds.refresh(Request())
                 else:
 
@@ -115,11 +117,15 @@ class Emailer(Loggable):
 
                     cred_path = os.path.join(paths.hidden_dir, "credentials.json")
                     if os.path.isfile(cred_path):
-                        flow = InstalledAppFlow.from_client_secrets_file(cred_path, SCOPES)
+                        flow = InstalledAppFlow.from_client_secrets_file(
+                            cred_path, SCOPES
+                        )
                         creds = flow.run_local_server(port=0)
                     else:
-                        self.information_dialog("The file '{}' was not found.\n\nPlease contact developers for a "
-                                                "copy".format(cred_path))
+                        self.information_dialog(
+                            "The file '{}' was not found.\n\nPlease contact developers for a "
+                            "copy".format(cred_path)
+                        )
                 if creds:
                     # Save the credentials for the next run
                     with open(token_path, "w") as token:
@@ -129,7 +135,9 @@ class Emailer(Loggable):
             if creds:
                 try:
                     # Call the Gmail API
-                    service = build("gmail", "v1", credentials=creds, cache_discovery=False)
+                    service = build(
+                        "gmail", "v1", credentials=creds, cache_discovery=False
+                    )
 
                 except HttpError as error:
                     # TODO(developer) - Handle errors from gmail API.
