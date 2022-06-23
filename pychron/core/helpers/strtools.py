@@ -34,11 +34,12 @@ def camel_case(name, delimiters=None):
 
 
 def to_list(a, delimiter=",", mapping=None):
-    l = a.split(delimiter)
-    if mapping:
-        l = [mapping[li] for li in l]
+    if a is not None:
+        la = a.split(delimiter)
+        if mapping:
+            la = [mapping[li] for li in la]
 
-    return l
+        return la
 
 
 def to_terminator(t):
@@ -139,6 +140,10 @@ def to_int(i):
     except ValueError:
         pass
     return i
+
+
+def streq(a, b):
+    return a and b and a.lower() == b.lower()
 
 
 if __name__ == "__main__":
