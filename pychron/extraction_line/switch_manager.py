@@ -28,7 +28,7 @@ import yaml
 from traits.api import Any, Dict, List, Bool, Event, Str
 
 from pychron.core.helpers.iterfuncs import groupby_key
-from pychron.core.helpers.strtools import to_bool
+from pychron.core.helpers.strtools import to_bool, streq
 from pychron.core.yaml import yload
 from pychron.extraction_line import VERBOSE_DEBUG, VERBOSE
 from pychron.extraction_line.pipettes.tracking import PipetteTracker
@@ -382,6 +382,13 @@ class SwitchManager(Manager):
         if not act:
             act = self.application.get_services(ICoreDevice)
         return act
+
+    def get_pipette_count(self, name):
+        for p in self.pipette_trackers:
+            if streq(name, p.name):
+                return p.counts
+        else:
+            return 0
 
     def get_actuator_by_name(self, name):
         act = None
