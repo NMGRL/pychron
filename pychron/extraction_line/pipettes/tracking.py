@@ -94,6 +94,9 @@ class PipetteTracker(Loggable):
                 )
             )
 
+    def to_dict(self):
+        return self._dump()
+
     def _dump(self):
         d = dict(counts=self.counts, last_shot_time=generate_datetimestamp())
 
