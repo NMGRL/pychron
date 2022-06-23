@@ -182,6 +182,16 @@ class ClientSwitchManager(SwitchManager):
                         ]
             return rs
 
+    def get_pipette_counts(self):
+        if self.actuators:
+            actuator = self.actuators[0]
+            return actuator.get_pipette_counts()
+
+    def get_pipette_count(self, name):
+        if self.actuators:
+            actuator = self.actuators[0]
+            return actuator.get_pipette_count(name)
+
     # private
     def _load_states(self):
         self.load_valve_states()

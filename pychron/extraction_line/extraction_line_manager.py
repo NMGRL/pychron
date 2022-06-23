@@ -476,6 +476,12 @@ class ExtractionLineManager(Manager, Consoleable):
             names = self.switch_manager.get_valve_names()
         return names
 
+    def get_pipette_counts(self):
+        counts = []
+        if self.switch_manager is not None:
+            counts = self.switch_manager.get_pipette_counts()
+        return counts
+
     def get_pipette_count(self, name):
         count = 0
         if self.switch_manager is not None:

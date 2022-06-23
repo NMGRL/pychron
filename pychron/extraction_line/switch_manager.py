@@ -383,6 +383,9 @@ class SwitchManager(Manager):
             act = self.application.get_services(ICoreDevice)
         return act
 
+    def get_pipette_counts(self):
+        return [p.to_dict() for p in self.pipette_trackers]
+
     def get_pipette_count(self, name):
         for p in self.pipette_trackers:
             if streq(name, p.name):
