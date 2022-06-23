@@ -732,7 +732,7 @@ class ExtractionLineManager(Manager, Consoleable):
             return True
 
     def _open_close_valve(
-            self, name, action, description=None, address=None, mode="remote", **kw
+        self, name, action, description=None, address=None, mode="remote", **kw
     ):
         vm = self.switch_manager
         if vm is not None:
@@ -860,13 +860,13 @@ class ExtractionLineManager(Manager, Consoleable):
             package = "pychron.managers.{}".format(manager)
 
         if manager in (
-                "switch_manager",
-                "gauge_manager",
-                "multiplexer_manager",
-                "cryo_manager",
-                "manometer_manager",
-                "heater_manager",
-                "pump_manager",
+            "switch_manager",
+            "gauge_manager",
+            "multiplexer_manager",
+            "cryo_manager",
+            "manometer_manager",
+            "heater_manager",
+            "pump_manager",
         ):
             if manager == "switch_manager":
                 man = self._switch_manager_factory()

@@ -66,7 +66,7 @@ class BaseValveProtocol(ServiceProtocol):
             ("GetValveLockState", "_get_valve_lock_state"),
             ("GetValveOwners", "_get_valve_owners"),
             ("GetPipetteCount", "_get_pipette_count"),
-            ("GetPipetteCounts", "_get_pipette_counts")
+            ("GetPipetteCounts", "_get_pipette_counts"),
         )
         self._register_services(services)
 

@@ -48,12 +48,12 @@ class PychronGPActuator(GPActuator, ClientMixin):
 
     @trim
     def get_pipette_count(self, name, verbose=False):
-        cmd = 'GetPipetteCount {}'.format(name)
+        cmd = "GetPipetteCount {}".format(name)
         return self.ask(cmd, verbose=verbose)
 
     @trim
     def get_pipette_counts(self, verbose=False):
-        cmd = 'GetPipetteCounts'
+        cmd = "GetPipetteCounts"
         return self.ask(cmd, verbose=verbose)
 
     @trim
