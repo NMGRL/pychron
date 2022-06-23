@@ -99,7 +99,12 @@ class Emailer(Loggable):
                 creds = Credentials.from_authorized_user_file(token_path, SCOPES)
             # If there are no (valid) credentials available, let the user log in.
             if not creds or not creds.valid:
+                if creds:
+                    self.debug('credentials expired {}'.format(creds.expired))
+                    self.debug('credentials refresh_token {}'.format(creds.refresh_token))
+
                 if creds and creds.expired and creds.refresh_token:
+                    self.debug('refreshing credentials')
                     creds.refresh(Request())
                 else:
 
@@ -109,20 +114,26 @@ class Emailer(Loggable):
                     )
 
                     cred_path = os.path.join(paths.hidden_dir, "credentials.json")
-                    flow = InstalledAppFlow.from_client_secrets_file(cred_path, SCOPES)
-                    creds = flow.run_local_server(port=0)
-                # Save the credentials for the next run
-                with open(token_path, "w") as token:
-                    token.write(creds.to_json())
+                    if os.path.isfile(cred_path):
+                        flow = InstalledAppFlow.from_client_secrets_file(cred_path, SCOPES)
+                        creds = flow.run_local_server(port=0)
+                    else:
+                        self.information_dialog("The file '{}' was not found.\n\nPlease contact developers for a "
+                                                "copy".format(cred_path))
+                if creds:
+                    # Save the credentials for the next run
+                    with open(token_path, "w") as token:
+                        token.write(creds.to_json())
 
             service = None
-            try:
-                # Call the Gmail API
-                service = build("gmail", "v1", credentials=creds, cache_discovery=False)
+            if creds:
+                try:
+                    # Call the Gmail API
+                    service = build("gmail", "v1", credentials=creds, cache_discovery=False)
 
-            except HttpError as error:
-                # TODO(developer) - Handle errors from gmail API.
-                print(f"An error occurred: {error}")
+                except HttpError as error:
+                    # TODO(developer) - Handle errors from gmail API.
+                    print(f"An error occurred: {error}")
 
             return service
         else:
@@ -170,6 +181,7 @@ class Emailer(Loggable):
             if self.use_gmail:
                 msg = self._gmail_message_factory(addrs, sub, msg, paths)
                 server.users().messages().send(userId="me", body=msg).execute()
+                server.close()
                 return True
             else:
                 msg = self._message_factory(addrs, sub, msg, paths)
