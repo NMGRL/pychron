@@ -1344,9 +1344,11 @@ class AutomatedRun(Loggable):
                 self.equilibration_conditionals,
             )
 
+            # get environmental values such as temperature, pneumatics etc
             env = self._get_environmentals()
-            if env:
-                set_environmentals(self.spec, env)
+
+            # if env:
+            #     set_environmentals(self.spec, env)
 
             tag = "ok"
             if self.spec.state in (CANCELED, FAILED):
@@ -1357,6 +1359,7 @@ class AutomatedRun(Loggable):
                 conditionals=[c for cond in conds for c in cond],
                 tag=tag,
                 tripped_conditional=self.tripped_conditional,
+                pipette_counts=self.extraction_line_manager.get_pipette_counts(),
                 **env
             )
 

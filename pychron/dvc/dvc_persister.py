@@ -234,7 +234,7 @@ class DVCPersister(BasePersister):
 
         hexsha = self.dvc.get_meta_head()
         obj["commit"] = str(hexsha)
-
+        obj["pipette_counts"] = self.per_spec.pipette_counts
         path = self._make_path(modifier="extraction")
         dvc_dump(obj, path)
         self.info("================= post extraction save finished =================")

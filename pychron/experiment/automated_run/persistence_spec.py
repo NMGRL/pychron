@@ -120,6 +120,7 @@ class PersistenceSpec(HasTraits):
     lab_humiditys = List
     lab_pneumatics = List
 
+    pipette_counts = List
     # lithographic_unit = Str
     # lat_long = Str
     # rock_type = Str
