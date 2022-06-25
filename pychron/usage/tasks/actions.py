@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2014 Jake Ross
+# Copyright 2022 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,52 +17,36 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from threading import Thread
+
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.envisage.resources import icon
 from pychron.envisage.ui_actions import UIAction
 
 
-class BuildApplicationAction(UIAction):
-    name = "Build"
-    image = icon("bricks")
+class ShareConfigurationAction(UIAction):
+    name = "Share Configuration"
 
     def perform(self, event):
         app = event.task.window.application
-        up = app.get_service("pychron.updater.updater.Updater")
-        up.build()
+        up = app.get_service("pychron.usage.worker.UsageWorker")
+        self._perform(up)
+
+    def _perform(self, up):
+        up.share()
 
 
-class CheckForUpdatesAction(UIAction):
-    name = "Check For Updates"
-    image = icon("update-product")
+class ShareSetupfilesAction(ShareConfigurationAction):
+    name = "Share Setupfiles"
 
-    description = "Check for updates to Pychron by examining the public Github."
-
-    def perform(self, event):
-        app = event.task.window.application
-        up = app.get_service("pychron.updater.updater.Updater")
-        up.check_for_updates(inform=True)
+    def _perform(self, up):
+        up.share(share_setupfiles=True, share_scripts=False)
 
 
-class ManageVersionAction(UIAction):
-    name = "Manage Version"
-    image = icon("update-product")
-    accelerator = "Ctrl+;"
+class ShareScriptsAction(ShareConfigurationAction):
+    name = "Share Scripts"
 
-    def perform(self, event):
-        app = event.task.window.application
-        up = app.get_service("pychron.updater.updater.Updater")
-        up.manage_version()
-
-
-class ManageBranchAction(UIAction):
-    name = "Manage Branch"
-    image = icon("update-product")
-    accelerator = "Ctrl+."
-
-    def perform(self, event):
-        app = event.task.window.application
-        up = app.get_service("pychron.updater.updater.Updater")
-        up.manage_branches()
-
+    def _perform(self, up):
+        up.share(share_setupfiles=False, share_scripts=True)
 
 # ============= EOF =============================================

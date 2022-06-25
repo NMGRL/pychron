@@ -27,19 +27,19 @@ from pychron.core.pychron_traits import HostStr
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
-class WatchDogPreferences(BasePreferencesHelper):
-    preferences_path = "pychron.watchdog"
-    host = HostStr
-    port = Int
-    pad = Float
+class UsagePreferences(BasePreferencesHelper):
+    preferences_path = "pychron.usage"
+    share_setupfiles_enabled = Bool
+    share_scripts_enabled = Bool
 
 
-class WatchDogPreferencesPane(PreferencesPane):
-    category = "WatchDog"
-    model_factory = WatchDogPreferences
+class UsagePreferencesPane(PreferencesPane):
+    category = "Usage"
+    model_factory = UsagePreferences
 
     def traits_view(self):
-        v = View(Item("host"), Item("port"), Item("pad"))
+        v = View(Item('share_setupfiles_enabled'),
+                 Item('share_scripts_enabled'))
         return v
 
 

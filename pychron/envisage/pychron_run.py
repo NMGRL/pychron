@@ -32,6 +32,7 @@ from pychron.pychron_constants import LASER_PLUGINS
 logger = logging.getLogger()
 
 PACKAGE_DICT = dict(
+    UsagePlugin="pychron.usage.tasks.plugin",
     ArArConstantsPlugin="pychron.constants.tasks.arar_constants_plugin",
     DashboardServerPlugin="pychron.dashboard.tasks.server.plugin",
     DashboardClientPlugin="pychron.dashboard.tasks.client.plugin",
