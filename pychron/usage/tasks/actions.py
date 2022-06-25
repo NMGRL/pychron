@@ -49,4 +49,5 @@ class ShareScriptsAction(ShareConfigurationAction):
     def _perform(self, up):
         up.share(share_setupfiles=False, share_scripts=True)
 
+
 # ============= EOF =============================================

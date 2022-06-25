@@ -19,11 +19,17 @@ from pyface.action.schema.schema_addition import SchemaAddition
 from pyface.message_dialog import warning
 
 # ============= standard library imports ========================
-from pychron.usage.tasks.actions import ShareConfigurationAction, ShareScriptsAction, ShareSetupfilesAction
+from pychron.usage.tasks.actions import (
+    ShareConfigurationAction,
+    ShareScriptsAction,
+    ShareSetupfilesAction,
+)
 from pychron.usage.worker import UsageWorker
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
+
 # from pychron.experiment.events import (
 #     ExperimentEventAddition,
 #     START_QUEUE,
@@ -165,10 +171,11 @@ class UsagePlugin(BaseTaskPlugin):
     #     return [e1, e2, e3, e4, e5]
 
     def _service_offers_default(self):
-        """
-        """
+        """ """
         so = self.service_offer_factory(factory=UsageWorker, protocol=UsageWorker)
-        return [so,]
+        return [
+            so,
+        ]
 
     # def _preferences_default(self):
     #     return ['file://']
@@ -209,12 +216,12 @@ class UsagePlugin(BaseTaskPlugin):
             )
         ]
 
+
 # ============= EOF =============================================
-{'location':
-     {'name': {'column': 'site_id',
-               'postprocess':'upper'},
-      'description': {'column': 'location'}
-      },
- 'thing':
-     {}
+{
+    "location": {
+        "name": {"column": "site_id", "postprocess": "upper"},
+        "description": {"column": "location"},
+    },
+    "thing": {},
 }

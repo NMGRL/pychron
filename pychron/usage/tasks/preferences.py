@@ -38,8 +38,7 @@ class UsagePreferencesPane(PreferencesPane):
     model_factory = UsagePreferences
 
     def traits_view(self):
-        v = View(Item('share_setupfiles_enabled'),
-                 Item('share_scripts_enabled'))
+        v = View(Item("share_setupfiles_enabled"), Item("share_scripts_enabled"))
         return v
 
 

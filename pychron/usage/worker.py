@@ -27,11 +27,15 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.preference_binding import bind_preference
 from pychron.loggable import Loggable
 from pychron.paths import paths
+
 try:
     from google.cloud import storage
 except ImportError:
-    warning(None, "Necessary library not installed please install Google Cloud Storage Client\n\n"
-                  "pip install --upgrade google-cloud-storage")
+    warning(
+        None,
+        "Necessary library not installed please install Google Cloud Storage Client\n\n"
+        "pip install --upgrade google-cloud-storage",
+    )
     storage = None
 
 
@@ -43,50 +47,59 @@ class UsageWorker(Loggable):
     def __init__(self, bind=True, *args, **kw):
         super(UsageWorker, self).__init__(*args, **kw)
         if bind:
-            bind_preference(self, 'share_setupfiles_enabled', 'pychron.usage.share_setupfiles_enabled')
-            bind_preference(self, 'share_scripts_enabled', 'pychron.usage.share_scripts_enabled')
+            bind_preference(
+                self,
+                "share_setupfiles_enabled",
+                "pychron.usage.share_setupfiles_enabled",
+            )
+            bind_preference(
+                self, "share_scripts_enabled", "pychron.usage.share_scripts_enabled"
+            )
             bind_preference(self, "lab_name", "pychron.general.lab_name")
-        self.ignore = ['.DS_Store', '.git']
+        self.ignore = [".DS_Store", ".git"]
 
     def share(self, share_scripts=True, share_setupfiles=True):
-        self.debug('usage sharing')
+        self.debug("usage sharing")
         lab_name = self.lab_name
         if not lab_name:
-            self.warning_dialog('Please set a lab_name in Preference/General')
+            self.warning_dialog("Please set a lab_name in Preference/General")
             return
 
         # self.setup_working_repo()
         client = self.get_client()
-        print('asdf', client)
+        print("asdf", client)
         if client:
-            self.debug('share setupfiles')
+            self.debug("share setupfiles")
             try:
                 if share_setupfiles:
                     self._share_setupfiles(client)
             except BaseException:
-                self.debug('Failed sharing setupfiles')
+                self.debug("Failed sharing setupfiles")
                 self.debug_exception()
 
-            self.debug('share scripts')
+            self.debug("share scripts")
             try:
                 if share_scripts:
                     self._share_scripts(client)
             except BaseException as e:
                 print(e)
-                self.debug('failed sharing scripts')
+                self.debug("failed sharing scripts")
                 self.debug_exception()
 
-            self.debug('sharing complete')
+            self.debug("sharing complete")
         else:
-            self.warning_dialog('Failed to get Google Storage Client. Cannot share configuration. see log for more '
-                                'details')
+            self.warning_dialog(
+                "Failed to get Google Storage Client. Cannot share configuration. see log for more "
+                "details"
+            )
+
     # @property
     # def workingroot(self):
     #     return os.path.join(paths.hidden_dir, 'usage', self.lab_name)
 
     def get_client(self):
         try:
-            client = storage.Client(project='pychronlabs')
+            client = storage.Client(project="pychronlabs")
         except BaseException:
             self.debug_exception()
             return
@@ -102,10 +115,10 @@ class UsageWorker(Loggable):
     #     self.repo_manager.init_repo(workingroot)
 
     def share_setupfiles(self, client):
-        self._share_directory(client, paths.setup_dir, 'setupfiles')
+        self._share_directory(client, paths.setup_dir, "setupfiles")
 
     def share_scripts(self, client):
-        self._share_directory(client, paths.scripts_dir, 'scripts')
+        self._share_directory(client, paths.scripts_dir, "scripts")
 
     def _share_directory(self, client, root, tag):
         bucket = client.get_bucket("pychronlabs_usage")
@@ -113,19 +126,19 @@ class UsageWorker(Loggable):
         n = len(ps)
         prog = open_progress(n)
         for i, (src, dest) in enumerate(ps):
-            dest = '{}/{}/{}'.format(self.lab_name, tag, dest)
+            dest = "{}/{}/{}".format(self.lab_name, tag, dest)
             blob = bucket.blob(dest)
             try:
                 blob.upload_from_filename(src, retry=True)
             except BaseException:
-                self.debug('failed uploading {}'.format(dest))
-            prog.change_message('Uploading {} {}/{} {}'.format(tag, i, n, dest))
+                self.debug("failed uploading {}".format(dest))
+            prog.change_message("Uploading {} {}/{} {}".format(tag, i, n, dest))
 
     def _gen_paths(self, baseroot):
 
         for root, dirs, files in os.walk(baseroot):
             # print(root, dirs, files)
-            if os.path.basename(root) == '.git':
+            if os.path.basename(root) == ".git":
                 continue
 
             for f in files:
@@ -138,11 +151,11 @@ class UsageWorker(Loggable):
                 yield src, dest
 
 
-if __name__ == '__main__':
-    paths.build('~/PychronExp')
-    logging_setup('pychron', level='DEBUG')
+if __name__ == "__main__":
+    paths.build("~/PychronExp")
+    logging_setup("pychron", level="DEBUG")
     u = UsageWorker(bind=False)
-    u.lab_name = 'NMGRL'
+    u.lab_name = "NMGRL"
     u.share_setupfiles_enabled = True
     # u.share_scripts_enabled = True
     # u.configure_traits()
