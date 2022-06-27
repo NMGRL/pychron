@@ -51,9 +51,7 @@ class ExperimentNotifier(Loggable):
         user_email = ctx.get("user_email")
         if user_email:
             self.info(
-                "Notifying user={} email={}".format(
-                    ctx.get("username"), user_email
-                )
+                "Notifying user={} email={}".format(ctx.get("username"), user_email)
             )
             subject = "{} {}".format(subject, datetime.now().isoformat())
             self._send(user_email, subject, message)
