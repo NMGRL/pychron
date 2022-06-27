@@ -218,10 +218,3 @@ class UsagePlugin(BaseTaskPlugin):
 
 
 # ============= EOF =============================================
-{
-    "location": {
-        "name": {"column": "site_id", "postprocess": "upper"},
-        "description": {"column": "location"},
-    },
-    "thing": {},
-}
