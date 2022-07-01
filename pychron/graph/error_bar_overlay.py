@@ -130,7 +130,11 @@ class ErrorBarOverlay(AbstractOverlay):
                 if isinstance(color, str):
                     color = color_table[color]
                 elif isinstance(color, QtGui.QColor):
-                    color = (color.red()/255., color.green()/255., color.blue()/255.)
+                    color = (
+                        color.red() / 255.0,
+                        color.green() / 255.0,
+                        color.blue() / 255.0,
+                    )
 
                 gc.set_line_width(self.line_width)
                 gc.set_stroke_color(color)

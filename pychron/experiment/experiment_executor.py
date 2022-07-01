@@ -2628,7 +2628,7 @@ Use Last "blank_{}"= {}
                             title="Please Select a Mass Spectrometer",
                             width=300,
                         ),
-                        kind='livemodal'
+                        kind="livemodal",
                     )
                     if info.result:
                         ms = self.timeseries_mass_spectrometer

@@ -63,7 +63,7 @@ class XMLLoader(BaseLoader):
 
     def _get_translation(self, elem, name="translation"):
         if isinstance(elem, dict):
-            elem = elem['translation']
+            elem = elem["translation"]
 
         x, y = elem.find(name).text.split(",")
         try:

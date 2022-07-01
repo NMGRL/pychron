@@ -90,7 +90,7 @@ class DataTool(BaseTool):
         ret = "{},{:0.3f}".format(xi, y)
         if self.predict_value_func:
             ret = "{},{}".format(ret, self.predict_value_func(x, y))
-        return   ret
+        return ret
 
 
 class DataToolOverlay(TextBoxOverlay):
