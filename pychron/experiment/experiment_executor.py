@@ -939,8 +939,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # self.debug("parallel saving currently disabled")
         if self._save_complete_evt:
             self.debug("waiting for save event to clear")
+            st = time.time()
             while self._save_complete_evt.is_set():
                 self._save_complete_evt.wait(1)
+                if time.time()-st > 120:
+                    self._save_complete_evt.set()
+                    break
+
             self.debug("waiting complete")
 
         for step in ("_start", "_extraction", "_measurement", "_post_measurement"):
