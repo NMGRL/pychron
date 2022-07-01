@@ -29,8 +29,8 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 class UsagePreferences(BasePreferencesHelper):
     preferences_path = "pychron.usage"
-    share_setupfiles_enabled = Bool
-    share_scripts_enabled = Bool
+    # share_setupfiles_enabled = Bool
+    # share_scripts_enabled = Bool
 
 
 class UsagePreferencesPane(PreferencesPane):
@@ -38,7 +38,10 @@ class UsagePreferencesPane(PreferencesPane):
     model_factory = UsagePreferences
 
     def traits_view(self):
-        v = View(Item("share_setupfiles_enabled"), Item("share_scripts_enabled"))
+        v = View(
+                # Item('share_setupfiles_enabled'),
+                #  Item('share_scripts_enabled')
+        )
         return v
 
 

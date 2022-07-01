@@ -17,7 +17,9 @@
 
 import os
 import time
+import datetime
 
+import requests
 from pyface.message_dialog import warning
 from traits.trait_types import Bool, Str
 
@@ -30,6 +32,8 @@ from pychron.paths import paths
 
 try:
     from google.cloud import storage
+    # from google.oauth2.credentials import Credentials
+    from google.oauth2 import service_account
 except ImportError:
     warning(
         None,
@@ -40,21 +44,15 @@ except ImportError:
 
 
 class UsageWorker(Loggable):
-    share_setupfiles_enabled = Bool
-    share_scripts_enabled = Bool
+    # share_setupfiles_enabled = Bool
+    # share_scripts_enabled = Bool
     lab_name = Str
 
     def __init__(self, bind=True, *args, **kw):
         super(UsageWorker, self).__init__(*args, **kw)
         if bind:
-            bind_preference(
-                self,
-                "share_setupfiles_enabled",
-                "pychron.usage.share_setupfiles_enabled",
-            )
-            bind_preference(
-                self, "share_scripts_enabled", "pychron.usage.share_scripts_enabled"
-            )
+            # bind_preference(self, 'share_setupfiles_enabled', 'pychron.usage.share_setupfiles_enabled')
+            # bind_preference(self, 'share_scripts_enabled', 'pychron.usage.share_scripts_enabled')
             bind_preference(self, "lab_name", "pychron.general.lab_name")
         self.ignore = [".DS_Store", ".git"]
 
@@ -67,12 +65,11 @@ class UsageWorker(Loggable):
 
         # self.setup_working_repo()
         client = self.get_client()
-        print("asdf", client)
         if client:
             self.debug("share setupfiles")
             try:
                 if share_setupfiles:
-                    self._share_setupfiles(client)
+                    self.share_setupfiles(client)
             except BaseException:
                 self.debug("Failed sharing setupfiles")
                 self.debug_exception()
@@ -80,7 +77,7 @@ class UsageWorker(Loggable):
             self.debug("share scripts")
             try:
                 if share_scripts:
-                    self._share_scripts(client)
+                    self.share_scripts(client)
             except BaseException as e:
                 print(e)
                 self.debug("failed sharing scripts")
@@ -99,7 +96,14 @@ class UsageWorker(Loggable):
 
     def get_client(self):
         try:
-            client = storage.Client(project="pychronlabs")
+            p = os.path.join(paths.hidden_dir, 'pychronlabs_usage_service_account.json')
+            if os.path.isfile(p):
+                creds = service_account.Credentials.from_service_account_file(p)
+                client = storage.Client(project='pychronlabs',
+                                        credentials=creds
+                                        )
+            else:
+                self.debug(f'File {p} does not exist')
         except BaseException:
             self.debug_exception()
             return
@@ -121,18 +125,27 @@ class UsageWorker(Loggable):
         self._share_directory(client, paths.scripts_dir, "scripts")
 
     def _share_directory(self, client, root, tag):
-        bucket = client.get_bucket("pychronlabs_usage")
         ps = list(self._gen_paths(root))
         n = len(ps)
         prog = open_progress(n)
-        for i, (src, dest) in enumerate(ps):
-            dest = "{}/{}/{}".format(self.lab_name, tag, dest)
-            blob = bucket.blob(dest)
-            try:
-                blob.upload_from_filename(src, retry=True)
-            except BaseException:
-                self.debug("failed uploading {}".format(dest))
-            prog.change_message("Uploading {} {}/{} {}".format(tag, i, n, dest))
+        bucket = client.get_bucket("pychronlabs_usage")
+        with requests.Session() as session:
+            for i, (src, dest) in enumerate(ps):
+                dest = '{}/{}/{}'.format(self.lab_name, tag, dest)
+                blob = bucket.blob(dest)
+                url = blob.generate_signed_url(
+                    version="v4",
+                    # This URL is valid for 15 minutes
+                    expiration=datetime.timedelta(minutes=15),
+                    # Allow PUT requests using this URL.
+                    method="PUT",
+                    content_type="application/octet-stream",
+                )
+                with open(src, 'r') as rfile:
+                    resp = session.put(url, headers={'Content-Type': 'application/octet-stream'},
+                                        data=rfile.read())
+                    self.debug('{} status_code={}'.format(os.path.basename(dest), resp.status_code))
+                prog.change_message('Uploading {} {}/{} {}'.format(tag, i, n, dest))
 
     def _gen_paths(self, baseroot):
 
@@ -151,12 +164,12 @@ class UsageWorker(Loggable):
                 yield src, dest
 
 
-if __name__ == "__main__":
-    paths.build("~/PychronExp")
-    logging_setup("pychron", level="DEBUG")
+if __name__ == '__main__':
+    paths.build('~/Pychron')
+    logging_setup('pychron', level='DEBUG')
     u = UsageWorker(bind=False)
-    u.lab_name = "NMGRL"
-    u.share_setupfiles_enabled = True
+    u.lab_name = 'NMGRLFoo'
+    # u.share_setupfiles_enabled = True
     # u.share_scripts_enabled = True
     # u.configure_traits()
     u.share()
