@@ -32,6 +32,7 @@ from pychron.paths import paths
 
 try:
     from google.cloud import storage
+
     # from google.oauth2.credentials import Credentials
     from google.oauth2 import service_account
 except ImportError:
@@ -96,14 +97,12 @@ class UsageWorker(Loggable):
 
     def get_client(self):
         try:
-            p = os.path.join(paths.hidden_dir, 'pychronlabs_usage_service_account.json')
+            p = os.path.join(paths.hidden_dir, "pychronlabs_usage_service_account.json")
             if os.path.isfile(p):
                 creds = service_account.Credentials.from_service_account_file(p)
-                client = storage.Client(project='pychronlabs',
-                                        credentials=creds
-                                        )
+                client = storage.Client(project="pychronlabs", credentials=creds)
             else:
-                self.debug(f'File {p} does not exist')
+                self.debug(f"File {p} does not exist")
         except BaseException:
             self.debug_exception()
             return
@@ -131,7 +130,7 @@ class UsageWorker(Loggable):
         bucket = client.get_bucket("pychronlabs_usage")
         with requests.Session() as session:
             for i, (src, dest) in enumerate(ps):
-                dest = '{}/{}/{}'.format(self.lab_name, tag, dest)
+                dest = "{}/{}/{}".format(self.lab_name, tag, dest)
                 blob = bucket.blob(dest)
                 url = blob.generate_signed_url(
                     version="v4",
@@ -141,11 +140,18 @@ class UsageWorker(Loggable):
                     method="PUT",
                     content_type="application/octet-stream",
                 )
-                with open(src, 'r') as rfile:
-                    resp = session.put(url, headers={'Content-Type': 'application/octet-stream'},
-                                        data=rfile.read())
-                    self.debug('{} status_code={}'.format(os.path.basename(dest), resp.status_code))
-                prog.change_message('Uploading {} {}/{} {}'.format(tag, i, n, dest))
+                with open(src, "r") as rfile:
+                    resp = session.put(
+                        url,
+                        headers={"Content-Type": "application/octet-stream"},
+                        data=rfile.read(),
+                    )
+                    self.debug(
+                        "{} status_code={}".format(
+                            os.path.basename(dest), resp.status_code
+                        )
+                    )
+                prog.change_message("Uploading {} {}/{} {}".format(tag, i, n, dest))
 
     def _gen_paths(self, baseroot):
 
@@ -164,11 +170,11 @@ class UsageWorker(Loggable):
                 yield src, dest
 
 
-if __name__ == '__main__':
-    paths.build('~/Pychron')
-    logging_setup('pychron', level='DEBUG')
+if __name__ == "__main__":
+    paths.build("~/Pychron")
+    logging_setup("pychron", level="DEBUG")
     u = UsageWorker(bind=False)
-    u.lab_name = 'NMGRLFoo'
+    u.lab_name = "NMGRLFoo"
     # u.share_setupfiles_enabled = True
     # u.share_scripts_enabled = True
     # u.configure_traits()

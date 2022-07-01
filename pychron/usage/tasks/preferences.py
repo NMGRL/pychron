@@ -39,8 +39,8 @@ class UsagePreferencesPane(PreferencesPane):
 
     def traits_view(self):
         v = View(
-                # Item('share_setupfiles_enabled'),
-                #  Item('share_scripts_enabled')
+            # Item('share_setupfiles_enabled'),
+            #  Item('share_scripts_enabled')
         )
         return v
 
