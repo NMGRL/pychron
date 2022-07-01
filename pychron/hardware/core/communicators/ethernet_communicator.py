@@ -17,6 +17,7 @@
 # ============= standard library imports ========================
 import socket
 import time
+
 # ============= enthought library imports =======================
 from traits.api import Float
 
@@ -25,7 +26,7 @@ from pychron.globals import globalv
 from pychron.hardware.core.checksum_helper import computeCRC
 from pychron.hardware.core.communicators.communicator import (
     Communicator,
-    process_response
+    process_response,
 )
 from pychron.regex import IPREGEX
 

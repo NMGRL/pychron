@@ -68,7 +68,7 @@ class NGXController(CoreDevice):
 
         if ret:
             resp = self.read()
-            self.debug('*********** initial response from NGX: {}'.format(resp))
+            self.debug("*********** initial response from NGX: {}".format(resp))
             bind_preference(self, "username", "pychron.spectrometer.ngx.username")
             bind_preference(self, "password", "pychron.spectrometer.ngx.password")
 

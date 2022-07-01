@@ -216,7 +216,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
                         collection_time = datetime.combine(cd, ct)
                         signals = [float(i.strip()) for i in args[5:]]
-                        print('fad', keys, signals)
+                        print("fad", keys, signals)
                         if line.startswith(targeta):
                             nsignals, keys = [], []
                             for i, di in enumerate(self.detectors[::-1]):
@@ -236,9 +236,13 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
         # self.microcontroller.lock.release()
         if len(signals) != len(keys):
-            self.debug('keys={}'.format(keys))
-            self.debug('signals'.format(signals))
-            self.debug('Number of signals {} and keys {} did not match'.format(len(signals), len(keys)))
+            self.debug("keys={}".format(keys))
+            self.debug("signals".format(signals))
+            self.debug(
+                "Number of signals {} and keys {} did not match".format(
+                    len(signals), len(keys)
+                )
+            )
             keys, signals = [], []
 
         if verbose:

@@ -69,8 +69,8 @@ class PipetteTracker(Loggable):
     def load(self):
         p = self._get_path_id()
         if os.path.isfile(p):
-            if p.endswith('.json'):
-                with open(p, 'r') as rfile:
+            if p.endswith(".json"):
+                with open(p, "r") as rfile:
                     self._load(json.load(rfile))
             else:
                 with open(p, "rb") as rfile:
@@ -92,8 +92,8 @@ class PipetteTracker(Loggable):
 
     def dump(self):
         p = self._get_path_id()
-        if p.endswith('.json'):
-            with open(p, 'w') as wfile:
+        if p.endswith(".json"):
+            with open(p, "w") as wfile:
                 json.dump(self._dump(), wfile)
         else:
             with open(p, "wb") as wfile:
@@ -132,11 +132,9 @@ class PipetteTracker(Loggable):
 
             name = "{}_{}-{}".format(self.name, self.inner, self.outer)
             if not pickled:
-                name ='{}.json'.format(name)
+                name = "{}.json".format(name)
 
-            p = os.path.join(
-                paths.hidden_dir, name
-            )
+            p = os.path.join(paths.hidden_dir, name)
 
         return p
 
