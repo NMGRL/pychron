@@ -90,7 +90,7 @@ class DataTool(BaseTool):
         ret = "{},{:0.3f}".format(xi, y)
         if self.predict_value_func:
             ret = "{},{}".format(ret, self.predict_value_func(x, y))
-        return ret
+        return   ret
 
 
 class DataToolOverlay(TextBoxOverlay):
@@ -99,7 +99,7 @@ class DataToolOverlay(TextBoxOverlay):
     tool = Any
     visibility = Enum("auto", True, False)
     visible = False
-    font = "arial 12"
+    # font = "modern 12"
     tooltip_mode = Bool(False)
 
     def _tool_changed(self, old, new):

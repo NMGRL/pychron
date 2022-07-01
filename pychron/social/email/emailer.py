@@ -39,6 +39,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from google.auth.exceptions import RefreshError
 
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
@@ -47,6 +48,7 @@ from pychron.paths import paths
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.readonly",
     "https://www.googleapis.com/auth/gmail.send",
+
 ]
 
 
@@ -105,10 +107,17 @@ class Emailer(Loggable):
                         "credentials refresh_token {}".format(creds.refresh_token)
                     )
 
+                creds_needed = True
                 if creds and creds.expired and creds.refresh_token:
                     self.debug("refreshing credentials")
-                    creds.refresh(Request())
-                else:
+                    try:
+                        creds.refresh(Request())
+                        creds_needed = False
+                    except RefreshError:
+                        self.debug_exception()
+                        creds_needed = True
+
+                if creds_needed:
 
                     self.information_dialog(
                         "Pychron needs authorization to send emails. You will now be redirected "
