@@ -16,6 +16,9 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+import json
+
 import six.moves.cPickle as pickle
 
 from traits.api import Str, Int
@@ -66,18 +69,36 @@ class PipetteTracker(Loggable):
     def load(self):
         p = self._get_path_id()
         if os.path.isfile(p):
+            if p.endswith('.json'):
+                with open(p, 'r') as rfile:
+                    self._load(json.load(rfile))
+            else:
+                with open(p, "rb") as rfile:
+                    try:
+                        params = pickle.load(rfile)
+                        self._load(params)
+                    except (pickle.PickleError, OSError):
+                        pass
+        else:
+            # try loading old
+            p = self._get_path_id(pickled=True)
             with open(p, "rb") as rfile:
                 try:
                     params = pickle.load(rfile)
                     self._load(params)
                 except (pickle.PickleError, OSError):
                     pass
+            self.dump()
 
     def dump(self):
         p = self._get_path_id()
-        with open(p, "wb") as wfile:
-            pickle.dump(self._dump(), wfile)
-            self.debug("saved current shot count {}".format(self.counts))
+        if p.endswith('.json'):
+            with open(p, 'w') as wfile:
+                json.dump(self._dump(), wfile)
+        else:
+            with open(p, "wb") as wfile:
+                pickle.dump(self._dump(), wfile)
+                self.debug("saved current shot count {}".format(self.counts))
 
     def _load(self, params):
         if params:
@@ -102,14 +123,19 @@ class PipetteTracker(Loggable):
 
         return d
 
-    def _get_path_id(self):
+    def _get_path_id(self, pickled=False):
         # handle legacy format
         p = os.path.join(
             paths.hidden_dir, "pipette-{}_{}".format(self.inner, self.outer)
         )
         if not os.path.isfile(p):
+
+            name = "{}_{}-{}".format(self.name, self.inner, self.outer)
+            if not pickled:
+                name ='{}.json'.format(name)
+
             p = os.path.join(
-                paths.hidden_dir, "{}_{}-{}".format(self.name, self.inner, self.outer)
+                paths.hidden_dir, name
             )
 
         return p

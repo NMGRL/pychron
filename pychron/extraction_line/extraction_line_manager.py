@@ -832,7 +832,7 @@ class ExtractionLineManager(Manager, Consoleable):
     def _set_pipette_counts(self, name, value):
         for c in self.canvases:
             scene = c.canvas2D.scene
-            obj = scene.get_item("vlabel_{}Pipette".format(name))
+            obj = scene.get_item("vlabel_{}".format(name))
             if obj is not None:
                 obj.value = int(value)
                 c.refresh()

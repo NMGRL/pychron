@@ -5,9 +5,9 @@ name: Pychron Install via EDM with pytest suite
 
 on:
   push:
-    branches: [ dev/dr, hot/dr, hot/dc]
+    branches: [ dev/dc, dev/dr, hot/dr, hot/dc]
   pull_request:
-    branches: [ dev/dr , hot/dr, hot/dc]
+    branches: [ dev/dc, dev/dr , hot/dr, hot/dc]
 
 jobs:
   build:
