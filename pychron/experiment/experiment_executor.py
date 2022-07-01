@@ -942,7 +942,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             st = time.time()
             while self._save_complete_evt.is_set():
                 self._save_complete_evt.wait(1)
-                if time.time()-st > 120:
+                if time.time() - st > 120:
                     self._save_complete_evt.set()
                     break
 
