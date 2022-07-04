@@ -144,7 +144,9 @@ class Emailer(Loggable):
                 try:
                     # Call the Gmail API
                     service = build(
-                        "gmail", "v1", credentials=creds,
+                        "gmail",
+                        "v1",
+                        credentials=creds,
                         # cache_discovery=False
                     )
 
@@ -198,7 +200,7 @@ class Emailer(Loggable):
             if self.use_gmail:
                 msg = self._gmail_message_factory(addrs, sub, msg, paths)
                 smsg = (server.users().messages().send(userId="me", body=msg)).execute()
-                self.debug('Sent message id {}'.format(smsg['id']))
+                self.debug("Sent message id {}".format(smsg["id"]))
                 return True
             else:
                 msg = self._message_factory(addrs, sub, msg, paths)
