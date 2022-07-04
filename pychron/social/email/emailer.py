@@ -144,7 +144,8 @@ class Emailer(Loggable):
                 try:
                     # Call the Gmail API
                     service = build(
-                        "gmail", "v1", credentials=creds, cache_discovery=False
+                        "gmail", "v1", credentials=creds,
+                        # cache_discovery=False
                     )
 
                 except HttpError as error:
@@ -196,8 +197,8 @@ class Emailer(Loggable):
 
             if self.use_gmail:
                 msg = self._gmail_message_factory(addrs, sub, msg, paths)
-                server.users().messages().send(userId="me", body=msg).execute()
-                server.close()
+                smsg = (server.users().messages().send(userId="me", body=msg)).execute()
+                self.debug('Sent message id {}'.format(smsg['id']))
                 return True
             else:
                 msg = self._message_factory(addrs, sub, msg, paths)
