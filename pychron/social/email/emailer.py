@@ -144,10 +144,8 @@ class Emailer(Loggable):
                 try:
                     # Call the Gmail API
                     service = build(
-                        "gmail",
-                        "v1",
-                        credentials=creds,
-                        # cache_discovery=False
+                        "gmail", "v1", credentials=creds,
+                        cache_discovery=False
                     )
 
                 except HttpError as error:
