@@ -490,8 +490,8 @@ class SwitchManager(Manager):
         :return:
         """
         # self.debug('load owners')
-        # update = False
-        states = []
+        update = False
+
         for k, v in self.switches.items():
             if not isinstance(v, HardwareValve):
                 continue
@@ -502,11 +502,11 @@ class SwitchManager(Manager):
                 s = None
 
             if ostate != s:
-                states.append((k, s, False))
-                # update = True
+                self.refresh_owned_state = (k, s, False)
+                # states.append((k, s, False))
+                update = True
 
-        if states:
-            self.refresh_owned_state = states
+        if update:
             if refresh_canvas:
                 self.refresh_canvas_needed = True
             return True
