@@ -18,12 +18,16 @@ from pymodbus.client.sync import ModbusTcpClient
 from pychron.hardware.core.communicators.communicator import Communicator
 from pymodbus.constants import Defaults
 
+
 class ModbustcpCommunicator(Communicator):
     host = None
     timeout = None
+
     def load(self, config, path):
-        self.host = self.config_get(config, 'Communications', 'host')
-        self.timeout = self.config_get(config, 'Communications', 'timeout', cast='int', default=Defaults.Timeout)
+        self.host = self.config_get(config, "Communications", "host")
+        self.timeout = self.config_get(
+            config, "Communications", "timeout", cast="int", default=Defaults.Timeout
+        )
         return super(ModbustcpCommunicator, self).load(config, path)
 
     def open(self, *args, **kw):
@@ -36,4 +40,6 @@ class ModbustcpCommunicator(Communicator):
 
     def __getattr__(self, item):
         return getattr(self.handle, item)
+
+
 # ============= EOF =============================================

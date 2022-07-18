@@ -19,6 +19,7 @@
 import os
 from configparser import ConfigParser, RawConfigParser
 import yaml
+
 # ============= local library imports  ==========================
 from pychron.core.codetools.inspection import caller
 from pychron.core.yaml import yload
@@ -58,15 +59,16 @@ class YAMLParser:
     def getboolean(self, *args, **kw):
         return bool(self.get(*args, **kw))
 
+
 class ParserWrapper:
     _parser = None
 
     def read(self, path):
-        if path.endswith('.cfg'):
+        if path.endswith(".cfg"):
             p = ConfigParser()
             p.read(path)
         else:
-            with open(path, 'r') as rfile:
+            with open(path, "r") as rfile:
                 p = yload(rfile)
                 p = YAMLParser(p)
 
@@ -91,21 +93,19 @@ class ConfigMixin:
             r = config.options(section)
         return r
 
-    def config_get(self, config, section, option,
-                   cast=None,
-                   optional=False,
-                   default=None):
+    def config_get(
+        self, config, section, option, cast=None, optional=False, default=None
+    ):
 
         if cast is not None:
-            func = getattr(config, 'get{}'.format(cast))
+            func = getattr(config, "get{}".format(cast))
         else:
             func = config.get
 
         if not config.has_option(section, option):
             if not optional:
                 if self.logger is not None:
-                    self.warning('Need to specifiy {}:{}'.format(section,
-                                                                 option))
+                    self.warning("Need to specifiy {}:{}".format(section, option))
 
             return default
         else:
@@ -121,7 +121,7 @@ class ConfigMixin:
         if path is None:
             path = self.config_path
 
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             config.write(f)
 
     def get_configuration(self, path=None, name=None, warn=True, set_path=True):
@@ -132,8 +132,7 @@ class ConfigMixin:
                 device_dir = paths.device_dir
 
                 if self.configuration_dir_name:
-                    base = os.path.join(device_dir,
-                                        self.configuration_dir_name)
+                    base = os.path.join(device_dir, self.configuration_dir_name)
                 else:
                     base = device_dir
 
@@ -143,21 +142,21 @@ class ConfigMixin:
                     if name is None:
                         name = self.name
 
-                path = os.path.join(base, '{}.yaml'.format(name))
+                path = os.path.join(base, "{}.yaml".format(name))
                 if not os.path.isfile(path):
-                    path = os.path.join(base, '{}.yml'.format(name))
+                    path = os.path.join(base, "{}.yml".format(name))
                     if not os.path.isfile(path):
-                        path = os.path.join(base, '{}.cfg'.format(name))
+                        path = os.path.join(base, "{}.cfg".format(name))
 
         if path is not None and os.path.isfile(path):
             config = self.configparser_factory()
-            self.debug('loading configuration from {}'.format(path))
+            self.debug("loading configuration from {}".format(path))
             config.read(path)
             if set_path:
                 self.config_path = path
             return config
         elif warn:
-            msg = '{} not a valid initialization file'.format(path)
+            msg = "{} not a valid initialization file".format(path)
             self.debug(msg)
             self.warning_dialog(msg)
 
@@ -167,5 +166,6 @@ class ConfigMixin:
             config.read(p)
 
         return config
+
 
 # ============= EOF =============================================

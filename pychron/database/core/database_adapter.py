@@ -21,11 +21,25 @@ from threading import Lock
 
 import six
 from sqlalchemy import create_engine, distinct, MetaData
-from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError, StatementError, \
-    DBAPIError, OperationalError
+from sqlalchemy.exc import (
+    SQLAlchemyError,
+    InvalidRequestError,
+    StatementError,
+    DBAPIError,
+    OperationalError,
+)
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
-from traits.api import Password, Bool, Str, on_trait_change, Any, Property, cached_property, Int
+from traits.api import (
+    Password,
+    Bool,
+    Str,
+    on_trait_change,
+    Any,
+    Property,
+    cached_property,
+    Int,
+)
 
 from pychron.database.core.base_orm import AlembicVersionTable
 from pychron.database.core.query import compile_query
@@ -35,7 +49,7 @@ from pychron.regex import IPREGEX
 
 def obscure_host(h):
     if IPREGEX.match(h):
-        h = 'x.x.x.{}'.format(h.split('.')[-1])
+        h = "x.x.x.{}".format(h.split(".")[-1])
     return h
 
 
@@ -64,14 +78,15 @@ class SessionCTX(object):
         self._psession = None
 
     def __enter__(self):
-        if self._use_parent_session:
-            self._parent.create_session()
-            return self._parent.session
-        else:
-            self._psession = self._parent.session
-            self._session = self._parent.session_factory()
-            self._parent.session = self._session
-            return self._session
+        if self._parent:
+            if self._use_parent_session:
+                self._parent.create_session()
+                return self._parent.session
+            else:
+                self._psession = self._parent.session
+                self._session = self._parent.session_factory()
+                self._parent.session = self._session
+                return self._session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._session:
@@ -102,6 +117,7 @@ class MockQuery:
 class MockSession:
     def query(self, *args, **kw):
         return MockQuery()
+
     # def __getattr__(self, item):
     #     return
 
@@ -118,6 +134,7 @@ class DatabaseAdapter(Loggable):
     ``_retrieve_items``
 
     """
+
     session = None
 
     sess_stack = 0
@@ -135,8 +152,8 @@ class DatabaseAdapter(Loggable):
 
     application = Any
 
-    test_func = 'get_versions'
-    version_func = 'get_versions'
+    test_func = "get_versions"
+    version_func = "get_versions"
 
     autoflush = True
     autocommit = False
@@ -146,8 +163,8 @@ class DatabaseAdapter(Loggable):
     # save_username = Str
     connection_parameters_changed = Bool
 
-    url = Property(depends_on='connection_parameters_changed')
-    datasource_url = Property(depends_on='connection_parameters_changed')
+    url = Property(depends_on="connection_parameters_changed")
+    datasource_url = Property(depends_on="connection_parameters_changed")
 
     path = Str
     echo = False
@@ -194,7 +211,7 @@ class DatabaseAdapter(Loggable):
         if self.connect(test=False):
             if self.session_factory:
                 if force:
-                    self.debug('force create new session {}'.format(id(self)))
+                    self.debug("force create new session {}".format(id(self)))
                     if self.session:
                         self.session.close()
 
@@ -206,7 +223,7 @@ class DatabaseAdapter(Loggable):
                         self.session = self.session_factory()
                     self._session_cnt += 1
             else:
-                self.warning('no session factory')
+                self.warning("no session factory")
         else:
             self.session = MockSession()
 
@@ -216,13 +233,13 @@ class DatabaseAdapter(Loggable):
 
             self._session_cnt -= 1
             if not self._session_cnt:
-                self.debug('close session {}'.format(id(self)))
+                self.debug("close session {}".format(id(self)))
                 self.session.close()
                 self.session = None
 
     @property
     def enabled(self):
-        return self.kind in ['mysql', 'sqlite', 'postgresql', 'mssql']
+        return self.kind in ["mysql", "sqlite", "postgresql", "mssql"]
 
     @property
     def save_username(self):
@@ -230,7 +247,7 @@ class DatabaseAdapter(Loggable):
 
         return globalv.username
 
-    @on_trait_change('username,host,password,name,kind,path')
+    @on_trait_change("username,host,password,name,kind,path")
     def reset_connection(self):
         """
         Trip the ``connection_parameters_changed`` flag. Next ``connect`` call with use the new values
@@ -240,7 +257,9 @@ class DatabaseAdapter(Loggable):
         self.session = None
 
     # @caller
-    def connect(self, test=True, force=False, warn=True, version_warn=True, attribute_warn=False):
+    def connect(
+        self, test=True, force=False, warn=True, version_warn=True, attribute_warn=False
+    ):
         """
         Connect to the database
 
@@ -251,9 +270,9 @@ class DatabaseAdapter(Loggable):
         :return: True if connected else False
         :rtype: bool
         """
-        self.connection_error = ''
+        self.connection_error = ""
         if force:
-            self.debug('forcing database connection')
+            self.debug("forcing database connection")
 
         if self.connection_parameters_changed:
             self._test_connection_enabled = True
@@ -263,26 +282,36 @@ class DatabaseAdapter(Loggable):
             # self.connected = True if self.kind == 'sqlite' else False
             self.connected = False
             pool_recycle = 600
-            if self.kind == 'sqlite':
+            if self.kind == "sqlite":
                 self.connected = True
                 test = False
                 pool_recycle = -1
 
-            self.connection_error = 'Database "{}" kind not set. ' \
-                                    'Set in Preferences. current kind="{}"'.format(self.name, self.kind)
+            self.connection_error = (
+                'Database "{}" kind not set. '
+                'Set in Preferences. current kind="{}"'.format(self.name, self.kind)
+            )
 
             if not self.enabled:
                 from pychron.core.ui.gui import invoke_in_main_thread
+
                 invoke_in_main_thread(self.warning_dialog, self.connection_error)
             else:
                 url = self.url
                 if url is not None:
-                    self.info('{} connecting to database {}'.format(id(self), self.public_url))
-                    engine = create_engine(url, echo=self.echo, pool_recycle=pool_recycle)
+                    self.info(
+                        "{} connecting to database {}".format(id(self), self.public_url)
+                    )
+                    engine = create_engine(
+                        url, echo=self.echo, pool_recycle=pool_recycle
+                    )
 
-                    self.session_factory = sessionmaker(bind=engine, autoflush=self.autoflush,
-                                                        expire_on_commit=False,
-                                                        autocommit=self.autocommit)
+                    self.session_factory = sessionmaker(
+                        bind=engine,
+                        autoflush=self.autoflush,
+                        expire_on_commit=False,
+                        autocommit=self.autocommit,
+                    )
                     if test:
                         if not self._test_connection_enabled:
                             warn = False
@@ -295,14 +324,19 @@ class DatabaseAdapter(Loggable):
                         self.connected = True
 
                     if self.connected:
-                        self.info('connected to db {}'.format(self.public_url))
+                        self.info("connected to db {}".format(self.public_url))
                         # self.initialize_database()
                     else:
                         self.connection_error = 'Not Connected to Database "{}".\nAccess Denied for user= {} \
-host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
+host= {}\nurl= {}'.format(
+                            self.name, self.username, self.host, self.public_url
+                        )
                         if warn:
                             from pychron.core.ui.gui import invoke_in_main_thread
-                            invoke_in_main_thread(self.warning_dialog, self.connection_error)
+
+                            invoke_in_main_thread(
+                                self.warning_dialog, self.connection_error
+                            )
 
         self.connection_parameters_changed = False
         return self.connected
@@ -340,7 +374,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             try:
                 self.session.commit()
             except BaseException as e:
-                self.warning('Commit exception: {}'.format(e))
+                self.warning("Commit exception: {}".format(e))
                 self.session.rollback()
 
     def delete(self, obj):
@@ -381,21 +415,25 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
     @property
     def public_datasource_url(self):
-        if self.kind == 'sqlite':
-            url = '{}:{}'.format(os.path.basename(os.path.dirname(self.path)),
-                                 os.path.basename(self.path))
+        if self.kind == "sqlite":
+            url = "{}:{}".format(
+                os.path.basename(os.path.dirname(self.path)),
+                os.path.basename(self.path),
+            )
         else:
 
-            url = '{}:{}'.format(obscure_host(self.host), self.name)
+            url = "{}:{}".format(obscure_host(self.host), self.name)
         return url
 
     @cached_property
     def _get_datasource_url(self):
-        if self.kind == 'sqlite':
-            url = '{}:{}'.format(os.path.basename(os.path.dirname(self.path)),
-                                 os.path.basename(self.path))
+        if self.kind == "sqlite":
+            url = "{}:{}".format(
+                os.path.basename(os.path.dirname(self.path)),
+                os.path.basename(self.path),
+            )
         else:
-            url = '{}:{}'.format(self.host, self.name)
+            url = "{}:{}".format(self.host, self.name)
         return url
 
     @property
@@ -404,11 +442,13 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         user = self.username
         host = self.host
         name = self.name
-        if kind == 'sqlite':
-            pu = '{}:{}'.format(os.path.basename(os.path.dirname(self.path)),
-                                os.path.basename(self.path))
+        if kind == "sqlite":
+            pu = "{}:{}".format(
+                os.path.basename(os.path.dirname(self.path)),
+                os.path.basename(self.path),
+            )
         else:
-            pu = '{}://{}@{}/{}'.format(kind, user, host, name)
+            pu = "{}://{}@{}/{}".format(kind, user, host, name)
 
         return pu
 
@@ -421,33 +461,33 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         name = self.name
         timeout = self.timeout
 
-        if kind in ('mysql', 'postgresql', 'mssql'):
-            if kind == 'mysql':
+        if kind in ("mysql", "postgresql", "mssql"):
+            if kind == "mysql":
                 # add support for different mysql drivers
                 driver = self._import_mysql_driver()
                 if driver is None:
                     return
-            elif kind == 'mssql':
+            elif kind == "mssql":
                 driver = self._import_mssql_driver()
                 if driver is None:
                     return
             else:
-                driver = 'pg8000'
+                driver = "pg8000"
 
             if password:
-                user = '{}:{}'.format(user, password)
+                user = "{}:{}".format(user, password)
 
-            prefix = '{}+{}://{}@'.format(kind, driver, user)
+            prefix = "{}+{}://{}@".format(kind, driver, user)
 
-            if driver == 'pyodbc':
-                url = '{}{}'.format(prefix, name)
+            if driver == "pyodbc":
+                url = "{}{}".format(prefix, name)
             else:
-                url = '{}{}/{}'.format(prefix, host, name)
-                if kind == 'mysql' and self.timeout:
-                    url = '{}?connect_timeout={}'.format(url, timeout)
+                url = "{}{}/{}".format(prefix, host, name)
+                if kind == "mysql" and self.timeout:
+                    url = "{}?connect_timeout={}".format(url, timeout)
 
         else:
-            url = 'sqlite:///{}'.format(self.path)
+            url = "sqlite:///{}".format(self.path)
 
         return url
 
@@ -455,12 +495,14 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         driver = None
         try:
             import pyodbc
-            driver = 'pyodbc'
+
+            driver = "pyodbc"
 
         except ImportError:
             try:
                 import pymssql
-                driver = 'pymssql'
+
+                driver = "pymssql"
             except ImportError:
                 pass
 
@@ -470,20 +512,22 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
     def _import_mysql_driver(self):
 
         try:
-            '''
-                pymysql
-                https://github.com/petehunt/PyMySQL/
-            '''
+            """
+            pymysql
+            https://github.com/petehunt/PyMySQL/
+            """
             import pymysql
 
-            driver = 'pymysql'
+            driver = "pymysql"
         except ImportError:
             try:
                 import _mysql
 
-                driver = 'mysqldb'
+                driver = "mysqldb"
             except ImportError:
-                self.warning_dialog('A mysql driver was not found. Install PyMySQL or MySQL-python')
+                self.warning_dialog(
+                    "A mysql driver was not found. Install PyMySQL or MySQL-python"
+                )
                 return
 
         self.info('using mysql driver="{}"'.format(driver))
@@ -494,30 +538,33 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
         self.create_session()
 
         try:
-            self.info('testing database connection {}'.format(self.test_func))
-            vers = getattr(self, self.test_func)(reraise=True)
+            self.info("testing database connection {}".format(self.test_func))
+            getattr(self, self.test_func)(reraise=True)
             if version_warn:
                 self._version_warn_hook()
 
             connected = True
         except OperationalError:
-            self.warning('Operational connection failed to {}'.format(self.public_url))
+            self.warning("Operational connection failed to {}".format(self.public_url))
             connected = False
             self._test_connection_enabled = False
 
         except Exception as e:
             self.debug_exception()
-            self.warning('connection failed to {} exception={}'.format(self.public_url, e))
+            self.warning(
+                "connection failed to {} exception={}".format(self.public_url, e)
+            )
             connected = False
 
         finally:
-            self.info('closing test session')
+            self.info("closing test session")
         self.close_session()
 
         return connected
 
     def _version_warn_hook(self):
         pass
+
     # def test_version(self):
     #     ver = getattr(self, self.version_func)()
     #     ver = ver.version_num
@@ -541,17 +588,20 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                 return obj
             except SQLAlchemyError as e:
                 import traceback
-                self.debug('add_item exception {} {}'.format(obj, traceback.format_exc()))
+
+                self.debug(
+                    "add_item exception {} {}".format(obj, traceback.format_exc())
+                )
                 sess.rollback()
                 if self.reraise:
                     raise
         else:
-            self.critical('No session')
+            self.critical("No session")
 
     def _add_unique(self, item, attr, name):
-        nitem = getattr(self, 'get_{}'.format(attr))(name)
+        nitem = getattr(self, "get_{}".format(attr))(name)
         if nitem is None:
-            self.info('adding {}= {}'.format(attr, name))
+            self.info("adding {}= {}".format(attr, name))
             self._add_item(item)
             nitem = item
 
@@ -569,29 +619,33 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
     def _delete_item(self, value, name=None):
         if name is not None:
-            func = getattr(self, 'get_{}'.format(name))
+            func = getattr(self, "get_{}".format(name))
             item = func(value)
         else:
             item = value
 
         if item:
-            self.debug('deleting value={},name={},item={}'.format(value, name, item))
+            self.debug("deleting value={},name={},item={}".format(value, name, item))
             self.session.delete(item)
 
-    def _retrieve_items(self, table,
-                        joins=None,
-                        filters=None,
-                        limit=None, order=None,
-                        distinct_=False,
-                        query_hook=None,
-                        reraise=False,
-                        func='all',
-                        group_by=None,
-                        verbose_query=False):
+    def _retrieve_items(
+        self,
+        table,
+        joins=None,
+        filters=None,
+        limit=None,
+        order=None,
+        distinct_=False,
+        query_hook=None,
+        reraise=False,
+        func="all",
+        group_by=None,
+        verbose_query=False,
+    ):
 
         sess = self.session
         if sess is None or isinstance(sess, MockSession):
-            self.debug('USING MOCKSESSION************** {}'.format(sess))
+            self.debug("USING MOCKSESSION************** {}".format(sess))
             return []
 
         if distinct_:
@@ -642,7 +696,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             items = []
         return items
 
-    def _retrieve_first(self, table, value=None, key='name', order_by=None):
+    def _retrieve_first(self, table, value=None, key="name", order_by=None):
         if value is not None:
             if not isinstance(value, (str, int, six.text_type, int, float)):
                 return value
@@ -655,19 +709,19 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                 q = q.order_by(order_by)
             return q.first()
         except SQLAlchemyError as e:
-            print('execption first', e)
+            print("execption first", e)
             return
 
     def _query_all(self, q, **kw):
-        ret = self._query(q, 'all', **kw)
+        ret = self._query(q, "all", **kw)
         return ret or []
 
     def _query_first(self, q, **kw):
-        return self._query(q, 'first', **kw)
+        return self._query(q, "first", **kw)
 
     def _query_one(self, q, **kw):
         q = q.limit(1)
-        return self._query(q, 'one', **kw)
+        return self._query(q, "one", **kw)
 
     def _query(self, q, func, reraise=False, verbose_query=False):
         if verbose_query:
@@ -675,7 +729,7 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                 cq = compile_query(q)
                 self.debug(cq)
             except BaseException:
-                cq = 'Query failed to compile'
+                cq = "Query failed to compile"
                 self.debug_exception()
 
         # print compile_query(q)
@@ -684,14 +738,14 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             return f()
         except NoResultFound:
             if verbose_query:
-                self.info('no results found for query -- {}'.format(cq))
+                self.info("no results found for query -- {}".format(cq))
         except OperationalError as e:
-            self.debug('_query operation exception')
+            self.debug("_query operation exception")
             self.debug_exception()
 
         except SQLAlchemyError as e:
             if self.verbose:
-                self.debug('_query exception {}'.format(e))
+                self.debug("_query exception {}".format(e))
 
             try:
                 self.rollback()
@@ -705,26 +759,35 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
 
     def _append_filters(self, f, kw):
 
-        filters = kw.get('filters', [])
+        filters = kw.get("filters", [])
         if isinstance(f, (tuple, list)):
             filters.extend(f)
         else:
             filters.append(f)
-        kw['filters'] = filters
+        kw["filters"] = filters
         return kw
 
     def _append_joins(self, f, kw):
-        joins = kw.get('joins', [])
+        joins = kw.get("joins", [])
         if isinstance(f, (tuple, list)):
             joins.extend(f)
         else:
             joins.append(f)
-        kw['joins'] = joins
+        kw["joins"] = joins
         return kw
 
-    def _retrieve_item(self, table, value, key='name', last=None,
-                       joins=None, filters=None, options=None, verbose=True,
-                       verbose_query=False):
+    def _retrieve_item(
+        self,
+        table,
+        value,
+        key="name",
+        last=None,
+        joins=None,
+        filters=None,
+        options=None,
+        verbose=True,
+        verbose_query=False,
+    ):
 
         if not isinstance(value, (str, int, six.text_type, int, float, list, tuple)):
             return value
@@ -772,21 +835,31 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
                 except MultipleResultsFound:
                     if verbose:
                         self.debug(
-                            'multiples row found for {} {} {}. Trying to get last row'.format(table.__tablename__, key,
-                                                                                              value))
+                            "multiples row found for {} {} {}. Trying to get last row".format(
+                                table.__tablename__, key, value
+                            )
+                        )
                     try:
-                        if hasattr(table, 'id'):
+                        if hasattr(table, "id"):
                             q = q.order_by(table.id.desc())
                         return q.limit(1).all()[-1]
 
                     except (SQLAlchemyError, IndexError, AttributeError) as e:
                         if verbose:
-                            self.debug('no rows for {} {} {}'.format(table.__tablename__, key, value))
+                            self.debug(
+                                "no rows for {} {} {}".format(
+                                    table.__tablename__, key, value
+                                )
+                            )
                         break
 
                 except NoResultFound:
                     if verbose and self.verbose:
-                        self.debug('no row found for {} {} {}'.format(table.__tablename__, key, value))
+                        self.debug(
+                            "no row found for {} {} {}".format(
+                                table.__tablename__, key, value
+                            )
+                        )
                     break
 
         close = False
@@ -800,21 +873,23 @@ host= {}\nurl= {}'.format(self.name, self.username, self.host, self.public_url)
             self.close_session()
         return ret
 
-    def _get_items(self, table, gtables,
-                   join_table=None, filter_str=None,
-                   limit=None,
-                   order=None,
-                   key=None
-                   ):
+    def _get_items(
+        self,
+        table,
+        gtables,
+        join_table=None,
+        filter_str=None,
+        limit=None,
+        order=None,
+        key=None,
+    ):
 
         if isinstance(join_table, str):
             join_table = gtables[join_table]
 
-        q = self._get_query(table, join_table=join_table,
-                            filter_str=filter_str)
+        q = self._get_query(table, join_table=join_table, filter_str=filter_str)
         if order:
-            for o in order \
-                    if isinstance(order, list) else [order]:
+            for o in order if isinstance(order, list) else [order]:
                 q = q.order_by(o)
 
         if limit:
@@ -845,13 +920,13 @@ class PathDatabaseAdapter(DatabaseAdapter):
     def _get_path_keywords(self, path, args):
         n = os.path.basename(path)
         r = os.path.dirname(path)
-        args['root'] = r
-        args['filename'] = n
+        args["root"] = r
+        args["filename"] = n
         return args
 
 
 class SQLiteDatabaseAdapter(DatabaseAdapter):
-    kind = 'sqlite'
+    kind = "sqlite"
 
     def build_database(self):
         self.connect(test=False)

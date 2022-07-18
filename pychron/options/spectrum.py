@@ -15,7 +15,18 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Button, Int, Bool, Float, Property, on_trait_change, List, Enum, Range, Color
+from traits.api import (
+    Button,
+    Int,
+    Bool,
+    Float,
+    Property,
+    on_trait_change,
+    List,
+    Enum,
+    Range,
+    Color,
+)
 from traitsui.api import Item
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
@@ -23,23 +34,57 @@ from pychron.options.aux_plot import AuxPlot
 from pychron.options.group.spectrum_group_options import SpectrumGroupOptions
 from pychron.options.options import AgeOptions
 from pychron.options.views.spectrum_views import VIEWS
-from pychron.pychron_constants import NULL_STR, ERROR_TYPES, SIZES, FONTS, SIG_FIGS, WEIGHTINGS, MAIN, APPEARANCE, \
-    DISPLAY, GROUPS, MAHON, FLECK, SPECTRUM, PLATEAU
+from pychron.pychron_constants import (
+    NULL_STR,
+    ERROR_TYPES,
+    SIZES,
+    FONTS,
+    SIG_FIGS,
+    WEIGHTINGS,
+    MAIN,
+    APPEARANCE,
+    DISPLAY,
+    GROUPS,
+    MAHON,
+    FLECK,
+    SPECTRUM,
+    PLATEAU,
+)
 
 
 class SpectrumAuxPlot(AuxPlot):
-    names = List([NULL_STR, 'Extract Value',
-                  'Radiogenic 40Ar',
-                  'K/Ca', 'K/Cl',
-                  'Ca/K', 'Cl/K',
-                  'Mol Ar40', 'Mol Ar36', 'Mol K39', 'Age Spectrum'],
-                 transient=True)
-    _plot_names = List(['', 'extract_value',
-                        'radiogenic_yield',
-                        'kca', 'kcl',
-                        'cak', 'clk',
-                        'moles_ar40', 'moles_ar36', 'moles_k39', 'age_spectrum'],
-                       transient=True)
+    names = List(
+        [
+            NULL_STR,
+            "Extract Value",
+            "Radiogenic 40Ar",
+            "K/Ca",
+            "K/Cl",
+            "Ca/K",
+            "Cl/K",
+            "Mol Ar40",
+            "Mol Ar36",
+            "Mol K39",
+            "Age Spectrum",
+        ],
+        transient=True,
+    )
+    _plot_names = List(
+        [
+            "",
+            "extract_value",
+            "radiogenic_yield",
+            "kca",
+            "kcl",
+            "cak",
+            "clk",
+            "moles_ar40",
+            "moles_ar36",
+            "moles_k39",
+            "age_spectrum",
+        ],
+        transient=True,
+    )
 
 
 class PlateauOptions(AgeOptions):
@@ -51,10 +96,15 @@ class PlateauOptions(AgeOptions):
     edit_plateau_criteria = Button
 
     def _edit_plateau_criteria_fired(self):
-        v = okcancel_view(Item('pc_nsteps', label='Num. Steps', tooltip='Number of contiguous steps'),
-                          Item('pc_gas_fraction', label='Min. Gas%',
-                               tooltip='Plateau must represent at least Min. Gas% release'),
-                          title='Edit Plateau Criteria')
+        v = okcancel_view(
+            Item("pc_nsteps", label="Num. Steps", tooltip="Number of contiguous steps"),
+            Item(
+                "pc_gas_fraction",
+                label="Min. Gas%",
+                tooltip="Plateau must represent at least Min. Gas% release",
+            ),
+            title="Edit Plateau Criteria",
+        )
         self.edit_traits(v)
 
 
@@ -89,7 +139,7 @@ class SpectrumOptions(PlateauOptions):
     integrated_fontsize = Enum(*SIZES)
     # step_label_font_size = Enum(*SIZES)
 
-    envelope_alpha = Range(0, 100, style='simple')
+    envelope_alpha = Range(0, 100, style="simple")
     envelope_color = Color
     user_envelope_color = Bool
     # center_line_style = Enum('No Line', 'solid', 'dash', 'dot dash', 'dot', 'long dash')
@@ -103,6 +153,12 @@ class SpectrumOptions(PlateauOptions):
     error_calc_method = Property
     use_error_envelope_fill = Bool
 
+    include_age_mswd = Bool
+    include_age_n = Bool
+
+    plateau_mswd_sig_figs = Int
+    include_plateau_mswd = Bool
+    include_plateau_n = Bool
     include_plateau_sample = Bool
     include_plateau_identifier = Bool
     use_isochron_trapped = Bool
@@ -118,7 +174,7 @@ class SpectrumOptions(PlateauOptions):
         return VIEWS[name]
 
     # handlers
-    @on_trait_change('display_step,display_extract_value')
+    @on_trait_change("display_step,display_extract_value")
     def _handle_labels(self):
         labels_enabled = self.display_extract_value or self.display_step
         self.aux_plots[-1].show_labels = labels_enabled
@@ -137,8 +193,10 @@ class SpectrumOptions(PlateauOptions):
         self.plateau_age_error_kind = v
 
     def _get_plateau_font(self):
-        return '{} {}'.format(self.plateau_fontname, self.plateau_fontsize)
+        return "{} {}".format(self.plateau_fontname, self.plateau_fontsize)
 
     def _get_integrated_font(self):
-        return '{} {}'.format(self.integrated_fontname, self.integrated_fontsize)
+        return "{} {}".format(self.integrated_fontname, self.integrated_fontsize)
+
+
 # ============= EOF =============================================

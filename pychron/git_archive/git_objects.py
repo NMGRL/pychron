@@ -23,6 +23,7 @@ from traits.api import HasTraits, Str, Bool, Date
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class GitTag(HasTraits):
     message = Str
     date = Date
@@ -55,6 +56,7 @@ class GitSha(HasTraits):
     tag = Str
 
     def _get_summary(self):
-        return '{} {}'.format(self.date, self.message)
+        return "{} {}".format(self.date, self.message)
+
 
 # ============= EOF =============================================

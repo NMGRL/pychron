@@ -30,10 +30,10 @@ class Model336TemperatureController(BaseLakeShoreController):
     setpoint4_readback = Float
 
     def read_input_c(self, **kw):
-        return self._read_input('c', self.units, **kw)
+        return self._read_input("c", self.units, **kw)
 
     def read_input_d(self, **kw):
-        return self._read_input('d', self.units, **kw)
+        return self._read_input("d", self.units, **kw)
 
     def _setpoint3_changed(self, new):
         self.set_setpoint(new, 3)
@@ -43,21 +43,36 @@ class Model336TemperatureController(BaseLakeShoreController):
 
     def get_control_group(self):
         items = [Spring(height=10, springy=False)]
-        for i, tag in enumerate('abcd'):
+        for i, tag in enumerate("abcd"):
             idx = i + 1
 
             contents = []
             if self.iomap[i] is not None:
-                contents = [Item('{}'.format(self.iomap[i])),
-                            UItem('{}_readback'.format(self.iomap[i]), editor=LCDEditor(width=120, height=30),
-                                  style='readonly'), Spring(width=10, springy=False)]
+                contents = [
+                    Item("{}".format(self.iomap[i])),
+                    UItem(
+                        "{}_readback".format(self.iomap[i]),
+                        editor=LCDEditor(width=120, height=30),
+                        style="readonly",
+                    ),
+                    Spring(width=10, springy=False),
+                ]
 
-            h = VGroup(Label(self.ionames[i]),
-                       HGroup(Item('input_{}'.format(tag),
-                                   style='readonly', editor=LCDEditor(width=120, ndigits=6, height=30)), *contents))
+            h = VGroup(
+                Label(self.ionames[i]),
+                HGroup(
+                    Item(
+                        "input_{}".format(tag),
+                        style="readonly",
+                        editor=LCDEditor(width=120, ndigits=6, height=30),
+                    ),
+                    *contents
+                ),
+            )
             items.append(h)
 
         grp = VGroup(*items)
         return grp
+
 
 # ============= EOF =============================================

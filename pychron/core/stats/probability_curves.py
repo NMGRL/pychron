@@ -22,6 +22,7 @@ from numpy import linspace, zeros, exp, pi, full
 
 # ============= local library imports  ==========================
 
+
 def cumulative_probability(ages, errors, xmi, xma, n=100):
     x = linspace(xmi, xma, n)
     probs = zeros(n)
@@ -33,7 +34,7 @@ def cumulative_probability(ages, errors, xmi, xma, n=100):
         # calculate probability curve for ai+/-ei
         # p=1/(2*pi*sigma2) *exp (-(x-u)**2)/(2*sigma2)
         # see http://en.wikipedia.org/wiki/Normal_distribution
-        ds = (x-full(n, ai)) ** 2
+        ds = (x - full(n, ai)) ** 2
         es2 = full(n, 2 * ei * ei)
         gs = (es2 * pi) ** -0.5 * exp(-ds / es2)
 
@@ -52,5 +53,6 @@ def kernel_density(ages, errors, xmi, xma, n=100):
     y = pdf(x)
 
     return x, y
+
 
 # ============= EOF =============================================

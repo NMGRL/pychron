@@ -23,9 +23,9 @@ from scipy import linalg
 
 class AffineTransform(object):
     """
-        affine transform
+    affine transform
 
-        cumulative transform using augmented matrix A
+    cumulative transform using augmented matrix A
 
     """
 
@@ -34,10 +34,10 @@ class AffineTransform(object):
 
     def translate(self, tx, ty):
         """
-           translation matrix
-           T=[1 0 tx
-              0 1 ty
-              0 0 1]
+        translation matrix
+        T=[1 0 tx
+           0 1 ty
+           0 0 1]
         """
         T = identity(3)
         T[0, 2] = tx
@@ -46,29 +46,27 @@ class AffineTransform(object):
 
     def rotate(self, theta):
         """
-            counter clockwise rotation
+        counter clockwise rotation
 
-            rotation matrix
-            R=[cos(t)  -sin(t)  0
-               sin(t)  cos(t)  0
-               0       0       1]
+        rotation matrix
+        R=[cos(t)  -sin(t)  0
+           sin(t)  cos(t)  0
+           0       0       1]
 
         """
         theta = radians(theta)
         co = cos(theta)
         si = sin(theta)
 
-        R = array([[co, -si, 0],
-                   [si, co, 0],
-                   [0, 0, 1]])
+        R = array([[co, -si, 0], [si, co, 0], [0, 0, 1]])
         self.A = self.A.dot(R)
 
     def scale(self, sx, sy):
         """
-            scale matrix
-            S= [sx  0  0
-                0  sy  0
-                0  0   1]
+        scale matrix
+        S= [sx  0  0
+            0  sy  0
+            0  0   1]
         """
         S = identity(3)
         S[0, 0] = sx
@@ -123,10 +121,10 @@ def itransform_point(pos, cpos, rot, scale):
     return pos
 
 
-'''
+"""
     Programming Computer Vision with Python:
     Tools and algorithms for analyzing images
-'''
+"""
 
 
 def calculate_rigid_itransform_affine(refpoints, datapoints):
@@ -189,39 +187,36 @@ def calc_transform_matrix(refpoints, datapoints):
     a, b, tx, ty = soln[0]
 
     sum_residuals = soln[1]
-    scale = (a ** 2 + b ** 2) ** 0.5
+    scale = (a**2 + b**2) ** 0.5
     err = (sum_residuals / len(datapoints)) ** 0.5 / scale
-    return array([[a, -b, tx],
-                  [b, a, ty],
-                  [0, 0, 1]]), scale, err
+    return array([[a, -b, tx], [b, a, ty], [0, 0, 1]]), scale, err
 
 
 def solve_matrix(refpoints, datapoints):
     """
-        A=[[x1 -y1  1 0]
-           [y1  x1  0 1]
-           [x2 -y2  1 0]
-           ...
-           [yn  xn  0 1]]
+    A=[[x1 -y1  1 0]
+       [y1  x1  0 1]
+       [x2 -y2  1 0]
+       ...
+       [yn  xn  0 1]]
 
-        y=[[x1]
-           [y1]
-           [x2]
-           [y2]
-           ...
-           [xn]
-           [yn]
-           ]
+    y=[[x1]
+       [y1]
+       [x2]
+       [y2]
+       ...
+       [xn]
+       [yn]
+       ]
 
     """
-    ys = [a for args in refpoints
-          for a in args]
-    rows = [row for x, y in datapoints
-            for row in ((x, -y, 1, 0), (y, x, 0, 1))]
+    ys = [a for args in refpoints for a in args]
+    rows = [row for x, y in datapoints for row in ((x, -y, 1, 0), (y, x, 0, 1))]
 
     big_a = array(rows)
     y = array(ys)
     return linalg.lstsq(big_a, y)
+
 
 # ============= EOF ====================================
 # import unittest

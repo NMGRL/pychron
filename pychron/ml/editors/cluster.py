@@ -14,7 +14,13 @@
 # limitations under the License.
 # ===============================================================================
 from numpy import array, column_stack
-from sklearn.cluster import KMeans, AffinityPropagation, MeanShift, estimate_bandwidth, DBSCAN
+from sklearn.cluster import (
+    KMeans,
+    AffinityPropagation,
+    MeanShift,
+    estimate_bandwidth,
+    DBSCAN,
+)
 from sklearn.preprocessing import StandardScaler
 from traits.api import List, Instance
 from traitsui.api import View, UItem
@@ -36,11 +42,11 @@ class ClusterEditor(BaseTraitsEditor):
         p = g.new_plot()
         p.value_range.tight_bounds = False
         p.index_range.tight_bounds = False
-        xattr = 'age'
-        yattr = 'kca'
+        xattr = "age"
+        yattr = "kca"
 
-        g.set_x_title('Age')
-        g.set_y_title('K/Ca')
+        g.set_x_title("Age")
+        g.set_y_title("K/Ca")
 
         cluster_kind = self.plotter_options.cluster_kind
 
@@ -49,34 +55,33 @@ class ClusterEditor(BaseTraitsEditor):
 
         xx = column_stack((xs, ys))
         xx = StandardScaler().fit_transform(xx)
-        if cluster_kind == 'kmeans':
+        if cluster_kind == "kmeans":
             clusterer = KMeans
-            kw = {'n_clusters': 2}
-        elif cluster_kind == 'meanshift':
+            kw = {"n_clusters": 2}
+        elif cluster_kind == "meanshift":
             clusterer = MeanShift
             ebw = estimate_bandwidth(xx)
-            kw = {'bandwidth': ebw}
-        elif cluster_kind == 'dbscan':
+            kw = {"bandwidth": ebw}
+        elif cluster_kind == "dbscan":
             clusterer = DBSCAN
             kw = {}
         else:
             clusterer = AffinityPropagation
-            kw = {'preference': -50}
+            kw = {"preference": -50}
 
         cs = clusterer(**kw).fit_predict(xx)
-        g.new_series(xs, ys, colors=cs, type='cmap_scatter')
+        g.new_series(xs, ys, colors=cs, type="cmap_scatter")
 
     def _extract_attr(self, items, attr):
         return array([nominal_value(ai.get_value(attr)) for ai in items])
 
     def traits_view(self):
-        v = View(UItem('graph', style='custom'))
+        v = View(UItem("graph", style="custom"))
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import random
-
 
     class I:
         def __init__(self, scale):
@@ -84,7 +89,6 @@ if __name__ == '__main__':
 
         def get_value(self, item):
             return random.random() + self._scale
-
 
     c = ClusterEditor()
     c.set_items([I(1) for i in range(100)] + [I(10) for i in range(100)])

@@ -20,6 +20,7 @@ from traits.api import Event
 # ============= standard library imports ========================
 from pychron.pipeline.plot.panels.figure_panel import FigurePanel
 from pychron.pipeline.plot.plotter.spectrum import Spectrum
+
 # ============= local library imports  ==========================
 from pychron.processing.analysis_graph import SpectrumGraph
 
@@ -27,29 +28,36 @@ from pychron.processing.analysis_graph import SpectrumGraph
 class SpectrumPanel(FigurePanel):
     _graph_klass = SpectrumGraph
     _figure_klass = Spectrum
+
     # make_alternate_figure_event = Event
 
     def _handle_figure_event(self, new):
         kind = new[0]
-        if kind == 'alternate_figure':
+        if kind == "alternate_figure":
             self.figure_event = (kind, new[1], [f.analysis_group for f in self.figures])
-        elif kind == 'tag':
-            self.figure_event = ('tag', [a for f in self.figures
-                                 for a in f.analysis_group.analyses
-                                 if not f.analysis_group.get_is_plateau_step(a)])
+        elif kind == "tag":
+            self.figure_event = (
+                "tag",
+                [
+                    a
+                    for f in self.figures
+                    for a in f.analysis_group.analyses
+                    if not f.analysis_group.get_is_plateau_step(a)
+                ],
+            )
 
     def _get_init_xlimits(self):
         return None, 0, 100
 
     def _make_graph_hook(self, g):
-        g.on_trait_change(self._handle_figure_event, 'figure_event')
+        g.on_trait_change(self._handle_figure_event, "figure_event")
 
     def _handle_rescale(self, obj, name, new):
-        if new == 'y':
+        if new == "y":
             plotid = obj.selected_plotid
             for f in self.figures:
                 ma, mi = f.get_ybounds(plotid)
-            obj.set_y_limits(mi, ma, pad='0.025', plotid=plotid)
+            obj.set_y_limits(mi, ma, pad="0.025", plotid=plotid)
         # elif new == 'valid':
         #     l, h = None, None
         #     for f in self.figures:
@@ -67,4 +75,6 @@ class SpectrumPanel(FigurePanel):
         #     obj.set_x_limits(xmi, xma)
         #     for f in self.figures:
         #         f.replot()
+
+
 # ============= EOF =============================================

@@ -24,7 +24,7 @@ from pychron.data_mapper.sources.nmgrl_legacy_source import NMGRLLegacySource
 
 
 def fget_data_dir():
-    op = 'pychron/data_mapper/tests/data'
+    op = "pychron/data_mapper/tests/data"
     return get_data_dir(op)
 
 
@@ -32,7 +32,7 @@ class NMGRLLegacySourceUnittest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.src = NMGRLLegacySource()
-        p = os.path.join(fget_data_dir(), 'nmgrl_legacy.xls')
+        p = os.path.join(fget_data_dir(), "nmgrl_legacy.xls")
         cls.src.path = p
         cls.spec = cls.src.get_analysis_import_spec()
 
@@ -107,7 +107,7 @@ class NMGRLLegacySourceUnittest(unittest.TestCase):
     #     self.assertEqual(disc, 1.0505546075085326)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 
 # ============= EOF =============================================

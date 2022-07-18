@@ -20,17 +20,21 @@ from pychron.pipeline.nodes.data import BaseDVCNode
 
 
 class PushNode(BaseDVCNode):
-
     def __init__(self, *args, **kw):
         super(PushNode, self).__init__(*args, **kw)
         self.configurable = False
-        self.name = 'Push'
+        self.name = "Push"
 
     def run(self, state):
-        ps = {ai.repository_identifier for ans in (state.unknowns, state.references) for ai in ans}
+        ps = {
+            ai.repository_identifier
+            for ans in (state.unknowns, state.references)
+            for ai in ans
+        }
         if ps:
             changed = repository_has_staged(ps)
             if changed:
                 self.dvc.push_repositories(changed)
+
 
 # ============= EOF =============================================

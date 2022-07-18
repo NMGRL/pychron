@@ -23,8 +23,8 @@ from pychron.envisage.tasks.base_task import BaseManagerTask
 
 
 class BasicEntryTask(BaseManagerTask):
-    id = 'pychron.entry.basic.task'
-    name = 'Database'
+    id = "pychron.entry.basic.task"
+    name = "Database"
 
     tool_bars = [SToolBar(SaveAction())]
 
@@ -44,9 +44,11 @@ class BasicEntryTask(BaseManagerTask):
         return [BasicEntryEditorPane(model=self.manager)]
 
     def _default_layout_default(self):
-        return TaskLayout(left=PaneItem('pychron.basic.editor'))
+        return TaskLayout(left=PaneItem("pychron.basic.editor"))
 
     def _manager_default(self):
-        dvc = self.application.get_service('pychron.dvc.dvc.DVC')
+        dvc = self.application.get_service("pychron.dvc.dvc.DVC")
         return BasicEntryManager(dvc=dvc)
+
+
 # ============= EOF =============================================

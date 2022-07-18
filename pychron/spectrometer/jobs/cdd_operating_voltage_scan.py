@@ -50,7 +50,7 @@ class CDDOperatingVoltageScan(SpectrometerTask):
     start_v = Float(0)
     end_v = Float(1500)
     step_v = Float(1)
-    title = 'CDD Operating Voltage Scan'
+    title = "CDD Operating Voltage Scan"
 
     def _execute(self):
         spec = self.spectrometer
@@ -65,7 +65,7 @@ class CDDOperatingVoltageScan(SpectrometerTask):
                 settle_time = 0.001
             else:
                 spec.set_cdd_operating_voltage(opv)
-                v = spec.get_intensity('CDD')
+                v = spec.get_intensity("CDD")
 
             graph.add_datum((opv, v), do_after=1)
             time.sleep(settle_time)
@@ -76,11 +76,13 @@ class CDDOperatingVoltageScan(SpectrometerTask):
         nopv = self._calculate_optimal_operating_voltage(xs, ys)
 
         if nopv:
-            self.info('Optimal operating voltage {:0.1f}'.format(nopv))
+            self.info("Optimal operating voltage {:0.1f}".format(nopv))
 
             graph.add_vertical_rule(nopv, color=(0, 0, 1))
 
-            if self.confirmation_dialog('Save new CDD Operating voltage {:0.1f}'.format(nopv)):
+            if self.confirmation_dialog(
+                "Save new CDD Operating voltage {:0.1f}".format(nopv)
+            ):
                 self._save(nopv)
 
     def _save(self, nv):
@@ -88,21 +90,21 @@ class CDDOperatingVoltageScan(SpectrometerTask):
         config = ConfigParser()
         config.read(p)
 
-        config.set('CDDParameters', 'OperatingVoltage', nv)
-        config.write(open(p, 'w'))
-        self.info('saving new operating voltage {:0.1f} to {}'.format(nv, p))
+        config.set("CDDParameters", "OperatingVoltage", nv)
+        config.write(open(p, "w"))
+        self.info("saving new operating voltage {:0.1f} to {}".format(nv, p))
 
     def _calculate_optimal_operating_voltage(self, xs, ys):
-        '''
-             find the flattest region of the grad
+        """
+         find the flattest region of the grad
 
-            1. smooth the signal
-            2. calculate the gradient 
-            3. get x of min y
-            
-            @todo: this algorithm may not work properly. need to collect a real scan to test on
-            
-        '''
+        1. smooth the signal
+        2. calculate the gradient
+        3. get x of min y
+
+        @todo: this algorithm may not work properly. need to collect a real scan to test on
+
+        """
 
         # 1. smooth
         smoothed = smooth(ys, window_len=100)
@@ -123,28 +125,28 @@ class CDDOperatingVoltageScan(SpectrometerTask):
         return cp
 
     def _graph_factory(self):
-        graph = Graph(container_dict=dict(padding=5,
-                                          bgcolor='lightgray'))
+        graph = Graph(container_dict=dict(padding=5, bgcolor="lightgray"))
 
         graph.new_plot(
             padding=[50, 5, 5, 50],
             #                       title='{}'.format(self.title),
-            xtitle='CDD Operating Voltage (V)',
-            ytitle='Intensity (fA)',
+            xtitle="CDD Operating Voltage (V)",
+            ytitle="Intensity (fA)",
         )
-        graph.new_series(type='scatter',
-                         marker='pixel')
+        graph.new_series(type="scatter", marker="pixel")
         return graph
 
     def traits_view(self):
-        v = okcancel_view(Item('start_v', label='Start Voltage'),
-                          Item('end_v', label='Stop Voltage'),
-                          Item('step_v', label='Step Voltage'),
-                          title=self.title)
+        v = okcancel_view(
+            Item("start_v", label="Start Voltage"),
+            Item("end_v", label="Stop Voltage"),
+            Item("step_v", label="Step Voltage"),
+            title=self.title,
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     xs = np.linspace(0, 100, 200)
     ys = xs[:50]
     b = ys[-1]
@@ -155,6 +157,6 @@ if __name__ == '__main__':
     c = CDDOperatingVoltageScan()
     v = c._calculate_optimal_operating_voltage(xs, ys)
 
-    assert (abs(v - 49.4974874372) < 0.001)
+    assert abs(v - 49.4974874372) < 0.001
 
 # ============= EOF =============================================

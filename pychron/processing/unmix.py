@@ -15,6 +15,7 @@
 # ===============================================================================
 
 import matplotlib.pyplot as plt
+
 # ============= enthought library imports =======================
 # from __future__ import absolute_import
 # from __future__ import print_function
@@ -26,6 +27,7 @@ import matplotlib.pyplot as plt
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from numpy import exp, pi, sqrt, hstack, arange
+
 #
 # def unmix(ages, errors, initial_guess):
 #     ages_errors = list(zip(ages, errors))
@@ -90,7 +92,6 @@ def unmix(ages, ps, ts):
             tis_n.append(tn)
             pis_n.append(pn)
 
-
         ps = pis_n
         ts = tis_n
     return ps, ts
@@ -104,17 +105,17 @@ def tj(ages, pj, to, ps, ts):
     n = len(ages)
 
     pj = 1 / n * sum([pj * fij(ai, ei, to) / si(ai, ei, ps, ts) for ai, ei in ages])
-    a = [pj * ai * fij(ai, ei, to) / (ei ** 2 * si(ai, ei, ps, ts)) for ai, ei in ages]
-    b = [pj * fij(ai, ei, to) / (ei ** 2 * si(ai, ei, ps, ts)) for ai, ei in ages]
+    a = [pj * ai * fij(ai, ei, to) / (ei**2 * si(ai, ei, ps, ts)) for ai, ei in ages]
+    b = [pj * fij(ai, ei, to) / (ei**2 * si(ai, ei, ps, ts)) for ai, ei in ages]
 
     return pj, sum(a) / sum(b)
 
 
 def fij(ai, ei, tj):
-    return 1 / (ei * sqrt(2 * pi)) * exp(-(ai - tj) ** 2 / (2 * ei ** 2))
+    return 1 / (ei * sqrt(2 * pi)) * exp(-((ai - tj) ** 2) / (2 * ei**2))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # [35.27,36.27] [0.59, 0.41]
     # p = '/Users/ross/Sandbox/unmix_data.txt'
     # with open(p, 'U') as rfile:
@@ -148,8 +149,8 @@ if __name__ == '__main__':
     ts = [35, 35.5]
     ps = [0.9, 0.1]
 
-    plt.plot(sorted(a), arange(10), 'bo')
-    plt.plot(sorted(b), arange(10, 20, 1), 'ro')
+    plt.plot(sorted(a), arange(10), "bo")
+    plt.plot(sorted(b), arange(10, 20, 1), "ro")
     print(unmix(ages, errors, ps, ts))
     plt.show()
 # ============= EOF =============================================

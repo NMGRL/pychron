@@ -69,7 +69,7 @@ class Experimentor(DVCIrradiationable):
 
     def reset_run_generator(self):
         if self.executor.is_alive():
-            self.debug('Queue modified. Reset run generator')
+            self.debug("Queue modified. Reset run generator")
             #             self.executor.queue_modified = True
             self.executor.set_queue_modified()
 
@@ -81,7 +81,7 @@ class Experimentor(DVCIrradiationable):
             qs = (self.executor.experiment_queue,)
 
         self.executor.executable = all([ei.is_executable() for ei in qs])
-        self.debug('setting executable {}'.format(self.executor.executable))
+        self.debug("setting executable {}".format(self.executor.executable))
 
     def update_queues(self):
         self._update_queues()
@@ -91,7 +91,7 @@ class Experimentor(DVCIrradiationable):
             self._update()
         except BaseException as e:
             self.debug_exception()
-            self.warning_dialog('Failed updating info: Error={}'.format(e))
+            self.warning_dialog("Failed updating info: Error={}".format(e))
 
     # ===============================================================================
     # info update
@@ -100,13 +100,11 @@ class Experimentor(DVCIrradiationable):
         if qs is None:
             qs = self.experiment_queues
 
-        return [ai for ei in qs
-                for ai in ei.automated_runs
-                if ai.executable]
+        return [ai for ei in qs for ai in ei.automated_runs if ai.executable]
 
     def _update(self, queues=None):
 
-        self.debug('update runs')
+        self.debug("update runs")
         if queues is None:
             queues = self.experiment_queues
 
@@ -114,8 +112,8 @@ class Experimentor(DVCIrradiationable):
         if not queues:
             return
 
-        self.debug('executor executable {}'.format(self.executor.executable))
-        self.debug('updating stats, ')
+        self.debug("executor executable {}".format(self.executor.executable))
+        self.debug("updating stats, ")
         self.executor.stats.experiment_queues = queues
         self.executor.stats.calculate()
 
@@ -123,7 +121,7 @@ class Experimentor(DVCIrradiationable):
 
         self._set_analysis_metadata()
 
-        self.debug('info updated')
+        self.debug("info updated")
         for qi in queues:
             qi.refresh_table_needed = True
 
@@ -138,24 +136,24 @@ class Experimentor(DVCIrradiationable):
                     continue
 
                 ln = ai.labnumber
-                if ln == 'dg':
+                if ln == "dg":
                     continue
 
                 # is run in cache
                 if ln not in cache:
                     info = db.get_identifier_info(ln)
-                    self.debug('Info for {}={}'.format(ln, info))
+                    self.debug("Info for {}={}".format(ln, info))
                     if not info:
                         cache[ln] = dict(identifier_error=True)
                     else:
-                        info['identifier_error'] = False
+                        info["identifier_error"] = False
                         cache[ln] = info
 
                 ai.trait_set(**cache[ln])
 
     def execute_queues(self, queues):
-        names = ','.join([e.name for e in queues])
-        self.debug('queues: n={}, names={}'.format(len(queues), names))
+        names = ",".join([e.name for e in queues])
+        self.debug("queues: n={}, names={}".format(len(queues), names))
 
         self.executor.trait_set(experiment_queues=queues, experiment_queue=queues[0])
 
@@ -167,7 +165,7 @@ class Experimentor(DVCIrradiationable):
             if db.connect(force=True):
                 return True
         elif inform:
-            self.warning_dialog('No Database available')
+            self.warning_dialog("No Database available")
 
     def sync_queue(self, queue):
         ms = queue.mass_spectrometer
@@ -180,35 +178,45 @@ class Experimentor(DVCIrradiationable):
                 if ai.skip or ai.is_special():
                     continue
 
-                kw = {'identifier': ai.identifier, 'position': ai.position,
-                      'mass_spectrometer': ms.lower(),
-                      'extract_device': ed}
+                kw = {
+                    "identifier": ai.identifier,
+                    "position": ai.position,
+                    "mass_spectrometer": ms.lower(),
+                    "extract_device": ed,
+                }
                 if ai.is_step_heat():
-                    kw['aliquot'] = ai.aliquot
-                    kw['extract_value'] = ai.extract_value
+                    kw["aliquot"] = ai.aliquot
+                    kw["extract_value"] = ai.extract_value
 
-                self.debug('checking {}/{}. attr={}'.format(i, ai.runid, kw))
+                self.debug("checking {}/{}. attr={}".format(i, ai.runid, kw))
 
                 aa = db.get_analysis_by_attr(**kw)
                 if aa is None:
-                    self.debug('----- not found')
+                    self.debug("----- not found")
                     if next_pos == ai:
                         i -= 1
                         break
-                    elif not self.confirmation_dialog('Found analyses up to {}. '
-                                                      'position={}, extract={}. '
-                                                      'Continue searching?'.format(ai.runid, ai.extract_value,
-                                                                                   ai.position)):
+                    elif not self.confirmation_dialog(
+                        "Found analyses up to {}. "
+                        "position={}, extract={}. "
+                        "Continue searching?".format(
+                            ai.runid, ai.extract_value, ai.position
+                        )
+                    ):
                         break
                     next_pos = queue.automated_runs[i + 1]
 
             if i:
                 if i == len(queue.automated_runs) - 1:
-                    self.information_dialog('All Analyses from this experiment have been run')
+                    self.information_dialog(
+                        "All Analyses from this experiment have been run"
+                    )
                 else:
                     queue.automated_runs = queue.automated_runs[i:]
             else:
-                self.information_dialog('No Analyses from this experiment have been run')
+                self.information_dialog(
+                    "No Analyses from this experiment have been run"
+                )
 
     # ===============================================================================
     # handlers
@@ -221,50 +229,50 @@ class Experimentor(DVCIrradiationable):
         else:
             self.experiment_factory.edit_enabled = False
 
-    @on_trait_change('executor:experiment_queue')
+    @on_trait_change("executor:experiment_queue")
     def _activate_editor(self, eq):
         self.activate_editor_event = id(eq)
 
-    @on_trait_change('experiment_queues[]')
+    @on_trait_change("experiment_queues[]")
     def _update_queues(self):
         qs = self.experiment_queues
         self.executor.stats.experiment_queues = qs
 
-    @on_trait_change('experiment_factory:run_factory:changed')
+    @on_trait_change("experiment_factory:run_factory:changed")
     def _queue_dirty(self):
         self.experiment_queue.changed = True
 
-    @on_trait_change('experiment_queue:dclicked')
+    @on_trait_change("experiment_queue:dclicked")
     def _dclicked_changed(self, new):
         self.experiment_factory.run_factory.edit_mode = True
         self._set_factory_runs(self.experiment_queue.selected)
 
-    @on_trait_change('experiment_factory:run_factory:update_info_needed')
+    @on_trait_change("experiment_factory:run_factory:update_info_needed")
     def _refresh3(self):
-        self.debug('update info needed fired')
+        self.debug("update info needed fired")
         self.update_info()
 
-    @on_trait_change('executor:queue_modified')
+    @on_trait_change("executor:queue_modified")
     def _refresh5(self, new):
         if new:
-            self.debug('queue modified fired')
+            self.debug("queue modified fired")
             self.update_info()
 
-    @on_trait_change('experiment_factory:run_factory:refresh_table_needed')
+    @on_trait_change("experiment_factory:run_factory:refresh_table_needed")
     def _refresh4(self):
         for qi in self.experiment_queues:
             qi.refresh_table_needed = True
 
-    @on_trait_change('experiment_factory:save_button')
+    @on_trait_change("experiment_factory:save_button")
     def _save_update(self):
         self.save_event = True
         self.update_info()
 
-    @on_trait_change('experiment_queue:refresh_info_needed')
+    @on_trait_change("experiment_queue:refresh_info_needed")
     def _handle_refresh(self):
         self.update_info()
 
-    @on_trait_change('experiment_queue:selected')
+    @on_trait_change("experiment_queue:selected")
     def _selected_changed(self, new):
         ef = self.experiment_factory
         rf = ef.run_factory
@@ -279,7 +287,7 @@ class Experimentor(DVCIrradiationable):
                 self.executor.stats.calculate_at(a, at_times=self.executor.is_alive())
                 # self.stats.calculate()
 
-    @on_trait_change('experiment_factory:queue_factory:delay_between_analyses')
+    @on_trait_change("experiment_factory:queue_factory:delay_between_analyses")
     def handle_delay_between_analyses(self, new):
         if self.executor.is_alive():
             self.executor.experiment_queue.delay_between_analyses = new
@@ -295,8 +303,7 @@ class Experimentor(DVCIrradiationable):
         rf.suppress_update = False
 
     def _executor_factory(self):
-        e = ExperimentExecutor(mode=self.mode,
-                               application=self.application)
+        e = ExperimentExecutor(mode=self.mode, application=self.application)
         e.bind_preferences()
         return e
 
@@ -307,16 +314,19 @@ class Experimentor(DVCIrradiationable):
         return self._executor_factory()
 
     def _experiment_factory_default(self):
-        dms = 'Spectrometer'
+        dms = "Spectrometer"
         if self.application:
-            p2 = 'pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager'
+            p2 = (
+                "pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager"
+            )
             spec = self.application.get_service(p2)
             if spec:
                 dms = spec.name.capitalize()
 
-        e = ExperimentFactory(application=self.application,
-                              dvc=self.dvc,
-                              default_mass_spectrometer=dms)
+        e = ExperimentFactory(
+            application=self.application, dvc=self.dvc, default_mass_spectrometer=dms
+        )
         return e
+
 
 # ============= EOF =============================================

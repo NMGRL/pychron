@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 
 import yaml
+
 # ============= standard library imports ========================
 from numpy import polyval, exp
 from traits.api import Float, Tuple, Int, Str, HasTraits
@@ -37,27 +38,28 @@ class BaseCamera(HasTraits):
 
     focus_z = Float
     # fps = Int
-    zoom_coefficients = Str('0,0,23')
+    zoom_coefficients = Str("0,0,23")
     config_path = Str
-    zoom_fitfunc = Str('polynomial')
+    zoom_fitfunc = Str("polynomial")
 
     def save_calibration(self):
         raise NotImplementedError
 
     def load(self, p):
-        """
-        """
+        """ """
         self.config_path = p
         config = self.get_configuration(self.config_path)
 
-        self.set_attribute(config, 'width', 'General', 'width', cast='int')
-        self.set_attribute(config, 'height', 'General', 'height', cast='int')
-        self.set_attribute(config, 'focus_z', 'General', 'focus', cast='float')
+        self.set_attribute(config, "width", "General", "width", cast="int")
+        self.set_attribute(config, "height", "General", "height", cast="int")
+        self.set_attribute(config, "focus_z", "General", "focus", cast="float")
 
-        self.set_attribute(config, 'zoom_coefficients', 'Zoom', 'coefficients',
-                           default='0,0,23')
-        self.set_attribute(config, 'zoom_fitfunc', 'Zoom', 'fitfunc',
-                           default='polynomial')
+        self.set_attribute(
+            config, "zoom_coefficients", "Zoom", "coefficients", default="0,0,23"
+        )
+        self.set_attribute(
+            config, "zoom_fitfunc", "Zoom", "fitfunc", default="polynomial"
+        )
 
     def set_attribute(self, config, name, section, option, **kw):
         raise NotImplementedError
@@ -69,26 +71,25 @@ class BaseCamera(HasTraits):
         raise NotImplementedError
 
     def calculate_pxpermm(self, zoom):
-        if self.zoom_fitfunc == 'polynomial':
+        if self.zoom_fitfunc == "polynomial":
             func = polyval
         else:
-            ff = 'lambda p,x: {}'.format(self.zoom_fitfunc)
-            func = eval(ff, {'exp': exp})
+            ff = "lambda p,x: {}".format(self.zoom_fitfunc)
+            func = eval(ff, {"exp": exp})
 
         if self.zoom_coefficients:
-            pxpermm = func(list(map(float, self.zoom_coefficients.split(','))), zoom)
+            pxpermm = func(list(map(float, self.zoom_coefficients.split(","))), zoom)
         else:
             pxpermm = 1
 
         return pxpermm
 
     def set_limits_by_zoom(self, zoom, cx, cy, canvas=None):
-        """
-        """
+        """ """
 
         def _set_limits(axis_key, px_per_mm, cur_pos, canvas):
 
-            if axis_key == 'x':
+            if axis_key == "x":
                 d = self.width
             else:
                 d = self.height
@@ -104,19 +105,19 @@ class BaseCamera(HasTraits):
 
         pxpermm = self.calculate_pxpermm(zoom)
         if cx is not None:
-            _set_limits('x', pxpermm, cx, canvas)
+            _set_limits("x", pxpermm, cx, canvas)
         if cy is not None:
-            _set_limits('y', pxpermm, cy, canvas)
+            _set_limits("y", pxpermm, cy, canvas)
         return pxpermm
 
 
 class YamlCamera(Loggable, BaseCamera):
     def save_calibration(self):
-        self.info('saving px per mm calibration to {}'.format(self.config_path))
+        self.info("saving px per mm calibration to {}".format(self.config_path))
         config = self.get_configuration(self.config_path)
-        zoom = config.get('Zoom', {})
-        zoom['coefficients'] = self.zoom_coefficients
-        config['Zoom'] = zoom
+        zoom = config.get("Zoom", {})
+        zoom["coefficients"] = self.zoom_coefficients
+        config["Zoom"] = zoom
         self.write_configuration(config, self.config_path)
 
     def set_attribute(self, config, name, section, option, default=None, **kw):
@@ -133,25 +134,26 @@ class YamlCamera(Loggable, BaseCamera):
         #     return yaml.load(rfile)
 
     def write_configuration(self, obj, path):
-        with open(path, 'w') as wfile:
+        with open(path, "w") as wfile:
             yaml.dump(obj, wfile, default_flow_style=False)
 
 
 class Camera(ConfigLoadable, BaseCamera):
-    """
-    """
+    """ """
 
     def save_calibration(self):
         """
-             only has to update the coeff str in config file
+        only has to update the coeff str in config file
         """
-        self.info('saving px per mm calibration to {}'.format(self.config_path))
+        self.info("saving px per mm calibration to {}".format(self.config_path))
         config = self.get_configuration(self.config_path)
         if config is not None:
-            if not config.has_section('Zoom'):
-                config.add_section('Zoom')
-            config.set('Zoom', 'coefficients', self.zoom_coefficients)
+            if not config.has_section("Zoom"):
+                config.add_section("Zoom")
+            config.set("Zoom", "coefficients", self.zoom_coefficients)
             self.write_configuration(config, self.config_path)
+
+
 # if __name__ == '__main__':
 #    c = Camera()
 #    p = '/Users/fargo2/Pychrondata_beta/setupfiles/canvas2D/camera.txt'

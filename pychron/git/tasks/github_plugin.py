@@ -24,14 +24,15 @@ from pychron.git.tasks.githost_preferences import GitHubPreferencesPane
 
 
 class GitHubPlugin(BaseGitPlugin):
-    name = 'GitHub'
+    name = "GitHub"
     service_klass = GitHubService
-    id = 'pychron.github.plugin'
+    id = "pychron.github.plugin"
 
     def _preferences_default(self):
-        return self._preferences_factory('github')
+        return self._preferences_factory("github")
 
     def _preferences_panes_default(self):
         return [GitHubPreferencesPane]
+
 
 # ============= EOF =============================================

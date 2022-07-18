@@ -40,8 +40,8 @@ class LoaderLogic(Loggable):
         # bt = ''.join(['<td>{}</td>'.format('X' if not b else '') for b in self._bits])
         rs = list(zip(self._rules, self._bits))
         rs = [ri for ri in rs if not ri[1]]
-        checks = ', '.join([ri[0] for ri in rs])
-        return '{} checks are not OK'.format(checks)
+        checks = ", ".join([ri[0] for ri in rs])
+        return "{} checks are not OK".format(checks)
 
     def check(self, name):
         rule = self.rules[name]
@@ -49,19 +49,19 @@ class LoaderLogic(Loggable):
 
     def open(self, name):
         name = self.switches[name]
-        key = '{}_O'.format(name)
+        key = "{}_O".format(name)
         return self.check(key)
 
     def close(self, name):
         name = self.switches[name]
-        key = '{}_C'.format(name)
+        key = "{}_C".format(name)
         return self.check(key)
 
     def load_config(self):
-        p = os.path.join(paths.device_dir, 'furnace', 'logic.yaml')
+        p = os.path.join(paths.device_dir, "furnace", "logic.yaml")
         yd = yload(p)
-        self.rules = yd['rules']
-        self.switches = yd['switches']
+        self.rules = yd["rules"]
+        self.switches = yd["switches"]
 
     def _convert_switch_name(self, name):
 
@@ -69,21 +69,25 @@ class LoaderLogic(Loggable):
 
     def _check_rule(self, key, rule):
         bits = []
-        self.debug('------- check rule {}: {}'.format(key, ','.join(rule)))
+        self.debug("------- check rule {}: {}".format(key, ",".join(rule)))
         for flag in rule:
-            if '_' in flag:
-                key, state = flag.split('_')
+            if "_" in flag:
+                key, state = flag.split("_")
                 name = self._convert_switch_name(key)
                 if name in self.switches:
                     s = self.manager.get_switch_state(name)
                     b = False
-                    if (s and state == 'O') or (not s and state == 'C'):
+                    if (s and state == "O") or (not s and state == "C"):
                         b = True
 
-                    self.debug('switch state: name={}, state={}, s={}, b={}'.format(name, state, s, b))
+                    self.debug(
+                        "switch state: name={}, state={}, s={}, b={}".format(
+                            name, state, s, b
+                        )
+                    )
                 else:
-                    self.debug('name not in switches {}'.format(name))
-                    self.debug('switches={}'.format(list(self.switches.keys())))
+                    self.debug("name not in switches {}".format(name))
+                    self.debug("switches={}".format(list(self.switches.keys())))
                     b = self.manager.get_flag_state(flag)
             else:
                 b = self.manager.get_flag_state(flag)
@@ -92,13 +96,14 @@ class LoaderLogic(Loggable):
         self._rules = rule
         self._bits = bits
 
-        rs = ['{:>10}'.format(f) for f in rule]
-        bs = ['{:>10}'.format(bi) for bi in bits]
-        rs = '|'.join(rs)
-        bs = '|'.join(bs)
+        rs = ["{:>10}".format(f) for f in rule]
+        bs = ["{:>10}".format(bi) for bi in bits]
+        rs = "|".join(rs)
+        bs = "|".join(bs)
         self.debug(rs)
         self.debug(bs)
 
         return all(bits)
+
 
 # ============= EOF =============================================

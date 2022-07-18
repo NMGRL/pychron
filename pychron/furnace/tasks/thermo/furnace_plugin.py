@@ -21,10 +21,10 @@ from pychron.furnace.tasks.thermo.task import ThermoFurnaceTask
 
 
 class ThermoFurnacePlugin(BaseFurnacePlugin):
-    name = 'ThermoFurnace'
-    id = 'pychron.furnace.thermo.plugin'
+    name = "ThermoFurnace"
+    id = "pychron.furnace.thermo.plugin"
 
-    klass = ('pychron.furnace.thermo.furnace_manager', 'ThermoFurnaceManager')
+    klass = ("pychron.furnace.thermo.furnace_manager", "ThermoFurnaceManager")
     task_klass = ThermoFurnaceTask
 
     # def _help_tips_default(self):
@@ -37,7 +37,7 @@ class ThermoFurnacePlugin(BaseFurnacePlugin):
             manager = application.get_service(IFurnaceManager)
             if manager:
                 for window in application.windows:
-                    if 'furnace' in window.active_task.id:
+                    if "furnace" in window.active_task.id:
                         break
                 else:
                     manager.stop_update()
@@ -51,6 +51,7 @@ class ThermoFurnacePlugin(BaseFurnacePlugin):
     def _panes_default(self):
         def f():
             from pychron.furnace.tasks.thermo.panes import ExperimentFurnacePane
+
             manager = self._get_manager()
             fpane = ExperimentFurnacePane(model=manager)
             return fpane
@@ -63,5 +64,6 @@ class ThermoFurnacePlugin(BaseFurnacePlugin):
 
     def _preferences_panes_default(self):
         return [ThermoFurnacePreferencesPane]
+
 
 # ============= EOF =============================================

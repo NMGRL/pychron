@@ -33,30 +33,38 @@ def open_progress(n, close_at_end=True, busy=False, **kw):
     else:
         mi, ma = 0, int(max(1, n - 1))
 
-    pd = myProgressDialog(min=mi, max=ma,
-                          close_at_end=close_at_end,
-                          can_cancel=True,
-                          can_ok=True, **kw)
+    pd = myProgressDialog(
+        min=mi, max=ma, close_at_end=close_at_end, can_cancel=True, can_ok=True, **kw
+    )
     pd.open()
     return pd
 
 
-def progress_loader(xs, func, threshold=50, progress=None,
-                    use_progress=True,
-                    reraise_cancel=False, n=None, busy=False, step=1, unpack=True):
+def progress_loader(
+    xs,
+    func,
+    threshold=50,
+    progress=None,
+    use_progress=True,
+    reraise_cancel=False,
+    n=None,
+    busy=False,
+    step=1,
+    unpack=True,
+):
     """
-        xs: list or tuple
-        func: callable with signature func(xi, prog, i, n)
-            where xi is ith item of xs, prog is a progress_dialog, i is ith iteration and n is total iterations
+    xs: list or tuple
+    func: callable with signature func(xi, prog, i, n)
+        where xi is ith item of xs, prog is a progress_dialog, i is ith iteration and n is total iterations
 
-        threshold: trigger value to open a progress dialog i.e. if n>threshold open the dialog
-        progress: an existing progress_dialog
-        reraise_cancel: if canceled during iteration should the exception be reraised for all objects to handle
+    threshold: trigger value to open a progress dialog i.e. if n>threshold open the dialog
+    progress: an existing progress_dialog
+    reraise_cancel: if canceled during iteration should the exception be reraised for all objects to handle
 
-        return: list
+    return: list
 
-        if user clicks "Cancel" during iteration an empty list is returned
-        if user clicks "Accept" during iteration a partial list is returned
+    if user clicks "Cancel" during iteration an empty list is returned
+    if user clicks "Accept" during iteration a partial list is returned
 
     """
     if n is None:
@@ -80,19 +88,25 @@ def progress_loader(xs, func, threshold=50, progress=None,
                     prog = progress
                 else:
                     prog = None if i % step else progress
-
-                r = func(x, prog, i, n)
+                try:
+                    r = func(x, prog, i, n)
+                except BaseException as e:
+                    print("progress loader exception={}".format(e))
+                    r = None
                 if r:
-                    if hasattr(r, '__iter__') and unpack:
+                    if hasattr(r, "__iter__") and unpack:
                         for ri in r:
                             yield ri
                     else:
                         yield r
         else:
             for x in xs:
-                r = func(x, None, 0, 0)
+                try:
+                    r = func(x, None, 0, 0)
+                except BaseException:
+                    r = None
                 if r:
-                    if hasattr(r, '__iter__') and unpack:
+                    if hasattr(r, "__iter__") and unpack:
                         for ri in r:
                             yield ri
                     else:
@@ -119,9 +133,9 @@ def progress_loader(xs, func, threshold=50, progress=None,
 
 def progress_iterator(xs, func, threshold=50, progress=None, reraise_cancel=False):
     """
-        see progress_loader documentation
+    see progress_loader documentation
 
-        only difference is that this function does not return anything
+    only difference is that this function does not return anything
     """
 
     def gen(prog):
@@ -147,5 +161,6 @@ def progress_iterator(xs, func, threshold=50, progress=None, reraise_cancel=Fals
     except CancelLoadingError:
         if reraise_cancel:
             raise CancelLoadingError
+
 
 # ============= EOF =============================================

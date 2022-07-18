@@ -19,22 +19,35 @@ from __future__ import absolute_import
 from traits.api import provides
 
 from pychron.entry.iimport_source import IImportSource
-from pychron.entry.import_spec import ImportSpec, Irradiation, Level, \
-    Sample, Project, Position, Production
+from pychron.entry.import_spec import (
+    ImportSpec,
+    Irradiation,
+    Level,
+    Sample,
+    Project,
+    Position,
+    Production,
+)
 from pychron.managers.data_managers.xls_data_manager import XLSDataManager
 
-NAME = ('Name', 'irradiation', 'irrad')
-PR = ('ProductionRatio', 'PR', 'Production Ratios', 'ProductionRatios', 'Production Ratio')
-LEVEL = ('Level', 'Tray')
-HOLDER = ('Holder',)
-PROJECT = ('Project',)
-SAMPLE = ('Sample',)
-MATERIAL = ('Material',)
-PI = ('Principal Investigator', 'Principal Investigator', 'PI')
-NOTE = ('Note',)
-WEIGHT = ('Weight',)
-POSITION = ('Position', 'Hole')
-Z = ('Height', 'Z')
+NAME = ("Name", "irradiation", "irrad")
+PR = (
+    "ProductionRatio",
+    "PR",
+    "Production Ratios",
+    "ProductionRatios",
+    "Production Ratio",
+)
+LEVEL = ("Level", "Tray")
+HOLDER = ("Holder",)
+PROJECT = ("Project",)
+SAMPLE = ("Sample",)
+MATERIAL = ("Material",)
+PI = ("Principal Investigator", "Principal Investigator", "PI")
+NOTE = ("Note",)
+WEIGHT = ("Weight",)
+POSITION = ("Position", "Hole")
+Z = ("Height", "Z")
 
 
 @provides(IImportSource)
@@ -48,7 +61,7 @@ class XLSIrradiationSource:
 
     def get_irradiation_names(self):
         dm = self._dm
-        sheet = dm.get_sheet(('Irradiations', 0))
+        sheet = dm.get_sheet(("Irradiations", 0))
         nameidx = dm.get_column_idx(NAME, sheet)
         return list({r[nameidx].value for r in dm.iterrows(sheet, start=1)})
 
@@ -66,7 +79,7 @@ class XLSIrradiationSource:
         nlevels = []
 
         dm = self._dm
-        sheet = dm.get_sheet(('Irradiations', 0))
+        sheet = dm.get_sheet(("Irradiations", 0))
         nameidx = dm.get_column_idx(NAME, sheet)
         levelidx = dm.get_column_idx(LEVEL, sheet)
         pridx = dm.get_column_idx(PR, sheet)
@@ -97,13 +110,13 @@ class XLSIrradiationSource:
 
     def _get_doses(self, name):
         dm = self._dm
-        sheet = dm.get_sheet(('Chronologies', 1))
+        sheet = dm.get_sheet(("Chronologies", 1))
         doses = []
 
         nameidx = dm.get_column_idx(NAME, sheet)
-        poweridx = dm.get_column_idx(('Power',), sheet)
-        startidx = dm.get_column_idx(('Start',), sheet)
-        endidx = dm.get_column_idx(('End',), sheet)
+        poweridx = dm.get_column_idx(("Power",), sheet)
+        startidx = dm.get_column_idx(("Start",), sheet)
+        endidx = dm.get_column_idx(("End",), sheet)
 
         for row in dm.iterrows(sheet, start=1):
             if row[nameidx].value == name:
@@ -117,7 +130,7 @@ class XLSIrradiationSource:
 
     def _get_positions(self, name, level):
         dm = self._dm
-        sheet = dm.get_sheet(('Positions', 2))
+        sheet = dm.get_sheet(("Positions", 2))
         nameidx = dm.get_column_idx(NAME, sheet)
         levelidx = dm.get_column_idx(LEVEL, sheet)
         positionidx = dm.get_column_idx(POSITION, sheet)
@@ -145,7 +158,7 @@ class XLSIrradiationSource:
                 sample.project = project
                 pos.sample = sample
 
-                pos.note = row[noteidx].value or ''
+                pos.note = row[noteidx].value or ""
                 pos.weight = row[weightidx].value or 0
 
                 ps.append(pos)
@@ -191,7 +204,6 @@ class XLSIrradiationSource:
         # i.levels = nlevels
         # return spec
 
-
         # def load(self, p):
         #
         #     sheet = dm.get_sheet(('Irradiations', 0))
@@ -211,5 +223,6 @@ class XLSIrradiationSource:
         #                         row[pridx].value, row[holderidx].value)
         #         if not dry_run and self.db:
         #             self.db.commit()
+
 
 # ============= EOF =============================================

@@ -26,7 +26,7 @@ from .gp_actuator import GPActuator
 
 class NMGRLFurnaceActuator(GPActuator):
     """
-        Used to communicate with furnace switches
+    Used to communicate with furnace switches
     """
 
     # @trim
@@ -58,12 +58,12 @@ class NMGRLFurnaceActuator(GPActuator):
     @trim_bool
     def get_channel_state(self, obj, verbose=False):
         """
-            Query the hardware for the channel state
+        Query the hardware for the channel state
         """
-        cmd = 'GetChannelState {}'.format(get_switch_address(obj))
+        cmd = "GetChannelState {}".format(get_switch_address(obj))
         return self.ask(cmd, verbose=True)
 
-    def get_indicator_state(self, obj, action='open', verbose=False):
+    def get_indicator_state(self, obj, action="open", verbose=False):
         """
         returns True if open and False if closed.
 
@@ -72,18 +72,22 @@ class NMGRLFurnaceActuator(GPActuator):
         :param verbose:
         :return:
         """
-        cmd = json.dumps({'command': 'GetIndicatorState',
-                          'name': get_switch_address(obj),
-                          'action': action})
+        cmd = json.dumps(
+            {
+                "command": "GetIndicatorState",
+                "name": get_switch_address(obj),
+                "action": action,
+            }
+        )
         resp = self.ask(cmd, verbose=True)
 
         # if action == 'open':
         # print 'aa', resp, action
         if resp:
             resp = resp.strip()
-            if resp == 'open':
+            if resp == "open":
                 return True
-            elif resp == 'closed':
+            elif resp == "closed":
                 return False
             # resp = to_bool(resp.strip())
             # resp = resp.strip()
@@ -96,12 +100,12 @@ class NMGRLFurnaceActuator(GPActuator):
             # elif action == 'open' and resp == 'closed':
             #     return False
 
-                # print 'bb', resp
-                # # # if close indicator is True and checking for closed return False
-                # if resp and action != 'open':
-                # #     resp = False
-                # # print 'cc', obj, resp
-                # return resp
+            # print 'bb', resp
+            # # # if close indicator is True and checking for closed return False
+            # if resp and action != 'open':
+            # #     resp = False
+            # # print 'cc', obj, resp
+            # return resp
 
     # def close_channel(self, obj, excl=False):
     #     """
@@ -128,13 +132,13 @@ class NMGRLFurnaceActuator(GPActuator):
     @trim_bool
     def _actuate(self, obj, action):
         """
-            obj: valve object
-            action: str,  "Open" or "Close"
+        obj: valve object
+        action: str,  "Open" or "Close"
         """
         if self.simulation:
             return True
 
-        cmd = '{} {}'.format(action, get_switch_address(obj))
+        cmd = "{} {}".format(action, get_switch_address(obj))
         return self.ask(cmd)
 
 

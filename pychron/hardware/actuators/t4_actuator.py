@@ -20,9 +20,11 @@ from pychron.hardware.labjack.base_t4 import BaseT4
 
 class T4Actuator(BaseT4, GPActuator):
     def _actuate(self, obj, action):
-        self.set_channel_state(get_switch_address(obj), action.lower()=='open')
+        self.set_channel_state(get_switch_address(obj), action.lower() == "open")
         return True
 
     def get_channel_state(self, obj, **kw):
         return BaseT4.get_channel_state(self, get_switch_address(obj), **kw)
+
+
 # ============= EOF =============================================

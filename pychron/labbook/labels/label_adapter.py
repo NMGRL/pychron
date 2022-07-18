@@ -23,7 +23,7 @@ from pychron.labbook.labels.orm import LabelTable, PathTable
 
 
 class LabelAdapter(SQLiteDatabaseAdapter):
-    kind = 'sqlite'
+    kind = "sqlite"
 
     def _build_database(self, sess, meta):
         from .orm import Base
@@ -50,21 +50,18 @@ class LabelAdapter(SQLiteDatabaseAdapter):
         return self._retrieve_items(LabelTable)
 
     def get_label(self, text):
-        return self._retrieve_item(LabelTable, text, key='text')
+        return self._retrieve_item(LabelTable, text, key="text")
 
     def get_path(self, p):
-        return self._retrieve_item(PathTable, p, key='relpath')
+        return self._retrieve_item(PathTable, p, key="relpath")
 
-    #deleters
+    # deleters
     def delete_label(self, text):
-        self._delete_item(text, 'label')
+        self._delete_item(text, "label")
 
 
-if __name__ == '__main__':
-    db = LabelAdapter(path='/Users/ross/Sandbox/label.db')
+if __name__ == "__main__":
+    db = LabelAdapter(path="/Users/ross/Sandbox/label.db")
     db.build_database()
 
 # ============= EOF =============================================
-
-
-

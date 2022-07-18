@@ -30,81 +30,103 @@ class USGSVSCIrradiationSourceUnittest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.src = USGSVSCMAPSource()
-        p = os.path.join(fget_data_dir(), 'IRR330.txt')
+        p = os.path.join(fget_data_dir(), "IRR330.txt")
         cls.src.irradiation_path = p
         cls.spec = cls.src.get_irradiation_import_spec()
 
     def test_name(self):
-        self.assertEqual('IRR330', self.spec.irradiation.name)
+        self.assertEqual("IRR330", self.spec.irradiation.name)
 
     def test_doses(self):
-        self.assertEqual([(1.0, datetime.datetime(2014, 9, 23, 9, 13), datetime.datetime(2014, 9, 23, 10, 13))],
-                         self.spec.irradiation.doses, [])
+        self.assertEqual(
+            [
+                (
+                    1.0,
+                    datetime.datetime(2014, 9, 23, 9, 13),
+                    datetime.datetime(2014, 9, 23, 10, 13),
+                )
+            ],
+            self.spec.irradiation.doses,
+            [],
+        )
 
     def test_3637(self):
-        self.assertEqual((2.810000E-4, 6.21e-6), self.spec.irradiation.levels[0].production.Ca3637)
+        self.assertEqual(
+            (2.810000e-4, 6.21e-6), self.spec.irradiation.levels[0].production.Ca3637
+        )
 
     def test_4039(self):
-        self.assertEqual((1.003E-3, 3.79e-4), self.spec.irradiation.levels[0].production.K4039)
+        self.assertEqual(
+            (1.003e-3, 3.79e-4), self.spec.irradiation.levels[0].production.K4039
+        )
 
     def test_3937(self):
-        self.assertEqual((7.10E-4, 4.96e-5), self.spec.irradiation.levels[0].production.Ca3937)
+        self.assertEqual(
+            (7.10e-4, 4.96e-5), self.spec.irradiation.levels[0].production.Ca3937
+        )
 
     def test_3837(self):
-        self.assertEqual((3.29E-5, 7.5e-6), self.spec.irradiation.levels[0].production.Ca3837)
+        self.assertEqual(
+            (3.29e-5, 7.5e-6), self.spec.irradiation.levels[0].production.Ca3837
+        )
 
     def test_3839(self):
-        self.assertEqual((1.314E-2, 1.2e-5), self.spec.irradiation.levels[0].production.K3839)
+        self.assertEqual(
+            (1.314e-2, 1.2e-5), self.spec.irradiation.levels[0].production.K3839
+        )
 
 
 class USGSVSCFileSourceUnittest(BaseFileSourceTestCase):
     @classmethod
     def setUpClass(cls):
         cls.src = USGSVSCMAPSource()
-        p = os.path.join(fget_data_dir(), '16Z0071', '16K0071A.TXT')
+        p = os.path.join(fget_data_dir(), "16Z0071", "16K0071A.TXT")
         cls.src.path = p
         cls.spec = cls.src.get_analysis_import_spec()
-        cls.expected = {'runid': '16K0071-01A',
-                        'irradiation': 'IRR347',
-                        'irradiation_level': 'A',
-                        'sample': 'GA1550',
-                        'material': 'Bio',
-                        'project': 'Std',
-                        'j': 0.0045,
-                        'j_err': 1e-7,
-                        'timestamp_month': 3,
-                        'cnt40': 40,
-                        'cnt39': 50,
-                        'cnt38': 10,
-                        'cnt37': 10,
-                        'cnt36': 80,
-                        'discrimination': 1.0462399093612802,
-                        'uuid': ''
-                        }
+        cls.expected = {
+            "runid": "16K0071-01A",
+            "irradiation": "IRR347",
+            "irradiation_level": "A",
+            "sample": "GA1550",
+            "material": "Bio",
+            "project": "Std",
+            "j": 0.0045,
+            "j_err": 1e-7,
+            "timestamp_month": 3,
+            "cnt40": 40,
+            "cnt39": 50,
+            "cnt38": 10,
+            "cnt37": 10,
+            "cnt36": 80,
+            "discrimination": 1.0462399093612802,
+            "uuid": "",
+        }
 
     def test_irradiation(self):
-        self.assertEqual(self.spec.run_spec.irradiation, self.expected['irradiation'])
+        self.assertEqual(self.spec.run_spec.irradiation, self.expected["irradiation"])
 
     def test_level(self):
-        self.assertEqual(self.spec.run_spec.irradiation_level, self.expected['irradiation_level'])
+        self.assertEqual(
+            self.spec.run_spec.irradiation_level, self.expected["irradiation_level"]
+        )
 
     def test_sample(self):
-        self.assertEqual(self.spec.run_spec.sample, self.expected['sample'])
+        self.assertEqual(self.spec.run_spec.sample, self.expected["sample"])
 
     def test_material(self):
-        self.assertEqual(self.spec.run_spec.material, self.expected['material'])
+        self.assertEqual(self.spec.run_spec.material, self.expected["material"])
 
     def test_project(self):
-        self.assertEqual(self.spec.run_spec.project, self.expected['project'])
+        self.assertEqual(self.spec.run_spec.project, self.expected["project"])
 
     def test_j(self):
-        self.assertEqual(self.spec.j, self.expected['j'])
+        self.assertEqual(self.spec.j, self.expected["j"])
 
     def test_j_err(self):
-        self.assertEqual(self.spec.j_err, self.expected['j_err'])
+        self.assertEqual(self.spec.j_err, self.expected["j_err"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 
 # ============= EOF =============================================

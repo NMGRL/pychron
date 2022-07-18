@@ -26,15 +26,15 @@ from pychron.pipeline.plot.models.spectrum_model import SpectrumModel
 
 class SpectrumEditor(InterpretedAgeEditor):
     plotter_options_manager = Instance(SpectrumOptionsManager, ())
-    basename = 'spec'
+    basename = "spec"
     figure_model_klass = SpectrumModel
 
     def _set_preferred_age_kind(self, ias):
         for ia in ias:
             if ia.plateau_age:
-                ia.preferred_age_kind = 'Plateau'
+                ia.preferred_age_kind = "Plateau"
             else:
-                ia.preferred_age_kind = 'Integrated'
+                ia.preferred_age_kind = "Integrated"
+
 
 # ============= EOF =============================================
-

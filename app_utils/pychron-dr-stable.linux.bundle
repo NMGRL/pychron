@@ -1,0 +1,24 @@
+{
+    "mark": [],
+    "metadata_version": "2.0",
+    "modifiers": {
+        "allow_any": [],
+        "allow_newer": [],
+        "allow_older": []
+    },
+    "repositories": {
+        "packages": [],
+        "runtimes": [
+            "enthought/free"
+        ]
+    },
+    "requirements": [],
+    "runtime": {
+        "implementation": "cpython",
+        "platform": "rh7_x86_64",
+        "platform_abi": "gnu",
+        "repository": "enthought/free",
+        "sha256": "4c5a3a39a67c29c702fda7b0ff4c18a1b8f304dd89a94fcbe1a8deb213d3738a",
+        "version": "3.6.13+3"
+    }
+}

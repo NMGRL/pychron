@@ -16,18 +16,43 @@
 from traits.api import List
 
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
-from pychron.mdd.tasks.nodes import AgesMeNode, ArrMeNode, FilesNode, MDDWorkspaceNode, MDDFigureNode, \
-    AutoAgeFreeNode, MDDLabTableNode, AutoAgeMonNode, AutoArrNode, CorrFFTNode, ConfIntNode, ArrMultiNode
-from pychron.mdd.tasks.predefined import LABTABLE, FILES, ARRME, AGESME, AUTOARR, AUTOAGEMON, MDDFIGURE, AUTOAGEFREE, \
-    CORRFFT, CONFINT, ARRMULTI
+from pychron.mdd.tasks.nodes import (
+    AgesMeNode,
+    ArrMeNode,
+    FilesNode,
+    MDDWorkspaceNode,
+    MDDFigureNode,
+    AutoAgeFreeNode,
+    MDDLabTableNode,
+    AutoAgeMonNode,
+    AutoArrNode,
+    CorrFFTNode,
+    ConfIntNode,
+    ArrMultiNode,
+)
+from pychron.mdd.tasks.predefined import (
+    LABTABLE,
+    FILES,
+    ARRME,
+    AGESME,
+    AUTOARR,
+    AUTOAGEMON,
+    MDDFIGURE,
+    AUTOAGEFREE,
+    CORRFFT,
+    CONFINT,
+    ARRMULTI,
+)
 from pychron.mdd.tasks.preferences import MDDPreferencesPane
 from pychron.paths import paths
 
 
 class MDDPlugin(BaseTaskPlugin):
-    nodes = List(contributes_to='pychron.pipeline.nodes')
-    predefined_templates = List(contributes_to='pychron.pipeline.predefined_templates')
-    pipeline_group_icon_map = List(contributes_to='pychron.pipeline.pipeline_group_icon_map')
+    nodes = List(contributes_to="pychron.pipeline.nodes")
+    predefined_templates = List(contributes_to="pychron.pipeline.predefined_templates")
+    pipeline_group_icon_map = List(
+        contributes_to="pychron.pipeline.pipeline_group_icon_map"
+    )
 
     def _preferences_panes_default(self):
         return [MDDPreferencesPane]
@@ -37,25 +62,43 @@ class MDDPlugin(BaseTaskPlugin):
             paths.clovera_root = new
 
     def _pipeline_group_icon_map_default(self):
-        return [('MDD', 'bricks')]
+        return [("MDD", "bricks")]
 
     def _predefined_templates_default(self):
-        return [('MDD', (('LabTable', LABTABLE),
-                         ('Files', FILES),
-                         ('ArrMulti', ARRMULTI),
-                         ('AutoArr', AUTOARR),
-                         ('ArrMe', ARRME),
-                         ('AgesMe', AGESME),
-                         ('CorrFFT', CORRFFT),
-                         ('ConfInt', CONFINT),
-                         ('AutoAgeMon', AUTOAGEMON),
-                         ('AutoAgeFree', AUTOAGEFREE),
-                         ('MDD Figure', MDDFIGURE)))]
+        return [
+            (
+                "MDD",
+                (
+                    ("LabTable", LABTABLE),
+                    ("Files", FILES),
+                    ("ArrMulti", ARRMULTI),
+                    ("AutoArr", AUTOARR),
+                    ("ArrMe", ARRME),
+                    ("AgesMe", AGESME),
+                    ("CorrFFT", CORRFFT),
+                    ("ConfInt", CONFINT),
+                    ("AutoAgeMon", AUTOAGEMON),
+                    ("AutoAgeFree", AUTOAGEFREE),
+                    ("MDD Figure", MDDFIGURE),
+                ),
+            )
+        ]
 
     def _nodes_default(self):
-        return [AutoArrNode, AgesMeNode, ArrMeNode, FilesNode,
-                MDDWorkspaceNode, MDDFigureNode, MDDLabTableNode,
-                AutoAgeFreeNode,
-                AutoAgeMonNode, CorrFFTNode, ConfIntNode, ArrMultiNode]
+        return [
+            AutoArrNode,
+            AgesMeNode,
+            ArrMeNode,
+            FilesNode,
+            MDDWorkspaceNode,
+            MDDFigureNode,
+            MDDLabTableNode,
+            AutoAgeFreeNode,
+            AutoAgeMonNode,
+            CorrFFTNode,
+            ConfIntNode,
+            ArrMultiNode,
+        ]
+
 
 # ============= EOF =============================================

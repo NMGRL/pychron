@@ -19,6 +19,7 @@ import random
 # ============= standard library imports ========================
 from numpy import linspace
 from numpy.core.umath import exp
+
 # ============= enthought library imports =======================
 from traitsui.api import View, Item, EnumEditor, Group, HGroup, spring, ButtonEditor
 
@@ -42,7 +43,7 @@ def multi_peak_generator(values):
 
 def pseudo_peak(center, start, stop, step, magnitude=500, peak_width=0.004, channels=1):
     x = linspace(start, stop, step)
-    gaussian = lambda x: magnitude * exp(-((center - x) / peak_width) ** 2)
+    gaussian = lambda x: magnitude * exp(-(((center - x) / peak_width) ** 2))
 
     for i, d in enumerate(gaussian(x)):
         if abs(center - x[i]) < peak_width:
@@ -62,9 +63,13 @@ class MagnetSweep(BaseSweep):
     _peak_generator = None
 
     def _make_pseudo(self, values, channels):
-        self._peak_generator = pseudo_peak(values[len(values) / 2] + 0.001,
-                                           values[0], values[-1], len(values),
-                                           channels)
+        self._peak_generator = pseudo_peak(
+            values[len(values) // 2] + 0.001,
+            values[0],
+            values[-1],
+            len(values),
+            channels,
+        )
 
     def _step_intensity(self):
         if self._peak_generator:
@@ -74,12 +79,15 @@ class MagnetSweep(BaseSweep):
         return resp
 
     def _step(self, v):
-        self.spectrometer.magnet.set_dac(v, verbose=self.verbose,
-                                         settling_time=0,
-                                         # settling_time=self.integration_time * 2,
-                                         use_dac_changed=False)
+        self.spectrometer.magnet.set_dac(
+            v,
+            verbose=self.verbose,
+            settling_time=0,
+            # settling_time=self.integration_time * 2,
+            use_dac_changed=False,
+        )
 
-        if hasattr(self.spectrometer, 'trigger_acq'):
+        if hasattr(self.spectrometer, "trigger_acq"):
             self.spectrometer.trigger_acq()
 
         self.spectrometer.settle()
@@ -89,8 +97,12 @@ class MagnetSweep(BaseSweep):
             spec = self.spectrometer
             mag = spec.magnet
             detname = self.reference_detector.name
-            ds = spec.correct_dac(self.reference_detector, mag.map_mass_to_dac(sm, detname))
-            de = spec.correct_dac(self.reference_detector, mag.map_mass_to_dac(em, detname))
+            ds = spec.correct_dac(
+                self.reference_detector, mag.map_mass_to_dac(sm, detname)
+            )
+            de = spec.correct_dac(
+                self.reference_detector, mag.map_mass_to_dac(em, detname)
+            )
 
             massdev = abs(sm - em)
             dacdev = abs(ds - de)
@@ -101,25 +113,50 @@ class MagnetSweep(BaseSweep):
         return super(MagnetSweep, self)._do_sweep(sm, em, stm, directions)
 
     def edit_view(self):
-        v = okcancel_view(Group(Item('reference_detector', editor=EnumEditor(name='detectors')),
-                                Item('integration_time', label='Integration (s)'),
-                                label='Magnet Scan',
-                                show_border=True),
-                          title=self.title)
+        v = okcancel_view(
+            Group(
+                Item("reference_detector", editor=EnumEditor(name="detectors")),
+                Item("integration_time", label="Integration (s)"),
+                label="Magnet Scan",
+                show_border=True,
+            ),
+            title=self.title,
+        )
 
         return v
 
     def traits_view(self):
-        v = View(Group(Item('reference_detector', editor=EnumEditor(name='detectors')),
-                       Item('start_value', label='Start Mass', tooltip='Start scan at this mass'),
-                       Item('stop_value', label='Stop Mass', tooltip='Stop scan when magnet reaches this mass'),
-                       Item('step_value', label='Step Mass', tooltip='Step from Start to Stop by this amount'),
-                       Item('integration_time', label='Integration (s)'),
-                       HGroup(spring, Item('execute_button', editor=ButtonEditor(label_value='execute_label'),
-                                           show_label=False)),
-                       label='Magnet Scan',
-                       show_border=True))
+        v = View(
+            Group(
+                Item("reference_detector", editor=EnumEditor(name="detectors")),
+                Item(
+                    "start_value", label="Start Mass", tooltip="Start scan at this mass"
+                ),
+                Item(
+                    "stop_value",
+                    label="Stop Mass",
+                    tooltip="Stop scan when magnet reaches this mass",
+                ),
+                Item(
+                    "step_value",
+                    label="Step Mass",
+                    tooltip="Step from Start to Stop by this amount",
+                ),
+                Item("integration_time", label="Integration (s)"),
+                HGroup(
+                    spring,
+                    Item(
+                        "execute_button",
+                        editor=ButtonEditor(label_value="execute_label"),
+                        show_label=False,
+                    ),
+                ),
+                label="Magnet Scan",
+                show_border=True,
+            )
+        )
 
         return v
+
 
 # ============= EOF =============================================

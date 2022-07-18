@@ -24,4 +24,5 @@ class RegressionSeriesPanel(FigurePanel):
     _figure_klass = RegressionSeries
     equi_stack = True
 
+
 # ============= EOF =============================================

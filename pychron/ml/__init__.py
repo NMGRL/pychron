@@ -14,5 +14,5 @@
 # limitations under the License.
 # ===============================================================================
 
-CLUSTER_KINDS = ('kmeans', 'meanshift', 'dbscan', 'affinity_propagation')
+CLUSTER_KINDS = ("kmeans", "meanshift", "dbscan", "affinity_propagation")
 # ============= EOF =============================================

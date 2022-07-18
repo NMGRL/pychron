@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from numpy import hstack, array, Inf
 from traits.api import DelegatesTo, List, Bool, Any, Float
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -58,8 +59,8 @@ def alternate(s, e, step, reverse=False):
 
 
 class BaseSweep(SpectrometerTask):
-    detectors = DelegatesTo('spectrometer')
-    integration_time = DelegatesTo('spectrometer')
+    detectors = DelegatesTo("spectrometer")
+    integration_time = DelegatesTo("spectrometer")
 
     reference_detector = Any
     additional_detectors = List
@@ -78,18 +79,18 @@ class BaseSweep(SpectrometerTask):
         return [self.reference_detector] + self.additional_detectors
 
     # private
-    def _series_factory(self, graph, kind='line', **kw):
-        if 'line_width' not in kw:
-            kw['line_width'] = 2
+    def _series_factory(self, graph, kind="line", **kw):
+        if "line_width" not in kw:
+            kw["line_width"] = 2
 
-        if kind == 'scatter':
-            kw['type'] = 'scatter'
-            kw['marker'] = 'circle'
-            kw['marker_size'] = 1.5
-        elif kind == 'line_scatter':
-            kw['type'] = 'line_scatter'
-            kw['marker'] = 'circle'
-            kw['marker_size'] = 1.5
+        if kind == "scatter":
+            kw["type"] = "scatter"
+            kw["marker"] = "circle"
+            kw["marker_size"] = 1.5
+        elif kind == "line_scatter":
+            kw["type"] = "line_scatter"
+            kw["marker"] = "circle"
+            kw["marker_size"] = 1.5
 
         graph.new_series(**kw)
 
@@ -99,7 +100,7 @@ class BaseSweep(SpectrometerTask):
         if not self._sweep(forward):
             return
 
-        self._series_factory(self.graph, kind='scatter')
+        self._series_factory(self.graph, kind="scatter")
         if not self._sweep(backward, series=1):
             return
 
@@ -123,7 +124,7 @@ class BaseSweep(SpectrometerTask):
         self.verbose = False
 
     def _do_sweep(self, sm, em, stm, directions=None):
-        self.debug('_do_sweep sm= {}, em= {}, stm= {}'.format(sm, em, stm))
+        self.debug("_do_sweep sm= {}, em= {}, stm= {}".format(sm, em, stm))
 
         if self.testing:
             return self._test_sweep(sm, em, stm)
@@ -131,9 +132,9 @@ class BaseSweep(SpectrometerTask):
         if directions is None:
             directions = [1]
         elif isinstance(directions, str):
-            if directions == 'Decrease':
+            if directions == "Decrease":
                 directions = [-1]
-            elif directions == 'Oscillate':
+            elif directions == "Oscillate":
                 directions = oscillate()
             else:
                 directions = [1]
@@ -173,7 +174,7 @@ class BaseSweep(SpectrometerTask):
         return self._alive
 
     def _post_execute(self):
-        self.debug('sweep finished')
+        self.debug("sweep finished")
 
     def _make_pseudo(self, values):
         pass
@@ -201,7 +202,7 @@ class BaseSweep(SpectrometerTask):
 
     def _update_graph_data2(self, plot, di, intensity, series):
         oys = None
-        k = 'odata{}'.format(series)
+        k = "odata{}".format(series)
         if hasattr(plot, k):
             oys = getattr(plot, k)
 
@@ -209,19 +210,18 @@ class BaseSweep(SpectrometerTask):
         setattr(plot, k, oys)
 
         data = plot.data
-        xs = data.get_data('x{}'.format(series))
+        xs = data.get_data("x{}".format(series))
         xs = hstack((xs, di))
 
-        data.set_data('x{}'.format(series), xs)
-        data.set_data('y{}'.format(series), oys)
+        data.set_data("x{}".format(series), xs)
+        data.set_data("y{}".format(series), oys)
         mi, ma = min(oys), max(oys)
 
-        self.graph.set_y_limits(min_=mi, max_=ma, pad='0.05',
-                                pad_style='upper')
+        self.graph.set_y_limits(min_=mi, max_=ma, pad="0.05", pad_style="upper")
 
     def _update_graph_data(self, plot, di, intensity, **kw):
         """
-            add and scale scans
+        add and scale scans
         """
 
         def set_data(k, v):
@@ -235,7 +235,7 @@ class BaseSweep(SpectrometerTask):
         mi, ma = Inf, -Inf
         for i, v in enumerate(intensity):
             oys = None
-            k = 'odata{}'.format(i)
+            k = "odata{}".format(i)
             if hasattr(plot, k):
                 oys = getattr(plot, k)
 
@@ -256,20 +256,20 @@ class BaseSweep(SpectrometerTask):
                 if r and R:
                     oys = (oys - mir) * R / r + miR
 
-            xs = get_data('x{}'.format(i))
+            xs = get_data("x{}".format(i))
             if not xs.shape[0] or di >= xs[-1]:
                 xs = hstack((xs, di))
             else:
                 xs = hstack((di, xs))
 
-            set_data('x{}'.format(i), xs)
-            set_data('y{}'.format(i), oys)
+            set_data("x{}".format(i), xs)
+            set_data("y{}".format(i), oys)
             mi, ma = min(mi, min(oys)), max(ma, max(oys))
 
-        self.graph.set_y_limits(min_=mi, max_=ma, pad='0.05',
-                                pad_style='upper')
+        self.graph.set_y_limits(min_=mi, max_=ma, pad="0.05", pad_style="upper")
 
     def _reference_detector_default(self):
         return self.detectors[0]
+
 
 # ============= EOF =============================================

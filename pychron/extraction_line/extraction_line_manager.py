@@ -21,7 +21,19 @@ from threading import Thread
 # =============enthought library imports=======================
 from apptools.preferences.preference_binding import bind_preference
 from pyface.timer.do_later import do_after
-from traits.api import Instance, List, Any, Bool, on_trait_change, Str, Int, Dict, File, Float, Enum
+from traits.api import (
+    Instance,
+    List,
+    Any,
+    Bool,
+    on_trait_change,
+    Str,
+    Int,
+    Dict,
+    File,
+    Float,
+    Enum,
+)
 
 from pychron.canvas.canvas_editor import CanvasEditor
 from pychron.core.file_listener import FileListener
@@ -29,7 +41,9 @@ from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.wait.wait_group import WaitGroup
 from pychron.envisage.consoleable import Consoleable
 from pychron.extraction_line import LOG_LEVEL_NAMES, LOG_LEVELS
-from pychron.extraction_line.explanation.extraction_line_explanation import ExtractionLineExplanation
+from pychron.extraction_line.explanation.extraction_line_explanation import (
+    ExtractionLineExplanation,
+)
 from pychron.extraction_line.extraction_line_canvas import ExtractionLineCanvas
 from pychron.extraction_line.graph.extraction_line_graph import ExtractionLineGraph
 from pychron.extraction_line.sample_changer import SampleChanger
@@ -39,11 +53,16 @@ from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
 from pychron.pychron_constants import NULL_STR
 
-
-MANAGERS = {'manometer_manager': ('pychron.extraction_line.manometer_manager', 'ManometerManager'),
-            'cryo_manager': ('pychron.extraction_line.cryo_manager', 'CryoManager'),
-            'gauge_manager': ('pychron.extraction_line.gauge_manager', 'GaugeManager'),
-            'heater_manager': ('pychron.extraction_line.heater_manager', 'HeaterManager')}
+MANAGERS = {
+    "manometer_manager": (
+        "pychron.extraction_line.manometer_manager",
+        "ManometerManager",
+    ),
+    "cryo_manager": ("pychron.extraction_line.cryo_manager", "CryoManager"),
+    "gauge_manager": ("pychron.extraction_line.gauge_manager", "GaugeManager"),
+    "heater_manager": ("pychron.extraction_line.heater_manager", "HeaterManager"),
+    "pump_manager": ("pychron.extraction_line.pump_manager", "PumpManager"),
+}
 
 
 class ExtractionLineManager(Manager, Consoleable):
@@ -52,6 +71,7 @@ class ExtractionLineManager(Manager, Consoleable):
     contains reference to valve manager, gauge manager and laser manager
 
     """
+
     canvas = Instance(ExtractionLineCanvas)
     canvases = List
 
@@ -74,7 +94,7 @@ class ExtractionLineManager(Manager, Consoleable):
     runscript = None
     learner = None
 
-    mode = 'normal'
+    mode = "normal"
 
     valve_state_frequency = Int
     valve_lock_frequency = Int
@@ -96,7 +116,7 @@ class ExtractionLineManager(Manager, Consoleable):
     file_listener = None
 
     wait_group = Instance(WaitGroup, ())
-    console_bgcolor = 'black'
+    console_bgcolor = "black"
 
     _active = False
     _update_status_flag = None
@@ -109,6 +129,7 @@ class ExtractionLineManager(Manager, Consoleable):
         pass
 
     def activate(self):
+        self.bind_preferences()
         self._active = True
         self._load_additional_canvases()
         self._activate_hook()
@@ -118,10 +139,12 @@ class ExtractionLineManager(Manager, Consoleable):
         self.devices = devs
 
     def deactivate(self):
-        if self.gauge_manager:
-            self.gauge_manager.stop_scans()
-        if self.heater_manager:
-            self.heater_manager.stop_scans()
+
+        for t in ("gauge", "heater", "pump"):
+            self.info("start {} scans".format(t))
+            man = getattr(self, "{}_manager".format(t))
+            if man:
+                man.stop_scans()
 
         if self.monitor:
             self.monitor.stop()
@@ -130,46 +153,76 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def bind_preferences(self):
 
-        prefid = 'pychron.extraction_line'
+        prefid = "pychron.extraction_line"
 
-        attrs = ('canvas_path', 'canvas_config_path',
-                 'use_hardware_update', 'hardware_update_period',
-                 'check_master_owner', 'use_network', 'logging_level')
+        attrs = (
+            "canvas_path",
+            "canvas_config_path",
+            "use_hardware_update",
+            "hardware_update_period",
+            "check_master_owner",
+            "use_network",
+            "logging_level",
+        )
 
         for attr in attrs:
             try:
-                bind_preference(self, attr, '{}.{}'.format(prefid, attr))
+                bind_preference(self, attr, "{}.{}".format(prefid, attr))
             except BaseException as e:
-                print('fffffffff', attr, e)
+                print("fffffffff", attr, e)
 
-        bind_preference(self.network, 'inherit_state', '{}.inherit_state'.format(prefid))
+        bind_preference(
+            self.network, "inherit_state", "{}.inherit_state".format(prefid)
+        )
 
-        self.console_bind_preferences('{}.console'.format(prefid))
+        self.console_bind_preferences("{}.console".format(prefid))
 
-        if self.gauge_manager:
-            bind_preference(self.gauge_manager, 'update_period', '{}.gauge_update_period'.format(prefid))
-            bind_preference(self.gauge_manager, 'use_update', '{}.use_gauge_update'.format(prefid))
+        for t in ("gauge", "heater", "pump"):
+            man = getattr(self, "{}_manager".format(t))
+            if man:
+                bind_preference(
+                    man,
+                    "period",
+                    "{}.{}_update_period".format(prefid, t),
+                )
+                bind_preference(
+                    man,
+                    "update_enabled",
+                    "{}.{}_update_enabled".format(prefid, t),
+                )
 
         if self.canvas:
-            bind_preference(self.canvas.canvas2D, 'display_volume', '{}.display_volume'.format(prefid))
-            bind_preference(self.canvas.canvas2D, 'volume_key', '{}.volume_key'.format(prefid))
+            bind_preference(
+                self.canvas.canvas2D,
+                "display_volume",
+                "{}.display_volume".format(prefid),
+            )
+            bind_preference(
+                self.canvas.canvas2D, "volume_key", "{}.volume_key".format(prefid)
+            )
 
     def link_valve_actuation(self, name, func, remove=False):
         if remove:
             try:
                 del self.link_valve_actuation_dict[name]
             except KeyError:
-                self.debug('could not remove "{}". not in dict {}'.format(name,
-                                                                          ','.join(
-                                                                              list(
-                                                                                  self.link_valve_actuation_dict.keys()))))
+                self.debug(
+                    'could not remove "{}". not in dict {}'.format(
+                        name, ",".join(list(self.link_valve_actuation_dict.keys()))
+                    )
+                )
         else:
-            self.debug('adding name="{}", func="{}" to link_valve_actuation_dict'.format(name, func.__name__))
+            self.debug(
+                'adding name="{}", func="{}" to link_valve_actuation_dict'.format(
+                    name, func.__name__
+                )
+            )
             self.link_valve_actuation_dict[name] = func
 
     def enable_auto_reload(self):
-        self.file_listener = fm = FileListener(path=self.canvas_path,
-                                               callback=self.reload_canvas)
+        self.file_listener = fm = FileListener(
+            path=self.canvas_path, callback=self.reload_canvas
+        )
 
     def disable_auto_reload(self):
         if self.file_listener:
@@ -183,19 +236,21 @@ class ExtractionLineManager(Manager, Consoleable):
         """
         sc = self._sample_changer_factory()
         if sc:
-            if self.confirmation_dialog('Ready to Isolate Chamber'):
-                self._handle_console_message(('===== Isolate Chamber =====', 'maroon'))
+            if self.confirmation_dialog("Ready to Isolate Chamber"):
+                self._handle_console_message(("===== Isolate Chamber =====", "maroon"))
                 if not sc.isolate_chamber():
                     return
             else:
                 return
 
-            if self.confirmation_dialog('Ready to Evacuate Chamber'):
-                self._handle_console_message(('===== Evacuate Chamber =====', 'maroon'))
+            if self.confirmation_dialog("Ready to Evacuate Chamber"):
+                self._handle_console_message(("===== Evacuate Chamber =====", "maroon"))
                 err = sc.check_evacuation()
                 if err:
                     name = sc.chamber
-                    msg = 'Are you sure you want to evacuate the {} chamber. {}'.format(name, err)
+                    msg = "Are you sure you want to evacuate the {} chamber. {}".format(
+                        name, err
+                    )
                     if not self.confirmation_dialog(msg):
                         return
 
@@ -205,8 +260,10 @@ class ExtractionLineManager(Manager, Consoleable):
             else:
                 return
 
-            if self.confirmation_dialog('Ready to Finish Sample Change'):
-                self._handle_console_message(('===== Finish Sample Change =====', 'maroon'))
+            if self.confirmation_dialog("Ready to Finish Sample Change"):
+                self._handle_console_message(
+                    ("===== Finish Sample Change =====", "maroon")
+                )
                 sc.finish_chamber_change()
 
     def get_volume(self, node_name):
@@ -217,8 +274,8 @@ class ExtractionLineManager(Manager, Consoleable):
         return v
 
     def test_cryo_communication(self):
-        self.info('test cryo communication')
-        ret, err = True, ''
+        self.info("test cryo communication")
+        ret, err = True, ""
         if self.cryo_manager:
             if self.cryo_manager.simulation:
                 ret = globalv.communication_simulation
@@ -227,8 +284,8 @@ class ExtractionLineManager(Manager, Consoleable):
         return ret, err
 
     def test_gauge_communication(self):
-        self.info('test gauge communication')
-        ret, err = True, ''
+        self.info("test gauge communication")
+        ret, err = True, ""
         if self.gauge_manager:
             if self.gauge_manager.simulation:
                 ret = globalv.communication_simulation
@@ -237,14 +294,14 @@ class ExtractionLineManager(Manager, Consoleable):
         return ret, err
 
     def test_connection(self):
-        self.info('test connection')
+        self.info("test connection")
         return self.test_valve_communication()
 
     def test_valve_communication(self):
-        self.info('test valve communication')
-        ret, err = True, ''
+        self.info("test valve communication")
+        ret, err = True, ""
         if self.switch_manager:
-            if hasattr(self.switch_manager, 'get_state_checksum'):
+            if hasattr(self.switch_manager, "get_state_checksum"):
                 valves = self.switch_manager.switches
                 vkeys = sorted(valves.keys())
                 state = self.switch_manager.get_state_checksum(vkeys)
@@ -276,7 +333,7 @@ class ExtractionLineManager(Manager, Consoleable):
         self._set_logger_level(self.switch_manager)
 
     def reload_canvas(self):
-        self.debug('reload canvas')
+        self.debug("reload canvas")
         self.reload_scene_graph()
         if self.use_network:
             self.network.load(self.canvas_path)
@@ -295,7 +352,7 @@ class ExtractionLineManager(Manager, Consoleable):
         self.refresh_canvas()
 
     def reload_scene_graph(self):
-        self.info('reloading canvas scene')
+        self.info("reloading canvas scene")
         for c in self.canvases:
             self.canvas_editor.load(c.canvas2D, self.canvas_path)
             # c.load_canvas_file(c.config_name)
@@ -330,7 +387,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def set_valve_owner(self, name, owner):
         """
-            set flag indicating if the valve is owned by a system
+        set flag indicating if the valve is owned by a system
         """
         if self.switch_manager is not None:
             self.switch_manager.set_valve_owner(name, owner)
@@ -351,8 +408,10 @@ class ExtractionLineManager(Manager, Consoleable):
                 self.switch_manager.unlock(name)
 
             description = self.switch_manager.get_switch_by_name(name).description
-            self.info('{} ({}) {}'.format(name, description, 'lock' if lock else 'unlock'),
-                      color='blue' if lock else 'black')
+            self.info(
+                "{} ({}) {}".format(name, description, "lock" if lock else "unlock"),
+                color="blue" if lock else "black",
+            )
             self.update_switch_lock_state(name, lock)
 
     def get_state_checksum(self, vkeys):
@@ -381,7 +440,9 @@ class ExtractionLineManager(Manager, Consoleable):
     def get_indicator_state(self, name=None, description=None):
         if self.switch_manager is not None:
             if description is not None and description.strip():
-                return self.switch_manager.get_indicator_state_by_description(description)
+                return self.switch_manager.get_indicator_state_by_description(
+                    description
+                )
             else:
                 return self.switch_manager.get_indicator_state_by_name(name)
 
@@ -395,7 +456,9 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.switch_manager is not None:
             # only query valve states if not already doing a
             # hardware_update via _trigger_update
-            return self.switch_manager.get_states(query=not self.use_hardware_update, version=1)
+            return self.switch_manager.get_states(
+                query=not self.use_hardware_update, version=1
+            )
 
     def get_lock_word(self):
         if self.switch_manager is not None:
@@ -413,6 +476,18 @@ class ExtractionLineManager(Manager, Consoleable):
             names = self.switch_manager.get_valve_names()
         return names
 
+    def get_pipette_counts(self):
+        counts = []
+        if self.switch_manager is not None:
+            counts = self.switch_manager.get_pipette_counts()
+        return counts
+
+    def get_pipette_count(self, name):
+        count = 0
+        if self.switch_manager is not None:
+            count = self.switch_manager.get_pipette_count(name)
+        return count
+
     def get_pressure(self, controller, name):
         if self.gauge_manager:
             return self.gauge_manager.get_pressure(controller, name)
@@ -420,7 +495,7 @@ class ExtractionLineManager(Manager, Consoleable):
     def get_device_value(self, dev_name):
         dev = self.get_device(dev_name)
         if dev is None:
-            self.unique_warning('No device named {}'.format(dev_name))
+            self.unique_warning("No device named {}".format(dev_name))
         else:
             return dev.get()
 
@@ -437,20 +512,20 @@ class ExtractionLineManager(Manager, Consoleable):
         return self._lock_valve(name, False, **kw)
 
     def open_valve(self, name, **kw):
-        return self._open_close_valve(name, 'open', **kw)
+        return self._open_close_valve(name, "open", **kw)
 
     def close_valve(self, name, **kw):
-        return self._open_close_valve(name, 'close', **kw)
+        return self._open_close_valve(name, "close", **kw)
 
     def sample(self, name, **kw):
         def sample():
             valve = self.switch_manager.get_switch_by_name(name)
             if valve is not None:
-                self.info('start sample')
+                self.info("start sample")
                 self.open_valve(name, **kw)
                 time.sleep(valve.sample_period)
 
-                self.info('end sample')
+                self.info("end sample")
                 self.close_valve(name, **kw)
 
         t = Thread(target=sample)
@@ -464,9 +539,9 @@ class ExtractionLineManager(Manager, Consoleable):
                 n = valve.cycle_n
                 period = valve.cycle_period
 
-                self.info('start cycle n={} period={}'.format(n, period))
+                self.info("start cycle n={} period={}".format(n, period))
                 for i in range(n):
-                    self.info('valve cycling iteration ={}'.format(i + 1))
+                    self.info("valve cycling iteration ={}".format(i + 1))
                     self.open_valve(name, **kw)
                     time.sleep(period)
                     self.close_valve(name, **kw)
@@ -482,17 +557,24 @@ class ExtractionLineManager(Manager, Consoleable):
         if self.explanation:
             selected = None
             if obj:
-                selected = next((i for i in self.explanation.explanable_items if obj.name == i.name), None)
+                selected = next(
+                    (
+                        i
+                        for i in self.explanation.explanable_items
+                        if obj.name == i.name
+                    ),
+                    None,
+                )
 
             self.explanation.selected = selected
 
     def new_canvas(self, config=None):
-        c = ExtractionLineCanvas(manager=self,
-                                 display_name='Extraction Line')
+        c = ExtractionLineCanvas(manager=self, display_name="Extraction Line")
         c.load_canvas_file(canvas_config_path=config)
         self.canvases.append(c)
-        c.canvas2D.trait_set(display_volume=self.display_volume,
-                             volume_key=self.volume_key)
+        c.canvas2D.trait_set(
+            display_volume=self.display_volume, volume_key=self.volume_key
+        )
         if self.switch_manager:
             self.switch_manager.load_valve_states()
             self.switch_manager.load_valve_lock_states(force=True)
@@ -508,37 +590,37 @@ class ExtractionLineManager(Manager, Consoleable):
         return wd
 
     def set_experiment_type(self, v):
-        self.debug('setting experiment type={}'.format(v))
+        self.debug("setting experiment type={}".format(v))
         if self.cryo_manager:
             self.cryo_manager.species = v
 
     # =========== Cryo ==============================================================
     def set_cryo(self, v, v2=None, **kw):
-        self.debug('setting cryo to {}, {}'.format(v, v2))
+        self.debug("setting cryo to {}, {}".format(v, v2))
         if self.cryo_manager:
             return self.cryo_manager.set_setpoint(v, v2, **kw)
         else:
-            self.warning('cryo manager not available')
+            self.warning("cryo manager not available")
             return 0, 0
 
     def get_cryo_temp(self, iput):
-        self.debug('get cryo temp {}'.format(iput))
+        self.debug("get cryo temp {}".format(iput))
         if self.cryo_manager:
             return self.cryo_manager.read_input(iput)
         else:
-            self.warning('cryo manager not available')
+            self.warning("cryo manager not available")
             return 0
 
     # ===============================================================================
 
     # ============= Manometer =======================================================
     def get_manometer_pressure(self, idx=0):
-        self.debug('get manometer pressure')
+        self.debug("get manometer pressure")
         ret = 0
         if self.manometer_manager:
             ret = self.manometer_manager.get_pressure(idx)
         else:
-            self.warning('manometer manager not available')
+            self.warning("manometer manager not available")
         return ret
 
     # ===============================================================================
@@ -548,23 +630,24 @@ class ExtractionLineManager(Manager, Consoleable):
     # ===============================================================================
     def _load_additional_canvases(self):
         for ci in self.plugin_canvases:
-            c = ExtractionLineCanvas(manager=self,
-                                     display_name=ci['display_name'], )
-            c.load_canvas_file(ci['canvas_path'], ci['config_path'], ci['valve_path'])
+            c = ExtractionLineCanvas(
+                manager=self,
+                display_name=ci["display_name"],
+            )
+            c.load_canvas_file(ci["canvas_path"], ci["config_path"], ci["valve_path"])
             self.canvases.append(c)
 
     def _activate_hook(self):
 
-        self.monitor = SystemMonitor(manager=self, name='system_monitor')
+        self.monitor = SystemMonitor(manager=self, name="system_monitor")
         self.monitor.monitor()
 
-        if self.gauge_manager:
-            self.info('start gauge scans')
-            self.gauge_manager.start_scans()
-
-        if self.heater_manager:
-            self.info('start heater scans')
-            self.heater_manager.start_scans()
+        # start the managers 'a scanning
+        for t in ("gauge", "heater", "pump"):
+            self.info("start {} scans".format(t))
+            man = getattr(self, "{}_manager".format(t))
+            if man:
+                man.start_scans()
 
         if self.switch_manager and self.use_hardware_update:
             do_after(1000, self._update)
@@ -580,7 +663,7 @@ class ExtractionLineManager(Manager, Consoleable):
                     try:
                         rc = widget.update() or rc
                     except BaseException as e:
-                        self.critical('failed updating widget {}, {}'.format(widget, e))
+                        self.critical("failed updating widget {}, {}".format(widget, e))
             if rc:
                 self.refresh_canvas()
 
@@ -593,13 +676,14 @@ class ExtractionLineManager(Manager, Consoleable):
         pass
 
     def _log_spec_event(self, name, action):
-        sm = self.application.get_service('pychron.spectrometer.scan_manager.ScanManager')
+        sm = self.application.get_service(
+            "pychron.spectrometer.scan_manager.ScanManager"
+        )
         if sm:
-            color = 0x98FF98 if action == 'open' else 0xFF9A9A
-            sm.add_spec_event_marker('{} ({})'.format(name, action),
-                                     mode='valve',
-                                     extra=name,
-                                     bgcolor=color)
+            color = 0x98FF98 if action == "open" else 0xFF9A9A
+            sm.add_spec_event_marker(
+                "{} ({})".format(name, action), mode="valve", extra=name, bgcolor=color
+            )
 
     def _enable_valve(self, description, state):
         if self.switch_manager:
@@ -632,7 +716,9 @@ class ExtractionLineManager(Manager, Consoleable):
                 name = vm.get_name_by_description(description, name=name)
 
             if not name:
-                self.warning('Invalid valve name={}, description={}'.format(oname, description))
+                self.warning(
+                    "Invalid valve name={}, description={}".format(oname, description)
+                )
                 return False
 
             v = vm.get_switch_by_name(name)
@@ -645,7 +731,9 @@ class ExtractionLineManager(Manager, Consoleable):
             self.refresh_canvas()
             return True
 
-    def _open_close_valve(self, name, action, description=None, address=None, mode='remote', **kw):
+    def _open_close_valve(
+        self, name, action, description=None, address=None, mode="remote", **kw
+    ):
         vm = self.switch_manager
         if vm is not None:
             oname = name
@@ -657,14 +745,16 @@ class ExtractionLineManager(Manager, Consoleable):
 
             # check if specified valve is in the valves.xml file
             if not name:
-                self.warning('Invalid valve name={}, description={}'.format(oname, description))
+                self.warning(
+                    "Invalid valve name={}, description={}".format(oname, description)
+                )
                 return False, False
 
             result = self._change_switch_state(name, mode, action, **kw)
 
-            self.debug('open_close_valve, mode={} result={}'.format(mode, result))
-            if mode == 'script':
-                invoke_in_main_thread(self.refresh_canvas)
+            self.debug("open_close_valve, mode={} result={}".format(mode, result))
+            # if mode == 'script':
+            #     invoke_in_main_thread(self.refresh_canvas)
 
             if result:
                 if all(result):
@@ -673,8 +763,12 @@ class ExtractionLineManager(Manager, Consoleable):
                         description = valve.description
                         self._log_spec_event(name, action)
 
-                        self.info('{:<6s} {} ({})'.format(action.upper(), valve.name, description),
-                                  color='red' if action == 'close' else 'green')
+                        self.info(
+                            "{:<6s} {} ({})".format(
+                                action.upper(), valve.name, description
+                            ),
+                            color="red" if action == "close" else "green",
+                        )
 
                         vm.actuate_children(name, action, mode)
                         ld = self.link_valve_actuation_dict
@@ -683,33 +777,43 @@ class ExtractionLineManager(Manager, Consoleable):
                                 func = ld[name]
                                 func(name, action)
                             except KeyError:
-                                self.debug('name="{}" not in '
-                                           'link_valve_actuation_dict. keys={}'.format(name, ','.join(list(ld.keys()))))
+                                self.debug(
+                                    'name="{}" not in '
+                                    "link_valve_actuation_dict. keys={}".format(
+                                        name, ",".join(list(ld.keys()))
+                                    )
+                                )
 
             return result
+
+        return True, True
 
     def _change_switch_state(self, name, mode, action, sender_address=None, **kw):
         result, change = False, False
         if self._check_ownership(name, sender_address):
-            func = getattr(self.switch_manager, '{}_by_name'.format(action))
+            func = getattr(self.switch_manager, "{}_by_name".format(action))
             ret = func(name, mode=mode, **kw)
-            self.debug('change switch state name={} action={} ret={}'.format(name, action, ret))
+            self.debug(
+                "change switch state name={} action={} ret={}".format(name, action, ret)
+            )
             if ret:
                 result, change = ret
                 if isinstance(result, bool):
                     if change:
-                        self.update_switch_state(name, True if action == 'open' else False)
+                        self.update_switch_state(
+                            name, True if action == "open" else False
+                        )
         return result, change
 
     def _check_ownership(self, name, requestor, force=False):
         """
-            check if this valve is owned by
-            another client 
-            
-            if this is not a client but you want it to 
-            respect valve ownership 
-            set check_master_owner=True
-            
+        check if this valve is owned by
+        another client
+
+        if this is not a client but you want it to
+        respect valve ownership
+        set check_master_owner=True
+
         """
         ret = True
 
@@ -717,7 +821,7 @@ class ExtractionLineManager(Manager, Consoleable):
             if requestor is None:
                 requestor = gethostbyname(gethostname())
 
-            self.debug('checking ownership. requestor={}'.format(requestor))
+            self.debug("checking ownership. requestor={}".format(requestor))
             try:
                 v = self.switch_manager.switches[name]
                 ret = not (v.owner and v.owner != requestor)
@@ -728,7 +832,7 @@ class ExtractionLineManager(Manager, Consoleable):
     def _set_pipette_counts(self, name, value):
         for c in self.canvases:
             scene = c.canvas2D.scene
-            obj = scene.get_item('vlabel_{}Pipette'.format(name))
+            obj = scene.get_item("vlabel_{}".format(name))
             if obj is not None:
                 obj.value = int(value)
                 c.refresh()
@@ -739,7 +843,7 @@ class ExtractionLineManager(Manager, Consoleable):
             sc = SampleChanger(manager=self)
 
         if sc.setup():
-            result = sc.edit_traits(view='chamber_select_view')
+            result = sc.edit_traits(view="chamber_select_view")
             if result:
                 if sc.chamber and sc.chamber != NULL_STR:
                     self.sample_changer = sc
@@ -750,14 +854,21 @@ class ExtractionLineManager(Manager, Consoleable):
         # if 'fusions' in manager:
         # package = 'pychron.managers.laser_managers.{}'.format(manager)
         # self.laser_manager_id = manager
-        if 'rpc' in manager:
-            package = 'pychron.rpc.manager'
+        if "rpc" in manager:
+            package = "pychron.rpc.manager"
         else:
-            package = 'pychron.managers.{}'.format(manager)
+            package = "pychron.managers.{}".format(manager)
 
-        if manager in ('switch_manager', 'gauge_manager', 'multiplexer_manager',
-                       'cryo_manager', 'manometer_manager', 'heater_manager'):
-            if manager == 'switch_manager':
+        if manager in (
+            "switch_manager",
+            "gauge_manager",
+            "multiplexer_manager",
+            "cryo_manager",
+            "manometer_manager",
+            "heater_manager",
+            "pump_manager",
+        ):
+            if manager == "switch_manager":
                 man = self._switch_manager_factory()
                 self.switch_manager = man
                 return man
@@ -771,20 +882,24 @@ class ExtractionLineManager(Manager, Consoleable):
         else:
             class_factory = self.get_manager_factory(package, klass, warn=False)
             if class_factory is None:
-                package = 'pychron.extraction_line.{}'.format(manager)
+                package = "pychron.extraction_line.{}".format(manager)
                 class_factory = self.get_manager_factory(package, klass)
             if class_factory:
                 m = class_factory(**params)
                 self.add_trait(manager, m)
                 return m
             else:
-                self.debug('could not create manager {}, {},{},{}'.format(klass, manager, params, kw))
+                self.debug(
+                    "could not create manager {}, {},{},{}".format(
+                        klass, manager, params, kw
+                    )
+                )
 
     def _set_logger_level(self, obj=None):
         level = LOG_LEVELS.get(self.logging_level, logging.DEBUG)
         if obj:
-            getattr(obj, 'logger').setLevel(level)
-            if hasattr(obj, 'set_logger_level_hook'):
+            getattr(obj, "logger").setLevel(level)
+            if hasattr(obj, "set_logger_level_hook"):
                 obj.set_logger_level_hook(level)
 
     # ===============================================================================
@@ -796,7 +911,7 @@ class ExtractionLineManager(Manager, Consoleable):
             if self.switch_manager:
                 self._set_logger_level(self.switch_manager)
 
-    @on_trait_change('use_hardware_update')
+    @on_trait_change("use_hardware_update")
     def _update_use_hardware_update(self):
         if self.use_hardware_update:
             do_after(1000, self._update)
@@ -805,7 +920,7 @@ class ExtractionLineManager(Manager, Consoleable):
     def _update_pipette_counts(self, obj, name, old, new):
         self._set_pipette_counts(obj.name, new)
 
-    @on_trait_change('use_network,network:inherit_state')
+    @on_trait_change("use_network,network:inherit_state")
     def _update_network(self):
         from pychron.canvas.canvas2D.scene.primitives.valves import Valve
 
@@ -824,7 +939,7 @@ class ExtractionLineManager(Manager, Consoleable):
                     net.set_valve_state(k, vi.state)
             self.reload_canvas()
 
-    @on_trait_change('display_volume,volume_key')
+    @on_trait_change("display_volume,volume_key")
     def _update_canvas_inspector(self, name, new):
         for c in self.canvases:
             c.canvas2D.trait_set(**{name: new})
@@ -840,7 +955,7 @@ class ExtractionLineManager(Manager, Consoleable):
                 # self.update_switch_state(refresh=i == n - 1, *ni)
 
     def _handle_lock_state(self, new):
-        self.debug('refresh_lock_state fired. {}'.format(new))
+        self.debug("refresh_lock_state fired. {}".format(new))
         self.update_switch_lock_state(*new)
 
     def _handle_owned_state(self, new):
@@ -869,25 +984,26 @@ class ExtractionLineManager(Manager, Consoleable):
     def _switch_manager_factory(self):
         klass = self._get_switch_manager_klass()
         vm = klass(application=self.application)
-        vm.on_trait_change(self._handle_state, 'refresh_state')
-        vm.on_trait_change(self._handle_lock_state, 'refresh_lock_state')
-        vm.on_trait_change(self._handle_owned_state, 'refresh_owned_state')
-        vm.on_trait_change(self._handle_refresh_canvas, 'refresh_canvas_needed')
-        vm.on_trait_change(self._handle_console_message, 'console_message')
-        vm.on_trait_change(self._update_pipette_counts, 'pipette_trackers:counts')
-        bind_preference(vm, 'valves_path', 'pychron.extraction_line.valves_path')
+        vm.on_trait_change(self._handle_state, "refresh_state")
+        vm.on_trait_change(self._handle_lock_state, "refresh_lock_state")
+        vm.on_trait_change(self._handle_owned_state, "refresh_owned_state")
+        vm.on_trait_change(self._handle_refresh_canvas, "refresh_canvas_needed")
+        vm.on_trait_change(self._handle_console_message, "console_message")
+        vm.on_trait_change(self._update_pipette_counts, "pipette_trackers:counts")
+        bind_preference(vm, "valves_path", "pychron.extraction_line.valves_path")
 
         return vm
 
     def _get_switch_manager_klass(self):
         from pychron.extraction_line.switch_manager import SwitchManager
+
         return SwitchManager
 
     def _explanation_default(self):
         e = ExtractionLineExplanation()
         if self.switch_manager is not None:
             e.load(self.switch_manager.switches)
-            self.switch_manager.on_trait_change(e.refresh, 'refresh_explanation')
+            self.switch_manager.on_trait_change(e.refresh, "refresh_explanation")
         return e
 
     def _canvas_default(self):
@@ -897,10 +1013,10 @@ class ExtractionLineManager(Manager, Consoleable):
         return ExtractionLineGraph()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     elm = ExtractionLineManager()
     elm.bootstrap()
-    elm.canvas.style = '2D'
+    elm.canvas.style = "2D"
     elm.configure_traits()
 
 # =================== EOF ================================

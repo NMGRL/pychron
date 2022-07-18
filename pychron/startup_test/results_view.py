@@ -24,6 +24,7 @@ from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 from traits.api import Instance, Int, Property, String, Bool
 from traitsui.api import Controller, UItem, TabularEditor, VGroup, UReadonly
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -35,22 +36,28 @@ from pychron.envisage.resources import icon
 from pychron.pychron_constants import LIGHT_GREEN, LIGHT_RED, LIGHT_YELLOW
 from pychron.startup_test.tester import TestResult
 
-COLOR_MAP = {'Passed': LIGHT_GREEN,
-             'Skipped': 'lightblue',
-             'Failed': LIGHT_RED,
-             'Invalid': LIGHT_YELLOW}
-ICON_MAP = {'Passed': 'green_ball',
-            'Skipped': 'gray_ball',
-            'Failed': 'red_ball',
-            'Invalid': 'yellow_ball'}
+COLOR_MAP = {
+    "Passed": LIGHT_GREEN,
+    "Skipped": "lightblue",
+    "Failed": LIGHT_RED,
+    "Invalid": LIGHT_YELLOW,
+}
+ICON_MAP = {
+    "Passed": "green_ball",
+    "Skipped": "gray_ball",
+    "Failed": "red_ball",
+    "Invalid": "yellow_ball",
+}
 
 
 class ResultsAdapter(TabularAdapter):
-    columns = [('', 'result_image'),
-               ('Plugin', 'plugin'),
-               ('Name', 'name'),
-               ('Duration (s)', 'duration'),
-               ('Result', 'result')]
+    columns = [
+        ("", "result_image"),
+        ("Plugin", "plugin"),
+        ("Name", "name"),
+        ("Duration (s)", "duration"),
+        ("Result", "result"),
+    ]
     plugin_width = Int(200)
     name_width = Int(190)
     duration_width = Int(80)
@@ -59,7 +66,7 @@ class ResultsAdapter(TabularAdapter):
     result_image_text = Property
 
     def _get_result_image_text(self):
-        return ''
+        return ""
 
     def _get_result_image_image(self):
         return icon(ICON_MAP[self.item.result])
@@ -72,12 +79,12 @@ class ResultsAdapter(TabularAdapter):
 
 
 class ResultsView(Controller):
-    model = Instance('pychron.startup_test.tester.StartupTester')
+    model = Instance("pychron.startup_test.tester.StartupTester")
     auto_close = 5
     selected = Instance(TestResult, ())
     cancel_auto_close = Bool(False)
 
-    base_help_str = 'Select any row to cancel auto close. Auto close in {}'
+    base_help_str = "Select any row to cancel auto close. Auto close in {}"
     help_str = String
     _auto_closed = False
     can_cancel = Bool(True)
@@ -96,7 +103,7 @@ class ResultsView(Controller):
             self.help_str = self.base_help_str.format(delay - int(ct))
 
         if self.cancel_auto_close:
-            self.help_str = 'Auto close canceled'
+            self.help_str = "Auto close canceled"
         else:
             invoke_in_main_thread(self._do_auto_close)
 
@@ -106,21 +113,27 @@ class ResultsView(Controller):
             t.start()
             # do_after(self.auto_close * 1000, self._do_auto_close)
         else:
-            self.help_str = ''
+            self.help_str = ""
 
     def closed(self, info, is_ok):
         import sys
 
         if not self._auto_closed and not is_ok:
-            if confirm(info.ui.control, 'Are you sure you want to Quit?') == YES:
-                self.model.info('User quit because of Startup fail')
+            if confirm(info.ui.control, "Are you sure you want to Quit?") == YES:
+                self.model.info("User quit because of Startup fail")
 
                 sys.exit()
         else:
             if not self.model.ok_close():
-                if confirm(info.ui.control, 'Pychron is not communicating with a Spectrometer.\n'
-                                            'Are you sure you want to enter '
-                                            'Spectrometer Simulation mode?') != YES:
+                if (
+                    confirm(
+                        info.ui.control,
+                        "Pychron is not communicating with a Spectrometer.\n"
+                        "Are you sure you want to enter "
+                        "Spectrometer Simulation mode?",
+                    )
+                    != YES
+                ):
                     sys.exit()
 
     def _do_auto_close(self):
@@ -133,28 +146,43 @@ class ResultsView(Controller):
 
     def traits_view(self):
         if self.can_cancel:
-            buttons = ['OK', 'Cancel']
+            buttons = ["OK", "Cancel"]
         else:
-            buttons = ['OK']
+            buttons = ["OK"]
 
-        v = okcancel_view(VGroup(UItem('results', editor=TabularEditor(adapter=ResultsAdapter(),
-                                                                       editable=False,
-                                                                       selected='controller.selected')),
-                                 VGroup(UReadonly('controller.selected.description'),
-                                        show_border=True,
-                                        label='Description'),
-                                 VGroup(UReadonly('controller.selected.error'),
-                                        show_border=True,
-                                        visible_when='controller.selected.error',
-                                        label='Error'),
-                                 VGroup(UReadonly('controller.help_str'),
-                                        show_border=True,
-                                        visible_when='controller.help_str')),
-                          title='Test Results',
-
-                          buttons=buttons,
-                          height=500,
-                          width=650)
+        v = okcancel_view(
+            VGroup(
+                UItem(
+                    "results",
+                    editor=TabularEditor(
+                        adapter=ResultsAdapter(),
+                        editable=False,
+                        selected="controller.selected",
+                    ),
+                ),
+                VGroup(
+                    UReadonly("controller.selected.description"),
+                    show_border=True,
+                    label="Description",
+                ),
+                VGroup(
+                    UReadonly("controller.selected.error"),
+                    show_border=True,
+                    visible_when="controller.selected.error",
+                    label="Error",
+                ),
+                VGroup(
+                    UReadonly("controller.help_str"),
+                    show_border=True,
+                    visible_when="controller.help_str",
+                ),
+            ),
+            title="Test Results",
+            buttons=buttons,
+            height=500,
+            width=650,
+        )
         return v
+
 
 # ============= EOF =============================================

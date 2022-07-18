@@ -21,7 +21,7 @@ class MockLJM:
         pass
 
     def eReadName(self, *args, **kw):
-        return '0'
+        return "0"
 
 
 ljm = MockLJM()

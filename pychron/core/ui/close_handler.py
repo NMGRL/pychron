@@ -43,4 +43,6 @@ class CloseHandler(Handler):
         if info.initialized:
             if info.ui:
                 info.ui.dispose()
+
+
 # ============= EOF =============================================

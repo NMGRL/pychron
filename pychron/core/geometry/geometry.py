@@ -18,7 +18,20 @@
 # ============= standard library imports ========================
 import math
 
-from numpy import array, vstack, mean, average, hstack, zeros, gradient
+from numpy import (
+    array,
+    vstack,
+    mean,
+    average,
+    hstack,
+    zeros,
+    gradient,
+    asarray,
+    ones_like,
+    column_stack,
+    ones,
+)
+
 # ============= local library imports  ==========================
 from numpy.linalg import norm
 
@@ -28,8 +41,8 @@ from numpy.linalg import norm
 
 def sort_clockwise(pts, xy, reverse=False):
     """
-        pts = list of points
-        xy = list of corresponding x,y tuples
+    pts = list of points
+    xy = list of corresponding x,y tuples
     """
     xy = array(xy)
     # sort points clockwise
@@ -49,38 +62,40 @@ def sort_clockwise(pts, xy, reverse=False):
 
 #    self.points = list(pts)
 
+
 def calc_point_along_line(x1, y1, x2, y2, L):
     """
-        calculate pt (x,y) that is L units from x1, y1
+    calculate pt (x,y) that is L units from x1, y1
 
-        if calculated pt is past endpoint use endpoint
+    if calculated pt is past endpoint use endpoint
 
 
-                    * x2,y2
-                  /
-                /
-          L--- * x,y
-          |  /
-          *
-        x1,y1
+                * x2,y2
+              /
+            /
+      L--- * x,y
+      |  /
+      *
+    x1,y1
 
-        L**2=(x-x1)**2+(y-y1)**2
-        y=m*x+b
+    L**2=(x-x1)**2+(y-y1)**2
+    y=m*x+b
 
-        0=(x-x1)**2+(m*x+b-y1)**2-L**2
+    0=(x-x1)**2+(m*x+b-y1)**2-L**2
 
-        solve for x
+    solve for x
     """
-    run = (x2 - x1)
+    run = x2 - x1
 
     if run:
         from scipy.optimize import fsolve
+
         m = (y2 - y1) / float(run)
         b = y2 - m * x2
-        f = lambda x: (x - x1) ** 2 + (m * x + b - y1) ** 2 - L ** 2
+        f = lambda x: (x - x1) ** 2 + (m * x + b - y1) ** 2 - L**2
 
         # initial guess x 1/2 between x1 and x2
-        x = fsolve(f, x1 + (x2 - x1) / 2.)[0]
+        x = fsolve(f, x1 + (x2 - x1) / 2.0)[0]
         y = m * x + b
 
     else:
@@ -99,14 +114,14 @@ def calc_point_along_line(x1, y1, x2, y2, L):
 
 
 def calculate_reference_frame_center(r1, r2, R1, R2):
-    '''
-        r1=x,y p1 in frame 1 (data space)
-        r2=x,y p2 in frame 1
-        R1=x,y p1 in frame 2 (screen space)
-        R2=x,y p2 in frame 2
+    """
+    r1=x,y p1 in frame 1 (data space)
+    r2=x,y p2 in frame 1
+    R1=x,y p1 in frame 2 (screen space)
+    R2=x,y p2 in frame 2
 
-        given r1, r2, R1, R2 calculate center of frame 1 in frame 2 space
-    '''
+    given r1, r2, R1, R2 calculate center of frame 1 in frame 2 space
+    """
     # calculate delta rotation for r1 in R2
     a1 = calc_angle(R1, R2)
     a2 = calc_angle(r1, r2)
@@ -122,7 +137,7 @@ def calculate_reference_frame_center(r1, r2, R1, R2):
     RL = calc_length(R1, R2)
     rperR = abs(RL / rL)
 
-    print('rrrr', rL, RL)
+    print("rrrr", rL, RL)
     print(r1, r2, R1, R2)
     # calculate center
     cx = R1[0] - r1Rx * rperR
@@ -147,6 +162,7 @@ def calc_length(v1, v2):
 
 def calc_distances(v1, v2):
     from scipy.spatial.distance import cdist
+
     return cdist(v1, v2)
 
 
@@ -159,26 +175,30 @@ def calc_angle(p1, p2):
 def arc_cost_func(p, p1, p2, r):
     x0, y0 = p1
     x1, y1 = p2
-    e1 = (p[0] - x0) ** 2 + (p[1] - y0) ** 2 - r ** 2
-    e2 = (p[0] - x1) ** 2 + (p[1] - y1) ** 2 - r ** 2
+    e1 = (p[0] - x0) ** 2 + (p[1] - y0) ** 2 - r**2
+    e2 = (p[0] - x1) ** 2 + (p[1] - y1) ** 2 - r**2
     return [e1, e2]
 
 
 def find_arc_center(p1, p2, r):
     """
-        given p1, p2 of an arc with radius r find the center cx,cy of the arc
+    given p1, p2 of an arc with radius r find the center cx,cy of the arc
 
-        p1: x,y
-        p2: x,y
-        r: radius float
+    p1: x,y
+    p2: x,y
+    r: radius float
 
-        return:
-            cx,cy
+    return:
+        cx,cy
     """
 
     from scipy.optimize import fsolve
-    cx, cy = fsolve(arc_cost_func, [0, 0], args=(p1, p2, r))
-    return cx, cy
+
+    x, info, status, message = fsolve(
+        arc_cost_func, [0, 0], args=(p1, p2, r), full_output=True
+    )
+    if status == 1:
+        return x
 
 
 def approximage_polygon_center2(pts, r, weight=True):
@@ -193,7 +213,7 @@ def approximage_polygon_center2(pts, r, weight=True):
     """
 
     n = len(pts)
-    cs = zeros(n ** 2)
+    cs = zeros(n**2)
 
     for i, p0 in enumerate(pts):
         for j, p1 in enumerate(pts):
@@ -214,54 +234,177 @@ def approximage_polygon_center2(pts, r, weight=True):
 
 def approximate_polygon_center(pts, r, weight=True):
     """
-        given a list of polygon vertices and a known radius
-        approximate the center of the polygon using the mean of xs,ys
-        where xs,ys are the arc centers for different arc segments of the polygon
+    given a list of polygon vertices and a known radius
+    approximate the center of the polygon using the mean of xs,ys
+    where xs,ys are the arc centers for different arc segments of the polygon
 
-        if weight is true calculate a weighted mean
-        where the weigthts 1/d**2 and d= distance from pt to centroid
+    if weight is true calculate a weighted mean
+    where the weigthts 1/d**2 and d= distance from pt to centroid
     """
 
     n = len(pts)
-    cxs = []
-    cys = []
+    # cxs = []
+    # cys = []
 
     pts = array(pts)
     pts = vstack((pts, pts))
-    for i in range(2 * n - 5):
-        p1 = pts[i]
-        p2 = pts[i + 4]
-        cx, cy = find_arc_center(p1, p2, r)
-        cxs.append(cx)
-        cys.append(cy)
+    # for i in range(2 * n - 5):
+    #     p1 = pts[i]
+    #     p2 = pts[i + 4]
+    m = int(n / 3)
+    # for i in range(n):
+    #     p1 = pts[i]
+    #     p2 = pts[(i + m) % n]
+    #
+    #     cx, cy = find_arc_center(p1, p2, r)
+    #     cxs.append(cx)
+    #     cys.append(cy)
 
-    mcx = mean(cxs)
-    mcy = mean(cys)
+    cs = [find_arc_center(pts[i], pts[(i + m) % n], r) for i in range(n)]
+    cs = [c for c in cs if c is not None]
+    if cs:
+        cxs, cys = zip(*cs)
 
-    if weight:
-        # pts = sort_clockwise(pts, pts)
-        #        cenx, ceny = calculate_centroid(array(pts))
-        cxs = array(cxs)
-        cys = array(cys)
-        # weight each arc center by the inverse distance to the centroid
-        #        ws = ((cxs - cenx) ** 2 + (cys - ceny) ** 2) ** -0.5
-        # weight each arc center by the inverse distance to the mean
-        ws = ((cxs - mcx) ** 2 + (cys - mcy) ** 2) ** -2
-        mcx = average(cxs, weights=ws)
-        mcy = average(cys, weights=ws)
+        mcx = mean(cxs)
+        mcy = mean(cys)
 
-    return mcx, mcy
+        if weight:
+            # pts = sort_clockwise(pts, pts)
+            #        cenx, ceny = calculate_centroid(array(pts))
+            cxs = array(cxs)
+            cys = array(cys)
+            # weight each arc center by the inverse distance to the centroid
+            #        ws = ((cxs - cenx) ** 2 + (cys - ceny) ** 2) ** -0.5
+            # weight each arc center by the inverse distance to the mean
+            ws = ((cxs - mcx) ** 2 + (cys - mcy) ** 2) ** -2
+            mcx = average(cxs, weights=ws)
+            mcy = average(cys, weights=ws)
+
+        return mcx, mcy
+
+
+TRANSPOSE = array([[0, -1], [1, 0]])
+
+
+def get_intersections(p0, r0, p1, r1):
+    """
+    https://stackoverflow.com/questions/55816902/finding-the-intersection-of-two-circles
+
+
+    :return:
+    """
+
+    x0, y0 = p0
+    x1, y1 = p1
+
+    # circle 1: (x0, y0), radius r0
+    # circle 2: (x1, y1), radius r1
+    dx = x1 - x0
+    dy = y1 - y0
+    d = (dx**2 + dy**2) ** 0.5
+    # d = math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)
+
+    # non intersecting
+    if d > r0 + r1:
+        return None
+    # One circle within other
+    if d < abs(r0 - r1):
+        return None
+    # coincident circles
+    if d == 0 and r0 == r1:
+        return None
+    else:
+        a = (r0**2 - r1**2 + d**2) / (2 * d)
+        h = (r0**2 - a**2) ** 0.5
+        # h = math.sqrt(r0 ** 2 - a ** 2)
+        # x2 = x0 + a * (x1 - x0) / d
+        # y2 = y0 + a * (y1 - y0) / d
+        # x3 = x2 + h * (y1 - y0) / d
+        # y3 = y2 - h * (x1 - x0) / d
+        #
+        # x4 = x2 - h * (y1 - y0) / d
+        # y4 = y2 + h * (x1 - x0) / d
+
+        dxd = dx / d
+        dyd = dy / d
+
+        x2 = x0 + a * dxd
+        y2 = y0 + a * dyd
+        x3 = x2 + h * dyd
+        y3 = y2 - h * dxd
+
+        # x4 = x2 - h * dyd
+        # y4 = y2 + h * dxd
+
+        return x3, y3  # , x4, y4
+
+
+def approximate_polygon_center3(pts, r, width, height, weight=True, k=3, freq=6):
+    """
+    get 2 points
+    if d btw points is > 2*r skip
+    find the 2 other points that make the 2 isosceles triangles with side r. This is also
+    the intersection of 2 circles centers at the 2 points with radius r
+    take weighted mean. weight by distance to average
+
+    :param pts:
+    :param r:
+    :param weight:
+    :return:
+    """
+
+    # ppts = []
+    pts = pts[::freq]
+    n = len(pts)
+    rpts = []
+    pad = 3
+    m = n / k
+    for i, p_i in enumerate(pts):
+        j = int((i + m) % n)
+        p_j = pts[j]
+        if (
+            pad < p_i[0] < width - pad
+            and pad < p_i[1] < height - pad
+            and pad < p_j[0] < width - pad
+            and pad < p_j[1] < height - pad
+        ):
+            npts = get_intersections(p_i, r, p_j, r)
+            if npts:
+                # x3, y3, x4, y4 = npts
+                x3, y3 = npts
+                if pad < x3 < width - pad and pad < y3 < height - pad:
+                    rpts.append((x3, y3))
+
+                # if pad < x4 < width - pad and pad < y4 < height - pad:
+                #     rpts.append((x4, y4))
+    if rpts:
+        rpts = array(rpts)
+        xs = rpts[:, 0]
+        ys = rpts[:, 1]
+        ws = ones_like(xs)
+        if weight:
+            n = rpts.shape[0]
+            if n > 1:
+                cxs = ones(rpts.shape[0]) * xs.mean()
+                cys = ones(rpts.shape[0]) * ys.mean()
+
+                ds = calc_distances(rpts, column_stack((cxs, cys))).T[0]
+                ws = 1 / ds**2
+
+        mcx = average(xs, weights=ws)
+        mcy = average(ys, weights=ws)
+        return mcx, mcy, rpts
 
 
 def approximate_polygon_center2(pts, r=None):
-    '''
-        this is the ideal solution however it doesnt work as well 
-        as approximage_polygon_center when there are outliers
-     
-        iteratively remove points that are R from the xm,ym
-        
-        is faster and prefered approximate_polygon_center
-    '''
+    """
+    this is the ideal solution however it doesnt work as well
+    as approximage_polygon_center when there are outliers
+
+    iteratively remove points that are R from the xm,ym
+
+    is faster and prefered approximate_polygon_center
+    """
 
     from scipy.optimize import fmin
     from numpy import linalg
@@ -277,9 +420,9 @@ def approximate_polygon_center2(pts, r=None):
         return (array(npts) ** 2).sum()
 
     def make_new_point_list(p, r, tol=1):
-        '''
-            filter points 
-        '''
+        """
+        filter points
+        """
         X, Y = p.T
         xm = X.mean()
         ym = Y.mean()
@@ -318,7 +461,7 @@ def approximate_polygon_center2(pts, r=None):
 def curvature(ys):
     d = gradient(ys)
     dd = gradient(d)
-    c = dd / (1 + d ** 2) ** 1.5
+    c = dd / (1 + d**2) ** 1.5
     cs = abs(c)
     return cs
 
@@ -328,13 +471,13 @@ def curvature_at(ys, x):
     return cs[int(x)]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from numpy import linspace
     import matplotlib.pyplot as plt
 
     xs = linspace(0, 10, 100)
-    ys = 1 * xs ** 2
-    ys2 = 3 * xs ** 2
+    ys = 1 * xs**2
+    ys2 = 3 * xs**2
 
     plt.subplot(2, 1, 1)
     plt.plot(xs, curvature(ys))

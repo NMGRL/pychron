@@ -18,8 +18,13 @@ from traits.trait_types import Event
 
 from pychron.core.helpers.filetools import glob_list_directory, list_directory
 from pychron.core.helpers.strtools import csv_to_ints
-from pychron.experiment.utilities.position_regex import SLICE_REGEX, SSLICE_REGEX, PSLICE_REGEX, CSLICE_REGEX, \
-    TRANSECT_REGEX
+from pychron.experiment.utilities.position_regex import (
+    SLICE_REGEX,
+    SSLICE_REGEX,
+    PSLICE_REGEX,
+    CSLICE_REGEX,
+    TRANSECT_REGEX,
+)
 from pychron.paths import paths
 from pychron.pychron_constants import LINE_STR, NULL_STR
 
@@ -48,10 +53,10 @@ def EKlass(klass):
 
 
 def increment_value(m, increment=1):
-    s = ','
+    s = ","
     if s not in m:
         m = (m,)
-        s = ''
+        s = ""
     else:
         m = m.split(s)
 
@@ -66,8 +71,13 @@ def increment_value(m, increment=1):
 
 
 def increment_position(pos):
-    for regex, sfunc, ifunc, _ in (SLICE_REGEX, SSLICE_REGEX,
-                                   PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
+    for regex, sfunc, ifunc, _ in (
+        SLICE_REGEX,
+        SSLICE_REGEX,
+        PSLICE_REGEX,
+        CSLICE_REGEX,
+        TRANSECT_REGEX,
+    ):
         if regex.match(pos):
             return ifunc(pos)
     else:
@@ -81,12 +91,17 @@ def increment_position(pos):
             except IndexError:
                 pass
             ms.append(mi + offset + inc)
-        return ','.join(map(str, ms))
+        return ",".join(map(str, ms))
 
 
 def generate_positions(pos):
-    for regex, func, ifunc, _ in (SLICE_REGEX, SSLICE_REGEX,
-                                  PSLICE_REGEX, CSLICE_REGEX, TRANSECT_REGEX):
+    for regex, func, ifunc, _ in (
+        SLICE_REGEX,
+        SSLICE_REGEX,
+        PSLICE_REGEX,
+        CSLICE_REGEX,
+        TRANSECT_REGEX,
+    ):
         if regex.match(pos):
             return func(pos)
     else:
@@ -95,8 +110,8 @@ def generate_positions(pos):
 
 def get_run_blocks():
     p = paths.run_block_dir
-    blocks = glob_list_directory(p, '.txt', remove_extension=True)
-    return ['RunBlock', LINE_STR] + blocks
+    blocks = glob_list_directory(p, ".txt", remove_extension=True)
+    return ["RunBlock", LINE_STR] + blocks
 
 
 def get_comment_templates():
@@ -105,15 +120,17 @@ def get_comment_templates():
     return templates
 
 
-def remove_file_extension(name, ext='.py'):
+def remove_file_extension(name, ext=".py"):
     if not name:
         return name
 
     if name is NULL_STR:
         return NULL_STR
 
-    if name.endswith('.py'):
+    if name.endswith(".py"):
         name = name[:-3]
 
     return name
+
+
 # ============= EOF =============================================

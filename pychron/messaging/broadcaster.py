@@ -33,7 +33,7 @@ class Broadcaster(HeadlessLoggable):
     @property
     def url(self):
         host = gethostbyname(gethostname())
-        return '{}:{}'.format(host, self.port)
+        return "{}:{}".format(host, self.port)
 
     def setup(self, port):
         context = zmq.Context()
@@ -41,26 +41,27 @@ class Broadcaster(HeadlessLoggable):
 
     def send_message(self, msg, verbose=True):
         if verbose:
-            self.info('pushing message - {}'.format(msg))
+            self.info("pushing message - {}".format(msg))
         self._send(msg)
 
     # private
     def _setup_publish(self, context, port):
         sock = context.socket(zmq.PUB)
-        sock.bind('tcp://*:{}'.format(port))
+        sock.bind("tcp://*:{}".format(port))
         self._sock = sock
 
     def _send(self, msg):
         if not self.enabled:
             return
-        
+
         with self._lock:
             if self._sock:
                 try:
                     self._sock.send_string(msg)
                 except zmq.ZMQBaseError as e:
-                    self.warning('failed sending message: error {}: {}'.format(e, msg))
+                    self.warning("failed sending message: error {}: {}".format(e, msg))
             else:
-                self.debug('notifier not setup')
+                self.debug("notifier not setup")
+
 
 # ============= EOF =============================================

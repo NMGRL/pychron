@@ -23,13 +23,12 @@ from traitsui.tabular_adapter import TabularAdapter
 from pychron.envisage.resources import icon
 from pychron.experiment.utilities.conditionals import level_text, level_color
 
-
-GREENBALL = icon('green_ball')
+GREENBALL = icon("green_ball")
 
 
 class BaseConditionalsAdapter(TabularAdapter):
     level_text = Property
-    tripped_text = Str('')
+    tripped_text = Str("")
     tripped_image = Property
 
     def get_bg_color(self, obj, trait, row, column=0):
@@ -45,24 +44,29 @@ class BaseConditionalsAdapter(TabularAdapter):
 
 
 class PRConditionalsAdapter(BaseConditionalsAdapter):
-    columns = [('Tripped', 'tripped'),
-               ('Level', 'level'),
-               ('Attribute', 'attr'),
-               ('Check', 'teststr'),
-               ('Location', 'location')]
+    columns = [
+        ("Tripped", "tripped"),
+        ("Level", "level"),
+        ("Attribute", "attr"),
+        ("Check", "teststr"),
+        ("Location", "location"),
+    ]
 
     attr_width = Int(100)
     teststr_width = Int(200)
 
 
 class ConditionalsAdapter(BaseConditionalsAdapter):
-    columns = [('Tripped', 'tripped'),
-               ('Level', 'level'),
-               ('Attribute', 'attr'),
-               ('Start', 'start_count'),
-               ('Frequency', 'frequency'),
-               ('Check', 'teststr'),
-               ('Location', 'location')]
+    columns = [
+        ("Tripped", "tripped"),
+        ("Level", "level"),
+        ("Attribute", "attr"),
+        ("Start", "start_count"),
+        ("N. trips", "ntrips"),
+        ("Frequency", "frequency"),
+        ("Check", "teststr"),
+        ("Location", "location"),
+    ]
 
     attr_width = Int(75)
     teststr_width = Int(175)
@@ -71,42 +75,63 @@ class ConditionalsAdapter(BaseConditionalsAdapter):
 
 
 class EPRConditionalsAdapter(PRConditionalsAdapter):
-    columns = [('Attribute', 'attr'),
-               ('Check', 'teststr')]
+    columns = [("Attribute", "attr"), ("Check", "teststr")]
 
 
 class EConditionalsAdapter(ConditionalsAdapter):
-    columns = [('Attribute', 'attr'),
-               ('Start', 'start_count'),
-               ('Frequency', 'frequency'),
-               ('Check', 'teststr')]
+    columns = [
+        ("Attribute", "attr"),
+        ("Start", "start_count"),
+        ("Frequency", "frequency"),
+        ("N. trips", "ntrips"),
+        ("Check", "teststr"),
+    ]
+
+
+class ETruncationConditionalsAdapter(ConditionalsAdapter):
+    columns = [
+        ("Attribute", "attr"),
+        ("Start", "start_count"),
+        ("Frequency", "frequency"),
+        ("N. trips", "ntrips"),
+        ("Check", "teststr"),
+        ("Trunc. Count Ratio", "abbreviated_count_ratio"),
+    ]
 
 
 class EActionConditionalsAdapter(ConditionalsAdapter):
-    columns = [('Attribute', 'attr'),
-               ('Start', 'start_count'),
-               ('Frequency', 'frequency'),
-               ('Check', 'teststr'),
-               ('Action', 'action')]
+    columns = [
+        ("Attribute", "attr"),
+        ("Start", "start_count"),
+        ("Frequency", "frequency"),
+        ("N. trips", "ntrips"),
+        ("Check", "teststr"),
+        ("Action", "action"),
+    ]
 
 
 class EModificationConditionalsAdapter(ConditionalsAdapter):
-    columns = [('Attribute', 'attr'),
-               ('Start', 'start_count'),
-               ('Frequency', 'frequency'),
-               ('Check', 'teststr'),
-               ('Action', 'action'),
-               ('Skip N', 'nskip'),
-               ('Truncate', 'use_truncation'),
-               ('Terminate', 'use_termination')]
+    columns = [
+        ("Attribute", "attr"),
+        ("Start", "start_count"),
+        ("Frequency", "frequency"),
+        ("N. trips", "ntrips"),
+        ("Check", "teststr"),
+        ("Action", "action"),
+        ("Skip N", "nskip"),
+        ("Truncate", "use_truncation"),
+        ("Terminate", "use_termination"),
+    ]
 
     use_termination_text = Property
     use_truncation_text = Property
     action_width = Int(150)
 
     def _get_use_termination_text(self):
-        return 'Yes' if self.item.use_termination else 'No'
+        return "Yes" if self.item.use_termination else "No"
 
     def _get_use_truncation_text(self):
-        return 'Yes' if self.item.use_truncation else 'No'
+        return "Yes" if self.item.use_truncation else "No"
+
+
 # ============= EOF =============================================

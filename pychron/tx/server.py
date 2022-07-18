@@ -34,8 +34,8 @@ class TxServer:
     _has_endpoints = False
 
     def bootstrap(self):
-        path = os.path.join(paths.log_dir, 'pps.log.json')
-        obs = jsonFileLogObserver(io.open(path, 'w'))
+        path = os.path.join(paths.log_dir, "pps.log.json")
+        obs = jsonFileLogObserver(io.open(path, "w"))
         logger = Logger(observer=obs)
 
         if self._has_endpoints:
@@ -52,6 +52,7 @@ class TxServer:
 
     def start(self):
         from threading import Thread
+
         t = Thread(target=reactor.run, args=(False,))
         t.setDaemon(True)
         t.start()
@@ -65,7 +66,7 @@ class TxServer:
     kill = stop
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.tx.factories import ValveFactory
 
     endpoint = TCP4ServerEndpoint(reactor, 8007)

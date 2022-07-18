@@ -40,23 +40,23 @@ class Caption(AbstractOverlay):
         self.label.text = text
 
     def _draw_component(self, gc, view_bounds=None, mode="normal"):
-        print('casdcasd')
+        print("casdcasd")
 
     def _draw_overlay(self, gc, view_bounds=None, mode="normal"):
-        print('asdfasdfasdf')
+        print("asdfasdfasdf")
 
     def _draw_underlay(self, gc, view_bounds=None, mode="normal"):
-        print('unasdf')
+        print("unasdf")
 
     def draw(self, gc, view_bounds=None, mode="default"):
-        print('dafasfasfd')
+        print("dafasfasfd")
         with gc:
             self.label.draw()
 
 
 class IdeogramEditor(InterpretedAgeEditor):
     figure_model_klass = IdeogramModel
-    basename = 'ideo'
+    basename = "ideo"
     results_tables = List
     ttest_tables = List
     rvalues_tables = List
@@ -66,7 +66,7 @@ class IdeogramEditor(InterpretedAgeEditor):
     def _get_additional_visible(self):
         return self.ttest_tables or self.results_tables or self.rvalues_tables
 
-    @on_trait_change('figure_model:panels:figures:recalculate_event')
+    @on_trait_change("figure_model:panels:figures:recalculate_event")
     def _handle_recalculate(self):
         self._get_component_hook()
 
@@ -103,10 +103,12 @@ class IdeogramEditor(InterpretedAgeEditor):
 
     def plot_interpreted_ages(self, iages):
         def construct(a):
-            i = InterpretedAgeAnalysis(record_id='{} ({})'.format(a.sample, a.identifier),
-                                       sample=a.sample,
-                                       age=a.age,
-                                       age_err=a.age_err)
+            i = InterpretedAgeAnalysis(
+                record_id="{} ({})".format(a.sample, a.identifier),
+                sample=a.sample,
+                age=a.age,
+                age_err=a.age_err,
+            )
             return i
 
         self.disable_aux_plots()
@@ -119,37 +121,55 @@ class IdeogramEditor(InterpretedAgeEditor):
     def disable_aux_plots(self):
         po = self.plotter_options_manager.plotter_options
         for ap in po.aux_plots:
-            if ap.name.lower() not in ('ideogram', 'analysis number', 'analysis number nonsorted'):
+            if ap.name.lower() not in (
+                "ideogram",
+                "analysis number",
+                "analysis number nonsorted",
+            ):
                 ap.use = False
                 ap.enabled = False
 
     def traits_view(self):
-        tbl_grp = VGroup(listeditor('results_tables',
-                                    # height=0.2
-                                    ),
-                         scrollable=True,
-                         visible_when='results_tables')
+        tbl_grp = VGroup(
+            listeditor(
+                "results_tables",
+                # height=0.2
+            ),
+            scrollable=True,
+            visible_when="results_tables",
+        )
 
-        ttest_grp = VGroup(listeditor('ttest_tables',
-                                      # height=0.2
-                                      ),
-                           scrollable=True,
-                           visible_when='ttest_tables')
+        ttest_grp = VGroup(
+            listeditor(
+                "ttest_tables",
+                # height=0.2
+            ),
+            scrollable=True,
+            visible_when="ttest_tables",
+        )
 
-        rvalues_grp = VGroup(listeditor('rvalues_tables',
-                                        # height=0.2
-                                        ),
-                             scrollable=True,
-                             visible_when='rvalues_tables')
+        rvalues_grp = VGroup(
+            listeditor(
+                "rvalues_tables",
+                # height=0.2
+            ),
+            scrollable=True,
+            visible_when="rvalues_tables",
+        )
 
         g = self.get_component_view()
         g.height = 750
 
-        v = View(VSplit(g,
-                        HSplit(tbl_grp,
-                               ttest_grp,
-                               rvalues_grp,
-                               visible_when='additional_visible')),
-                 resizable=True)
+        v = View(
+            VSplit(
+                g,
+                HSplit(
+                    tbl_grp, ttest_grp, rvalues_grp, visible_when="additional_visible"
+                ),
+            ),
+            resizable=True,
+        )
         return v
+
+
 # ============= EOF =============================================

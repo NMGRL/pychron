@@ -36,10 +36,10 @@ class MetaObject(object):
     def __init__(self, path=None, new=False, allow_null=False):
         self.path = path
         if path is not None and os.path.isfile(path):
-            with open(path, 'r') as rfile:
+            with open(path, "r") as rfile:
                 self._load_hook(path, rfile)
         elif not new and not allow_null:
-            msg = 'failed loading {} {}'.format(path, os.path.isfile(path))
+            msg = "failed loading {} {}".format(path, os.path.isfile(path))
             raise MetaObjectException(msg)
 
     def _load_hook(self, path, rfile):
@@ -80,7 +80,7 @@ class Chronology(MetaObject):
         d = 0
         for line in lines:
             try:
-                power, start, end = line.strip().split(',')
+                power, start, end = line.strip().split(",")
             except ValueError:
                 continue
 
@@ -90,15 +90,18 @@ class Chronology(MetaObject):
             d += ds
             self._doses.append((float(power), start, end))
 
-        self.duration = d / 3600.
+        self.duration = d / 3600.0
 
     def get_doses(self):
         return self._doses
 
     def get_chron_segments(self, analts):
-        convert_days = lambda x: x.total_seconds() / (60. * 60 * 24)
+        convert_days = lambda x: x.total_seconds() / (60.0 * 60 * 24)
 
-        return [(p, convert_days(en - st), convert_days(analts - st), st, en) for p, st, en in self._doses]
+        return [
+            (p, convert_days(en - st), convert_days(analts - st), st, en)
+            for p, st, en in self._doses
+        ]
 
     @property
     def total_duration_seconds(self):
@@ -118,19 +121,19 @@ class Chronology(MetaObject):
     @property
     def start_date(self):
         """
-            return date component of dose.
-            dose =(pwr, %Y-%m-%d %H:%M:%S, %Y-%m-%d %H:%M:%S)
+        return date component of dose.
+        dose =(pwr, %Y-%m-%d %H:%M:%S, %Y-%m-%d %H:%M:%S)
 
         """
         # doses = self.get_doses(tofloat=False)
         # d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
         # return d.strftime('%m-%d-%Y')
         # d = datetime.strptime(doses[0][1], '%Y-%m-%d %H:%M:%S')
-        date = ''
+        date = ""
         doses = self.get_doses()
         if doses:
             d = doses[0][1]
-            date = d.strftime('%m-%d-%Y')
+            date = d.strftime("%m-%d-%Y")
         return date
 
 
@@ -164,9 +167,9 @@ class Chronology(MetaObject):
 
 
 class Production(MetaObject):
-    name = ''
-    note = ''
-    reactor = 'Triga'
+    name = ""
+    note = ""
+    reactor = "Triga"
     attrs = None
 
     @property
@@ -193,7 +196,7 @@ class Production(MetaObject):
             self.attrs.append(k)
 
         setattr(self, k, v)
-        setattr(self, '{}_err'.format(k), e)
+        setattr(self, "{}_err".format(k), e)
 
     def _load_hook(self, path, rfile):
         self.name = os.path.splitext(os.path.basename(path))[0]
@@ -201,13 +204,13 @@ class Production(MetaObject):
 
         attrs = []
         for k, v in obj.items():
-            if k == 'reactor':
+            if k == "reactor":
                 self.reactor = v
-            elif k == 'name':
+            elif k == "name":
                 self.name = v
             else:
                 setattr(self, k, float(v[0]))
-                setattr(self, '{}_err'.format(k), float(v[1]))
+                setattr(self, "{}_err".format(k), float(v[1]))
                 attrs.append(k)
 
         self.attrs = attrs
@@ -219,7 +222,7 @@ class Production(MetaObject):
         if isinstance(d, dict):
             for k, v in d.items():
                 setattr(self, k, v)
-                if not k.endswith('_err') and k not in self.attrs:
+                if not k.endswith("_err") and k not in self.attrs:
                     self.attrs.append(k)
         else:
             attrs = []
@@ -229,13 +232,14 @@ class Production(MetaObject):
                 if v is None:
                     v = (0, 0)
                 setattr(self, k, v[0])
-                setattr(self, '{}_err'.format(k), v[1])
+                setattr(self, "{}_err".format(k), v[1])
             self.attrs = attrs
 
     def to_dict(self, keys):
-        return {t: ufloat(getattr(self, t, 0),
-                          getattr(self, '{}_err'.format(t), 0),
-                          tag=t) for t in keys}
+        return {
+            t: ufloat(getattr(self, t, 0), getattr(self, "{}_err".format(t), 0), tag=t)
+            for t in keys
+        }
 
     def dump(self, path=None):
         if path is None:
@@ -243,11 +247,14 @@ class Production(MetaObject):
 
         obj = {}
         for a in self.attrs:
-            obj[a] = (getattr(self, a, 0), getattr(self, '{}_err'.format(a), 0))
+            obj[a] = (getattr(self, a, 0), getattr(self, "{}_err".format(a), 0))
         dvc_dump(obj, path)
 
     def __repr__(self):
-        return 'Production<{}:{}>'.format(self.name, os.path.dirname(self.path) if self.path else '')
+        return "Production<{}:{}>".format(
+            self.name, os.path.dirname(self.path) if self.path else ""
+        )
+
 
 class BaseGeometry(MetaObject):
     holes = None
@@ -256,7 +263,7 @@ class BaseGeometry(MetaObject):
         holes = []
 
         line = next(rfile)
-        _, radius = line.split(',')
+        _, radius = line.split(",")
         radius = float(radius)
 
         for c, line in enumerate(rfile):
@@ -265,10 +272,10 @@ class BaseGeometry(MetaObject):
                 continue
 
             # skip commented lines
-            if line.strip().startswith('#'):
+            if line.strip().startswith("#"):
                 continue
 
-            args = line.split(',')
+            args = line.split(",")
             if len(args) == 2:
                 x, y = args
                 r = radius
@@ -295,7 +302,7 @@ class Cached(object):
     def __call__(self, func):
         def wrapper(obj, name, *args, **kw):
             ret = None
-            if not hasattr(obj, '__cache__') or obj.__cache__ is None:
+            if not hasattr(obj, "__cache__") or obj.__cache__ is None:
                 obj.__cache__ = {}
 
             cache = obj.__cache__[func] if func in obj.__cache__ else {}
@@ -304,7 +311,7 @@ class Cached(object):
                     cache = {}
 
             key = (func, name)
-            force = kw.get('force', None)
+            force = kw.get("force", None)
             if not force:
                 ret = cache.get(key)
 

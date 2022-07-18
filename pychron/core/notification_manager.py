@@ -18,6 +18,7 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 import weakref
+
 # ============= local library imports  ==========================
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.ui.notification_widget import NotificationWidget
@@ -34,7 +35,7 @@ class NotificationManager(object):
     def add_notification(self, *args, **kw):
         invoke_in_main_thread(self._add_notification, *args, **kw)
 
-    def _add_notification(self, message, color='orange', fontsize=18):
+    def _add_notification(self, message, color="orange", fontsize=18):
         parent = self.parent
         if parent:
             parent.resizeEvent = self._resize
@@ -42,10 +43,9 @@ class NotificationManager(object):
             x, y, w, h = prect.x(), prect.y(), prect.width(), prect.height()
             self._rect_tuple = x, y, w, h
 
-            dw = NotificationWidget(message,
-                                    parent=parent,
-                                    fontsize=fontsize,
-                                    color=color)
+            dw = NotificationWidget(
+                message, parent=parent, fontsize=fontsize, color=color
+            )
 
             dw.on_close = self._update_positions
             self.messages.insert(0, weakref.ref(dw)())
@@ -58,7 +58,6 @@ class NotificationManager(object):
                 m.destroy()
                 m.close()
 
-
     def _update_positions(self, widget):
         self.messages.remove(widget)
         if self.messages:
@@ -66,7 +65,12 @@ class NotificationManager(object):
 
     def _resize(self, event):
         size = event.size()
-        self._rect_tuple = (self._rect_tuple[0], self._rect_tuple[1], size.width(), size.height())
+        self._rect_tuple = (
+            self._rect_tuple[0],
+            self._rect_tuple[1],
+            size.width(),
+            size.height(),
+        )
         if self.messages:
             self._reposition()
 
@@ -83,7 +87,7 @@ class NotificationManager(object):
     def _compress_messages(self):
         mo = self.messages[0]
         x, y, w, h = self._rect_tuple
-        spacing=self.spacing
+        spacing = self.spacing
         mo.move(w - mo.width(), 0)
         if len(self.messages) > 1:
             hh = 0
@@ -100,10 +104,8 @@ class NotificationManager(object):
             spacing = self.spacing
             for i, mi in enumerate(self.messages[1:]):
                 y2 = mi.y() + mo.height() + spacing
-                mi.move(w-mi.width(), y2)
+                mi.move(w - mi.width(), y2)
                 # mi.set_position(0, y2, w, h)
 
+
 # ============= EOF =============================================
-
-
-

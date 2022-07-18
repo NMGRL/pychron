@@ -24,8 +24,8 @@ from pychron.media_storage.tasks.task import MediaStorageTask
 
 
 class MediaStoragePlugin(BaseTaskPlugin):
-    name = 'Media Storage'
-    id = 'pychron.media_storage.plugin'
+    name = "Media Storage"
+    id = "pychron.media_storage.plugin"
 
     def _media_storage_factory(self):
         ms = MediaStorageTask(application=self.application)
@@ -36,16 +36,22 @@ class MediaStoragePlugin(BaseTaskPlugin):
         return msm
 
     def _service_offers_default(self):
-        so = self.service_offer_factory(protocol=MediaStorageManager,
-                                        factory=self._media_storage_manager_factory)
+        so = self.service_offer_factory(
+            protocol=MediaStorageManager, factory=self._media_storage_manager_factory
+        )
         return [so]
 
     def _preferences_panes_default(self):
         return [MediaStoragePreferencesPane]
 
     def _tasks_default(self):
-        return [TaskFactory(id='pychron.media_storage.task_factory',
-                            include_view_menu=False,
-                            factory=self._media_storage_factory)]
+        return [
+            TaskFactory(
+                id="pychron.media_storage.task_factory",
+                include_view_menu=False,
+                factory=self._media_storage_factory,
+            )
+        ]
+
 
 # ============= EOF =============================================

@@ -15,13 +15,14 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import Bool, Any, Float, \
-    Button, Instance, List
+from traits.api import Bool, Any, Float, Button, Instance, List
+
 # ============= standard library imports ========================
 from threading import Thread, Event
 from numpy import hstack, array
 import time
 import os
+
 # ============= local library imports  ==========================
 from pychron.graph.graph import Graph
 from pychron.paths import paths
@@ -36,7 +37,7 @@ class BaseScanner(PersistenceLoggable):
     clear_graph_button = Button
     start_scanner = Button
     stop_scanner = Button
-    new_scanner = Button('New Magnet Scan')
+    new_scanner = Button("New Magnet Scan")
     start_scanner_enabled = Bool
     stop_scanner_enabled = Bool
     new_scanner_enabled = Bool(True)
@@ -83,7 +84,7 @@ class BaseScanner(PersistenceLoggable):
 
         plot = graph.plots[0]
         try:
-            line = plot.plots['plot{}'.format(self.plotid)][0]
+            line = plot.plots["plot{}".format(self.plotid)][0]
         except KeyError:
             line, _ = graph.new_series()
         # xs = line.index.get_data()
@@ -97,25 +98,25 @@ class BaseScanner(PersistenceLoggable):
         st = time.time()
 
         limits = self._get_limits()
-        graph.set_x_limits(*limits, pad='0.1')
-        
-        self.debug('reference detector {}'.format(spec.reference_detector))
+        graph.set_x_limits(*limits, pad="0.1")
+
+        self.debug("reference detector {}".format(spec.reference_detector))
         refdet = spec.get_detector(spec.reference_detector)
 
         for i, si in enumerate(self._calculate_steps(*limits)):
             if self._cancel_event.is_set():
-                self.debug('exiting scan. dac={}'.format(si))
+                self.debug("exiting scan. dac={}".format(si))
                 break
 
             self._do_step(magnet, si)
             time.sleep(max(0, period))
             if i == 0:
                 time.sleep(3)
-            
+
             ks, ss, t, inc = spec.get_intensities(integrated_intensity=True)
 
             refsig = float(refdet.intensity)
-            refk = '{}y{}'.format(refdet, self.plotid)
+            refk = "{}y{}".format(refdet, self.plotid)
             rys = plot.data.get_data(refk)
             if i == 0:
                 rys = array([refsig])
@@ -123,10 +124,10 @@ class BaseScanner(PersistenceLoggable):
             else:
                 rys = hstack((rys, refsig))
                 xs = hstack((xs, si))
-            
-            #self.debug('dsfa {}, {}'.format(refsig, rys))
-            
-            plot.data.update_data({'x{}'.format(self.plotid): xs})
+
+            # self.debug('dsfa {}, {}'.format(refsig, rys))
+
+            plot.data.update_data({"x{}".format(self.plotid): xs})
             plot.data.set_data(refk, rys)
 
             ref_mi, ref_ma = mi, ma = rys.min(), rys.max()
@@ -136,7 +137,7 @@ class BaseScanner(PersistenceLoggable):
                     continue
 
                 oys = None
-                k = 'odata{}_{}'.format(i, self.plotid)
+                k = "odata{}_{}".format(i, self.plotid)
                 if hasattr(plot, k):
                     oys = getattr(plot, k)
 
@@ -147,16 +148,15 @@ class BaseScanner(PersistenceLoggable):
                 r = oys.max() - mir
                 oys = (oys - mir) * ref_r / r + ref_mi
 
-                plot.data.update_data({'{}y{}'.format(det, self.plotid): oys})
+                plot.data.update_data({"{}y{}".format(det, self.plotid): oys})
                 det = self.spectrometer.get_detector(det)
                 if det.active:
                     mi, ma = min(mi, min(oys)), max(ma, max(oys))
 
-            self.graph.set_y_limits(min_=mi, max_=ma, pad='0.05',
-                                    pad_style='upper')
+            self.graph.set_y_limits(min_=mi, max_=ma, pad="0.05", pad_style="upper")
 
         self.plotid += 1
-        self.debug('duration={:0.3f}'.format(time.time() - st))
+        self.debug("duration={:0.3f}".format(time.time() - st))
         self.new_scanner_enabled = True
         self.start_scanner_enabled = True
         self.stop_scanner_enabled = False
@@ -190,8 +190,8 @@ class BaseScanner(PersistenceLoggable):
 
     # handlers
     def _start_scanner_fired(self):
-        print('start scanner')
-        self.info('starting scanner')
+        print("start scanner")
+        self.info("starting scanner")
         self.new_scanner_enabled = False
         self.start_scanner_enabled = False
         self.stop_scanner_enabled = True
@@ -203,8 +203,8 @@ class BaseScanner(PersistenceLoggable):
         self.new_scanner_enabled = True
 
     def _new_scanner_fired(self):
-        print('new scanner')
-        self.info('new scanner')
+        print("new scanner")
+        self.info("new scanner")
         self.new_scanner_enabled = False
         self.start_scanner_enabled = True
 
@@ -212,5 +212,6 @@ class BaseScanner(PersistenceLoggable):
         self.graph.clear_plots()
         self.plotid = 0
         self.graph.redraw()
+
 
 # ============= EOF =============================================

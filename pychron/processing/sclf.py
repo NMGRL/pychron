@@ -17,14 +17,20 @@ from operator import attrgetter
 from numpy import array, argmax, delete
 from numpy.random import normal
 from scipy.stats import shapiro, skew, norm, ttest_rel
-from uncertainties import ufloat
+from uncertainties import ufloat, nominal_value
 
 from pychron.core.stats import calculate_mswd, validate_mswd, calculate_weighted_mean
-from pychron.pychron_constants import SCHAEN2020_1, SCHAEN2020_2, SCHAEN2020_3, DEINO, SCHAEN2020_3youngest
+from pychron.pychron_constants import (
+    SCHAEN2020_1,
+    SCHAEN2020_2,
+    SCHAEN2020_3,
+    DEINO,
+    SCHAEN2020_3youngest,
+)
 
 
 def age_errors(ais):
-    xs = [ai.age for ai in ais]
+    xs = [nominal_value(ai.age) for ai in ais]
     es = [ai.age_err for ai in ais]
 
     return array(xs), array(es)
@@ -89,7 +95,7 @@ def schaen_2020_2(ans, **kw):
     :param ans:
     :return: ufloat
     """
-
+    wm, we, ais = 0, 0, []
     for i in range(2, len(ans) - 1):
         ais = ans[:i]
         next_a = ans[i]
@@ -135,11 +141,13 @@ def skewness_value(ans):
 
 
 def schaen_2020_3youngest(*args, **kw):
-    kw['find_youngest'] = True
+    kw["find_youngest"] = True
     return schaen_2020_3(*args, **kw)
 
 
-def schaen_2020_3(ans, alpha=0.05, skew_min=-0.2, skew_max=0.2, find_youngest=False, **kw):
+def schaen_2020_3(
+    ans, alpha=0.05, skew_min=-0.2, skew_max=0.2, find_youngest=False, **kw
+):
     """
         normality and goodness-of-fit parameter
 
@@ -197,40 +205,46 @@ def schaen_2020_3(ans, alpha=0.05, skew_min=-0.2, skew_max=0.2, find_youngest=Fa
     return mean, mean_ans
 
 
-OUTLIER_FUNCS = {SCHAEN2020_1: schaen_2020_1,
-                 SCHAEN2020_2: schaen_2020_2,
-                 SCHAEN2020_3: schaen_2020_3,
-                 SCHAEN2020_3youngest: schaen_2020_3youngest,
-                 DEINO: deino_filter}
+OUTLIER_FUNCS = {
+    SCHAEN2020_1: schaen_2020_1,
+    SCHAEN2020_2: schaen_2020_2,
+    SCHAEN2020_3: schaen_2020_3,
+    SCHAEN2020_3youngest: schaen_2020_3youngest,
+    DEINO: deino_filter,
+}
 
 
 def plot(s, mu, sigma, um3, um2):
     import numpy as np
     import matplotlib.pyplot as plt
+
     count, bins, ignored = plt.hist(s, 30, density=True)
-    plt.plot(bins, 1 / (sigma * np.sqrt(2 * np.pi)) *
-             np.exp(- (bins - mu) ** 2 / (2 * sigma ** 2)),
-             linewidth=2, color='r')
+    plt.plot(
+        bins,
+        1
+        / (sigma * np.sqrt(2 * np.pi))
+        * np.exp(-((bins - mu) ** 2) / (2 * sigma**2)),
+        linewidth=2,
+        color="r",
+    )
 
     plt.vlines(um3.nominal_value, 0, 1)
-    plt.vlines(um2.nominal_value, 0, 1, 'r')
+    plt.vlines(um2.nominal_value, 0, 1, "r")
 
     plt.show()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     xs = normal(size=400)
     es = normal(size=400) * 3
-
 
     class A:
         def __init__(self, x, e):
             self.age = x
             self.age_err = e
 
-
     ans = [A(xi, ei) for xi, ei in zip(xs, es)]
-    ans = sorted(ans, key=attrgetter('age'))
+    ans = sorted(ans, key=attrgetter("age"))
     print([a.age for a in ans])
     # ans = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
     um3 = schaen_2020_3(ans)

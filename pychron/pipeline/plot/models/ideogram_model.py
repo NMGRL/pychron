@@ -26,4 +26,5 @@ from pychron.pipeline.plot.panels.ideogram_panel import IdeogramPanel
 class IdeogramModel(FigureModel):
     _panel_klass = IdeogramPanel
 
+
 # ============= EOF =============================================

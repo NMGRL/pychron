@@ -55,6 +55,7 @@ class VisualElProgrammerTask(BaseTask):
         return [ControlPane(model=self.model)]
 
     def _default_layout_default(self):
-        return TaskLayout(left=PaneItem('pychron.pyscript.visual.control'))
+        return TaskLayout(left=PaneItem("pychron.pyscript.visual.control"))
+
 
 # ============= EOF =============================================

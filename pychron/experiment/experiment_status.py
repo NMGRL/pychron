@@ -27,9 +27,12 @@ from pychron.core.ui.gui import invoke_in_main_thread
 def make_pattern_gen(flash, period, label, color):
     def pattern_gen():
         """
-            infinite generator
+        infinite generator
         """
-        pattern = ((flash * period, True, label, color), ((1 - flash) * period, False, '', 'black'))
+        pattern = (
+            (flash * period, True, label, color),
+            ((1 - flash) * period, False, "", "black"),
+        )
         i = 0
         while 1:
             try:
@@ -51,7 +54,7 @@ class ExperimentStatus(HasTraits):
 
     def reset(self):
         self.end()
-        invoke_in_main_thread(self.trait_set, label='')
+        invoke_in_main_thread(self.trait_set, label="")
 
     def set_state(self, state, flash, color, period=1):
         label = state.upper()
@@ -78,10 +81,11 @@ class ExperimentStatus(HasTraits):
                 t, state, label, color = next(self._gen)
                 invoke_in_main_thread(self.trait_set, color=color, label=label)
             else:
-                invoke_in_main_thread(self.trait_set, label='')
+                invoke_in_main_thread(self.trait_set, label="")
                 break
             time.sleep(t)
 
         self._flash_daemon = None
+
 
 # ============= EOF =============================================

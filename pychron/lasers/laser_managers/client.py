@@ -45,13 +45,18 @@ class UVLaserControlsClient(Controller):
     # _nburst = Int
 
     def traits_view(self):
-        v = View(HGroup(
-            icon_button_editor('fire', 'lightning',
-                               enabled_when='not firing', tooltip='Fire laser'),
-            icon_button_editor('stop', 'stop',
-                               enabled_when='firing', tooltip='Stop firing'),
-            UItem('fire_mode')),
-                 Item('nburst'))
+        v = View(
+            HGroup(
+                icon_button_editor(
+                    "fire", "lightning", enabled_when="not firing", tooltip="Fire laser"
+                ),
+                icon_button_editor(
+                    "stop", "stop", enabled_when="firing", tooltip="Stop firing"
+                ),
+                UItem("fire_mode"),
+            ),
+            Item("nburst"),
+        )
 
         return v
 
@@ -103,9 +108,9 @@ class UVLaserOpticsClient(Controller):
 
     def traits_view(self):
         v = View(
-            HGroup(Item('mask', editor=EnumEditor(name='masks')),
-                   UItem('mask')),
-            Item('attenuator'))
+            HGroup(Item("mask", editor=EnumEditor(name="masks")), UItem("mask")),
+            Item("attenuator"),
+        )
 
         return v
 
@@ -129,5 +134,6 @@ class UVLaserOpticsClient(Controller):
     #                 values.append(lin)
     #
     #     return values
+
 
 # ============= EOF =============================================

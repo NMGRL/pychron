@@ -24,4 +24,5 @@ from pychron.experiment.automated_run.factory import AutomatedRunFactory
 class CryoAutomatedRunFactory(AutomatedRunFactory):
     factory_view_klass = CryoFactoryView
 
+
 # ============= EOF =============================================

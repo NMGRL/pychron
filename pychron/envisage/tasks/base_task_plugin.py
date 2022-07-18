@@ -26,12 +26,15 @@ from pychron.envisage.tasks.base_plugin import BasePlugin
 
 
 class BaseTaskPlugin(BasePlugin):
-    tasks = List(contributes_to='envisage.ui.tasks.tasks')
-    available_task_extensions = List(contributes_to='pychron.available_task_extensions')
-    task_extensions = List(contributes_to='envisage.ui.tasks.task_extensions')
+    tasks = List(contributes_to="envisage.ui.tasks.tasks")
+    available_task_extensions = List(contributes_to="pychron.available_task_extensions")
+    task_extensions = List(contributes_to="envisage.ui.tasks.task_extensions")
 
     def _task_extensions_default(self):
-        extensions = [TaskExtension(actions=actions, task_id=eid) for eid, actions in self._get_extensions()]
+        extensions = [
+            TaskExtension(actions=actions, task_id=eid)
+            for eid, actions in self._get_extensions()
+        ]
 
         return extensions
 
@@ -40,10 +43,17 @@ class BaseTaskPlugin(BasePlugin):
         xx = []
         sadditions = []
         for tid, action_id in sorted(self.application.get_task_extensions(self.id)):
-            action = next((av for _, _, _, actions in self.available_task_extensions
-                           for av in actions if av.id == action_id), None)
+            action = next(
+                (
+                    av
+                    for _, _, _, actions in self.available_task_extensions
+                    for av in actions
+                    if av.id == action_id
+                ),
+                None,
+            )
             if action is None:
-                self.debug('no action found for {}'.format(action_id))
+                self.debug("no action found for {}".format(action_id))
                 continue
 
             if ctid is None:
@@ -57,10 +67,11 @@ class BaseTaskPlugin(BasePlugin):
                 else:
                     sadditions.append(action)
 
-        sadditions = sorted(sadditions, key=attrgetter('id'))
+        sadditions = sorted(sadditions, key=attrgetter("id"))
         if sadditions:
             xx.append((tid, sadditions))
 
         return xx
+
 
 # ============= EOF =============================================

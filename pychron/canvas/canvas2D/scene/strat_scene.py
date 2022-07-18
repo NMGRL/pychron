@@ -37,31 +37,33 @@ class StratScene(Scene):
 
         yd = self._get_dict(p)
 
-        for yi in yd['items']:
+        for yi in yd["items"]:
 
-            elev = yi['elevation']
+            elev = yi["elevation"]
 
             c = 0
             if elev in heights:
                 c = heights.count(elev)
 
-            age = yi['age']
+            age = yi["age"]
             heights.append(elev)
             ages.append(age)
-            err = yi['age_err']
+            err = yi["age_err"]
             lowages.append(age - err * 2)
             highages.append(age + err * 2)
-            v = StratItem(age,
-                          elev,
-                          error=err,
-                          default_color=yi.get('color', 'black'),
-                          soffset_x=c,
-                          soffset_y=c * 12,
-                          label_offsety=-15,
-                          font='modern 10',
-                          vjustify='center',
-                          text=yi['label'],
-                          use_border=False)
+            v = StratItem(
+                age,
+                elev,
+                error=err,
+                default_color=yi.get("color", "black"),
+                soffset_x=c,
+                soffset_y=c * 12,
+                label_offsety=-15,
+                font="modern 10",
+                vjustify="center",
+                text=yi["label"],
+                use_border=False,
+            )
             self.add_item(v)
 
         self.value_limits = (min(heights), max(heights))
@@ -69,10 +71,10 @@ class StratScene(Scene):
 
     def _get_dict(self, p):
         if isinstance(p, (str, six.text_type)):
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 p = yaml.load(rfile)
 
         return p
 
-# ============= EOF =============================================
 
+# ============= EOF =============================================

@@ -19,11 +19,13 @@ from __future__ import absolute_import
 from pyface.qt import QtGui
 from traits.api import Str, Event
 from traits.trait_types import Any
+
 # ============= standard library imports ========================
 import os
 from PySide import QtCore
 from pyface.qt.QtCore import QRect
 from pyface.qt.QtGui import QWidget, QImageReader, QPixmap
+
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
@@ -89,7 +91,7 @@ class _AnimatedPNGEditor(Editor):
 
     def init(self, parent):
         self.control = self._create_control(parent)
-        self.sync_value(self.factory.state, 'state', 'from')
+        self.sync_value(self.factory.state, "state", "from")
 
     def _create_control(self, parent):
         widget = AnimatedWidget(icon(self.value))
@@ -106,7 +108,9 @@ class _AnimatedPNGEditor(Editor):
             anim.setStartValue(1)
             anim.setEndValue(32)
             anim.setLoopCount(-1)
-            QtCore.QObject.connect(anim, QtCore.SIGNAL("finished()"), anim, QtCore.SLOT("deleteLater()"))
+            QtCore.QObject.connect(
+                anim, QtCore.SIGNAL("finished()"), anim, QtCore.SLOT("deleteLater()")
+            )
             anim.start()
 
             self._animation = anim
@@ -122,8 +126,5 @@ class AnimatedPNGEditor(BasicEditorFactory):
     klass = _AnimatedPNGEditor
     state = Str
 
+
 # ============= EOF =============================================
-
-
-
-

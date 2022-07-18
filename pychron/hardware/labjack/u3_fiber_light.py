@@ -37,7 +37,15 @@ class U3FiberLight(BaseU3LV, CoreDevice):
     def load_additional_args(self, config):
         BaseU3LV.load_additional_args(self, config)
 
-        self.set_attribute(config, 'dac_id', 'AnalogMapping', 'intensity', default=0, optional=True, cast='int')
+        self.set_attribute(
+            config,
+            "dac_id",
+            "AnalogMapping",
+            "intensity",
+            default=0,
+            optional=True,
+            cast="int",
+        )
         return True
 
     def power_on(self):
@@ -47,14 +55,16 @@ class U3FiberLight(BaseU3LV, CoreDevice):
         self._power(False)
 
     def set_intensity(self, v):
-        self.set_dac_channel(self.dac_id, 5*v)
+        self.set_dac_channel(self.dac_id, 5 * v)
 
     def read_intensity(self):
         return self.read_adc_channel(self.dac_id)
 
     def read_state(self):
-        return self.get_channel_state('power')
+        return self.get_channel_state("power")
 
     def _power(self, state):
-        self.set_channel_state('power', state)
+        self.set_channel_state("power", state)
+
+
 # ============= EOF =============================================

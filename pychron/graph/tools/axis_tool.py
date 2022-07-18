@@ -25,54 +25,73 @@ from traitsui.api import View, Item, HGroup, VGroup, TextEditor, Handler
 # ============= local library imports  ==========================
 from traitsui.editors.api import FontEditor
 
-limit_grp = VGroup(Item('object.mapper.range.high', label='Upper',
-                        springy=True,
-                        editor=TextEditor(enter_set=True, auto_set=False)),
-                   Item('object.mapper.range.low', label='Lower',
-                        springy=True,
-                        editor=TextEditor(enter_set=True, auto_set=False)),
-                   show_border=True,
-                   label='Limits')
+limit_grp = VGroup(
+    Item(
+        "object.mapper.range.high",
+        label="Upper",
+        springy=True,
+        editor=TextEditor(enter_set=True, auto_set=False),
+    ),
+    Item(
+        "object.mapper.range.low",
+        label="Lower",
+        springy=True,
+        editor=TextEditor(enter_set=True, auto_set=False),
+    ),
+    show_border=True,
+    label="Limits",
+)
 
-title_grp = VGroup(Item('title', label='Title', editor=TextEditor()),
-                   Item('wrapper.title_font', label='Font',
-                        editor=FontEditor()),
-                   Item('title_color', label='Color'),
-                   show_border=True,
-                   label='Title')
-tick_grp = VGroup(Item('tick_color', label='Color'),
-                  # editor=EnableRGBAColorEditor()),
-                  Item('tick_weight', label='Thickness'),
-                  # Item('tick_label_font', label='Font'),
-                  Item('tick_label_color', label='Label color'),
-                  # editor=EnableRGBAColorEditor()),
-                  HGroup(Item('tick_in', label='Tick in'),
-                         Item('tick_out', label='Tick out')),
-                  Item('tick_visible', label='Visible'),
-                  Item('tick_interval', label='Interval', editor=TextEditor(evaluate=float_or_auto)),
-                  Item('wrapper.tick_label_format_str',
-                       tooltip='Enter a formatting string to apply to the tick labels. Currently the only supported '
-                               'option is to enter a number from 0-9 specifying the number of decimal places',
-                       label='Format'),
-                  show_border=True,
-                  label='Ticks')
-line_grp = VGroup(Item('axis_line_color', label='Color'),
-                  # editor=EnableRGBAColorEditor()),
-                  Item('axis_line_weight', label='Thickness'),
-                  Item('axis_line_visible', label='Visible'),
-                  show_border=True,
-                  label='Line')
+title_grp = VGroup(
+    Item("title", label="Title", editor=TextEditor()),
+    Item("wrapper.title_font", label="Font", editor=FontEditor()),
+    Item("title_color", label="Color"),
+    show_border=True,
+    label="Title",
+)
+tick_grp = VGroup(
+    Item("tick_color", label="Color"),
+    # editor=EnableRGBAColorEditor()),
+    Item("tick_weight", label="Thickness"),
+    # Item('tick_label_font', label='Font'),
+    Item("tick_label_color", label="Label color"),
+    # editor=EnableRGBAColorEditor()),
+    HGroup(Item("tick_in", label="Tick in"), Item("tick_out", label="Tick out")),
+    Item("tick_visible", label="Visible"),
+    Item("tick_interval", label="Interval", editor=TextEditor(evaluate=float_or_auto)),
+    Item(
+        "wrapper.tick_label_format_str",
+        tooltip="Enter a formatting string to apply to the tick labels. Currently the only supported "
+        "option is to enter a number from 0-9 specifying the number of decimal places",
+        label="Format",
+    ),
+    show_border=True,
+    label="Ticks",
+)
+line_grp = VGroup(
+    Item("axis_line_color", label="Color"),
+    # editor=EnableRGBAColorEditor()),
+    Item("axis_line_weight", label="Thickness"),
+    Item("axis_line_visible", label="Visible"),
+    show_border=True,
+    label="Line",
+)
 
-AxisView = View(VGroup(limit_grp, title_grp, tick_grp, line_grp),
-                title='Edit Axis',
-                x=50,
-                y=50,
-                buttons=['OK', ])
+AxisView = View(
+    VGroup(limit_grp, title_grp, tick_grp, line_grp),
+    title="Edit Axis",
+    x=50,
+    y=50,
+    buttons=[
+        "OK",
+    ],
+)
 
 
 class AxisViewHandler(Handler):
     def init(self, info):
         from pyface.qt import QtCore
+
         info.ui.control.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
 
@@ -84,13 +103,13 @@ class WrapAxis(HasTraits):
         super(WrapAxis, self).__init__(*args, **kw)
         self._comp = comp
         self.title_font = str(comp.title_font)
-        self.on_trait_change(self._update_title_font, 'title_font')
+        self.on_trait_change(self._update_title_font, "title_font")
 
-    @on_trait_change('tick_label_format_str')
+    @on_trait_change("tick_label_format_str")
     def handle_change(self, new):
         func = DEFAULT_TICK_FORMATTER
         if new.isdigit():
-            f = '{{:0.{}f}}'.format(new)
+            f = "{{:0.{}f}}".format(new)
 
             def func(x):
                 return f.format(x)
@@ -102,7 +121,7 @@ class WrapAxis(HasTraits):
         self._comp.request_redraw()
 
     def trait_context(self):
-        return {'object': self._comp, 'wrapper': self}
+        return {"object": self._comp, "wrapper": self}
 
 
 class AxisTool(BaseTool):
@@ -110,19 +129,18 @@ class AxisTool(BaseTool):
         if self.hittest(event):
             wrap_axis = WrapAxis(self.component)
 
-            wrap_axis.edit_traits(view=AxisView,
-                                  handler=AxisViewHandler(),
-                                  kind='live')
+            wrap_axis.edit_traits(view=AxisView, handler=AxisViewHandler(), kind="live")
             self.component.request_redraw()
             event.handled = True
 
-    @on_trait_change('component:+')
+    @on_trait_change("component:+")
     def handle_change(self, name, new):
-        if name.startswith('_'):
+        if name.startswith("_"):
             return
         self.component.request_redraw()
 
     def hittest(self, event):
         return self.component.is_in(event.x, event.y)
+
 
 # ============= EOF =============================================

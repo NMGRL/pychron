@@ -17,46 +17,61 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Property, Instance, Button
-from traitsui.api import View, Item, Controller, VGroup, HGroup, UItem, \
-    EnumEditor, TabularEditor, HSplit, InstanceEditor
+from traitsui.api import (
+    View,
+    Item,
+    Controller,
+    VGroup,
+    HGroup,
+    UItem,
+    EnumEditor,
+    TabularEditor,
+    HSplit,
+    InstanceEditor,
+)
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.text_editor import myTextEditor
-from pychron.data_mapper.model import DVCIrradiationImporterModel, DVCAnalysisImporterModel
+from pychron.data_mapper.model import (
+    DVCIrradiationImporterModel,
+    DVCAnalysisImporterModel,
+)
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
 class ImportNameAdapter(TabularAdapter):
-    columns = [('Name', 'name')]
+    columns = [("Name", "name")]
 
 
 class ImportedNameAdapter(TabularAdapter):
-    columns = [('Name', 'name'),
-               ('Levels', 'nlevels'),
-               ('Positions', 'npositions'),
-               ('Samples', 'nsamples'),
-               ('Projects', 'nprojects'),
-               ('Materials', 'nmaterials'),
-               ('PIs', 'nprincipal_investigators')]
+    columns = [
+        ("Name", "name"),
+        ("Levels", "nlevels"),
+        ("Positions", "npositions"),
+        ("Samples", "nsamples"),
+        ("Projects", "nprojects"),
+        ("Materials", "nmaterials"),
+        ("PIs", "nprincipal_investigators"),
+    ]
 
     skipped_text = Property
 
     def _get_skipped_text(self):
-        return 'Yes' if self.item.skipped else ''
+        return "Yes" if self.item.skipped else ""
 
     def get_bg_color(self, obj, trait, row, column=0):
-        color = 'white'
+        color = "white"
         if self.item.skipped:
-            color = 'red'
+            color = "red"
         return color
 
 
 class ImportButton(Action):
-    name = 'Import'
-    action = 'do_import'
+    name = "Import"
+    action = "do_import"
 
 
 class BaseDVCImporterView(Controller):
@@ -68,16 +83,25 @@ class DVCIrradiationImporterView(BaseDVCImporterView):
     model = Instance(DVCIrradiationImporterModel)
 
     def traits_view(self):
-        grp = HGroup(UItem('source', editor=EnumEditor(name='sources')), )
+        grp = HGroup(
+            UItem("source", editor=EnumEditor(name="sources")),
+        )
 
-        v = View(VGroup(grp,
-                        UItem('source', style='custom',
-                              editor=InstanceEditor(view='irradiation_view'))),
-                 kind='livemodal',
-                 resizable=True,
-                 width=700,
-                 buttons=[ImportButton(), 'OK', 'Cancel'],
-                 title='Import Irradiations')
+        v = View(
+            VGroup(
+                grp,
+                UItem(
+                    "source",
+                    style="custom",
+                    editor=InstanceEditor(view="irradiation_view"),
+                ),
+            ),
+            kind="livemodal",
+            resizable=True,
+            width=700,
+            buttons=[ImportButton(), "OK", "Cancel"],
+            title="Import Irradiations",
+        )
         return v
 
     # def traits_view(self):
@@ -115,20 +139,27 @@ class DVCAnalysisImporterView(BaseDVCImporterView):
         self.model.add_repository()
 
     def traits_view(self):
-        grp = HGroup(UItem('source', editor=EnumEditor(name='sources')))
-        grp1 = HGroup(Item('repository_identifier', editor=EnumEditor(name='repository_identifiers')),
-                      icon_button_editor('controller.add_repository_identifier_button', 'add'),
-                      Item('mass_spectrometer'),
-                      Item('extract_device'))
+        grp = HGroup(UItem("source", editor=EnumEditor(name="sources")))
+        grp1 = HGroup(
+            Item(
+                "repository_identifier",
+                editor=EnumEditor(name="repository_identifiers"),
+            ),
+            icon_button_editor("controller.add_repository_identifier_button", "add"),
+            Item("mass_spectrometer"),
+            Item("extract_device"),
+        )
 
-        v = View(VGroup(grp,
-                        grp1,
-                        UItem('source', style='custom', editor=InstanceEditor())),
-                 kind='livemodal',
-                 resizable=True,
-                 width=700,
-                 buttons=[ImportButton(), 'OK', 'Cancel'],
-                 title='Import Analyses')
+        v = View(
+            VGroup(grp, grp1, UItem("source", style="custom", editor=InstanceEditor())),
+            kind="livemodal",
+            resizable=True,
+            width=700,
+            buttons=[ImportButton(), "OK", "Cancel"],
+            title="Import Analyses",
+        )
 
         return v
+
+
 # ============= EOF =============================================

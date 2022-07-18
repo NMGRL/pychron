@@ -26,6 +26,16 @@ class SeriesFitAuxPlot(FitAuxPlot):
     use_dev = Bool
     use_percent_dev = Bool
 
+    def get_keyname(self):
+        key = self.name
+
+        if self.use_dev:
+            key = "{} Dev".format(key)
+        elif self.use_percent_dev:
+            key = "{} %Dev".format(key)
+
+        return key
+
     def _use_dev_changed(self, new):
         if new:
             if self.use_percent_dev:
@@ -59,13 +69,20 @@ class SeriesOptions(FitOptions):
     display_min_max = Bool(False)
 
     def get_statistics_options(self):
-        return {k: getattr(self, k) for k in ('show_statistics_as_table', 'display_min_max', )}
+        return {
+            k: getattr(self, k)
+            for k in (
+                "show_statistics_as_table",
+                "display_min_max",
+            )
+        }
 
     # use_restricted_references = Bool
     def initialize(self):
-        self.subview_names = [MAIN, 'Series', APPEARANCE]
+        self.subview_names = [MAIN, "Series", APPEARANCE, "Guides"]
 
     def _get_subview(self, name):
         return VIEWS[name]
+
 
 # ============= EOF =============================================

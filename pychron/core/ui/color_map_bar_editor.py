@@ -20,5 +20,5 @@
 from __future__ import absolute_import
 from pychron.core.ui.factory import toolkit_factory
 
-BarGaugeEditor = toolkit_factory('color_map_bar_editor', 'BarGaugeEditor')
+BarGaugeEditor = toolkit_factory("color_map_bar_editor", "BarGaugeEditor")
 # ============= EOF =============================================

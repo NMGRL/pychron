@@ -31,10 +31,13 @@ class VerticalFluxModel(FigureModel):
     items = List
 
     def _make_panels(self):
-        panel = self._panel_klass(plot_options=self.plot_options,
-                                  irradiation=self.irradiation,
-                                  items=self.items)
+        panel = self._panel_klass(
+            plot_options=self.plot_options,
+            irradiation=self.irradiation,
+            items=self.items,
+        )
         panel.make_figures()
         return [panel]
+
 
 # ============= EOF =============================================

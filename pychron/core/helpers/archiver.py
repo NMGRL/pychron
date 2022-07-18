@@ -15,26 +15,48 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
 from traits.api import Range, Bool, Str, HasTraits
+
 # ============= standard library imports ========================
 import os
 import shutil
 from datetime import datetime, timedelta
+
 # ============= local library imports  ==========================
-# from logger_setup import simple_logger
 from pychron.core.helpers.logger_setup import simple_logger
 
-MONTH_NAMES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY',
-               'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+MONTH_NAMES = [
+    "JAN",
+    "FEB",
+    "MAR",
+    "APR",
+    "MAY",
+    "JUN",
+    "JUL",
+    "AUG",
+    "SEP",
+    "OCT",
+    "NOV",
+    "DEC",
+]
 
-# logger = logging.getLogger('Archiver')
-# logger.setLevel(logging.DEBUG)
-# h = logging.StreamHandler()
-# h.setFormatter(logging.Formatter('%(name)-40s: %(asctime)s %(levelname)-7s (%(threadName)-10s) %(message)s'))
-# logger.addHandler(h)
+logger = simple_logger("Archiver")
 
-logger = simple_logger('Archiver')
+
+def get_dirs(root):
+    return (
+        p
+        for p in os.listdir(root)
+        if not p.startswith(".") and os.path.isdir(os.path.join(root, p))
+    )
+
+
+def get_files(root):
+    return (
+        p
+        for p in os.listdir(root)
+        if not p.startswith(".") and os.path.isfile(os.path.join(root, p))
+    )
 
 
 class Archiver(HasTraits):
@@ -47,14 +69,14 @@ class Archiver(HasTraits):
     def info(self, msg, *args, **kw):
         logger.info(msg)
 
-    def clean(self, exclude=None):
-        self._clean(exclude)
+    def clean(self, exclude=None, **kw):
+        self._clean(exclude, **kw)
 
-    def _clean(self, exclude):
+    def _clean(self, exclude, use_dirs=False):
         """
-            1. find all files older than archive_days+archive_hours
-                - move to archive
-            2. remove archive directories older than archive_months
+        1. find all files older than archive_days+archive_hours
+            - move to archive
+        2. remove archive directories older than archive_months
         """
         if exclude is None:
             exclude = []
@@ -63,11 +85,15 @@ class Archiver(HasTraits):
         if not root:
             return
 
-        archive_date = datetime.today() - timedelta(days=self.archive_days,
-                                                    hours=self.archive_hours)
-        self.info('Files older than {} will be archived'.format(archive_date))
+        archive_date = datetime.today() - timedelta(
+            days=self.archive_days, hours=self.archive_hours
+        )
+        self.info("Files older than {} will be archived".format(archive_date))
         cnt = 0
-        for p in self._get_files(root):
+
+        f = get_dirs if use_dirs else get_files
+
+        for p in f(root):
             rp = os.path.join(root, p)
             if p in exclude or rp in exclude:
                 continue
@@ -81,36 +107,42 @@ class Archiver(HasTraits):
                 cnt += 1
 
         if cnt > 0:
-            self.info('Archived {} files'.format(cnt))
+            self.info("Archived {} files".format(cnt))
 
         if self.clean_archives:
             self._clean_archive(root)
-        self.info('Archive cleaning complete')
+        self.info("Archive cleaning complete")
 
     def _get_files(self, root):
-        return (p for p in os.listdir(root)
-                if not p.startswith('.') and os.path.isfile(os.path.join(root, p)))
+        return (
+            p
+            for p in os.listdir(root)
+            if not p.startswith(".") and os.path.isfile(os.path.join(root, p))
+        )
 
     def _clean_archive(self, root):
-        self.info('Archives older than {} months will be deleted'.format(self.archive_months))
-        arch = os.path.join(root, 'archive')
+        self.info(
+            "Archives older than {} months will be deleted".format(self.archive_months)
+        )
+        arch = os.path.join(root, "archive")
         rdate = datetime.today() - timedelta(days=self.archive_months * 30)
 
         if os.path.isdir(arch):
             for year_dir in self._get_files(arch):
                 yarch = os.path.join(arch, year_dir)
                 for month_dir in self._get_files(yarch):
-                    adate = datetime(year=int(year_dir),
-                                     month=MONTH_NAMES.index(month_dir) + 1,
-                                     day=1)
+                    adate = datetime(
+                        year=int(year_dir),
+                        month=MONTH_NAMES.index(month_dir) + 1,
+                        day=1,
+                    )
                     if rdate > adate:
-                        self.info('Deleting archive {}/{}'.format(year_dir,
-                                                                  month_dir))
+                        self.info("Deleting archive {}/{}".format(year_dir, month_dir))
                         shutil.rmtree(os.path.join(arch, year_dir, month_dir))
 
                 # remove empty year archives
                 if not os.listdir(yarch):
-                    self.info('Deleting empty year archive {}'.format(year_dir))
+                    self.info("Deleting empty year archive {}".format(year_dir))
                     os.rmdir(yarch)
 
     def _archive(self, root, p):
@@ -119,7 +151,7 @@ class Archiver(HasTraits):
         month_idx = today.month
         month = MONTH_NAMES[month_idx - 1]
         year = today.year
-        arch = os.path.join(root, 'archive')
+        arch = os.path.join(root, "archive")
         if not os.path.isdir(arch):
             os.mkdir(arch)
 
@@ -127,7 +159,7 @@ class Archiver(HasTraits):
         if not os.path.isdir(yarch):
             os.mkdir(yarch)
 
-        mname = '{:02d}-{}'.format(month_idx, month)
+        mname = "{:02d}-{}".format(month_idx, month)
         march = os.path.join(yarch, mname)
         if not os.path.isdir(march):
             os.mkdir(march)
@@ -135,11 +167,11 @@ class Archiver(HasTraits):
         src = os.path.join(root, p)
         dst = os.path.join(march, p)
 
-        self.info('Archiving {:15s} to ./archive/{}/{}'.format(p, year, mname))
+        self.info("Archiving {:15s} to ./archive/{}/{}".format(p, year, mname))
         try:
             shutil.move(src, dst)
         except Exception as e:
-            self.warning('Archiving failed')
+            self.warning("Archiving failed")
             self.warning(e)
 
 
@@ -151,5 +183,3 @@ class Archiver(HasTraits):
 #     )
 #     c.root = '/Users/ross/Sandbox/video_test'
 #     c.clean()
-
-

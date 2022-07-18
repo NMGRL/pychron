@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 from pyface.qt import QtGui
 from traits.api import Any, Str, Event, Bool
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.basic_editor_factory import BasicEditorFactory
@@ -37,12 +38,10 @@ class mComboBox(QtGui.QComboBox):
 
 class _EnumEditor(SimpleEditor):
     def create_combo_box(self):
-        """ Returns the QComboBox used for the editor control.
-        """
+        """Returns the QComboBox used for the editor control."""
         control = mComboBox(self.factory.disable_scroll)
         control.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
-        control.setSizePolicy(QtGui.QSizePolicy.Maximum,
-                              QtGui.QSizePolicy.Fixed)
+        control.setSizePolicy(QtGui.QSizePolicy.Maximum, QtGui.QSizePolicy.Fixed)
         return control
 
 
@@ -54,7 +53,7 @@ class myEnumEditor(BasicEditorFactory):
     values = Any
 
     # Extended name of the trait on **object** containing the enumeration data:
-    object = Str('object')
+    object = Str("object")
 
     # Name of the trait on 'object' containing the enumeration data
     name = Str
@@ -65,11 +64,12 @@ class myEnumEditor(BasicEditorFactory):
     disable_scroll = Bool(True)
 
     def _values_changed(self):
-        """ Recomputes the mappings whenever the **values** trait is changed.
-        """
-        self._names, self._mapping, self._inverse_mapping = \
-            enum_values_changed(self.values)
+        """Recomputes the mappings whenever the **values** trait is changed."""
+        self._names, self._mapping, self._inverse_mapping = enum_values_changed(
+            self.values
+        )
 
         self.values_modified = True
+
 
 # ============= EOF =============================================

@@ -17,8 +17,10 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Instance, Float, List
+
 # ============= standard library imports ========================
 from threading import Timer
+
 # ============= local library imports  ==========================
 from pychron.core.ui.close_handler import CloseHandler
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -56,11 +58,10 @@ class MachineVisionManager(Loggable):
             src = self.video.get_cached_frame()
             return src
 
-    def new_image(self, frame=None, title='AutoCenter',
-                  view_id='target', **kw):
-        im = StandAloneImage(title=title,
-                             handler=CloseHandler(always_on_top=False),
-                             **kw)
+    def new_image(self, frame=None, title="AutoCenter", view_id="target", **kw):
+        im = StandAloneImage(
+            title=title, handler=CloseHandler(always_on_top=False), **kw
+        )
         im.window_x = OX + XOFFSET * CloseHandler.WINDOW_CNT
         im.window_y = OY + YOFFSET * CloseHandler.WINDOW_CNT
         im.window_height = 300
@@ -68,23 +69,24 @@ class MachineVisionManager(Loggable):
         if frame is not None:
             im.load(frame, swap_rb=True)
         self.open_images.append(im)
-        im.on_trait_change(self._remove_image, 'close_event')
+        im.on_trait_change(self._remove_image, "close_event")
         return im
 
     def close_open_images(self):
-        self.debug('close open images')
+        self.debug("close open images")
 
         import time
+
         for i in self.open_images:
             i.close_ui()
-            i.on_trait_change(self._remove_image, 'close_event', remove=True)
+            i.on_trait_change(self._remove_image, "close_event", remove=True)
             time.sleep(0.05)
 
         self.open_images = []
 
     def _remove_image(self, obj, name, old, new):
         self.open_images.remove(obj)
-        obj.on_trait_change(self._remove_image, 'close_event', remove=True)
+        obj.on_trait_change(self._remove_image, "close_event", remove=True)
 
 
 # ============= EOF =============================================

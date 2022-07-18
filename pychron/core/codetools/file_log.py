@@ -22,12 +22,15 @@ from pychron.core.helpers.filetools import unique_path
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-root = os.path.join(os.path.expanduser('~'), 'Desktop', 'filelog')
+root = os.path.join(os.path.expanduser("~"), "Desktop", "filelog")
 if not os.path.isdir(root):
     os.mkdir(root)
-p, _ = unique_path(root, 'mem')
+p, _ = unique_path(root, "mem")
+
 
 def file_log(msg):
-    with open(os.path.join(root, p), 'a') as wfile:
-        wfile.write('{}\n'.format(msg))
+    with open(os.path.join(root, p), "a") as wfile:
+        wfile.write("{}\n".format(msg))
+
+
 # ============= EOF =============================================

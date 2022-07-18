@@ -24,15 +24,17 @@ from pychron.spectrometer.tasks.base_spectrometer_plugin import BaseSpectrometer
 
 
 class ThermoSpectrometerPlugin(BaseSpectrometerPlugin):
-
     def start(self):
         super(ThermoSpectrometerPlugin, self).start()
 
-        if to_bool(self.application.preferences.get('pychron.spectrometer.auto_open_readout')):
+        if to_bool(
+            self.application.preferences.get("pychron.spectrometer.auto_open_readout")
+        ):
             from pychron.spectrometer.readout_view import new_readout_view
 
             rv = self.application.get_service(ReadoutView)
             v = new_readout_view(rv)
             open_view(rv, view=v)
+
 
 # ============= EOF =============================================

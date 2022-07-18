@@ -17,12 +17,14 @@
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
 from enable.colors import black_color_trait, ColorTrait
+
 # ============= standard library imports ========================
 from numpy import array, zeros
 from traits.api import Array
 
 
 # ============= local library imports  ==========================
+
 
 class ErrorEnvelopeOverlay(AbstractOverlay):
     _cache_valid = False
@@ -66,8 +68,10 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
         if self.use_downsampling:
             return self._downsample()
         else:
-            return (self.component.map_screen(self._cached_data_pts_u),
-                    self.component.map_screen(self._cached_data_pts_l))
+            return (
+                self.component.map_screen(self._cached_data_pts_u),
+                self.component.map_screen(self._cached_data_pts_l),
+            )
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
@@ -110,18 +114,23 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
 
     def _downsample(self):
         if not self._screen_cache_valid:
-            self._cached_screen_pts_u = self.component.map_screen(self._cached_data_pts_u)[0]
-            self._cached_screen_pts_l = self.component.map_screen(self._cached_data_pts_l)[0]
+            self._cached_screen_pts_u = self.component.map_screen(
+                self._cached_data_pts_u
+            )[0]
+            self._cached_screen_pts_l = self.component.map_screen(
+                self._cached_data_pts_l
+            )[0]
 
             self._screen_cache_valid = True
 
-            for pt_arrays in (self._cached_screen_pts_l,
-                              self._cached_screen_pts_u):
+            for pt_arrays in (self._cached_screen_pts_l, self._cached_screen_pts_u):
                 r, c = pt_arrays.shape
                 # some boneheaded short-circuits
                 m = self.component.index_mapper
                 total_numpoints = r * c
-                if (total_numpoints < 400) or (total_numpoints < m.high_pos - m.low_pos):
+                if (total_numpoints < 400) or (
+                    total_numpoints < m.high_pos - m.low_pos
+                ):
                     return [self._cached_screen_pts_l], [self._cached_screen_pts_u]
 
                 # the new point array and a counter of how many actual points we've added
@@ -143,5 +152,6 @@ class ErrorEnvelopeOverlay(AbstractOverlay):
                     new_arrays.append(new_pts[:numpoints])
 
         return [self._cached_screen_pts_l], [self._cached_screen_pts_u]
+
 
 # ============= EOF =============================================

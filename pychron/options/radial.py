@@ -22,15 +22,24 @@ from pychron.pychron_constants import NULL_STR, MAIN, APPEARANCE, DISPLAY, GROUP
 
 
 class RadialAuxPlot(AuxPlot):
-    names = List([NULL_STR, 'Radial'], transient=True)
+    names = List([NULL_STR, "Radial"], transient=True)
 
 
 class RadialOptions(AgeOptions):
     aux_plot_klass = RadialAuxPlot
 
     def initialize(self):
-        self.subview_names = [MAIN, 'Radial', APPEARANCE, 'Calculations', DISPLAY, GROUPS]
+        self.subview_names = [
+            MAIN,
+            "Radial",
+            APPEARANCE,
+            "Calculations",
+            DISPLAY,
+            GROUPS,
+        ]
 
     def _get_subview(self, name):
         return VIEWS[name]
+
+
 # ============= EOF =============================================

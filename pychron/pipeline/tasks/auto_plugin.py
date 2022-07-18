@@ -47,11 +47,20 @@ nodes:
 
 
 class AutoPlugin(BasePlugin):
-    nodes = List(contributes_t='pychron.pipeline.nodes')
-    predefined_templates = List(contributes_to='pychron.pipeline.predefined_templates')
+    nodes = List(contributes_t="pychron.pipeline.nodes")
+    predefined_templates = List(contributes_to="pychron.pipeline.predefined_templates")
 
     def _predefined_templates_default(self):
-        return [('Auto', (('Ideogram', AUTO_IDEOGRAM),
-                          ('Series', AUTO_SERIES),
-                          ('Report', AUTO_REPORT)))]
+        return [
+            (
+                "Auto",
+                (
+                    ("Ideogram", AUTO_IDEOGRAM),
+                    ("Series", AUTO_SERIES),
+                    ("Report", AUTO_REPORT),
+                ),
+            )
+        ]
+
+
 # ============= EOF =============================================

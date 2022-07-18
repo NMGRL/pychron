@@ -16,20 +16,25 @@
 
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.tasks.furnace_plugin import BaseFurnacePlugin
-from pychron.furnace.tasks.ldeo.preferences import LDEOFurnacePreferencesPane, LDEOFurnaceControlPreferencesPane
+from pychron.furnace.tasks.ldeo.preferences import (
+    LDEOFurnacePreferencesPane,
+    LDEOFurnaceControlPreferencesPane,
+)
 from pychron.furnace.tasks.ldeo.task import LDEOFurnaceTask
 
 
 class LDEOFurnacePlugin(BaseFurnacePlugin):
-    name = 'LDEOFurnace'
-    id = 'pychron.furnace.ldeo.plugin'
-    task_name = 'LDEO Furnace'
-    klass = ('pychron.furnace.ldeo.furnace_manager', 'LDEOFurnaceManager')
+    name = "LDEOFurnace"
+    id = "pychron.furnace.ldeo.plugin"
+    task_name = "LDEO Furnace"
+    klass = ("pychron.furnace.ldeo.furnace_manager", "LDEOFurnaceManager")
     task_klass = LDEOFurnaceTask
 
     def _help_tips_default(self):
-        return ['LDEOFurnace hardware was designed by Stephen Cox. Firmware and software was designed by Jake '
-                'Ross for NMGRL with modifications by Stephen Cox for LDEO']
+        return [
+            "LDEOFurnace hardware was designed by Stephen Cox. Firmware and software was designed by Jake "
+            "Ross for NMGRL with modifications by Stephen Cox for LDEO"
+        ]
 
     def _deactivations_default(self):
         application = self.application
@@ -38,7 +43,7 @@ class LDEOFurnacePlugin(BaseFurnacePlugin):
             manager = application.get_service(IFurnaceManager)
             if manager:
                 for window in application.windows:
-                    if 'furnace' in window.active_task.id:
+                    if "furnace" in window.active_task.id:
                         break
                 else:
                     manager.stop_update()
@@ -58,5 +63,6 @@ class LDEOFurnacePlugin(BaseFurnacePlugin):
 
     def _preferences_panes_default(self):
         return [LDEOFurnacePreferencesPane, LDEOFurnaceControlPreferencesPane]
+
 
 # ============= EOF =============================================

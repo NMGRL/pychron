@@ -31,14 +31,16 @@ class BaseRecallEditor(BaseTraitsEditor):
 
     def set_name(self, name):
         if self.instance_id:
-            name = '{} #{}'.format(name, self.instance_id + 1)
+            name = "{} #{}".format(name, self.instance_id + 1)
 
         self.name = name
 
 
 class RecallEditor(BaseRecallEditor):
-    analysis = Instance('pychron.processing.analyses.analysis.Analysis')
-    analysis_view = Instance('pychron.processing.analyses.view.analysis_view.AnalysisView')
+    analysis = Instance("pychron.processing.analyses.analysis.Analysis")
+    analysis_view = Instance(
+        "pychron.processing.analyses.view.analysis_view.AnalysisView"
+    )
 
     def __init__(self, analysis, av, *args, **kw):
         super(RecallEditor, self).__init__(*args, **kw)
@@ -47,10 +49,12 @@ class RecallEditor(BaseRecallEditor):
     def init(self, analysis, av):
         self.analysis = analysis
         self.analysis_view = av
-        self.basename = analysis.record_id
+        self.basename = av.analysis_id
+        # self.basename = '{}({})'.format(analysis.record_id, analysis.sample)
 
     def traits_view(self):
-        v = View(UItem('analysis_view', style='custom', editor=InstanceEditor()))
+        v = View(UItem("analysis_view", style="custom", editor=InstanceEditor()))
         return v
+
 
 # ============= EOF =============================================

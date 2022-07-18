@@ -15,8 +15,14 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
-from chaco.api import PlotGrid, BarPlot, ArrayDataSource, \
-    DataRange1D, LinearMapper, add_default_axes
+from chaco.api import (
+    PlotGrid,
+    BarPlot,
+    ArrayDataSource,
+    DataRange1D,
+    LinearMapper,
+    add_default_axes,
+)
 
 # =============local library imports  ==========================
 from chaco.axis import PlotAxis
@@ -30,24 +36,22 @@ from pychron.graph.regression_graph import RegressionGraph
 
 
 class ResidualsGraph(RegressionGraph):
-    """
-    """
+    """ """
+
     xtitle = None
 
     def _plotcontainer_default(self):
-        """
-        """
+        """ """
         return self.container_factory()
 
     def container_factory(self):
-        """
-        """
-        kw = {'type': 'v', 'stack_order': 'top_to_bottom'}
+        """ """
+        kw = {"type": "v", "stack_order": "top_to_bottom"}
         for k, v in self.container_dict.items():
             kw[k] = v
         return container_factory(**kw)
 
-    # def _metadata_changed(self, obj, name, new):
+        # def _metadata_changed(self, obj, name, new):
         """
         """
         # super(ResidualsGraph, self)._metadata_changed(obj, name, new)
@@ -78,8 +82,7 @@ class ResidualsGraph(RegressionGraph):
             pplot.value.set_data(rp)
 
     def _split_residual(self, x, res):
-        """
-        """
+        """ """
         neg = res <= 0
         pos = res > 0
         return x[neg], res[neg], x[pos], res[pos]
@@ -95,10 +98,11 @@ class ResidualsGraph(RegressionGraph):
     #     return super(ResidualsGraph, self).new_plot(*args, **kw)
 
     def new_series(self, x=None, y=None, plotid=0, **kw):
-        """
-        """
+        """ """
 
-        plot, scatter, line = super(ResidualsGraph, self).new_series(x=x, y=y, plotid=plotid, **kw)
+        plot, scatter, line = super(ResidualsGraph, self).new_series(
+            x=x, y=y, plotid=plotid, **kw
+        )
         # for underlay in plot.underlays:
         #     if underlay.orientation == 'bottom':
         #         underlay.visible = False
@@ -115,26 +119,28 @@ class ResidualsGraph(RegressionGraph):
 
         ymapper = LinearMapper(range=yrange)
 
-        container = container_factory(kind='o',
-                                      padding_left=plot.padding_left,
-                                      padding_right=plot.padding_right,
-                                      padding_top=50,
-                                      padding_bottom=0,
-                                      height=75,
-                                      resizable='h')
+        container = container_factory(
+            kind="o",
+            padding_left=plot.padding_left,
+            padding_right=plot.padding_right,
+            padding_top=50,
+            padding_bottom=0,
+            height=75,
+            resizable="h",
+        )
 
-        neg_bar = BarPlot(index=ArrayDataSource(xn),
-                          value=ArrayDataSource(rn),
-                          index_mapper=scatter.index_mapper,
-                          value_mapper=ymapper,
-                          bar_width=0.2,
-                          line_color='blue',
-                          fill_color='blue',
+        neg_bar = BarPlot(
+            index=ArrayDataSource(xn),
+            value=ArrayDataSource(rn),
+            index_mapper=scatter.index_mapper,
+            value_mapper=ymapper,
+            bar_width=0.2,
+            line_color="blue",
+            fill_color="blue",
+            border_visible=True,
+        )
 
-                          border_visible=True)
-
-        left_axis = PlotAxis(neg_bar, orientation='right',
-                             title='residuals')
+        left_axis = PlotAxis(neg_bar, orientation="right", title="residuals")
         # bottom_axis=PlotAxis(bar,orientation='bottom')
 
         # kw = dict(vtitle='residuals')
@@ -142,28 +148,30 @@ class ResidualsGraph(RegressionGraph):
         #     kw['htitle'] = self.xtitle
 
         # add_default_axes(neg_bar, **kw)
-        hgrid = PlotGrid(mapper=ymapper,
-                         component=neg_bar,
-                         orientation='horizontal',
-                         line_color='lightgray',
-                         line_style='dot')
+        hgrid = PlotGrid(
+            mapper=ymapper,
+            component=neg_bar,
+            orientation="horizontal",
+            line_color="lightgray",
+            line_style="dot",
+        )
 
         neg_bar.underlays.append(hgrid)
         neg_bar.underlays.append(left_axis)
 
-        pos_bar = BarPlot(index=ArrayDataSource(xp),
-                          value=ArrayDataSource(rp),
-                          index_mapper=scatter.index_mapper,
-                          value_mapper=ymapper,
-                          bar_width=0.2,
-                          line_color='green',
-                          fill_color='green',
-                          # bgcolor = 'green',
-
-                          resizable='hv',
-                          border_visible=True,
-                          # padding = [30, 5, 0, 30]
-                          )
+        pos_bar = BarPlot(
+            index=ArrayDataSource(xp),
+            value=ArrayDataSource(rp),
+            index_mapper=scatter.index_mapper,
+            value_mapper=ymapper,
+            bar_width=0.2,
+            line_color="green",
+            fill_color="green",
+            # bgcolor = 'green',
+            resizable="hv",
+            border_visible=True,
+            # padding = [30, 5, 0, 30]
+        )
         # bar2.overlays.append(GuideOverlay(bar2, value=0, color=(0, 0, 0)))
         # bar2.underlays.append(hgrid)
         container.add(pos_bar)
@@ -175,7 +183,7 @@ class ResidualsGraph(RegressionGraph):
         self.plotcontainer.insert(0, container)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import numpy as np
 
     g = ResidualsGraph()
@@ -184,7 +192,7 @@ if __name__ == '__main__':
     n = 100
     x = np.arange(n)
     a, b, c = -0.01, 0, 100
-    y = a * x ** 2 + b * x + c + 10 * np.random.random(n)
+    y = a * x**2 + b * x + c + 10 * np.random.random(n)
     g.new_series(x, y)
 
     g.configure_traits()

@@ -17,24 +17,41 @@
 # =============enthought library imports=======================
 from __future__ import absolute_import
 from __future__ import print_function
-from traits.api import Color, Float, Any, Bool, Range, on_trait_change, \
-    Enum, List, File, Int
+from traits.api import (
+    Color,
+    Float,
+    Any,
+    Bool,
+    Range,
+    on_trait_change,
+    Enum,
+    List,
+    File,
+    Int,
+)
+
 # from traitsui.api import View, Item, VGroup, HGroup, ColorEditor
 from chaco.api import AbstractOverlay
 from kiva import constants, Font
 from kiva.agg.agg import GraphicsContextArray
+
 # =============standard library imports ========================
 from numpy import array
 from PIL import Image
+
 # import math
 # =============local library imports  ==========================
-from pychron.canvas.canvas2D.scene.primitives.laser_primitives import Transect, \
-    VelocityPolyLine, RasterPolygon, LaserPoint, DrillPoint
+from pychron.canvas.canvas2D.scene.primitives.laser_primitives import (
+    Transect,
+    VelocityPolyLine,
+    RasterPolygon,
+    LaserPoint,
+    DrillPoint,
+)
 from pychron.canvas.canvas2D.crosshairs_overlay import CrosshairsOverlay
 import os
 from pychron.canvas.canvas2D.stage_canvas import StageCanvas, DIRECTIONS
-from pychron.experiment.utilities.position_regex import TRANSECT_REGEX, \
-    DRILL_REGEX
+from pychron.experiment.utilities.position_regex import TRANSECT_REGEX, DRILL_REGEX
 
 
 class BoundsOverlay(AbstractOverlay):
@@ -46,8 +63,7 @@ class BoundsOverlay(AbstractOverlay):
             gc.set_stroke_color((1, 0, 0))
             gc.set_line_width(3)
             gc.set_line_dash((5, 5))
-            rect = [getattr(component, attr) for attr in
-                    ('x', 'y', 'width', 'height')]
+            rect = [getattr(component, attr) for attr in ("x", "y", "width", "height")]
             gc.clip_to_rect(*rect)
 
             gc.draw_rect((x1 + 1, y1, w, h), constants.STROKE)
@@ -68,15 +84,20 @@ class ImageOverlay(AbstractOverlay):
                 self._compute_cached_image()
 
             if self._cached_image:
-                gc.draw_image(self._cached_image,
-                              rect=(other_component.x, other_component.y,
-                                    other_component.width,
-                                    other_component.height))
+                gc.draw_image(
+                    self._cached_image,
+                    rect=(
+                        other_component.x,
+                        other_component.y,
+                        other_component.width,
+                        other_component.height,
+                    ),
+                )
 
     def _compute_cached_image(self):
         pic = Image.open(self.path)
         data = array(pic)
-        if not data.flags['C_CONTIGUOUS']:
+        if not data.flags["C_CONTIGUOUS"]:
             data = data.copy()
 
         if data.shape[2] == 3:
@@ -85,7 +106,8 @@ class ImageOverlay(AbstractOverlay):
             kiva_depth = "rgba32"
         else:
             raise RuntimeError(
-                "Unknown colormap depth value: %i".format(data.value_depth))
+                "Unknown colormap depth value: %i".format(data.value_depth)
+            )
 
         self._cached_image = GraphicsContextArray(data, pix_format=kiva_depth)
         self._image_cache_valid = True
@@ -102,14 +124,13 @@ class ImageOverlay(AbstractOverlay):
         self.request_redraw()
 
 
-
 class LaserTrayCanvas(StageCanvas):
-    """
-    """
+    """ """
+
     markup = Bool(False)
     configuration_dir = None
 
-    bgcolor = 'mediumturquoise'
+    bgcolor = "mediumturquoise"
 
     # show_axes = True
     tool_state = None
@@ -121,22 +142,21 @@ class LaserTrayCanvas(StageCanvas):
     use_zoom = False
 
     beam_radius = Float(0)
-    crosshairs_kind = Enum('BeamRadius', 'UserRadius', 'MaskRadius')
-    crosshairs_offset_color = Color('blue')
+    crosshairs_kind = Enum("BeamRadius", "UserRadius", "MaskRadius")
+    crosshairs_offset_color = Color("blue")
 
     crosshairs_radius = Range(0.0, 10.0, 1.0)
     crosshairs_offsetx = Float
     crosshairs_offsety = Float
-
 
     aux_show_laser_position = Bool(True)
     aux_show_desired_position = False
     aux_desired_position = None
     aux_desired_position_color = None
 
-    aux_crosshairs_color = Color('red')
-    aux_crosshairs_kind = Enum('UserRadius')
-    aux_crosshairs_offset_color = Color('red')
+    aux_crosshairs_color = Color("red")
+    aux_crosshairs_kind = Enum("UserRadius")
+    aux_crosshairs_offset_color = Color("red")
     aux_crosshairs_radius = Range(0.0, 10.0, 1.0)
     aux_crosshairs_offsetx = Float
     aux_crosshairs_offsety = Float
@@ -145,7 +165,7 @@ class LaserTrayCanvas(StageCanvas):
     show_hole_label = Bool(True)
     hole_label_color = Color
     hole_label_size = Int
-    hole_label_font = Font('Consolas')
+    hole_label_font = Font("Consolas")
 
     show_bounds_rect = Bool(True)
     transects = List
@@ -156,7 +176,7 @@ class LaserTrayCanvas(StageCanvas):
     _new_transect = True
     _new_polygon = True
 
-    aspect_ratio = 4 / 3.
+    aspect_ratio = 4 / 3.0
 
     def _show_axes_default(self):
         return True
@@ -169,45 +189,48 @@ class LaserTrayCanvas(StageCanvas):
         self.border_visible = False
 
     def get_show_laser_position(self, tag=None):
-        attr = 'show_laser_position'
+        attr = "show_laser_position"
         if tag:
-            attr = '{}_{}'.format(tag, attr)
+            attr = "{}_{}".format(tag, attr)
 
         return getattr(self, attr)
 
     def get_crosshairs_color(self, tag=None, offset=False):
         if offset and not tag:
-            key = 'crosshairs_offset_color'
+            key = "crosshairs_offset_color"
         else:
-            key = 'crosshairs_color'
+            key = "crosshairs_color"
 
         if tag:
-            key = '{}_{}'.format(tag, key)
+            key = "{}_{}".format(tag, key)
 
         c = getattr(self, key)
         return c
 
     def get_desired_position(self, tag):
         if tag:
-            s, p = getattr(self, '{}_show_desired_position'.format(tag)), \
-                   getattr(self, '{}_desired_position'.format(tag))
+            s, p = getattr(self, "{}_show_desired_position".format(tag)), getattr(
+                self, "{}_desired_position".format(tag)
+            )
         else:
             s, p = self.show_desired_position, self.desired_position
         return s, p
 
     def get_crosshairs_radius(self, screen=False, tag=None):
         if tag:
-            radius = getattr(self, '{}_crosshairs_radius'.format(tag))
-            kind = getattr(self, '{}_crosshairs_kind'.format(tag))
+            radius = getattr(self, "{}_crosshairs_radius".format(tag))
+            kind = getattr(self, "{}_crosshairs_kind".format(tag))
         else:
             radius = self.crosshairs_radius
             kind = self.crosshairs_kind
 
-        if kind == 'BeamRadius':
+        if kind == "BeamRadius":
             radius = self.beam_radius
 
         if screen:
-            radius = self.get_wh(radius, 0)[0]
+            w, h = self.get_wh(radius, radius)
+            radius = (w + h) / 2.0
+
         return radius
 
     def add_image_underlay(self, p, alpha=1.0):
@@ -229,9 +252,16 @@ class LaserTrayCanvas(StageCanvas):
         self._new_polygon = True
 
     def point_exists(self, x, y, z, tol=1e-5):
-        pt = next((pts for pts in self.get_points()
-                   if abs(pts.x - x) < tol and abs(pts.y - y) < tol and abs(
-            pts.z - z) < tol), None)
+        pt = next(
+            (
+                pts
+                for pts in self.get_points()
+                if abs(pts.x - x) < tol
+                and abs(pts.y - y) < tol
+                and abs(pts.z - z) < tol
+            ),
+            None,
+        )
 
         return True if pt else False
 
@@ -241,12 +271,15 @@ class LaserTrayCanvas(StageCanvas):
         transect.step = step
         self.request_redraw()
 
-    def new_polygon_point(self, xy=None,
-                          ptargs=None,
-                          identifier=None,
-                          line_color=(1, 0, 0),
-                          point_color=(1, 0, 0),
-                          **kw):
+    def new_polygon_point(
+        self,
+        xy=None,
+        ptargs=None,
+        identifier=None,
+        line_color=(1, 0, 0),
+        point_color=(1, 0, 0),
+        **kw
+    ):
         if ptargs is None:
             ptargs = dict()
 
@@ -258,31 +291,37 @@ class LaserTrayCanvas(StageCanvas):
 
         if self._new_polygon:
             self._new_polygon = False
-            poly = RasterPolygon([xy],
-                                 identifier=identifier,
-                                 default_color=point_color,
-                                 ptargs=ptargs,
-                                 **kw)
+            poly = RasterPolygon(
+                [xy],
+                identifier=identifier,
+                default_color=point_color,
+                ptargs=ptargs,
+                **kw
+            )
             self.polygons.append(poly)
             self.scene.add_item(poly)
         else:
             poly = self.polygons[-1]
             poly.add_point(xy, default_color=point_color, **ptargs)
 
-    def new_transect_point(self, xy=None, step=1, line_color=(1, 0, 0),
-                           point_color=(1, 0, 0), **ptargs):
+    def new_transect_point(
+        self, xy=None, step=1, line_color=(1, 0, 0), point_color=(1, 0, 0), **ptargs
+    ):
         if xy is None:
             xy = self._stage_position
 
         if self._new_transect:
             self._new_transect = False
 
-            transect = Transect(xy[0], xy[1],
-                                identifier=str(len(self.transects) + 1),
-                                canvas=self,
-                                default_color=point_color,
-                                step=step,
-                                **ptargs)
+            transect = Transect(
+                xy[0],
+                xy[1],
+                identifier=str(len(self.transects) + 1),
+                canvas=self,
+                default_color=point_color,
+                step=step,
+                **ptargs
+            )
             self.scene.add_item(transect)
             self.transects.append(transect)
         else:
@@ -291,27 +330,29 @@ class LaserTrayCanvas(StageCanvas):
             tran.add_point(xy[0], xy[1], **ptargs)
             tran.set_step_points(**ptargs)
 
-    def new_line_point(self, xy=None, z=0, line_color=(1, 0, 0),
-                       point_color=(1, 0, 0), velocity=None, **kw):
+    def new_line_point(
+        self,
+        xy=None,
+        z=0,
+        line_color=(1, 0, 0),
+        point_color=(1, 0, 0),
+        velocity=None,
+        **kw
+    ):
         if xy is None:
             xy = self._stage_position
 
         if self._new_line:
-            kw['identifier'] = str(len(self.lines) + 1)
+            kw["identifier"] = str(len(self.lines) + 1)
 
-            line = VelocityPolyLine(*xy, z=z,
-                                    default_color=point_color,
-                                    **kw)
+            line = VelocityPolyLine(*xy, z=z, default_color=point_color, **kw)
             self._new_line = False
             self.scene.add_item(line)
             self.lines.append(line)
         else:
             line = self.lines[-1]
             line.velocity_segments.append(velocity)
-            line.add_point(*xy,
-                           z=z,
-                           line_color=line_color,
-                           point_color=point_color)
+            line.add_point(*xy, z=z, line_color=line_color, point_color=point_color)
 
     def remove_item(self, name):
         self.scene.remove_item(name)
@@ -326,8 +367,8 @@ class LaserTrayCanvas(StageCanvas):
         if xy is None:
             xy = self._stage_position
 
-        if 'identifier' not in kw:
-            kw['identifier'] = str(self.point_count)
+        if "identifier" not in kw:
+            kw["identifier"] = str(self.point_count)
 
         p = LaserPoint(*xy, **kw)
         self.point_count += 1
@@ -368,13 +409,13 @@ class LaserTrayCanvas(StageCanvas):
             return self.get_drill_point(v)
         else:
             # v= p2 e.g. identifier is only 2
-            if v.startswith('p'):
+            if v.startswith("p"):
                 v = v[1:]
 
             return self.scene.get_item(v, klass=LaserPoint)
 
     def get_transect_point(self, v):
-        t, p = v[1:].split('-')
+        t, p = v[1:].split("-")
         tran = self.get_transect(t)
         if tran:
             return tran.get_point(int(p))
@@ -384,8 +425,7 @@ class LaserTrayCanvas(StageCanvas):
         return drill
 
     def valid_position(self, x, y):
-        """
-        """
+        """ """
         between = lambda mi, v, ma: mi < v <= ma
 
         if between(self.x, x, self.x2) and between(self.y, y, self.y2):
@@ -393,24 +433,25 @@ class LaserTrayCanvas(StageCanvas):
                 p = self.stage_manager.stage_controller
                 x, y = self.map_data((x, y))
                 try:
-                    if between(p.xaxes_min, x, p.xaxes_max) and \
-                            between(p.yaxes_min, y, p.yaxes_max):
+                    if between(p.xaxes_min, x, p.xaxes_max) and between(
+                        p.yaxes_min, y, p.yaxes_max
+                    ):
                         return x, y
                 except AttributeError as e:
                     print(e)
 
     def map_offset_position(self, pos):
         """
-            input a x,y tuple in screen space
-            return the position modified by crosshairs offset
+        input a x,y tuple in screen space
+        return the position modified by crosshairs offset
         """
         sx, sy = self.map_data(pos)
         return sx + self.crosshairs_offsetx, sy + self.crosshairs_offsety
 
     def get_screen_offset(self, tag=None):
         if tag:
-            x = getattr(self, '{}_crosshairs_offsetx'.format(tag))
-            y = getattr(self, '{}_crosshairs_offsety'.format(tag))
+            x = getattr(self, "{}_crosshairs_offsetx".format(tag))
+            y = getattr(self, "{}_crosshairs_offsety".format(tag))
             pt = x, y
         else:
             pt = self.crosshairs_offsetx, self.crosshairs_offsety
@@ -430,18 +471,17 @@ class LaserTrayCanvas(StageCanvas):
         return self.stage_manager.get_current_hole()
 
     def adjust_limits(self, mapper, val, delta=None):
-        """
-        """
+        """ """
         if val is None:
             return
 
         if delta is None:
 
-            vrange = getattr(self, '{}_mapper'.format(mapper)).range
+            vrange = getattr(self, "{}_mapper".format(mapper)).range
 
             vmi = vrange.low
             vma = vrange.high
-            pname = 'prev_{}_val'.format(mapper)
+            pname = "prev_{}_val".format(mapper)
 
             try:
                 pv = getattr(self, pname)
@@ -464,8 +504,7 @@ class LaserTrayCanvas(StageCanvas):
     # interactor
     # ===============================================================================
     def normal_left_down(self, event):
-        """
-        """
+        """ """
 
         ox, oy = self.get_screen_offset()
         x, y = event.x - ox, event.y - oy
@@ -473,27 +512,29 @@ class LaserTrayCanvas(StageCanvas):
         pos = self.valid_position(x, y)
 
         if pos:
-            self.stage_manager.linear_move(*pos,
-                                           source='laser_canvas',
-                                           start_timer=True,
-                                           check_moving=True,
-                                           use_calibration=False)
+            self.stage_manager.linear_move(
+                *pos,
+                source="laser_canvas",
+                start_timer=True,
+                check_moving=True,
+                use_calibration=False
+            )
             event.handled = True
 
     def normal_key_pressed(self, event):
         c = event.character
-        if c in ('Left', 'Right', 'Up', 'Down'):
+        if c in ("Left", "Right", "Up", "Down"):
             ax_key, direction = DIRECTIONS[c]
             direction = self._calc_relative_move_direction(c, direction)
             distance = 5 if event.shift_down else 1
             self.stage_manager.relative_move(ax_key, direction, distance)
             event.handled = True
-        elif c in ('a', 'A'):
+        elif c in ("a", "A"):
             self.stage_manager.accept_point()
 
     def key_released(self, char):
         """
-            called from outside by StageCompnentEditor
+        called from outside by StageCompnentEditor
         """
 
         # if char in ('left', 'right'):
@@ -516,22 +557,23 @@ class LaserTrayCanvas(StageCanvas):
             self.overlays.append(BoundsOverlay(component=self))
 
     def _add_aux_crosshairs(self):
-        ch = CrosshairsOverlay(component=self, circle_only=True, tag='aux')
+        ch = CrosshairsOverlay(component=self, circle_only=True, tag="aux")
         self.aux_crosshairs = ch
         self.overlays.append(ch)
 
     # ===============================================================================
     # handlers
     # ===============================================================================
-    @on_trait_change('''show_laser_position, show_desired_position,
+    @on_trait_change(
+        """show_laser_position, show_desired_position,
                          desired_position_color,
-                         crosshairs_+, aux_crosshairs+''')
+                         crosshairs_+, aux_crosshairs+"""
+    )
     def change_indicator_visibility(self, name, new):
         self.request_redraw()
 
     def _show_bounds_rect_changed(self):
-        bo = next((o for o in self.overlays if isinstance(o, BoundsOverlay)),
-                  None)
+        bo = next((o for o in self.overlays if isinstance(o, BoundsOverlay)), None)
         if bo is None:
             self._add_bounds_rect()
         elif not self.show_bounds_rect:
@@ -539,15 +581,16 @@ class LaserTrayCanvas(StageCanvas):
 
         self.request_redraw()
 
-    @on_trait_change('hole_label_size')
+    @on_trait_change("hole_label_size")
     def handle_hole_label_size(self, new):
-        self.hole_label_font = Font('Consolas', size=new)
+        self.hole_label_font = Font("Consolas", size=new)
 
     # ===============================================================================
     # property get/set
     # ===============================================================================
     def _get_crosshairs_color(self):
         return self._crosshairs_color
+
 
 # ========================EOF====================================================
 #    def normal_mouse_wheel(self, event):

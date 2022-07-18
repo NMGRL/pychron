@@ -18,7 +18,10 @@ import os
 
 from pychron.core.ui import set_qt
 from pychron.paths import paths
-from pychron.persistence_loggable import load_persistence_values, dump_persistence_values
+from pychron.persistence_loggable import (
+    load_persistence_values,
+    dump_persistence_values,
+)
 
 set_qt()
 
@@ -26,8 +29,10 @@ set_qt()
 from pyface.timer.do_later import do_after
 from traits.api import HasTraits, Button, List, Int, on_trait_change
 from traits.trait_types import Str, Password
+
 # ============= standard library imports ========================
 import pymysql
+
 # ============= local library imports  ==========================
 from pychron.core.pychron_traits import IPAddress
 from pychron.database.tasks.panes import SlavePane
@@ -47,8 +52,8 @@ class StatusItem(HasTraits):
 
 
 class ReplicationTask(BaseTask):
-    name = 'Replication'
-    id = 'pychron.database.replication'
+    name = "Replication"
+    id = "pychron.database.replication"
 
     check_status_button = Button
     host = IPAddress(enter_set=True, auto_set=False)
@@ -65,9 +70,9 @@ class ReplicationTask(BaseTask):
     _connection = None
 
     def activated(self):
-        self.host = 'localhost'
-        self.user = 'root'
-        self.password = 'Argon'
+        self.host = "localhost"
+        self.user = "root"
+        self.password = "Argon"
         self._load()
         self._check_status()
 
@@ -81,20 +86,19 @@ class ReplicationTask(BaseTask):
         return SlavePane(model=self)
 
     def _load(self):
-        p = os.path.join(paths.hidden_dir,'slave')
-        load_persistence_values(self, p, ('host','user','password'))
+        p = os.path.join(paths.hidden_dir, "slave")
+        load_persistence_values(self, p, ("host", "user", "password"))
 
     def _dump(self):
-        p = os.path.join(paths.hidden_dir,'slave')
-        dump_persistence_values(self, p, ('host','user','password'))
+        p = os.path.join(paths.hidden_dir, "slave")
+        dump_persistence_values(self, p, ("host", "user", "password"))
 
     def _get_connection(self):
         if not self._connection:
             try:
-                con = pymysql.connect(host=self.host,
-                                      port=3306,
-                                      user=self.user,
-                                      passwd=self.password)
+                con = pymysql.connect(
+                    host=self.host, port=3306, user=self.user, passwd=self.password
+                )
                 self._connection = con
             except pymysql.OperationalError as e:
                 self.sql_warning(e)
@@ -103,8 +107,8 @@ class ReplicationTask(BaseTask):
 
     def execute_sql(self, s, ret=None):
         """
-            if ret=='cursor' return the Cursor object. remember to close it when finished
-            with Cursor.close()
+        if ret=='cursor' return the Cursor object. remember to close it when finished
+        with Cursor.close()
         """
         con = self._get_connection()
         if con:
@@ -115,20 +119,20 @@ class ReplicationTask(BaseTask):
                 self.sql_warning(e)
                 return
 
-            if ret == 'cursor':
+            if ret == "cursor":
                 return cur
             else:
                 cur.close()
 
     def sql_warning(self, e):
         self.debug(e)
-        self.warning_dialog('{}\nErrno: {}'.format(e[1], e[0]))
+        self.warning_dialog("{}\nErrno: {}".format(e[1], e[0]))
 
-    def query_sql(self, s, query='all'):
-        cur = self.execute_sql(s, ret='cursor')
+    def query_sql(self, s, query="all"):
+        cur = self.execute_sql(s, ret="cursor")
         if cur:
             description = [di[0] for di in cur.description]
-            if query == 'all':
+            if query == "all":
                 result = cur.fetchall()
             else:
                 result = cur.fetchone()
@@ -137,25 +141,28 @@ class ReplicationTask(BaseTask):
             return description, result
 
     def _check_status(self):
-        """
-
-
-        """
-        r = self.query_sql('show slave status', query='one')
+        """ """
+        r = self.query_sql("show slave status", query="one")
         running = False
         items = []
-        last_error = ''
+        last_error = ""
         if r:
             header, results = r
             if results:
                 nofunc = lambda x: x
 
-                for args in (('Status', 'Slave_IO_State'),
-                             ('MasterHost', 'Master_Host'),
-                             ('IO Running', 'Slave_IO_Running'),
-                             ('SQL Running', 'Slave_SQL_Running'),
-                             ('Replicating DBs', 'Replicate_Do_DB'),
-                             ('Seconds Behind', 'Seconds_Behind_Master', lambda x: '0' if x is None else x)):
+                for args in (
+                    ("Status", "Slave_IO_State"),
+                    ("MasterHost", "Master_Host"),
+                    ("IO Running", "Slave_IO_Running"),
+                    ("SQL Running", "Slave_SQL_Running"),
+                    ("Replicating DBs", "Replicate_Do_DB"),
+                    (
+                        "Seconds Behind",
+                        "Seconds_Behind_Master",
+                        lambda x: "0" if x is None else x,
+                    ),
+                ):
                     if len(args) == 2:
                         display_name, tag = args
                         func = nofunc
@@ -166,14 +173,14 @@ class ReplicationTask(BaseTask):
                     value = results[header.index(tag)]
                     items.append(StatusItem(display_name, tag, func(value)))
                 running = bool(items[0].value)
-                last_error = results[header.index('Last_Error')]
+                last_error = results[header.index("Last_Error")]
 
         self.running = running
         self.status_items = items
         self.last_error = last_error
 
     def _start_slave(self):
-        self.execute_sql('start slave')
+        self.execute_sql("start slave")
         do_after(1000, self._check_status)
 
     def _check_status_button_fired(self):
@@ -183,14 +190,18 @@ class ReplicationTask(BaseTask):
         self._start_slave()
 
     def _stop_button_fired(self):
-        self.execute_sql('stop slave')
+        self.execute_sql("stop slave")
         do_after(1000, self._check_status)
 
     def _skip_button_fired(self):
-        self.execute_sql('stop slave; SET GLOBAL sql_slave_skip_counter = {};'.format(self.skip_count))
+        self.execute_sql(
+            "stop slave; SET GLOBAL sql_slave_skip_counter = {};".format(
+                self.skip_count
+            )
+        )
         self._start_slave()
 
-    @on_trait_change('host, user, password')
+    @on_trait_change("host, user, password")
     def _handle_auth(self):
         if self._connection:
             self._connection.close()
@@ -198,7 +209,8 @@ class ReplicationTask(BaseTask):
 
             self._check_status()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     f = ReplicationTask()
     f.activated()
     sp = SlavePane(model=f)
@@ -206,6 +218,3 @@ if __name__ == '__main__':
     f.prepare_destroy()
 
 # ============= EOF =============================================
-
-
-

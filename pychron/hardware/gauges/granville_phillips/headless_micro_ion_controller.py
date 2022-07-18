@@ -19,7 +19,9 @@
 # =============local library imports  ==========================
 from __future__ import absolute_import
 from pychron.hardware.core.headless.core_device import HeadlessCoreDevice
-from pychron.hardware.gauges.granville_phillips.base_micro_ion_controller import BaseMicroIonController
+from pychron.hardware.gauges.granville_phillips.base_micro_ion_controller import (
+    BaseMicroIonController,
+)
 
 
 class HeadlessMicroIonController(BaseMicroIonController, HeadlessCoreDevice):

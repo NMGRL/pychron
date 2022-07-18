@@ -30,22 +30,41 @@ class BaseGauge(HasTraits):
     color_scalar = 1
     width = Int(100)
     channel = Str
+    map_function = Str
+
+    def voltage_to_pressure(self, v):
+        # convert a voltage to a pressure
+        if self.map_function:
+            tag = "x" if "x" in self.map_function else "v"
+            v = eval(self.map_function, {tag: v})
+        return v
 
     def traits_view(self):
-        v = View(HGroup(Item('display_name', show_label=False, style='readonly',
-                             width=-100, ),
-                        Item('pressure',
-                             format_str='%0.2e',
-                             show_label=False,
-                             style='readonly'),
-                        Item('pressure',
-                             show_label=False,
-                             width=self.width,
-                             editor=BarGaugeEditor(low=self.low,
-                                                   high=self.high,
-                                                   scale='power',
-                                                   color_scalar=self.color_scalar,
-                                                   width=self.width))))
+        v = View(
+            HGroup(
+                Item(
+                    "display_name",
+                    show_label=False,
+                    style="readonly",
+                    width=-100,
+                ),
+                Item(
+                    "pressure", format_str="%0.2e", show_label=False, style="readonly"
+                ),
+                Item(
+                    "pressure",
+                    show_label=False,
+                    width=self.width,
+                    editor=BarGaugeEditor(
+                        low=self.low,
+                        high=self.high,
+                        scale="power",
+                        color_scalar=self.color_scalar,
+                        width=self.width,
+                    ),
+                ),
+            )
+        )
         return v
 
 
@@ -57,21 +76,23 @@ class BaseGaugeController(HasTraits):
     graph_klass = TimeSeriesStreamStackedGraph
 
     def initialize(self, *args, **kw):
-        self.scan_func = 'update_pressures'
-        self.graph_y_title = 'Pressure (torr)'
+        self.scan_func = "update_pressures"
+        self.graph_y_title = "Pressure (torr)"
 
         return True
 
     def update_pressures(self, verbose=False):
         if verbose:
-            self.debug('update pressures')
+            self.debug("update pressures")
 
         resps = [self._update_pressure(g, verbose) for g in self.gauges]
         return tuple(resps)
 
     def get_gauge(self, name):
-        return next((gi for gi in self.gauges
-                     if gi.name == name or gi.display_name == name), None)
+        return next(
+            (gi for gi in self.gauges if gi.name == name or gi.display_name == name),
+            None,
+        )
 
     def get_pressure(self, gauge, force=False, verbose=False):
         if isinstance(gauge, str):
@@ -89,7 +110,7 @@ class BaseGaugeController(HasTraits):
         return [g.pressure for g in self.gauges]
 
     def _pressure_change(self, obj, name, old, new):
-        self.trait_set(**{'{}_pressure'.format(obj.name): new})
+        self.trait_set(**{"{}_pressure".format(obj.name): new})
 
     def _read_pressure(self, *args, **kw):
         raise NotImplementedError
@@ -107,7 +128,7 @@ class BaseGaugeController(HasTraits):
 
     def _get_pressure(self, name, verbose=False, force=False):
         if self._scanning and not force:
-            attr = '{}_pressure'.format(name)
+            attr = "{}_pressure".format(name)
             if hasattr(self, attr):
                 return getattr(self, attr)
 
@@ -117,25 +138,33 @@ class BaseGaugeController(HasTraits):
         if isinstance(gauge, str):
             gauge = self.get_gauge(gauge)
         if verbose:
-            self.debug('_update_pressure: {}'.format(gauge))
+            self.debug("_update_pressure: {}".format(gauge))
         if gauge:
             p = self._read_pressure(gauge, verbose)
             if self._set_gauge_pressure(gauge, p):
                 return p
 
     def _load_gauges(self, config, *args, **kw):
-        ns = self.config_get(config, 'Gauges', 'names')
+        ns = self.config_get(config, "Gauges", "names")
         if ns:
-            ans = self.config_get(config, 'Gauges', 'display_names', optional=True)
+            ans = self.config_get(config, "Gauges", "display_names", optional=True)
             if not ans:
                 ans = ns
 
-            lows = self.config_get(config, 'Gauges', 'lows', optional=True, default='1e-10, 1e-3, 1e-3')
-            highs = self.config_get(config, 'Gauges', 'highs', optional=True, default='1e-6, 1, 1')
-            cs = self.config_get(config, 'Gauges', 'color_scalars', optional=True, default='1, 1, 1')
-            chs = self.config_get(config, 'Gauges', 'channels', optional=True, default='1, 2, 3')
+            lows = self.config_get(
+                config, "Gauges", "lows", optional=True, default="1e-10, 1e-3, 1e-3"
+            )
+            highs = self.config_get(
+                config, "Gauges", "highs", optional=True, default="1e-6, 1, 1"
+            )
+            cs = self.config_get(
+                config, "Gauges", "color_scalars", optional=True, default="1, 1, 1"
+            )
+            chs = self.config_get(
+                config, "Gauges", "channels", optional=True, default="1, 2, 3"
+            )
 
-            for gi in zip(*[x.split(',') for x in (ns, ans, lows, highs, cs, chs)]):
+            for gi in zip(*[x.split(",") for x in (ns, ans, lows, highs, cs, chs)]):
                 # ni, ai, li, hi, ci, cn = list(map(str.strip, gi))
                 ni, ai, li, hi, ci, cn = [gg.strip() for gg in gi]
 
@@ -143,45 +172,58 @@ class BaseGaugeController(HasTraits):
                 try:
                     g.low = float(li)
                 except ValueError as e:
-                    self.warning_dialog('Invalid lows string. {}'.format(e), title=self.config_path)
+                    self.warning_dialog(
+                        "Invalid lows string. {}".format(e), title=self.config_path
+                    )
                     continue
 
                 try:
                     g.high = float(hi)
                 except ValueError as e:
-                    self.warning_dialog('Invalid highs string. {}'.format(e), title=self.config_path)
+                    self.warning_dialog(
+                        "Invalid highs string. {}".format(e), title=self.config_path
+                    )
                     continue
                 try:
                     g.color_scalar = int(ci)
                 except ValueError as e:
-                    self.warning_dialog('Invalid color_scalar string. {}'.format(e), title=self.config_path)
+                    self.warning_dialog(
+                        "Invalid color_scalar string. {}".format(e),
+                        title=self.config_path,
+                    )
                     continue
 
-                p = '{}_pressure'.format(ni)
+                p = "{}_pressure".format(ni)
                 self.add_trait(p, Float)
-                g.on_trait_change(self._pressure_change, 'pressure')
+                g.on_trait_change(self._pressure_change, "pressure")
 
                 self.gauges.append(g)
 
     def gauge_view(self):
-        v = View(Group(Item('gauges', style='custom',
-                            show_label=False,
-                            editor=ListEditor(mutable=False,
-                                              style='custom',
-                                              editor=InstanceEditor())),
-                       show_border=True,
-                       label=self.display_name))
+        v = View(
+            Group(
+                Item(
+                    "gauges",
+                    style="custom",
+                    show_label=False,
+                    editor=ListEditor(
+                        mutable=False, style="custom", editor=InstanceEditor()
+                    ),
+                ),
+                show_border=True,
+                label=self.display_name,
+            )
+        )
         return v
 
     def graph_builder(self, g, **kw):
         for i, gi in enumerate(self.gauges):
-            g.new_plot(padding=[50, 5, 5, 35],
-                       zoom=True,
-                       pan=True)
+            g.new_plot(padding=[50, 5, 5, 35], zoom=True, pan=True)
 
             g.set_y_title(self.graph_ytitle, plotid=i)
-            g.set_x_title('Time')
+            g.set_x_title("Time")
             g.new_series(plotid=i)
             g.set_series_label(gi.display_name, plotid=i)
+
 
 # ============= EOF =============================================

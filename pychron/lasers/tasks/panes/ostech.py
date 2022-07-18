@@ -17,8 +17,14 @@
 # ============= enthought library imports =======================
 from traitsui.api import View, UItem, VGroup, InstanceEditor, UCustom
 
-from pychron.lasers.tasks.laser_panes import ClientPane, BaseLaserPane, \
-    StageControlPane, ControlPane, AxesPane, SupplementalPane
+from pychron.lasers.tasks.laser_panes import (
+    ClientPane,
+    BaseLaserPane,
+    StageControlPane,
+    ControlPane,
+    AxesPane,
+    SupplementalPane,
+)
 
 
 # ============= standard library imports ========================
@@ -37,34 +43,42 @@ class OsTechDiodePane(BaseLaserPane):
 
 
 class OsTechDiodeStagePane(StageControlPane):
-    id = 'pychron.ostech.diode.stage'
+    id = "pychron.ostech.diode.stage"
 
 
 class OsTechDiodeControlPane(ControlPane):
-    id = 'pychron.ostech.diode.control'
+    id = "pychron.ostech.diode.control"
 
 
 class OsTechDiodeAxesPane(AxesPane):
-    id = 'pychron.ostech.diode.axes'
+    id = "pychron.ostech.diode.axes"
 
 
 class OsTechDiodeSupplementalPane(SupplementalPane):
-    id = 'pychron.ostech.diode.supplemental'
-    name = 'Diode'
+    id = "pychron.ostech.diode.supplemental"
+    name = "Diode"
 
     def traits_view(self):
-        v = View(VGroup(UCustom('temperature_controller',
-                        editor=InstanceEditor(view='control_view')),
-                   label='Watlow'),
-             VGroup(UItem('pyrometer', style='custom'),
-                    label='Pyrometer',
-                    ),
+        v = View(
+            VGroup(
+                UCustom(
+                    "temperature_controller", editor=InstanceEditor(view="control_view")
+                ),
+                label="Watlow",
+            ),
+            VGroup(
+                UItem("pyrometer", style="custom"),
+                label="Pyrometer",
+            ),
             # VGroup(Item('control_module_manager', show_label=False, style='custom',
             #             ),
             #        #                      show_border = True,
             #        label='ControlModule',
             #
             #        ),
-            VGroup(UCustom('fiber_light'), label='FiberLight'))
+            VGroup(UCustom("fiber_light"), label="FiberLight"),
+        )
         return v
+
+
 # ============= EOF =============================================

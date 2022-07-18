@@ -79,7 +79,7 @@ class BasePDFWriter(Loggable):
     def _new_base_doc_template(self, path):
         pagesize = letter
         opt = self.options
-        if opt.orientation == 'landscape':
+        if opt.orientation == "landscape":
             pagesize = landscape(letter)
             leftMargin = opt.bottom_margin * inch
             rightMargin = opt.top_margin * inch
@@ -91,16 +91,18 @@ class BasePDFWriter(Loggable):
             topMargin = opt.top_margin * inch
             bottomMargin = opt.bottom_margin * inch
 
-        doc = BaseDocTemplate(path,
-                              leftMargin=leftMargin,
-                              rightMargin=rightMargin,
-                              topMargin=topMargin,
-                              bottomMargin=bottomMargin,
-                              pagesize=pagesize)
+        doc = BaseDocTemplate(
+            path,
+            leftMargin=leftMargin,
+            rightMargin=rightMargin,
+            topMargin=topMargin,
+            bottomMargin=bottomMargin,
+            pagesize=pagesize,
+        )
         return doc
 
     def build(self, path, *args, **kw):
-        self.info('saving pdf to {}'.format(path))
+        self.info("saving pdf to {}".format(path))
         doc = self._new_base_doc_template(path)
         self._doc = doc
         flowables, templates = self._build(doc, *args, **kw)
@@ -121,13 +123,13 @@ class BasePDFWriter(Loggable):
 
     def _build(self, *args, **kw):
         """
-            return a tuple of reportlab flowables and templates.
-            templates are optional but you must at least return None
-            e.g [f1,f2],[]
+        return a tuple of reportlab flowables and templates.
+        templates are optional but you must at least return None
+        e.g [f1,f2],[]
         """
         raise NotImplementedError
 
-    def _new_paragraph(self, t, s='Normal', klass=None, **skw):
+    def _new_paragraph(self, t, s="Normal", klass=None, **skw):
         if klass is None:
             klass = Paragraph
 
@@ -142,8 +144,7 @@ class BasePDFWriter(Loggable):
         return PageBreak()
 
     def _default_frame(self, doc):
-        return Frame(doc.leftMargin, doc.bottomMargin,
-                     doc.width, doc.height)
+        return Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height)
 
     def _new_page_template(self, frames):
         temp = PageTemplate(frames=frames)
@@ -160,18 +161,18 @@ class BasePDFWriter(Loggable):
             self._footnotes = []
 
         n = len(self._footnotes)
-        link, tag = Anchor('{}_{}'.format(tagname, id(self)), n + 1)
+        link, tag = Anchor("{}_{}".format(tagname, id(self)), n + 1)
         para = link(linkname, extra=link_extra)
 
         self._footnotes.append(tag(tagName, tagText))
         return para
 
-    def _fmt_attr(self, v, key='nominal_value', n=5, scale=1, **kw):
+    def _fmt_attr(self, v, key="nominal_value", n=5, scale=1, **kw):
         if v is None:
-            return ''
+            return ""
 
         if isinstance(v, tuple):
-            if key == 'std_dev':
+            if key == "std_dev":
                 v = v[1]
             else:
                 v = v[0]
@@ -187,9 +188,10 @@ class BasePDFWriter(Loggable):
         return floatfmt(v, n=n, max_width=10, **kw)
 
     def _error(self, **kw):
-        return lambda x: self._fmt_attr(x, key='std_dev', **kw)
+        return lambda x: self._fmt_attr(x, key="std_dev", **kw)
 
     def _value(self, **kw):
-        return lambda x: self._fmt_attr(x, key='nominal_value', **kw)
+        return lambda x: self._fmt_attr(x, key="nominal_value", **kw)
+
 
 # ============= EOF =============================================

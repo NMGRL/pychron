@@ -28,7 +28,7 @@ def yload(stream, default=None, reraise=False):
         default = {}
 
     if isinstance(stream, str) and os.path.isfile(stream):
-        with open(stream, 'r') as rfile:
+        with open(stream, "r") as rfile:
             try:
                 yd = yaml.load(rfile, Loader=Loader)
             except yaml.YAMLError as e:
@@ -44,4 +44,6 @@ def yload(stream, default=None, reraise=False):
                 raise e
 
     return yd
+
+
 # ============= EOF =============================================

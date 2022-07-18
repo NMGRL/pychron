@@ -26,8 +26,7 @@ from skimage.transform._hough_transform import probabilistic_hough_line
 
 # ============= standard library imports ========================
 from PIL import Image
-from numpy import array, linspace, \
-    polyval, polyfit
+from numpy import array, linspace, polyval, polyfit
 import matplotlib.pyplot as plt
 
 
@@ -42,7 +41,7 @@ def calc_rotation(x1, y1, x2, y2):
 
 def calculate_spacing(p):
     # with open(p) as fp:
-    im = Image.open(p).convert('L')
+    im = Image.open(p).convert("L")
     w, h = im.size
     # im = im.crop((50, 50, w - 50, h - 50))
     pad = 40
@@ -98,16 +97,15 @@ def calculate_spacing(p):
 
 
 def plot(im, edges, lines):
-    fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3,
-                                        figsize=(8,
-                                                 3),
-                                        sharex=True, sharey=True)
+    fig, (ax1, ax2, ax3) = plt.subplots(
+        nrows=1, ncols=3, figsize=(8, 3), sharex=True, sharey=True
+    )
 
     ax1.imshow(im, cmap=plt.cm.jet)
-    ax1.axis('off')
+    ax1.axis("off")
 
     ax2.imshow(edges, cmap=plt.cm.gray)
-    ax2.axis('off')
+    ax2.axis("off")
 
     for a, b in lines:
         x1, y1 = a
@@ -117,8 +115,9 @@ def plot(im, edges, lines):
             ax2.plot((x1, x2), (y1, y2))
             ax3.plot((x1, x2), (y1, y2))
 
-    fig.subplots_adjust(wspace=0.02, hspace=0.02, top=0.9,
-                        bottom=0.02, left=0.02, right=0.98)
+    fig.subplots_adjust(
+        wspace=0.02, hspace=0.02, top=0.9, bottom=0.02, left=0.02, right=0.98
+    )
 
     # plt.show()
 
@@ -127,23 +126,22 @@ def calculate_spacings():
     ps = [
         # ('/Users/ross/Sandbox/zoom_cal/snapshot-008.jpg', 0),
         # ('/Users/ross/Sandbox/zoom_cal/snapshot-013.jpg', 0),
-        ('/Users/ross/Sandbox/zoom_cal/snapshot-007.jpg', 25, 24.958),
-        ('/Users/ross/Sandbox/zoom_cal/snapshot-012.jpg', 25, 24.958),
-        ('/Users/ross/Sandbox/zoom_cal/snapshot-014.jpg', 25, 24.965),
-        ('/Users/ross/Sandbox/zoom_cal/snapshot-006.jpg', 50, 49.997),
-        ('/Users/ross/Sandbox/zoom_cal/snapshot-011.jpg', 50, 49.993),
-        ('/Users/ross/Sandbox/zoom_cal/snapshot-002.jpg', 50, 49.916),
-        ('/Users/ross/Sandbox/zoom_cal/snapshot-015.jpg', 50, 49.909),
-        ('/Users/ross/Sandbox/zoom_cal/snapshot-005.jpg', 75, 74.986),
-        ('/Users/ross/Sandbox/zoom_cal/snapshot-003.jpg', 75, 74.941),
-        ('/Users/ross/Sandbox/zoom_cal/snapshot-016.jpg', 75, 74.937),
-        ('/Users/ross/Sandbox/zoom_cal/snapshot-010.jpg', 75, 74.979),
-        ('/Users/ross/Sandbox/zoom_cal/snapshot-009.jpg', 100, 99.955),
-        ('/Users/ross/Sandbox/zoom_cal/snapshot-004.jpg', 100, 99.969),
-        ('/Users/ross/Sandbox/zoom_cal/snapshot-017.jpg', 100, 99.969),
-
+        ("/Users/ross/Sandbox/zoom_cal/snapshot-007.jpg", 25, 24.958),
+        ("/Users/ross/Sandbox/zoom_cal/snapshot-012.jpg", 25, 24.958),
+        ("/Users/ross/Sandbox/zoom_cal/snapshot-014.jpg", 25, 24.965),
+        ("/Users/ross/Sandbox/zoom_cal/snapshot-006.jpg", 50, 49.997),
+        ("/Users/ross/Sandbox/zoom_cal/snapshot-011.jpg", 50, 49.993),
+        ("/Users/ross/Sandbox/zoom_cal/snapshot-002.jpg", 50, 49.916),
+        ("/Users/ross/Sandbox/zoom_cal/snapshot-015.jpg", 50, 49.909),
+        ("/Users/ross/Sandbox/zoom_cal/snapshot-005.jpg", 75, 74.986),
+        ("/Users/ross/Sandbox/zoom_cal/snapshot-003.jpg", 75, 74.941),
+        ("/Users/ross/Sandbox/zoom_cal/snapshot-016.jpg", 75, 74.937),
+        ("/Users/ross/Sandbox/zoom_cal/snapshot-010.jpg", 75, 74.979),
+        ("/Users/ross/Sandbox/zoom_cal/snapshot-009.jpg", 100, 99.955),
+        ("/Users/ross/Sandbox/zoom_cal/snapshot-004.jpg", 100, 99.969),
+        ("/Users/ross/Sandbox/zoom_cal/snapshot-017.jpg", 100, 99.969),
     ]
-    print('Path        |Z   |Mode |Cnt |Avg   |STD')
+    print("Path        |Z   |Mode |Cnt |Avg   |STD")
     zns = [0]
     zas = [0]
     px = [23]
@@ -152,11 +150,14 @@ def calculate_spacings():
         #     continue
         bp, _ = os.path.splitext(os.path.basename(pp))
         m, c, a, s = calculate_spacing(pp)
-        a = '{:0.3f}'.format(a)
-        s = '{:0.3f}'.format(s)
+        a = "{:0.3f}".format(a)
+        s = "{:0.3f}".format(s)
 
-        print('{}|{:<4s}|{:<5s}|{:<4s}|{:<6s}|{}'.format(bp, str(zn),
-                                                         str(m), str(c), a, s))
+        print(
+            "{}|{:<4s}|{:<5s}|{:<4s}|{:<6s}|{}".format(
+                bp, str(zn), str(m), str(c), a, s
+            )
+        )
         zns.append(zn)
         zas.append(za)
 
@@ -165,7 +166,7 @@ def calculate_spacings():
     return zns, zas, px
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     zns, zas, px = calculate_spacings()
     # print zns
     # print zas
@@ -178,14 +179,14 @@ if __name__ == '__main__':
     #       128.0, 128.0, 128.0]
 
     # plt.plot(zns, px, '+')
-    plt.plot(zas, px, '+')
+    plt.plot(zas, px, "+")
     xs = linspace(0, 100)
     # plt.plot(xs, polyval(polyfit(zns, px, 4), xs))
     coeffs = polyfit(zas, px, 4)
     print(coeffs)
     plt.plot(xs, polyval(coeffs, xs))
-    plt.xlabel('Z')
-    plt.ylabel('pxpermm')
+    plt.xlabel("Z")
+    plt.ylabel("pxpermm")
     plt.show()
     # print os.path.basename(pp)
     # print z, calculate_spacing(pp)

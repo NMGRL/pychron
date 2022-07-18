@@ -19,8 +19,12 @@
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 
-from pychron.tx.errors import InvalidValveErrorCode, InvalidArgumentsErrorCode, ValveSoftwareLockErrorCode, \
-    ValveActuationErrorCode
+from pychron.tx.errors import (
+    InvalidValveErrorCode,
+    InvalidArgumentsErrorCode,
+    ValveSoftwareLockErrorCode,
+    ValveActuationErrorCode,
+)
 from pychron.tx.protocols.service import ServiceProtocol
 
 
@@ -49,23 +53,37 @@ class BaseValveProtocol(ServiceProtocol):
         pass
 
     def _register_base_services(self):
-        services = (('Open', '_open'),
-                    ('Close', '_close'),
-                    ('GetIndicatorState', '_get_indicator_state'),
-                    ('GetValveState', '_get_valve_state'),
-                    ('GetStateChecksum', '_get_state_checksum'),
-                    ('GetValveStates', '_get_valve_states'),
-                    ('GetStateWord', '_get_state_word'),
-                    ('GetLockWord', '_get_lock_word'),
-                    ('GetValveLockStates', '_get_valve_lock_states'),
-                    ('GetValveLockState', '_get_valve_lock_state'),
-                    ('GetValveOwners', '_get_valve_owners'))
+        services = (
+            ("Open", "_open"),
+            ("Close", "_close"),
+            ("GetIndicatorState", "_get_indicator_state"),
+            ("GetValveState", "_get_valve_state"),
+            ("GetStateChecksum", "_get_state_checksum"),
+            ("GetValveStates", "_get_valve_states"),
+            ("GetStateWord", "_get_state_word"),
+            ("GetLockWord", "_get_lock_word"),
+            ("GetValveLockStates", "_get_valve_lock_states"),
+            ("GetValveLockState", "_get_valve_lock_state"),
+            ("GetValveOwners", "_get_valve_owners"),
+            ("GetPipetteCount", "_get_pipette_count"),
+            ("GetPipetteCounts", "_get_pipette_counts"),
+        )
         self._register_services(services)
 
     # command handlers
+    def _get_pipette_counts(self, data):
+        result = self._manager.get_pipette_counts()
+        return result
+
+    def _get_pipette_count(self, data):
+        if isinstance(data, dict):
+            data = data["value"]
+        result = self._manager.get_pipette_count(data)
+        return result
+
     def _get_indicator_state(self, data):
         if isinstance(data, dict):
-            data = data['value']
+            data = data["value"]
         result = self._manager.get_indicator_state(data)
         if result is None:
             result = InvalidValveErrorCode(data)
@@ -73,7 +91,7 @@ class BaseValveProtocol(ServiceProtocol):
 
     def _get_valve_state(self, data):
         if isinstance(data, dict):
-            data = data['value']
+            data = data["value"]
         result = self._manager.get_valve_state(data)
         if result is None:
             result = InvalidValveErrorCode(data)
@@ -88,10 +106,10 @@ class BaseValveProtocol(ServiceProtocol):
         :return: OK or ErrorCode
         """
         if isinstance(data, dict):
-            data = data['value']
+            data = data["value"]
 
         # intercept flags
-        if data.endswith('Flag'):
+        if data.endswith("Flag"):
             r = self.set(data, 1)
             return bool(r)
 
@@ -99,13 +117,13 @@ class BaseValveProtocol(ServiceProtocol):
         result, change = manager.open_valve(data, sender_address=self._addr)
 
         if result is True:
-            result = 'OK' if change else 'ok'
+            result = "OK" if change else "ok"
         elif result is None:
-            result = InvalidArgumentsErrorCode('Open', data)
-        elif result == 'software lock enabled':
+            result = InvalidArgumentsErrorCode("Open", data)
+        elif result == "software lock enabled":
             result = ValveSoftwareLockErrorCode(data)
         else:
-            result = ValveActuationErrorCode(data, 'open')
+            result = ValveActuationErrorCode(data, "open")
 
         return result
 
@@ -118,30 +136,29 @@ class BaseValveProtocol(ServiceProtocol):
         :return: OK or ErrorCode
         """
         if isinstance(data, dict):
-            data = data['value']
+            data = data["value"]
 
         # intercept flags
-        if data.endswith('Flag'):
+        if data.endswith("Flag"):
             r = self.set(data, 0)
             return bool(r)
 
         result, change = self._manager.close_valve(data, sender_address=self._addr)
         if result is True:
-            result = 'OK' if change else 'ok'
+            result = "OK" if change else "ok"
         elif result is None:
-            result = InvalidArgumentsErrorCode('Close', data)
-        elif result == 'software lock enabled':
+            result = InvalidArgumentsErrorCode("Close", data)
+        elif result == "software lock enabled":
             result = ValveSoftwareLockErrorCode(data)
         else:
-            result = ValveActuationErrorCode(data, 'close')
+            result = ValveActuationErrorCode(data, "close")
 
         return result
 
     def _get_state_checksum(self, data):
-        """
-        """
+        """ """
         if isinstance(data, dict):
-            data = data['value']
+            data = data["value"]
 
         result = self._manager.get_state_checksum(data)
         return result
@@ -157,7 +174,7 @@ class BaseValveProtocol(ServiceProtocol):
         :return: True, False, or InvalidValveErrorCode
         """
         if isinstance(data, dict):
-            data = data['value']
+            data = data["value"]
 
         result = self._manager.get_valve_state(data)
         if result is None:
@@ -207,7 +224,7 @@ class BaseValveProtocol(ServiceProtocol):
         :return: True, False
         """
         if isinstance(data, dict):
-            data = data['value']
+            data = data["value"]
 
         result = self._manager.get_software_lock(data)
         return result
@@ -215,5 +232,6 @@ class BaseValveProtocol(ServiceProtocol):
     def _get_valve_owners(self, data):
         result = self._manager.get_valve_owners()
         return result
+
 
 # ============= EOF =============================================

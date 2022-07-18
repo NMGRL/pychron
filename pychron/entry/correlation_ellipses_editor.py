@@ -37,21 +37,25 @@ class CorrelationEllipse(HasTraits):
 
     @classmethod
     def duplicate(cls, obj):
-        return cls(name=obj.name,
-                   age_min=obj.age_min,
-                   age_max=obj.age_max,
-                   kca_min=obj.kca_min,
-                   kca_max=obj.kca_max,
-                   active=obj.active)
+        return cls(
+            name=obj.name,
+            age_min=obj.age_min,
+            age_max=obj.age_max,
+            kca_min=obj.kca_min,
+            kca_max=obj.kca_max,
+            active=obj.active,
+        )
 
     def tojson(self):
-        return {'age': {'min': self.age_min, 'max': self.age_max},
-                'kca': {'min': self.kca_min, 'max': self.kca_max},
-                'active': self.active}
+        return {
+            "age": {"min": self.age_min, "max": self.age_max},
+            "kca": {"min": self.kca_min, "max": self.kca_max},
+            "active": self.active,
+        }
 
 
 class CorrelationEllipsesEditor(Loggable):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance("pychron.dvc.dvc.DVC")
     items = List
 
     add_row_button = Button
@@ -62,32 +66,34 @@ class CorrelationEllipsesEditor(Loggable):
 
     @property
     def persistence_path(self):
-        return os.path.join(paths.meta_root, 'correlation_ellipses.json')
+        return os.path.join(paths.meta_root, "correlation_ellipses.json")
 
     def dump(self):
         self.dvc.meta_pull()
-        with open(self.persistence_path, 'w') as wfile:
+        with open(self.persistence_path, "w") as wfile:
             obj = {i.name: i.tojson() for i in self.items}
             json.dump(obj, wfile, indent=2)
 
         # add, commit, push
         if self.dvc.meta_repo.add_paths(self.persistence_path):
-            self.dvc.meta_commit('Updated correlation ellipses')
+            self.dvc.meta_commit("Updated correlation ellipses")
             self.dvc.meta_push()
 
     def load(self):
         self.dvc.meta_pull()
 
         def factory(k, v):
-            return CorrelationEllipse(name=k,
-                                      active=v.get('active', True),
-                                      age_min=v['age']['min'],
-                                      age_max=v['age']['max'],
-                                      kca_min=v['kca']['min'],
-                                      kca_max=v['kca']['max'])
+            return CorrelationEllipse(
+                name=k,
+                active=v.get("active", True),
+                age_min=v["age"]["min"],
+                age_max=v["age"]["max"],
+                kca_min=v["kca"]["min"],
+                kca_max=v["kca"]["max"],
+            )
 
         if os.path.isfile(self.persistence_path):
-            with open(self.persistence_path, 'r') as rfile:
+            with open(self.persistence_path, "r") as rfile:
                 jd = json.load(rfile)
                 self.items = [factory(k, ji) for k, ji in jd.items()]
 
@@ -107,27 +113,40 @@ class CorrelationEllipsesEditor(Loggable):
             self.items.append(nitem)
 
     def traits_view(self):
-        cols = [CheckboxColumn(name='active'),
-                ObjectColumn(name='name'),
-                ObjectColumn(name='kca_min'),
-                ObjectColumn(name='kca_max'),
-                ObjectColumn(name='age_min'),
-                ObjectColumn(name='age_max'),
-                ]
+        cols = [
+            CheckboxColumn(name="active"),
+            ObjectColumn(name="name"),
+            ObjectColumn(name="kca_min"),
+            ObjectColumn(name="kca_max"),
+            ObjectColumn(name="age_min"),
+            ObjectColumn(name="age_max"),
+        ]
 
-        button_grp = HGroup(icon_button_editor('add_row_button', 'add', tooltip='Add row'),
-                            icon_button_editor('delete_row_button', 'delete', tooltip='Delete selected rows'),
-                            icon_button_editor('duplicate_row_button', 'duplicate', tooltip='Duplicate selected rows'))
+        button_grp = HGroup(
+            icon_button_editor("add_row_button", "add", tooltip="Add row"),
+            icon_button_editor(
+                "delete_row_button", "delete", tooltip="Delete selected rows"
+            ),
+            icon_button_editor(
+                "duplicate_row_button", "duplicate", tooltip="Duplicate selected rows"
+            ),
+        )
 
-        return okcancel_view(VGroup(button_grp,
-                                    UItem('items',
-                                          editor=TableEditor(columns=cols,
-                                                             selected_indices='selected_row'))),
-                             title='Edit Correlation Ellipses',
-                             width=550, height=700)
+        return okcancel_view(
+            VGroup(
+                button_grp,
+                UItem(
+                    "items",
+                    editor=TableEditor(columns=cols, selected_indices="selected_row"),
+                ),
+            ),
+            title="Edit Correlation Ellipses",
+            width=550,
+            height=700,
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     c = CorrelationEllipsesEditor()
     c.configure_traits()
 # ============= EOF =============================================

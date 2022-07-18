@@ -23,7 +23,7 @@ from __future__ import print_function
 from collections import deque
 
 
-def bfs(G, s, value, attr='name'):
+def bfs(G, s, value, attr="name"):
     P, Q = {s: None}, deque([s])
     while Q:
         u = Q.popleft()
@@ -49,7 +49,7 @@ def bft(G, s, traverse_all=False):
             continue
 
         if not traverse_all:
-            if u.state == 'closed':
+            if u.state == "closed":
                 continue
 
         for v in G[u]:
@@ -59,4 +59,6 @@ def bft(G, s, traverse_all=False):
             Q.append(v)
 
     return P
+
+
 # ============= EOF =============================================

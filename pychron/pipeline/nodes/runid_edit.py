@@ -35,6 +35,7 @@ class RunIDEditItem(HasTraits):
     dest_identifier = Str
     dest_aliquot = Int
     dest_step = Str
+    uuid = Str
 
     def __init__(self, a, *args, **kw):
         super(RunIDEditItem, self).__init__(*args, **kw)
@@ -43,6 +44,7 @@ class RunIDEditItem(HasTraits):
         self.dest_aliquot = a.aliquot
         self.dest_step = a.step
         self.repository_identifier = a.repository_identifier
+        self.uuid = a.uuid
 
     @property
     def dest_record_id(self):
@@ -51,39 +53,56 @@ class RunIDEditItem(HasTraits):
 
 class RunIDEditNode(BaseDVCNode):
     items = List
-    name = 'RunID Edit'
+    name = "RunID Edit"
 
     def traits_view(self):
-        cols = [ObjectColumn(name='src_record_id'),
-                ObjectColumn(name='dest_identifier'),
-                ObjectColumn(name='dest_aliquot'),
-                ObjectColumn(name='dest_step')]
+        cols = [
+            ObjectColumn(name="src_record_id"),
+            ObjectColumn(name="dest_identifier"),
+            ObjectColumn(name="dest_aliquot"),
+            ObjectColumn(name="dest_step"),
+        ]
 
-        return okcancel_view(UItem('items', editor=TableEditor(columns=cols)),
-                             width=500,
-                             height=700,
-                             title='RunID Edit')
+        return okcancel_view(
+            UItem("items", editor=TableEditor(columns=cols)),
+            width=500,
+            height=700,
+            title="RunID Edit",
+        )
 
     def _pre_run_hook(self, state):
         self.items = [RunIDEditItem(a) for a in state.unknowns]
 
     def run(self, state):
-        if confirm(None, 'This is only for advanced users. Serious unintended consequences may occur if not used '
-                         'properly. Please do not use unless you are capable of manually fixing database/repository '
-                         'issues. \n\n Are you sure you want to continue') != YES:
+        if (
+            confirm(
+                None,
+                "This is only for advanced users. Serious unintended consequences may occur if not used "
+                "properly. Please do not use unless you are capable of manually fixing database/repository "
+                "issues. \n\n Are you sure you want to continue",
+            )
+            != YES
+        ):
             return
 
         for repo, items in groupby_repo(self.items):
             pss = []
             for item in items:
-                ps = self.dvc.fix_identifier(item.src_record_id,  item.dest_record_id, repo,
-                                        item.dest_identifier, item.dest_aliquot, item.dest_step)
+                ps = self.dvc.fix_identifier(
+                    item.uuid,
+                    item.src_record_id,
+                    item.dest_record_id,
+                    repo,
+                    item.dest_identifier,
+                    item.dest_aliquot,
+                    item.dest_step,
+                )
                 pss.extend(ps)
 
             self.dvc.commit()
 
             base = os.path.join(paths.repository_dataset_dir, repo)
-            temp = os.path.join(base, 'temp')
+            temp = os.path.join(base, "temp")
 
             crepo = self.dvc.get_repository(repo)
             for p in pss:
@@ -102,5 +121,10 @@ class RunIDEditNode(BaseDVCNode):
             # add all the temps to the git index
             # commit the changes
 
-        warning(None, 'This process is not fully complete. You need to manual add/commit modified files')
+        warning(
+            None,
+            "This process is not fully complete. You need to manual add/commit modified files",
+        )
+
+
 # ============= EOF =============================================

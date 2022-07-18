@@ -21,6 +21,7 @@ from __future__ import absolute_import
 import os
 
 from sqlalchemy.orm.exc import NoResultFound
+
 # ============= local library imports  ==========================
 from pychron.paths import paths
 from pychron.database.core.database_adapter import DatabaseAdapter
@@ -30,15 +31,15 @@ from pychron.database.orms.local_lab_orm import LabTable, Base
 class LocalLabAdapter(DatabaseAdapter):
     def __init__(self, *args, **kw):
         super(LocalLabAdapter, self).__init__(*args, **kw)
-        self.kind = 'sqlite'
+        self.kind = "sqlite"
         if not self.path:
-            self.path = os.path.join(paths.hidden_dir, 'local_lab.db')
+            self.path = os.path.join(paths.hidden_dir, "local_lab.db")
 
     def build_database(self):
         self.connect(test=False)
         if not os.path.isfile(self.path):
             with self.session_ctx() as sess:
-                Base.metadata.tables['LabTable'].create(bind=sess.bind)
+                Base.metadata.tables["LabTable"].create(bind=sess.bind)
 
     def add_analysis(self, **kw):
         l = LabTable(**kw)
@@ -55,7 +56,7 @@ class LocalLabAdapter(DatabaseAdapter):
             pass
 
 
-if __name__ == '__main__':
-    lb = LocalLabAdapter(name='/Users/ross/Sandbox/foo.db')
+if __name__ == "__main__":
+    lb = LocalLabAdapter(name="/Users/ross/Sandbox/foo.db")
     lb.build_database()
 # ============= EOF =============================================

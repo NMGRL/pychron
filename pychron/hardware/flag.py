@@ -17,9 +17,11 @@
 # ============= enthought library imports =======================
 from traits.api import Bool, Property, Float, CInt, List, Str, Any
 from traitsui.api import View, Item, HGroup, spring
+
 # ============= standard library imports ========================
 from threading import Timer as OneShotTimer, Thread, Event
 import time
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.timer import Timer as PTimer
 from pychron.loggable import Loggable
@@ -30,12 +32,12 @@ def convert_to_bool(v):
         v = float(v)
         return bool(v)
     except:
-        return v.lower().strip() in ['t', 'true', 'on']
+        return v.lower().strip() in ["t", "true", "on"]
 
 
 class Flag(Loggable):
     _set = Bool(False)
-    display_state = Property(Bool, depends_on='_set')
+    display_state = Property(Bool, depends_on="_set")
     owner = Str
 
     def __init__(self, name, *args, **kw):
@@ -52,9 +54,13 @@ class Flag(Loggable):
         self.owner = owner
 
     def traits_view(self):
-        v = View(HGroup(Item('name', show_label=False, style='readonly'),
-                        spring,
-                        Item('display_state', show_label=False)))
+        v = View(
+            HGroup(
+                Item("name", show_label=False, style="readonly"),
+                spring,
+                Item("display_state", show_label=False),
+            )
+        )
         return v
 
     def _get_display_state(self):
@@ -76,7 +82,7 @@ class Flag(Loggable):
             value = convert_to_bool(value)
         else:
             value = bool(value)
-        self.info('setting flag state to {} ({})'.format(value, ovalue))
+        self.info("setting flag state to {} ({})".format(value, ovalue))
 
         if value:
             self._monitor_evt = Event()
@@ -91,7 +97,7 @@ class Flag(Loggable):
         return True
 
     def clear(self):
-        self.info('clearing flag')
+        self.info("clearing flag")
         self._set = False
         if self._monitor_evt:
             self._monitor_evt.set()
@@ -104,9 +110,9 @@ class Flag(Loggable):
         timeout = self.timeout
         self._pinged = time.time()
         while not evt.is_set():
-            if time.time()-self._pinged > timeout:
+            if time.time() - self._pinged > timeout:
                 if self._set:
-                    self.info('auto canceling flag')
+                    self.info("auto canceling flag")
                     self.clear()
                 break
 
@@ -116,7 +122,7 @@ class Flag(Loggable):
 class TimedFlag(Flag):
     duration = Float(1)
 
-    display_time = Property(depends_on='_time_remaining')
+    display_time = Property(depends_on="_time_remaining")
     _time_remaining = CInt(0)
 
     def __init__(self, *args, **kw):
@@ -129,24 +135,27 @@ class TimedFlag(Flag):
     def clear(self):
         super(TimedFlag, self).clear()
         self._update_timer.Stop()
-        self._ping_result = 'Complete'
+        self._ping_result = "Complete"
 
     def ping(self):
         ret = super(TimedFlag, self).ping()
-        if self._ping_result == 'Complete':
-            ret = 'Complete'
+        if self._ping_result == "Complete":
+            ret = "Complete"
         return ret
 
     def _get_display_time(self):
         return self._time_remaining
 
     def traits_view(self):
-        v = View(HGroup(Item('name', style='readonly'),
-                        spring,
-                        Item('display_time',
-                             format_str='%03i', style='readonly'),
-                        Item('display_state'),
-                        show_labels=False))
+        v = View(
+            HGroup(
+                Item("name", style="readonly"),
+                spring,
+                Item("display_time", format_str="%03i", style="readonly"),
+                Item("display_state"),
+                show_labels=False,
+            )
+        )
         return v
 
     def set(self, value):
@@ -158,7 +167,7 @@ class TimedFlag(Flag):
         try:
             value = float(value)
         except ValueError:
-            return 'Invalid flag value'
+            return "Invalid flag value"
 
         super(TimedFlag, self).set(value)
         if self.isSet():
@@ -192,17 +201,18 @@ class TimedFlag(Flag):
 
 class ValveFlag(Flag):
     """
-        a ValveFlag holds a list of valves keys (A, B, ...)
+    a ValveFlag holds a list of valves keys (A, B, ...)
 
-        if the flag is set then the these valves should be locked out
-        from being actuated by ip addresses other than the owner of this
-        flag
+    if the flag is set then the these valves should be locked out
+    from being actuated by ip addresses other than the owner of this
+    flag
 
-        valves should (can) not occur in multiple ValveFlags
+    valves should (can) not occur in multiple ValveFlags
     """
+
     valves = List
     owner = Str
-    valves_str = Property(depends_on='valves')
+    valves_str = Property(depends_on="valves")
     manager = Any
 
     def set(self):
@@ -213,12 +223,16 @@ class ValveFlag(Flag):
             self.manager.set_valve_owner(vi, owner)
 
     def traits_view(self):
-        v = View(HGroup(Item('name', show_label=False, style='readonly'),
-                        Item('valves_str', style='readonly',
-                             label='Valves')))
+        v = View(
+            HGroup(
+                Item("name", show_label=False, style="readonly"),
+                Item("valves_str", style="readonly", label="Valves"),
+            )
+        )
         return v
 
     def _get_valves_str(self):
-        return ','.join(self.valves)
+        return ",".join(self.valves)
+
 
 # ============= EOF =============================================

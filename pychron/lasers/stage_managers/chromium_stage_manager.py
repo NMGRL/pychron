@@ -21,4 +21,5 @@ from pychron.lasers.stage_managers.remote_stage_manger import RemoteStageManager
 class ChromiumStageManager(RemoteStageManager):
     pass
 
+
 # ============= EOF =============================================

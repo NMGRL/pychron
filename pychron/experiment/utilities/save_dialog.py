@@ -33,7 +33,7 @@ class BaseSaveDialog(HasTraits):
     @property
     def path(self):
         if self.root and self.name:
-            return os.path.join(self.root, add_extension(self.name, '.txt'))
+            return os.path.join(self.root, add_extension(self.name, ".txt"))
 
 
 class IncrementalHeatTemplateSaveDialog(BaseSaveDialog):
@@ -47,15 +47,19 @@ class IncrementalHeatTemplateSaveDialog(BaseSaveDialog):
 
     @property
     def name(self):
-        return '{:02n}-{}'.format(self.n, self.fname)
+        return "{:02n}-{}".format(self.n, self.fname)
 
     def traits_view(self):
-        ngrp = HGroup(Item('fname',
-                           tooltip='No spaces in name. Name is automatically prefixed with the number of steps'))
-        dgrp = HGroup(Item('root', label='Directory'))
-        v = okcancel_view(VGroup(ngrp, dgrp),
-                          width=400,
-                          title='Save Step Heat Template')
+        ngrp = HGroup(
+            Item(
+                "fname",
+                tooltip="No spaces in name. Name is automatically prefixed with the number of steps",
+            )
+        )
+        dgrp = HGroup(Item("root", label="Directory"))
+        v = okcancel_view(
+            VGroup(ngrp, dgrp), width=400, title="Save Step Heat Template"
+        )
         return v
 
 
@@ -63,24 +67,28 @@ class ExperimentSaveDialog(BaseSaveDialog):
     name = PascalCase()
     use_current_exp = Bool
 
-    help_str = Str('<b>Name must be in PascalCase. NoSpaces and only AlphaNumeric characters</b>')
+    help_str = Str(
+        "<b>Name must be in PascalCase. NoSpaces and only AlphaNumeric characters</b>"
+    )
 
     def _use_current_exp_changed(self, new):
         if new:
-            self.name = 'CurrentExperiment'
+            self.name = "CurrentExperiment"
 
     def traits_view(self):
-        ngrp = HGroup(Item('name',
-                           tooltip='Name must be in PascalCase. NoSpaces, use only AlphaNumeric. '
-                                   'This is "PascalCase". This is not "pascalcase"'),
+        ngrp = HGroup(
+            Item(
+                "name",
+                tooltip="Name must be in PascalCase. NoSpaces, use only AlphaNumeric. "
+                'This is "PascalCase". This is not "pascalcase"',
+            ),
+            Item("use_current_exp"),
+        )
+        dgrp = HGroup(Item("root", label="Directory"))
+        hgrp = UItem("help_str", style="readonly")
 
-                      Item('use_current_exp'))
-        dgrp = HGroup(Item('root', label='Directory'))
-        hgrp = UItem('help_str', style='readonly')
-
-        v = okcancel_view(VGroup(ngrp, hgrp, dgrp),
-                          width=400,
-                          title='Save Experiment')
+        v = okcancel_view(VGroup(ngrp, hgrp, dgrp), width=400, title="Save Experiment")
         return v
+
 
 # ============= EOF =============================================

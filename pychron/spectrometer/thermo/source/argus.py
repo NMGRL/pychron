@@ -24,7 +24,5 @@ from pychron.spectrometer.thermo.source.base import ThermoSource
 class ArgusSource(ThermoSource):
     pass
 
+
 # ============= EOF =============================================
-
-
-

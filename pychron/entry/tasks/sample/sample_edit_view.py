@@ -16,15 +16,34 @@
 import re
 
 import pyproj as pyproj
-from traits.api import HasTraits, Instance, List, Str, Long, Float, BaseFloat, Enum, Int
+from traits.api import (
+    HasTraits,
+    Instance,
+    List,
+    Str,
+    Long,
+    Float,
+    BaseFloat,
+    Enum,
+    Int,
+    CStr,
+)
 from traitsui.api import View, UItem, Item, VGroup, EnumEditor, HGroup
 from traitsui.menu import Action
 
-EN = re.compile(r'(?P<a>[\w\W]+) \((?P<b>[\w\W]+, ?[\w\W]+)\)')
+EN = re.compile(r"(?P<a>[\w\W]+) \((?P<b>[\w\W]+, ?[\w\W]+)\)")
 
-SAMPLE_ATTRS = ('lat', 'lon', 'igsn', 'storage_location',
-                'lithology', 'location', 'approximate_age', 'elevation',
-                'note')
+SAMPLE_ATTRS = (
+    "lat",
+    "lon",
+    "igsn",
+    "storage_location",
+    "lithology",
+    "location",
+    "approximate_age",
+    "elevation",
+    "note",
+)
 
 
 class LatFloat(BaseFloat):
@@ -54,15 +73,15 @@ def extract_names(s):
     b = None
     mat = EN.match(s)
     if mat:
-        a = mat.group('a')
-        b = mat.group('b')
+        a = mat.group("a")
+        b = mat.group("b")
 
     return a, b
 
 
 class SaveAction(Action):
-    name = 'Save'
-    action = 'save'
+    name = "Save"
+    action = "save"
 
 
 class SampleEditItem(HasTraits):
@@ -73,7 +92,7 @@ class SampleEditItem(HasTraits):
     id = Long
     note = Str
 
-    location_mode = Enum('Lat/Lon', 'UTM')
+    location_mode = Enum("Lat/Lon", "UTM")
     northing = Int
     easting = Int
     utm_zone = Int
@@ -92,14 +111,14 @@ class SampleEditItem(HasTraits):
 
     _project = Str
     _material = Str
-    _grainsize = Str
-    _note = Str
+    _grainsize = CStr
+    _note = CStr
     _lat = LatFloat
     _lon = LonFloat
-    _igsn = Str
-    _lithology = Str
-    _location = Str
-    _storage_location = Str
+    _igsn = CStr
+    _lithology = CStr
+    _location = CStr
+    _storage_location = CStr
     _approximate_age = Float
     _elevation = Float
 
@@ -111,9 +130,11 @@ class SampleEditItem(HasTraits):
             self.name = self._name = rec.name
             # self.note = self._note = rec.note or ''
 
-            self.project = self._project = rec.project.pname if rec.project else ''
-            self.material = self._material = rec.material.name if rec.material else ''
-            self.grainsize = self._grainsize = (rec.material.grainsize or '') if rec.material else ''
+            self.project = self._project = rec.project.pname if rec.project else ""
+            self.material = self._material = rec.material.name if rec.material else ""
+            self.grainsize = self._grainsize = (
+                (rec.material.grainsize or "") if rec.material else ""
+            )
             self._easting = 0
             self._northing = 0
             self._utm_zone = 0
@@ -124,15 +145,28 @@ class SampleEditItem(HasTraits):
                 if v is not None:
                     try:
                         setattr(self, attr, v)
-                        setattr(self, '_{}'.format(attr), v)
+                        setattr(self, "_{}".format(attr), v)
                     except ValueError:
                         pass
 
     @property
     def altered(self):
-        attrs = ('name', 'project', 'material', 'grainsize', 'easting', 'northing', 'utm_zone') + SAMPLE_ATTRS
+        attrs = (
+            "name",
+            "project",
+            "material",
+            "grainsize",
+            "easting",
+            "northing",
+            "utm_zone",
+        ) + SAMPLE_ATTRS
         try:
-            return any((getattr(self, attr) != getattr(self, '_{}'.format(attr)) for attr in attrs))
+            return any(
+                (
+                    getattr(self, attr) != getattr(self, "_{}".format(attr))
+                    for attr in attrs
+                )
+            )
         except AttributeError:
             return False
 
@@ -143,32 +177,49 @@ class SampleEditItem(HasTraits):
 
     def traits_view(self):
 
-        ll_grp = HGroup(Item('lat', label='Latitude'),
-                        Item('lon', label='Longitude'),
-                        visible_when='location_mode!="UTM"')
-        utm_grp = HGroup(Item('easting'), Item('northing'), Item('utm_zone'),
-                         visible_when='location_mode=="UTM"')
+        ll_grp = HGroup(
+            Item("lat", label="Latitude"),
+            Item("lon", label="Longitude"),
+            visible_when='location_mode!="UTM"',
+        )
+        utm_grp = HGroup(
+            Item("easting"),
+            Item("northing"),
+            Item("utm_zone"),
+            visible_when='location_mode=="UTM"',
+        )
 
-        vv = View(VGroup(Item('name', label='Sample Name'),
-                         Item('project', editor=EnumEditor(name='_projects')),
-                         Item('material', editor=EnumEditor(name='_materials')),
-                         Item('grainsize'),
-                         HGroup(VGroup(
-                             UItem('location_mode'),
-                             ll_grp, utm_grp,
-                             Item('location'),
-                             Item('elevation'),
-                             label='Location', show_border=True),
-                             VGroup(Item('lithology'),
-                                    Item('approximate_age', label='Approx. Age (Ma)'),
-                                    Item('storage_location'),
-                                    show_border=True)),
-                         VGroup(UItem('note', style='custom'), show_border=True, label='Note')))
+        vv = View(
+            VGroup(
+                Item("name", label="Sample Name"),
+                Item("project", editor=EnumEditor(name="_projects")),
+                Item("material", editor=EnumEditor(name="_materials")),
+                Item("grainsize"),
+                HGroup(
+                    VGroup(
+                        UItem("location_mode"),
+                        ll_grp,
+                        utm_grp,
+                        Item("location"),
+                        Item("elevation"),
+                        label="Location",
+                        show_border=True,
+                    ),
+                    VGroup(
+                        Item("lithology"),
+                        Item("approximate_age", label="Approx. Age (Ma)"),
+                        Item("storage_location"),
+                        show_border=True,
+                    ),
+                ),
+                VGroup(UItem("note", style="custom"), show_border=True, label="Note"),
+            )
+        )
         return vv
 
 
 class SampleEditModel(HasTraits):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance("pychron.dvc.dvc.DVC")
     sample = Str
     samples = List
     sample_records = List
@@ -179,7 +230,7 @@ class SampleEditModel(HasTraits):
     def set_sample(self, rec):
         nm = SampleEditItem(rec, _projects=self._projects, _materials=self._materials)
         if self.sample_item:
-            for attr in ('location_mode', 'utm_zone'):
+            for attr in ("location_mode", "utm_zone"):
                 setattr(nm, attr, getattr(self.sample_item, attr))
 
         self.sample_item = nm
@@ -200,17 +251,17 @@ class SampleEditModel(HasTraits):
             # dbsam.lat = si.lat
 
             for attr in SAMPLE_ATTRS:
-                if si.location_mode == 'UTM' and attr in ('lat', 'lon'):
+                if si.location_mode == "UTM" and attr in ("lat", "lon"):
                     continue
                 v = getattr(si, attr)
                 setattr(dbsam, attr, v)
 
-            if si.location_mode == 'UTM':
+            if si.location_mode == "UTM":
                 zone = si.utm_zone
                 if zone in self._projections:
                     p = self._projections[zone]
                 else:
-                    p = pyproj.Proj(proj='utm', zone=int(zone), ellps='WGS84')
+                    p = pyproj.Proj(proj="utm", zone=int(zone), ellps="WGS84")
                     self._projections[zone] = p
 
                 lon, lat = p(si.easting, si.northing, inverse=True)
@@ -237,10 +288,13 @@ class SampleEditModel(HasTraits):
             sams = self.dvc.get_samples_by_name(self.sample)
             # sams = [SampleEditItem(si, _projects=self._projects,
             #                        _materials=self._materials) for si in sams]
-            self.sample_item = SampleEditItem(sams[0], _projects=self._projects, _materials=self._materials)
+            self.sample_item = SampleEditItem(
+                sams[0], _projects=self._projects, _materials=self._materials
+            )
         # self.samples = sams
 
     def traits_view(self):
-        return View(UItem('sample_item', style='custom'))
+        return View(UItem("sample_item", style="custom"))
+
 
 # ============= EOF =============================================

@@ -20,12 +20,13 @@ import pickle
 import time
 
 from traits.api import HasTraits, List, Float, Property, Str, Bool
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.datetime_tools import convert_timestamp
 from pychron.messaging.notify.subscriber import Subscriber
 
-CONFIG = '''(lp0
+CONFIG = """(lp0
 ctraits.traits
 __newobj__
 p1
@@ -136,25 +137,25 @@ sg17
 F0.0
 sg18
 F0.0
-sba.'''
+sba."""
 
 
 class DashboardValue(HasTraits):
     name = Str
     value = Float
     last_time = Float
-    last_time_str = Property(depends_on='last_time')
+    last_time_str = Property(depends_on="last_time")
     timed_out = Bool
 
     def _get_last_time_str(self):
-        r = ''
+        r = ""
         if self.last_time:
             r = convert_timestamp(self.last_time)
 
         return r
 
     def handle_update(self, new):
-        if new == 'timeout':
+        if new == "timeout":
             if not self.timed_out:
                 self.timed_out = True
                 self.last_time = time.time()
@@ -169,7 +170,7 @@ class DashboardClient(Subscriber):
     error_flag = Str
 
     def load_configuration(self):
-        config=self.request('config')
+        config = self.request("config")
         if config:
             self._load_configuration(config)
 
@@ -180,7 +181,7 @@ class DashboardClient(Subscriber):
         try:
             d = pickle.loads(config)
         except (pickle.PickleError, ImportError):
-            self.warning('Could not load configuration: {}'.format(config))
+            self.warning("Could not load configuration: {}".format(config))
             return
 
         vs = []
@@ -189,6 +190,8 @@ class DashboardClient(Subscriber):
             vs.append(pv)
             self.subscribe(di.tag, pv.handle_update, verbose=True)
 
-        self.subscribe('error', self.set_error_flag, verbose=True)
+        self.subscribe("error", self.set_error_flag, verbose=True)
         self.values = vs
+
+
 # ============= EOF =============================================

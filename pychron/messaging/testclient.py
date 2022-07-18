@@ -19,10 +19,20 @@ from __future__ import absolute_import
 from __future__ import print_function
 import json
 
-from traits.api import HasTraits, String, Button, Int, Str, Enum, \
-    Float, Bool, Event, Property, List
+from traits.api import (
+    HasTraits,
+    String,
+    Button,
+    Int,
+    Str,
+    Enum,
+    Float,
+    Bool,
+    Event,
+    Property,
+    List,
+)
 from traitsui.api import View, Item, HGroup, VGroup, ButtonEditor, EnumEditor
-
 
 # ============= standard library imports ========================
 
@@ -35,6 +45,7 @@ import socket
 
 # from timeit import Timer
 import time
+
 # import os
 # from datetime import timedelta
 from threading import Thread
@@ -47,8 +58,9 @@ from six.moves import input
 
 
 class Client(HasTraits):
-    command = Property(String('GetData', enter_set=True, auto_set=False),
-                       depends_on='_command')
+    command = Property(
+        String("GetData", enter_set=True, auto_set=False), depends_on="_command"
+    )
     _command = Str
     resend = Button
     receive_data_stream = Button
@@ -57,31 +69,31 @@ class Client(HasTraits):
     #    port = Int(8080)
     # host = Str('192.168.0.65')
     #    host = Str('129.138.12.145')
-    host = 'localhost'
+    host = "localhost"
     path = None
-    kind = Enum('IPC', 'UDP', 'TCP')
+    kind = Enum("IPC", "UDP", "TCP")
 
     period = Float(100)
     periodic = Event
-    periodic_label = Property(depends_on='_alive')
+    periodic_label = Property(depends_on="_alive")
     periods_completed = Int
     time_remain = Float
     n_periods = Int(100)
     _alive = Bool(False)
 
-    calculated_duration = Property(depends_on=['n_periods', 'period'])
+    calculated_duration = Property(depends_on=["n_periods", "period"])
 
-    ask_id = 'A'
+    ask_id = "A"
     sent_commands = List
     pcommand = Str
 
-    test_command = ''
-    test_response = ''
+    test_command = ""
+    test_response = ""
 
     _sock = None
 
     def _get_calculated_duration(self):
-        return self.period / 1000. * self.n_periods / 3600.
+        return self.period / 1000.0 * self.n_periods / 3600.0
 
     def _periodic_fired(self):
         self._alive = not self._alive
@@ -98,17 +110,20 @@ class Client(HasTraits):
             try:
                 self._send(sock=None)
 
-                self.time_remain = self.calculated_duration - self.periods_completed * self.period / 1000.0 / 3600.
+                self.time_remain = (
+                    self.calculated_duration
+                    - self.periods_completed * self.period / 1000.0 / 3600.0
+                )
                 self.periods_completed += 1
 
                 time.sleep(max(0, self.period / 1000.0 - (time.time() - t)))
             except Exception as e:
-                print('exception', e)
-        print('looping complete')
+                print("exception", e)
+        print("looping complete")
         self._alive = False
 
     def _get_periodic_label(self):
-        return 'Periodic' if not self._alive else 'Stop'
+        return "Periodic" if not self._alive else "Stop"
 
     def _resend_fired(self):
         self._send()
@@ -132,13 +147,12 @@ class Client(HasTraits):
                 # open connection
                 sock = self.get_connection()
 
-
         # send command
         sock.send(self.command)
         self.response = sock.recv(1024)
         #        print self.response, 'foo'
-        if 'ERROR' in self.response:
-            print(time.strftime('%H:%M:%S'), self.response)
+        if "ERROR" in self.response:
+            print(time.strftime("%H:%M:%S"), self.response)
         return sock
 
     def get_connection(self, port=None):
@@ -148,10 +162,10 @@ class Client(HasTraits):
             port = self.port
         addr = (self.host, port)
         #        print 'connection address', addr
-        if self.kind == 'UDP':
+        if self.kind == "UDP":
             packet_kind = socket.SOCK_DGRAM
 
-        elif self.kind == 'IPC':
+        elif self.kind == "IPC":
             packet_kind = socket.SOCK_STREAM
             family = socket.AF_UNIX
             addr = self.path
@@ -170,9 +184,9 @@ class Client(HasTraits):
             r = conn.recv(4096)
             r = r.strip()
             if verbose:
-                print('{} -----ask----- {} ==> {}'.format(self.ask_id, command, r))
+                print("{} -----ask----- {} ==> {}".format(self.ask_id, command, r))
         except socket.error as e:
-            print('exception', e)
+            print("exception", e)
 
         return r
 
@@ -183,10 +197,10 @@ class Client(HasTraits):
             if self.test_response:
                 if response != self.test_response:
                     ecount += 1
-                    print('&&&&&&&&&&&&&&&&& ERROR &&&&&&&&&&&&')
-            time.sleep(random.randint(0, 100) / 10000.)
-        print('=====test {} complete======'.format(self.ask_id))
-        print('{} error count= {}'.format(self.ask_id, ecount))
+                    print("&&&&&&&&&&&&&&&&& ERROR &&&&&&&&&&&&")
+            time.sleep(random.randint(0, 100) / 10000.0)
+        print("=====test {} complete======".format(self.ask_id))
+        print("{} error count= {}".format(self.ask_id, ecount))
 
     #        self.ask('StartMultRuns Foo')
     #        time.sleep(2)
@@ -208,35 +222,37 @@ class Client(HasTraits):
     def traits_view(self):
         v = View(
             VGroup(
-                Item('receive_data_stream', show_label=False),
-                Item('command'),
-                Item('response', show_label=False, style='custom',
-                     width=-300
-                     ),
-                Item('pcommand', editor=EnumEditor(name='object.sent_commands')),
-                Item('resend', show_label=False),
-
-                HGroup(Item('periodic',
-                            editor=ButtonEditor(label_value='periodic_label'),
-                            show_label=False), Item('period', show_label=False),
-                       Item('n_periods'),
-                       Item('periods_completed', show_label=False)
-                       ),
-                HGroup(Item('calculated_duration', format_str='%0.3f', style='readonly'),
-                       Item('time_remain', format_str='%0.3f', style='readonly'),
-                       ),
-                Item('kind', show_label=False),
-                Item('port'),
-                Item('host')),
-
-            resizable=True
+                Item("receive_data_stream", show_label=False),
+                Item("command"),
+                Item("response", show_label=False, style="custom", width=-300),
+                Item("pcommand", editor=EnumEditor(name="object.sent_commands")),
+                Item("resend", show_label=False),
+                HGroup(
+                    Item(
+                        "periodic",
+                        editor=ButtonEditor(label_value="periodic_label"),
+                        show_label=False,
+                    ),
+                    Item("period", show_label=False),
+                    Item("n_periods"),
+                    Item("periods_completed", show_label=False),
+                ),
+                HGroup(
+                    Item("calculated_duration", format_str="%0.3f", style="readonly"),
+                    Item("time_remain", format_str="%0.3f", style="readonly"),
+                ),
+                Item("kind", show_label=False),
+                Item("port"),
+                Item("host"),
+            ),
+            resizable=True,
         )
         return v
 
 
-def send_command(addr, cmd, kind='UDP'):
+def send_command(addr, cmd, kind="UDP"):
     p = socket.SOCK_STREAM
-    if kind == 'UDP':
+    if kind == "UDP":
         p = socket.SOCK_DGRAM
 
     sock = socket.socket(socket.AF_INET, p)
@@ -250,25 +266,25 @@ def send_command(addr, cmd, kind='UDP'):
 
 def client(kind, port):
     while 1:
-        data = input('    >> ')
-        if kind == 'inet':
+        data = input("    >> ")
+        if kind == "inet":
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect(('127.0.0.1', port))
+            s.connect(("127.0.0.1", port))
         else:
             s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             s.connect("/tmp/hardware")
 
         s.send(data)
         datad = s.recv(1024)
-        print('Received', repr(datad))
+        print("Received", repr(datad))
         s.close()
 
 
 def main():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(('localhost', 1063))
+    s.connect(("localhost", 1063))
 
-    cmd = 'Read bakeout1'
+    cmd = "Read bakeout1"
     s.send(cmd)
     s.recv(1024)
     s.close()
@@ -276,9 +292,9 @@ def main():
 
 def main2():
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    s.connect('/tmp/hardware')
+    s.connect("/tmp/hardware")
 
-    cmd = 'System|Read bakeout1'
+    cmd = "System|Read bakeout1"
     s.send(cmd)
     s.recv(1024)
     s.close()
@@ -286,22 +302,16 @@ def main2():
 
 def multiplex_test():
     # cmd = 'GetValveState C'
-    c = Client(
-        port=1067,
-        ask_id='D'
-    )
+    c = Client(port=1067, ask_id="D")
 
-    c.test_command = 'GetPosition'
-    c.test_response = '0.00,0.00,0.00'
+    c.test_command = "GetPosition"
+    c.test_response = "0.00,0.00,0.00"
     t = Thread(target=c.test)
 
-
     # cmd = 'GetValveState C'
-    c = Client(
-        port=1067,
-        ask_id='E')
-    c.test_command = 'SetLaserPower 10'
-    c.test_response = 'OK'
+    c = Client(port=1067, ask_id="E")
+    c.test_command = "SetLaserPower 10"
+    c.test_response = "OK"
     t2 = Thread(target=c.test)
 
     t.start()
@@ -309,34 +319,27 @@ def multiplex_test():
 
 
 def diode_client():
-    c = Client(
-        port=1068,
-        ask_id='D')
+    c = Client(port=1068, ask_id="D")
     c.configure_traits()
 
 
 def co2_client():
-    c = Client(
-
-        port=1067,
-        ask_id='E')
+    c = Client(port=1067, ask_id="E")
     c.configure_traits()
 
 
 def system_client():
-    c = Client(
-        host='129.138.12.141',
-        port=1061,
-        ask_id='E')
+    c = Client(host="129.138.12.141", port=1061, ask_id="E")
     c.configure_traits()
 
 
 def local_client():
     c = Client(
-        path='/tmp/hardware-argus',
+        path="/tmp/hardware-argus",
         #               host=socket.gethostbyname(socket.gethostname()),
         #               port=8900,
-        ask_id='E')
+        ask_id="E",
+    )
     c.configure_traits()
 
 
@@ -344,15 +347,16 @@ def power_test():
     c = Client(
         port=1068,
         #               host='129.138.12.141',
-        host='192.168.0.253',
-        ask_id='E')
+        host="192.168.0.253",
+        ask_id="E",
+    )
 
     ask = c.ask
-    ask('Enable')
+    ask("Enable")
 
-    ask('SetLaserPower 10')
+    ask("SetLaserPower 10")
     time.sleep(4)
-    ask('Disable')
+    ask("Disable")
 
 
 #    for i in range(500):
@@ -362,60 +366,53 @@ def power_test():
 #        c.ask('Disable')
 #        time.sleep(1)
 
+
 def timed_flag_test():
-    c = Client(
-        port=1061,
-        ask_id='E')
+    c = Client(port=1061, ask_id="E")
     for _ in range(3):
-        c.ask('Open ChamberPumpTimeFlag')
+        c.ask("Open ChamberPumpTimeFlag")
 
         while 1:
 
-            if abs(float(c.ask('Read ChamberPumpTimeFlag'))) < 0.001:
+            if abs(float(c.ask("Read ChamberPumpTimeFlag"))) < 0.001:
                 break
             time.sleep(1)
         time.sleep(1)
 
 
 def mass_spec_param_test():
-    c = Client(
-        port=1061,
-        ask_id='E')
-    c.ask('Read test_param')
-    c.ask('Read test_param1')
-    c.ask('Read test_paramfoo')
-    c.ask('Read pump_time')
+    c = Client(port=1061, ask_id="E")
+    c.ask("Read test_param")
+    c.ask("Read test_param1")
+    c.ask("Read test_paramfoo")
+    c.ask("Read pump_time")
 
 
 def video_test():
-    c = Client(
-        port=1067,
-        host='localhost',
-        ask_id='E',
-        kind='TCP')
+    c = Client(port=1067, host="localhost", ask_id="E", kind="TCP")
 
     ask = c.ask
     for i in range(10):
-        print('executing run', i)
-        ask('Enable')
+        print("executing run", i)
+        ask("Enable")
 
         time.sleep(5)
-        ask('Disable')
-        print('finish run', i)
+        ask("Disable")
+        print("finish run", i)
 
         time.sleep(7)
 
 
 def get_data():
     # for i in range(4):
-    c = Client(host='localhost', port=8007, kind='TCP', ask_id='A')
+    c = Client(host="localhost", port=8007, kind="TCP", ask_id="A")
 
     def func1():
         pt = time.time()
         for i in range(30):
             t = time.time()
-            c.ask('GetData -10')
-            obj = dict(command='GetData', value=10)
+            c.ask("GetData -10")
+            obj = dict(command="GetData", value=10)
             c.ask(json.dumps(obj))
             pt = t
 
@@ -442,7 +439,7 @@ def get_data():
     # t2.start()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     get_data()
     # video_test()
 #    local_client()

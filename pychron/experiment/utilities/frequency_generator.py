@@ -23,7 +23,7 @@ from itertools import groupby
 import six
 
 # ============= local library imports  ==========================
-FREQ_REG = re.compile(r'(\d,)*\d(,[eE])?$|(s(,\d)+(,[eE])?)$|^s$|(s,[eE])$|^e$')
+FREQ_REG = re.compile(r"(\d,)*\d(,[eE])?$|(s(,\d)+(,[eE])?)$|^s$|(s,[eE])$|^e$")
 
 
 def validate_frequency_template(v):
@@ -32,14 +32,14 @@ def validate_frequency_template(v):
 
 def parse_frequency_template(freq):
     start, end, excl, idx = False, False, False, None
-    if freq.startswith('s'):
+    if freq.startswith("s"):
         start = True
         freq = freq[2:]
 
-    if freq.endswith('e'):
+    if freq.endswith("e"):
         end = True
         freq = freq[:-2]
-    elif freq.endswith('E'):
+    elif freq.endswith("E"):
         end = True
         freq = freq[:-2]
         excl = True
@@ -56,11 +56,10 @@ def parse_frequency_template(freq):
 
 def compress_runs(runs, incrementable):
     """
-        return a 2-tuple list (idx, run) filter out not incrementables
+    return a 2-tuple list (idx, run) filter out not incrementables
 
     """
-    return [(i, r) for i, r in enumerate(runs)
-            if r.analysis_type in incrementable]
+    return [(i, r) for i, r in enumerate(runs) if r.analysis_type in incrementable]
 
 
 def render_template(freq, runs, sidx):
@@ -138,5 +137,6 @@ def frequency_index_gen(runs, freq, incrementable, before, after, sidx=0):
         return render_simple(freq, runs, sidx, before, after)
 
         #
+
 
 # ============= EOF =============================================

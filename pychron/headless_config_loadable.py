@@ -24,9 +24,7 @@ from pychron.headless_loggable import HeadlessLoggable
 
 
 class HeadlessConfigLoadable(BaseConfigLoadable, HeadlessLoggable):
-    """
-    """
+    """ """
 
 
 # ============= EOF =============================================
-

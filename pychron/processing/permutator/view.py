@@ -18,9 +18,11 @@
 from __future__ import absolute_import
 from traits.api import HasTraits, Instance, List, Property
 from traitsui.api import View, UItem, TabularEditor
+
 # ============= standard library imports ========================
 from numpy import array
 from uncertainties import nominal_value
+
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
 from pychron.core.helpers.formatting import floatfmt
@@ -29,11 +31,13 @@ from pychron.pipeline.plot.editors.graph_editor import GraphEditor
 
 
 class ResultsAdapter(TabularAdapter):
-    columns = [('Identifier', 'identifier'),
-               ('Min (Ma)', 'mi'),
-               ('Max (Ma)', 'ma'),
-               ('Spread (Ma)', 'spread'),
-               ('Std.', 'std')]
+    columns = [
+        ("Identifier", "identifier"),
+        ("Min (Ma)", "mi"),
+        ("Max (Ma)", "ma"),
+        ("Spread (Ma)", "spread"),
+        ("Std.", "std"),
+    ]
 
     mi_text = Property
     ma_text = Property
@@ -58,7 +62,7 @@ class ResultRecord(object):
     mi = 0
     spread = 0
     std = 0
-    identifier = ''
+    identifier = ""
 
     def __init__(self, records):
         ages = array([nominal_value(ai.age) for ai in records])
@@ -79,10 +83,13 @@ class PermutatorResultsView(HasTraits):
         self.results.append(ResultRecord(records))
 
     def traits_view(self):
-        v = View(UItem('editor', style='custom'),
-                 UItem('results', editor=TabularEditor(adapter=ResultsAdapter())),
-                 width=700,
-                 height=600)
+        v = View(
+            UItem("editor", style="custom"),
+            UItem("results", editor=TabularEditor(adapter=ResultsAdapter())),
+            width=700,
+            height=600,
+        )
         return v
+
 
 # ============= EOF =============================================

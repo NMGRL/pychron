@@ -46,4 +46,5 @@ class BaseGroupOptions(HasTraits):
         if new:
             self.line_color = self.color
 
+
 # ============= EOF =============================================

@@ -25,18 +25,19 @@ class AgilentMultifunction(AgilentMixin, GPActuator):
     Agilent 34907A
 
     """
+
     _state_word = None
 
     def get_channel_state(self, obj, verbose=False, **kw):
         addr = get_switch_address(obj)
         if self._read_state_word(addr[0]):
 
-            bitidx = int(addr[1:])-1
+            bitidx = int(addr[1:]) - 1
             state = bool(int(self._state_word[bitidx]))
             if verbose:
-                self.debug('addr: {}: bitidx: {}, state={}'.format(addr, bitidx, state))
-                self.debug(''.join(['{:<4s}'.format(str(i)) for i in range(16)]))
-                self.debug(''.join(['{:<4s}'.format(str(w)) for w in self._state_word]))
+                self.debug("addr: {}: bitidx: {}, state={}".format(addr, bitidx, state))
+                self.debug("".join(["{:<4s}".format(str(i)) for i in range(16)]))
+                self.debug("".join(["{:<4s}".format(str(w)) for w in self._state_word]))
 
             return state
 
@@ -48,13 +49,13 @@ class AgilentMultifunction(AgilentMixin, GPActuator):
         :return:
         """
         if port not in (1, 2):
-            self.warning('Invalid port number {}. defaulting to port 1'.format(port))
+            self.warning("Invalid port number {}. defaulting to port 1".format(port))
             port = 1
 
-        base = 'SENS:DIG:DATA:{}? (@{}{:02n})'
-        datatype = 'BYTE'
+        base = "SENS:DIG:DATA:{}? (@{}{:02n})"
+        datatype = "BYTE"
         if as_word:
-            datatype = 'WORD'
+            datatype = "WORD"
             port = 1
 
         cmd = base.format(datatype, slot, int(port))
@@ -62,18 +63,20 @@ class AgilentMultifunction(AgilentMixin, GPActuator):
         resp = self.ask(cmd)
         if resp is None:
             if globalv.communication_simulation:
-                self._state_word = [0, ] * 16
+                self._state_word = [
+                    0,
+                ] * 16
                 return True
         else:
             resp = resp.strip()
             if resp:
                 nbits = 16 if as_word else 8
-                fmt = '{{:0{}b}}'.format(nbits)
+                fmt = "{{:0{}b}}".format(nbits)
 
-                resp = resp.split(',')[0]
+                resp = resp.split(",")[0]
                 word = fmt.format(int(float(resp)))
                 if self.invert:
-                    word = fmt.format(int(word, 2) ^ (2 ** nbits - 1))
+                    word = fmt.format(int(word, 2) ^ (2**nbits - 1))
 
                 self._state_word = list(word)[::-1]
                 return True
@@ -92,16 +95,18 @@ class AgilentMultifunction(AgilentMixin, GPActuator):
             self._read_state_word(slot)
 
         self._state_word[int(channel)] = int(state)
-        return int(''.join(self._state_word[::-1]), 2)
+        return int("".join(self._state_word[::-1]), 2)
 
     def _actuate(self, obj, action, excl=False):
         addr = get_switch_address(obj)
         slot = addr[0]
-        state = action.lower() == 'open'
+        state = action.lower() == "open"
 
         word = self._assemble_state_word(slot, addr[1:], state)
 
-        cmd = 'SOURCE:DIGITAL:DATA:WORD {},(@{}01)'.format(word, slot)
+        cmd = "SOURCE:DIGITAL:DATA:WORD {},(@{}01)".format(word, slot)
         self.tell(cmd)
         return self.get_channel_state(obj) is state
+
+
 # ============= EOF =============================================

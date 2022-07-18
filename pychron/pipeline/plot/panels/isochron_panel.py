@@ -33,4 +33,5 @@ class InverseIsochronPanel(FigurePanel):
     _figure_klass = InverseIsochron
     track_value = False
 
+
 # ============= EOF =============================================

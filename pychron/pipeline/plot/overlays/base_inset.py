@@ -32,7 +32,7 @@ class BaseInset(HasTraits):
     visible_axes = True
     yoffset = Float
 
-    label_font = Str('Helvetica 8')
+    label_font = Str("Helvetica 8")
     xtitle = Str
     ytitle = Str
 
@@ -66,18 +66,22 @@ class BaseInset(HasTraits):
 
         label_font = self.label_font
 
-        for orien, title, mapper in (('left', self.ytitle, value_mapper),
-                                     ('bottom', self.xtitle, index_mapper)):
+        for orien, title, mapper in (
+            ("left", self.ytitle, value_mapper),
+            ("bottom", self.xtitle, index_mapper),
+        ):
             klass = PlotAxis
-            if 'sub' in title or 'sup' in title:
+            if "sub" in title or "sup" in title:
                 klass = MPlotAxis
 
-            axis = klass(orientation=orien,
-                         title=title,
-                         mapper=mapper,
-                         bgcolor=self.bgcolor,
-                         tick_label_font=label_font,
-                         title_font=label_font)
+            axis = klass(
+                orientation=orien,
+                title=title,
+                mapper=mapper,
+                bgcolor=self.bgcolor,
+                tick_label_font=label_font,
+                title_font=label_font,
+            )
             self.underlays.append(axis)
 
         # bottom = PlotAxis(orientation='bottom',
@@ -96,11 +100,11 @@ class BaseInset(HasTraits):
         h = self.height
         # w = h * GOLDEN_RATIO
         loc = self.location
-        if 'Upper' in loc:
+        if "Upper" in loc:
             y = y2 - h - 2
         else:
             y = y1 + 2
-        if 'Right' in loc:
+        if "Right" in loc:
             x = x2 - w - 2
         else:
             x = x1 + 2
@@ -117,5 +121,6 @@ class BaseInset(HasTraits):
             self._draw_plot(gc, *args, **kw)
             self._draw_overlay(gc, *args, **kw)
             self._draw_border(gc, *args, **kw)
+
 
 # ============= EOF =============================================

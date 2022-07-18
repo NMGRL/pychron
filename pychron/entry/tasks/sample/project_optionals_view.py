@@ -23,21 +23,38 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 
 class ProjectOptionalsView(Controller):
     def traits_view(self):
-        lc_grp = HGroup(UItem('lock_project_lab_contact',
-                              label='Lab Contact',
-                              tooltip='Prevent Lab Contact from being automatically cleared'),
-                        Item('project_lab_contact',
-                             editor=EnumEditor(name='lab_contacts')))
+        lc_grp = HGroup(
+            UItem(
+                "lock_project_lab_contact",
+                label="Lab Contact",
+                tooltip="Prevent Lab Contact from being automatically cleared",
+            ),
+            Item("project_lab_contact", editor=EnumEditor(name="lab_contacts")),
+        )
 
-        i_grp = HGroup(UItem('lock_project_institution',
-                             tooltip='Prevent Institution from being automatically cleared'),
-                       Item('project_institution', label='Institution'))
+        i_grp = HGroup(
+            UItem(
+                "lock_project_institution",
+                tooltip="Prevent Institution from being automatically cleared",
+            ),
+            Item("project_institution", label="Institution"),
+        )
 
-        c_grp = HGroup(UItem('lock_project_comment',
-                             tooltip='Prevent Comment from being automatically cleared'),
-                       VGroup(UItem('project_comment', style='custom'), label='Comment', show_border=True))
-        v = okcancel_view(VGroup(lc_grp, i_grp, c_grp),
-                          title='Set Optional Project Values')
+        c_grp = HGroup(
+            UItem(
+                "lock_project_comment",
+                tooltip="Prevent Comment from being automatically cleared",
+            ),
+            VGroup(
+                UItem("project_comment", style="custom"),
+                label="Comment",
+                show_border=True,
+            ),
+        )
+        v = okcancel_view(
+            VGroup(lc_grp, i_grp, c_grp), title="Set Optional Project Values"
+        )
         return v
+
 
 # ============= EOF =============================================

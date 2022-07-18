@@ -19,8 +19,11 @@ from __future__ import absolute_import
 from traits.api import Float, on_trait_change, Bool, Property, List
 from traitsui.api import Item, VGroup, HGroup
 
-from pychron.canvas.canvas2D.scene.primitives.primitives import Polygon, \
-    PolyLine, PointIndicator
+from pychron.canvas.canvas2D.scene.primitives.primitives import (
+    Polygon,
+    PolyLine,
+    PointIndicator,
+)
 from pychron.core.geometry.geometry import calc_point_along_line
 
 
@@ -50,8 +53,7 @@ class RasterPolygon(Polygon):
 
     velocity = Float
     find_min = Bool(True)
-    theta = Property(Float(enter_set=True, auto_set=False),
-                     depends_on='_theta')
+    theta = Property(Float(enter_set=True, auto_set=False), depends_on="_theta")
     _theta = Float
 
     def _set_theta(self, v):
@@ -65,18 +67,18 @@ class RasterPolygon(Polygon):
         self._theta = 0
         self.request_redraw()
 
-    @on_trait_change('offset, use_outline')
+    @on_trait_change("offset, use_outline")
     def _refresh(self):
         self.request_redraw()
 
     def _get_group(self):
-        g = VGroup(HGroup(Item('use_outline'),
-                          Item('offset'),
-                          ),
-                   HGroup(Item('find_min'),
-                          Item('theta')
-                          )
-                   )
+        g = VGroup(
+            HGroup(
+                Item("use_outline"),
+                Item("offset"),
+            ),
+            HGroup(Item("find_min"), Item("theta")),
+        )
 
         return g
 
@@ -87,8 +89,9 @@ class Transect(PolyLine):
     _cached_ptargs = None
     point_klass = LaserPoint
 
-    def add_point(self, x, y, z=0, point_color=(1, 0, 0), line_color=(1, 0, 0),
-                  **ptargs):
+    def add_point(
+        self, x, y, z=0, point_color=(1, 0, 0), line_color=(1, 0, 0), **ptargs
+    ):
 
         p2 = LaserPoint(x, y, z=z, default_color=point_color, **ptargs)
         self._add_point(p2, line_color)
@@ -101,7 +104,7 @@ class Transect(PolyLine):
             return self.step_points[p - 1]
 
     def _get_group(self):
-        g = Item('step', label='Step (units)')
+        g = Item("step", label="Step (units)")
         return g
 
     def set_step_points(self, **ptargs):
@@ -134,28 +137,30 @@ class Transect(PolyLine):
 
             x, y = p1.x, p1.y
 
-            tol = step / 3.
+            tol = step / 3.0
             while 1:
                 x, y = calc_point_along_line(x, y, p2.x, p2.y, step)
-                ptargs['use_border'] = False
+                ptargs["use_border"] = False
                 if abs(p2.x - x) < tol and abs(p2.y - y) < tol:
                     p = self.new_point(p2.x, p2.y, cnt, **ptargs)
                     self.step_points.append(p)
                     cnt += 1
                     break
                 else:
-                    p = self.new_point(x, y,
-                                       cnt,
-                                       line_color=line_color, point_color=point_color,
-                                       **ptargs)
+                    p = self.new_point(
+                        x,
+                        y,
+                        cnt,
+                        line_color=line_color,
+                        point_color=point_color,
+                        **ptargs
+                    )
 
                     self.step_points.append(p)
                     cnt += 1
 
     def new_point(self, x, y, i, **kw):
-        p = LaserPoint(x, y,
-                       identifier=str(i),
-                       **kw)
+        p = LaserPoint(x, y, identifier=str(i), **kw)
         return p
 
     def set_canvas(self, canvas):
@@ -168,5 +173,6 @@ class Transect(PolyLine):
         super(Transect, self)._render(gc)
         for si in self.step_points:
             si.render(gc)
+
 
 # ============= EOF =============================================

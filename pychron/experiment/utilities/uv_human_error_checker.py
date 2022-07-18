@@ -24,39 +24,41 @@ from pychron.experiment.utilities.identifier import get_analysis_type
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class UVHumanErrorChecker(HumanErrorChecker):
     _extraction_line_required = False
     _mass_spec_required = True
 
     def _check_run(self, run, inform, test):
         if test:
-            run.test_scripts(script_context=self._script_context,
-                             warned=self._warned,
-                             duration=False)
+            run.test_scripts(
+                script_context=self._script_context, warned=self._warned, duration=False
+            )
 
-        err = self._check_attr(run, 'labnumber', inform)
+        err = self._check_attr(run, "labnumber", inform)
         if err is not None:
             return err
 
         ant = get_analysis_type(run.labnumber)
-        if ant == 'unknown':
-            for attr in ('cleanup',):
+        if ant == "unknown":
+            for attr in ("cleanup",):
                 err = self._check_attr(run, attr, inform)
                 if err is not None:
                     return err
 
             if run.position:
                 if not run.extract_value:
-                    return 'position but no extract value'
+                    return "position but no extract value"
 
         self._set_extraction_line_required(run)
 
     def _check_attr(self, run, attr, inform):
         if not getattr(run, attr):
-            msg = 'No {} set for {}'.format(attr, run.runid)
+            msg = "No {} set for {}".format(attr, run.runid)
             self.warning(msg)
             if inform:
                 self.warning_dialog(msg)
-            return 'no {}'.format(attr)
+            return "no {}".format(attr)
+
 
 # ============= EOF =============================================

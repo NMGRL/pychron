@@ -14,30 +14,40 @@
 # limitations under the License.
 # ===============================================================================
 from traitsui.view import View
+
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import ps
-from pychron.experiment.conditional.conditional import ActionConditional, TruncationConditional, TerminationConditional, \
-    CancelationConditional
-from pychron.experiment.conditional.conditionals_edit_view import ConditionalsViewable, ConditionalGroup
+from pychron.experiment.conditional.conditional import (
+    ActionConditional,
+    TruncationConditional,
+    TerminationConditional,
+    CancelationConditional,
+)
+from pychron.experiment.conditional.conditionals_edit_view import (
+    ConditionalsViewable,
+    ConditionalGroup,
+)
 from pychron.experiment.conditional.groups import PostRunGroup, PreRunGroup
 from pychron.pychron_constants import ACTION, TERMINATION, CANCELATION, TRUNCATION
 
-ADD_CONDITIONALS = ((ps(ACTION), ConditionalGroup, ActionConditional),
-                    (ps(TRUNCATION), ConditionalGroup, TruncationConditional),
-                    (ps(CANCELATION), ConditionalGroup, CancelationConditional),
-                    (ps(TERMINATION), ConditionalGroup, TerminationConditional))
+ADD_CONDITIONALS = (
+    (ps(ACTION), ConditionalGroup, ActionConditional),
+    (ps(TRUNCATION), ConditionalGroup, TruncationConditional),
+    (ps(CANCELATION), ConditionalGroup, CancelationConditional),
+    (ps(TERMINATION), ConditionalGroup, TerminationConditional),
+)
 
 
 class ConditionalsView(ConditionalsViewable):
-    title = 'Active Conditionals'
+    title = "Active Conditionals"
 
     def add_post_run_terminations(self, items):
-        self._add_pre_post('PostRunTerminations', items, PostRunGroup)
+        self._add_pre_post("PostRunTerminations", items, PostRunGroup)
 
     def add_pre_run_terminations(self, items):
-        self._add_pre_post('PreRunTerminations', items, PreRunGroup)
+        self._add_pre_post("PreRunTerminations", items, PreRunGroup)
 
     def _add_pre_post(self, label, items, klass):
         if not items:
@@ -54,25 +64,31 @@ class ConditionalsView(ConditionalsViewable):
         if ditems:
             for name, klass, cklass in ADD_CONDITIONALS:
                 items = ditems.get(name, [])
-                self._group_factory(items, klass, conditional_klass=cklass,
-                                    auto_select=False, label=name.capitalize())
+                self._group_factory(
+                    items,
+                    klass,
+                    conditional_klass=cklass,
+                    auto_select=False,
+                    label=name.capitalize(),
+                )
 
     def add_conditionals(self, ditems, **kw):
         if ditems:
             for name, klass, cklass in ADD_CONDITIONALS:
                 items = ditems.get(name, [])
-                grp = next((gi for gi in self.groups if gi.label == name.capitalize()), None)
+                grp = next(
+                    (gi for gi in self.groups if gi.label == name.capitalize()), None
+                )
                 if not grp:
-                    self._group_factory(items, klass, auto_select=False,
-                                        label=name.capitalize(), **kw)
+                    self._group_factory(
+                        items, klass, auto_select=False, label=name.capitalize(), **kw
+                    )
                 else:
                     grp.conditionals.extend(items)
 
     def traits_view(self):
-        v = View(self._view_tabs(),
-                 buttons=['OK'],
-                 title=self.title,
-                 width=800)
+        v = View(self._view_tabs(), buttons=["OK"], title=self.title, width=800)
         return v
+
 
 # ============= EOF =============================================

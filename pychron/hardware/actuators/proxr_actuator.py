@@ -21,7 +21,7 @@ from pychron.hardware.ncd.relay import ProXR
 class ProXRActuator(ProXR, GPActuator):
     def _actuate(self, obj, action):
         addr = get_switch_address(obj)
-        if action.lower() == 'open':
+        if action.lower() == "open":
             self.open_channel(addr)
         else:
             self.close_channel(addr)
@@ -29,4 +29,6 @@ class ProXRActuator(ProXR, GPActuator):
 
     def get_channel_state(self, obj, **kw):
         return ProXR.get_channel_state(self, get_switch_address(obj), **kw)
+
+
 # ============= EOF =============================================

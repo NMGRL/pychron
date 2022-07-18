@@ -24,28 +24,29 @@ from pychron.loggable import Loggable
 
 class BaseImportMapper(Loggable):
     """
-        base class for mapping between two data sources
-        use this to fix/change run info on import
+    base class for mapping between two data sources
+    use this to fix/change run info on import
 
-        fix typos
-        e.g change Mina Bluff > Minna Bluff
+    fix typos
+    e.g change Mina Bluff > Minna Bluff
     """
 
 
 class MinnaBluffMapper(BaseImportMapper):
     def map_project(self, project):
         pl = project.lower()
-        if pl in ('mina bluff', 'minna bluff'):
-            project = 'Minna Bluff'
-        elif pl in ('j', 'j-curve'):
-            project = 'J'
+        if pl in ("mina bluff", "minna bluff"):
+            project = "Minna Bluff"
+        elif pl in ("j", "j-curve"):
+            project = "J"
         return project
 
     def map_material(self, mat):
-        #ml=mat.lower()
-        #if ml in ('gmc', 'groundmass', 'groundmass conc'):
+        # ml=mat.lower()
+        # if ml in ('gmc', 'groundmass', 'groundmass conc'):
         #    mat='Groundmass'
 
         return mat.capitalize()
+
 
 # ============= EOF =============================================

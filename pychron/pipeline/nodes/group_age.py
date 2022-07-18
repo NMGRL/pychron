@@ -23,17 +23,17 @@ from pychron.pychron_constants import UNKNOWN, BLANK_TYPES, AIR
 
 
 class GroupAgeNode(BaseDVCNode):
-    name = 'Group Age'
+    name = "Group Age"
     auto_configure = False
     configurable = False
     editor = None
     editor_klass = SubGroupAgeEditor
 
     def bind_preferences(self):
-        bind_preference(self, 'skip_meaning', 'pychron.pipeline.skip_meaning')
+        bind_preference(self, "skip_meaning", "pychron.pipeline.skip_meaning")
 
     def run(self, state):
-        unknowns = list(a for a in state.unknowns if a.analysis_type == 'unknown')
+        unknowns = list(a for a in state.unknowns if a.analysis_type == "unknown")
 
         editor = self.editor_klass(dvc=self.dvc)
         editor.load()
@@ -45,10 +45,10 @@ class GroupAgeNode(BaseDVCNode):
         self.set_groups(state)
 
     def set_groups(self, state):
-        def factory(ans, tag='Human Table'):
+        def factory(ans, tag="Human Table"):
             if self.skip_meaning:
                 if tag in self.skip_meaning:
-                    ans = (ai for ai in ans if ai.tag.lower() != 'skip')
+                    ans = (ai for ai in ans if ai.tag.lower() != "skip")
 
             g = InterpretedAgeGroup(analyses=list(ans))
             return g
@@ -60,13 +60,17 @@ class GroupAgeNode(BaseDVCNode):
         # unk_group = [factory(analyses) for _, analyses in groupby(sorted(unknowns, key=key), key=key)]
         blank_group = [factory(analyses) for _, analyses in groupby_group_id(blanks)]
         air_group = [factory(analyses) for _, analyses in groupby_group_id(airs)]
-        munk_group = [factory(analyses, 'Machine Table') for _, analyses in groupby_group_id(unknowns)]
+        munk_group = [
+            factory(analyses, "Machine Table")
+            for _, analyses in groupby_group_id(unknowns)
+        ]
 
         groups = {
             # 'unknowns': unk_group,
-            'blanks': blank_group,
-            'airs': air_group,
-            'machine_unknowns': munk_group}
+            "blanks": blank_group,
+            "airs": air_group,
+            "machine_unknowns": munk_group,
+        }
 
         state.run_groups = groups
 
@@ -80,7 +84,9 @@ class GroupAgeNode(BaseDVCNode):
 
         # nans = self.editor.fgroups
         # state.unknowns = nans
-        state.run_groups['unknowns'] = self.editor.groups
+        state.run_groups["unknowns"] = self.editor.groups
         state.unknowns = self.editor.unknowns
         self.editor.dump()
+
+
 # ============= EOF =============================================

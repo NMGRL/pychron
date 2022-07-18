@@ -28,6 +28,7 @@ from traitsui.api import UItem, HGroup
 from traitsui.editors.api import TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
+
 # ============= standard library imports ========================
 import os
 import yaml
@@ -65,23 +66,29 @@ class OptionsEditor(HasTraits):
             self.bool_options = bopts
 
     def traits_view(self):
-        ncols = [ObjectColumn(name='name', editable=False),
-                 ObjectColumn(name='value')]
+        ncols = [ObjectColumn(name="name", editable=False), ObjectColumn(name="value")]
 
-        bcols = [ObjectColumn(name='name', editable=False),
-                 CheckboxColumn(name='value')]
+        bcols = [
+            ObjectColumn(name="name", editable=False),
+            CheckboxColumn(name="value"),
+        ]
 
-        v = okcancel_view(HGroup(UItem('numeric_options',
-                                       editor=TableEditor(columns=ncols), ),
-                                 UItem('bool_options',
-                                       editor=TableEditor(columns=bcols))),
-                          title='Script Options')
+        v = okcancel_view(
+            HGroup(
+                UItem(
+                    "numeric_options",
+                    editor=TableEditor(columns=ncols),
+                ),
+                UItem("bool_options", editor=TableEditor(columns=bcols)),
+            ),
+            title="Script Options",
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     v = OptionsEditor()
-    v.path = '/Users/ross/Programming/git/pychron_dev/test/data/script_options.yaml'
+    v.path = "/Users/ross/Programming/git/pychron_dev/test/data/script_options.yaml"
     v.configure_traits()
 
 # ============= EOF =============================================

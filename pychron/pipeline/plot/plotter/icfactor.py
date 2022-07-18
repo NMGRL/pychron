@@ -22,6 +22,7 @@ from logging import warning
 
 from numpy import array
 from six.moves import zip
+
 # ============= local library imports  ==========================
 from uncertainties import std_dev, nominal_value, ufloat, umath
 
@@ -54,17 +55,22 @@ class ICFactor(ReferencesSeries):
     # return asarray(p_uys), asarray(p_ues)
 
     def _get_plot_label_text(self, po):
-        n, d = po.name.split('/')
+        n, d = po.name.split("/")
 
         analysis = self.sorted_references[0]
 
         niso = analysis.get_isotope(detector=n)
-        diso = analysis.get_isotope(detector=d)
+        if niso:
+            n = niso.name
 
-        return '{}/{}'.format(niso.name, diso.name)
+        diso = analysis.get_isotope(detector=d)
+        if diso:
+            d = diso.name
+
+        return "{}/{}".format(n, d)
 
     def _get_interpolated_value(self, po, analysis):
-        n, d = po.name.split('/')
+        n, d = po.name.split("/")
         # iso = next((i for i in analysis.isotopes.itervalues() if i.detector == d), None)
         v, e = 0, 0
         if d in analysis.temporary_ic_factors:
@@ -74,19 +80,19 @@ class ICFactor(ReferencesSeries):
         return v, e
 
     def _set_interpolated_values(self, iso, fit, ans, p_uys, p_ues):
-        n, d = iso.split('/')
+        n, d = iso.split("/")
 
         is_peak_hop = False
         for ai in self.references:
             dets = ai.detectors()
-            
-            print('dets', dets, len(dets) , len(set(dets)))
+
+            print("dets", dets, len(dets), len(set(dets)))
             # a detector is used more than once
             if len(dets) > len(set(dets)):
                 is_peak_hop = True
                 break
-                
-        print('---------------- ispeakhop', is_peak_hop)
+
+        print("---------------- ispeakhop", is_peak_hop)
         for ui, v, e in zip(ans, p_uys, p_ues):
             if v is not None and e is not None:
                 if self.options.use_source_correction:
@@ -99,11 +105,15 @@ class ICFactor(ReferencesSeries):
                     beta = umath.log(ic) / umath.log(m40 / m36)
                     ui.set_beta(beta, is_peak_hop)
                 else:
+                    if d == "rad40":
+                        iso = ui.get_isotope(name="Ar40")
+                        d = iso.detector
+
                     ui.set_temporary_ic_factor(d, v, e)
 
     def _get_current_data(self, po):
-        if '/' in po.name:
-            n, d = po.name.split('/')
+        if "/" in po.name:
+            n, d = po.name.split("/")
             nys = array([ri.get_ic_factor(n) for ri in self.sorted_analyses])
             dys = array([ri.get_ic_factor(d) for ri in self.sorted_analyses])
             return dys / nys
@@ -111,23 +121,37 @@ class ICFactor(ReferencesSeries):
             return array([ri.get_value(po.name) for ri in self.sorted_analyses])
 
     def _get_reference_data(self, po):
-        if '/' in po.name:
-            n, d = po.name.split('/')
+        if "/" in po.name:
+            n, d = po.name.split("/")
+            if n in ("rad40",):
+                nys = [ri.get_value(n) for ri in self.sorted_references]
+            else:
+                nys = [ri.get_isotope(detector=n) for ri in self.sorted_references]
+                nys = array(
+                    [ni.get_decay_corrected_value() for ni in nys if ni is not None]
+                )
 
-            nys = [ri.get_isotope(detector=n) for ri in self.sorted_references]
-            dys = [ri.get_isotope(detector=d) for ri in self.sorted_references]
+            if d in ("rad40",):
+                dys = [ri.get_value(d) for ri in self.sorted_references]
+            else:
+                dys = [ri.get_isotope(detector=d) for ri in self.sorted_references]
+                dys = array(
+                    [di.get_decay_corrected_value() for di in dys if di is not None]
+                )
 
-            nys = array([ni.get_decay_corrected_value() for ni in nys if ni is not None])
-            dys = array([di.get_decay_corrected_value() for di in dys if di is not None])
             try:
                 rys = nys / dys
             except ZeroDivisionError:
-                warning(None, 'The data you trying to fit is not complete. One or more analyses are missing '
-                              'measurements for detector {}. Can not proceed'.format(d))
+                warning(
+                    None,
+                    "The data you trying to fit is not complete. One or more analyses are missing "
+                    "measurements for detector {}. Can not proceed".format(d),
+                )
                 return
         else:
             rys = array([ri.get_value(po.name) for ri in self.sorted_references])
         rys = rys / po.standard_ratio
         return self.sorted_references, self.rxs, rys
+
 
 # ============= EOF =============================================

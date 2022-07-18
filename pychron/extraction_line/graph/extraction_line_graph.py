@@ -22,9 +22,19 @@ from traits.api import HasTraits, Dict, Bool
 
 from pychron.canvas.canvas2D.scene.canvas_parser import CanvasParser, get_volume
 from pychron.canvas.canvas2D.scene.primitives.valves import Valve
-from pychron.extraction_line.graph.nodes import ValveNode, RootNode, \
-    PumpNode, Edge, SpectrometerNode, LaserNode, TankNode, PipetteNode, \
-    GaugeNode, GetterNode, ColdFingerNode
+from pychron.extraction_line.graph.nodes import (
+    ValveNode,
+    RootNode,
+    PumpNode,
+    Edge,
+    SpectrometerNode,
+    LaserNode,
+    TankNode,
+    PipetteNode,
+    GaugeNode,
+    GetterNode,
+    ColdFingerNode,
+)
 from pychron.extraction_line.graph.traverse import bft
 
 
@@ -34,8 +44,8 @@ from pychron.extraction_line.graph.traverse import bft
 
 def split_graph(n):
     """
-        valves only have binary connections
-        so can only split in half
+    valves only have binary connections
+    so can only split in half
     """
 
     if len(n.edges) == 2:
@@ -56,7 +66,7 @@ def split_graph(n):
             return n1, n2
     else:
         if n.edges:
-            return n.edges[0].get_nodes(n)[0],
+            return (n.edges[0].get_nodes(n)[0],)
         else:
             return []
 
@@ -72,11 +82,11 @@ class ExtractionLineGraph(HasTraits):
         if self._cp:
             a = elem.find(tag).text
         else:
-            a = elem.get(tag)['name']
+            a = str(elem.get(tag)["name"])
 
         return a.strip()
 
-    def _get_volume(self, v, tag='volume', default=0):
+    def _get_volume(self, v, tag="volume", default=0):
         if self._cp:
             vol = get_volume(v, tag, default)
         else:
@@ -87,7 +97,7 @@ class ExtractionLineGraph(HasTraits):
         if self._cp:
             t = v.text
         else:
-            t = v.get('name', '')
+            t = str(v.get("name", ""))
         return t.strip()
 
     def _get_elements(self, key):
@@ -97,8 +107,9 @@ class ExtractionLineGraph(HasTraits):
             return self._yd.get(key, [])
 
     def load(self, p):
-        if p.endswith('.yaml') or p.endswith('.yml'):
+        if p.endswith(".yaml") or p.endswith(".yml"):
             from pychron.core.yaml import yload
+
             self._yd = yload(p)
         else:
             self._cp = CanvasParser(p)
@@ -111,26 +122,28 @@ class ExtractionLineGraph(HasTraits):
         # load nodes
         # =======================================================================
         # load roots
-        for t, klass in (('stage', RootNode),
-                         ('circle_stage', RootNode),
-                         ('spectrometer', SpectrometerNode),
-                         ('valve', ValveNode),
-                         ('rough_valve', ValveNode),
-                         ('manual_valve', ValveNode),
-                         ('turbo', PumpNode),
-                         ('ionpump', PumpNode),
-                         ('laser', LaserNode),
-                         ('circle_laser', LaserNode),
-                         ('tank', TankNode),
-                         ('pipette', PipetteNode),
-                         ('gauge', GaugeNode),
-                         ('getter', GetterNode),
-                         ('coldfinger', ColdFingerNode)):
+        for t, klass in (
+            ("stage", RootNode),
+            ("circle_stage", RootNode),
+            ("spectrometer", SpectrometerNode),
+            ("valve", ValveNode),
+            ("rough_valve", ValveNode),
+            ("manual_valve", ValveNode),
+            ("turbo", PumpNode),
+            ("ionpump", PumpNode),
+            ("laser", LaserNode),
+            ("circle_laser", LaserNode),
+            ("tank", TankNode),
+            ("pipette", PipetteNode),
+            ("gauge", GaugeNode),
+            ("getter", GetterNode),
+            ("coldfinger", ColdFingerNode),
+        ):
             for si in self._get_elements(t):
                 n = self._get_text(si)
-                if t in ('valve', 'rough_valve', 'manual_valve'):
-                    o_vol = self._get_volume(si, tag='open_volume', default=10)
-                    c_vol = self._get_volume(si, tag='closed_volume', default=5)
+                if t in ("valve", "rough_valve", "manual_valve"):
+                    o_vol = self._get_volume(si, tag="open_volume", default=10)
+                    c_vol = self._get_volume(si, tag="closed_volume", default=5)
                     vol = (o_vol, c_vol)
                 else:
                     vol = self._get_volume(si)
@@ -141,13 +154,13 @@ class ExtractionLineGraph(HasTraits):
         # =======================================================================
         # load edges
         # =======================================================================
-        for tag in ('connection', 'elbow', 'vconnection', 'hconnection', 'rconnection'):
+        for tag in ("connection", "elbow", "vconnection", "hconnection", "rconnection"):
             for ei in self._get_elements(tag):
-                skey = self._findname(ei, 'start')
-                ekey = self._findname(ei, 'end')
+                skey = self._findname(ei, "start")
+                ekey = self._findname(ei, "end")
                 vol = self._get_volume(ei)
                 edge = Edge(volume=vol)
-                s_name = ''
+                s_name = ""
 
                 if skey in nodes:
                     s_name = skey
@@ -155,7 +168,7 @@ class ExtractionLineGraph(HasTraits):
                     edge.nodes.append(sa)
                     sa.add_edge(edge)
 
-                e_name = ''
+                e_name = ""
                 if ekey in nodes:
                     e_name = ekey
                     ea = nodes[e_name]
@@ -163,13 +176,13 @@ class ExtractionLineGraph(HasTraits):
                     edge.nodes.append(ea)
                     ea.add_edge(edge)
 
-                edge.name = '{}_{}'.format(s_name, e_name)
+                edge.name = "{}_{}".format(s_name, e_name)
 
-        for c in ('tee_connection', 'fork_connection'):
+        for c in ("tee_connection", "fork_connection"):
             for conn in self._get_elements(c):
-                left = self._findname(conn, 'left')
-                right = self._findname(conn, 'right')
-                mid = self._findname(conn, 'mid')
+                left = self._findname(conn, "left")
+                right = self._findname(conn, "right")
+                mid = self._findname(conn, "mid")
 
                 edge = Edge(vol=self._get_volume(conn))
 
@@ -181,7 +194,7 @@ class ExtractionLineGraph(HasTraits):
                         ln.add_edge(edge)
                         ns.append(x)
 
-                edge.name = '-'.join(ns)
+                edge.name = "-".join(ns)
 
         self.nodes = nodes
 
@@ -194,11 +207,11 @@ class ExtractionLineGraph(HasTraits):
     def set_valve_state(self, name, state, *args, **kw):
         if name in self.nodes:
             v_node = self.nodes[name]
-            v_node.state = 'open' if state else 'closed'
+            v_node.state = "open" if state else "closed"
 
     def set_canvas_states(self, canvas, name):
         if not self.suppress_changes:
-            if hasattr(canvas, 'scene'):
+            if hasattr(canvas, "scene"):
                 scene = canvas.scene
             else:
                 scene = canvas.canvas2D.scene
@@ -225,7 +238,7 @@ class ExtractionLineGraph(HasTraits):
     def _set_state(self, n, scene=None):
 
         if n:
-            if n.state == 'closed' and not n.visited:
+            if n.state == "closed" and not n.visited:
                 n.visited = True
                 # print('splitting on {}'.format(n.name))
                 # print(','.join([x.name for x in split_graph(n)]))
@@ -240,11 +253,13 @@ class ExtractionLineGraph(HasTraits):
     def calculate_volumes(self, node):
         if isinstance(node, str):
             if node not in self.nodes:
-                return [(0, 0), ]
+                return [
+                    (0, 0),
+                ]
 
             node = self.nodes[node]
 
-        if node.state == 'closed':
+        if node.state == "closed":
             nodes = split_graph(node)
         else:
             nodes = (node,)
@@ -255,14 +270,14 @@ class ExtractionLineGraph(HasTraits):
 
     def _calculate_volume(self, node, k=0):
         """
-            use a Depth-first Traverse
-            accumulate volume
+        use a Depth-first Traverse
+        accumulate volume
         """
         debug = False
         vol = node.volume
         node.f_visited = True
         if debug:
-            print('=' * (k + 1), node.name, node.volume, vol)
+            print("=" * (k + 1), node.name, node.volume, vol)
 
         for i, ei in enumerate(node.edges):
             # ns = ei.get_nodes(node)
@@ -272,33 +287,33 @@ class ExtractionLineGraph(HasTraits):
 
                 vol += ei.volume
                 if debug:
-                    print('-' * (k + i + 1), ei.name, ei.volume, vol)
+                    print("-" * (k + i + 1), ei.name, ei.volume, vol)
 
                 if not n.f_visited:
                     n.f_visited = True
-                    if n.state == 'closed':
+                    if n.state == "closed":
                         vol += n.volume
                         if debug:
-                            print('e' * (k + i + 1), n.name, n.volume, vol)
+                            print("e" * (k + i + 1), n.name, n.volume, vol)
 
                     else:
                         v = self._calculate_volume(n, k=k + 1)
                         vol += v
                         if debug:
-                            print('n' * (k + i + 1), n.name, v, vol)
+                            print("n" * (k + i + 1), n.name, v, vol)
 
         return vol
 
     def _find_max_state(self, node):
         """
-            use a Breadth-First Traverse
-            acumulate the max state at each node
+        use a Breadth-First Traverse
+        acumulate the max state at each node
         """
-        m_state, term, p = False, '', 0
+        m_state, term, p = False, "", 0
 
         for ni in bft(self, node):
             if isinstance(ni, PumpNode):
-                return 'pump', ni.name
+                return "pump", ni.name
 
             if ni.precedence > p:
                 p = ni.precedence
@@ -328,16 +343,16 @@ class ExtractionLineGraph(HasTraits):
                     continue
                 self._set_item_state(scene, ei.name, state, term)
 
-                if n.state != 'closed' and not n.f_visited:
+                if n.state != "closed" and not n.f_visited:
                     n.f_visited = True
                     self.fill(scene, n, state, term)
 
     def _set_item_state(self, scene, name, state, term, color=None):
         if not isinstance(name, str):
-            raise ValueError('name needs to be a str. provided={}'.format(name))
+            raise ValueError("name needs to be a str. provided={}".format(name))
 
         obj = scene.get_item(name)
-        if obj is None or obj.type_tag in ('turbo', 'tank', 'ionpump'):
+        if obj is None or obj.type_tag in ("turbo", "tank", "ionpump"):
             return
 
         if not color and state:
@@ -348,7 +363,7 @@ class ExtractionLineGraph(HasTraits):
             # set the color of the valve to
             # the max state if the valve is open
             if self.inherit_state:
-                if obj.state != 'closed':
+                if obj.state != "closed":
                     if state:
                         obj.active_color = color
                     else:
@@ -381,14 +396,14 @@ class ExtractionLineGraph(HasTraits):
             #     return bfs(self, self.root, name)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     elg = ExtractionLineGraph()
-    elg.load('/Users/ross/Pychrondata_dev/setupfiles/canvas2D/canvas.xml')
-    elg.set_valve_state('C', True)
-    elg.set_valve_state('D', True)
+    elg.load("/Users/ross/Pychrondata_dev/setupfiles/canvas2D/canvas.xml")
+    elg.set_valve_state("C", True)
+    elg.set_valve_state("D", True)
 
-    elg.set_valve_state('D', False)
-    elg._set_state(elg.nodes['D'])
+    elg.set_valve_state("D", False)
+    elg._set_state(elg.nodes["D"])
     # elg.set_canvas_states('D')
     # print 'exception', elg.calculate_volumes('Obama')
     # print 'exception', elg.calculate_volumes('Bone')

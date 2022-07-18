@@ -27,8 +27,8 @@ from pychron.git.hosts import GitHostService
 
 class GitLabService(GitHostService):
     host = Str
-    preference_path = 'pychron.gitlab'
-    name = 'GitLab'
+    preference_path = "pychron.gitlab"
+    name = "GitLab"
 
     @property
     def remote_url(self):
@@ -36,31 +36,32 @@ class GitLabService(GitHostService):
 
     def bind_preferences(self):
         super(GitLabService, self).bind_preferences()
-        bind_preference(self, 'host', '{}.host'.format(self.preference_path))
+        bind_preference(self, "host", "{}.host".format(self.preference_path))
 
     def set_team(self, team, organization, repo, permission=None):
         pass
 
     def create_repo(self, name, organization, **kw):
-        cmd = '{}/orgs/{}/repos'.format(self.host,
-                                        organization)
+        cmd = "{}/orgs/{}/repos".format(self.host, organization)
         resp = self._post(cmd, name=name, **kw)
         if resp:
-            self.debug('Create repo response {}'.format(resp.status_code))
+            self.debug("Create repo response {}".format(resp.status_code))
             return resp.status_code == 201
 
     def make_url(self, name, organization, protocol=None):
-        return 'http://{}/{}/{}.git'.format(self.host, organization, name)
+        return "http://{}/{}/{}.git".format(self.host, organization, name)
 
     def get_repos(self, organization):
-        cmd = '{}/groups/{}/projects'.format(self.host, organization)
+        cmd = "{}/groups/{}/projects".format(self.host, organization)
         return self._get(cmd)
 
     def get_info(self, organization):
-        cmd = '{}/groups/{}'.format(self.host, organization)
+        cmd = "{}/groups/{}".format(self.host, organization)
         return self._get(cmd)
 
     # private
     def _get_oauth_token(self):
-        return 'Bearer {}'.format(self.oauth_token)
+        return "Bearer {}".format(self.oauth_token)
+
+
 # ============= EOF =============================================

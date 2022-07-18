@@ -31,12 +31,25 @@ def intfilter(ticks):
 
 
 class IntTickGenerator(DefaultTickGenerator):
-    def get_ticks(self, data_low, data_high, bounds_low,
-                  bounds_high, interval, use_endpoints=False,
-                  scale='linear'):
-        ticks = super(IntTickGenerator, self).get_ticks(data_low, data_high, bounds_low,
-                                                        bounds_high, interval, use_endpoints=use_endpoints,
-                                                        scale=scale)
+    def get_ticks(
+        self,
+        data_low,
+        data_high,
+        bounds_low,
+        bounds_high,
+        interval,
+        use_endpoints=False,
+        scale="linear",
+    ):
+        ticks = super(IntTickGenerator, self).get_ticks(
+            data_low,
+            data_high,
+            bounds_low,
+            bounds_high,
+            interval,
+            use_endpoints=use_endpoints,
+            scale=scale,
+        )
         # filter out non integer ticks
         ticks = intfilter(ticks)
         return ticks
@@ -67,43 +80,54 @@ class IntSparseTicks(SparseTicks):
 
 class SparseLogTicks(DefaultTickGenerator):
     def get_ticks_and_labels(self, data_low, data_high, bounds_low, bounds_high):
-        ticks = self.get_ticks(data_low, data_high, bounds_low, bounds_high, 'auto')
-        labels = array(['{:n}'.format(t) for t in ticks])
+        ticks = self.get_ticks(data_low, data_high, bounds_low, bounds_high, "auto")
+        labels = array(["{:n}".format(t) for t in ticks])
 
         # only label 0.1,1,10,100,1000...
         try:
-            labels[log10(ticks) % 1 != 0] = ''
+            labels[log10(ticks) % 1 != 0] = ""
         except ValueError:
             pass
 
         return ticks, labels
 
-    def get_ticks(self, data_low, data_high, bounds_low,
-                  bounds_high, interval, use_endpoints=False,
-                  scale='log'):
+    def get_ticks(
+        self,
+        data_low,
+        data_high,
+        bounds_low,
+        bounds_high,
+        interval,
+        use_endpoints=False,
+        scale="log",
+    ):
         i = 1
         while 1:
             if data_low < data_high:
                 break
-            data_low = min(10 ** -i, data_low)
+            data_low = min(10**-i, data_low)
             i += 1
 
-        oticks = super(SparseLogTicks, self).get_ticks(data_low, data_high, bounds_low,
-                                                       bounds_high, interval, use_endpoints=use_endpoints,
-                                                       scale=scale)
+        oticks = super(SparseLogTicks, self).get_ticks(
+            data_low,
+            data_high,
+            bounds_low,
+            bounds_high,
+            interval,
+            use_endpoints=use_endpoints,
+            scale=scale,
+        )
         ticks = oticks[oticks > data_low]
 
         return ticks
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     g = Graph()
     pp = g.new_plot()
     g.new_series([1, 2, 3, 4, 5, 6, 7], [-1, 1, 10, 20, 30, 80, 105])
 
-    pp.value_scale = 'log'
+    pp.value_scale = "log"
     pp.value_axis.tick_generator = SparseLogTicks()
-    g.configure_traits(
-
-    )
+    g.configure_traits()
 # ============= EOF =============================================

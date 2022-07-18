@@ -21,8 +21,7 @@ import os
 
 from traits.api import HasTraits, Str, CFloat, Float, Property, List, Enum
 
-from pychron.core.geometry.affine import transform_point, \
-    itransform_point
+from pychron.core.geometry.affine import transform_point, itransform_point
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.loggable import Loggable
 
@@ -41,8 +40,8 @@ class SampleHole(HasTraits):
     interpolation_holes = None
     analyzed = False
 
-    nominal_position = Property(depends_on='x,y')
-    corrected_position = Property(depends_on='x_cor,y_cor')
+    nominal_position = Property(depends_on="x,y")
+    corrected_position = Property(depends_on="x_cor,y_cor")
 
     associated_hole = Str
 
@@ -59,15 +58,15 @@ class SampleHole(HasTraits):
 class BaseStageMap(Loggable):
     file_path = Str
     # holes = Dict
-    name = Property(depends_on='file_path')
-    bitmap_path = Property(depends_on='file_path')
+    name = Property(depends_on="file_path")
+    bitmap_path = Property(depends_on="file_path")
     #    valid_holes = None
     #    use_valid_holes = True
     # holes = Property
     sample_holes = List(SampleHole)
 
     g_dimension = Float(enter_set=True, auto_set=False)
-    g_shape = Enum('circle', 'square')
+    g_shape = Enum("circle", "square")
 
     # should always be N,E,S,W,center
     calibration_holes = None
@@ -77,28 +76,28 @@ class BaseStageMap(Loggable):
     #     self.load()
 
     def load(self):
-        self.debug('loading stage map file {}'.format(self.file_path))
-        with open(self.file_path, 'r') as rfile:
+        self.debug("loading stage map file {}".format(self.file_path))
+        with open(self.file_path, "r") as rfile:
             cnt = 0
             for line in rfile:
-                if line.startswith('#'):
+                if line.startswith("#"):
                     continue
 
-                if '#' in line:
-                    line = line.split('#')[0]
+                if "#" in line:
+                    line = line.split("#")[0]
 
                 if cnt == 0:
                     # line 0 shape, dimension
-                    shape, dimension = line.split(',')
+                    shape, dimension = line.split(",")
                     self.g_shape = shape
                     self.g_dimension = dimension = float(dimension)
                 elif cnt == 1:
                     # line 1 list of holes to default draw
-                    valid_holes = line.split(',')
+                    valid_holes = line.split(",")
                 elif cnt == 2:
                     # # line 2 list of calibration holes
                     # # should always be N,E,S,W,center
-                    self.calibration_holes = line.split(',')
+                    self.calibration_holes = line.split(",")
                     break
 
                 cnt += 1
@@ -107,10 +106,10 @@ class BaseStageMap(Loggable):
             sms = []
             for line in rfile:
                 line = line.strip()
-                if line and not line.startswith('#'):
+                if line and not line.startswith("#"):
                     h = self._hole_factory(hi, line, shape, dimension, valid_holes)
                     if h is None:
-                        self.warning_dialog('Invalid Stage Map {}'.format(self.name))
+                        self.warning_dialog("Invalid Stage Map {}".format(self.name))
                         return
 
                     sms.append(h)
@@ -152,18 +151,18 @@ class BaseStageMap(Loggable):
             yield ri[len(ri) // 2]
 
     def get_calibration_hole(self, h):
-        d = 'north', 'east', 'south', 'west', 'center'
+        d = "north", "east", "south", "west", "center"
         try:
             idx = d.index(h)
         except IndexError as e:
-            self.debug('^^^^^^^^^^^^^^^^^^^ index error: {}, {}, {}'.format(d, h, e))
+            self.debug("^^^^^^^^^^^^^^^^^^^ index error: {}, {}, {}".format(d, h, e))
             return
 
         try:
             key = self.calibration_holes[idx]
         except IndexError as e:
-            self.debug('^^^^^^^^^^^^^^^^^^^ index error: {}, {}'.format(idx, e))
-            self.debug('calibration holes={}'.format(self.calibration_holes))
+            self.debug("^^^^^^^^^^^^^^^^^^^ index error: {}, {}".format(idx, e))
+            self.debug("calibration holes={}".format(self.calibration_holes))
             return
 
         return self.get_hole(key.strip())
@@ -187,7 +186,11 @@ class BaseStageMap(Loggable):
         cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)
 
         pt = transform_point(pos, cpos, rot, scale)
-        self.debug('map to calibration. pos={}, cpos={}, rot={}. new pos={}'.format(pos, cpos, rot, pt))
+        self.debug(
+            "map to calibration. pos={}, cpos={}, rot={}. new pos={}".format(
+                pos, cpos, rot, pt
+            )
+        )
         return pt
 
     def get_hole(self, key):
@@ -195,10 +198,9 @@ class BaseStageMap(Loggable):
 
     def get_hole_pos(self, key):
         """
-            hole ids are str so convert key to str
+        hole ids are str so convert key to str
         """
-        return next(((h.x, h.y)
-                     for h in self.sample_holes if h.id == str(key)), None)
+        return next(((h.x, h.y) for h in self.sample_holes if h.id == str(key)), None)
 
     def check_valid_hole(self, key, autocenter_only=False, **kw):
         if autocenter_only and not key:
@@ -208,25 +210,40 @@ class BaseStageMap(Loggable):
         if self.sample_holes:
             hole = self.get_hole(key)
             if hole is None:
-                msg = '"{}" is not a valid hole for tray "{}".'.format(key,
-                                                                       self.name)
+                msg = '"{}" is not a valid hole for tray "{}".'.format(key, self.name)
         else:
-            msg = '''There a no holes in tray "{}". This is most likely because
+            msg = """There a no holes in tray "{}". This is most likely because
 the file "{}" was not properly parsed. \n\n
-Check that the file is UTF-8 and Unix (LF) linefeed'''.format(self.name,
-                                                              self.file_path)
+Check that the file is UTF-8 and Unix (LF) linefeed""".format(
+                self.name, self.file_path
+            )
         if msg:
             from pychron.core.ui.gui import invoke_in_main_thread
+
             invoke_in_main_thread(self.warning_dialog, msg)
         else:
             return True
 
     def get_corrected_hole_pos(self, key):
-        return next((h.corrected_position if h.has_correction else h.nominal_position
-                     for h in self.sample_holes if h.id == key), None)
+        return next(
+            (
+                h.corrected_position if h.has_correction else h.nominal_position
+                for h in self.sample_holes
+                if h.id == key
+            ),
+            None,
+        )
 
     def clear_correction_file(self):
         pass
+
+    def motion_saver_holes(self):
+        for i, rs in self._grouped_rows():
+            rs = list(rs)
+            if i % 2:
+                rs = list(reversed(rs))
+            yield rs
+            # print(rs[0].id, rs[-1].id)
 
     # private
     def _grouped_rows(self, reverse=True):
@@ -235,20 +252,20 @@ Check that the file is UTF-8 and Unix (LF) linefeed'''.format(self.name,
 
         # holes = sorted(self.sample_holes, key=func, reverse=reverse)
         # return groupby(holes, key=func)
-        return groupby_key(self.sample_holes, 'y', reverse=reverse)
+        return groupby_key(self.sample_holes, "y", reverse=reverse)
 
     def _load_hook(self):
         pass
 
     def _hole_factory(self, hi, line, shape, dimension, valid_holes):
-        ah = ''
-        args = line.split(',')
+        ah = ""
+        args = line.split(",")
         if len(args) == 2:
             x, y = args
             hole = str(hi + 1)
         elif len(args) == 3:
             hole, x, y = args
-            if '(' in y:
+            if "(" in y:
                 hole = str(hi + 1)
                 x, y, ah = args
                 ah = ah.strip()
@@ -256,27 +273,30 @@ Check that the file is UTF-8 and Unix (LF) linefeed'''.format(self.name,
 
         elif len(args) == 4:
             hole, x, y, ah = args
-            if '(' in ah:
+            if "(" in ah:
                 ah = ah.strip()
                 ah = ah[1:-1]
         else:
-            self.warning('invalid stage map file. {}. '
-                         'Problem with line {}: {}'.format(self.file_path,
-                                                           hi + 3, line))
+            self.warning(
+                "invalid stage map file. {}. "
+                "Problem with line {}: {}".format(self.file_path, hi + 3, line)
+            )
             return
-        return SampleHole(id=hole,
-                          x=float(x),
-                          y=float(y),
-                          associated_hole=ah,
-                          render='x' if hole in valid_holes else '',
-                          shape=shape,
-                          dimension=dimension)
+        return SampleHole(
+            id=hole,
+            x=float(x),
+            y=float(y),
+            associated_hole=ah,
+            render="x" if hole in valid_holes else "",
+            shape=shape,
+            dimension=dimension,
+        )
 
     def _get_bitmap_path(self):
 
         name, _ext = os.path.splitext(self.name)
         root, _path = os.path.split(self.file_path)
-        name = '.'.join([name, 'png'])
+        name = ".".join([name, "png"])
         return os.path.join(root, name)
 
     def _get_name(self):
@@ -305,11 +325,12 @@ Check that the file is UTF-8 and Unix (LF) linefeed'''.format(self.name,
         self._save()
 
     def _save(self):
-        with open(self.file_path, 'r') as f:
+        with open(self.file_path, "r") as f:
             lines = [line for line in f]
 
-        lines[0] = '{},{}\n'.format(self.g_shape, self.g_dimension)
-        with open(self.file_path, 'w') as f:
+        lines[0] = "{},{}\n".format(self.g_shape, self.g_dimension)
+        with open(self.file_path, "w") as f:
             f.writelines(lines)
+
 
 # ============= EOF =============================================

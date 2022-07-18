@@ -43,12 +43,12 @@ class SelectDataReductionTagModel(HasTraits):
     name_filter = Str
 
     def _user_filter_changed(self, new):
-        tags = self._filter('name', self.name_filter, self.otags)
-        self.tags = self._filter('user', new, tags)
+        tags = self._filter("name", self.name_filter, self.otags)
+        self.tags = self._filter("user", new, tags)
 
     def _name_filter_changed(self, new):
-        tags = self._filter('name', new, self.otags)
-        self.tags = self._filter('user', self.user_filter, tags)
+        tags = self._filter("name", new, self.otags)
+        self.tags = self._filter("user", self.user_filter, tags)
 
     def _filter(self, attr, val, tags):
         return [ti for ti in tags if getattr(ti, attr).startswith(val)] if val else tags
@@ -56,11 +56,13 @@ class SelectDataReductionTagModel(HasTraits):
     def load_tags(self, dbtags):
         def g():
             for di in dbtags:
-                d = DataReductionTag(name=di.name,
-                                     id=di.id,
-                                     create_date=di.create_date.strftime('%m-%d-%Y'),
-                                     user=di.user.name,
-                                     comment=di.comment or '')
+                d = DataReductionTag(
+                    name=di.name,
+                    id=di.id,
+                    create_date=di.create_date.strftime("%m-%d-%Y"),
+                    user=di.user.name,
+                    comment=di.comment or "",
+                )
                 yield d
 
         self.otags = self.tags = list(g())
@@ -69,14 +71,14 @@ class SelectDataReductionTagModel(HasTraits):
 class DataReductionTagModel(BaseTagModel):
     tagname = Str
     comment = Str
-    edit_comment_button = Button('Comment')
+    edit_comment_button = Button("Comment")
 
     def _edit_comment_button_fired(self):
-        self.edit_traits(view='edit_comment_view')
+        self.edit_traits(view="edit_comment_view")
 
     def edit_comment_view(self):
-        v = okcancel_view(UItem('comment', style='custom'),
-                          title='Comment')
+        v = okcancel_view(UItem("comment", style="custom"), title="Comment")
         return v
+
 
 # ============= EOF =============================================

@@ -20,7 +20,7 @@
 from __future__ import absolute_import
 from pychron.core.ui.factory import toolkit_factory
 
-LEDEditor = toolkit_factory('led_editor', 'LEDEditor')
-ButtonLED = toolkit_factory('led_editor', 'ButtonLED')
-LED = toolkit_factory('led_editor', 'LED')
+LEDEditor = toolkit_factory("led_editor", "LEDEditor")
+ButtonLED = toolkit_factory("led_editor", "ButtonLED")
+LED = toolkit_factory("led_editor", "LED")
 # ============= EOF =============================================

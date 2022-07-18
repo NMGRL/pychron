@@ -29,8 +29,7 @@ NTRIES = 3
 
 
 class FusionsLaserMonitor(LaserMonitor):
-    """
-    """
+    """ """
 
     max_coolant_temp = Float(25)
     max_coolant_temp_tries = Int(3)
@@ -48,31 +47,43 @@ class FusionsLaserMonitor(LaserMonitor):
     max_unavailable = 3
 
     def load_additional_args(self, config):
-        """
-        """
+        """ """
         super(FusionsLaserMonitor, self).load_additional_args(self)
-        self.set_attribute(config, 'max_coolant_temp',
-                           'General', 'max_coolant_temp', cast='float', optional=True)
+        self.set_attribute(
+            config,
+            "max_coolant_temp",
+            "General",
+            "max_coolant_temp",
+            cast="float",
+            optional=True,
+        )
+        self.set_attribute(
+            config,
+            "max_unavailable",
+            "General",
+            "max_unavailable",
+            cast="int",
+            optional=True,
+            default=3,
+        )
 
     def _fcheck_interlocks(self):
-        """
-        """
+        """ """
         # check laser interlocks
         manager = self.manager
-        self.info('Check laser interlocks')
+        self.info("Check laser interlocks")
         interlocks = manager.laser_controller.check_interlocks(verbose=False)
 
         if interlocks:
-            inter = ' '.join(interlocks)
+            inter = " ".join(interlocks)
             manager.emergency_shutoff(inter)
             return True
 
     def _fcheck_coolant_temp(self):
-        """
-        """
+        """ """
         manager = self.manager
 
-        self.info('Check laser coolant temperature')
+        self.info("Check laser coolant temperature")
         ct = manager.get_coolant_temperature(verbose=False)
         if ct is None:
             self._chiller_unavailable()
@@ -81,11 +92,10 @@ class FusionsLaserMonitor(LaserMonitor):
             if ct > self.max_coolant_temp:
 
                 if self._coolant_check_cnt > self.max_coolant_temp_tries:
-                    manager.emergency_shutoff('Coolant over temp {:0.2f}'.format(ct))
+                    manager.emergency_shutoff("Coolant over temp {:0.2f}".format(ct))
+                    return True
                 else:
                     self._coolant_check_cnt += 1
-                return True
-
             else:
                 self._coolant_check_cnt = 0
 
@@ -95,7 +105,7 @@ class FusionsLaserMonitor(LaserMonitor):
 
     def _fcheck_coolant_status(self):
         manager = self.manager
-        self.info('Check laser coolant status')
+        self.info("Check laser coolant status")
 
         status = manager.get_coolant_status()
         # returns an empty list
@@ -103,19 +113,19 @@ class FusionsLaserMonitor(LaserMonitor):
             self._chiller_unavailable()
         else:
             # temporary disable pump fail check
-            if 'Pump Fail' in status:
-                self.debug('skip pump fail')
+            if "Pump Fail" in status:
+                self.debug("skip pump fail")
                 return
 
             self._unavailable_cnt = 0
             if status and all(status):
                 if self._coolant_check_status_cnt > self.max_coolant_temp_tries:
-                    status = ','.join(status) if isinstance(status, list) else status
-                    reason = 'Laser coolant error {}'.format(status)
+                    status = ",".join(status) if isinstance(status, list) else status
+                    reason = "Laser coolant error {}".format(status)
                     manager.emergency_shutoff(reason)
                 else:
                     self._coolant_check_status_cnt += 1
-                return True
+                    return True
 
             else:
                 self._coolant_check_status_cnt = 0
@@ -125,7 +135,7 @@ class FusionsLaserMonitor(LaserMonitor):
 
         if not globalv.ignore_chiller_unavailable:
             if self._unavailable_cnt >= self.max_unavailable:
-                reason = 'Laser chiller not available'
+                reason = "Laser chiller not available"
                 self.manager.emergency_shutoff(reason)
             else:
                 self._unavailable_cnt += 1

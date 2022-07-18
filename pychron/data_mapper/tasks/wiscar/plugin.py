@@ -23,17 +23,22 @@ from pychron.envisage.tasks.base_plugin import BasePlugin
 
 class ViewWiscArNuSource(WiscArNuSource):
     def traits_view(self):
-        n = VGroup(UItem('nice_path'), show_border=True, label='Nice')
-        mp = VGroup(UItem('metadata_path'), show_border=True, label='MetaData')
-        d = VGroup(UItem('directory'), show_border=True, label='Directory')
-        p = VGroup(UItem('path'), show_border=True, label='File', enabled_when='not directory')
+        n = VGroup(UItem("nice_path"), show_border=True, label="Nice")
+        mp = VGroup(UItem("metadata_path"), show_border=True, label="MetaData")
+        d = VGroup(UItem("directory"), show_border=True, label="Directory")
+        p = VGroup(
+            UItem("path"), show_border=True, label="File", enabled_when="not directory"
+        )
         return View(VGroup(n, mp, d, p))
 
 
 class WiscArDataPlugin(BasePlugin):
-    sources = List(contributes_to='pychron.entry.data_sources')
+    sources = List(contributes_to="pychron.entry.data_sources")
 
     def _sources_default(self):
-        return [('WiscAr Nu', ViewWiscArNuSource()), ]
+        return [
+            ("WiscAr Nu", ViewWiscArNuSource()),
+        ]
+
 
 # ============= EOF =============================================

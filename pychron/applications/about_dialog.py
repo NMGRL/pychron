@@ -19,13 +19,14 @@ import sys
 # ============= standard library imports ========================
 from pyface.qt import QtGui, QtCore
 from pyface.qt.QtGui import QPlainTextEdit
+
 # ============= enthought library imports =======================
 from pyface.ui.qt4.about_dialog import AboutDialog
 from traits.api import List, Str
 
 # ============= local library imports  ==========================
 
-_ABOUT_TEXT = '''
+_ABOUT_TEXT = """
 <html>
   <body>
     <center>
@@ -41,8 +42,8 @@ _ABOUT_TEXT = '''
   </center>
   </body>
 </html>
-'''
-_FOOTER_TEXT = '''
+"""
+_FOOTER_TEXT = """
 <html>
   <body>
     <center>
@@ -56,7 +57,7 @@ _FOOTER_TEXT = '''
       </p>
   </center>
   </body>
-</html>'''
+</html>"""
 
 
 class myAboutDialog(AboutDialog):
@@ -85,7 +86,7 @@ class myAboutDialog(AboutDialog):
         # additions = '<br />'.join(self.additions)
 
         # Get the version numbers.
-        py_version = sys.version[0:sys.version.find("(")]
+        py_version = sys.version[0 : sys.version.find("(")]
         qt_version = QtCore.__version__
 
         # Set the page contents.
@@ -117,16 +118,18 @@ class myAboutDialog(AboutDialog):
 
     def _create_revisions(self):
         label = QtGui.QLabel()
-        label.setText('<b>Local=</b>{} <b>Remote=</b>{}'.format(self.local_rev, self.remote_rev))
+        label.setText(
+            "<b>Local=</b>{} <b>Remote=</b>{}".format(self.local_rev, self.remote_rev)
+        )
         return label
 
     def _create_changes(self):
         c = QPlainTextEdit()
         c.setReadOnly(True)
-        txt = ''
+        txt = ""
         for i in range(10):
             for a, d, m in self.changes:
-                txt += '<p>{} {}</p><p><b><pre> {}</pre></b></p>'.format(a, d, m)
+                txt += "<p>{} {}</p><p><b><pre> {}</pre></b></p>".format(a, d, m)
 
         c.appendHtml(txt)
         cur = c.textCursor()
@@ -134,5 +137,6 @@ class myAboutDialog(AboutDialog):
         c.setTextCursor(cur)
         c.ensureCursorVisible()
         return c
+
 
 # ============= EOF =============================================

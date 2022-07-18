@@ -28,10 +28,14 @@ class ProjectManager(Loggable):
     items = List
 
     filter_str = Str(enter_set=True, auto_set=False)
-    filter_attrs = Dict({'name': 'Name',
-                         'unique_id': 'UniqueID',
-                         'principal_investigator': 'Principal Investigator',
-                         'lab_contact': 'Lab Contact'})
+    filter_attrs = Dict(
+        {
+            "name": "Name",
+            "unique_id": "UniqueID",
+            "principal_investigator": "Principal Investigator",
+            "lab_contact": "Lab Contact",
+        }
+    )
     filter_attr = Str
 
     # add_button = Button
@@ -52,7 +56,9 @@ class ProjectManager(Loggable):
 
     def activated(self):
         with self.dvc.session_ctx(use_parent_session=False):
-            self.items = self.oitems = [ProjectRecordView(pr) for pr in self.dvc.get_projects()]
+            self.items = self.oitems = [
+                ProjectRecordView(pr) for pr in self.dvc.get_projects()
+            ]
 
             # self._filter()
 
@@ -82,7 +88,7 @@ class ProjectManager(Loggable):
                     p.dirty = False
                 self.refresh = True
             else:
-                self.warning_dialog('Can only edit the name of one project at a time')
+                self.warning_dialog("Can only edit the name of one project at a time")
 
     def _comment_changed(self, new):
         if self.selected:
@@ -96,7 +102,7 @@ class ProjectManager(Loggable):
             self.refresh = True
 
     def _save_button_fired(self):
-        self.debug('Apply changes')
+        self.debug("Apply changes")
         dvc = self.dvc
         with dvc.session_ctx(use_parent_session=False):
             commit = False
@@ -131,5 +137,6 @@ class ProjectManager(Loggable):
 
         # def _add_button_fired(self):
         #     self._add()
+
 
 # ============= EOF =============================================

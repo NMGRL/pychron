@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 
 from traits.api import HasTraits, Int, Bool, Str, Any
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traits.trait_errors import TraitError
@@ -36,9 +37,9 @@ class Connectable(HasTraits):
     manager = Any
 
     def set_connection_parameters(self, obj):
-        if hasattr(obj, 'communicator'):
+        if hasattr(obj, "communicator"):
             com = obj.communicator
-            for attr in 'host', 'port', 'kind':
+            for attr in "host", "port", "kind":
                 if hasattr(com, attr):
                     try:
                         setattr(self, attr, getattr(com, attr))
@@ -46,5 +47,6 @@ class Connectable(HasTraits):
                         pass
 
             self.monitorable = True
+
 
 # ============= EOF =============================================

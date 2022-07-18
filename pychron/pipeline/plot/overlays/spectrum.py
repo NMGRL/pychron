@@ -25,6 +25,7 @@ from enable.colors import convert_from_pyqt_color
 from enable.font_metrics_provider import font_metrics_provider
 from enable.tools.drag_tool import DragTool
 from kiva.trait_defs.kiva_font_trait import KivaFont
+
 # ============= standard library imports ========================
 from numpy import where, array
 from six.moves import zip
@@ -61,6 +62,7 @@ class SpectrumTool(AnalysisPointInspector, BasePlateauOverlay):
     single_point = True
     _cached_lines = None
     current_idx = Int
+
     def get_selected_index(self):
         return [self.current_idx]
 
@@ -90,8 +92,8 @@ class SpectrumTool(AnalysisPointInspector, BasePlateauOverlay):
         pt = event.x, event.y
         ndx = self.hittest(pt)
         if ndx is not None:
-            sels = self.component.index.metadata['selections']
-            self.component.index.metadata['selections'] = list(set(sels) ^ {ndx})
+            sels = self.component.index.metadata["selections"]
+            self.component.index.metadata["selections"] = list(set(sels) ^ {ndx})
             self.component.request_redraw()
             event.handled = True
 
@@ -109,12 +111,20 @@ class SpectrumTool(AnalysisPointInspector, BasePlateauOverlay):
             high_c = self.cumulative39s[idx2 + 1]
 
             an = self.analyses[idx]
-            lines = ['RunID={}'.format(an.record_id),
-                     'Tag={}'.format(an.tag),
-                     'Status={}'.format(an.status_text),
-                     u'{}={} {}{} (1{})'.format(comp.container.y_axis.title, floatfmt(v), PLUSMINUS,
-                                                floatfmt(e), SIGMA),
-                     'Cumulative. Ar39={}-{}'.format(floatfmt(low_c), floatfmt(high_c))]
+            lines = [
+                "RunID={}".format(an.record_id),
+                "Tag={}".format(an.tag),
+                "Status={}".format(an.status_text),
+                "{}={} {} {} ({}{})".format(
+                    comp.container.y_axis.title,
+                    floatfmt(v),
+                    PLUSMINUS,
+                    floatfmt(e * self.nsigma),
+                    self.nsigma,
+                    SIGMA,
+                ),
+                "Cumulative. Ar39={}-{}".format(floatfmt(low_c), floatfmt(high_c)),
+            ]
 
             self._cached_lines = lines
 
@@ -200,7 +210,10 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 func = gc.stroke_path
 
             color = self.user_color
-            color = [x / 255. for x in (color.red(), color.green(), color.blue(), color.alpha())]
+            color = [
+                x / 255.0
+                for x in (color.red(), color.green(), color.blue(), color.alpha())
+            ]
 
             color = color[0], color[1], color[2], alpha
             if abs(alpha - 0.3) < 0.1:
@@ -246,7 +259,6 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 gc.set_stroke_color(sc)
 
                 gc.rect(x, y, w, h)
-                gc.draw_path()
 
                 func()
                 if i > 0 and i <= n:
@@ -269,9 +281,9 @@ class SpectrumErrorOverlay(AbstractOverlay):
 class PlateauTool(DragTool):
     def normal_mouse_move(self, event):
         if self.is_draggable(event.x, event.y):
-            event.window.set_pointer('hand')
+            event.window.set_pointer("hand")
         else:
-            event.window.set_pointer('arrow')
+            event.window.set_pointer("arrow")
 
     # def normal_mouse_move(self, event):
     # if self.is_draggable(event.x, event.y):
@@ -318,7 +330,7 @@ class PlateauOverlay(BasePlateauOverlay):
     ages_errors = Array
     ages = Array
     nsigma = Int(2)
-    line_color = Color('red')
+    line_color = Color("red")
     line_width = Float(1.0)
     selections = List
     arrow_visible = Bool
@@ -334,7 +346,7 @@ class PlateauOverlay(BasePlateauOverlay):
 
     def _get_line(self):
         """
-            reurns screen values for start plat, end plat, error mag at start, error mag at end
+        reurns screen values for start plat, end plat, error mag at start, error mag at end
         """
         cs = self.cumulative39s
         ps = self.plateau_bounds
@@ -370,7 +382,9 @@ class PlateauOverlay(BasePlateauOverlay):
         a = ystart - estart if y < ystart else ystart + estart
         b = yend - eend if y < yend else yend + eend
 
-        pt1, pt2, up1, up2 = self.component.map_screen([(cstart, y), (cend, y), (cstart, a), (cend, b)])
+        pt1, pt2, up1, up2 = self.component.map_screen(
+            [(cstart, y), (cend, y), (cstart, a), (cend, b)]
+        )
         # up1, up2 = self.component.map_screen([(cstart, a), (cend, b)])
         y1, y2 = up1[1], up2[1]
 
@@ -461,30 +475,32 @@ class PlateauOverlay(BasePlateauOverlay):
             x = x1 + (x2 - x1) * 0.5
 
             dummy_gc = font_metrics_provider()
-            l = Label(text=self.info_txt,
-                      font=self.label_font)
+            l = Label(text=self.info_txt, font=self.label_font)
             w, h = l.get_bounding_box(dummy_gc)
 
-            xa = x + w / 2.
-            hjustify = 'center'
+            xa = x + w / 2.0
+            hjustify = "center"
             if xa > comp.x2:
                 d = xa - comp.x2
                 x -= d
-            elif x - w / 2. < comp.x:
+            elif x - w / 2.0 < comp.x:
                 x = comp.x + 5
-                hjustify = 'left'
+                hjustify = "left"
 
             x = max(comp.x, x)
-            p = PlotLabel(text=self.info_txt,
-                          font=self.label_font,
-                          color=self.line_color,
-                          hjustify=hjustify,
-                          border_visible=True,
-                          bgcolor='white',
-                          x=x,
-                          y=y + 10)
+            p = PlotLabel(
+                text=self.info_txt,
+                font=self.label_font,
+                color=self.line_color,
+                hjustify=hjustify,
+                border_visible=True,
+                bgcolor="white",
+                x=x,
+                y=y + 10,
+            )
             self.plateau_label = p
 
         return p
+
 
 # ============= EOF =============================================

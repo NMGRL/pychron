@@ -2,15 +2,13 @@ from __future__ import absolute_import
 
 from pychron.core.yaml import yload
 
-__author__ = 'ross'
+__author__ = "ross"
 
 import unittest
 
 from pychron.experiment.automated_run.hop_util import parse_hops, generate_hops
 
-HOPS = [('Ar40:H1, Ar36:CDD', 2, 1),
-        ('bs:39.5:H1', 45, 2),
-        ('Ar39:CDD', 2, 1)]
+HOPS = [("Ar40:H1, Ar36:CDD", 2, 1), ("bs:39.5:H1", 45, 2), ("Ar39:CDD", 2, 1)]
 
 
 class PeakHopYamlCase(unittest.TestCase):
@@ -30,7 +28,7 @@ class PeakHopYamlCase(unittest.TestCase):
 
 
 class PeakHopYamlCase2(PeakHopYamlCase):
-    txt = '''- counts: 1
+    txt = """- counts: 1
   settle: 5
   cup_configuration:
     - isotope: Ar40
@@ -152,19 +150,19 @@ class PeakHopYamlCase2(PeakHopYamlCase):
   positioning:
     detector: AX(CDD)
     isotope: PHHCl
-'''
+"""
 
     def test_hop1_deflections(self):
         hop = self.hop1()
-        self.assertEqual(hop['deflections'], [0])
+        self.assertEqual(hop["deflections"], [0])
 
     def test_hop2_deflections(self):
         hop = self.hop2()
-        self.assertEqual(hop['deflections'], [3250, 0, 0, 0, 0])
+        self.assertEqual(hop["deflections"], [3250, 0, 0, 0, 0])
 
 
 class PeakHopYamlCase1(PeakHopYamlCase):
-    txt = '''
+    txt = """
 - counts: 2
   settle: 1
   positioning:
@@ -201,52 +199,52 @@ class PeakHopYamlCase1(PeakHopYamlCase):
      detector: CDD
      protect: False
      is_baseline: False
-'''
+"""
 
     def test_hop1_settle(self):
         hop = self.hop1()
-        self.assertEqual(hop['settle'], 1)
+        self.assertEqual(hop["settle"], 1)
 
     def test_hop1_counts(self):
         hop = self.hop1()
-        self.assertEqual(hop['counts'], 2)
+        self.assertEqual(hop["counts"], 2)
 
     def test_hop1_detectors(self):
         hop = self.hop1()
-        self.assertEqual(hop['detectors'], ['H1', 'AX', 'CDD'])
+        self.assertEqual(hop["detectors"], ["H1", "AX", "CDD"])
 
     def test_hop1_detectors(self):
         hop = self.hop1()
-        self.assertEqual(hop['isotopes'], ['Ar40', 'Ar39', 'Ar36'])
+        self.assertEqual(hop["isotopes"], ["Ar40", "Ar39", "Ar36"])
 
     def test_hop2_settle(self):
         hop = self.hop2()
-        self.assertEqual(hop['settle'], 10)
+        self.assertEqual(hop["settle"], 10)
 
     def test_hop2_counts(self):
         hop = self.hop2()
-        self.assertEqual(hop['counts'], 30)
+        self.assertEqual(hop["counts"], 30)
 
     def test_hop2_detectors(self):
         hop = self.hop2()
-        self.assertEqual(hop['detectors'], ['CDD'])
+        self.assertEqual(hop["detectors"], ["CDD"])
 
     def test_hop2_detectors(self):
         hop = self.hop2()
-        self.assertEqual(hop['isotopes'], ['Ar37'])
+        self.assertEqual(hop["isotopes"], ["Ar37"])
 
 
 class PeakHopTxtCase(unittest.TestCase):
     def setUp(self):
-        hop_txt = '''#('Ar40:H1:10,     Ar39:AX,     Ar36:CDD',      3, 1)
+        hop_txt = """#('Ar40:H1:10,     Ar39:AX,     Ar36:CDD',      3, 1)
 #('Ar40:L2,     Ar39:CDD',                   3, 1)
 #('Ar38:CDD',                                3, 1)
 #('Ar37:CDD',                                3, 1)
 ('Ar40:H1, Ar36:CDD', 2, 1)
 ('bs:39.5:H1', 45, 2)
-('Ar39:CDD', 2, 1)'''
-        lines = hop_txt.split('\n')
-        hops = [eval(li) for li in lines if not li.startswith('#')]
+('Ar39:CDD', 2, 1)"""
+        lines = hop_txt.split("\n")
+        hops = [eval(li) for li in lines if not li.startswith("#")]
         # hops = [eval(line) for line in fp if line.strip() and not line.strip().startswith('#')]
         self.gen = parse_hops(hops)
 
@@ -272,8 +270,8 @@ class PeakHopTxtCase(unittest.TestCase):
         hop = next(self.gen)
         hop = next(self.gen)
         self.assertEqual(hop[0], True)
-        self.assertEqual(hop[1], '39.5')
-        self.assertEqual(hop[2], 'H1')
+        self.assertEqual(hop[1], "39.5")
+        self.assertEqual(hop[2], "H1")
 
     def test_generate_hops(self):
         g = generate_hops(HOPS)
@@ -281,26 +279,26 @@ class PeakHopTxtCase(unittest.TestCase):
         # print h1
         h1 = next(g)
         # print h1
-        self.assertEqual(h1['is_baselines'], (False, False))
+        self.assertEqual(h1["is_baselines"], (False, False))
 
         h1 = next(g)
         # print h1
-        self.assertEqual(h1['is_baselines'], (True,))
+        self.assertEqual(h1["is_baselines"], (True,))
 
         h1 = next(g)
         # print h1
         h1 = next(g)
         # print h1
-        self.assertEqual(h1['is_baselines'], (False,))
+        self.assertEqual(h1["is_baselines"], (False,))
         h1 = next(g)
         # print h1
         h1 = next(g)
         # print h1
-        self.assertEqual(h1['is_baselines'], (False, False))
+        self.assertEqual(h1["is_baselines"], (False, False))
         h1 = next(g)
         # print h1
-        self.assertEqual(h1['is_baselines'], (True,))
+        self.assertEqual(h1["is_baselines"], (True,))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

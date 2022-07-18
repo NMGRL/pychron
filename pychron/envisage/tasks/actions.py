@@ -58,8 +58,9 @@ class myTaskAction(TaskAction):
                 enabled = True
                 if self.enabled_name:
                     if self.object:
-                        enabled = bool(self._get_attr(self.object,
-                                                      self.enabled_name, False))
+                        enabled = bool(
+                            self._get_attr(self.object, self.enabled_name, False)
+                        )
                 if enabled:
                     self._enabled = True
             else:
@@ -67,12 +68,13 @@ class myTaskAction(TaskAction):
 
     def _enabled_update(self):
         """
-             reimplement ListeningAction's _enabled_update
+        reimplement ListeningAction's _enabled_update
         """
         if self.enabled_name:
             if self.object:
-                self.enabled = bool(self._get_attr(self.object,
-                                                   self.enabled_name, False))
+                self.enabled = bool(
+                    self._get_attr(self.object, self.enabled_name, False)
+                )
             else:
                 self.enabled = False
         elif self._enabled is not None:
@@ -96,27 +98,27 @@ class PTaskAction(UITaskAction):
 
 
 class DemoAction(Action):
-    name = 'Demo'
-    accelerator = 'Shift+Ctrl+0'
+    name = "Demo"
+    accelerator = "Shift+Ctrl+0"
 
     def perform(self, event):
         app = event.task.application
-        app.info('Demo message: {}'.format('Hello version 2.0'))
+        app.info("Demo message: {}".format("Hello version 2.0"))
 
 
 class StartupTestsAction(Action):
-    name = 'Run Startup Tests'
+    name = "Run Startup Tests"
 
     def perform(self, event):
         app = event.task.application
 
-        app.do_startup_tests(force_show_results=True,
-                             cancel_auto_close=True,
-                             can_cancel=False)
+        app.do_startup_tests(
+            force_show_results=True, cancel_auto_close=True, can_cancel=False
+        )
 
 
 class KeyBindingsAction(PAction):
-    name = 'Edit Key Bindings'
+    name = "Edit Key Bindings"
 
     def perform(self, event):
         from pychron.envisage.key_bindings import edit_key_bindings
@@ -127,15 +129,15 @@ class KeyBindingsAction(PAction):
 class UserAction(PAction):
     def _get_current_user(self, event):
         app = event.task.application
-        args = app.id.split('.')
+        args = app.id.split(".")
         cuser = args[-1]
-        base_id = '.'.join(args[:-1])
+        base_id = ".".join(args[:-1])
         return base_id, cuser
 
 
 class SwitchUserAction(UserAction):
-    name = 'Switch User'
-    image = icon('user_suit')
+    name = "Switch User"
+    image = icon("user_suit")
 
     def perform(self, event):
         pass
@@ -152,7 +154,7 @@ class SwitchUserAction(UserAction):
 
 
 class CopyPreferencesAction(UserAction):
-    name = 'Copy Preferences'
+    name = "Copy Preferences"
 
     def perform(self, event):
         pass
@@ -181,8 +183,8 @@ class CopyPreferencesAction(UserAction):
 
 
 class RestartAction(PAction):
-    name = 'Restart'
-    image = icon('system-restart')
+    name = "Restart"
+    image = icon("system-restart")
 
     def perform(self, event):
         restart()
@@ -197,7 +199,7 @@ class WebAction(PAction):
         try:
             requests.get(url)
         except BaseException as e:
-            print('web action url:{} exception:{}'.format(url, e))
+            print("web action url:{} exception:{}".format(url, e))
             return
 
         webbrowser.open_new(url)
@@ -205,21 +207,24 @@ class WebAction(PAction):
 
 
 class IssueAction(WebAction):
-    name = 'Add Request/Report Bug'
-    image = icon('bug')
+    name = "Add Request/Report Bug"
+    image = icon("bug")
 
     def perform(self, event):
         """
-            goto issues page add an request or report bug
+        goto issues page add an request or report bug
         """
 
         app = event.task.window.application
-        name = app.preferences.get('pychron.general.organization')
+        name = app.preferences.get("pychron.general.organization")
         if not name:
-            information(event.task.window.control, 'Please set an "Organziation" in General Preferences')
+            information(
+                event.task.window.control,
+                'Please set an "Organziation" in General Preferences',
+            )
             return
 
-        url = 'https://github.com/{}/pychron/issues/new'.format(name)
+        url = "https://github.com/{}/pychron/issues/new".format(name)
         self._open_url(url)
 
 
@@ -227,22 +232,26 @@ class SettingsAction(Action):
     def perform(self, event):
 
         app = event.task.window.application
-        name = app.preferences.get('pychron.general.remote')
+        name = app.preferences.get("pychron.general.remote")
         if not name:
-            information(event.task.window.control, 'Please set an "Laboratory Repo" in General Preferences')
+            information(
+                event.task.window.control,
+                'Please set an "Laboratory Repo" in General Preferences',
+            )
             return
 
         from pychron.envisage.settings_repo import SettingsRepoManager
         from pychron.paths import paths
-        root = os.path.join(paths.root_dir, '.lab')
-        exists = os.path.isdir(os.path.join(root, '.git'))
+
+        root = os.path.join(paths.root_dir, ".lab")
+        exists = os.path.isdir(os.path.join(root, ".git"))
         if exists:
             repo = SettingsRepoManager()
             repo.path = root
             repo.open_repo(root)
             repo.pull()
         else:
-            url = 'https://github.com/{}'.format(name)
+            url = "https://github.com/{}".format(name)
             repo = SettingsRepoManager.clone_from(url, root)
 
         self._perform(repo)
@@ -252,7 +261,7 @@ class SettingsAction(Action):
 
 
 class ApplySettingsAction(SettingsAction):
-    name = 'Apply Settings...'
+    name = "Apply Settings..."
 
     def _perform(self, repo):
         """
@@ -265,7 +274,7 @@ class ApplySettingsAction(SettingsAction):
 
 
 class ShareSettingsAction(SettingsAction):
-    name = 'Share Settings...'
+    name = "Share Settings..."
 
     def _perform(self, repo):
         """
@@ -277,69 +286,75 @@ class ShareSettingsAction(SettingsAction):
         repo.share_settings()
 
 
-class NoteAction(WebAction):
-    name = 'Add Laboratory Note'
-    image = icon('insert-comment')
-
-    def perform(self, event):
-        """
-            goto issues page add an request or report bug
-        """
-        app = event.task.window.application
-        name = app.preferences.get('pychron.general.remote')
-        if not name:
-            information(event.task.window.control, 'Please set an "Laboratory Repo" in General Preferences')
-            return
-
-        url = 'https://github.com/{}/issues/new'.format(name)
-        self._open_url(url)
+# class NoteAction(WebAction):
+#     name = "Add Laboratory Note"
+#     image = icon("insert-comment")
+#
+#     def perform(self, event):
+#         """
+#         goto issues page add an request or report bug
+#         """
+#         app = event.task.window.application
+#         name = app.preferences.get("pychron.general.remote")
+#         if not name:
+#             information(
+#                 event.task.window.control,
+#                 'Please set an "Laboratory Repo" in General Preferences',
+#             )
+#             return
+#
+#         url = "https://github.com/{}/issues/new".format(name)
+#         self._open_url(url)
 
 
 class DocumentationAction(WebAction):
-    name = 'View Documentation'
-    image = icon('documentation')
+    name = "View Documentation"
+    image = icon("documentation")
 
     def perform(self, event):
         """
-            goto issues page add an request or report bug
+        goto issues page add an request or report bug
         """
-        url = 'http://pychron.readthedocs.org/en/latest/index.html'
+        url = "http://pychron.readthedocs.org/en/latest/index.html"
         self._open_url(url)
 
 
 class WaffleAction(WebAction):
-    name = 'View Waffle Board'
-    image = icon('waffle')
+    name = "View Waffle Board"
+    image = icon("waffle")
 
     def perform(self, event):
         """
-            goto waffle page
+        goto waffle page
         """
-        url = 'https://waffle.io/NMGRL/pychron'
+        url = "https://waffle.io/NMGRL/pychron"
         self._open_url(url)
 
 
 class ChangeLogAction(WebAction):
     name = "What's New"
-    image = icon('documentation')
-    description = 'View changelog'
+    image = icon("documentation")
+    description = "View changelog"
 
     def perform(self, event):
         """
-            goto issues page add an request or report bug
+        goto issues page add an request or report bug
         """
         from pychron.version import __version__
-        app = event.task.window.application
-        org = app.preferences.get('pychron.general.organization')
 
-        url = 'https://github.com/{}/pychron/blob/release/v{}/CHANGELOG.md'.format(org, __version__)
+        app = event.task.window.application
+        org = app.preferences.get("pychron.general.organization")
+
+        url = "https://github.com/{}/pychron/blob/release/v{}/CHANGELOG.md".format(
+            org, __version__
+        )
         if not self._open_url(url):
-            url = 'https://github.com/{}/pychron/blob/develop/CHANGELOG.md'.format(org)
+            url = "https://github.com/{}/pychron/blob/develop/CHANGELOG.md".format(org)
             self._open_url(url)
 
 
 class AboutAction(PAction):
-    name = 'About Pychron'
+    name = "About Pychron"
 
     def perform(self, event):
         app = event.task.window.application
@@ -347,16 +362,16 @@ class AboutAction(PAction):
 
 
 class ResetLayoutAction(PTaskAction):
-    name = 'Reset Layout'
-    image = icon('view-restore')
+    name = "Reset Layout"
+    image = icon("view-restore")
 
     def perform(self, event):
         self.task.window.reset_layout()
 
 
 class PositionAction(PAction):
-    name = 'Window Positions'
-    image = icon('window-new')
+    name = "Window Positions"
+    image = icon("window-new")
 
     def perform(self, event):
         from pychron.envisage.tasks.layout_manager import LayoutManager
@@ -367,8 +382,8 @@ class PositionAction(PAction):
 
 
 class MinimizeAction(PTaskAction):
-    name = 'Minimize'
-    accelerator = 'Ctrl+m'
+    name = "Minimize"
+    accelerator = "Ctrl+m"
 
     def perform(self, event):
         app = self.task.window.application
@@ -376,21 +391,21 @@ class MinimizeAction(PTaskAction):
 
 
 class CloseAction(PTaskAction):
-    name = 'Close'
-    accelerator = 'Ctrl+W'
+    name = "Close"
+    accelerator = "Ctrl+W"
 
     def perform(self, event):
         ok = YES
         if len(self.task.window.application.windows) == 1:
-            ok = confirm(self.task.window.control, message='Quit Pychron?')
+            ok = confirm(self.task.window.control, message="Quit Pychron?")
 
         if ok == YES:
             self.task.window.close()
 
 
 class CloseOthersAction(PTaskAction):
-    name = 'Close others'
-    accelerator = 'Ctrl+Shift+W'
+    name = "Close others"
+    accelerator = "Ctrl+Shift+W"
 
     def perform(self, event):
         win = self.task.window
@@ -400,8 +415,8 @@ class CloseOthersAction(PTaskAction):
 
 
 class OpenAdditionalWindow(PTaskAction):
-    name = 'Open Additional Window'
-    description = 'Open an additional window of the current active task'
+    name = "Open Additional Window"
+    description = "Open an additional window of the current active task"
 
     def perform(self, event):
         app = self.task.window.application
@@ -411,7 +426,7 @@ class OpenAdditionalWindow(PTaskAction):
 
 class RaiseAction(PTaskAction):
     window = Any
-    style = 'toggle'
+    style = "toggle"
 
     def perform(self, event):
         self.window.activate()
@@ -423,48 +438,48 @@ class RaiseAction(PTaskAction):
 
 
 class RaiseUIAction(PTaskAction):
-    style = 'toggle'
+    style = "toggle"
 
     def perform(self, event):
         self.checked = True
 
 
 class GenericSaveAction(PTaskAction):
-    name = 'Save'
-    accelerator = 'Ctrl+S'
-    image = icon('document-save')
+    name = "Save"
+    accelerator = "Ctrl+S"
+    image = icon("document-save")
 
     def perform(self, event):
         task = self.task
-        if hasattr(task, 'save'):
+        if hasattr(task, "save"):
             task.save()
 
 
 class GenericSaveAsAction(PTaskAction):
-    name = 'Save As...'
-    accelerator = 'Ctrl+Shift+S'
-    image = icon('document-save-as')
+    name = "Save As..."
+    accelerator = "Ctrl+Shift+S"
+    image = icon("document-save-as")
 
     def perform(self, event):
         task = self.task
-        if hasattr(task, 'save_as'):
+        if hasattr(task, "save_as"):
             task.save_as()
 
 
 class GenericFindAction(PTaskAction):
-    accelerator = 'Ctrl+F'
-    name = 'Find text...'
+    accelerator = "Ctrl+F"
+    name = "Find text..."
 
     def perform(self, event):
         task = self.task
-        if hasattr(task, 'find'):
+        if hasattr(task, "find"):
             task.find()
 
 
 class FileOpenAction(PAction):
-    task_id = ''
-    test_path = ''
-    image = icon('document-open')
+    task_id = ""
+    test_path = ""
+    image = icon("document-open")
 
     def perform(self, event):
         if event.task.id == self.task_id:
@@ -479,7 +494,7 @@ class FileOpenAction(PAction):
 
 
 class NewAction(PAction):
-    task_id = ''
+    task_id = ""
 
     def perform(self, event):
         if event.task.id == self.task_id:
@@ -499,30 +514,35 @@ class NewAction(PAction):
 #            manager = self._get_experimentor(event)
 #            manager.save_as_experiment_queues()
 
+
 class ToggleFullWindowAction(TaskAction):
-    name = 'Toggle Full Window'
-    method = 'toggle_full_window'
-    image = icon('view-fullscreen-8')
+    name = "Toggle Full Window"
+    method = "toggle_full_window"
+    image = icon("view-fullscreen-8")
 
 
 class EditInitializationAction(Action):
-    name = 'Edit Initialization'
-    image = icon('brick-edit')
+    name = "Edit Initialization"
+    image = icon("brick-edit")
 
     def perform(self, event):
-        from pychron.envisage.initialization.initialization_edit_view import edit_initialization
+        from pychron.envisage.initialization.initialization_edit_view import (
+            edit_initialization,
+        )
 
         if edit_initialization():
             restart()
 
 
 class EditTaskExtensionsAction(Action):
-    name = 'Edit UI...'
+    name = "Edit UI..."
 
     def perform(self, event):
         app = event.task.window.application
         from pychron.envisage.task_extensions import edit_task_extensions
+
         if edit_task_extensions(app.available_task_extensions):
             restart()
+
 
 # ============= EOF =============================================

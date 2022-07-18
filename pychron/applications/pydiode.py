@@ -20,16 +20,20 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 
 from pychron.applications.pychron_application import PychronApplication
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class PyDiode(PychronApplication):
-    id = 'pychron.diode.application'
-    name = 'pyDiode'
-    shortname = 'diode'
+    id = "pychron.diode.application"
+    name = "pyDiode"
+    shortname = "diode"
 
     default_layout = [
-        TaskWindowLayout('tasks.hardware'),
-        TaskWindowLayout('pychron.fusions.diode')]
+        TaskWindowLayout("tasks.hardware"),
+        TaskWindowLayout("pychron.fusions.diode"),
+    ]
+
 
 # ============= EOF =============================================

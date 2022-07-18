@@ -26,4 +26,5 @@ from pychron.mv.locator import Locator
 class DiodeLocator(Locator):
     pass
 
+
 # ============= EOF =============================================

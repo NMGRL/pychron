@@ -26,7 +26,7 @@ from pychron.core.helpers.strtools import camel_case
 REGISTRY = {}
 FUNC_REGISTRY = {}
 
-logger = new_logger('DeviceFunctionRegistry')
+logger = new_logger("DeviceFunctionRegistry")
 
 
 class DeviceFunctionRegistry(object):
@@ -42,7 +42,7 @@ class DeviceFunctionRegistry(object):
             if self.camel_case:
                 name = camel_case(name)
 
-        logger.debug('register function {} as {}'.format(func.__name__, name))
+        logger.debug("register function {} as {}".format(func.__name__, name))
         REGISTRY[name] = (func.__name__, self.postprocess)
         return func
 
@@ -69,7 +69,7 @@ class RegisteredFunction(object):
                 try:
                     r = self.returntype(r)
                 except BaseException as e:
-                    obj.critical('excpection running command {}. {}'.format(cmd, e))
+                    obj.critical("excpection running command {}. {}".format(cmd, e))
 
             return r
 
@@ -109,7 +109,10 @@ def tx_register_functions(obj):
                 func = getattr(obj, fname)
                 if func is not None:
                     FUNC_REGISTRY[k] = (func, p)
-                    logger.debug('Function register {} {}:{}'.format(obj.name, k, fname))
+                    logger.debug(
+                        "Function register {} {}:{}".format(obj.name, k, fname)
+                    )
+
 
 # if __name__ == '__main__':
 #     class Handler(object):

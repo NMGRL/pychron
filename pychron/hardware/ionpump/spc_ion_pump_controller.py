@@ -22,7 +22,7 @@ from pychron.hardware.core.core_device import CoreDevice
 
 
 class SPCIonPumpController(CoreDevice):
-    scan_func = 'update'
+    scan_func = "update"
 
     pressure = Float
 
@@ -32,8 +32,8 @@ class SPCIonPumpController(CoreDevice):
     high = 1e-7
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'address', 'General', 'address', cast='int')
-        self.set_attribute(config, 'display_name', 'General', 'display_name')
+        self.set_attribute(config, "address", "General", "address", cast="int")
+        self.set_attribute(config, "display_name", "General", "display_name")
 
         return True
 
@@ -48,33 +48,41 @@ class SPCIonPumpController(CoreDevice):
 
     @get_float(0)
     def _read_pressure(self):
-        cmd = self._make_command('0B')
+        cmd = self._make_command("0B")
         resp = self.ask(cmd, verbose=False)
         if resp:
-            addr, status, err, data, unit, chk = resp.split(' ')
+            addr, status, err, data, unit, chk = resp.split(" ")
             return data
 
     def _make_command(self, cmd):
-        a = ' '.join(('~', '{:02X}'.format(self.address), cmd))
-        return '{} {}'.format(a, self._calculate_checksum(a))
+        a = " ".join(("~", "{:02X}".format(self.address), cmd))
+        return "{} {}".format(a, self._calculate_checksum(a))
 
     def _calculate_checksum(self, a):
-        return '00'
+        return "00"
 
     def pump_view(self):
-        v = View(HGroup(UReadonly('display_name', width=-30, ),
-                        Item('pressure',
-                             format_str='%0.2e',
-                             show_label=False,
-                             style='readonly'),
-                        Item('pressure',
-                             show_label=False,
-                             width=100,
-                             editor=BarGaugeEditor(low=1e-10,
-                                                   high=1e-7,
-                                                   scale='power',
-                                                   width=100,
-                                                   color_scalar=1))))
+        v = View(
+            HGroup(
+                UReadonly(
+                    "display_name",
+                    width=-30,
+                ),
+                Item(
+                    "pressure", format_str="%0.2e", show_label=False, style="readonly"
+                ),
+                Item(
+                    "pressure",
+                    show_label=False,
+                    width=100,
+                    editor=BarGaugeEditor(
+                        low=1e-10, high=1e-7, scale="power", width=100, color_scalar=1
+                    ),
+                ),
+            )
+        )
 
         return v
+
+
 # ============= EOF =============================================

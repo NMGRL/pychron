@@ -20,6 +20,7 @@ from __future__ import absolute_import
 from datetime import datetime, timedelta
 
 from apptools.preferences.preference_binding import bind_preference
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from sqlalchemy import and_
@@ -27,19 +28,26 @@ from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
 
 from pychron.database.core.database_adapter import DatabaseAdapter
-from pychron.labspy.orm import Measurement, ProcessInfo, Version, \
-    Device, Experiment, Analysis, Connections  # , Version, Status, Experiment, Analysis, AnalysisType
+from pychron.labspy.orm import (
+    Measurement,
+    ProcessInfo,
+    Version,
+    Device,
+    Experiment,
+    Analysis,
+    Connections,
+)  # , Version, Status, Experiment, Analysis, AnalysisType
 
 
 class LabspyDatabaseAdapter(DatabaseAdapter):
-    kind = 'mysql'
+    kind = "mysql"
 
     def bind_preferences(self):
-        bind_preference(self, 'host', 'pychron.labspy.host')
+        bind_preference(self, "host", "pychron.labspy.host")
         # bind_preference(self, 'port', 'pychron.labspy.port')
-        bind_preference(self, 'username', 'pychron.labspy.username')
-        bind_preference(self, 'password', 'pychron.labspy.password')
-        bind_preference(self, 'name', 'pychron.labspy.name')
+        bind_preference(self, "username", "pychron.labspy.username")
+        bind_preference(self, "password", "pychron.labspy.password")
+        bind_preference(self, "name", "pychron.labspy.name")
 
     def add_experiment(self, **kw):
         exp = Experiment(**kw)
@@ -64,7 +72,11 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         try:
             conn = self.get_connection(appname, devname)
         except SQLAlchemyError as e:
-            self.warning('Error getting connection {}.{} exception: {}'.format(appname, devname, e))
+            self.warning(
+                "Error getting connection {}.{} exception: {}".format(
+                    appname, devname, e
+                )
+            )
             return
 
         add = False
@@ -85,7 +97,9 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
 
     def get_connection(self, appname, devname):
         q = self.session.query(Connections)
-        q = q.filter(and_(Connections.appname == appname, Connections.devname == devname))
+        q = q.filter(
+            and_(Connections.appname == appname, Connections.devname == devname)
+        )
         return self._query_first(q, reraise=True)
 
     def update_experiment(self, hashid, **kw):
@@ -106,13 +120,13 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
             measurement.process = pinfo
             return self._add_item(measurement)
         else:
-            self.warning('ProcessInfo={} Device={} not available'.format(name, dev))
+            self.warning("ProcessInfo={} Device={} not available".format(name, dev))
 
     def add_process_info(self, dev, name, unit):
-        self.debug('add process info {} {} {}'.format(dev, name, unit))
+        self.debug("add process info {} {} {}".format(dev, name, unit))
         dbdev = self.get_device(dev)
         if not dbdev:
-            self.debug('add device {}'.format(dev))
+            self.debug("add device {}".format(dev))
             dbdev = self.add_device(dev)
 
         p = ProcessInfo(name=name, units=unit)
@@ -136,6 +150,7 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         q = q.filter(Experiment.hashid == hid)
         return q.first()
         # return self._retrieve_item(Experiment, hid, key='HashID')
+
     #
     # def get_status(self):
     #     with self.session_ctx() as sess:
@@ -149,7 +164,7 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         return mv
 
     def get_device(self, name):
-        return self._retrieve_item(Device, name, key='name')
+        return self._retrieve_item(Device, name, key="name")
 
     def get_process_info(self, dev, name):
         q = self.session.query(ProcessInfo)
@@ -159,25 +174,25 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
         return self._query_one(q)
 
     def get_latest_lab_temperatures(self):
-        return self._get_latest(('Temp',))
+        return self._get_latest(("Temp",))
 
     def get_latest_lab_humiditys(self):
-        return self._get_latest(('Hum',))
+        return self._get_latest(("Hum",))
 
     def get_latest_lab_pneumatics(self):
-        return self._get_latest('Pressure')
+        return self._get_latest("Pressure")
 
     def _get_latest(self, tag):
         values = []
         with self.session_ctx(use_parent_session=False) as sess:
             q = sess.query(ProcessInfo)
             if not isinstance(tag, tuple):
-                tag = (tag, )
+                tag = (tag,)
 
-            q = q.filter(or_(*[ProcessInfo.name.like('%{}%'.format(t)) for t in tag]))
+            q = q.filter(or_(*[ProcessInfo.name.like("%{}%".format(t)) for t in tag]))
 
             ps = self._query_all(q)
-            self.debug('get latest {}, ps={}'.format(tag, len(ps)))
+            self.debug("get latest {}, ps={}".format(tag, len(ps)))
             min_date = datetime.now() - timedelta(hours=24)
             for p in ps:
                 q = sess.query(Measurement)
@@ -187,11 +202,15 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
 
                 record = self._query_first(q)
                 if record:
-                    values.append({'name': p.name,
-                                   'title': p.graph_title,
-                                   'pub_date': record.pub_date.isoformat(),
-                                   'value': record.value,
-                                   'device': p.device.name})
+                    values.append(
+                        {
+                            "name": p.name,
+                            "title": p.graph_title,
+                            "pub_date": record.pub_date.isoformat(),
+                            "value": record.value,
+                            "device": p.device.name,
+                        }
+                    )
 
         return values
 
@@ -205,5 +224,6 @@ class LabspyDatabaseAdapter(DatabaseAdapter):
             q = q.filter(Measurement.pub_date >= low)
 
         return self._query_all(q)
+
 
 # ============= EOF =============================================

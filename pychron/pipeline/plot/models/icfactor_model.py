@@ -31,4 +31,6 @@ class ICFactorModel(FigureModel):
         p = super(ICFactorModel, self)._panel_factory(*args, **kw)
         p.references_name = self.references_name
         return p
+
+
 # ============= EOF =============================================

@@ -28,9 +28,9 @@ from pychron.experiment.utilities.identifier import is_special
 
 
 def renumber_aliquots(aruns):
-    akey = attrgetter('user_defined_aliquot')
+    akey = attrgetter("user_defined_aliquot")
 
-    for ln, ans in groupby_key(aruns, 'labnumber'):
+    for ln, ans in groupby_key(aruns, "labnumber"):
         if is_special(ln):
             continue
 
@@ -41,5 +41,6 @@ def renumber_aliquots(aruns):
             for i, (al, ans) in enumerate(groupby(b, key=akey)):
                 for ai in ans:
                     ai.user_defined_aliquot = minaliquot + i
+
 
 # ============= EOF =============================================

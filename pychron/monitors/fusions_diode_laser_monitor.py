@@ -15,11 +15,9 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import HasTraits, Bool, Float, Int, Str
-
 
 # ============= standard library imports ========================
 
@@ -28,19 +26,20 @@ from pychron.monitors.fusions_laser_monitor import FusionsLaserMonitor
 
 
 class MonitorSeries(HasTraits):
-    """
-    """
+    """ """
+
     name = Str
     show = Bool
     value = Float
 
 
 class FusionsDiodeLaserMonitor(FusionsLaserMonitor):
-    """
-    """
+    """ """
+
     max_temp = Float(800)
     max_tempmin = Int(0)
     max_tempmax = Int(800)
+
     #    update_max_temp = Property(depends_on = '_update_max_temp')
     #    _update_max_temp = Float(0)
 
@@ -111,12 +110,11 @@ class FusionsDiodeLaserMonitor(FusionsLaserMonitor):
     #        self.series_list[0].value = v
 
     def load_additional_args(self, config):
-        """
-
-        """
+        """ """
         super(FusionsDiodeLaserMonitor, self).load_additional_args(config)
-        self.set_attribute(config, 'max_temp',
-                           'General', 'max_temp', cast='float', optional=True)
+        self.set_attribute(
+            config, "max_temp", "General", "max_temp", cast="float", optional=True
+        )
 
     #    def _get_update_max_temp(self):
     #        '''
@@ -131,21 +129,21 @@ class FusionsDiodeLaserMonitor(FusionsLaserMonitor):
     #        return self._update_max_coolant_temp
 
     def _fcheck_laser_temp(self):
-        """
-        """
+        """ """
 
         manager = self.manager
         # check laser temp
-        self.info('Check laser internal temperature')
+        self.info("Check laser internal temperature")
         lt = manager.get_laser_internal_temperature(verbose=False)
         if lt is None:
-            self.warning('could not read laser internal temperature')
+            self.warning("could not read laser internal temperature")
 
         # self._update_max_temp = lt
         if lt > self.max_temp:
-            self.warning('Laser over temperature {:0.2f}'.format(lt))
-            manager.emergency_shutoff(reason='Over temp {}'.format(lt))
+            self.warning("Laser over temperature {:0.2f}".format(lt))
+            manager.emergency_shutoff(reason="Over temp {}".format(lt))
             return True
+
 
 # ============= views ===================================
 #    def traits_view(self):

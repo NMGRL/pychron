@@ -20,8 +20,12 @@ from pychron.hardware.labjack.base_u3_lv import BaseU3LV
 
 class U3Actuator(BaseU3LV, GPActuator):
     def _actuate(self, obj, action):
-        return BaseU3LV.set_channel_state(self, get_switch_address(obj), action.lower() == 'open')
+        return BaseU3LV.set_channel_state(
+            self, get_switch_address(obj), action.lower() == "open"
+        )
 
     def get_channel_state(self, obj, **kw):
         return BaseU3LV.get_channel_state(self, get_switch_address(obj), **kw)
+
+
 # ============= EOF =============================================

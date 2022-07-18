@@ -20,16 +20,18 @@ from pychron.hardware.gauges.base_controller import BaseGaugeController
 
 class PLC2000GaugeController(BaseGaugeController, CoreDevice, ModbusMixin):
     def load_additional_args(self, config, *args, **kw):
-        self.display_name = self.config_get(config, 'General', 'display_name', default=self.name)
+        self.display_name = self.config_get(
+            config, "General", "display_name", default=self.name
+        )
         self._load_gauges(config)
         return True
 
     def get_pressures(self, *args, **kw):
-        kw['force'] = True
+        kw["force"] = True
         return super(PLC2000GaugeController, self).get_pressures(*args, **kw)
 
     def _read_pressure(self, name=None, verbose=False):
-        pressure = 'err'
+        pressure = "err"
 
         if isinstance(name, str):
             gauge = self.get_gauge(name)
@@ -44,6 +46,8 @@ class PLC2000GaugeController(BaseGaugeController, CoreDevice, ModbusMixin):
                 pressure = self._read_float(register)
             except BaseException as e:
                 self.debug_exception()
-                self.debug('failed reading register={}, error={}'.format(register, e))
+                self.debug("failed reading register={}, error={}".format(register, e))
         return pressure
+
+
 # ============= EOF =============================================

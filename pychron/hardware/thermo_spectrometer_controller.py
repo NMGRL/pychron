@@ -25,10 +25,18 @@
 from pychron.hardware.core.core_device import CoreDevice
 
 
-class ArgusController(CoreDevice):
+class QtegraCoreDevice(CoreDevice):
+    def reset(self):
+        self.info("######## Sending Spectrometer Reset ########")
+        self.ask("Reset")
+
+
+class ArgusController(QtegraCoreDevice):
     pass
 
 
-class HelixController(CoreDevice):
+class HelixController(QtegraCoreDevice):
     pass
+
+
 # ============= EOF =============================================

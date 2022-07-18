@@ -16,11 +16,13 @@
 
 # ============= enthought library imports =======================
 from traits.has_traits import provides
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import to_list
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.ichiller import IChiller
+
 # from pychron.remote_hardware.registry import registered_function
 from pychron.tx.registry import registered_function
 
@@ -31,6 +33,7 @@ class PychronChiller(CoreDevice):
     :hardware
     This is the main doc
     """
+
     def get(self):
         return self.get_coolant_out_temperature()
 
@@ -48,7 +51,5 @@ class PychronChiller(CoreDevice):
     def set_setpoint(self, v):
         pass
 
+
 # ============= EOF =============================================
-
-
-

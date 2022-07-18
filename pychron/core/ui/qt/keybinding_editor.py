@@ -34,22 +34,25 @@ from pychron.envisage.key_bindings import keybinding_exists
 
 class KeyBindingsEditor(Controller):
     def traits_view(self):
-        cols = [ObjectColumn(name='binding', editor=KeyBindingEditor()),
-                ObjectColumn(name='description', editable=False, width=400)]
-        v = View(UItem('bindings', editor=TableEditor(columns=cols)),
-                 width=500,
-                 height=600,
-                 title='Edit Key Bindings',
-                 kind='livemodal',
-                 buttons=['OK','Cancel'],
-                 resizable=True)
+        cols = [
+            ObjectColumn(name="binding", editor=KeyBindingEditor()),
+            ObjectColumn(name="description", editable=False, width=400),
+        ]
+        v = View(
+            UItem("bindings", editor=TableEditor(columns=cols)),
+            width=500,
+            height=600,
+            title="Edit Key Bindings",
+            kind="livemodal",
+            buttons=["OK", "Cancel"],
+            resizable=True,
+        )
         return v
 
 
 class KeyBindingControl(QtGui.QLabel):
     def keyPressEvent(self, event):
-        """ Handle keyboard keys being pressed.
-        """
+        """Handle keyboard keys being pressed."""
         # Ignore presses of the control and shift keys.
         if event.key() not in (QtCore.Qt.Key_Control, QtCore.Qt.Key_Shift):
             self.editor.key = event
@@ -57,6 +60,7 @@ class KeyBindingControl(QtGui.QLabel):
 
 class _KeyBindingEditor(Editor):
     key = Event
+
     # clear = Event
     # refresh_needed = Event
     # dump_needed = Event
@@ -67,9 +71,8 @@ class _KeyBindingEditor(Editor):
             return
 
         name = self.extended_name
-        if name != 'None':
-            self.context_object.on_trait_change(self._update_editor, name,
-                                                remove=True)
+        if name != "None":
+            self.context_object.on_trait_change(self._update_editor, name, remove=True)
 
         if self._user_from is not None:
             for name, handler in self._user_from:
@@ -93,24 +96,28 @@ class _KeyBindingEditor(Editor):
         return ctrl
 
     def update_editor(self):
-        """ Updates the editor when the object trait changes externally to the
-            editor.
+        """Updates the editor when the object trait changes externally to the
+        editor.
         """
         if self.control:
             self.control.setText(self.value)
 
     def _key_changed(self, event):
         key_name = key_event_to_name(event)
-        key_name = key_name.replace('-', '+')
+        key_name = key_name.replace("-", "+")
         desc = keybinding_exists(key_name)
         if desc:
-            if QtGui.QMessageBox.question(self.control,
-                                          "Duplicate Key Definition",
-                                          "'%s' has already been assigned to '%s'.\n"
-                                          "Do you wish to continue?" % (key_name,
-                                                                        desc),
-                                          QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
-                                          QtGui.QMessageBox.No) != QtGui.QMessageBox.Yes:
+            if (
+                QtGui.QMessageBox.question(
+                    self.control,
+                    "Duplicate Key Definition",
+                    "'%s' has already been assigned to '%s'.\n"
+                    "Do you wish to continue?" % (key_name, desc),
+                    QtGui.QMessageBox.Yes | QtGui.QMessageBox.No,
+                    QtGui.QMessageBox.No,
+                )
+                != QtGui.QMessageBox.Yes
+            ):
                 return
             # else:
             #     clear_keybinding(desc)
@@ -124,7 +131,5 @@ class KeyBindingEditor(BasicEditorFactory):
     klass = _KeyBindingEditor
     # refresh_needed = Str
 
+
 # ============= EOF =============================================
-
-
-

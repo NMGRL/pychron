@@ -15,10 +15,12 @@
 # ===============================================================================
 
 from numpy import Inf
+
 # ============= enthought library imports =======================
 from traits.api import Int
 
 from pychron.canvas.canvas2D.scene.primitives.primitives import LoadIndicator
+
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.scene import Scene
 
@@ -42,21 +44,24 @@ class LoadingScene(Scene):
             ymi, yma = min(ymi, y), max(yma, y)
 
             mr = max(mr, r)
-            v = LoadIndicator(x=x,
-                              y=y,
-                              radius=r,
-                              name_visible=show_hole_numbers,
-                              name=n,
-                              font='modern 10')
+            v = LoadIndicator(
+                x=x,
+                y=y,
+                radius=r,
+                name_visible=show_hole_numbers,
+                name=n,
+                font="modern 10",
+            )
             self.add_item(v)
 
-        xd = (xma - xmi) / 2.+xmi
-        yd = (yma - ymi) / 2.+ymi
+        xd = (xma - xmi) / 2.0 + xmi
+        yd = (yma - ymi) / 2.0 + ymi
         w = (xma + mr - (xmi - mr)) * 1.2
         h = (yma + mr - (ymi - mr)) * 1.2
         w /= 2.0
         h /= 2.0
         self._xrange = -w + xd, w + xd
         self._yrange = -h + yd, h + yd
+
 
 # ============= EOF =============================================

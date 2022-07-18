@@ -19,12 +19,16 @@ from __future__ import absolute_import
 
 from traits.api import Bool
 from traitsui.api import UItem, Item, HGroup, EnumEditor, VGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.editors.check_list_editor import CheckListEditor
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
-from pychron.spectrometer.ion_optics.peak_center_config import PeakCenterConfig, PeakCenterConfigHandler
+from pychron.spectrometer.ion_optics.peak_center_config import (
+    PeakCenterConfig,
+    PeakCenterConfigHandler,
+)
 
 
 class CoincidenceConfigHandler(PeakCenterConfigHandler):
@@ -45,24 +49,41 @@ class CoincidenceConfig(PeakCenterConfig):
 
     def traits_view(self):
         rgrp = HGroup(
-            Item('detector', editor=EnumEditor(name='detectors')),
-            Item('isotope', editor=EnumEditor(name='isotopes')),
-            show_border=True, label='Reference')
+            Item("detector", editor=EnumEditor(name="detectors")),
+            Item("isotope", editor=EnumEditor(name="isotopes")),
+            show_border=True,
+            label="Reference",
+        )
 
-        dgrp = VGroup(HGroup(Item('use_nominal_dac', label='Use Nominal DAC')),
-                      HGroup(Item('use_current_dac',
-                                  label='Use Current DAC'),
-                             Item('dac', enabled_when='not use_current_dac'),
-                             enabled_when='not use_nominal_dac'),
-                      show_border=True, label='Center')
-        degrp = VGroup(UItem('additional_detectors', style='custom',
-                             editor=CheckListEditor(name='available_detectors',
-                                                    cols=max(1, len(self.available_detectors)))),
-                       show_border=True, label='Detectors')
+        dgrp = VGroup(
+            HGroup(Item("use_nominal_dac", label="Use Nominal DAC")),
+            HGroup(
+                Item("use_current_dac", label="Use Current DAC"),
+                Item("dac", enabled_when="not use_current_dac"),
+                enabled_when="not use_nominal_dac",
+            ),
+            show_border=True,
+            label="Center",
+        )
+        degrp = VGroup(
+            UItem(
+                "additional_detectors",
+                style="custom",
+                editor=CheckListEditor(
+                    name="available_detectors",
+                    cols=max(1, len(self.available_detectors)),
+                ),
+            ),
+            show_border=True,
+            label="Detectors",
+        )
 
-        v = okcancel_view(VGroup(rgrp, degrp, dgrp),
-                          title='Coincidence',
-                          handler=CoincidenceConfigHandler())
+        v = okcancel_view(
+            VGroup(rgrp, degrp, dgrp),
+            title="Coincidence",
+            handler=CoincidenceConfigHandler(),
+        )
         return v
+
 
 # ============= EOF =============================================

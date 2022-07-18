@@ -16,6 +16,7 @@
 
 # ============= enthought library imports =======================
 from traits.api import provides, Int
+
 # ============= standard library imports ========================
 import json
 import re
@@ -26,7 +27,7 @@ from pychron.furnace.ifurnace_controller import IFurnaceController
 from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice
 
-VER_REGEX = re.compile(r'\d+.\d+(.\d+){0,1}')
+VER_REGEX = re.compile(r"\d+.\d+(.\d+){0,1}")
 
 
 @provides(IFurnaceController)
@@ -34,11 +35,13 @@ class NMGRLFurnaceEurotherm(CoreDevice):
     water_flow_channel = Int
 
     def load_additional_args(self, config):
-        self.set_attribute(config, 'water_flow_channel', 'DIO', 'water_flow_channel', cast='int')
+        self.set_attribute(
+            config, "water_flow_channel", "DIO", "water_flow_channel", cast="int"
+        )
         return super(NMGRLFurnaceEurotherm, self).load_additional_args(config)
 
     def test_connection(self):
-        d = json.dumps({'command': 'GetVersion'})
+        d = json.dumps({"command": "GetVersion"})
         resp = self.ask(d)
         if resp:
             return VER_REGEX.match(resp) is not None
@@ -46,47 +49,50 @@ class NMGRLFurnaceEurotherm(CoreDevice):
             return False
 
     def get_summary(self, **kw):
-        d = json.dumps({'command': 'GetFurnaceSummary', 'h2o_channel': self.water_flow_channel})
+        d = json.dumps(
+            {"command": "GetFurnaceSummary", "h2o_channel": self.water_flow_channel}
+        )
         r = self.ask(d, **kw)
         if r:
             return json.loads(r)
 
     @get_float(default=0)
     def read_output_percent(self, **kw):
-        d = json.dumps({'command': 'GetPercentOutput'})
+        d = json.dumps({"command": "GetPercentOutput"})
         return self.ask(d, **kw)
 
     @trim_bool
     def get_water_flow_state(self, **kw):
-        d = json.dumps({'command': 'GetDIState', 'name': self.water_flow_channel})
+        d = json.dumps({"command": "GetDIState", "name": self.water_flow_channel})
         return self.ask(d, **kw)
 
     def set_pid(self, pstr):
-        d = json.dumps({'command': 'SetPID', 'pid': pstr})
+        d = json.dumps({"command": "SetPID", "pid": pstr})
         return self.ask(d)
 
     def set_setpoint(self, v, **kw):
-        d = json.dumps({'command': 'SetSetpoint', 'setpoint': v})
+        d = json.dumps({"command": "SetSetpoint", "setpoint": v})
         self.ask(d)
 
     @get_float(default=0)
     def get_setpoint(self, **kw):
-        return self.ask('GetSetpoint', **kw)
+        return self.ask("GetSetpoint", **kw)
 
     read_setpoint = get_setpoint
 
     @get_float
     def get_temperature(self, **kw):
-        return self.ask('GetTemperature', **kw)
+        return self.ask("GetTemperature", **kw)
 
     read_temperature = get_temperature
 
     @get_float(default=0)
     def get_process_value(self, **kw):
-        return self.ask('GetProcessValue', **kw)
+        return self.ask("GetProcessValue", **kw)
 
     @get_float(default=0)
     def get_output(self, **kw):
-        return self.ask('GetPercentOutput', **kw)
+        return self.ask("GetPercentOutput", **kw)
+
 
 # ============= EOF =============================================

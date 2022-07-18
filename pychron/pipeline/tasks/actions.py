@@ -28,72 +28,74 @@ from pychron.envisage.ui_actions import UIAction, UITaskAction
 
 
 class EditorAction(TaskAction):
-    enabled_name = 'active_editor'
+    enabled_name = "active_editor"
 
 
 class FigureAction(TaskAction):
-    enabled_name = 'is_figure_editor'
+    enabled_name = "is_figure_editor"
 
 
 class IdentifyPeaksDemoAction(TaskAction):
-    name = 'Id peaks'
-    method = 'identify_peaks'
+    name = "Id peaks"
+    method = "identify_peaks"
 
 
 class SavePipelineTemplateAction(TaskAction):
-    name = 'Save Pipeline Template'
-    method = 'save_pipeline_template'
+    name = "Save Pipeline Template"
+    method = "save_pipeline_template"
 
 
 class RunAction(TaskAction):
-    name = 'Run'
-    method = 'run'
-    image = icon('start')
-    visible_name = 'engine.run_enabled'
-    accelerator = 'Ctrl+R'
+    name = "Run"
+    method = "run"
+    image = icon("start")
+    visible_name = "engine.run_enabled"
+    accelerator = "Ctrl+R"
 
 
 class ResumeAction(TaskAction):
-    name = 'Resume'
-    method = 'resume'
-    image = icon('edit-redo-3')
-    visible_name = 'engine.resume_enabled'
+    name = "Resume"
+    method = "resume"
+    image = icon("edit-redo-3")
+    visible_name = "engine.resume_enabled"
 
 
 class RunFromAction(TaskAction):
-    name = 'Run From'
-    method = 'run_from'
-    image = icon('start')
+    name = "Run From"
+    method = "run_from"
+    image = icon("start")
 
 
 class ResetAction(TaskAction):
-    name = 'Reset'
-    method = 'reset'
-    image = icon('arrow_refresh')
+    name = "Reset"
+    method = "reset"
+    image = icon("arrow_refresh")
 
 
 class ClearAction(TaskAction):
-    name = 'Clear'
-    method = 'clear'
-    image = icon('clear')
+    name = "Clear"
+    method = "clear"
+    image = icon("clear")
 
 
 class SwitchToBrowserAction(TaskAction):
-    name = 'To Browser'
-    method = 'switch_to_browser'
-    image = icon('start')
+    name = "To Browser"
+    method = "switch_to_browser"
+    image = icon("start")
 
 
 class ConfigureRecallAction(UITaskAction):
-    name = 'Recall Configuration...'
-    method = 'configure_recall'
-    image = icon('cog')
+    name = "Recall Configuration..."
+    method = "configure_recall"
+    image = icon("cog")
 
 
 class PlayVideoAction(UITaskAction):
-    name = 'Video'
-    method = 'play_analysis_video'
+    name = "Video"
+    method = "play_analysis_video"
     # image = icon('cog')
+
+
 # class ConfigureAnalysesTableAction(TaskAction):
 #     name = 'Configure Analyses Table'
 #     dname = 'Configure Analyses Table'
@@ -109,40 +111,40 @@ class PlayVideoAction(UITaskAction):
 
 
 class LoadReviewStatusAction(TaskAction):
-    name = 'Review Status'
-    method = 'load_review_status'
-    image = icon('check_boxes')
+    name = "Review Status"
+    method = "load_review_status"
+    image = icon("check_boxes")
 
 
 class EditAnalysisAction(TaskAction):
-    name = 'Edit Analysis'
-    method = 'edit_analysis'
-    image = icon('application-form-edit')
+    name = "Edit Analysis"
+    method = "edit_analysis"
+    image = icon("application-form-edit")
 
 
 class DiffViewAction(TaskAction):
-    name = 'Diff View'
-    method = 'diff_analysis'
-    image = icon('edit_diff')
-    enabled_name = 'diff_enabled'
+    name = "Diff View"
+    method = "diff_analysis"
+    image = icon("edit_diff")
+    enabled_name = "diff_enabled"
 
 
 class TabularViewAction(TaskAction):
-    name = 'Tabular View'
-    method = 'tabular_view'
-    image = icon('table')
+    name = "Tabular View"
+    method = "tabular_view"
+    image = icon("table")
 
 
 class PipelineAction(UIAction):
     def perform(self, event):
         app = event.task.window.application
-        task = app.get_task('pychron.pipeline.task')
+        task = app.get_task("pychron.pipeline.task")
         if hasattr(task, self.action):
             getattr(task, self.action)()
 
 
 class BrowserAction(Action):
-    _task_id = 'pychron.browser.task'
+    _task_id = "pychron.browser.task"
 
     def perform(self, event):
         task = self._get_task(event)
@@ -156,18 +158,18 @@ class BrowserAction(Action):
 
 
 class RecallAction(PipelineAction):
-    name = 'Recall...'
-    action = 'pipeline_recall'
+    name = "Recall..."
+    action = "pipeline_recall"
 
 
 class InterpretedAgeRecallAction(PipelineAction):
-    name = 'Interpreted Age Recall...'
-    action = 'pipeline_interpreted_age_recall'
+    name = "Interpreted Age Recall..."
+    action = "pipeline_interpreted_age_recall"
 
 
 class TimeViewBrowserAction(BrowserAction):
-    name = 'Time View Recall...'
-    action = 'open_time_view_browser'
+    name = "Time View Recall..."
+    action = "open_time_view_browser"
 
 
 class ReductionAction(PipelineAction):
@@ -175,65 +177,70 @@ class ReductionAction(PipelineAction):
 
 
 class IsoEvolutionAction(PipelineAction):
-    name = 'Isotope Evolutions'
-    action = 'set_isotope_evolutions_template'
+    name = "Isotope Evolutions"
+    action = "set_isotope_evolutions_template"
 
 
 class BlanksAction(PipelineAction):
-    name = 'Blanks'
-    action = 'set_blanks_template'
+    name = "Blanks"
+    action = "set_blanks_template"
 
 
 class ICFactorAction(PipelineAction):
-    name = 'ICFactor'
-    action = 'set_icfactor_template'
+    name = "ICFactor"
+    action = "set_icfactor_template"
 
 
 class FluxAction(PipelineAction):
-    name = 'Flux'
-    action = 'set_flux_template'
+    name = "Flux"
+    action = "set_flux_template"
 
 
 class FreezeProductionRatios(PipelineAction):
-    name = 'Freeze Production Ratios'
-    action = 'freeze_production_ratios'
+    name = "Freeze Production Ratios"
+    action = "freeze_production_ratios"
 
 
 class FreezeFlux(PipelineAction):
-    name = 'Freeze Flux'
-    action = 'freeze_flux'
+    name = "Freeze Flux"
+    action = "freeze_flux"
 
 
 class AnalysisTableAction(PipelineAction):
-    name = 'Analysis Table'
-    action = 'set_analysis_table_template'
+    name = "Analysis Table"
+    action = "set_analysis_table_template"
 
 
 class PipelineRecallAction(TaskAction):
-    name = 'Recall'
-    method = 'pipeline_recall'
+    name = "Recall"
+    method = "pipeline_recall"
 
 
 class ClearAnalysisSetsAction(UIAction):
-    name = 'Clear Analysis Sets'
+    name = "Clear Analysis Sets"
 
     def perform(self, event):
         from pychron.paths import paths
-        p = paths.hidden_path('analysis_sets')
+
+        p = paths.hidden_path("analysis_sets")
         if os.path.isfile(p):
-            if confirm(None, 'Are you sure you want to clear the Analysis Sets?') == YES:
+            if (
+                confirm(None, "Are you sure you want to clear the Analysis Sets?")
+                == YES
+            ):
                 os.remove(p)
         else:
-            information(None, 'No Analysis Sets to remove')
+            information(None, "No Analysis Sets to remove")
 
 
 # ============= Plotting Actions =============================================
 class ResetFactoryDefaultsAction(UIAction):
-    name = 'Reset Factory Defaults'
+    name = "Reset Factory Defaults"
 
     def perform(self, event):
         from pychron.paths import paths
-        if confirm(None, 'Are you sure you want to reset to Factory Default settings'):
+
+        if confirm(None, "Are you sure you want to reset to Factory Default settings"):
             paths.reset_plot_factory_defaults()
 
 
@@ -242,81 +249,82 @@ class PlotAction(PipelineAction):
 
 
 class IdeogramAction(PlotAction):
-    name = 'Ideogram'
-    action = 'set_ideogram_template'
-    image = icon('histogram')
-    accelerator = 'Ctrl+i'
+    name = "Ideogram"
+    action = "set_ideogram_template"
+    image = icon("histogram")
+    accelerator = "Ctrl+i"
 
 
 class SubgroupIdeogramAction(PlotAction):
-    name = 'SubGroup Ideogram'
-    action = 'set_subgroup_ideogram_template'
-    image = icon('histogram')
+    name = "SubGroup Ideogram"
+    action = "set_subgroup_ideogram_template"
+    image = icon("histogram")
 
 
 class HybridIdeogramAction(PlotAction):
-    name = 'Hybrid Ideogram'
-    action = 'set_hybrid_ideogram_template'
-    image = icon('histogram')
+    name = "Hybrid Ideogram"
+    action = "set_hybrid_ideogram_template"
+    image = icon("histogram")
 
 
 class HistoryIdeogramAction(PlotAction):
-    name = 'History Ideogram'
-    action = 'set_history_ideogram_template'
-    image = icon('histogram')
+    name = "History Ideogram"
+    action = "set_history_ideogram_template"
+    image = icon("histogram")
 
 
 class SpectrumAction(PlotAction):
-    name = 'Spectrum'
-    action = 'set_spectrum_template'
-    accelerator = 'Ctrl+D'
+    name = "Spectrum"
+    action = "set_spectrum_template"
+    accelerator = "Ctrl+D"
     # image = icon('histogram')
 
 
 class IsochronAction(PlotAction):
-    name = 'Isochron'
-    action = 'set_isochron_template'
+    name = "Isochron"
+    action = "set_isochron_template"
     # image = icon('histogram')
 
 
 class InverseIsochronAction(PlotAction):
-    name = 'InverseIsochron'
-    action = 'set_inverse_isochron_template'
+    name = "InverseIsochron"
+    action = "set_inverse_isochron_template"
 
 
 class SeriesAction(PlotAction):
-    name = 'Series'
-    action = 'set_series_template'
-    id = 'pychron.series'
+    name = "Series"
+    action = "set_series_template"
+    id = "pychron.series"
 
 
 class VerticalFluxAction(PipelineAction):
-    name = 'Vertical Flux'
-    action = 'set_vertical_flux_template'
+    name = "Vertical Flux"
+    action = "set_vertical_flux_template"
 
 
 class ExtractionAction(UIAction):
-    name = 'Extraction Results...'
+    name = "Extraction Results..."
 
     def perform(self, event):
         app = event.task.window.application
         windows = app.windows
-        for tid in ('pychron.browser.task', 'pychron.pipeline.task'):
+        for tid in ("pychron.browser.task", "pychron.pipeline.task"):
             for win in windows:
                 task = win.active_task
                 if task and task.id == tid:
-                    getattr(task, 'show_extraction_graph')()
+                    getattr(task, "show_extraction_graph")()
                     break
 
 
 class MassSpecReducedAction(PipelineAction):
-    name = 'Mass Spec Reduced Transfer'
-    action = 'mass_spec_reduced_transfer'
+    name = "Mass Spec Reduced Transfer"
+    action = "mass_spec_reduced_transfer"
 
 
 class ImportOptionsActions(PipelineAction):
-    name = 'Import Options...'
-    action = 'import_options'
+    name = "Import Options..."
+    action = "import_options"
+
 
 # ============= Quick Series ====================================
 # class LastNAnalysesSeriesAction(PipelineAction):
@@ -346,54 +354,56 @@ class ImportOptionsActions(PipelineAction):
 
 # ============= tag =============================================
 class TagAction(TaskAction):
-    name = 'Tag...'
-    dname = 'Tag'
+    name = "Tag..."
+    dname = "Tag"
     # accelerator = 'Ctrl+Shift+t'
-    method = 'set_tag'
-    image = icon('tag-blue-add')
-    id = 'pychron.tag'
+    method = "set_tag"
+    image = icon("tag-blue-add")
+    id = "pychron.tag"
 
 
 class SetInvalidAction(TaskAction):
-    name = 'Set Invalid'
-    method = 'set_invalid'
-    image = icon('edit-delete-2')
+    name = "Set Invalid"
+    method = "set_invalid"
+    image = icon("edit-delete-2")
 
 
 class SetFilteringTagAction(TaskAction):
-    name = 'Set Filtering Tag'
-    method = 'set_filtering_tag'
-    image = icon('flag')
+    name = "Set Filtering Tag"
+    method = "set_filtering_tag"
+    image = icon("flag")
 
 
 # ============= Interperted Age =================================
 class SetInterpretedAgeAction(TaskAction):
-    name = 'Set Interpreted Age'
-    method = 'set_interpreted_age'
-    enabled_name = 'set_interpreted_enabled'
-    image = icon('brick-add')
+    name = "Set Interpreted Age"
+    method = "set_interpreted_age"
+    enabled_name = "set_interpreted_enabled"
+    image = icon("brick-add")
 
 
 class SavePDFAction(FigureAction):
-    name = 'Save PDF'
-    method = 'save_figure_pdf'
-    image = icon('file_pdf')
+    name = "Save PDF"
+    method = "save_figure_pdf"
+    image = icon("file_pdf")
 
 
 class SaveFigureAction(FigureAction):
-    name = 'Save Figure'
-    method = 'save_figure'
+    name = "Save Figure"
+    method = "save_figure"
 
 
 class PrintFigureAction(FigureAction):
-    name = 'Print'
-    method = 'print_figure'
-    image = icon('printer')
+    name = "Print"
+    method = "print_figure"
+    image = icon("printer")
 
 
 class SaveTableAction(TaskAction):
-    name = 'Save Table'
-    method = 'save_table'
-    image = icon('table_save')
-    enabled_name = 'set_interpreted_enabled'
+    name = "Save Table"
+    method = "save_table"
+    image = icon("table_save")
+    enabled_name = "set_interpreted_enabled"
+
+
 # ============= EOF =============================================

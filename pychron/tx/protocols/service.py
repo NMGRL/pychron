@@ -23,7 +23,6 @@ import traceback
 import json
 
 from twisted.internet import defer
-from twisted.internet.protocol import Protocol
 from twisted.protocols.basic import LineReceiver
 
 from pychron.tx.errors import InvalidArgumentsErrorCode
@@ -48,12 +47,12 @@ def response_err(failure):
 
 def nargs_err(failure):
     failure.trap(ValueError)
-    return InvalidArgumentsErrorCode('Foo', str(failure.value))
+    return InvalidArgumentsErrorCode("Foo", str(failure.value))
 
 
 # logger = Logger()
 
-regex = re.compile(r'^(?P<command>\w+) {0,1}(?P<args>.*)')
+regex = re.compile(r"^(?P<command>\w+) {0,1}(?P<args>.*)")
 
 
 class MockLogger(object):
@@ -68,8 +67,8 @@ class ServiceProtocol(LineReceiver):
     def __init__(self, logger=None, *args, **kw):
         # super(ServiceProtocol, self).__init__(*args, **kw)
         self._services = {}
-        self._cmd_delim = ' '
-        self._arg_delim = ','
+        self._cmd_delim = " "
+        self._arg_delim = ","
 
         if logger is None:
             logger = MockLogger()
@@ -81,8 +80,8 @@ class ServiceProtocol(LineReceiver):
         self.critical = logger.critical
 
     def dataReceived(self, data):
-        self.debug('Received n={n}: {data!r}', n=len(data), data=data)
-        data = data.decode('utf-8')
+        self.debug("Received n={n}: {data!r}", n=len(data), data=data)
+        data = data.decode("utf-8")
         data = data.strip()
         args = self._get_service(data)
         if args:
@@ -90,23 +89,31 @@ class ServiceProtocol(LineReceiver):
             self._get_response(service, data)
 
     def register_service(self, service_name, success, err=None):
-        """
-
-        """
+        """ """
 
         if err is None:
             err = default_err
 
         d = defer.Deferred()
-        if not isinstance(success, (list, tuple)):
-            success = (success,)
+        # if not isinstance(success, (list, tuple)):
+        #     success = (success,)
+        #
+        # for si in success:
+        #     d.addCallback(si)
+        #
+        # d.addCallback(self._prepare_response)
+        # d.addCallback(self._send_response)
+        #
+        # d.addErrback(nargs_err)
+        # d.addErrback(service_err)
+        # d.addErrback(err)
 
-        for si in success:
-            d.addCallback(si)
+        def func(received_data):
+            resp = success(received_data)
+            resp = self._prepare_response(resp)
+            return self._send_response(resp)
 
-        d.addCallback(self._prepare_response)
-        d.addCallback(self._send_response)
-
+        d.addCallback(func)
         d.addErrback(nargs_err)
         d.addErrback(service_err)
         d.addErrback(err)
@@ -121,26 +128,26 @@ class ServiceProtocol(LineReceiver):
 
     def _prepare_response(self, data):
         if isinstance(data, bool) and data:
-            return 'OK'
+            return "OK"
         elif data is None:
-            return 'No Response'
+            return "No Response"
         else:
             return data
 
     def _send_response(self, resp):
         resp = str(resp)
-        self.debug('Response {data!r}', data=resp)
-        self.transport.write(resp.encode('utf-8'))
+        self.debug("Response {data!r}", data=resp)
+        self.transport.write(resp.encode("utf-8"))
         self.transport.loseConnection()
 
     def _get_service(self, data):
         m = regex.match(data)
         if m:
-            name = m.group('command')
+            name = m.group("command")
             jd = data
         else:
             jd = json.loads(data)
-            name = jd['command']
+            name = jd["command"]
 
         try:
             service = self._services[name]
@@ -163,12 +170,13 @@ class ServiceProtocol(LineReceiver):
                 data = tuple(data)
             cdata = data
 
-        self.debug('Data {cdata!r}', cdata=cdata)
+        self.debug("Data {cdata!r}", cdata=cdata)
         return cdata
 
     def _get_response(self, service, data):
         cdata = self._prepare_data(data)
         service.callback(cdata)
+
 
 # ============= EOF =============================================
 # def sleep(secs):

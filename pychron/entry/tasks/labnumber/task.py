@@ -23,12 +23,27 @@ from traitsui.api import Item, VGroup, UItem, HGroup
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pychron_traits import PacketStr
 from pychron.entry.labnumber_entry import LabnumberEntry
-from pychron.entry.tasks.actions import SavePDFAction, DatabaseSaveAction, PreviewGenerateIdentifiersAction, \
-    GenerateIdentifiersAction, ClearSelectionAction, RecoverAction, SyncMetaDataAction, ManualEditIdentifierAction, \
-    EditMaterialAction
-from pychron.entry.tasks.labnumber.panes import LabnumbersPane, \
-    IrradiationPane, IrradiationEditorPane, IrradiationCanvasPane, LevelInfoPane, ChronologyPane, FluxHistoryPane, \
-    IrradiationMetadataEditorPane
+from pychron.entry.tasks.actions import (
+    SavePDFAction,
+    DatabaseSaveAction,
+    PreviewGenerateIdentifiersAction,
+    GenerateIdentifiersAction,
+    ClearSelectionAction,
+    RecoverAction,
+    SyncMetaDataAction,
+    ManualEditIdentifierAction,
+    EditMaterialAction,
+)
+from pychron.entry.tasks.labnumber.panes import (
+    LabnumbersPane,
+    IrradiationPane,
+    IrradiationEditorPane,
+    IrradiationCanvasPane,
+    LevelInfoPane,
+    ChronologyPane,
+    FluxHistoryPane,
+    IrradiationMetadataEditorPane,
+)
 from pychron.envisage.browser.base_browser_model import BaseBrowserModel
 from pychron.envisage.browser.record_views import SampleRecordView
 from pychron.envisage.tasks.base_task import BaseManagerTask
@@ -36,16 +51,22 @@ from pychron.globals import globalv
 from pychron.pychron_constants import DVC_PROTOCOL
 from pychron.regex import PACKETREGEX
 
-ATTRS = (('sample', ''),
-         ('material', ''),
-         ('project', ''),
-         ('principal_investigator', ''),
-         ('weight', 0),
-         ('j', 0,),
-         ('j_err', 0))
+ATTRS = (
+    ("sample", ""),
+    ("material", ""),
+    ("project", ""),
+    ("principal_investigator", ""),
+    ("weight", 0),
+    (
+        "j",
+        0,
+    ),
+    ("j_err", 0),
+)
 
-
-MANUAL_EDIT_VIEW = okcancel_view(Item('edit_identifier_entry', label='Identifier'), title='Manual Edit Identifier')
+MANUAL_EDIT_VIEW = okcancel_view(
+    Item("edit_identifier_entry", label="Identifier"), title="Manual Edit Identifier"
+)
 
 
 class ClearSelectionView(HasTraits):
@@ -57,8 +78,8 @@ class ClearSelectionView(HasTraits):
     j = Bool(True)
     j_err = Bool(True)
 
-    select_all = Button('Select All')
-    clear_all = Button('Clear All')
+    select_all = Button("Select All")
+    clear_all = Button("Clear All")
 
     def _select_all_fired(self):
         self._apply_all(True)
@@ -74,22 +95,27 @@ class ClearSelectionView(HasTraits):
         return [(a, v) for a, v in ATTRS if getattr(self, a)]
 
     def traits_view(self):
-        v = okcancel_view(VGroup(HGroup(UItem('select_all'),
-                                        UItem('clear_all')),
-                                 VGroup(Item('sample'),
-                                        Item('material'),
-                                        Item('project'),
-                                        Item('principal_investigator'),
-                                        Item('weight'),
-                                        Item('j', label='J'),
-                                        Item('j_err', label='J Err.'))),
-                          title='Clear Selection')
+        v = okcancel_view(
+            VGroup(
+                HGroup(UItem("select_all"), UItem("clear_all")),
+                VGroup(
+                    Item("sample"),
+                    Item("material"),
+                    Item("project"),
+                    Item("principal_investigator"),
+                    Item("weight"),
+                    Item("j", label="J"),
+                    Item("j_err", label="J Err."),
+                ),
+            ),
+            title="Clear Selection",
+        )
         return v
 
 
 class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
-    name = 'Package'
-    id = 'pychron.entry.irradiation.task'
+    name = "Package"
+    id = "pychron.entry.irradiation.task"
 
     edit_identifier_entry = Str
     clear_sample_button = Button
@@ -97,17 +123,21 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     dclicked = Event
 
     principal_investigator = Str
-    tool_bars = [SToolBar(SavePDFAction(),
-                          DatabaseSaveAction(),
-                          image_size=(16, 16)),
-                 SToolBar(GenerateIdentifiersAction(),
-                          PreviewGenerateIdentifiersAction(),
-                          image_size=(16, 16)),
-                 SToolBar(ClearSelectionAction()),
-                 SToolBar(RecoverAction(),
-                          SyncMetaDataAction(),
-                          ManualEditIdentifierAction(),
-                          EditMaterialAction())]
+    tool_bars = [
+        SToolBar(SavePDFAction(), DatabaseSaveAction(), image_size=(16, 16)),
+        SToolBar(
+            GenerateIdentifiersAction(),
+            PreviewGenerateIdentifiersAction(),
+            image_size=(16, 16),
+        ),
+        SToolBar(ClearSelectionAction()),
+        SToolBar(
+            RecoverAction(),
+            SyncMetaDataAction(),
+            ManualEditIdentifierAction(),
+            EditMaterialAction(),
+        ),
+    ]
 
     invert_flag = Bool
     selection_freq = Int
@@ -133,13 +163,13 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.db.close_session()
 
     def _opened_hook(self):
-        self.db.create_session()
+        self.db.create_session(force=True)
 
     def _closed_hook(self):
         self.db.close_session()
 
     def activated(self):
-        self.debug('activated labnumber')
+        self.debug("activated labnumber")
         if self.manager.verify_database_connection(inform=True):
             if self.db.connected:
                 self.manager.activated()
@@ -148,24 +178,24 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def find_associated_identifiers(self):
         ns = [ni.name for ni in self.selected_samples]
-        self.info('find associated identifiers {}'.format(','.join(ns)))
+        self.info("find associated identifiers {}".format(",".join(ns)))
 
         self.manager.find_associated_identifiers(self.selected_samples)
 
     def sync_metadata(self):
-        self.info('sync metadata')
+        self.info("sync metadata")
         self.manager.sync_metadata()
 
     def generate_status_report(self):
-        self.info('generate status report')
+        self.info("generate status report")
         self.manager.generate_status_report()
 
     def recover(self):
-        self.info('recover')
+        self.info("recover")
         self.manager.recover()
 
     def clear_selection(self):
-        self.info('clear selection')
+        self.info("clear selection")
         cs = ClearSelectionView()
         info = cs.edit_traits()
         if info.result:
@@ -186,12 +216,14 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     #     self.manager.get_igsns()
 
     def transfer_j(self):
-        self.info('Transferring J Data')
+        self.info("Transferring J Data")
         self.manager.transfer_j()
 
     def manual_edit_material(self):
         if not self.manager.selected:
-            self.information_dialog('Please select an existing irradiation position to edit')
+            self.information_dialog(
+                "Please select an existing irradiation position to edit"
+            )
             return
 
         self.manager.edit_material()
@@ -200,18 +232,22 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def manual_edit_identifier(self):
         if not self.manager.selected:
-            self.information_dialog('Please select an existing irradiation position to edit')
+            self.information_dialog(
+                "Please select an existing irradiation position to edit"
+            )
             return
 
-        if not self.confirmation_dialog('Please be very careful editing identifiers. Serious unintended consequences '
-                                        'may result from changing an identifier. This function should only be used by '
-                                        'users with a deep understanding of how pychron handles irradiations. \n\nAre '
-                                        'you sure you want to continue?'):
+        if not self.confirmation_dialog(
+            "Please be very careful editing identifiers. Serious unintended consequences "
+            "may result from changing an identifier. This function should only be used by "
+            "users with a deep understanding of how pychron handles irradiations. \n\nAre "
+            "you sure you want to continue?"
+        ):
             return
 
-        self.info('Manual edit identifier')
+        self.info("Manual edit identifier")
         self.edit_identifier_entry = self.manager.selected[0].identifier
-        info = self.edit_traits(view=MANUAL_EDIT_VIEW, kind='livemodal')
+        info = self.edit_traits(view=MANUAL_EDIT_VIEW, kind="livemodal")
         if info and self.edit_identifier_entry:
             self.manager.selected[0].identifier = self.edit_identifier_entry
 
@@ -252,18 +288,18 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
 
     def save_pdf(self):
         if globalv.irradiation_pdf_debug:
-            p = '/Users/ross/Sandbox/irradiation.pdf'
+            p = "/Users/ross/Sandbox/irradiation.pdf"
         else:
             p = self.save_file_dialog()
 
         if p:
-            self.debug('saving pdf to {}'.format(p))
+            self.debug("saving pdf to {}".format(p))
             if self.manager.save_pdf(p):
                 self.view_pdf(p)
 
     def make_irradiation_book_pdf(self):
         if globalv.entry_labbook_debug:
-            p = '/Users/ross/Sandbox/irradiation.pdf'
+            p = "/Users/ross/Sandbox/irradiation.pdf"
         else:
             p = self.save_file_dialog()
 
@@ -281,7 +317,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         if globalv.entry_irradiation_import_from_file_debug:
             path = self.open_file_dialog()
         else:
-            path = '/Users/ross/Sandbox/template.xls'
+            path = "/Users/ross/Sandbox/template.xls"
 
         if path:
             self.manager.import_irradiation_load_xls(path)
@@ -336,17 +372,24 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         from pychron.entry.export.export_selection_view import ExportSelectionView
 
         pref = self.application.preferences
-        connection = {attr: pref.get('pychron.massspec.database.{}'.format(attr))
-                      for attr in ('name', 'host', 'password', 'username')}
-        es = ExportSelectionView(irradiations=self.manager.irradiations,
-                                 default_massspec_connection=connection)
-        info = es.edit_traits(kind='livemodal')
+        connection = {
+            attr: pref.get("pychron.massspec.database.{}".format(attr))
+            for attr in ("name", "host", "password", "username")
+        }
+        es = ExportSelectionView(
+            irradiations=self.manager.irradiations,
+            default_massspec_connection=connection,
+        )
+        info = es.edit_traits(kind="livemodal")
         if info.result:
             if not es.selected:
-                self.warning_dialog('Please select Irradiation(s) to export')
+                self.warning_dialog("Please select Irradiation(s) to export")
             else:
                 from pychron.entry.export.export_util import do_export
-                do_export(self.manager.dvc, es.export_type, es.destination_dict, es.selected)
+
+                do_export(
+                    self.manager.dvc, es.export_type, es.destination_dict, es.selected
+                )
 
     def _manager_default(self):
         dvc = self.application.get_service(DVC_PROTOCOL)
@@ -361,30 +404,36 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def _default_layout_default(self):
         return TaskLayout(
             left=Splitter(
-                PaneItem('pychron.labnumber.irradiation'),
+                PaneItem("pychron.labnumber.irradiation"),
                 Tabbed(
                     # PaneItem('pychron.labnumber.extractor'),
-                    PaneItem('pychron.labnumber.editor')),
-                orientation='vertical'),
+                    PaneItem("pychron.labnumber.editor")
+                ),
+                orientation="vertical",
+            ),
             right=Splitter(
-                PaneItem('pychron.entry.level'),
-                PaneItem('pychron.entry.chronology'),
-                PaneItem('pychron.entry.irradiation_canvas'),
-                PaneItem('pychron.entry.flux_history'),
-                orientation='vertical'))
+                PaneItem("pychron.entry.level"),
+                PaneItem("pychron.entry.chronology"),
+                PaneItem("pychron.entry.irradiation_canvas"),
+                PaneItem("pychron.entry.flux_history"),
+                orientation="vertical",
+            ),
+        )
 
     def create_central_pane(self):
         return LabnumbersPane(model=self.manager)
 
     def create_dock_panes(self):
 
-        return [IrradiationPane(model=self.manager),
-                ChronologyPane(model=self.manager),
-                LevelInfoPane(model=self.manager),
-                FluxHistoryPane(model=self.manager),
-                IrradiationEditorPane(model=self),
-                IrradiationMetadataEditorPane(model=self),
-                IrradiationCanvasPane(model=self.manager)]
+        return [
+            IrradiationPane(model=self.manager),
+            ChronologyPane(model=self.manager),
+            LevelInfoPane(model=self.manager),
+            FluxHistoryPane(model=self.manager),
+            IrradiationEditorPane(model=self),
+            IrradiationMetadataEditorPane(model=self),
+            IrradiationCanvasPane(model=self.manager),
+        ]
 
     # ===========================================================================
     # GenericActon Handlers
@@ -402,30 +451,32 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def _increment_packet(self):
         m = PACKETREGEX.search(self.packet)
         if m:
-            v = m.group('prefix')
+            v = m.group("prefix")
             if not v:
-                v = ''
-            a = m.group('number')
-            self.packet = '{}{:02n}'.format(v, int(a) + 1)
+                v = ""
+            a = m.group("number")
+            self.packet = "{}{:02n}".format(v, int(a) + 1)
 
     # handlers
     def _estimate_j_button_fired(self):
         self.manager.estimate_j()
 
-    @on_trait_change('selection_freq, invert_flag')
+    @on_trait_change("selection_freq, invert_flag")
     def _handle_selection(self):
         if self.selection_freq:
             self.manager.select_positions(self.selection_freq, self.invert_flag)
 
-    @on_trait_change('j,j_err, note, weight')
+    @on_trait_change("j,j_err, note, weight")
     def _handle_j(self, obj, name, old, new):
         if new:
             self.manager.set_selected_attr(new, name)
 
-    @on_trait_change('set_packet_event')
+    @on_trait_change("set_packet_event")
     def _handle_packet(self):
         if not self.manager.selected:
-            self.warning_dialog('Please select an Irradiation Position before trying to set the Packet')
+            self.warning_dialog(
+                "Please select an Irradiation Position before trying to set the Packet"
+            )
             return
 
         for s in self.manager.selected:
@@ -443,8 +494,22 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def _selected_samples_changed(self, new):
         if new:
             ni = new[0]
-            self.manager.set_selected_attrs((ni.name, ni.material, ni.grainsize, ni.project, ni.principal_investigator),
-                                            ('sample', 'material', 'grainsize', 'project', 'principal_investigator'))
+            self.manager.set_selected_attrs(
+                (
+                    ni.name,
+                    ni.material,
+                    ni.grainsize,
+                    ni.project,
+                    ni.principal_investigator,
+                ),
+                (
+                    "sample",
+                    "material",
+                    "grainsize",
+                    "project",
+                    "principal_investigator",
+                ),
+            )
 
     def _load_associated_samples(self, names=None):
         if names is None:
@@ -467,7 +532,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def _clear_sample_button_fired(self):
         self.selected_samples = []
 
-    @on_trait_change('extractor:update_irradiations_needed')
+    @on_trait_change("extractor:update_irradiations_needed")
     def _update_irradiations(self):
         self.manager.updated = True
 
@@ -478,7 +543,7 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
     def _selected_projects_changed(self, old, new):
         if new:
             names = [ni.name for ni in new]
-            self.debug('selected projects={}'.format(names))
+            self.debug("selected projects={}".format(names))
 
             self._load_associated_samples(names)
         else:
@@ -488,11 +553,12 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         self.manager.push_changes()
 
         if self.manager.dirty:
-            message = 'You have unsaved changes. Save changes to Database?'
+            message = "You have unsaved changes. Save changes to Database?"
             ret = self._handle_prompt_for_save(message)
-            if ret == 'save':
+            if ret == "save":
                 return self.manager.save()
             return ret
         return True
+
 
 # ============= EOF =============================================

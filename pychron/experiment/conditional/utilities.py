@@ -20,9 +20,26 @@
 from __future__ import absolute_import
 from uncertainties import ufloat
 
-from pychron.experiment.conditional.regexes import COMP_REGEX, ARGS_REGEX, DEFLECTION_REGEX, BASELINECOR_REGEX, \
-    BASELINE_REGEX, MIN_REGEX, MAX_REGEX, CP_REGEX, PARENTHESES_REGEX, KEY_REGEX, ACTIVE_REGEX, SLOPE_REGEX, AVG_REGEX, \
-    RATIO_REGEX, BETWEEN_REGEX, PRESSURE_REGEX, DEVICE_REGEX
+from pychron.experiment.conditional.regexes import (
+    COMP_REGEX,
+    ARGS_REGEX,
+    DEFLECTION_REGEX,
+    BASELINECOR_REGEX,
+    BASELINE_REGEX,
+    MIN_REGEX,
+    MAX_REGEX,
+    CP_REGEX,
+    PARENTHESES_REGEX,
+    KEY_REGEX,
+    ACTIVE_REGEX,
+    SLOPE_REGEX,
+    AVG_REGEX,
+    RATIO_REGEX,
+    BETWEEN_REGEX,
+    PRESSURE_REGEX,
+    DEVICE_REGEX,
+    INSTANT_AGE_REGEX,
+)
 
 
 def interpolate_teststr():
@@ -31,19 +48,21 @@ def interpolate_teststr():
 
 def get_teststr_attr_func(token):
     for args in (
-            (DEVICE_REGEX, 'obj.get_device_value(attr)', wrapper, device_teststr),
-            (PRESSURE_REGEX, 'obj.get_pressure(attr)', wrapper, pressure_teststr),
-            (DEFLECTION_REGEX, 'obj.get_deflection(attr, current=True)'),
-            (ACTIVE_REGEX, 'attr not in data[0] if data is not None else False'),
-            (CP_REGEX, 'aa.get_current_intensity(attr)'),
-            (BASELINECOR_REGEX, 'aa.get_baseline_corrected_value(attr, default=None)'),
-            (BASELINE_REGEX, 'aa.get_baseline_value(attr)'),
-            (SLOPE_REGEX, 'aa.get_slope(attr, window or -1)'),
-            (AVG_REGEX, 'aa.get_values(attr, window or -1).mean()'),
-            (MAX_REGEX, 'aa.get_values(attr, window or -1).max()'),
-            (MIN_REGEX, 'aa.get_values(attr, window or -1).min()'),
-            (RATIO_REGEX, 'aa.get_value(attr)', wrapper, ratio_teststr),
-            (BETWEEN_REGEX, 'aa.get_value(attr)', between_wrapper, between_teststr)):
+        (DEVICE_REGEX, "obj.get_device_value(attr)", wrapper, device_teststr),
+        (PRESSURE_REGEX, "obj.get_pressure(attr)", wrapper, pressure_teststr),
+        (DEFLECTION_REGEX, "obj.get_deflection(attr, current=True)"),
+        (ACTIVE_REGEX, "attr not in data[0] if data is not None else False"),
+        (CP_REGEX, "aa.get_current_intensity(attr)"),
+        (BASELINECOR_REGEX, "aa.get_baseline_corrected_value(attr, default=None)"),
+        (BASELINE_REGEX, "aa.get_baseline_value(attr)"),
+        (SLOPE_REGEX, "aa.get_slope(attr, window or -1)"),
+        (AVG_REGEX, "aa.get_values(attr, window or -1).mean()"),
+        (MAX_REGEX, "aa.get_values(attr, window or -1).max()"),
+        (MIN_REGEX, "aa.get_values(attr, window or -1).min()"),
+        (RATIO_REGEX, "aa.get_value(attr)", wrapper, ratio_teststr),
+        (BETWEEN_REGEX, "aa.get_value(attr)", between_wrapper, between_teststr),
+        (INSTANT_AGE_REGEX, "aa.instant_age(window or -1)"),
+    ):
 
         wfunc = wrapper
         if len(args) == 2:
@@ -70,9 +89,9 @@ def get_teststr_attr_func(token):
                 v = obj.isotope_group.get_value(attr)
             return v
 
-    if token.startswith('not'):
-        if not teststr.startswith('not'):
-            teststr = 'not {}'.format(teststr)
+    if token.startswith("not"):
+        if not teststr.startswith("not"):
+            teststr = "not {}".format(teststr)
 
     return teststr, key, func
 
@@ -80,26 +99,34 @@ def get_teststr_attr_func(token):
 # wrappers
 def wrapper(fstr, token, ai):
     def func(obj, data, window):
-        return eval(fstr, {'attr': ai,
-                           'aa': obj.isotope_group,
-                           'obj': obj,
-                           'data': data, 'window': window})
+        return eval(
+            fstr,
+            {
+                "attr": ai,
+                "aa": obj.isotope_group,
+                "obj": obj,
+                "data": data,
+                "window": window,
+            },
+        )
 
     return func
 
 
 def between_wrapper(fstr, token, ai):
-    aa = ARGS_REGEX.search(token).group(0)[1:-1].split(',')
+    aa = ARGS_REGEX.search(token).group(0)[1:-1].split(",")
     kk = aa[0]
-    if '.' in kk:
-        kk = kk.split('.')[0].strip()
+    if "." in kk:
+        kk = kk.split(".")[0].strip()
 
-    for aa in ((DEFLECTION_REGEX, 'obj.get_deflection(attr, current=True)'),
-               (BASELINECOR_REGEX, 'aa.get_baseline_corrected_value(attr)'),
-               (BASELINE_REGEX, 'aa.get_baseline_value(attr)'),
-               (MIN_REGEX, 'aa.get_values(attr, window or -1).min()', kfunc()),
-               (MAX_REGEX, 'aa.get_values(attr, window or -1).max()', kfunc()),
-               (CP_REGEX, 'aa.get_current_intensity(attr)')):
+    for aa in (
+        (DEFLECTION_REGEX, "obj.get_deflection(attr, current=True)"),
+        (BASELINECOR_REGEX, "aa.get_baseline_corrected_value(attr)"),
+        (BASELINE_REGEX, "aa.get_baseline_value(attr)"),
+        (MIN_REGEX, "aa.get_values(attr, window or -1).min()", kfunc()),
+        (MAX_REGEX, "aa.get_values(attr, window or -1).max()", kfunc()),
+        (CP_REGEX, "aa.get_current_intensity(attr)"),
+    ):
         if len(aa) == 2:
             r, ff = aa
             kf = lambda x: x
@@ -121,15 +148,15 @@ def between_wrapper(fstr, token, ai):
 def teststr_func(token):
     c = remove_attr(token)
     a = extract_attr(token)
-    ts = '{}{}'.format(a, c)
+    ts = "{}{}".format(a, c)
     return a, a, ts
 
 
 def device_teststr(token):
     c = remove_attr(token)
     tt = remove_comp(token)
-    a = k = tt.split('.')[-1]
-    ts = '{}{}'.format(k, c)
+    a = k = tt.split(".")[-1]
+    ts = "{}{}".format(k, c)
     return a, k, ts
 
 
@@ -137,21 +164,20 @@ def pressure_teststr(token):
     c = remove_attr(token)
     # k = extract_attr(token)
     tt = remove_comp(token)
-    k = tt.replace('.', '_')
-    a = '.'.join(tt.split('.')[:-1])
+    k = tt.replace(".", "_")
+    a = ".".join(tt.split(".")[:-1])
 
-    ts = '{}{}'.format(k, c)
+    ts = "{}{}".format(k, c)
     return a, k, ts
 
 
 def between_teststr(token):
-    args = ARGS_REGEX.search(token).group(0)[1:-1].split(',')
+    args = ARGS_REGEX.search(token).group(0)[1:-1].split(",")
     kk = args[0]
-    if '.' in kk:
-        kk = kk.replace('.', '_')
+    if "." in kk:
+        kk = kk.replace(".", "_")
     else:
-        for rargs in ((MIN_REGEX,),
-                      (MAX_REGEX,)):
+        for rargs in ((MIN_REGEX,), (MAX_REGEX,)):
             if len(rargs) == 2:
                 r, kf = rargs
             else:
@@ -161,14 +187,14 @@ def between_teststr(token):
                 kk = kf(kk)
                 break
     v1, v2 = args[1:]
-    return kk, kk, '{}<={}<={}'.format(v1, kk, v2)
+    return kk, kk, "{}<={}<={}".format(v1, kk, v2)
 
 
 def ratio_teststr(token):
     c = remove_attr(token)
-    attr = token.replace(c, '')
-    key = 'ratio{}'.format(attr.replace('/', ''))
-    teststr = '{}{}'.format(key, c)
+    attr = token.replace(c, "")
+    key = "ratio{}".format(attr.replace("/", ""))
+    teststr = "{}{}".format(key, c)
     return attr, key, teststr
 
 
@@ -181,13 +207,13 @@ def kfunc(n=4):
 
 def tokenize(teststr):
     def func():
-        ts = teststr.split(' ')
+        ts = teststr.split(" ")
         i = 0
         is_not = False
         while 1:
             try:
                 a = ts[i]
-                if a == 'not':
+                if a == "not":
                     i += 1
                     is_not = True
                     continue
@@ -198,13 +224,13 @@ def tokenize(teststr):
 
             i += 2
             if is_not:
-                a = 'not {}'.format(a)
+                a = "not {}".format(a)
                 is_not = False
 
             yield a, b
 
         if is_not:
-            a = 'not {}'.format(a)
+            a = "not {}".format(a)
 
         yield a, b
 
@@ -213,20 +239,20 @@ def tokenize(teststr):
 
 def remove_attr(s):
     """
-        return >10 where s=Ar40>10
+    return >10 where s=Ar40>10
     """
     try:
         c = COMP_REGEX.findall(s)[0]
-        return '{}{}'.format(c, s.split(c)[-1])
+        return "{}{}".format(c, s.split(c)[-1])
     except IndexError:
-        return ''
+        return ""
 
 
 def remove_comp(s):
     try:
         c = COMP_REGEX.findall(s)[0]
         s = s.split(c)[0]
-        if s.startswith('not '):
+        if s.startswith("not "):
             s = s[4:]
         return s
     except IndexError as e:
@@ -234,16 +260,15 @@ def remove_comp(s):
 
 
 def extract_attr(key):
-    """
-    """
-    if key.startswith('L2(CDD)'):
-        return 'L2(CDD)'
+    """ """
+    if key.startswith("L2(CDD)"):
+        return "L2(CDD)"
 
     try:
-        aa = ARGS_REGEX.search(key).group(0)[1:-1].split(',')
+        aa = ARGS_REGEX.search(key).group(0)[1:-1].split(",")
         key = aa[0]
-        if '.' in key:
-            key = key.split('.')[0].strip()
+        if "." in key:
+            key = key.split(".")[0].strip()
     except AttributeError:
         pass
 
@@ -254,10 +279,11 @@ def extract_attr(key):
         m = KEY_REGEX.findall(key)
         if m:
             k = m[0]
-            if k in ('not',):
+            if k in ("not",):
                 k = m[1]
             key = k
 
     return key
+
 
 # ============= EOF =============================================

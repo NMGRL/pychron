@@ -23,7 +23,6 @@ from pychron.canvas.canvas2D.scene.dumper_scene import DumperScene
 
 
 class DumperCanvas(ExtractionLineCanvas2D):
-
     def __init__(self, *args, **kw):
         super(DumperCanvas, self).__init__(*args, **kw)
 
@@ -45,7 +44,7 @@ class DumperCanvas(ExtractionLineCanvas2D):
             self.invalidate_and_redraw()
 
     def _select_hook(self, item):
-        if hasattr(item, 'associations'):
+        if hasattr(item, "associations"):
             if item.associations:
                 for i in item.associations:
                     self._set_associated(i, item.state)
@@ -59,5 +58,6 @@ class DumperCanvas(ExtractionLineCanvas2D):
     def _scene_default(self):
         s = DumperScene()
         return s
+
 
 # ============= EOF =============================================

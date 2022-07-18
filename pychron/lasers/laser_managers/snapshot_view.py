@@ -16,13 +16,16 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from pychron.core.ui import set_qt
+
 set_qt()
 # ============= enthought library imports =======================
 from traits.api import HasTraits, Any, Str
 from traitsui.api import View, VGroup, Readonly, UItem
+
 # ============= standard library imports ========================
 import Image
 import cStringIO
+
 # ============= local library imports  ==========================
 from pychron.core.ui.image_editor import ImageEditor
 
@@ -33,32 +36,34 @@ class SnapshotView(HasTraits):
     remote_path = Str
 
     def set_image(self, l, r, im):
-        self.local_path=l
-        self.remote_path=r
+        self.local_path = l
+        self.remote_path = r
         if im:
             buf = cStringIO.StringIO(im)
             buf.seek(0)
             try:
                 img = Image.open(buf)
-                self.image = img.convert('RGBA')
+                self.image = img.convert("RGBA")
             except IOError as e:
-                print('snapshot view {}'.format(e))
+                print("snapshot view {}".format(e))
                 pass
 
     def traits_view(self):
-        v=View(VGroup(VGroup(Readonly('local_path'),
-                      Readonly('remote_path')),
-               VGroup(UItem('image', editor=ImageEditor()))),
-               title='Snapshot')
+        v = View(
+            VGroup(
+                VGroup(Readonly("local_path"), Readonly("remote_path")),
+                VGroup(UItem("image", editor=ImageEditor())),
+            ),
+            title="Snapshot",
+        )
         return v
 
 
-if __name__ == '__main__':
-    sv=SnapshotView()
-    with open('/Users/ross/Pychrondata_dev/data/snapshots/snapshot-001.jpg', 'rb') as rfile:
-        sv.set_image('a','b', rfile.read())
+if __name__ == "__main__":
+    sv = SnapshotView()
+    with open(
+        "/Users/ross/Pychrondata_dev/data/snapshots/snapshot-001.jpg", "rb"
+    ) as rfile:
+        sv.set_image("a", "b", rfile.read())
     sv.configure_traits()
 # ============= EOF =============================================
-
-
-

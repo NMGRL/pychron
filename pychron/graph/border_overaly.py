@@ -15,10 +15,10 @@
 # ===============================================================================
 
 
-
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from chaco.api import AbstractOverlay
+
 
 # ============= standard library imports ========================
 
@@ -26,16 +26,16 @@ from chaco.api import AbstractOverlay
 
 
 class BorderOverlay(AbstractOverlay):
-    def overlay(self, component, gc, view_bounds=None, mode='normal'):
-        '''
-            
-        '''
-#        print component.outer_bounds, component.outer_position
+    def overlay(self, component, gc, view_bounds=None, mode="normal"):
+        """ """
+        #        print component.outer_bounds, component.outer_position
         gc.set_stroke_color((0, 1, 0))
         x, y = component.outer_position
         w, h = component.outer_bounds
         gc.rect(x - 3, y - 3, w + 6, h + 6)
 
         gc.stroke_path()
+
+
 # ============= views ===================================
 # ============= EOF ====================================

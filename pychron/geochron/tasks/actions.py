@@ -26,21 +26,24 @@ from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class UploadAction(TaskAction):
-    name = 'Upload to Geochron...'
+    name = "Upload to Geochron..."
 
     def perform(self, event):
-        information(None, 'Upload to Geochron is not fully implemented')
+        information(None, "Upload to Geochron is not fully implemented")
 
         app = event.task.application
-        geochron_service = app.get_service('pychron.geochron.geochron_service.GeochronService')
+        geochron_service = app.get_service(
+            "pychron.geochron.geochron_service.GeochronService"
+        )
 
         dvc = app.get_service(DVC_PROTOCOL)
         with dvc.session_ctx():
-            ai = dvc.get_analysis('c038c72a-cf21-49f9-a5b5-1e43bb4a6b93')
+            ai = dvc.get_analysis("c038c72a-cf21-49f9-a5b5-1e43bb4a6b93")
             ans = dvc.make_analyses(ai)
 
             ag = AnalysisGroup()
             ag.analyses = ans
             print(geochron_service.assemble_xml(ag))
+
 
 # ============= EOF =============================================

@@ -22,20 +22,20 @@ from enable.component_editor import ComponentEditor
 from traits.api import Instance, List, Property, Str
 from traitsui.api import View, HGroup, UItem, TabularEditor, Handler, Action
 from traitsui.tabular_adapter import TabularAdapter
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_date_path
 from pychron.core.helpers.formatting import floatfmt
 from pychron.loggable import Loggable
-from pychron.canvas.canvas2D.stage_visualization_canvas import \
-    StageVisualizationCanvas
+from pychron.canvas.canvas2D.stage_visualization_canvas import StageVisualizationCanvas
 from pychron.pychron_constants import LIGHT_RED
 from pychron.stage.maps.laser_stage_map import LaserStageMap
 from pychron.paths import paths
 
 
 class ResultsAdapter(TabularAdapter):
-    columns = [('Hole', 'hole_id'), ('dX', 'dx'), ('dY', 'dy')]
+    columns = [("Hole", "hole_id"), ("dX", "dx"), ("dY", "dy")]
     dx_text = Property
     dy_text = Property
 
@@ -68,63 +68,69 @@ class StageVisualizer(Loggable):
     def save(self):
         root = paths.corrections_dir
         base = self.stage_map_name
-        p = unique_date_path(root, base, extension='')
-        gp = '{}.{}'.format(p, 'pdf')
-        gc = PdfPlotGraphicsContext(filename=gp,
-                                    pagesize='letter')
+        p = unique_date_path(root, base, extension="")
+        gp = "{}.{}".format(p, "pdf")
+        gc = PdfPlotGraphicsContext(filename=gp, pagesize="letter")
 
         from reportlab.lib.pagesizes import letter
+
         bounds = self.canvas.bounds
         self.canvas.do_layout(size=letter, force=True)
 
-        gc.render_component(self.canvas, valign='center')
+        gc.render_component(self.canvas, valign="center")
         gc.save(p)
         self.canvas.do_layout(size=bounds, force=True)
         self.canvas.invalidate_and_redraw()
 
-        tp = '{}.{}'.format(p, 'txt')
-        with open(tp, 'w') as wfile:
+        tp = "{}.{}".format(p, "txt")
+        with open(tp, "w") as wfile:
             for r in self.results:
                 args = r.nx, r.ny, r.dx, r.dy
-                args = ['{:0.5f}'.format(x) for x in args]
+                args = ["{:0.5f}".format(x) for x in args]
                 args = [r.hole_id, str(r.corrected)] + args
-                line = ','.join(args)
-                wfile.write('{}\n'.format(line))
+                line = ",".join(args)
+                wfile.write("{}\n".format(line))
 
     def traits_view(self):
-        v = View(HGroup(UItem('canvas', editor=ComponentEditor(width=550,
-                                                               height=550)),
-                        UItem('results', editor=TabularEditor(
-                                adapter=ResultsAdapter()))),
-                 handler=StageVisualizerHandler(),
-                 buttons=[Action(action='save', name='Save'), ],
-                 title='Stage Visualizer',
-                 resizable=True)
+        v = View(
+            HGroup(
+                UItem("canvas", editor=ComponentEditor(width=550, height=550)),
+                UItem("results", editor=TabularEditor(adapter=ResultsAdapter())),
+            ),
+            handler=StageVisualizerHandler(),
+            buttons=[
+                Action(action="save", name="Save"),
+            ],
+            title="Stage Visualizer",
+            resizable=True,
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
 
-    paths.build('_dev')
-    logging_setup('sv', use_archiver=False, use_file=False)
+    paths.build("_dev")
+    logging_setup("sv", use_archiver=False, use_file=False)
 
-    p = '/Users/ross/Programming/github/support_pychron/setupfiles/tray_maps' \
-        '/221-hole.txt'
+    p = (
+        "/Users/ross/Programming/github/support_pychron/setupfiles/tray_maps"
+        "/221-hole.txt"
+    )
     # p = '/Users/argonlab3/Pychron_co2/setupfiles/tray_maps/221-small_hole.txt'
 
     sm = LaserStageMap(file_path=p)
 
     sv = StageVisualizer()
-    results = [((-3.9878, 15.9512), True),
-               ((-1.9939, 15.5), False),
-               ((0, 15.9512), True)]
-
+    results = [
+        ((-3.9878, 15.9512), True),
+        ((-1.9939, 15.5), False),
+        ((0, 15.9512), True),
+    ]
 
     class CO:
         rotation = 1
         center = -2, 0
-
 
     sv.set_stage_map(sm, results, CO())
 

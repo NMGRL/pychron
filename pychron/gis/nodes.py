@@ -22,20 +22,24 @@ from pychron.pipeline.nodes.figure import FigureNode
 
 
 class SampleGroupingNode(GroupingNode):
-    name = 'Sample Grouping'
-    keys = ('Material',
-            'Sample',
-            'Comment',
-            'SubGroup',
-            'Group Name',
-            'Label Name',
-            'No Grouping')
-    attribute = Enum('FeatureGroup',)
+    name = "Sample Grouping"
+    keys = (
+        "Material",
+        "Sample",
+        "Comment",
+        "SubGroup",
+        "Group Name",
+        "Label Name",
+        "No Grouping",
+    )
+    attribute = Enum(
+        "FeatureGroup",
+    )
 
 
 class GISNode(FigureNode):
-    name = 'GIS'
-    editor_klass = 'pychron.gis.qgis_figure_editor, GISFigureEditor'
+    name = "GIS"
+    editor_klass = "pychron.gis.qgis_figure_editor, GISFigureEditor"
     plotter_options_manager_klass = GISOptionsManager
 
     def refresh(self):
@@ -49,5 +53,6 @@ class GISNode(FigureNode):
         editor.load()
         state.editors.append(editor)
         self.editor = editor
+
 
 # ============= EOF =============================================
