@@ -2784,6 +2784,8 @@ anaylsis_type={}
             refresh_age=self.spec.analysis_type in ("unknown", "cocktail"),
         )
 
+        self._update_persister_spec(time_zero=starttime)
+
         m.set_starttime(starttime)
         if hasattr(self.spectrometer_manager.spectrometer, "trigger_acq"):
             m.trait_set(trigger=self.spectrometer_manager.spectrometer.trigger_acq)
