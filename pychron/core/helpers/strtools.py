@@ -143,7 +143,7 @@ def to_int(i):
 
 
 def streq(a, b):
-    return a and b and a.lower() == b.lower()
+    return a and b and a.casefold() == b.casefold()
 
 
 if __name__ == "__main__":

@@ -25,7 +25,6 @@ from chaco.api import (
     VPlotContainer,
     HPlotContainer,
     GridPlotContainer,
-    BasePlotContainer,
     Plot,
     ArrayPlotData,
 )
