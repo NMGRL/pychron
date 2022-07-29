@@ -952,7 +952,8 @@ class GitRepoManager(Loggable):
             else:
                 self.debug("merging {} commits".format(behind))
                 self._git_command(
-                    lambda g: g.merge("FETCH_HEAD", '-X', 'ours'), "GitRepoManager.smart_pull/!ahead"
+                    lambda g: g.merge("FETCH_HEAD", "-X", "ours"),
+                    "GitRepoManager.smart_pull/!ahead",
                 )
         else:
             self.debug("Up-to-date with {}".format(remote))
