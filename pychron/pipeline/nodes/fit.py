@@ -19,7 +19,7 @@ from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 
 # ============= enthought library imports =======================
-from traits.api import Bool, List
+from traits.api import Bool, List, Instance
 
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.progress import progress_loader
@@ -269,6 +269,8 @@ class FitIsotopeEvolutionNode(FitNode):
     use_plotting = False
     _refit_message = "The selected Isotope Evolutions have already been fit. Would you like to skip refitting?"
 
+    classifier = Instance('pychron.classifier.isotope_classifier.IsotopeClassifier')
+
     def _check_refit(self, analysis):
         for k in self._keys:
 
@@ -422,10 +424,14 @@ class FitIsotopeEvolutionNode(FitNode):
                     signal_to_blank_goodness = (
                         signal_to_blank < signal_to_blank_threshold
                     )
+                class_ = 1
+                if self.classifier:
+                    class_, prob = self.classifier.classify_isotope(iso)
 
                 yield IsoEvoResult(
                     analysis=xi,
                     isotope_obj=iso,
+                    class_=class_,
                     nstr=nstr,
                     intercept_value=i,
                     intercept_error=e,

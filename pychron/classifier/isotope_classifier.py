@@ -26,7 +26,7 @@ from pychron.classifier.base_classifier import BaseClassifier
 
 
 def make_sample(iso):
-    # print 'make sample {} {} {}'.format(iso.mass, iso.n, iso.intercept_percent_error)
+    print('make sample {} {} {}'.format(iso.mass, iso.n, iso.intercept_percent_error))
     return (
         iso.mass,
         iso.n,
@@ -54,7 +54,7 @@ class IsotopeClassifier(BaseClassifier):
             klass=klass, *args, **kw
         )
 
-    def predict_isotope(self, iso):
+    def classify_isotope(self, iso):
         return self.predict(make_sample(iso))
 
     def add_isotopes(self, isos, klasses):
@@ -79,9 +79,8 @@ class IsotopeClassifier(BaseClassifier):
         if self._clf is None:
             self.load()
 
-        klass = None
+        klass = 1
         prob = 0
-        print(x)
         if self._clf:
             klass = int(self._clf.predict(x)[0])
             prob = self._clf.predict_proba(x)[0][klass]

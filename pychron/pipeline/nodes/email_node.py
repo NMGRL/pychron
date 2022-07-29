@@ -51,7 +51,8 @@ class Emailee(HasTraits):
 
 class EmailNode(BaseNode):
     name = "Email"
-    emailer = Instance(Emailer)
+    # emailer = Instance(Emailer)
+    emailer = Instance('pychron.social.email.emailer.Emailer')
     addresses = List
 
     def traits_view(self):

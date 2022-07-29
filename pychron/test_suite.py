@@ -20,6 +20,9 @@ from pychron.core.regression.tests.regression import (
     FilterOLSRegressionTest,
     OLSRegressionTest2,
     TruncateRegressionTest,
+    NewYorkRegressionTest,
+    # ReedRegressionTest,
+    PearsonRegressionTest
 )
 from pychron.core.tests.alpha_tests import AlphaTestCase
 from pychron.experiment.tests.backup import BackupTestCase
@@ -92,6 +95,10 @@ def suite():
         OLSRegressionTest2,
         TruncateRegressionTest,
         MSWDTestCase,
+        # ReedRegressionTest,
+        PearsonRegressionTest,
+        NewYorkRegressionTest,
+
         # old
         # ExpoRegressionTest,
         # ExpoRegressionTest2,

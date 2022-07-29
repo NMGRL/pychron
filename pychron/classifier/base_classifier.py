@@ -23,10 +23,11 @@ from sklearn.externals import joblib
 from sklearn.neighbors import KNeighborsClassifier
 
 # ============= local library imports  ==========================
+from pychron.loggable import Loggable
 from pychron.paths import paths
 
 
-class BaseClassifier(object):
+class BaseClassifier(Loggable):
     _clf = None
 
     def fit(self, x, y):
@@ -61,8 +62,12 @@ class BaseClassifier(object):
 
     def load(self):
         p = self.persistence_path
+        self.debug(f'loading {self.persistence_path}')
         if os.path.isfile(p):
-            self._clf = joblib.load(p)
+            try:
+                self._clf = joblib.load(p)
+            except BaseException:
+                self.debug('failed loading classifier')
 
     def dump(self):
         joblib.dump(self._clf, self.persistence_path)
