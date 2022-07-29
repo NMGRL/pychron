@@ -260,7 +260,7 @@ class FluxPersistNode(DVCPersistNode):
     def run(self, state):
         if state.monitor_positions:
             meta_repo = self.dvc.meta_repo
-            meta_repo.smart_pull()
+            meta_repo.smart_pull(quiet=False)
             xs = [
                 xi
                 for xi in state.monitor_positions + state.unknown_positions
