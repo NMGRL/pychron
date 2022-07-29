@@ -70,7 +70,7 @@ class FitNode(FigureNode):
                 u
                 for u in unks
                 if not u.is_omitted()
-                   and u.analysis_type in self.plotter_options.analysis_types
+                and u.analysis_type in self.plotter_options.analysis_types
             ]
         return unks
 
@@ -220,8 +220,14 @@ class FitICFactorNode(FitReferencesNode):
 
         rd = {}
         for p in ps:
-            ans, xs, vs, es = self.editor.figure_model.panels[0].figures[0].reference_data(p)
-            rd[p.denominator] = {'xs': [ai.timestamp for ai in ans], 'vs': vs.tolist(), 'es': es.tolist()}
+            ans, xs, vs, es = (
+                self.editor.figure_model.panels[0].figures[0].reference_data(p)
+            )
+            rd[p.denominator] = {
+                "xs": [ai.timestamp for ai in ans],
+                "vs": vs.tolist(),
+                "es": es.tolist(),
+            }
         state.reference_data = rd
 
     def _check_refit(self, ai):
@@ -375,8 +381,8 @@ class FitIsotopeEvolutionNode(FitNode):
                     bs = iso.baseline.error
                     signal_to_baseline = abs(bs / i * 100)
                     if (
-                            signal_to_baseline_threshold
-                            and signal_to_baseline_percent_threshold
+                        signal_to_baseline_threshold
+                        and signal_to_baseline_percent_threshold
                     ):
                         if signal_to_baseline > signal_to_baseline_threshold:
                             signal_to_baseline_goodness = bool(
@@ -427,7 +433,7 @@ class FitIsotopeEvolutionNode(FitNode):
                 if f.signal_to_blank_goodness:
                     signal_to_blank_threshold = f.signal_to_blank_goodness
                     signal_to_blank_goodness = (
-                            signal_to_blank < signal_to_blank_threshold
+                        signal_to_blank < signal_to_blank_threshold
                     )
                 class_ = 1
                 if self.classifier:
@@ -440,7 +446,7 @@ class FitIsotopeEvolutionNode(FitNode):
                     nstr=nstr,
                     intercept_value=i,
                     intercept_error=e,
-                    normalized_error=e * iso.n ** 0.5,
+                    normalized_error=e * iso.n**0.5,
                     percent_error=pe,
                     int_err=pe,
                     int_err_threshold=goodness_threshold,
@@ -600,5 +606,6 @@ class FitFluxNode(FitNode):
             state.monitor_positions = editor.monitor_positions
             editor.predict_values()
             editor.name = "Flux: {}{}".format(state.irradiation, state.level)
+
 
 # ============= EOF =============================================

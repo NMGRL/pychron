@@ -251,12 +251,14 @@ def _analysis_path(
 def repository_path(*args):
     return os.path.join(paths.repository_dataset_dir, *args)
 
+
 # def make_ref_plot_list(refs):
 #
 #     xs = [for r in refs]
 #     ys = [for r in refs]
 #
 #     return {"xs": xs, "ys": ys}
+
 
 def make_ref_list(refs):
     ret = ""

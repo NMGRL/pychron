@@ -75,7 +75,7 @@ class ICFactor(ReferencesSeries):
         v, e = 0, 0
         if d in analysis.temporary_ic_factors:
             ticf = analysis.temporary_ic_factors[d]
-            ic = ticf['value']
+            ic = ticf["value"]
             v, e = nominal_value(ic), std_dev(ic)
 
         return v, e

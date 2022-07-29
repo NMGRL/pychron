@@ -57,7 +57,7 @@ class ICFactor(HasTraits):
             HGroup(
                 UItem("use"),
                 UItem("det", editor=EnumEditor(name="detectors")),
-                UItem("num", label='Relative To', editor=EnumEditor(name="detectors")),
+                UItem("num", label="Relative To", editor=EnumEditor(name="detectors")),
                 Item("value"),
                 Label(PLUSMINUS),
                 UItem("error"),
