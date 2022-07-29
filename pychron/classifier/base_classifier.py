@@ -62,12 +62,12 @@ class BaseClassifier(Loggable):
 
     def load(self):
         p = self.persistence_path
-        self.debug(f'loading {self.persistence_path}')
+        self.debug(f"loading {self.persistence_path}")
         if os.path.isfile(p):
             try:
                 self._clf = joblib.load(p)
             except BaseException:
-                self.debug('failed loading classifier')
+                self.debug("failed loading classifier")
 
     def dump(self):
         joblib.dump(self._clf, self.persistence_path)

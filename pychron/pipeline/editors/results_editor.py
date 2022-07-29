@@ -69,7 +69,13 @@ from pychron.options.views.views import view
 from pychron.pipeline.plot.figure_container import FigureContainer
 from pychron.pipeline.plot.models.regression_series_model import RegressionSeriesModel
 from pychron.pipeline.results.iso_evo import ISO_EVO_RESULT_ARGS
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED, LIGHT_YELLOW, BAD, GOOD
+from pychron.pychron_constants import (
+    PLUSMINUS_ONE_SIGMA,
+    LIGHT_RED,
+    LIGHT_YELLOW,
+    BAD,
+    GOOD,
+)
 
 
 class IsoEvolutionResultsAdapter(TabularAdapter):
@@ -379,7 +385,7 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
                 editor=TabularEditor(
                     adapter=self.adapter,
                     editable=False,
-                    refresh='refresh_needed',
+                    refresh="refresh_needed",
                     multi_select=True,
                     selected="selected",
                     column_clicked="column_clicked",
@@ -390,5 +396,6 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
         )
         v = View(VGroup(Tabbed(ggrp, tgrp)))
         return v
+
 
 # ============= EOF =============================================

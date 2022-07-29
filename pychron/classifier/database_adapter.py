@@ -31,11 +31,11 @@ class ArgonIntelligenceDatabase(DVCDatabase):
         # prefid = "pychron.dvc.connection"
         # bind_preference(self, "favorites", "{}.favorites".format(prefid))
         # self._favorites_changed(self.favorites)
-        favorites = eval(self.application.preferences.get("pychron.dvc.connection.favorites"))
-        ds = [DVCConnectionItem(attrs=f, load_names=False) for f in favorites]
-        data_source = next(
-            (d for d in ds if d.default and d.enabled), None
+        favorites = eval(
+            self.application.preferences.get("pychron.dvc.connection.favorites")
         )
+        ds = [DVCConnectionItem(attrs=f, load_names=False) for f in favorites]
+        data_source = next((d for d in ds if d.default and d.enabled), None)
         self.host = data_source.host
         self.kind = data_source.kind
         self.password = data_source.password
@@ -53,11 +53,16 @@ class ArgonIntelligenceDatabase(DVCDatabase):
             with self.session_ctx() as sess:
                 q = sess.query(ArgonIntelligenceTbl)
                 q = q.join(AnalysisTbl)
-                q = q.filter(AnalysisTbl.uuid == analysis.uuid and ArgonIntelligenceTbl.isotope == iso.name)
+                q = q.filter(
+                    AnalysisTbl.uuid == analysis.uuid
+                    and ArgonIntelligenceTbl.isotope == iso.name
+                )
                 return self._query_one(q, verbose_query=False)
 
     def add_classification(self, analysis, isotope, class_=None):
-        self.debug(f'add classification: {analysis.uuid}, {analysis.record_id}, {isotope}')
+        self.debug(
+            f"add classification: {analysis.uuid}, {analysis.record_id}, {isotope}"
+        )
         with self.session_ctx() as sess:
             iso = isotope
             if isinstance(iso, str):
@@ -69,9 +74,11 @@ class ArgonIntelligenceDatabase(DVCDatabase):
                 co = self.get_classification(analysis, iso)
                 if co is None:
                     dbanalysis = self.get_analysis_uuid(analysis.uuid)
-                    obj = ArgonIntelligenceTbl(analysisID=dbanalysis.id,
-                                               class_=class_ or iso.class_,
-                                               isotope=iso.name)
+                    obj = ArgonIntelligenceTbl(
+                        analysisID=dbanalysis.id,
+                        class_=class_ or iso.class_,
+                        isotope=iso.name,
+                    )
 
                     self.add_item(obj)
                 else:
@@ -79,5 +86,7 @@ class ArgonIntelligenceDatabase(DVCDatabase):
                     sess.flush()
                     sess.commit()
             else:
-                self.warning(f'failed to located isotope {isotope}')
+                self.warning(f"failed to located isotope {isotope}")
+
+
 # ============= EOF =============================================

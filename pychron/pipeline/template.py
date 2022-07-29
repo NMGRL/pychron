@@ -192,8 +192,11 @@ class PipelineTemplate(HasTraits):
         elif isinstance(node, EmailNode):
             emailer = application.get_service("pychron.social.email.emailer.Emailer")
             if emailer is None:
-                warning(None, "Cannot load an Email Node, the Email Plugin is required.  Check log to see why Email "
-                              "Plugin is not loaded")
+                warning(
+                    None,
+                    "Cannot load an Email Node, the Email Plugin is required.  Check log to see why Email "
+                    "Plugin is not loaded",
+                )
                 return
 
             node.trait_set(emailer=emailer)
@@ -214,9 +217,13 @@ class PipelineTemplate(HasTraits):
             node.trait_set(recaller=recaller)
 
         if isinstance(node, FitIsotopeEvolutionNode):
-            node.classifier = application.get_service('pychron.classifier.isotope_classifier.IsotopeClassifier')
+            node.classifier = application.get_service(
+                "pychron.classifier.isotope_classifier.IsotopeClassifier"
+            )
         elif isinstance(node, IsotopeEvolutionPersistNode):
-            node.classifier_db = application.get_service('pychron.classifier.database_adapter.ArgonIntelligenceDatabase')
+            node.classifier_db = application.get_service(
+                "pychron.classifier.database_adapter.ArgonIntelligenceDatabase"
+            )
 
         return node
 

@@ -144,7 +144,9 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
     name = "Save Iso Evo"
     commit_tag = "ISOEVO"
     modifier = ("intercepts", "baselines")
-    classifier_db = Instance('pychron.classifier.database_adapter.ArgonIntelligenceDatabase')
+    classifier_db = Instance(
+        "pychron.classifier.database_adapter.ArgonIntelligenceDatabase"
+    )
 
     def run(self, state):
         if not state.saveable_keys:

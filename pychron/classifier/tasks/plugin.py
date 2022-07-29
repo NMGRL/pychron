@@ -46,13 +46,10 @@ class ClassifierPlugin(BaseTaskPlugin):
         so1 = self.service_offer_factory(
             protocol=ArgonIntelligenceDatabase,
             factory=ArgonIntelligenceDatabase,
-            properties={"application": self.application}
+            properties={"application": self.application},
         )
 
-        return [
-            so,
-            so1
-        ]
+        return [so, so1]
 
     # def _preferences_default(self):
     #     return self._preferences_factory('dvc')

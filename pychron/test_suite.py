@@ -22,7 +22,7 @@ from pychron.core.regression.tests.regression import (
     TruncateRegressionTest,
     NewYorkRegressionTest,
     # ReedRegressionTest,
-    PearsonRegressionTest
+    PearsonRegressionTest,
 )
 from pychron.core.tests.alpha_tests import AlphaTestCase
 from pychron.experiment.tests.backup import BackupTestCase
@@ -98,7 +98,6 @@ def suite():
         # ReedRegressionTest,
         PearsonRegressionTest,
         NewYorkRegressionTest,
-
         # old
         # ExpoRegressionTest,
         # ExpoRegressionTest2,

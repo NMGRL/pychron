@@ -21,14 +21,16 @@ from pychron.dvc.dvc_orm import Base, IDMixin
 
 
 class ArgonIntelligenceTbl(Base, IDMixin):
-    class_ = Column('class', Integer, ForeignKey("ArgonIntelligenceClassTbl.class"))
+    class_ = Column("class", Integer, ForeignKey("ArgonIntelligenceClassTbl.class"))
     analysisID = Column(Integer, ForeignKey("AnalysisTbl.id"))
     isotope = Column(String(40))
 
 
 class ArgonIntelligenceClassTbl(Base):
-    __tablename__ = 'ArgonIntelligenceClassTbl'
-    class_ = Column('class', Integer, primary_key=True)
+    __tablename__ = "ArgonIntelligenceClassTbl"
+    class_ = Column("class", Integer, primary_key=True)
     name = Column(String(140))
     description = Column(Text)
+
+
 # ============= EOF =============================================

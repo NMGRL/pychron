@@ -269,7 +269,7 @@ class FitIsotopeEvolutionNode(FitNode):
     use_plotting = False
     _refit_message = "The selected Isotope Evolutions have already been fit. Would you like to skip refitting?"
 
-    classifier = Instance('pychron.classifier.isotope_classifier.IsotopeClassifier')
+    classifier = Instance("pychron.classifier.isotope_classifier.IsotopeClassifier")
 
     def _check_refit(self, analysis):
         for k in self._keys:
