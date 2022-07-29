@@ -82,6 +82,7 @@ class BrowserModel(BaseBrowserModel):
         bind_preference(
             self, "auto_load_database", "{}.auto_load_database".format(prefid)
         )
+        bind_preference(self, 'use_quick_recall', '{}.use_quick_recall'.format(prefid))
 
     def activated(self, force=False):
         self.reattach()

@@ -407,6 +407,9 @@ class DVCAnalysis(Analysis):
 
             iso.set_fit(fi)
 
+    def get_json(self, modifier):
+        return self._get_json(modifier)
+
     def get_meta(self):
         return dvc_load(self.meta_path)
 
@@ -549,12 +552,13 @@ class DVCAnalysis(Analysis):
         self._dump(jd, path)
 
     def dump_icfactors(
-        self, dkeys, fits, refs=None, reviewed=False, standard_ratios=None
+        self, dkeys, fits, refs=None, reviewed=False, standard_ratios=None, reference_data=None
     ):
         jd, path = self._get_json("icfactors")
 
         for i, (dk, fi) in enumerate(zip(dkeys, fits)):
-            v = self.temporary_ic_factors.get(dk)
+            ticf = self.temporary_ic_factors.get(dk)
+            v = ticf['value']
             if v is None:
                 v, e = 1, 0
             else:
@@ -570,20 +574,26 @@ class DVCAnalysis(Analysis):
                     standard_ratio = standard_ratios[i]
                 except IndexError:
                     standard_ratio = None
+            rd = None
+            if reference_data:
+                rd = reference_data[dk]
 
             jd[dk] = {
                 "value": float(v),
                 "error": float(e),
                 "reviewed": reviewed,
                 "fit": fi,
+                "reference_detector": ticf['reference_detector'],
                 "standard_ratio": standard_ratio,
                 "references": make_ref_list(refs),
+                "reference_data": rd
             }
         self._dump(jd, path)
 
     def dump_source_correction_icfactors(self, refs=None, standard_ratio=None):
         jd, path = self._get_json(ICFACTORS)
-        for det, value in self.temporary_ic_factors.items():
+        for det, ticf in self.temporary_ic_factors.items():
+            value = ticf['value']
             v, e = nominal_value(value), std_dev(value)
             jd[det] = {
                 "value": float(v),

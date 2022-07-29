@@ -45,6 +45,7 @@ from pychron.processing.analyses.view.adapters import (
 from pychron.processing.analyses.view.detector_ic_view import DetectorICView
 from pychron.processing.analyses.view.dvc_commit_view import HistoryView
 from pychron.processing.analyses.view.error_components_view import ErrorComponentsView
+from pychron.processing.analyses.view.icfactor_view import ICFactorView
 from pychron.processing.analyses.view.interferences_view import InterferencesView
 from pychron.processing.analyses.view.main_view import MainView
 from pychron.processing.analyses.view.peak_center_view import PeakCenterView
@@ -316,6 +317,9 @@ class AnalysisView(HasTraits):
             new.dvc = self.dvc
         elif isinstance(new, RegressionView):
             new.initialize(self.model)
+        elif isinstance(new, ICFactorView):
+            new.dvc = self.dvc
+            new.activate()
 
     def _make_subviews(self, an, gs):
         view = HistoryView()
@@ -350,6 +354,9 @@ class AnalysisView(HasTraits):
         if an.analysis_type in (UNKNOWN, COCKTAIL):
             ecv = ErrorComponentsView(an)
             gs.append(ecv)
+
+            icv = ICFactorView(analysis=an)
+            gs.append(icv)
 
         pch = PeakCenterView()
         if pch.load(an):

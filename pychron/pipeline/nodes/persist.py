@@ -250,6 +250,7 @@ class ICFactorPersistNode(DVCPersistNode):
             state.references,
             state.use_source_correction,
             state.standard_ratios,
+            state.reference_data
         )
 
 
