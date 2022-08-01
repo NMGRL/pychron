@@ -99,7 +99,7 @@ class AnalysesAdapter(SubGroupAdapter):
         ("Tag", "tag"),
         ("Group", "group_id"),
         ("SubGroup", "subgroup"),
-        ("Exclude Isochron", "exclude_from_isochron")
+        ("Exclude Isochron", "exclude_from_isochron"),
     ]
 
     subgroup_text = Property
@@ -108,7 +108,7 @@ class AnalysesAdapter(SubGroupAdapter):
     exclude_from_isochron_text = Property
 
     def _get_exclude_from_isochron_text(self):
-        return 'Yes' if self.item.exclude_from_isochron else ''
+        return "Yes" if self.item.exclude_from_isochron else ""
 
     def _get_tag_text(self):
         return self.item.tag
@@ -127,7 +127,10 @@ class AnalysesAdapter(SubGroupAdapter):
             Action(name="Clear Grouping", action="clear_grouping"),
             Action(name="Group Selected", action="group_selected"),
             Action(name="SubGroup Selected", action="subgroup_selected"),
-            Action(name="Toggle Exclude From Isochron", action='toggle_exclude_from_isochron')
+            Action(
+                name="Toggle Exclude From Isochron",
+                action="toggle_exclude_from_isochron",
+            ),
         )
         return m
 
