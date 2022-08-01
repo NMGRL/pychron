@@ -114,7 +114,8 @@ class ArArAge(IsotopeGroup):
     rundate = None
 
     arar_mapping = ARAR_MAPPING
-
+    exclude_from_isochron = False
+    
     def __init__(self, *args, **kw):
         super(ArArAge, self).__init__(*args, **kw)
         self.arar_constants = ArArConstants()
@@ -299,7 +300,7 @@ class ArArAge(IsotopeGroup):
             numkey, denkey = ratio.split("/")
 
             for name, isos in groupby_key(
-                self.isotopes.values(), key=attrgetter("name")
+                    self.isotopes.values(), key=attrgetter("name")
             ):
                 num, den = None, None
                 for iso in isos:
@@ -334,10 +335,10 @@ class ArArAge(IsotopeGroup):
                 self.sensitivity_units = si["units"]
                 break
 
-    def set_temporary_uic_factor(self, k, uv):
+    def set_temporary_uic_factor(self, k, refdet, uv):
         self.temporary_ic_factors[k] = uv
 
-    def set_beta(self, beta, is_peak_hop):
+    def set_beta(self, n, beta, is_peak_hop):
         """
         this is a source discrimination correction and assumes detectors are already "perfectly" calibrated
         Requested by WiscAr for NGX.  They do detector calibration in IsoLinx (Iconia) and assume the detectors stay in
@@ -369,11 +370,11 @@ class ArArAge(IsotopeGroup):
             else:
                 iso = self.get_isotope(k)
             det = iso.detector
-            self.temporary_ic_factors[det] = v
+            self.temporary_ic_factors[det] = {'reference_detector': n, 'value': v}
             self.info("setting ic factor={} to {}".format(det, v))
 
-    def set_temporary_ic_factor(self, k, v, e, tag=None):
-        self.temporary_ic_factors[k] = uv = ufloat(v, e, tag=tag)
+    def set_temporary_ic_factor(self, n, k, v, e, tag=None):
+        self.temporary_ic_factors[k] = uv = {'reference_detector': n, 'value': ufloat(v, e, tag=tag)}
         return uv
 
     def set_temporary_blank(self, k, v, e, f, verbose=False):
@@ -706,6 +707,5 @@ class ArArAge(IsotopeGroup):
     @property
     def moles_Ar40(self):
         return self.sensitivity * self.get_isotope("Ar40").get_intensity()
-
 
 # ============= EOF =============================================

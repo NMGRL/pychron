@@ -36,6 +36,7 @@ from traits.api import (
     Color,
     Dict,
 )
+from traits.trait_errors import TraitError
 from uncertainties import ufloat, nominal_value, std_dev
 
 from pychron.core.pychron_traits import StepStr
@@ -360,12 +361,12 @@ class AnalysisGroup(IdeogramPlotable):
             def test(ai):
                 a = self._is_omitted(ai)
                 b = not self.get_is_plateau_step(ai)
-                return a or b
+                return a or b or ai.exclude_from_isochron
 
         else:
 
             def test(ai):
-                return self._is_omitted(ai)
+                return self._is_omitted(ai) or ai.exclude_from_isochron
 
         exclude = [i for i, x in enumerate(ans) if test(x)]
         if ans:
@@ -1110,7 +1111,11 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             if "Plateau" in obj.kind:
                 self.plateau_age_error_kind = obj.error_kind
                 if obj.kind != "Plateau":
-                    self.age_error_kind = obj.error_kind
+                    try:
+                        self.age_error_kind = obj.error_kind
+                    except TraitError:
+                        pass
+
             elif "Isochron" in obj.kind:
                 self.isochron_age_error_kind = obj.error_kind
             else:
@@ -1118,9 +1123,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
 
             self.dirty = True
             v = self._get_preferred_age()
+            print('asdfsafdsda', v)
             obj.value = nominal_value(v)
             obj.error = std_dev(v)
-            self.dirty = True
+
         else:
             v, k = self._get_preferred_(
                 obj.attr, obj.kind, obj.error_kind, obj.weighting
@@ -1177,8 +1183,13 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
                     vk = default_vk
                     ek = default_ek
             else:
-                vk = sg.get("{}_kind".format(k), default_vk)
-                ek = sg.get("{}_error_kind".format(k), default_ek)
+                if not isinstance(sg, dict):
+                    pv = sg.get_preferred_obj(k)
+                    vk = pv.kind
+                    ek = pv.error_kind
+                else:
+                    vk = sg.get("{}_kind".format(k), default_vk)
+                    ek = sg.get("{}_error_kind".format(k), default_ek)
 
             self.set_preferred_kind(k, vk, ek, unit)
 
@@ -1187,9 +1198,10 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
         pv = self._get_pv(attr)
         pv.error_kind = ek
         pv.kind = k
-        pv.dirty = True
         if unit:
             pv.unit = unit
+
+        pv.dirty = True
 
     def get_preferred_kind(self, attr):
         pv = self.get_preferred_obj(attr)
