@@ -18,8 +18,12 @@
 from itertools import groupby
 from operator import attrgetter
 
-from chaco.overlays.scatter_inspector_overlay import ScatterInspectorOverlay
-from chaco.plots.scatterplot import ScatterPlot
+try:
+    from chaco.overlays.scatter_inspector_overlay import ScatterInspectorOverlay
+    from chaco.plots.scatterplot import ScatterPlot
+except ImportError:
+    from chaco.api import ScatterInspectorOverlay, ScatterPlot
+
 from enable.component_editor import ComponentEditor
 from numpy import poly1d, linspace
 from pyface.action.menu_manager import MenuManager
