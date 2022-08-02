@@ -1158,9 +1158,12 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
     def get_preferred_mswd_tuple(self):
         pv = self._get_pv("age")
         k = pv.computed_kind.lower()
-        t = self.get_mswd_tuple()
         if k == "plateau":
             t = self.get_plateau_mswd_tuple()
+        elif 'isochron' in k:
+            t = self.isochron_mswd()
+        else:
+            t = self.get_mswd_tuple()
 
         return t
 
