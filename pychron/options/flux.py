@@ -31,7 +31,7 @@ from pychron.pychron_constants import (
     BOWL,
     PLANE,
     GRIDDATA,
-    IDW,
+    IDW, LINEAR, WEIGHTED_MEAN, AVERAGE,
 )
 
 
@@ -41,6 +41,7 @@ class BaseFluxOptions(FigureOptions):
     levels = Int(50, auto_set=False, enter_set=True)
     plot_kind = Enum("1D", "2D", "Grid")
     use_weighted_fit = Bool(False)
+    interpolation_style = Enum(WEIGHTED_MEAN, AVERAGE, LINEAR)
     monte_carlo_ntrials = Int(10)
     use_monte_carlo = Bool(False)
     position_error = Float

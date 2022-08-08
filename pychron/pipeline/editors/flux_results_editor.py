@@ -60,7 +60,7 @@ from pychron.pipeline.editors.flux_visualization_editor import (
 )
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
 from pychron.processing.flux import mean_j
-from pychron.pychron_constants import LEAST_SQUARES_1D, WEIGHTED_MEAN_1D
+from pychron.pychron_constants import LEAST_SQUARES_1D, WEIGHTED_MEAN_1D, WEIGHTED_MEAN, AVERAGE, LINEAR
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
@@ -489,31 +489,43 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
         v = View(VGroup(tgrp, Tabbed(ggrp, pgrp)))
         return v
 
+# def linear_interp(obj, a, b):
+#     def func(j1,j2):
+#         x2 = ((a.x - b.x) ** 2 + (a.y - b.y) ** 2) ** 0.5
+#         x = ((obj.x - b.x) ** 2 + (obj.y - b.y) ** 2) ** 0.5
+#         j = j1 + x * (j2 - j1) / (x2)
+#         return j
+#
+#     return func(a.mean_j, b.mean_j), func(a.mean_jerr, b.mean_jerr)
+
 
 class BracketingFluxResultsEditor(FluxResultsEditor):
     @on_trait_change("unknown_positions:[bracket_a, bracket_b]")
     def handle_bracket(self, obj, name, old, new):
-        if obj.bracket_a and obj.bracket_b:
-            a, b = [
-                p
-                for p in self.monitor_positions
-                if p.hole_id in (obj.bracket_a, obj.bracket_b)
-            ]
-
-            ws = array([1 / a.mean_jerr**2, 1 / b.mean_jerr**2])
-            vs = array([a.mean_j, b.mean_j])
-            if self.plotter_options.use_weighted_fit:
-
-                j = average(vs, weights=ws)
-                je = sum(ws)
-
-            else:
-                j, je = vs.mean(), vs.std()
-
-            oj = obj.saved_j
-            obj.j = j
-            obj.jerr = je
-            obj.dev = (oj - j) / j * 100
+        pass
+        # if obj.bracket_a and obj.bracket_b:
+        #     a, b = [
+        #         p
+        #         for p in self.monitor_positions
+        #         if p.hole_id in (obj.bracket_a, obj.bracket_b)
+        #     ]
+        #
+        #     ws = array([1 / a.mean_jerr**2, 1 / b.mean_jerr**2])
+        #     vs = array([a.mean_j, b.mean_j])
+        #     self.debug('interpolation style {}', self.plotter_options)
+        #     if self.plotter_options.interpolation_style in (AVERAGE, WEIGHTED_MEAN):
+        #         if self.plotter_options.use_weighted_fit:
+        #             j = average(vs, weights=ws)
+        #             je = sum(ws)
+        #         else:
+        #             j, je = vs.mean(), vs.std()
+        #     elif self.plotter_options.interpolation_style == LINEAR:
+        #         j, je = linear_interp(obj, a, b)
+        #         self.debug('j={}, je={}', j, je)
+        #     oj = obj.saved_j
+        #     obj.j = j
+        #     obj.jerr = je
+        #     obj.dev = (oj - j) / j * 100
 
     def traits_view(self):
         unk_cols = [

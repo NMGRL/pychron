@@ -119,11 +119,14 @@ PLATEAU_INTEGRATED = "{} Integrated".format(PLATEAU)
 AUTO_LINEAR_PARABOLIC = "Auto Linear/Parabolic"
 AUTO_N = "Auto N"
 EXPONENTIAL = "exponential"
+AVERAGE = "Average"
+LINEAR = "Linear"
+
 FIT_TYPES = [
-    "Linear",
+    LINEAR,
     "Parabolic",
     "Cubic",
-    "Average",
+    AVERAGE,
     EXPONENTIAL.capitalize(),
     WEIGHTED_MEAN,
     "Custom",

@@ -34,12 +34,13 @@ from scipy.interpolate import Rbf, bisplrep, bisplev, griddata
 from statsmodels.regression.linear_model import WLS, OLS
 
 # ============= enthought library imports =======================
-from traits.api import Bool, Int
+from traits.api import Bool, Int, Enum
 
 from pychron.core.geometry.geometry import calc_distances
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.core.regression.ols_regressor import MultipleLinearRegressor
 from pychron.core.stats.idw import Invdisttree
+from pychron.pychron_constants import WEIGHTED_MEAN, AVERAGE, LINEAR
 
 
 class SpecialFluxRegressor(BaseRegressor):
@@ -144,8 +145,33 @@ class IDWRegressor(InterpolationRegressor):
         return self._invdisttree(pts, nnear=nnear, eps=eps, p=p)
 
 
+def linear_interp(xy, xs, js):
+    x2 = ((xs[0][0] - xs[1][0]) ** 2 + (xs[0][1] - xs[1][1]) ** 2) ** 0.5
+    x = ((xy[0] - xs[0][0]) ** 2 + (xy[1] - xs[0][1]) ** 2) ** 0.5
+    j = js[0] + x * (js[1] - js[0]) / (x2)
+    return j
+
+    # return func(*vs)
+    # return func(a.mean_j, b.mean_j), func(a.mean_jerr, b.mean_jerr)
+
+
 class NearestNeighborFluxRegressor(SpecialFluxRegressor):
     n = Int(3)
+    interpolation_style = Enum(WEIGHTED_MEAN, AVERAGE, LINEAR)
+
+    def set_neighbors(self, unks, mons):
+        for unk in unks:
+            idx, ds = self._get_neighbors(unk.x, unk.y)
+            unk.bracket_a = mons[idx[0]].hole_id
+            unk.bracket_b = mons[idx[-1]].hole_id
+
+    def _get_neighbors(self, x, y):
+        v2 = array([[x, y]])
+        ds = ravel(calc_distances(self.clean_xs, v2))
+        idx = sorted(enumerate(ds), key=itemgetter(1))
+        idx = sorted(idx[:self.n])
+        idx, ds = zip(*idx)
+        return idx, ds
 
     def _predict(self, pts, return_error=False):
         def pred(x, y):
@@ -153,29 +179,30 @@ class NearestNeighborFluxRegressor(SpecialFluxRegressor):
             get the n positions that are closest (eucledian distance) to x,y
             """
 
-            v2 = array([[x, y]])
-            ds = ravel(calc_distances(self.clean_xs, v2))
-            idx = sorted(enumerate(ds), key=itemgetter(1))
-            idx, ds = zip(*idx[: self.n])
-
+            idx, _ = self._get_neighbors(x, y)
             v = 0
             if idx:
                 idx = array(idx)
 
                 vs = self.clean_ys[idx]
-
-                if self.use_weighted_fit:
+                # if self.interpolation_style in (AVERAGE, WEIGHTED_MEAN):
+                if self.interpolation_style == WEIGHTED_MEAN:
                     es = self.clean_yserr[idx]
-                    ws = es**-2
+                    ws = es ** -2
                     if return_error:
                         v = ws.sum() ** -0.5
                     else:
                         v = average(vs, weights=ws)
-                else:
+                elif self.interpolation_style == AVERAGE:
                     if return_error:
                         v = vs.std()
                     else:
                         v = vs.mean()
+                elif self.interpolation_style == LINEAR:
+                     v = linear_interp((x, y),
+                                          self.clean_xs[idx],
+                                          self.clean_yserr[idx] if return_error else self.clean_ys[idx]
+                                          )
             return v
 
         ret = [pred(*pt) for pt in pts]
@@ -257,8 +284,8 @@ class BowlFluxRegressor(MultipleLinearRegressor):
                 # x2**4,
                 # x1**3,
                 # x2**3,
-                x1**2,
-                x2**2,
+                x1 ** 2,
+                x2 ** 2,
                 x1,
                 x2,
                 ones_like(x1),
@@ -323,13 +350,12 @@ class PlaneFluxRegressor(MultipleLinearRegressor):
     def _get_weights(self):
         e = self.clean_yserr
         if self._check_integrity(e, e):
-            return 1 / e**2
+            return 1 / e ** 2
 
     def _engine_factory(self, fy, X, check_integrity=True):
         if self.use_weighted_fit:
             return WLS(fy, X, weights=self._get_weights())
         else:
             return OLS(fy, X)
-
 
 # ============= EOF =============================================

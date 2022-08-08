@@ -336,6 +336,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             elif model_kind == BRACKETING:
                 klass = NearestNeighborFluxRegressor
                 kw["n"] = 2
+                kw["interpolation_style"] = po.interpolation_style
             elif model_kind == NN:
                 klass = NearestNeighborFluxRegressor
                 kw["n"] = po.n_neighbors
@@ -362,6 +363,8 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
             xs=xs, ys=z, yserr=ze, error_calc_type=ec, use_weighted_fit=wf, **kw
         )
         reg.calculate()
+        if isinstance(reg, NearestNeighborFluxRegressor):
+            reg.set_neighbors(self.unknown_positions, self.monitor_positions)
         return reg
 
     def _model_flux(self, reg, r, total=True, n=None, origin=None):

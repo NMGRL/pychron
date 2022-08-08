@@ -435,14 +435,14 @@ class FitIsotopeEvolutionNode(FitNode):
                     signal_to_blank_goodness = (
                         signal_to_blank < signal_to_blank_threshold
                     )
-                class_ = 1
+                klass = 1
                 if self.classifier:
-                    class_, prob = self.classifier.classify_isotope(iso)
+                    klass, prob = self.classifier.classify_isotope(iso)
 
                 yield IsoEvoResult(
                     analysis=xi,
                     isotope_obj=iso,
-                    class_=class_,
+                    klass=klass,
                     nstr=nstr,
                     intercept_value=i,
                     intercept_error=e,
@@ -569,7 +569,6 @@ class FitFluxNode(FitNode):
         else:
             klass = FluxResultsEditor
         editor = klass()
-
         editor.plotter_options = self.plotter_options
         return editor
 

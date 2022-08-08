@@ -59,7 +59,7 @@ class ArgonIntelligenceDatabase(DVCDatabase):
                 )
                 return self._query_one(q, verbose_query=False)
 
-    def add_classification(self, analysis, isotope, class_=None):
+    def add_classification(self, analysis, isotope, klass=None):
         self.debug(
             f"add classification: {analysis.uuid}, {analysis.record_id}, {isotope}"
         )
@@ -76,13 +76,13 @@ class ArgonIntelligenceDatabase(DVCDatabase):
                     dbanalysis = self.get_analysis_uuid(analysis.uuid)
                     obj = ArgonIntelligenceTbl(
                         analysisID=dbanalysis.id,
-                        class_=class_ or iso.class_,
+                        klass=klass or iso.klass,
                         isotope=iso.name,
                     )
 
                     self.add_item(obj)
                 else:
-                    co.class_ = class_ or iso.class_
+                    co.klass = klass or iso.klass
                     sess.flush()
                     sess.commit()
             else:

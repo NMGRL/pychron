@@ -118,7 +118,7 @@ class IsoEvolutionResultsAdapter(TabularAdapter):
             if not item.goodness:
                 color = LIGHT_RED
 
-        if not item.class_:
+        if not item.klass:
             color = LIGHT_YELLOW
 
         return color
@@ -311,15 +311,15 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
 
     def _classify_good_button_fired(self):
         for s in self.selected:
-            s.class_ = GOOD
-            s.isotope_obj.class_ = GOOD
+            s.klass = GOOD
+            s.isotope_obj.klass = GOOD
 
         self.refresh_needed = True
 
     def _classify_bad_button_fired(self):
         for s in self.selected:
-            s.class_ = BAD
-            s.isotope_obj.class_ = BAD
+            s.klass = BAD
+            s.isotope_obj.klass = BAD
         self.refresh_needed = True
 
     def _view_bad_button_fired(self):

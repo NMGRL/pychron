@@ -90,7 +90,7 @@ class IsoEvoResult(BaseResult):
 
     hover_text = Property
 
-    class_ = None
+    klass = None
 
     @cached_property
     def _get_hover_text(self):

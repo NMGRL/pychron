@@ -277,6 +277,7 @@ class FluxPersistNode(DVCPersistNode):
                 model_kind=po.model_kind,
                 predicted_j_error_type=po.predicted_j_error_type,
                 use_weighted_fit=po.use_weighted_fit,
+                interpolation_style=po.interpolation_style,
                 monte_carlo_ntrials=po.monte_carlo_ntrials,
                 use_monte_carlo=po.use_monte_carlo,
                 monitor_name=po.monitor_name,

@@ -694,7 +694,7 @@ class Isotope(BaseIsotope):
     interference_corrected_value = None
     blank_source = ""
 
-    class_ = 1
+    klass = 1
 
     def __init__(self, name, detector):
         BaseIsotope.__init__(self, name, detector)
