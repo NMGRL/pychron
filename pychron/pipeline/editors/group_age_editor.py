@@ -412,14 +412,14 @@ class SubGroupAgeEditor(GroupAgeEditor):
         gid = r.group_id
 
         sgid = (
-                max(
-                    {
-                        int(a.subgroup["name"]) if a.subgroup else 0
-                        for a in self.items
-                        if a.group_id == gid
-                    }
-                )
-                + 1
+            max(
+                {
+                    int(a.subgroup["name"]) if a.subgroup else 0
+                    for a in self.items
+                    if a.group_id == gid
+                }
+            )
+            + 1
         )
         for a in self.selected:
             a.subgroup = {"name": sgid}
@@ -461,5 +461,6 @@ class SubGroupAgeEditor(GroupAgeEditor):
 
         v = View(VGroup(agrp, sgrp, ggrp), handler=THandler())
         return v
+
 
 # ============= EOF =============================================

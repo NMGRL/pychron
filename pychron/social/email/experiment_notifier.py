@@ -30,7 +30,7 @@ from pychron.loggable import Loggable
 
 
 class ExperimentNotifier(Loggable):
-    emailer = Instance('pychron.social.email.emailer.Emailer')
+    emailer = Instance("pychron.social.email.emailer.Emailer")
     include_log = Bool
 
     def __init__(self, *args, **kw):

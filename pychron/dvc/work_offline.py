@@ -361,12 +361,12 @@ class WorkOffline(Loggable):
         nrepos = []
         for repo in self.selected_repositories:
             arepos = self.dvc.find_reference_repos(repo)
-            self.debug('found {} for {}'.format(arepos, repo))
+            self.debug("found {} for {}".format(arepos, repo))
             nrepos.extend(arepos)
         nrepos = list(set(nrepos))
 
         self.selected_repositories.extend(nrepos)
-        print('asdf', self.selected_repositories, nrepos)
+        print("asdf", self.selected_repositories, nrepos)
 
     def _work_offline_button_fired(self):
         self.debug("work offline fired")

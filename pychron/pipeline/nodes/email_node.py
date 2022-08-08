@@ -36,6 +36,7 @@ try:
     from googleapiclient.errors import HttpError
     from pychron.social.email.emailer import Emailer
 except ImportError:
+
     class Emailer:
         def send(self, *args, **kw):
             information(

@@ -2095,8 +2095,11 @@ class DVCDatabase(DatabaseAdapter):
             return self._query_all(q, verbose_query=verbose)
 
     def get_analyses(
-        self, analysis_type=None, mass_spectrometer=None, reverse_order=False,
-            limit=1000
+        self,
+        analysis_type=None,
+        mass_spectrometer=None,
+        reverse_order=False,
+        limit=1000,
     ):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)

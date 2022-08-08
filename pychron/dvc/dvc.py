@@ -440,7 +440,7 @@ class DVC(Loggable):
         repos.extend(
             ["{}{}".format(irradiation_project_prefix, ir) for ir in irradiations]
         )
-        self.debug('reference repos {}'.format(repos))
+        self.debug("reference repos {}".format(repos))
         return list(set(repos))
 
     def find_associated_identifiers(self, samples):
@@ -1124,7 +1124,7 @@ class DVC(Loggable):
             try:
                 self.sync_repo(xi, use_progress=False, pull_frequency=pull_frequency)
             except BaseException as e:
-                print('sync repo', e)
+                print("sync repo", e)
                 pass
 
         bad_records = [r for r in records if r.repository_identifier is None]
@@ -1155,7 +1155,7 @@ class DVC(Loggable):
         try:
             branches = {ei: get_repository_branch(repository_path(ei)) for ei in exps}
         except NoSuchPathError as e:
-            print('e', e)
+            print("e", e)
             return []
 
         flux_histories = {}
