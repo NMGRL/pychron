@@ -29,9 +29,13 @@ from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
 
 try:
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
     from pychron.social.email.emailer import Emailer
 except ImportError:
-
     class Emailer:
         def send(self, *args, **kw):
             information(

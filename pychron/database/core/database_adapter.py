@@ -84,9 +84,11 @@ class SessionCTX(object):
                 return self._parent.session
             else:
                 self._psession = self._parent.session
-                self._session = self._parent.session_factory()
-                self._parent.session = self._session
-                return self._session
+                factory = self._parent.session_factory
+                if factory:
+                    self._session = factory()
+                    self._parent.session = self._session
+                    return self._session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._session:
@@ -727,6 +729,7 @@ host= {}\nurl= {}'.format(
         if verbose_query:
             try:
                 cq = compile_query(q)
+                print(cq)
                 self.debug(cq)
             except BaseException:
                 cq = "Query failed to compile"

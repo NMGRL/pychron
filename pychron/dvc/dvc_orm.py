@@ -639,7 +639,7 @@ class CurrentTbl(Base, IDMixin):
     analysisID = Column(Integer, ForeignKey("AnalysisTbl.id"))
 
     parameter = relationship("ParameterTbl", uselist=False)
-    analysis = relationship("AnalysisTbl", uselist=False)
+    analysis = relationship("AnalysisTbl", uselist=False, backref='current')
     units = relationship("UnitsTbl", uselist=False)
 
 

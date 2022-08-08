@@ -134,6 +134,9 @@ class FigurePanel(HasTraits):
                 update_dict = fig.get_update_dict()
             self._suppress_limits(False)
 
+            # use the last figure to plot the group based overlays e.g. ExplicitLegent
+            fig.finalize_group_overlays(self.figures)
+
             if legend:
                 g.plots[0].overlays.append(legend)
 

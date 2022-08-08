@@ -30,6 +30,7 @@ from traitsui.api import (
 from traitsui.menu import Action
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -44,9 +45,9 @@ from pychron.pipeline.subgrouping import (
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.processing.analyses.preferred import get_preferred_grp
 
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class GroupAdapter(BaseAdapter):
@@ -99,6 +100,8 @@ class AnalysesAdapter(SubGroupAdapter):
         ("Tag", "tag"),
         ("Group", "group_id"),
         ("SubGroup", "subgroup"),
+        ("Age", "age"),
+        (PLUSMINUS_ONE_SIGMA, "age_err"),
         ("Exclude Isochron", "exclude_from_isochron"),
     ]
 
@@ -106,6 +109,9 @@ class AnalysesAdapter(SubGroupAdapter):
     record_id_width = Int(60)
     subgroup_width = Int(100)
     exclude_from_isochron_text = Property
+
+    def get_text_color(self, obj, trait, row, column=0):
+        return colornames[self.item.group_id]
 
     def _get_exclude_from_isochron_text(self):
         return "Yes" if self.item.exclude_from_isochron else ""
@@ -406,14 +412,14 @@ class SubGroupAgeEditor(GroupAgeEditor):
         gid = r.group_id
 
         sgid = (
-            max(
-                {
-                    int(a.subgroup["name"]) if a.subgroup else 0
-                    for a in self.items
-                    if a.group_id == gid
-                }
-            )
-            + 1
+                max(
+                    {
+                        int(a.subgroup["name"]) if a.subgroup else 0
+                        for a in self.items
+                        if a.group_id == gid
+                    }
+                )
+                + 1
         )
         for a in self.selected:
             a.subgroup = {"name": sgid}
@@ -455,6 +461,5 @@ class SubGroupAgeEditor(GroupAgeEditor):
 
         v = View(VGroup(agrp, sgrp, ggrp), handler=THandler())
         return v
-
 
 # ============= EOF =============================================

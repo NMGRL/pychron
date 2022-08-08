@@ -162,6 +162,9 @@ class Ideogram(BaseArArFigure):
 
     subgroup = None
     peaks = None
+    _labels = None
+    _legend_plot = None
+    _legend_plots = None
 
     def plot(self, plots, legend=None):
         """
@@ -532,7 +535,7 @@ class Ideogram(BaseArArFigure):
             )
 
             if opt.include_group_legend:
-                key = str(aux_id)
+                key = str(aux_id + self.group_id)
                 plots[key] = [scatter]
                 if gla == "Group":
                     label = key
@@ -590,11 +593,27 @@ class Ideogram(BaseArArFigure):
 
         if opt.include_group_legend:
             labels = sorted(labels, key=itemgetter(2))
-            self._add_group_legend(plot, plots, labels)
+            self._labels = labels
+            self._legend_plot = plot
+            self._legend_plots = plots
+
+            # self._add_group_legend(plot, plots, labels)
             # omits, invalids, outliers = self._do_aux_plot_filtering(scatter, po, xs, xes)
             # selection = omits + outliers
             # selection.extend(omits)
             # selection.extend(outliers)
+
+    def finalize_group_overlays(self, others):
+        plot = self._legend_plot
+        plots = self._legend_plots
+        labels = self._labels
+        if labels:
+            for o in others:
+                if o != self:
+                    labels.extend(o._labels)
+                    plots.update(o._legend_plots)
+
+            self._add_group_legend(plot, plots, labels)
 
     def _add_subgroup_overlay(self, scatter, ans):
         idx = [i for i, a in enumerate(ans) if isinstance(a, InterpretedAgeGroup)]
@@ -740,9 +759,9 @@ class Ideogram(BaseArArFigure):
 
     def _add_group_legend(self, plot, plots, labels):
 
+        print('asdf', labels, self.group_id)
         ln, ns, _ = zip(*labels)
         labels = list(zip(ln, ns))
-
         legend = ExplicitLegend(
             plots=plots, labels=list(reversed(labels)), inside=True, align="ul"
         )
@@ -990,7 +1009,7 @@ class Ideogram(BaseArArFigure):
         return xs
 
     def _add_aux_plot(
-        self, ys, title, po, pid, gid=None, es=None, type="scatter", xs=None, **kw
+            self, ys, title, po, pid, gid=None, es=None, type="scatter", xs=None, **kw
     ):
         if gid is None:
             gid = self.group_id
@@ -1015,6 +1034,9 @@ class Ideogram(BaseArArFigure):
 
         if "selection_marker_size" not in plotkw:
             plotkw["selection_marker_size"] = plotkw["marker_size"]
+
+        if "selection_marker" not in plotkw:
+            plotkw["selection_marker"] = plotkw["marker"]
 
         if "type" in plotkw:
             plotkw.pop("type")
@@ -1044,7 +1066,7 @@ class Ideogram(BaseArArFigure):
         return s
 
     def _calculate_probability_curve(
-        self, ages, errors, calculate_limits=False, limits=None
+            self, ages, errors, calculate_limits=False, limits=None
     ):
         xmi, xma = None, None
         if limits:
@@ -1123,7 +1145,7 @@ class Ideogram(BaseArArFigure):
         return xs, ys, rx1, rx2
 
     def _calculate_asymptotic_limits2(
-        self, cfunc, max_iter=200, asymptotic_width=10, tol=10
+            self, cfunc, max_iter=200, asymptotic_width=10, tol=10
     ):
         """
         cfunc: callable that returns xs,ys and accepts xmin, xmax
@@ -1203,6 +1225,5 @@ class Ideogram(BaseArArFigure):
             wm, we = nominal_value(wage), std_dev(wage)
 
         return wm, we, mswd, valid_mswd, n, pvalue
-
 
 # ============= EOF =============================================

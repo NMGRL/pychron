@@ -2095,7 +2095,8 @@ class DVCDatabase(DatabaseAdapter):
             return self._query_all(q, verbose_query=verbose)
 
     def get_analyses(
-        self, analysis_type=None, mass_spectrometer=None, reverse_order=False
+        self, analysis_type=None, mass_spectrometer=None, reverse_order=False,
+            limit=1000
     ):
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
@@ -2107,7 +2108,10 @@ class DVCDatabase(DatabaseAdapter):
             q = q.order_by(
                 getattr(AnalysisTbl.timestamp, "desc" if reverse_order else "asc")()
             )
-            return self._query_all(q)
+            if limit:
+                q = q.limit(limit)
+
+            return self._query_all(q, verbose_query=True)
 
     def get_analysis_types(self):
         return []

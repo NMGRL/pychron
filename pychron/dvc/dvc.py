@@ -119,6 +119,7 @@ class DVC(Loggable):
     irradiation_prefix = Str
     irradiation_project_prefix = Str
 
+    git_service = None
     _cache = None
     _uuid_runid_cache = None
     _pull_cache = None
@@ -439,7 +440,7 @@ class DVC(Loggable):
         repos.extend(
             ["{}{}".format(irradiation_project_prefix, ir) for ir in irradiations]
         )
-
+        self.debug('reference repos {}'.format(repos))
         return list(set(repos))
 
     def find_associated_identifiers(self, samples):
@@ -1122,7 +1123,8 @@ class DVC(Loggable):
                 prog.change_message("Syncing repository= {}".format(xi))
             try:
                 self.sync_repo(xi, use_progress=False, pull_frequency=pull_frequency)
-            except BaseException:
+            except BaseException as e:
+                print('sync repo', e)
                 pass
 
         bad_records = [r for r in records if r.repository_identifier is None]
@@ -1152,7 +1154,8 @@ class DVC(Loggable):
                     self.sync_repo(ei, use_progress=False)
         try:
             branches = {ei: get_repository_branch(repository_path(ei)) for ei in exps}
-        except NoSuchPathError:
+        except NoSuchPathError as e:
+            print('e', e)
             return []
 
         flux_histories = {}
@@ -1430,7 +1433,10 @@ class DVC(Loggable):
         else:
             self.debug("getting repository from remote")
 
-            service = self.application.get_service(IGitHost)
+            service = self.git_service
+            if not service:
+                service = self.application.get_service(IGitHost)
+
             if not service:
                 return True
             else:
