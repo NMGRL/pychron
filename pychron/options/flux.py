@@ -31,7 +31,10 @@ from pychron.pychron_constants import (
     BOWL,
     PLANE,
     GRIDDATA,
-    IDW, LINEAR, WEIGHTED_MEAN, AVERAGE,
+    IDW,
+    LINEAR,
+    WEIGHTED_MEAN,
+    AVERAGE,
 )
 
 

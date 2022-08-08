@@ -48,9 +48,13 @@ class FluxSubOptions(SubOptions):
                 Item("model_kind", label="Kind"),
                 Item("error_kind", label="Mean J Error"),
                 Item("predicted_j_error_type", label="Predicted J Error"),
-                Item("use_weighted_fit", label='Use Weighted Mean Js',  tooltip='Use the inverse variance weighted mean '
-                                                                                'of the analyses from each position '
-                                                                                'to calculate J curve'),
+                Item(
+                    "use_weighted_fit",
+                    label="Use Weighted Mean Js",
+                    tooltip="Use the inverse variance weighted mean "
+                    "of the analyses from each position "
+                    "to calculate J curve",
+                ),
                 Item(
                     "least_squares_fit",
                     visible_when='model_kind=="{}"'.format(LEAST_SQUARES_1D),
@@ -72,8 +76,10 @@ class FluxSubOptions(SubOptions):
                     label="Polynominal Degree",
                     visible_when='model_kind == "{}"'.format(HIGH_ORDER_POLY),
                 ),
-                Item("interpolation_style",
-                     visible_when='model_kind == "{}"'.format(BRACKETING)),
+                Item(
+                    "interpolation_style",
+                    visible_when='model_kind == "{}"'.format(BRACKETING),
+                ),
                 label="Model",
             ),
             VGroup(

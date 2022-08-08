@@ -169,7 +169,7 @@ class NearestNeighborFluxRegressor(SpecialFluxRegressor):
         v2 = array([[x, y]])
         ds = ravel(calc_distances(self.clean_xs, v2))
         idx = sorted(enumerate(ds), key=itemgetter(1))
-        idx = sorted(idx[:self.n])
+        idx = sorted(idx[: self.n])
         idx, ds = zip(*idx)
         return idx, ds
 
@@ -188,7 +188,7 @@ class NearestNeighborFluxRegressor(SpecialFluxRegressor):
                 # if self.interpolation_style in (AVERAGE, WEIGHTED_MEAN):
                 if self.interpolation_style == WEIGHTED_MEAN:
                     es = self.clean_yserr[idx]
-                    ws = es ** -2
+                    ws = es**-2
                     if return_error:
                         v = ws.sum() ** -0.5
                     else:
@@ -199,10 +199,11 @@ class NearestNeighborFluxRegressor(SpecialFluxRegressor):
                     else:
                         v = vs.mean()
                 elif self.interpolation_style == LINEAR:
-                     v = linear_interp((x, y),
-                                          self.clean_xs[idx],
-                                          self.clean_yserr[idx] if return_error else self.clean_ys[idx]
-                                          )
+                    v = linear_interp(
+                        (x, y),
+                        self.clean_xs[idx],
+                        self.clean_yserr[idx] if return_error else self.clean_ys[idx],
+                    )
             return v
 
         ret = [pred(*pt) for pt in pts]
@@ -284,8 +285,8 @@ class BowlFluxRegressor(MultipleLinearRegressor):
                 # x2**4,
                 # x1**3,
                 # x2**3,
-                x1 ** 2,
-                x2 ** 2,
+                x1**2,
+                x2**2,
                 x1,
                 x2,
                 ones_like(x1),
@@ -350,12 +351,13 @@ class PlaneFluxRegressor(MultipleLinearRegressor):
     def _get_weights(self):
         e = self.clean_yserr
         if self._check_integrity(e, e):
-            return 1 / e ** 2
+            return 1 / e**2
 
     def _engine_factory(self, fy, X, check_integrity=True):
         if self.use_weighted_fit:
             return WLS(fy, X, weights=self._get_weights())
         else:
             return OLS(fy, X)
+
 
 # ============= EOF =============================================

@@ -60,7 +60,13 @@ from pychron.pipeline.editors.flux_visualization_editor import (
 )
 from pychron.pipeline.plot.plotter.arar_figure import SelectionFigure
 from pychron.processing.flux import mean_j
-from pychron.pychron_constants import LEAST_SQUARES_1D, WEIGHTED_MEAN_1D, WEIGHTED_MEAN, AVERAGE, LINEAR
+from pychron.pychron_constants import (
+    LEAST_SQUARES_1D,
+    WEIGHTED_MEAN_1D,
+    WEIGHTED_MEAN,
+    AVERAGE,
+    LINEAR,
+)
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
@@ -488,6 +494,7 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
 
         v = View(VGroup(tgrp, Tabbed(ggrp, pgrp)))
         return v
+
 
 # def linear_interp(obj, a, b):
 #     def func(j1,j2):
