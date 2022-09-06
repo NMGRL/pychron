@@ -1373,27 +1373,26 @@ class DVC(Loggable):
             if not service:
                 return True
             else:
-                if service.clone_from(name, root, self.organization):
+                if isinstance(service, LocalGitHostService):
+                    service.create_empty_repo(name)
                     return True
+                elif service.clone_from(name, root, self.organization):
+                    return True
+                else:
+                    self.warning_dialog(
+                        "name={} not in available repos "
+                        "from service={}, organization={}".format(
+                            name, service.remote_url, self.organization
+                        )
+                    )
+                    names = self.remote_repository_names()
+                    for ni in names:
+                        self.debug("available repo== {}".format(ni))
+
                 # names = self.remote_repository_names()
                 # if name in names:
                 #     service.clone_from(name, root, self.organization)
                 #     return True
-                else:
-                    if isinstance(service, LocalGitHostService):
-                        service.create_empty_repo(name)
-                        return True
-                    else:
-
-                        self.warning_dialog(
-                            "name={} not in available repos "
-                            "from service={}, organization={}".format(
-                                name, service.remote_url, self.organization
-                            )
-                        )
-                        names = self.remote_repository_names()
-                        for ni in names:
-                            self.debug("available repo== {}".format(ni))
 
     def rollback_repository(self, expid):
         repo = self._get_repository(expid)
