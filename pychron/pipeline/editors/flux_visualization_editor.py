@@ -173,8 +173,8 @@ def get_geom_radius(g):
     return xg
 
 
-def get_geom_radiusxy(x,y):
-    r = max((x**2+y**2)**0.5)
+def get_geom_radiusxy(x, y):
+    r = max((x**2 + y**2) ** 0.5)
     return r
 
 
