@@ -28,6 +28,7 @@ class ArgonIntelligenceTbl(Base, IDMixin):
 
     analysis = relationship("AnalysisTbl")
 
+
 class ArgonIntelligenceClassTbl(Base):
     __tablename__ = "ArgonIntelligenceClassTbl"
     klass = Column("klass", Integer, primary_key=True)

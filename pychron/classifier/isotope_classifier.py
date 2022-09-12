@@ -36,8 +36,9 @@ from pychron.classifier.base_classifier import BaseClassifier
 #         iso.standard_fit_error(),
 #         iso.noutliers(),
 #     )
-NMAX = 1200*10
+NMAX = 1200 * 10
 PLACEHOLDER = -9999
+
 
 def make_sample(iso):
     xs = iso.xs
@@ -46,8 +47,8 @@ def make_sample(iso):
     # vs = iso.sniff.ys
 
     timebins = arange(NMAX)
-    vs = zeros(NMAX)*PLACEHOLDER
-    mxs = sxs*10
+    vs = zeros(NMAX) * PLACEHOLDER
+    mxs = sxs * 10
     # print(digitize(mxs, timebins))
 
     vs[digitize(mxs, timebins)] = iso.sniff.ys

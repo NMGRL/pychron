@@ -78,8 +78,10 @@ class ArgonIntelligenceDatabase(DVCDatabase):
                 q = sess.query(ArgonIntelligenceTbl)
                 q = q.join(AnalysisTbl)
                 q = q.filter(
-                    and_(AnalysisTbl.uuid == analysis.uuid,
-                    ArgonIntelligenceTbl.isotope == iso)
+                    and_(
+                        AnalysisTbl.uuid == analysis.uuid,
+                        ArgonIntelligenceTbl.isotope == iso,
+                    )
                 )
                 return self._query_one(q, verbose_query=False)
 
@@ -126,28 +128,27 @@ class ArgonIntelligenceDatabase(DVCDatabase):
                 self.warning(f"failed to located isotope {isotope}")
 
     def upload_file(self, p):
-        with open(p, 'r') as rfile:
+        with open(p, "r") as rfile:
             reader = csv.DictReader(rfile)
             for row in reader:
 
                 for k in ARGON_KEYS:
-                    klass = int(k not in ('Ar40', 'Ar36'))
-                    self.add_classification(row['runid'], k, klass)
+                    klass = int(k not in ("Ar40", "Ar36"))
+                    self.add_classification(row["runid"], k, klass)
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
 
     paths.build("~/PychronDev")
     logging_setup("argonintel")
 
     d = ArgonIntelligenceDatabase(bind=False)
-    d.host = '129.138.12.160'
-    d.name = 'pychrondvc'
-    d.username = 'jross'
-    d.password = 'argon4039'
-    d.kind = 'mysql'
+    d.host = "129.138.12.160"
+    d.name = "pychrondvc"
+    d.username = "jross"
+    d.password = "argon4039"
+    d.kind = "mysql"
 
     # d.upload_file('./example_upload2.csv')
 

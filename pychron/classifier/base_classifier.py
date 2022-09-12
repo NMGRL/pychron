@@ -39,9 +39,9 @@ class BaseClassifier(Loggable):
         raise NotImplementedError
 
     def new_classifier(self, klass, *args, **kw):
-        if klass == 'SVC':
+        if klass == "SVC":
             klass = svm.SVC
-        elif klass == 'NearestNeighbors':
+        elif klass == "NearestNeighbors":
             klass = KNeighborsClassifier
 
         self._clf = klass(*args, **kw)
@@ -96,5 +96,6 @@ class BaseClassifier(Loggable):
     @property
     def persistence_path(self):
         return os.path.join(paths.hidden_dir, self._persistence_name)
+
 
 # ============= EOF =============================================

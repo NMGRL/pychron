@@ -60,8 +60,8 @@ class IsotopeTrainer(Loggable):
     clf = Instance(IsotopeClassifier, ())
 
     def load(self):
-        sp = os.path.join(paths.hidden_dir, 'isotope_training_data_samples.npy')
-        kp = os.path.join(paths.hidden_dir, 'isotope_training_data_klasses.npy')
+        sp = os.path.join(paths.hidden_dir, "isotope_training_data_samples.npy")
+        kp = os.path.join(paths.hidden_dir, "isotope_training_data_klasses.npy")
         if os.path.isfile(sp) and os.path.isfile(kp):
             samples = load(sp)
             klasses = load(kp)
@@ -94,22 +94,22 @@ class IsotopeTrainer(Loggable):
                 samples.append(make_sample(iso))
                 klasses.append(ri.klass)
 
-            self.dump(samples, 'samples')
-            self.dump(klasses, 'klasses')
+            self.dump(samples, "samples")
+            self.dump(klasses, "klasses")
 
-        samples_train, samples_test, klasses_train, klasses_test = train_test_split(samples, klasses,
-                                                                                    test_size=0.4,
-                                                                                    random_state=0)
+        samples_train, samples_test, klasses_train, klasses_test = train_test_split(
+            samples, klasses, test_size=0.4, random_state=0
+        )
 
-        clf.new_classifier('SVC', kernel='linear', C=1)
+        clf.new_classifier("SVC", kernel="linear", C=1)
         clf.add_training_data(samples_train, klasses_train, load=False)
         scores = clf.cross_val_score(samples_test, klasses_test, cv=5)
         print(scores, scores.mean(), scores.std())
 
         results = []
         for nn in range(3, 15):
-            for weights in ('uniform', 'distance'):
-                clf.new_classifier('NearestNeighbors', nn, weights=weights)
+            for weights in ("uniform", "distance"):
+                clf.new_classifier("NearestNeighbors", nn, weights=weights)
                 clf.add_training_data(samples_train, klasses_train, load=False)
                 scores = clf.cross_val_score(samples_test, klasses_test, cv=5)
                 args = nn, weights, scores, scores.mean(), scores.std()
@@ -120,11 +120,11 @@ class IsotopeTrainer(Loggable):
             print(r)
 
     def dump(self, arr, tag):
-        p = os.path.join(paths.hidden_dir, f'isotope_training_data_{tag}.npy')
+        p = os.path.join(paths.hidden_dir, f"isotope_training_data_{tag}.npy")
         save(p, arr)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.core.helpers.logger_setup import logging_setup
 
     paths.build("~/PychronDev")
@@ -132,19 +132,19 @@ if __name__ == '__main__':
 
     d = IsotopeTrainer()
     d.db = ArgonIntelligenceDatabase(bind=False)
-    d.db.host = '129.138.12.160'
-    d.db.name = 'pychrondvc'
-    d.db.username = 'jross'
-    d.db.password = 'argon4039'
-    d.db.kind = 'mysql'
+    d.db.host = "129.138.12.160"
+    d.db.name = "pychrondvc"
+    d.db.username = "jross"
+    d.db.password = "argon4039"
+    d.db.kind = "mysql"
 
-    d.dvc = DVC(bind=False, meta_repo_name='NMGRLMetaData')
-    d.dvc.db.kind = 'mysql'
-    d.dvc.db.host = '129.138.12.160'
-    d.dvc.db.name = 'pychrondvc'
-    d.dvc.db.username = 'jross'
-    d.dvc.db.password = 'argon4039'
-    d.dvc.repository_root = '~/Users/ross/PychronDev/data/.dvc/repositories'
+    d.dvc = DVC(bind=False, meta_repo_name="NMGRLMetaData")
+    d.dvc.db.kind = "mysql"
+    d.dvc.db.host = "129.138.12.160"
+    d.dvc.db.name = "pychrondvc"
+    d.dvc.db.username = "jross"
+    d.dvc.db.password = "argon4039"
+    d.dvc.repository_root = "~/Users/ross/PychronDev/data/.dvc/repositories"
 
     d.dvc.initialize()
     d.train()
