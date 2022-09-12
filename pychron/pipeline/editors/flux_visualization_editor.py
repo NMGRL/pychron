@@ -173,6 +173,11 @@ def get_geom_radius(g):
     return xg
 
 
+def get_geom_radiusxy(x,y):
+    r = max((x**2+y**2)**0.5)
+    return r
+
+
 class BaseFluxVisualizationEditor(BaseTraitsEditor):
     graph = Instance("pychron.graph.graph.Graph")
     levels = Int(10)
@@ -235,6 +240,7 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         ):
             # n = z.shape[0] * 10
             # r = max((max(abs(x)), max(abs(y))))
+            r = get_geom_radiusxy(x, y)
             reg = self._regressor_factory(x, y, z, ze)
             self._regressor = reg
         else:
@@ -290,8 +296,6 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
                 p.jerr = float(je)
 
                 p.dev = (p.saved_j - j) / j * 100
-
-        r = get_geom_radius(self.geometry)
 
         if options.plot_kind == "2D":
             self._graph_contour(x, y, z, r, reg, refresh)
