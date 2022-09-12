@@ -16,19 +16,21 @@
 
 # ========== Argon Intelligence =================================
 from sqlalchemy import Integer, Column, ForeignKey, String, Text
+from sqlalchemy.orm import relationship
 
 from pychron.dvc.dvc_orm import Base, IDMixin
 
 
 class ArgonIntelligenceTbl(Base, IDMixin):
-    klass = Column("class", Integer, ForeignKey("ArgonIntelligenceClassTbl.class"))
+    klass = Column("klass", Integer, ForeignKey("ArgonIntelligenceClassTbl.klass"))
     analysisID = Column(Integer, ForeignKey("AnalysisTbl.id"))
     isotope = Column(String(40))
 
+    analysis = relationship("AnalysisTbl")
 
 class ArgonIntelligenceClassTbl(Base):
     __tablename__ = "ArgonIntelligenceClassTbl"
-    klass = Column("class", Integer, primary_key=True)
+    klass = Column("klass", Integer, primary_key=True)
     name = Column(String(140))
     description = Column(Text)
 

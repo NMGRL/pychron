@@ -729,7 +729,6 @@ host= {}\nurl= {}'.format(
         if verbose_query:
             try:
                 cq = compile_query(q)
-                print(cq)
                 self.debug(cq)
             except BaseException:
                 cq = "Query failed to compile"
