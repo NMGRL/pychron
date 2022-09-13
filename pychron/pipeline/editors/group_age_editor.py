@@ -355,7 +355,7 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
     def get_options_group(self):
         return BorderHGroup(  # Item('include_j_position_error'),
             Item("include_j_error_in_mean"),
-            Item('include_decay_error_in_mean'),
+            Item("include_decay_error_in_mean"),
             label="Options",
         )
 
