@@ -49,6 +49,7 @@ from pychron.core.helpers.iterfuncs import partition, groupby_key
 from pychron.core.helpers.strtools import camel_case
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.yaml import yload
+from pychron.dvc import prep_repo_name
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
 from pychron.envisage.view_util import open_view
@@ -1178,6 +1179,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                             repo = project_name
                         else:
                             repo = camel_case(project_name)
+
+                        self.debug('unprepped repo={}'.format(repo))
+                        repo = prep_repo_name(repo)
                         self.debug("setting repository to {}".format(repo))
 
                         self.repository_identifier = repo

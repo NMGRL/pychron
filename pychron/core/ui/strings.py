@@ -24,6 +24,7 @@ from traits.trait_types import BaseStr
 import six
 
 pascalcase_regex = re.compile(r"^[A-Z0-9]{1}\w*$")
+reponame_regex = re.compile(r'[^.a-zA-Z0-9_-]')
 
 
 class PascalCase(BaseStr):
@@ -35,11 +36,18 @@ class PascalCase(BaseStr):
 
 
 class SpacelessStr(BaseStr):
-    def validate(self, object, name, value):
+    def validate(self, obj, name, value):
         if isinstance(value, six.string_types) and " " not in value:
             return value
 
-        self.error(object, name, value)
+        self.error(obj, name, value)
 
+
+class RepoNameStr(BaseStr):
+    def validate(self, obj, name, value):
+        if not value or not reponame_regex.match(value):
+            self.error(obj, name, value)
+        else:
+            return value
 
 # ============= EOF =============================================

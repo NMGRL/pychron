@@ -33,6 +33,7 @@ from traits.api import (
     File,
     Float,
     Enum,
+    Color
 )
 
 from pychron.canvas.canvas_editor import CanvasEditor
@@ -116,7 +117,7 @@ class ExtractionLineManager(Manager, Consoleable):
     file_listener = None
 
     wait_group = Instance(WaitGroup, ())
-    console_bgcolor = "black"
+    console_bgcolor = Color("black")
 
     _active = False
     _update_status_flag = None
