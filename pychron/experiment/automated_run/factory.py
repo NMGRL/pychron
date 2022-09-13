@@ -1180,7 +1180,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                         else:
                             repo = camel_case(project_name)
 
-                        self.debug('unprepped repo={}'.format(repo))
+                        self.debug("unprepped repo={}".format(repo))
                         repo = prep_repo_name(repo)
                         self.debug("setting repository to {}".format(repo))
 

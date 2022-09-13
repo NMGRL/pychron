@@ -24,7 +24,7 @@ from traits.trait_types import BaseStr
 import six
 
 pascalcase_regex = re.compile(r"^[A-Z0-9]{1}\w*$")
-reponame_regex = re.compile(r'[^.a-zA-Z0-9_-]')
+reponame_regex = re.compile(r"[^.a-zA-Z0-9_-]")
 
 
 class PascalCase(BaseStr):
@@ -49,5 +49,6 @@ class RepoNameStr(BaseStr):
             self.error(obj, name, value)
         else:
             return value
+
 
 # ============= EOF =============================================

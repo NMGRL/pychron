@@ -276,7 +276,9 @@ def list_frozen_productions(repo):
 def prep_repo_name(name):
     # camel case and remove special characters
     name = camel_case(name)
-    name = re.sub(r'[^.a-zA-Z0-9]', "-", name)
+    name = re.sub(r"[^.a-zA-Z0-9]", "-", name)
 
     return name
+
+
 # ============= EOF =============================================

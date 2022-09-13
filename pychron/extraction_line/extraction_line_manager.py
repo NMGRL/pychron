@@ -33,7 +33,7 @@ from traits.api import (
     File,
     Float,
     Enum,
-    Color
+    Color,
 )
 
 from pychron.canvas.canvas_editor import CanvasEditor

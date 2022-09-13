@@ -17,31 +17,33 @@ import unittest
 
 from pychron.dvc import prep_repo_name
 
-FOOBAR = 'Foo-Bar'
+FOOBAR = "Foo-Bar"
 
 
 class RepoNameTestCase(unittest.TestCase):
     def test_repo_comma(self):
-        name = 'Foo,Bar'
-        self.assertEqual(prep_repo_name(name), 'Foo-Bar')
+        name = "Foo,Bar"
+        self.assertEqual(prep_repo_name(name), "Foo-Bar")
 
     def test_repo_slash(self):
-        name = 'Foo/Bar'
-        self.assertEqual(prep_repo_name(name), 'FooBar')
+        name = "Foo/Bar"
+        self.assertEqual(prep_repo_name(name), "FooBar")
 
     def test_repo_space(self):
-        name = 'Foo Bar'
-        self.assertEqual(prep_repo_name(name), 'FooBar')
+        name = "Foo Bar"
+        self.assertEqual(prep_repo_name(name), "FooBar")
 
     def test_repo_underscore(self):
-        name = 'Foo_Bar'
-        self.assertEqual(prep_repo_name(name), 'FooBar')
+        name = "Foo_Bar"
+        self.assertEqual(prep_repo_name(name), "FooBar")
 
     def test_repo_special_character(self):
-        name = 'Foo&Bar'
-        self.assertEqual(prep_repo_name(name), 'Foo-Bar')
+        name = "Foo&Bar"
+        self.assertEqual(prep_repo_name(name), "Foo-Bar")
 
     def test_repo_special_character2(self):
-        name = '&Foo>Bar$'
-        self.assertEqual(prep_repo_name(name), '-Foo-Bar-')
+        name = "&Foo>Bar$"
+        self.assertEqual(prep_repo_name(name), "-Foo-Bar-")
+
+
 # ============= EOF =============================================
