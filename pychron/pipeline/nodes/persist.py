@@ -170,7 +170,8 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
             msg = "fits={}".format(f)
 
         self._persist(state, msg)
-        self.classifier_db.close_session()
+        if self.classifier_db:
+            self.classifier_db.close_session()
 
     def _save_fit(self, x, prog, i, n, keys):
         if prog:
