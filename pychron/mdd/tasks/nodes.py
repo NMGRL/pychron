@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
-
+import json
 import logging
 import os
 import shutil
@@ -72,6 +71,11 @@ from pychron.regex import MDD_PARAM_REGEX
 class MDDWorkspace(HasTraits):
     roots = List
     add_root_button = Button
+    delete_root_button = Button
+    selected = List
+    def _delete_root_button_fired(self):
+        for si in self.selected:
+            self.roots.remove(si)
 
     def _add_root_button_fired(self):
         dlg = DirectoryDialog(default_path=paths.mdd_data_dir)
@@ -87,16 +91,37 @@ class MDDWorkspace(HasTraits):
                 )
 
     def traits_view(self):
-        w = BorderVGroup(UItem("roots", editor=ListStrEditor()), label="Workspaces")
+        w = BorderVGroup(UItem("roots", editor=ListStrEditor(selected='selected',
+                                                             multi_select=True)), label="Workspaces")
         b = HGroup(
             icon_button_editor(
                 "add_root_button",
                 "add",
-                tooltip="Add an MDD workspace (folder) to the available workspace list",
-            )
+                tooltip="Add a MDD workspace (folder) to the available workspace list",
+            ),
+            icon_button_editor('delete_root_button', 'delete',
+                               tooltip="Delete the selected MDD Workspace from the list")
         )
-        v = View(VGroup(b, w), title="Select a MDD Workspace")
+        v = View(VGroup(b, w), title="Select a MDD Workspace", width=600)
         return v
+    def iterroots(self):
+        r = self.roots
+        if self.selected:
+            r = self.selected
+        return r
+
+    def dump(self):
+        with open(self._persistence_path, 'w') as wfile:
+            json.dump(list(self.roots), wfile)
+
+    def load(self):
+        if os.path.isfile(self._persistence_path):
+            with open(self._persistence_path, 'r') as rfile:
+                roots = json.load(rfile)
+                self.roots = roots
+    @property
+    def _persistence_path(self):
+        return paths.hidden_path('mdd_workspace.json')
 
     def _roots_default(self):
         r = []
@@ -112,8 +137,12 @@ class MDDWorkspaceNode(BaseNode):
     name = "MDD Workspace"
     workspace = Instance(MDDWorkspace, ())
 
+    def _configure_hook(self):
+        self.workspace.load()
+
     def run(self, state):
         state.mdd_workspace = self.workspace
+        self.workspace.dump()
 
     def traits_view(self):
         g = VGroup(UItem("workspace", style="custom", editor=InstanceEditor()))
@@ -136,7 +165,7 @@ class MDDNode(BaseNode):
 
     def run(self, state):
         if state.mdd_workspace:
-            for root in state.mdd_workspace.roots:
+            for root in state.mdd_workspace.iterroots():
                 self.root_dir = root
 
                 self._write_configuration_file()
@@ -237,8 +266,8 @@ class MDDLabTableNode(MDDNode):
             root = os.path.join(paths.mdd_data_dir, name)
             if os.path.isdir(root):
                 if (
-                    confirm(None, "{} already exists. Backup existing?".format(root))
-                    == YES
+                        confirm(None, "{} already exists. Backup existing?".format(root))
+                        == YES
                 ):
                     head, tail = os.path.split(root)
                     dest = os.path.join(head, "~{}".format(tail))
@@ -304,15 +333,15 @@ class MDDLabTableNode(MDDNode):
                 "temp_offset",
                 label="Temp. Offset (C)",
                 tooltip="Subtract Temp Offset from nominal lab "
-                "extraction temperature. e.g "
-                "temp = lab_temp - temp_offset",
+                        "extraction temperature. e.g "
+                        "temp = lab_temp - temp_offset",
             ),
             Item(
                 "time_offset",
                 label="Time Offset (Min)",
                 tooltip="Subtract Time Offset from nominal lab "
-                "extraction time. e.g "
-                "time = lab_time - time_offset",
+                        "extraction time. e.g "
+                        "time = lab_time - time_offset",
             ),
         )
         return okcancel_view(g, title="Configure Lab Table")
@@ -632,6 +661,5 @@ class MDDFigureNode(FigureNode):
         for name, es in groupby_key(state.editors, "name"):
             for i, ei in enumerate(es):
                 ei.name = "{} {:02n}".format(ei.name, i + 1)
-
 
 # ============= EOF =============================================

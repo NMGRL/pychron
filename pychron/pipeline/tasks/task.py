@@ -658,8 +658,9 @@ class PipelineTask(BaseBrowserTask):
             if close_all:
                 self.close_all()
 
-            self.dvc.db.session = None
-            self.dvc.create_session()
+            if self.dvc:
+                self.dvc.db.session = None
+                self.dvc.create_session()
 
             if not getattr(self.engine, func)():
                 self.engine.resume_enabled = True

@@ -321,8 +321,9 @@ class BaseBrowserTask(BaseEditorTask):
 
     # private
     def _opened_hook(self):
-        self.dvc.initialize()
-        self.dvc.create_session()
+        if self.dvc:
+            self.dvc.initialize()
+            self.dvc.create_session()
         if not self.browser_model.is_activated:
             self._setup_browser_model()
         else:

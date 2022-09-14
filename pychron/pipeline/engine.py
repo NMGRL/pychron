@@ -809,8 +809,8 @@ class PipelineEngine(Loggable):
             self.debug("using existing state")
 
         ost = time.time()
-
-        self.dvc.create_session(force=True)
+        if self.dvc:
+            self.dvc.create_session(force=True)
 
         if state.veto:
             pipeline.resume(state)
