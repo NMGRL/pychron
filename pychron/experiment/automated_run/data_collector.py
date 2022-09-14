@@ -212,6 +212,7 @@ class DataCollector(Consoleable):
             k, s, t, inc = data
         except (AttributeError, TypeError, ValueError) as e:
             self.debug("failed getting data {}".format(e))
+            self.debug_exception()
             return
 
         if k is not None and s is not None:
