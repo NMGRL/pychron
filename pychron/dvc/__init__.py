@@ -99,7 +99,7 @@ def dvc_dump(obj, path):
 
 def dvc_load(path):
     ret = {}
-    if os.path.isfile(path):
+    if path and os.path.isfile(path):
         with open(path, "r") as rfile:
             try:
                 ret = json.load(rfile)

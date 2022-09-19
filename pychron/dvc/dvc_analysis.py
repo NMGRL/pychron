@@ -481,39 +481,45 @@ class DVCAnalysis(Analysis):
 
         # save intercepts
         if isoks:
-            isos, path = self._get_json("intercepts")
-            for k in isoks:
-                try:
-                    iso = isos[k]
-                except KeyError:
-                    iso = {}
-                    isos[k] = iso
+            isos, path = self._get_json(INTERCEPTS)
+            if isos:
+                for k in isoks:
+                    try:
+                        iso = isos[k]
+                    except KeyError:
+                        iso = {}
+                        isos[k] = iso
 
-                siso = sisos[k]
-                if siso:
-                    update(iso, siso)
+                    siso = sisos[k]
+                    if siso:
+                        update(iso, siso)
 
-            self._dump(isos, path)
+                self._dump(isos, path)
+            else:
+                self.debug('failed locating intercepts for {}'.format(self))
 
         # save baselines
         if dks:
-            baselines, path = self._get_json("baselines")
-            for di in dks:
-                try:
-                    det = baselines[di]
-                except KeyError:
-                    det = {}
-                    baselines[di] = det
+            baselines, path = self._get_json(BASELINES)
+            if baselines:
+                for di in dks:
+                    try:
+                        det = baselines[di]
+                    except KeyError:
+                        det = {}
+                        baselines[di] = det
 
-                # bs = next((iso.baseline for iso in six.itervalues(sisos) if iso.detector == di), None)
-                bs = self.get_isotope(detector=di, kind="baseline")
-                if bs:
-                    update(det, bs)
+                    # bs = next((iso.baseline for iso in six.itervalues(sisos) if iso.detector == di), None)
+                    bs = self.get_isotope(detector=di, kind="baseline")
+                    if bs:
+                        update(det, bs)
 
-            self._dump(baselines, path)
+                self._dump(baselines, path)
+            else:
+                self.debug('failed locating baselines for {}'.format(self))
 
     def dump_blanks(self, keys, refs=None, reviewed=False):
-        isos, path = self._get_json("blanks")
+        isos, path = self._get_json(BLANKS)
         sisos = self.isotopes
 
         for k in keys:
@@ -539,7 +545,7 @@ class DVCAnalysis(Analysis):
         self._dump(isos, path)
 
     def delete_icfactors(self, dkeys):
-        jd, path = self._get_json("icfactors")
+        jd, path = self._get_json(ICFACTORS)
 
         remove = []
         for k in jd:
@@ -552,15 +558,15 @@ class DVCAnalysis(Analysis):
         self._dump(jd, path)
 
     def dump_icfactors(
-        self,
-        dkeys,
-        fits,
-        refs=None,
-        reviewed=False,
-        standard_ratios=None,
-        reference_data=None,
+            self,
+            dkeys,
+            fits,
+            refs=None,
+            reviewed=False,
+            standard_ratios=None,
+            reference_data=None,
     ):
-        jd, path = self._get_json("icfactors")
+        jd, path = self._get_json(ICFACTORS)
 
         for i, (dk, fi) in enumerate(zip(dkeys, fits)):
             ticf = self.temporary_ic_factors.get(dk)
@@ -639,13 +645,13 @@ class DVCAnalysis(Analysis):
                 k: unpack(pd["points"], jd["fmt"], decode=True)
                 for k, pd in jd.items()
                 if k
-                not in (
-                    refdet,
-                    "fmt",
-                    "interpolation",
-                    "reference_detector",
-                    "reference_isotope",
-                )
+                   not in (
+                       refdet,
+                       "fmt",
+                       "interpolation",
+                       "reference_detector",
+                       "reference_isotope",
+                   )
             }
 
         self.peak_center = pd["center_dac"]
@@ -781,8 +787,12 @@ class DVCAnalysis(Analysis):
     def _analysis_path(self, repository_identifier=None, **kw):
         if repository_identifier is None:
             repository_identifier = self.repository_identifier
-
-        return analysis_path((self.uuid, self.record_id), repository_identifier, **kw)
+        ret = analysis_path((self.uuid, self.record_id), repository_identifier, **kw)
+        if ret is None:
+            self.warning('Failed locating analysis path for uuid={}, record_id={} in {}'.format(self.uuid,
+                                                                                                self.record_id,
+                                                                                                repository_identifier))
+        return ret
 
     @property
     def intercepts_path(self):
@@ -807,6 +817,5 @@ class DVCAnalysis(Analysis):
     @property
     def tag_path(self):
         return self._analysis_path(modifier="tags")
-
 
 # ============= EOF ============================================
