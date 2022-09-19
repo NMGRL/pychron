@@ -496,7 +496,7 @@ class DVCAnalysis(Analysis):
 
                 self._dump(isos, path)
             else:
-                self.debug('failed locating intercepts for {}'.format(self))
+                self.debug("failed locating intercepts for {}".format(self))
 
         # save baselines
         if dks:
@@ -516,7 +516,7 @@ class DVCAnalysis(Analysis):
 
                 self._dump(baselines, path)
             else:
-                self.debug('failed locating baselines for {}'.format(self))
+                self.debug("failed locating baselines for {}".format(self))
 
     def dump_blanks(self, keys, refs=None, reviewed=False):
         isos, path = self._get_json(BLANKS)
@@ -558,13 +558,13 @@ class DVCAnalysis(Analysis):
         self._dump(jd, path)
 
     def dump_icfactors(
-            self,
-            dkeys,
-            fits,
-            refs=None,
-            reviewed=False,
-            standard_ratios=None,
-            reference_data=None,
+        self,
+        dkeys,
+        fits,
+        refs=None,
+        reviewed=False,
+        standard_ratios=None,
+        reference_data=None,
     ):
         jd, path = self._get_json(ICFACTORS)
 
@@ -645,13 +645,13 @@ class DVCAnalysis(Analysis):
                 k: unpack(pd["points"], jd["fmt"], decode=True)
                 for k, pd in jd.items()
                 if k
-                   not in (
-                       refdet,
-                       "fmt",
-                       "interpolation",
-                       "reference_detector",
-                       "reference_isotope",
-                   )
+                not in (
+                    refdet,
+                    "fmt",
+                    "interpolation",
+                    "reference_detector",
+                    "reference_isotope",
+                )
             }
 
         self.peak_center = pd["center_dac"]
@@ -789,9 +789,11 @@ class DVCAnalysis(Analysis):
             repository_identifier = self.repository_identifier
         ret = analysis_path((self.uuid, self.record_id), repository_identifier, **kw)
         if ret is None:
-            self.warning('Failed locating analysis path for uuid={}, record_id={} in {}'.format(self.uuid,
-                                                                                                self.record_id,
-                                                                                                repository_identifier))
+            self.warning(
+                "Failed locating analysis path for uuid={}, record_id={} in {}".format(
+                    self.uuid, self.record_id, repository_identifier
+                )
+            )
         return ret
 
     @property
@@ -817,5 +819,6 @@ class DVCAnalysis(Analysis):
     @property
     def tag_path(self):
         return self._analysis_path(modifier="tags")
+
 
 # ============= EOF ============================================
