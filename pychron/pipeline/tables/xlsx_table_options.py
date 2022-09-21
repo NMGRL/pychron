@@ -160,6 +160,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     include_summary_sample = dumpable(Bool(True))
     include_summary_j = dumpable(Bool(True))
 
+    include_summary_aliquot = dumpable(Bool(False))
     include_summary_identifier = dumpable(Bool(True))
     include_summary_unit = dumpable(Bool(True))
     include_summary_location = dumpable(Bool(True))
@@ -492,6 +493,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         summary_columns = BorderVGroup(
             iisum("sample", "Sample"),
             iisum("identifier", "Identifier"),
+            iisum("aliquot", "Aliquot"),
             iisum("unit", "Unit"),
             iisum("location", "Location"),
             iisum("material", "Material"),

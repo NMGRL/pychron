@@ -202,6 +202,7 @@ class AnalysisGroup(IdeogramPlotable):
                 "igsn",
                 "sample",
                 "material",
+                "weight",
                 "grainsize",
                 "project",
                 "irradiation",
