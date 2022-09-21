@@ -56,7 +56,8 @@ from pychron.pychron_constants import (
     NULL_STR,
     DESCENDING,
     format_mswd as FM,
-    PLUSMINUS_ONE_SIGMA, PLATEAU,
+    PLUSMINUS_ONE_SIGMA,
+    PLATEAU,
 )
 
 
@@ -374,7 +375,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         )
 
     def _intercalibration_columns(
-            self, columns, detectors, ic_visible=True, disc_visible=True
+        self, columns, detectors, ic_visible=True, disc_visible=True
     ):
         disc = [
             SigFigColumn(
@@ -409,9 +410,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _signal_columns(self, columns, ibit, bkbit):
         isos = (("Ar", 40), ("Ar", 39), ("Ar", 38), ("Ar", 37), ("Ar", 36))
         for bit, tag in (
-                (True, "disc_ic_corrected"),
-                (ibit, "intercept"),
-                (bkbit, "blank"),
+            (True, "disc_ic_corrected"),
+            (ibit, "intercept"),
+            (bkbit, "blank"),
         ):
             cols = [
                 c
@@ -647,8 +648,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         def get_age_error(attr):
             def f(ag, *args):
                 return (
-                        ag.scaled_age(std_dev(getattr(ag, attr)), opt.age_units)
-                        * opt.summary_age_nsigma
+                    ag.scaled_age(std_dev(getattr(ag, attr)), opt.age_units)
+                    * opt.summary_age_nsigma
                 )
 
             return f
@@ -667,9 +668,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 attr="identifier",
             ),
             Column(
-                visible=opt.include_summary_aliquot,
-                label="Aliquot",
-                func=get_aliquot
+                visible=opt.include_summary_aliquot, label="Aliquot", func=get_aliquot
             ),
             Column(visible=opt.include_summary_unit, label="Unit", attr="unit"),
             Column(
@@ -703,7 +702,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 visible=opt.include_summary_mswd,
                 sigformat="summary_mswd",
                 label="MSWD",
-                func = get_preferred_mswd
+                func=get_preferred_mswd,
             ),
             Column(visible=opt.include_summary_kca, label="K/Ca", func=get_kca),
             Column(
@@ -732,7 +731,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             VColumn(label="ArithmeticMeanAge", func=get_age("arith_age")),
             AEColumn(opt.summary_age_nsigma, func=get_age_error("arith_age")),
             VColumn(label="IsochronAge", func=get_age("isochron_age")),
-            VColumn(label='IsochronMSWD', func=get_isochron_mswd),
+            VColumn(label="IsochronMSWD", func=get_isochron_mswd),
             AEColumn(opt.summary_age_nsigma, func=get_age_error("isochron_age")),
             VColumn(
                 label=(
@@ -803,11 +802,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         # hide extra age columns
         for hidden in (
-                "WeightedMeanAge",
-                "ArithmeticMeanAge",
-                "IsochronAge",
-                "PlateauAge",
-                "IntegratedAge",
+            "WeightedMeanAge",
+            "ArithmeticMeanAge",
+            "IsochronAge",
+            "PlateauAge",
+            "IntegratedAge",
         ):
             hc = next((i for i, c in enumerate(cols) if c.label == hidden), None)
             if hc is not None:
@@ -1077,8 +1076,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     args = []
                     for cii in ci:
                         for reg, fmt in (
-                                (supreg, self._superscript),
-                                (subreg, self._subscript),
+                            (supreg, self._superscript),
+                            (subreg, self._subscript),
                         ):
                             m = reg.match(cii)
                             if m:
@@ -1215,7 +1214,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return fn
 
     def _make_analysis(
-            self, sh, cols, item, is_last=False, is_plateau_step=None, cum=""
+        self, sh, cols, item, is_last=False, is_plateau_step=None, cum=""
     ):
         row = self._current_row
 
@@ -1230,7 +1229,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 status = "pX"
 
         if item.exclude_from_isochron:
-            status = 'i{}'.format(status)
+            status = "i{}".format(status)
 
         sh.write(row, 0, status, fmt)
 
@@ -1334,7 +1333,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         no_preferred_age = False
         if ageobj.computed_kind == PLATEAU:
             if not group.plateau_steps:
-                no_preferred_age = 'No Plateau'
+                no_preferred_age = "No Plateau"
 
         if no_preferred_age:
             sh.write_string(self._current_row, start_col, no_preferred_age, fmt)
@@ -1413,9 +1412,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
             ia = group.isochron_age
             if nominal_value(ia) == 0 and std_dev(ia) == 0:
-                sh.write_string(
-                    self._current_row, start_col, "No Isochron", fmt
-                )
+                sh.write_string(self._current_row, start_col, "No Isochron", fmt)
             else:
                 sh.write_string(
                     self._current_row, start_col, "Isochron Age {}".format(pmsigma), fmt
@@ -1423,12 +1420,16 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
                 iage = group.scaled_age(ia, self._options.age_units)
                 sh.write_number(self._current_row, idx, nominal_value(iage), nfmt)
-                sh.write_number(self._current_row, idx + 1, std_dev(iage) * nsigma, nfmt)
+                sh.write_number(
+                    self._current_row, idx + 1, std_dev(iage) * nsigma, nfmt
+                )
 
                 mt = group.isochron_mswd()
                 try:
                     trapped = group.isochron_4036
-                    trapped_value, trapped_error = nominal_value(trapped), std_dev(trapped)
+                    trapped_value, trapped_error = nominal_value(trapped), std_dev(
+                        trapped
+                    )
                 except ZeroDivisionError:
                     trapped_value, trapped_error = "NaN", "NaN"
 
@@ -1602,6 +1603,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         if isinstance(v, Variable):
             v = nominal_value(v)
         return v
+
 
 # ============= EOF =============================================
 # if __name__ == '__main__':
