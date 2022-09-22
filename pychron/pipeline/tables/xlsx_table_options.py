@@ -289,7 +289,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
             path = os.path.join(root, add_extension(name, ext=".xlsx"))
             if check_exists:
                 if os.path.isfile(path) and not self.overwrite:
-                    path, _ = unique_path2(root, name, extension='.xlsx')
+                    path, _ = unique_path2(root, name, extension=".xlsx")
         return path
 
     def traits_view(self):
@@ -489,15 +489,16 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         )
 
         meta_grp = BorderVGroup(
-            iinc("meta_weight", 'Weight'),
-            iinc("meta_location", 'Location'),
-            label="Meta Data"
+            iinc("meta_weight", "Weight"),
+            iinc("meta_location", "Location"),
+            label="Meta Data",
         )
 
         columns_grp = BorderHGroup(general_col_grp, arar_col_grp, label="Columns")
         unk_columns_grp = VGroup(
             HGroup(columns_grp, sig_figs_grp),
-            HGroup(summary_rows_grp, meta_grp), label="Unknowns"
+            HGroup(summary_rows_grp, meta_grp),
+            label="Unknowns",
         )
         g1 = VGroup(
             HGroup(grp, appearence_grp), HGroup(sheet_grp, behavior_grp), label="Main"

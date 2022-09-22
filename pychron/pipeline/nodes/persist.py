@@ -378,7 +378,9 @@ class XLSXAnalysisTablePersistNode(BaseDVCNode):
         if info.result:
             p = self.options.selected_options.get_path()
             if os.path.isfile(p):
-                if confirmation_dialog("File {} already exists. Would you like to overwrite it?".format(p)):
+                if confirmation_dialog(
+                    "File {} already exists. Would you like to overwrite it?".format(p)
+                ):
                     self.options.selected_options.overwrite = True
             return True
 
@@ -489,6 +491,7 @@ class FluxMonitorMeansPersistNode(BaseNode):
                     wfile.write("{}\n".format(line))
 
             information(None, "Flux saved to\n\n{}".format(p))
+
 
 # class TablePersistNode(FileNode):
 #     pass

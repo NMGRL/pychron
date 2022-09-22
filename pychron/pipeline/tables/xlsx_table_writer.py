@@ -1130,9 +1130,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         if self._options.include_meta_weight:
             sh.write_string(row, 1, "Weight:", fmt)
 
-            txt = ''
+            txt = ""
             if group.weight:
-                txt = '{} mg'.format(group.weight)
+                txt = "{} mg".format(group.weight)
             sh.write_string(row, 2, txt, fmt)
         self._current_row += 1
 
