@@ -1115,18 +1115,25 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         sh.write_string(row, 5, "Identifier:", fmt)
         sh.write_string(row, 6, group.identifier, fmt)
 
-        sh.write_string(row, 9, "Weight:", fmt)
-        sh.write_string(row, 10, str(group.weight), fmt)
-
         self._current_row += 1
         row = self._current_row
 
         sh.write_string(row, 1, "Material:", fmt)
         sh.write_string(row, 2, group.material, fmt)
 
-        sh.write_string(row, 5, "Location:", fmt)
-        sh.write_string(row, 6, group.flatlon, fmt)
+        if self._options.include_meta_location:
+            sh.write_string(row, 5, "Location:", fmt)
+            sh.write_string(row, 6, group.flatlon, fmt)
 
+        self._current_row += 1
+        row = self._current_row
+        if self._options.include_meta_weight:
+            sh.write_string(row, 1, "Weight:", fmt)
+
+            txt = ''
+            if group.weight:
+                txt = '{} mg'.format(group.weight)
+            sh.write_string(row, 2, txt, fmt)
         self._current_row += 1
 
     def _make_intermediate_summary(self, sh, ag, cols, label):

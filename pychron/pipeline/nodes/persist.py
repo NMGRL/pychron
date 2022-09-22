@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import os
 
 # ============= enthought library imports =======================
 from pyface.message_dialog import information
@@ -373,7 +374,12 @@ class XLSXAnalysisTablePersistNode(BaseDVCNode):
         info = OptionsController(model=self.options).edit_traits(
             view=self.options_view, kind="livemodal"
         )
+        self.options.selected_options.overwrite = False
         if info.result:
+            p = self.options.selected_options.get_path()
+            if os.path.isfile(p):
+                if confirmation_dialog("File {} already exists. Would you like to overwrite it?".format(p)):
+                    self.options.selected_options.overwrite = True
             return True
 
     def _pre_run_hook(self, state):
@@ -483,7 +489,6 @@ class FluxMonitorMeansPersistNode(BaseNode):
                     wfile.write("{}\n".format(line))
 
             information(None, "Flux saved to\n\n{}".format(p))
-
 
 # class TablePersistNode(FileNode):
 #     pass

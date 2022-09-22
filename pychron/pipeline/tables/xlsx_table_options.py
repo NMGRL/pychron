@@ -60,6 +60,10 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
     intensity_units = dumpable(Enum("fA", "cps", "Volts"))
     age_units = dumpable(Enum("Ma", "Ga", "ka", "a"))
     hide_gridlines = dumpable(Bool(False))
+
+    include_meta_weight = dumpable(Bool(True))
+    include_meta_location = dumpable(Bool(True))
+
     include_F = dumpable(Bool(True))
     include_radiogenic_yield = dumpable(Bool(True))
     include_production_ratios = dumpable(Bool(True))
@@ -214,6 +218,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     exclude_hidden_columns = dumpable(Bool(False))
     include_notes_border = dumpable(Bool(True))
 
+    overwrite = Bool(False)
+
     def __init__(self, name, *args, **kw):
         self._persistence_name = name
 
@@ -266,6 +272,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
     @property
     def path(self):
+        return self.get_path(check_exists=True)
+
+    def get_path(self, check_exists=False):
         name = self.name
         root = paths.table_dir
 
@@ -278,7 +287,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
             path, _ = unique_path2(root, "Untitled", extension=".xlsx")
         else:
             path = os.path.join(root, add_extension(name, ext=".xlsx"))
-
+            if check_exists:
+                if os.path.isfile(path) and not self.overwrite:
+                    path, _ = unique_path2(root, name, extension='.xlsx')
         return path
 
     def traits_view(self):
@@ -476,9 +487,17 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
             iinc("trapped_ratio", "Trapped 40/36"),
             label="Summary Rows",
         )
+
+        meta_grp = BorderVGroup(
+            iinc("meta_weight", 'Weight'),
+            iinc("meta_location", 'Location'),
+            label="Meta Data"
+        )
+
         columns_grp = BorderHGroup(general_col_grp, arar_col_grp, label="Columns")
         unk_columns_grp = VGroup(
-            HGroup(columns_grp, sig_figs_grp), summary_rows_grp, label="Unknowns"
+            HGroup(columns_grp, sig_figs_grp),
+            HGroup(summary_rows_grp, meta_grp), label="Unknowns"
         )
         g1 = VGroup(
             HGroup(grp, appearence_grp), HGroup(sheet_grp, behavior_grp), label="Main"
