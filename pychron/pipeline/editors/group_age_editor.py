@@ -111,7 +111,7 @@ class AnalysesAdapter(SubGroupAdapter):
     exclude_from_isochron_text = Property
 
     def get_text_color(self, obj, trait, row, column=0):
-        return colornames[self.item.group_id]
+        return colornames[self.item.group_id % len(colornames)]
 
     def _get_exclude_from_isochron_text(self):
         return "Yes" if self.item.exclude_from_isochron else ""
@@ -412,14 +412,14 @@ class SubGroupAgeEditor(GroupAgeEditor):
         gid = r.group_id
 
         sgid = (
-            max(
-                {
-                    int(a.subgroup["name"]) if a.subgroup else 0
-                    for a in self.items
-                    if a.group_id == gid
-                }
-            )
-            + 1
+                max(
+                    {
+                        int(a.subgroup["name"]) if a.subgroup else 0
+                        for a in self.items
+                        if a.group_id == gid
+                    }
+                )
+                + 1
         )
         for a in self.selected:
             a.subgroup = {"name": sgid}
@@ -461,6 +461,5 @@ class SubGroupAgeEditor(GroupAgeEditor):
 
         v = View(VGroup(agrp, sgrp, ggrp), handler=THandler())
         return v
-
 
 # ============= EOF =============================================
