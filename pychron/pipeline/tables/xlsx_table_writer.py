@@ -1331,7 +1331,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         nsigma = self._options.asummary_age_nsigma
         pmsigma = PLUSMINUS_NSIGMA.format(nsigma)
-
+        mswd_sigfigs = self._options.asummary_mswd_sig_figs
         # a, label = group.get_age()
         # label = label.capitalize()
         ageobj = group.get_preferred_obj("age")
@@ -1363,7 +1363,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             )
 
             mt = group.get_preferred_mswd_tuple()
-            mswd_sigfigs = self._options.asummary_mswd_sig_figs
+
             sh.write_string(
                 self._current_row, idx + 3, format_mswd(mt, n=mswd_sigfigs), fmt
             )
