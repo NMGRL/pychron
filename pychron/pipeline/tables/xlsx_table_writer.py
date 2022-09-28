@@ -134,7 +134,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self.information_dialog("Table saved to {}".format(path))
         # view = self._options.auto_view
         # if not view:
-            # view = confirm(None, "Table saved to {}\n\nView Table?".format(path)) == YES
+        # view = confirm(None, "Table saved to {}\n\nView Table?".format(path)) == YES
 
         # if view:
         #     view_file(path, application="Excel")
