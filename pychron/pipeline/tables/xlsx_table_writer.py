@@ -131,12 +131,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         self._workbook.close()
 
-        view = self._options.auto_view
-        if not view:
-            view = confirm(None, "Table saved to {}\n\nView Table?".format(path)) == YES
+        self.information_dialog("Table saved to {}".format(path))
+        # view = self._options.auto_view
+        # if not view:
+            # view = confirm(None, "Table saved to {}\n\nView Table?".format(path)) == YES
 
-        if view:
-            view_file(path, application="Excel")
+        # if view:
+        #     view_file(path, application="Excel")
 
     # private
     def _get_detectors(self, grps):
@@ -1193,6 +1194,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             if c < cum_idx:
                 sh.write(row, c, "", border)
                 c += 1
+            else:
+                break
 
         if label == "plateau":
             sh.write_number(row, cum_idx, ag.plateau_total_ar39(), fmt)
