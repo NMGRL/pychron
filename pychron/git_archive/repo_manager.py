@@ -546,7 +546,7 @@ class GitRepoManager(Loggable):
         for line in lines.split("\n"):
             if not line.startswith(prefix):
                 continue
-            filename = line[len(prefix):].rstrip("\n")
+            filename = line[len(prefix) :].rstrip("\n")
             # Special characters are escaped
             if filename[0] == filename[-1] == '"':
                 filename = filename[1:-1].decode("string_escape")
@@ -736,19 +736,19 @@ class GitRepoManager(Loggable):
                 ret = branch
                 break
         else:
-            if branch == 'master':
+            if branch == "master":
                 ret = "main"
 
-        self.debug('clean master in = {} out={}'.format(branch, ret))
+        self.debug("clean master in = {} out={}".format(branch, ret))
         return ret
 
     def pull(
-            self,
-            branch="master",
-            remote="origin",
-            handled=True,
-            use_progress=True,
-            use_auto_pull=False,
+        self,
+        branch="master",
+        remote="origin",
+        handled=True,
+        use_progress=True,
+        use_auto_pull=False,
     ):
         """
         fetch and merge
@@ -798,10 +798,10 @@ class GitRepoManager(Loggable):
                 ahead, behind = self.ahead_behind(remote)
                 if behind:
                     if self.confirmation_dialog(
-                            'Repository "{}" is behind the official version by {} changes.\n'
-                            "Would you like to pull the available changes?".format(
-                                self.name, behind
-                            )
+                        'Repository "{}" is behind the official version by {} changes.\n'
+                        "Would you like to pull the available changes?".format(
+                            self.name, behind
+                        )
                     ):
                         # show the changes
                         h = self.git_history_view(branch)
@@ -872,12 +872,12 @@ class GitRepoManager(Loggable):
             repo.git.rebase(onto_branch, branch)
 
     def smart_pull(
-            self,
-            branch="master",
-            remote="origin",
-            quiet=True,
-            accept_our=False,
-            accept_their=False,
+        self,
+        branch="master",
+        remote="origin",
+        quiet=True,
+        accept_our=False,
+        accept_their=False,
     ):
 
         if remote not in self._repo.remotes:
@@ -895,9 +895,9 @@ class GitRepoManager(Loggable):
             if ahead:
                 if not quiet:
                     if not self.confirmation_dialog(
-                            "You are {} behind and {} commits ahead. "
-                            "There are potential conflicts that you will have to resolve."
-                            "\n\nWould you like to Continue?".format(behind, ahead)
+                        "You are {} behind and {} commits ahead. "
+                        "There are potential conflicts that you will have to resolve."
+                        "\n\nWould you like to Continue?".format(behind, ahead)
                     ):
                         return
 
@@ -929,11 +929,11 @@ class GitRepoManager(Loggable):
                         repo.git.merge("{}/{}".format(remote, branch))
                     except GitCommandError:
                         if self.confirmation_dialog(
-                                "There appears to be a conflict with {}."
-                                "\n\nWould you like to accept the master copy (Yes).\n\nOtherwise "
-                                "you will need to merge the changes manually (No)".format(
-                                    self.name
-                                )
+                            "There appears to be a conflict with {}."
+                            "\n\nWould you like to accept the master copy (Yes).\n\nOtherwise "
+                            "you will need to merge the changes manually (No)".format(
+                                self.name
+                            )
                         ):
                             try:
                                 repo.git.merge("--abort")
@@ -945,8 +945,8 @@ class GitRepoManager(Loggable):
                             except GitCommandError:
                                 pass
                         elif self.confirmation_dialog(
-                                "Would you like to accept all of your current changes even "
-                                "though there are newer changes available?"
+                            "Would you like to accept all of your current changes even "
+                            "though there are newer changes available?"
                         ):
                             accept_our = True
                 #                             try:
