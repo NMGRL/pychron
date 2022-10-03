@@ -546,7 +546,7 @@ class GitRepoManager(Loggable):
         for line in lines.split("\n"):
             if not line.startswith(prefix):
                 continue
-            filename = line[len(prefix) :].rstrip("\n")
+            filename = line[len(prefix):].rstrip("\n")
             # Special characters are escaped
             if filename[0] == filename[-1] == '"':
                 filename = filename[1:-1].decode("string_escape")
@@ -564,6 +564,7 @@ class GitRepoManager(Loggable):
 
     def has_unpushed_commits(self, remote="origin", branch="master"):
         if self._repo:
+            branch = self._clean_master_branch(branch)
             # return self._repo.git.log('--not', '--remotes', '--oneline')
             if remote in self._repo.remotes:
                 return self._repo.git.log(
@@ -729,19 +730,32 @@ class GitRepoManager(Loggable):
         commit_view = CommitView(model=h)
         return commit_view
 
+    def _clean_master_branch(self, branch):
+        for ref in self._repo.references:
+            if ref.name == branch:
+                ret = branch
+                break
+        else:
+            if branch == 'master':
+                ret = "main"
+
+        self.debug('clean master in = {} out={}'.format(branch, ret))
+        return ret
+
     def pull(
-        self,
-        branch="master",
-        remote="origin",
-        handled=True,
-        use_progress=True,
-        use_auto_pull=False,
+            self,
+            branch="master",
+            remote="origin",
+            handled=True,
+            use_progress=True,
+            use_auto_pull=False,
     ):
         """
         fetch and merge
 
         if use_auto_pull is False ask user if they want to accept the available updates
         """
+
         self.debug("pulling {} from {}".format(branch, remote))
 
         repo = self._repo
@@ -753,6 +767,8 @@ class GitRepoManager(Loggable):
 
         if remote:
             self.debug("pulling from url: {}".format(remote.url))
+
+            branch = self._clean_master_branch(branch)
             if use_progress:
                 prog = open_progress(
                     3,
@@ -782,10 +798,10 @@ class GitRepoManager(Loggable):
                 ahead, behind = self.ahead_behind(remote)
                 if behind:
                     if self.confirmation_dialog(
-                        'Repository "{}" is behind the official version by {} changes.\n'
-                        "Would you like to pull the available changes?".format(
-                            self.name, behind
-                        )
+                            'Repository "{}" is behind the official version by {} changes.\n'
+                            "Would you like to pull the available changes?".format(
+                                self.name, behind
+                            )
                     ):
                         # show the changes
                         h = self.git_history_view(branch)
@@ -856,12 +872,12 @@ class GitRepoManager(Loggable):
             repo.git.rebase(onto_branch, branch)
 
     def smart_pull(
-        self,
-        branch="master",
-        remote="origin",
-        quiet=True,
-        accept_our=False,
-        accept_their=False,
+            self,
+            branch="master",
+            remote="origin",
+            quiet=True,
+            accept_our=False,
+            accept_their=False,
     ):
 
         if remote not in self._repo.remotes:
@@ -879,9 +895,9 @@ class GitRepoManager(Loggable):
             if ahead:
                 if not quiet:
                     if not self.confirmation_dialog(
-                        "You are {} behind and {} commits ahead. "
-                        "There are potential conflicts that you will have to resolve."
-                        "\n\nWould you like to Continue?".format(behind, ahead)
+                            "You are {} behind and {} commits ahead. "
+                            "There are potential conflicts that you will have to resolve."
+                            "\n\nWould you like to Continue?".format(behind, ahead)
                     ):
                         return
 
@@ -905,17 +921,19 @@ class GitRepoManager(Loggable):
 
                         return
 
+                    branch = self._clean_master_branch(branch)
+
                     # do merge
                     try:
                         # repo.git.rebase('--preserve-merges', '{}/{}'.format(remote, branch))
                         repo.git.merge("{}/{}".format(remote, branch))
                     except GitCommandError:
                         if self.confirmation_dialog(
-                            "There appears to be a conflict with {}."
-                            "\n\nWould you like to accept the master copy (Yes).\n\nOtherwise "
-                            "you will need to merge the changes manually (No)".format(
-                                self.name
-                            )
+                                "There appears to be a conflict with {}."
+                                "\n\nWould you like to accept the master copy (Yes).\n\nOtherwise "
+                                "you will need to merge the changes manually (No)".format(
+                                    self.name
+                                )
                         ):
                             try:
                                 repo.git.merge("--abort")
@@ -927,8 +945,8 @@ class GitRepoManager(Loggable):
                             except GitCommandError:
                                 pass
                         elif self.confirmation_dialog(
-                            "Would you like to accept all of your current changes even "
-                            "though there are newer changes available?"
+                                "Would you like to accept all of your current changes even "
+                                "though there are newer changes available?"
                         ):
                             accept_our = True
                 #                             try:
