@@ -30,16 +30,26 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from apptools.preferences.preference_binding import bind_preference
+from pyface.message_dialog import information
 from traits.api import HasTraits, Str, Enum, Bool, Int
 from traitsui.api import View
 
+try:
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-from google.auth.exceptions import RefreshError
+    USE_GMAIL = True
+except ImportError:
+    USE_GMAIL = False
+    information(
+        None,
+        "Not all packages installed for the email plugin.  Disable Email plugin in "
+        "initialization.xml or "
+        "install the necessary packages. See https://developers.google.com/gmail/api/quickstart/python",
+    )
 
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
@@ -86,8 +96,10 @@ class Emailer(Loggable):
         if not self.server_port:
             self.server_port = 587
 
+        self.use_gmail = USE_GMAIL
+
     def test_email_server(self):
-        return bool(self.connect(warn=False, test=True)), "No Error Message"
+        return bool(self.connect(warn=False, test=True))
 
     def connect(self, warn=True, test=False):
         if self.use_gmail:
@@ -100,23 +112,9 @@ class Emailer(Loggable):
                 creds = Credentials.from_authorized_user_file(token_path, SCOPES)
             # If there are no (valid) credentials available, let the user log in.
             if not creds or not creds.valid:
-                if creds:
-                    self.debug("credentials expired {}".format(creds.expired))
-                    self.debug(
-                        "credentials refresh_token {}".format(creds.refresh_token)
-                    )
-
-                creds_needed = True
                 if creds and creds.expired and creds.refresh_token:
-                    self.debug("refreshing credentials")
-                    try:
-                        creds.refresh(Request())
-                        creds_needed = False
-                    except RefreshError:
-                        self.debug_exception()
-                        creds_needed = True
-
-                if creds_needed:
+                    creds.refresh(Request())
+                else:
 
                     self.information_dialog(
                         "Pychron needs authorization to send emails. You will now be redirected "
@@ -124,32 +122,20 @@ class Emailer(Loggable):
                     )
 
                     cred_path = os.path.join(paths.hidden_dir, "credentials.json")
-                    if os.path.isfile(cred_path):
-                        flow = InstalledAppFlow.from_client_secrets_file(
-                            cred_path, SCOPES
-                        )
-                        creds = flow.run_local_server(port=0)
-                    else:
-                        self.information_dialog(
-                            "The file '{}' was not found.\n\nPlease contact developers for a "
-                            "copy".format(cred_path)
-                        )
-                if creds:
-                    # Save the credentials for the next run
-                    with open(token_path, "w") as token:
-                        token.write(creds.to_json())
+                    flow = InstalledAppFlow.from_client_secrets_file(cred_path, SCOPES)
+                    creds = flow.run_local_server(port=0)
+                # Save the credentials for the next run
+                with open(token_path, "w") as token:
+                    token.write(creds.to_json())
 
             service = None
-            if creds:
-                try:
-                    # Call the Gmail API
-                    service = build(
-                        "gmail", "v1", credentials=creds, cache_discovery=False
-                    )
+            try:
+                # Call the Gmail API
+                service = build("gmail", "v1", credentials=creds)
 
-                except HttpError as error:
-                    # TODO(developer) - Handle errors from gmail API.
-                    print(f"An error occurred: {error}")
+            except HttpError as error:
+                # TODO(developer) - Handle errors from gmail API.
+                print(f"An error occurred: {error}")
 
             return service
         else:
@@ -196,9 +182,7 @@ class Emailer(Loggable):
 
             if self.use_gmail:
                 msg = self._gmail_message_factory(addrs, sub, msg, paths)
-                smsg = (server.users().messages().send(userId="me", body=msg)).execute()
-                self.debug("Sent message id {}".format(smsg["id"]))
-                return True
+                server.users().messages().send(userId="me", body=msg).execute()
             else:
                 msg = self._message_factory(addrs, sub, msg, paths)
                 try:
