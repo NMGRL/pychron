@@ -937,7 +937,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.extracting_run = run
 
         # self.debug("parallel saving currently disabled")
-        if self._save_complete_evt:
+        if self._save_complete_evt and self.use_dvc_persistence:
             self.debug("waiting for save event to clear")
             st = time.time()
             while self._save_complete_evt.is_set():
