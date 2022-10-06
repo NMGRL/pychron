@@ -51,7 +51,7 @@ for face in pychron_constants.TTF_FONTS:
             break
         except TTFError as e:
             print("invalid font", spec, e)
-            pdfmetrics.registerFont(TTFont(face_name, 'Vera.tff'))
+            pdfmetrics.registerFont(TTFont(face_name, "Vera.tff"))
 
 
 class myPdfPlotGraphicsContext(PdfPlotGraphicsContext):
