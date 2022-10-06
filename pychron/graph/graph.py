@@ -46,7 +46,7 @@ from pychron.graph.offset_plot_label import OffsetPlotLabel
 from pychron.graph.tools.axis_tool import AxisTool
 from .tools.contextual_menu_tool import ContextualMenuTool
 
-VALID_FONTS = ["Arial", "Lucida Grande", "Geneva", "Courier"]
+# VALID_FONTS = ["Arial", "Lucida Grande", "Geneva", "Courier"]
 # 'Helvetica',
 # 'Times New Roman'
 
@@ -580,8 +580,8 @@ class Graph(ContextMenuMixin):
         if pc.overlays:
             pc.overlays.pop()
 
-        if font not in VALID_FONTS:
-            font = "modern"
+        # if font not in VALID_FONTS:
+        #     font = "modern"
 
         if size is None:
             size = 12
@@ -1238,8 +1238,8 @@ class Graph(ContextMenuMixin):
         axis = getattr(self.plots[plotid], axistag)
         params = dict(title=title)
 
-        if font not in VALID_FONTS:
-            font = "arial"
+        # if font not in VALID_FONTS:
+        #     font = "arial"
 
         if font is not None or size is not None:
             if size is None:
