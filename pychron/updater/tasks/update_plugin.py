@@ -24,7 +24,7 @@ from pyface.tasks.action.schema_addition import SchemaAddition
 # ============= local library imports  ==========================
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.globals import globalv
-from pychron.updater.tasks.actions import CheckForUpdatesAction
+from pychron.updater.tasks.actions import CheckForUpdatesAction, LibraryAction
 from pychron.updater.tasks.update_preferences import UpdatePreferencesPane
 from pychron.updater.updater import Updater
 
@@ -126,6 +126,11 @@ class UpdatePlugin(BaseTaskPlugin):
                     SchemaAddition(
                         id="pychron.update.check_for_updates",
                         factory=CheckForUpdatesAction,
+                        path="MenuBar/help.menu",
+                    ),
+                    SchemaAddition(
+                        id="pychron.update.library_manager",
+                        factory=LibraryAction,
                         path="MenuBar/help.menu",
                     ),
                     # SchemaAddition(id='pychron.update.build_app',

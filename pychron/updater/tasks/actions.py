@@ -19,6 +19,7 @@
 # ============= local library imports  ==========================
 from pychron.envisage.resources import icon
 from pychron.envisage.ui_actions import UIAction
+from pychron.envisage.view_util import open_view
 
 
 class BuildApplicationAction(UIAction):
@@ -64,5 +65,14 @@ class ManageBranchAction(UIAction):
         up = app.get_service("pychron.updater.updater.Updater")
         up.manage_branches()
 
+
+class LibraryAction(UIAction):
+    name = "Library Manager"
+
+    def perform(self, event):
+        from pychron.updater.package_manager import LibraryManager
+        pm = LibraryManager()
+        pm.load_libraries()
+        open_view(pm)
 
 # ============= EOF =============================================
