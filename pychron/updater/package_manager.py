@@ -28,22 +28,26 @@ from pychron.loggable import Loggable
 
 
 class LibraryAdapter(TabularAdapter):
-    columns = [('Name', 'name'),
-               ('Version', 'version')]
+    columns = [("Name", "name"), ("Version", "version")]
     name_width = Int(200)
 
 
-PV = View(HGroup(icon_button_editor('copy_as_text', ''),
-                 icon_button_editor('install_library', 'add')),
+PV = View(
+    HGroup(
+        icon_button_editor("copy_as_text", ""),
+        icon_button_editor("install_library", "add"),
+    ),
+    UItem(
+        "libraries",
+        editor=TabularEditor(adapter=LibraryAdapter(), stretch_last_section=False),
+    ),
+    title="Library Manager",
+    width=400,
+    height=600,
+    resizable=True,
+)
 
-          UItem('libraries', editor=TabularEditor(adapter=LibraryAdapter(),
-                                                  stretch_last_section=False)),
-          title='Library Manager',
-          width=400,
-          height=600,
-          resizable=True)
-
-LV = okcancel_view('library_entry', title='Install Library')
+LV = okcancel_view("library_entry", title="Install Library")
 
 
 class Library(HasTraits):
@@ -52,11 +56,11 @@ class Library(HasTraits):
 
     def __init__(self, a, *args, **kw):
         super(Library, self).__init__(*args, **kw)
-        args = a.split(' ')
+        args = a.split(" ")
         self.name, self.version = args[0].strip(), args[-1].strip()
 
     def tostr(self):
-        return f'{self.name} {self.version}'
+        return f"{self.name} {self.version}"
 
 
 class LibraryManager(Loggable):
@@ -66,7 +70,7 @@ class LibraryManager(Loggable):
     library_entry = Str
 
     def _copy_as_text_fired(self):
-        txt = '\n'.join((p.tostr() for p in self.libraries))
+        txt = "\n".join((p.tostr() for p in self.libraries))
         clipboard = QApplication.clipboard()
         clipboard.setText(txt)
 
@@ -77,30 +81,32 @@ class LibraryManager(Loggable):
 
     def _install_library(self, entry):
         # parse entry for name and version
-        name, version = entry, ''
+        name, version = entry, ""
         try:
-            self._pip_cmd('install', name)
-            self.info(f'installed {name} successfully')
+            self._pip_cmd("install", name)
+            self.info(f"installed {name} successfully")
         except subprocess.CalledProcessError:
-            self.information_dialog(f'"{name}" could not be located.\n\nPlease make sure the library name is spelled '
-                                    f'correctly')
+            self.information_dialog(
+                f'"{name}" could not be located.\n\nPlease make sure the library name is spelled '
+                f"correctly"
+            )
 
     def load_libraries(self):
-        args = self._pip_cmd('list')
+        args = self._pip_cmd("list")
         self.libraries = [Library(a) for a in args.splitlines()[2:]]
 
     def _pip_cmd(self, *args):
         pyexecutable = sys.executable
-        pipexecutable = os.path.join(os.path.dirname(pyexecutable), 'pip')
+        pipexecutable = os.path.join(os.path.dirname(pyexecutable), "pip")
 
-        cmd = (pipexecutable,)+args
-        return subprocess.check_output(cmd).decode('utf8')
+        cmd = (pipexecutable,) + args
+        return subprocess.check_output(cmd).decode("utf8")
 
     def traits_view(self):
         return PV
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     d = LibraryManager()
     d.load_libraries()
     d.configure_traits()

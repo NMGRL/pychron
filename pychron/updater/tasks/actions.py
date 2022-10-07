@@ -71,8 +71,10 @@ class LibraryAction(UIAction):
 
     def perform(self, event):
         from pychron.updater.package_manager import LibraryManager
+
         pm = LibraryManager()
         pm.load_libraries()
         open_view(pm)
+
 
 # ============= EOF =============================================
