@@ -244,7 +244,7 @@ class DataCollector(Consoleable):
             return
         if data:
             keys, signals, ct, inc = data
-            if keys and signals:
+            if keys is not None and signals is not None:
                 if detectors:
                     # data = list(zip(*(d for d in zip(*data) if d[0] in detectors)))
                     nkeys, nsignals = [], []
