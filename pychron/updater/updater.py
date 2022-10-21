@@ -258,6 +258,7 @@ class Updater(Loggable):
 
     def _install_dependencies_pip(self):
         from library_manager import LibraryManager
+
         lm = LibraryManager()
         lm.install_dependencies()
 

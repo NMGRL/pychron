@@ -34,8 +34,8 @@ class LibraryAdapter(TabularAdapter):
 
 PV = View(
     HGroup(
-        icon_button_editor("copy_as_text", "copy", tooltip='Copy Library list as text'),
-        icon_button_editor("install_library_button", "add", tooltip='Install library'),
+        icon_button_editor("copy_as_text", "copy", tooltip="Copy Library list as text"),
+        icon_button_editor("install_library_button", "add", tooltip="Install library"),
     ),
     UItem(
         "libraries",
@@ -88,9 +88,9 @@ class LibraryManager(Loggable):
             self._install_library(self.library_entry)
 
     def install_dependencies(self, *args, **kw):
-        p = './dependencies.txt'
+        p = "./dependencies.txt"
         fails = []
-        with open(p, 'r') as rfile:
+        with open(p, "r") as rfile:
             for line in rfile:
                 d = line.strip()
                 name = self._install_library(d, warn=True)
@@ -98,8 +98,10 @@ class LibraryManager(Loggable):
                     fails.append(name)
 
         if fails:
-            self.warning(f"The libraries {fails} failed to install. Please install manually or contact a python "
-                         f"expert")
+            self.warning(
+                f"The libraries {fails} failed to install. Please install manually or contact a python "
+                f"expert"
+            )
 
     def _install_library(self, entry, warn=False):
 
@@ -110,7 +112,9 @@ class LibraryManager(Loggable):
             self.info(f"installed {name} successfully")
         except subprocess.CalledProcessError:
             if warn:
-                self.critical(f'"{name}" could not be located. Parts of pychron will be broken if not resolved')
+                self.critical(
+                    f'"{name}" could not be located. Parts of pychron will be broken if not resolved'
+                )
                 return name
             else:
                 self.information_dialog(

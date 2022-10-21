@@ -71,24 +71,27 @@ class GitHubPlugin(BaseGitPlugin):
     def oauth_flow(self):
         from google_auth_oauthlib.flow import InstalledAppFlow
 
-        config = {'installed': {'client_id': 'Iv1.e4ea3100ace7882b',
-                                'client_secret': '00118d67ed990c72ac926f57b6c0a04bb2eb0120',
-                                'auth_uri': 'https://github.com/login/oauth/authorize',
-                                'token_uri': 'https://github.com/login/oauth/access_token'}}
+        config = {
+            "installed": {
+                "client_id": "Iv1.e4ea3100ace7882b",
+                "client_secret": "00118d67ed990c72ac926f57b6c0a04bb2eb0120",
+                "auth_uri": "https://github.com/login/oauth/authorize",
+                "token_uri": "https://github.com/login/oauth/access_token",
+            }
+        }
 
         p = paths.oauth_file
         if os.path.isfile(p):
             flow = InstalledAppFlow.from_client_secrets_file(p, [""])
             flow.oauth2session.refresh_token(flow.authorization_url())
         else:
-            flow = InstalledAppFlow.from_client_config(config,
-                                                       scopes=[""])
+            flow = InstalledAppFlow.from_client_config(config, scopes=[""])
             flow.run_local_server()
 
-        with open(p, 'w') as wfile:
+        with open(p, "w") as wfile:
             obj = json.loads(flow.credentials.to_json())
-            obj['auth_uri'] = config['installed']['auth_uri']
-            json.dump({'installed': obj}, wfile)
+            obj["auth_uri"] = config["installed"]["auth_uri"]
+            json.dump({"installed": obj}, wfile)
 
     def _preferences_default(self):
         return self._preferences_factory("github")

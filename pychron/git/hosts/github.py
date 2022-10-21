@@ -71,15 +71,18 @@ class GitHubService(GitHostService):
 
     def post_file(self, remote, path, content, committer_name, committer_email=None):
         if committer_email is None:
-            cn = committer_name.replace(' ', '_')
-            committer_email = f'{cn}@gmail.com'
+            cn = committer_name.replace(" ", "_")
+            committer_email = f"{cn}@gmail.com"
 
         url = f"{API_URL}/repos/{remote}/contents/{path}"
 
         try:
-            self._put(url, message='Created shareable archive',
-                      commiter={'name': committer_name, 'email': committer_email},
-                      content=content)
+            self._put(
+                url,
+                message="Created shareable archive",
+                commiter={"name": committer_name, "email": committer_email},
+                content=content,
+            )
         except BaseException:
             self.debug_exception()
 
@@ -148,10 +151,10 @@ class GitHubService(GitHostService):
         if organization == self.organization:
             p = paths.oauth_file
             if os.path.isfile(p):
-                with open(p, 'r') as rfile:
+                with open(p, "r") as rfile:
                     obj = json.load(rfile)
-                    obj = obj['installed']
-                    token = obj['token']
+                    obj = obj["installed"]
+                    token = obj["token"]
                     auth = "{}@".format(token)
             elif self.oauth_token:
                 auth = "{}@".format(self.oauth_token)
@@ -185,5 +188,6 @@ class GitHubService(GitHostService):
     # private
     def _get_oauth_token(self):
         return "token {}".format(self.oauth_token)
+
 
 # ============= EOF =============================================
