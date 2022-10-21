@@ -21,6 +21,7 @@ from __future__ import absolute_import
 
 import json
 import os
+from base64 import b64encode
 
 import requests
 from requests.exceptions import SSLError
@@ -76,6 +77,7 @@ class GitHubService(GitHostService):
 
         url = f"{API_URL}/repos/{remote}/contents/{path}"
 
+        content = b64encode(content)
         try:
             self._put(
                 url,
