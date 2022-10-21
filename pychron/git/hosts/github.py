@@ -20,11 +20,13 @@
 from __future__ import absolute_import
 
 import json
+import os
 
 import requests
 from requests.exceptions import SSLError
 
 from pychron.git.hosts import GitHostService
+from pychron.paths import paths
 
 BASE_URL = "github.com"
 API_URL = "https://api.github.com"
@@ -67,9 +69,23 @@ class GitHubService(GitHostService):
             self.close_session()
         return ret, rsha
 
+    def post_file(self, remote, path, content, committer_name, committer_email=None):
+        if committer_email is None:
+            cn = committer_name.replace(' ', '_')
+            committer_email = f'{cn}@gmail.com'
+
+        url = f"{API_URL}/repos/{remote}/contents/{path}"
+
+        try:
+            self._put(url, message='Created shareable archive',
+                      commiter={'name': committer_name, 'email': committer_email},
+                      content=content)
+        except BaseException:
+            self.debug_exception()
+
     def post_issue(self, remote, issue):
         url = "{}/repos/{}/issues".format(API_URL, remote)
-        return self._post(url, **issue)
+        return self._post(url, issue)
 
     def get_labels(self, remote):
         cmd = "{}/repos/{}/labels".format(API_URL, remote)
@@ -130,7 +146,14 @@ class GitHubService(GitHostService):
         # including the authenitcation when cloning presents an issue when cloning a repository
         # you only have read-only access to
         if organization == self.organization:
-            if self.oauth_token:
+            p = paths.oauth_file
+            if os.path.isfile(p):
+                with open(p, 'r') as rfile:
+                    obj = json.load(rfile)
+                    obj = obj['installed']
+                    token = obj['token']
+                    auth = "{}@".format(token)
+            elif self.oauth_token:
                 auth = "{}@".format(self.oauth_token)
             elif self.username and self.password:
                 auth = "{}:{}@".format(self.username, self.password)
@@ -162,6 +185,5 @@ class GitHubService(GitHostService):
     # private
     def _get_oauth_token(self):
         return "token {}".format(self.oauth_token)
-
 
 # ============= EOF =============================================

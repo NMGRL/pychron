@@ -70,7 +70,7 @@ class LibraryAction(UIAction):
     name = "Library Manager"
 
     def perform(self, event):
-        from pychron.updater.package_manager import LibraryManager
+        from pychron.updater.library_manager import LibraryManager
 
         pm = LibraryManager()
         pm.load_libraries()

@@ -20,6 +20,7 @@ import time
 from operator import attrgetter
 
 import yaml
+from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import Str, Button, List, Instance
@@ -31,6 +32,7 @@ from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.progress import progress_iterator, open_progress
 from pychron.dvc.dvc import DVC
 from pychron.envisage.browser.record_views import RepositoryRecordView
+from pychron.git.hosts import IGitHost
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -75,6 +77,9 @@ class WorkOffline(Loggable):
     work_offline_button = Button("Work Offline")
     dvc = Instance(DVC)
 
+    lab_name = Str
+    username = Str
+
     def load_repos(self):
         repos = self.dvc.remote_repositories()
         # repos = [{'name': 'Foo', 'created_at': '2021-10-28 13:23:05,286 '},
@@ -95,6 +100,9 @@ class WorkOffline(Loggable):
             a. check database
             b. check github
         """
+        bind_preference(self, 'lab_name', 'pychron.general.lab_name')
+        bind_preference(self, 'username', 'pychron.general.username')
+
         if self._check_database_connection():
             if self._check_githost_connection():
                 self.load_repos()
@@ -142,6 +150,14 @@ class WorkOffline(Loggable):
                         "database": dbfile.read(),
                     }
                 yaml.dump(ctx, wfile, encoding="utf-8")
+                content = yaml.dump(ctx, encoding="utf-8")
+
+                # try to share with PychronLabsLLC/pzdata
+                gh = self.application.get_services(IGitHost)
+                upath = os.path.join(self.lab_name or 'NoLab', os.path.basename(apath))
+                gh.post_file('PychronLabsLLC/pzdata', upath, content, committer_name=self.username)
+
+
 
         # msg = 'Would you like to switch to the offline database?'
         # if self.confirmation_dialog(msg):

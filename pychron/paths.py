@@ -275,6 +275,7 @@ class Paths(object):
     ratio_change_detection = None
     actuation_tracker_file = None
 
+    oauth_file = None
     # plot_factory_defaults = (('ideogram_defaults', 'IDEOGRAM_DEFAULTS', True),
     #                          ('spectrum_defaults', 'SPECTRUM_DEFAULTS', True))
 
