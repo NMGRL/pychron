@@ -32,6 +32,7 @@ from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.progress import progress_iterator, open_progress
 from pychron.core.pychron_traits import BorderVGroup
 from pychron.dvc.dvc import DVC
+
 # from pychron.envisage.browser.record_views import RepositoryRecordView
 from pychron.git.hosts import IGitHost
 from pychron.git.hosts.github import GitHubService
@@ -88,8 +89,10 @@ class WorkOffline(Loggable):
         if self.dvc:
             repos = self.dvc.remote_repositories()
         else:
-            repos = [{'name': 'Foo', 'created_at': '2021-10-28 13:23:05,286 '},
-                     {'name': 'Basdfarefasdasdc', 'created_at': '2021-10-28 13:23:05,286 '}]
+            repos = [
+                {"name": "Foo", "created_at": "2021-10-28 13:23:05,286 "},
+                {"name": "Basdfarefasdasdc", "created_at": "2021-10-28 13:23:05,286 "},
+            ]
 
         repos = [r["name"] for r in repos]
 
@@ -154,8 +157,10 @@ class WorkOffline(Loggable):
                         "meta_repo_dirname": self.dvc.meta_repo_dirname,
                         "organization": self.dvc.organization,
                         "database": dbfile.read(),
-                        "metadata": {"tags": self.tags.split(','),
-                                     "description": self.description}
+                        "metadata": {
+                            "tags": self.tags.split(","),
+                            "description": self.description,
+                        },
                     }
                 yaml.dump(ctx, wfile, encoding="utf-8")
                 content = yaml.dump(ctx, encoding="utf-8")
@@ -163,7 +168,9 @@ class WorkOffline(Loggable):
                 # try to share with PychronLabsLLC/pzdata
                 gh = self.application.get_services(GitHubService)
                 if gh is not None:
-                    upath = os.path.join(self.lab_name or "NoLab", os.path.basename(apath))
+                    upath = os.path.join(
+                        self.lab_name or "NoLab", os.path.basename(apath)
+                    )
                     gh.post_file(
                         "PychronLabsLLC/pzdata",
                         upath,
@@ -197,7 +204,7 @@ class WorkOffline(Loggable):
         return unique_path2(paths.dvc_dir, "index", extension=".sqlite3")[0]
 
     def _clone_central_db(
-            self, repositories, analyses=None, principal_investigators=None, projects=None
+        self, repositories, analyses=None, principal_investigators=None, projects=None
     ):
 
         self.info("--------- Clone DB -----------")
@@ -210,8 +217,8 @@ class WorkOffline(Loggable):
         path = database_path()
         if os.path.isfile(path):
             if not self.confirmation_dialog(
-                    'The database "{}" already exists. '
-                    "Do you want to overwrite it".format(os.path.basename(path))
+                'The database "{}" already exists. '
+                "Do you want to overwrite it".format(os.path.basename(path))
             ):
 
                 path = self._get_new_path()
@@ -414,12 +421,23 @@ class WorkOffline(Loggable):
                     "selected_repositories",
                     editor=SetEditor(name="repositories", can_move_all=False),
                 ),
-                BorderVGroup(UItem('description', style='custom', tooltip='Provide a description of this dataset to '
-                                                                          'make it easier to identifier '),
-                             label='Description'),
-                BorderVGroup(UItem('tags', tooltip='Provide a list of tags for this dataset, e.g. sanidine,'
-                                                   'san juan volcanic field.   Use commas (,) to add multiple tags'),
-                             label='Tags'),
+                BorderVGroup(
+                    UItem(
+                        "description",
+                        style="custom",
+                        tooltip="Provide a description of this dataset to "
+                        "make it easier to identifier ",
+                    ),
+                    label="Description",
+                ),
+                BorderVGroup(
+                    UItem(
+                        "tags",
+                        tooltip="Provide a list of tags for this dataset, e.g. sanidine,"
+                        "san juan volcanic field.   Use commas (,) to add multiple tags",
+                    ),
+                    label="Tags",
+                ),
                 UItem("work_offline_button", enabled_when="selected_repositories"),
             ),
             toolbar=ToolBar(
