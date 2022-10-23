@@ -24,15 +24,17 @@ from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import Str, Button, List, Instance
-from traitsui.api import View, UItem, VGroup, SetEditor
+from traitsui.api import View, UItem, VGroup, SetEditor, Item
 from traitsui.menu import Action, ToolBar
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.progress import progress_iterator, open_progress
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.dvc.dvc import DVC
-from pychron.envisage.browser.record_views import RepositoryRecordView
+# from pychron.envisage.browser.record_views import RepositoryRecordView
 from pychron.git.hosts import IGitHost
+from pychron.git.hosts.github import GitHubService
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -51,12 +53,12 @@ def switch_to_offline_database(preferences):
     preferences.save()
 
 
-class RepositoryTabularAdapter(TabularAdapter):
-    columns = [
-        ("Name", "name"),
-        ("Create Date", "created_at"),
-        ("Last Change", "pushed_at"),
-    ]
+# class RepositoryTabularAdapter(TabularAdapter):
+#     columns = [
+#         ("Name", "name"),
+#         ("Create Date", "created_at"),
+#         ("Last Change", "pushed_at"),
+#     ]
 
 
 class WorkOffline(Loggable):
@@ -79,11 +81,15 @@ class WorkOffline(Loggable):
 
     lab_name = Str
     username = Str
+    description = Str
+    tags = Str
 
     def load_repos(self):
-        repos = self.dvc.remote_repositories()
-        # repos = [{'name': 'Foo', 'created_at': '2021-10-28 13:23:05,286 '},
-        #          {'name': 'Basdfarefasdasdc', 'created_at': '2021-10-28 13:23:05,286 '}]
+        if self.dvc:
+            repos = self.dvc.remote_repositories()
+        else:
+            repos = [{'name': 'Foo', 'created_at': '2021-10-28 13:23:05,286 '},
+                     {'name': 'Basdfarefasdasdc', 'created_at': '2021-10-28 13:23:05,286 '}]
 
         repos = [r["name"] for r in repos]
 
@@ -148,19 +154,22 @@ class WorkOffline(Loggable):
                         "meta_repo_dirname": self.dvc.meta_repo_dirname,
                         "organization": self.dvc.organization,
                         "database": dbfile.read(),
+                        "metadata": {"tags": self.tags.split(','),
+                                     "description": self.description}
                     }
                 yaml.dump(ctx, wfile, encoding="utf-8")
                 content = yaml.dump(ctx, encoding="utf-8")
 
                 # try to share with PychronLabsLLC/pzdata
-                gh = self.application.get_services(IGitHost)
-                upath = os.path.join(self.lab_name or "NoLab", os.path.basename(apath))
-                gh.post_file(
-                    "PychronLabsLLC/pzdata",
-                    upath,
-                    content,
-                    committer_name=self.username,
-                )
+                gh = self.application.get_services(GitHubService)
+                if gh is not None:
+                    upath = os.path.join(self.lab_name or "NoLab", os.path.basename(apath))
+                    gh.post_file(
+                        "PychronLabsLLC/pzdata",
+                        upath,
+                        content,
+                        committer_name=self.username,
+                    )
 
         # msg = 'Would you like to switch to the offline database?'
         # if self.confirmation_dialog(msg):
@@ -188,7 +197,7 @@ class WorkOffline(Loggable):
         return unique_path2(paths.dvc_dir, "index", extension=".sqlite3")[0]
 
     def _clone_central_db(
-        self, repositories, analyses=None, principal_investigators=None, projects=None
+            self, repositories, analyses=None, principal_investigators=None, projects=None
     ):
 
         self.info("--------- Clone DB -----------")
@@ -201,8 +210,8 @@ class WorkOffline(Loggable):
         path = database_path()
         if os.path.isfile(path):
             if not self.confirmation_dialog(
-                'The database "{}" already exists. '
-                "Do you want to overwrite it".format(os.path.basename(path))
+                    'The database "{}" already exists. '
+                    "Do you want to overwrite it".format(os.path.basename(path))
             ):
 
                 path = self._get_new_path()
@@ -385,7 +394,6 @@ class WorkOffline(Loggable):
         nrepos = list(set(nrepos))
 
         self.selected_repositories.extend(nrepos)
-        print("asdf", self.selected_repositories, nrepos)
 
     def _work_offline_button_fired(self):
         self.debug("work offline fired")
@@ -406,6 +414,12 @@ class WorkOffline(Loggable):
                     "selected_repositories",
                     editor=SetEditor(name="repositories", can_move_all=False),
                 ),
+                BorderVGroup(UItem('description', style='custom', tooltip='Provide a description of this dataset to '
+                                                                          'make it easier to identifier '),
+                             label='Description'),
+                BorderVGroup(UItem('tags', tooltip='Provide a list of tags for this dataset, e.g. sanidine,'
+                                                   'san juan volcanic field.   Use commas (,) to add multiple tags'),
+                             label='Tags'),
                 UItem("work_offline_button", enabled_when="selected_repositories"),
             ),
             toolbar=ToolBar(

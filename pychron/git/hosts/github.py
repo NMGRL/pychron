@@ -82,7 +82,7 @@ class GitHubService(GitHostService):
             self._put(
                 url,
                 message="Created shareable archive",
-                commiter={"name": committer_name, "email": committer_email},
+                committer={"name": committer_name, "email": committer_email},
                 content=content,
             )
         except BaseException:
