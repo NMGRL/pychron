@@ -631,7 +631,6 @@ class GitRepoManager(Loggable):
         repo = self._repo
         return repo.active_branch.name
 
-
     def checkout_branch(self, name, inform=True, load_history=True):
         repo = self._repo
         if name.startswith("origin"):
@@ -683,7 +682,7 @@ class GitRepoManager(Loggable):
 
             if push:
                 origin = repo.remotes.origin
-                repo.git.push('--set-upstream', origin, repo.head.ref)
+                repo.git.push("--set-upstream", origin, repo.head.ref)
             if inform:
                 self.information_dialog('Repository now on branch "{}"'.format(name))
             return name
@@ -871,7 +870,7 @@ class GitRepoManager(Loggable):
         if self._repo:
             repo = self._repo
             branch = self.get_current_branch()
-            if onto_branch.startswith('origin'):
+            if onto_branch.startswith("origin"):
                 remote = repo.remotes.origin
                 onto_branch = getattr(remote.refs, onto_branch[7:])
             else:
