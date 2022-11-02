@@ -1855,9 +1855,11 @@ class DVCDatabase(DatabaseAdapter):
 
             if low_post:
                 has_filter = True
+                # q = q.filter(AnalysisTbl.timestamp >= low_post.strftime('%m-%d-%y'))
                 q = q.filter(AnalysisTbl.timestamp >= low_post)
             if high_post:
                 has_filter = True
+                # q = q.filter(AnalysisTbl.timestamp <= high_post.strftime('%m-%d-%y'))
                 q = q.filter(AnalysisTbl.timestamp <= high_post)
 
             if samples:

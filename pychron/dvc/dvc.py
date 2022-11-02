@@ -1429,6 +1429,10 @@ class DVC(Loggable):
 
             repo = self._get_repository(name)
             repo.pull(use_progress=use_progress, use_auto_pull=self.use_auto_pull)
+
+            # rebase any new commits on the data_collection branch to this branch
+            repo.rebase('origin/data_collection')
+
             return True
         else:
             self.debug("getting repository from remote")

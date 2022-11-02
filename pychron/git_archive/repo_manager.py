@@ -634,16 +634,17 @@ class GitRepoManager(Loggable):
     def checkout(self, *args, **kw):
         self._repo.git.checkout(*args, **kw)
 
-    def checkout_branch(self, name, inform=True):
+    def checkout_branch(self, name, inform=True, load_history=True):
         repo = self._repo
         if name.startswith("origin"):
-            name = name[7:]
-            remote = repo.remote()
-            rref = getattr(remote.refs, name)
-            repo.create_head(name, rref)
-
-            branch = repo.heads[name]
-            branch.set_tracking_branch(rref)
+            self.warning_dialog('Contact developer')
+            # name = name[7:]
+            # remote = repo.remote()
+            # rref = getattr(remote.refs, name)
+            # repo.create_head(name, rref)
+            #
+            # branch = repo.heads[name]
+            # branch.set_tracking_branch(rref)
 
         else:
             branch = getattr(repo.heads, name)
@@ -651,7 +652,8 @@ class GitRepoManager(Loggable):
         try:
             branch.checkout()
             self.selected_branch = name
-            self._load_branch_history()
+            if load_history:
+                self._load_branch_history()
             if inform:
                 self.information_dialog('Repository now on branch "{}"'.format(name))
 
@@ -667,7 +669,7 @@ class GitRepoManager(Loggable):
     def get_branch(self, name):
         return getattr(self._repo.heads, name)
 
-    def create_branch(self, name=None, commit="HEAD", inform=True):
+    def create_branch(self, name=None, commit="HEAD", inform=True, push=False):
         repo = self._repo
 
         if name is None:
@@ -681,6 +683,10 @@ class GitRepoManager(Loggable):
         if name not in repo.branches:
             branch = repo.create_head(name, commit=commit)
             branch.checkout()
+
+            if push:
+                origin = repo.remotes.origin
+                repo.git.push('--set-upstream', origin, repo.head.ref)
             if inform:
                 self.information_dialog('Repository now on branch "{}"'.format(name))
             return name
@@ -840,12 +846,20 @@ class GitRepoManager(Loggable):
     def rebase(self, onto_branch="master"):
         if self._repo:
             repo = self._repo
-
             branch = self.get_current_branch()
-            self.checkout_branch(onto_branch)
-            self.pull()
+            if onto_branch.startswith('origin'):
+                remote = repo.remotes.origin
+                try:
+                    bn = onto_branch[7:]
+                    onto_branch = getattr(remote.refs, bn)
+                except AttributeError:
+                    onto_branch = None
+            else:
+                self.checkout_branch(onto_branch)
+                self.pull()
 
-            repo.git.rebase(onto_branch, branch)
+            if onto_branch is not None:
+                repo.git.rebase(onto_branch, branch)
 
     def smart_pull(
         self,
