@@ -309,7 +309,10 @@ class DVCPersister(BasePersister):
 
         if self.stage_files:
             if commit:
-                ar.smart_pull(accept_their=True)
+
+                ar.create_branch('data_collection', inform=False, push=True)
+                ar.checkout_branch('data_collection', inform=False, load_history=False)
+                ar.smart_pull(branch='data_collection', accept_our=True)
 
                 paths = [
                     spec_path,
@@ -404,7 +407,7 @@ class DVCPersister(BasePersister):
             npath = self._make_path("logs", ".log")
             shutil.copyfile(path, npath)
             ar = self.active_repository
-            ar.smart_pull(accept_their=True)
+            ar.smart_pull(accept_our=True)
             ar.add(npath, commit=False)
             ar.commit("<COLLECTION> log")
             self.dvc.push_repository(ar)

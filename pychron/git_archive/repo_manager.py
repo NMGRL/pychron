@@ -631,7 +631,8 @@ class GitRepoManager(Loggable):
         repo = self._repo
         return repo.active_branch.name
 
-    def checkout_branch(self, name, inform=True):
+
+    def checkout_branch(self, name, inform=True, load_history=True):
         repo = self._repo
         if name.startswith("origin"):
             name = name[7:]
@@ -648,7 +649,8 @@ class GitRepoManager(Loggable):
         try:
             branch.checkout()
             self.selected_branch = name
-            self._load_branch_history()
+            if load_history:
+                self._load_branch_history()
             if inform:
                 self.information_dialog('Repository now on branch "{}"'.format(name))
 
@@ -664,7 +666,7 @@ class GitRepoManager(Loggable):
     def get_branch(self, name):
         return getattr(self._repo.heads, name)
 
-    def create_branch(self, name=None, commit="HEAD", inform=True):
+    def create_branch(self, name=None, commit="HEAD", inform=True, push=False):
         repo = self._repo
 
         if name is None:
@@ -678,6 +680,10 @@ class GitRepoManager(Loggable):
         if name not in repo.branches:
             branch = repo.create_head(name, commit=commit)
             branch.checkout()
+
+            if push:
+                origin = repo.remotes.origin
+                repo.git.push('--set-upstream', origin, repo.head.ref)
             if inform:
                 self.information_dialog('Repository now on branch "{}"'.format(name))
             return name
@@ -864,10 +870,13 @@ class GitRepoManager(Loggable):
     def rebase(self, onto_branch="master"):
         if self._repo:
             repo = self._repo
-
             branch = self.get_current_branch()
-            self.checkout_branch(onto_branch)
-            self.pull()
+            if onto_branch.startswith('origin'):
+                remote = repo.remotes.origin
+                onto_branch = getattr(remote.refs, onto_branch[7:])
+            else:
+                self.checkout_branch(onto_branch)
+                self.pull()
 
             repo.git.rebase(onto_branch, branch)
 
