@@ -297,9 +297,9 @@ class DVCPersister(BasePersister):
 
         if self.stage_files:
             if commit:
-                ar.create_branch('data_collection', inform=False, push=True)
-                ar.checkout_branch('data_collection', inform=False, load_history=False)
-                ar.smart_pull(branch='data_collection', accept_our=True)
+                ar.create_branch("data_collection", inform=False, push=True)
+                ar.checkout_branch("data_collection", inform=False, load_history=False)
+                ar.smart_pull(branch="data_collection", accept_our=True)
 
                 paths = [
                     spec_path,
