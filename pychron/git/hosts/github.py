@@ -155,7 +155,7 @@ class GitHubService(GitHostService):
             if p and os.path.isfile(p):
                 with open(p, "r") as rfile:
                     obj = json.load(rfile)
-                    obj = obj["installed"]
+                    # obj = obj["installed"]
                     token = obj["token"]
                     auth = "{}@".format(token)
             elif self.oauth_token:
