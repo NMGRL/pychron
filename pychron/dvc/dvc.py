@@ -1446,7 +1446,7 @@ class DVC(Loggable):
             else:
                 if service.clone_from(name, root, self.organization):
                     repo = self._get_repository(name)
-                    repo.merge('origin/data_collection', inform=False)
+                    repo.merge("origin/data_collection", inform=False)
                     return True
                 # names = self.remote_repository_names()
                 # if name in names:

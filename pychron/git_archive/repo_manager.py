@@ -998,7 +998,7 @@ class GitRepoManager(Loggable):
             dest = getattr(repo.branches, to_)
             dest.checkout()
 
-        if from_.startswith('origin'):
+        if from_.startswith("origin"):
             remote = repo.remotes.origin
             try:
                 bn = from_[7:]
