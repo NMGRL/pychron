@@ -520,7 +520,7 @@ class Paths(object):
             paths.setup_dir, "ratio_change_detection.yaml"
         )
 
-        self.oauth_file = join(self.appdata_dir, 'oauth.json')
+        self.oauth_file = join(self.appdata_dir, "oauth.json")
 
         build_directories()
 
