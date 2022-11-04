@@ -1019,7 +1019,7 @@ class GitRepoManager(Loggable):
         try:
             src = getattr(repo.branches, from_)
         except AttributeError:
-            msg = 'Could not locate {} for merge'.format(from_)
+            msg = "Could not locate {} for merge".format(from_)
             self.warning(msg)
             if inform:
                 self.warning_dialog(msg)
