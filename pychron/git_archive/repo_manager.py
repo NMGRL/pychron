@@ -1016,8 +1016,14 @@ class GitRepoManager(Loggable):
         if to_:
             dest = getattr(repo.branches, to_)
             dest.checkout()
-
-        src = getattr(repo.branches, from_)
+        try:
+            src = getattr(repo.branches, from_)
+        except AttributeError:
+            msg = 'Could not locate {} for merge'.format(from_)
+            self.warning(msg)
+            if inform:
+                self.warning_dialog(msg)
+            return
 
         try:
             repo.git.merge(src.commit)
