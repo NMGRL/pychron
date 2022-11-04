@@ -23,6 +23,9 @@ import json
 import os
 import subprocess
 
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+
 from pychron.git.hosts.github import GitHubService
 from pychron.git.tasks.base_git_plugin import BaseGitPlugin
 from pychron.git.tasks.githost_preferences import GitHubPreferencesPane
@@ -47,16 +50,16 @@ class GitHubPlugin(BaseGitPlugin):
         #         "in Pychron's {} preferences".format(self.name),
         #         position=STARTUP_MESSAGE_POSITION,
         #     )
-        try:
-            self.debug("checking for gh cli")
-            subprocess.call(
-                ["gh", "--version"],
-                stdout=subprocess.DEVNULL,
-            )
-            self.debug("github authentication handled by gh")
-            return
-        except FileNotFoundError:
-            self.oauth_flow()
+        # try:
+        #     self.debug("checking for gh cli")
+        #     subprocess.call(
+        #         ["gh", "--version"],
+        #         stdout=subprocess.DEVNULL,
+        #     )
+        #     self.debug("github authentication handled by gh")
+        #     return
+        # except FileNotFoundError:
+        self.oauth_flow()
             # if not tok and not (usr and pwd):
             #     self.information_dialog(
             #         "Please set user name and password or token in {} preferences".format(
@@ -81,17 +84,27 @@ class GitHubPlugin(BaseGitPlugin):
         }
 
         p = paths.oauth_file
+        creds=None
         if p and os.path.isfile(p):
-            flow = InstalledAppFlow.from_client_secrets_file(p, [""])
-            flow.oauth2session.refresh_token(flow.authorization_url()[0])
-        else:
-            flow = InstalledAppFlow.from_client_config(config, scopes=[""])
-            flow.run_local_server()
+            with open(p, 'r') as rfile:
+                obj = json.load(rfile)
 
-        with open(p, "w") as wfile:
-            obj = json.loads(flow.credentials.to_json())
-            obj["auth_uri"] = config["installed"]["auth_uri"]
-            json.dump({"installed": obj}, wfile)
+            creds = Credentials.from_authorized_user_info(obj, [""])
+
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            # flow = InstalledAppFlow.from_client_secrets_file(p, [""])
+            # flow.oauth2session.refresh_token(flow.authorization_url()[0])
+            else:
+                flow = InstalledAppFlow.from_client_config(config, scopes=[""])
+                flow.run_local_server()
+
+            with open(p, "w") as wfile:
+                obj = json.loads(flow.credentials.to_json())
+                json.dump(obj, wfile)
+                # obj["auth_uri"] = config["installed"]["auth_uri"]
+                # json.dump({"installed": obj}, wfile)
 
     def _preferences_default(self):
         return self._preferences_factory("github")
