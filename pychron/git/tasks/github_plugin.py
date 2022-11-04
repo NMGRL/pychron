@@ -60,16 +60,16 @@ class GitHubPlugin(BaseGitPlugin):
         #     return
         # except FileNotFoundError:
         self.oauth_flow()
-            # if not tok and not (usr and pwd):
-            #     self.information_dialog(
-            #         "Please set user name and password or token in {} preferences".format(
-            #             self.name
-            #         ),
-            #         position=STARTUP_MESSAGE_POSITION,
-            #     )
-            # else:
-            #     service = self.application.get_service(IGitHost)
-            #     service.set_authentication()
+        # if not tok and not (usr and pwd):
+        #     self.information_dialog(
+        #         "Please set user name and password or token in {} preferences".format(
+        #             self.name
+        #         ),
+        #         position=STARTUP_MESSAGE_POSITION,
+        #     )
+        # else:
+        #     service = self.application.get_service(IGitHost)
+        #     service.set_authentication()
 
     def oauth_flow(self):
         from google_auth_oauthlib.flow import InstalledAppFlow
@@ -84,9 +84,9 @@ class GitHubPlugin(BaseGitPlugin):
         }
 
         p = paths.oauth_file
-        creds=None
+        creds = None
         if p and os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 obj = json.load(rfile)
 
             creds = Credentials.from_authorized_user_info(obj, [""])
