@@ -81,7 +81,7 @@ class GitHubPlugin(BaseGitPlugin):
         }
 
         p = paths.oauth_file
-        if os.path.isfile(p):
+        if p and os.path.isfile(p):
             flow = InstalledAppFlow.from_client_secrets_file(p, [""])
             flow.oauth2session.refresh_token(flow.authorization_url())
         else:
