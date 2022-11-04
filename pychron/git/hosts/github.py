@@ -152,7 +152,7 @@ class GitHubService(GitHostService):
         # you only have read-only access to
         if organization == self.organization:
             p = paths.oauth_file
-            if os.path.isfile(p):
+            if p and os.path.isfile(p):
                 with open(p, "r") as rfile:
                     obj = json.load(rfile)
                     obj = obj["installed"]

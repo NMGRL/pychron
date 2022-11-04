@@ -1431,7 +1431,7 @@ class DVC(Loggable):
             repo.pull(use_progress=use_progress, use_auto_pull=self.use_auto_pull)
 
             # rebase any new commits on the data_collection branch to this branch
-            repo.rebase("origin/data_collection")
+            repo.merge("origin/data_collection", inform=False)
 
             return True
         else:
@@ -1445,6 +1445,8 @@ class DVC(Loggable):
                 return True
             else:
                 if service.clone_from(name, root, self.organization):
+                    repo = self._get_repository(name)
+                    repo.merge('origin/data_collection', inform=False)
                     return True
                 # names = self.remote_repository_names()
                 # if name in names:

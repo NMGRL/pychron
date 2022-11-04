@@ -998,10 +998,18 @@ class GitRepoManager(Loggable):
             dest = getattr(repo.branches, to_)
             dest.checkout()
 
-        src = getattr(repo.branches, from_)
+        if from_.startswith('origin'):
+            remote = repo.remotes.origin
+            try:
+                bn = from_[7:]
+                from_ = getattr(remote.refs, bn)
+            except AttributeError:
+                return
+        else:
+            from_ = getattr(repo.branches, from_)
 
         try:
-            repo.git.merge(src.commit)
+            repo.git.merge(from_.commit)
         except GitCommandError:
             self.debug_exception()
             if inform:
