@@ -89,7 +89,7 @@ class GitHubPlugin(BaseGitPlugin):
             with open(p, "r") as rfile:
                 obj = json.load(rfile)
 
-            creds = Credentials.from_authorized_user_info(obj, [""])
+            creds = Credentials.from_authorized_user_info(obj, ["repo"])
 
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
@@ -97,7 +97,7 @@ class GitHubPlugin(BaseGitPlugin):
             # flow = InstalledAppFlow.from_client_secrets_file(p, [""])
             # flow.oauth2session.refresh_token(flow.authorization_url()[0])
             else:
-                flow = InstalledAppFlow.from_client_config(config, scopes=[""])
+                flow = InstalledAppFlow.from_client_config(config, scopes=["repo"])
                 flow.run_local_server()
 
             with open(p, "w") as wfile:
