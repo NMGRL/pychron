@@ -150,19 +150,19 @@ class GitHubService(GitHostService):
         auth = ""
         # including the authenitcation when cloning presents an issue when cloning a repository
         # you only have read-only access to
-        if organization == self.organization:
-            p = paths.oauth_file
-            if p and os.path.isfile(p):
-                with open(p, "r") as rfile:
-                    obj = json.load(rfile)
-                    # obj = obj["installed"]
-                    token = obj["token"]
-                    auth = "{}@".format(token)
-            elif self.oauth_token:
-                auth = "{}@".format(self.oauth_token)
-            elif self.username and self.password:
-                auth = "{}:{}@".format(self.username, self.password)
-
+        # print(organization, self.organization)
+        # if organization == self.organization:
+        p = paths.oauth_file
+        if p and os.path.isfile(p):
+            with open(p, "r") as rfile:
+                obj = json.load(rfile)
+                # obj = obj["installed"]
+                token = obj["access_token"]
+                auth = "{}@".format(token)
+        elif self.oauth_token:
+            auth = "{}@".format(self.oauth_token)
+        elif self.username and self.password:
+            auth = "{}:{}@".format(self.username, self.password)
         url = "{}://{}{}/{}/{}.git".format(protocol, auth, BASE_URL, organization, name)
         return url
 

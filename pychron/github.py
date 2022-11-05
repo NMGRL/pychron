@@ -54,8 +54,9 @@ def get_list(cmd, attr="name", headers=None):
             except KeyError:
                 return result
 
-            if attr:
-                dd = [di[attr] for di in dd]
+            # if attr:
+            #     print(dd)
+            #     dd = [di[attr] for di in dd]
 
             result.extend(dd)
             return result

@@ -17,19 +17,21 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from __future__ import absolute_import
-
 import json
 import os
 import subprocess
+import datetime
+from json import JSONDecodeError
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
 from pychron.git.hosts.github import GitHubService
 from pychron.git.tasks.base_git_plugin import BaseGitPlugin
+from pychron.git.tasks.flow import InstalledAppFlow
 from pychron.git.tasks.githost_preferences import GitHubPreferencesPane
 from pychron.paths import paths
+
 
 
 class GitHubPlugin(BaseGitPlugin):
@@ -50,16 +52,16 @@ class GitHubPlugin(BaseGitPlugin):
         #         "in Pychron's {} preferences".format(self.name),
         #         position=STARTUP_MESSAGE_POSITION,
         #     )
-        # try:
-        #     self.debug("checking for gh cli")
-        #     subprocess.call(
-        #         ["gh", "--version"],
-        #         stdout=subprocess.DEVNULL,
-        #     )
-        #     self.debug("github authentication handled by gh")
-        #     return
-        # except FileNotFoundError:
-        self.oauth_flow()
+        try:
+            self.debug("checking for gh cli")
+            subprocess.call(
+                ["gh", "--version"],
+                stdout=subprocess.DEVNULL,
+            )
+            self.debug("github authentication handled by gh")
+            return
+        except FileNotFoundError:
+            self.oauth_flow()
         # if not tok and not (usr and pwd):
         #     self.information_dialog(
         #         "Please set user name and password or token in {} preferences".format(
@@ -72,9 +74,9 @@ class GitHubPlugin(BaseGitPlugin):
         #     service.set_authentication()
 
     def oauth_flow(self):
-        from google_auth_oauthlib.flow import InstalledAppFlow
+        # from google_auth_oauthlib.flow import InstalledAppFlow
 
-        config = {
+        githubapp_config = {
             "installed": {
                 "client_id": "Iv1.e4ea3100ace7882b",
                 "client_secret": "00118d67ed990c72ac926f57b6c0a04bb2eb0120",
@@ -82,29 +84,20 @@ class GitHubPlugin(BaseGitPlugin):
                 "token_uri": "https://github.com/login/oauth/access_token",
             }
         }
+        config = {
+            "client_id": "05317d25974cd74eba4e",
+            "client_secret": "be1fec163f573bfba2aea8dbd8b0452dad28bf95",
+            "auth_uri": "https://github.com/login/oauth/authorize",
+            "token_uri": "https://github.com/login/oauth/access_token",
+        }
 
         p = paths.oauth_file
-        creds = None
-        if p and os.path.isfile(p):
-            with open(p, "r") as rfile:
-                obj = json.load(rfile)
-
-            creds = Credentials.from_authorized_user_info(obj, ["repo"])
-
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            # flow = InstalledAppFlow.from_client_secrets_file(p, [""])
-            # flow.oauth2session.refresh_token(flow.authorization_url()[0])
-            else:
-                flow = InstalledAppFlow.from_client_config(config, scopes=["repo"])
-                flow.run_local_server()
-
-            with open(p, "w") as wfile:
-                obj = json.loads(flow.credentials.to_json())
-                json.dump(obj, wfile)
-                # obj["auth_uri"] = config["installed"]["auth_uri"]
-                # json.dump({"installed": obj}, wfile)
+        if not os.path.isfile(p):
+            flow = InstalledAppFlow()
+            token = flow.flow(config, ['repo'])
+            if token:
+                with open(p, "w") as wfile:
+                    json.dump(token, wfile)
 
     def _preferences_default(self):
         return self._preferences_factory("github")
