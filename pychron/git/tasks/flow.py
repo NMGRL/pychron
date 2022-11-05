@@ -111,14 +111,17 @@ class InstalledAppFlow(object):
 
         return url, state
 
-    def run_local_server(self, host="localhost",
-                         bind_addr=None,
-                         port=8080,
-                         authorization_prompt_message="",
-                         success_message="The authentication flow has completed. You may close this window.",
-                         open_browser=True,
-                         redirect_uri_trailing_slash=True,
-                         **kwargs):
+    def run_local_server(
+        self,
+        host="localhost",
+        bind_addr=None,
+        port=8080,
+        authorization_prompt_message="",
+        success_message="The authentication flow has completed. You may close this window.",
+        open_browser=True,
+        redirect_uri_trailing_slash=True,
+        **kwargs
+    ):
 
         wsgi_app = _RedirectWSGIApp(success_message)
         # Fail fast if the address is occupied
@@ -188,7 +191,7 @@ class InstalledAppFlow(object):
         return self.oauth2session.fetch_token(self.client_config["token_uri"], **kwargs)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     a = InstalledAppFlow()
     config = {
         "client_id": "05317d25974cd74eba4e",
@@ -197,6 +200,6 @@ if __name__ == '__main__':
         "token_uri": "https://github.com/login/oauth/access_token",
     }
 
-    token = a.flow(config=config, scopes=['repo'])
+    token = a.flow(config=config, scopes=["repo"])
     print(token)
 # ============= EOF =============================================

@@ -33,7 +33,6 @@ from pychron.git.tasks.githost_preferences import GitHubPreferencesPane
 from pychron.paths import paths
 
 
-
 class GitHubPlugin(BaseGitPlugin):
     name = "GitHub"
     service_klass = GitHubService
@@ -94,7 +93,7 @@ class GitHubPlugin(BaseGitPlugin):
         p = paths.oauth_file
         if not os.path.isfile(p):
             flow = InstalledAppFlow()
-            token = flow.flow(config, ['repo'])
+            token = flow.flow(config, ["repo"])
             if token:
                 with open(p, "w") as wfile:
                     json.dump(token, wfile)
