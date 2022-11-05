@@ -19,13 +19,11 @@ from __future__ import absolute_import
 
 from chaco.abstract_overlay import AbstractOverlay
 
-# from chaco.data_label import draw_arrow
+from chaco.plot_label import PlotLabel
+from chaco.data_label import draw_arrow
 from chaco.label import Label
 
-# from chaco.plot_label import PlotLabel
-# from enable.colors import convert_from_pyqt_color
-from chaco.overlays.data_label import draw_arrow
-from chaco.overlays.plot_label import PlotLabel
+
 from enable.font_metrics_provider import font_metrics_provider
 from enable.tools.drag_tool import DragTool
 from enable.api import ColorTrait
