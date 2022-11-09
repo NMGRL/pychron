@@ -51,16 +51,16 @@ class GitHubPlugin(BaseGitPlugin):
         #         "in Pychron's {} preferences".format(self.name),
         #         position=STARTUP_MESSAGE_POSITION,
         #     )
-        try:
-            self.debug("checking for gh cli")
-            subprocess.call(
-                ["gh", "--version"],
-                stdout=subprocess.DEVNULL,
-            )
-            self.debug("github authentication handled by gh")
-            return
-        except FileNotFoundError:
-            self.oauth_flow()
+        # try:
+        #     self.debug("checking for gh cli")
+        #     subprocess.call(
+        #         ["gh", "--version"],
+        #         stdout=subprocess.DEVNULL,
+        #     )
+        #     self.debug("github authentication handled by gh")
+        #     return
+        # except FileNotFoundError:
+        self.oauth_flow()
         # if not tok and not (usr and pwd):
         #     self.information_dialog(
         #         "Please set user name and password or token in {} preferences".format(
