@@ -156,7 +156,7 @@ class BrowserModel(BaseBrowserModel):
             db = self.db
             with db.session_ctx():
                 ans = None
-                if '-' in self.fuzzy_search_entry:
+                if "-" in self.fuzzy_search_entry:
                     ans = db.get_fuzzy_analysis(self.fuzzy_search_entry)
 
                 if ans:
@@ -181,7 +181,6 @@ class BrowserModel(BaseBrowserModel):
                     ad = self._make_project_records(ps, include_recent=False)
                     self.projects = ad
                     self.oprojects = ad
-
 
         # self._fuzzy_search_entry_changed(self.fuzzy_search_entry)
 
