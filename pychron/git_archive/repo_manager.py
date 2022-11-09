@@ -966,7 +966,7 @@ class GitRepoManager(Loggable):
             else:
                 self.debug("merging {} commits".format(behind))
                 self._git_command(
-                    lambda g: g.merge("FETCH_HEAD", "-X", "ours"),
+                    lambda g: g.merge("-X", "theirs", "FETCH_HEAD"),
                     "GitRepoManager.smart_pull/!ahead",
                 )
         else:
@@ -1008,16 +1008,17 @@ class GitRepoManager(Loggable):
         else:
             from_ = getattr(repo.branches, from_)
 
-        try:
-            repo.git.merge(from_.commit)
-        except GitCommandError:
-            self.debug_exception()
-            if inform:
-                self.warning_dialog(
-                    "Merging {} into {} failed. See log file for more details".format(
-                        from_, to_
+        with StashCTX(repo):
+            try:
+                repo.git.merge(from_.commit)
+            except GitCommandError:
+                self.debug_exception()
+                if inform:
+                    self.warning_dialog(
+                        "Merging {} into {} failed. See log file for more details".format(
+                            from_, to_
+                        )
                     )
-                )
 
     def commit(self, msg, author=None):
         self.debug("commit message={}, author={}".format(msg, author))
