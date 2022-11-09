@@ -826,6 +826,20 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(f)
             return self._query_all(q)
 
+    def get_fuzzy_analysis(self, search_str):
+        with self.session_ctx() as sess:
+            comps = [AnalysisTbl.uuid.like("{}%".format(search_str))]
+            if '-' in search_str:
+                aliquot = search_str.split('-')[-1]
+                comps.append(AnalysisTbl.aliquot.like("%{}%".format(aliquot)))
+            q = sess.query(AnalysisTbl)
+            # f = or_(
+            #     AnalysisTbl.uuid.like("{}%".format(search_str)),
+            #     AnalysisTbl.aliquot.like("{}%".format(search_str)),
+            # )
+
+            q = q.filter(or_(*comps))
+            return self._query_all(q)
     def _fuzzy_sample_comps(self, name):
         oname = name
         likes = ["{}%".format(oname)]

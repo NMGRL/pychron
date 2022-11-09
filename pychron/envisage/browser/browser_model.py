@@ -155,25 +155,33 @@ class BrowserModel(BaseBrowserModel):
 
             db = self.db
             with db.session_ctx():
-                ps1 = db.get_fuzzy_projects(self.fuzzy_search_entry)
+                ans = None
+                if '-' in self.fuzzy_search_entry:
+                    ans = db.get_fuzzy_analysis(self.fuzzy_search_entry)
 
-                ss, ps2 = db.get_fuzzy_labnumbers(self.fuzzy_search_entry)
+                if ans:
+                    self.table.set_analyses(ans)
+                else:
+                    ps1 = db.get_fuzzy_projects(self.fuzzy_search_entry)
 
-                # ss2, ps3 = db.get_fuzzy_samples(self.fuzzy_search_entry, include_projects=True)
-                # if ss:
-                #     ss.extend(ss2)
-                # else:
-                #     ss = ss2
+                    ss, ps2 = db.get_fuzzy_labnumbers(self.fuzzy_search_entry)
 
-                sams = self._load_sample_record_views(ss)
+                    # ss2, ps3 = db.get_fuzzy_samples(self.fuzzy_search_entry, include_projects=True)
+                    # if ss:
+                    #     ss.extend(ss2)
+                    # else:
+                    #     ss = ss2
 
-                ps = set(ps1 + ps2)
-                self.osamples = sams
-                self.samples = sams
+                    sams = self._load_sample_record_views(ss)
 
-                ad = self._make_project_records(ps, include_recent=False)
-                self.projects = ad
-                self.oprojects = ad
+                    ps = set(ps1 + ps2)
+                    self.osamples = sams
+                    self.samples = sams
+
+                    ad = self._make_project_records(ps, include_recent=False)
+                    self.projects = ad
+                    self.oprojects = ad
+
 
         # self._fuzzy_search_entry_changed(self.fuzzy_search_entry)
 
