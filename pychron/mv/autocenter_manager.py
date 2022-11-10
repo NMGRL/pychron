@@ -123,7 +123,7 @@ class AutoCenterManager(MachineVisionManager):
         if self.locator:
             self.locator.cancel()
 
-    def calculate_new_center(self, cx, cy, offx, offy, dim=1.0, shape="circle", scale = 1):
+    def calculate_new_center(self, cx, cy, offx, offy, dim=1.0, shape="circle", scale = 1, **kw):
         frame = self.new_image_frame()
         loc = self._get_locator(shape=shape)
         self.locator = loc
@@ -153,6 +153,7 @@ class AutoCenterManager(MachineVisionManager):
             preprocess=config.preprop,
             search=config.search,
             inverted=config.inverted,
+            **kw
         )
 
         if dx is None and dy is None:

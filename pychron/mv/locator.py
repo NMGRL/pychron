@@ -239,6 +239,7 @@ class Locator(Loggable):
             shape,
             preprocess,
             mask=False,
+            annular_mask=False,
             inverted=True,
             search_depth=10,
             min_targets=3,
@@ -258,6 +259,10 @@ class Locator(Loggable):
 
         if mask:
             self._mask(src, mask)
+
+        if annular_mask:
+            self._annular_mask(src, annular_mask)
+            self._tile(image, src)
 
         if inverted:
             src = invert(src)
@@ -389,6 +394,28 @@ class Locator(Loggable):
         src[mask] = 0
 
         return invert(mask)
+
+    def _annular_mask(self, src, radius):
+        """
+
+
+        """
+        outer_radius, inner_radius = radius
+        outer_radius = outer_radius * self.pxpermm
+        h, w = src.shape[:2]
+        c = disk((h / 2.0, w / 2.0), outer_radius, shape=(h, w))
+        mask = ones_like(src, dtype=bool)
+        mask[c] = False
+        src[mask] = 255
+
+        inner_radius = inner_radius * self.pxpermm
+        c = disk((h / 2.0, w / 2.0), inner_radius, shape=(h, w))
+        mask = zeros_like(src, dtype=bool)
+        mask[c] = True
+        src[mask] = 0
+
+        # return invert(mask)
+
 
     # ===============================================================================
     # filter
