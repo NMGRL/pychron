@@ -408,11 +408,15 @@ class TrayIdentifier(SemiAutoCalibrator):
         for smap in self.stage_manager.stage_maps_iter():
             if smap.has_correction_file():
                 smap.load_correction_file()
-                diff = smap.finger_print(holes)
-                scores[smap.name] = diff
-                if mindiff is None or diff < mindiff:
-                    mindiff = diff
+                score = smap.finger_print(holes)
+                scores[smap.name] = score
+                if maxscore is None or score > maxscore:
+                    maxscore = score
                     bestmatch = smap
+
+                # if mindiff is None or diff > mindiff:
+                #     mindiff = diff
+                #     bestmatch = smap
 
         self.info(f'scores: {scores}')
         self.info(f'bestmatch: {bestmatch}')
