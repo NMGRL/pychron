@@ -19,6 +19,8 @@ from __future__ import absolute_import
 
 import math
 import os
+import random
+from operator import attrgetter
 
 from traits.api import HasTraits, Str, CFloat, Float, Property, List, Enum
 
@@ -123,6 +125,10 @@ class BaseStageMap(Loggable):
 
             self._load_hook()
             return True
+
+    def random_choice(self, k=10):
+        holes = random.choice(self.sample_holes, k=k)
+        return sorted(holes, key=attrgetter('id'))
 
     def row_dict(self):
         return {k: list(v) for k, v in self._grouped_rows()}

@@ -81,6 +81,12 @@ class BaseStageManager(Manager):
         print(sms, self.root)
         self.stage_map_names = sms
 
+    def stage_maps_iter(self):
+        for s in self.stage_map_names:
+            sm = self._stage_map_factory(s)
+            if sm and sm.load():
+                yield sm
+
     def load(self):
         self.refresh_stage_map_names()
 
@@ -183,13 +189,16 @@ class BaseStageManager(Manager):
         self.debug("User entered calibrated position {}".format(new))
         self.goto_position(new)
 
+    def _stage_map_factory(self, name):
+        root = self.root
+        path = os.path.join(root, add_extension(name, ".txt"))
+        sm = self.stage_map_klass(file_path=path)
+        return sm
+
     def _stage_map_name_changed(self, old, new):
         if new:
             self.debug("setting stage map to {}".format(new))
-            root = self.root
-            path = os.path.join(root, add_extension(new, ".txt"))
-            sm = self.stage_map_klass(file_path=path)
-
+            sm = self._stage_map_factory(new)
             if sm.load():
                 self.tray_calibration_manager.load_calibration(stage_map=new)
 

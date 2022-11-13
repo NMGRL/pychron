@@ -18,7 +18,7 @@ import os
 import time
 from threading import Thread
 
-from numpy import array, hstack, average
+from numpy import array, hstack, average, Inf
 
 # ============= enthought library imports =======================
 from traits.api import Instance, HasTraits, Str, Bool, Float
@@ -376,5 +376,38 @@ class AutoCalibrator(SemiAutoCalibrator):
                     "Failed parsing center guess file {}. error={}".format(path, e)
                 )
 
+
+class TrayIdentifier(SemiAutoCalibrator):
+    def handle(self, step, x, y, canvas):
+        if step == 'Identify':
+            holes = self.stage_map.random_choice(n=10)
+            t = Thread(target=self._traverse, args=(canvas.calibration_item, holes))
+            t.start()
+            self.calibration_enabled = False
+
+    def identify(self, holes):
+        # take current corrections these holes and compare to saved trays
+        bestmatch = None
+        mindiff = None
+        scores = {}
+
+        for sm in self.stage_manager.stage_maps_iter():
+            sm.load_correction_file()
+            diff = sm.finger_print(holes)
+            scores[sm] = diff
+            if mindiff is None or diff < mindiff:
+                mindiff = diff
+                bestmatch = sm
+
+        self.info(f'scores: {scores}')
+        self.info(f'bestmatch: {bestmatch}')
+
+
+class TrayMapper(SemiAutoCalibrator):
+    def handle(self, step, x, y, canvas):
+        if step == 'Do Map':
+            t = Thread(target=self._traverse, args=(canvas.calibration_item,))
+            t.start()
+            self.calibration_enabled = False
 
 # ============= EOF =============================================

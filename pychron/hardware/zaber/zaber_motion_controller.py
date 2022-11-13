@@ -125,7 +125,7 @@ class ZaberMotionController(MotionController):
         dev = axis.device
 
         if axis.sign == -1:
-            value = self.xaxes_max - value
+            value = axis.positive_limit - value
         # steps = axis.convert_to_steps(value)
         # self.debug("calculated steps={} value={}".format(steps, value))
         # axis.device.move_abs(steps)
