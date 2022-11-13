@@ -89,6 +89,20 @@ class LaserStageMap(BaseStageMap):
             for lin in previous:
                 wfile.write(lin.encode("utf-8"))
 
+    def finger_print(self, holes):
+        """
+        fp = sum(distance(hi, hj))
+        """
+        return sum([h.distance(self.get_hole(h.id)) for h in holes])
+
+        # sd = 0
+        # for h in holes:
+        #     th = self.get_hole(h.id)
+        #     sd += h.distance(th)
+        # return sd
+    def has_correction_file(self):
+        return os.path.isfile(self.correction_path)
+
     def load_correction_file(self):
         self.debug("load correction file")
         p = self.correction_path
@@ -104,7 +118,7 @@ class LaserStageMap(BaseStageMap):
                         "recalibration is required".format(p)
                     )
                     if self.confirmation_dialog(
-                        "Would you like to delete the file:\n {}".format(p)
+                            "Would you like to delete the file:\n {}".format(p)
                     ):
                         os.remove(p)
             if cors:
@@ -249,6 +263,5 @@ class UVLaserStageMap(LaserStageMap):
             pos = items[v - 1]
 
         return pos
-
 
 # ============= EOF =============================================

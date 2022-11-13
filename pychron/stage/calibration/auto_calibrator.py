@@ -379,11 +379,19 @@ class AutoCalibrator(SemiAutoCalibrator):
 
 class TrayIdentifier(SemiAutoCalibrator):
     def handle(self, step, x, y, canvas):
-        if step == 'Identify':
+        ret = None
+        if step == "Calibrate":
+            self.stage_map.clear_correction_file()
+            canvas.new_calibration_item()
+            self.calibration_step = "Identify"
+
+        elif step == 'Identify':
             holes = self.stage_map.random_choice(n=10)
             t = Thread(target=self._traverse, args=(canvas.calibration_item, holes))
             t.start()
             self.calibration_enabled = False
+
+        return ret
 
     def identify(self, holes):
         # take current corrections these holes and compare to saved trays
@@ -391,16 +399,20 @@ class TrayIdentifier(SemiAutoCalibrator):
         mindiff = None
         scores = {}
 
-        for sm in self.stage_manager.stage_maps_iter():
-            sm.load_correction_file()
-            diff = sm.finger_print(holes)
-            scores[sm] = diff
-            if mindiff is None or diff < mindiff:
-                mindiff = diff
-                bestmatch = sm
+        for smap in self.stage_manager.stage_maps_iter():
+            if smap.has_correction_file():
+                smap.load_correction_file()
+                diff = smap.finger_print(holes)
+                scores[smap.name] = diff
+                if mindiff is None or diff < mindiff:
+                    mindiff = diff
+                    bestmatch = smap
 
         self.info(f'scores: {scores}')
         self.info(f'bestmatch: {bestmatch}')
+
+        self.stage_manager.stage_map_name = bestmatch.name
+        return bestmatch
 
 
 class TrayMapper(SemiAutoCalibrator):
@@ -409,5 +421,6 @@ class TrayMapper(SemiAutoCalibrator):
             t = Thread(target=self._traverse, args=(canvas.calibration_item,))
             t.start()
             self.calibration_enabled = False
+
 
 # ============= EOF =============================================

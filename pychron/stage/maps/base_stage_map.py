@@ -58,6 +58,12 @@ class SampleHole(HasTraits):
     def has_correction(self):
         return self.corrected
 
+    def distance(self, h):
+        return ((self.x_cor-h.x_cor)**2+(self.y_cor-h.y_cor)**2)**0.5
+
+    def vector_distance(self, h):
+        return self.x_cor-h.x_cor, self.y_cor-h.y_cor
+
 
 class BaseStageMap(Loggable):
     file_path = Str
