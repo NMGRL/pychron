@@ -149,6 +149,7 @@ class LaserTrayCanvas(StageCanvas):
     crosshairs_offsetx = Float
     crosshairs_offsety = Float
 
+    aux_crosshairs_enabled = Bool(True)
     aux_show_laser_position = Bool(True)
     aux_show_desired_position = False
     aux_desired_position = None
@@ -553,11 +554,15 @@ class LaserTrayCanvas(StageCanvas):
         return direction
 
     def _add_bounds_rect(self):
+        print('adding bound react', self.show_bounds_rect)
         if self.show_bounds_rect:
             self.overlays.append(BoundsOverlay(component=self))
 
     def _add_aux_crosshairs(self):
-        ch = CrosshairsOverlay(component=self, circle_only=True, tag="aux")
+        ch = CrosshairsOverlay(component=self, circle_only=True,
+                               show_hole_label=False,
+                               tag="aux",
+                               visible=self.aux_crosshairs_enabled)
         self.aux_crosshairs = ch
         self.overlays.append(ch)
 
@@ -572,12 +577,22 @@ class LaserTrayCanvas(StageCanvas):
     def change_indicator_visibility(self, name, new):
         self.request_redraw()
 
+    def _aux_crosshairs_enabled_changed(self):
+        self.aux_crosshairs.visible = self.aux_crosshairs_enabled
+        self.request_redraw()
+
     def _show_bounds_rect_changed(self):
-        bo = next((o for o in self.overlays if isinstance(o, BoundsOverlay)), None)
-        if bo is None:
+        print('asdfsdafsdfsdfasdf', self.show_bounds_rect)
+        if self.show_bounds_rect:
             self._add_bounds_rect()
-        elif not self.show_bounds_rect:
-            self.overlays.remove(bo)
+        else:
+            bo = next((o for o in self.overlays if isinstance(o, BoundsOverlay)), None)
+            if bo is not None:
+                self.overlays.remove(bo)
+        # if bo is None:
+        #     self._add_bounds_rect()
+        # elif not self.show_bounds_rect:
+        #     self.overlays.remove(bo)
 
         self.request_redraw()
 

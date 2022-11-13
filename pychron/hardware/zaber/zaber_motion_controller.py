@@ -108,6 +108,15 @@ class ZaberMotionController(MotionController):
     def _get_simulation(self):
         return False
 
+    def relative_move(self, ax_key, direction, distance=1):
+        axis = self.axes[ax_key]
+        dev = axis.device
+        sign = -1 if ax_key=='x' else 1
+        dev.move_relative(distance*direction*sign*0.1, Units.LENGTH_MILLIMETRES)
+        dev.wait_until_idle()
+        self.update_axes()
+        return dev
+
     def linear_move(self, x, y, block=True, *args, **kw):
         if kw.get("source") != "laser_canvas":
             xaxis = self.single_axis_move("x", x, block=False)

@@ -88,10 +88,16 @@ class TrayChecker(MachineVisionManager):
         self.debug('stop fired')
         self._alive = False
 
+    def check_frame(self):
+        frame = self._loading_manager.stage_manager.autocenter_manager.new_image_frame(force=True)
+        return True
+
     def check(self):
         self._iter()
+
     def map(self):
         self._iter(map_positions=True)
+
     def _iter(self, map_positions=False):
         use_ml = True
         pipe = None
@@ -111,20 +117,20 @@ class TrayChecker(MachineVisionManager):
         else:
             func = self._check
 
-        self._thread = Thread(target=func, args=(pipe, ))
+        self._thread = Thread(target=func, args=(pipe,))
         self._thread.start()
 
     def _map_positions(self, pipe):
         self._alive = True
         results = []
-        for hole in self._loading_manager.stage_manager.stage_map.sample_holes:
+        for hole in self._loading_manager.stage_manager.stage_map.sample_holes[:11]:
             if not self._alive:
                 self.debug('exiting check loop')
                 break
 
             pos = hole.id
             # for pos in self._loading_manager.positions:
-            self._loading_manager.goto(pos, block=True)
+            self._loading_manager.goto(pos, block=True, capture=".filled")
             # time.sleep(self.post_move_delay)
             # if pipe is not None:
             #     self._check_position_ml(pipe, pos)
@@ -132,9 +138,9 @@ class TrayChecker(MachineVisionManager):
             #     self._check_position(pos)
             x = self._loading_manager.stage_manager.stage_controller.x
             y = self._loading_manager.stage_manager.stage_controller.y
-            results.append((hole, pos, (x,y)))
+            results.append((pos, (x, y)))
             self.debug('map position result {}'.format(results[-1]))
-            time.sleep(self.post_check_delay)
+            # time.sleep(self.post_check_delay)
 
         name = self._loading_manager.stage_manager.stage_map.name
         p, cnt = unique_path2(paths.csv_data_dir, '{}.corrected_positions.txt'.format(name))
@@ -153,7 +159,7 @@ class TrayChecker(MachineVisionManager):
                 break
 
             pos = hole.id
-        # for pos in self._loading_manager.positions:
+            # for pos in self._loading_manager.positions:
             self._loading_manager.goto(pos, block=True)
             time.sleep(self.post_move_delay)
             if pipe is not None:
@@ -311,6 +317,7 @@ class TrayChecker(MachineVisionManager):
         # blankframe = self._get_blankframe(pos)
         # if not self.locator.find_grain(im, blankframe, frame, dim):
         #     self.debug('no grain found {}'.format(pos))
+
     def _stop_button_fired(self):
         self.stop()
 # ============= EOF =============================================

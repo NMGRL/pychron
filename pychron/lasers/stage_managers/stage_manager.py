@@ -210,7 +210,11 @@ class StageManager(BaseStageManager):
         bind_preference(
             self.canvas, "show_bounds_rect", "{}.show_bounds_rect".format(pref_id)
         )
+        bind_preference(
+            self.canvas, "aux_crosshairs_enabled", "{}.aux_crosshairs_enabled".format(pref_id)
+        )
 
+        self.canvas._show_bounds_rect_changed()
         self.canvas.request_redraw()
 
     def load(self):

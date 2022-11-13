@@ -385,7 +385,7 @@ class VideoStageManager(StageManager):
                 path = self.save_file_dialog()
 
         if path:
-            self.info("saving snapshot {}".format(path))
+
             # play camera shutter sound
             # play_sound('shutter')
 
@@ -393,9 +393,11 @@ class VideoStageManager(StageManager):
                 frame = self.video.get_cached_frame(force=not use_cached)
                 head, _ = os.path.splitext(path)
                 raw_path = "{}.tif".format(head)
+                self.info("saving snapshot {}".format(raw_path))
                 pil_save(frame, raw_path)
 
             if render_canvas:
+                self.info("saving snapshot {}".format(path))
                 self._render_snapshot(path)
 
             if self.auto_upload:
@@ -742,6 +744,7 @@ class VideoStageManager(StageManager):
                     oy,
                     dim=dim,
                     shape=shape,
+                    annular_mask=(dim*1.4, 0)
                 )
                 # rpos = rpos[0]*0.75, rpos[1]*0.75
 
@@ -905,8 +908,13 @@ class VideoStageManager(StageManager):
         except ValueError:
             pass
 
-    def _update_xy_limits(self):
-        z = 0
+    def set_zoom_manually(self, pxpermm):
+        x = self.stage_controller.get_current_position("x")
+        y = self.stage_controller.get_current_position("y")
+        self.camera.set_limits_by_zoom(None, x, y, self.canvas, pxpermm=pxpermm)
+
+
+    def _update_xy_limits(self, z=0):
         if self.parent is not None:
             zoom = self.parent.get_motor("zoom")
             if zoom is not None:

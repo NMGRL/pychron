@@ -148,7 +148,7 @@ def _arc_approximation_filter(image, src, targets, dim, tol=0.35):
 
 class Locator(Loggable):
     pxpermm = Float
-    use_histogram = False
+    use_histogram = True
     use_arc_approximation = True
     use_square_approximation = True
     step_signal = None
@@ -408,11 +408,12 @@ class Locator(Loggable):
         mask[c] = False
         src[mask] = 255
 
-        inner_radius = inner_radius * self.pxpermm
-        c = disk((h / 2.0, w / 2.0), inner_radius, shape=(h, w))
-        mask = zeros_like(src, dtype=bool)
-        mask[c] = True
-        src[mask] = 0
+        if inner_radius:
+            inner_radius = inner_radius * self.pxpermm
+            c = disk((h / 2.0, w / 2.0), inner_radius, shape=(h, w))
+            mask = zeros_like(src, dtype=bool)
+            mask[c] = True
+            src[mask] = 0
 
         # return invert(mask)
 

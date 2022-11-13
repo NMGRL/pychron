@@ -84,7 +84,7 @@ class BaseCamera(HasTraits):
 
         return pxpermm
 
-    def set_limits_by_zoom(self, zoom, cx, cy, canvas=None):
+    def set_limits_by_zoom(self, zoom, cx, cy, canvas=None, pxpermm=None):
         """ """
 
         def _set_limits(axis_key, px_per_mm, cur_pos, canvas):
@@ -101,9 +101,10 @@ class BaseCamera(HasTraits):
             if canvas:
                 d /= 2.0 * px_per_mm
                 lim = (-d + cur_pos, d + cur_pos)
+                print('asdfasdfsdaf', self.width, self.height, axis_key, lim, px_per_mm)
                 canvas.set_mapper_limits(axis_key, lim)
-
-        pxpermm = self.calculate_pxpermm(zoom)
+        if pxpermm is None:
+            pxpermm = self.calculate_pxpermm(zoom)
         if cx is not None:
             _set_limits("x", pxpermm, cx, canvas)
         if cy is not None:

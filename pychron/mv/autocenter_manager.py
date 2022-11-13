@@ -106,6 +106,8 @@ class AutoCenterManager(MachineVisionManager):
     display_image = Instance(FrameImage, ())
 
     locator = None
+    x_correction_sign = 1
+    y_correction_sign = 1
 
     def bind_preferences(self, pref_id):
         bind_preference(self, "use_autocenter", "{}.use_autocenter".format(pref_id))
@@ -160,13 +162,14 @@ class AutoCenterManager(MachineVisionManager):
             return
         else:
             # pdx, pdy = round(dx), round(dy)
-            mdx = dx / self.pxpermm
-            mdy = dy / self.pxpermm
+            mdx = dx / self.pxpermm *self.x_correction_sign
+            mdy = dy / self.pxpermm *self.y_correction_sign
             self.info(
                 "calculated deviation px={:n},{:n}, "
                 "mm={:0.3f},{:0.3f} ({})".format(dx, dy, mdx, mdy, self.pxpermm)
             )
-            return cx - mdx, cy - mdy
+
+            return cx + mdx, cy + mdy
 
     # private
     def _load_configuration(self):

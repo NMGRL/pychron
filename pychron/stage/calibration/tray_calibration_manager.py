@@ -25,7 +25,8 @@ from traits.api import Float, Event, String, Any, Enum, Button, List, Instance
 
 from pychron.loggable import Loggable
 from pychron.paths import paths
-from pychron.stage.calibration.auto_calibrator import SemiAutoCalibrator, AutoCalibrator
+from pychron.stage.calibration.auto_calibrator import SemiAutoCalibrator, AutoCalibrator, \
+    SemiAutoFullTraversalCalibrator
 from pychron.stage.calibration.calibrator import (
     TrayCalibrator,
     LinearCalibrator,
@@ -56,6 +57,7 @@ STYLE_DICT = {
     "Linear": LinearCalibrator,
     "SemiAuto": SemiAutoCalibrator,
     "Auto": AutoCalibrator,
+    "SemiAutoFullTraversal": SemiAutoFullTraversalCalibrator
 }
 
 
@@ -80,7 +82,7 @@ class TrayCalibrationManager(Loggable):
     calibrate = Event
     calibration_step = String("Calibrate")
     calibration_help = String(TRAY_HELP)
-    style = Enum("Tray", "Free", "Hole", "Irregular", "Linear", "SemiAuto")
+    style = Enum("Tray", "Free", "Hole", "Irregular", "Linear", "SemiAuto", "SemiAutoFullTraversal")
     canvas = Any
     calibrator = Instance(BaseCalibrator)
     # calibrator = Property(depends_on='style')

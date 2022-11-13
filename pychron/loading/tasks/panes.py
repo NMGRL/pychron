@@ -288,14 +288,14 @@ class VideoPane(TraitsDockPane):
     #     return {'object': self.model.stage_manager}
 
     def traits_view(self):
-        v = View(VGroup(UItem("video",
-                              width=320,
-                              height=240,
-                              resizable=True,
-                              style="custom", editor=VideoEditor())),
-                 )
-
-        return v
+        # v = View(VGroup(UItem("video",
+        #                       width=320,
+        #                       height=240,
+        #                       resizable=True,
+        #                       style="custom", editor=VideoEditor())),
+        #          )
+        editor = self.model.canvas_editor_factory()
+        return View(UItem("canvas", style="custom", editor=editor))
 
 
 class StageManagerPane(TraitsDockPane):
@@ -308,7 +308,9 @@ class StageManagerPane(TraitsDockPane):
             "stage_manager": sm,
             "tray_calibration": sm.tray_calibration_manager,
             "object": sm,
-            "foot_pedal": self.model.foot_pedal
+            "foot_pedal": self.model.foot_pedal,
+            "focus_motor": self.model.focus_motor,
+            "loading_manager": self.model
         }
 
     def calibration_view(self):
@@ -382,9 +384,15 @@ class StageManagerPane(TraitsDockPane):
 
     def traits_view(self):
         v = View(
-            VGroup(UItem("calibrated_position_entry",
-                         tooltip="Enter a position e.g 1 for a hole, " "or 3,4 for X,Y"),
+            VGroup(HGroup(UItem("calibrated_position_entry",
+                                tooltip="Enter a position e.g 1 for a hole, " "or 3,4 for X,Y"),
+                          icon_button_editor('autocenter_button', "find")
+                          ),
                    UItem('stage_controller', style='custom'),
+                   HGroup(Item('loading_manager.loading_level_button'),
+                          Item('loading_manager.checking_level_button')),
+                   HGroup(Item('loading_manager.up_button'),
+                          Item('loading_manager.down_button')),
                    HGroup(UItem('home'),
                           icon_button_editor("snapshot_button", "camera"), spring),
                    self.calibration_view(),

@@ -48,7 +48,7 @@ class SemiAutoCalibrator(TrayCalibrator):
      b. record position
     3. traverse holes finding autocenter position
     """
-
+    full_traversal = False
     stage_map = Instance("pychron.stage.maps.base_stage_map.BaseStageMap")
 
     def handle(self, step, x, y, canvas):
@@ -195,9 +195,12 @@ class SemiAutoCalibrator(TrayCalibrator):
         sm = self.stage_manager
         smap = self.stage_map
 
-        # holes = smap.row_ends(alternate=True)
-        holes = list(smap.circumference_holes())
-        holes.extend(smap.mid_holes())
+        if self.full_traversal:
+            holes = smap.all_holes()
+        else:
+            # holes = smap.row_ends(alternate=True)
+            holes = list(smap.circumference_holes())
+            holes.extend(smap.mid_holes())
 
         results = []
         points = []
@@ -303,6 +306,9 @@ class SemiAutoCalibrator(TrayCalibrator):
         r = smap.get_calibration_hole("east")
 
         return l is not None or r is not None
+
+class SemiAutoFullTraversalCalibrator(SemiAutoCalibrator):
+    full_traversal =True
 
 
 class AutoCalibrator(SemiAutoCalibrator):

@@ -98,12 +98,10 @@ class LoadingTask(BaseManagerTask):
     # def set_edit(self):
     #     self.manager.set_edit()
     def map_tray(self):
-        tray_checker = TrayChecker(self.manager)
-        tray_checker.map()
+        self.manager.map_tray()
 
     def check_tray(self):
-        tray_checker = TrayChecker(self.manager)
-        tray_checker.check()
+        self.manager.check_tray()
 
     def goto_mode(self):
         self.manager.set_interaction_mode('Goto')

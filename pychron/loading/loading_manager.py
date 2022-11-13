@@ -51,10 +51,12 @@ from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.dvc.meta_object import MetaObjectException
 from pychron.envisage.view_util import open_view
+from pychron.hardware.jss57 import STP_MTRD
 from pychron.lasers.stage_managers.stage_manager import StageManager
 from pychron.lasers.stage_managers.video_stage_manager import VideoStageManager
 from pychron.loading.foot_pedal import FootPedal
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
+from pychron.loading.tray_checker import TrayChecker
 from pychron.paths import paths
 
 # ============= enthought library imports =======================
@@ -243,9 +245,16 @@ class LoadingManager(DVCIrradiationable):
     use_stage = Bool(True)
     foot_pedal = Instance(FootPedal, ())
     interaction_mode_enabled = Bool(False)
+    focus_motor = Instance(STP_MTRD)
 
+    loading_level_button = Button('Loading Level')
+    checking_level_button = Button('Checking Level')
+    up_button = Button('Up')
+    down_button = Button('Down')
     refresh_table = Event
     mode = 'normal'
+
+    tray_checker = Instance(TrayChecker)
 
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
@@ -254,13 +263,29 @@ class LoadingManager(DVCIrradiationable):
         if self.use_stage:
             self.stage_manager = VideoStageManager(parent=self,
                                                    name='loader',
+                                                   pxpermm = 62,
                                                    stage_controller_klass='ZaberMotion')
             self.stage_manager.autocenter_manager.use_autocenter = True
-            self.stage_manager.autocenter_manager.pxpermm = 52
+            self.stage_manager.autocenter_manager.pxpermm = 62
             self.stage_manager.load()
             self.stage_manager.initialize_video()
+            # self.stage_manager.canvas.padding = 0
+            # self.stage_manager.canvas.show_axes = False
             self.stage_manager.stage_controller.bootstrap()
             self.stage_manager.stage_controller.update_axes()
+            self.tray_checker = TrayChecker(self)
+            self.focus_motor = STP_MTRD(name='focusmotor')
+            self.focus_motor.bootstrap()
+            self.stage_manager.set_zoom_manually(62)
+            # self.stage_manager.canvas.set_mapper_limits('x', (-10,10))
+            # self.stage_manager.canvas.set_mapper_limits('y', (-10,10))
+            self.stage_manager.bind_preferences('pychron.loading')
+
+    def check_tray(self):
+        self.tray_checker.check()
+
+    def map_tray(self):
+        self.tray_checker.map()
 
     def set_loaded_runs(self, runs):
         pass
@@ -1024,6 +1049,19 @@ class LoadingManager(DVCIrradiationable):
         idx = self.foot_pedal.active_idx
         item = self.canvas.scene.get_item(idx)
         if item:
+
+            # check to see if sample actually loaded
+            if not self.tray_checker.check_frame():
+                if self.confirmation_dialog('It does not appear that a grain is in the hole. Is this correct?'):
+                    result = True
+                else:
+                    result = False
+                self.tray_checker.validate_result(result)
+
+                if result:
+                    if not self.confirmation_dialog('Would you like to skip loading this hole?'):
+                        return
+
             item.fill = True
             self._capture('{}.loaded'.format(idx))
 
@@ -1148,6 +1186,15 @@ class LoadingManager(DVCIrradiationable):
         self.dirty = True
         self.canvas.request_redraw()
 
+    def _up_button_fired(self):
+        pos = self.focus_motor.data_position
+        self.debug(f'up pos={pos}')
+        self.focus_motor.set_position(0.01)
+
+    def _down_button_fired(self):
+        pos = self.focus_motor.data_position
+        self.debug(f'down pos={pos}')
+        self.focus_motor.set_position(-0.01)
 # ============= EOF =============================================
 
 # actions

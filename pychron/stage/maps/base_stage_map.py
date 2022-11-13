@@ -152,6 +152,15 @@ class BaseStageMap(Loggable):
                 yield ri[len(ri) / 2]
             yield b
 
+    def all_holes(self):
+        for i, (g, ri) in enumerate(self._grouped_rows()):
+            if i%2:
+                # odd row
+                yield from ri
+            else:
+                # even row
+                yield from reversed(list(ri))
+
     def circumference_holes(self):
         for i, (g, ri) in enumerate(self._grouped_rows()):
             ri = list(ri)
@@ -220,6 +229,9 @@ class BaseStageMap(Loggable):
     def update_secondary_calibration(self, h):
         """
         """
+        return
+
+
         if h.corrected_position:
             # nx, ny = h.nominal_position
             nx, ny = h.calibrated_position
