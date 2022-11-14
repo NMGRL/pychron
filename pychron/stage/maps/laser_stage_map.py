@@ -90,15 +90,18 @@ class LaserStageMap(BaseStageMap):
             for lin in previous:
                 wfile.write(lin.encode("utf-8"))
 
-    def finger_print(self, tholes):
+    def finger_print(self, keys, resultarr):
         """
 
         """
-        holes = [self.get_hole(k.id) for k in tholes]
+        # get our same holes as those in results
+        holes = [self.get_hole(k.hole_id) for k in keys]
 
-        hs = array([(h.x_cor, h.y_cor) for h in holes])
-        ts = array([(h.x_cor, h.y_cor) for h in tholes])
-        corr = corrcoef(hs.flat, ts.flat)
+        # get our corrected positions as an array
+        hs = array([(h.x_cor, h.y_cor) for h in holes]).flat
+
+        # calculate correlation coeffs
+        corr = corrcoef(hs.flat, resultarr)
         return corr[0, 1]
 
         """

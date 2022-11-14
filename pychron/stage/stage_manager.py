@@ -200,12 +200,12 @@ class BaseStageManager(Manager):
             self.debug("setting stage map to {}".format(new))
             sm = self._stage_map_factory(new)
             if sm.load():
+                self.stage_map = sm
+
                 self.tray_calibration_manager.load_calibration(stage_map=new)
 
                 self.canvas.set_map(sm)
                 self.canvas.request_redraw()
-
-                self.stage_map = sm
 
                 self._stage_map_changed_hook()
             else:

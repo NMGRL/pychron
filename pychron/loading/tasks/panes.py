@@ -340,12 +340,12 @@ class StageManagerPane(TraitsDockPane):
 
         cal_grp = HGroup(
             UItem(
-                "tray_calibration.style",
-                enabled_when="not tray_calibration.isCalibrating()",
-            ),
-            UItem(
                 "stage_manager.stage_map_name",
                 editor=EnumEditor(name="stage_manager.stage_map_names"),
+            ),
+            UItem(
+                "tray_calibration.style",
+                enabled_when="not tray_calibration.isCalibrating()",
             ),
             UItem(
                 "tray_calibration.calibrate",
