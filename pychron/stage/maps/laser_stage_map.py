@@ -20,7 +20,7 @@ from __future__ import absolute_import
 import os
 import pickle
 
-from numpy import array, mean, correlate, std
+from numpy import array, mean, correlate, std, corrcoef
 from traits.api import Button, on_trait_change
 
 from pychron.core.yaml import yload
@@ -92,23 +92,33 @@ class LaserStageMap(BaseStageMap):
 
     def finger_print(self, tholes):
         """
+
+        """
+        holes = [self.get_hole(k.id) for k in tholes]
+
+        hs = array([(h.x_cor, h.y_cor) for h in holes])
+        ts = array([(h.x_cor, h.y_cor) for h in tholes])
+        corr = corrcoef(hs.flat, ts.flat)
+        return corr[0, 1]
+
+        """
         do a normalized cross correlation between our corrected positions and the correct positions for `tholes`
 
         the larger the value the better the match. 1.0 indicates perfect match i.e. autocorrelation
         """
-        holes = [self.get_hole(k.id) for k in tholes]
-
-        def crosscorr(k):
-            hs = array([getattr(h, k) for h in holes])
-            ts = array([getattr(h, k) for h in tholes])
-            if hs.any() and ts.any():
-                hs = (hs - mean(hs)) / (std(hs) * len(hs))
-                ts = (ts - mean(ts)) / (std(ts))
-                return correlate(hs, ts)
-            else:
-                return 0
-
-        return ((crosscorr('x_cor') + crosscorr('y_cor')) / 2)[0]
+        # holes = [self.get_hole(k.id) for k in tholes]
+        #
+        # def crosscorr(k):
+        #     hs = array([getattr(h, k) for h in holes])
+        #     ts = array([getattr(h, k) for h in tholes])
+        #     if hs.any() and ts.any():
+        #         hs = (hs - mean(hs)) / (std(hs) * len(hs))
+        #         ts = (ts - mean(ts)) / (std(ts))
+        #         return correlate(hs, ts)
+        #     else:
+        #         return 0
+        #
+        # return ((crosscorr('x_cor') + crosscorr('y_cor')) / 2)[0]
 
     def has_correction_file(self):
         return os.path.isfile(self.correction_path)
