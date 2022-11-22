@@ -189,8 +189,8 @@ class InstalledAppFlow(object):
                 :meth:`credentials` to obtain a
                 :class:`~google.auth.credentials.Credentials` instance.
         """
-        kwargs['verify'] = globalv.verify_ssl
-        kwargs['cert'] = globalv.cert_file
+        kwargs["verify"] = globalv.verify_ssl
+        kwargs["cert"] = globalv.cert_file
 
         kwargs.setdefault("client_secret", self.client_config["client_secret"])
         return self.oauth2session.fetch_token(self.client_config["token_uri"], **kwargs)
