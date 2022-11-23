@@ -46,10 +46,12 @@ class GitHubPlugin(BaseGitPlugin):
         try:
             self.oauth_flow()
         except SSLError:
+            self.warning_dialog('OAuth authenication failed. Using old style authentication')
+
             # use old style authenication
             p = self.application.preferences
-            usr = p.get("pychron.github.username")
-            pwd = p.get("pychron.github.password")
+            # usr = p.get("pychron.github.username")
+            # pwd = p.get("pychron.github.password")
             tok = p.get("pychron.github.oauth_token")
             org = p.get("pychron.github.organization")
 
@@ -58,10 +60,10 @@ class GitHubPlugin(BaseGitPlugin):
                     "Please set the organization that contains your data (e.g. NMGRLData) "
                     "in Pychron's {} preferences".format(self.name),
                     position=STARTUP_MESSAGE_POSITION,
-                )
-            if not tok and not (usr and pwd):
+            )
+            if not tok:
                 self.information_dialog(
-                    "Please set user name and password or token in {} preferences".format(
+                    "Please set token in {} preferences".format(
                         self.name
                     ),
                     position=STARTUP_MESSAGE_POSITION,
