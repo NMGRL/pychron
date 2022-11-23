@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 import hashlib
+import os
 import webbrowser
 import wsgiref
 from base64 import urlsafe_b64encode
@@ -190,7 +191,8 @@ class InstalledAppFlow(object):
                 :class:`~google.auth.credentials.Credentials` instance.
         """
         kwargs["verify"] = globalv.verify_ssl
-        kwargs["cert"] = globalv.cert_file
+        if os.path.isfile(globalv.cert_file):
+            kwargs["cert"] = globalv.cert_file
 
         kwargs.setdefault("client_secret", self.client_config["client_secret"])
         return self.oauth2session.fetch_token(self.client_config["token_uri"], **kwargs)
