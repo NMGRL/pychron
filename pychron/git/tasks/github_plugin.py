@@ -25,12 +25,15 @@ from json import JSONDecodeError
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from requests.exceptions import SSLError
 
+from pychron.git.hosts import IGitHost
 from pychron.git.hosts.github import GitHubService
 from pychron.git.tasks.base_git_plugin import BaseGitPlugin
 from pychron.git.tasks.flow import InstalledAppFlow
 from pychron.git.tasks.githost_preferences import GitHubPreferencesPane
 from pychron.paths import paths
+from pychron.pychron_constants import STARTUP_MESSAGE_POSITION
 
 
 class GitHubPlugin(BaseGitPlugin):
@@ -39,18 +42,33 @@ class GitHubPlugin(BaseGitPlugin):
     id = "pychron.github.plugin"
 
     def start(self):
-        # p = self.application.preferences
-        # usr = p.get("pychron.github.username")
-        # pwd = p.get("pychron.github.password")
-        # tok = p.get("pychron.github.oauth_token")
-        # org = p.get("pychron.github.organization")
-        #
-        # if not org:
-        #     self.information_dialog(
-        #         "Please set the organization that contains your data (e.g. NMGRLData) "
-        #         "in Pychron's {} preferences".format(self.name),
-        #         position=STARTUP_MESSAGE_POSITION,
-        #     )
+
+        try:
+            self.oauth_flow()
+        except SSLError:
+            # use old style authenication
+            p = self.application.preferences
+            usr = p.get("pychron.github.username")
+            pwd = p.get("pychron.github.password")
+            tok = p.get("pychron.github.oauth_token")
+            org = p.get("pychron.github.organization")
+
+            if not org:
+                self.information_dialog(
+                    "Please set the organization that contains your data (e.g. NMGRLData) "
+                    "in Pychron's {} preferences".format(self.name),
+                    position=STARTUP_MESSAGE_POSITION,
+            )
+            if not tok and not (usr and pwd):
+                self.information_dialog(
+                    "Please set user name and password or token in {} preferences".format(
+                        self.name
+                    ),
+                    position=STARTUP_MESSAGE_POSITION,
+                )
+            else:
+                service = self.application.get_service(IGitHost)
+                service.set_authentication()
         # try:
         #     self.debug("checking for gh cli")
         #     subprocess.call(
@@ -60,7 +78,7 @@ class GitHubPlugin(BaseGitPlugin):
         #     self.debug("github authentication handled by gh")
         #     return
         # except FileNotFoundError:
-        self.oauth_flow()
+        # self.oauth_flow()
         # if not tok and not (usr and pwd):
         #     self.information_dialog(
         #         "Please set user name and password or token in {} preferences".format(
