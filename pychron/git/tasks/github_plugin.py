@@ -58,7 +58,7 @@ class GitHubPlugin(BaseGitPlugin):
                     "Please set the organization that contains your data (e.g. NMGRLData) "
                     "in Pychron's {} preferences".format(self.name),
                     position=STARTUP_MESSAGE_POSITION,
-            )
+                )
             if not tok and not (usr and pwd):
                 self.information_dialog(
                     "Please set user name and password or token in {} preferences".format(
