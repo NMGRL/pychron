@@ -943,9 +943,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             while self._save_complete_evt.is_set():
                 self._save_complete_evt.wait(1)
 
-                if time.time() - st > 120:
+                if time.time() - st > 300:
+                    self.warning_dialog('Saving run failed to complete success fully')
                     self._save_complete_evt.set()
-                    break
+                    run.cancel_run()
+                    run.spec.state = FAILED
+                    return
 
             self.debug("waiting complete")
 
