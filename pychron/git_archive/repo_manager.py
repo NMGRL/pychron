@@ -872,12 +872,17 @@ class GitRepoManager(Loggable):
             branch = self.get_current_branch()
             if onto_branch.startswith("origin"):
                 remote = repo.remotes.origin
-                onto_branch = getattr(remote.refs, onto_branch[7:])
+                try:
+                    bn = onto_branch[7:]
+                    onto_branch = getattr(remote.refs, bn)
+                except AttributeError:
+                    onto_branch = None
             else:
                 self.checkout_branch(onto_branch)
                 self.pull()
 
-            repo.git.rebase(onto_branch, branch)
+            if onto_branch is not None:
+                repo.git.rebase(onto_branch, branch)
 
     def smart_pull(
         self,
@@ -1016,26 +1021,34 @@ class GitRepoManager(Loggable):
         if to_:
             dest = getattr(repo.branches, to_)
             dest.checkout()
-        try:
-            src = getattr(repo.branches, from_)
-        except AttributeError:
-            self.debug("available branches {}".format(repo.branches))
-            msg = "Could not locate {} for merge".format(from_)
-            self.warning(msg)
-            if inform:
-                self.warning_dialog(msg)
-            return
 
-        try:
-            repo.git.merge(src.commit)
-        except GitCommandError:
-            self.debug_exception()
-            if inform:
-                self.warning_dialog(
-                    "Merging {} into {} failed. See log file for more details".format(
-                        from_, to_
+        if from_.startswith("origin"):
+            remote = repo.remotes.origin
+            try:
+                bn = from_[7:]
+                from_ = getattr(remote.refs, bn)
+            except AttributeError:
+                self.debug("available branches {}".format(repo.branches))
+                msg = "Could not locate {} for merge".format(from_)
+                self.warning(msg)
+                if inform:
+                    self.warning_dialog(msg)
+
+                return
+        else:
+            from_ = getattr(repo.branches, from_)
+
+        with StashCTX(repo):
+            try:
+                repo.git.merge(from_.commit)
+            except GitCommandError:
+                self.debug_exception()
+                if inform:
+                    self.warning_dialog(
+                        "Merging {} into {} failed. See log file for more details".format(
+                            from_, to_
+                        )
                     )
-                )
 
     def commit(self, msg, author=None):
         self.debug("commit message={}, author={}".format(msg, author))
