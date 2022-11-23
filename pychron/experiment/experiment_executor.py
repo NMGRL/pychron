@@ -944,7 +944,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self._save_complete_evt.wait(1)
 
                 if time.time() - st > 300:
-                    self.warning_dialog('Saving run failed to complete success fully')
+                    self.warning_dialog("Saving run failed to complete success fully")
                     self._save_complete_evt.set()
                     run.cancel_run()
                     run.spec.state = FAILED
