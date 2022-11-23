@@ -47,7 +47,7 @@ class GitHubPlugin(BaseGitPlugin):
             self.oauth_flow()
         except SSLError:
             self.warning_dialog(
-                "OAuth authenication failed. Using old style authentication"
+                "OAuth authentication failed. Using old style authentication"
             )
 
             # use old style authenication
