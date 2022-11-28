@@ -43,34 +43,36 @@ class GitHubPlugin(BaseGitPlugin):
 
     def start(self):
 
-        try:
-            self.oauth_flow()
-        except SSLError:
-            self.warning_dialog(
-                "OAuth authentication failed. Using old style authentication"
+        tok = p.get("pychron.github.oauth_token")
+        if not tok:
+            try:
+                self.oauth_flow()
+            except SSLError:
+                self.warning_dialog(
+                    "OAuth authentication failed. Using old style authentication"
+                )
+
+        # use old style authenication
+        p = self.application.preferences
+        # usr = p.get("pychron.github.username")
+        # pwd = p.get("pychron.github.password")
+        tok = p.get("pychron.github.oauth_token")
+        org = p.get("pychron.github.organization")
+
+        if not org:
+            self.information_dialog(
+                "Please set the organization that contains your data (e.g. NMGRLData) "
+                "in Pychron's {} preferences".format(self.name),
+                position=STARTUP_MESSAGE_POSITION,
             )
-
-            # use old style authenication
-            p = self.application.preferences
-            # usr = p.get("pychron.github.username")
-            # pwd = p.get("pychron.github.password")
-            tok = p.get("pychron.github.oauth_token")
-            org = p.get("pychron.github.organization")
-
-            if not org:
-                self.information_dialog(
-                    "Please set the organization that contains your data (e.g. NMGRLData) "
-                    "in Pychron's {} preferences".format(self.name),
-                    position=STARTUP_MESSAGE_POSITION,
-                )
-            if not tok:
-                self.information_dialog(
-                    "Please set token in {} preferences".format(self.name),
-                    position=STARTUP_MESSAGE_POSITION,
-                )
-            else:
-                service = self.application.get_service(IGitHost)
-                service.set_authentication()
+        if not tok:
+            self.information_dialog(
+                "Please set token in {} preferences".format(self.name),
+                position=STARTUP_MESSAGE_POSITION,
+            )
+        else:
+            service = self.application.get_service(IGitHost)
+            service.set_authentication()
         # try:
         #     self.debug("checking for gh cli")
         #     subprocess.call(
