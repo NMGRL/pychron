@@ -43,6 +43,7 @@ class GitHubPlugin(BaseGitPlugin):
 
     def start(self):
 
+        p = self.application.preferences
         tok = p.get("pychron.github.oauth_token")
         if not tok:
             try:
@@ -53,7 +54,6 @@ class GitHubPlugin(BaseGitPlugin):
                 )
 
         # use old style authenication
-        p = self.application.preferences
         # usr = p.get("pychron.github.username")
         # pwd = p.get("pychron.github.password")
         tok = p.get("pychron.github.oauth_token")
