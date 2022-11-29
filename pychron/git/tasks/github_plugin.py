@@ -48,6 +48,7 @@ class GitHubPlugin(BaseGitPlugin):
         if not tok:
             try:
                 self.oauth_flow()
+                return
             except SSLError:
                 self.warning_dialog(
                     "OAuth authentication failed. Using old style authentication"
