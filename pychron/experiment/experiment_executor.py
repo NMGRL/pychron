@@ -552,6 +552,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             self.debug("waiting complete")
 
         return True
+
     def _wait_for_save(self):
         """
         wait for experiment queue to be saved.
@@ -747,7 +748,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                         )
 
                 if not self._wait_for_dvc_save(spec):
-                    self.debug('wait for dvc save failed')
+                    self.debug("wait for dvc save failed")
                     break
 
                 run = self._make_run(spec)
