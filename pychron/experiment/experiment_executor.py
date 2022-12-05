@@ -535,6 +535,23 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # scroll to the first run
         self.experiment_queue.automated_runs_scroll_to_row = 0
 
+    def _wait_for_dvc_save(self, spec):
+        if self._save_complete_evt and self.use_dvc_persistence:
+            self.debug("waiting for save event to clear")
+            st = time.time()
+            while self._save_complete_evt.is_set():
+                self._save_complete_evt.wait(1)
+
+                if time.time() - st > 300:
+                    self.warning_dialog("Saving run failed to complete success fully")
+                    self._save_complete_evt.set()
+                    # run.cancel_run()
+                    spec.state = FAILED
+                    return
+
+            self.debug("waiting complete")
+
+        return True
     def _wait_for_save(self):
         """
         wait for experiment queue to be saved.
@@ -728,6 +745,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                 self.is_alive(), cnt < nruns, is_first_analysis
                             )
                         )
+
+                if not self._wait_for_dvc_save(spec):
+                    self.debug('wait for dvc save failed')
+                    break
 
                 run = self._make_run(spec)
                 if run is None:
@@ -937,20 +958,20 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.extracting_run = run
 
         # self.debug("parallel saving currently disabled")
-        if self._save_complete_evt and self.use_dvc_persistence:
-            self.debug("waiting for save event to clear")
-            st = time.time()
-            while self._save_complete_evt.is_set():
-                self._save_complete_evt.wait(1)
-
-                if time.time() - st > 300:
-                    self.warning_dialog("Saving run failed to complete success fully")
-                    self._save_complete_evt.set()
-                    run.cancel_run()
-                    run.spec.state = FAILED
-                    return
-
-            self.debug("waiting complete")
+        # if self._save_complete_evt and self.use_dvc_persistence:
+        #     self.debug("waiting for save event to clear")
+        #     st = time.time()
+        #     while self._save_complete_evt.is_set():
+        #         self._save_complete_evt.wait(1)
+        #
+        #         if time.time() - st > 300:
+        #             self.warning_dialog("Saving run failed to complete success fully")
+        #             self._save_complete_evt.set()
+        #             run.cancel_run()
+        #             run.spec.state = FAILED
+        #             return
+        #
+        #     self.debug("waiting complete")
 
         for step in ("_start", "_extraction", "_measurement", "_post_measurement"):
 

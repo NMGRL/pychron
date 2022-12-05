@@ -654,6 +654,7 @@ class GitRepoManager(Loggable):
                 self.information_dialog('Repository now on branch "{}"'.format(name))
 
         except BaseException as e:
+            self.debug_exception()
             self.warning_dialog(
                 'There was an issue trying to checkout branch "{}"'.format(name)
             )

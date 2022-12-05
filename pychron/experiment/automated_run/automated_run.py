@@ -1741,13 +1741,13 @@ anaylsis_type={}
         )
 
     def get_baselines(self):
+        ret = {}
         if self.isotope_group:
-            return {
+            ret = {
                 iso.name: (iso.detector, iso.baseline.uvalue)
                 for iso in self.isotope_group.values()
             }
-            # return dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
-            #              self.isotope_group.values()])
+        return ret
 
     def get_baseline_corrected_signals(self):
         if self.isotope_group:
