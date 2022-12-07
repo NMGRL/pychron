@@ -342,6 +342,11 @@ class DVCDatabase(DatabaseAdapter):
 
             change = an.change
             change.tag = tagname
+
+            if not self.get_user(self.save_username):
+                self.add_user(self.save_username)
+                sess.commit()
+
             change.user = self.save_username
             sess.add(change)
 
