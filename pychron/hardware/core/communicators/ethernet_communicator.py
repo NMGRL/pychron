@@ -465,7 +465,7 @@ class EthernetCommunicator(Communicator):
             time.sleep(timeout)
 
         else:
-            return ''
+            return ""
 
     def tell(self, cmd, verbose=True, quiet=False, info=None):
         with self._lock:

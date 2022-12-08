@@ -232,7 +232,7 @@ class DVCExperimentPreferencesPane(PreferencesPane):
             BorderVGroup(
                 Item("use_dvc_persistence", label="Use DVC Persistence"),
                 Item("dvc_save_timeout_minutes", "DVC Save timeout (minutes)"),
-                label="DVC"
+                label="DVC",
             )
         )
         return v

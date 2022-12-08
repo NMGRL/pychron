@@ -337,8 +337,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder(prefid, attrs)
 
         # dvc
-        self._preference_binder("pychron.dvc.experiment", ("use_dvc_persistence",
-                                                           "dvc_save_timeout_minutes"))
+        self._preference_binder(
+            "pychron.dvc.experiment",
+            ("use_dvc_persistence", "dvc_save_timeout_minutes"),
+        )
 
         # dashboard
         self._preference_binder(
@@ -540,8 +542,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _wait_for_dvc_save(self, spec):
         if self._save_complete_evt and self.use_dvc_persistence:
             timeout = self.dvc_save_timeout_minutes
-            self.debug("waiting for save event to clear. Timeout after {} minutes".format(timeout))
-            timeoutseconds = timeout*60
+            self.debug(
+                "waiting for save event to clear. Timeout after {} minutes".format(
+                    timeout
+                )
+            )
+            timeoutseconds = timeout * 60
             st = time.time()
             while self._save_complete_evt.is_set():
                 self._save_complete_evt.wait(1)
