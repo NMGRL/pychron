@@ -447,10 +447,25 @@ class EthernetCommunicator(Communicator):
         self._reset_connection()
 
     def read(self, datasize=None, *args, **kw):
-        with self._lock:
-            handler = self.get_handler()
-            if handler:
-                return handler.get_packet(datasize=datasize)
+        for i in range(3):
+            with self._lock:
+                timeout = self._reset_error_mode()
+
+                handler = self.get_handler(timeout=timeout)
+                if handler:
+                    handler = self.get_read_handler(handler, timeout=timeout)
+
+                if handler:
+                    try:
+                        return handler.get_packet(datasize=datasize)
+                    except socket.timeout as e:
+                        self.warning("read. read packet. error: {}".format(e))
+                        self.error_mode = True
+
+            time.sleep(timeout)
+
+        else:
+            return ''
 
     def tell(self, cmd, verbose=True, quiet=False, info=None):
         with self._lock:
@@ -470,9 +485,7 @@ class EthernetCommunicator(Communicator):
         self.handler = None
         self.error_mode = False
 
-    def _ask(
-        self, cmd, timeout=None, message_frame=None, delay=None, use_error_mode=True
-    ):
+    def _reset_error_mode(self, timeout=None, use_error_mode=True):
         if self.error_mode:
             if self.handler:
                 self.handler.end()
@@ -489,6 +502,12 @@ class EthernetCommunicator(Communicator):
             timeout = self.default_timeout
 
         self.error_mode = False
+        return timeout
+
+    def _ask(
+        self, cmd, timeout=None, message_frame=None, delay=None, use_error_mode=True
+    ):
+        timeout = self._reset_error_mode(timeout, use_error_mode)
 
         handler = self.get_handler(timeout=timeout)
         if not handler:

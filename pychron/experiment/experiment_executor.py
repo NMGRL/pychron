@@ -243,6 +243,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     # dvc
     use_dvc_persistence = Bool(False)
+    dvc_save_timeout_minutes = Int(5)
     default_principal_investigator = Str
 
     baseline_color = Color
@@ -336,7 +337,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder(prefid, attrs)
 
         # dvc
-        self._preference_binder("pychron.dvc.experiment", ("use_dvc_persistence",))
+        self._preference_binder("pychron.dvc.experiment", ("use_dvc_persistence",
+                                                           "dvc_save_timeout_minutes"))
 
         # dashboard
         self._preference_binder(
@@ -537,12 +539,14 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     def _wait_for_dvc_save(self, spec):
         if self._save_complete_evt and self.use_dvc_persistence:
-            self.debug("waiting for save event to clear")
+            timeout = self.dvc_save_timeout_minutes
+            self.debug("waiting for save event to clear. Timeout after {} minutes".format(timeout))
+            timeoutseconds = timeout*60
             st = time.time()
             while self._save_complete_evt.is_set():
                 self._save_complete_evt.wait(1)
 
-                if time.time() - st > 300:
+                if time.time() - st > timeoutseconds:
                     self.warning_dialog("Saving run failed to complete success fully")
                     self._save_complete_evt.set()
                     # run.cancel_run()

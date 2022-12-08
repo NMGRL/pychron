@@ -220,6 +220,7 @@ class DVCPreferencesPane(PreferencesPane):
 class DVCExperimentPreferences(BasePreferencesHelper):
     preferences_path = "pychron.dvc.experiment"
     use_dvc_persistence = Bool
+    dvc_save_timeout_minutes = Int
 
 
 class DVCExperimentPreferencesPane(PreferencesPane):
@@ -229,7 +230,9 @@ class DVCExperimentPreferencesPane(PreferencesPane):
     def traits_view(self):
         v = View(
             BorderVGroup(
-                Item("use_dvc_persistence", label="Use DVC Persistence"), label="DVC"
+                Item("use_dvc_persistence", label="Use DVC Persistence"),
+                Item("dvc_save_timeout_minutes", "DVC Save timeout (minutes)"),
+                label="DVC"
             )
         )
         return v
