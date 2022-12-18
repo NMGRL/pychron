@@ -174,7 +174,7 @@ class DVCPreferencesPane(PreferencesPane):
                     Item(
                         "use_cocktail_irradiation",
                         tooltip="Use the special cocktail.json for defining the "
-                        "irradiation flux and chronology",
+                                "irradiation flux and chronology",
                         label="Use Cocktail Irradiation",
                     )
                 ),
@@ -183,16 +183,16 @@ class DVCPreferencesPane(PreferencesPane):
                         "use_auto_pull",
                         label="Auto Pull",
                         tooltip="If selected, automatically "
-                        "update your version to the "
-                        "latest version. Deselect if "
-                        "you want to be asked to pull "
-                        "the official version.",
+                                "update your version to the "
+                                "latest version. Deselect if "
+                                "you want to be asked to pull "
+                                "the official version.",
                     ),
                     Item(
                         "use_auto_push",
                         label="Auto Push",
                         tooltip="Push changes when a PushNode is used automatically without asking "
-                        "for confirmation.",
+                                "for confirmation.",
                     ),
                 ),
                 BorderVGroup(
@@ -221,6 +221,7 @@ class DVCExperimentPreferences(BasePreferencesHelper):
     preferences_path = "pychron.dvc.experiment"
     use_dvc_persistence = Bool
     dvc_save_timeout_minutes = Int
+    use_dvc_overlap_save = Bool
 
 
 class DVCExperimentPreferencesPane(PreferencesPane):
@@ -231,7 +232,9 @@ class DVCExperimentPreferencesPane(PreferencesPane):
         v = View(
             BorderVGroup(
                 Item("use_dvc_persistence", label="Use DVC Persistence"),
-                Item("dvc_save_timeout_minutes", "DVC Save timeout (minutes)"),
+                Item("use_dvc_overlap_save", label="Use DVC Overlap Save"),
+                Item("dvc_save_timeout_minutes", label="DVC Save timeout (minutes)",
+                     enabled_when='use_dvc_overlap_save'),
                 label="DVC",
             )
         )
@@ -256,12 +259,11 @@ class DVCRepositoryPreferencesPane(PreferencesPane):
                     "auto_fetch",
                     label="Auto Fetch",
                     tooltip='Automatically "fetch" when a local repository is selected. Turn this off '
-                    "if fetching speed is an issue",
+                            "if fetching speed is an issue",
                 ),
                 label="",
             )
         )
         return v
-
 
 # ============= EOF =============================================
