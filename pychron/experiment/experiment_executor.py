@@ -340,8 +340,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # dvc
         self._preference_binder(
             "pychron.dvc.experiment",
-            ("use_dvc_persistence", "dvc_save_timeout_minutes"),
-            ("use_dvc_overlap_save", "use_dvc_overlap_save"),
+            ("use_dvc_persistence", "dvc_save_timeout_minutes", 'use_dvc_overlap_save')
         )
 
         # dashboard
@@ -542,11 +541,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.experiment_queue.automated_runs_scroll_to_row = 0
 
     def _wait_for_dvc_save(self, spec):
-        if (
-            self.use_dvc_overlap_save
-            and self._save_complete_evt
-            and self.use_dvc_persistence
-        ):
+        if self.use_dvc_overlap_save and self._save_complete_evt and self.use_dvc_persistence:
             timeout = self.dvc_save_timeout_minutes
             self.debug(
                 "waiting for save event to clear. Timeout after {} minutes".format(
@@ -1023,8 +1018,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             kw = {}
             if self.use_dvc_overlap_save:
                 # run.save is non-blocked when exception queue defined
-                kw["exception_queue"] = self._exception_queue
-                kw["complete_event"] = self._save_complete_evt
+                kw['exception_queue'] = self._exception_queue
+                kw['complete_event'] = self._save_complete_evt
 
             run.save(**kw)
 
