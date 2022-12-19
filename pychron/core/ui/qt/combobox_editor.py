@@ -207,6 +207,7 @@ class ComboboxEditor(BasicEditorFactory):
     use_separator = Bool(False)
     separator = Str
     use_separator = Bool(False)
-    separator = Str('')
+    separator = Str("")
+
 
 # ============= EOF =============================================

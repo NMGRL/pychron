@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 
 from chaco.abstract_overlay import AbstractOverlay
+
 # from chaco.data_label import draw_arrow
 from chaco.label import Label
 
