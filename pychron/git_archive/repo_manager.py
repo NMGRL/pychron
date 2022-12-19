@@ -633,7 +633,7 @@ class GitRepoManager(Loggable):
 
     def reset(self):
         """delete index.lock"""
-        p = os.path.join(self._repo.working_dir, '.git', 'index.lock')
+        p = os.path.join(self._repo.working_dir, ".git", "index.lock")
         if os.path.isfile(p):
             os.remove(p)
 

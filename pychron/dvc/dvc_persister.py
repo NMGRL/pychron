@@ -320,10 +320,14 @@ class DVCPersister(BasePersister):
             if commit:
                 ar.create_branch("data_collection", inform=False, push=True)
                 try:
-                    ar.checkout_branch("data_collection", inform=False, load_history=False)
+                    ar.checkout_branch(
+                        "data_collection", inform=False, load_history=False
+                    )
                 except GitCommandError:
                     ar.reset()
-                    ar.checkout_branch("data_collection", inform=False, load_history=False)
+                    ar.checkout_branch(
+                        "data_collection", inform=False, load_history=False
+                    )
 
                 ar.smart_pull(branch="data_collection", accept_our=True)
 
