@@ -631,6 +631,12 @@ class GitRepoManager(Loggable):
         repo = self._repo
         return repo.active_branch.name
 
+    def reset(self):
+        """delete index.lock"""
+        p = os.path.join(self._repo.working_dir, '.git', 'index.lock')
+        if os.path.isfile(p):
+            os.remove(p)
+
     def checkout_branch(self, name, inform=True, load_history=True):
         repo = self._repo
         if name.startswith("origin"):
