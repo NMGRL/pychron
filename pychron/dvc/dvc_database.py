@@ -2247,6 +2247,16 @@ class DVCDatabase(DatabaseAdapter):
             gs = self._query_all(q)
             return [g[0] for g in gs if g[0]]
 
+    def get_samples_by_material(self, mat):
+        with self.session_ctx() as sess:
+            q = sess.query(SampleTbl)
+            if isinstance(mat, int):
+                q = q.filter(SampleTbl.materialID == mat)
+            else:
+                q = q.filter(SampleTbl.material == mat)
+
+            return self._query_all(q)
+
     def get_samples_by_name(self, name):
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
@@ -2508,6 +2518,9 @@ class DVCDatabase(DatabaseAdapter):
                 ProjectTbl, order=order, verbose_query=verbose_query
             )
         return ps
+
+    def get_materials(self):
+        return self._retrieve_items(MaterialTbl)
 
     def get_repositories(self):
         return self._retrieve_items(RepositoryTbl)
