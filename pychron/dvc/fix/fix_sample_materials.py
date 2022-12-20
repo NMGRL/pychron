@@ -26,20 +26,21 @@ def main():
     dvc.connect()
     with dvc.session_ctx() as sess:
         ms = dvc.get_materials()
-        key = attrgetter('name')
+        key = attrgetter("name")
+
         def gkey(x):
-            return x.grainsize or ''
+            return x.grainsize or ""
 
         for mname, mss in groupby(sorted(ms, key=key), key=key):
             for gname, gs in groupby(sorted(mss, key=gkey), key=gkey):
                 first = next(gs)
                 mss = list(gs)
                 dest_material_id = first.id
-                print(mname, f'{first.id}, {first.name} {first.grainsize}')
-                for mi in sorted(mss, key=attrgetter('id')):
-                    print(f'  {dest_material_id} <-- {mi.id}, {mi.name} {mi.grainsize}')
+                print(mname, f"{first.id}, {first.name} {first.grainsize}")
+                for mi in sorted(mss, key=attrgetter("id")):
+                    print(f"  {dest_material_id} <-- {mi.id}, {mi.name} {mi.grainsize}")
                     for s in dvc.get_samples_by_material(mi.id):
-                        print(f'    setting sample {s} material to {dest_material_id}')
+                        print(f"    setting sample {s} material to {dest_material_id}")
                         if not DRY:
                             s.materialID = dest_material_id
 
@@ -50,7 +51,6 @@ def main():
                         sess.flush()
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 # ============= EOF =============================================
