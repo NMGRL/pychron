@@ -74,7 +74,11 @@ class WaitControl(Loggable):
             evt.wait(self.duration - 1)
 
         while not evt.wait(timeout=0.25):
-            time.sleep(0.25)
+            pass
+
+        #     time.sleep(0.25)
+        # while evt.is_set():
+        #     evt.wait(0.5)
 
         self.debug("Join finished")
 
@@ -102,6 +106,7 @@ class WaitControl(Loggable):
             self.message = message
 
         self.timer = Timer(1000, self._update_time, delay=1000)
+        # self.timer = Timer()
         self._continued = False
         self._paused = paused
 
@@ -148,7 +153,6 @@ class WaitControl(Loggable):
     def _update_time(self):
         if self._paused:
             return
-
         ct = self.current_time
         if self.timer and self.timer.isActive():
             self.current_time -= 1

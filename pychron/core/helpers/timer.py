@@ -19,16 +19,16 @@
 import time
 from threading import Event
 
-try:
-    from pyface.qt.QtCore import QThread
-except ImportError:
-    from threading import Thread as QThread
+# try:
+#     from pyface.qt.QtCore import QThread
+# except ImportError:
+from threading import Thread
 
 
 # ============= local library imports  ==========================
 
 
-class Timer(QThread):
+class Timer(Thread):
     def __init__(self, period, func, delay=0, *args, **kw):
         super(Timer, self).__init__()
         self._period = period / 1000.0
@@ -53,7 +53,7 @@ class Timer(QThread):
             flag.wait(delay)
 
         flag.clear()
-        while not flag.isSet():
+        while not flag.is_set():
             st = time.time()
             func(*args, **kwargs)
             t = max(0, self._period - time.time() + st)
@@ -72,12 +72,13 @@ class Timer(QThread):
             time.sleep(0.01)
 
     def Stop(self):
+        print('stoping')
         self._flag.set()
 
     stop = Stop
 
     def isActive(self):
-        return self.isRunning() and not self.isFinished()
+        return not self._flag.is_set()
 
     #         # need to wait unit
     #         self.f
