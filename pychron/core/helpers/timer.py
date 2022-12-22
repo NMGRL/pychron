@@ -72,7 +72,7 @@ class Timer(Thread):
             time.sleep(0.01)
 
     def Stop(self):
-        print('stoping')
+        print("stoping")
         self._flag.set()
 
     stop = Stop
