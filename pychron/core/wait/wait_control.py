@@ -94,6 +94,9 @@ class WaitControl(Loggable):
             self.end_evt = evt
 
         if self.timer:
+            # stopping and wait for completion seems redundant. Stop sets the flag to false then
+            # wait for completion checks if the flag is false or not.
+            # will leave for now
             self.timer.stop()
             self.timer.wait_for_completion()
 

@@ -69,10 +69,11 @@ class Timer(Thread):
 
             if not self.isActive():
                 break
-            time.sleep(0.01)
+
+            self._flag.wait(0.25)
+            # time.sleep(0.01)
 
     def Stop(self):
-        print("stoping")
         self._flag.set()
 
     stop = Stop
