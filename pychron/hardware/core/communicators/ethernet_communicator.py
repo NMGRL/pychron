@@ -55,7 +55,7 @@ class MessageFrame(object):
 
 class Handler(object):
     sock = None
-    datasize = 2 ** 12
+    datasize = 2**12
     address = None
     message_frame = None
     read_terminator = None
@@ -377,18 +377,18 @@ class EthernetCommunicator(Communicator):
             self.handler = None
 
     def ask(
-            self,
-            cmd,
-            retries=3,
-            verbose=True,
-            quiet=False,
-            info=None,
-            timeout=None,
-            message_frame=None,
-            delay=None,
-            use_error_mode=True,
-            *args,
-            **kw
+        self,
+        cmd,
+        retries=3,
+        verbose=True,
+        quiet=False,
+        info=None,
+        timeout=None,
+        message_frame=None,
+        delay=None,
+        use_error_mode=True,
+        *args,
+        **kw
     ):
         """
         @param cmd: ASCII text to send
@@ -518,7 +518,7 @@ class EthernetCommunicator(Communicator):
         return timeout
 
     def _ask(
-            self, cmd, timeout=None, message_frame=None, delay=None, use_error_mode=True
+        self, cmd, timeout=None, message_frame=None, delay=None, use_error_mode=True
     ):
         timeout = self._reset_error_mode(timeout, use_error_mode)
 
@@ -548,5 +548,6 @@ class EthernetCommunicator(Communicator):
                 "ask. send packet. error: {} address: {}".format(e, handler.address)
             )
             self.error_mode = True
+
 
 # ============= EOF ====================================

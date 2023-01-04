@@ -164,7 +164,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         self._read_enabled = False
 
     def read_intensities(
-            self, timeout=60, trigger=False, target="ACQ.B", verbose=False
+        self, timeout=60, trigger=False, target="ACQ.B", verbose=False
     ):
         # self.microcontroller.lock.acquire()
         # verbose=True
@@ -309,5 +309,6 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     def _integration_time_default(self):
         self.default_integration_time = ISOTOPX_DEFAULT_INTEGRATION_TIME
         return ISOTOPX_DEFAULT_INTEGRATION_TIME
+
 
 # ============= EOF =============================================
