@@ -98,7 +98,7 @@ class PipetteTracker(Loggable):
         else:
             with open(p, "wb") as wfile:
                 pickle.dump(self._dump(), wfile)
-                self.debug("saved current shot count {}".format(self.counts))
+        self.debug("saved current shot count {}".format(self.counts))
 
     def _load(self, params):
         if params:

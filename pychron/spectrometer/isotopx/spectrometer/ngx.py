@@ -146,23 +146,25 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                 return
 
             try:
-                ds += self.read(1)
+                ds += self.readinto(datasize=8192)
             except BaseException:
                 if not self.microcontroller.canceled:
                     self.debug_exception()
                     self.debug(f"data left: {ds}")
 
             if "#\r\n" in ds:
-
                 ds = ds.split("#\r\n")[0]
                 return ds
+
+    def readinto(self, *args, **kw):
+        return self.microcontroller.read(*args, **kw)
 
     def cancel(self):
         self.debug("canceling")
         self._read_enabled = False
 
     def read_intensities(
-        self, timeout=60, trigger=False, target="ACQ.B", verbose=False
+            self, timeout=60, trigger=False, target="ACQ.B", verbose=False
     ):
         # self.microcontroller.lock.acquire()
         # verbose=True
@@ -307,6 +309,5 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     def _integration_time_default(self):
         self.default_integration_time = ISOTOPX_DEFAULT_INTEGRATION_TIME
         return ISOTOPX_DEFAULT_INTEGRATION_TIME
-
 
 # ============= EOF =============================================
