@@ -174,7 +174,7 @@ class Handler(object):
             rsock = readable[0]
             if rsock == self.sock:
                 while 1:
-                    rsock.recv_into(buff, 2)
+                    rsock.recv_into(buff)
                     if terminator in buff:
                         data = buff.split(terminator)[0]
                         return data.decode("utf-8")
