@@ -132,32 +132,48 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     def readline(self, verbose=False):
         if verbose:
             self.debug("readline")
-        st = time.time()
-        ds = ""
-        while 1:
-            if time.time() - st > 3:  # (1.25 * self.integration_time):
-                if verbose:
-                    self.debug("readline timeout. raw={}".format(ds))
-                return
+        # st = time.time()
+        # ds = ""
+        if not self._read_enabled or self.microcontroller.canceled:
 
-            if not self._read_enabled or self.microcontroller.canceled:
-                self.microcontroller.canceled = False
-                self.debug("readline canceled")
-                return
+            self.microcontroller.canceled = False
+            self.debug("readline canceled")
+            return
 
-            try:
-                ds += self.readinto(datasize=2)
-            except BaseException:
-                if not self.microcontroller.canceled:
-                    self.debug_exception()
-                    self.debug(f"data left: {ds}")
+        try:
 
-            if "#\r\n" in ds:
-                ds = ds.split("#\r\n")[0]
-                return ds
+            return self.microcontroller.select_read(terminator='#\r\n')
+            # ds += self.readinto(datasize=2)
+        except BaseException:
+            if not self.microcontroller.canceled:
+                self.debug_exception()
 
-    def readinto(self, *args, **kw):
-        return self.microcontroller.read(*args, **kw)
+        # while 1:
+        #     if time.time() - st > 3:  # (1.25 * self.integration_time):
+        #         if verbose:
+        #             self.debug("readline timeout. raw={}".format(ds))
+        #         return
+        #
+        #     if not self._read_enabled or self.microcontroller.canceled:
+        #         self.microcontroller.canceled = False
+        #         self.debug("readline canceled")
+        #         return
+        #
+        #     try:
+        #
+        #         self.microcontroller.select_read()
+        #         # ds += self.readinto(datasize=2)
+        #     except BaseException:
+        #         if not self.microcontroller.canceled:
+        #             self.debug_exception()
+        #             self.debug(f"data left: {ds}")
+        #
+        #     if "#\r\n" in ds:
+        #         ds = ds.split("#\r\n")[0]
+        #         return ds
+
+    # def readinto(self, *args, **kw):
+    #     return self.microcontroller.read(*args, **kw)
 
     def cancel(self):
         self.debug("canceling")

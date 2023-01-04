@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
+import select
 # ============= standard library imports ========================
 import socket
 import time
@@ -157,6 +157,26 @@ class Handler(object):
         if self.strip:
             data = data.strip()
         return data
+
+    def select_read(self, terminator=None):
+        if terminator is None:
+            terminator = '#\r\n'
+
+        terminator = terminator.encode('utf-8')
+
+        inputs = [self.sock]
+        outputs = []
+        readable, writable, exceptional = select.select(inputs, outputs, inputs)
+
+        buff = bytearray(2**12)
+        if readable:
+            rsock = readable[0]
+            if rsock == self.sock:
+                while 1:
+                    rsock.recv_into(buff, 2)
+                    if terminator in buff:
+                        data = buff.split(terminator)[0]
+                        return data.decode('utf-8')
 
 
 class TCPHandler(Handler):
@@ -475,6 +495,14 @@ class EthernetCommunicator(Communicator):
         if self.handler:
             self.handler.end()
         self._reset_connection()
+
+    def select_read(self, *args, **kw):
+        timeout = self.default_timeout
+        handler = self.get_handler(timeout=timeout)
+        if handler:
+            handler = self.get_read_handler(handler, timeout=timeout)
+
+        return handler.select_read(*args, **kw)
 
     def read(self, datasize=None, *args, **kw):
         for i in range(3):
