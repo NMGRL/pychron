@@ -35,6 +35,8 @@ class NGXController(CoreDevice):
     lock = None
     canceled = False
     triggered = False
+    def select_read(self, *args, **kw):
+        return self.communicator.select_read(*args, **kw)
 
     def ask(self, cmd, *args, **kw):
         resp = super(NGXController, self).ask(cmd, *args, **kw)
