@@ -681,6 +681,7 @@ class LabnumberEntry(DVCIrradiationable):
         db = self.dvc.db
 
         if not self.dvc.meta_repo.smart_pull():
+            self.warning_dialog('Saving to database aborted. Failed pulling Meta Repo. Please contact an expert')
             return
 
         n = len(self.irradiated_positions)
@@ -779,7 +780,7 @@ class LabnumberEntry(DVCIrradiationable):
 
         if self.dvc.meta_repo.has_staged():
             self.dvc.meta_commit("Labnumber Entry Save")
-            self.dvc.meta_push()
+            self.dvc.meta_push(inform=True)
 
     def _increment(self, name):
         """

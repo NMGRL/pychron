@@ -1564,8 +1564,8 @@ class DVC(Loggable):
     def meta_pull(self, **kw):
         return self.meta_repo.smart_pull(**kw)
 
-    def meta_push(self):
-        self.meta_repo.push()
+    def meta_push(self, *args, **kw):
+        self.meta_repo.push(*args, **kw)
 
     def meta_add_all(self):
         self.meta_repo.add_unstaged(paths.meta_root, add_all=True)
