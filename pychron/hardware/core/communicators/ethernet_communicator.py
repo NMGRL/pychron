@@ -111,46 +111,47 @@ class Handler(object):
             msg_len = 0
             nm = frame.nmessage_len
 
+        data = b""
         if datasize is None:
             datasize = self.datasize
-        else:
-            return self._recv_into(datasize)
 
-        data = b""
-        rt = self.read_terminator
+            rt = self.read_terminator
 
-        while 1:
-            s = recv(datasize)
-            if not s:
-                break
-
-            if msg_len is not None:
-                msg_len = int(s[:nm], 16)
-
-            sum += len(s)
-            data += s
-
-            if rt is not None:
-                if data.endswith(rt):
+            while 1:
+                s = recv(datasize)
+                if not s:
                     break
-            else:
-                if msg_len and sum >= msg_len:
-                    break
+
+                if msg_len is not None:
+                    msg_len = int(s[:nm], 16)
+
+                sum += len(s)
+                data += s
+
+                if rt is not None:
+                    if data.endswith(rt):
+                        break
                 else:
-                    break
+                    if msg_len and sum >= msg_len:
+                        break
+                    else:
+                        break
 
-        if frame.message_len:
-            # trim off header
-            data = data[nm:]
+            if frame.message_len:
+                # trim off header
+                data = data[nm:]
 
-        if frame.checksum:
-            nc = frame.nchecksum
-            checksum = data[-nc:]
-            data = data[:-nc]
-            comp = computeCRC(data)
-            if comp != checksum:
-                print("checksum fail computed={}, expected={}".format(comp, checksum))
-                return
+            if frame.checksum:
+                nc = frame.nchecksum
+                checksum = data[-nc:]
+                data = data[:-nc]
+                comp = computeCRC(data)
+                if comp != checksum:
+                    print("checksum fail computed={}, expected={}".format(comp, checksum))
+                    return
+
+        else:
+            data = self._recv_into(datasize)
 
         data = data.decode("utf-8")
         if self.strip:
