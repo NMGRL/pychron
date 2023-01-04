@@ -147,7 +147,9 @@ class Handler(object):
                 data = data[:-nc]
                 comp = computeCRC(data)
                 if comp != checksum:
-                    print("checksum fail computed={}, expected={}".format(comp, checksum))
+                    print(
+                        "checksum fail computed={}, expected={}".format(comp, checksum)
+                    )
                     return
 
         else:
