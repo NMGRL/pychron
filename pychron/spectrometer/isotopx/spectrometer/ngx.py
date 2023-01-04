@@ -142,7 +142,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
         try:
 
-            return self.microcontroller.select_read(terminator='#\r\n')
+            return self.microcontroller.select_read(terminator="#\r\n")
             # ds += self.readinto(datasize=2)
         except BaseException:
             if not self.microcontroller.canceled:

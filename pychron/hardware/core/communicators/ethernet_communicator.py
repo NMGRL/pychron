@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 import select
+
 # ============= standard library imports ========================
 import socket
 import time
@@ -160,9 +161,9 @@ class Handler(object):
 
     def select_read(self, terminator=None):
         if terminator is None:
-            terminator = '#\r\n'
+            terminator = "#\r\n"
 
-        terminator = terminator.encode('utf-8')
+        terminator = terminator.encode("utf-8")
 
         inputs = [self.sock]
         outputs = []
@@ -176,7 +177,7 @@ class Handler(object):
                     rsock.recv_into(buff, 2)
                     if terminator in buff:
                         data = buff.split(terminator)[0]
-                        return data.decode('utf-8')
+                        return data.decode("utf-8")
 
 
 class TCPHandler(Handler):
