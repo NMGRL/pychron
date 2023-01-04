@@ -146,7 +146,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                 return
 
             try:
-                ds += self.readinto(datasize=8192)
+                ds += self.readinto(datasize=2)
             except BaseException:
                 if not self.microcontroller.canceled:
                     self.debug_exception()

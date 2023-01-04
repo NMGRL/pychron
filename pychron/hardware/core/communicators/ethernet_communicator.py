@@ -78,16 +78,16 @@ class Handler(object):
             self.sock.close()
 
     # private
-    def _recv_into(self, datasize):
-        buff = bytearray(datasize)
-        pos = 0
-        sock = self.sock
-        while pos < datasize:
-            cr = sock.recv_into(memoryview(buff)[pos:])
-            if cr == 0:
-                raise EOFError
-            pos += cr
-        return buff
+    # def _recv_into(self, datasize):
+    #     buff = bytearray(datasize)
+    #     pos = 0
+    #     sock = self.sock
+    #     while pos < datasize:
+    #         cr = sock.recv_into(memoryview(buff)[pos:])
+    #         if cr == 0:
+    #             raise EOFError
+    #         pos += cr
+    #     return buff
 
     def _recvall(self, recv, datasize=None, frame=None):
         """
@@ -115,45 +115,45 @@ class Handler(object):
         if datasize is None:
             datasize = self.datasize
 
-            rt = self.read_terminator
+        rt = self.read_terminator
 
-            while 1:
-                s = recv(datasize)
-                if not s:
+        while 1:
+            s = recv(datasize)
+            if not s:
+                break
+
+            if msg_len is not None:
+                msg_len = int(s[:nm], 16)
+
+            sum += len(s)
+            data += s
+
+            if rt is not None:
+                if data.endswith(rt):
+                    break
+            else:
+                if msg_len and sum >= msg_len:
+                    break
+                else:
                     break
 
-                if msg_len is not None:
-                    msg_len = int(s[:nm], 16)
+        if frame.message_len:
+            # trim off header
+            data = data[nm:]
 
-                sum += len(s)
-                data += s
+        if frame.checksum:
+            nc = frame.nchecksum
+            checksum = data[-nc:]
+            data = data[:-nc]
+            comp = computeCRC(data)
+            if comp != checksum:
+                print(
+                    "checksum fail computed={}, expected={}".format(comp, checksum)
+                )
+                return
 
-                if rt is not None:
-                    if data.endswith(rt):
-                        break
-                else:
-                    if msg_len and sum >= msg_len:
-                        break
-                    else:
-                        break
-
-            if frame.message_len:
-                # trim off header
-                data = data[nm:]
-
-            if frame.checksum:
-                nc = frame.nchecksum
-                checksum = data[-nc:]
-                data = data[:-nc]
-                comp = computeCRC(data)
-                if comp != checksum:
-                    print(
-                        "checksum fail computed={}, expected={}".format(comp, checksum)
-                    )
-                    return
-
-        else:
-            data = self._recv_into(datasize)
+        # else:
+        #     data = self._recv_into(datasize)
 
         data = data.decode("utf-8")
         if self.strip:
@@ -224,8 +224,9 @@ class EthernetCommunicator(Communicator):
     timeout = Float(1.0)
     strip = True
     default_timeout = 3
+    default_datasize = 2**12
 
-    _comms_report_attrs = ("host", "port", "read_port", "kind", "timeout")
+    _comms_report_attrs = ("host", "port", "read_port", "kind", "timeout", "default_datasize")
 
     @property
     def address(self):
@@ -290,7 +291,14 @@ class EthernetCommunicator(Communicator):
             optional=True,
             default=3,
         )
-
+        self.default_datasize = self.config_get(
+            config,
+            "Communications",
+            "default_datasize",
+            cast="int",
+            optional=True,
+            default=2**12,
+        )
         if self.kind is None:
             self.kind = "UDP"
 
@@ -366,6 +374,7 @@ class EthernetCommunicator(Communicator):
                 h.keep_alive = not self.use_end
                 h.open_socket(addrs, timeout=timeout or 1, bind=bind)
                 h.set_frame(self.message_frame)
+                h.datasize = self.default_datasize
                 h.strip = self.strip
                 self.handler = h
             return h

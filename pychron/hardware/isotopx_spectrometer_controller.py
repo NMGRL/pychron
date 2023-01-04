@@ -67,7 +67,7 @@ class NGXController(CoreDevice):
         #   self.event_buffer = Queue()
 
         if ret:
-            resp = self.read()
+            resp = self.read(datasize=2)
             self.debug("*********** initial response from NGX: {}".format(resp))
             bind_preference(self, "username", "pychron.spectrometer.ngx.username")
             bind_preference(self, "password", "pychron.spectrometer.ngx.password")
