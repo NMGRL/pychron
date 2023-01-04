@@ -147,9 +147,7 @@ class Handler(object):
             data = data[:-nc]
             comp = computeCRC(data)
             if comp != checksum:
-                print(
-                    "checksum fail computed={}, expected={}".format(comp, checksum)
-                )
+                print("checksum fail computed={}, expected={}".format(comp, checksum))
                 return
 
         # else:
@@ -226,7 +224,14 @@ class EthernetCommunicator(Communicator):
     default_timeout = 3
     default_datasize = 2**12
 
-    _comms_report_attrs = ("host", "port", "read_port", "kind", "timeout", "default_datasize")
+    _comms_report_attrs = (
+        "host",
+        "port",
+        "read_port",
+        "kind",
+        "timeout",
+        "default_datasize",
+    )
 
     @property
     def address(self):
