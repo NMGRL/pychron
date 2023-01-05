@@ -325,7 +325,9 @@ class AutomatedRun(Loggable):
         if not os.path.isdir(root):
             root = paths.csv_data_dir
 
-        p, _ = unique_path2(root, self.runid, extension=".csv")
+        v = self.extraction_line_manager.get_valve_by_name('3HeTank')
+        rid = f'{self.runid}-{v.actuations}'
+        p, _ = unique_path2(root, rid, extension=".csv")
 
         with open(p, "w") as rfile:
             writer = csv.writer(rfile)
