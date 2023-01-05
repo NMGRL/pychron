@@ -325,8 +325,8 @@ class AutomatedRun(Loggable):
         if not os.path.isdir(root):
             root = paths.csv_data_dir
 
-        v = self.extraction_line_manager.get_valve_by_name('9')
-        rid = f'{self.runid}-{v.actuations}'
+        v = self.extraction_line_manager.get_valve_by_name("9")
+        rid = f"{self.runid}-{v.actuations}"
         p, _ = unique_path2(root, rid, extension=".csv")
 
         with open(p, "w") as rfile:
