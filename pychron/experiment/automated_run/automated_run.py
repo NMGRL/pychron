@@ -309,7 +309,7 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
-    def py_sink_data(self, n=100, delay=1):
+    def py_sink_data(self, n=100, delay=1, root=None):
         """
 
         new measurement interface for just sinking the data from a ring buffer
@@ -318,7 +318,15 @@ class AutomatedRun(Loggable):
 
         spec = self.spectrometer_manager.spectrometer
         spec.set_data_pump_mode(1)
-        p, _ = unique_path2(paths.csv_data_dir, self.runid, extension=".csv")
+
+        if root is None:
+            root = paths.csv_data_dir
+
+        if not os.path.isdir(root):
+            root = paths.csv_data_dir
+
+        p, _ = unique_path2(root, self.runid, extension=".csv")
+
         with open(p, "w") as rfile:
             writer = csv.writer(rfile)
             ig = spec.sink_data(writer, n, delay)
