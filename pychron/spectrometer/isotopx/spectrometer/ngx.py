@@ -132,48 +132,30 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     def readline(self, verbose=False):
         if verbose:
             self.debug("readline")
-        # st = time.time()
-        # ds = ""
-        if not self._read_enabled or self.microcontroller.canceled:
+        st = time.time()
+        ds = ""
+        while 1:
+            if time.time() - st > 3:  # (1.25 * self.integration_time):
+                if verbose:
+                    self.debug("readline timeout. raw={}".format(ds))
+                return
 
-            self.microcontroller.canceled = False
-            self.debug("readline canceled")
-            return
+            if not self._read_enabled or self.microcontroller.canceled:
+                self.microcontroller.canceled = False
+                self.debug("readline canceled")
+                return
 
-        try:
+            try:
+                ds += self.read(1)
+            except BaseException:
+                if not self.microcontroller.canceled:
+                    self.debug_exception()
+                    self.debug(f"data left: {ds}")
 
-            return self.microcontroller.select_read(terminator="#\r\n")
-            # ds += self.readinto(datasize=2)
-        except BaseException:
-            if not self.microcontroller.canceled:
-                self.debug_exception()
+            if "#\r\n" in ds:
 
-        # while 1:
-        #     if time.time() - st > 3:  # (1.25 * self.integration_time):
-        #         if verbose:
-        #             self.debug("readline timeout. raw={}".format(ds))
-        #         return
-        #
-        #     if not self._read_enabled or self.microcontroller.canceled:
-        #         self.microcontroller.canceled = False
-        #         self.debug("readline canceled")
-        #         return
-        #
-        #     try:
-        #
-        #         self.microcontroller.select_read()
-        #         # ds += self.readinto(datasize=2)
-        #     except BaseException:
-        #         if not self.microcontroller.canceled:
-        #             self.debug_exception()
-        #             self.debug(f"data left: {ds}")
-        #
-        #     if "#\r\n" in ds:
-        #         ds = ds.split("#\r\n")[0]
-        #         return ds
-
-    # def readinto(self, *args, **kw):
-    #     return self.microcontroller.read(*args, **kw)
+                ds = ds.split("#\r\n")[0]
+                return ds
 
     def cancel(self):
         self.debug("canceling")
@@ -225,39 +207,32 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                 if line is None:
                     break
 
-                if not (line.startswith(targeta) or line.startswith(targetb)):
-                    if targeta in line:
-                        args = line.split(targeta)
-                        line = next((a for a in args if a.startswith(targeta)))
-                    elif targetb in line:
-                        args = line.split(targetb)
-                        line = next((a for a in args if a.startswith(targetb)))
+                if line and (line.startswith(targeta) or line.startswith(targetb)):
+                    try:
+                        args = line.split(",")
 
-                try:
-                    args = line.split(",")
+                        cd = datetime.today()
+                        ct = datetime.strptime(args[4], "%H:%M:%S.%f").time()
 
-                    cd = datetime.today()
-                    ct = datetime.strptime(args[4], "%H:%M:%S.%f").time()
+                        collection_time = datetime.combine(cd, ct)
+                        signals = [float(i.strip()) for i in args[5:]]
+                        print("fad", keys, signals)
+                        if line.startswith(targeta):
+                            nsignals, keys = [], []
+                            for i, di in enumerate(self.detectors[::-1]):
+                                if di.kind == "CDD":
+                                    nsignals.append(signals[i])
+                                    keys.append(di.name)
+                            signals = nsignals
+                            break
 
-                    collection_time = datetime.combine(cd, ct)
-                    signals = [float(i.strip()) for i in args[5:]]
-                    print("fad", keys, signals)
-                    if line.startswith(targeta):
-                        nsignals, keys = [], []
-                        for i, di in enumerate(self.detectors[::-1]):
-                            if di.kind == "CDD":
-                                nsignals.append(signals[i])
-                                keys.append(di.name)
-                        signals = nsignals
-                        break
+                        elif line.startswith(targetb):
+                            self.microcontroller.triggered = False
+                            inc = True
 
-                    elif line.startswith(targetb):
-                        self.microcontroller.triggered = False
-                        inc = True
-
-                        break
-                except BaseException as e:
-                    self.debug("read intensities errror={}".format(e))
+                            break
+                    except BaseException as e:
+                        self.debug("read intensities errror={}".format(e))
 
         # self.microcontroller.lock.release()
         if len(signals) != len(keys):
