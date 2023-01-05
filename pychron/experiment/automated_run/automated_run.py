@@ -325,8 +325,8 @@ class AutomatedRun(Loggable):
         if not os.path.isdir(root):
             root = paths.csv_data_dir
 
-        v = self.extraction_line_manager.get_valve_by_name('3HeTank')
-        rid = f'{self.runid}-{v.actuations}'
+        v = self.extraction_line_manager.get_valve_by_name("3HeTank")
+        rid = f"{self.runid}-{v.actuations}"
         p, _ = unique_path2(root, rid, extension=".csv")
 
         with open(p, "w") as rfile:
@@ -854,7 +854,7 @@ class AutomatedRun(Loggable):
         check_intensity=None,
         peak_center_threshold=None,
         peak_center_threshold_window=None,
-        **kw
+        **kw,
     ):
         if not self._alive:
             return
@@ -908,7 +908,7 @@ class AutomatedRun(Loggable):
                 directions=directions,
                 config_name=config_name,
                 use_configuration_dac=False,
-                **kw
+                **kw,
             )
             self.peak_center = pc
             self.debug("do peak center. {}".format(pc))
@@ -1358,7 +1358,7 @@ class AutomatedRun(Loggable):
                 conditionals=[c for cond in conds for c in cond],
                 tag=tag,
                 tripped_conditional=self.tripped_conditional,
-                **env
+                **env,
             )
 
             # save to database
