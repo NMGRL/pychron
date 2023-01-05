@@ -352,7 +352,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 ),
                 Column(
                     visible=options.include_time_delta,
-                    label=(u"\u0394t", "<sup>3</sup>"),
+                    label=("\u0394t", "<sup>3</sup>"),
                     units="(days)",
                     attr="decay_days",
                 ),
@@ -1237,7 +1237,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             sh.write_string(
                 self._current_row,
                 start_col,
-                u"{} {} {}".format(label, kcalabel, pmsigma),
+                "{} {} {}".format(label, kcalabel, pmsigma),
                 fmt,
             )
 
@@ -1271,7 +1271,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         sh.write_string(
             self._current_row,
             start_col,
-            u"{} Age {}".format(ageobj.computed_kind.capitalize(), pmsigma),
+            "{} Age {}".format(ageobj.computed_kind.capitalize(), pmsigma),
             fmt,
         )
         sh.write_number(self._current_row, idx, nominal_value(age), nfmt)
@@ -1312,7 +1312,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             sh.write_string(
                 self._current_row,
                 start_col,
-                u"Total Integrated Age {}".format(pmsigma),
+                "Total Integrated Age {}".format(pmsigma),
                 fmt,
             )
             sh.write_number(self._current_row, idx, nominal_value(integrated_age), nfmt)
@@ -1339,7 +1339,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         trapped_value, trapped_error = nominal_value(t), std_dev(t)
         if self._options.include_isochron_age:
             sh.write_string(
-                self._current_row, start_col, u"Isochron Age {}".format(pmsigma), fmt
+                self._current_row, start_col, "Isochron Age {}".format(pmsigma), fmt
             )
 
             iage = group.scaled_age(group.isochron_age, self._options.age_units)

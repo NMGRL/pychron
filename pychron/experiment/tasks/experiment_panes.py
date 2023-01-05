@@ -375,7 +375,7 @@ class ExperimentFactoryPane(TraitsDockPane):
             ),
             HGroup(
                 run_factory_item("flux", format_str="%0.4E"),
-                Label(u"\u00b1"),
+                Label("\u00b1"),
                 run_factory_uitem("flux_error", format_str="%0.4E"),
                 icon_button_editor(
                     run_factory_name("save_flux_button"),

@@ -285,19 +285,19 @@ class CircleStage(Connectable, Bordered):
 
                     dx = p2x - p1x
                     dy = p2y - p1y
-                    dr = (dx ** 2 + dy ** 2) ** 0.5
+                    dr = (dx**2 + dy**2) ** 0.5
                     D = p1x * p2y - p2x * p1y
 
-                    ss = (r ** 2 * dr ** 2 - D ** 2) ** 0.5
+                    ss = (r**2 * dr**2 - D**2) ** 0.5
                     plus_x = D * dy + sgn(dy) * dx * ss
                     minus_x = D * dy - sgn(dy) * dx * ss
 
                     plus_y = -D * dx + abs(dy) * ss
                     minus_y = -D * dx - abs(dy) * ss
-                    plus_x /= dr ** 2
-                    plus_y /= dr ** 2
-                    minus_x /= dr ** 2
-                    minus_y /= dr ** 2
+                    plus_x /= dr**2
+                    plus_y /= dr**2
+                    minus_x /= dr**2
+                    minus_y /= dr**2
 
                     if p2y > p1y:
                         if p2x > p1x:

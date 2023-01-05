@@ -109,8 +109,8 @@ class YorkRegressor(OLSRegressor):
     def _get_weights(self):
         ex = self.clean_xserr
         ey = self.clean_yserr
-        Wx = ex ** -2
-        Wy = ey ** -2
+        Wx = ex**-2
+        Wy = ey**-2
         return Wx, Wy
 
     def _calculate_UV(self, W):
@@ -167,9 +167,9 @@ class YorkRegressor(OLSRegressor):
         W = self._calculate_W(b)
         U, V = self._calculate_UV(W)
 
-        sigbsq = 1 / sum(W * U ** 2)
+        sigbsq = 1 / sum(W * U**2)
 
-        sigasq = sigbsq * sum(W * self.clean_xs ** 2) / sum(W)
+        sigasq = sigbsq * sum(W * self.clean_xs**2) / sum(W)
 
         self._intercept_variance = sigasq
         return sigbsq
@@ -224,11 +224,11 @@ class YorkRegressor(OLSRegressor):
         sig_x = self.clean_xserr
         sig_y = self.clean_yserr
 
-        var_x = sig_x ** 2
-        var_y = sig_y ** 2
+        var_x = sig_x**2
+        var_y = sig_y**2
         r = self.calculate_correlation_coefficients()
         # print var_x.shape, var_y.shape, r.shape, b
-        return (var_y + b ** 2 * var_x - 2 * b * r * sig_x * sig_y) ** -1
+        return (var_y + b**2 * var_x - 2 * b * r * sig_x * sig_y) ** -1
 
     def _calculate(self):
         b = 0
@@ -261,15 +261,15 @@ class YorkRegressor(OLSRegressor):
 
             r = self.calculate_correlation_coefficients()
 
-            var_x = sig_x ** 2
-            var_y = sig_y ** 2
+            var_x = sig_x**2
+            var_y = sig_y**2
 
             W = self._calculate_W(b)
             U, V = self._calculate_UV(W)
 
-            sumA = sum(W ** 2 * V * (U * var_y + b * V * var_x - r * V * sig_x * sig_y))
+            sumA = sum(W**2 * V * (U * var_y + b * V * var_x - r * V * sig_x * sig_y))
             sumB = sum(
-                W ** 2 * U * (U * var_y + b * V * var_x - b * r * U * sig_x * sig_y)
+                W**2 * U * (U * var_y + b * V * var_x - b * r * U * sig_x * sig_y)
             )
             try:
                 nb = sumA / sumB
@@ -304,23 +304,23 @@ class NewYorkRegressor(YorkRegressor):
         sx = self.clean_xserr
         sy = self.clean_yserr
 
-        var_x = sx ** 2
-        var_y = sy ** 2
+        var_x = sx**2
+        var_y = sy**2
 
         r = self.calculate_correlation_coefficients()
         sxy = r * sx * sy
 
-        aa = 2 * b * (U * V * var_x - U ** 2 * sxy)
-        bb = U ** 2 * var_y - V ** 2 * var_x
-        cc = W ** 3 * (sxy - b * var_x)
+        aa = 2 * b * (U * V * var_x - U**2 * sxy)
+        bb = U**2 * var_y - V**2 * var_x
+        cc = W**3 * (sxy - b * var_x)
 
-        da = b ** 2 * (U * V * var_x - U ** 2 * sxy)
-        db = b * (U ** 2 * var_y - V ** 2 * var_x)
-        dc = U * V * var_y - V ** 2 * sxy
+        da = b**2 * (U * V * var_x - U**2 * sxy)
+        db = b * (U**2 * var_y - V**2 * var_x)
+        dc = U * V * var_y - V**2 * sxy
         dd = da + db - dc
 
         # eq 19
-        dthdb = sum(W ** 2 * (aa + bb)) + 4 * sum(cc * dd)
+        dthdb = sum(W**2 * (aa + bb)) + 4 * sum(cc * dd)
 
         xbar, _ = self._calculate_xy_bar(W)
 
@@ -329,8 +329,8 @@ class NewYorkRegressor(YorkRegressor):
         sigasq = 0.0
         sigbsq = 0.0
 
-        x = b ** 2 * (V * var_x - 2 * U * sxy) + 2 * b * U * var_y - V * var_y
-        xx = b ** 2 * U * var_x + 2 * V * sxy - 2 * b * V * var_x - U * var_y
+        x = b**2 * (V * var_x - 2 * U * sxy) + 2 * b * U * var_y - V * var_y
+        xx = b**2 * U * var_x + 2 * V * sxy - 2 * b * V * var_x - U * var_y
         for i, wi in enumerate(W):
             var_xi = var_x[i]
             var_yi = var_y[i]
@@ -342,7 +342,7 @@ class NewYorkRegressor(YorkRegressor):
             ww = wi / wksum
             for j, wj in enumerate(W):
                 # add to dthdxi and dthdyi
-                a = wj ** 2.0 * (kron(i, j) - ww)
+                a = wj**2.0 * (kron(i, j) - ww)
                 dthdxi += a * x[j]
                 # correct equation! not equal to equation 21 in Mahon (1996)
                 dthdyi += a * xx[j]
@@ -353,16 +353,16 @@ class NewYorkRegressor(YorkRegressor):
 
             # now finally add to sigasq and sigbsq
             sigbsq += (
-                dthdxi ** 2.0 * var_xi
-                + dthdyi ** 2.0 * var_yi
+                dthdxi**2.0 * var_xi
+                + dthdyi**2.0 * var_yi
                 + 2 * sxyi * dthdxi * dthdyi
             )
             sigasq += (
-                dadxi ** 2.0 * var_xi + dadyi ** 2.0 * var_yi + 2 * sxyi * dadxi * dadyi
+                dadxi**2.0 * var_xi + dadyi**2.0 * var_yi + 2 * sxyi * dadxi * dadyi
             )
 
         # now divide sigbsq
-        sigbsq /= dthdb ** 2.0
+        sigbsq /= dthdb**2.0
         self._intercept_variance = sigasq
         return sigbsq
 
@@ -414,8 +414,8 @@ class ReedYorkRegressor(YorkRegressor):
     #         '''
     #         self._degree = 2
     def _get_weights(self):
-        wx = self.clean_xserr ** -2
-        wy = self.clean_yserr ** -2
+        wx = self.clean_xserr**-2
+        wy = self.clean_yserr**-2
 
         return wx, wy
 
@@ -429,13 +429,13 @@ class ReedYorkRegressor(YorkRegressor):
             W = self._calculate_W(mi, Wx, Wy)
             U, V = self._calculate_UV(W)
 
-            suma = sum((W ** 2 * U * V) / Wx)
-            S = sum((W ** 2 * U ** 2) / Wx)
+            suma = sum((W**2 * U * V) / Wx)
+            S = sum((W**2 * U**2) / Wx)
 
             a = (2 * suma) / (3 * S)
 
-            sumB = sum((W ** 2 * V ** 2) / Wx)
-            B = (sumB - sum(W * U ** 2)) / (3 * S)
+            sumB = sum((W**2 * V**2) / Wx)
+            B = (sumB - sum(W * U**2)) / (3 * S)
 
             g = -sum(W * U * V) / S
 
@@ -453,7 +453,7 @@ class ReedYorkRegressor(YorkRegressor):
         self._intercept = y_bar - slope * x_bar
 
     def _calculate_W(self, slope, Wx, Wy):
-        W = Wx * Wy / (slope ** 2 * Wy + Wx)
+        W = Wx * Wy / (slope**2 * Wy + Wx)
         return W
 
     def get_intercept_variance(self):
@@ -461,7 +461,7 @@ class ReedYorkRegressor(YorkRegressor):
         xs = self.clean_xs
         wx, wy = self._get_weights()
         w = self._calculate_W(self._slope, wx, wy)
-        return var_slope * sum(w * xs ** 2) / sum(w)
+        return var_slope * sum(w * xs**2) / sum(w)
 
     def get_slope_variance(self):
         n = len(self.clean_xs)
@@ -475,7 +475,7 @@ class ReedYorkRegressor(YorkRegressor):
         # this is the York 1966 equations which Reed 1992 says are erroneous
         # Reed 1992 Linear least‐squares fits with errors in both coordinates. II: Comments on parameter variances
         sumA = sum(W * (slope * U - V) ** 2)
-        sumB = sum(W * U ** 2)
+        sumB = sum(W * U**2)
         try:
             var = 1 / float(n - 2) * sumA / sumB
         except ZeroDivisionError:
@@ -564,8 +564,8 @@ if __name__ == "__main__":
     ys = [5.9, 5.4, 4.4, 4.6, 3.5, 3.7, 2.8, 2.8, 2.4, 1.5]
     wxs = array([1000, 1000, 500, 800, 200, 80, 60, 20, 1.8, 1])
     wys = array([1, 1.8, 4, 8, 20, 20, 70, 70, 100, 500])
-    exs = 1 / wxs ** 0.5
-    eys = 1 / wys ** 0.5
+    exs = 1 / wxs**0.5
+    eys = 1 / wys**0.5
 
     plot(xs, ys, "o")
 

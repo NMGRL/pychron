@@ -54,7 +54,7 @@ def calculate_radius(m_e, hv, mfield):
     hv= accelerating voltage (V)
     mfield= magnet field (H)
     """
-    r = ((2 * m_e * hv) / mfield ** 2) ** 0.5
+    r = ((2 * m_e * hv) / mfield**2) ** 0.5
 
     return r
 

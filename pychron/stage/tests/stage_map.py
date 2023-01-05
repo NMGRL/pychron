@@ -245,7 +245,7 @@ class TransformTestCase(unittest.TestCase):
         pt = 1, 0
         tpt = transform_point(pt, cpos, rot, 1)
 
-        r2 = 0.5 ** 0.5
+        r2 = 0.5**0.5
         self.assertAlmostEqual(r2, tpt[0])
         self.assertAlmostEqual(r2, tpt[1])
 
@@ -256,7 +256,7 @@ class TransformTestCase(unittest.TestCase):
         pt = 1, 0
         tpt = transform_point(pt, cpos, rot, 1)
 
-        r2 = 0.5 ** 0.5
+        r2 = 0.5**0.5
         self.assertAlmostEqual(1.5 + r2, tpt[0])
         self.assertAlmostEqual(-1.5 + r2, tpt[1])
 

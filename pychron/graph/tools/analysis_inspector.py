@@ -131,7 +131,7 @@ class AnalysisPointInspector(PointInspector):
                             if self.value_format:
                                 y = self.value_format(y)
 
-                            y = u"{} {} {} {}".format(y, PLUSMINUS, ye, pe)
+                            y = "{} {} {} {}".format(y, PLUSMINUS, ye, pe)
                         except IndexError as e:
                             print("asdf", e)
 
@@ -140,9 +140,9 @@ class AnalysisPointInspector(PointInspector):
                             y = self.value_format(y)
 
                     info = [
-                        u"Analysis= {} UUID({})".format(rid, analysis.display_uuid),
-                        u"Tag= {}".format(analysis.tag),
-                        u"{}= {}".format(name, y),
+                        "Analysis= {} UUID({})".format(rid, analysis.display_uuid),
+                        "Tag= {}".format(analysis.tag),
+                        "{}= {}".format(name, y),
                     ]
 
                     if self.include_x:
@@ -156,18 +156,16 @@ class AnalysisPointInspector(PointInspector):
                                 xe = xerror[ind]
                                 pe = self.percent_error(x, xe)
 
-                                x = u"{} {} {} {}".format(
-                                    floatfmt(x), PLUSMINUS, xe, pe
-                                )
+                                x = "{} {} {} {}".format(floatfmt(x), PLUSMINUS, xe, pe)
                             except IndexError as e:
                                 print("asdf", e)
                         else:
                             x = floatfmt(x)
 
-                        info.append(u"{}= {}".format(xname, x))
+                        info.append("{}= {}".format(xname, x))
 
                     if analysis.comment:
-                        info.insert(1, u"Comment= {}".format(analysis.comment[:20]))
+                        info.insert(1, "Comment= {}".format(analysis.comment[:20]))
 
                     if hasattr(analysis, "status_text"):
                         info.insert(1, "Status= {}".format(analysis.status_text))

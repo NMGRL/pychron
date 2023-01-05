@@ -517,7 +517,7 @@ class DBAnalysis(Analysis):
                 n = mass - refmass
 
                 # calculate discrimination
-                idisc = disc ** n
+                idisc = disc**n
                 e = disc
                 idisc = ufloat(
                     idisc.nominal_value, e.std_dev, tag="{} D".format(iso.name)

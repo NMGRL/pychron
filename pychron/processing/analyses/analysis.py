@@ -438,7 +438,7 @@ class IdeogramPlotable(HasTraits):
     def value_string(self, t):
         a, e = self._value_string(t)
         pe = format_percent_error(a, e)
-        return u"{} {}{} ({}%)".format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
+        return "{} {}{} ({}%)".format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
 
     @property
     def display_uuid(self):
@@ -780,7 +780,7 @@ class Analysis(ArArAge, IdeogramPlotable):
         e = self.age_err
         pe = format_percent_error(a, e)
 
-        return u"{} {}{} ({}%)".format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
+        return "{} {}{} ({}%)".format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
 
     def _value_string(self, t):
         if t == "uF":

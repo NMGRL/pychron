@@ -1100,7 +1100,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
         for spoke, poss in self._group_spokes():
             print(spoke)
             x, y, z, ze, j, je, sj, sje = self._extract_position_arrays(poss)
-            x = (x ** 2 + y ** 2) ** 0.5
+            x = (x**2 + y**2) ** 0.5
             plot = sg.new_plot(
                 padding_left=100, padding_top=20, padding_right=10, padding_bottom=30
             )
@@ -1134,7 +1134,7 @@ class FluxVisualizationEditor(BaseFluxVisualizationEditor):
         return [s for s in spokes if len(s[1]) > 1]
 
     def _group_rings(self):
-        rs = array([p.x ** 2 + p.y ** 2 for p in self.monitor_positions])
+        rs = array([p.x**2 + p.y**2 for p in self.monitor_positions])
         split_idx = abs(diff(rs)) > 1e-2
 
         pidx = 0

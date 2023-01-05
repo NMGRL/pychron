@@ -29,7 +29,7 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.core.helpers.formatting import format_percent_error
 from pychron.pychron_constants import NULL_STR
 
-SIGMA_1 = u"\u00b11\u03c3"
+SIGMA_1 = "\u00b11\u03c3"
 TABLE_FONT = "arial 11"
 
 vwidth = Int(80)
@@ -39,7 +39,7 @@ pwidth = Int(50)
 
 
 def sigmaf(s):
-    return u"{}({})".format(SIGMA_1, s)
+    return "{}({})".format(SIGMA_1, s)
 
 
 def handle_error(func):

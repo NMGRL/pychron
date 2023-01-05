@@ -143,7 +143,6 @@ try:
         def set_altered(self):
             self.altered_screen_point = (self.x, self.y)
 
-
 except TypeError:
     # documentation auto doc hack
     class XYPlotLabel:
@@ -337,7 +336,6 @@ try:
                 self.altered_screen_point = (x, self.altered_screen_point[1])
             else:
                 self.current_screen_point = (x, self.y)
-
 
 except TypeError:
     # documentation auto doc hack

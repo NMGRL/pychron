@@ -260,14 +260,14 @@ class OLSRegressor(BaseRegressor):
 
             def func(xi):
                 varY_hat = calc_hat(xi)
-                m = mswd ** 0.5 if mswd > 1 else 1
+                m = mswd**0.5 if mswd > 1 else 1
                 return sef * sqrt(varY_hat) * m
 
         else:
 
             def func(xi):
                 varY_hat = calc_hat(xi)
-                return sqrt(sef ** 2 + sef ** 2 * varY_hat)
+                return sqrt(sef**2 + sef**2 * varY_hat)
 
         if not self._result:
             return zeros_like(x)
@@ -295,9 +295,9 @@ class OLSRegressor(BaseRegressor):
             bx_covar = asarray(bx_covar)[0]
             var = sum(bx * bx_covar)
             #            print var
-            s = se * var ** 0.5
+            s = se * var**0.5
             if error_calc == "sd":
-                s = (se ** 2 + s ** 2) ** 0.5
+                s = (se**2 + s**2) ** 0.5
 
             return s
 

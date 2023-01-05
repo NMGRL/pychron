@@ -57,7 +57,7 @@ class MessageFrame(object):
 
 class Handler(object):
     sock = None
-    datasize = 2 ** 12
+    datasize = 2**12
     address = None
     message_frame = None
 

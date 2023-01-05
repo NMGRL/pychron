@@ -50,13 +50,13 @@ DIFF_TOLERANCE_PERCENT = 0.01
 
 DIFF_TAGS = (
     "J",
-    u"J {}".format(PLUSMINUS_ONE_SIGMA),
+    "J {}".format(PLUSMINUS_ONE_SIGMA),
     "Age",
-    u"Age W/Jerr {}".format(PLUSMINUS_ONE_SIGMA),
-    u"Age {}".format(PLUSMINUS_ONE_SIGMA),
+    "Age W/Jerr {}".format(PLUSMINUS_ONE_SIGMA),
+    "Age {}".format(PLUSMINUS_ONE_SIGMA),
     "40Ar* %",
     "Rad4039",
-    u"Rad4039 {}".format(PLUSMINUS_ONE_SIGMA),
+    "Rad4039 {}".format(PLUSMINUS_ONE_SIGMA),
     "Ca37/K39",
     "Ca/K",
     "Cl38/K39",
@@ -66,11 +66,11 @@ DIFF_TAGS = (
     "Lambda Ar39",
     "Lambda Cl36",
     "Ar40 Total",
-    u"Ar40 Total".format(PLUSMINUS_ONE_SIGMA),
+    "Ar40 Total".format(PLUSMINUS_ONE_SIGMA),
     "Ar40 Bs Corrected",
-    u"Ar40 Bs Corrected {}".format(PLUSMINUS_ONE_SIGMA),
+    "Ar40 Bs Corrected {}".format(PLUSMINUS_ONE_SIGMA),
     "Ar40 Blank",
-    u"Ar40 Blank {}".format(PLUSMINUS_ONE_SIGMA),
+    "Ar40 Blank {}".format(PLUSMINUS_ONE_SIGMA),
     "Ar40 N",
     "Ar40 fN",
     "Ar40 Fit",
@@ -78,13 +78,13 @@ DIFF_TAGS = (
     "Ar40 Filter Iter",
     "Ar40 Filter SD",
     "Ar40 IC",
-    u"Ar40 IC {}".format(PLUSMINUS_ONE_SIGMA),
+    "Ar40 IC {}".format(PLUSMINUS_ONE_SIGMA),
     "Ar39 Total",
-    u"Ar39 Total".format(PLUSMINUS_ONE_SIGMA),
+    "Ar39 Total".format(PLUSMINUS_ONE_SIGMA),
     "Ar39 Bs Corrected",
-    u"Ar39 Bs Corrected {}".format(PLUSMINUS_ONE_SIGMA),
+    "Ar39 Bs Corrected {}".format(PLUSMINUS_ONE_SIGMA),
     "Ar39 Blank",
-    u"Ar39 Blank {}".format(PLUSMINUS_ONE_SIGMA),
+    "Ar39 Blank {}".format(PLUSMINUS_ONE_SIGMA),
     "Ar39 N",
     "Ar39 fN",
     "Ar39 Fit",
@@ -92,13 +92,13 @@ DIFF_TAGS = (
     "Ar39 Filter Iter",
     "Ar39 Filter SD",
     "Ar39 IC",
-    u"Ar39 IC {}".format(PLUSMINUS_ONE_SIGMA),
+    "Ar39 IC {}".format(PLUSMINUS_ONE_SIGMA),
     "Ar38 Total",
-    u"Ar38 Total".format(PLUSMINUS_ONE_SIGMA),
+    "Ar38 Total".format(PLUSMINUS_ONE_SIGMA),
     "Ar38 Bs Corrected",
-    u"Ar38 Bs Corrected {}".format(PLUSMINUS_ONE_SIGMA),
+    "Ar38 Bs Corrected {}".format(PLUSMINUS_ONE_SIGMA),
     "Ar38 Blank",
-    u"Ar38 Blank {}".format(PLUSMINUS_ONE_SIGMA),
+    "Ar38 Blank {}".format(PLUSMINUS_ONE_SIGMA),
     "Ar38 N",
     "Ar38 fN",
     "Ar38 Fit",
@@ -106,13 +106,13 @@ DIFF_TAGS = (
     "Ar38 Filter Iter",
     "Ar38 Filter SD",
     "Ar38 IC",
-    u"Ar38 IC {}".format(PLUSMINUS_ONE_SIGMA),
+    "Ar38 IC {}".format(PLUSMINUS_ONE_SIGMA),
     "Ar37 Total",
-    u"Ar37 Total".format(PLUSMINUS_ONE_SIGMA),
+    "Ar37 Total".format(PLUSMINUS_ONE_SIGMA),
     "Ar37 Bs Corrected",
-    u"Ar37 Bs Corrected {}".format(PLUSMINUS_ONE_SIGMA),
+    "Ar37 Bs Corrected {}".format(PLUSMINUS_ONE_SIGMA),
     "Ar37 Blank",
-    u"Ar37 Blank {}".format(PLUSMINUS_ONE_SIGMA),
+    "Ar37 Blank {}".format(PLUSMINUS_ONE_SIGMA),
     "Ar37 N",
     "Ar37 fN",
     "Ar37 Fit",
@@ -120,13 +120,13 @@ DIFF_TAGS = (
     "Ar37 Filter Iter",
     "Ar37 Filter SD",
     "Ar37 IC",
-    u"Ar37 IC {}".format(PLUSMINUS_ONE_SIGMA),
+    "Ar37 IC {}".format(PLUSMINUS_ONE_SIGMA),
     "Ar36 Total",
-    u"Ar36 Total".format(PLUSMINUS_ONE_SIGMA),
+    "Ar36 Total".format(PLUSMINUS_ONE_SIGMA),
     "Ar36 Bs Corrected",
-    u"Ar36 Bs Corrected {}".format(PLUSMINUS_ONE_SIGMA),
+    "Ar36 Bs Corrected {}".format(PLUSMINUS_ONE_SIGMA),
     "Ar36 Blank",
-    u"Ar36 Blank {}".format(PLUSMINUS_ONE_SIGMA),
+    "Ar36 Blank {}".format(PLUSMINUS_ONE_SIGMA),
     "Ar36 N",
     "Ar36 fN",
     "Ar36 Fit",
@@ -134,7 +134,7 @@ DIFF_TAGS = (
     "Ar36 Filter Iter",
     "Ar36 Filter SD",
     "Ar36 IC",
-    u"Ar36 IC {}".format(PLUSMINUS_ONE_SIGMA),
+    "Ar36 IC {}".format(PLUSMINUS_ONE_SIGMA),
     "K4039",
     "K3839",
     "K3739",
@@ -315,7 +315,7 @@ class DiffEditor(BaseTraitsEditor):
 
     def _set_values(self, left, right, isotopes):
         vs = []
-        pfunc = lambda x: lambda n: u"{} {}".format(x, n)
+        pfunc = lambda x: lambda n: "{} {}".format(x, n)
 
         if not self.is_blank and not self.is_air:
             vs.append(
@@ -327,7 +327,7 @@ class DiffEditor(BaseTraitsEditor):
             )
             vs.append(
                 Value(
-                    name=u"J {}".format(PLUSMINUS_ONE_SIGMA),
+                    name="J {}".format(PLUSMINUS_ONE_SIGMA),
                     lvalue=std_dev(left.j or 0),
                     rvalue=std_dev(right.j or 0),
                 )
@@ -335,14 +335,14 @@ class DiffEditor(BaseTraitsEditor):
             vs.append(Value(name="Age", lvalue=left.age or 0, rvalue=right.age or 0))
             vs.append(
                 Value(
-                    name=u"Age W/Jerr {}".format(PLUSMINUS_ONE_SIGMA),
+                    name="Age W/Jerr {}".format(PLUSMINUS_ONE_SIGMA),
                     lvalue=std_dev(left.uage_w_j_err) or 0,
                     rvalue=right.age_err or 0,
                 )
             )
             vs.append(
                 Value(
-                    name=u"Age {}".format(PLUSMINUS_ONE_SIGMA),
+                    name="Age {}".format(PLUSMINUS_ONE_SIGMA),
                     lvalue=left.age_err or 0,
                     rvalue=right.age_err_wo_j or 0,
                 )
@@ -364,7 +364,7 @@ class DiffEditor(BaseTraitsEditor):
             )
             vs.append(
                 Value(
-                    name=u"Rad4039 {}".format(PLUSMINUS_ONE_SIGMA),
+                    name="Rad4039 {}".format(PLUSMINUS_ONE_SIGMA),
                     lvalue=std_dev(left.uF),
                     rvalue=std_dev(right.rad4039),
                 )
@@ -466,7 +466,7 @@ class DiffEditor(BaseTraitsEditor):
                 )
                 vs.append(
                     Value(
-                        name=func(u"Total {}".format(PLUSMINUS_ONE_SIGMA)),
+                        name=func("Total {}".format(PLUSMINUS_ONE_SIGMA)),
                         lvalue=std_dev(i),
                         rvalue=std_dev(ri),
                     )
@@ -508,7 +508,7 @@ class DiffEditor(BaseTraitsEditor):
             )
             vs.append(
                 Value(
-                    name=func(u"IC {}".format(PLUSMINUS_ONE_SIGMA)),
+                    name=func("IC {}".format(PLUSMINUS_ONE_SIGMA)),
                     lvalue=std_dev(iso.ic_factor),
                     rvalue=std_dev(riso.ic_factor),
                 )
@@ -523,7 +523,7 @@ class DiffEditor(BaseTraitsEditor):
             )
             vs.append(
                 Value(
-                    name=func(u"Bs {}".format(PLUSMINUS_ONE_SIGMA)),
+                    name=func("Bs {}".format(PLUSMINUS_ONE_SIGMA)),
                     lvalue=baseline.error,
                     rvalue=rbaseline.error,
                 )
@@ -567,7 +567,7 @@ class DiffEditor(BaseTraitsEditor):
                 )
                 vs.append(
                     Value(
-                        name=func(u"Blank {}".format(PLUSMINUS_ONE_SIGMA)),
+                        name=func("Blank {}".format(PLUSMINUS_ONE_SIGMA)),
                         lvalue=iso.blank.error,
                         rvalue=riso.blank.error,
                     )

@@ -67,7 +67,6 @@ try:
             self.y_axis.trait_set(tick_label_formatter=lambda x: "", tick_visible=False)
             # self.set_limits()
 
-
 except TypeError:
     # documentation auto doc hack
     class IdeogramInset:
@@ -104,7 +103,6 @@ try:
                 visible=visible,
             )
             self.overlays.append(ebo)
-
 
 except TypeError:
     # documentation auto doc hack
