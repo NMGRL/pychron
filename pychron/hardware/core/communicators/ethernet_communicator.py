@@ -173,14 +173,14 @@ class Handler(object):
         if readable:
             rsock = readable[0]
             if rsock == self.sock:
-                st=time.time()
+                st = time.time()
                 while 1:
                     rsock.recv_into(buff)
                     if terminator in buff:
                         data = buff.split(terminator)[0]
                         return data.decode("utf-8")
 
-                    if time.time()-st > timeout:
+                    if time.time() - st > timeout:
                         break
 
 
