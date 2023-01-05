@@ -225,32 +225,39 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                 if line is None:
                     break
 
-                if line and (line.startswith(targeta) or line.startswith(targetb)):
-                    try:
-                        args = line.split(",")
+                if not (line.startswith(targeta) or line.startswith(targetb)):
+                    if targeta in line:
+                        args = line.split(targeta)
+                        line = next((a for a in args if a.startswith(targeta)))
+                    elif targetb in line:
+                        args = line.split(targetb)
+                        line = next((a for a in args if a.startswith(targetb)))
 
-                        cd = datetime.today()
-                        ct = datetime.strptime(args[4], "%H:%M:%S.%f").time()
+                try:
+                    args = line.split(",")
 
-                        collection_time = datetime.combine(cd, ct)
-                        signals = [float(i.strip()) for i in args[5:]]
-                        print("fad", keys, signals)
-                        if line.startswith(targeta):
-                            nsignals, keys = [], []
-                            for i, di in enumerate(self.detectors[::-1]):
-                                if di.kind == "CDD":
-                                    nsignals.append(signals[i])
-                                    keys.append(di.name)
-                            signals = nsignals
-                            break
+                    cd = datetime.today()
+                    ct = datetime.strptime(args[4], "%H:%M:%S.%f").time()
 
-                        elif line.startswith(targetb):
-                            self.microcontroller.triggered = False
-                            inc = True
+                    collection_time = datetime.combine(cd, ct)
+                    signals = [float(i.strip()) for i in args[5:]]
+                    print("fad", keys, signals)
+                    if line.startswith(targeta):
+                        nsignals, keys = [], []
+                        for i, di in enumerate(self.detectors[::-1]):
+                            if di.kind == "CDD":
+                                nsignals.append(signals[i])
+                                keys.append(di.name)
+                        signals = nsignals
+                        break
 
-                            break
-                    except BaseException as e:
-                        self.debug("read intensities errror={}".format(e))
+                    elif line.startswith(targetb):
+                        self.microcontroller.triggered = False
+                        inc = True
+
+                        break
+                except BaseException as e:
+                    self.debug("read intensities errror={}".format(e))
 
         # self.microcontroller.lock.release()
         if len(signals) != len(keys):
