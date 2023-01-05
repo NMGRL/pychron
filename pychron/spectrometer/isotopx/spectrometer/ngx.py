@@ -54,6 +54,8 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     use_deflection_correction = False
     use_hv_correction = False
     _triggered = False
+    acq_count = None
+    total_acq_count = 10
 
     def _microcontroller_default(self):
         service = "pychron.hardware.isotopx_spectrometer_controller.NGXController"
@@ -124,6 +126,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
             self.ask("StopAcq", verbose=verbose)
             self.microcontroller.triggered = True
             # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
+            self.total_acq_count = int(self.integration_time)
             return self.ask(
                 "StartAcq {},{}".format(int(self.integration_time), self.rcs_id)
             )
@@ -153,7 +156,6 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     self.debug(f"data left: {ds}")
 
             if "#\r\n" in ds:
-
                 ds = ds.split("#\r\n")[0]
                 return ds
 
@@ -162,7 +164,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         self._read_enabled = False
 
     def read_intensities(
-        self, timeout=60, trigger=False, target="ACQ.B", verbose=False
+            self, timeout=60, trigger=False, target="ACQ.B", verbose=False
     ):
         # self.microcontroller.lock.acquire()
         # verbose=True
@@ -218,15 +220,21 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                         signals = [float(i.strip()) for i in args[5:]]
                         print("fad", keys, signals)
                         if line.startswith(targeta):
-                            nsignals, keys = [], []
-                            for i, di in enumerate(self.detectors[::-1]):
-                                if di.kind == "CDD":
-                                    nsignals.append(signals[i])
-                                    keys.append(di.name)
-                            signals = nsignals
-                            break
+                            self.acq_count += 1
+                            if self.acq_count == self.total_acq_count:
+                                # forget this ACQ and immediately get the ACQ.B record.
+                                continue
+                            else:
+                                nsignals, keys = [], []
+                                for i, di in enumerate(self.detectors[::-1]):
+                                    if di.kind == "CDD":
+                                        nsignals.append(signals[i])
+                                        keys.append(di.name)
+                                signals = nsignals
+                                break
 
                         elif line.startswith(targetb):
+                            self.acq_count = 0
                             self.microcontroller.triggered = False
                             inc = True
 
@@ -307,6 +315,5 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     def _integration_time_default(self):
         self.default_integration_time = ISOTOPX_DEFAULT_INTEGRATION_TIME
         return ISOTOPX_DEFAULT_INTEGRATION_TIME
-
 
 # ============= EOF =============================================
