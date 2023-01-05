@@ -167,7 +167,9 @@ class Handler(object):
 
         inputs = [self.sock]
         outputs = []
-        readable, writable, exceptional = select.select(inputs, outputs, inputs, timeout=timeout)
+        readable, writable, exceptional = select.select(
+            inputs, outputs, inputs, timeout=timeout
+        )
 
         buff = bytearray(2**12)
         if readable:
