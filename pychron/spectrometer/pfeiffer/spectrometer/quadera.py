@@ -16,6 +16,7 @@
 import json
 import struct
 import time
+from datetime import datetime
 from numpy import append as npappend
 
 from traits.api import List
@@ -82,22 +83,32 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
             if cnt > n:
                 break
 
-            et = time.time() - st
-            if et < delay:
-                time.sleep(delay - et)
+            # et = time.time() - st
+            # if et < delay:
+            #     time.sleep(delay - et)
 
-            st = time.time()
+            # st = time.time()
             size = sock.recv(4)
             size = struct.unpack("i", size)[0]
             str_data = sock.recv(size)
+
             # self.debug(str_data)
-            s = str_data.decode("ascii")
+            s = str_data.decode("utf-8")
 
             self.debug(s)
 
             s = s.replace("False", '"False"')
             s = s.replace("True", '"True"')
             obj = json.loads(s)
+
+            # read all the buffered messages
+            if 'Time' in obj:
+                v=datetime.strptime(obj['Time'], '%H:%M:%S %p')
+                dt = datetime.now().second - v.second
+                if dt > 4 or dt < 0:
+                    self.debug(f'skipping {obj}')
+                    continue
+
             # if not i:
             # construct and write the header
             keys = list(obj.keys())
@@ -142,6 +153,11 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
             self.debug("sinking row: {}".format(row))
             writer.writerow(row)
             cnt += 1
+
+            et = time.time() - st
+            if et < delay:
+                time.sleep(delay - et)
+
         return IsotopeGroup(isotopes=isotopes)
 
     # def set_data_pump_mode(self, mode):
