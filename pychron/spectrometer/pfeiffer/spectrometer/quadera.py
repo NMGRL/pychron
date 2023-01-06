@@ -102,11 +102,11 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
             obj = json.loads(s)
 
             # read all the buffered messages
-            if 'Time' in obj:
-                v=datetime.strptime(obj['Time'], '%H:%M:%S %p')
+            if "Time" in obj:
+                v = datetime.strptime(obj["Time"], "%H:%M:%S %p")
                 dt = datetime.now().second - v.second
                 if dt > 4 or dt < 0:
-                    self.debug(f'skipping {obj}')
+                    self.debug(f"skipping {obj}")
                     continue
 
             # if not i:
