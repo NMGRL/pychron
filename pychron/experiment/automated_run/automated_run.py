@@ -328,7 +328,7 @@ class AutomatedRun(Loggable):
         v = self.extraction_line_manager.get_valve_by_name("9")
         rid = f"{self.runid}-{v.actuations}"
         p, _ = unique_path2(root, rid, extension=".csv")
-        self.debug(f'saving analysis to {p}')
+        self.debug(f"saving analysis to {p}")
         with open(p, "w") as rfile:
             writer = csv.writer(rfile)
             ig = spec.sink_data(writer, n, delay)
