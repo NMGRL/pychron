@@ -159,7 +159,7 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
                 + intensities
                 + raw
             )
-            self.debug("sinking row: {}".format(row))
+            self.debug(f"sinking row {cnt}/{n}: {row}")
             writer.writerow(row)
             cnt += 1
 
