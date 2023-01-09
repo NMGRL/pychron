@@ -103,11 +103,11 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
 
             # read all the buffered messages
             if "Time" in obj:
-                t = obj["Time"]
-                targs = t.split(":")
-                h = targs[0]
-                tt = ":".join(targs)
-                t = f"{h:02n}:{tt}"
+                t = obj['Time']
+                targs = t.split(':')
+                h = int(targs[0])
+                tt = ':'.join(targs)
+                t = f'{h:02n}:{tt}'
 
                 v = datetime.strptime(t, "%H:%M:%S %p")
                 dt = v - datetime.now()
@@ -139,10 +139,6 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
 
             intensities = obj["intensity"]
             ct = time.time()
-
-            # consume all the old data
-            if abs((datetime.strptime(raw["time"], fmt).timestamp() - ct)) > 3:
-                continue
 
             for m, si in zip(obj["amuNames"], intensities):
                 if m not in isotopes:
