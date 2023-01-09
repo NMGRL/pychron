@@ -79,6 +79,7 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         cnt = 1
         start_time = st = time.time()
         isotopes = {}
+        nowdate = datetime.now().date()
         while 1:
             if cnt > n:
                 break
@@ -110,6 +111,8 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
                 t = f"{h:02n}:{tt}"
 
                 v = datetime.strptime(t, "%H:%M:%S %p")
+                v = datetime.combine(nowdate, v.time())
+
                 dt = v - datetime.now()
                 self.debug(f"reading buffer message.  behind {dt.total_seconds()}")
                 if dt.total_seconds() < 4:
