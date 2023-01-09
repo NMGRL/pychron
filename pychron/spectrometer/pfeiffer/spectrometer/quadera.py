@@ -113,7 +113,7 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
                 v = datetime.strptime(t, "%H:%M:%S %p")
                 v = datetime.combine(nowdate, v.time())
 
-                dt = v - datetime.now()
+                dt = abs(v - datetime.now())
                 self.debug(f"reading buffer message.  behind {dt.total_seconds()}")
                 if dt.total_seconds() < 4:
                     self.debug(f"skipping {obj}")
