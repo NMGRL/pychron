@@ -103,11 +103,11 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
 
             # read all the buffered messages
             if "Time" in obj:
-                t = obj['Time']
-                targs = t.split(':')
+                t = obj["Time"]
+                targs = t.split(":")
                 h = int(targs[0])
-                tt = ':'.join(targs)
-                t = f'{h:02n}:{tt}'
+                tt = ":".join(targs)
+                t = f"{h:02n}:{tt}"
 
                 v = datetime.strptime(t, "%H:%M:%S %p")
                 dt = v - datetime.now()
