@@ -106,8 +106,8 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
                 t = obj["Time"]
                 targs = t.split(":")
                 h = int(targs[0])
-                tt = ':'.join(targs[1:])
-                t = f'{h:02n}:{tt}'
+                tt = ":".join(targs[1:])
+                t = f"{h:02n}:{tt}"
 
                 v = datetime.strptime(t, "%H:%M:%S %p")
                 dt = v - datetime.now()
