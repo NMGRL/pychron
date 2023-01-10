@@ -787,6 +787,9 @@ class BaseSpectrometer(SpectrometerDevice):
     def read_deflection_word(self, *args, **kw):
         return []
 
+    def get_configuration_value(self, *args, **kw):
+        pass
+
     def get_hardware_name(self, *args, **kw):
         pass
 
