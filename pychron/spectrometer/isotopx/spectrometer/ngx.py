@@ -155,8 +155,8 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     self.debug_exception()
                     self.debug(f"data left: {ds}")
 
-            if "#\r\n" in ds:
-                ds = ds.split("#\r\n")[0]
+            if "#" in ds:
+                ds = ds.split("#")[0]
                 return ds
 
     def cancel(self):
@@ -195,8 +195,8 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         collection_time = None
         inc = False
         # self.debug(f'acquired mcir lock {self.microcontroller.lock}')
-        targetb = "#EVENT:ACQ.B,{}".format(self.rcs_id)
-        targeta = "#EVENT:ACQ,{}".format(self.rcs_id)
+        targetb = "EVENT:ACQ.B,{}".format(self.rcs_id)
+        targeta = "EVENT:ACQ,{}".format(self.rcs_id)
         if resp is not None:
             keys = self.detector_names[::-1]
             while self._read_enabled:
