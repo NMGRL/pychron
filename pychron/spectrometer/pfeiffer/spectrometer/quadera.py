@@ -127,12 +127,12 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
             if not header:
                 masses = ["mass({})".format(m) for m in obj["amuNames"]]
                 header = (
-                        [
-                            "count",
-                            "time",
-                        ]
-                        + masses
-                        + keys
+                    [
+                        "count",
+                        "time",
+                    ]
+                    + masses
+                    + keys
                 )
                 writer.writerow(header)
 
@@ -153,12 +153,12 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
                 iso.ys = npappend(iso.ys, si)
 
             row = (
-                    [
-                        cnt,
-                        ct,
-                    ]
-                    + intensities
-                    + raw
+                [
+                    cnt,
+                    ct,
+                ]
+                + intensities
+                + raw
             )
             self.debug(f"sinking row {cnt}/{n}: {row}")
             writer.writerow(row)
@@ -357,5 +357,6 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
     def _integration_time_default(self):
         self.default_integration_time = QUADERA_DEFAULT_INTEGRATION_TIME
         return QUADERA_DEFAULT_INTEGRATION_TIME
+
 
 # ============= EOF =============================================
