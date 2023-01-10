@@ -784,8 +784,8 @@ class BaseSpectrometer(SpectrometerDevice):
     def read_intensities(self):
         raise NotImplementedError
 
-    def read_deflection_word(self):
-        pass
+    def read_deflection_word(self, *args, **kw):
+        return []
 
     def read_parameter_word(self):
         pass
