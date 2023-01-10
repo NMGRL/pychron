@@ -104,7 +104,7 @@ class MeasurementPyScript(ValvePyScript):
     # ===============================================================================
     @verbose_skip
     @command_register
-    def sink_data(self, n=100, delay=1, root=None, calc_time=False):
+    def sink_data(self, n=100, delay=1, root=None, buffer_delay=5, calc_time=False):
         """
 
         @param n: number of measurements
@@ -114,7 +114,7 @@ class MeasurementPyScript(ValvePyScript):
         """
         if calc_time:
             return n * delay
-        self._automated_run_call("py_sink_data", n=n, delay=delay, root=root)
+        self._automated_run_call("py_sink_data", n=n, delay=delay, root=root, buffer_delay=buffer_delay)
 
     @verbose_skip
     @command_register

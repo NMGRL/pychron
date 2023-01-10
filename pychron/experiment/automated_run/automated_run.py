@@ -309,7 +309,7 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
-    def py_sink_data(self, n=100, delay=1, root=None):
+    def py_sink_data(self, n=100, delay=1, root=None, buffer_delay=5):
         """
 
         new measurement interface for just sinking the data from a ring buffer
@@ -331,7 +331,7 @@ class AutomatedRun(Loggable):
         self.debug(f"saving analysis to {p}")
         with open(p, "w") as rfile:
             writer = csv.writer(rfile)
-            ig = spec.sink_data(writer, n, delay)
+            ig = spec.sink_data(writer, n, delay, buffer_delay)
 
             if self.use_dvc_persistence:
                 pspec = self.persistence_spec

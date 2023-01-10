@@ -69,7 +69,7 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
     def set_data_pump_mode(self, mode):
         pass
 
-    def sink_data(self, writer, n, delay):
+    def sink_data(self, writer, n, delay, buffer_delay):
 
         client = self.microcontroller.communicator
         handle = client.get_handler()
@@ -80,6 +80,7 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         start_time = st = time.time()
         isotopes = {}
         nowdate = datetime.now().date()
+        buffer_empty = False
         while 1:
             if cnt > n:
                 break
@@ -103,16 +104,18 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
             obj = json.loads(s)
 
             # read all the buffered messages
-            if "Time" in obj:
+            if not buffer_empty and "Time" in obj:
                 t = obj["Time"]
                 v = datetime.strptime(t, "%I:%M:%S %p")
                 v = datetime.combine(nowdate, v.time())
 
                 dt = abs(v - datetime.now())
                 self.debug(f"reading buffer message.  behind {dt.total_seconds()}")
-                if dt.total_seconds() > 4:
+                if dt.total_seconds() > buffer_delay:
                     self.debug(f"skipping {obj}")
                     continue
+                else:
+                    buffer_empty = True
 
             # if not i:
             # construct and write the header
@@ -124,12 +127,12 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
             if not header:
                 masses = ["mass({})".format(m) for m in obj["amuNames"]]
                 header = (
-                    [
-                        "count",
-                        "time",
-                    ]
-                    + masses
-                    + keys
+                        [
+                            "count",
+                            "time",
+                        ]
+                        + masses
+                        + keys
                 )
                 writer.writerow(header)
 
@@ -150,12 +153,12 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
                 iso.ys = npappend(iso.ys, si)
 
             row = (
-                [
-                    cnt,
-                    ct,
-                ]
-                + intensities
-                + raw
+                    [
+                        cnt,
+                        ct,
+                    ]
+                    + intensities
+                    + raw
             )
             self.debug(f"sinking row {cnt}/{n}: {row}")
             writer.writerow(row)
@@ -354,6 +357,5 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
     def _integration_time_default(self):
         self.default_integration_time = QUADERA_DEFAULT_INTEGRATION_TIME
         return QUADERA_DEFAULT_INTEGRATION_TIME
-
 
 # ============= EOF =============================================
