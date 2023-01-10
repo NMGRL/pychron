@@ -790,13 +790,12 @@ class ExtractionPyScript(ValvePyScript):
 
         def func(i, ramp_step):
             if self._cancel:
+                self.debug('script canceled. exit ramp')
                 return
 
             self.console_info("ramp step {}. setpoint={}".format(i, ramp_step))
             if not self._extraction_action(("set_laser_power", (ramp_step,), {})):
-                return
-
-            if self._cancel:
+                self.debug('setting laser power during ramping failed')
                 return
 
             return True
