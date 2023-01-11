@@ -101,12 +101,15 @@ class SCPIProtocol(Protocol):
         return self.ask(f"SOURCE:TEMPERATURE:SETPOINT {v},{output}")
 
     def read_input(self, tag, mode, verbose):
-        return self.ask(f"FETCH:TEMPERATURE?", verbose=verbose)
+        return self.ask(f"FETCH:TEMPERATURE? {tag}", verbose=verbose)
 
 
 class BaseLakeShoreController(CoreDevice):
     units = Enum("C", "K")
     scan_func = "update"
+
+    input_a_enabled = Bool
+    input_b_enabled = Bool
 
     input_a = Float
     input_b = Float
@@ -129,8 +132,11 @@ class BaseLakeShoreController(CoreDevice):
 
     def load_additional_args(self, config):
         self.set_attribute(config, "units", "General", "units", default="K")
+        self.set_attribute(config, "input_a_enabled", "General", "input_a_enabled", default=True, cast='boolean')
+        self.set_attribute(config, "input_b_enabled", "General", "input_b_enabled", default=True, cast='boolean')
+
         self.set_attribute(
-            config, "protocol_kind", "Communications", "protocol_kind", default="GPIB"
+            config, "protocol_kind", "Communications", "protocol", default="GPIB"
         )
         self.set_attribute(
             config,
@@ -308,6 +314,7 @@ class BaseLakeShoreController(CoreDevice):
         return r
 
     def get_control_group(self):
+
         grp = BorderVGroup(
             Spring(height=10, springy=False),
             HGroup(
@@ -323,6 +330,7 @@ class BaseLakeShoreController(CoreDevice):
                     style="readonly",
                 ),
                 Spring(width=10, springy=False),
+                defined_when='input_a_enabled'
             ),
             HGroup(
                 Item(
@@ -337,6 +345,7 @@ class BaseLakeShoreController(CoreDevice):
                     style="readonly",
                 ),
                 Spring(width=10, springy=False),
+                defined_when='input_b_enabled'
             ),
             label=self.name,
         )
