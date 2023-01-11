@@ -28,7 +28,7 @@ from pychron.pychron_constants import (
     FUSIONS_DIODE,
     FUSIONS_CO2,
     FUSIONS_UV,
-    OSTECH_DIODE,
+    OSTECH_DIODE, TAP_DIODE,
 )
 
 
@@ -134,6 +134,9 @@ class OsTechDiodePreferences(LaserPreferences):
     name = OSTECH_DIODE
     preferences_path = "pychron.ostech.diode"
 
+class TAPDiodePreferences(LaserPreferences):
+    name = TAP_DIODE
+    preferences_path = "pychron.tap.diode"
 
 # ===============================================================================
 # Panes
@@ -324,4 +327,7 @@ class OsTechDiodePreferencesPane(LaserPreferencesPane):
     model_factory = OsTechDiodePreferences
 
 
+class TAPDiodePreferencesPane(LaserPreferencesPane):
+    category = TAP_DIODE
+    model_factory = TAPDiodePreferences
 # ============= EOF =============================================
