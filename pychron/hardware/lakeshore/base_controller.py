@@ -124,12 +124,14 @@ class BaseLakeShoreController(CoreDevice):
 
     verify_setpoint = Bool
 
-    protocol_kind = Enum('GPIB', 'SCPI')
+    protocol_kind = Enum("GPIB", "SCPI")
     protocol = None
 
     def load_additional_args(self, config):
         self.set_attribute(config, "units", "General", "units", default="K")
-        self.set_attribute(config, "protocol_kind", "General", "protocol_kind", default="GPIB")
+        self.set_attribute(
+            config, "protocol_kind", "General", "protocol_kind", default="GPIB"
+        )
         self.set_attribute(
             config,
             "verify_setpoint",
@@ -177,7 +179,7 @@ class BaseLakeShoreController(CoreDevice):
     def initialize(self, *args, **kw):
         self.communicator.write_terminator = chr(10)  # line feed \n
 
-        klass = GPIBProtocol if self.protocol_kind == 'GPIB' else SCPIProtocol
+        klass = GPIBProtocol if self.protocol_kind == "GPIB" else SCPIProtocol
         self.protocol = klass(self)
 
         return super(BaseLakeShoreController, self).initialize(*args, **kw)
