@@ -130,7 +130,7 @@ class BaseLakeShoreController(CoreDevice):
     def load_additional_args(self, config):
         self.set_attribute(config, "units", "General", "units", default="K")
         self.set_attribute(
-            config, "protocol_kind", "General", "protocol_kind", default="GPIB"
+            config, "protocol_kind", "Communications", "protocol_kind", default="GPIB"
         )
         self.set_attribute(
             config,
