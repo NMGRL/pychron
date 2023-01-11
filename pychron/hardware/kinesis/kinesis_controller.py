@@ -24,20 +24,21 @@ class KinesisMotionController(MotionController):
 
     def load_additional_args(self, config):
         """ """
-        self._axis_id_map = {'x': 1, 'y': 2, 'z': 3}
+        self._axis_id_map = {"x": 1, "y": 2, "z": 3}
 
         self.set_attribute(config, "base_url", "General", "base_url")
         if self.address is not None:
             return True
+
     def get_current_position(self, axis_id, *args, **kw):
-        request = self._make_request('positions')
+        request = self._make_request("positions")
         resp = requests.get(request)
         if resp.status_code == 200:
             return self.parse_position_response(resp.json(), axis_id)
 
     def get_current_positions(self, keys):
         vs = []
-        request = self._make_request('positions')
+        request = self._make_request("positions")
         resp = requests.get(request)
         if resp.status_code == 200:
             pos = resp.json()
@@ -47,7 +48,7 @@ class KinesisMotionController(MotionController):
         return vs
 
     def linear_move(self, x, y, *args, **kw):
-        request = self._make_request(f'/move/{x}/{y}')
+        request = self._make_request(f"/move/{x}/{y}")
         resp = requests.post(request)
 
     def parse_position_response(self, pos, axis_id):
@@ -57,9 +58,10 @@ class KinesisMotionController(MotionController):
             except ValueError:
                 axis_id = self._axis_id_map[axis_id]
 
-        return pos[axis_id]['position']
+        return pos[axis_id]["position"]
 
     def _make_request(self, tag):
-        return f'{self.base_url}/{tag}'
+        return f"{self.base_url}/{tag}"
+
 
 # ============= EOF =============================================

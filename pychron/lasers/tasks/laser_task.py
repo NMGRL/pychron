@@ -28,7 +28,12 @@ from pychron.lasers.tasks.panes.ostech import (
     OsTechDiodeSupplementalPane,
     OsTechDiodeControlPane,
 )
-from pychron.pychron_constants import FUSIONS_CO2, FUSIONS_DIODE, OSTECH_DIODE, TAP_DIODE
+from pychron.pychron_constants import (
+    FUSIONS_CO2,
+    FUSIONS_DIODE,
+    OSTECH_DIODE,
+    TAP_DIODE,
+)
 
 
 class BaseLaserTask(BaseHardwareTask):
@@ -150,6 +155,7 @@ class OsTechDiodeTask(BaseLaserTask):
                 # AuxilaryGraphPane(model=self.manager)
             ]
 
+
 class TAPDiodeTask(BaseLaserTask):
     id = "pychron.tap.diode"
     name = TAP_DIODE
@@ -185,6 +191,7 @@ class TAPDiodeTask(BaseLaserTask):
         #         # AuxilaryGraphPane(model=self.manager)
         #     ]
         #
+
 
 class AblationCO2Task(BaseLaserTask):
     id = "pychron.ablation.co2"

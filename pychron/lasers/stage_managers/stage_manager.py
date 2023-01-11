@@ -1113,10 +1113,12 @@ class StageManager(BaseStageManager):
             )
 
             factory = LegacyBinaryZaberMotionController
-        elif self.stage_controller_klass == 'Kinesis':
-            from pychron.hardware.kinesis.kinesis_controller import KinesisMotionController
-            factory = KinesisMotionController
+        elif self.stage_controller_klass == "Kinesis":
+            from pychron.hardware.kinesis.kinesis_controller import (
+                KinesisMotionController,
+            )
 
+            factory = KinesisMotionController
 
         m = factory(
             name="{}controller".format(self.name),

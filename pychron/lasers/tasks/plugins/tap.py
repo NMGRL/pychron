@@ -15,11 +15,11 @@
 # ===============================================================================
 from pychron.lasers.tasks.laser_preferences import TAPDiodePreferencesPane
 from pychron.lasers.tasks.laser_task import TAPDiodeTask
-from pychron.lasers.tasks.plugins.laser_plugin import  BaseLaserPlugin
+from pychron.lasers.tasks.plugins.laser_plugin import BaseLaserPlugin
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.pychron_constants import  TAP_DIODE
+from pychron.pychron_constants import TAP_DIODE
 
 
 class TAPDiodePlugin(BaseLaserPlugin):
@@ -59,5 +59,6 @@ class TAPDiodePlugin(BaseLaserPlugin):
     def _task_factory(self):
         t = TAPDiodeTask(manager=self._get_manager(), application=self.application)
         return t
+
 
 # ============= EOF =============================================

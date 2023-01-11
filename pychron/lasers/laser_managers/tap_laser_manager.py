@@ -19,8 +19,11 @@ from pychron.lasers.laser_managers.laser_manager import LaserManager
 class TAPLaserManager(LaserManager):
     pass
 
+
 class TAPDiodeManager(TAPLaserManager):
     stage_manager_id = "ostech.diode"
     configuration_dir_name = "ostech_diode"
     stage_controller_klass = "Zaber"
+
+
 # ============= EOF =============================================
