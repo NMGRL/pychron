@@ -132,8 +132,22 @@ class BaseLakeShoreController(CoreDevice):
 
     def load_additional_args(self, config):
         self.set_attribute(config, "units", "General", "units", default="K")
-        self.set_attribute(config, "input_a_enabled", "General", "input_a_enabled", default=True, cast='boolean')
-        self.set_attribute(config, "input_b_enabled", "General", "input_b_enabled", default=True, cast='boolean')
+        self.set_attribute(
+            config,
+            "input_a_enabled",
+            "General",
+            "input_a_enabled",
+            default=True,
+            cast="boolean",
+        )
+        self.set_attribute(
+            config,
+            "input_b_enabled",
+            "General",
+            "input_b_enabled",
+            default=True,
+            cast="boolean",
+        )
 
         self.set_attribute(
             config, "protocol_kind", "Communications", "protocol", default="GPIB"
@@ -330,7 +344,7 @@ class BaseLakeShoreController(CoreDevice):
                     style="readonly",
                 ),
                 Spring(width=10, springy=False),
-                defined_when='input_a_enabled'
+                defined_when="input_a_enabled",
             ),
             HGroup(
                 Item(
@@ -345,7 +359,7 @@ class BaseLakeShoreController(CoreDevice):
                     style="readonly",
                 ),
                 Spring(width=10, springy=False),
-                defined_when='input_b_enabled'
+                defined_when="input_b_enabled",
             ),
             label=self.name,
         )
