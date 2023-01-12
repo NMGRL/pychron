@@ -665,7 +665,7 @@ class FigureOptions(BaseOptions, GroupMixin):
     # group_editor_klass = None
 
     # refresh_colors = Event
-
+    stretch_vertical = Bool
     xpadding = Property
     xpad = Float
     xpad_as_percent = Bool

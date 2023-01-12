@@ -790,8 +790,8 @@ class DVCAnalysis(Analysis):
         ret = analysis_path((self.uuid, self.record_id), repository_identifier, **kw)
         if ret is None:
             self.warning(
-                "Failed locating analysis path for uuid={}, record_id={} in {}".format(
-                    self.uuid, self.record_id, repository_identifier
+                "Failed locating analysis path for uuid={}, record_id={} in {} {}".format(
+                    self.uuid, self.record_id, repository_identifier, kw
                 )
             )
         return ret

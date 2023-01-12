@@ -81,7 +81,7 @@ class FigurePanel(HasTraits):
             fig.suppress_ylimits_update = state
             fig.suppress_xlimits_update = state
 
-    def make_graph(self):
+    def make_graph(self, row=(0,0), col=(0,0)):
 
         po = self.plot_options
         g = self._graph_klass(
@@ -123,7 +123,7 @@ class FigurePanel(HasTraits):
                 )
 
                 if i == 0:
-                    fig.build(plots)
+                    fig.build(plots, row=row, col=col)
 
                 fig.plot(plots, legend)
 
@@ -177,7 +177,7 @@ class FigurePanel(HasTraits):
                 g.set_x_limits(mi, ma, pad=xpad or self.plot_options.xpadding)
 
             self.figures[-1].post_make()
-            self.figures[-1].post_plot(plots)
+            self.figures[-1].post_plot(plots, row, col)
 
             for fig in self.figures:
                 for i in range(len(plots)):

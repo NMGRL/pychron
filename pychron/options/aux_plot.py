@@ -140,10 +140,18 @@ class AuxPlot(HasTraits):
 
     def has_ylimits(self):
         return self._has_ylimits or has_limits(self.ylimits)
+    def has_fixed_ylimits(self):
+        return self.ymin or self.ymax
 
     @on_trait_change("clear_ylimits_button")
-    def clear_ylimits(self):
+    def handle_clear_ylimits(self):
         self.ymin, self.ymax = 0, 0
+        self.clear_ylimits()
+        # self.ylimits = (self.ymin, self.ymax)
+        # self._has_ylimits = has_limits(self.ylimits)
+
+    def clear_ylimits(self):
+        # self.ymin, self.ymax = 0, 0
         self.ylimits = (self.ymin, self.ymax)
         self._has_ylimits = has_limits(self.ylimits)
 

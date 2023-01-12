@@ -119,7 +119,7 @@ class BaseArArFigure(SelectionFigure):
     def get_update_dict(self):
         return {}
 
-    def build(self, plots, plot_dict=None):
+    def build(self, plots, plot_dict=None, row=(0,0), col=(0,0)):
         """
         make plots
         """
@@ -138,7 +138,13 @@ class BaseArArFigure(SelectionFigure):
 
         nplots = len(plots)
 
-        fw, fh = self.options.layout.fixed_width, self.options.layout.fixed_height
+        layout = self.options.layout
+        fw= layout.fixed_width
+        fh = layout.fixed_height
+        stretch_vertical = layout.stretch_vertical
+
+        if fw and col[1]>0:
+            fw = int(fw/col[1])
 
         oheights = sum([po.height for po in plots[1:]])
 
@@ -156,8 +162,9 @@ class BaseArArFigure(SelectionFigure):
                         height = po.height
                 else:
                     height = po.height
-                    if i == 0:
-                        r = "v"
+                    if stretch_vertical:
+                        if i == 0:
+                            r = "v"
 
                 kw["bounds"] = [fw, height]
                 kw["resizable"] = r
@@ -201,10 +208,17 @@ class BaseArArFigure(SelectionFigure):
     def post_make(self):
         self._fix_log_axes()
 
-    def post_plot(self, plots):
+    def post_plot(self, plots, row, col):
         graph = self.graph
-        for (plotobj, po) in zip(graph.plots, plots):
-            self._apply_aux_plot_options(plotobj, po)
+        n = len(plots)
+        for idx, (plotobj, po) in enumerate(zip(graph.plots, plots)):
+            self._apply_aux_plot_options(bool(idx), plotobj, po, row, col)
+            # if this not the only plot and not the upper left turn off error info overlay
+            if (row[1]>1 or col[1]>1) and not (row[0]!=row[1]-1 and col[0]==0):
+                for ov in plotobj.overlays:
+                    if isinstance(ov, FlowPlotLabel):
+                        ov.visible = False
+
 
     def plot(self, *args, **kw):
         pass
@@ -254,8 +268,15 @@ class BaseArArFigure(SelectionFigure):
         # this needs to happen post_plot
         # self._apply_aux_plot_options(pp, po)
 
-    def _apply_aux_plot_options(self, pp, po):
+    def _apply_aux_plot_options(self, is_bottom_plot, pp, po, row, col):
         options = self.options
+
+        # print('aaa', pp.padding_left, pp.width, pp.outer_width)
+        if col[0]>0:
+            pp.padding_left = max(20, int(pp.padding_left*0.5))
+
+
+        # print('bbb', pp.padding_left, pp.width, pp.outer_width)
 
         pp.bgcolor = options.plot_bgcolor
         pp.x_grid.visible = options.use_xgrid
@@ -272,6 +293,12 @@ class BaseArArFigure(SelectionFigure):
                     )
 
             axis.tick_label_font = getattr(options, "{}tick_font".format(k))
+
+        if row[0]<(row[1]-1) and not is_bottom_plot:
+            pp.x_axis.title = ''
+            pp.x_axis.tick_visible = False
+            pp.x_axis.tick_label_formatter = lambda x: ""
+            pp.padding_bottom = 10
 
         if po:
             alt_axis = None
@@ -291,34 +318,40 @@ class BaseArArFigure(SelectionFigure):
                     pp.underlays.append(alt_axis)
                     pp.alt_axis = alt_axis
 
+            if not po.ytitle_visible or col[0]>0:
+                pp.y_axis.title = ''
+
             if not po.ytick_visible:
                 pp.y_axis.tick_visible = False
                 pp.y_axis.tick_label_formatter = lambda x: ""
-                if alt_axis:
+                if alt_axis and not po.ytitle_visible:
                     alt_axis.tick_visible = False
-
-            pp.value_scale = po.scale
-            if po.scale == "log":
-                if po.use_sparse_yticks:
-                    st = SparseLogTicks(step=po.sparse_yticks_step)
-                    pp.value_axis.tick_generator = st
-                    pp.value_grid.tick_generator = st
             else:
-                st = None
-                pp.value_axis.tick_interval = po.ytick_interval
-                if po.use_sparse_yticks:
-                    if po.use_integer_ticks:
-                        st = IntSparseTicks(step=po.sparse_yticks_step)
-                    else:
-                        st = SparseTicks(step=po.sparse_yticks_step)
-                elif po.use_integer_ticks:
-                    st = IntTickGenerator()
+                if po.has_fixed_ylimits() and col[0]>0:
+                    pp.y_axis.tick_label_formatter = lambda x: ""
 
-                if st is not None:
-                    pp.value_axis.tick_generator = st
-                    pp.value_grid.tick_generator = st
-                    if alt_axis:
-                        alt_axis.tick_generator = st
+                pp.value_scale = po.scale
+                if po.scale == "log":
+                    if po.use_sparse_yticks:
+                        st = SparseLogTicks(step=po.sparse_yticks_step)
+                        pp.value_axis.tick_generator = st
+                        pp.value_grid.tick_generator = st
+                else:
+                    st = None
+                    pp.value_axis.tick_interval = po.ytick_interval
+                    if po.use_sparse_yticks:
+                        if po.use_integer_ticks:
+                            st = IntSparseTicks(step=po.sparse_yticks_step)
+                        else:
+                            st = SparseTicks(step=po.sparse_yticks_step)
+                    elif po.use_integer_ticks:
+                        st = IntTickGenerator()
+
+                    if st is not None:
+                        pp.value_axis.tick_generator = st
+                        pp.value_grid.tick_generator = st
+                        if alt_axis:
+                            alt_axis.tick_generator = st
 
     def _set_options_format(self, pp):
         # print 'using options format'

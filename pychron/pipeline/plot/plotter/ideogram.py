@@ -613,7 +613,8 @@ class Ideogram(BaseArArFigure):
                     labels.extend(o._labels)
                     plots.update(o._legend_plots)
 
-            self._add_group_legend(plot, plots, labels)
+            if len(labels)>1:
+                self._add_group_legend(plot, plots, labels)
 
     def _add_subgroup_overlay(self, scatter, ans):
         idx = [i for i, a in enumerate(ans) if isinstance(a, InterpretedAgeGroup)]
@@ -758,8 +759,6 @@ class Ideogram(BaseArArFigure):
                     ov.set_y_limits(0, yma2)
 
     def _add_group_legend(self, plot, plots, labels):
-
-        print("asdf", labels, self.group_id)
         ln, ns, _ = zip(*labels)
         labels = list(zip(ln, ns))
         legend = ExplicitLegend(

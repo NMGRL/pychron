@@ -1373,7 +1373,7 @@ class Graph(ContextMenuMixin):
             if mi is not None:
                 change = ra.low != mi
                 if isinstance(mi, (int, float)):
-                    if mi < ra.high:
+                    if mi < ra.high or (ma is not None and mi<ma):
                         ra.low = mi
                 else:
                     ra.low = mi
@@ -1381,7 +1381,7 @@ class Graph(ContextMenuMixin):
             if ma is not None:
                 change = change or ra.high != ma
                 if isinstance(ma, (int, float)):
-                    if ma > ra.low:
+                    if ma > ra.low or (mi is not None and ma>mi):
                         ra.high = ma
                 else:
                     ra.high = ma
