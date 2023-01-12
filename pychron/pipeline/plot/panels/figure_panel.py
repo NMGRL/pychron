@@ -81,7 +81,7 @@ class FigurePanel(HasTraits):
             fig.suppress_ylimits_update = state
             fig.suppress_xlimits_update = state
 
-    def make_graph(self, row=(0,0), col=(0,0)):
+    def make_graph(self, row=(0, 0), col=(0, 0)):
 
         po = self.plot_options
         g = self._graph_klass(

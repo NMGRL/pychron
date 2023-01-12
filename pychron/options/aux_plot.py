@@ -140,6 +140,7 @@ class AuxPlot(HasTraits):
 
     def has_ylimits(self):
         return self._has_ylimits or has_limits(self.ylimits)
+
     def has_fixed_ylimits(self):
         return self.ymin or self.ymax
 

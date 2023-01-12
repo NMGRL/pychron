@@ -613,7 +613,7 @@ class Ideogram(BaseArArFigure):
                     labels.extend(o._labels)
                     plots.update(o._legend_plots)
 
-            if len(labels)>1:
+            if len(labels) > 1:
                 self._add_group_legend(plot, plots, labels)
 
     def _add_subgroup_overlay(self, scatter, ans):
