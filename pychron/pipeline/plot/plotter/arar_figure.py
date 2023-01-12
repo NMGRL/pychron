@@ -261,6 +261,18 @@ class BaseArArFigure(SelectionFigure):
         pp.x_grid.visible = options.use_xgrid
         pp.y_grid.visible = options.use_ygrid
 
+        for k, axis in (("x", pp.x_axis), ("y", pp.y_axis)):
+            for attr in ("title_font", "tick_in", "tick_out", "tick_label_formatter"):
+                value = getattr(options, "{}{}".format(k, attr))
+                try:
+                    setattr(axis, attr, value)
+                except TraitError as e:
+                    print(
+                        "error setting attr={},value={} error={}".format(attr, value, e)
+                    )
+
+            axis.tick_label_font = getattr(options, "{}tick_font".format(k))
+
         if po:
             alt_axis = None
             if po.y_axis_right:
@@ -307,18 +319,6 @@ class BaseArArFigure(SelectionFigure):
                     pp.value_grid.tick_generator = st
                     if alt_axis:
                         alt_axis.tick_generator = st
-
-        for k, axis in (("x", pp.x_axis), ("y", pp.y_axis)):
-            for attr in ("title_font", "tick_in", "tick_out", "tick_label_formatter"):
-                value = getattr(options, "{}{}".format(k, attr))
-                try:
-                    setattr(axis, attr, value)
-                except TraitError as e:
-                    print(
-                        "error setting attr={},value={} error={}".format(attr, value, e)
-                    )
-
-            axis.tick_label_font = getattr(options, "{}tick_font".format(k))
 
     def _set_options_format(self, pp):
         # print 'using options format'
