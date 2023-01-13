@@ -349,7 +349,8 @@ class VideoStageManager(StageManager):
         pic_format=".jpg",
         include_raw=True,
         render_canvas=True,
-        use_cached=False
+        use_cached=False,
+        crop_to_hole=True,
     ):
         """
         path: abs path to use
@@ -391,6 +392,8 @@ class VideoStageManager(StageManager):
 
             if include_raw:
                 frame = self.video.get_cached_frame(force=not use_cached)
+                if crop_to_hole:
+                    frame = self._crop_to_hole(frame)
                 head, _ = os.path.splitext(path)
                 raw_path = "{}.tif".format(head)
                 self.info("saving snapshot {}".format(raw_path))
@@ -576,6 +579,11 @@ class VideoStageManager(StageManager):
                 else:
                     self.warning(msg)
 
+    def _crop_to_hole(self, frame):
+        dim = self.get_target_dimension()
+        cropdim = dim * 8 * self.pxpermm
+        return self.video.crop(frame, 0,0, cropdim, cropdim)
+
     def _render_snapshot(self, path):
         from chaco.plot_graphics_context import PlotGraphicsContext
 
@@ -626,8 +634,8 @@ class VideoStageManager(StageManager):
         video = self.video
 
         crop_to_hole = True
-        dim = self.get_target_dimension()
-        cropdim = dim * 8 * self.pxpermm
+        # dim = self.get_target_dimension()
+        # cropdim = dim * 8 * self.pxpermm
         color = self.canvas.crosshairs_color.getRgb()[:3]
 
         r = int(self.canvas.get_crosshairs_radius() * self.pxpermm)
@@ -647,7 +655,8 @@ class VideoStageManager(StageManager):
             # ch, cw = int(ch), int(cw)
 
             if crop_to_hole:
-                frame = video.crop(frame, 0, 0, cropdim, cropdim)
+                frame = self._crop_to_hole(frame)
+                # frame = video.crop(frame, 0, 0, cropdim, cropdim)
 
             if self.render_with_markup and frame is not None:
                 # draw crosshairs

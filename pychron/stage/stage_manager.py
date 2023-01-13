@@ -26,7 +26,7 @@ from traits.api import Event, Str, List, Instance, String
 
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.map_canvas import MapCanvas
-from pychron.core.helpers.filetools import glob_list_directory, add_extension
+from pychron.core.helpers.filetools import glob_list_directory, add_extension, list_directory
 from pychron.core.ui.stage_component_editor import LaserComponentEditor
 from pychron.core.ui.thread import Thread
 from pychron.managers.manager import Manager

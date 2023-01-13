@@ -14,6 +14,7 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import numpy as np
 import pywt
 from numpy.fft import fftshift, fftn
 from scipy.ndimage import binary_fill_holes
@@ -334,7 +335,7 @@ class Locator(Loggable):
         cnt = 0
         while t <= 254:
             t = int(t)
-            tt = find(t)
+            tt = find(t, use_segmentation=False)
             visited[t] = len(tt) if tt else 0
             ts.extend(tt)
             if tt:
@@ -546,64 +547,96 @@ class Locator(Loggable):
         self.debug("number markers={}".format(ns))
         ttsrc = zeros_like(wsrc, dtype="uint8")
         step = 200/ns
-        for i in range(1, ns):
-            target = None
-            tsrc = zeros_like(wsrc, dtype="uint8")
-            mask = wsrc == i
+
+        # for i in range(1, ns+1):
+        target = None
+        tsrc = zeros_like(wsrc, dtype="uint8")
+        for i in range(1, ns+1):
+            mask = wsrc==i
             tsrc[mask] = 255
-            ttsrc[mask] = (i+1) * step
-            # image.tile(tsrc)
-            # csrc = colorspace(tsrc)
-            # csrc[mask] = (240, 0, 255)
+        # ttsrc[mask] = (i+1) * step
+
+        targets = self._find_polygon_targets(tsrc)
+        self.debug("polygon targets={}".format(targets))
+
+        if targets:
+            csrc = colorspace(tsrc)
+            csrc[mask] = (240, 50, 255)
+            # image.tile(csrc)
             # image.set_frame(csrc)
+            # print('found target={}'.format(targets))
+            ct = cthreshold * 0.75
+            target = self._test_targets(
+                tsrc, targets, ct, mi, ma * 1.1, use_centest=False
+            )
+            # print('filterd {}'.format(target))
             # time.sleep(1)
+            # if target:
+            #     # image.tile(csrc)
+            #     self.debug("target found for segment {}, ns={}".format(i, ns))
+            #     break
 
-            # bp = _binary_percent(tsrc)
-            # self.debug('binary percent {} {}'.format(i, bp))
-            # if bp < 0.20:
-            #     continue
-            # per = count_nonzero(nsrc) / nsrc.size
-            targets = self._find_polygon_targets(tsrc)
-            self.debug("polygon targets={}".format(targets))
-
-            if targets:
-                csrc = colorspace(tsrc)
-                csrc[mask] = (240, 50, 255)
-                # image.tile(csrc)
-                # image.set_frame(csrc)
-                # print('found target={}'.format(targets))
-                ct = cthreshold * 0.75
-                target = self._test_targets(
-                    tsrc, targets, ct, mi, ma * 1.1, use_centest=False
-                )
-                # print('filterd {}'.format(target))
-                # time.sleep(1)
-                if target:
-                    # image.tile(csrc)
-                    self.debug("target found for segment {}, ns={}".format(i, ns))
-                    break
-        # if not target:
-        #     values, bins = histogram(wsrc, bins=max((10, ns)))
-        #     # assume 0 is the most abundant pixel. ie the image is mostly background
-        #     values, bins = values[1:], bins[1:]
-        #     idxs = nonzero(values)[0]
-        #
-        #     '''
-        #         polygon is now segmented into multiple regions
-        #         consectutively remove a region and find targets
-        #     '''
-        #     nimage = ones_like(wsrc, dtype='uint8') * 255
-        #     nimage[wsrc == 0] = 0
-        #     for idx in idxs:
-        #         bl = bins[idx]
-        #         bu = bins[idx + 1]
-        #         nimage[((wsrc >= bl) & (wsrc <= bu))] = 0
-        #
-        #         targets = self._find_polygon_targets(nimage)
-        #         target = self._test_targets(nimage, targets, ct, mi, ma, use_centest=False)
-        #         if target:
-        #             break
         self._tile(image, ttsrc)
+
+        # old
+        # for i in range(1, ns+1):
+        #     target = None
+        #     tsrc = zeros_like(wsrc, dtype="uint8")
+        #     mask = wsrc == i
+        #     tsrc[mask] = 255
+        #     ttsrc[mask] = (i+1) * step
+        #     # image.tile(tsrc)
+        #     # csrc = colorspace(tsrc)
+        #     # csrc[mask] = (240, 0, 255)
+        #     # image.set_frame(csrc)
+        #     # time.sleep(1)
+        #
+        #     # bp = _binary_percent(tsrc)
+        #     # self.debug('binary percent {} {}'.format(i, bp))
+        #     # if bp < 0.20:
+        #     #     continue
+        #     # per = count_nonzero(nsrc) / nsrc.size
+        #     targets = self._find_polygon_targets(tsrc)
+        #     self.debug("polygon targets={}".format(targets))
+        #
+        #     if targets:
+        #         csrc = colorspace(tsrc)
+        #         csrc[mask] = (240, 50, 255)
+        #         # image.tile(csrc)
+        #         # image.set_frame(csrc)
+        #         # print('found target={}'.format(targets))
+        #         ct = cthreshold * 0.75
+        #         target = self._test_targets(
+        #             tsrc, targets, ct, mi, ma * 1.1, use_centest=False
+        #         )
+        #         # print('filterd {}'.format(target))
+        #         # time.sleep(1)
+        #         if target:
+        #             # image.tile(csrc)
+        #             self.debug("target found for segment {}, ns={}".format(i, ns))
+        #             break
+        # # if not target:
+        # #     values, bins = histogram(wsrc, bins=max((10, ns)))
+        # #     # assume 0 is the most abundant pixel. ie the image is mostly background
+        # #     values, bins = values[1:], bins[1:]
+        # #     idxs = nonzero(values)[0]
+        # #
+        # #     '''
+        # #         polygon is now segmented into multiple regions
+        # #         consectutively remove a region and find targets
+        # #     '''
+        # #     nimage = ones_like(wsrc, dtype='uint8') * 255
+        # #     nimage[wsrc == 0] = 0
+        # #     for idx in idxs:
+        # #         bl = bins[idx]
+        # #         bu = bins[idx + 1]
+        # #         nimage[((wsrc >= bl) & (wsrc <= bu))] = 0
+        # #
+        # #         targets = self._find_polygon_targets(nimage)
+        # #         target = self._test_targets(nimage, targets, ct, mi, ma, use_centest=False)
+        # #         if target:
+        # #             break
+        # self._tile(image, ttsrc)
 
         return target
 

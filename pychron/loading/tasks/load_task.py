@@ -46,8 +46,8 @@ class LoadingTask(BaseManagerTask):
         SToolBar(GotoModeAction(enabled_name='interaction_mode_enabled'),
                  GotoEntryModeAction(enabled_name='interaction_mode_enabled'),
                  FootPedalModeAction(enabled_name='interaction_mode_enabled')),
-        SToolBar(CheckTrayAction(),
-                 MapTrayAction())
+        # SToolBar(CheckTrayAction(),
+        #          MapTrayAction())
     ]
     interaction_mode_enabled = DelegatesTo('manager')
 

@@ -251,35 +251,44 @@ class LoadingManager(DVCIrradiationable):
     checking_level_button = Button('Checking Level')
     up_button = Button('Up')
     down_button = Button('Down')
+    home_button = Button('Home')
+    scan_tray_button = Button("Scan Tray")
     refresh_table = Event
     mode = 'normal'
 
     tray_checker = Instance(TrayChecker)
+
+    use_image_shift = False
 
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
         self.dvc.create_session()
 
         if self.use_stage:
+            pxpermm = 62
             self.stage_manager = VideoStageManager(parent=self,
                                                    name='loader',
-                                                   pxpermm = 62,
+                                                   pxpermm = pxpermm,
+                                                   # root=os.path.join(paths.meta_root, 'load_holders'),
                                                    stage_controller_klass='ZaberMotion')
             self.stage_manager.autocenter_manager.use_autocenter = True
-            self.stage_manager.autocenter_manager.pxpermm = 62
+            self.stage_manager.autocenter_manager.pxpermm = pxpermm
             self.stage_manager.load()
             self.stage_manager.initialize_video()
-            # self.stage_manager.canvas.padding = 0
-            # self.stage_manager.canvas.show_axes = False
+            self.stage_manager.canvas.padding = 10
+            self.stage_manager.canvas.show_axes = False
             self.stage_manager.stage_controller.bootstrap()
             self.stage_manager.stage_controller.update_axes()
             self.tray_checker = TrayChecker(self)
             self.focus_motor = STP_MTRD(name='focusmotor')
             self.focus_motor.bootstrap()
-            self.stage_manager.set_zoom_manually(62)
+            self.stage_manager.set_zoom_manually(pxpermm)
             # self.stage_manager.canvas.set_mapper_limits('x', (-10,10))
             # self.stage_manager.canvas.set_mapper_limits('y', (-10,10))
             self.stage_manager.bind_preferences('pychron.loading')
+
+    def scan_tray(self):
+        self.tray_checker.scan()
 
     def check_tray(self):
         self.tray_checker.check()
@@ -424,11 +433,12 @@ class LoadingManager(DVCIrradiationable):
                 self._update_mv_canvas(hole)
 
     def _update_mv_canvas(self, hole):
-        hole = self.stage_manager.stage_map.get_hole(hole)
-        pos = hole.corrected_position
-        if pos[0] or pos[1]:
-            unmapped_pos = self.stage_manager.get_uncalibrated_xy(pos)
-            self.mv_canvas.update_hole(hole, unmapped_pos)
+        if self.mv_canvas:
+            hole = self.stage_manager.stage_map.get_hole(hole)
+            pos = hole.corrected_position
+            if pos[0] or pos[1]:
+                unmapped_pos = self.stage_manager.get_uncalibrated_xy(pos)
+                self.mv_canvas.update_hole(hole, unmapped_pos)
 
     def make_canvas(self, new, editable=True, klass=None, **kw):
         if klass is None:
@@ -1186,15 +1196,25 @@ class LoadingManager(DVCIrradiationable):
         self.dirty = True
         self.canvas.request_redraw()
 
+    def _scan_tray_button_fired(self):
+        self.scan_tray()
+
     def _up_button_fired(self):
         pos = self.focus_motor.data_position
         self.debug(f'up pos={pos}')
-        self.focus_motor.set_position(0.01)
+        self.focus_motor.set_position(0.025)
+        if self.use_image_shift:
+            self.stage_manager.canvas.shift_right()
 
     def _down_button_fired(self):
         pos = self.focus_motor.data_position
         self.debug(f'down pos={pos}')
-        self.focus_motor.set_position(-0.01)
+        self.focus_motor.set_position(-0.025)
+        if self.use_image_shift:
+            self.stage_manager.canvas.shift_left()
+
+    def _home_button_fired(self):
+        self.focus_motor.home()
 # ============= EOF =============================================
 
 # actions

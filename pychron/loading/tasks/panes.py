@@ -389,12 +389,15 @@ class StageManagerPane(TraitsDockPane):
                           icon_button_editor('autocenter_button', "find")
                           ),
                    UItem('stage_controller', style='custom'),
-                   HGroup(Item('loading_manager.loading_level_button'),
-                          Item('loading_manager.checking_level_button')),
-                   HGroup(Item('loading_manager.up_button'),
-                          Item('loading_manager.down_button')),
                    HGroup(UItem('home'),
                           icon_button_editor("snapshot_button", "camera"), spring),
+
+                   HGroup(UItem('loading_manager.loading_level_button'),
+                          UItem('loading_manager.checking_level_button'),
+                          UItem('loading_manager.scan_tray_button')),
+                   HGroup(icon_button_editor('loading_manager.up_button', 'arrow_up'),
+                          icon_button_editor('loading_manager.down_button', 'arrow_down')),
+
                    self.calibration_view(),
                    self.counter_view()
                    )

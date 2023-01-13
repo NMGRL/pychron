@@ -59,10 +59,10 @@ class SampleHole(HasTraits):
         return self.corrected
 
     def distance(self, h):
-        return ((self.x_cor-h.x_cor)**2+(self.y_cor-h.y_cor)**2)**0.5
+        return ((self.x_cor - h.x_cor) ** 2 + (self.y_cor - h.y_cor) ** 2) ** 0.5
 
     def vector_distance(self, h):
-        return self.x_cor-h.x_cor, self.y_cor-h.y_cor
+        return self.x_cor - h.x_cor, self.y_cor - h.y_cor
 
 
 class BaseStageMap(Loggable):
@@ -154,12 +154,12 @@ class BaseStageMap(Loggable):
 
     def all_holes(self):
         for i, (g, ri) in enumerate(self._grouped_rows()):
-            if i%2:
+            if i % 2:
                 # odd row
-                yield from ri
+                yield from reversed(list(ri))
             else:
                 # even row
-                yield from reversed(list(ri))
+                yield from ri
 
     def circumference_holes(self):
         for i, (g, ri) in enumerate(self._grouped_rows()):
@@ -231,7 +231,6 @@ class BaseStageMap(Loggable):
         """
         return
 
-
         if h.corrected_position:
             # nx, ny = h.nominal_position
             nx, ny = h.calibrated_position
@@ -257,7 +256,7 @@ class BaseStageMap(Loggable):
             r = corrected_rotation - nominal_rotation
 
             self.debug('secondary rotation calibration {}'.format(ny, nx, cy, cx, r))
-            #self.secondary_calibration = ((0, 0), r, 1)
+            # self.secondary_calibration = ((0, 0), r, 1)
             # self.debug('nx {} {} {} {} dx={} dy={}'.format(nx, cx, ny, cy, dx, dy))
             # c, r, s = calculate_transform(h.nominal_position, h.corrected_position)
 

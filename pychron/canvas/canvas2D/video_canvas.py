@@ -65,6 +65,14 @@ class VideoCanvas(SceneCanvas):
         if self.video:
             self.fps = self.video.fps
 
+    def shift_left(self):
+        ox,oy = self.video_underlay.offset
+        self.video_underlay.offset = (ox-1, oy)
+
+    def shift_right(self):
+        ox,oy = self.video_underlay.offset
+        self.video_underlay.offset = (ox+1, oy)
+
     def close_video(self):
         self.closed_event = True
 

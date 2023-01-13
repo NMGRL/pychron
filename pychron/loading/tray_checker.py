@@ -77,7 +77,7 @@ class TrayChecker(MachineVisionManager):
     refresh_image = Event
     stop_button = Button('Stop')
     post_move_delay = 0.125
-    post_check_delay = 1
+    post_check_delay = 0.125
 
     def __init__(self, loading_manager, *args, **kw):
         super(TrayChecker, self).__init__(*args, **kw)
@@ -96,14 +96,17 @@ class TrayChecker(MachineVisionManager):
         self._iter()
 
     def map(self):
-        self._iter(map_positions=True)
+        self._iter(func=self._map_positions)
 
-    def _iter(self, map_positions=False):
-        use_ml = True
+    def scan(self):
+        self._iter(func=self._scan)
+
+    def _iter(self, func=None):
+        use_ml = False
         pipe = None
         if use_ml:
             pipe = self._get_classifier()
-        self.edit_traits(view=View(UItem('stop_button'),
+        info = self.edit_traits(view=View(UItem('stop_button'),
                                    UItem('object.display_image.source_frame',
                                          width=640,
                                          height=480,
@@ -112,16 +115,13 @@ class TrayChecker(MachineVisionManager):
                                    # height=900,
                                    ))
 
-        if map_positions:
-            func = self._map_positions
-        else:
+        if func is None:
             func = self._check
-
-        self._thread = Thread(target=func, args=(pipe,))
+        self._alive =True
+        self._thread = Thread(target=func, args=(pipe,info))
         self._thread.start()
 
-    def _map_positions(self, pipe):
-        self._alive = True
+    def _map_positions(self, pipe, info):
         results = []
         for hole in self._loading_manager.stage_manager.stage_map.sample_holes[:11]:
             if not self._alive:
@@ -151,8 +151,35 @@ class TrayChecker(MachineVisionManager):
                 line = '{}\n'.format(line)
                 wfile.write(line)
 
-    def _check(self, pipe):
-        self._alive = True
+    def _scan(self, pipe, info):
+        trayname = self._loading_manager.stage_manager.stage_map.name
+        traypath = os.path.join(paths.snapshot_dir, trayname)
+        if not os.path.isdir(traypath):
+            os.mkdir(traypath)
+
+        for hole in self._loading_manager.stage_manager.stage_map.all_holes():
+            if not self._alive:
+                self.debug('exiting check loop')
+                break
+
+            pos = hole.id
+            # for pos in self._loading_manager.positions:
+            self._loading_manager.goto(pos, block=True)
+            time.sleep(self.post_move_delay)
+            frame = self.new_image_frame(pos)
+
+            self._loading_manager.stage_manager.snapshot(name=os.path.join(traypath, '{}.tc'.format(pos)),
+                                                         render_canvas=False, inform=False)
+            self.display_image.clear()
+            self.display_image.tile(frame)
+            self.display_image.tilify()
+            self.display_image.refresh_needed = True
+            time.sleep(self.post_check_delay)
+
+        info.dispose()
+        self.information_dialog(f'Scan of {trayname} complete')
+
+    def _check(self, pipe, info):
         for hole in self._loading_manager.stage_manager.stage_map.sample_holes:
             if not self._alive:
                 self.debug('exiting check loop')

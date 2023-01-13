@@ -554,7 +554,6 @@ class LaserTrayCanvas(StageCanvas):
         return direction
 
     def _add_bounds_rect(self):
-        print('adding bound react', self.show_bounds_rect)
         if self.show_bounds_rect:
             self.overlays.append(BoundsOverlay(component=self))
 
@@ -582,7 +581,6 @@ class LaserTrayCanvas(StageCanvas):
         self.request_redraw()
 
     def _show_bounds_rect_changed(self):
-        print('asdfsdafsdfsdfasdf', self.show_bounds_rect)
         if self.show_bounds_rect:
             self._add_bounds_rect()
         else:

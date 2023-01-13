@@ -199,6 +199,7 @@ class SemiAutoCalibrator(TrayCalibrator):
         record autocenter position
         warn user about failures
         """
+        st = time.time()
         sm = self.stage_manager
         smap = self.stage_map
 
@@ -279,7 +280,7 @@ class SemiAutoCalibrator(TrayCalibrator):
                 success_cb(results)
 
             invoke_in_main_thread(open_view, sv)
-
+        self.debug(f'calibration time={time.time()-st:0.3f}s')
         # reset calibration manager
         self.calibration_step = "Calibrate"
         self.calibration_enabled = True
