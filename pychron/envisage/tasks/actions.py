@@ -229,9 +229,11 @@ class IssueAction(WebAction):
 
 
 class ManageSettingsAction(Action):
-    name = 'Install Settings...'
+    name = "Install Settings..."
+
     def perform(self, event):
         from pychron.envisage.settings_manager import SettingsManager
+
         man = SettingsManager()
         man.edit_traits()
 

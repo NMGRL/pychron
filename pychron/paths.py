@@ -523,7 +523,7 @@ class Paths(object):
 
         self.oauth_file = join(self.appdata_dir, "oauth.json")
 
-        self.packages_file = join(self.appdata_dir, 'packages.json')
+        self.packages_file = join(self.appdata_dir, "packages.json")
 
         build_directories()
 

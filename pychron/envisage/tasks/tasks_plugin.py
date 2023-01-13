@@ -53,7 +53,8 @@ from pychron.envisage.tasks.actions import (
     DocumentationAction,
     ChangeLogAction,
     RestartAction,
-    StartupTestsAction, ManageSettingsAction,
+    StartupTestsAction,
+    ManageSettingsAction,
 )
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.envisage.tasks.base_task import WindowGroup

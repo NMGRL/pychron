@@ -28,6 +28,7 @@ from traits.api import Int, List, Button, Str, HasTraits, Property
 
 from pychron.paths import paths
 
+
 def memoize(function):
     """ """
     cache = {}
@@ -47,33 +48,40 @@ class Package(HasTraits):
     def get_settings(self):
         manifest = self.get_manifest_file()
         # for file in manifest.split('\n'):
-        return manifest.split('\n')
+        return manifest.split("\n")
+
     def get_setting(self, name):
         return self.get_file(name)
+
     def get_manifest_file(self):
-        return self.get_file('manifest.txt')
+        return self.get_file("manifest.txt")
+
     @memoize
     def get_file(self, path):
         url = self.url
-        if url.startswith('https://github'):
-            url = url.replace('https://github.com', 'https://raw.githubusercontent.com')
-        url = f'{url}/main/{path}'
+        if url.startswith("https://github"):
+            url = url.replace("https://github.com", "https://raw.githubusercontent.com")
+        url = f"{url}/main/{path}"
         resp = requests.get(url)
         if resp.status_code == 200:
             return resp.text
+
     def get_description(self, name):
         name = f'{".".join(name.split(".")[:-1])}.md'
-        return self.get_file(name) or ''
+        return self.get_file(name) or ""
+
 
 class SettingsManager(Loggable):
     packages = List
-    package_names = Property(depends_on='packages')
+    package_names = Property(depends_on="packages")
     selected_package = Str
     available_settings = List
     selected_settings = List
     install_settings_button = Button("Install")
-    help_str = Str('Select a package to load available settings.  Select one or more settings '
-                   'and then click the "Install" button')
+    help_str = Str(
+        "Select a package to load available settings.  Select one or more settings "
+        'and then click the "Install" button'
+    )
     selected_description = Str
 
     def __init__(self, *args, **kw):
@@ -86,15 +94,21 @@ class SettingsManager(Loggable):
 
     def _load_packages(self):
         if not os.path.isfile(paths.packages_file):
-            self.packages = [Package(name='PychronLabsLLC',
-                                     url='https://github.com/PychronLabsLLC/settings_package')]
+            self.packages = [
+                Package(
+                    name="PychronLabsLLC",
+                    url="https://github.com/PychronLabsLLC/settings_package",
+                )
+            ]
         else:
-            with open(paths.packages_file, 'r') as rfile:
+            with open(paths.packages_file, "r") as rfile:
                 ps = json.load(rfile)
                 self.packages = ps
+
     def _dump_packages(self):
-        with open(paths.packages_file, 'w') as wfile:
+        with open(paths.packages_file, "w") as wfile:
             json.dump(list(self.packages), wfile)
+
     def _install_settings_button_fired(self):
         print(self.selected_settings)
         p = self._get_package()
@@ -102,11 +116,13 @@ class SettingsManager(Loggable):
             sfile = p.get_setting(s)
 
             # name will be something like spectrum.multigraph.json
-            args = s.split('.')
-            name = '.'.join(args[1:])
+            args = s.split(".")
+            name = ".".join(args[1:])
             basedir = args[0]
-            destpath = os.path.join(paths.plotter_options_dir, globalv.username, basedir, name)
-            with open(destpath, 'w') as wfile:
+            destpath = os.path.join(
+                paths.plotter_options_dir, globalv.username, basedir, name
+            )
+            with open(destpath, "w") as wfile:
                 wfile.write(sfile)
 
     def _selected_settings_changed(self):
@@ -122,32 +138,59 @@ class SettingsManager(Loggable):
         if name is None:
             name = self.selected_package
 
-        return next((p for p in self.packages if p.name==name), None)
+        return next((p for p in self.packages if p.name == name), None)
+
     def _get_package_names(self):
         return [p.name for p in self.packages]
 
     def traits_view(self):
-        v = View(VGroup(BorderVGroup(CustomLabel('help_str', size=14),),
-                        HGroup(VGroup(BorderVGroup(UItem('package_names',
-                                                  editor=ListStrEditor(editable=False, selected='selected_package')),
-                                            label='Packages')),
-                        VGroup(
-                            # icon_button_editor('install_settings_button', 'document-import'),
-                               BorderVGroup(UItem('available_settings', editor=ListStrEditor(editable=False,
-                                                                         multi_select=True,
-                                                                         selected='selected_settings')),
-                                            UItem('selected_description',
-                                                  style='custom',
-                                                  editor=TextEditor(read_only=True)),
-                                            label='Settings'
-                                            ),
-                            UItem("install_settings_button", enabled_when='selected_settings')
-                        ))),
-                 title='Install Settings')
+        v = View(
+            VGroup(
+                BorderVGroup(
+                    CustomLabel("help_str", size=14),
+                ),
+                HGroup(
+                    VGroup(
+                        BorderVGroup(
+                            UItem(
+                                "package_names",
+                                editor=ListStrEditor(
+                                    editable=False, selected="selected_package"
+                                ),
+                            ),
+                            label="Packages",
+                        )
+                    ),
+                    VGroup(
+                        # icon_button_editor('install_settings_button', 'document-import'),
+                        BorderVGroup(
+                            UItem(
+                                "available_settings",
+                                editor=ListStrEditor(
+                                    editable=False,
+                                    multi_select=True,
+                                    selected="selected_settings",
+                                ),
+                            ),
+                            UItem(
+                                "selected_description",
+                                style="custom",
+                                editor=TextEditor(read_only=True),
+                            ),
+                            label="Settings",
+                        ),
+                        UItem(
+                            "install_settings_button", enabled_when="selected_settings"
+                        ),
+                    ),
+                ),
+            ),
+            title="Install Settings",
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     paths.build("~/PychronDev")
     s = SettingsManager()
     s.configure_traits()
