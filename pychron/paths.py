@@ -276,6 +276,7 @@ class Paths(object):
     actuation_tracker_file = None
 
     oauth_file = None
+    packages_file = None
     # plot_factory_defaults = (('ideogram_defaults', 'IDEOGRAM_DEFAULTS', True),
     #                          ('spectrum_defaults', 'SPECTRUM_DEFAULTS', True))
 
@@ -521,6 +522,8 @@ class Paths(object):
         )
 
         self.oauth_file = join(self.appdata_dir, "oauth.json")
+
+        self.packages_file = join(self.appdata_dir, 'packages.json')
 
         build_directories()
 

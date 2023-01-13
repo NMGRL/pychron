@@ -53,7 +53,7 @@ from pychron.envisage.tasks.actions import (
     DocumentationAction,
     ChangeLogAction,
     RestartAction,
-    StartupTestsAction,
+    StartupTestsAction, ManageSettingsAction,
 )
 from pychron.envisage.tasks.base_plugin import BasePlugin
 from pychron.envisage.tasks.base_task import WindowGroup
@@ -205,6 +205,7 @@ class myTasksPlugin(TasksPlugin):
             return SMenu(
                 ShareSettingsAction(),
                 ApplySettingsAction(),
+                ManageSettingsAction(),
                 id="tools.menu",
                 name="Tools",
             )
