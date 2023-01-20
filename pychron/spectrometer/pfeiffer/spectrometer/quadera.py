@@ -106,7 +106,13 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
             # read all the buffered messages
             if not buffer_empty and "Time" in obj:
                 t = obj["Time"]
-                v = datetime.strptime(t, "%I:%M:%S %p")
+                try:
+                    v = datetime.strptime(t, "%I:%M:%S %p")
+                except ValueError:
+                    self.debug('Invalid "Time" in message. continuing')
+                    self.debug_exception()
+                    continue
+
                 v = datetime.combine(nowdate, v.time())
 
                 dt = abs(v - datetime.now())
