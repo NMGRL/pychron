@@ -403,7 +403,7 @@ class PipelineEngine(Loggable):
     def group_selected(self, key):
 
         # if there are multiple graphs only get the analyses from the selected graph
-        if key != 'graph_id':
+        if key != "graph_id":
             # e.g. key=='group_id'
             items = self.selected_unknowns
             graph_id = items[0].graph_id
