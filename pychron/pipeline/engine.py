@@ -244,7 +244,7 @@ class Pipeline(HasTraits):
             try:
 
                 def gen():
-                    for n in self.nodes[idx + 1:]:
+                    for n in self.nodes[idx + 1 :]:
                         yield n
                         if isinstance(n, NodeGroup):
                             for nn in n.nodes:
@@ -401,7 +401,7 @@ class PipelineEngine(Loggable):
         self.refresh_figure_editors()
 
     def group_selected(self, key):
-        if key == 'group_id':
+        if key == "group_id":
             items = self.selected.unknowns
             items_to_set = self.selected_unknowns
         else:
@@ -441,8 +441,8 @@ class PipelineEngine(Loggable):
 
         if node.configure():
             for tag, klass, editor in (
-                    ("Ideogram", IdeogramNode, IdeogramEditor),
-                    ("Spectrum", SpectrumNode, SpectrumEditor),
+                ("Ideogram", IdeogramNode, IdeogramEditor),
+                ("Spectrum", SpectrumNode, SpectrumEditor),
             ):
 
                 if isinstance(node, klass):
@@ -801,7 +801,7 @@ class PipelineEngine(Loggable):
             return True
 
     def run_pipeline(
-            self, run_from=None, state=None, pipeline=None, post_run=True, configure=True
+        self, run_from=None, state=None, pipeline=None, post_run=True, configure=True
     ):
         self.selected_unknowns = []
         self.selected_references = []
@@ -1061,7 +1061,7 @@ class PipelineEngine(Loggable):
 
         # predefined_templates contributed to by other plugins
         for grp_name, gs in groupby_key(
-                default + self.predefined_templates, key=itemgetter(0)
+            default + self.predefined_templates, key=itemgetter(0)
         ):
             grp = PipelineTemplateGroup(
                 name=grp_name, icon=icon(self.pipeline_group_icon_map.get(grp_name, ""))
@@ -1076,7 +1076,7 @@ class PipelineEngine(Loggable):
             pp = os.path.join(paths.user_pipeline_template_dir, grp_name.lower())
             # add templates from named user directory
             for temp in glob_list_directory(
-                    pp, extension=".yaml", remove_extension=True
+                pp, extension=".yaml", remove_extension=True
             ):
                 path = os.path.join(pp, "{}.yaml".format(temp))
                 templates.append(PipelineTemplate(temp, path, nodes, node_factories))
@@ -1088,7 +1088,7 @@ class PipelineEngine(Loggable):
         grp = PipelineTemplateGroup(name="User", icon=icon("user_suit"))
         user_templates = []
         for temp in glob_list_directory(
-                paths.user_pipeline_template_dir, extension=".yaml", remove_extension=True
+            paths.user_pipeline_template_dir, extension=".yaml", remove_extension=True
         ):
             path = os.path.join(
                 paths.user_pipeline_template_dir, "{}.yaml".format(temp)
@@ -1370,5 +1370,6 @@ class PipelineEngine(Loggable):
 
     def _pipeline_default(self):
         return self.pipeline_group.pipelines[0]
+
 
 # ============= EOF =============================================

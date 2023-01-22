@@ -265,7 +265,9 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         graph_id = selected.graph_id
 
         # get the max group id for this graph
-        max_gid = max([si.group_id for si in self.analyses if si.graph_id == graph_id]) + 1
+        max_gid = (
+            max([si.group_id for si in self.analyses if si.graph_id == graph_id]) + 1
+        )
         for s in selected:
             s.group_id = max_gid
 
