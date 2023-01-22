@@ -401,14 +401,18 @@ class PipelineEngine(Loggable):
         self.refresh_figure_editors()
 
     def group_selected(self, key):
-        if key == "group_id":
-            items = self.selected.unknowns
-            items_to_set = self.selected_unknowns
-        else:
+
+        # if there are multiple graphs only get the analyses from the selected graph
+        if key != 'graph_id':
+            # e.g. key=='group_id'
             items = self.selected_unknowns
             graph_id = items[0].graph_id
             items = [i for i in items if i.graph_id == graph_id]
             items_to_set = items
+        else:
+            # graph grouping
+            items = self.selected.unknowns
+            items_to_set = self.selected_unknowns
 
         max_gid = max([getattr(si, key) for si in items]) + 1
         self._set_grouping(items_to_set, max_gid, attr=key)
