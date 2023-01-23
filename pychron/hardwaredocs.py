@@ -17,30 +17,30 @@ from pychron.hardware import HW_PACKAGE_MAP
 
 import sys
 
+
 def extract_doc(cf):
     name = cf.__name__
     rdoc = cf.__doc__
-    doc = ''
+    doc = ""
     if rdoc:
         active = False
-        lines = rdoc.split('\n')
+        lines = rdoc.split("\n")
         for i, line in enumerate(lines):
-            if line.strip()==':::':
+            if line.strip() == ":::":
                 active = True
                 break
 
         if active:
-            doc = '\n'.join(lines[i+1:])
+            doc = "\n".join(lines[i + 1 :])
 
-    return f'''{name}
+    return f"""{name}
 ==========================
 {doc}
-    '''
-
+    """
 
 
 def assemble_docs():
-    contents=[]
+    contents = []
     for klass, package in HW_PACKAGE_MAP.items():
         # print(klass, package)
 
@@ -48,24 +48,24 @@ def assemble_docs():
         try:
             m = __import__(package, globals(), locals(), [klass])
         except ModuleNotFoundError as e:
-            print('No module', e)
+            print("No module", e)
             continue
 
         try:
             class_factory = getattr(m, klass)
         except AttributeError as e:
-            print('No klass', e)
+            print("No klass", e)
             continue
 
         description_doc = extract_doc(class_factory)
         contents.append(description_doc)
 
-    content = '\n'.join(contents)
-    with open('./hardwaredocs.md', 'w') as wfile:
+    content = "\n".join(contents)
+    with open("./hardwaredocs.md", "w") as wfile:
         wfile.write(content)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     assemble_docs()
 
 # ============= EOF =============================================
