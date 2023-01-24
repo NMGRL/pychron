@@ -49,15 +49,17 @@ jobs:
       - name: Install PIP dependencies
         run: >
           ~/.edm/envs/edm/bin/python -m pip install --no-dependencies uncertainties qimage2ndarray peakutils
+      - name: build docs
+        run: |
+          ~/.edm/envs/edm/bin/python pychron/hardwaredocs.py 
+
       - name: fetch wiki
         uses: actions/checkout@v2
         with:
           repository: NMGRL/pychron.wiki
-      - name: build docs
-        run: |
-          ~/.edm/envs/edm/bin/python pychron/hardwaredocs.py  
+
       - name:
-        run: cp ./pychron/hardwaredocs.md ../pychron.wiki/Available-Hardware.md
+        run: cp ../pychron/pychron/hardwaredocs.md ./Available-Hardware.md
 #      - name: fetch
 #        uses: actions/checkout@v2
 #        with:
