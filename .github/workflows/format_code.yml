@@ -52,7 +52,7 @@ jobs:
       - name: fetch wiki
         uses: actions/checkout@v2
         with:
-          ref: https://github.com/NMGRL/pychron.wiki
+          repository: NMGRL/pychron.wiki
       - name: build docs
         run: |
           ~/.edm/envs/edm/bin/python pychron/hardwaredocs.py  
