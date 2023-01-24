@@ -53,7 +53,7 @@ jobs:
         run: |
           ~/.edm/envs/edm/bin/python pychron/hardwaredocs.py 
       - name: copy to temp
-        run: cp /Users/runner/work/pychron/pychron/hardwaredocs.md /Users/runner/work/hardwaredocs.md
+        run: cp pychron/hardwaredocs.md /Users/runner/work/hardwaredocs.md
       - name: fetch wiki
         uses: actions/checkout@v2
         with:
