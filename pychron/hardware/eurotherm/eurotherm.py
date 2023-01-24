@@ -30,8 +30,6 @@ from __future__ import absolute_import
 from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.eurotherm.base import BaseEurotherm
 
-print("asdfsafd")
-
 
 class Eurotherm(BaseEurotherm, CoreDevice):
     """

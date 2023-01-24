@@ -68,7 +68,7 @@ def assemble_docs():
     contents = []
 
     for klass, package in sorted(list(HW_PACKAGE_MAP.items()) + list(PACKAGES.items())):
-        # print(klass, package)
+        print(klass, package)
 
         # package = HW_PACKAGE_MAP[klass]
         try:
@@ -84,12 +84,13 @@ def assemble_docs():
             if klass == "Eurotherm":
                 print(dir(m))
             continue
-
+        print('built', klass)
         description_doc = extract_doc(package, class_factory)
         contents.append(description_doc)
 
     content = "\n".join(contents)
-    with open(os.path.join(root, "pychron", "hardwaredocs.md"), "w") as wfile:
+    pname = os.environ.get('PNAME', 'hardwaredocs.md')
+    with open(os.path.join(root, "pychron", pname), "w") as wfile:
         wfile.write(content)
 
 
