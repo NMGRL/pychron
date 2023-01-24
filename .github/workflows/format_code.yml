@@ -52,14 +52,15 @@ jobs:
       - name: build docs
         run: |
           ~/.edm/envs/edm/bin/python pychron/hardwaredocs.py 
-
+      - name: copy to temp
+        run: cp /Users/runner/work/pychron/pychron/hardwaredocs.md /Users/runner/work/hardwaredocs.md
       - name: fetch wiki
         uses: actions/checkout@v2
         with:
           repository: NMGRL/pychron.wiki
           set-safe-directory: /Users/runner/work/pychron.wiki
       - name: copy to wiki
-        run: cp /Users/runner/work/pychron/pychron/hardwaredocs.md /Users/runner/work/pychron.wiki/Available-Hardware.md
+        run:  cp /Users/runner/work/hardwaredocs.md /Users/runner/work/pychron.wiki/Available-Hardware.md
 #      - name: fetch
 #        uses: actions/checkout@v2
 #        with:
