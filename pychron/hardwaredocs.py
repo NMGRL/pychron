@@ -39,7 +39,7 @@ def extract_doc(mod, cf):
                 break
 
         if active:
-            doc = "\n".join(lines[i + 1:])
+            doc = "\n".join(lines[i + 1 :])
             try:
                 ydoc = yaml.load(doc, Loader=yaml.SafeLoader)
                 description = ydoc.pop("description", description)
