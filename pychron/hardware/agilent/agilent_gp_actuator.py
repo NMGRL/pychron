@@ -24,8 +24,10 @@ from pychron.hardware.agilent.agilent_mixin import AgilentMixin
 
 class AgilentGPActuator(AgilentMixin, GPActuator):
     """
-    Abstract module for the Agilent 34903A GP AgilentGPActuator
-
+    :::
+    name: Agilent 34903A
+    description: Abstract module for the Agilent 34903A GP AgilentGPActuator
+    website: https://www.keysight.com/us/en/product/34903A/20-channel-actuator-gp-switch-module.html
     """
 
     # def get_indicator_state(self, obj, *args, **kw):

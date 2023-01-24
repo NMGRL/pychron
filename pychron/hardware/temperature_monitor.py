@@ -105,7 +105,13 @@ TC_KEYS = ["J", "K", "T", "E", "N", "Din-J", "R", "S", "B", "C"]
 
 
 class DPi32TemperatureMonitor(ISeriesDevice):
-    """ """
+    """
+    :::
+    name: DPi32 Temperature Monitor
+    website: http://www.omega.com/iseries/Pdf/M3397CO.pdf
+    description: Simple RS-232 temp. monitor. Good for streaming thermocouple observation for both high and low
+      temperature ranges
+    """
 
     scan_func = "read_temperature"
     input_type = Property(depends_on="_input_type")
