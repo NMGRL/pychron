@@ -58,8 +58,8 @@ jobs:
         with:
           repository: NMGRL/pychron.wiki
 
-      - name:
-        run: cp ../pychron/pychron/hardwaredocs.md ./Available-Hardware.md
+      - name: copy to wiki
+        run: cp /Users/runner/work/pychron/pychron/hardwaredocs.md /Users/runner/work/pychron.wiki/Available-Hardware.md
 #      - name: fetch
 #        uses: actions/checkout@v2
 #        with:
