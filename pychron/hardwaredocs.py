@@ -15,17 +15,13 @@
 # ===============================================================================
 
 import sys, os
-
 import yaml
-
-from pychron.hardware.actuators import PACKAGES
 
 root = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(root)
 
+from pychron.hardware.actuators import PACKAGES
 from pychron.hardware import HW_PACKAGE_MAP
-
-import sys
 
 
 def extract_doc(mod, cf):
@@ -43,7 +39,7 @@ def extract_doc(mod, cf):
                 break
 
         if active:
-            doc = "\n".join(lines[i + 1 :])
+            doc = "\n".join(lines[i + 1:])
             try:
                 ydoc = yaml.load(doc, Loader=yaml.SafeLoader)
                 description = ydoc.pop("description", description)
