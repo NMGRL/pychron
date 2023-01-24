@@ -28,6 +28,7 @@ class PLC2000GPActuator(GPActuator, ModbusMixin, ClientMixin):
     website: https://automationdirect.com
 
     """
+
     def _actuate(self, obj, action):
         addr = int(obj.address) - 1
         state = action.lower() == "open"
