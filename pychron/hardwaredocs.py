@@ -88,7 +88,7 @@ def assemble_docs():
         description_doc = extract_doc(package, class_factory)
         contents.append(description_doc)
 
-    content = "\n".join(contents)
+    content = "# Available Hardware Drivers\n".join(contents)
     pname = os.environ.get("PNAME", "hardwaredocs.md")
     with open(os.path.join(root, "pychron", pname), "w") as wfile:
         wfile.write(content)
