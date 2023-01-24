@@ -84,12 +84,12 @@ def assemble_docs():
             if klass == "Eurotherm":
                 print(dir(m))
             continue
-        print('built', klass)
+        print("built", klass)
         description_doc = extract_doc(package, class_factory)
         contents.append(description_doc)
 
     content = "\n".join(contents)
-    pname = os.environ.get('PNAME', 'hardwaredocs.md')
+    pname = os.environ.get("PNAME", "hardwaredocs.md")
     with open(os.path.join(root, "pychron", pname), "w") as wfile:
         wfile.write(content)
 
