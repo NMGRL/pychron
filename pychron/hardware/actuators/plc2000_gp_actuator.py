@@ -21,6 +21,13 @@ from pychron.hardware.core.modbus import ModbusMixin
 
 
 class PLC2000GPActuator(GPActuator, ModbusMixin, ClientMixin):
+    """
+    :::
+    name: PLC2000
+    description: AutomationDirect.com PLC
+    website: https://automationdirect.com
+
+    """
     def _actuate(self, obj, action):
         addr = int(obj.address) - 1
         state = action.lower() == "open"
