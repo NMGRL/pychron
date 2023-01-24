@@ -82,7 +82,7 @@ HW_PACKAGE_MAP = {
     "SPCIonPumpController": hardware_pkg("ionpump.spc_ion_pump_controller"),
     "HiPace": hardware_pkg("turbo.hipace"),
     "ADCGaugeController": gauge_pkg("adc_gauge_controller"),
-    "WatlowEZZone": hardware_pkg("watlow.watlow_ezzone")
+    "WatlowEZZone": hardware_pkg("watlow.watlow_ezzone"),
 }
 
 

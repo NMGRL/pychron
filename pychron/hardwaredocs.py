@@ -33,7 +33,7 @@ def extract_doc(mod, cf):
     name = classname
     rdoc = cf.__doc__
     doc = ""
-    description = ''
+    description = ""
     if rdoc:
         active = False
         lines = rdoc.split("\n")
@@ -43,14 +43,14 @@ def extract_doc(mod, cf):
                 break
 
         if active:
-            doc = "\n".join(lines[i + 1:])
+            doc = "\n".join(lines[i + 1 :])
             try:
                 ydoc = yaml.load(doc, Loader=yaml.SafeLoader)
-                description = ydoc.pop('description', description)
+                description = ydoc.pop("description", description)
                 name = ydoc.pop("name", classname)
                 doc = yaml.dump(ydoc)
             except yaml.YamlError as e:
-                print('asdf', e)
+                print("asdf", e)
 
     return f"""{name}
 ==========================
@@ -71,7 +71,7 @@ def extract_doc(mod, cf):
 def assemble_docs():
     contents = []
 
-    for klass, package in sorted(list(HW_PACKAGE_MAP.items())+list(PACKAGES.items())):
+    for klass, package in sorted(list(HW_PACKAGE_MAP.items()) + list(PACKAGES.items())):
         # print(klass, package)
 
         # package = HW_PACKAGE_MAP[klass]
@@ -85,7 +85,7 @@ def assemble_docs():
             class_factory = getattr(m, klass)
         except AttributeError as e:
             print("No klass", e)
-            if klass == 'Eurotherm':
+            if klass == "Eurotherm":
                 print(dir(m))
             continue
 
@@ -93,7 +93,7 @@ def assemble_docs():
         contents.append(description_doc)
 
     content = "\n".join(contents)
-    with open(os.path.join(root, 'pychron', "hardwaredocs.md"), "w") as wfile:
+    with open(os.path.join(root, "pychron", "hardwaredocs.md"), "w") as wfile:
         wfile.write(content)
 
 
