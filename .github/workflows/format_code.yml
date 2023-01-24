@@ -52,6 +52,10 @@ jobs:
       - name: build docs
         run: |
           ~/.edm/envs/edm/bin/python pychron/hardwaredocs.py
+      - name: fetch
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v4.1.2
         with:
