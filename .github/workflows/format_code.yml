@@ -57,8 +57,7 @@ jobs:
         run: |
           ~/.edm/envs/edm/bin/python pychron/hardwaredocs.py  
       - name:
-          run:
-            cp ./pychron/hardwaredocs.md ../pychron.wiki/Available-Hardware.md
+        run: cp ./pychron/hardwaredocs.md ../pychron.wiki/Available-Hardware.md
 #      - name: fetch
 #        uses: actions/checkout@v2
 #        with:
