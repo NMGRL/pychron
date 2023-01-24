@@ -60,7 +60,7 @@ jobs:
           repository: NMGRL/pychron.wiki
           set-safe-directory: /Users/runner/work/pychron.wiki
       - name: copy to wiki
-        run:  cp /Users/runner/work/hardwaredocs.md /Users/runner/work/pychron.wiki/Available-Hardware.md
+        run:  cp /Users/runner/work/hardwaredocs.md ./Available-Hardware.md
 #      - name: fetch
 #        uses: actions/checkout@v2
 #        with:
