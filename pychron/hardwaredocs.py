@@ -13,6 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+
+import sys, os
+p = os.path.dirname(os.path.dirname(__file__))
+sys.path.append(p)
+
+
 from pychron.hardware import HW_PACKAGE_MAP
 
 import sys
