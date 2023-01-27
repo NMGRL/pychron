@@ -40,7 +40,7 @@ from traitsui.tabular_adapter import TabularAdapter
 # ============= local library imports  ==========================
 from pychron.core.configurable_tabular_adapter import ConfigurableMixin
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view, VFold, rfloatitem
-from pychron.core.pychron_traits import BorderHGroup
+from pychron.core.pychron_traits import BorderHGroup, BorderVGroup
 from pychron.core.ui.button_editor import ButtonEditor
 from pychron.core.ui.custom_label_editor import CustomLabel
 from pychron.core.ui.image_editor import ImageEditor
@@ -310,7 +310,8 @@ class StageManagerPane(TraitsDockPane):
             "object": sm,
             "foot_pedal": self.model.foot_pedal,
             "focus_motor": self.model.focus_motor,
-            "loading_manager": self.model
+            "loading_manager": self.model,
+            "canvas": sm.canvas
         }
 
     def calibration_view(self):
@@ -325,8 +326,8 @@ class StageManagerPane(TraitsDockPane):
                 rfloatitem("tray_calibration.cx"), rfloatitem("tray_calibration.cy")
             ),
             rfloatitem("tray_calibration.rotation"),
-            rfloatitem("tray_calibration.scale", sigfigs=4),
-            rfloatitem("tray_calibration.error", sigfigs=2),
+            # rfloatitem("tray_calibration.scale", sigfigs=4),
+            # rfloatitem("tray_calibration.error", sigfigs=2),
             label="Results",
             show_border=True,
         )
@@ -359,8 +360,8 @@ class StageManagerPane(TraitsDockPane):
                 "tray_calibration.cancel_button",
                 enabled_when="tray_calibration.isCalibrating()",
             ),
-            UItem("tray_calibration.set_center_button"),
-            UItem("tray_calibration.clear_corrections_button")
+            # UItem("tray_calibration.set_center_button"),
+            # UItem("tray_calibration.clear_corrections_button")
         )
         tc_grp = VGroup(
             cal_grp,
@@ -370,39 +371,70 @@ class StageManagerPane(TraitsDockPane):
         )
         return tc_grp
 
-    def counter_view(self):
-        g = BorderHGroup(Item('foot_pedal.max_count'),
-                         CustomLabel('foot_pedal.count',
-                                     size=20,
-                                     color='orange',
-                                     bgcolor='black',
-                                     use_color_background=True,
-                                     style='readonly'),
-                         label="Foot Pedal"
-                         )
-        return g
+    # def counter_view(self):
+    #
+    #     return g
 
     def traits_view(self):
         v = View(
-            VGroup(HGroup(UItem("calibrated_position_entry",
-                                tooltip="Enter a position e.g 1 for a hole, " "or 3,4 for X,Y"),
-                          icon_button_editor('autocenter_button', "find")
-                          ),
-                   UItem('stage_controller', style='custom'),
-                   HGroup(UItem('home'),
-                          icon_button_editor("snapshot_button", "camera"), spring),
+            VGroup(BorderVGroup(HGroup(UItem("calibrated_position_entry",
+                                             tooltip="Enter a position e.g 1 for a hole, " "or 3,4 for X,Y"),
+                                       icon_button_editor('autocenter_button', "find")
+                                       ),
+                                UItem('stage_controller', style='custom'),
+                                HGroup(
+                                    Item("canvas.crosshairs_offsetx", label="Offset (mm)"),
+                                    UItem("canvas.crosshairs_offsety")),
+                                HGroup(UItem('home'),
+                                       icon_button_editor("snapshot_button", "camera"), spring),
+                                ),
+                   VGroup(BorderHGroup(UItem('loading_manager.loading_level_button'),
+                                       UItem('loading_manager.checking_level_button'),
+                                       UItem('loading_manager.scan_tray_button'),
+                                       label='Tray Scan'),
+                          BorderHGroup(HGroup(icon_button_editor('loading_manager.up_button', 'arrow_up'),
+                                              icon_button_editor('loading_manager.down_button', 'arrow_down'),
+                                              UItem('loading_manager.home_button')),
+                                       Item('loading_manager.focus_scalar', label='Steps/mm'),
+                                       HGroup(UItem('loading_manager.focus_position_entry'),
+                                              UItem('loading_manager.focus_position_readback',
+                                                    format_str='%0.3f',
+                                                    style='readonly')),
 
-                   HGroup(UItem('loading_manager.loading_level_button'),
-                          UItem('loading_manager.checking_level_button'),
-                          UItem('loading_manager.scan_tray_button')),
-                   HGroup(icon_button_editor('loading_manager.up_button', 'arrow_up'),
-                          icon_button_editor('loading_manager.down_button', 'arrow_down')),
+                                       label='Focus')),
 
                    self.calibration_view(),
-                   self.counter_view()
+                   # self.counter_view()
                    )
 
         )
+        return v
+
+
+class CounterPane(TraitsDockPane):
+    name = "Counter"
+    id = "pychron.loading.counter"
+
+    def trait_context(self):
+        sm = self.model.stage_manager
+        return {
+            "stage_manager": sm,
+            "tray_calibration": sm.tray_calibration_manager,
+            "object": sm,
+            "foot_pedal": self.model.foot_pedal,
+            "focus_motor": self.model.focus_motor,
+            "loading_manager": self.model
+        }
+
+    def traits_view(self):
+        v = View(HGroup(Item('foot_pedal.max_count'),
+                        CustomLabel('foot_pedal.count',
+                                    size=20,
+                                    color='orange',
+                                    bgcolor='black',
+                                    use_color_background=True,
+                                    style='readonly'),
+                        ))
         return v
 
 

@@ -48,6 +48,7 @@ from pychron.core.helpers.filetools import view_file
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.pdf.pdf_graphics_context import PdfPlotGraphicsContext
+from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.dvc.dvc_irradiationable import DVCIrradiationable
 from pychron.dvc.meta_object import MetaObjectException
 from pychron.envisage.view_util import open_view
@@ -246,6 +247,10 @@ class LoadingManager(DVCIrradiationable):
     foot_pedal = Instance(FootPedal, ())
     interaction_mode_enabled = Bool(False)
     focus_motor = Instance(STP_MTRD)
+    focus_position_entry = Float(enter_set=True, auto_set=False)
+    focus_position_readback = Float
+    focus_stepsperdata = Int(964)
+    focus_scalar = Float(15.5)
 
     loading_level_button = Button('Loading Level')
     checking_level_button = Button('Checking Level')
@@ -258,17 +263,17 @@ class LoadingManager(DVCIrradiationable):
 
     tray_checker = Instance(TrayChecker)
 
-    use_image_shift = False
+    use_image_shift = True
 
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
         self.dvc.create_session()
 
         if self.use_stage:
-            pxpermm = 62
+            pxpermm = 55
             self.stage_manager = VideoStageManager(parent=self,
                                                    name='loader',
-                                                   pxpermm = pxpermm,
+                                                   pxpermm=pxpermm,
                                                    # root=os.path.join(paths.meta_root, 'load_holders'),
                                                    stage_controller_klass='ZaberMotion')
             self.stage_manager.autocenter_manager.use_autocenter = True
@@ -282,10 +287,15 @@ class LoadingManager(DVCIrradiationable):
             self.tray_checker = TrayChecker(self)
             self.focus_motor = STP_MTRD(name='focusmotor')
             self.focus_motor.bootstrap()
+            self.focus_motor.stepsperdata = self.focus_stepsperdata
+            self.focus_motor.nominal_home_position = 12
             self.stage_manager.set_zoom_manually(pxpermm)
             # self.stage_manager.canvas.set_mapper_limits('x', (-10,10))
             # self.stage_manager.canvas.set_mapper_limits('y', (-10,10))
             self.stage_manager.bind_preferences('pychron.loading')
+
+            self._update_focus_position()
+            self.focus_position_entry = round(self.focus_position_readback, 2)
 
     def scan_tray(self):
         self.tray_checker.scan()
@@ -1199,21 +1209,49 @@ class LoadingManager(DVCIrradiationable):
     def _scan_tray_button_fired(self):
         self.scan_tray()
 
+    def _focus_stepsperdata_changed(self, new):
+        self.focus_motor.stepsperdata = new
+
+    def _focus_position_entry_changed(self, new):
+        if new is not None:
+            def update(pos):
+                self.focus_position_readback = pos
+
+            self.focus_motor.set_position(
+                new,
+                use_absolute=True,
+                block=False,
+                update=update)
+            dev = new - 18
+
+            self.stage_manager.canvas.set_offset(self.get_focus_scalar() * dev)
+
+    def get_focus_scalar(self):
+        return self.stage_manager.pxpermm / self.focus_scalar
+
     def _up_button_fired(self):
         pos = self.focus_motor.data_position
         self.debug(f'up pos={pos}')
-        self.focus_motor.set_position(0.025)
-        if self.use_image_shift:
-            self.stage_manager.canvas.shift_right()
+        if self.focus_position_readback < 52:
+            self.focus_motor.set_position(0.25)
+            if self.use_image_shift:
+                self.stage_manager.canvas.shift_right(self.get_focus_scalar() / 4.)
+            self._update_focus_position()
 
     def _down_button_fired(self):
         pos = self.focus_motor.data_position
         self.debug(f'down pos={pos}')
-        self.focus_motor.set_position(-0.025)
-        if self.use_image_shift:
-            self.stage_manager.canvas.shift_left()
+        if self.focus_position_readback > 0:
+            self.focus_motor.set_position(-0.25)
+            if self.use_image_shift:
+                self.stage_manager.canvas.shift_left(self.get_focus_scalar() / 4.)
+            self._update_focus_position()
+
+    def _update_focus_position(self):
+        self.focus_position_readback = self.focus_motor.get_position()
 
     def _home_button_fired(self):
+        self._update_focus_position()
         self.focus_motor.home()
 # ============= EOF =============================================
 

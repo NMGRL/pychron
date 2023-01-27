@@ -4,13 +4,14 @@ from pychron.loggable import Loggable
 from pychron.paths import paths
 from traits.api import Instance, HasTraits, Str, Int
 import time
+from threading import Thread
 
 
 class LinearDrive(CoreDevice):
-    stepsperdata = Int(20000)
+    stepsperdata = Int(2000)
     data_position = 0
 
-    def set_position(self, data=None, steps=None, block=True, use_absolute=False):
+    def set_position(self, data=None, steps=None, block=True, use_absolute=False, update=None):
         if data is not None:
             self.data_position = data
             v = int(data * self.stepsperdata)
@@ -21,10 +22,33 @@ class LinearDrive(CoreDevice):
         if block:
             self.block()
 
+        if update:
+            def loop():
+                c = 0
+                n = 2
+                while 1:
+                    if self.moving():
+                        pos = self._update_position()
+                        update(pos/self.stepsperdata)
+                        continue
+
+                    c += 1
+                    if c > n:
+                        break
+
+                    time.sleep(0.05)
+            t = Thread(target=loop)
+            t.start()
+
+    def get_position(self):
+        pos = self._update_position()
+        print('asdf', pos, self.stepsperdata)
+        return pos/self.stepsperdata
+
     def _set_motor(self, v, use_absolute):
         raise NotImplementedError
 
-    def block(self, n=2, tolerance=1, progress=None, homing=False, verbose=False, timeout=30):
+    def block(self, n=4, tolerance=1, progress=None, homing=False, verbose=False, timeout=30):
         c = 0
         st = time.time()
         while 1:
@@ -35,19 +59,18 @@ class LinearDrive(CoreDevice):
                 break
 
             if self.moving():
-                self._update_position()
+                pos = self._update_position()
                 continue
 
             c += 1
             if c > n:
                 break
 
-            time.sleep(0.1)
+            time.sleep(0.05)
 
 
 class STP_MTRD(LinearDrive):
     address = Str('1')
-    mmperturn = 25
     nominal_home_position = 0.75
 
     def test(self):
@@ -64,8 +87,8 @@ class STP_MTRD(LinearDrive):
         # time.sleep(1)
         # self.move_mm(2)
         
-    def move_mm(self, mm):
-        self.set_position(mm/self.mmperturn)
+    # def move_mm(self, mm):
+    #     self.set_position(mm/self.mmperturn)
 
     def initialize(self):
         self._set_acceleration(2.5)
@@ -75,7 +98,14 @@ class STP_MTRD(LinearDrive):
         # setup digital inputs
         self.ask('DL3')
 
+    _homing = False
     def home(self):
+        if not self._homing:
+            self._homing = True
+            self._home_thread = Thread(target=self._home)
+            self._home_thread.start()
+
+    def _home(self):
         # set distance to -1 to set direction of seek home
         self.ask('DI-1')
 
@@ -90,6 +120,7 @@ class STP_MTRD(LinearDrive):
 
         # move to nominal position
         self.set_absolute_position(self.nominal_home_position)
+        self._homing = False
 
     def set_absolute_position(self, v, **kw):
         self.set_position(v, use_absolute=True, **kw)
@@ -102,12 +133,13 @@ class STP_MTRD(LinearDrive):
     def _update_position(self):
         pos = self._read_motor_position()
         self.debug(f'current motor position = {pos}')
+        return pos
 
     def _read_status_code(self):
         return self.ask('SC')
 
     def _read_motor_position(self, *args, **kw):
-        resp = self.ask('IE')
+        resp = self.ask('IP')
         _, v = resp.split('=')
         return int(v, 16)
 

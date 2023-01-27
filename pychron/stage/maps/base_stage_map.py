@@ -91,6 +91,7 @@ class BaseStageMap(Loggable):
         with open(self.file_path, "r") as rfile:
             cnt = 0
             for line in rfile:
+                print('ff', line)
                 if line.startswith("#"):
                     continue
 
@@ -123,7 +124,7 @@ class BaseStageMap(Loggable):
                     if h is None:
                         self.warning_dialog("Invalid Stage Map {}".format(self.name))
                         return
-
+                    print(h.id, h.nominal_position)
                     sms.append(h)
                     hi += 1
             else:

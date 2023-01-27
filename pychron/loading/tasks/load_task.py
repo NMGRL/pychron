@@ -29,7 +29,7 @@ from pychron.loading.tasks.actions import (
     SaveLoadingDBAction, GotoModeAction, GotoEntryModeAction, FootPedalModeAction, CheckTrayAction, MapTrayAction,
 )
 from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane, StageManagerPane, VideoPane, \
-    MachineVisionPane
+    MachineVisionPane, CounterPane
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -67,7 +67,7 @@ class LoadingTask(BaseManagerTask):
                         ),
             right=PaneItem("pychron.loading.video"),
             bottom=HSplitter(PaneItem("pychron.loading.positions"),
-                            PaneItem("pychron.loading.stage"))
+                             PaneItem("pychron.loading.stage"))
         )
 
     def prepare_destroy(self):
@@ -79,7 +79,8 @@ class LoadingTask(BaseManagerTask):
         stage_pane = StageManagerPane(model=self.manager)
         video_pane = VideoPane(model=self.manager.stage_manager)
         mv_pane = MachineVisionPane(model=self.manager.stage_manager)
-        return [control_pane, table_pane, stage_pane, video_pane, mv_pane]
+        cpane = CounterPane(model=self.manager)
+        return [control_pane, table_pane, stage_pane, video_pane, mv_pane, cpane]
 
     def create_central_pane(self):
         self.load_pane = LoadPane(model=self.manager)
