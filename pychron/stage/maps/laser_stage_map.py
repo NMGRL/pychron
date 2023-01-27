@@ -20,6 +20,7 @@ from __future__ import absolute_import
 import os
 import pickle
 
+import yaml
 from numpy import array, mean, correlate, std, corrcoef
 from traits.api import Button, on_trait_change
 
@@ -68,6 +69,14 @@ class LaserStageMap(BaseStageMap):
         head, tail = os.path.splitext(self.file_path)
         path = "{}.center.txt".format(head)
         return path
+
+
+    @property
+    def correction_affine_path(self):
+        p = ""
+        if paths.hidden_dir:
+            p = os.path.join(paths.hidden_dir, "{}_correction_affine_file.yaml".format(self.name))
+        return p
 
     @property
     def correction_path(self):
@@ -125,6 +134,11 @@ class LaserStageMap(BaseStageMap):
 
     def has_correction_file(self):
         return os.path.isfile(self.correction_path)
+
+    def load_correction_affine_file(self):
+        self.debug('load correction affine file')
+        p = self.correction_affine_path
+        self.corrected_affine = yload(p)
 
     def load_correction_file(self):
         self.debug("load correction file")
@@ -186,6 +200,7 @@ class LaserStageMap(BaseStageMap):
     # private
     def _load_hook(self):
         self.load_correction_file()
+        self.load_correction_affine_file()
 
     @on_trait_change("clear_corrections")
     def clear_correction_file(self):
@@ -208,6 +223,12 @@ class LaserStageMap(BaseStageMap):
         for h in self.sample_holes:
             h.interpolated = False
             h.interpolation_holes = None
+
+    def dump_corrections_affine(self):
+        p = self.correction_affine_path
+        with open(p, 'w') as wfile:
+            yaml.dump(self.corrected_affine, wfile)
+        self.info(f'saved correction affine file to {p}')
 
     def dump_correction_file(self):
         p = self.correction_path

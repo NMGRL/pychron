@@ -143,8 +143,7 @@ class BaseStageManager(Manager):
                 npos = smap.map_to_calibration(pos, cpos=cpos, rot=rot, scale=scale)
                 if key:
                     hole = smap.get_hole(key)
-                    hole.calibrated_position = smap.map_to_calibration(pos, cpos=cpos, rot=rot, scale=scale,
-                                                                      include_secondary=False)
+                    hole.calibrated_position = smap.map_to_calibration(pos, cpos=cpos, rot=rot, scale=scale)
                 pos = npos
         return pos
 

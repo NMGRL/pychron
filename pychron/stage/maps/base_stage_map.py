@@ -82,6 +82,8 @@ class BaseStageMap(Loggable):
     calibration_holes = None
     secondary_calibration = None
 
+    corrected_affine = None
+
     # def __init__(self, *args, **kw):
     #     super(BaseStageMap, self).__init__(*args, **kw)
     #     self.load()
@@ -208,7 +210,7 @@ class BaseStageMap(Loggable):
         # pos = a.transform(*pos)
         # return pos
 
-    def map_to_calibration(self, pos, cpos=None, rot=None, scale=None, include_secondary=True):
+    def map_to_calibration(self, pos, cpos=None, rot=None, scale=None):
         cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)
 
         pt = transform_point(pos, cpos, rot, scale)
@@ -217,49 +219,49 @@ class BaseStageMap(Loggable):
                 pos, cpos, rot, pt
             )
         )
-        if self.secondary_calibration and include_secondary:
-            c, r, s = self.secondary_calibration
-            npt = transform_point(pt, c, r, s)
-            self.debug('secondary calibration pos={}, cpos={}, rot={}, new pos={}'.format(pt, c, r, npt))
-            pt = npt
+        # if self.secondary_calibration and include_secondary:
+        #     c, r, s = self.secondary_calibration
+        #     npt = transform_point(pt, c, r, s)
+        #     self.debug('secondary calibration pos={}, cpos={}, rot={}, new pos={}'.format(pt, c, r, npt))
+        #     pt = npt
 
         return pt
 
     _bufx = None
 
-    def update_secondary_calibration(self, h):
-        """
-        """
-        return
-
-        if h.corrected_position:
-            # nx, ny = h.nominal_position
-            nx, ny = h.calibrated_position
-            cx, cy = h.corrected_position
-
-            # nx -= self.cpos[0]
-            # ny -= self.cpos[1]
-            # dx = nx - cx
-            # dy = ny - cy
-
-            # if self._bufx is None:
-            #     self._bufx = []
-            #     self._bufy = []
-            # self._bufx.append(dx)
-            # self._bufy.append(dy)
-            #
-            # dx = sum(self._bufx) / len(self._bufx)
-            # dy = sum(self._bufy) / len(self._bufy)
-
-            # r = math.degrees(math.atan2(dy, dx))
-            nominal_rotation = math.degrees(math.atan2(ny, nx))
-            corrected_rotation = math.degrees(math.atan2(cy, cx))
-            r = corrected_rotation - nominal_rotation
-
-            self.debug('secondary rotation calibration {}'.format(ny, nx, cy, cx, r))
-            # self.secondary_calibration = ((0, 0), r, 1)
-            # self.debug('nx {} {} {} {} dx={} dy={}'.format(nx, cx, ny, cy, dx, dy))
-            # c, r, s = calculate_transform(h.nominal_position, h.corrected_position)
+    # def update_secondary_calibration(self, h):
+    #     """
+    #     """
+    #     return
+    #
+    #     if h.corrected_position:
+    #         # nx, ny = h.nominal_position
+    #         nx, ny = h.calibrated_position
+    #         cx, cy = h.corrected_position
+    #
+    #         # nx -= self.cpos[0]
+    #         # ny -= self.cpos[1]
+    #         # dx = nx - cx
+    #         # dy = ny - cy
+    #
+    #         # if self._bufx is None:
+    #         #     self._bufx = []
+    #         #     self._bufy = []
+    #         # self._bufx.append(dx)
+    #         # self._bufy.append(dy)
+    #         #
+    #         # dx = sum(self._bufx) / len(self._bufx)
+    #         # dy = sum(self._bufy) / len(self._bufy)
+    #
+    #         # r = math.degrees(math.atan2(dy, dx))
+    #         nominal_rotation = math.degrees(math.atan2(ny, nx))
+    #         corrected_rotation = math.degrees(math.atan2(cy, cx))
+    #         r = corrected_rotation - nominal_rotation
+    #
+    #         self.debug('secondary rotation calibration {}'.format(ny, nx, cy, cx, r))
+    #         # self.secondary_calibration = ((0, 0), r, 1)
+    #         # self.debug('nx {} {} {} {} dx={} dy={}'.format(nx, cx, ny, cy, dx, dy))
+    #         # c, r, s = calculate_transform(h.nominal_position, h.corrected_position)
 
     def get_hole(self, key):
         r = key
@@ -296,7 +298,7 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
             return True
 
     def get_corrected_hole_pos(self, key):
-        return next(
+        pos = next(
             (
                 h.corrected_position if h.has_correction else h.nominal_position
                 for h in self.sample_holes
@@ -304,6 +306,15 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
             ),
             None,
         )
+        if pos is not None:
+            if self.corrected_affine:
+                cpos = self.corrected_affine['translation']
+                rot = self.corrected_affine['rotation']
+                scale = 1
+                self.debug(f'applying corrected affine cpos={cpos}, rot={rot}')
+                pos = transform_point(pos, cpos, rot, scale)
+
+        return pos
 
     def clear_correction_file(self):
         pass

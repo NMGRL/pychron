@@ -365,6 +365,10 @@ class StageManagerPane(TraitsDockPane):
         )
         tc_grp = VGroup(
             cal_grp,
+            HGroup(
+                UItem("tray_calibration.set_corrections_affine_button"),
+                UItem("tray_calibration.clear_corrections_button")
+            ),
             UItem("tray_calibration.calibrator", style="custom"),
             HGroup(cal_results_grp, cal_help_grp),
             label="Calibration",

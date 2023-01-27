@@ -46,29 +46,30 @@ from pychron.paths import paths
 from skimage.io import imread, imsave
 
 
-class TrainView(HasTraits):
-    blank_image = Instance(FrameImage, ())
-    loaded_image = Instance(FrameImage, ())
-    blank_state = Enum('Empty', 'Loaded', 'MultiGrain', 'Dirty')
-    loaded_state = Enum('Empty', 'Loaded', 'MultiGrain', 'Dirty')
-
-    def __init__(self, blankframe, loaded_frame, *args, **kw):
-        super(TrainView, self).__init__(*args, **kw)
-
-        self.blank_image.set_frame(blankframe)
-        self.loaded_image.set_frame(loaded_frame)
-        self.blank_state = 'Empty'
-        self.loaded_state = 'Loaded'
-
-    def traits_view(self):
-        a = VGroup(UItem('blank_state'),
-                   UItem('object.blank_image.source_frame',
-                         editor=ImageEditor()))
-        b = VGroup(UItem('loaded_state'),
-                   UItem('object.loaded_image.source_frame',
-                         editor=ImageEditor()))
-        v = okcancel_view(HGroup(a, b))
-        return v
+#
+# class TrainView(HasTraits):
+#     blank_image = Instance(FrameImage, ())
+#     loaded_image = Instance(FrameImage, ())
+#     blank_state = Enum('Empty', 'Loaded', 'MultiGrain', 'Dirty')
+#     loaded_state = Enum('Empty', 'Loaded', 'MultiGrain', 'Dirty')
+#
+#     def __init__(self, blankframe, loaded_frame, *args, **kw):
+#         super(TrainView, self).__init__(*args, **kw)
+#
+#         self.blank_image.set_frame(blankframe)
+#         self.loaded_image.set_frame(loaded_frame)
+#         self.blank_state = 'Empty'
+#         self.loaded_state = 'Loaded'
+#
+#     def traits_view(self):
+#         a = VGroup(UItem('blank_state'),
+#                    UItem('object.blank_image.source_frame',
+#                          editor=ImageEditor()))
+#         b = VGroup(UItem('loaded_state'),
+#                    UItem('object.loaded_image.source_frame',
+#                          editor=ImageEditor()))
+#         v = okcancel_view(HGroup(a, b))
+#         return v
 
 
 class TrayChecker(MachineVisionManager):
@@ -76,8 +77,20 @@ class TrayChecker(MachineVisionManager):
     display_image = Instance(FrameImage, ())
     refresh_image = Event
     stop_button = Button('Stop')
+    good_button = Button('Good')
+    empty_button = Button('Empty')
+    multigrain_button = Button('MultiGrain')
+    contaminant_button = Button('Contaminant')
+
     post_move_delay = 0.125
     post_check_delay = 0.125
+
+    _alive = False
+    _active_frame = None
+    _samples = None
+    _labels = None
+    _active_positions = None
+    _thread = None
 
     def __init__(self, loading_manager, *args, **kw):
         super(TrayChecker, self).__init__(*args, **kw)
@@ -88,68 +101,150 @@ class TrayChecker(MachineVisionManager):
         self.debug('stop fired')
         self._alive = False
 
-    def check_frame(self):
-        frame = self._loading_manager.stage_manager.autocenter_manager.new_image_frame(force=True)
-        return True
+    # def check_frame(self):
+    #     frame = self._loading_manager.stage_manager.autocenter_manager.new_image_frame(force=True)
+    #     return True
 
-    def check(self):
-        self._iter()
+    # def check(self):
+    #     self._iter()
 
-    def map(self):
-        self._iter(func=self._map_positions)
+    # def map(self):
+    #     self._iter(func=self._map_positions)
 
-    def scan(self):
-        self._iter(func=self._scan)
+    def scan(self, classify_now=False):
+        if classify_now:
+            self._samples = []
+            self._labels = []
+            self._active_positions = self._loading_manager.stage_manager.stage_map.all_holes()
 
-    def _iter(self, func=None):
-        use_ml = False
-        pipe = None
-        if use_ml:
-            pipe = self._get_classifier()
-        info = self.edit_traits(view=View(UItem('stop_button'),
-                                   UItem('object.display_image.source_frame',
-                                         width=640,
-                                         height=480,
-                                         editor=ImageEditor(refresh='object.display_image.refresh_needed')),
-                                   # width=900,
-                                   # height=900,
-                                   ))
+            buttons = HGroup(UItem('stop_button'),
+                             UItem('good_button'),
+                             UItem('empty_button'),
+                             UItem('multigrain_button'),
+                             UItem('contaminant_button')
+                             )
+            v = okcancel_view(buttons,
+                              UItem('object.display_image.source_frame',
+                                    width=640,
+                                    height=480,
+                                    editor=ImageEditor(refresh='object.display_image.refresh_needed')),
+                              )
 
-        if func is None:
-            func = self._check
-        self._alive =True
-        self._thread = Thread(target=func, args=(pipe,info))
-        self._thread.start()
+            # go to first hole
+            self._visit_next_position()
 
-    def _map_positions(self, pipe, info):
-        results = []
-        for hole in self._loading_manager.stage_manager.stage_map.sample_holes[:11]:
-            if not self._alive:
-                self.debug('exiting check loop')
-                break
-
-            pos = hole.id
             # for pos in self._loading_manager.positions:
-            self._loading_manager.goto(pos, block=True, capture=".filled")
-            # time.sleep(self.post_move_delay)
-            # if pipe is not None:
-            #     self._check_position_ml(pipe, pos)
-            # else:
-            #     self._check_position(pos)
-            x = self._loading_manager.stage_manager.stage_controller.x
-            y = self._loading_manager.stage_manager.stage_controller.y
-            results.append((pos, (x, y)))
-            self.debug('map position result {}'.format(results[-1]))
-            # time.sleep(self.post_check_delay)
+            info = self.edit_traits(v)
+            if info.result():
+                self.dump_klasses()
+        else:
+            pipe = None
+            info = self.edit_traits(view=View(HGroup(UItem('stop_button')),
+                                              UItem('object.display_image.source_frame',
+                                                    width=640,
+                                                    height=480,
+                                                    editor=ImageEditor(refresh='object.display_image.refresh_needed')),
+                                              ))
 
-        name = self._loading_manager.stage_manager.stage_map.name
-        p, cnt = unique_path2(paths.csv_data_dir, '{}.corrected_positions.txt'.format(name))
-        with open(p, 'w') as wfile:
-            for r in results:
-                print(r)
-                line = ','.join([str(ri) for ri in r])
-                line = '{}\n'.format(line)
-                wfile.write(line)
+            self._alive = True
+            self._thread = Thread(target=self._check, args=(info,))
+            self._thread.start()
+
+    def _visit_next_position(self):
+        try:
+            hole = next(self._active_positions)
+        except StopIteration:
+            self.information_dialog('Classification Complete')
+            return
+
+        trayname = self._loading_manager.stage_manager.stage_map.name
+        traypath = os.path.join(paths.snapshot_dir, trayname)
+
+        pos = hole.id
+        self._loading_manager.goto(pos, block=True)
+        time.sleep(self.post_move_delay)
+        frame = self.new_image_frame(pos)
+
+        self._loading_manager.stage_manager.snapshot(name=os.path.join(traypath, '{}.tc'.format(pos)),
+                                                     render_canvas=False, inform=False)
+        self.display_image.clear()
+        self.display_image.tile(frame)
+        self.display_image.tilify()
+        self.display_image.refresh_needed = True
+
+    def dump_klasses(self):
+        loadname = self._loading_manager.load_instance.name
+        sp = os.path.join(paths.loading_dir, '{}.samples.npy'.format(loadname))
+        samples = self._samples
+        labels = self._labels
+
+        if os.path.isfile(sp):
+            samples = load(sp)
+            samples = column_stack((samples, self._samples))
+        else:
+            samples = column_stack(samples)
+        save(sp, samples)
+
+        lp = os.path.join(paths.loading_dir, '{}.labels.npy'.format(loadname))
+
+        if os.path.isfile(sp):
+            labels = load(sp)
+            labels = column_stack((labels, self._labels))
+        else:
+            labels = column_stack(labels)
+        save(lp, labels)
+
+    # def _iter(self, func=None):
+    #     use_ml = False
+    #     pipe = None
+    #     if use_ml:
+    #         pipe = self._get_classifier()
+    #
+    #     info = self.edit_traits(view=View(HGroup(UItem('stop_button')),
+    #                                       UItem('object.display_image.source_frame',
+    #                                             width=640,
+    #                                             height=480,
+    #                                             editor=ImageEditor(refresh='object.display_image.refresh_needed')),
+    #                                       # width=900,
+    #                                       # height=900,
+    #                                       ))
+    #
+    #     if func is None:
+    #         func = self._check
+    #
+    #     self._alive = True
+    #     self._thread = Thread(target=func, args=(pipe, info))
+    #     self._thread.start()
+
+    # def _map_positions(self, pipe, info):
+    #     results = []
+    #     for hole in self._loading_manager.stage_manager.stage_map.sample_holes[:11]:
+    #         if not self._alive:
+    #             self.debug('exiting check loop')
+    #             break
+    #
+    #         pos = hole.id
+    #         # for pos in self._loading_manager.positions:
+    #         self._loading_manager.goto(pos, block=True, capture=".filled")
+    #         # time.sleep(self.post_move_delay)
+    #         # if pipe is not None:
+    #         #     self._check_position_ml(pipe, pos)
+    #         # else:
+    #         #     self._check_position(pos)
+    #         x = self._loading_manager.stage_manager.stage_controller.x
+    #         y = self._loading_manager.stage_manager.stage_controller.y
+    #         results.append((pos, (x, y)))
+    #         self.debug('map position result {}'.format(results[-1]))
+    #         # time.sleep(self.post_check_delay)
+    #
+    #     name = self._loading_manager.stage_manager.stage_map.name
+    #     p, cnt = unique_path2(paths.csv_data_dir, '{}.corrected_positions.txt'.format(name))
+    #     with open(p, 'w') as wfile:
+    #         for r in results:
+    #             print(r)
+    #             line = ','.join([str(ri) for ri in r])
+    #             line = '{}\n'.format(line)
+    #             wfile.write(line)
 
     def _scan(self, pipe, info):
         trayname = self._loading_manager.stage_manager.stage_map.name
@@ -179,91 +274,93 @@ class TrayChecker(MachineVisionManager):
         info.dispose()
         self.information_dialog(f'Scan of {trayname} complete')
 
-    def _check(self, pipe, info):
-        for hole in self._loading_manager.stage_manager.stage_map.sample_holes:
+    def _check(self, info):
+        for hole in self._loading_manager.stage_manager.stage_map.all_holes():
             if not self._alive:
                 self.debug('exiting check loop')
                 break
 
             pos = hole.id
-            # for pos in self._loading_manager.positions:
             self._loading_manager.goto(pos, block=True)
             time.sleep(self.post_move_delay)
-            if pipe is not None:
-                self._check_position_ml(pipe, pos)
-            else:
-                self._check_position(pos)
+
+            self._check_position(pos)
+
             time.sleep(self.post_check_delay)
 
-    def train(self):
-        xs = []
-        labels = []
-        for pos in self._loading_manager.positions:
-            self._loading_manager.goto(pos, block=True)
-            args = self._train_position(pos.position)
-            if not args:
-                ss, bv, lv = args
-                labels.extend(ss)
-                xs.extend((bv, lv))
+        info.dispose()
 
-                loadname = self._loading_manager.load_instance.name
-                sp = os.path.join(paths.loading_dir, '{}.samples.npy'.format(loadname))
-                save(sp, column_stack(xs))
-                lp = os.path.join(paths.loading_dir, '{}.labels.npy'.format(loadname))
-                save(lp, labels)
-
-        self.train_ml()
-
-    def train_ml(self):
-        loadname = self._loading_manager.load_instance.name
-        sp = os.path.join(paths.loading_dir, '{}.samples.npy'.format(loadname))
-        lp = os.path.join(paths.loading_dir, '{}.labels.npy'.format(loadname))
-        samples = load(sp)
-        labels = load(lp)
-        use_nn = False
-        if use_nn:
-            clf = MLPClassifier(hidden_layer_sizes=(5, 2),
-                                random_state=1)
-        else:
-            clf = svm.SVC(gamma=0.001)
-
-        X_train, X_test, y_train, y_test = train_test_split(samples, labels, random_state=42)
-        pipe = make_pipeline(StandardScaler(), clf)
-        pipe.fit(X_train, y_train)  # apply scaling on training data
-
-        tp = os.path.join(paths.loading_dir, '{}.clf.joblib'.format(loadname))
-        joblib.dump(pipe, tp)
-
-        score = pipe.score(X_test, y_test)
-
-        predicted = pipe.predict(X_test)
-        print(
-            f"Classification report for classifier {clf}:\n"
-            f"{metrics.classification_report(y_test, predicted)}\n"
-        )
-        self.info('training score={}'.format(score))
-        disp = metrics.ConfusionMatrixDisplay.from_predictions(y_test, predicted)
-        disp.figure_.suptitle("Confusion Matrix")
-        print(f"Confusion matrix:\n{disp.confusion_matrix}")
-
-    def _train_position(self, pos):
-        blankframe = self._get_blankframe(pos)
-        frame = self.new_image_frame(pos)
-        self._save_image(pos, frame)
-
-        t = TrainView(blankframe, frame)
-        info = t.edit_traits()
-        if info.result:
-            blank_vector = blankframe.flatten()
-            loaded_vector = frame.flatten()
-            # blank_vector = self._make_vector(pos, blankframe)
-            # loaded_vector = self._make_vector(pos, frame)
-            return [t.blank_state, t.loaded_state], blank_vector, loaded_vector
+    # def train(self):
+    #     xs = []
+    #     labels = []
+    #     for pos in self._loading_manager.positions:
+    #         self._loading_manager.goto(pos, block=True)
+    #         args = self._train_position(pos.position)
+    #         if not args:
+    #             ss, bv, lv = args
+    #             labels.extend(ss)
+    #             xs.extend((bv, lv))
+    #
+    #             loadname = self._loading_manager.load_instance.name
+    #             sp = os.path.join(paths.loading_dir, '{}.samples.npy'.format(loadname))
+    #             save(sp, column_stack(xs))
+    #             lp = os.path.join(paths.loading_dir, '{}.labels.npy'.format(loadname))
+    #             save(lp, labels)
+    #
+    #     self.train_ml()
+    #
+    # def train_ml(self):
+    #     loadname = self._loading_manager.load_instance.name
+    #     sp = os.path.join(paths.loading_dir, '{}.samples.npy'.format(loadname))
+    #     lp = os.path.join(paths.loading_dir, '{}.labels.npy'.format(loadname))
+    #     samples = load(sp)
+    #     labels = load(lp)
+    #     use_nn = False
+    #     if use_nn:
+    #         clf = MLPClassifier(hidden_layer_sizes=(5, 2),
+    #                             random_state=1)
+    #     else:
+    #         clf = svm.SVC(gamma=0.001)
+    #
+    #     X_train, X_test, y_train, y_test = train_test_split(samples, labels, random_state=42)
+    #     pipe = make_pipeline(StandardScaler(), clf)
+    #     pipe.fit(X_train, y_train)  # apply scaling on training data
+    #
+    #     tp = os.path.join(paths.loading_dir, '{}.clf.joblib'.format(loadname))
+    #     joblib.dump(pipe, tp)
+    #
+    #     score = pipe.score(X_test, y_test)
+    #
+    #     predicted = pipe.predict(X_test)
+    #     print(
+    #         f"Classification report for classifier {clf}:\n"
+    #         f"{metrics.classification_report(y_test, predicted)}\n"
+    #     )
+    #     self.info('training score={}'.format(score))
+    #     disp = metrics.ConfusionMatrixDisplay.from_predictions(y_test, predicted)
+    #     disp.figure_.suptitle("Confusion Matrix")
+    #     print(f"Confusion matrix:\n{disp.confusion_matrix}")
+    #
+    # def _train_position(self, pos):
+    #     blankframe = self._get_blankframe(pos)
+    #     frame = self.new_image_frame(pos)
+    #     self._save_image(pos, frame)
+    #
+    #     t = TrainView(blankframe, frame)
+    #     info = t.edit_traits()
+    #     if info.result:
+    #         blank_vector = blankframe.flatten()
+    #         loaded_vector = frame.flatten()
+    #         # blank_vector = self._make_vector(pos, blankframe)
+    #         # loaded_vector = self._make_vector(pos, frame)
+    #         return [t.blank_state, t.loaded_state], blank_vector, loaded_vector
 
     def new_image_frame(self, pos):
         frame = super(TrayChecker, self).new_image_frame(force=True)
         frame = self._preprocess(frame)
-        return self._crop(frame, pos=pos)
+        frame = self._crop(frame, pos=pos)
+        self._active_frame = frame
+        return frame
 
     def _preprocess(self, frame, gamma=2):
         # frame = grayspace(frame)
@@ -310,41 +407,61 @@ class TrayChecker(MachineVisionManager):
         y = int((h - ch_px) / 2.0)
         return asarray(crop(frame, x, y, cw_px, ch_px))
 
-    def _check_position(self, pos):
-        self.debug('check position {}'.format(pos))
-        frame = self.new_image_frame(pos)
-        self._loading_manager.stage_manager.snapshot(name='{}.tc'.format(pos),
-                                                     render_canvas=False, inform=False)
-        blankframe = self._get_blankframe(pos)
+    # def _check_position(self, hole):
+    #     pos = hole.id
+    #
+    #     self.debug('check position {}'.format(pos))
+    #     frame = self.new_image_frame(pos)
+    #     self._loading_manager.stage_manager.snapshot(name='{}.tc'.format(pos),
+    #                                                  render_canvas=False, inform=False)
+    #     blankframe = self._get_blankframe(pos)
+    #
+    #     self.display_image.clear()
+    #     self.display_image.tile(frame)
+    #     if blankframe is not None:
+    #         diff = frame - blankframe
+    #         self.display_image.tile(blankframe)
+    #         self.display_image.tile(diff)
+    #         # self.display_image.tile(diff)
+    #     self.display_image.tilify()
+    #     # invoke_in_main_thread(self.trait_set, refresh_image=True)
+    #     # self.refresh_image = True
+    #     self.display_image.refresh_needed = True
+    #
+    # def _check_position_ml(self, pipe, pos):
+    #     self.debug('check position nn {}'.format(pos))
+    #
+    #     frame = self.new_image_frame(pos)
+    #     if pipe is not None:
+    #         result = pipe.predict(frame.flatten())
+    #         self.info('check_position result={}'.format(result))
+    #
+    #     else:
+    #         self.debug('dumb position check')
+    #         self._check_position(pos)
+    #
+    #     # blankframe = self._get_blankframe(pos)
+    #     # if not self.locator.find_grain(im, blankframe, frame, dim):
+    #     #     self.debug('no grain found {}'.format(pos))
 
-        self.display_image.clear()
-        self.display_image.tile(frame)
-        if blankframe is not None:
-            diff = frame - blankframe
-            self.display_image.tile(blankframe)
-            self.display_image.tile(diff)
-            # self.display_image.tile(diff)
-        self.display_image.tilify()
-        # invoke_in_main_thread(self.trait_set, refresh_image=True)
-        # self.refresh_image = True
-        self.display_image.refresh_needed = True
-
-    def _check_position_ml(self, pipe, pos):
-        self.debug('check position nn {}'.format(pos))
-
-        frame = self.new_image_frame(pos)
-        if pipe is not None:
-            result = pipe.predict(frame.flatten())
-            self.info('check_position result={}'.format(result))
-
-        else:
-            self.debug('dumb position check')
-            self._check_position(pos)
-
-        # blankframe = self._get_blankframe(pos)
-        # if not self.locator.find_grain(im, blankframe, frame, dim):
-        #     self.debug('no grain found {}'.format(pos))
+    def _advance(self, label):
+        self._labels.append(label)
+        self._samples.append(self._active_frame)
+        self._visit_next_position()
 
     def _stop_button_fired(self):
         self.stop()
+
+    def _good_button_fired(self):
+        self._advance(0)
+
+    def _empty_button_fired(self):
+        self._advance(1)
+
+    def _multigrain_button_fired(self):
+        self._advance(2)
+
+    def _contaminant_button_fired(self):
+        self._advance(3)
+
 # ============= EOF =============================================

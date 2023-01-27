@@ -97,6 +97,7 @@ class TrayCalibrationManager(Loggable):
     holes_list = List
     set_center_button = Button("Set Center Guess")
     clear_corrections_button = Button("Clear Corrections")
+    set_corrections_affine_button = Button("Set Correction Affine")
 
     def isCalibrating(self):
         return self.calibration_step != "Calibrate"
@@ -157,6 +158,11 @@ class TrayCalibrationManager(Loggable):
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _set_corrections_affine_button_fired(self):
+        center = self.parent.get_current_position()
+        rot = 0
+        self.parent.stage_map.dump_corrections_affine(center, rot)
+
     def _clear_corrections_button_fired(self):
         self.clear_corrections()
 

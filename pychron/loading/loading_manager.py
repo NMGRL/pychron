@@ -298,7 +298,10 @@ class LoadingManager(DVCIrradiationable):
             self.focus_position_entry = round(self.focus_position_readback, 2)
 
     def scan_tray(self):
-        self.tray_checker.scan()
+        classify_now = False
+        if self.confirmation_dialog('Would you like to classify each image'):
+            classify_now = True
+        self.tray_checker.scan(classify_now)
 
     def check_tray(self):
         self.tray_checker.check()
@@ -1208,6 +1211,7 @@ class LoadingManager(DVCIrradiationable):
 
     def _scan_tray_button_fired(self):
         self.scan_tray()
+
 
     def _focus_stepsperdata_changed(self, new):
         self.focus_motor.stepsperdata = new
