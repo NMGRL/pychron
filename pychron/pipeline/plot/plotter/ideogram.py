@@ -726,6 +726,9 @@ class Ideogram(BaseArArFigure):
             xs, ys, xmi, xma = self._calculate_asymptotic_limits(
                 cfunc, tol=self.options.asymptotic_height_percent
             )
+
+            xmi = min(self.xs-self.xes)*0.9
+            xma = max(self.xs+self.xes)*1.1
             oo = IdeogramInset(
                 xs,
                 ys,
