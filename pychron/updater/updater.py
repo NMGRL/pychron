@@ -194,7 +194,7 @@ class Updater(Loggable):
                             #             "may be required. Set CONDA_ENV and CONDA_DISTRO environment "
                             #             "variables to resolve this issue"
                             #         )
-                            self._install_dependencies_edm()
+                            # self._install_dependencies_edm()
 
                             if os.getenv("PYCHRON_UPDATE_DATABASE", False):
                                 self._update_database()
