@@ -885,13 +885,17 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(or_(*comps))
             return self._query_all(q, verbose_query=True)
 
-    def get_fuzzy_labnumbers(self, search_str):
+    def get_fuzzy_labnumbers(self, search_str, filter_non_run=True):
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTbl)
             q = q.join(SampleTbl)
             q = q.join(ProjectTbl)
 
             q = q.distinct(IrradiationPositionTbl.id)
+            if filter_non_run:
+                q = q.join(AnalysisTbl)
+                q = q.group_by(IrradiationPositionTbl.id)
+                q = q.having(count(AnalysisTbl.id) > 0)
 
             comps = [
                 IrradiationPositionTbl.identifier.like("{}%".format(search_str)),
@@ -902,6 +906,8 @@ class DVCDatabase(DatabaseAdapter):
             f = or_(*comps)
             q = q.filter(f)
             ips = self._query_all(q)
+
+
 
             q = sess.query(ProjectTbl)
             q = q.join(SampleTbl)
@@ -1809,6 +1815,7 @@ class DVCDatabase(DatabaseAdapter):
         self.debug("------- high_post: {}".format(high_post))
         self.debug("------- low_post: {}".format(low_post))
         self.debug("------- loads: {}".format(loads))
+        self.debug("------- Non run: {}".format(filter_non_run))
         self.debug("------------------------------")
 
         with self.session_ctx() as sess:
