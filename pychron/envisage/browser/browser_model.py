@@ -164,8 +164,10 @@ class BrowserModel(BaseBrowserModel):
                 else:
                     ps1 = db.get_fuzzy_projects(self.fuzzy_search_entry)
 
-
-                    ss, ps2 = db.get_fuzzy_labnumbers(self.fuzzy_search_entry, filter_non_run=self.filter_non_run_samples)
+                    ss, ps2 = db.get_fuzzy_labnumbers(
+                        self.fuzzy_search_entry,
+                        filter_non_run=self.filter_non_run_samples,
+                    )
 
                     # ss2, ps3 = db.get_fuzzy_samples(self.fuzzy_search_entry, include_projects=True)
                     # if ss:

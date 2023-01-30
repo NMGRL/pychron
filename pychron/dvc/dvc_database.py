@@ -907,8 +907,6 @@ class DVCDatabase(DatabaseAdapter):
             q = q.filter(f)
             ips = self._query_all(q)
 
-
-
             q = sess.query(ProjectTbl)
             q = q.join(SampleTbl)
             q = q.join(IrradiationPositionTbl)
