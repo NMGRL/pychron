@@ -20,7 +20,7 @@ import time
 from math import ceil
 
 import joblib
-from numpy import hstack, column_stack, savetxt, savez, save, load, asarray
+from numpy import hstack, column_stack, savetxt, savez, save, load, asarray, concatenate
 from skimage.exposure import adjust_gamma
 from sklearn import metrics, svm
 from sklearn.model_selection import train_test_split
@@ -125,8 +125,8 @@ class TrayChecker(MachineVisionManager):
                              )
             v = okcancel_view(buttons,
                               UItem('object.display_image.source_frame',
-                                    width=640,
-                                    height=480,
+                                    width=640*1.25,
+                                    height=480*1.25,
                                     editor=ImageEditor(refresh='object.display_image.refresh_needed')),
                               )
 
@@ -135,7 +135,7 @@ class TrayChecker(MachineVisionManager):
 
             # for pos in self._loading_manager.positions:
             info = self.edit_traits(v)
-            if info.result():
+            if info.result:
                 self.dump_klasses()
         else:
             pipe = None
@@ -159,6 +159,8 @@ class TrayChecker(MachineVisionManager):
 
         trayname = self._loading_manager.stage_manager.stage_map.name
         traypath = os.path.join(paths.snapshot_dir, trayname)
+        if not os.path.isdir(traypath):
+            os.mkdir(traypath)
 
         pos = hole.id
         self._loading_manager.goto(pos, block=True)
@@ -168,30 +170,39 @@ class TrayChecker(MachineVisionManager):
         self._loading_manager.stage_manager.snapshot(name=os.path.join(traypath, '{}.tc'.format(pos)),
                                                      render_canvas=False, inform=False)
         self.display_image.clear()
-        self.display_image.tile(frame)
-        self.display_image.tilify()
+        self.display_image.source_frame = frame
+        # self.display_image.tile(frame)
+        # self.display_image.tilify()
         self.display_image.refresh_needed = True
 
     def dump_klasses(self):
-        loadname = self._loading_manager.load_instance.name
-        sp = os.path.join(paths.loading_dir, '{}.samples.npy'.format(loadname))
+        tray_name = self._loading_manager.stage_manager.stage_map.name
+        # loadname = self._loading_manager.load_instance.name
+        sp = os.path.join(paths.loading_dir, f'{tray_name}.samples.npy')
+        #sp, cnt = unique_path2(paths.loading_dir, 'samples', extension='.npy')
+        # sp = os.path.join(paths.loading_dir, '{}.samples.npy'.format(loadname))
         samples = self._samples
         labels = self._labels
 
         if os.path.isfile(sp):
             samples = load(sp)
-            samples = column_stack((samples, self._samples))
+            samples = concatenate((samples, self._samples))
         else:
-            samples = column_stack(samples)
+            samples = self._samples
         save(sp, samples)
 
-        lp = os.path.join(paths.loading_dir, '{}.labels.npy'.format(loadname))
+        lp = os.path.join(paths.loading_dir, f'{tray_name}.samples.npy')
+        #lp, cnt = unique_path2(paths.loading_dir, 'labels', extension='.npy')
+        # lp = os.path.join(paths.loading_dir, '{}.labels.npy'.format(loadname))
 
-        if os.path.isfile(sp):
-            labels = load(sp)
-            labels = column_stack((labels, self._labels))
+        if os.path.isfile(lp):
+            labels = load(lp)
+            self.debug(f'loaded labels {labels}')
+            self.debug(f'new labels {self._labels}')
+            labels = concatenate((labels, self._labels))
         else:
-            labels = column_stack(labels)
+            # labels = column_stack(labels)
+            labels = self._labels
         save(lp, labels)
 
     # def _iter(self, func=None):
@@ -399,9 +410,21 @@ class TrayChecker(MachineVisionManager):
             dim = hole.dimension
 
         cw = ch = ceil(dim * 2.55)
+        # new = 3
+        # with open(os.path.join(paths.appdata_dir, 'zoom_level.csv')) as rfile:
+        #     for line in rfile:
+        #         zoom, pxpermm = line.split(',')
+        #         if float(zoom) == float(new):
+        #             pxpermm = float(pxpermm)
+        #             break
+        #     else:
+        #         pxpermm = 55
+        #         self.debug(f'no zoom found for {new}. defaulting to {pxpermm}')
+
         pxpermm = self._loading_manager.stage_manager.autocenter_manager.pxpermm
         cw_px = int(cw * pxpermm)
         ch_px = int(ch * pxpermm)
+        print('fffffff', dim, pxpermm)
         w, h = get_size(frame)
         x = int((w - cw_px) / 2.0)
         y = int((h - ch_px) / 2.0)

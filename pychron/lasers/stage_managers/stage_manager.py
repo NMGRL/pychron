@@ -399,6 +399,7 @@ class StageManager(BaseStageManager):
             smap = self.stage_map
 
             xx, yy = smap.map_to_uncalibration((x, y), ca.center, ca.rotation)
+
             return next(
                 (
                     hole

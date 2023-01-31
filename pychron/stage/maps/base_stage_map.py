@@ -93,7 +93,6 @@ class BaseStageMap(Loggable):
         with open(self.file_path, "r") as rfile:
             cnt = 0
             for line in rfile:
-                print('ff', line)
                 if line.startswith("#"):
                     continue
 
@@ -126,7 +125,6 @@ class BaseStageMap(Loggable):
                     if h is None:
                         self.warning_dialog("Invalid Stage Map {}".format(self.name))
                         return
-                    print(h.id, h.nominal_position)
                     sms.append(h)
                     hi += 1
             else:
@@ -197,7 +195,15 @@ class BaseStageMap(Loggable):
 
     def map_to_uncalibration(self, pos, cpos=None, rot=None, scale=None):
         cpos, rot, scale = self._get_calibration_params(cpos, rot, scale)
-        return itransform_point(pos, cpos, rot, scale)
+        npos = itransform_point(pos, cpos, rot, scale)
+
+        self.load_correction_affine_file()
+        if self.corrected_affine:
+            cpos = self.corrected_affine['translation']
+            rot = self.corrected_affine['rotation']
+            npos = itransform_point(npos, cpos, rot, 1)
+
+        return npos
         # a = AffineTransform()
         # a.scale(1 / scale, 1 / scale)
         # a.rotate(-rot)
@@ -307,14 +313,19 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
             None,
         )
         if pos is not None:
+            self.load_correction_affine_file()
+
             if self.corrected_affine:
                 cpos = self.corrected_affine['translation']
                 rot = self.corrected_affine['rotation']
                 scale = 1
-                self.debug(f'applying corrected affine cpos={cpos}, rot={rot}')
+                self.debug(f'applying corrected affine pos={pos} cpos={cpos}, rot={rot}')
                 pos = transform_point(pos, cpos, rot, scale)
-
+                self.debug(f'new pos {pos}')
         return pos
+
+    def load_correction_affine_file(self):
+        pass
 
     def clear_correction_file(self):
         pass

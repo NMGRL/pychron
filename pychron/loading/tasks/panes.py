@@ -396,6 +396,7 @@ class StageManagerPane(TraitsDockPane):
                                        UItem('loading_manager.checking_level_button'),
                                        UItem('loading_manager.scan_tray_button'),
                                        label='Tray Scan'),
+                          BorderHGroup(UItem('loading_manager.zoom_level'), label='Zoom'),
                           BorderHGroup(HGroup(icon_button_editor('loading_manager.up_button', 'arrow_up'),
                                               icon_button_editor('loading_manager.down_button', 'arrow_down'),
                                               UItem('loading_manager.home_button')),

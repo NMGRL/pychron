@@ -19,6 +19,7 @@ from __future__ import absolute_import
 
 import os
 import pickle
+import shutil
 
 import yaml
 from numpy import array, mean, correlate, std, corrcoef
@@ -63,13 +64,13 @@ class LaserStageMap(BaseStageMap):
 
     cpos = None
     rotation = None
+    zoom_level = 1
 
     @property
     def center_guess_path(self):
         head, tail = os.path.splitext(self.file_path)
         path = "{}.center.txt".format(head)
         return path
-
 
     @property
     def correction_affine_path(self):
@@ -135,10 +136,17 @@ class LaserStageMap(BaseStageMap):
     def has_correction_file(self):
         return os.path.isfile(self.correction_path)
 
+    _corrected_zoom_level = None
+
     def load_correction_affine_file(self):
-        self.debug('load correction affine file')
-        p = self.correction_affine_path
-        self.corrected_affine = yload(p)
+        if not self.corrected_affine or self._corrected_zoom_level != self.zoom_level:
+            self.debug('load correction affine file')
+            p = self.correction_affine_path
+            correction_table = yload(p)
+            self.corrected_affine = correction_table.get(str(self.zoom_level))
+            self._corrected_zoom_level = self.zoom_level
+
+            self.debug(f'corrected_affine {self.corrected_affine}')
 
     def load_correction_file(self):
         self.debug("load correction file")
@@ -206,8 +214,11 @@ class LaserStageMap(BaseStageMap):
     def clear_correction_file(self):
         p = self.correction_path
         if os.path.isfile(p):
-            os.remove(p)
-            self.info("removed correction file {}".format(p))
+            # os.remove(p)
+            root, name = os.path.split(p)
+            bp = os.path.join(root, f'~{name}')
+            shutil.move(p, bp)
+            self.info(f"backup correction file {p} to {bp}")
 
         for h in self.sample_holes:
             h.x_cor = 0
@@ -248,7 +259,7 @@ class LaserStageMap(BaseStageMap):
             hole.x_cor = x_cor
             hole.y_cor = y_cor
             hole.corrected = True
-            self.update_secondary_calibration(hole)
+            # self.update_secondary_calibration(hole)
 
     def _get_hole_by_position(self, x, y, tol=None):
         return self._get_hole_by_pos(x, y, "x", "y", tol)

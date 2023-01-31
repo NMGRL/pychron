@@ -251,6 +251,7 @@ class LoadingManager(DVCIrradiationable):
     focus_position_readback = Float
     focus_stepsperdata = Int(964)
     focus_scalar = Float(15.5)
+    zoom_level = Enum('1', ('0.8', '1', '2', '3', '4', '6', '8', ))
 
     loading_level_button = Button('Loading Level')
     checking_level_button = Button('Checking Level')
@@ -1061,6 +1062,10 @@ class LoadingManager(DVCIrradiationable):
                 sel.nxtals = self.nxtals
                 sel.nxtals_label.text = self.nxtals
 
+    @on_trait_change('stage_map:stage_map_name')
+    def _handle_stage_map_changed(self):
+        self.stage_manager.stage_map.zoom_level = self.zoom_level
+
     @on_trait_change("canvas:increment_event")
     def _increment(self):
         """
@@ -1212,6 +1217,19 @@ class LoadingManager(DVCIrradiationable):
     def _scan_tray_button_fired(self):
         self.scan_tray()
 
+    def _zoom_level_changed(self, new):
+        self.stage_manager.stage_map.zoom_level = new
+        with open(os.path.join(paths.appdata_dir, 'zoom_level.csv')) as rfile:
+            for line in rfile:
+                zoom, pxpermm = line.split(',')
+                if float(zoom) == float(new):
+                    pxpermm = float(pxpermm)
+                    break
+            else:
+                pxpermm = 55
+                self.debug(f'no zoom found for {new}. defaulting to {pxpermm}')
+        self.stage_manager.set_zoom_manually(pxpermm)
+        self.stage_manager.autocenter_manager.pxpermm = pxpermm
 
     def _focus_stepsperdata_changed(self, new):
         self.focus_motor.stepsperdata = new
