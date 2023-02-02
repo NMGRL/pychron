@@ -15,7 +15,6 @@
 
 # ============= enthought library imports =======================
 import numpy as np
-import pywt
 from numpy.fft import fftshift, fftn
 from scipy.ndimage import binary_fill_holes
 from skimage.feature import canny
@@ -687,11 +686,15 @@ class Locator(Loggable):
 
         wavelet = ''
         if wavelet:
-            self.debug('wavelet: {}'.format(wavelet))
-            coeffs2 = pywt.dwt2(frm, wavelet)
-            LL, (LH, HL, HH) = coeffs2
-            frm = LL
-            frm = (frm - frm.min()) / frm.max() * 255
+            try:
+                import pywt
+                self.debug('wavelet: {}'.format(wavelet))
+                coeffs2 = pywt.dwt2(frm, wavelet)
+                LL, (LH, HL, HH) = coeffs2
+                frm = LL
+                frm = (frm - frm.min()) / frm.max() * 255
+            except ImportError:
+                self.debug('pywt required')
 
         gamma = 0
         # gamma = 1

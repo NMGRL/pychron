@@ -600,7 +600,11 @@ host= {}\nurl= {}'.format(
             self.critical("No session")
 
     def _add_unique(self, item, attr, name):
-        nitem = getattr(self, "get_{}".format(attr))(name)
+        try:
+            nitem = getattr(self, "get_{}".format(attr))(name)
+        except NoResultFound:
+            nitem = None
+
         if nitem is None:
             self.info("adding {}= {}".format(attr, name))
             self._add_item(item)
