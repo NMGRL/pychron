@@ -535,7 +535,7 @@ class TrayChecker(MachineVisionManager):
 
         trayname = self._loading_manager.stage_manager.stage_map.name
         name = f'{trayname}-{self._active_position}'
-        self.traydb.add_labeled_sample(name, self._active_frame.tobytes(), label)
+        self.traydb.add_labeled_sample(name, self._active_frame, label)
 
         self._visit_next_position()
 
