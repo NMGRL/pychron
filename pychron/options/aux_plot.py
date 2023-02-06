@@ -114,8 +114,8 @@ class AuxPlot(HasTraits):
     marker_size = Float(2)
     marker_color = Color("black")
 
-    calculated_ymax = Any(transient=True)
-    calculated_ymin = Any(transient=True)
+    calculated_ymax = Dict(transient=True)
+    calculated_ymin = Dict(transient=True)
 
     use_integer_ticks = False
 

@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 from math import isinf
 
-from chaco.legend import Legend
+from chaco.api import Legend
 from numpy import inf
-from traits.api import HasTraits, Any, List, Str, Event
+from traits.api import HasTraits, Any, List, Str, Event, Int
 
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.processing.analysis_graph import AnalysisStackedGraph
@@ -30,6 +30,7 @@ class FigurePanel(HasTraits):
     analyses = Any
     plot_options = Any
     equi_stack = False
+    graph_id = Int
 
     _index_attr = ""
     _graph_klass = AnalysisStackedGraph
@@ -51,7 +52,10 @@ class FigurePanel(HasTraits):
 
     def _figure_factory(self, *args, **kw):
         return self._figure_klass(
-            options=self.plot_options, equi_stack=self.equi_stack, *args, **kw
+            graph_id=self.graph_id,
+            options=self.plot_options,
+            equi_stack=self.equi_stack,
+            *args, **kw
         )
 
     def _make_figures(self, **kw):
@@ -157,7 +161,7 @@ class FigurePanel(HasTraits):
             for i, p in enumerate(plots):
                 g.plots[i].value_scale = p.scale
                 if p.ymin or p.ymax:
-                    # print("has ymin max set", p.ymin, p.ymax)
+                    # print("has ymin max set", i, p.ymin, p.ymax)
                     ymi, yma = p.ymin, p.ymax
                     if p.ymin > p.ymax:
                         yma = None
@@ -165,9 +169,9 @@ class FigurePanel(HasTraits):
                 elif p.has_ylimits():
                     # print("has ylimits", i, p.ylimits[0], p.ylimits[1])
                     g.set_y_limits(p.ylimits[0], p.ylimits[1], plotid=i)
-                elif p.calculated_ymin or p.calculated_ymax:
-                    # print("has calculated", p.calculated_ymin, p.calculated_ymax)
-                    g.set_y_limits(p.calculated_ymin, p.calculated_ymax, plotid=i)
+                elif p.calculated_ymin.get(self.graph_id) or p.calculated_ymax.get(self.graph_id):
+                    g.set_y_limits(p.calculated_ymin.get(self.graph_id),
+                                   p.calculated_ymax.get(self.graph_id), plotid=i)
 
             if mi is None and ma is None:
                 mi, ma = 0, 100

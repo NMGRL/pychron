@@ -134,17 +134,21 @@ class Spectrum(BaseArArFigure):
         # except ValueError:
         #     _mi = 0
         #     _ma = 1
+
+        # attaching the calculated limits to the aux plot is not working when using a multi graph figure.
+        # the easiest thing to go is give this figure a graph_id
+
         _ma, _mi = self.get_ybounds(vs=vs, s39=s39, pma=pma)
         if not po.has_ylimits():
-            if po.calculated_ymin is None:
-                po.calculated_ymin = _mi
+            if self.graph_id not in po.calculated_ymin:
+                po.calculated_ymin[self.graph_id] = _mi
             else:
-                po.calculated_ymin = min(po.calculated_ymin, _mi)
+                po.calculated_ymin[self.graph_id] = min(po.calculated_ymin[self.graph_id], _mi)
 
-            if po.calculated_ymax is None:
-                po.calculated_ymax = _ma
+            if self.graph_id not in po.calculated_ymax:
+                po.calculated_ymax[self.graph_id] = _ma
             else:
-                po.calculated_ymax = max(po.calculated_ymax, _ma)
+                po.calculated_ymax[self.graph_id] = max(po.calculated_ymax[self.graph_id], _ma)
 
     # ===============================================================================
     # plotters

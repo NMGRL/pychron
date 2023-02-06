@@ -86,6 +86,7 @@ class BaseArArFigure(SelectionFigure):
     _analysis_group = Instance(AnalysisGroup)
     _analysis_group_klass = AnalysisGroup
 
+    graph_id = Int
     group_id = Int
     subgroup_id = Int
     ytitle = Str
@@ -214,12 +215,11 @@ class BaseArArFigure(SelectionFigure):
         for idx, (plotobj, po) in enumerate(zip(graph.plots, plots)):
             self._apply_aux_plot_options(bool(idx), plotobj, po, row, col)
             # if this not the only plot and not the upper left turn off error info overlay
-            if (row[1] > 1 or col[1] > 1) and not (
-                row[0] != row[1] - 1 and col[0] == 0
-            ):
-                for ov in plotobj.overlays:
-                    if isinstance(ov, FlowPlotLabel):
-                        ov.visible = False
+            if row[1] > 1 or col[1] > 1:
+                if col[0] or row[0]:
+                    for ov in plotobj.overlays:
+                        if isinstance(ov, FlowPlotLabel):
+                            ov.visible = False
 
     def plot(self, *args, **kw):
         pass
