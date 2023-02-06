@@ -216,7 +216,6 @@ class Loggable(BaseFS):
         self.logcolor = c
 
     def _log_(self, func, msg):
-
         # def get_thread_name():
         #     name = 'foo'
         #     # ct = current_thread()

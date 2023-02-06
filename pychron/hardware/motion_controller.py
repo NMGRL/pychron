@@ -360,7 +360,6 @@ class MotionController(CoreDevice):
         cnt = 0
         threshold = 0 if timer else 1
         while 1:
-
             st = time.time()
             a = func()
             et = time.time() - st
@@ -475,7 +474,6 @@ class MotionController(CoreDevice):
         keys = list(self.axes.keys())
         keys.sort()
         for k in keys:
-
             editor = RangeEditor(
                 low_name="{}axes_min".format(k),
                 high_name="{}axes_max".format(k),

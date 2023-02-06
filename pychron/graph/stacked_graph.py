@@ -105,7 +105,6 @@ class StackedGraph(Graph):
         return c
 
     def new_plot(self, **kw):
-
         if "title" in kw:
             if self._has_title:
                 kw.pop("title")

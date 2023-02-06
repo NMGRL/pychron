@@ -872,7 +872,6 @@ class Graph(ContextMenuMixin):
         ymin_anchor=None,
         **kw
     ):
-
         try:
             names = self.series[plotid][series]
         except (IndexError, TypeError):
@@ -1082,7 +1081,6 @@ class Graph(ContextMenuMixin):
             if "xname" in kw:
                 xname = kw["xname"]
             else:
-
                 xname = next(self.xdataname_generators[plotid])
             if "yname" in kw:
                 yname = kw["yname"]
@@ -1281,7 +1279,6 @@ class Graph(ContextMenuMixin):
     def _set_limits(
         self, mi, ma, axis, plotid, pad, pad_style="symmetric", force=False
     ):
-
         if not plotid < len(self.plots):
             return
 

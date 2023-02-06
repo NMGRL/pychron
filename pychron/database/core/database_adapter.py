@@ -423,7 +423,6 @@ host= {}\nurl= {}'.format(
                 os.path.basename(self.path),
             )
         else:
-
             url = "{}:{}".format(obscure_host(self.host), self.name)
         return url
 
@@ -512,7 +511,6 @@ host= {}\nurl= {}'.format(
         return driver
 
     def _import_mysql_driver(self):
-
         try:
             """
             pymysql
@@ -644,7 +642,6 @@ host= {}\nurl= {}'.format(
         group_by=None,
         verbose_query=False,
     ):
-
         sess = self.session
         if sess is None or isinstance(sess, MockSession):
             self.debug("USING MOCKSESSION************** {}".format(sess))
@@ -760,7 +757,6 @@ host= {}\nurl= {}'.format(
                 raise e
 
     def _append_filters(self, f, kw):
-
         filters = kw.get("filters", [])
         if isinstance(f, (tuple, list)):
             filters.extend(f)
@@ -790,7 +786,6 @@ host= {}\nurl= {}'.format(
         verbose=True,
         verbose_query=False,
     ):
-
         if not isinstance(value, (str, int, six.text_type, int, float, list, tuple)):
             return value
 
@@ -885,7 +880,6 @@ host= {}\nurl= {}'.format(
         order=None,
         key=None,
     ):
-
         if isinstance(join_table, str):
             join_table = gtables[join_table]
 

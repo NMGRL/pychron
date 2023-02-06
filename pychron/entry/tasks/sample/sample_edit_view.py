@@ -178,7 +178,6 @@ class SampleEditItem(HasTraits):
         return proj, pi
 
     def traits_view(self):
-
         ll_grp = HGroup(
             Item("lat", label="Latitude"),
             Item("lon", label="Longitude"),

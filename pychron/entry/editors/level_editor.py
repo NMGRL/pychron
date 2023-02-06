@@ -265,7 +265,6 @@ class IrradiationLevelEditor(PackageLevelEditor):
         self._select_production()
 
     def _edit_level(self):
-
         orignal_name = self.name
         db = self.dvc.db
         level = db.get_irradiation_level(self.irradiation, self.name)
@@ -382,7 +381,6 @@ class IrradiationLevelEditor(PackageLevelEditor):
                     "You are about to delete {} irradiation positions. "
                     "Are you sure you want to continue?".format(on - n)
                 ):
-
                     for p in level.positions[n:]:
                         self.debug(
                             "deleting {} {} {} {}".format(

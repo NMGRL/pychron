@@ -244,7 +244,6 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 h = p2[1] - p1[1]
 
                 if self.dim_non_plateau:
-
                     if step_a is not None and step_a <= i <= step_b:
                         c = color
                     else:
@@ -471,7 +470,6 @@ class PlateauOverlay(BasePlateauOverlay):
                     label.overlay(component, gc)
 
     def _get_plateau_label(self, x1, x2, y):
-
         if self.layout_needed or not self.plateau_label:
             p = self.plateau_label
         else:

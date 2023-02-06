@@ -293,7 +293,6 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
         )
 
     def _get_bitmap_path(self):
-
         name, _ext = os.path.splitext(self.name)
         root, _path = os.path.split(self.file_path)
         name = ".".join([name, "png"])

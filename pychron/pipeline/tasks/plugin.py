@@ -169,7 +169,6 @@ class PipelinePlugin(BaseTaskPlugin):
             ("fit", reduction_group, "MenuBar/data.menu"),
             ("recall", recall_group, "MenuBar/data.menu"),
         ):
-
             for eid, actions in exts:
                 for ai in actions:
                     if ai.id.startswith("pychron.pipeline.{}".format(s)):

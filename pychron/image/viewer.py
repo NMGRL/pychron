@@ -97,7 +97,6 @@ class ImageViewer(HasTraits):
         return self.counter + 1
 
     def set_images(self, records):
-
         self.records = [ImageRecord(path=p, note=n or "", id=i) for p, n, i in records]
         # self.images = paths
         self.nimages = len(records)

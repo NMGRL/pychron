@@ -143,12 +143,16 @@ class Spectrum(BaseArArFigure):
             if self.graph_id not in po.calculated_ymin:
                 po.calculated_ymin[self.graph_id] = _mi
             else:
-                po.calculated_ymin[self.graph_id] = min(po.calculated_ymin[self.graph_id], _mi)
+                po.calculated_ymin[self.graph_id] = min(
+                    po.calculated_ymin[self.graph_id], _mi
+                )
 
             if self.graph_id not in po.calculated_ymax:
                 po.calculated_ymax[self.graph_id] = _ma
             else:
-                po.calculated_ymax[self.graph_id] = max(po.calculated_ymax[self.graph_id], _ma)
+                po.calculated_ymax[self.graph_id] = max(
+                    po.calculated_ymax[self.graph_id], _ma
+                )
 
     # ===============================================================================
     # plotters
@@ -266,7 +270,6 @@ class Spectrum(BaseArArFigure):
                     self._add_info_label(plot, ts)
 
     def _add_age_label(self, plot, text, font="modern 10", relative_position=0, **kw):
-
         o = RelativePlotLabel(
             component=plot,
             text=text,
@@ -440,7 +443,6 @@ class Spectrum(BaseArArFigure):
     def _calculate_spectrum(
         self, excludes=None, group_id=0, index_key="k39", value_key="uage"
     ):
-
         if excludes is None:
             excludes = []
 

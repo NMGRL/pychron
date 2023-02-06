@@ -131,7 +131,6 @@ class ArgonIntelligenceDatabase(DVCDatabase):
         with open(p, "r") as rfile:
             reader = csv.DictReader(rfile)
             for row in reader:
-
                 for k in ARGON_KEYS:
                     klass = int(k not in ("Ar40", "Ar36"))
                     self.add_classification(row["runid"], k, klass)

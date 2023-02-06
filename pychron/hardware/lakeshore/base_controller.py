@@ -178,7 +178,6 @@ class BaseLakeShoreController(CoreDevice):
                 time.sleep(delay)
 
     def set_setpoint(self, v, output=1, retries=3):
-
         self.set_range(v, output)
         for i in range(retries):
             self.tell("SETP {},{}".format(output, v))

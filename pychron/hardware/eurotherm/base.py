@@ -47,7 +47,6 @@ def get_pid_parameters(v):
         params = [[li.strip() for li in l.split("\t")] for l in f]
 
     for i, pa in enumerate(params[:-1]):
-
         low_t = int(pa[0])
         if i == 0:
             if v < low_t:

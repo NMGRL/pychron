@@ -36,7 +36,6 @@ class AgilentMixin:
                 if dev.communicator.address == addr:
                     self.communicator = dev.communicator
         else:
-
             communicator = self._communicator_factory(comtype)
             if communicator is not None:
                 # give the _communicator the config object so it can load its args

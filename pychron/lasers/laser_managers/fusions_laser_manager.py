@@ -145,7 +145,6 @@ class FusionsLaserManager(LaserManager):
             return chiller.get_coolant_out_temperature(**kw)
 
     def get_coolant_status(self, **kw):
-
         chiller = self.chiller
         if chiller is not None:
             return chiller.get_faults(**kw)
@@ -298,7 +297,6 @@ class FusionsLaserManager(LaserManager):
         self.degasser.degas(power, **kw)
 
     def _move_to_position(self, position, autocenter):
-
         if self.stage_manager is not None:
             if isinstance(position, tuple):
                 if len(position) > 1:
@@ -307,7 +305,6 @@ class FusionsLaserManager(LaserManager):
                     if len(position) == 3:
                         self.stage_manager.set_z(position[2])
             else:
-
                 self.stage_manager.move_to_hole(position)
             return True
 

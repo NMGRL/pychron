@@ -461,7 +461,6 @@ class MetaRepo(GitRepoManager):
         save_predicted=True,
         jd=None,
     ):
-
         self.info(
             "Saving j for {}{}:{} {}, j={} +/-{}".format(
                 irradiation, level, pos, identifier, j, e

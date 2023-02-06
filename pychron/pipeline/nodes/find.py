@@ -118,7 +118,6 @@ class BaseFindFluxNode(FindNode):
     def _fp_factory(
         self, geom, irradiation, level, identifier, sample, hole_id, fluxes
     ):
-
         pp = next((p for p in fluxes if p["identifier"] == identifier), {})
 
         # j, j_err, mean_j, mean_j_err, model_kind = 0, 0, 0, 0, ""
@@ -599,7 +598,6 @@ class FindReferencesNode(FindNode):
                 return True
 
     def traits_view(self):
-
         load_grp = BorderHGroup(
             UItem("load_name", editor=EnumEditor(name="display_loads")),
             Item(

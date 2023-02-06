@@ -504,7 +504,6 @@ class IdeogramPlotable(HasTraits):
         return self.tag in tags
 
     def set_temp_status(self, tag):
-
         tag = tag.lower()
         if tag != "ok":
             self.otemp_status = tag

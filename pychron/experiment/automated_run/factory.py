@@ -634,7 +634,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         self.display_irradiation = il
 
     def _new_run(self, excludes=None, **kw):
-
         # need to set the labnumber now because analysis_type depends on it
         arv = self._spec_klass(labnumber=self.labnumber, **kw)
 
@@ -771,7 +770,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             excludes.append("comment")
 
         for attr in self._get_clonable_attrs():
-
             if attr in excludes:
                 continue
             try:
@@ -927,7 +925,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def _update_run_values(self, attr, v):
         if self.edit_mode and self._selected_runs and not self.suppress_update:
-
             self._auto_save()
 
             self.edit_event = dict(
@@ -1017,7 +1014,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self._load_default_scripts(tag, new)
 
     def _load_default_scripts(self, labnumber_tag, labnumber):
-
         # if labnumber is int use key='U'
         try:
             _ = int(labnumber_tag)
@@ -1184,7 +1180,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                 'Repository Identifier "{}" does not exist. Would you '
                                 "like to add it?".format(repo)
                             ):
-
                                 m = 'Repository "{}({})"'.format(repo, pi_name)
                                 # this will set self.repository_identifier
                                 if self._add_repository(repo, pi_name):
@@ -1549,7 +1544,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             ct = CommentTemplater()
 
         for idn, runs in groupby_key(self._selected_runs, "identifier"):
-
             with self.dvc.session_ctx():
                 ipos = self.dvc.get_identifier(idn)
 

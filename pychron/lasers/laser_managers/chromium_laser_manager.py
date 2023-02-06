@@ -80,7 +80,6 @@ class ChromiumLaserManager(EthernetLaserManager):
             pass
 
     def set_laser_power(self, v):
-
         return self._ask("laser.output {}".format(v))
 
     def enable_laser(self, **kw):

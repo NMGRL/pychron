@@ -138,7 +138,6 @@ class Locator(Loggable):
         return rescale(src, v, preserve_range=True)
 
     def crop(self, src, cw, ch, ox=0, oy=0, verbose=True):
-
         cw_px = int(cw * self.pxpermm)
         ch_px = int(ch * self.pxpermm)
         w, h = get_size(src)
@@ -298,7 +297,6 @@ class Locator(Loggable):
         self.debug("src mean={}, {}, {}".format(sm, low, high))
 
         def find(t):
-
             nsrc = seg.segment(src, t)
             per = _binary_percent(nsrc)
             if threshold_limiting and (per > 0.85 or per < 0.25):
@@ -334,7 +332,6 @@ class Locator(Loggable):
             tt = find(threshold)
             visited[threshold] = len(tt) if tt else 0
             if tt or sum(visited.values()) < min_targets:
-
                 at = find_bs(int(threshold / 2), depth + 1)
                 if not at:
                     at = find_bs(int(threshold / 1.5), depth + 1)
@@ -415,7 +412,6 @@ class Locator(Loggable):
                 othreshold = sm - 32
 
         for step in (1, -1):
-
             if step == -1:
                 othreshold = sm + 32
 
@@ -520,7 +516,6 @@ class Locator(Loggable):
         return stargets
 
     def _mask(self, src, radius=None):
-
         radius *= self.pxpermm
         h, w = src.shape[:2]
         c = circle(h / 2.0, w / 2.0, radius, shape=(h, w))
@@ -822,7 +817,6 @@ class Locator(Loggable):
                     and cy is not None
                     and not isnan(cy)
                 ):
-
                     for cpt in cpts:
                         self._draw_indicator(src, cpt, size=1)
 
@@ -955,7 +949,6 @@ class Locator(Loggable):
         """
         # color = (255, 165, 0)
         if targets:
-
             size = 20
             sstep = 0
             start = 100

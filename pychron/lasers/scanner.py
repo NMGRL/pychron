@@ -154,7 +154,6 @@ class Scanner(Loggable):
         pass
 
     def execute(self):
-
         if self._scanning:
             self.stop()
         else:
@@ -182,7 +181,6 @@ class Scanner(Loggable):
         self._execute()
 
     def _execute(self):
-
         yd = self._read_control_path()
 
         if yd is None:
@@ -314,7 +312,6 @@ class Scanner(Loggable):
             self._warned = False
             return yaml.load(open(self.control_path).read())
         elif not self._warned:
-
             self.warning_dialog(
                 "No Scanner Control file found at {}".format(self.control_path)
             )
@@ -355,7 +352,6 @@ class PIDScanner(Scanner):
             tc = self.manager.temperature_controller
 
             if tc:
-
                 p, i, d = self.pid
 
                 tc.set_heat_proportional_band(p)

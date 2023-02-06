@@ -237,7 +237,6 @@ class GraphicModel(HasTraits):
         self.container.invalidate_and_redraw()
 
     def _srcpath_changed(self):
-
         # default_radius=radius,
         # default_bounds=bounds,
         # convert_mm=convert_mm,

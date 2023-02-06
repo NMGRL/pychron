@@ -42,7 +42,6 @@ class GitHubPlugin(BaseGitPlugin):
     id = "pychron.github.plugin"
 
     def start(self):
-
         p = self.application.preferences
         tok = p.get("pychron.github.oauth_token")
         if not tok:

@@ -735,7 +735,6 @@ class MeasurementPyScript(ValvePyScript):
         action=None,
         resume=False,
     ):
-
         self._automated_run_call(
             "py_add_action",
             attr=attr,

@@ -254,7 +254,6 @@ class BaseArArFigure(SelectionFigure):
                     p.alt_axis.mapper = p.value_mapper
 
     def _setup_plot(self, i, pp, po):
-
         # add limit tools
         self.graph.add_limit_tool(pp, "x", self._handle_xlimits)
         self.graph.add_limit_tool(pp, "y", self._handle_ylimits)
@@ -386,7 +385,6 @@ class BaseArArFigure(SelectionFigure):
         return gen()
 
     def _set_y_limits(self, a, b, min_=None, max_=None, pid=0, pad=None):
-
         mi, ma = self.graph.get_y_limits(plotid=pid)
 
         mi = min_ if min_ is not None else min(mi, a)
@@ -740,7 +738,6 @@ class BaseArArFigure(SelectionFigure):
         sig_figs=3,
         mswd_sig_figs=3,
     ):
-
         display_mswd = n >= 2 and display_mswd
 
         if display_n:

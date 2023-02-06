@@ -132,13 +132,11 @@ class RunParser(Loggable):
             LIGHT_VALUE,
             "frequency_group",
         ]:
-
             v = self._get_attr_value(header, args, attr, cast=float)
             if v is not None:
                 params[v[0]] = v[1]
 
     def _load_booleans(self, header, args, params):
-
         for attr in [
             "autocenter",
             USE_CDD_WARMING,

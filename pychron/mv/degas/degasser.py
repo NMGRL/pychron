@@ -182,7 +182,6 @@ class Degasser(Loggable):
         self.plot_container.add(self.img_graph.plotcontainer)
 
     def _degas(self, lumens, pid):
-
         self.lumens = lumens
         g = self.stream_graph
         img = self.img_graph.plots[0]

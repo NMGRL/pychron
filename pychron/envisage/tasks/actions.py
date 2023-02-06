@@ -192,7 +192,6 @@ class RestartAction(PAction):
 
 class WebAction(PAction):
     def _open_url(self, url):
-
         import webbrowser
         import requests
 
@@ -240,7 +239,6 @@ class ManageSettingsAction(Action):
 
 class SettingsAction(Action):
     def perform(self, event):
-
         app = event.task.window.application
         name = app.preferences.get("pychron.general.remote")
         if not name:

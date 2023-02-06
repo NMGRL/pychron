@@ -198,7 +198,6 @@ class PyScript(Loggable):
 
     def test(self, argv=None):
         if not self.syntax_checked:
-
             self.debug("testing...")
             self._estimated_duration = 0
             self.syntax_checked = True
@@ -250,7 +249,6 @@ class PyScript(Loggable):
                 return MainError
 
         else:
-
             try:
                 code = compile(snippet, "<string>", "exec")
             except BaseException as e:
@@ -438,7 +436,6 @@ class PyScript(Loggable):
     @calculate_duration
     @command_register
     def gosub(self, name=None, root=None, klass=None, argv=None, calc_time=False, **kw):
-
         if not name.endswith(".py"):
             name += ".py"
 
@@ -654,7 +651,6 @@ class PyScript(Loggable):
     # private
     # ===============================================================================
     def _execute(self, **kw):
-
         self._cancel = False
         self._completed = False
         self._truncate = False

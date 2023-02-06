@@ -97,7 +97,6 @@ class GuideOverlay(AbstractOverlay):
         gc.set_alpha(self.alpha)
 
     def overlay(self, component, gc, view_bounds=None, mode="normal"):
-
         with gc:
             gc.clip_to_rect(component.x, component.y, component.width, component.height)
             self._setup_line(gc)

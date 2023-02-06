@@ -48,7 +48,6 @@ class BaseU3LV:
             try:
                 self._device = u3.U3(**conn)
             except NullHandleException:
-
                 self.debug_exception()
                 return
             return self.load_additional_args(config)

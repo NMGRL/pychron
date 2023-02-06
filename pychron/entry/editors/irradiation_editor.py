@@ -201,7 +201,6 @@ class IrradiationEditor(PackageEditor):
     #        self.dvc.add_production_to_irradiation(self.name, self.reactor.name, self.reactor.get_params())
 
     def _load_reactors(self):
-
         p = os.path.join(paths.meta_root, "reactors.json")
         reactors = {}
         if os.path.isfile(p):

@@ -104,7 +104,6 @@ class LibraryManager(Loggable):
             )
 
     def _install_library(self, entry, warn=False):
-
         # parse entry for name and version
         name, version = entry, ""
         try:

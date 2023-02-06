@@ -335,7 +335,6 @@ e.g.
                 "Otherwise please select a repository to save the data "
                 "file",
             ):
-
                 dlg = FileDialog(action="save as", default_directory=paths.csv_data_dir)
                 if dlg.open():
                     local_path = dlg.path
@@ -369,7 +368,6 @@ e.g.
         return record
 
     def _add_record_button_fired(self):
-
         self.records.append(self._record_factory())
         self._make_groups()
 

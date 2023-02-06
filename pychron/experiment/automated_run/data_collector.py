@@ -322,7 +322,6 @@ class DataCollector(Consoleable):
             self.plot_panel.update()
 
     def _set_plot_data(self, cnt, det, x, signal):
-
         iso = det.isotope
         detname = det.name
         ypadding = det.ypadding
@@ -355,7 +354,6 @@ class DataCollector(Consoleable):
             ]
 
         for g, name, fit, series, fit_series in gs:
-
             pid = g.get_plotid_by_ytitle(name)
             if pid is None:
                 self.critical(
@@ -498,7 +496,6 @@ class DataCollector(Consoleable):
                     self.equilibration_conditionals,
                 ),
             ):
-
                 if tag == "equilibration" and self.collection_kind != SNIFF:
                     continue
 

@@ -127,7 +127,6 @@ class StageCanvas(MapCanvas):
     # property get/set
     # ===============================================================================
     def _get_current_position(self):
-
         md = self.map_data(self.cur_pos)
         return self.cur_pos[0], md[0], self.cur_pos[1], md[1]
 

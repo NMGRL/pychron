@@ -152,7 +152,6 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     self.debug(f"data left: {ds}")
 
             if "#\r\n" in ds:
-
                 ds = ds.split("#\r\n")[0]
                 return ds
 

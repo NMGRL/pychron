@@ -363,7 +363,6 @@ class LaserTrayCanvas(StageCanvas):
         self.scene.pop_item(idx, klass=LaserPoint)
 
     def new_point(self, xy=None, redraw=True, **kw):
-
         if xy is None:
             xy = self._stage_position
 
@@ -476,7 +475,6 @@ class LaserTrayCanvas(StageCanvas):
             return
 
         if delta is None:
-
             vrange = getattr(self, "{}_mapper".format(mapper)).range
 
             vmi = vrange.low

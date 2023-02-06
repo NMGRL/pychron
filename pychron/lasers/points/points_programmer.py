@@ -100,7 +100,6 @@ class PointsProgrammer(Manager):
             self.maker._accept_point_fired()
 
     def load_stage_map(self, sm):
-
         canvas = self.canvas
         canvas.clear_all()
 

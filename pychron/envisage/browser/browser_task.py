@@ -128,7 +128,6 @@ class BaseBrowserTask(BaseEditorTask):
         ):
             editor.edit_view.show()
         else:
-
             e = AnalysisEditView(editor, dvc=self.dvc)
             info = open_view(e)
             # info = e.edit_traits()
@@ -244,7 +243,6 @@ class BaseBrowserTask(BaseEditorTask):
         tc = self.recall_configurer
         info = tc.edit_traits()
         if info.result:
-
             self._set_adapter_sig_figs()
 
             editors = self.get_recall_editors()
@@ -349,7 +347,6 @@ class BaseBrowserTask(BaseEditorTask):
         editor = None
         # check if record already is open
         for r in records:
-
             editor = self._get_editor_by_uuid(r.uuid)
             if editor:
                 records.remove(r)
@@ -408,7 +405,6 @@ class BaseBrowserTask(BaseEditorTask):
         if ans:
             quick = self.browser_model.use_quick_recall and use_quick
             for rec in ans:
-
                 av = rec.analysis_view_factory(quick=False)
                 av.isotope_view.isotope_adapter = self.isotope_adapter
                 av.isotope_view.intermediate_adapter = self.intermediate_adapter

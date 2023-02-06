@@ -401,7 +401,6 @@ class PipelineEngine(Loggable):
         self.refresh_figure_editors()
 
     def group_selected(self, key):
-
         # if there are multiple graphs only get the analyses from the selected graph
         if key != "graph_id":
             # e.g. key=='group_id'
@@ -448,7 +447,6 @@ class PipelineEngine(Loggable):
                 ("Ideogram", IdeogramNode, IdeogramEditor),
                 ("Spectrum", SpectrumNode, SpectrumEditor),
             ):
-
                 if isinstance(node, klass):
                     e = node.editor
                     es = [
@@ -767,7 +765,6 @@ class PipelineEngine(Loggable):
         for idx, node in enumerate(self.pipeline.iternodes(None)):
             if node.enabled:
                 with ActiveCTX(node):
-
                     if not node.pre_run(state, configure=False):
                         self.debug("Pre run failed {}".format(node))
                         return True
@@ -841,7 +838,6 @@ class PipelineEngine(Loggable):
             configure = False
 
         for idx, node in enumerate(pipeline.iternodes(start_node)):
-
             if node.enabled:
                 # node.editor = None
 

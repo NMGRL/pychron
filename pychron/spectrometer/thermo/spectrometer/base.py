@@ -332,7 +332,6 @@ class ThermoSpectrometer(BaseSpectrometer):
 
         pd = "Protection"
         if config.has_section(pd):
-
             self.magnet.use_beam_blank = self.config_get(
                 config, pd, "use_beam_blank", cast="boolean", default=False
             )
@@ -406,7 +405,6 @@ class ThermoSpectrometer(BaseSpectrometer):
         """
         data = self.get_intensities()
         if data is not None:
-
             keys, signals, _, _ = data
 
             def func(k):
@@ -535,7 +533,6 @@ class ThermoSpectrometer(BaseSpectrometer):
     def _get_config_dev(self, current, v, comp):
         dev = False
         if comp.get("compare", True):
-
             tol = comp.get("percent_tol")
             if not tol:
                 tol = comp.get("tolerance", 0.01)
@@ -611,7 +608,6 @@ class ThermoSpectrometer(BaseSpectrometer):
                     if not self.force_send_configuration:
                         comp = readout_comp.get(k, {})
                         if comp.get("compare", True):
-
                             current = self._get_source_parameter_value(k, mk)
                             try:
                                 current = float(current)
@@ -699,7 +695,6 @@ class ThermoSpectrometer(BaseSpectrometer):
                     show_progress = True
 
                 if ok:
-
                     r = StepRamper()
                     steps = abs(v - current) / step
                     if show_progress:

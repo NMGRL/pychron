@@ -324,7 +324,6 @@ class InitializationParser(XMLParser):
 
     def get_plugin(self, name, category=None):
         if "_" in name:
-
             if "co2" in name:
                 name = name.split("_")[0].capitalize() + "CO2"
             elif "uv" in name:
@@ -346,7 +345,6 @@ class InitializationParser(XMLParser):
                 return elem
 
     def get_manager(self, name, plugin):
-
         if "Manager" in plugin:
             plugin = plugin.replace("Manager", "")
 

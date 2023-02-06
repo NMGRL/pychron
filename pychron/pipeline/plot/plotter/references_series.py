@@ -120,7 +120,6 @@ class ReferencesSeries(BaseSeries):
         key = key.format(0)
         for plotobj, reg in new:
             if isinstance(reg, BaseRegressor):
-
                 excluded = reg.get_excluded()
                 for i, r in enumerate(self.sorted_references):
                     r.set_temp_status("omit" if i in excluded else "ok")
@@ -207,7 +206,6 @@ class ReferencesSeries(BaseSeries):
             scatter._layout_needed = True
 
     def reference_data(self, po):
-
         data = self._get_reference_data(po)
         if data:
             ans, xs, ys = data

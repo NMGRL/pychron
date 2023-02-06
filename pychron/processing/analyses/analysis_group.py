@@ -282,7 +282,6 @@ class AnalysisGroup(IdeogramPlotable):
         }
 
     def get_outliers(self, mck, **options):
-
         func = OUTLIER_FUNCS.get(mck)
         # if mck == SCHAEN2020_1:
         #     func = schaen_2020_1
@@ -595,7 +594,6 @@ class AnalysisGroup(IdeogramPlotable):
         return wa
 
     def _modify_error(self, v, e, kind, mswd=None):
-
         if mswd is None:
             mswd = self.mswd
 
@@ -695,7 +693,6 @@ class AnalysisGroup(IdeogramPlotable):
         return f
 
     def _calculate_integrated(self, attr, kind="total", weighting=None):
-
         uv = ufloat(0, 0)
         if kind == "total":
             ans = self.analyses
@@ -706,7 +703,6 @@ class AnalysisGroup(IdeogramPlotable):
 
         ans = [a for a in ans if not isinstance(a, InterpretedAgeGroup)]
         if ans:
-
             prs = ans[0].production_ratios
 
             def apply_pr(r, k):
@@ -1198,7 +1194,6 @@ class InterpretedAgeGroup(StepHeatAnalysisGroup, Preferred):
             self.set_preferred_kind(k, vk, ek, unit)
 
     def set_preferred_kind(self, attr, k, ek, unit=None):
-
         pv = self._get_pv(attr)
         pv.error_kind = ek
         pv.kind = k

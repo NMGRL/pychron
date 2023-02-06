@@ -201,7 +201,6 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
             self.af_demag_threshold = yd.get("threshold", 1)
 
     def _do_af_demagnetization(self, target, setfunc):
-
         p = paths.af_demagnetization
         if os.path.isfile(p):
             try:

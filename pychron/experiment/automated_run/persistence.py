@@ -158,7 +158,6 @@ class ExcelPersister(BasePersister):
 
     def _save_isotopes(self, sh):
         for i, (k, iso) in enumerate(self.per_spec.isotope_group.items()):
-
             sh.write(0, i, "{} time".format(k))
             sh.write(0, i + 1, "{} intensity".format(k))
 
@@ -285,7 +284,6 @@ class AutomatedRunPersister(BasePersister):
         """
         dm = self.data_manager
         with dm.open_file(self._current_data_frame):
-
             dm.new_group("peak_centers")
             for result in pc.get_results():
                 tab = dm.new_table("/peak_centers", result.detector)
@@ -616,7 +614,6 @@ class AutomatedRunPersister(BasePersister):
 
     # private
     def _save_detector_ic_csv(self):
-
         from pychron.experiment.utilities.detector_ic import make_items, save_csv
         from pychron.experiment.utilities.identifier import get_analysis_type
 

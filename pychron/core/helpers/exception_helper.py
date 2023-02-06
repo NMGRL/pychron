@@ -191,7 +191,6 @@ class ExceptionHandler(Controller):
         info.ui.dispose()
 
     def submit_issue_github(self):
-
         issue = self._make_issue()
         issue_obj = create_issue(issue)
         if issue_obj:

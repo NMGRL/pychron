@@ -106,7 +106,6 @@ class BESTModeler:
             axs[i].set_ylabel(names[i], fontsize=14)
 
     def plot(self, samples):
-
         # f = plt.figure(figsize=[7, 3])
         plt.subplot(1, 2, 1)
         plt.hist(

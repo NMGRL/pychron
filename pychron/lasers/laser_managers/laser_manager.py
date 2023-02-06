@@ -65,7 +65,6 @@ class LaserManager(BaseLaserManager):
     # public interface
     # ===============================================================================
     def bind_preferences(self, pref_id):
-
         from apptools.preferences.preference_binding import bind_preference
 
         bind_preference(self, "use_video", "{}.use_video".format(pref_id))
@@ -303,7 +302,6 @@ class LaserManager(BaseLaserManager):
         if not self.enabled:
             self.enable_laser()
         else:
-
             self.disable_laser()
 
     # ===============================================================================

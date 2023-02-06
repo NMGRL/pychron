@@ -946,7 +946,6 @@ class Ideogram(BaseArArFigure):
                 ov.set_x(wm)
                 ov.error = we
                 if ov.label:
-
                     mswd_args = None
                     if opt.display_mean_mswd:
                         mswd_args = (mswd, valid_mswd, n, pvalue)

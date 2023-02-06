@@ -62,7 +62,6 @@ class ExperimentStats(Loggable):
 
     # private
     def _calculate_duration(self, runs):
-
         dur = 0
         if runs:
             script_ctx = dict()
@@ -282,7 +281,6 @@ class StatsGroup(Loggable):
         for ei in self.experiment_queues:
             stats = ei.stats
             if sel in ei.cleaned_automated_runs:
-
                 si = ei.cleaned_automated_runs.index(sel)
 
                 st += (

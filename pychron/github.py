@@ -145,7 +145,6 @@ class Organization(GithubObject):
         return [self._repo_factory(ri, attributes) for ri in self.get_repos()]
 
     def get_repos(self):
-
         cmd = "/orgs/{}/repos".format(self._name)
         r = get_list(cmd, attr=None, headers=self._make_headers())
 

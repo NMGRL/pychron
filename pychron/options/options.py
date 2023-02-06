@@ -478,7 +478,6 @@ class BaseOptions(HasTraits):
         return None
 
     def _setstate(self, state):
-
         # see self.__setstate___
 
         self._init_trait_listeners()
@@ -843,7 +842,6 @@ class AuxPlotFigureOptions(FigureOptions):
     def setup(self):
         super(AuxPlotFigureOptions, self).setup()
         while len(self.aux_plots) > self.naux_plots:
-
             p = next(
                 (pp for pp in self.aux_plots if not pp.name or not pp.plot_enabled),
                 None,

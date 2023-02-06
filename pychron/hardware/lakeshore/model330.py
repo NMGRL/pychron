@@ -23,7 +23,6 @@ import time
 
 
 class Model330TemperatureController(BaseLakeShoreController):
-
     # def set_setpoint(self, v, output=1, retries=3):
     #
     #     self.set_range(v)

@@ -714,7 +714,6 @@ class BaseBrowserModel(PersistenceLoggable, ColumnSorterMixin):
             self._load_associated_labnumbers()
 
     def _selected_projects_changed(self, old, new):
-
         if new and self.project_enabled:
             # self._recent_low_post = None
             # self._recent_mass_spectrometers = None

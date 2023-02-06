@@ -38,7 +38,6 @@ class StratScene(Scene):
         yd = self._get_dict(p)
 
         for yi in yd["items"]:
-
             elev = yi["elevation"]
 
             c = 0

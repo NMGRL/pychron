@@ -100,7 +100,6 @@ class BrowserModel(BaseBrowserModel):
         )
 
         if not self.is_activated or force:
-
             if self.auto_load_database:
                 self.load_selectors()
 

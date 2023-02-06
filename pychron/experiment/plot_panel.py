@@ -309,7 +309,6 @@ class PlotPanel(Loggable):
         self.total_counts += v
 
     def _set_ncounts(self, v):
-
         o = self._ncounts
 
         self.info("{} set to terminate after {} counts".format(self.plot_title, v))

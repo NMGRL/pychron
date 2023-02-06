@@ -125,7 +125,6 @@ class InstalledAppFlow(object):
         redirect_uri_trailing_slash=True,
         **kwargs
     ):
-
         wsgi_app = _RedirectWSGIApp(success_message)
         # Fail fast if the address is occupied
         wsgiref.simple_server.WSGIServer.allow_reuse_address = False

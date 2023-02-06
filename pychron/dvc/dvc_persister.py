@@ -457,7 +457,6 @@ class DVCPersister(BasePersister):
                 db.add_repository("NoRepo", self.default_principal_investigator)
 
     def _save_analysis_db(self, timestamp):
-
         ps = self.per_spec
         rs = ps.run_spec
         d = {
@@ -561,7 +560,6 @@ class DVCPersister(BasePersister):
     def _save_currents(self, dban):
         dvc = self.dvc
         if dvc.update_currents_enabled:
-
             ps = self.per_spec
             db = dvc.db
 
@@ -602,7 +600,6 @@ class DVCPersister(BasePersister):
                 db.add_current(dban, iso.n, None, param, "int")
 
     def _save_analysis(self, timestamp):
-
         isos = {}
         dets = {}
         signals = []

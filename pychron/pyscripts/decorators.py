@@ -86,7 +86,6 @@ def verbose_skip(func):
     else:
 
         def decorator(obj, *args, **kw):
-
             fname = check_parameters(func, args, kw)
             if (
                 obj.testing_syntax

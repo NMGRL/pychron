@@ -327,7 +327,6 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
         self._show_results(ans)
 
     def _show_results(self, ans):
-
         c = FigureContainer()
         pom = RegressionSeriesOptionsManager()
         names = list({k for a in ans for k in a.isotope_keys})

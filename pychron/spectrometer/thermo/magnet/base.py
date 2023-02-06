@@ -52,7 +52,6 @@ class ThermoMagnet(BaseMagnet):
         use_dac_changed=True,
         use_af_demag=True,
     ):
-
         # if not self._wait_lock(2):
         #     self.debug('Unabled to obtain set_dac lock. Another thread is moving the magnet')
         #     return

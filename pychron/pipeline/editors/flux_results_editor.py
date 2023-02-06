@@ -175,7 +175,6 @@ class FluxPosition(HasTraits):
         return (self.mean_j - self.saved_j) / self.saved_j * 100
 
     def set_mean_j(self, use_weights):
-
         ans = [a for a in self.analyses if not a.is_omitted()]
         if ans:
             j, mswd = mean_j(
@@ -272,7 +271,6 @@ class FluxResultsEditor(BaseFluxVisualizationEditor, SelectionFigure):
         padding = vs / 4.0
 
         for identifier, ais in groupby_key(monitors, "identifier"):
-
             ais = list(ais)
             n = len(ais)
 

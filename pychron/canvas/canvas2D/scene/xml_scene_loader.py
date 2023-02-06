@@ -97,7 +97,6 @@ class XMLLoader(BaseLoader):
     def _new_rectangle(
         self, scene, elem, c, bw=3, layer=1, origin=None, klass=None, type_tag=""
     ):
-
         if klass is None:
             klass = RoundedRectangle
         if origin is None:

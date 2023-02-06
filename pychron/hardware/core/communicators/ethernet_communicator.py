@@ -273,7 +273,6 @@ class EthernetCommunicator(Communicator):
         return True
 
     def open(self, *args, **kw):
-
         for k in ("host", "port", "message_frame", "kind"):
             if k in kw:
                 setattr(self, k, kw[k])
@@ -308,7 +307,6 @@ class EthernetCommunicator(Communicator):
         return ret
 
     def get_read_handler(self, handler, **kw):
-
         if self.read_port:
             handler = self.get_handler(
                 addrs=(self.host, self.read_port), bind=True, **kw
@@ -323,7 +321,6 @@ class EthernetCommunicator(Communicator):
             addrs = (self.host, self.port)
 
         try:
-
             h = self.handler
             if h is None or h.address != addrs:
                 if self.kind.lower() == "udp":

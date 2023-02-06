@@ -143,7 +143,6 @@ class TimeSeriesGraph(Graph):
                 timefunc = lambda xi, fmt: time.mktime(time.strptime(xi, fmt))
 
                 if len(args) > 1:
-
                     xd = [
                         timefunc(xi.split(" +")[0], fmt)
                         + float(xi.split(" +")[1]) / 1000.0

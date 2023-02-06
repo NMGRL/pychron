@@ -584,7 +584,6 @@ class ArArAge(IsotopeGroup):
         return iso_intensities
 
     def _calculate_f(self, iso_intensities=None, interferences=None, set_attr=True):
-
         if iso_intensities is None:
             iso_intensities = self._assemble_isotope_intensities()
 

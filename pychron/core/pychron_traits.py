@@ -61,7 +61,6 @@ class HostStr(BaseStr):
             or URLREGEX.match(value)
             or "\\" in value
         ):
-
             return value
         else:
             self.error(obj, name, value)

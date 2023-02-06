@@ -54,7 +54,6 @@ class ErrorBarOverlay(AbstractOverlay):
                 y = comp.value.get_data()
 
             if self.orientation == "x":
-
                 err = self.error
                 if self.use_component:
                     err = comp.xerror.get_data()

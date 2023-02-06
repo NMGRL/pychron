@@ -584,7 +584,6 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         return vs
 
     def _graph_linear_j(self, x, y, r, reg, refresh):
-
         g = self.graph
         if not isinstance(g, RegressionGraph):
             g = RegressionGraph(
@@ -645,7 +644,6 @@ class BaseFluxVisualizationEditor(BaseTraitsEditor):
         self.min_j = fys.min()
 
     def _graph_hole_vs_j(self, x, y, r, reg, refresh):
-
         if self._individual_analyses_enabled:
             sel = [
                 i

@@ -44,7 +44,6 @@ class PyScriptNode(BaseNode):
     def run(self, state):
         spath = self._get_path()
         if spath and os.path.isfile(spath):
-
             root = os.path.dirname(spath)
             name = os.path.basename(spath)
             script = PipelinePyScript(root=root, name=name)

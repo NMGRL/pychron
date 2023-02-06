@@ -230,7 +230,6 @@ class IdeogramOptions(AgeOptions):
         return [fg.color for fg in self.groups]
 
     def get_plot_dict(self, group_id, subgroup_id):
-
         n = len(self.groups)
         gid = group_id % n
         fg = self.groups[gid]

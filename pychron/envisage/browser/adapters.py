@@ -241,7 +241,6 @@ class AnalysisAdapter(BrowserAdapter):
         return "{:0.1f} {}".format(dt, units)
 
     def get_menu(self, obj, trait, row, column):
-
         tag_actions = [
             Action(name="OK", action="tag_ok"),
             Action(name="Omit", action="tag_omit"),

@@ -54,7 +54,6 @@ class PipetteTracker(Loggable):
                 return True
 
     def _increment(self):
-
         self.counts += 1
 
         self.debug("increment shot count {}".format(self.counts))

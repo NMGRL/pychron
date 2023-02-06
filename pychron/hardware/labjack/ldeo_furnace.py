@@ -94,7 +94,6 @@ class LamontFurnaceControl(CoreDevice):
         self.test_connection()
 
     def test_connection(self):
-
         sn = self.return_sn()
         if 256 <= sn <= 2147483647:
             self.info("Labjack loaded")
@@ -119,7 +118,6 @@ class LamontFurnaceControl(CoreDevice):
         return temp
 
     def extract(self, value, units=None, furnace=1):
-
         self.furnace = furnace
 
         print(units)

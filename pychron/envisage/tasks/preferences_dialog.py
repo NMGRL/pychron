@@ -84,7 +84,6 @@ class PreferencesDialog(PD):
         categories = self.categories[:]
         category_map = dict((category.id, []) for category in categories)
         for pane in self.panes:
-
             # force pane to call trait_context
             # for some reason when using this PreferencesDialog
             # pane._model is None (only set when trait_context called)
@@ -107,7 +106,6 @@ class PreferencesDialog(PD):
         self._selected = tabs[0]
 
     def traits_view(self):
-
         a = UItem(
             "_tabs",
             width=-200,
