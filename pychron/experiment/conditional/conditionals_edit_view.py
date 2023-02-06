@@ -209,7 +209,6 @@ class ConditionalsEditView(ConditionalsViewable):
             (TERMINATION, TerminationGroup, TerminationConditional),
             (POST_RUN_TERMINATION, EPostRunGroup, TerminationConditional),
         ):
-
             name = "{}s".format(name)
             label = camel_case(name)
 

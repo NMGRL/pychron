@@ -217,7 +217,6 @@ class SamplePrep(DVCAble, PersistenceMixin):
     persistence_name = "sample_prep"
 
     def activated(self):
-
         self.dvc.create_session()
         self._load_pis()
         self._load_workers()
@@ -277,7 +276,6 @@ class SamplePrep(DVCAble, PersistenceMixin):
             setattr(self.prep_step, "choices_{}".format(k), cs)
 
     def _get_new_session(self):
-
         self.move_to_sessions = [s for s in self.sessions if s != self.session]
 
         v = okcancel_view(
@@ -385,7 +383,6 @@ class SamplePrep(DVCAble, PersistenceMixin):
         "fcrush, fsieve, fwash, facid, ffrantz, fheavy_liquid, fpick, fstatus"
     )
     def _handle_filter(self):
-
         keys = SAMPLE_PREP_STEPS + ("status",)
 
         def test(si):
@@ -412,7 +409,6 @@ class SamplePrep(DVCAble, PersistenceMixin):
             self._load_choices()
 
     def _add_selection_button_fired(self):
-
         if self.selected:
             dvc = self.dvc
             for s in self.selected:
@@ -517,7 +513,6 @@ class SamplePrep(DVCAble, PersistenceMixin):
         self._view_associated_image()
 
     def _view_associated_image(self):
-
         new = self.selected_step
         if new:
             msm = self._get_msm()
@@ -634,7 +629,6 @@ class SamplePrep(DVCAble, PersistenceMixin):
     @cached_property
     def _get_projects(self):
         with self.dvc.session_ctx(use_parent_session=False):
-
             ps = self.dvc.get_projects(
                 principal_investigators=(self.principal_investigator,), order="asc"
             )

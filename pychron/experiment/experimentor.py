@@ -103,7 +103,6 @@ class Experimentor(DVCIrradiationable):
         return [ai for ei in qs for ai in ei.automated_runs if ai.executable]
 
     def _update(self, queues=None):
-
         self.debug("update runs")
         if queues is None:
             queues = self.experiment_queues
@@ -174,7 +173,6 @@ class Experimentor(DVCIrradiationable):
         with db.session_ctx():
             next_pos = None
             for i, ai in enumerate(queue.automated_runs):
-
                 if ai.skip or ai.is_special():
                     continue
 
@@ -278,7 +276,6 @@ class Experimentor(DVCIrradiationable):
         rf = ef.run_factory
         rf.edit_mode = False
         if new:
-
             self._set_factory_runs(new)
 
             # if self.executor.is_alive():

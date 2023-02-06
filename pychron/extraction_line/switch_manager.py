@@ -284,7 +284,6 @@ class SwitchManager(Manager):
             if clear_prev_keys and len(keys) == len(self.switches):
                 self._prev_keys = []
             else:
-
                 self._prev_keys = keys
 
         if version:
@@ -615,7 +614,6 @@ class SwitchManager(Manager):
             self._verbose_debug("interlocks {}".format(interlocks))
             switches = self.switches
             for interlock in interlocks:
-
                 if interlock in switches:
                     v = switches[interlock]
                     if v.state:
@@ -808,7 +806,6 @@ class SwitchManager(Manager):
                     return
 
                 for v in self.switches:
-
                     if v in sls and sls[v]:
                         self.lock(v, save=False)
                     else:
@@ -1173,7 +1170,6 @@ class SwitchManager(Manager):
         return ctx
 
     def _make_switch_xml_ctx(self, v_elem, klass):
-
         if not v_elem.text:
             self.warning(
                 "Must specify a name for all switches. i.e. must provide text in <valve></valve> tags"

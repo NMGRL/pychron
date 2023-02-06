@@ -267,7 +267,6 @@ class BaseExperimentQueue(RunBlock):
     def _add_frequency_runs(
         self, runspecs, freq, freq_before, freq_after, is_run_block, is_repeat_block
     ):
-
         aruns = self.automated_runs
         runblock = self.automated_runs
         if is_repeat_block:

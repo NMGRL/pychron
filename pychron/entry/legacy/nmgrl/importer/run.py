@@ -188,7 +188,6 @@ def main():
         for sample_spec, run in sample_specs:
             info = sample_importer.fetch_irradiation_info(sample_spec)
             if info is not None:
-
                 # fetch j data
                 ln = run.runid.split("-")[0]
                 if ln != "50681":

@@ -166,7 +166,6 @@ class Demo(HasTraits):
         self.cnt += 1
 
     def traits_view(self):
-
         v = View(
             UItem("size"),
             "foo",

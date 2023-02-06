@@ -103,7 +103,6 @@ class MetaHandler(MetaHasTraits):
 
 def tx_register_functions(obj):
     for k, (fname, p) in REGISTRY.items():
-
         if hasattr(obj, fname):
             if fname not in FUNC_REGISTRY:
                 func = getattr(obj, fname)

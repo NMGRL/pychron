@@ -116,7 +116,6 @@ class _AnimatedPNGEditor(Editor):
             self._animation = anim
 
         else:
-
             self._animation.stop()
             self.control.set_count(0)
         self._state = not self._state

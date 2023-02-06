@@ -81,7 +81,6 @@ class BulkRunFixer(Loggable):
 
             if self.unknown_enabled:
                 for attr in ATTRS:
-
                     ats = list({getattr(r, attr) for r in ris})
                     if len(ats) > 1:
                         setattr(self, attr, ats[0])

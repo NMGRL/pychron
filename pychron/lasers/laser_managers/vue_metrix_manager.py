@@ -47,7 +47,6 @@ class VueMetrixManager(Manager):
     #            self.laser_voltage = v
 
     def __getattr__(self, attr):
-
         if hasattr(self.control, attr):
             obj = self.control
             return getattr(obj, attr)

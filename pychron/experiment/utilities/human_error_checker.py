@@ -120,7 +120,6 @@ class HumanErrorChecker(Loggable):
     _warned = None
 
     def check_runs(self, runs, test_all=False, inform=True, test_scripts=False):
-
         if not self.runs_enabled:
             self.info("check runs disabled")
             return
@@ -146,7 +145,6 @@ class HumanErrorChecker(Loggable):
         return ret
 
     def report_errors(self, errdict):
-
         msg = "\n".join(["{} {}".format(k, v) for k, v in errdict.items()])
         self.warning_dialog(msg)
 
@@ -237,7 +235,6 @@ class HumanErrorChecker(Loggable):
 
         ant = get_analysis_type(run.labnumber)
         if ant == "unknown":
-
             for attr in ("duration", "cleanup"):
                 err = self._check_attr(run, attr, inform)
                 if err is not None:

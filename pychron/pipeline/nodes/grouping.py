@@ -212,7 +212,6 @@ class SubGroupingNode(GroupingNode, Preferred):
         compress_groups(ans)
 
     def traits_view(self):
-
         v = okcancel_view(
             VGroup(
                 VGroup(

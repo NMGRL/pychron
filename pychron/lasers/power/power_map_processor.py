@@ -288,7 +288,6 @@ class PowerMapProcessor(HasTraits):
         metadata = []
         reader_meta = False
         for _index, row in enumerate(reader):
-
             if reader_meta:
                 metadata.append(row)
                 continue

@@ -375,7 +375,6 @@ class DVCCommitView(HasTraits):
 
     def _do_diff_fired(self):
         if self.selected_commits:
-
             lhs = self.selected_lhs
             rhs = self.selected_rhs
 

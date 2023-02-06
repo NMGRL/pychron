@@ -39,8 +39,10 @@ class CryoManager(Manager):
 
     def finish_loading(self, *args, **kw):
         pass
+
     def start_response_recorder(self):
-        self.response_recorder.start('cryo')
+        self.response_recorder.start("cryo")
+
     def stop_response_recorder(self):
         self.response_recorder.stop()
 

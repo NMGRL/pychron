@@ -57,7 +57,6 @@ class _LaserComponentEditor(_ComponentEditor):
         self._window.on_key_release = self.onKeyUp
 
     def onKeyUp(self, event):
-
         """
         key_released looking for text repr
 
@@ -71,7 +70,6 @@ class _LaserComponentEditor(_ComponentEditor):
             (Qt.Key_Up, "up"),
             (Qt.Key_Down, "down"),
         ):
-
             if ekey == sk:
                 if hasattr(self.value, "key_released"):
                     self.value.key_released(n)

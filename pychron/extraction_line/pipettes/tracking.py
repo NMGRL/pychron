@@ -57,7 +57,6 @@ class PipetteTracker(Loggable):
                 return True
 
     def _increment(self):
-
         self.counts += 1
 
         self.debug("increment shot count {}".format(self.counts))
@@ -129,7 +128,6 @@ class PipetteTracker(Loggable):
             paths.hidden_dir, "pipette-{}_{}".format(self.inner, self.outer)
         )
         if not os.path.isfile(p):
-
             name = "{}_{}-{}".format(self.name, self.inner, self.outer)
             if not pickled:
                 name = "{}.json".format(name)

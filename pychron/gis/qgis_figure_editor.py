@@ -396,7 +396,6 @@ class GISFigureEditor(BaseEditor):
         self.ideogram.refresh_needed = True
 
     def load(self):
-
         p = IdeogramOptionsManager()
         options = p.selected_options
 
@@ -462,7 +461,6 @@ class GISFigureEditor(BaseEditor):
         self.refresh_map()
 
     def traits_view(self):
-
         # center_grp = VGroup(HGroup(
         #     UReadonly('object.fmap.center.ylabel'), UItem('object.fmap.center.y'),
         #     UReadonly('object.fmap.center.xlabel'), UItem('object.fmap.center.x')))

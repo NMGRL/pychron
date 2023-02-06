@@ -424,7 +424,6 @@ class LabnumberEntryTask(BaseManagerTask, BaseBrowserModel):
         return LabnumbersPane(model=self.manager)
 
     def create_dock_panes(self):
-
         return [
             IrradiationPane(model=self.manager),
             ChronologyPane(model=self.manager),

@@ -51,7 +51,6 @@ class ErrorComponentsView(HasTraits):
         self._load(an)
 
     def _load(self, an):
-
         keys = [k for k in an.arar_mapping.values() if k in an.isotopes]
 
         def get_comp(age):

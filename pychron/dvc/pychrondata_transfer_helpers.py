@@ -75,7 +75,6 @@ def import_j(src, dest, meta, repo_identifier):
         }
 
         with src.session_ctx():
-
             for ra in repo.repository_associations:
                 ip = ra.analysis.irradiation_position
                 idn = ip.identifier

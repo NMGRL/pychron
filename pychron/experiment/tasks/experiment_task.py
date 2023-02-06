@@ -219,7 +219,6 @@ class ExperimentEditorTask(EditorTask):
         self._do_callables(self.deactivations)
 
     def create_dock_panes(self):
-
         name = "Isotope Evolutions"
         man = self.application.get_service(SPECTROMETER_PROTOCOL)
         if not man or man.simulation:

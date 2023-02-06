@@ -221,7 +221,6 @@ class ReadoutView(PersistenceLoggable):
         self._load_configuration()
 
     def _load_configuration(self):
-
         ypath = os.path.join(paths.spectrometer_dir, "readout.yaml")
         if not os.path.isfile(ypath):
             path = os.path.join(paths.spectrometer_dir, "readout.cfg")

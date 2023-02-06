@@ -266,7 +266,6 @@ class BaseLakeShoreController(CoreDevice):
                 time.sleep(delay)
 
     def set_setpoint(self, v, output=1, retries=3):
-
         self.set_range(v, output)
         for i in range(retries):
             self.protocol.set_setpoint(output, v)
@@ -328,7 +327,6 @@ class BaseLakeShoreController(CoreDevice):
         return r
 
     def get_control_group(self):
-
         grp = BorderVGroup(
             Spring(height=10, springy=False),
             HGroup(

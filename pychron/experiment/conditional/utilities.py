@@ -63,7 +63,6 @@ def get_teststr_attr_func(token):
         (BETWEEN_REGEX, "aa.get_value(attr)", between_wrapper, between_teststr),
         (INSTANT_AGE_REGEX, "aa.instant_age(window or -1)"),
     ):
-
         wfunc = wrapper
         if len(args) == 2:
             reg, fstr = args

@@ -170,15 +170,17 @@ class DVCPersister(BasePersister):
         rblob = per_spec.response_blob  # time vs measured response
         oblob = per_spec.output_blob  # time vs %output
         sblob = per_spec.setpoint_blob  # time vs requested
-        cblob = per_spec.cryo_response_blob # time vs measured response
+        cblob = per_spec.cryo_response_blob  # time vs measured response
 
         gp = per_spec.grain_polygons
 
         obj = {}
-        for key, blob in (('measured_response', rblob),
-                          ('requested_output', oblob),
-                          ('setpoint_stream', sblob),
-                          ('cryo_response', cblob)):
+        for key, blob in (
+            ("measured_response", rblob),
+            ("requested_output", oblob),
+            ("setpoint_stream", sblob),
+            ("cryo_response", cblob),
+        ):
             if blob is not None:
                 blob = encode_blob(blob)
             obj[key] = blob
@@ -480,7 +482,6 @@ class DVCPersister(BasePersister):
                 db.add_repository("NoRepo", self.default_principal_investigator)
 
     def _save_analysis_db(self, timestamp):
-
         ps = self.per_spec
         rs = ps.run_spec
         d = {
@@ -584,7 +585,6 @@ class DVCPersister(BasePersister):
     def _save_currents(self, dban):
         dvc = self.dvc
         if dvc.update_currents_enabled:
-
             ps = self.per_spec
             db = dvc.db
 
@@ -625,7 +625,6 @@ class DVCPersister(BasePersister):
                 db.add_current(dban, iso.n, None, param, "int")
 
     def _save_analysis(self, timestamp):
-
         isos = {}
         dets = {}
         signals = []

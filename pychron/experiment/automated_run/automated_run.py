@@ -646,7 +646,6 @@ class AutomatedRun(Loggable):
         use_dac=False,
         check_conditionals=True,
     ):
-
         if not self._alive:
             return
 
@@ -799,12 +798,10 @@ class AutomatedRun(Loggable):
         fit_series=0,
         group="signal",
     ):
-
         if not self._alive:
             return
 
         with self.ion_optics_manager.mftable_ctx(mftable):
-
             is_baseline = False
             self.peak_hop_collector.is_baseline = is_baseline
             self.peak_hop_collector.fit_series_idx = fit_series
@@ -1100,7 +1097,6 @@ class AutomatedRun(Loggable):
     #
     # ===============================================================================
     def show_conditionals(self, tripped=None):
-
         self.tripped_conditional = tripped
 
         self.executor_event = {"kind": "show_conditionals", "tripped": tripped}
@@ -1566,7 +1562,7 @@ class AutomatedRun(Loggable):
                 videos=videos,
                 extraction_positions=ext_pos,
                 extraction_context=extraction_context,
-                cryo_response_blob=cblob
+                cryo_response_blob=cblob,
             )
 
             self._persister_save_action("post_extraction_save")
@@ -1693,7 +1689,6 @@ class AutomatedRun(Loggable):
             t.start()
 
     def do_post_termination(self, do_post_equilibration=True):
-
         self.heading("Post Termination Started")
         if do_post_equilibration:
             self.do_post_equilibration()
@@ -1814,7 +1809,6 @@ anaylsis_type={}
         return env
 
     def _start(self):
-
         # for testing only
         # self._get_environmentals()
 
@@ -2254,7 +2248,6 @@ anaylsis_type={}
             self.isotope_group.set_baseline(iso, v[0], v[1])
 
     def _add_conditionals(self):
-
         t = self.spec.conditionals
         self.debug("adding conditionals {}".format(t))
         if t:
@@ -2328,7 +2321,6 @@ anaylsis_type={}
         return self._get_yaml_parameter(self.extraction_script, key, default)
 
     def _new_plot_panel(self, plot_panel, stack_order="bottom_to_top"):
-
         title = self.runid
         sample, irradiation = self.spec.sample, self.spec.display_irradiation
         if sample:
@@ -2362,7 +2354,6 @@ anaylsis_type={}
             valve = str(valve)
 
         if valve and not isinstance(valve, (tuple, list)):
-
             if "," in valve:
                 valve = [v.strip() for v in valve.split(",")]
             else:
@@ -2560,7 +2551,6 @@ anaylsis_type={}
                     items = list(items)
                     if len(items) > 1:
                         for det, items in groupby_key(items, key2):
-
                             items = list(items)
                             if len(items) > 1:
                                 for k, v in items:
@@ -2608,7 +2598,6 @@ anaylsis_type={}
                     )
                 )
                 if cnt >= fcnt:
-
                     try:
                         self.info("Saving run. Analysis did not complete successfully")
                         self.save()
@@ -2750,7 +2739,6 @@ anaylsis_type={}
         color,
         script=None,
     ):
-
         if script is None:
             script = self.measurement_script
 
@@ -2881,7 +2869,6 @@ anaylsis_type={}
 
         series = self.collector.series_idx
         for k, iso in self.isotope_group.items():
-
             idx = self._get_plot_id_by_ytitle(graph, k, iso)
 
             if idx is not None:

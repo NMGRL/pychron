@@ -154,7 +154,6 @@ class UsageWorker(Loggable):
                 prog.change_message("Uploading {} {}/{} {}".format(tag, i, n, dest))
 
     def _gen_paths(self, baseroot):
-
         for root, dirs, files in os.walk(baseroot):
             # print(root, dirs, files)
             if os.path.basename(root) == ".git":

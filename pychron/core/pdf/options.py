@@ -181,7 +181,6 @@ class PDFTableOptions(BasePDFOptions):
     _persistence_name = "table_pdf_options"
 
     def _load_yaml_hook(self, d):
-
         self.age_nsigma = d.get("age_nsigma", 2)
         self.kca_nsigma = d.get("kca_nsigma", 2)
         self.link_sigmas = d.get("link_sigmas", True)

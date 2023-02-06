@@ -115,7 +115,6 @@ class Emailer(Loggable):
                 if creds and creds.expired and creds.refresh_token:
                     creds.refresh(Request())
                 else:
-
                     self.information_dialog(
                         "Pychron needs authorization to send emails. You will now be redirected "
                         "to your browser to complete the authorization process"

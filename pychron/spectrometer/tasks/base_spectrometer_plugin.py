@@ -269,7 +269,6 @@ class BaseSpectrometerPlugin(BaseTaskPlugin):
             return ext
 
     def _task_extensions_default(self):
-
         ext = []
         hopext = self._hops_ext()
         if hopext:

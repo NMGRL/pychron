@@ -81,7 +81,6 @@ class _TextTableEditor(Editor):
         n = len(tables)
 
         for i, ti in enumerate(tables):
-
             self._add_table(ti, cursor)
             #             timethis(self._add_table, args=(ti, cursor), msg='add_table')
             if i < n - 1:
@@ -91,7 +90,6 @@ class _TextTableEditor(Editor):
         pass
 
     def _add_table(self, tab, cursor):
-
         tab_fmt = QTextTableFormat()
         tab_fmt.setCellSpacing(0)
         tab_fmt.setCellPadding(3)

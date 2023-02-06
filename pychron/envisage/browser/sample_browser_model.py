@@ -46,7 +46,6 @@ class SampleBrowserModel(AnalysisBrowserModel):
         bind_preference(self, "monitor_sample_name", "pychron.entry.monitor_name")
 
     def reattach(self):
-
         self.debug("reattach")
 
         ans = sorted(self.table.oanalyses, key=attrgetter("uuid"))

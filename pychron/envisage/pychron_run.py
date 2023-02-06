@@ -202,7 +202,6 @@ def get_user_plugins():
     for p in ps:
         # if laser plugin add CoreLaserPlugin
         if p in LASER_PLUGINS:
-
             plugint = ip.get_plugin(p, category="hardware")
             mode = ip.get_parameter(plugint, "mode")
             if mode == "client":
@@ -270,7 +269,6 @@ def launch(klass):
     app = app_factory(klass)
 
     try:
-
         # root = os.path.dirname(__file__)
         # r = QtGui.QApplication.instance()
         # p = os.path.join(root, 'stylesheets', 'qdark.css')

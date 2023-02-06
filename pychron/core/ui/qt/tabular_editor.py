@@ -357,7 +357,6 @@ class _TableView(TableView):
             if self.pastable:
                 self._paste()
         else:
-
             self._editor.key_pressed = TabularKeyEvent(event)
 
             self._key_press_hook(event)

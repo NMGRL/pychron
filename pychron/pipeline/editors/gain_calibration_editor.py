@@ -77,7 +77,6 @@ class GainCalibrationEditor(BaseTraitsEditor):
 
     # private
     def _get_analysis(self, rid):
-
         args = rid.split("-")
         ln = "-".join(args[:-1])
         a = args[-1]

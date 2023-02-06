@@ -260,7 +260,6 @@ class FusionsCO2Task(FusionsTask):
             return FusionsCO2Pane(model=self.manager)
 
     def create_dock_panes(self):
-
         if self.manager.mode == "client":
             return []
         else:

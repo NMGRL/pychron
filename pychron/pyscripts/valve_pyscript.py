@@ -128,7 +128,6 @@ class ValvePyScript(PyScript):
                 action, result, name, description, ntries=ntries
             ):
                 if not globalv.experiment_debug:
-
                     if cancel_on_failed_actuation:
                         self.cancel()
                         msg = 'Failed to {} valve name="{}", description="{}"'.format(

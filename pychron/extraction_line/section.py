@@ -223,7 +223,6 @@ class Section(object):
         """
         self.cur_state = state
         if state is not None:
-
             for c in self.components:
                 c = sg.get_object_by_name(c)
 

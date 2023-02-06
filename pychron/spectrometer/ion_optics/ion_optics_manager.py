@@ -121,7 +121,6 @@ class IonOpticsManager(Manager):
         return mag.set_dac(dac, use_af_demag=use_af_demag)
 
     def do_coincidence_scan(self, new_thread=True):
-
         if new_thread:
             t = Thread(name="ion_optics.coincidence", target=self._coincidence)
             t.start()
@@ -222,7 +221,6 @@ class IonOpticsManager(Manager):
         update_others=True,
         plot_panel=None,
     ):
-
         if deconvolve is None:
             n_peaks, select_peak = 1, 1
 
@@ -403,7 +401,6 @@ class IonOpticsManager(Manager):
     #         time.sleep(0.01)
 
     def _peak_center(self, save, confirm_save, warn, message, on_end, timeout):
-
         pc = self.peak_center
         spec = self.spectrometer
         ref = self.reference_detector
@@ -417,7 +414,6 @@ class IonOpticsManager(Manager):
 
         self.peak_center_result = center_value
         if center_value:
-
             det = spec.get_detector(ref)
 
             if pc.use_accel_voltage:

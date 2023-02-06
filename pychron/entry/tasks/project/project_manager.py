@@ -107,7 +107,6 @@ class ProjectManager(Loggable):
         with dvc.session_ctx(use_parent_session=False):
             commit = False
             for item in self.oitems:
-
                 if item.dirty:
                     pr = dvc.get_project_by_id(item.unique_id)
                     pr.name = item.name

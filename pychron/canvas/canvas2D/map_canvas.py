@@ -89,7 +89,6 @@ class MapCanvas(SceneCanvas):
         # over a hole
         ca = self.calibration_item
         if ca:
-
             for obj in self.mp.sample_holes:
                 hole = obj.id
                 pos = obj.x, obj.y
@@ -204,7 +203,6 @@ class MapCanvas(SceneCanvas):
         w /= 2.0
         h /= 2.0
         with gc:
-
             ca = self.calibration_item
             if ca:
                 # make the crosshairs orthogonal

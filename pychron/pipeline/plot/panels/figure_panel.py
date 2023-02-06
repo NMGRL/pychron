@@ -82,7 +82,6 @@ class FigurePanel(HasTraits):
             fig.suppress_xlimits_update = state
 
     def make_graph(self):
-
         po = self.plot_options
         g = self._graph_klass(
             # panel_height=200,
@@ -98,7 +97,6 @@ class FigurePanel(HasTraits):
             xpad = None
 
             if po.include_legend:
-
                 align = po.legend_location
                 a, b = align.split(" ")
                 align = "{}{}".format(a[0].lower(), b[0].lower())

@@ -63,7 +63,6 @@ class NGXGPActuator(ASCIIGPActuator):
         return r
 
     def _get_channel_state(self, obj, verbose=False, **kw):
-
         cmd = "GetValveStatus {}".format(get_switch_address(obj))
         s = self.ask(cmd, verbose=verbose)
 

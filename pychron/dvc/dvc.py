@@ -572,7 +572,6 @@ class DVC(Loggable):
         return ps
 
     def repository_transfer(self, ans, dest):
-
         destrepo = self._get_repository(dest, as_current=False)
         for src, ais in groupby_repo(ans):
             repo = self._get_repository(src, as_current=False)
@@ -736,7 +735,6 @@ class DVC(Loggable):
         return mod_repositories
 
     def update_analyses(self, ans, modifiers, msg, author=None):
-
         author = self.get_author(author)
 
         if not isinstance(modifiers, (list, tuple)):
@@ -896,7 +894,6 @@ class DVC(Loggable):
     #         self._update_current_age(ai)
 
     def save_csv_dataset(self, name, repository, lines, local_path=False):
-
         if local_path:
             p = add_extension(local_path, ".csv")
         else:
@@ -964,7 +961,6 @@ class DVC(Loggable):
     def find_references_by_load(self, load, atypes, make_records=True, **kw):
         records = self.db.find_references_by_load(load, atypes, **kw)
         if records:
-
             for r in records:
                 r.bind()
 
@@ -1271,7 +1267,6 @@ class DVC(Loggable):
 
     def get_author(self, author=None):
         if not self.use_default_commit_author:
-
             if self._author:
                 author = self._author
             elif author is None:
@@ -1470,7 +1465,6 @@ class DVC(Loggable):
         self.meta_repo.update_flux(*args, **kw)
 
     def set_identifier(self, irradiation, level, position, identifier):
-
         dbpos = self.db.get_irradiation_position(irradiation, level, position)
         if dbpos:
             dbpos.identifier = identifier
@@ -1565,7 +1559,6 @@ class DVC(Loggable):
             ialabels.append("{} {} {}".format(ia.name, ia.identifier, ia.sample))
 
         if self.repository_add_paths(rid, ps):
-
             sparrow = self.application.get_service(
                 "pychron.sparrow.sparrow_client.SparrowClient"
             )
@@ -2430,7 +2423,6 @@ class DVC(Loggable):
             ("productions", self._add_default_irradiation_productions),
             ("load holders", self._add_default_load_holders),
         ):
-
             d = os.path.join(self.meta_repo.path, tag.replace(" ", "_"))
             if not os.path.isdir(d):
                 os.mkdir(d)

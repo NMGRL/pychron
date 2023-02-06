@@ -747,7 +747,6 @@ class Ideogram(BaseArArFigure):
                     ov.set_y_limits(0, yma2)
 
     def _add_group_legend(self, plot, plots, labels):
-
         ln, ns, _ = zip(*labels)
         labels = list(zip(ln, ns))
 
@@ -921,7 +920,6 @@ class Ideogram(BaseArArFigure):
                 ov.set_x(wm)
                 ov.error = we
                 if ov.label:
-
                     mswd_args = None
                     if opt.display_mean_mswd:
                         mswd_args = (mswd, valid_mswd, n, pvalue)

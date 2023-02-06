@@ -156,7 +156,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return sort_detectors(d)
 
     def _get_columns(self, name, grps):
-
         detectors = self._get_detectors(grps)
 
         options = self._options
@@ -1026,7 +1025,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._current_row += 1
 
     def _make_column_header(self, sh, cols, it):
-
         start = next((i for i, c in enumerate(cols) if c.attr == "Ar40"), 9)
 
         if self._options.repeat_header and it > 0:
@@ -1186,7 +1184,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         if use_scientific:
             fmt = "0.0E+00"
         else:
-
             fmt = "0.{}".format("0" * sig_figs)
 
         # if not self._options.ensure_trailing_zeros:
@@ -1451,7 +1448,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._write_notes(sh, notes)
 
     def _make_unknown_notes(self, groups, sh):
-
         g = groups[0]
         monitor_age, decay_ref = g.monitor_info
 

@@ -110,7 +110,6 @@ class LaserStageMap(BaseStageMap):
             if cors:
                 self.info("loaded correction file {}".format(p))
                 for i, x, y in cors:
-
                     h = self.get_hole(i)
                     if h is not None:
                         if x is not None and y is not None:
@@ -122,12 +121,10 @@ class LaserStageMap(BaseStageMap):
         self.debug("generate row interpolated corrections")
         rowdict = self.row_dict()
         for i, h in enumerate(self.sample_holes):
-
             self.debug(
                 "{:03n} {} has correction ={}".format(i, h.id, h.has_correction())
             )
             if not h.has_correction():
-
                 row = rowdict[h.y]
                 args = get_interpolation_holes(row.index(h), row)
                 if args:

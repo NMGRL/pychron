@@ -36,7 +36,6 @@ class CompositeOptions(FigureOptions):
         state["isochron_options"] = self.isochron_options.make_state()
 
     def _load_state_hook(self, state):
-
         so = state.pop("isochron_options")
         if so:
             try:

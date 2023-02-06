@@ -171,7 +171,6 @@ def calculate_plateau_age(
         pidx = (sidx, eidx) if sidx < n else None
 
     else:
-
         from pychron.processing.plateau import Plateau
 
         p = Plateau(
@@ -345,7 +344,6 @@ def interference_corrections(
 
     pr = production_ratios
     if arar_constants.k3739_mode.lower() == "normal" and not fixed_k3739:
-
         ca3937 = pr.get("Ca3937", 0)
         k3739 = pr.get("K3739", 0)
         k39 = (a39 - ca3937 * a37) / (1 - k3739 * ca3937)
@@ -560,7 +558,6 @@ def age_equation(j, f, include_decay_error=False, lambda_k=None, arar_constants=
     if not include_decay_error:
         lambda_k = nominal_value(lambda_k)
     try:
-
         # lambda is defined in years, so age is in years
         age = lambda_k**-1 * umath.log(1 + j * f)
 

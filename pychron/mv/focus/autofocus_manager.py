@@ -109,7 +109,6 @@ class AutoFocusManager(Manager):
             return FocusParameters()
 
     def passive_focus(self, block=False, **kw):
-
         self._evt_autofocusing = TEvent()
         self._evt_autofocusing.clear()
         #        manager = self.laser_manager
@@ -157,7 +156,6 @@ class AutoFocusManager(Manager):
         self.add_window(ui)
 
     def stop_focus(self):
-
         if self.stage_controller:
             self.stage_controller.stop()
 

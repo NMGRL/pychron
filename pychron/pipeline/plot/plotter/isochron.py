@@ -443,7 +443,6 @@ class InverseIsochron(Isochron):
             self._add_info_label(plot, ts, font=self.options.info_font)
 
     def _add_inset(self, plot, reg):
-
         opt = self.options
         group = opt.get_group(self.group_id)
         insetp = InverseIsochronPointsInset(
@@ -527,7 +526,6 @@ class InverseIsochron(Isochron):
         )
 
     def _add_results_info(self, plot, label=None, text_color="black"):
-
         ag = self.analysis_group
 
         age = ag.isochron_age
@@ -699,7 +697,6 @@ class InverseIsochron(Isochron):
                 fit.underlays.append(ee)
                 fit.error_envelope = ee
             else:
-
                 fit.error_envelope.invalidate()
 
                 fit.error_envelope.lower = lci

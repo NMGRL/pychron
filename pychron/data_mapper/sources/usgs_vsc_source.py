@@ -55,7 +55,6 @@ class USGSVSCNuSource(USGSVSCSource):
 
 
 class USGSVSCMAPSource(USGSVSCSource):
-
     # def _path_default(self):
     #     return '/Users/ross/Programming/github/pychron_dev/pychron/data_mapper/tests/data/16Z0071/16K0071A.TXT'
     #
@@ -77,7 +76,6 @@ class USGSVSCMAPSource(USGSVSCSource):
         spec = ImportSpec()
         delimiter = "\t"
         with open(self.irradiation_path, "r") as rfile:
-
             i = Irradiation()
             i.name = next(rfile).strip()
             spec.irradiation = i
@@ -122,7 +120,6 @@ class USGSVSCMAPSource(USGSVSCSource):
         return spec
 
     def get_analysis_import_spec(self, delimiter=None):
-
         pspec = self.new_persistence_spec()
         rspec = pspec.run_spec
 

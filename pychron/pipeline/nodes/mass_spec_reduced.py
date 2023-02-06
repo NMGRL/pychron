@@ -101,7 +101,6 @@ class MassSpecReducedNode(BaseMassSpecNode):
     def run(self, state):
         if self.recaller:
             if self.recaller.connect():
-
                 self.dvc.create_session()
                 for repo, unks in groupby_repo(state.unknowns):
                     self.dvc.pull_repository(repo)

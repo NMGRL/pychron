@@ -171,7 +171,6 @@ class WorkOffline(Loggable):
     def _clone_central_db(
         self, repositories, analyses=None, principal_investigators=None, projects=None
     ):
-
         self.info("--------- Clone DB -----------")
         # create an a sqlite database
         from pychron.dvc.dvc_orm import Base
@@ -185,7 +184,6 @@ class WorkOffline(Loggable):
                 'The database "{}" already exists. '
                 "Do you want to overwrite it".format(os.path.basename(path))
             ):
-
                 path = self._get_new_path()
             else:
                 os.remove(path)
@@ -237,7 +235,6 @@ class WorkOffline(Loggable):
                     ans = analyses
                     ras = [rai for ai in ans for rai in ai.repository_associations]
                 else:
-
                     # at = time.time()
                     ras = [ra for repo in repos for ra in repo.repository_associations]
                     # self.debug('association time={}'.format(time.time()-at))
@@ -322,7 +319,6 @@ class WorkOffline(Loggable):
                 return path
 
     def _copy_records(self, progress, dest, table, records):
-
         st = time.time()
         msg = "Copying records from {}. n={}".format(table.__tablename__, len(records))
         self.debug(msg)

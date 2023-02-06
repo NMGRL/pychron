@@ -70,7 +70,6 @@ class Commands(HasTraits):
         self.command_objects = co
 
     def _command_factory(self, scmd):
-
         cmd = None
         words = scmd.split("_")
         klass = "".join([w.capitalize() for w in words])
@@ -91,7 +90,6 @@ class Commands(HasTraits):
         return cmd
 
     def _pyscript_factory(self, kind, **kw):
-
         klassname = "{}PyScript".format(kind)
         m = __import__(SCRIPT_PKGS[kind], fromlist=[klassname])
         klass = getattr(m, klassname)
@@ -259,7 +257,6 @@ class PyScriptEditor(Editor, PyScriptEdit):
         self.control = self._create_control(parent)
 
     def _create_control(self, parent):
-
         self.control = control = myAdvancedCodeWidget(parent, commands=self.commands)
         self._show_line_numbers_changed()
 

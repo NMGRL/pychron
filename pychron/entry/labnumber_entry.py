@@ -528,7 +528,6 @@ class LabnumberEntry(DVCIrradiationable):
                 return True
 
     def check_monitor_name(self):
-
         if self.use_consecutive_identifiers:
             return
 
@@ -863,7 +862,6 @@ THIS CHANGE CANNOT BE UNDONE"
 
     # @simple_timer()
     def _update_level(self, name=None, debug=False):
-
         if name is None:
             name = self.level
 
@@ -1154,7 +1152,6 @@ THIS CHANGE CANNOT BE UNDONE"
             self.level = new_level
 
     def _irradiation_changed(self, old, new):
-
         if self.irradiation:
             self._old_irradiation = old
             self.level = ""

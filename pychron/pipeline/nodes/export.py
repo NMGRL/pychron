@@ -339,7 +339,6 @@ class CSVAnalysesExportNode(CSVExportNode):
                 ("ic_decay_corrected", get_ic_decay_corrected),
                 ("ifc", get_ifc),
             ):
-
                 if attr.endswith(tag):
                     # iso = attr[:len(tag) + 1]
                     args = attr.split("_")

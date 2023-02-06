@@ -132,7 +132,6 @@ class MotionDesigner(HasTraits):
     # g.new_series(x, yu, color='blue')
 
     def velocity_profile(self, plotid):
-
         #        v = self.velocity
         # ac = self.acceleration
         # dc = self.deceleration

@@ -69,7 +69,6 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         pass
 
     def sink_data(self, writer, n, delay):
-
         client = self.microcontroller.communicator
         handle = client.get_handler()
         sock = handle.sock

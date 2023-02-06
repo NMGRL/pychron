@@ -77,7 +77,6 @@ class PipelinePyScriptEditor(BaseTraitsEditor):
         self._execute()
 
     def traits_view(self):
-
         error_grp = BorderVGroup(
             Readonly("object.script.execution_error"),
             BorderVGroup(

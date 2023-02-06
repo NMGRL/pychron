@@ -132,7 +132,6 @@ class SeriesEditor(FigureEditor):
         )
 
     def traits_view(self):
-
         v = View(
             VSplit(self.get_component_view(), self.get_table_view()), resizable=True
         )

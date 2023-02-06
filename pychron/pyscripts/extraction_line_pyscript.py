@@ -101,8 +101,11 @@ class ExtractionPyScript(ValvePyScript):
         if not m:
             m = self._extraction_action(("get_grain_polygon_blob", (), {}))
         return m
+
     def get_cryo_response_blob(self):
-        return self._manager_action(('get_cryo_response_blob', (), {}), protocol=EL_PROTOCOL)
+        return self._manager_action(
+            ("get_cryo_response_blob", (), {}), protocol=EL_PROTOCOL
+        )
 
     def get_response_blob(self):
         """
@@ -228,13 +231,13 @@ class ExtractionPyScript(ValvePyScript):
     @verbose_skip
     @command_register
     def start_cryo_recorder(self):
-        result = self._manager_action(("start_cryo_recorder", ), protocol=EL_PROTOCOL)
+        result = self._manager_action(("start_cryo_recorder",), protocol=EL_PROTOCOL)
         return result
 
     @verbose_skip
     @command_register
     def stop_cryo_recorder(self):
-        result = self._manager_action(("stop_cryo_recorder", ), protocol=EL_PROTOCOL)
+        result = self._manager_action(("stop_cryo_recorder",), protocol=EL_PROTOCOL)
         return result
 
     @verbose_skip

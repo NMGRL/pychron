@@ -56,7 +56,6 @@ class PyrometerCalibrationScanner(Scanner):
             super(PyrometerCalibrationScanner, self)._maintain_setpoint(t, d)
 
     def _equilibrate(self, ctemp):
-
         # ctemp=self._current_setpoint
         # ctemp = self.manager.map_temperature(temp)
 

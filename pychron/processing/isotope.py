@@ -339,7 +339,6 @@ class IsotopicMeasurement(BaseMeasurement):
         use_standard_deviation_filtering=False,
         use_iqr_filtering=False,
     ):
-
         self.filter_outliers_dict = {
             "filter_outliers": filter_outliers,
             "iterations": iterations,
@@ -369,7 +368,6 @@ class IsotopicMeasurement(BaseMeasurement):
             elif isinstance(fit, dict):
                 self.attr_set(**fit)
             else:
-
                 fitname = fit.fit
                 if fitname == AUTO_N:
                     fitname = fit.auto_fit(self.n)

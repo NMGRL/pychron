@@ -115,7 +115,6 @@ class RemoteCommandServer(ConfigLoadable):
 
         config = self.get_configuration()
         if config:
-
             server_class = self.config_get(config, "General", "class")
             if server_class is None:
                 return

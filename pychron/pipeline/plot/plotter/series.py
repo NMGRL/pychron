@@ -244,7 +244,6 @@ class BaseSeries(BaseArArFigure):
             print("Series", e)
 
     def _get_xs(self, plots, ans, tzero=None):
-
         if self.options.use_time_axis:
             xs = array([ai.timestamp for ai in ans])
             px = plots[0]

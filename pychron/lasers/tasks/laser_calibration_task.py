@@ -85,7 +85,6 @@ class LaserCalibrationTask(BaseLaserTask):
         return ps
 
     def open_power_maps(self, ps):
-
         #         ps = self.open_file_dialog(action='open files',
         #                                       default_directory=paths.power_map_dir
         #                                       )
@@ -109,7 +108,6 @@ class LaserCalibrationTask(BaseLaserTask):
                     self.debug("invalid power map file {}".format(p))
 
     def new_power_map(self):
-
         n = len(
             [ed for ed in self.editor_area.editors if isinstance(ed, PowerMapEditor)]
         )

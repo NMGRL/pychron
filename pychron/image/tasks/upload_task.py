@@ -94,7 +94,6 @@ class ImageUploadTask(BaseManagerTask, BaseBrowserModel):
         self._set_association_enabled()
 
     def _set_association_enabled(self):
-
         self.association_enabled = bool(
             self.selected_items and len(self.selected_samples) == 1
             if self.selected_samples
