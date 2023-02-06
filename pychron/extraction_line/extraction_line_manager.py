@@ -612,6 +612,15 @@ class ExtractionLineManager(Manager, Consoleable):
             self.warning("cryo manager not available")
             return 0
 
+    def get_cryo_response_blob(self):
+        if self.cryo_manager:
+            return self.cryo_manager.response_recorder.get_response_blob()
+    def start_cryo_recorder(self):
+        if self.cryo_manager:
+            self.cryo_manager.start_response_recorder()
+    def stop_cryo_recorder(self):
+        if self.cryo_manager:
+            self.cryo_manager.stop_response_recorder()
     # ===============================================================================
 
     # ============= Manometer =======================================================

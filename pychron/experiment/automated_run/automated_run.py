@@ -1543,6 +1543,7 @@ class AutomatedRun(Loggable):
             self.info("Requested Output= {:0.3f}".format(req))
             self.info("Achieved Output=  {:0.3f}".format(ach))
 
+            cblob = script.get_cryo_response_blob()
             rblob = script.get_response_blob()
             oblob = script.get_output_blob()
             sblob = script.get_setpoint_blob()
@@ -1565,6 +1566,7 @@ class AutomatedRun(Loggable):
                 videos=videos,
                 extraction_positions=ext_pos,
                 extraction_context=extraction_context,
+                cryo_response_blob=cblob
             )
 
             self._persister_save_action("post_extraction_save")
