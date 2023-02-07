@@ -13,13 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
+import base64
+import io
 # ============= enthought library imports =======================
 import os
 import time
 from math import ceil
 
 import joblib
+import requests
+from PIL import Image
 from numpy import hstack, column_stack, savetxt, savez, save, load, asarray, concatenate
 from sklearn import metrics, svm
 from sklearn.model_selection import train_test_split
@@ -36,7 +39,7 @@ from pychron.core.ui.image_editor import ImageEditor
 from pychron.core.ui.thread import Thread
 from pychron.image.cv_wrapper import get_size, crop
 from pychron.image.standalone_image import FrameImage
-from pychron.loading.traydb import TrayDB, LABEL_MAP
+from pychron.loading.traydb import LABEL_MAP
 from pychron.loggable import Loggable
 from pychron.mv.machine_vision_manager import MachineVisionManager
 from pychron.paths import paths
@@ -83,7 +86,7 @@ class TrayChecker(MachineVisionManager):
     post_move_delay = 0.125
     post_check_delay = 0.125
 
-    traydb = Instance(TrayDB)
+    # traydb = Instance(TrayDB)
 
     _alive = False
     _active_frame = None
@@ -99,8 +102,8 @@ class TrayChecker(MachineVisionManager):
             self._loading_manager = loading_manager
             self.video = loading_manager.stage_manager.video
 
-        self.traydb = TrayDB(path=dbpath)
-        self.traydb.build_database()
+        # self.traydb = TrayDB(path=dbpath)
+        # self.traydb.build_database()
 
     def stop(self):
         self.debug('stop fired')
@@ -268,9 +271,9 @@ class TrayChecker(MachineVisionManager):
 
     def _scan(self, pipe, info):
         trayname = self._loading_manager.stage_manager.stage_map.name
-        traypath = os.path.join(paths.snapshot_dir, trayname)
-        if not os.path.isdir(traypath):
-            os.mkdir(traypath)
+        # traypath = os.path.join(paths.snapshot_dir, trayname)
+        # if not os.path.isdir(traypath):
+        #     os.mkdir(traypath)
 
         for hole in self._loading_manager.stage_manager.stage_map.all_holes():
             if not self._alive:
@@ -283,8 +286,10 @@ class TrayChecker(MachineVisionManager):
             time.sleep(self.post_move_delay)
             frame = self.new_image_frame(pos)
 
-            self._loading_manager.stage_manager.snapshot(name=os.path.join(traypath, '{}.tc'.format(pos)),
-                                                         render_canvas=False, inform=False)
+            # self._loading_manager.stage_manager.snapshot(name=os.path.join(traypath, '{}.tc'.format(pos)),
+            #                                              render_canvas=False, inform=False)
+            self._add_unlabeled_image(f'{trayname}:{pos}', frame)
+
             self.display_image.clear()
             self.display_image.tile(frame)
             self.display_image.tilify()
@@ -420,12 +425,12 @@ class TrayChecker(MachineVisionManager):
         self._active_position = pos
 
         return frame
-    def _get_sample_labels(self):
-        args = self.traydb.get_sample_labels()
-        if args is not None:
-            names, samples, labels = args
-
-        return names, samples, labels
+    # def _get_sample_labels(self):
+    #     args = self.traydb.get_sample_labels()
+    #     if args is not None:
+    #         names, samples, labels = args
+    #
+    #     return names, samples, labels
 
     def _preprocess(self, frame, gamma=2):
         # frame = grayspace(frame)
@@ -535,9 +540,24 @@ class TrayChecker(MachineVisionManager):
 
         trayname = self._loading_manager.stage_manager.stage_map.name
         name = f'{trayname}-{self._active_position}'
-        self.traydb.add_labeled_sample(name, self._active_frame, label)
-
+        # self.traydb.add_labeled_sample(name, self._active_frame, label)
+        self._add_labeled_sample(name, self._active_frame, label)
         self._visit_next_position()
+    def _add_unlabeled_image(self, name, frame):
+        host=''
+        url=f'http://{host}/unclassified_image'
+
+        buf = io.BytesIO()
+        im = Image.fromarray(frame)
+        im.save(buf, 'tiff')
+
+        data = {'name': name,
+                'image': base64.b64encode(buf.getvalue()).decode()
+                }
+        resp = requests.post(url, json=data)
+
+    def _add_labeled_sample(self, name, frame, label):
+        pass
 
     def _stop_button_fired(self):
         self.stop()
