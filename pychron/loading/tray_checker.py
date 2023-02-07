@@ -288,7 +288,12 @@ class TrayChecker(MachineVisionManager):
 
             # self._loading_manager.stage_manager.snapshot(name=os.path.join(traypath, '{}.tc'.format(pos)),
             #                                              render_canvas=False, inform=False)
-            self._add_unlabeled_image(f'{trayname}:{pos}', frame)
+
+            name = f'{trayname}:{pos}'
+            if self._loading_manager.load_instance:
+                name = f'{name}:{self._loading_manager.load_instance.name}'
+
+            self._add_unlabeled_image(name, frame)
 
             self.display_image.clear()
             self.display_image.tile(frame)
