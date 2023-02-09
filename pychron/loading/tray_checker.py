@@ -289,11 +289,11 @@ class TrayChecker(MachineVisionManager):
             # self._loading_manager.stage_manager.snapshot(name=os.path.join(traypath, '{}.tc'.format(pos)),
             #                                              render_canvas=False, inform=False)
 
-            name = f'{trayname}:{pos}'
-            if self._loading_manager.load_instance:
-                name = f'{name}:{self._loading_manager.load_instance.name}'
+            # name = f'{trayname}:{pos}'
+            # if self._loading_manager.load_instance:
+            #     name = f'{name}:{self._loading_manager.load_instance.name}'
 
-            self._add_unlabeled_image(name, frame)
+            self._add_unlabeled_image(pos, frame)
 
             self.display_image.clear()
             self.display_image.tile(frame)
@@ -548,7 +548,7 @@ class TrayChecker(MachineVisionManager):
         # self.traydb.add_labeled_sample(name, self._active_frame, label)
         self._add_labeled_sample(name, self._active_frame, label)
         self._visit_next_position()
-    def _add_unlabeled_image(self, name, frame):
+    def _add_unlabeled_image(self, load_pos, pos, frame):
         host=''
         url=f'http://{host}/unclassified_image'
 
@@ -556,9 +556,25 @@ class TrayChecker(MachineVisionManager):
         im = Image.fromarray(frame)
         im.save(buf, 'tiff')
 
-        data = {'name': name,
-                'image': base64.b64encode(buf.getvalue()).decode()
+        loadname = self._loading_manager.load_instance.name
+        trayname = self._loading_manager.stage_manager.stage_map.name
+
+        data = {    'loadname': loadname,
+                    'trayname': trayname,
+                    'hole_id': pos,
+                    'image': base64.b64encode(buf.getvalue()).decode()
                 }
+
+        load_pos = self._loading_manager.get_load_position_by_position(pos)
+        if load_pos:
+            data['identifier'] = load_pos.identifier
+            data['sample'] = load_pos.sample
+            data['material'] = load_pos.material
+            data['project'] = load_pos.project
+            data['note'] = load_pos.note
+            data['nxtals'] = load_pos.nxtals
+            data['weight'] = load_pos.weight
+
         resp = requests.post(url, json=data)
 
     def _add_labeled_sample(self, name, frame, label):

@@ -322,6 +322,10 @@ class LoadingManager(DVCIrradiationable):
     def clear(self):
         if self.canvas:
             self.canvas.clear_all()
+    def get_load_position_by_position(self, pos):
+        for p in self.positions:
+            if p.position == pos:
+                return p
 
     def get_selection(self):
         from pychron.loading.load_view_selection import (
