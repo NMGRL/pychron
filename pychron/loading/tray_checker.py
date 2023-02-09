@@ -556,10 +556,10 @@ class TrayChecker(MachineVisionManager):
         im = Image.fromarray(frame)
         im.save(buf, 'tiff')
 
-        loadname = self._loading_manager.load_instance.name
+
         trayname = self._loading_manager.stage_manager.stage_map.name
 
-        data = {    'loadname': loadname,
+        data = {
                     'trayname': trayname,
                     'hole_id': pos,
                     'image': base64.b64encode(buf.getvalue()).decode()
@@ -574,6 +574,9 @@ class TrayChecker(MachineVisionManager):
             data['note'] = load_pos.note
             data['nxtals'] = load_pos.nxtals
             data['weight'] = load_pos.weight
+
+        if self._loading_manager.load_instance:
+            data['loadname'] = self._loading_manager.load_instance.name
 
         resp = requests.post(url, json=data)
 
