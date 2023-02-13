@@ -99,7 +99,9 @@ class DVCPersister(BasePersister):
             bind_preference(
                 self,
                 "use_uuid_path_name",
-                "pychron.experiment.use_uuid_path_name",
+                "pychron.experiment.use_uuid_path_name")
+
+            bind_preference(
                 self,
                 "use_data_collection_branch",
                 "pychron.experiment.use_data_collection_branch",
