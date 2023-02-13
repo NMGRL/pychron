@@ -88,6 +88,7 @@ class DVCPersister(BasePersister):
     stage_files = Bool(True)
     default_principal_investigator = Str
     _positions = None
+    use_data_collection_branch = Bool(False)
 
     save_log_enabled = Bool(False)
     arar_mapping = None
@@ -96,7 +97,8 @@ class DVCPersister(BasePersister):
         super(DVCPersister, self).__init__(*args, **kw)
         if bind:
             bind_preference(
-                self, "use_uuid_path_name", "pychron.experiment.use_uuid_path_name"
+                self, "use_uuid_path_name", "pychron.experiment.use_uuid_path_name",
+                self, "use_data_collection_branch", "pychron.experiment.use_data_collection_branch"
             )
 
         if load_mapping:
@@ -321,18 +323,19 @@ class DVCPersister(BasePersister):
 
         if self.stage_files:
             if commit:
-                ar.create_branch("data_collection", inform=False, push=True)
-                try:
-                    ar.checkout_branch(
-                        "data_collection", inform=False, load_history=False
-                    )
-                except GitCommandError:
-                    ar.reset()
-                    ar.checkout_branch(
-                        "data_collection", inform=False, load_history=False
-                    )
+                if self.use_data_collection_branch:
+                    ar.create_branch("data_collection", inform=False, push=True)
+                    try:
+                        ar.checkout_branch(
+                            "data_collection", inform=False, load_history=False
+                        )
+                    except GitCommandError:
+                        ar.reset()
+                        ar.checkout_branch(
+                            "data_collection", inform=False, load_history=False
+                        )
 
-                ar.smart_pull(branch="data_collection", accept_our=True)
+                    ar.smart_pull(branch="data_collection", accept_our=True)
 
                 paths = [
                     spec_path,

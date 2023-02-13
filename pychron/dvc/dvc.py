@@ -1362,7 +1362,12 @@ class DVC(Loggable):
             repo.pull(use_progress=use_progress, use_auto_pull=self.use_auto_pull)
 
             # merge any new commits on the data_collection branch to this branch
-            repo.merge("origin/data_collection", inform=False)
+            try:
+                repo.merge("origin/data_collection", inform=False)
+            except BaseException:
+                self.debug('merge with origin/data_collection failed. This is not an issue if you are only using local '
+                           'repos')
+
             return True
         else:
             self.debug("getting repository from remote")
