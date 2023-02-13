@@ -282,7 +282,7 @@ class ExperimentPreferencesPane(PreferencesPane):
             Item("use_xls_persistence", label="Save analyses to Excel workbook"),
             Item("use_db_persistence", label="Save analyses to Database"),
             Item("use_uuid_path_name", label="Use UUID Path Names"),
-            Item('use_data_collection_branch', label='Use data_collection branch'),
+            Item("use_data_collection_branch", label="Use data_collection branch"),
             Item(
                 "save_all_runs",
                 label="Save All analyses",

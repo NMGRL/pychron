@@ -1365,8 +1365,10 @@ class DVC(Loggable):
             try:
                 repo.merge("origin/data_collection", inform=False)
             except BaseException:
-                self.debug('merge with origin/data_collection failed. This is not an issue if you are only using local '
-                           'repos')
+                self.debug(
+                    "merge with origin/data_collection failed. This is not an issue if you are only using local "
+                    "repos"
+                )
 
             return True
         else:
