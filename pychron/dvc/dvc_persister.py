@@ -97,9 +97,8 @@ class DVCPersister(BasePersister):
         super(DVCPersister, self).__init__(*args, **kw)
         if bind:
             bind_preference(
-                self,
-                "use_uuid_path_name",
-                "pychron.experiment.use_uuid_path_name")
+                self, "use_uuid_path_name", "pychron.experiment.use_uuid_path_name"
+            )
 
             bind_preference(
                 self,
