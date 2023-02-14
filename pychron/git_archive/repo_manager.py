@@ -685,7 +685,7 @@ class GitRepoManager(Loggable):
             branch = repo.create_head(name, commit=commit)
             branch.checkout()
 
-            if push:
+            if push and repo.remotes:
                 origin = repo.remotes.origin
                 repo.git.push("--set-upstream", origin, repo.head.ref)
             if inform:
