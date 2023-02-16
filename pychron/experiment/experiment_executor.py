@@ -2678,7 +2678,7 @@ Use Last "blank_{}"= {}
                     exclude_types=("unknown",),
                     low_post=low_post,
                     verbose=True,
-                    use_parent_session=False
+                    use_parent_session=False,
                 )
                 if ans:
                     ans = dvc.make_analyses(ans, use_progress=False)
@@ -2686,7 +2686,8 @@ Use Last "blank_{}"= {}
                     self.timeseries_editor.set_items(ans)
                     invoke_in_main_thread(self.timeseries_editor.refresh)
                 else:
-                    self.warning('failed retrieving analyses for experiment timeseries')
+                    self.warning("failed retrieving analyses for experiment timeseries")
+
     # ===============================================================================
     # handlers
     # ===============================================================================
