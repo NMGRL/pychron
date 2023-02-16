@@ -55,7 +55,10 @@ def get_list(cmd, attr="name", headers=None):
                 return result
 
             if attr:
-                dd = [di[attr] for di in dd]
+                try:
+                    dd = [di[attr] for di in dd]
+                except TypeError:
+                    pass
 
             result.extend(dd)
             return result
