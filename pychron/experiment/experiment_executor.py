@@ -2647,7 +2647,7 @@ Use Last "blank_{}"= {}
                 self._low_post = low_post
 
             dvc = self.datahub.mainstore
-            with dvc.session_ctx():
+            with dvc.session_ctx(use_parent_session=False):
                 if self.experiment_queue:
                     ms = self.experiment_queue.mass_spectrometer
                 else:
@@ -2677,14 +2677,16 @@ Use Last "blank_{}"= {}
                     mass_spectrometer=ms,
                     exclude_types=("unknown",),
                     low_post=low_post,
-                    verbose=False,
+                    verbose=True,
+                    use_parent_session=False
                 )
                 if ans:
                     ans = dvc.make_analyses(ans, use_progress=False)
 
                     self.timeseries_editor.set_items(ans)
                     invoke_in_main_thread(self.timeseries_editor.refresh)
-
+                else:
+                    self.warning('failed retrieving analyses for experiment timeseries')
     # ===============================================================================
     # handlers
     # ===============================================================================
@@ -2696,6 +2698,7 @@ Use Last "blank_{}"= {}
         self.information_dialog(
             "Timeseries reset to {}".format(self._low_post.strftime("%m/%d/%y %H:%M"))
         )
+        self._update_timeseries()
 
     # def _configure_timeseries_editor_button_fired(self):
     #
