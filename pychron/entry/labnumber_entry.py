@@ -528,7 +528,6 @@ class LabnumberEntry(DVCIrradiationable):
                 return True
 
     def check_monitor_name(self):
-
         if self.use_consecutive_identifiers:
             return
 
@@ -863,7 +862,6 @@ THIS CHANGE CANNOT BE UNDONE"
 
     # @simple_timer()
     def _update_level(self, name=None, debug=False):
-
         if name is None:
             name = self.level
 
@@ -1154,7 +1152,6 @@ THIS CHANGE CANNOT BE UNDONE"
             self.level = new_level
 
     def _irradiation_changed(self, old, new):
-
         if self.irradiation:
             self._old_irradiation = old
             self.level = ""
@@ -1164,7 +1161,7 @@ THIS CHANGE CANNOT BE UNDONE"
                 j = chron.duration * self.j_multiplier
                 self.total_irradiation_hours = "{:0.1f}".format(chron.duration)
                 self._estimated_j_value = j
-                self.estimated_j_value = u"{} {}{}".format(
+                self.estimated_j_value = "{} {}{}".format(
                     floatfmt(j), PLUSMINUS, floatfmt(j * 0.001)
                 )
                 items = [NeutronDose(*args) for args in chron.get_doses()]

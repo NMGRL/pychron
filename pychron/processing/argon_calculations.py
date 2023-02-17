@@ -171,7 +171,6 @@ def calculate_plateau_age(
         pidx = (sidx, eidx) if sidx < n else None
 
     else:
-
         from pychron.processing.plateau import Plateau
 
         p = Plateau(
@@ -345,7 +344,6 @@ def interference_corrections(
 
     pr = production_ratios
     if arar_constants.k3739_mode.lower() == "normal" and not fixed_k3739:
-
         ca3937 = pr.get("Ca3937", 0)
         k3739 = pr.get("K3739", 0)
         k39 = (a39 - ca3937 * a37) / (1 - k3739 * ca3937)
@@ -560,9 +558,8 @@ def age_equation(j, f, include_decay_error=False, lambda_k=None, arar_constants=
     if not include_decay_error:
         lambda_k = nominal_value(lambda_k)
     try:
-
         # lambda is defined in years, so age is in years
-        age = lambda_k ** -1 * umath.log(1 + j * f)
+        age = lambda_k**-1 * umath.log(1 + j * f)
 
         return arar_constants.scale_age(age, current="a")
     except (ValueError, TypeError):
@@ -590,15 +587,15 @@ def calculate_error_F(signals, F, k4039, ca3937, ca3637):
     C3 = k4039.nominal_value
     C4 = ca3937.nominal_value
 
-    ssD = D.std_dev ** 2
-    ssB = B.std_dev ** 2
-    ssG = G.std_dev ** 2
+    ssD = D.std_dev**2
+    ssB = B.std_dev**2
+    ssG = G.std_dev**2
     G = G.nominal_value
     B = B.nominal_value
     D = D.nominal_value
 
-    ssF = ssG + C1 ** 2 * ssB + ssD * (C4 * G - C1 * C4 * B + C1 * C2) ** 2
-    return ssF ** 0.5
+    ssF = ssG + C1**2 * ssB + ssD * (C4 * G - C1 * C4 * B + C1 * C2) ** 2
+    return ssF**0.5
 
 
 def calculate_error_t(F, ssF, j, ssJ):
@@ -611,7 +608,7 @@ def calculate_error_t(F, ssF, j, ssJ):
     constants = ArArConstants()
     ll = constants().lambdak.nominal_value ** 2
     sst = (JJ * ssF + FF * ssJ) / (ll * (1 + F * j) ** 2)
-    return sst ** 0.5
+    return sst**0.5
 
 
 def calculate_fractional_loss(t, temp, a, model="plane", material="kfeldspar"):
@@ -639,9 +636,9 @@ def calculate_fractional_loss(t, temp, a, model="plane", material="kfeldspar"):
     d = d_0 * math.exp(-ea / (r * temp))
 
     if model == "plane":
-        f = 2 / math.pi ** 0.5 * (d * t / a ** 2) ** 0.5
+        f = 2 / math.pi**0.5 * (d * t / a**2) ** 0.5
         if 1 >= f >= 0.45:
-            f = 1 - (8 / math.pi ** 2) * math.exp(-math.pi ** 2 * d * t / (4 * a ** 2))
+            f = 1 - (8 / math.pi**2) * math.exp(-math.pi**2 * d * t / (4 * a**2))
 
     return f
 

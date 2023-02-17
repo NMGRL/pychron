@@ -117,6 +117,7 @@ class DVC(Loggable):
     use_cache = Bool
     max_cache_size = Int
     irradiation_prefix = Str
+    irradiation_project_prefix = Str
 
     _cache = None
     _uuid_runid_cache = None
@@ -370,6 +371,35 @@ class DVC(Loggable):
         #         self._uuid_runid_cache[uuid] = r
         # return r
 
+    def find_reference_repos(self, repo):
+        irradiations = self.db.get_repository_irradiations(repo)
+        low, high = self.db.get_repository_analyses_date_range(repo)
+        mss = self.db.get_repository_mass_spectrometers(repo)
+        mss = [mi.capitalize() for mi in mss]
+
+        self.debug("{} {}".format(low, high))
+        repos = []
+        if low.month <= 6:
+            year = low.year
+            year = str(year)[-2:]
+            repos.extend(["{}_air{}0".format(mi, year) for mi in mss])
+            repos.extend(["{}_blank{}0".format(mi, year) for mi in mss])
+            repos.extend(["{}_cocktail{}0".format(mi, year) for mi in mss])
+
+        if high.month >= 6 or low.month >= 6:
+            year = high.year
+            year = str(year)[-2:]
+            repos.extend(["{}_air{}1".format(mi, year) for mi in mss])
+            repos.extend(["{}_blank{}1".format(mi, year) for mi in mss])
+            repos.extend(["{}_cocktail{}1".format(mi, year) for mi in mss])
+
+        irradiation_project_prefix = self.irradiation_project_prefix
+        repos.extend(
+            ["{}{}".format(irradiation_project_prefix, ir) for ir in irradiations]
+        )
+
+        return list(set(repos))
+
     def find_associated_identifiers(self, samples):
         from pychron.dvc.associated_identifiers import AssociatedIdentifiersView
 
@@ -542,7 +572,6 @@ class DVC(Loggable):
         return ps
 
     def repository_transfer(self, ans, dest):
-
         destrepo = self._get_repository(dest, as_current=False)
         for src, ais in groupby_repo(ans):
             repo = self._get_repository(src, as_current=False)
@@ -706,7 +735,6 @@ class DVC(Loggable):
         return mod_repositories
 
     def update_analyses(self, ans, modifiers, msg, author=None):
-
         author = self.get_author(author)
 
         if not isinstance(modifiers, (list, tuple)):
@@ -866,7 +894,6 @@ class DVC(Loggable):
     #         self._update_current_age(ai)
 
     def save_csv_dataset(self, name, repository, lines, local_path=False):
-
         if local_path:
             p = add_extension(local_path, ".csv")
         else:
@@ -934,7 +961,6 @@ class DVC(Loggable):
     def find_references_by_load(self, load, atypes, make_records=True, **kw):
         records = self.db.find_references_by_load(load, atypes, **kw)
         if records:
-
             for r in records:
                 r.bind()
 
@@ -1241,7 +1267,9 @@ class DVC(Loggable):
 
     def get_author(self, author=None):
         if not self.use_default_commit_author:
-            if author is None or not self._author:
+            if self._author:
+                author = self._author
+            elif author is None:
                 db = self.db
                 with db.session_ctx():
                     authors = [User(r) for r in db.get_users()]
@@ -1332,6 +1360,16 @@ class DVC(Loggable):
 
             repo = self._get_repository(name)
             repo.pull(use_progress=use_progress, use_auto_pull=self.use_auto_pull)
+
+            # merge any new commits on the data_collection branch to this branch
+            try:
+                repo.merge("origin/data_collection", inform=False)
+            except BaseException:
+                self.debug(
+                    "merge with origin/data_collection failed. This is not an issue if you are only using local "
+                    "repos"
+                )
+
             return True
         else:
             self.debug("getting repository from remote")
@@ -1340,27 +1378,26 @@ class DVC(Loggable):
             if not service:
                 return True
             else:
-                if service.clone_from(name, root, self.organization):
+                if isinstance(service, LocalGitHostService):
+                    service.create_empty_repo(name)
                     return True
+                elif service.clone_from(name, root, self.organization):
+                    return True
+                else:
+                    self.warning_dialog(
+                        "name={} not in available repos "
+                        "from service={}, organization={}".format(
+                            name, service.remote_url, self.organization
+                        )
+                    )
+                    names = self.remote_repository_names()
+                    for ni in names:
+                        self.debug("available repo== {}".format(ni))
+
                 # names = self.remote_repository_names()
                 # if name in names:
                 #     service.clone_from(name, root, self.organization)
                 #     return True
-                else:
-                    if isinstance(service, LocalGitHostService):
-                        service.create_empty_repo(name)
-                        return True
-                    else:
-
-                        self.warning_dialog(
-                            "name={} not in available repos "
-                            "from service={}, organization={}".format(
-                                name, service.remote_url, self.organization
-                            )
-                        )
-                        names = self.remote_repository_names()
-                        for ni in names:
-                            self.debug("available repo== {}".format(ni))
 
     def rollback_repository(self, expid):
         repo = self._get_repository(expid)
@@ -1435,7 +1472,6 @@ class DVC(Loggable):
         self.meta_repo.update_flux(*args, **kw)
 
     def set_identifier(self, irradiation, level, position, identifier):
-
         dbpos = self.db.get_irradiation_position(irradiation, level, position)
         if dbpos:
             dbpos.identifier = identifier
@@ -1493,6 +1529,13 @@ class DVC(Loggable):
     def get_repository(self, exp):
         return self._get_repository(exp)
 
+    def get_version(self):
+        bd = str(self.application.preferences.get("pychron.update.build_repo"))
+        self.debug("get version {}".format(bd))
+        if os.path.isdir(bd):
+            repo = Repo(bd)
+            return repo.head.commit.hexsha
+
     def get_meta_head(self):
         return self.meta_repo.get_head()
 
@@ -1523,7 +1566,6 @@ class DVC(Loggable):
             ialabels.append("{} {} {}".format(ia.name, ia.identifier, ia.sample))
 
         if self.repository_add_paths(rid, ps):
-
             sparrow = self.application.get_service(
                 "pychron.sparrow.sparrow_client.SparrowClient"
             )
@@ -1649,18 +1691,20 @@ class DVC(Loggable):
         else:
             self.warning_dialog(HOST_WARNING_MESSAGE)
 
-    def add_readme(self, identifier):
+    def add_readme(self, identifier, content=""):
         self.debug("adding readme to repository identifier={}".format(identifier))
         root = repository_path(identifier)
         if os.path.isdir(root):
             p = os.path.join(root, "README.md")
             if not os.path.isfile(p):
                 with open(p, "w") as wfile:
-                    wfile.write("{}\n###############".format(identifier))
-            repo = self._get_repository(identifier, as_current=False)
-            repo.add(p)
-            repo.commit("initial commit")
-
+                    wfile.write("{}\n###############\n{}".format(identifier, content))
+                repo = self._get_repository(identifier, as_current=False)
+                repo.add(p)
+                repo.commit("initial commit")
+                repo.push()
+            else:
+                self.debug("readme already exists")
         else:
             self.critical("Repository does not exist {}. {}".format(identifier, root))
 
@@ -1668,7 +1712,14 @@ class DVC(Loggable):
         repo = self._get_repository(repo)
         repo.create_branch(branch, inform=False)
 
-    def add_repository(self, identifier, principal_investigator, inform=True):
+    def add_repository(
+        self,
+        identifier,
+        principal_investigator,
+        inform=True,
+        license_template=None,
+        private=True,
+    ):
         self.debug(
             "trying to add repository identifier={}, pi={}".format(
                 identifier, principal_investigator
@@ -1685,7 +1736,7 @@ class DVC(Loggable):
 
         # names = self.remote_repository_names(ide)
         # if identifier in names:
-        if not self.check_remote_repository_exists(identifier):
+        if self.check_remote_repository_exists(identifier):
             # make sure also in the database
             self.db.add_repository(identifier, principal_investigator)
 
@@ -1709,7 +1760,12 @@ class DVC(Loggable):
                             "Creating repository at {}. {}".format(gi.name, identifier)
                         )
 
-                        if gi.create_repo(identifier, organization=self.organization):
+                        if gi.create_repo(
+                            identifier,
+                            organization=self.organization,
+                            license_template=license_template,
+                            private=private,
+                        ):
                             ret = True
                             if isinstance(gi, LocalGitHostService):
                                 if i == 0:
@@ -2106,6 +2162,7 @@ class DVC(Loggable):
             try:
                 a = DVCAnalysis(uuid, rid, expid)
             except AnalysisNotAnvailableError:
+                self.debug("uuid={}, rid={}, expid={}".format(uuid, rid, expid))
                 self.warning_dialog(
                     "Analysis {} not in local repository {}. "
                     "You may need to pull changes. If local repository is up to date you may "
@@ -2293,6 +2350,12 @@ class DVC(Loggable):
         bind_preference(
             self, "irradiation_prefix", "{}.irradiation_prefix".format(prefid)
         )
+
+        bind_preference(
+            self,
+            "irradiation_project_prefix",
+            "{}.irradiation_project_prefix".format(prefid),
+        )
         if self.use_cache:
             self._use_cache_changed()
 
@@ -2367,7 +2430,6 @@ class DVC(Loggable):
             ("productions", self._add_default_irradiation_productions),
             ("load holders", self._add_default_load_holders),
         ):
-
             d = os.path.join(self.meta_repo.path, tag.replace(" ", "_"))
             if not os.path.isdir(d):
                 os.mkdir(d)

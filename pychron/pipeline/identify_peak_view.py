@@ -106,7 +106,6 @@ class IdentifyPeakView(HasTraits):
             self._make_peaks()
 
     def traits_view(self):
-
         v = View(
             HGroup(Item("threshold")),
             UItem(

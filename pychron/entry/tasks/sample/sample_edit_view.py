@@ -16,7 +16,18 @@
 import re
 
 import pyproj as pyproj
-from traits.api import HasTraits, Instance, List, Str, Long, Float, BaseFloat, Enum, Int
+from traits.api import (
+    HasTraits,
+    Instance,
+    List,
+    Str,
+    Long,
+    Float,
+    BaseFloat,
+    Enum,
+    Int,
+    CStr,
+)
 from traitsui.api import View, UItem, Item, VGroup, EnumEditor, HGroup
 from traitsui.menu import Action
 
@@ -100,14 +111,14 @@ class SampleEditItem(HasTraits):
 
     _project = Str
     _material = Str
-    _grainsize = Str
-    _note = Str
+    _grainsize = CStr
+    _note = CStr
     _lat = LatFloat
     _lon = LonFloat
-    _igsn = Str
-    _lithology = Str
-    _location = Str
-    _storage_location = Str
+    _igsn = CStr
+    _lithology = CStr
+    _location = CStr
+    _storage_location = CStr
     _approximate_age = Float
     _elevation = Float
 
@@ -165,7 +176,6 @@ class SampleEditItem(HasTraits):
         return proj, pi
 
     def traits_view(self):
-
         ll_grp = HGroup(
             Item("lat", label="Latitude"),
             Item("lon", label="Longitude"),

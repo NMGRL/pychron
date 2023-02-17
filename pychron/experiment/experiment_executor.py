@@ -20,10 +20,13 @@ import os
 import time
 from datetime import datetime
 from operator import itemgetter
-from threading import Thread, Lock, currentThread
+from queue import Queue, Empty
+from threading import Thread, Lock, currentThread, Event as TEvent
 
 from pyface.constant import CANCEL, YES, NO
 from pyface.timer.do_later import do_after
+from sqlalchemy.exc import DatabaseError
+from traitsui.api import View, EnumEditor, Item, UItem
 from traits.api import (
     Event,
     String,
@@ -49,7 +52,9 @@ from pychron.core.codetools.memory_usage import mem_available
 from pychron.core.helpers.filetools import add_extension, get_path, unique_path2
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.core.helpers.logger_setup import add_root_handler, remove_root_handler
+from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.progress import open_progress
+from pychron.core.pychron_traits import PositiveInteger
 from pychron.core.stats import calculate_weighted_mean, calculate_mswd
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.wait.wait_group import WaitGroup
@@ -82,7 +87,14 @@ from pychron.experiment.utilities.repository_identifier import (
 )
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.globals import globalv
+from pychron.options.options_manager import SeriesOptionsManager, OptionsController
+from pychron.options.views.views import view
 from pychron.paths import paths
+from pychron.pipeline.plot.editors.series_editor import (
+    SeriesEditor,
+    AnalysisGroupedSeriesEditor,
+)
+from pychron.pipeline.plot.plotter.series import Series
 from pychron.pychron_constants import (
     DEFAULT_INTEGRATION_TIME,
     AR_AR,
@@ -100,6 +112,7 @@ from pychron.pychron_constants import (
     CANCELED,
     TRUNCATED,
     SUCCESS,
+    ARGON_KEYS,
 )
 
 
@@ -181,6 +194,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     scheduler = Instance(ExperimentScheduler)
 
     events = List
+
+    timeseries_editor = Instance(AnalysisGroupedSeriesEditor)
+    timeseries_refresh_button = Event
+    timeseries_reset_button = Event
+    # configure_timeseries_editor_button = Event
+    # timeseries_options = Instance(SeriesOptionsManager)
+    timeseries_n_recall = PositiveInteger(50)
+    timeseries_mass_spectrometer = Str
+    timeseries_mass_spectrometers = List
     # ===========================================================================
     #
     # ===========================================================================
@@ -221,6 +243,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     # dvc
     use_dvc_persistence = Bool(False)
+    dvc_save_timeout_minutes = Int(5)
+    use_dvc_overlap_save = Bool(False)
     default_principal_investigator = Str
 
     baseline_color = Color
@@ -251,6 +275,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def __init__(self, *args, **kw):
         super(ExperimentExecutor, self).__init__(*args, **kw)
         self.wait_control_lock = Lock()
+        self._exception_queue = Queue()
+        self._save_complete_evt = TEvent()
         # self.set_managers()
         # self.notification_manager = NotificationManager()
 
@@ -312,7 +338,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder(prefid, attrs)
 
         # dvc
-        self._preference_binder("pychron.dvc.experiment", ("use_dvc_persistence",))
+        self._preference_binder(
+            "pychron.dvc.experiment",
+            ("use_dvc_persistence", "dvc_save_timeout_minutes", "use_dvc_overlap_save"),
+        )
 
         # dashboard
         self._preference_binder(
@@ -345,7 +374,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.events.extend(events)
 
     def execute(self):
-
         prog = open_progress(100, position=(100, 100))
 
         pre_execute_result = False
@@ -373,7 +401,22 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.queue_modified = True
 
     def is_alive(self):
-        return self.alive
+        try:
+            exc = self._exception_queue.get_nowait()
+            self.warning("exception queue. {}".format(exc))
+            if exc[0] == "NonFatal":
+                if self.confirmation_dialog(
+                    "{}\n\nDo you want to CANCEL the experiment?\n".format(exc[1]),
+                    timeout_ret=False,
+                    timeout=30,
+                ):
+                    return False
+            else:
+                self.critical("exception kills experiment queue")
+                return False
+
+        except Empty:
+            return self.alive
 
     def continued(self):
         self.stats.continue_run()
@@ -468,6 +511,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             exp = self.experiment_queue
 
         ctx = {
+            "current_run_duration": self.stats.current_run_duration_f,
             "etf_iso": self.stats.etf_iso,
             "err_message": self._err_message,
             "canceled": self._canceled,
@@ -494,6 +538,34 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.experiment_queue.executed = True
         # scroll to the first run
         self.experiment_queue.automated_runs_scroll_to_row = 0
+
+    def _wait_for_dvc_save(self, spec):
+        if (
+            self.use_dvc_overlap_save
+            and self._save_complete_evt
+            and self.use_dvc_persistence
+        ):
+            timeout = self.dvc_save_timeout_minutes
+            self.debug(
+                "waiting for save event to clear. Timeout after {} minutes".format(
+                    timeout
+                )
+            )
+            timeoutseconds = timeout * 60
+            st = time.time()
+            while self._save_complete_evt.is_set():
+                self._save_complete_evt.wait(1)
+
+                if time.time() - st > timeoutseconds:
+                    self.warning_dialog("Saving run failed to complete success fully")
+                    self._save_complete_evt.set()
+                    # run.cancel_run()
+                    spec.state = FAILED
+                    return
+
+            self.debug("waiting complete")
+
+        return True
 
     def _wait_for_save(self):
         """
@@ -607,6 +679,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         exp.start_timestamp = datetime.now()
 
+        self._save_complete_evt.clear()
+
         self._do_event(events.START_QUEUE)
 
         # save experiment to database
@@ -687,6 +761,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                             )
                         )
 
+                if not self._wait_for_dvc_save(spec):
+                    self.debug("wait for dvc save failed")
+                    break
+
                 run = self._make_run(spec)
                 if run is None:
                     self.debug("failed to make run")
@@ -711,7 +789,11 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
                     self.info("overlaping")
 
-                    t = Thread(target=self._do_run, args=(run,), name=run.runid)
+                    t = Thread(
+                        target=self._do_run,
+                        args=(run, delay_after_previous_analysis),
+                        name=run.runid,
+                    )
                     t.start()
 
                     run.wait_for_overlap()
@@ -723,7 +805,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 else:
                     is_first_flag = True
                     last_runid = run.runid
-                    self._join_run(spec, run)
+                    self._join_run(spec, run, delay_after_previous_analysis)
 
                 # self.tracker.stats.print_summary()
 
@@ -734,10 +816,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug("end at run completion")
                     break
 
-                if spec.state in ("success", "truncated"):
-                    if self._ratio_change_detection(spec):
-                        self.warning("Ratio Change Detected")
-                        break
+                # if spec.state in ("success", "truncated"):
+                #     if self._ratio_change_detection(spec):
+                #         self.warning("Ratio Change Detected")
+                #         break
 
             self.debug(
                 "run loop exited. end at completion:{}".format(
@@ -783,14 +865,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         path = os.path.join(paths.setup_dir, "users.yaml")
         if os.path.isfile(path):
             yl = yload(path)
-            items = [
-                (i["name"], i["email"])
-                for i in yl
-                if i["enabled"] and i["email"] != email
-            ]
+            if yl:
+                items = [
+                    (i["name"], i["email"])
+                    for i in yl
+                    if i["enabled"] and i["email"] != email
+                ]
 
-            if items:
-                names, addrs = list(zip(*items))
+                if items:
+                    names, addrs = list(zip(*items))
         return names, addrs
 
     def _wait_for(self, predicate, period=1, invert=False):
@@ -832,9 +915,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ct = currentThread()
         ct.name = name
 
-    def _join_run(self, spec, run):
+    def _join_run(self, spec, run, delay_after_run):
         self.debug("join run")
-        self._do_run(run)
+        self._do_run(run, delay_after_run)
 
         self.debug("{} finished".format(run.runid))
         if self.is_alive():
@@ -865,7 +948,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
             self._prev_baselines = run.get_baselines()
 
-    def _do_run(self, run):
+    def _do_run(self, run, delay_after_run):
         self._set_thread_name(run.runid)
         # add a new log handler
 
@@ -889,8 +972,23 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self.extracting_run = run
 
-        for step in ("_start", "_extraction", "_measurement", "_post_measurement"):
+        # self.debug("parallel saving currently disabled")
+        # if self._save_complete_evt and self.use_dvc_persistence:
+        #     self.debug("waiting for save event to clear")
+        #     st = time.time()
+        #     while self._save_complete_evt.is_set():
+        #         self._save_complete_evt.wait(1)
+        #
+        #         if time.time() - st > 300:
+        #             self.warning_dialog("Saving run failed to complete success fully")
+        #             self._save_complete_evt.set()
+        #             run.cancel_run()
+        #             run.spec.state = FAILED
+        #             return
+        #
+        #     self.debug("waiting complete")
 
+        for step in ("_start", "_extraction", "_measurement", "_post_measurement"):
             if not self.is_alive():
                 break
 
@@ -917,9 +1015,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             if run.spec.state not in (TRUNCATED, CANCELED, FAILED):
                 run.spec.state = SUCCESS
 
+        self._do_event(events.SAVE_RUN, run=run)
         if self.save_all_runs or run.spec.state in ("success", "truncated"):
-            run.save()
+            kw = {}
+            if self.use_dvc_overlap_save:
+                # run.save is non-blocked when exception queue defined
+                kw["exception_queue"] = self._exception_queue
+                kw["complete_event"] = self._save_complete_evt
 
+            run.save(**kw)
+
+        self._save_complete_evt.set()
         self.run_completed = run
 
         remove_backup(run.uuid)
@@ -931,6 +1037,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 self.warning("post run check failed")
             else:
                 self.heading("Post Run Check Passed")
+
+                # update the timeseries graph
+                try:
+                    self._update_timeseries()
+                except BaseException:
+                    self.debug("failed updating timeseries via experiment")
+                    self.debug_exception()
 
         t = time.time() - st
         self.info(
@@ -964,7 +1077,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # close conditionals view
         # self._close_cv()
 
-        self._do_event(events.END_RUN, run=run)
+        self._do_event(events.END_RUN, run=run, delay_after_run=delay_after_run)
 
         remove_root_handler(handler)
         run.post_finish()
@@ -1105,7 +1218,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self, active_run=None, tripped=None, conditionals=None, kind="live"
     ):
         try:
-
             v = ConditionalsView()
 
             self.debug("Show conditionals active run: {}".format(active_run))
@@ -1217,9 +1329,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ai: AutomatedRun
         extraction step
         """
-        if self._pre_extraction_check(ai):
-            self.heading("Pre Extraction Check Failed")
-            self._err_message = "Pre Extraction Check Failed"
+        if self._pre_step_check(ai, "Extraction"):
+            self._failed_execution_step("Pre Extraction Check Failed")
             return
 
         # make sure status monitor is running a
@@ -1244,6 +1355,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         ai: AutomatedRun
         measurement step
         """
+        if self._pre_step_check(ai, "Measurement"):
+            self._failed_execution_step("Pre Measurement Check Failed")
+            return
+
         if self.send_config_before_run:
             self.info("Sending spectrometer configuration")
             man = self.spectrometer_manager
@@ -1283,6 +1398,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     def _failed_execution_step(self, msg):
         self.debug("failed execution step {}".format(msg))
         if not self._canceled:
+            self.heading(msg)
             self._err_message = msg
             self.alive = False
         return False
@@ -1558,7 +1674,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         analysis_type = check["analysis_type"]
         mainstore = self.datahub.mainstore
         if atype == analysis_type:
-
             ratio_name = check["ratio"]
             threshold = check.get("threshold", 0)
             nsigma = check.get("nsigma", 0)
@@ -1596,7 +1711,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 )
                 ans = mainstore.make_analyses(ans, use_progress=False)
             else:
-
                 ratios = self._ratios.get(atype, [])
                 nn = max(nanalyses - len(ratios), 1)
 
@@ -1624,7 +1738,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     nominal_ratio, cur, dev, threshold
                 )
             else:
-
                 ratios = ratios[-nanalyses:]
                 self._ratios[atype] = ratios
 
@@ -1808,7 +1921,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     IPIPETTE_PROTOCOL,
                     CRYO_PROTOCOL,
                 ):
-
                     man = self.application.get_service(
                         protocol, 'name=="{}"'.format(extract_device)
                     )
@@ -2026,16 +2138,20 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.debug("pre execute check complete")
         return True
 
-    def _pre_extraction_check(self, run):
+    def _pre_step_check(self, run, tag):
         """
         do pre_run_terminations
+
+        return True to fail
         """
 
         if not self.alive:
             return
 
         self.debug(
-            "============================= Pre Extraction Check ============================="
+            "============================= Pre {} Check =============================".format(
+                tag
+            )
         )
 
         conditionals = self._load_queue_conditionals("pre_run_terminations")
@@ -2192,7 +2308,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                     )
 
                                 else:
-
                                     self.debug(
                                         "Repository association conflict. "
                                         "repository={} "
@@ -2220,16 +2335,17 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 return True
 
     def _sync_repositories(self, prog):
-        experiment_ids = {
-            a.repository_identifier
-            for q in self.experiment_queues
-            for a in q.cleaned_automated_runs
-        }
-        for e in experiment_ids:
-            if prog:
-                prog.change_message("Syncing {}".format(e))
-                if not self.datahub.mainstore.sync_repo(e, use_progress=False):
-                    return e
+        if self.use_dvc_persistence:
+            experiment_ids = {
+                a.repository_identifier
+                for q in self.experiment_queues
+                for a in q.cleaned_automated_runs
+            }
+            for e in experiment_ids:
+                if prog:
+                    prog.change_message("Syncing {}".format(e))
+                    if not self.datahub.mainstore.sync_repo(e, use_progress=False):
+                        return e
 
     def _post_run_check(self, run):
         """
@@ -2243,6 +2359,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self.alive:
             return
         self.heading("Post Run Check")
+
+        if self._ratio_change_detection(run.spec):
+            self.warning("Ratio Change Detected")
+            return True
 
         # check user defined post run actions
         # conditionals = self._load_queue_conditionals('post_run_actions', klass='ActionConditional')
@@ -2517,9 +2637,79 @@ Use Last "blank_{}"= {}
         # invoke_in_main_thread(self.trait_set, extraction_state_label=msg,
         #                       extraction_state_color=color)
 
+    _low_post = None
+
+    def _update_timeseries(self, low_post=None):
+        if self.use_dvc_persistence:
+            if low_post is None:
+                low_post = self._low_post
+            else:
+                self._low_post = low_post
+
+            dvc = self.datahub.mainstore
+            with dvc.session_ctx(use_parent_session=False):
+                if self.experiment_queue:
+                    ms = self.experiment_queue.mass_spectrometer
+                else:
+                    if not self.timeseries_mass_spectrometers:
+                        self.timeseries_mass_spectrometers = (
+                            dvc.get_mass_spectrometer_names()
+                        )
+
+                    info = self.edit_traits(
+                        view=okcancel_view(
+                            UItem(
+                                "timeseries_mass_spectrometer",
+                                # label='Mass Spectrometer',
+                                editor=EnumEditor(name="timeseries_mass_spectrometers"),
+                            ),
+                            title="Please Select a Mass Spectrometer",
+                            width=300,
+                        ),
+                        kind="livemodal",
+                    )
+                    if info.result:
+                        ms = self.timeseries_mass_spectrometer
+                    else:
+                        return
+                ans = dvc.get_last_n_analyses(
+                    self.timeseries_n_recall,
+                    mass_spectrometer=ms,
+                    exclude_types=("unknown",),
+                    low_post=low_post,
+                    verbose=True,
+                    use_parent_session=False,
+                )
+                if ans:
+                    ans = dvc.make_analyses(ans, use_progress=False)
+
+                    self.timeseries_editor.set_items(ans)
+                    invoke_in_main_thread(self.timeseries_editor.refresh)
+                else:
+                    self.warning("failed retrieving analyses for experiment timeseries")
+
     # ===============================================================================
     # handlers
     # ===============================================================================
+    def _timeseries_refresh_button_fired(self):
+        self._update_timeseries()
+
+    def _timeseries_reset_button_fired(self):
+        self._low_post = datetime.now()
+        self.information_dialog(
+            "Timeseries reset to {}".format(self._low_post.strftime("%m/%d/%y %H:%M"))
+        )
+        self._update_timeseries()
+
+    # def _configure_timeseries_editor_button_fired(self):
+    #
+    #     info = OptionsController(model=self.timeseries_options).edit_traits(
+    #         view=view("Timeseries Options"), kind="livemodal"
+    #     )
+    #     if info.result:
+    #         self.timeseries_editor.set_options(self.timeseries_options.selected_options)
+    #         self.timeseries_editor.refresh()
+
     def _measuring_run_changed(self):
         if self.measuring_run:
             self.measuring_run.is_last = self.end_at_run_completion
@@ -2586,6 +2776,20 @@ Use Last "blank_{}"= {}
     # ===============================================================================
     # defaults
     # ===============================================================================
+    # def _timeseries_options_default(self):
+    #     opt = SeriesOptionsManager()
+    #     opt.set_names_via_keys(ARGON_KEYS)
+    #     return opt
+
+    def _timeseries_editor_default(self):
+        ed = AnalysisGroupedSeriesEditor()
+        ed.init(
+            atypes=["air", "cocktail", "blank_unknown", "blank_air", "blank_cocktail"]
+        )
+        # ed.set_options(self.timeseries_options.selected_options)
+
+        return ed
+
     def _dashboard_client_default(self):
         if self.use_dashboard_client:
             return self.application.get_service(

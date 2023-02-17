@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pymodbus.exceptions import ModbusIOException
+try:
+    from pymodbus.exceptions import ModbusIOException
+except ImportError:
+    pass
 
 from pychron.hardware.actuators.client_gp_actuator import ClientMixin
 from pychron.hardware.actuators.gp_actuator import GPActuator
@@ -21,6 +24,14 @@ from pychron.hardware.core.modbus import ModbusMixin
 
 
 class PLC2000GPActuator(GPActuator, ModbusMixin, ClientMixin):
+    """
+    :::
+    name: PLC2000 GP Actuator
+    description: AutomationDirect.com PLC
+    website: https://automationdirect.com
+
+    """
+
     def _actuate(self, obj, action):
         addr = int(obj.address) - 1
         state = action.lower() == "open"

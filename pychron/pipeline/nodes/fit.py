@@ -110,7 +110,6 @@ class FitReferencesNode(FitNode):
 
         # self.plotter_options.set_detectors(state.union_detectors)
         if state.references:
-
             for i, (gid, refs) in enumerate(groupby_group_id(state.references)):
                 if i == 0:
                     editor = self.editor
@@ -236,7 +235,6 @@ class FitICFactorNode(FitReferencesNode):
                 raise RefitException()
 
     def load(self, nodedict):
-
         pom = self.plotter_options_manager
         if pom.selected_options.name == "Default":
             try:
@@ -271,7 +269,6 @@ class FitIsotopeEvolutionNode(FitNode):
 
     def _check_refit(self, analysis):
         for k in self._keys:
-
             i = analysis.get_isotope(k)
             if i is None:
                 i = analysis.get_isotope(detector=k)
@@ -429,7 +426,7 @@ class FitIsotopeEvolutionNode(FitNode):
                     nstr=nstr,
                     intercept_value=i,
                     intercept_error=e,
-                    normalized_error=e * iso.n ** 0.5,
+                    normalized_error=e * iso.n**0.5,
                     percent_error=pe,
                     int_err=pe,
                     int_err_threshold=goodness_threshold,

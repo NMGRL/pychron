@@ -108,7 +108,6 @@ class NMGRLFurnaceDrive(CoreDevice):
             return pos
 
     def start_jitter(self, turns=None, p1=None, p2=None, **kw):
-
         if "acceleration" not in kw:
             kw["acceleration"] = self.jacceleration
         if "deceleration" not in kw:

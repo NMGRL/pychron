@@ -49,7 +49,6 @@ class PieClock(QWidget):
         qp.end()
 
     def _draw_indicator(self, event, qp):
-
         cx, cy, w, r = self._get_geometry(event)
 
         pen = qp.pen()
@@ -99,7 +98,6 @@ class PieClock(QWidget):
         qp.drawEllipse(cx - r, cy - r, w, w)
 
     def _draw_slices(self, event, qp):
-
         # qp.setPen(QColor(168, 34, 3))
         self._set_pen(qp)
 

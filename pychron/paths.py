@@ -236,6 +236,7 @@ class Paths(object):
     # ===========================================================================
     # files
     # ===========================================================================
+    checkpoint_file = None
     labspy_client_config = None
     template_manifest_file = None
     pipeline_template_file = None
@@ -377,7 +378,10 @@ class Paths(object):
 
         self.peak_center_config_dir = join(self.appdata_dir, "peak_center_configs")
 
-        self.actuation_tracker_file = join(self.appdata_dir, "actuation_tracker.yaml")
+        self.actuation_tracker_file = join(self.appdata_dir, "actuation_tracker.json")
+        self.actuation_tracker_file_yaml = join(
+            self.appdata_dir, "actuation_tracker.yaml"
+        )
 
         # login
         self.login_file = join(self.appdata_dir, "login")

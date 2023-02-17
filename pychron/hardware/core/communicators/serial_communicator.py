@@ -128,7 +128,6 @@ class SerialCommunicator(Communicator):
         self.bytesize = bytesize
 
     def load(self, config, path):
-
         self.config_path = path
         self._config = config
 
@@ -391,7 +390,6 @@ class SerialCommunicator(Communicator):
                 break
 
         if not found:
-
             # update the port
             if self._auto_write_handle and port:
                 # port in form
@@ -429,7 +427,7 @@ class SerialCommunicator(Communicator):
                     self.warning(v)
                 self.warning("=============================")
 
-    def _write(self, cmd, is_hex=False):
+    def _write(self, cmd, is_hex=False, retry_on_exception=True):
         """
         use the serial handle to write the cmd to the serial buffer
         return True if there is an exception writing cmd
@@ -463,6 +461,12 @@ class SerialCommunicator(Communicator):
                 ValueError,
             ) as e:
                 self.warning("Serial Communicator write execption: {}".format(e))
+                if (
+                    isinstance(e, serial.serialutil.SerialException)
+                    and retry_on_exception
+                ):
+                    self.open()
+                    return self._write(cmd, is_hex, retry_on_exception=False)
                 return
 
         return cmd
@@ -489,7 +493,6 @@ class SerialCommunicator(Communicator):
     def _read_terminator(
         self, timeout=1, delay=None, terminator=None, terminator_position=None
     ):
-
         if terminator is None:
             terminator = self.read_terminator
         if terminator_position is None:

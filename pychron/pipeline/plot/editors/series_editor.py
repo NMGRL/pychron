@@ -16,17 +16,21 @@
 
 # ============= enthought library imports =======================
 from pyface.timer.do_later import do_after
-from traits.api import List, Event
-from traitsui.api import View, UItem, Group, VSplit
-from traitsui.editors.api import TabularEditor
+from traits.api import List, Event, Str, Button, Instance
+from traitsui.api import View, UItem, Group, VSplit, ListEditor, TabularEditor, VGroup
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.formatting import floatfmt
+from pychron.core.helpers.iterfuncs import groupby_key
+from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.envisage.tasks.base_editor import BaseTraitsEditor
+from pychron.options.options_manager import OptionsController, SeriesOptionsManager
+from pychron.options.views.views import view
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.models.series_model import SeriesModel
-from pychron.pychron_constants import DELTA
+from pychron.pychron_constants import DELTA, ARGON_KEYS
 
 TOOLTIP_MAP = {
     "label": "Label",
@@ -114,8 +118,8 @@ class SeriesEditor(FigureEditor):
     def _handle_reg(self, new):
         self.update_needed = True
 
-    def traits_view(self):
-        tblgrp = Group(
+    def get_table_view(self):
+        return Group(
             UItem(
                 "statistics",
                 height=100,
@@ -127,8 +131,80 @@ class SeriesEditor(FigureEditor):
             label="Stats.",
         )
 
-        v = View(VSplit(self.get_component_view(), tblgrp), resizable=True)
+    def traits_view(self):
+        v = View(
+            VSplit(self.get_component_view(), self.get_table_view()), resizable=True
+        )
         return v
+
+
+class AnalysisTypeSeriesEditor(SeriesEditor):
+    analysis_type = Str
+    configure_plotter_options_button = Button
+    options_manager = Instance(SeriesOptionsManager)
+
+    def __init__(self, *args, **kw):
+        super(AnalysisTypeSeriesEditor, self).__init__(*args, **kw)
+        self.plotter_options = self.options_manager.selected_options
+
+    def _options_manager_default(self):
+        opt = SeriesOptionsManager(id="{}_series".format(self.analysis_type))
+        opt.set_names_via_keys(
+            ARGON_KEYS,
+            additional_names=[
+                "F",
+            ],
+        )
+        return opt
+
+    def _configure_plotter_options_button_fired(self):
+        info = OptionsController(model=self.options_manager).edit_traits(
+            view=view("Timeseries Options"), kind="livemodal"
+        )
+        if info.result:
+            self.plotter_options = self.options_manager.selected_options
+            self.refresh_needed = True
+
+    def traits_view(self):
+        return View(
+            VGroup(
+                icon_button_editor("configure_plotter_options_button", "cog"),
+                VSplit(self.get_component_view(), self.get_table_view()),
+            ),
+            resizable=True,
+        )
+
+
+class AnalysisGroupedSeriesEditor(BaseTraitsEditor):
+    editors = List
+
+    def init(self, atypes):
+        eds = [AnalysisTypeSeriesEditor(analysis_type=atype) for atype in atypes]
+        self.editors = eds
+
+    def refresh(self):
+        for ei in self.editors:
+            ei.refresh_needed = True
+
+    # def set_options(self, options):
+    #     for ei in self.editors:
+    #         ei.plotter_options = options
+
+    def set_items(self, items, *args, **kw):
+        for atype, ans in groupby_key(items, "analysis_type"):
+            for ei in self.editors:
+                if ei.analysis_type == atype:
+                    ei.set_items(list(ans))
+                    break
+
+    def traits_view(self):
+        return View(
+            UItem(
+                "editors",
+                style="custom",
+                editor=ListEditor(use_notebook=True, page_name=".analysis_type"),
+            )
+        )
 
 
 # ============= EOF =============================================

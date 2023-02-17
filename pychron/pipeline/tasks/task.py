@@ -307,8 +307,18 @@ class PipelineTask(BaseBrowserTask):
             if tag and items:
                 # tags stored as lowercase
                 tag = tag.lower()
+                try:
+                    self.dvc.tag_items(tag, items, note)
+                except BaseException as e:
+                    self.debug_exception()
+                    if self.confirmation_dialog(
+                        "Any error occurred trying to tag the analyses. You may not have "
+                        "sufficient privileges to UPDATE the database. Contact your DB "
+                        "administrator. Would you like to try to report the error to Pychron "
+                        "developers?"
+                    ):
+                        raise e
 
-                self.dvc.tag_items(tag, items, note)
                 if use_filter:
                     for e in self.editor_area.editors:
                         if hasattr(e, "set_items"):
@@ -610,9 +620,7 @@ class PipelineTask(BaseBrowserTask):
                 break
 
     def _run(self, message, func, close_all=False):
-
         if self.engine.pre_run_check(func):
-
             self.debug("{} started".format(message))
             if close_all:
                 self.close_all()

@@ -270,7 +270,6 @@ class ReportWriter(BasePDFTableWriter):
         self,
         analysis_type,
     ):
-
         opt = getattr(
             self.options, "{}s_series_options_manager".format(analysis_type)
         ).selected_options
@@ -297,7 +296,6 @@ class ReportWriter(BasePDFTableWriter):
         return s, ag
 
     def _make_summary_table(self, ag, opt):
-
         # ag = editor.analysis_groups[0]
 
         ts = self._new_style(header_line_idx=0, header_line_width=2)

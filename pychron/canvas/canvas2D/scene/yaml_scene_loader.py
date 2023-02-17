@@ -96,7 +96,7 @@ class YAMLLoader(BaseLoader):
             pass
 
         for v in self._yd.get("valve") or []:
-            key = v["name"].strip()
+            key = str(v["name"]).strip()
             # x, y = self._get_floats(v, 'translation')
             x, y = self._get_translation(v)
             w, h = self._get_floats(v, "dimension", default=self._valve_dimension)
@@ -145,6 +145,7 @@ class YAMLLoader(BaseLoader):
                 desc = vv.find("description")
                 desc = desc.text.strip() if desc is not None else ""
             v = ManualSwitch(x + ox, y + oy, display_name=desc, name=key)
+            print("masdf", v)
             scene.add_item(v, layer=1)
             ndict[key] = v
 
@@ -200,6 +201,40 @@ class YAMLLoader(BaseLoader):
         pass
 
     # private
+    def _new_fork(self, scene, klass, conn):
+        left = conn.get("left")
+        right = conn.get("right")
+        mid = conn.get("mid")
+        lname = str(left["name"]).strip()
+        mname = str(mid["name"]).strip()
+        rname = str(right["name"]).strip()
+        key = "{}-{}-{}".format(lname, mname, rname)
+
+        height = 4
+        dim = conn.get("dimension")
+        if dim is not None:
+            height = float(dim.strip())
+        # klass = BorderLine
+        tt = klass(0, 0, default_color=(204, 204, 204), name=key, height=height)
+
+        lf = scene.get_item(lname)
+        rt = scene.get_item(rname)
+        mm = scene.get_item(mname)
+        lf.connections.append(("left", tt))
+        rt.connections.append(("right", tt))
+        mm.connections.append(("mid", tt))
+
+        def get_xy(item, elem):
+            default = item.width / 2.0, item.height / 2.0
+            ox, oy, txt = get_offset(elem, default=default)
+            return item.x + ox, item.y + oy
+
+        lx, ly = get_xy(lf, left)
+        rx, ry = get_xy(rt, right)
+        mx, my = get_xy(mm, mid)
+        tt.set_points(lx, ly, rx, ry, mx, my)
+        scene.add_item(tt, layer=0)
+
     def _new_rectangle(
         self, scene, elem, c, bw=3, layer=1, origin=None, klass=None, type_tag=""
     ):
@@ -250,6 +285,7 @@ class YAMLLoader(BaseLoader):
             default_color=c,
             type_tag=type_tag,
             fill=fill,
+            use_symbol=elem.get("use_symbol", False),
         )
         font = elem.get("font")
         if font is not None:
@@ -276,8 +312,8 @@ class YAMLLoader(BaseLoader):
         start = conn.get("start")
         end = conn.get("end")
 
-        skey = start["name"].strip()
-        ekey = end["name"].strip()
+        skey = str(start["name"]).strip()
+        ekey = str(end["name"]).strip()
         key = "{}_{}".format(skey, ekey)
 
         orient = conn.get("orientation")
@@ -310,6 +346,7 @@ class YAMLLoader(BaseLoader):
         elif orient == "horizontal":
             y1 = y
 
+        dimension = float(conn.get("dimension", self._connection_dimension))
         connection = klass(
             (x, y),
             (x1, y1),
@@ -320,7 +357,7 @@ class YAMLLoader(BaseLoader):
             end_offset=end_offset,
             default_color=(204, 204, 204),
             name=key,
-            width=10,
+            width=dimension,
         )
 
         if sanchor:

@@ -64,7 +64,7 @@ FITDEGREES = dict(Linear=1, Parabolic=2, Cubic=3)
 
 class DummyAPM:
     def read_power_meter(self, setpoint):
-        return setpoint ** 2 + random.randint(0, 5)
+        return setpoint**2 + random.randint(0, 5)
 
     def check_saturation(self, n=3):
         return False
@@ -333,7 +333,6 @@ class PowerCalibrationManager(Manager):
         return pa
 
     def _apply_calibration(self):
-
         if self.confirmation_dialog("Apply Calibration"):
             self._calculate_calibration()
             #            pc = PowerCalibrationObject()
@@ -376,7 +375,6 @@ class PowerCalibrationManager(Manager):
         self.data_manager.close_file()
 
     def _write_data(self, pi, rp, table):
-
         row = table.row
         row["setpoint"] = pi
         row["value"] = rp
@@ -390,7 +388,6 @@ class PowerCalibrationManager(Manager):
         self._coefficients = self._regress(xs, ys, deg)
 
     def _regress(self, xs, ys, deg):
-
         if xs is not None and ys is not None:
             xs, ys = list(zip(*list(zip(xs, ys))))
 
@@ -491,7 +488,6 @@ class PowerCalibrationManager(Manager):
                 #                pickle.dump(self.check_parameters, f)
 
     def traits_view(self):
-
         self.graph_cnt = 0
 
         v = View(
@@ -592,7 +588,6 @@ class PowerCalibrationManager(Manager):
     # persistence
     # ===============================================================================
     def dump_power_calibration(self, coefficients, calibration_path=None):
-
         #        calibration_path = self._get_calibration_path(calibration_path)
         #        self.info('dumping power calibration {}'.format(calibration_path))
 

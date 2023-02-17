@@ -62,8 +62,8 @@ def convert_to_video(
     subprocess.call(call_args)
 
 
-BIT_8 = 2 ** 8 - 1
-BIT_16 = 2 ** 16 - 1
+BIT_8 = 2**8 - 1
+BIT_16 = 2**16 - 1
 
 
 def pil_save(src, p):
@@ -152,7 +152,6 @@ class Video(Image):
         self.width = 640
         self.height = 480
         if self.cap is None or force:
-
             if globalv.video_test:
                 self.cap = 1
             else:
@@ -170,7 +169,6 @@ class Video(Image):
                         self.cap = self._get_pylon_device(i)
                         # identifier is a url
                 else:
-
                     # ideally an identifier is passed in
                     try:
                         self.cap = get_capture_device()

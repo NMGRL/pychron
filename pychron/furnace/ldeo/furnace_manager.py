@@ -48,7 +48,6 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         return c
 
     def activate(self):
-
         # sn = self.controller.return_sn()
         # if 256 <= sn <= 2147483647:
         #     self.info('Labjack loaded')
@@ -173,7 +172,6 @@ class LDEOFurnaceManager(BaseFurnaceManager):
     def _update_scan(self):
         d = self.controller.get_summary()
         if d:
-
             output1 = d.get("OP1")
             # output2 = d.get('OP2')  # not recorded right now
             temp1 = d.get("TC1")

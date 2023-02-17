@@ -40,7 +40,7 @@ def calculate_mswd(x, errs, k=1, wm=None):
         if wm is None:
             wm, _err = calculate_weighted_mean(x, errs)
 
-        ssw = (x - wm) ** 2 / errs ** 2
+        ssw = (x - wm) ** 2 / errs**2
         mswd_w = ssw.sum() / float(n - k)
 
     return mswd_w
@@ -55,10 +55,10 @@ def calculate_weighted_mean(x, errs):
     errs = errs[idx]
     x = x[idx]
 
-    weights = 1 / errs ** 2
+    weights = 1 / errs**2
     try:
         wmean, sum_weights = average(x, weights=weights, returned=True)
-        werr = sum_weights ** -0.5
+        werr = sum_weights**-0.5
     except ZeroDivisionError:
         wmean = average(x)
         werr = 0
@@ -129,7 +129,7 @@ def chi_squared(x, y, sx, sy, a, b, corrcoeffs=None):
         # p=((1+(sy/y)**2)*(1+(sx/x)**2))**-2
         k = 2 * b * corrcoeffs * sx * sy
 
-    w = (sy ** 2 + (b * sx) ** 2 - k) ** -1
+    w = (sy**2 + (b * sx) ** 2 - k) ** -1
 
     c = ((y - (a + b * x)) ** 2 * w).sum()
 

@@ -96,7 +96,6 @@ class LoadingPDFWriter(BasePDFTableWriter):
     _options_klass = LoadingPDFOptions
 
     def _build(self, doc, positions, grouped_positions, component, meta):
-
         n = len(grouped_positions)
         if n > 5:
             idx = int(round(n / 2.0))
@@ -231,7 +230,6 @@ class LoadingPDFWriter(BasePDFTableWriter):
         # ts.add('VALIGN', (-3, 1), (-1, -1), 'MIDDLE')
 
         for idx, pi in enumerate(positions):
-
             items = [
                 RowItem(i)
                 for i in (pi.identifier, pi.level_str, pi.sample, pi.position_str)

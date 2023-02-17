@@ -32,6 +32,7 @@ from pychron.pychron_constants import LASER_PLUGINS
 logger = logging.getLogger()
 
 PACKAGE_DICT = dict(
+    UsagePlugin="pychron.usage.tasks.plugin",
     ArArConstantsPlugin="pychron.constants.tasks.arar_constants_plugin",
     DashboardServerPlugin="pychron.dashboard.tasks.server.plugin",
     DashboardClientPlugin="pychron.dashboard.tasks.client.plugin",
@@ -60,6 +61,7 @@ PACKAGE_DICT = dict(
     EntryPlugin="pychron.entry.tasks.entry_plugin",
     ExperimentPlugin="pychron.experiment.tasks.experiment_plugin",
     PyScriptPlugin="pychron.pyscripts.tasks.pyscript_plugin",
+    WatchDogPlugin="pychron.watchdog.tasks.plugin",
     # hardware
     ClientExtractionLinePlugin="pychron.extraction_line.tasks.client_extraction_line_plugin",
     ExternalPipettePlugin="pychron.external_pipette.tasks.external_pipette_plugin",
@@ -70,6 +72,7 @@ PACKAGE_DICT = dict(
     LDEOFurnaceControlPlugin="pychron.furnace.tasks.ldeo.furnace_control_plugin",
     ThermoFurnacePlugin="pychron.furnace.tasks.thermo.furnace_plugin",
     # hardware-lasers
+    TAPDiodePlugin="pychron.lasers.tasks.plugins.tap",
     OsTechDiodePlugin="pychron.lasers.tasks.plugins.ostech_diode",
     AblationCO2Plugin="pychron.lasers.tasks.plugins.ablation_co2",
     ChromiumCO2Plugin="pychron.lasers.tasks.plugins.chromium_co2",
@@ -199,7 +202,6 @@ def get_user_plugins():
     for p in ps:
         # if laser plugin add CoreLaserPlugin
         if p in LASER_PLUGINS:
-
             plugint = ip.get_plugin(p, category="hardware")
             mode = ip.get_parameter(plugint, "mode")
             if mode == "client":
@@ -267,7 +269,6 @@ def launch(klass):
     app = app_factory(klass)
 
     try:
-
         # root = os.path.dirname(__file__)
         # r = QtGui.QApplication.instance()
         # p = os.path.join(root, 'stylesheets', 'qdark.css')

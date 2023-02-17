@@ -22,6 +22,9 @@ from io import StringIO
 from threading import Event
 
 from numpy import polyfit, array, average, uint8, zeros_like
+from skimage.color import gray2rgb
+from skimage.draw import circle
+from skimage.draw._draw import _coords_inside_image
 from traits.api import Any, Bool
 
 from pychron.core.ui.gui import invoke_in_main_thread
@@ -62,6 +65,11 @@ class PatternExecutor(Patternable):
             self.pattern.clear_graph()
 
     def finish(self):
+        if self.pattern and self.controller:
+            self.controller.linear_move(
+                self.pattern.cx, self.pattern.cy, source="pattern stop"
+            )
+
         self._alive = False
         self.close_pattern()
         self.pattern = None
@@ -119,15 +127,17 @@ class PatternExecutor(Patternable):
 
     def stop(self):
         self._alive = False
+
+        if self.laser_manager.stage_manager:
+            self.laser_manager.stage_manager.cancel()
+
         if self.controller:
             self.info("User requested stop")
             self.controller.stop()
 
         if self.pattern is not None:
-            if self.controller:
-                self.controller.linear_move(
-                    self.pattern.cx, self.pattern.cy, source="pattern stop"
-                )
+            # if self.controller:
+            #     self.controller.linear_move(self.pattern.cx, self.pattern.cy, source='pattern stop')
             # self.pattern.close_ui()
             self.info("Pattern {} stopped".format(self.pattern_name))
 
@@ -277,7 +287,6 @@ class PatternExecutor(Patternable):
         controller = self.controller
         pattern = self.pattern
         if controller is not None:
-
             kind = pattern.kind
             if kind == "ArcPattern":
                 self._execute_arc(controller, pattern)
@@ -322,7 +331,6 @@ class PatternExecutor(Patternable):
         controller.arc_move(pattern.cx, pattern.cy, pattern.degrees, block=True)
 
     def _execute_seek(self, controller, pattern):
-
         duration = pattern.duration
         total_duration = pattern.total_duration
 
@@ -360,9 +368,6 @@ class PatternExecutor(Patternable):
         GUI.invoke_later(self._info.dispose)
 
     def _dragonfly_peak(self, st, pattern, lm, controller):
-        from skimage.color import gray2rgb
-        from skimage.draw import circle
-
         # imgplot, imgplot2, imgplot3 = pattern.setup_execution_graph()
         # imgplot, imgplot2 = pattern.setup_execution_graph()
         imgplot, imgplot2 = pattern.setup_execution_graph(nplots=2)
@@ -398,11 +403,11 @@ class PatternExecutor(Patternable):
         per_img = zeros_like(oimg, dtype="int16")
 
         img_h, img_w = pos_img.shape
-        perimeter_circle = circle(
-            img_h / 2, img_w / 2, pattern.perimeter_radius * pxpermm
-        )
+        pcx, pcy = circle(img_h / 2, img_w / 2, pattern.perimeter_radius * pxpermm)
 
-        color = 2 ** 15 - 1
+        color = 2**15 - 1
+
+        perimeter_circle = _coords_inside_image(pcx, pcy, per_img.shape)
         per_img[perimeter_circle] = 50
         set_data("imagedata", gray2rgb(per_img.astype(uint8)))
 
@@ -415,7 +420,10 @@ class PatternExecutor(Patternable):
             ist = time.time()
             npt = None
             self.debug("starting iteration={}, in_motion={}".format(cnt, in_motion()))
-            while time.time() - ist < duration or in_motion():
+            while time.time() - ist < duration:
+                if not self._alive:
+                    break
+
                 args = find_lum_peak(min_distance, blur)
 
                 if args is None:
@@ -425,12 +433,12 @@ class PatternExecutor(Patternable):
                 pt, peakcol, peakrow, peak_img, sat, src = args
 
                 sats.append(sat)
-                src = gray2rgb(src).astype(uint8)
+                # src = gray2rgb(src).astype(uint8)
                 if pt:
                     pts.append(pt)
-                    c = circle(peakrow, peakcol, 2)
+                    # c = circle(peakrow, peakcol, 2)
                     # img[c] = (255, 0, 0)
-                    src[c] = (255, 0, 0)
+                    # src[c] = (225, 0, 225)
 
                 set_data2("imagedata", src)
 
@@ -469,7 +477,6 @@ class PatternExecutor(Patternable):
                 self.debug("generating new point={},{} ---- {},{}".format(x, y, px, py))
 
             else:
-
                 point_gen = None
 
                 # # wait = True
@@ -535,36 +542,45 @@ class PatternExecutor(Patternable):
             pattern.position_str = "{:0.5f},{:0.5f}".format(px, py)
 
             # if there is less than 1 duration left then block is true
-            block = total_duration - (time.time() - st) < duration
-            self.debug("blocking ={}".format(block))
-
-            try:
-                linear_move(
-                    px,
-                    py,
-                    source="dragonfly{}".format(cnt),
-                    block=block,
-                    velocity=pattern.velocity,
-                    use_calibration=False,
+            # block = total_duration - (time.time() - st) < duration
+            block = True
+            self.debug(
+                "move to {}, {} blocking ={}, alive={}".format(
+                    px, py, block, self._alive
                 )
-            except TargetPositionError as e:
-                self.debug("Target position error: {}".format(e))
+            )
+            if self._alive:
+                try:
+                    linear_move(
+                        px,
+                        py,
+                        source="dragonfly{}".format(cnt),
+                        block=block,
+                        velocity=pattern.velocity,
+                        use_calibration=False,
+                    )
+                except TargetPositionError as e:
+                    self.debug("Target position error: {}".format(e))
+                    break
 
-            ay, ax = py - cy, px - cx
-            # self.debug('position mm ax={},ay={}'.format(ax, ay))
-            ay, ax = int(-ay * pxpermm) + img_h / 2, int(ax * pxpermm) + img_w / 2
-            # self.debug('position pixel ax={},ay={}'.format(ax, ay))
+                ay, ax = py - cy, px - cx
 
-            pos_img -= 5
-            pos_img = pos_img.clip(0, color)
+                # self.debug('position mm ax={},ay={}, pxpermm={}, w={}, h={}'.format(ax, ay, pxpermm, img_h, img_w))
 
-            c = circle(ay, ax, 2)
-            pos_img[c] = color - 60
-            nimg = (pos_img + per_img).astype(uint8)
+                ay, ax = int(-ay * pxpermm) + img_h / 2, int(ax * pxpermm) + img_w / 2
+                # self.debug('position pixel ax={},ay={}'.format(ax, ay))
 
-            set_data("imagedata", gray2rgb(nimg))
+                pos_img -= 5
+                pos_img = pos_img.clip(0, color)
 
-            cnt += 1
+                cxx, cyy = circle(ay, ax, 2)
+                c = _coords_inside_image(cxx, cyy, pos_img.shape)
+                pos_img[c] = color - 60
+                nimg = (pos_img + per_img).astype(uint8)
+
+                set_data("imagedata", gray2rgb(nimg))
+
+                cnt += 1
 
         self.debug("dragonfly complete")
         controller.block()

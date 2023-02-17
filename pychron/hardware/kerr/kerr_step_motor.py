@@ -161,7 +161,6 @@ class KerrStepMotor(KerrMotor):
             return value
 
     def get_discrete_position(self, name):
-
         #        for di in self.discrete_positions:
         #            print di.name.lower(), name.lower(),di.name.lower()== name.lower
         if name is not None:
@@ -197,7 +196,6 @@ class KerrStepMotor(KerrMotor):
         return "".join(ob)
 
     def _build_parameters(self):
-
         cmd = "56"
         obbyte = self._assemble_options_byte()
         #        print obbyte

@@ -72,10 +72,16 @@ class Protocol:
         return t
 
     def ctof(self, c):
-        return c * 9 / 5.0 + 32
+        try:
+            return c * 9 / 5.0 + 32
+        except (ValueError, TypeError):
+            pass
 
     def ftoc(self, f):
-        return (f - 32) * 5 / 9.0
+        try:
+            return (f - 32) * 5 / 9.0
+        except (ValueError, TypeError):
+            return
 
 
 class StandardProtocol(Protocol):
@@ -333,7 +339,6 @@ class BaseWatlowEZZone(HasTraits):
 
     @on_trait_change("calibration:coefficients")
     def _coeff_string_changed(self):
-
         config = self.get_configuration()
         if not config.has_section("Calibration"):
             config.add_section("Calibration")
@@ -425,7 +430,6 @@ class BaseWatlowEZZone(HasTraits):
             self._process_memory_len += 2
 
     def report_pid(self):
-
         self.info("read pid parameters")
         pid_attrs = ["_Ph_", "_Pc_", "_I_", "_D_"]
 
@@ -586,7 +590,6 @@ class BaseWatlowEZZone(HasTraits):
                     # print t
         if t is not None:
             try:
-
                 t = float(t)
                 self.process_value = t
                 #                self.process_value_flag = True
@@ -647,7 +650,6 @@ class BaseWatlowEZZone(HasTraits):
         return True
 
     def set_nonvolatile_save(self, yesno, **kw):
-
         v = 106 if yesno else 59
         self.write(2494, v, **kw)
 
@@ -698,7 +700,6 @@ class BaseWatlowEZZone(HasTraits):
             self.debug("set_baudrate keyerror {}".format(e))
 
     def set_closed_loop_setpoint(self, setpoint, set_pid=True, **kw):
-
         # if setpoint == 0:
         #     self._output_scale_low = 0
         #     self.set_output_scale_low(0)
@@ -1094,7 +1095,6 @@ class BaseWatlowEZZone(HasTraits):
         return r_map[rid] if rid in r_map else None
 
     def read_output_function(self, **kw):
-
         register = self.protocol.get_register("fn")
         rid = str(self.read(register, response_type="int", **kw))
         r_map = {"36": "heat", "62": "off"}
@@ -1254,7 +1254,6 @@ class BaseWatlowEZZone(HasTraits):
                 self.set_output_scale_high(v)
 
     def _set_enable_tru_tune(self, v):
-
         self._enable_tru_tune = v
         self.set_tru_tune(v)
 

@@ -159,7 +159,7 @@ class BaseRegressor(HasTraits):
             # n = len(ys) - self.ddof
             n = ys.shape[0]
             if n > 0:
-                return self.std * n ** -0.5
+                return self.std * n**-0.5
             else:
                 return 0
         else:
@@ -241,8 +241,13 @@ class BaseRegressor(HasTraits):
             m = re.match(r"[A-Za-z]+", self.truncate)
             if m:
                 k = m.group(0)
-                exclude = eval(self.truncate, {k: self.xs})
-                excludes = list(exclude.nonzero()[0])
+                if k.lower() == "n":
+                    excludes = [
+                        i for i, _ in enumerate(self.xs) if eval(self.truncate, {k: i})
+                    ]
+                else:
+                    exclude = eval(self.truncate, {k: self.xs})
+                    excludes = list(exclude.nonzero()[0])
                 self.truncate_excluded = excludes
                 self.dirty = True
             else:
@@ -271,7 +276,6 @@ class BaseRegressor(HasTraits):
         raise NotImplementedError
 
     def calculate_pearsons_r(self, X, Y):
-
         Xbar = X.mean()
         Ybar = Y.mean()
 
@@ -340,7 +344,7 @@ class BaseRegressor(HasTraits):
 
         s = 0
         if residuals is not None:
-            ss_res = (residuals ** 2).sum()
+            ss_res = (residuals**2).sum()
 
             n = residuals.shape[0]
             q = len(self.coefficients)
@@ -396,7 +400,6 @@ class BaseRegressor(HasTraits):
         return ((x - xm) ** 2).sum()
 
     def tostring(self, sig_figs=5):
-
         cs = self.coefficients[::-1]
         ce = self.coefficient_errors[::-1]
 
@@ -409,10 +412,10 @@ class BaseRegressor(HasTraits):
             fmt = "{{:0.{}e}}" if abs(ei) < math.pow(10, -sig_figs) else "{{:0.{}f}}"
             ei = fmt.format(sig_figs).format(ei)
 
-            vfmt = u"{{}}= {{}} {} {{}} {{}}".format(PLUSMINUS)
+            vfmt = "{{}}= {{}} {} {{}} {{}}".format(PLUSMINUS)
             coeffs.append(vfmt.format(alphas(i), ci, ei, pp))
 
-        s = u", ".join(coeffs)
+        s = ", ".join(coeffs)
         return s
 
     def make_equation(self):
@@ -460,7 +463,6 @@ class BaseRegressor(HasTraits):
         return cors
 
     def _calculate_confidence_interval(self, x, observations, rx, confidence=95):
-
         alpha = 1.0 - confidence / 100.0
 
         n = len(observations)
@@ -470,8 +472,8 @@ class BaseRegressor(HasTraits):
             ti = tinv(alpha, n - 1)
             syx = self.get_syx()
             ssx = self.get_ssx(xm)
-            d = n ** -1 + (rx - xm) ** 2 / ssx
-            cors = ti * syx * d ** 0.5
+            d = n**-1 + (rx - xm) ** 2 / ssx
+            cors = ti * syx * d**0.5
 
             return cors / 2.0
 

@@ -72,6 +72,7 @@ from pychron.experiment.conditional.tabular_adapters import (
     EModificationConditionalsAdapter,
     PRConditionalsAdapter,
     ConditionalsAdapter,
+    ETruncationConditionalsAdapter,
 )
 from pychron.pychron_constants import ANALYSIS_TYPES
 
@@ -208,7 +209,6 @@ class ConditionalGroup(HasTraits):
     )
     def _refresh_comp(self, name, new):
         if not self._no_update:
-
             with no_update(self):
                 if name == "function":
                     self.modifier = ""
@@ -401,7 +401,6 @@ class ConditionalGroup(HasTraits):
         return cnt_grp
 
     def _get_atype_grp(self):
-
         atypes = [(a.lower().replace(" ", "_"), a) for a in ANALYSIS_TYPES]
 
         grp = BorderVGroup(
@@ -414,7 +413,6 @@ class ConditionalGroup(HasTraits):
         return grp
 
     def _get_edit_group(self):
-
         cnt_grp = self._get_cnt_grp()
         cmp_grp = self._get_cmp_grp()
         opt_grp = self._get_opt_grp()
@@ -614,6 +612,47 @@ class CancelationGroup(EConditionalGroup):
 
 class TruncationGroup(EConditionalGroup):
     help_str = "Truncation: Stop current measurement and CONTINUE run"
+    tabular_adapter_klass = ETruncationConditionalsAdapter
+
+    abbreviated_count_ratio = Float
+
+    def __init__(self, *args, **kw):
+        super(TruncationGroup, self).__init__(*args, **kw)
+        self.dump_attrs.append(("abbreviated_count_ratio", ""))
+
+    @on_trait_change("abbreviated_count_ratio")
+    def _update_selected2(self, name, new):
+        self._update_selected(name, new)
+
+    def _selected_changed_hook(self):
+        for a in ("abbreviated_count_ratio",):
+            setattr(self, a, getattr(self.selected, a))
+
+    def _get_cnt_grp(self):
+        cnt_grp = BorderVGroup(
+            Item(
+                "start_count",
+                tooltip="Number of counts to wait until performing check",
+                label="Start",
+            ),
+            Item("frequency", tooltip="Number of counts between each check"),
+            Item(
+                "ntrips",
+                label="N Trips",
+                tooltip="Number of trips (conditional evaluates True) "
+                "before action is taken. Default=1",
+            ),
+            Item(
+                "abbreviated_count_ratio",
+                label="Abbrev. Count Ratio",
+                tooltip="""The number of counts of the succeeding measurement will be
+ncounts*abbreviated_count_ratio. For example, if the next measurement is a
+baseline for 100 seconds and the abbreviated_count_ratio is 0.5, then if this conditional
+trips the baseline measurement will be for only 100*0.5 or 50 seconds""",
+            ),
+            label="Counts",
+        )
+        return cnt_grp
 
 
 class EquilibrationGroup(EConditionalGroup):

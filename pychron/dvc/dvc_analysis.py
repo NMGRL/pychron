@@ -273,7 +273,17 @@ class DVCAnalysis(Analysis):
         jd = dvc_load(path)
         return jd
 
-    def load_raw_data(self, keys=None, n_only=False, use_name_pairs=True):
+    def load_raw_data(self, keys=None, n_only=False, use_name_pairs=True, force=False):
+        self.debug(
+            "loading raw data, keys={}, n_only={}, use_name_pairs={}, force={}".format(
+                keys, n_only, use_name_pairs, force
+            )
+        )
+        if self.has_raw_data and not force:
+            self.debug("already has raw data {}, {}".format(self.has_raw_data, force))
+            print(self.isotopes["Ar40"].sniff.xs)
+            return
+
         path = self._analysis_path(modifier=".data")
 
         jd = dvc_load(path)
@@ -344,6 +354,9 @@ class DVCAnalysis(Analysis):
                 if iso.detector == det:
                     iso.sniff.unpack_data(data, n_only)
 
+        if not n_only and not keys:
+            self.has_raw_data = True
+
     def set_production(self, prod, r):
         self.production_obj = r
         self.production_name = prod
@@ -409,7 +422,7 @@ class DVCAnalysis(Analysis):
         nsignals = []
         nsniffs = []
 
-        for (new, existing) in ((nsignals, "signals"), (nsniffs, "sniffs")):
+        for new, existing in ((nsignals, "signals"), (nsniffs, "sniffs")):
             for sig in jd[existing]:
                 key = sig["isotope"]
                 if key in keys:
@@ -444,7 +457,6 @@ class DVCAnalysis(Analysis):
         return path
 
     def dump_fits(self, keys, reviewed=False):
-
         sisos = self.isotopes
         isoks, dks = list(map(tuple, partition(keys, lambda x: x in sisos)))
 
@@ -597,7 +609,6 @@ class DVCAnalysis(Analysis):
         self.arar_constants.cosmo_from_dict(jd)
 
     def _load_peakcenter(self, jd):
-
         refdet = jd.get("reference_detector")
         if refdet is None:
             pd = jd

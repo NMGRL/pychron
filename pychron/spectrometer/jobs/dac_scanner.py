@@ -49,7 +49,6 @@ class ScannerBoundsTool(DragTool):
         self.updated = (mi, ma)
 
     def set_low(self, v):
-
         offset = (self.high - v) * 0.1
         v += offset
         self.low = v
@@ -301,7 +300,6 @@ class DACScanner(BaseScanner):
         self.step = st * d / t
 
     def _handle_tool_change(self, new):
-
         self.scan_min_dac = new[0]  # self.tool.low
         self.scan_max_dac = new[1]  # self.tool.high
 

@@ -389,7 +389,6 @@ class DVCDatabase(DatabaseAdapter):
         mass_spectrometers=None,
         exclude_invalid=True,
     ):
-
         with self.session_ctx():
             delta = timedelta(hours=hours)
             refs = OrderedSet()
@@ -685,13 +684,19 @@ class DVCDatabase(DatabaseAdapter):
 
     def add_extraction_device(self, name):
         with self.session_ctx():
-            a = ExtractDeviceTbl(name=name)
-            return self._add_item(a)
+            a = self.get_extraction_device(name)
+            if not a:
+                a = ExtractDeviceTbl(name=name)
+                a = self._add_item(a)
+            return a
 
     def add_mass_spectrometer(self, name, kind="Argus"):
         with self.session_ctx():
-            a = MassSpectrometerTbl(name=name, kind=kind)
-            return self._add_item(a)
+            ms = self.get_mass_spectrometer(name)
+            if not ms:
+                ms = MassSpectrometerTbl(name=name, kind=kind)
+                ms = self._add_item(ms)
+            return ms
 
     def add_irradiation(self, name):
         with self.session_ctx():
@@ -740,7 +745,7 @@ class DVCDatabase(DatabaseAdapter):
             a = self.get_project(name, principal_investigator)
             if a is None:
                 self.debug("Adding project {} {}".format(name, principal_investigator))
-                a = ProjectTbl(name=name, checkin_date=datetime.now(), **kw)
+                a = ProjectTbl(name=name, checkin_date=datetime.now().date(), **kw)
                 if principal_investigator:
                     dbpi = self.get_principal_investigator(principal_investigator)
                     if dbpi:
@@ -969,6 +974,29 @@ class DVCDatabase(DatabaseAdapter):
             q = q.order_by(AnalysisTbl.timestamp.desc())
             q = q.limit(limit)
             return self._query_all(q)
+
+    def get_repository_analyses_date_range(self, repo):
+        with self.session_ctx() as sess:
+            r = self.get_repository(repo)
+            ts = {a.analysis.timestamp for a in r.repository_associations}
+            return min(ts), max(ts)
+
+    def get_repository_mass_spectrometers(self, repo):
+        with self.session_ctx() as sess:
+            r = self.get_repository(repo)
+            return {a.analysis.mass_spectrometer for a in r.repository_associations}
+
+    def get_repository_irradiations(self, repo):
+        with self.session_ctx() as sess:
+            q = sess.query(IrradiationTbl)
+            q = q.join(LevelTbl)
+            q = q.join(IrradiationPositionTbl)
+            q = q.join(AnalysisTbl)
+            q = q.join(RepositoryAssociationTbl)
+            q = q.filter(RepositoryAssociationTbl.repository == repo)
+            return [i.name for i in self._query_all(q)]
+            # r = self.get_repository(repo)
+            # return {a.analysis.irradiation for a in r.repository_associations}
 
     def get_repository_analyses(self, repo):
         with self.session_ctx():
@@ -1225,11 +1253,13 @@ class DVCDatabase(DatabaseAdapter):
         n,
         mass_spectrometer=None,
         analysis_types=None,
+        exclude_types=None,
         excluded_uuids=None,
         verbose=False,
+        low_post=None,
+        use_parent_session=True,
     ):
-
-        with self.session_ctx() as sess:
+        with self.session_ctx(use_parent_session=use_parent_session) as sess:
             q = sess.query(AnalysisTbl)
 
             if mass_spectrometer:
@@ -1239,11 +1269,17 @@ class DVCDatabase(DatabaseAdapter):
 
             if analysis_types:
                 q = analysis_type_filter(q, analysis_types)
+            if exclude_types:
+                if not isinstance(exclude_types, (tuple, list)):
+                    exclude_types = (exclude_types,)
+                q = q.filter(AnalysisTbl.analysis_type.notin_(exclude_types))
 
             if excluded_uuids:
                 q = q.filter(not_(AnalysisTbl.uuid.in_(excluded_uuids)))
 
             q = q.order_by(AnalysisTbl.timestamp.desc())
+            if low_post:
+                q = q.filter(AnalysisTbl.timestamp >= low_post)
             q = q.limit(n)
             return self._query_all(q, verbose_query=verbose)
 
@@ -1533,7 +1569,6 @@ class DVCDatabase(DatabaseAdapter):
         limit=None,
         verbose_query=True,
     ):
-
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
             q = q.join(IrradiationPositionTbl)
@@ -1733,7 +1768,6 @@ class DVCDatabase(DatabaseAdapter):
         loads=None,
         filter_non_run=False,
     ):
-
         self.debug("------- Get Labnumbers {}-------".format(id(self)))
         self.debug("------- samples: {}".format(samples))
         self.debug(
@@ -1933,7 +1967,6 @@ class DVCDatabase(DatabaseAdapter):
         if isinstance(name, (str,)):
             if pi:
                 with self.session_ctx() as sess:
-
                     q = sess.query(ProjectTbl)
                     q = q.join(PrincipalInvestigatorTbl)
                     q = q.filter(ProjectTbl.name == name)
@@ -2293,7 +2326,6 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx():
             level = self.get_irradiation_level(irrad, level)
             if level:
-
                 if with_summary:
                     lns = [
                         (
@@ -2339,7 +2371,6 @@ class DVCDatabase(DatabaseAdapter):
         sort_name_key=None,
         **kw
     ):
-
         if names is not None:
             if hasattr(names, "__call__"):
                 f = names(IrradiationTbl)
@@ -2373,7 +2404,6 @@ class DVCDatabase(DatabaseAdapter):
 
         items = self._retrieve_items(IrradiationTbl, order=order, **kw)
         if sort_name_key:
-
             n = "{:05n}".format(len(items))
 
             def func(i):
@@ -2397,7 +2427,6 @@ class DVCDatabase(DatabaseAdapter):
         order=None,
         verbose_query=False,
     ):
-
         if order:
             order = getattr(ProjectTbl.name, order)()
 
@@ -2544,7 +2573,6 @@ class DVCDatabase(DatabaseAdapter):
                 si.sessionID = session.id
 
     def update_current(self, dban, parameter, value, error, units, force=False):
-
         with self.session_ctx() as sess:
             c = None
             if not force:
@@ -2658,7 +2686,6 @@ class DVCDatabase(DatabaseAdapter):
                     "Continue with Pychron despite out of date db?",
                     position=STARTUP_MESSAGE_POSITION,
                 ):
-
                     self.debug("exiting application")
                     if self.application:
                         self.application.stop()

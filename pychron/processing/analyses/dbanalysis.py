@@ -517,7 +517,7 @@ class DBAnalysis(Analysis):
                 n = mass - refmass
 
                 # calculate discrimination
-                idisc = disc ** n
+                idisc = disc**n
                 e = disc
                 idisc = ufloat(
                     idisc.nominal_value, e.std_dev, tag="{} D".format(iso.name)
@@ -760,7 +760,6 @@ class DBAnalysis(Analysis):
                 blank.name = n
 
     def _get_peak_center(self, meas_analysis):
-
         pc = meas_analysis.peak_center
         if pc:
             center = float(pc.center)

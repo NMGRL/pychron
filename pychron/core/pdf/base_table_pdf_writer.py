@@ -63,11 +63,9 @@ class BasePDFTableWriter(BasePDFWriter):
     def _new_line(
         self, style, idx, weight=1.5, start=0, end=-1, color="black", cmd="LINEBELOW"
     ):
-
         style.add(cmd, (start, idx), (end, idx), weight, getattr(colors, color))
 
     def _new_table(self, style, data, hAlign="LEFT", col_widths=None, *args, **kw):
-
         # set spans
 
         for idx, ri in enumerate(data):
@@ -92,7 +90,6 @@ class BasePDFTableWriter(BasePDFWriter):
         header_line_color="black",
         debug_grid=False,
     ):
-
         ts = TableStyle()
         if debug_grid:
             ts.add("GRID", (0, 0), (-1, -1), 1, colors.red)

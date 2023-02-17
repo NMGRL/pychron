@@ -412,7 +412,7 @@ class InverseIsochron(Isochron):
             except ZeroDivisionError:
                 pe = "(Inf%)"
 
-            return u"39Ar/40Ar= {} {} {} {}".format(
+            return "39Ar/40Ar= {} {} {} {}".format(
                 floatfmt(v, n=6), PLUSMINUS, floatfmt(e, n=7), pe
             )
 
@@ -433,7 +433,7 @@ class InverseIsochron(Isochron):
             s = self.options.nsigma
             es = self.options.ellipse_kind
             ts.append(
-                u"{} {}{}{} Data: {}{}".format(m, PLUSMINUS, s, SIGMA, PLUSMINUS, es)
+                "{} {}{}{} Data: {}{}".format(m, PLUSMINUS, s, SIGMA, PLUSMINUS, es)
             )
 
         if self.options.show_error_type_info:
@@ -443,7 +443,6 @@ class InverseIsochron(Isochron):
             self._add_info_label(plot, ts, font=self.options.info_font)
 
     def _add_inset(self, plot, reg):
-
         opt = self.options
         group = opt.get_group(self.group_id)
         insetp = InverseIsochronPointsInset(
@@ -527,7 +526,6 @@ class InverseIsochron(Isochron):
         )
 
     def _add_results_info(self, plot, label=None, text_color="black"):
-
         ag = self.analysis_group
 
         age = ag.isochron_age
@@ -540,10 +538,10 @@ class InverseIsochron(Isochron):
 
         opt = self.options
         try:
-            inv_intercept = intercept ** -1
+            inv_intercept = intercept**-1
             p = calc_percent_error(intercept, err, scale=1)
             err = inv_intercept * p * opt.nsigma
-            mse = err * mswd ** 0.5
+            mse = err * mswd**0.5
             sf = opt.yintercept_sig_figs
             v, e, p, mse = (
                 floatfmt(inv_intercept, n=sf, s=3),
@@ -554,7 +552,7 @@ class InverseIsochron(Isochron):
         except ZeroDivisionError:
             v, e, p, mse = "NaN", "NaN", "NaN", "NaN"
 
-        sample_line = u"{}({})".format(ag.identifier, ag.sample)
+        sample_line = "{}({})".format(ag.identifier, ag.sample)
         mse_text = ""
         if opt.include_4036_mse:
             mse_text = " MSE= {}".format(mse)
@@ -573,7 +571,7 @@ class InverseIsochron(Isochron):
         if ag.isochron_age_error_kind in (MSE, MSEM):
             mse_age = e
         elif ag.isochron_age_error_kind in (SE, SEM):
-            mse_age = e * mswd ** 0.5
+            mse_age = e * mswd**0.5
         else:
             mse_age = 0
 
@@ -593,7 +591,7 @@ class InverseIsochron(Isochron):
             p = format_percent_error(v, e)
             pe = " ({})%".format(p)
 
-        age_line = u"Age={} {} {}{} {}{}".format(
+        age_line = "Age={} {} {}{} {}{}".format(
             floatfmt(v, n=af),
             PLUSMINUS,
             floatfmt(e, n=af, s=3),
@@ -602,6 +600,24 @@ class InverseIsochron(Isochron):
             mse_text,
         )
         mswd_line = "N={} MSWD={}".format(n, mswd)
+
+        if opt.show_results_info_location == "Bottom Right":
+            overlay_position = "inside bottom"
+            hjustify = "right"
+            ox = -2
+        elif opt.show_results_info_location == "Top Right":
+            overlay_position = "inside top"
+            hjustify = "right"
+            ox = -2
+        elif opt.show_results_info_location == "Top Left":
+            overlay_position = "inside top"
+            hjustify = "inside left"
+            ox = 2
+        else:
+            overlay_position = "inside bottom"
+            hjustify = "left"
+            ox = 2
+
         if label is None:
             th = 0
             for overlay in plot.overlays:
@@ -610,10 +626,11 @@ class InverseIsochron(Isochron):
                     th += h + opt.results_info_spacing
 
             label = OffsetPlotLabel(
-                offset=(1, th),
+                offset=(ox, th + 2),
                 component=plot,
-                overlay_position="inside bottom",
-                hjustify="left",
+                overlay_position=overlay_position,
+                border_visible=False,
+                hjustify=hjustify,
                 bgcolor="transparent",
                 font=opt.results_font,
                 color=text_color,
@@ -625,7 +642,7 @@ class InverseIsochron(Isochron):
         if opt.include_sample:
             lines.insert(0, sample_line)
 
-        lines = u"\n".join(lines)
+        lines = "\n".join(lines)
         label.text = lines
         label.bgcolor = plot.bgcolor
         label.request_redraw()
@@ -680,14 +697,13 @@ class InverseIsochron(Isochron):
                 fit.underlays.append(ee)
                 fit.error_envelope = ee
             else:
-
                 fit.error_envelope.invalidate()
 
                 fit.error_envelope.lower = lci
                 fit.error_envelope.upper = uci
 
         if self.options.display_inset and self.options.inset_link_status:
-            plot = self.graph.plots[self.group_id]
+            plot = self.graph.plots[0]
             if plot:
                 for o in plot.overlays:
                     if isinstance(o, InverseIsochronLineInset):

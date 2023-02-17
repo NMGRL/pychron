@@ -437,7 +437,6 @@ class PipelineEngine(Loggable):
                 ("Ideogram", IdeogramNode, IdeogramEditor),
                 ("Spectrum", SpectrumNode, SpectrumEditor),
             ):
-
                 if isinstance(node, klass):
                     e = node.editor
                     es = [
@@ -756,7 +755,6 @@ class PipelineEngine(Loggable):
         for idx, node in enumerate(self.pipeline.iternodes(None)):
             if node.enabled:
                 with ActiveCTX(node):
-
                     if not node.pre_run(state, configure=False):
                         self.debug("Pre run failed {}".format(node))
                         return True
@@ -830,7 +828,6 @@ class PipelineEngine(Loggable):
             configure = False
 
         for idx, node in enumerate(pipeline.iternodes(start_node)):
-
             if node.enabled:
                 # node.editor = None
 
@@ -1167,6 +1164,7 @@ class PipelineEngine(Loggable):
         self.refresh_table_needed = True
 
     def _set_template(self, name, clear=True, exclude_klass=None):
+        self.debug("template set to ={}".format(name))
         if isinstance(name, (str, tuple)):
             pt = self.pipeline_template_root.get_template(name)
         else:

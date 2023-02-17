@@ -15,8 +15,12 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
+import json
+import os
+from datetime import datetime
+
 from numpy import polyfit, linspace
-from traits.api import HasTraits, Float, Any, Button, Bool, List, Color, Property
+from traits.api import HasTraits, Float, Any, Button, Bool, List, Color, Property, Str
 from traitsui.api import View, Item, spring, ButtonEditor, HGroup, VGroup, UItem
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -24,6 +28,7 @@ from pychron.core.helpers.formatting import floatfmt
 from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.graph.guide_overlay import GuideOverlay
 from .spectrometer_task import SpectrometerTask
+from ...paths import paths
 
 
 class ResultsAdapter(TabularAdapter):
@@ -32,6 +37,7 @@ class ResultsAdapter(TabularAdapter):
         ("Endpoints", "endpoints"),
         ("Linear", "linear"),
         ("Duration (m)", "duration"),
+        ("Timestamp", "timestamp"),
     ]
 
     endpoints_text = Property
@@ -52,6 +58,13 @@ class Result(HasTraits):
     linear = Float
     endpoints = Float
     duration = Float
+    timestamp = Str
+
+    def to_json(self):
+        return {
+            attr: getattr(self, attr)
+            for attr in ("linear", "endpoints", "duration", "timestamp")
+        }
 
     def calculate(self, xs, ys, rise, starttime):
         ti = xs[-1]
@@ -62,6 +75,7 @@ class Result(HasTraits):
         self.duration = run
         self.endpoints = rrendpoints
         self.linear = rrfit
+        self.timestamp = datetime.now().isoformat()
         return rrendpoints, rrfit, ti, run
 
 
@@ -121,6 +135,21 @@ class RiseRate(SpectrometerTask):
         self.result_fit = rrfit
 
         self.results.append(result)
+        self._save()
+
+    def _save(self):
+        p = os.path.join(paths.appdata_dir, "rise_rates.json")
+        obj = []
+        if os.path.isfile(p):
+            with open(p, "r") as rfile:
+                try:
+                    obj = json.load(rfile)
+                except BaseException as e:
+                    self.debug("Invalid file: {} error={}".format(p, e))
+
+        with open(p, "w") as wfile:
+            obj.extend([ri.to_json() for ri in self.results])
+            json.dump(obj, wfile, indent=2)
 
     def _get_intensity(self):
         return self.spectrometer.get_intensity(self.detector.name)

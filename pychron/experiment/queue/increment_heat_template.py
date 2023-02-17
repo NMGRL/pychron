@@ -192,7 +192,6 @@ class BaseIncrementalHeatTemplate(Viewable):
     # persistence
     # ===============================================================================
     def load(self, path):
-
         self.path = path
         self.steps = []
         with open(path, "r") as rfile:

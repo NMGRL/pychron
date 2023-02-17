@@ -63,7 +63,6 @@ class Rectangle(QPrimitive):
     use_border = True
 
     def _render(self, gc):
-
         x, y = self.get_xy(clear_layout_needed=False)
         w, h = self.get_wh()
 
@@ -118,7 +117,6 @@ class Line(QPrimitive):
     height = Property
 
     def __init__(self, p1=None, p2=None, *args, **kw):
-
         self.set_startpoint(p1, **kw)
         self.set_endpoint(p2, **kw)
 
@@ -169,10 +167,9 @@ class Line(QPrimitive):
     def get_length(self):
         dx = self.start_point.x - self.end_point.x
         dy = self.start_point.y - self.end_point.y
-        return (dx ** 2 + dy ** 2) ** 0.5
+        return (dx**2 + dy**2) ** 0.5
 
     def calculate_rotation(self):
-
         x1, y1 = self.start_point.x, self.start_point.y
         x2, y2 = self.end_point.x, self.end_point.y
         a = calc_rotation(x1, y1, x2, y2)
@@ -196,7 +193,6 @@ class Triangle(QPrimitive):
         points = self.points
         func = self.canvas.map_screen
         if points:
-
             as_lines = True
             if as_lines:
                 gc.begin_path()
@@ -416,7 +412,7 @@ class LoadIndicator(Circle):
         if self.space == "data":
             r = self.map_dimension(r)
 
-        f = 2 ** 0.5 / 2
+        f = 2**0.5 / 2
         self.name_offsetx = (r * f) + 8
         self.name_offsety = (r * f) + 8
 
@@ -618,7 +614,6 @@ class PointIndicator(Indicator):
         super(PointIndicator, self)._render(gc)
 
         if not self.use_simple_render:
-
             if self.label_item and self.show_label:
                 self.label_item.render(gc)
 

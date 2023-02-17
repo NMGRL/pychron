@@ -65,7 +65,6 @@ class MassSpecAnalysis(Analysis):
     Cl3839 = 0
 
     def _sync(self, obj):
-
         self.j = ufloat(0, 0)
         self.age = 0
         self.age_err = 0

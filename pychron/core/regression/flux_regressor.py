@@ -132,7 +132,7 @@ class NearestNeighborFluxRegressor(SpecialFluxRegressor):
 
                 if self.use_weighted_fit:
                     es = self.clean_yserr[idx]
-                    ws = es ** -2
+                    ws = es**-2
                     if return_error:
                         v = ws.sum()
                     else:
@@ -212,10 +212,10 @@ class BowlFluxRegressor(MultipleLinearRegressor):
 
         return column_stack(
             (
-                x1 ** 2,
-                x2 ** 2,
-                x1 ** 2 * x2,
-                x2 ** 2 * x1,
+                x1**2,
+                x2**2,
+                x1**2 * x2,
+                x2**2 * x1,
                 x1 * x2,
                 x1,
                 x2,
@@ -232,7 +232,7 @@ class PlaneFluxRegressor(MultipleLinearRegressor):
     def _get_weights(self):
         e = self.clean_yserr
         if self._check_integrity(e, e):
-            return 1 / e ** 2
+            return 1 / e**2
 
     def _engine_factory(self, fy, X, check_integrity=True):
         if self.use_weighted_fit:

@@ -111,7 +111,7 @@ class MotionController(CoreDevice):
         #        print self._x_position, self._y_position
         self.parent.canvas.set_stage_position(self._x_position, self._y_position)
 
-    @caller
+    # @caller
     def timer_factory(self, func=None, period=150):
         """
 
@@ -135,8 +135,8 @@ class MotionController(CoreDevice):
         else:
             timer.stop()
             self._not_moving_count = 0
-            time.sleep(period / 1000.0)
-            timer = Timer(period, func)
+            # time.sleep(period / 1000.)
+            timer = Timer(period, func, delay=period)
 
         timer.set_interval(period)
         return timer
@@ -187,6 +187,8 @@ class MotionController(CoreDevice):
                 negative_limit=limits[0],
                 positive_limit=limits[1],
                 loadposition=loadposition[i],
+                min_velocity=self.motion_profiler.min_velocity,
+                max_velocity=self.motion_profiler.max_velocity,
             )
 
             self.axes[a] = na
@@ -343,22 +345,21 @@ class MotionController(CoreDevice):
 
         if timer is not None:
             self.debug("using existing timer")
-            period = 0.01
+            period = 0.15
 
             def func():
-                return self.timer.isActive()
+                return timer.isActive()
 
         else:
             self.debug("check moving={}".format(axis))
             period = 0.15
 
             def func():
-                return self._moving(axis=axis, verbose=False)
+                return self._moving(axis=axis, verbose=True)
 
         cnt = 0
         threshold = 0 if timer else 1
         while 1:
-
             st = time.time()
             a = func()
             et = time.time() - st
@@ -473,7 +474,6 @@ class MotionController(CoreDevice):
         keys = list(self.axes.keys())
         keys.sort()
         for k in keys:
-
             editor = RangeEditor(
                 low_name="{}axes_min".format(k),
                 high_name="{}axes_max".format(k),

@@ -124,9 +124,8 @@ class UpdatePreferencesHelper(GitRepoPreferencesHelper):
                 or bi
                 in (
                     "develop",
-                    " \
-                                                                                                            "
                     "master",
+                    "main",
                 )
             ]
 

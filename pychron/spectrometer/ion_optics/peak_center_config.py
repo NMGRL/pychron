@@ -90,7 +90,6 @@ class PeakCenterConfig(HasTraits):
     #     return QTEGRA_INTEGRATION_TIMES[4]  # 1.048576
 
     def _n_peaks_changed(self, new):
-
         self.select_n_peaks = [i + 1 for i in range(new)]
 
         if self.select_n_peak > new:

@@ -60,6 +60,16 @@ Installation of Pychron at other laboratories is ongoing. Current interested lab
 Additionally, [Remote Control Server](https://github.com/NMGRL/qtegra), a script made by the pychron developers, is used extensively 
 by the international community to interface third-party software with Thermo Scientific's Mass Spectrometer control software.
 
+
+pyExperiment
+--------------
+Write and run a set of automated analyses. Allows NMGRL to operate continuously. only limited by size of analysis chamber.
+
+pyCrunch
+-------
+Display, process and publish Ar-Ar geochronology and thermochonology data. Export publication ready PDF tables and figures. Export Excel, CSV, and XML data tables. Store and search for figures in database.  
+
+
 pyValve
 -----------
 Used to control and monitor a noble gas extraction line a.k.a prep system. Displays a graphical interface for user to interact with. A RPC interface is also provided enabling control of the prep system by other applications.
@@ -92,5 +102,5 @@ To turn off App Nap system wide use
 
 
 # Citing Pychron 
-Are you using pychron for data collection and/or data reduction of published data? Please cite it by including as much
+Are you using pychron for data collection and/or data reduction for published data? Please cite it by including as much
 information as possible from the following: *Jake Ross. (2019). NMGRL/pychron v18.2 (v18.2). Zenodo. https://doi.org/10.5281/zenodo.3237834*

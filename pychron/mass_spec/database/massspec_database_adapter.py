@@ -458,17 +458,14 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
     # adders
     # ===============================================================================
     def add_project(self, name, **kw):
-
         obj = ProjectTable(Project=name, **kw)
         return self._add_item(obj)
 
     def add_material(self, name):
-
         obj = MaterialTable(Material=name)
         return self._add_item(obj)
 
     def add_sample(self, name):
-
         obj = SampleTable(Sample=name, ProjectID=1)
         return self._add_item(obj)
 
@@ -568,7 +565,6 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             self._add_item(i)
 
     def add_sample_loading(self, ms, tray):
-
         if isinstance(ms, str):
             ms = ms.capitalize()
             system = self.get_system(
@@ -684,7 +680,6 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return d
 
     def add_isotope(self, rid, detector, label, **kw):
-
         analysis = self.get_analysis(
             rid,
         )
@@ -794,7 +789,6 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return drs
 
     def add_login_session(self, ms, **kw):
-
         if isinstance(ms, str):
             ms = ms.capitalize()
             system = self.get_system(

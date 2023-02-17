@@ -57,7 +57,9 @@ def validate_response(resp, cmd):
 
 class WiscArGPActuator(ASCIIGPActuator, ClientMixin):
     """
-    Used to communicate with PyValve valves
+    :::
+    name: WiscAr CRio based GP Actuator
+    description: Used to communicate with PyValve valves
     """
 
     close_cmd = actuate("close")

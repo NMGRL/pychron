@@ -106,7 +106,6 @@ class VideoServer(Loggable):
 
         quality = self.quality
         while not stop.isSet():
-
             socks = dict(poll.poll(100))
             if socks.get(sock) == zmq.POLLIN:
                 resp = sock.recv()

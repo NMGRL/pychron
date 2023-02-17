@@ -32,7 +32,14 @@ from pychron.hardware.eurotherm.base import BaseEurotherm
 
 
 class Eurotherm(BaseEurotherm, CoreDevice):
-    """ """
+    """
+    :::
+    name: Eurotherm Series 2000
+    description: Eurotherm Series 2000 temperature controller
+    website: http://buphy.bu.edu/~stein/etherm/2000cmms.pdf
+    website2: http://eurotherm.com/document-library/?ignoreeveryonegroup=0&assetdetesctl1390419=1833&search=2000+series&searchcontent=0
+
+    """
 
 
 # ============= EOF ====================================

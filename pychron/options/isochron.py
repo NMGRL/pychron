@@ -66,6 +66,9 @@ class InverseIsochronOptions(IsochronOptions):
 
     show_labels = Bool(True)
     show_results_info = Bool(True)
+    show_results_info_location = Enum(
+        "Bottom Left", "Bottom Right", "Top Left", "Top Right"
+    )
     show_nominal_intercept = Bool(False)
     nominal_intercept_label = Str("Atm", enter_set=True, auto_set=False)
     nominal_intercept_value = Float(295.5)

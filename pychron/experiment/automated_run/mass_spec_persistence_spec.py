@@ -273,7 +273,7 @@ class MassSpecPersistenceSpec(Loggable):
             fncnts = ys.shape[0]
 
         if error == "sem":
-            s = (s / fncnts ** 0.5) if fncnts else 0
+            s = (s / fncnts**0.5) if fncnts else 0
 
         return ufloat(m, s), fncnts
 
@@ -320,7 +320,9 @@ class MassSpecPersistenceSpec(Loggable):
             t, v = iso.xs, iso.ys
 
         except KeyError:
-            t, v = [0,], [
+            t, v = [
+                0,
+            ], [
                 0,
             ]
 

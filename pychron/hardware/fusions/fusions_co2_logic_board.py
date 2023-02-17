@@ -55,7 +55,6 @@ class FusionsCO2LogicBoard(FusionsLogicBoard):
 
         coeffs = self.config_get(config, "PowerOutput", "coefficients")
         if coeffs is not None:
-
             p = os.path.join(
                 paths.hidden_dir, "{}_power_calibration".format(self.name.split(".")[0])
             )

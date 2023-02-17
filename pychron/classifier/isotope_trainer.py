@@ -100,7 +100,6 @@ class IsotopeTrainer(Loggable):
                     # ai = dvc.make_analysis(dbai.record_view)
                     ai.load_raw_data()
                     for iso in ai.isotopes.values():
-
                         klass = self._get_klass(iso)
                         if klass is -1:
                             continue

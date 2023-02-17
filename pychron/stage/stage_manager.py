@@ -69,6 +69,7 @@ class BaseStageManager(Manager):
     temp_position = None
     temp_hole = None
     root = Str
+
     # use_modified = Bool(True)  # set true to use modified affine calculation
     def motor_event_hook(self, name, value, *args, **kw):
         pass
@@ -78,6 +79,7 @@ class BaseStageManager(Manager):
 
     def refresh_stage_map_names(self):
         sms = get_stage_map_names(root=self.root)
+        print(sms, self.root)
         self.stage_map_names = sms
 
     def load(self):

@@ -53,7 +53,6 @@ def gen_commits(log):
                             message.append(line.strip())
 
             except StopIteration:
-
                 yield date, author, "\n".join(message)
                 break
 

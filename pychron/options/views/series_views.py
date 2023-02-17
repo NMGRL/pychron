@@ -15,15 +15,21 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traitsui.api import View, UItem, VGroup, EnumEditor, Item, HGroup
+from traits.api import Button, Any, Str, List
+from traitsui.api import View, UItem, VGroup, EnumEditor, Item, HGroup, TableEditor
+from traitsui.table_column import ObjectColumn
 
+from pychron.core.fits.fit_selector import CheckboxColumn
 from pychron.core.pychron_traits import BorderVGroup
+from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.options.guide import Guide
 from pychron.options.options import (
     SubOptions,
     AppearanceSubOptions,
     MainOptions,
     object_column,
     checkbox_column,
+    GuidesOptions,
 )
 
 SHOW_STATISTICS_GROUP = BorderVGroup(
@@ -98,6 +104,7 @@ VIEWS = {
     "main": SeriesMainOptions,
     "series": SeriesSubOptions,
     "appearance": SeriesAppearance,
+    "guides": GuidesOptions,
 }
 # VIEWS['series'] = SeriesSubOptions
 # VIEWS['appearance'] = SeriesAppearance

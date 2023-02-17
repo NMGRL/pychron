@@ -18,12 +18,16 @@
 from __future__ import absolute_import
 
 from chaco.abstract_overlay import AbstractOverlay
-from chaco.data_label import draw_arrow
+
+# from chaco.data_label import draw_arrow
 from chaco.label import Label
-from chaco.plot_label import PlotLabel
-from enable.colors import convert_from_pyqt_color
+
+# from enable.colors import convert_from_pyqt_color
+from chaco.overlays.data_label import draw_arrow
 from enable.font_metrics_provider import font_metrics_provider
 from enable.tools.drag_tool import DragTool
+from enable.api import ColorTrait
+from chaco.api import PlotLabel
 from kiva.trait_defs.kiva_font_trait import KivaFont
 
 # ============= standard library imports ========================
@@ -115,11 +119,12 @@ class SpectrumTool(AnalysisPointInspector, BasePlateauOverlay):
                 "RunID={}".format(an.record_id),
                 "Tag={}".format(an.tag),
                 "Status={}".format(an.status_text),
-                u"{}={} {} {} (1{})".format(
+                "{}={} {} {} ({}{})".format(
                     comp.container.y_axis.title,
                     floatfmt(v),
                     PLUSMINUS,
-                    floatfmt(e),
+                    floatfmt(e * self.nsigma),
+                    self.nsigma,
                     SIGMA,
                 ),
                 "Cumulative. Ar39={}-{}".format(floatfmt(low_c), floatfmt(high_c)),
@@ -240,7 +245,6 @@ class SpectrumErrorOverlay(AbstractOverlay):
                 h = p2[1] - p1[1]
 
                 if self.dim_non_plateau:
-
                     if step_a is not None and step_a <= i <= step_b:
                         c = color
                     else:
@@ -329,7 +333,7 @@ class PlateauOverlay(BasePlateauOverlay):
     ages_errors = Array
     ages = Array
     nsigma = Int(2)
-    line_color = Color("red")
+    line_color = ColorTrait("red")
     line_width = Float(1.0)
     selections = List
     arrow_visible = Bool
@@ -439,7 +443,8 @@ class PlateauOverlay(BasePlateauOverlay):
             with gc:
                 comp = self.component
                 gc.clip_to_rect(comp.x, comp.y, comp.width, comp.height)
-                color = convert_from_pyqt_color(None, None, self.line_color)
+                # color = convert_from_pyqt_color(None, None, self.line_color)
+                color = self.line_color_
                 gc.set_stroke_color(color)
                 gc.set_line_width(self.line_width)
 
@@ -466,7 +471,6 @@ class PlateauOverlay(BasePlateauOverlay):
                     label.overlay(component, gc)
 
     def _get_plateau_label(self, x1, x2, y):
-
         if self.layout_needed or not self.plateau_label:
             p = self.plateau_label
         else:

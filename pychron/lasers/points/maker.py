@@ -601,7 +601,6 @@ class GridMaker(BaseMaker):
                 x = ox + hspacing * ci
 
             for ri in range(ys):
-
                 if vertical:
                     x = ox + hspacing * ri
                 else:

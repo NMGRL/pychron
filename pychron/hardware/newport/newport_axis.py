@@ -336,7 +336,6 @@ class NewportAxis(Axis):
                 continue
             value = getattr(self, key)
             if isinstance(value, str):
-
                 name = (
                     "{}S".format(key.upper()) if not key.endswith("s") else key.upper()
                 )
@@ -371,7 +370,7 @@ class NewportAxis(Axis):
                     value = int(value)
                 else:
                     value = float(value)
-            # print 'setting', self.name, key, value
+            # print('setting', self.name, key, value)
             setattr(self, key, value)
 
         self.nominal_velocity = self.velocity
@@ -552,7 +551,6 @@ class NewportAxis(Axis):
         results.edit_traits()
 
     def _anytrait_changed(self, name, old, new):
-
         if self.loaded and self.configuring:
             try:
                 attr = COMMAND_MAP[name]
@@ -568,7 +566,6 @@ class NewportAxis(Axis):
                 pass
 
     def save(self):
-
         self.info("saving parameters to {}".format(self.config_path))
         cp = self.get_configuration()
 

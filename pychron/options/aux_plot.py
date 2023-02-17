@@ -58,6 +58,7 @@ YTITLES = {
     "moles_k39": "<sup>39</sup>Ar<sub>K</sub>(mol)",
     "Analysis Number": "Analysis #",
     "Analysis Number Nonsorted": "A# Nonsorted",
+    "F": "<sup>40</sup>Ar*/<sup>39</sup>Ar<sub>K</sub>",
 }
 
 
@@ -117,6 +118,9 @@ class AuxPlot(HasTraits):
     calculated_ymin = Any(transient=True)
 
     use_integer_ticks = False
+
+    def get_keyname(self):
+        return self.name
 
     def get_ytitle(self, k):
         t = self.ytitle

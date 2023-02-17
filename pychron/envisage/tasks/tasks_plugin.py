@@ -49,7 +49,6 @@ from pychron.envisage.tasks.actions import (
     ResetLayoutAction,
     PositionAction,
     IssueAction,
-    NoteAction,
     AboutAction,
     DocumentationAction,
     ChangeLogAction,
@@ -91,7 +90,6 @@ class PychronTasksPlugin(BasePlugin):
         self._start_background_processes()
 
     def _start_background_processes(self):
-
         self.info("starting background processes disabled")
         return
 
@@ -225,7 +223,7 @@ class myTasksPlugin(TasksPlugin):
         def help_menu():
             return SMenu(
                 IssueAction(),
-                NoteAction(),
+                # NoteAction(),
                 AboutAction(),
                 DocumentationAction(),
                 ChangeLogAction(),

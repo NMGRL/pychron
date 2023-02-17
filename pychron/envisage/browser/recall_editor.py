@@ -49,7 +49,8 @@ class RecallEditor(BaseRecallEditor):
     def init(self, analysis, av):
         self.analysis = analysis
         self.analysis_view = av
-        self.basename = analysis.record_id
+        self.basename = av.analysis_id
+        # self.basename = '{}({})'.format(analysis.record_id, analysis.sample)
 
     def traits_view(self):
         v = View(UItem("analysis_view", style="custom", editor=InstanceEditor()))

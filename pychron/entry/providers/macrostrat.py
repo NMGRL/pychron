@@ -15,6 +15,8 @@
 # ===============================================================================
 import requests
 
+from pychron.globals import globalv
+
 DEFS_URL = "http://macrostrat.org/api/defs"
 CACHED_LITHOLOGIES = None
 
@@ -53,37 +55,38 @@ def get_lithologies(lith_type=None, lith_class=None, lith_group=None):
     else:
         url = "{}{}".format(url, "&".join(qs))
 
-    r = s.get(url)
+    r = s.get(url, verify=globalv.cert_file)
 
     obj = r.json()
     return obj["success"]["data"]
 
 
 def get_lithology_values():
-    global CACHED_LITHOLOGIES
-    ret = CACHED_LITHOLOGIES
-    if ret is None:
-        ls = get_lithologies()
-        groups = []
-        classes = []
-        types = []
-        liths = []
-        for li in ls:
-            groups.append(li["group"])
-            types.append(li["type"])
-            classes.append(li["class"])
-            liths.append(li["name"])
-
-        ret = [sorted(list(set(a))) for a in (liths, groups, classes, types)]
-        CACHED_LITHOLOGIES = ret
-
-    return ret
+    return [], [], [], []
+    # global CACHED_LITHOLOGIES
+    # ret = CACHED_LITHOLOGIES
+    # if ret is None:
+    #     ls = get_lithologies()
+    #     groups = []
+    #     classes = []
+    #     types = []
+    #     liths = []
+    #     for li in ls:
+    #         groups.append(li["group"])
+    #         types.append(li["type"])
+    #         classes.append(li["class"])
+    #         liths.append(li["name"])
+    #
+    #     ret = [sorted(list(set(a))) for a in (liths, groups, classes, types)]
+    #     CACHED_LITHOLOGIES = ret
+    #
+    # return ret
 
 
 if __name__ == "__main__":
     rets = get_lithology_values()
     names = "liths", "groups", "classes", "types"
-    for (n, vs) in zip(names, rets):
+    for n, vs in zip(names, rets):
         with open("/Users/ross/Desktop/defs_{}.txt".format(n), "w") as wfile:
             for vi in vs:
                 wfile.write("{}\n".format(vi))

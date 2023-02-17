@@ -98,7 +98,6 @@ class _LEDEditor(Editor):
             rad = 20
 
         if self.control is None:
-
             scene = QGraphicsScene()
 
             # system background color

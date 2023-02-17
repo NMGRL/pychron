@@ -46,7 +46,6 @@ class AerotechAxis(Axis):
         self.trait_set(_velocity=v, trait_change_notify=False)
 
     def load_parameters(self):
-
         # homing and limts 4.7
         attrs = [
             ("home_direction_ccw", 2),

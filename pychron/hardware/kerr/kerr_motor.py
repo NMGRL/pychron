@@ -204,7 +204,6 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
         return status_byte
 
     def read_defined_status(self, verbose=True):
-
         addr = self.address
         cmd = "0E"
         cmd = self._build_command(addr, cmd)
@@ -299,7 +298,6 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
         self.load_data_position()
 
     def _home_motor(self, progress=None, *args, **kw):
-
         if progress is not None:
             progress.increase_max()
             progress.change_message("Homing {}".format(self.name))
@@ -544,7 +542,6 @@ class KerrMotor(KerrDevice, BaseLinearDrive):
         return binascii.hexlify(struct.pack(fmt, int(f))).decode("utf-8")
 
     def _hexstr_to_float(self, h, endianness="little"):
-
         fmt = "<i" if endianness == "little" else ">i"
         try:
             return struct.unpack(fmt, h)[0]

@@ -123,9 +123,10 @@ class BaseArArFigure(SelectionFigure):
 
         graph = self.graph
 
-        vertical_resize = not all([p.height for p in plots])
+        if len(plots) > 1 and not self.equi_stack:
+            vertical_resize = not all([p.height for p in plots[:-1]])
+            graph.vertical_resize = vertical_resize
 
-        graph.vertical_resize = vertical_resize
         graph.clear_has_title()
 
         title = self.title
@@ -133,13 +134,41 @@ class BaseArArFigure(SelectionFigure):
             title = self.options.title
 
         nplots = len(plots)
+
+        fw, fh = self.options.layout.fixed_width, self.options.layout.fixed_height
+
+        oheights = sum([po.height for po in plots[1:]])
+
         for i, po in enumerate(plots):
             kw = {"ytitle": po.name}
             if plot_dict:
                 kw.update(plot_dict)
 
-            if po.height:
+            if fw:
+                r = ""
+                if fh:
+                    if i == 0 and not po.height:
+                        height = fh - oheights
+                    else:
+                        height = po.height
+                else:
+                    height = po.height
+                    if i == 0:
+                        r = "v"
+
+                kw["bounds"] = [fw, height]
+                kw["resizable"] = r
+            elif fh:
+                kw["resizable"] = "h"
+                if i == 0 and not po.height:
+                    height = fh - oheights
+                else:
+                    height = po.height
+
+                kw["bounds"] = [50, height]
+            elif po.height:
                 kw["bounds"] = [50, po.height]
+                kw["resizable"] = "h"
 
             # if self.options.layout.fixed_width:
             #     kw['bounds'] = [self.options.layout.fixed_width, kw['bounds'][1]]
@@ -158,6 +187,7 @@ class BaseArArFigure(SelectionFigure):
                 kw["xtitle"] = self.xtitle
 
             kw["padding"] = self.options.get_paddings()
+
             p = graph.new_plot(**kw)
             if i == (len(plots) - 1):
                 p.title_font = self.options.title_font
@@ -170,7 +200,7 @@ class BaseArArFigure(SelectionFigure):
 
     def post_plot(self, plots):
         graph = self.graph
-        for (plotobj, po) in zip(graph.plots, plots):
+        for plotobj, po in zip(graph.plots, plots):
             self._apply_aux_plot_options(plotobj, po)
 
     def plot(self, *args, **kw):
@@ -199,10 +229,11 @@ class BaseArArFigure(SelectionFigure):
                     m = 10 ** math.floor(math.log10(min(ys)))
                     p.value_mapper.range.low = m
 
+                if hasattr(p, "alt_axis"):
+                    p.alt_axis.mapper = p.value_mapper
+
     def _setup_plot(self, i, pp, po):
-
         # add limit tools
-
         self.graph.add_limit_tool(pp, "x", self._handle_xlimits)
         self.graph.add_limit_tool(pp, "y", self._handle_ylimits)
 
@@ -213,20 +244,11 @@ class BaseArArFigure(SelectionFigure):
         pp.index_range.on_trait_change(lambda: self.update_options_limits(i), "updated")
         pp.value_range.tight_bounds = False
 
-        self._apply_aux_plot_options(pp, po)
+        # this needs to happen post_plot
+        # self._apply_aux_plot_options(pp, po)
 
     def _apply_aux_plot_options(self, pp, po):
         options = self.options
-
-        # pp.x_axis.title_font = options.xtitle_font
-        # pp.x_axis.tick_label_font = options.xtick_font
-        # pp.x_axis.tick_in = options.xtick_in
-        # pp.x_axis.tick_out = options.xtick_out
-        #
-        # pp.y_axis.title_font = options.ytitle_font
-        # pp.y_axis.tick_label_font = options.ytick_font
-        # pp.y_axis.tick_in = options.ytick_in
-        # pp.y_axis.tick_out = options.ytick_out
 
         pp.bgcolor = options.plot_bgcolor
         pp.x_grid.visible = options.use_xgrid
@@ -245,11 +267,10 @@ class BaseArArFigure(SelectionFigure):
                     )
                     alt_axis.tick_label_formatter = lambda x: ""
                     alt_axis.axis_line_visible = False
-                    alt_axis.tick_in = options.ytick_in - 1
+                    alt_axis.tick_in = options.ytick_in
                     alt_axis.tick_out = options.ytick_out
-
                     pp.underlays.append(alt_axis)
-                    pp.add(alt_axis)
+                    pp.alt_axis = alt_axis
 
             if not po.ytick_visible:
                 pp.y_axis.tick_visible = False
@@ -285,8 +306,10 @@ class BaseArArFigure(SelectionFigure):
                 value = getattr(options, "{}{}".format(k, attr))
                 try:
                     setattr(axis, attr, value)
-                except TraitError:
-                    pass
+                except TraitError as e:
+                    print(
+                        "error setting attr={},value={} error={}".format(attr, value, e)
+                    )
 
             axis.tick_label_font = getattr(options, "{}tick_font".format(k))
 
@@ -323,7 +346,6 @@ class BaseArArFigure(SelectionFigure):
         return gen()
 
     def _set_y_limits(self, a, b, min_=None, max_=None, pid=0, pad=None):
-
         mi, ma = self.graph.get_y_limits(plotid=pid)
 
         mi = min_ if min_ is not None else min(mi, a)
@@ -459,8 +481,7 @@ class BaseArArFigure(SelectionFigure):
         return self._plot_aux("Ar36", po, pid)
 
     def _plot_extract_value(self, po, pobj, pid):
-        k = "extract_value"
-        return self._plot_aux("Extract Value", k, po, pid)
+        return self._plot_aux("extract_value", po, pid)
 
     def _get_aux_plot_data(self, k, scalar=1):
         vs = list(self._unpack_attr(k, scalar=scalar))
@@ -608,8 +629,11 @@ class BaseArArFigure(SelectionFigure):
         ov = FlowPlotLabel(
             text="\n".join(text_lines),
             overlay_position="inside top",
+            padx=3,
+            pady=-3,
             hjustify="left",
             bgcolor=plot.bgcolor,
+            border_visible=False,
             font=font,
             component=plot,
         )
@@ -668,7 +692,6 @@ class BaseArArFigure(SelectionFigure):
         sig_figs=3,
         mswd_sig_figs=3,
     ):
-
         display_mswd = n >= 2 and display_mswd
 
         if display_n:
@@ -694,7 +717,7 @@ class BaseArArFigure(SelectionFigure):
             swe = floatfmt(we, sig_figs)
 
         if self.options.index_attr in ("uF", "Ar40/Ar36"):
-            me = u"{} {} {}".format(sx, PLUSMINUS, swe)
+            me = "{} {} {}".format(sx, PLUSMINUS, swe)
         else:
             age_units = self._get_age_units()
             pe = ""
@@ -703,9 +726,9 @@ class BaseArArFigure(SelectionFigure):
                     format_percent_error(x, we, include_percent_sign=True)
                 )
 
-            me = u"{} {} {}{} {}".format(sx, PLUSMINUS, swe, pe, age_units)
+            me = "{} {} {}{} {}".format(sx, PLUSMINUS, swe, pe, age_units)
 
-        return u"{} {} {}".format(me, mswd, n)
+        return "{} {} {}".format(me, mswd, n)
 
     def _get_age_units(self):
         a = "Ma"

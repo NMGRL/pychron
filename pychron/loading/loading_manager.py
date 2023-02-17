@@ -232,6 +232,9 @@ class LoadingManager(DVCIrradiationable):
         super(LoadingManager, self).__init__(*args, **kw)
         self.dvc.create_session()
 
+    def set_loaded_runs(self, runs):
+        pass
+
     def load(self):
         if self.canvas:
             self.canvas.editable = True
@@ -513,6 +516,7 @@ class LoadingManager(DVCIrradiationable):
             except MetaObjectException as e:
                 self.warning(e)
             except BaseException:
+                self.debug_exception()
                 self.warning_dialog(
                     '"{}" is an invalid load holder file. '
                     "Holder unavailable until its fixed".format(ti)
@@ -555,7 +559,6 @@ class LoadingManager(DVCIrradiationable):
         )
 
     def _deselect_position(self, canvas_hole):
-
         # remove from position list
         pid = int(canvas_hole.name)
         p = next((p for p in self.positions if p.position == pid), None)

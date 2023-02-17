@@ -156,7 +156,6 @@ class SpectrumLabelOverlay(AbstractOverlay):
 
     @on_trait_change("component.+")
     def _handle_component_change(self, name, new):
-
         if name in ("bounds", "_cache_valid"):
             if name == "_cache_valid" and not new:
                 return

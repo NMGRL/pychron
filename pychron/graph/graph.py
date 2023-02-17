@@ -25,7 +25,6 @@ from chaco.api import (
     VPlotContainer,
     HPlotContainer,
     GridPlotContainer,
-    BasePlotContainer,
     Plot,
     ArrayPlotData,
 )
@@ -237,8 +236,8 @@ class Graph(ContextMenuMixin):
         for po in self.plots:
             if is_equal(po.y_axis.title):
                 return po
-        else:
-            print("plot titles txt={} {}".format(txt, self.get_plot_ytitles()))
+        # else:
+        #     print("plot titles txt={} {}".format(txt, self.get_plot_ytitles()))
 
     def get_plot_ytitles(self):
         return [po.y_axis.title for po in self.plots]
@@ -288,6 +287,7 @@ class Graph(ContextMenuMixin):
     def rescale_x_axis(self):
         # l, h = self.selected_plot.default_index.get_bounds()
         # self.set_x_limits(l, h, plotid=self.selected_plotid)
+        print("asdf", self.selected_plot)
         r = self.selected_plot.index_range
         r.reset()
 
@@ -871,7 +871,6 @@ class Graph(ContextMenuMixin):
         ymin_anchor=None,
         **kw
     ):
-
         try:
             names = self.series[plotid][series]
         except (IndexError, TypeError):
@@ -916,13 +915,22 @@ class Graph(ContextMenuMixin):
 
         plot.overlays.append(RangeSelectionOverlay(component=plot))
 
-    def add_guide(self, value, orientation="h", plotid=0, color=(0, 0, 0)):
+    def add_range_guide(self, minvalue, maxvalue, plotid=0, **kw):
+        plot = self.plots[plotid]
+        from pychron.graph.guide_overlay import RangeGuideOverlay
+
+        guide_overlay = RangeGuideOverlay(
+            component=plot, minvalue=minvalue, maxvalue=maxvalue, **kw
+        )
+        plot.overlays.append(guide_overlay)
+
+    def add_guide(self, value, plotid=0, **kw):
         """ """
         plot = self.plots[plotid]
 
         from pychron.graph.guide_overlay import GuideOverlay
 
-        guide_overlay = GuideOverlay(component=plot, value=value, color=color)
+        guide_overlay = GuideOverlay(component=plot, value=value, **kw)
         plot.overlays.append(guide_overlay)
 
     def add_vertical_rule(self, v, **kw):
@@ -1072,7 +1080,6 @@ class Graph(ContextMenuMixin):
             if "xname" in kw:
                 xname = kw["xname"]
             else:
-
                 xname = next(self.xdataname_generators[plotid])
             if "yname" in kw:
                 yname = kw["yname"]
@@ -1271,7 +1278,6 @@ class Graph(ContextMenuMixin):
     def _set_limits(
         self, mi, ma, axis, plotid, pad, pad_style="symmetric", force=False
     ):
-
         if not plotid < len(self.plots):
             return
 
