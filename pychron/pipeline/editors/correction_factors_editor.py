@@ -147,11 +147,24 @@ class KCorrectionFactorsEditor(BaseCorrectionFactorsEditor):
     def calculate(self):
         results = []
         n = len(self.analyses)
-        tag = "(40/39)K"
-        rs = [a.computed["rad40"] / a.computed["k39"] for a in self.analyses]
+        # tag = "(40/39)K"
+        # rs = [a.computed["rad40"] / a.computed["k39"] for a in self.analyses]
+        #
+        # results.append(Result(array(rs), tag))
+        # self._plot(rs, tag, n, 0)
 
-        results.append(Result(array(rs), tag))
-        self._plot(rs, tag, n, 0)
+        dkey = "k39"
+        for i, (nkey, tag) in enumerate((("Ar37", "(37/39)K"),
+                                         ("Ar38", "(38/39)K"),
+                                         ("rad40", "(40/39)K"),
+                                         )):
+            rs = [
+                a.corrected_intensities[nkey] / a.corrected_intensities[dkey]
+                for a in self.analyses
+            ]
+
+            results.append(Result(array(rs), tag))
+            self._plot(rs, tag, n, i)
 
         self.graph.refresh()
         self.results = results
@@ -161,8 +174,11 @@ class CaCorrectionFactorsEditor(BaseCorrectionFactorsEditor):
     def calculate(self):
         results = []
         n = len(self.analyses)
-        dkey = "Ar39"
-        for i, (nkey, tag) in enumerate((("Ar36", "(36/39)Ca"), ("Ar37", "(37/39)Ca"))):
+        dkey = "Ar37"
+        for i, (nkey, tag) in enumerate((("Ar36", "(36/37)Ca"),
+                                         ("Ar38", "(38/37)Ca"),
+                                         ("Ar39", "(39/37)Ca"),
+                                         )):
             rs = [
                 a.corrected_intensities[nkey] / a.corrected_intensities[dkey]
                 for a in self.analyses
