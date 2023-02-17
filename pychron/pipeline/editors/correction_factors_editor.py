@@ -105,7 +105,6 @@ class BaseCorrectionFactorsEditor(BaseTraitsEditor):
             a.calculate_no_interference()
 
     def _calculate(self, dkey, atmo_ratio, ratios, atmo_correction_key):
-
         self._pre_calculate()
 
         results = []
@@ -115,9 +114,11 @@ class BaseCorrectionFactorsEditor(BaseTraitsEditor):
 
         for i, (nkey, tag) in enumerate(ratios):
             nv = array([a.get_ic_corrected_value(nkey) for a in self.analyses])
-            if nkey==atmo_correction_key:
-                nv -= array([a.get_ic_corrected_value(nkey)*atmo_ratio for a in self.analyses])
-            rs = nv/dv
+            if nkey == atmo_correction_key:
+                nv -= array(
+                    [a.get_ic_corrected_value(nkey) * atmo_ratio for a in self.analyses]
+                )
+            rs = nv / dv
 
             results.append(Result(array(rs), tag))
             self._plot(rs, tag, n, i)
@@ -165,13 +166,14 @@ class BaseCorrectionFactorsEditor(BaseTraitsEditor):
 
 class KCorrectionFactorsEditor(BaseCorrectionFactorsEditor):
     def calculate(self):
-        dkey = 'Ar39'
-        ratios = (("Ar37", "(37/39)K"),
-                   ("Ar38", "(38/39)K"),
-                   ("Ar40", "(40/39)K"),
-                   )
+        dkey = "Ar39"
+        ratios = (
+            ("Ar37", "(37/39)K"),
+            ("Ar38", "(38/39)K"),
+            ("Ar40", "(40/39)K"),
+        )
         atmo_ratio = self.analyses[0].arar_constants.atm4036
-        atmo_correction_key = 'Ar40'
+        atmo_correction_key = "Ar40"
 
         self._calculate(dkey, atmo_ratio, ratios, atmo_correction_key)
 
@@ -179,17 +181,16 @@ class KCorrectionFactorsEditor(BaseCorrectionFactorsEditor):
 class CaCorrectionFactorsEditor(BaseCorrectionFactorsEditor):
     def calculate(self):
         dkey = "Ar37"
-        ratios = (("Ar36", "(36/37)Ca"),
-         ("Ar38", "(38/37)Ca"),
-         ("Ar39", "(39/37)Ca"),
-         )
+        ratios = (
+            ("Ar36", "(36/37)Ca"),
+            ("Ar38", "(38/37)Ca"),
+            ("Ar39", "(39/37)Ca"),
+        )
 
         atmo_ratio = self.analyses[0].arar_constants.atm3836
-        atmo_correction_key = 'Ar38'
+        atmo_correction_key = "Ar38"
 
         self._calculate(dkey, atmo_ratio, ratios, atmo_correction_key)
-
-
 
 
 # ============= EOF =============================================
