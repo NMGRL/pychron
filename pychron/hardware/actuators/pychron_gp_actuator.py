@@ -47,6 +47,16 @@ class PychronGPActuator(GPActuator, ClientMixin):
         return self.ask(cmd, verbose=verbose)
 
     @trim
+    def get_pipette_count(self, name, verbose=False):
+        cmd = "GetPipetteCount {}".format(name)
+        return self.ask(cmd, verbose=verbose)
+
+    @trim
+    def get_pipette_counts(self, verbose=False):
+        cmd = "GetPipetteCounts"
+        return self.ask(cmd, verbose=verbose)
+
+    @trim
     def get_state_word(self, verbose=False):
         cmd = (
             "GetStateWord"

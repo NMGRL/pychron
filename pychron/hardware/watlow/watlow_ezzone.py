@@ -65,8 +65,12 @@ from pychron.hardware.watlow.base_ezzone import BaseWatlowEZZone
 
 class WatlowEZZone(BaseWatlowEZZone, CoreDevice):
     """
-    WatlowEZZone represents a WatlowEZZone PM PID controller.
-    this class provides human readable methods for setting the modbus registers
+    :::
+    name: Watlow EZZone PM
+    description: WatlowEZZone represents a WatlowEZZone PM PID controller.
+      this class provides human readable methods for setting the modbus registers
+    website: https://watlow.com
+    manual: https://www.watlow.com/-/media/documents/user-manuals/pm-pid-1.ashx
     """
 
     graph_klass = TimeSeriesStreamStackedGraph

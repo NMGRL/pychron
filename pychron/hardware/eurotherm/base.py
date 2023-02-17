@@ -44,22 +44,32 @@ def get_pid_parameters(v):
     """ """
     p = os.path.join(paths.device_dir, "furnace", "eurotherm_control_parameters.txt")
     with open(p) as f:
-        params = [[li.strip() for li in l.split("\t")] for l in f]
+        params = [[li.strip() for li in l.split("|")] for l in f]
 
-    for i, pa in enumerate(params[:-1]):
-        low_t = int(pa[0])
-        if i == 0:
-            if v < low_t:
-                return pa
-            continue
-
-        try:
-            high_t = int(params[i + 1][0])
-        except ValueError:
-            return None
-
-        if low_t <= v < high_t:
+    for i, pa in enumerate(reversed(params[:-1])):
+        t = int(pa[0])
+        # if i == 0:
+        #     if v >= t:
+        #         return pa
+        # else:
+        if v >= t:
             return pa
+        # t = int(pa[0])
+        # if v <= t:
+        #     return pa
+
+        # if i == 0:
+        #     if v < low_t:
+        #         return pa
+        #     continue
+        #
+        # try:
+        #     high_t = int(params[i + 1][0])
+        # except ValueError:
+        #     return None
+        #
+        # if low_t < v < high_t:
+        #     return pa,
 
 
 @provides(IFurnaceController)

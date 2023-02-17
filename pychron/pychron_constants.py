@@ -245,10 +245,19 @@ OSTECH_DIODE = "OsTech Diode"
 FUSIONS_CO2 = "Fusions CO2"
 CHROMIUM_CO2 = "Chromium CO2"
 ABLATION_CO2 = "Ablation CO2"
+TAP_DIODE = "TAP Diode"
+
 FUSIONS = [FUSIONS_CO2, FUSIONS_DIODE, FUSIONS_UV]
 LASER_PLUGINS = [
     a.replace(" ", "")
-    for a in (FUSIONS_CO2, FUSIONS_DIODE, CHROMIUM_CO2, ABLATION_CO2, OSTECH_DIODE)
+    for a in (
+        FUSIONS_CO2,
+        FUSIONS_DIODE,
+        CHROMIUM_CO2,
+        ABLATION_CO2,
+        OSTECH_DIODE,
+        TAP_DIODE,
+    )
 ]
 
 NO_BLANK_CORRECT = (BLANK, DETECTOR_IC, BACKGROUND)
@@ -482,6 +491,7 @@ TRAY = "tray"
 USERNAME = "username"
 TEMPLATE = "template"
 DISABLE_BETWEEN_POSITIONS = "disable_between_positions"
+AUTOCENTER = "autocenter"
 
 
 def duration(k):

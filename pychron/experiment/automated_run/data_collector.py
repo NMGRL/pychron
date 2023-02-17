@@ -212,6 +212,7 @@ class DataCollector(Consoleable):
             k, s, t, inc = data
         except (AttributeError, TypeError, ValueError) as e:
             self.debug("failed getting data {}".format(e))
+            self.debug_exception()
             return
 
         if k is not None and s is not None:
@@ -243,20 +244,21 @@ class DataCollector(Consoleable):
             return
         if data:
             keys, signals, ct, inc = data
-            if detectors:
-                # data = list(zip(*(d for d in zip(*data) if d[0] in detectors)))
-                nkeys, nsignals = [], []
-                for k, s in zip(keys, signals):
-                    if k in detectors:
-                        nkeys.append(k)
-                        nsignals.append(s)
+            if keys is not None and signals is not None:
+                if detectors:
+                    # data = list(zip(*(d for d in zip(*data) if d[0] in detectors)))
+                    nkeys, nsignals = [], []
+                    for k, s in zip(keys, signals):
+                        if k in detectors:
+                            nkeys.append(k)
+                            nsignals.append(s)
 
-                ds = (nkeys, nsignals, ct, inc)
+                    ds = (nkeys, nsignals, ct, inc)
 
-            else:
-                ds = (keys, signals, ct, inc)
+                else:
+                    ds = (keys, signals, ct, inc)
 
-            self._data = ds
+                self._data = ds
             return data
 
     def _save_data(self, x, keys, signals):
@@ -288,14 +290,15 @@ class DataCollector(Consoleable):
             dn = self._get_detector(dn)
             if dn:
                 iso = dn.isotope
-                signal = self._get_signal(keys, signals, dn.name)
-                if signal is not None:
-                    if not a.append_data(iso, dn.name, x, signal, kind):
-                        self.debug(
-                            "{} - failed appending data for {}. not a current isotope {}".format(
-                                kind, iso, a.isotope_keys
+                if iso:
+                    signal = self._get_signal(keys, signals, dn.name)
+                    if signal is not None:
+                        if not a.append_data(iso, dn.name, x, signal, kind):
+                            self.debug(
+                                "{} - failed appending data for {}. not a current isotope {}".format(
+                                    kind, iso, a.isotope_keys
+                                )
                             )
-                        )
 
     def _get_signal(self, keys, signals, det):
         try:
@@ -325,13 +328,13 @@ class DataCollector(Consoleable):
         iso = det.isotope
         detname = det.name
         ypadding = det.ypadding
-
+        gs = []
         if self.collection_kind == SNIFF:
-            gs = [
-                (self.plot_panel.sniff_graph, iso, None, 0, 0),
-                (self.plot_panel.isotope_graph, iso, None, 0, 0),
-            ]
-
+            if iso:
+                gs = [
+                    (self.plot_panel.sniff_graph, iso, None, 0, 0),
+                    (self.plot_panel.isotope_graph, iso, None, 0, 0),
+                ]
         elif self.collection_kind == BASELINE:
             iso = self.isotope_group.get_isotope(detector=detname, kind="baseline")
             if iso is not None:
@@ -339,7 +342,7 @@ class DataCollector(Consoleable):
             else:
                 fit = "average"
             gs = [(self.plot_panel.baseline_graph, detname, fit, 0, 0)]
-        else:
+        elif iso:
             title = self.isotope_group.get_isotope_title(name=iso, detector=detname)
             iso = self.isotope_group.get_isotope(name=iso, detector=detname)
             fit = iso.get_fit(cnt)
@@ -356,9 +359,14 @@ class DataCollector(Consoleable):
         for g, name, fit, series, fit_series in gs:
             pid = g.get_plotid_by_ytitle(name)
             if pid is None:
-                self.critical(
-                    "failed to locate {}, ytitles={}".format(name, g.get_plot_ytitles())
-                )
+                # this case arises when doing a sniff and a peakhop.
+                # the sniff graph and the signal graph have different plots and its ok not to warn about this
+                if not self.collection_kind == SNIFF:
+                    self.critical(
+                        "failed to locate {}, ytitles={}".format(
+                            name, g.get_plot_ytitles()
+                        )
+                    )
                 continue
 
             g.add_datum(

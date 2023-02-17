@@ -1425,8 +1425,14 @@ class DVC(Loggable):
             repo = self._get_repository(name)
             repo.pull(use_progress=use_progress, use_auto_pull=self.use_auto_pull)
 
-            # rebase any new commits on the data_collection branch to this branch
-            repo.merge("origin/data_collection", inform=False)
+            # merge any new commits on the data_collection branch to this branch
+            try:
+                repo.merge("origin/data_collection", inform=False)
+            except BaseException:
+                self.debug(
+                    "merge with origin/data_collection failed. This is not an issue if you are only using local "
+                    "repos"
+                )
 
             return True
         else:
@@ -1439,28 +1445,29 @@ class DVC(Loggable):
             if not service:
                 return True
             else:
-                if service.clone_from(name, root, self.organization):
+                if isinstance(service, LocalGitHostService):
+                    service.create_empty_repo(name)
+                    
+                    return True
+                elif service.clone_from(name, root, self.organization):
                     repo = self._get_repository(name)
                     repo.merge("origin/data_collection", inform=False)
                     return True
+                else:
+                    self.warning_dialog(
+                        "name={} not in available repos "
+                        "from service={}, organization={}".format(
+                            name, service.remote_url, self.organization
+                        )
+                    )
+                    names = self.remote_repository_names()
+                    for ni in names:
+                        self.debug("available repo== {}".format(ni))
+
                 # names = self.remote_repository_names()
                 # if name in names:
                 #     service.clone_from(name, root, self.organization)
                 #     return True
-                else:
-                    if isinstance(service, LocalGitHostService):
-                        service.create_empty_repo(name)
-                        return True
-                    else:
-                        self.warning_dialog(
-                            "name={} not in available repos "
-                            "from service={}, organization={}".format(
-                                name, service.remote_url, self.organization
-                            )
-                        )
-                        names = self.remote_repository_names()
-                        for ni in names:
-                            self.debug("available repo== {}".format(ni))
 
     def rollback_repository(self, expid):
         repo = self._get_repository(expid)
@@ -1591,6 +1598,13 @@ class DVC(Loggable):
 
     def get_repository(self, exp):
         return self._get_repository(exp)
+
+    def get_version(self):
+        bd = str(self.application.preferences.get("pychron.update.build_repo"))
+        self.debug("get version {}".format(bd))
+        if os.path.isdir(bd):
+            repo = Repo(bd)
+            return repo.head.commit.hexsha
 
     def get_meta_head(self):
         return self.meta_repo.get_head()

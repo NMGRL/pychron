@@ -32,6 +32,7 @@ from pychron.pychron_constants import LASER_PLUGINS
 logger = logging.getLogger()
 
 PACKAGE_DICT = dict(
+    UsagePlugin="pychron.usage.tasks.plugin",
     ArArConstantsPlugin="pychron.constants.tasks.arar_constants_plugin",
     DashboardServerPlugin="pychron.dashboard.tasks.server.plugin",
     DashboardClientPlugin="pychron.dashboard.tasks.client.plugin",
@@ -71,6 +72,7 @@ PACKAGE_DICT = dict(
     LDEOFurnaceControlPlugin="pychron.furnace.tasks.ldeo.furnace_control_plugin",
     ThermoFurnacePlugin="pychron.furnace.tasks.thermo.furnace_plugin",
     # hardware-lasers
+    TAPDiodePlugin="pychron.lasers.tasks.plugins.tap",
     OsTechDiodePlugin="pychron.lasers.tasks.plugins.ostech_diode",
     AblationCO2Plugin="pychron.lasers.tasks.plugins.ablation_co2",
     ChromiumCO2Plugin="pychron.lasers.tasks.plugins.chromium_co2",

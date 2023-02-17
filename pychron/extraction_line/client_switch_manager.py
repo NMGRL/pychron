@@ -101,7 +101,7 @@ class ClientSwitchManager(SwitchManager):
             return
 
         changed = False
-        ip = gethostbyname(gethostname())
+        ip = gethostbyname("")
         for owner, valves in owners:
             if owner != ip:
                 for k in valves:
@@ -181,6 +181,16 @@ class ClientSwitchManager(SwitchManager):
                             ("", groups[0].split(",")),
                         ]
             return rs
+
+    def get_pipette_counts(self):
+        if self.actuators:
+            actuator = self.actuators[0]
+            return actuator.get_pipette_counts()
+
+    def get_pipette_count(self, name):
+        if self.actuators:
+            actuator = self.actuators[0]
+            return actuator.get_pipette_count(name)
 
     # private
     def _load_states(self):

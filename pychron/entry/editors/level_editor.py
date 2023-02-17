@@ -366,13 +366,26 @@ class IrradiationLevelEditor(PackageLevelEditor):
         n = len(self.dvc.meta_repo.get_irradiation_holder_holes(self.selected_tray))
         on = len(level.positions)
         if n < on:
-            for p in level.positions[n:]:
-                if self.dvc.get_labnumber_analyses(p.identifier, count_only=True):
-                    self.warning_dialog(
-                        'Cannot change tray from "{}" to "{}" '
-                        "This change would orphan irradiation identifiers "
-                        "that have associated analyses".format(
-                            original_tray, self.selected_tray
+            if any([p.labnumber.analyses for p in level.positions[n:]]):
+                self.warning_dialog(
+                    'Cannot change tray from "{}" to "{}" '
+                    "This change would orphan irradiation identifiers "
+                    "that have associated analyses".format(
+                        original_tray, self.selected_tray
+                    )
+                )
+            elif self.confirmation_dialog(
+                "You are about to orphan {} irradiation identifiers. "
+                "Are you sure you want to continue?".format(on - n)
+            ):
+                level.holder = self.selected_tray
+                for p in level.positions[n:]:
+                    self.debug(
+                        "deleting {} {} {} {}".format(
+                            level.irradiation.name,
+                            level.name,
+                            p.position,
+                            p.labnumber.identifier,
                         )
                     )
                     break

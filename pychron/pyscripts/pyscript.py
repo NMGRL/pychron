@@ -367,6 +367,7 @@ class PyScript(Loggable):
         if self._gosub_script is not None:
             self._gosub_script.truncate(style=style)
 
+    @command_register
     def abort(self):
         self._aborted = True
         if self._gosub_script is not None:

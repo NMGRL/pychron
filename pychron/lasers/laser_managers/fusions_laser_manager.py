@@ -296,16 +296,20 @@ class FusionsLaserManager(LaserManager):
     def _luminosity_hook(self, power, **kw):
         self.degasser.degas(power, **kw)
 
-    def _move_to_position(self, position, autocenter):
+
+    def _move_to_position(self, position, autocenter, **kw):
         if self.stage_manager is not None:
             if isinstance(position, tuple):
                 if len(position) > 1:
                     x, y = position[:2]
-                    self.stage_manager.linear_move(x, y)
+                    self.stage_manager.linear_move(x, y, **kw)
                     if len(position) == 3:
                         self.stage_manager.set_z(position[2])
             else:
-                self.stage_manager.move_to_hole(position)
+                self.stage_manager.move_to_hole(position, correct_position=autocenter)
+                if kw.get("block"):
+                    self.stage_manager.block()
+
             return True
 
     def _disable_hook(self):

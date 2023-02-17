@@ -173,6 +173,7 @@ class LaserManager(BaseLaserManager):
         self._requested_power = power
         self._calibrated_power = p
         self._set_laser_power_hook(p, verbose=verbose)
+        return True
 
     def close(self, ok):
         self.pulse.dump_pulse()

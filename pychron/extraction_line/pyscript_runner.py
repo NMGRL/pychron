@@ -130,6 +130,9 @@ class RemoteResource(object):
     def _set(self, v):
         self.handle.ask("Set {} {}".format(self.name, v))
         if v:
+            if self._ping_evt:
+                self._ping_evt.set()
+
             self._ping_evt = Event()
             self._ping_thread = Thread(target=self._ping_loop)
             self._ping_thread.setDaemon(True)

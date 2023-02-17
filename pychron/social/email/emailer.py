@@ -99,7 +99,7 @@ class Emailer(Loggable):
         self.use_gmail = USE_GMAIL
 
     def test_email_server(self):
-        return bool(self.connect(warn=False, test=True))
+        return bool(self.connect(warn=False, test=True)), "No Error Message"
 
     def connect(self, warn=True, test=False):
         if self.use_gmail:

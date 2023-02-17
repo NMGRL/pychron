@@ -95,6 +95,8 @@ class ThermoSpectrometer(BaseSpectrometer):
         if key in d:
             d[key] = float("{:0.2f}".format(d[key]))
 
+        return d
+
     def make_gains_dict(self):
         return {di.name: di.get_gain() for di in self.detectors}
 
@@ -213,7 +215,9 @@ class ThermoSpectrometer(BaseSpectrometer):
         if hasattr(self.source, "read_{}".format(cmd.lower())):
             return getattr(self.source, "read_{}".format(cmd.lower()))()
         else:
-            return self.ask("GetParameter {}".format(cmd))
+            if not cmd.startswith("Get"):
+                cmd = "GetParameter {}".format(cmd)
+            return self.ask(cmd)
 
     def set_deflection(self, name, value):
         det = self.get_detector(name)

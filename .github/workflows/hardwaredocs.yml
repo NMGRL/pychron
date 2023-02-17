@@ -1,0 +1,51 @@
+name: Hardware Docs
+on:
+  pull_request:
+    branches: [dev/dc, hot/dc]
+  push:
+    branches: [dev/dc, hot/dc]
+jobs:
+  build_hardware_docs:
+    name: Build hardware docs (${{ matrix.python-version }}, ${{ matrix.os }})
+    strategy:
+      matrix:
+        os: [ macos-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Cache EDM packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache
+          key: ${{ runner.os }}--${{ hashFiles('requirements.txt') }}
+      - name: Setup EDM
+        uses: enthought/setup-edm-action@v1
+        with:
+          edm-version: 3.1.1
+      - name: Install EDM dependencies
+        run: >
+          edm install -y chaco certifi cython envisage future gitpython keyring jinja2 lxml numpy pandas patsy pillow
+          pip pyface pyparsing pyproj pymysql pyqt5 pytables pyyaml pygments qt Reportlab requests
+          scipy sqlalchemy traits xlrd xlsxwriter xlwt pytest statsmodels
+      - name: Install PIP dependencies
+        run: >
+          ~/.edm/envs/edm/bin/python -m pip install --no-dependencies uncertainties qimage2ndarray peakutils
+      - name: build docs
+        run: |
+          ~/.edm/envs/edm/bin/python pychron/hardwaredocs.py 
+      - name: copy to temp
+        run: cp pychron/hardwaredocs.md /Users/runner/work/hardwaredocs.md
+      - name: fetch wiki
+        uses: actions/checkout@v2
+        with:
+          repository: NMGRL/pychron.wiki
+          set-safe-directory: /Users/runner/work/pychron.wiki
+      - name: copy to wiki
+        run:  cp /Users/runner/work/hardwaredocs.md ./Available-Hardware.md
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v4.1.2
+        with:
+          commit_message: built hardware docs

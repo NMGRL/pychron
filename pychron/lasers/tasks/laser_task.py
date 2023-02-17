@@ -28,7 +28,12 @@ from pychron.lasers.tasks.panes.ostech import (
     OsTechDiodeSupplementalPane,
     OsTechDiodeControlPane,
 )
-from pychron.pychron_constants import FUSIONS_CO2, FUSIONS_DIODE, OSTECH_DIODE
+from pychron.pychron_constants import (
+    FUSIONS_CO2,
+    FUSIONS_DIODE,
+    OSTECH_DIODE,
+    TAP_DIODE,
+)
 
 
 class BaseLaserTask(BaseHardwareTask):
@@ -149,6 +154,43 @@ class OsTechDiodeTask(BaseLaserTask):
                 # OpticsPane(model=self.manager),
                 # AuxilaryGraphPane(model=self.manager)
             ]
+
+
+class TAPDiodeTask(BaseLaserTask):
+    id = "pychron.tap.diode"
+    name = TAP_DIODE
+
+    def create_central_pane(self):
+        if self.manager.mode == "client":
+            from pychron.lasers.tasks.panes.tap import TAPDiodeClientPane
+
+            return TAPDiodeClientPane(model=self.manager)
+
+        # else:
+        #     from pychron.lasers.tasks.panes.ostech import OsTechDiodePane
+        #     return OsTechDiodePane(model=self.manager)
+
+    def create_dock_panes(self):
+        if self.manager.mode == "client":
+            return []
+        # else:
+        #     from pychron.lasers.tasks.panes.ostech import OsTechDiodeStagePane
+        #
+        #     # from pychron.lasers.tasks.panes.diode import FusionsDiodeControlPane
+        #     # from pychron.lasers.tasks.panes.diode import FusionsDiodeSupplementalPane
+        #     # from pychron.lasers.tasks.laser_panes import PulsePane
+        #     # from pychron.lasers.tasks.laser_panes import OpticsPane
+        #     # from pychron.lasers.tasks.laser_panes import AuxilaryGraphPane
+        #
+        #     return [
+        #         OsTechDiodeStagePane(model=self.manager),
+        #         OsTechDiodeControlPane(model=self.manager),
+        #         OsTechDiodeSupplementalPane(model=self.manager),
+        #         # PulsePane(model=self.manager),
+        #         # OpticsPane(model=self.manager),
+        #         # AuxilaryGraphPane(model=self.manager)
+        #     ]
+        #
 
 
 class AblationCO2Task(BaseLaserTask):

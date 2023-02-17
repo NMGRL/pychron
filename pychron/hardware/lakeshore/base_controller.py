@@ -46,9 +46,70 @@ class RangeTest:
             return self._r
 
 
+class Protocol:
+    def __init__(self, controller):
+        self._controller = controller
+
+    def test_connection(self):
+        pass
+
+    def read_setpoint(self, *args, **kw):
+        pass
+
+    def set_setpoint(self, *args, **kw):
+        pass
+
+    def set_range(self, *args, **kw):
+        pass
+
+    def read_input(self, *args, **kw):
+        pass
+
+    def tell(self, *args, **kw):
+        self._controller.tell(*args, **kw)
+
+    def ask(self, *args, **kw):
+        return self._controller.ask(*args, **kw)
+
+
+class GPIBProtocol(Protocol):
+    def test_connection(self):
+        self.tell("*CLS")
+        return self.ask("*IDN?")
+
+    def read_setpoint(self, output, verbose=True):
+        return self.ask(f"SETP? {output}", verbose=verbose)
+
+    def set_setpoint(self, output, v):
+        self.tell(f"SETP {output},{v}")
+
+    def set_range(self, output, ra):
+        self.tell(f"RANGE {output},{ra}")
+
+    def read_input(self, tag, mode, verbose):
+        return self.ask(f"{mode}RDG? {tag}", verbose=verbose)
+
+
+class SCPIProtocol(Protocol):
+    def test_connection(self):
+        return self.ask("*IDN?")
+
+    def read_setpoint(self, output, verbose=True):
+        return self.ask(f"SOURCE:TEMPERATURE:SETPOINT? {output}", verbose=verbose)
+
+    def set_setpoint(self, output, v):
+        return self.ask(f"SOURCE:TEMPERATURE:SETPOINT {v},{output}")
+
+    def read_input(self, tag, mode, verbose):
+        return self.ask(f"FETCH:TEMPERATURE? {tag}", verbose=verbose)
+
+
 class BaseLakeShoreController(CoreDevice):
     units = Enum("C", "K")
     scan_func = "update"
+
+    input_a_enabled = Bool
+    input_b_enabled = Bool
 
     input_a = Float
     input_b = Float
@@ -66,8 +127,31 @@ class BaseLakeShoreController(CoreDevice):
 
     verify_setpoint = Bool
 
+    protocol_kind = Enum("GPIB", "SCPI")
+    protocol = None
+
     def load_additional_args(self, config):
         self.set_attribute(config, "units", "General", "units", default="K")
+        self.set_attribute(
+            config,
+            "input_a_enabled",
+            "General",
+            "input_a_enabled",
+            default=True,
+            cast="boolean",
+        )
+        self.set_attribute(
+            config,
+            "input_b_enabled",
+            "General",
+            "input_b_enabled",
+            default=True,
+            cast="boolean",
+        )
+
+        self.set_attribute(
+            config, "protocol_kind", "Communications", "protocol", default="GPIB"
+        )
         self.set_attribute(
             config,
             "verify_setpoint",
@@ -114,11 +198,14 @@ class BaseLakeShoreController(CoreDevice):
 
     def initialize(self, *args, **kw):
         self.communicator.write_terminator = chr(10)  # line feed \n
+
+        klass = GPIBProtocol if self.protocol_kind == "GPIB" else SCPIProtocol
+        self.protocol = klass(self)
+
         return super(BaseLakeShoreController, self).initialize(*args, **kw)
 
     def test_connection(self):
-        self.tell("*CLS")
-        resp = self.ask("*IDN?")
+        resp = self.protocol.test_connection()
         return bool(IDN_RE.match(resp))
 
     def update(self, **kw):
@@ -158,7 +245,8 @@ class BaseLakeShoreController(CoreDevice):
         if output is not None:
             if isinstance(output, str):
                 output = re.sub("[^0-9]", "", output)
-            return self.ask("SETP? {}".format(output), verbose=verbose)
+
+            return self.protocol.read_setpoint(output, verbose)
 
     def set_setpoints(self, *setpoints, block=False, delay=1):
         for i, v in enumerate(setpoints):
@@ -180,7 +268,9 @@ class BaseLakeShoreController(CoreDevice):
     def set_setpoint(self, v, output=1, retries=3):
         self.set_range(v, output)
         for i in range(retries):
-            self.tell("SETP {},{}".format(output, v))
+            self.protocol.set_setpoint(output, v)
+            # self.tell("SETP {},{}".format(output, v))
+
             if not self.verify_setpoint:
                 break
 
@@ -205,7 +295,7 @@ class BaseLakeShoreController(CoreDevice):
         for r in self.range_tests:
             ra = r.test(v)
             if ra:
-                self.tell("RANGE {},{}".format(output, ra))
+                self.protocol.set_range(output, ra)
                 break
 
         time.sleep(1)
@@ -223,7 +313,8 @@ class BaseLakeShoreController(CoreDevice):
 
     @get_float(default=0)
     def _read_input(self, tag, mode="C", verbose=False):
-        return self.ask("{}RDG? {}".format(mode, tag), verbose=verbose)
+        return self.protocol.read_input(tag, mode, verbose)
+        # return self.ask("{}RDG? {}".format(mode, tag), verbose=verbose)
 
     def _setpoint1_changed(self):
         self.set_setpoint(self.setpoint1, 1)
@@ -251,6 +342,7 @@ class BaseLakeShoreController(CoreDevice):
                     style="readonly",
                 ),
                 Spring(width=10, springy=False),
+                defined_when="input_a_enabled",
             ),
             HGroup(
                 Item(
@@ -265,6 +357,7 @@ class BaseLakeShoreController(CoreDevice):
                     style="readonly",
                 ),
                 Spring(width=10, springy=False),
+                defined_when="input_b_enabled",
             ),
             label=self.name,
         )

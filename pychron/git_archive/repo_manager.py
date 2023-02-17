@@ -559,6 +559,7 @@ class GitRepoManager(Loggable):
 
     def has_unpushed_commits(self, remote="origin", branch="master"):
         if self._repo:
+            branch = self._clean_master_branch(branch)
             # return self._repo.git.log('--not', '--remotes', '--oneline')
             if remote in self._repo.remotes:
                 return self._repo.git.log(
@@ -632,6 +633,12 @@ class GitRepoManager(Loggable):
     def checkout(self, *args, **kw):
         self._repo.git.checkout(*args, **kw)
 
+    def reset(self):
+        """delete index.lock"""
+        p = os.path.join(self._repo.working_dir, ".git", "index.lock")
+        if os.path.isfile(p):
+            os.remove(p)
+
     def checkout_branch(self, name, inform=True, load_history=True):
         repo = self._repo
         if name.startswith("origin"):
@@ -656,6 +663,7 @@ class GitRepoManager(Loggable):
                 self.information_dialog('Repository now on branch "{}"'.format(name))
 
         except BaseException as e:
+            self.debug_exception()
             self.warning_dialog(
                 'There was an issue trying to checkout branch "{}"'.format(name)
             )
@@ -682,7 +690,8 @@ class GitRepoManager(Loggable):
             branch = repo.create_head(name, commit=commit)
             branch.checkout()
 
-            if push:
+
+            if push and repo.remotes:
                 origin = repo.remotes.origin
                 repo.git.push("--set-upstream", origin, repo.head.ref)
             if inform:
@@ -737,6 +746,18 @@ class GitRepoManager(Loggable):
         commit_view = CommitView(model=h)
         return commit_view
 
+    def _clean_master_branch(self, branch):
+        for ref in self._repo.references:
+            if ref.name == branch:
+                ret = branch
+                break
+        else:
+            if branch == "master":
+                ret = "main"
+
+        self.debug("clean master in = {} out={}".format(branch, ret))
+        return ret
+
     def pull(
         self,
         branch="master",
@@ -750,6 +771,7 @@ class GitRepoManager(Loggable):
 
         if use_auto_pull is False ask user if they want to accept the available updates
         """
+
         self.debug("pulling {} from {}".format(branch, remote))
 
         repo = self._repo
@@ -761,6 +783,8 @@ class GitRepoManager(Loggable):
 
         if remote:
             self.debug("pulling from url: {}".format(remote.url))
+
+            branch = self._clean_master_branch(branch)
             if use_progress:
                 prog = open_progress(
                     3,
@@ -824,7 +848,19 @@ class GitRepoManager(Loggable):
                 if inform:
                     self.information_dialog("{} push complete".format(self.name))
             except GitCommandError as e:
-                self.debug_exception()
+                if branch == "master":
+                    self.debug("retrying push")
+                    try:
+                        self._repo.git.push(remote, "main")
+                        if inform:
+                            self.information_dialog(
+                                "{} push complete".format(self.name)
+                            )
+                    except GitCommandError as e:
+                        self.debug_exception()
+                else:
+                    self.debug_exception()
+
                 if inform:
                     self.warning_dialog(
                         "{} push failed. See log file for more details".format(
@@ -907,6 +943,8 @@ class GitRepoManager(Loggable):
                         )
 
                         return
+
+                    branch = self._clean_master_branch(branch)
 
                     # do merge
                     try:
@@ -1001,6 +1039,12 @@ class GitRepoManager(Loggable):
                 bn = from_[7:]
                 from_ = getattr(remote.refs, bn)
             except AttributeError:
+                self.debug("available branches {}".format(repo.branches))
+                msg = "Could not locate {} for merge".format(from_)
+                self.warning(msg)
+                if inform:
+                    self.warning_dialog(msg)
+
                 return
         else:
             from_ = getattr(repo.branches, from_)

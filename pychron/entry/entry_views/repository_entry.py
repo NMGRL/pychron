@@ -18,7 +18,7 @@ from traits.api import Str, List, Enum, Bool
 from traitsui.api import VGroup, UItem, Item, EnumEditor
 
 from pychron.core.pychron_traits import BorderHGroup
-from pychron.core.ui.strings import SpacelessStr
+from pychron.core.ui.strings import SpacelessStr, RepoNameStr
 from pychron.entry.entry_views.entry import BaseEntry, OKButton, STYLESHEET
 
 LICENSES = {
@@ -33,7 +33,7 @@ class RepositoryIdentifierEntry(BaseEntry):
     tag = "Repository Identifier"
     principal_investigator = Str
     principal_investigators = List
-    value = SpacelessStr
+    value = RepoNameStr
     readme = Str
     license_template_name = Enum(LICENSES.keys())
     private = Bool(True)

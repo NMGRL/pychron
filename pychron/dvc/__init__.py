@@ -24,6 +24,7 @@ from pprint import pformat
 
 from pychron import json
 from pychron.core.helpers.filetools import subdirize, add_extension
+from pychron.core.helpers.strtools import camel_case
 from pychron.paths import paths
 from pychron.wisc_ar_constants import WISCAR_ID_RE
 
@@ -278,6 +279,14 @@ def list_frozen_productions(repo):
         name = "{}.{}".format(irrad, level)
         ps.append((name, prod))
     return ps
+
+
+def prep_repo_name(name):
+    # camel case and remove special characters
+    name = camel_case(name)
+    name = re.sub(r"[^.a-zA-Z0-9]", "-", name)
+
+    return name
 
 
 # ============= EOF =============================================

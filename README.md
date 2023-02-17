@@ -79,7 +79,6 @@ pyLaser
 Configure for multiple types of lasers. Currently compatible with Photon machines Fusions CO2, 810 diode and ATLEX UV lasers. Watlow or Eurotherm interface for PID control. Machine vision
 for laser auto targeting and modulated degassing.
 
-
 pyExperiment
 --------------
 Write and run a set of automated analyses. Allows NMGRL to operate continuously. only limited by size of analysis chamber.

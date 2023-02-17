@@ -193,6 +193,9 @@ class HumanErrorChecker(Loggable):
                             es, ds, ds
                         )
                     )
+                if run.extract_value and not run.position:
+                    return "Extract value but no position"
+
             elif run.analysis_type == "cocktail" and es and "cocktail" not in es:
                 return 'Cocktail analysis is not using a "cocktail" extraction script'
             elif run.analysis_type == "air" and es and "air" not in es:
@@ -237,9 +240,8 @@ class HumanErrorChecker(Loggable):
                 if err is not None:
                     return err
 
-            if run.position:
-                if not run.extract_value:
-                    return "position but no extract value"
+            if run.position and not run.extract_value:
+                return "position but no extract value"
 
             if run.overlap[0]:
                 if not run.post_measurement_script:

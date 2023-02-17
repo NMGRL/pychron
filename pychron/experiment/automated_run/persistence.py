@@ -338,11 +338,12 @@ class AutomatedRunPersister(BasePersister):
                         nrow.append()
                         t.flush()
                 except AttributeError as e:
-                    self.debug(
-                        "error: {} group:{} det:{} iso:{}".format(
-                            e, grpname, k, det.isotope
+                    if det.isotope and grpname and k:
+                        self.debug(
+                            "error: {} group:{} det:{} iso:{}".format(
+                                e, grpname, k, det.isotope
+                            )
                         )
-                    )
 
         return write_data
 

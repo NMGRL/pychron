@@ -258,6 +258,7 @@ class AutomatedRun(Loggable):
     _truncate_signal = Bool
     _equilibration_done = False
     _integration_seconds = Float(1.1)
+    _previous_loaded = False
 
     min_ms_pumptime = Int(60)
     overlap_evt = None
@@ -334,6 +335,9 @@ class AutomatedRun(Loggable):
 
     def py_measure(self):
         return self.spectrometer_manager.measure()
+
+    def py_get_deflection(self, detector):
+        return self.get_deflection(detector, current=True)
 
     def py_get_intensity(self, detector):
         if self._intensities:
@@ -1099,6 +1103,9 @@ class AutomatedRun(Loggable):
 
     def teardown(self):
         self.debug("tear down")
+
+        self._previous_loaded = False
+
         if self.measurement_script:
             self.measurement_script.automated_run = None
 
@@ -1112,6 +1119,8 @@ class AutomatedRun(Loggable):
         #     self.plot_panel.automated_run = None
 
         self._persister_action("trait_set", persistence_spec=None, monitor=None)
+        if self.runner:
+            self.runner.clear()
 
     def finish(self):
         self.debug("----------------- finish -----------------")
@@ -1331,9 +1340,11 @@ class AutomatedRun(Loggable):
                 self.equilibration_conditionals,
             )
 
+            # get environmental values such as temperature, pneumatics etc
             env = self._get_environmentals()
-            if env:
-                set_environmentals(self.spec, env)
+
+            # if env:
+            #     set_environmentals(self.spec, env)
 
             tag = "ok"
             if self.spec.state in (CANCELED, FAILED):
@@ -1344,13 +1355,14 @@ class AutomatedRun(Loggable):
                 conditionals=[c for cond in conds for c in cond],
                 tag=tag,
                 tripped_conditional=self.tripped_conditional,
+                pipette_counts=self.extraction_line_manager.get_pipette_counts(),
                 **env
             )
 
             self.spec.new_result(self)
 
             # save to database
-            if exception_queue and 0:  # parallel save not currently working
+            if exception_queue:  # parallel save not currently working
                 t = Thread(
                     target=self._persister_save_action,
                     args=("post_measurement_save",),
@@ -1527,6 +1539,7 @@ class AutomatedRun(Loggable):
             self.info("Requested Output= {:0.3f}".format(req))
             self.info("Achieved Output=  {:0.3f}".format(ach))
 
+            cblob = script.get_cryo_response_blob()
             rblob = script.get_response_blob()
             oblob = script.get_output_blob()
             sblob = script.get_setpoint_blob()
@@ -1549,6 +1562,7 @@ class AutomatedRun(Loggable):
                 videos=videos,
                 extraction_positions=ext_pos,
                 extraction_context=extraction_context,
+                cryo_response_blob=cblob,
             )
 
             self._persister_save_action("post_extraction_save")
@@ -1627,8 +1641,10 @@ class AutomatedRun(Loggable):
             return True
         else:
             if use_post_on_fail:
-                self.do_post_equilibration()
-                self.do_post_measurement()
+                if not self._aborted:
+                    self.do_post_equilibration()
+                    self.do_post_measurement()
+
             self.finish()
 
             self.heading(
@@ -1722,13 +1738,13 @@ anaylsis_type={}
         )
 
     def get_baselines(self):
+        ret = {}
         if self.isotope_group:
-            return {
+            ret = {
                 iso.name: (iso.detector, iso.baseline.uvalue)
                 for iso in self.isotope_group.values()
             }
-            # return dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
-            #              self.isotope_group.values()])
+        return ret
 
     def get_baseline_corrected_signals(self):
         if self.isotope_group:
@@ -2205,6 +2221,13 @@ anaylsis_type={}
         self.plot_panel = p
 
     def _load_previous(self):
+        # this is necessary for measuring the baseline before doing a peakhop or multicollect
+        if self._previous_loaded:
+            self.debug("previous blanks and baselines already loaded")
+            return
+
+        self._previous_loaded = True
+
         if not self.spec.analysis_type.startswith(
             "blank"
         ) and not self.spec.analysis_type.startswith("background"):
@@ -2750,6 +2773,8 @@ anaylsis_type={}
             experiment_type=self.experiment_type,
             refresh_age=self.spec.analysis_type in ("unknown", "cocktail"),
         )
+
+        self._update_persister_spec(time_zero=starttime)
 
         m.set_starttime(starttime)
         if hasattr(self.spectrometer_manager.spectrometer, "trigger_acq"):

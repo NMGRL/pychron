@@ -110,6 +110,7 @@ DEFAULT_PLUGINS = (
             "Auto",
             "Update",
             ("WatchDog", ["test_api"]),
+            "Usage",
         ),
     ),
     ("Data", ("USGSVSCData", "WiscArData", ("Sparrow", ["test_api"]))),

@@ -28,7 +28,7 @@ import yaml
 from traits.api import Any, Dict, List, Bool, Event, Str
 
 from pychron.core.helpers.iterfuncs import groupby_key
-from pychron.core.helpers.strtools import to_bool
+from pychron.core.helpers.strtools import to_bool, streq
 from pychron.core.yaml import yload
 from pychron.extraction_line import VERBOSE_DEBUG, VERBOSE
 from pychron.extraction_line.pipettes.tracking import PipetteTracker
@@ -382,6 +382,16 @@ class SwitchManager(Manager):
             act = self.application.get_services(ICoreDevice)
         return act
 
+    def get_pipette_counts(self):
+        return [p.to_dict() for p in self.pipette_trackers]
+
+    def get_pipette_count(self, name):
+        for p in self.pipette_trackers:
+            if streq(name, p.name):
+                return p.counts
+        else:
+            return 0
+
     def get_actuator_by_name(self, name):
         act = None
         if self.actuators:
@@ -479,8 +489,8 @@ class SwitchManager(Manager):
         :return:
         """
         # self.debug('load owners')
-        # update = False
-        states = []
+        update = False
+
         for k, v in self.switches.items():
             if not isinstance(v, HardwareValve):
                 continue
@@ -491,11 +501,11 @@ class SwitchManager(Manager):
                 s = None
 
             if ostate != s:
-                states.append((k, s, False))
-                # update = True
+                self.refresh_owned_state = (k, s, False)
+                # states.append((k, s, False))
+                update = True
 
-        if states:
-            self.refresh_owned_state = states
+        if update:
             if refresh_canvas:
                 self.refresh_canvas_needed = True
             return True

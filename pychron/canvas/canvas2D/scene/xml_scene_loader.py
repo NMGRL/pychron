@@ -62,6 +62,9 @@ class XMLLoader(BaseLoader):
         return [float(i) for i in elem.find(name).text.split(",")]
 
     def _get_translation(self, elem, name="translation"):
+        if isinstance(elem, dict):
+            elem = elem["translation"]
+
         x, y = elem.find(name).text.split(",")
         try:
             x = float(x)

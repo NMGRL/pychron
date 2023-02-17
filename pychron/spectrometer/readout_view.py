@@ -336,6 +336,8 @@ class ReadoutView(PersistenceLoggable):
             for nn, rs in ((ne, self.readouts), (nd, self.deflections)):
                 for r in rs:
                     cv = spec.get_configuration_value(r.id)
+                    if cv is None:
+                        continue
                     r.config_value = cv
                     if r.compare:
                         args = r.config_compare()

@@ -18,6 +18,7 @@
 from __future__ import absolute_import
 
 import os
+import pickle
 import shelve
 
 from traits.api import HasTraits, Str, List, Any, Button, on_trait_change
@@ -54,7 +55,11 @@ class LayoutManager(Loggable):
     def __init__(self, application, *args, **kw):
         self.application = application
         super(LayoutManager, self).__init__(*args, **kw)
+        self._load_from_shelve()
+
+    def _load_from_shelve(self):
         d = self._open_shelve()
+        self.layouts = []
         if d:
             for k, v in d.items():
                 layout = UserLayout(name=k, layouts=v)
@@ -95,6 +100,7 @@ class LayoutManager(Loggable):
                     layout = UserLayout(name=name, layouts=self._assemble_layouts())
                     self.layouts.append(layout)
                     self.save()
+                    self._load_from_shelve()
                     break
                 else:
                     if not self.confirmation_dialog(
@@ -105,22 +111,38 @@ class LayoutManager(Loggable):
                         break
 
     def save(self, remove=None):
-        p = os.path.join(paths.hidden_dir, "window_positions")
-        d = shelve.open(p)
-        if remove is not None:
-            if remove in d:
-                d.pop(remove)
-
+        d = {}
         for li in self.layouts:
-            d[str(li.name)] = li.layouts
+            if str(li.name) != remove:
+                d[str(li.name)] = li.layouts
 
-        d.close()
+        p = os.path.join(paths.hidden_dir, "window_positions")
+        with open(p, "wb") as wfile:
+            pickle.dump(d, wfile)
+
+        # d = shelve.open(p, writeback=True)
+        # with shelve.open(p, writeback=True) as d:
+        #     if remove is not None:
+        #         if remove in d:
+        #             d.pop(remove)
+        #
+        #     for li in self.layouts:
+        #         d[str(li.name)] = li.layouts
+        #     print('asdfasfasdfsad')
+        #     d.sync()
+        # print(d, self.layouts)
+        # d.close()
 
     def _open_shelve(self):
         p = os.path.join(paths.hidden_dir, "window_positions")
         if os.path.isfile(p):
-            d = shelve.open(p)
-            return d
+            try:
+                with open(p, "rb") as rfile:
+                    return pickle.load(rfile)
+            except pickle.PickleError:
+                pass
+            # d = shelve.open(p)
+            # return d
 
     def save_view(self):
         v = okcancel_view(

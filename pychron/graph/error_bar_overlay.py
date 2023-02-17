@@ -15,8 +15,9 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+
 from chaco.api import AbstractOverlay
-from enable.colors import color_table
+from enable.colors import color_table, QtGui
 
 # ============= standard library imports ========================
 from numpy import column_stack
@@ -127,6 +128,12 @@ class ErrorBarOverlay(AbstractOverlay):
                 color = component.color_
                 if isinstance(color, str):
                     color = color_table[color]
+                elif isinstance(color, QtGui.QColor):
+                    color = (
+                        color.red() / 255.0,
+                        color.green() / 255.0,
+                        color.blue() / 255.0,
+                    )
 
                 gc.set_line_width(self.line_width)
                 gc.set_stroke_color(color)

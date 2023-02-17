@@ -104,6 +104,15 @@ class StageManager(BaseStageManager):
 
     # def fiber_light_changed(self, v):
     #    pass
+    def block(self):
+        self.debug("blocking")
+
+        # if self.move_thread and self.move_thread.isRunning():
+        time.sleep(1)
+        while self.move_thread.isRunning():
+            time.sleep(1)
+
+        self.debug("blocking complete")
 
     def measure_grain_polygon(self):
         pass
@@ -1101,6 +1110,12 @@ class StageManager(BaseStageManager):
             )
 
             factory = LegacyBinaryZaberMotionController
+        elif self.stage_controller_klass == "Kinesis":
+            from pychron.hardware.kinesis.kinesis_controller import (
+                KinesisMotionController,
+            )
+
+            factory = KinesisMotionController
 
         m = factory(
             name="{}controller".format(self.name),
