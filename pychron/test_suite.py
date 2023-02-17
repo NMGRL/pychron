@@ -23,7 +23,6 @@ from pychron.core.regression.tests.regression import (
     NewYorkRegressionTest,
     # ReedRegressionTest,
     PearsonRegressionTest,
-
 )
 from pychron.core.tests.alpha_tests import AlphaTestCase
 from pychron.experiment.tests.backup import BackupTestCase
