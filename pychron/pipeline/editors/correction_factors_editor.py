@@ -154,10 +154,13 @@ class KCorrectionFactorsEditor(BaseCorrectionFactorsEditor):
         # self._plot(rs, tag, n, 0)
 
         dkey = "k39"
-        for i, (nkey, tag) in enumerate((("Ar37", "(37/39)K"),
-                                         ("Ar38", "(38/39)K"),
-                                         ("rad40", "(40/39)K"),
-                                         )):
+        for i, (nkey, tag) in enumerate(
+            (
+                ("Ar37", "(37/39)K"),
+                ("Ar38", "(38/39)K"),
+                ("rad40", "(40/39)K"),
+            )
+        ):
             rs = [
                 a.corrected_intensities[nkey] / a.corrected_intensities[dkey]
                 for a in self.analyses
@@ -175,10 +178,13 @@ class CaCorrectionFactorsEditor(BaseCorrectionFactorsEditor):
         results = []
         n = len(self.analyses)
         dkey = "Ar37"
-        for i, (nkey, tag) in enumerate((("Ar36", "(36/37)Ca"),
-                                         ("Ar38", "(38/37)Ca"),
-                                         ("Ar39", "(39/37)Ca"),
-                                         )):
+        for i, (nkey, tag) in enumerate(
+            (
+                ("Ar36", "(36/37)Ca"),
+                ("Ar38", "(38/37)Ca"),
+                ("Ar39", "(39/37)Ca"),
+            )
+        ):
             rs = [
                 a.corrected_intensities[nkey] / a.corrected_intensities[dkey]
                 for a in self.analyses
