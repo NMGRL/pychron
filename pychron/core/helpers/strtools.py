@@ -147,7 +147,6 @@ def streq(a, b):
     return a and b and a.casefold() == b.casefold()
 
 
-
 if __name__ == "__main__":
     for ret in ratio("abc"):
         print(ret)

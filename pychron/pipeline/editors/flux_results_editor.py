@@ -532,7 +532,6 @@ class BracketingFluxResultsEditor(FluxResultsEditor):
         #     obj.jerr = je
         #     obj.dev = (oj - j) / j * 100
 
-
     def traits_view(self):
         unk_cols = [
             column(

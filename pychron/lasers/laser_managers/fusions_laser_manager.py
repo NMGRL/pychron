@@ -296,7 +296,6 @@ class FusionsLaserManager(LaserManager):
     def _luminosity_hook(self, power, **kw):
         self.degasser.degas(power, **kw)
 
-
     def _move_to_position(self, position, autocenter, **kw):
         if self.stage_manager is not None:
             if isinstance(position, tuple):

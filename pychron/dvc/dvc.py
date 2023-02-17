@@ -1447,7 +1447,7 @@ class DVC(Loggable):
             else:
                 if isinstance(service, LocalGitHostService):
                     service.create_empty_repo(name)
-                    
+
                     return True
                 elif service.clone_from(name, root, self.organization):
                     repo = self._get_repository(name)

@@ -1283,7 +1283,6 @@ class DVCDatabase(DatabaseAdapter):
         low_post=None,
         use_parent_session=True,
     ):
-
         with self.session_ctx(use_parent_session=use_parent_session) as sess:
             q = sess.query(AnalysisTbl)
 
