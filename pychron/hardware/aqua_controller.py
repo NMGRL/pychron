@@ -18,10 +18,9 @@ from pychron.hardware.core.core_device import CoreDevice
 
 class AquaController(CoreDevice):
     def trigger(self):
-        self.ask("trigger")
+        self.ask('trigger')
 
     def get_status(self):
-        self.ask("getstatus")
-
+        return self.ask('getstatus')
 
 # ============= EOF =============================================
