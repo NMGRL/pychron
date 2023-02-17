@@ -38,7 +38,6 @@ from pychron.spectrometer.base_spectrometer import BaseSpectrometer
 from pychron.spectrometer.thermo.spectrometer import normalize_integration_time
 
 
-
 class ThermoSpectrometer(BaseSpectrometer):
     integration_time = Float
     integration_times = List(QTEGRA_INTEGRATION_TIMES)
