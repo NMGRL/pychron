@@ -27,6 +27,7 @@ pascalcase_regex = re.compile(r"^[A-Z](([a-z0-9]+[A-Z]?)*)$")
 reponame_regex = re.compile(r"^[\w_-]+$")
 experiment_name_regex = re.compile(r"^([0-9]+)?([A-Za-z0-9]+)$")
 
+
 class PascalCase(BaseStr):
     def validate(self, obj, name, value):
         if not value or not pascalcase_regex.match(value):
@@ -57,4 +58,6 @@ class ExperimentStr(BaseStr):
             self.error(obj, name, value)
         else:
             return value
+
+
 # ============= EOF =============================================
