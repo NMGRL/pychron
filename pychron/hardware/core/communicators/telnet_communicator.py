@@ -16,7 +16,10 @@
 import socket
 import telnetlib
 
-from pychron.hardware.core.communicators.communicator import Communicator, process_response
+from pychron.hardware.core.communicators.communicator import (
+    Communicator,
+    process_response,
+)
 from pychron.regex import IPREGEX
 
 
@@ -54,28 +57,27 @@ class TelnetCommunicator(Communicator):
         return True
 
     def open(self, *args, **kw):
-        self._tn = telnetlib.Telnet(self.host,
-                                    port=self.port,
-                                    timeout=self.timeout)
+        self._tn = telnetlib.Telnet(self.host, port=self.port, timeout=self.timeout)
         return True
 
     def ask(self, cmd, verbose=False, *args, **kw):
-        cmd = f'{cmd}{self.write_terminator}'
+        cmd = f"{cmd}{self.write_terminator}"
 
-        self._tn.write(cmd.encode('utf8'))
+        self._tn.write(cmd.encode("utf8"))
 
         if self.read_terminator:
-            r = self._tn.read_until(self.read_terminator,
-                                    timeout=self.timeout)
+            r = self._tn.read_until(self.read_terminator, timeout=self.timeout)
         else:
             r = self._tn.read_all()
 
         if r is not None:
-            r = r.decode('ascii')
+            r = r.decode("ascii")
             re = process_response(r)
 
         if verbose:
             self.log_response(cmd, re)
 
         return r
+
+
 # ============= EOF =============================================

@@ -25,12 +25,13 @@ class AquaController(CoreDevice):
         waitfor(dev.is_ready)
 
     """
+
     def trigger(self):
         self.ask("trigger")
 
     def is_ready(self):
-        r = self.ask('is_ready')
-        return r and r.strip() == 'OK'
+        r = self.ask("is_ready")
+        return r and r.strip() == "OK"
 
     def get_status(self):
         return self.ask("getstatus")

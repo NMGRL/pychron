@@ -105,4 +105,5 @@ class EthernetDeviceMixin(RemoteDeviceMixin):
 
         return ec.open()
 
+
 # ============= EOF =============================================
