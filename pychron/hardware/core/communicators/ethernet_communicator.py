@@ -200,6 +200,7 @@ class TCPHandler(Handler):
 
     def get_packet(self, datasize=None, message_frame=None):
         return self._recvall(self.sock.recv, datasize=datasize, frame=message_frame)
+
     def readline(self, terminator):
         return self._recvall(self.sock.recv, terminator=terminator)
 
@@ -512,7 +513,7 @@ class EthernetCommunicator(Communicator):
 
         return handler.select_read(*args, **kw)
 
-    def readline(self, terminator=b'\r\n'):
+    def readline(self, terminator=b"\r\n"):
         timeout = self._reset_error_mode()
 
         handler = self.get_handler(timeout=timeout)

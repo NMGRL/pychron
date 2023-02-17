@@ -187,6 +187,4 @@ class LDEOFurnaceManager(SwitchableFurnaceManager):
             )  # not writing setpoint at moment since not implemented
 
 
-
-
 # ============= EOF =============================================

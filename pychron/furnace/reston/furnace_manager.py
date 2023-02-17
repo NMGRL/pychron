@@ -21,6 +21,7 @@ from traits.api import Instance, provides
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.hardware.eurotherm.eurotherm import Eurotherm
 
+
 @provides(IFurnaceManager)
 class RestonFurnaceManager(BaseFurnaceManager):
     controller_klass = Eurotherm

@@ -24,7 +24,10 @@ from traits.api import TraitError, Float, provides, Str
 
 from pychron.core.progress import open_progress
 from pychron.core.yaml import yload
-from pychron.furnace.base_furnace_manager import BaseFurnaceManager, SwitchableFurnaceManager
+from pychron.furnace.base_furnace_manager import (
+    BaseFurnaceManager,
+    SwitchableFurnaceManager,
+)
 from pychron.furnace.configure_dump import ConfigureDump
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.thermo.stage_manager import ThermoFurnaceStageManager
@@ -41,7 +44,6 @@ class ThermoFurnaceManager(SwitchableFurnaceManager):
     temperature_readback_max = Float(1600.0)
 
     mode = "normal"
-
 
     status_txt = Str
 
@@ -134,7 +136,6 @@ class ThermoFurnaceManager(SwitchableFurnaceManager):
         ret = self._dumper_thread is None
         return ret
 
-
     # def set_pid_parameters(self, v):
     #     self.debug('setting pid parameters for {}'.format(v))
     #     from pychron.hardware.eurotherm.base import get_pid_parameters
@@ -143,7 +144,6 @@ class ThermoFurnaceManager(SwitchableFurnaceManager):
     #         _, param_str = params
     #         self._pid_str = param_str
     #         self.controller.set_pid(param_str)
-
 
     # canvas
     def set_software_lock(self, name, lock):

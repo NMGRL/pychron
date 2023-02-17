@@ -150,7 +150,7 @@ class ControlPane(TraitsDockPane):
             ),
             label="Graph",
         )
-        v = View(VGroup(c_grp,g_grp))
+        v = View(VGroup(c_grp, g_grp))
         return v
 
 

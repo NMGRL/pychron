@@ -29,7 +29,10 @@ from pychron.core.helpers.filetools import pathtolist
 from pychron.core.progress import open_progress
 from pychron.core.yaml import yload
 from pychron.experiment import ExtractionException
-from pychron.furnace.base_furnace_manager import BaseFurnaceManager, SwitchableFurnaceManager
+from pychron.furnace.base_furnace_manager import (
+    BaseFurnaceManager,
+    SwitchableFurnaceManager,
+)
 from pychron.furnace.configure_dump import ConfigureDump
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.nmgrl.furnace_controller import NMGRLFurnaceController
@@ -100,7 +103,6 @@ class NMGRLFurnaceManager(SwitchableFurnaceManager):
 
         self.loader_logic.manager = self
 
-
     def test_furnace_cam(self):
         self.info("testing furnace cam")
         ret, err = False, ""
@@ -151,7 +153,6 @@ class NMGRLFurnaceManager(SwitchableFurnaceManager):
         else:
             return True
 
-
     def extract(self, v, **kw):
         self.debug("extract")
         # self.response_recorder.start()
@@ -164,7 +165,6 @@ class NMGRLFurnaceManager(SwitchableFurnaceManager):
         self.setpoint = 0
 
     disable_device = disable
-
 
     def move_to_position(self, pos, *args, **kw):
         self.debug("move to position {}".format(pos))
@@ -459,7 +459,6 @@ class NMGRLFurnaceManager(SwitchableFurnaceManager):
                 self.output_percent_readback = output
 
             self._update_scan_graph(response, output, d["setpoint"])
-
 
     # def _update_scan_graph(self, response, output, setpoint):
     #     x = None

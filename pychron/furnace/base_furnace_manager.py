@@ -44,7 +44,7 @@ class BaseFurnaceManager(StreamGraphManager):
     _pid_str = None
 
     def activate(self):
-        self.debug('activate')
+        self.debug("activate")
         self.load_settings()
         self.start_update()
 
@@ -124,7 +124,6 @@ class BaseFurnaceManager(StreamGraphManager):
         self.debug("set response recorder period={}".format(p))
         self.response_recorder.period = p
 
-
     def get_active_pid_parameters(self):
         result = self._pid_str or ""
         self.debug("active pid ={}".format(result))
@@ -202,6 +201,7 @@ class BaseFurnaceManager(StreamGraphManager):
 
     def _stop_recording(self):
         self._recording = False
+
     def _update_scan(self):
         response = self.controller.get_process_value(verbose=False)
         self.temperature_readback = response or 0
@@ -277,13 +277,17 @@ class BaseFurnaceManager(StreamGraphManager):
 
         return g
 
+
 class SwitchableFurnaceManager(BaseFurnaceManager):
     stage_manager = Instance(BaseFurnaceStageManager)
     switch_manager = Instance(SwitchManager)
+
     def _switch_manager_default(self):
         sm = SwitchManager(configuration_dir_name="furnace")
 
         sm.valves_path = os.path.join(paths.extraction_line_dir, "furnace_valves.xml")
         sm.on_trait_change(self._handle_state, "refresh_state")
         return sm
+
+
 # ============= EOF =============================================
