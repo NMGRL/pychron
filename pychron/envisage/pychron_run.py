@@ -71,6 +71,7 @@ PACKAGE_DICT = dict(
     LDEOFurnacePlugin="pychron.furnace.tasks.ldeo.furnace_plugin",
     LDEOFurnaceControlPlugin="pychron.furnace.tasks.ldeo.furnace_control_plugin",
     ThermoFurnacePlugin="pychron.furnace.tasks.thermo.furnace_plugin",
+    RestonFurnacePlugin="pychron.furnace.tasks.reston.furnace_plugin",
     # hardware-lasers
     TAPDiodePlugin="pychron.lasers.tasks.plugins.tap",
     OsTechDiodePlugin="pychron.lasers.tasks.plugins.ostech_diode",

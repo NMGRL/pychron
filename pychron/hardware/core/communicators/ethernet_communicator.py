@@ -90,7 +90,7 @@ class Handler(object):
     #         pos += cr
     #     return buff
 
-    def _recvall(self, recv, datasize=None, frame=None):
+    def _recvall(self, recv, datasize=None, frame=None, terminator=None):
         """
         recv: callable that accepts 1 argument (datasize). should return a str
         """
@@ -116,7 +116,8 @@ class Handler(object):
         if datasize is None:
             datasize = self.datasize
 
-        rt = self.read_terminator
+        if terminator is None:
+            terminator = self.read_terminator
 
         while 1:
             s = recv(datasize)
@@ -129,8 +130,8 @@ class Handler(object):
             sum += len(s)
             data += s
 
-            if rt is not None:
-                if data.endswith(rt):
+            if terminator is not None:
+                if data.endswith(terminator):
                     break
             else:
                 if msg_len and sum >= msg_len:
@@ -199,6 +200,8 @@ class TCPHandler(Handler):
 
     def get_packet(self, datasize=None, message_frame=None):
         return self._recvall(self.sock.recv, datasize=datasize, frame=message_frame)
+    def readline(self, terminator):
+        return self._recvall(self.sock.recv, terminator=terminator)
 
     def send_packet(self, p):
         self.sock.send(p.encode("utf-8"))
@@ -508,6 +511,20 @@ class EthernetCommunicator(Communicator):
             handler = self.get_read_handler(handler, timeout=timeout)
 
         return handler.select_read(*args, **kw)
+
+    def readline(self, terminator=b'\r\n'):
+        timeout = self._reset_error_mode()
+
+        handler = self.get_handler(timeout=timeout)
+        if handler:
+            handler = self.get_read_handler(handler, timeout=timeout)
+
+        if handler:
+            try:
+                return handler.readline(terminator)
+            except socket.timeout as e:
+                self.warning("read. read packet. error: {}".format(e))
+                self.error_mode = True
 
     def read(self, datasize=None, *args, **kw):
         for i in range(3):

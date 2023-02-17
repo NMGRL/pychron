@@ -19,12 +19,12 @@ from pyface.tasks.task_layout import TaskLayout, PaneItem
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from pychron.furnace.tasks.nmgrl.panes import FurnacePane, ControlPane
+from pychron.furnace.tasks.reston.panes import FurnacePane, ControlPane
 from pychron.furnace.tasks.task import BaseFurnaceTask
 
 
-class NMGRLFurnaceTask(BaseFurnaceTask):
-    id = "pychron.furnace.nmgrl.task"
+class RestonFurnaceTask(BaseFurnaceTask):
+    id = "pychron.furnace.reston.task"
     name = "Furnace"
 
     def create_dock_panes(self):
@@ -34,7 +34,7 @@ class NMGRLFurnaceTask(BaseFurnaceTask):
         return FurnacePane(model=self.manager)
 
     def _default_layout_default(self):
-        return TaskLayout(left=PaneItem("pychron.nmgrlfurnace.controls"))
+        return TaskLayout(left=PaneItem("pychron.furnace.reston.controls"))
 
 
 # ============= EOF =============================================
