@@ -30,9 +30,9 @@ class ChromiumLaserManager(EthernetLaserManager):
     _alive = False
 
     def setup_communicator(self):
-        com = super(ChromiumLaserManager, self).setup_communicator()
+        com = super(ChromiumLaserManager, self).setup_communicator(write_terminator="\r\n",
+                                                                   read_terminator="\r\n")
         if self.communicator:
-            self.communicator.write_terminator = "\r\n"
             self.communicator.report()
 
         return com

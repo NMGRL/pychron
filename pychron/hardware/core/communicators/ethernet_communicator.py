@@ -346,8 +346,8 @@ class EthernetCommunicator(Communicator):
     def test_connection(self):
         self.simulation = False
 
-        with self._lock:
-            handler = self.get_handler()
+        # with self._lock:
+        #     handler = self.get_handler()
 
         # send a test command so see if wer have connection
         cmd = self.test_cmd
@@ -367,7 +367,8 @@ class EthernetCommunicator(Communicator):
                 #         self.simulation = True
                 # else:
                 #     self.simulation = True
-        ret = not self.simulation and handler is not None
+        # ret = not self.simulation and handler is not None
+        ret = not self.simulation
         return ret
 
     def get_read_handler(self, handler, **kw):
