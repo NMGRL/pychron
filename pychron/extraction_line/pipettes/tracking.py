@@ -81,13 +81,14 @@ class PipetteTracker(Loggable):
         else:
             # try loading old
             p = self._get_path_id(pickled=True)
-            with open(p, "rb") as rfile:
-                try:
-                    params = pickle.load(rfile)
-                    self._load(params)
-                except (pickle.PickleError, OSError):
-                    pass
-            self.dump()
+            if os.path.isfile(p):
+                with open(p, "rb") as rfile:
+                    try:
+                        params = pickle.load(rfile)
+                        self._load(params)
+                    except (pickle.PickleError, OSError):
+                        pass
+                self.dump()
 
     def dump(self):
         p = self._get_path_id()
