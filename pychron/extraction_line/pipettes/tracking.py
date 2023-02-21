@@ -57,7 +57,6 @@ class PipetteTracker(Loggable):
                 return True
 
     def _increment(self):
-
         self.counts += 1
 
         self.debug("increment shot count {}".format(self.counts))
@@ -77,18 +76,19 @@ class PipetteTracker(Loggable):
                     try:
                         params = pickle.load(rfile)
                         self._load(params)
-                    except (pickle.PickleError, OSError):
+                    except (pickle.PickleError, OSError, EOFError):
                         pass
         else:
             # try loading old
             p = self._get_path_id(pickled=True)
-            with open(p, "rb") as rfile:
-                try:
-                    params = pickle.load(rfile)
-                    self._load(params)
-                except (pickle.PickleError, OSError):
-                    pass
-            self.dump()
+            if os.path.isfile(p):
+                with open(p, "rb") as rfile:
+                    try:
+                        params = pickle.load(rfile)
+                        self._load(params)
+                    except (pickle.PickleError, OSError, EOFError):
+                        pass
+                self.dump()
 
     def dump(self):
         p = self._get_path_id()
@@ -129,7 +129,6 @@ class PipetteTracker(Loggable):
             paths.hidden_dir, "pipette-{}_{}".format(self.inner, self.outer)
         )
         if not os.path.isfile(p):
-
             name = "{}_{}-{}".format(self.name, self.inner, self.outer)
             if not pickled:
                 name = "{}.json".format(name)

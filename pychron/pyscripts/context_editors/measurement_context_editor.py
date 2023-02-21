@@ -154,7 +154,6 @@ class MeasurementContextEditor(ContextEditor):
     # persistence
     def load(self, s):
         with no_update(self):
-
             try:
                 s = self._extract_docstring(s)
             except SyntaxError:

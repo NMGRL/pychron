@@ -90,7 +90,6 @@ class PychronTasksPlugin(BasePlugin):
         self._start_background_processes()
 
     def _start_background_processes(self):
-
         self.info("starting background processes disabled")
         return
 

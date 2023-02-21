@@ -298,7 +298,6 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         records = self.get_analysis_records()
         if records:
             for repoid, rs in groupby_repo(records):
-
                 self.dvc.sync_repo(repoid)
                 for ri in rs:
                     get_review_status(ri)

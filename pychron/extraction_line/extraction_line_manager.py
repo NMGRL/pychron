@@ -140,7 +140,6 @@ class ExtractionLineManager(Manager, Consoleable):
         self.devices = devs
 
     def deactivate(self):
-
         for t in ("gauge", "heater", "pump"):
             self.info("start {} scans".format(t))
             man = getattr(self, "{}_manager".format(t))
@@ -153,7 +152,6 @@ class ExtractionLineManager(Manager, Consoleable):
         self._deactivate_hook()
 
     def bind_preferences(self):
-
         prefid = "pychron.extraction_line"
 
         attrs = (
@@ -360,7 +358,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
             c.load_canvas_file()
             if self.switch_manager:
-
                 for k, v in self.switch_manager.switches.items():
                     vc = c.get_object(k)
                     if vc:
@@ -534,7 +531,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def cycle(self, name, **kw):
         def cycle():
-
             valve = self.switch_manager.get_switch_by_name(name)
             if valve is not None:
                 n = valve.cycle_n
@@ -612,6 +608,18 @@ class ExtractionLineManager(Manager, Consoleable):
             self.warning("cryo manager not available")
             return 0
 
+    def get_cryo_response_blob(self):
+        if self.cryo_manager:
+            return self.cryo_manager.response_recorder.get_response_blob()
+
+    def start_cryo_recorder(self):
+        if self.cryo_manager:
+            self.cryo_manager.start_response_recorder()
+
+    def stop_cryo_recorder(self):
+        if self.cryo_manager:
+            self.cryo_manager.stop_response_recorder()
+
     # ===============================================================================
 
     # ============= Manometer =======================================================
@@ -639,7 +647,6 @@ class ExtractionLineManager(Manager, Consoleable):
             self.canvases.append(c)
 
     def _activate_hook(self):
-
         self.monitor = SystemMonitor(manager=self, name="system_monitor")
         self.monitor.monitor()
 

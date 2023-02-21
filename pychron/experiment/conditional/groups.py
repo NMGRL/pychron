@@ -209,7 +209,6 @@ class ConditionalGroup(HasTraits):
     )
     def _refresh_comp(self, name, new):
         if not self._no_update:
-
             with no_update(self):
                 if name == "function":
                     self.modifier = ""
@@ -402,7 +401,6 @@ class ConditionalGroup(HasTraits):
         return cnt_grp
 
     def _get_atype_grp(self):
-
         atypes = [(a.lower().replace(" ", "_"), a) for a in ANALYSIS_TYPES]
 
         grp = BorderVGroup(
@@ -415,7 +413,6 @@ class ConditionalGroup(HasTraits):
         return grp
 
     def _get_edit_group(self):
-
         cnt_grp = self._get_cnt_grp()
         cmp_grp = self._get_cmp_grp()
         opt_grp = self._get_opt_grp()

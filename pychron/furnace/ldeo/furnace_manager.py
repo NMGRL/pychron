@@ -24,6 +24,7 @@ from pychron.canvas.canvas2D.dumper_canvas import DumperCanvas
 from pychron.canvas.canvas2D.furnace_canvas import FurnaceCanvas
 from pychron.canvas.canvas2D.map_canvas import MapCanvas
 from pychron.core.yaml import yload
+from pychron.furnace.base_furnace_manager import SwitchableFurnaceManager
 from pychron.furnace.ifurnace_manager import IFurnaceManager
 from pychron.furnace.nmgrl.furnace_manager import BaseFurnaceManager
 from pychron.graph.time_series_graph import TimeSeriesStreamStackedGraph
@@ -32,23 +33,20 @@ from pychron.paths import paths
 
 
 @provides(IFurnaceManager)
-class LDEOFurnaceManager(BaseFurnaceManager):
-    controller = Instance(LamontFurnaceControl)
+class LDEOFurnaceManager(SwitchableFurnaceManager):
+    controller_klass = LamontFurnaceControl
     canvas = Instance(MapCanvas)
     dumper_canvas = Instance(DumperCanvas)
 
-    settings_name = "furnace_settings"
-
-    def _controller_default(self):
-        c = LamontFurnaceControl(name="controller", configuration_dir_name="furnace")
-        return c
+    # def _controller_default(self):
+    #     c = LamontFurnaceControl(name="controller", configuration_dir_name="furnace")
+    #     return c
 
     def _canvas_factory(self):
         c = FurnaceCanvas()
         return c
 
     def activate(self):
-
         # sn = self.controller.return_sn()
         # if 256 <= sn <= 2147483647:
         #     self.info('Labjack loaded')
@@ -77,10 +75,6 @@ class LDEOFurnaceManager(BaseFurnaceManager):
         if self.timer:
             self.timer.stop()
 
-    def get_process_value(self):
-        pv = self.controller.get_process_value()
-        return pv
-
     def extract(self, v, units="volts"):
         self.controller.extract(v, units, furnace=1)
 
@@ -105,11 +99,11 @@ class LDEOFurnaceManager(BaseFurnaceManager):
     def stop_motors(self):
         pass  # need to wire up enable line
 
-    def get_active_pid_parameters(self):
-        pass  # not implemented
-
-    def set_pid_parameters(self, v):
-        pass  # not implemented
+    # def get_active_pid_parameters(self):
+    #     pass  # not implemented
+    #
+    # def set_pid_parameters(self, v):
+    #     pass  # not implemented
 
     def set_setpoint(
         self, v
@@ -173,7 +167,6 @@ class LDEOFurnaceManager(BaseFurnaceManager):
     def _update_scan(self):
         d = self.controller.get_summary()
         if d:
-
             output1 = d.get("OP1")
             # output2 = d.get('OP2')  # not recorded right now
             temp1 = d.get("TC1")
@@ -192,86 +185,6 @@ class LDEOFurnaceManager(BaseFurnaceManager):
             self._update_scan_graph(
                 output1, temp1, 0
             )  # not writing setpoint at moment since not implemented
-
-    def _stop_update(self):
-        self.debug("stop update")
-        self._alive = False
-        self.timer.stop()
-
-    def _update_scan_graph(self, response, output, setpoint):
-        x = None
-        update = False
-        if response is not None:
-            x = self.graph.record(response, series=1, track_y=False)
-            update = True
-
-        if output is not None:
-            self.graph.record(output, x=x, series=0, plotid=1, track_y=False)
-            update = True
-
-        if update:
-            ss = self.graph.get_data(plotid=0, axis=1)
-            if len(ss) > 1:
-                xs = self.graph.get_data(plotid=0)
-                xs[-1] = x
-                self.graph.set_data(xs, plotid=0)
-            else:
-                self.graph.record(setpoint, x=x, track_y=False)
-
-            if self.graph_y_auto:
-                temp_plot = self.graph.plots[0].plots["plot0"][0]
-                setpoint_plot = self.graph.plots[0].plots["plot1"][0]
-
-                temp_data = temp_plot.value.get_data()
-                setpoint_data = setpoint_plot.value.get_data()
-
-                ma = max(temp_data.max(), setpoint_data.max())
-                if self.setpoint == 0:
-                    mi = 0
-                else:
-                    mi = min(setpoint_data.min(), temp_data.min())
-
-                self.graph.set_y_limits(min_=mi, max_=ma, pad="0.1", plotid=0)
-
-            if self._recording:
-                self.record_data_manager.write_to_frame((x, response or 0, output or 0))
-
-    def _start_recording(self):
-        self._recording = True
-        self.record_data_manager = dm = self._record_data_manager_factory()
-        dm.new_frame(directory=paths.furnace_scans_dir)
-        dm.write_to_frame(("time", "temperature", "output"))
-        self._start_time = time.time()
-
-    def _stop_recording(self):
-        self._recording = False
-
-    def _graph_factory(self, *args, **kw):
-        g = TimeSeriesStreamStackedGraph()
-        # g.plotcontainer.padding_top = 5
-        # g.plotcontainer.padding_right = 5
-        g.new_plot(
-            xtitle="Time (s)",
-            ytitle="Temp. (C)",
-            padding_top=5,
-            padding_left=75,
-            padding_right=5,
-        )
-        g.set_scan_width(600, plotid=0)
-        g.set_data_limits(1.8 * 600, plotid=0)
-
-        # setpoint
-        g.new_series(plotid=0, line_width=2, render_style="connectedhold")
-        # response
-        g.new_series(plotid=0)
-
-        g.new_plot(ytitle="Output (%)", padding_top=5, padding_left=75, padding_right=5)
-        g.set_scan_width(600, plotid=1)
-        g.set_data_limits(1.8 * 600, plotid=1)
-        g.new_series(plotid=1)
-        g.set_y_limits(min_=-2, max_=102, plotid=1)
-
-        return g
 
 
 # ============= EOF =============================================

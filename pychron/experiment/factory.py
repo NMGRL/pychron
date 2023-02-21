@@ -110,7 +110,6 @@ class ExperimentFactory(DVCAble):
             "queue_conditionals_name",
             "note",
         ):
-
             if not self._sync_queue_to_factory(eq, qf, a):
                 self._sync_factory_to_queue(eq, qf, a)
 
@@ -158,7 +157,6 @@ class ExperimentFactory(DVCAble):
                 self.debug_exception()
 
     def _add_run(self, *args, **kw):
-
         if not self.ok_add:
             missing = []
             if not bool(self.username):

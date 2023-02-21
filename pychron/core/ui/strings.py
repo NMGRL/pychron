@@ -25,6 +25,7 @@ import six
 
 pascalcase_regex = re.compile(r"^[A-Z](([a-z0-9]+[A-Z]?)*)$")
 reponame_regex = re.compile(r"^[\w_-]+$")
+experiment_name_regex = re.compile(r"^([0-9]+)?([A-Za-z0-9]+)$")
 
 
 class PascalCase(BaseStr):
@@ -46,6 +47,14 @@ class SpacelessStr(BaseStr):
 class RepoNameStr(BaseStr):
     def validate(self, obj, name, value):
         if not value or not reponame_regex.match(value):
+            self.error(obj, name, value)
+        else:
+            return value
+
+
+class ExperimentStr(BaseStr):
+    def validate(self, obj, name, value):
+        if not value or not experiment_name_regex.match(value):
             self.error(obj, name, value)
         else:
             return value

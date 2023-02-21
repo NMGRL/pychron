@@ -53,6 +53,7 @@ Examples:
 8.  L3 (trace path L3)
 9.  1-6;9;11;15-20 (combination of rules 2. and 3. treat all positions as individual analyses)
 10. 1.0,2.0 (goto the point defined by x,y[,z]. Use ";" to treat multiple points as one analysis e.g 1.0,2.0;3.0,4.0)
+11. s1 or S1 (goto Scan 1 via Chromium Laser)
 """
 
 PATTERN_TOOLTIP = 'Please select a pattern from Remote or Local Patterns. \

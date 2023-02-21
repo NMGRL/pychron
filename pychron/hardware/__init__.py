@@ -37,7 +37,7 @@ HW_PACKAGE_MAP = {
     "AnalogPowerMeter": hardware_pkg("analog_power_meter"),
     "ADC": hardware_pkg("adc.adc_device"),
     "AgilentADC": hardware_pkg("adc.analog_digital_converter"),
-    "Eurotherm": hardware_pkg("eurotherm"),
+    "Eurotherm": hardware_pkg("eurotherm.eurotherm"),
     "ThermoRack": hardware_pkg("thermorack"),
     "MicroIonController": gauge_pkg("granville_phillips.micro_ion_controller"),
     "PychronMicroIonController": gauge_pkg(
@@ -63,7 +63,7 @@ HW_PACKAGE_MAP = {
     "Pneumatics": hardware_pkg("pneumatics"),
     "PychronPneumatics": hardware_pkg("pneumatics"),
     "PychronChiller": hardware_pkg("pychron_chiller"),
-    "RemoteNewportMotionController": hardware_pkg("remote.newport_motion_controller"),
+    # "RemoteNewportMotionController": hardware_pkg("remote.newport_motion_controller"),
     "TempHumMicroServer": hardware_pkg("environmental_probe"),
     "AirTransducer": hardware_pkg("transducer"),
     "NMGRLMagnetDumper": "pychron.furnace.magnet_dumper",
@@ -82,6 +82,7 @@ HW_PACKAGE_MAP = {
     "SPCIonPumpController": hardware_pkg("ionpump.spc_ion_pump_controller"),
     "HiPace": hardware_pkg("turbo.hipace"),
     "ADCGaugeController": gauge_pkg("adc_gauge_controller"),
+    "WatlowEZZone": hardware_pkg("watlow.watlow_ezzone"),
 }
 
 

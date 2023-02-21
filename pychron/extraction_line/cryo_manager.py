@@ -15,7 +15,7 @@
 # ===============================================================================
 import os
 
-from traits.api import Enum
+from traits.api import Enum, provides, Instance
 from traitsui.api import View, Item, InstanceEditor, ListEditor
 
 from pychron.core.helpers.strtools import csv_to_floats
@@ -23,14 +23,28 @@ from pychron.core.yaml import yload
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 from pychron.pychron_constants import AR_AR, NE, HE, GENERIC
+from pychron.response_recorder import ResponseRecorder
 
 
 class CryoManager(Manager):
     name = "Cryo"
     species = Enum(HE, AR_AR, NE, GENERIC)
+    response_recorder = Instance(ResponseRecorder)
+
+    def _response_recorder_default(self):
+        r = ResponseRecorder(
+            response_device=self.devices[0], output_device=self.devices[0]
+        )
+        return r
 
     def finish_loading(self, *args, **kw):
         pass
+
+    def start_response_recorder(self):
+        self.response_recorder.start("cryo")
+
+    def stop_response_recorder(self):
+        self.response_recorder.stop()
 
     # def get_pressure(self, controller, name):
     #     dev = next((di for di in self.devices if di.name == controller), None)

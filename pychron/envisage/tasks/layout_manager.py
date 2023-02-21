@@ -73,7 +73,6 @@ class LayoutManager(Loggable):
         app = self.application
         if app:
             for _id, pos, size in self.selected.layouts:
-
                 task = app.get_task(_id)
                 if task:
                     win = task.window

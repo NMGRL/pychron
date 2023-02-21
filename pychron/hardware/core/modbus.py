@@ -13,8 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pymodbus.constants import Endian
-from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
+try:
+    from pymodbus.constants import Endian
+    from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
+except ImportError:
+    pass
 
 
 class ModbusMixin:

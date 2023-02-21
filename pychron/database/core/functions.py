@@ -29,7 +29,6 @@ import six
 @deprecated_message("use DatabaseAdapter._add_item instead")
 def add(func):
     def _add(obj, *args, **kw):
-
         kwargs = kw.copy()
         for key in ("unique", "commit", "flush"):
             if key in kwargs:

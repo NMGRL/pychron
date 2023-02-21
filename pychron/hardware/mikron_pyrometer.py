@@ -119,7 +119,6 @@ class MikronGA140Pyrometer(Pyrometer):
             if response_type == "float":
                 resp = self.get_random_value()
         else:
-
             resp = resp.strip()
             if response_type == "float":
                 try:

@@ -250,7 +250,6 @@ def calc_growth(
         key=lambda x: x[1],
         reverse=True,
     ):
-
         ids = before[k]
         #         a = len(after[k])
         #         b = len(ids)

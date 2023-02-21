@@ -257,7 +257,6 @@ class BaseLaserManager(Manager):
         nsuccess=2,
         timeout=50,
     ):
-
         ask = self._ask
 
         cnt = 0

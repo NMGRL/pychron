@@ -58,7 +58,6 @@ class MassSpecRecaller(Loggable):
         return prod
 
     def find_analysis(self, labnumber, aliquot, step):
-
         db = self.db
         with db.session_ctx():
             dbrec = db.get_analysis(labnumber, aliquot, step)

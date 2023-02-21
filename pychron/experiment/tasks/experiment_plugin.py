@@ -222,7 +222,6 @@ class ExperimentPlugin(BaseTaskPlugin):
                 ),
             ),
         ):
-
             path = "MenuBar/{}".format(path)
             for f, t in fs:
                 actions.append(SchemaAddition(id=idformat(t), factory=f, path=path))

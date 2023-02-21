@@ -64,7 +64,6 @@ class CommandRepeater(ConfigLoadable):
             return True
 
     def open(self, *args, **kw):
-
         kind = socket.SOCK_STREAM
         if globalv.ipc_dgram:
             kind = socket.SOCK_DGRAM

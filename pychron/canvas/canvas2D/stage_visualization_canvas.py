@@ -35,7 +35,6 @@ class HoleOverlay(AbstractOverlay):
     _cached_result_pts = None
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
-
         if self._cached_pts is None or self._layout_needed:
             self._calculate_cached_points(other_component)
 
@@ -50,7 +49,6 @@ class HoleOverlay(AbstractOverlay):
                 other_component.height,
             )
             with gc:
-
                 for (x, y), r in self._cached_pts:
                     gc.arc(x, y, r, 0, 360)
 
@@ -96,7 +94,6 @@ class StageVisualizationCanvas(BaseDataCanvas):
     use_pan = False
 
     def build_map(self, sm, results, calibration=None):
-
         center = 0, 0
         rot = 0
         if calibration is not None:

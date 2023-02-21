@@ -91,7 +91,6 @@ class SimpleEditor(_SimpleEditor):
         #     print i, item, item.text(0),
 
     def _expand_all_fired(self):
-
         ctrl = self.control
         if ctrl is None:
             return

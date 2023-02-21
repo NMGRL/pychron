@@ -145,7 +145,6 @@ class CompositeCalibrationManager(Manager):
         return p
 
     def _load_graph_fired(self):
-
         g = self.graph
         g.clear()
         #        g.new_plot(zoom=True, pan=True,
@@ -226,7 +225,6 @@ class CompositeCalibrationManager(Manager):
         )
 
     def _db_default(self):
-
         if self.parent_name == "FusionsDiode":
             name = paths.diodelaser_db
         else:

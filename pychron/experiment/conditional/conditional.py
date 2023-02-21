@@ -257,7 +257,6 @@ class AutomatedRunConditional(BaseConditional):
     _analysis_types_logged = False
 
     def __init__(self, teststr, start_count=0, frequency=1, *args, **kw):
-
         self.active = True
         # self.attr = attr
         self.teststr = teststr
@@ -327,7 +326,6 @@ class AutomatedRunConditional(BaseConditional):
             if isinstance(cnt, bool):
                 return cnt
             else:
-
                 ocnt = cnt - self.start_count
 
                 b = ocnt > 0
@@ -592,7 +590,6 @@ class QueueModificationConditional(AutomatedRunConditional):
         self._skip_n_runs(runs, current_run, 1)
 
     def _skip_aliquot(self, queue, runs, current_run):
-
         identifier = current_run.spec.identifier
         aliquot = current_run.spec.aliquot
         for r in runs:
@@ -619,7 +616,6 @@ class QueueModificationConditional(AutomatedRunConditional):
                 pass
 
     def _set_extract(self, queue, runs, current_run):
-
         es = self.extraction_str
 
         identifier = current_run.spec.identifier

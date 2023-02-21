@@ -33,7 +33,6 @@ class ReferencesPanel(FigurePanel):
     equi_stack = True
 
     def _make_correlation(self, refplot, xtitle):
-
         fi = self.figures[0]
 
         n = len(list(fi.options.get_plotable_aux_plots()))

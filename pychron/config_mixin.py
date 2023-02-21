@@ -96,7 +96,6 @@ class ConfigMixin:
     def config_get(
         self, config, section, option, cast=None, optional=False, default=None
     ):
-
         if cast is not None:
             func = getattr(config, "get{}".format(cast))
         else:
@@ -117,7 +116,6 @@ class ConfigMixin:
             setattr(self, attribute, r)
 
     def write_configuration(self, config, path=None):
-
         if path is None:
             path = self.config_path
 
@@ -125,7 +123,6 @@ class ConfigMixin:
             config.write(f)
 
     def get_configuration(self, path=None, name=None, warn=True, set_path=True):
-
         if path is None:
             path = self.config_path
             if path is None:

@@ -30,9 +30,12 @@ class ChromiumLaserManager(EthernetLaserManager):
     _alive = False
 
     def setup_communicator(self):
-        com = super(ChromiumLaserManager, self).setup_communicator()
+        com = super(ChromiumLaserManager, self).setup_communicator(
+            write_terminator="\r\n", read_terminator="\r\n"
+        )
         if self.communicator:
-            self.communicator.write_terminator = "\n\r"
+            self.communicator.report()
+
         return com
 
     def set_tray(self, t):
@@ -80,7 +83,6 @@ class ChromiumLaserManager(EthernetLaserManager):
             pass
 
     def set_laser_power(self, v):
-
         return self._ask("laser.output {}".format(v))
 
     def enable_laser(self, **kw):

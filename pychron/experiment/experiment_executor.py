@@ -374,7 +374,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.events.extend(events)
 
     def execute(self):
-
         prog = open_progress(100, position=(100, 100))
 
         pre_execute_result = False
@@ -990,7 +989,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         #     self.debug("waiting complete")
 
         for step in ("_start", "_extraction", "_measurement", "_post_measurement"):
-
             if not self.is_alive():
                 break
 
@@ -1220,7 +1218,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self, active_run=None, tripped=None, conditionals=None, kind="live"
     ):
         try:
-
             v = ConditionalsView()
 
             self.debug("Show conditionals active run: {}".format(active_run))
@@ -1677,7 +1674,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         analysis_type = check["analysis_type"]
         mainstore = self.datahub.mainstore
         if atype == analysis_type:
-
             ratio_name = check["ratio"]
             threshold = check.get("threshold", 0)
             nsigma = check.get("nsigma", 0)
@@ -1715,7 +1711,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 )
                 ans = mainstore.make_analyses(ans, use_progress=False)
             else:
-
                 ratios = self._ratios.get(atype, [])
                 nn = max(nanalyses - len(ratios), 1)
 
@@ -1743,7 +1738,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     nominal_ratio, cur, dev, threshold
                 )
             else:
-
                 ratios = ratios[-nanalyses:]
                 self._ratios[atype] = ratios
 
@@ -1927,7 +1921,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     IPIPETTE_PROTOCOL,
                     CRYO_PROTOCOL,
                 ):
-
                     man = self.application.get_service(
                         protocol, 'name=="{}"'.format(extract_device)
                     )
@@ -2146,7 +2139,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         return True
 
     def _pre_step_check(self, run, tag):
-
         """
         do pre_run_terminations
 
@@ -2316,7 +2308,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                     )
 
                                 else:
-
                                     self.debug(
                                         "Repository association conflict. "
                                         "repository={} "
@@ -2650,14 +2641,13 @@ Use Last "blank_{}"= {}
 
     def _update_timeseries(self, low_post=None):
         if self.use_dvc_persistence:
-
             if low_post is None:
                 low_post = self._low_post
             else:
                 self._low_post = low_post
 
             dvc = self.datahub.mainstore
-            with dvc.session_ctx():
+            with dvc.session_ctx(use_parent_session=False):
                 if self.experiment_queue:
                     ms = self.experiment_queue.mass_spectrometer
                 else:
@@ -2687,13 +2677,16 @@ Use Last "blank_{}"= {}
                     mass_spectrometer=ms,
                     exclude_types=("unknown",),
                     low_post=low_post,
-                    verbose=False,
+                    verbose=True,
+                    use_parent_session=False,
                 )
                 if ans:
                     ans = dvc.make_analyses(ans, use_progress=False)
 
                     self.timeseries_editor.set_items(ans)
                     invoke_in_main_thread(self.timeseries_editor.refresh)
+                else:
+                    self.warning("failed retrieving analyses for experiment timeseries")
 
     # ===============================================================================
     # handlers
@@ -2706,6 +2699,7 @@ Use Last "blank_{}"= {}
         self.information_dialog(
             "Timeseries reset to {}".format(self._low_post.strftime("%m/%d/%y %H:%M"))
         )
+        self._update_timeseries()
 
     # def _configure_timeseries_editor_button_fired(self):
     #

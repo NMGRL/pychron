@@ -90,7 +90,7 @@ class Handler(object):
     #         pos += cr
     #     return buff
 
-    def _recvall(self, recv, datasize=None, frame=None):
+    def _recvall(self, recv, datasize=None, frame=None, terminator=None):
         """
         recv: callable that accepts 1 argument (datasize). should return a str
         """
@@ -116,7 +116,8 @@ class Handler(object):
         if datasize is None:
             datasize = self.datasize
 
-        rt = self.read_terminator
+        if terminator is None:
+            terminator = self.read_terminator
 
         while 1:
             s = recv(datasize)
@@ -129,8 +130,8 @@ class Handler(object):
             sum += len(s)
             data += s
 
-            if rt is not None:
-                if data.endswith(rt):
+            if terminator is not None:
+                if data.endswith(terminator):
                     break
             else:
                 if msg_len and sum >= msg_len:
@@ -199,6 +200,9 @@ class TCPHandler(Handler):
 
     def get_packet(self, datasize=None, message_frame=None):
         return self._recvall(self.sock.recv, datasize=datasize, frame=message_frame)
+
+    def readline(self, terminator):
+        return self._recvall(self.sock.recv, terminator=terminator)
 
     def send_packet(self, p):
         self.sock.send(p.encode("utf-8"))
@@ -337,7 +341,6 @@ class EthernetCommunicator(Communicator):
         return True
 
     def open(self, *args, **kw):
-
         for k in ("host", "port", "message_frame", "kind"):
             if k in kw:
                 setattr(self, k, kw[k])
@@ -347,8 +350,8 @@ class EthernetCommunicator(Communicator):
     def test_connection(self):
         self.simulation = False
 
-        with self._lock:
-            handler = self.get_handler()
+        # with self._lock:
+        #     handler = self.get_handler()
 
         # send a test command so see if wer have connection
         cmd = self.test_cmd
@@ -368,11 +371,11 @@ class EthernetCommunicator(Communicator):
                 #         self.simulation = True
                 # else:
                 #     self.simulation = True
-        ret = not self.simulation and handler is not None
+        # ret = not self.simulation and handler is not None
+        ret = not self.simulation
         return ret
 
     def get_read_handler(self, handler, **kw):
-
         if self.read_port:
             if self.read_handler:
                 handler = self.read_handler
@@ -391,7 +394,6 @@ class EthernetCommunicator(Communicator):
             addrs = (self.host, self.port)
 
         try:
-
             h = self.handler
             if h is None or h.address != addrs:
                 if self.kind.lower() == "udp":
@@ -510,6 +512,20 @@ class EthernetCommunicator(Communicator):
             handler = self.get_read_handler(handler, timeout=timeout)
 
         return handler.select_read(*args, **kw)
+
+    def readline(self, terminator=b"\r\n"):
+        timeout = self._reset_error_mode()
+
+        handler = self.get_handler(timeout=timeout)
+        if handler:
+            handler = self.get_read_handler(handler, timeout=timeout)
+
+        if handler:
+            try:
+                return handler.readline(terminator)
+            except socket.timeout as e:
+                self.warning("read. read packet. error: {}".format(e))
+                self.error_mode = True
 
     def read(self, datasize=None, *args, **kw):
         for i in range(3):

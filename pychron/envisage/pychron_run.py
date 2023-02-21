@@ -71,7 +71,9 @@ PACKAGE_DICT = dict(
     LDEOFurnacePlugin="pychron.furnace.tasks.ldeo.furnace_plugin",
     LDEOFurnaceControlPlugin="pychron.furnace.tasks.ldeo.furnace_control_plugin",
     ThermoFurnacePlugin="pychron.furnace.tasks.thermo.furnace_plugin",
+    RestonFurnacePlugin="pychron.furnace.tasks.reston.furnace_plugin",
     # hardware-lasers
+    TAPDiodePlugin="pychron.lasers.tasks.plugins.tap",
     OsTechDiodePlugin="pychron.lasers.tasks.plugins.ostech_diode",
     AblationCO2Plugin="pychron.lasers.tasks.plugins.ablation_co2",
     ChromiumCO2Plugin="pychron.lasers.tasks.plugins.chromium_co2",
@@ -201,7 +203,6 @@ def get_user_plugins():
     for p in ps:
         # if laser plugin add CoreLaserPlugin
         if p in LASER_PLUGINS:
-
             plugint = ip.get_plugin(p, category="hardware")
             mode = ip.get_parameter(plugint, "mode")
             if mode == "client":
@@ -269,7 +270,6 @@ def launch(klass):
     app = app_factory(klass)
 
     try:
-
         # root = os.path.dirname(__file__)
         # r = QtGui.QApplication.instance()
         # p = os.path.join(root, 'stylesheets', 'qdark.css')

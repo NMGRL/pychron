@@ -84,7 +84,6 @@ class MassSpecDatabaseImporter(Loggable):
 
     # IDatastore protocol
     def get_greatest_step(self, identifier, aliquot):
-
         ret = 0
         if self.db:
             with self.db.session_ctx():
@@ -256,7 +255,6 @@ class MassSpecDatabaseImporter(Loggable):
                 self.db.reraise = True
 
     def _add_analysis(self, sess, spec, irradpos, rid, runtype):
-
         gst = time.time()
 
         db = self.db

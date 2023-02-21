@@ -86,7 +86,6 @@ class Axis(ConfigLoadable):
         return self._deceleration
 
     def _get_parameters(self, path):
-
         params = []
         if not os.path.isfile(path):
             path = os.path.join(path, "{}axis.cfg".format(self.name))

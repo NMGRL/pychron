@@ -73,7 +73,6 @@ class StageControlPane(TraitsDockPane):
         }
 
     def _get_tabs(self):
-
         cg = VGroup(
             HGroup(
                 Item("canvas.show_laser_position", label="Display Current"),

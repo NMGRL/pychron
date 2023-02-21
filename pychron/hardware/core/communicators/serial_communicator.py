@@ -128,7 +128,6 @@ class SerialCommunicator(Communicator):
         self.bytesize = bytesize
 
     def load(self, config, path):
-
         self.config_path = path
         self._config = config
 
@@ -391,7 +390,6 @@ class SerialCommunicator(Communicator):
                 break
 
         if not found:
-
             # update the port
             if self._auto_write_handle and port:
                 # port in form
@@ -495,7 +493,6 @@ class SerialCommunicator(Communicator):
     def _read_terminator(
         self, timeout=1, delay=None, terminator=None, terminator_position=None
     ):
-
         if terminator is None:
             terminator = self.read_terminator
         if terminator_position is None:

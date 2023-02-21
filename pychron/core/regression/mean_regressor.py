@@ -58,7 +58,6 @@ class MeanRegressor(BaseRegressor):
 
     @property
     def summary(self):
-
         m = self.mean
         e = self.std
         sem = self.sem
@@ -94,7 +93,6 @@ sem={}
         return ly, uy
 
     def tostring(self, sig_figs=3):
-
         m = self.mean
         std = self.std
         sem = self.sem

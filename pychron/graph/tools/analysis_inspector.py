@@ -86,7 +86,6 @@ class AnalysisPointInspector(PointInspector):
         event.handled = True
 
     def assemble_lines(self):
-
         lines = []
         if self.current_position:
             inds = self.get_selected_index()
@@ -140,7 +139,6 @@ class AnalysisPointInspector(PointInspector):
                     ]
 
                     if self.include_x:
-
                         if hasattr(component, "xerror"):
                             try:
                                 xerror = component.xerror

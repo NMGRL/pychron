@@ -286,7 +286,6 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
             elif item.end_after:
                 color = END_AFTER_COLOR
             elif self.use_analysis_type_colors:
-
                 atype = item.analysis_type
                 if atype.startswith("blank"):
                     atype = "blank"
@@ -303,7 +302,6 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
     def _get_AutomatedRunSpec_menu(self):
         item = self.item
         if item.state in ("success", "truncated"):
-
             evo_actions = [
                 Action(name="Show All", action="show_evolutions"),
                 Action(name="Show All w/Equilibration", action="show_evolutions_w_eq"),

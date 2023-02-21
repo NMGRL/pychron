@@ -98,7 +98,6 @@ class BaseDatabaseBridge(Loggable):
                 q = src.query(table)
                 q = q.filter(getattr(table.c, attr) == pid)
             try:
-
                 record = q.one()
                 data = dict(
                     [(str(column), getattr(record, column)) for column in columns]

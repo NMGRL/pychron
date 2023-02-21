@@ -389,7 +389,6 @@ class DVCDatabase(DatabaseAdapter):
         mass_spectrometers=None,
         exclude_invalid=True,
     ):
-
         with self.session_ctx():
             delta = timedelta(hours=hours)
             refs = OrderedSet()
@@ -1258,9 +1257,9 @@ class DVCDatabase(DatabaseAdapter):
         excluded_uuids=None,
         verbose=False,
         low_post=None,
+        use_parent_session=True,
     ):
-
-        with self.session_ctx() as sess:
+        with self.session_ctx(use_parent_session=use_parent_session) as sess:
             q = sess.query(AnalysisTbl)
 
             if mass_spectrometer:
@@ -1570,7 +1569,6 @@ class DVCDatabase(DatabaseAdapter):
         limit=None,
         verbose_query=True,
     ):
-
         with self.session_ctx() as sess:
             q = sess.query(AnalysisTbl)
             q = q.join(IrradiationPositionTbl)
@@ -1770,7 +1768,6 @@ class DVCDatabase(DatabaseAdapter):
         loads=None,
         filter_non_run=False,
     ):
-
         self.debug("------- Get Labnumbers {}-------".format(id(self)))
         self.debug("------- samples: {}".format(samples))
         self.debug(
@@ -1970,7 +1967,6 @@ class DVCDatabase(DatabaseAdapter):
         if isinstance(name, (str,)):
             if pi:
                 with self.session_ctx() as sess:
-
                     q = sess.query(ProjectTbl)
                     q = q.join(PrincipalInvestigatorTbl)
                     q = q.filter(ProjectTbl.name == name)
@@ -2330,7 +2326,6 @@ class DVCDatabase(DatabaseAdapter):
         with self.session_ctx():
             level = self.get_irradiation_level(irrad, level)
             if level:
-
                 if with_summary:
                     lns = [
                         (
@@ -2376,7 +2371,6 @@ class DVCDatabase(DatabaseAdapter):
         sort_name_key=None,
         **kw
     ):
-
         if names is not None:
             if hasattr(names, "__call__"):
                 f = names(IrradiationTbl)
@@ -2410,7 +2404,6 @@ class DVCDatabase(DatabaseAdapter):
 
         items = self._retrieve_items(IrradiationTbl, order=order, **kw)
         if sort_name_key:
-
             n = "{:05n}".format(len(items))
 
             def func(i):
@@ -2434,7 +2427,6 @@ class DVCDatabase(DatabaseAdapter):
         order=None,
         verbose_query=False,
     ):
-
         if order:
             order = getattr(ProjectTbl.name, order)()
 
@@ -2581,7 +2573,6 @@ class DVCDatabase(DatabaseAdapter):
                 si.sessionID = session.id
 
     def update_current(self, dban, parameter, value, error, units, force=False):
-
         with self.session_ctx() as sess:
             c = None
             if not force:
@@ -2695,7 +2686,6 @@ class DVCDatabase(DatabaseAdapter):
                     "Continue with Pychron despite out of date db?",
                     position=STARTUP_MESSAGE_POSITION,
                 ):
-
                     self.debug("exiting application")
                     if self.application:
                         self.application.stop()

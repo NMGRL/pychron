@@ -279,7 +279,6 @@ class IsotopeAdapter(DatabaseAdapter):
         analysis.selected_histories.selected_sensitivity = hist
 
     def save_flux(self, identifier, v, e, inform=True):
-
         with self.session_ctx():
             dbln = self.get_labnumber(identifier)
             if dbln:
@@ -499,7 +498,6 @@ class IsotopeAdapter(DatabaseAdapter):
         material=None,
         identifier=None,
     ):
-
         with self.session_ctx():
             sam = self.get_sample(sample_name, project, material, identifier)
             obj = med_SampleImageTable(name=image_name, image=image, note=note)
@@ -925,7 +923,6 @@ class IsotopeAdapter(DatabaseAdapter):
 
     def add_sample(self, name, project=None, material=None, **kw):
         with self.session_ctx() as sess:
-
             q = sess.query(gen_SampleTable)
             if project:
                 project = self.get_project(project)
@@ -1290,7 +1287,6 @@ class IsotopeAdapter(DatabaseAdapter):
         low_post=None,
         high_post=None,
     ):
-
         with self.session_ctx() as sess:
             q = self._simple_query(
                 sess,
@@ -1932,7 +1928,6 @@ class IsotopeAdapter(DatabaseAdapter):
         self, uuids, attr=None, record_only=False, analysis_only=False
     ):
         with self.session_ctx() as sess:
-
             if analysis_only or attr:
                 if attr is None:
                     attr = meas_AnalysisTable
@@ -2500,7 +2495,6 @@ class IsotopeAdapter(DatabaseAdapter):
         projects=None,
         **kw
     ):
-
         if identifiers is not None:
             f = gen_LabTable.identifier.in_(identifiers)
             kw = self._append_filters(f, kw)
@@ -2653,7 +2647,6 @@ class IsotopeAdapter(DatabaseAdapter):
     def get_projects(
         self, irradiation=None, level=None, mass_spectrometers=None, order=None, **kw
     ):
-
         if irradiation or mass_spectrometers:
             with self.session_ctx() as sess:
                 if irradiation:
@@ -2826,7 +2819,6 @@ class IsotopeAdapter(DatabaseAdapter):
         low_post,
         high_post,
     ):
-
         if (
             filter_non_run
             or low_post
@@ -2860,7 +2852,6 @@ class IsotopeAdapter(DatabaseAdapter):
         high_post,
         cast_date,
     ):
-
         if low_post:
             # q = q.filter(cast(meas_AnalysisTable.analysis_timestamp, Date) >= low_post)
             q = q.filter(self._get_post_filter(low_post, "__ge__", cast=cast_date))
@@ -3001,7 +2992,6 @@ class IsotopeAdapter(DatabaseAdapter):
         include_invalid=False,
         count_only=False,
     ):
-
         if not include_invalid:
             q = q.filter(meas_AnalysisTable.tag != "invalid")
 
@@ -3018,7 +3008,6 @@ class IsotopeAdapter(DatabaseAdapter):
         if limit:
             q = q.limit(limit)
         if offset:
-
             if offset < 0:
                 offset = max(0, tc + offset)
 

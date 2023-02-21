@@ -69,7 +69,6 @@ class _ImageEditor(Editor):
     refresh = Event
 
     def init(self, parent):
-
         image = self.factory.image
         if image is None:
             image = self.value

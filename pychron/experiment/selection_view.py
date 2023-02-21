@@ -37,7 +37,6 @@ from six.moves import zip
 
 class LegendOverlay(AbstractOverlay):
     def overlay(self, component, gc, *args, **kw):
-
         gc.save_state()
         gc.set_font(Font("Monaco"))
         x = component.x
@@ -120,7 +119,6 @@ class SelectionView(Viewable):
         return g
 
     def build_graph(self):
-
         skw = dict(type="scatter", marker_size=3)
         #            skw = dict(type='bar')
         g = self.graph

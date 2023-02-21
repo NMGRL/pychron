@@ -270,7 +270,6 @@ class GitRepoManager(Loggable):
         return local_commit != remote_commit
 
     def _get_local_remote_commit(self, branchname=None):
-
         repo = self._repo
         origin = repo.remotes.origin
         try:
@@ -337,7 +336,6 @@ class GitRepoManager(Loggable):
         #     # prog.close()
 
     def clone(self, url, path, reraise=False, **kw):
-
         # config = 'http.sslVerify={}'.format(globalv.VERIFY_SSL)
         # kw['config'] = config
         try:
@@ -687,7 +685,7 @@ class GitRepoManager(Loggable):
             branch = repo.create_head(name, commit=commit)
             branch.checkout()
 
-            if push:
+            if push and repo.remotes:
                 origin = repo.remotes.origin
                 repo.git.push("--set-upstream", origin, repo.head.ref)
             if inform:
@@ -899,7 +897,6 @@ class GitRepoManager(Loggable):
         accept_our=False,
         accept_their=False,
     ):
-
         if remote not in self._repo.remotes:
             return True
 

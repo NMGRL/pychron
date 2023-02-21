@@ -106,6 +106,7 @@ class PersistenceSpec(HasTraits):
     response_blob = Bytes
     output_blob = Bytes
     setpoint_blob = Bytes
+    cryo_response_blob = Bytes
     snapshots = List
     videos = List
     extraction_context = Dict

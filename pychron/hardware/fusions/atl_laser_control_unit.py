@@ -333,7 +333,6 @@ class ATLLaserControlUnit(CoreDevice):
         self._send_command(cmd)
 
     def start_auto_gas_exchange(self):
-
         cmd = self._build_command(14, 11)
         self._send_command(cmd)
 
@@ -375,7 +374,6 @@ class ATLLaserControlUnit(CoreDevice):
         self.info("close valve {}".format(addr))
 
     def update_parameters(self):
-
         # energy, pressure, status, action
         vs = self._send_query(8, 4, verbose=False)
 
@@ -411,14 +409,12 @@ class ATLLaserControlUnit(CoreDevice):
         answer_len,
         verbose=True,
     ):
-
         values = [start_addr_value, answer_len]
         cmd = self._build_command(ANSWER_ADDR, values)
 
         self._send_command(cmd, verbose=verbose)
 
     def _build_command(self, start_addr, values):
-
         if isinstance(start_addr, int):
             start_addr = "{:04X}".format(start_addr)
 
@@ -465,7 +461,6 @@ class ATLLaserControlUnit(CoreDevice):
             self._lock.release()
 
     def _start_message(self, verbose=True):
-
         cmd = "A" + ENQ
         self.ask(cmd, read_terminator=DLE + "0", verbose=verbose)
 
@@ -479,7 +474,6 @@ class ATLLaserControlUnit(CoreDevice):
 
         # print handshake,handshake=='a'+DLE+'0'+STX
         if handshake == "a" + DLE + "0" + STX:
-
             chksum = computeBCC(r[4:-1])
 
             # print 'a={} b={} c={} d={}'.format(chksum, ord(r[-1]), chr(chksum),chr(chksum) == r[-1])

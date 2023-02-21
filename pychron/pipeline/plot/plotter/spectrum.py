@@ -262,7 +262,6 @@ class Spectrum(BaseArArFigure):
                     self._add_info_label(plot, ts)
 
     def _add_age_label(self, plot, text, font="modern 10", relative_position=0, **kw):
-
         o = RelativePlotLabel(
             component=plot,
             text=text,
@@ -436,7 +435,6 @@ class Spectrum(BaseArArFigure):
     def _calculate_spectrum(
         self, excludes=None, group_id=0, index_key="k39", value_key="uage"
     ):
-
         if excludes is None:
             excludes = []
 

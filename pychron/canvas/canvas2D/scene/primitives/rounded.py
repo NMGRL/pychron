@@ -98,7 +98,6 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
 
     def _render_border(self, gc, x, y, width, height, use_border_gaps=True):
         if self.use_border:
-
             corner_radius = self.corner_radius
             with gc:
                 gc.set_line_width(self.border_width)
@@ -237,7 +236,6 @@ class CircleStage(Connectable, Bordered):
                 self._render_name(gc, x, y, width, height)
 
     def _render_textbox(self, gc, x, y, w, h, txt):
-
         tw, th, _, _ = gc.get_full_text_extent(txt)
         x = x - tw / 2.0
         y = y - th / 2.0
