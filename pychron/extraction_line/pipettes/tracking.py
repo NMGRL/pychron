@@ -76,7 +76,7 @@ class PipetteTracker(Loggable):
                     try:
                         params = pickle.load(rfile)
                         self._load(params)
-                    except (pickle.PickleError, OSError):
+                    except (pickle.PickleError, OSError, EOFError):
                         pass
         else:
             # try loading old
@@ -86,7 +86,7 @@ class PipetteTracker(Loggable):
                     try:
                         params = pickle.load(rfile)
                         self._load(params)
-                    except (pickle.PickleError, OSError):
+                    except (pickle.PickleError, OSError, EOFError):
                         pass
                 self.dump()
 
