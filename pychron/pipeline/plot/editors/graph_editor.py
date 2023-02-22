@@ -104,8 +104,10 @@ class GraphEditor(BaseEditor):
             try:
                 comp = self._component_factory()
             except BaseException:
-                self.debug_exception('Failed to make component')
-                self.warning_dialog('Failed to make figure. Check the log for more information')
+                self.debug_exception("Failed to make component")
+                self.warning_dialog(
+                    "Failed to make figure. Check the log for more information"
+                )
 
         if comp is None:
             comp = self._no_component_factory()
