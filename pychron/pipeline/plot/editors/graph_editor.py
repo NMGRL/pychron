@@ -99,10 +99,17 @@ class GraphEditor(BaseEditor):
 
     @cached_property
     def _get_component(self):
+        comp = None
         if self.items:
-            comp = self._component_factory()
-        else:
+            try:
+                comp = self._component_factory()
+            except BaseException:
+                self.debug_exception('Failed to make component')
+                self.warning_dialog('Failed to make figure. Check the log for more information')
+
+        if comp is None:
             comp = self._no_component_factory()
+
         return comp
 
     def _component_factory(self):
