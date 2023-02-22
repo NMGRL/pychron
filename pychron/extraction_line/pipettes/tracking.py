@@ -109,9 +109,7 @@ class PipetteTracker(Loggable):
                 cnts = 0
 
             self.counts = cnts
-            self.debug(
-                f"loaded current shot count {self.counts} time:{last_shot_time}"
-            )
+            self.debug(f"loaded current shot count {self.counts} time:{last_shot_time}")
 
     def to_dict(self):
         return self._dump()
@@ -123,9 +121,7 @@ class PipetteTracker(Loggable):
 
     def _get_path_id(self, pickled=False):
         # handle legacy format
-        p = os.path.join(
-            paths.hidden_dir, f"pipette-{self.inner}_{self.outer}"
-        )
+        p = os.path.join(paths.hidden_dir, f"pipette-{self.inner}_{self.outer}")
         if not os.path.isfile(p):
             name = f"{self.name}_{self.inner}-{self.outer}"
             if not pickled:
