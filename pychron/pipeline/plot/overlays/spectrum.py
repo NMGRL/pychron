@@ -19,11 +19,14 @@ from __future__ import absolute_import
 
 from chaco.abstract_overlay import AbstractOverlay
 
-# from chaco.data_label import draw_arrow
 from chaco.label import Label
 
 # from enable.colors import convert_from_pyqt_color
-from chaco.overlays.data_label import draw_arrow
+try:
+    from chaco.overlays.data_label import draw_arrow
+except ImportError:
+    draw_arrow = None
+
 from enable.font_metrics_provider import font_metrics_provider
 from enable.tools.drag_tool import DragTool
 from enable.api import ColorTrait
@@ -456,8 +459,9 @@ class PlateauOverlay(BasePlateauOverlay):
                 self._draw_end_caps(gc, x1, x2, y)
                 gc.draw_path()
                 if self.arrow_visible:
-                    draw_arrow(gc, (x1 + 5, y), (x1, y), color)
-                    draw_arrow(gc, (x2 - 5, y), (x2, y), color)
+                    if draw_arrow:
+                        draw_arrow(gc, (x1 + 5, y), (x1, y), color)
+                        draw_arrow(gc, (x2 - 5, y), (x2, y), color)
 
                 # add end caps
                 if self.extend_end_caps:
