@@ -59,7 +59,7 @@ class PipetteTracker(Loggable):
     def _increment(self):
         self.counts += 1
 
-        self.debug("increment shot count {}".format(self.counts))
+        self.debug(f"increment shot count {self.counts}")
         self.dump()
 
     # ===============================================================================
@@ -98,7 +98,7 @@ class PipetteTracker(Loggable):
         else:
             with open(p, "wb") as wfile:
                 pickle.dump(self._dump(), wfile)
-        self.debug("saved current shot count {}".format(self.counts))
+        self.debug(f"saved current shot count {self.counts}")
 
     def _load(self, params):
         if params:
@@ -110,9 +110,7 @@ class PipetteTracker(Loggable):
 
             self.counts = cnts
             self.debug(
-                "loaded current shot count {} time:{}".format(
-                    self.counts, last_shot_time
-                )
+                f"loaded current shot count {self.counts} time:{last_shot_time}"
             )
 
     def to_dict(self):
@@ -126,12 +124,12 @@ class PipetteTracker(Loggable):
     def _get_path_id(self, pickled=False):
         # handle legacy format
         p = os.path.join(
-            paths.hidden_dir, "pipette-{}_{}".format(self.inner, self.outer)
+            paths.hidden_dir, f"pipette-{self.inner}_{self.outer}"
         )
         if not os.path.isfile(p):
-            name = "{}_{}-{}".format(self.name, self.inner, self.outer)
+            name = f"{self.name}_{self.inner}-{self.outer}"
             if not pickled:
-                name = "{}.json".format(name)
+                name = f"{name}.json"
 
             p = os.path.join(paths.hidden_dir, name)
 
