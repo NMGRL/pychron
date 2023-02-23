@@ -29,7 +29,8 @@ from pychron.pychron_constants import (
     FUSIONS_CO2,
     FUSIONS_UV,
     OSTECH_DIODE,
-    TAP_DIODE, UC2000_CO2,
+    TAP_DIODE,
+    UC2000_CO2,
 )
 
 
@@ -143,7 +144,8 @@ class TAPDiodePreferences(LaserPreferences):
 
 class UC2000CO2Preferences(LaserPreferences):
     name = UC2000_CO2
-    preferences_path = 'pychron.uc2000.co2'
+    preferences_path = "pychron.uc2000.co2"
+
 
 # ===============================================================================
 # Panes

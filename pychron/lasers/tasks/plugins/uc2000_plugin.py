@@ -13,7 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from pychron.lasers.tasks.laser_preferences import TAPDiodePreferencesPane, UC2000CO2PreferencesPane
+from pychron.lasers.tasks.laser_preferences import (
+    TAPDiodePreferencesPane,
+    UC2000CO2PreferencesPane,
+)
 from pychron.lasers.tasks.laser_task import TAPDiodeTask, UC2000CO2Task
 from pychron.lasers.tasks.plugins.laser_plugin import BaseLaserPlugin
 

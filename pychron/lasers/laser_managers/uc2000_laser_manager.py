@@ -20,4 +20,6 @@ from traits.api import Instance
 
 class UC2000LaserManager(LaserManager):
     laser_controller = Instance(UC2000)
+
+
 # ============= EOF =============================================

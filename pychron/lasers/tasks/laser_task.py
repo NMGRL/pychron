@@ -32,7 +32,8 @@ from pychron.pychron_constants import (
     FUSIONS_CO2,
     FUSIONS_DIODE,
     OSTECH_DIODE,
-    TAP_DIODE, UC2000_CO2,
+    TAP_DIODE,
+    UC2000_CO2,
 )
 
 
@@ -191,6 +192,8 @@ class TAPDiodeTask(BaseLaserTask):
         #         # AuxilaryGraphPane(model=self.manager)
         #     ]
         #
+
+
 class UC2000CO2Task(BaseLaserTask):
     id = "pychron.uc2000.co2"
     name = UC2000_CO2

@@ -16,9 +16,11 @@
 from pychron.hardware.core.communicators.serial_communicator import SerialCommunicator
 from pychron.hardware.core.core_device import CoreDevice
 
-STX = '5B'
-ACK = 'AA'
-NAK = '3F'
+STX = "5B"
+ACK = "AA"
+NAK = "3F"
+
+
 class UC2000(CoreDevice):
     """
 
@@ -27,13 +29,15 @@ class UC2000(CoreDevice):
     description: UC-2000 Universal Laser Controller
 
     """
+
     def _load_communicator(self, config, comtype, *args, **kw):
-        self.communicator = SerialCommunicator(name='uc2000')
+        self.communicator = SerialCommunicator(name="uc2000")
         self.communicator.load(config, self.config_path)
         self.communicator.baudrate = 9600
 
     def initialize(self, *args, **kw):
         return True
+
     def load_additional_args(self, config):
         return True
 
@@ -46,26 +50,29 @@ class UC2000(CoreDevice):
     def set_laser_power(self, percentage, *args, **kw):
         """ """
         if 0 <= percentage <= 100:
-            cmd = '7F'
-            databyte = f'{percentage * 2:x}'
+            cmd = "7F"
+            databyte = f"{percentage * 2:x}"
             checksum = self._calculate_checksum(cmd, databyte)
-            resp = self._ask(f'{cmd}{databyte}{checksum}')
-    def get_status(self):
-        status = self.communicator.ask('7E')
-        self.debug(f'status {status}')
+            resp = self._ask(f"{cmd}{databyte}{checksum}")
 
-    #private
+    def get_status(self):
+        status = self.communicator.ask("7E")
+        self.debug(f"status {status}")
+
+    # private
     def _ask(self, cmd, databyte=None, default=None):
         chksum = self._calculate_checksum(cmd, databyte)
-        cmd = f'{STX}{cmd}'
+        cmd = f"{STX}{cmd}"
 
         if databyte:
-            cmd = f'{cmd}{databyte}'
+            cmd = f"{cmd}{databyte}"
 
-        cmd = f'{cmd}{chksum}'
+        cmd = f"{cmd}{chksum}"
         resp = self.communicator.ask(cmd, verbose=True)
         if resp != ACK:
-            self.warning(f'response was not an ACK. resp={resp}. returning default={default}')
+            self.warning(
+                f"response was not an ACK. resp={resp}. returning default={default}"
+            )
             resp = default
 
         return resp
@@ -73,20 +80,18 @@ class UC2000(CoreDevice):
     def _calculate_checksum(self, cmd, value=None):
         d = int(cmd, 16)
         if value is not None:
-            d+=int(value, 16)
-        nc = d&255
-        ones_compliment = nc^255
-        return f'{ones_compliment:x}'
+            d += int(value, 16)
+        nc = d & 255
+        ones_compliment = nc ^ 255
+        return f"{ones_compliment:x}"
 
     def _enable_laser(self, **kw):
-        cmd = '75'
+        cmd = "75"
         return self._ask(cmd)
-
 
     def _disable_laser(self):
-        cmd = '76'
+        cmd = "76"
         return self._ask(cmd)
-
 
 
 # ============= EOF =============================================
