@@ -32,7 +32,7 @@ from pychron.pychron_constants import (
     FUSIONS_CO2,
     FUSIONS_DIODE,
     OSTECH_DIODE,
-    TAP_DIODE,
+    TAP_DIODE, UC2000_CO2,
 )
 
 
@@ -191,6 +191,25 @@ class TAPDiodeTask(BaseLaserTask):
         #         # AuxilaryGraphPane(model=self.manager)
         #     ]
         #
+class UC2000CO2Task(BaseLaserTask):
+    id = "pychron.uc2000.co2"
+    name = UC2000_CO2
+
+    def create_central_pane(self):
+        pass
+        # if self.manager.mode == "client":
+        #     from pychron.lasers.tasks.panes.tap import TAPDiodeClientPane
+        #
+        #     return TAPDiodeClientPane(model=self.manager)
+
+        # else:
+        #     from pychron.lasers.tasks.panes.ostech import OsTechDiodePane
+        #     return OsTechDiodePane(model=self.manager)
+
+    def create_dock_panes(self):
+        pass
+        # if self.manager.mode == "client":
+        #     return []
 
 
 class AblationCO2Task(BaseLaserTask):

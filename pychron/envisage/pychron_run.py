@@ -74,6 +74,7 @@ PACKAGE_DICT = dict(
     RestonFurnacePlugin="pychron.furnace.tasks.reston.furnace_plugin",
     # hardware-lasers
     TAPDiodePlugin="pychron.lasers.tasks.plugins.tap",
+    UC2000CO2Plugin="pychron.lasers.tasks.plugins.uc2000_plugin",
     OsTechDiodePlugin="pychron.lasers.tasks.plugins.ostech_diode",
     AblationCO2Plugin="pychron.lasers.tasks.plugins.ablation_co2",
     ChromiumCO2Plugin="pychron.lasers.tasks.plugins.chromium_co2",
