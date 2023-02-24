@@ -31,8 +31,8 @@ class ChromiumLaserManager(EthernetLaserManager):
 
     def setup_communicator(self):
         return super(ChromiumLaserManager, self).setup_communicator(
-                write_terminator="\r\n", read_terminator="\r\n"
-            )
+            write_terminator="\r\n", read_terminator="\r\n"
+        )
 
     def set_tray(self, t):
         if self.stage_manager:

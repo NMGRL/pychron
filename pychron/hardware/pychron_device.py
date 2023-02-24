@@ -81,7 +81,9 @@ class EthernetDeviceMixin(RemoteDeviceMixin):
     host = Str
     timeout = CInt
 
-    def setup_communicator(self, write_terminator=None, read_terminator=None, force=False):
+    def setup_communicator(
+        self, write_terminator=None, read_terminator=None, force=False
+    ):
         from pychron.hardware.core.communicators.ethernet_communicator import (
             EthernetCommunicator,
         )
