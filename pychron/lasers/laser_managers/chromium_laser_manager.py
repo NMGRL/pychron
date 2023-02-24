@@ -30,15 +30,9 @@ class ChromiumLaserManager(EthernetLaserManager):
     _alive = False
 
     def setup_communicator(self):
-        com = self.communicator
-        if com is None:
-            com = super(ChromiumLaserManager, self).setup_communicator(
+        return super(ChromiumLaserManager, self).setup_communicator(
                 write_terminator="\r\n", read_terminator="\r\n"
             )
-            if self.communicator:
-                self.communicator.report()
-
-        return com
 
     def set_tray(self, t):
         if self.stage_manager:
