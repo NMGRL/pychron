@@ -32,13 +32,16 @@ class VisaCommunicator(Communicator):
     model_code = 0
     serial_number = 0
     usb_interface_number = None
-    interface_kind = 'USB'
+    interface_kind = "USB"
     _comms_report_attrs = ("board", "model_code", "serial_number")
 
     def _make_address(self):
-
         base = "{}{}::{}::{}::{}".format(
-            self.interface_kind, self.board, self.manufacture_id, self.model_code, self.serial_number
+            self.interface_kind,
+            self.board,
+            self.manufacture_id,
+            self.model_code,
+            self.serial_number,
         )
         if self.usb_interface_number:
             base = "{}::{}".format(base, self.usb_interface_number)
