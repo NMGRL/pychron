@@ -26,7 +26,7 @@ class VisaCommunicator(Communicator):
     """
     uses PyVisa as main interface to USB.
     """
-
+    address = None
     board = 0
     manufacture_id = 0
     model_code = 0
@@ -36,28 +36,32 @@ class VisaCommunicator(Communicator):
     _comms_report_attrs = ("board", "model_code", "serial_number")
 
     def _make_address(self):
-        base = "{}{}::{}::{}::{}".format(
-            self.interface_kind,
-            self.board,
-            self.manufacture_id,
-            self.model_code,
-            self.serial_number,
-        )
-        if self.usb_interface_number:
-            base = "{}::{}".format(base, self.usb_interface_number)
+        addr = self.address
+        if addr is None:
+            base = "{}{}::{}::{}::{}".format(
+                self.interface_kind, self.board, self.manufacture_id, self.model_code, self.serial_number
+            )
+            if self.usb_interface_number:
+                base = "{}::{}".format(base, self.usb_interface_number)
+            addr =  "{}::INSTR".format(base)
 
-        return "{}::INSTR".format(base)
+        return addr
 
     def open(self, *args, **kw):
         self.debug("opening visa usb communicator")
 
         address = self._make_address()
-        self.handle = resource_manager.get_instrument(address)
+        try:
+            self.handle = resource_manager.open_resource(address)
+        except AttributeError:
+            self.handle = resource_manager.get_instrument(address)
+
         if self.handle is not None:
             self.simulation = False
             return True
 
     def load(self, config, path, **kw):
+        self.set_attribute(config, "address", "Communications", "address", optional=True)
         self.set_attribute(config, "board", "Communications", "board")
         self.set_attribute(config, "interface_kind", "Communications", "interface")
         self.set_attribute(config, "manufacture_id", "Communications", "manufacture_id")
