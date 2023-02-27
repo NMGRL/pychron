@@ -26,6 +26,7 @@ class VisaCommunicator(Communicator):
     """
     uses PyVisa as main interface to USB.
     """
+
     address = None
     board = 0
     manufacture_id = 0
@@ -39,11 +40,15 @@ class VisaCommunicator(Communicator):
         addr = self.address
         if addr is None:
             base = "{}{}::{}::{}::{}".format(
-                self.interface_kind, self.board, self.manufacture_id, self.model_code, self.serial_number
+                self.interface_kind,
+                self.board,
+                self.manufacture_id,
+                self.model_code,
+                self.serial_number,
             )
             if self.usb_interface_number:
                 base = "{}::{}".format(base, self.usb_interface_number)
-            addr =  "{}::INSTR".format(base)
+            addr = "{}::INSTR".format(base)
 
         return addr
 
@@ -61,7 +66,9 @@ class VisaCommunicator(Communicator):
             return True
 
     def load(self, config, path, **kw):
-        self.set_attribute(config, "address", "Communications", "address", optional=True)
+        self.set_attribute(
+            config, "address", "Communications", "address", optional=True
+        )
         self.set_attribute(config, "board", "Communications", "board")
         self.set_attribute(config, "interface_kind", "Communications", "interface")
         self.set_attribute(config, "manufacture_id", "Communications", "manufacture_id")
