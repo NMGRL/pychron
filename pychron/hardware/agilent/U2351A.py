@@ -15,6 +15,10 @@
 # ===============================================================================
 import os
 import time
+import yaml
+import bezier
+from matplotlib import pyplot as plt
+from numpy import array, linspace
 
 from pychron.core.yaml import yload
 from pychron.hardware.actuators.gp_actuator import GPActuator
@@ -26,25 +30,37 @@ class U2351A(GPActuator):
 
     valve_actuation_config.yaml example
 
-    A:
-      open:
-        curve:
-        nsteps: 1000
-        step_delay: 1
-      close:
-        curve:
-        nsteps: 1
-        step_delay: 0
-    B:
-      open:
-        curve:
-        nsteps: 1000
-        step_delay: 1
-      close:
-        curve:
-        nsteps: 1
-        step_delay: 0
-    """
+       ValveA:
+         open:
+           control_points:
+            - 0.0,0
+            - 0.5,5
+            - 1.0,5
+           nsteps: 50
+           step_delay: 1
+         close:
+           control_points:
+            - 0.0,5
+            - 0.5,0
+            - 1.0,0
+           nsteps: 50
+           step_delay: 1
+       ValveB:
+         open:
+           control_points:
+            - 0.0,0
+            - 0.5,5
+            - 1.0,5
+           nsteps: 50
+           step_delay: 1
+         close:
+           control_points:
+            - 0.0,5
+            - 0.5,0
+            - 1.0,0
+           nsteps: 50
+           step_delay: 1
+       """
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
@@ -57,24 +73,37 @@ class U2351A(GPActuator):
         state = action.lower() == "open"
         print("actuate. write digital out {} {}".format(addr, state))
 
-        stepobj = self._get_actuation_steps(state)
+        stepobj = self._get_actuation_steps(obj.name)
         if stepobj:
-            n = stepobj["nsteps"]
-            step_delay = stepobj["step_delay"]
-            steps = self._generate_voltage_steps(stepobj)
+            n = stepobj['nsteps']
+            step_delay = stepobj['step_delay']
+            steps = self._generate_voltage_steps(stepobj[state])
 
             self.debug(f"ramping voltage nsteps={n}, step_delay={step_delay}")
             for i, step in enumerate(steps):
-                self.debug(f"step {i + 1}/{n} {step}")
-                # self.communicator.a_out(addr, step)
-                self.ask(f"SOUR:VOLT {step}, (@{addr})")
+                self.debug(f'step {i + 1}/{n} {step}')
+                self.ask(f'SOUR:VOLT {step}, (@{addr})')
                 time.sleep(step_delay)
         else:
-            self.ask(f"SOUR:VOLT 5,(@{addr})")
+            v = 5 if state else 0
+            self.ask(f'SOUR:VOLT {v},(@{addr})')
         return True
 
     def _generate_voltage_steps(self, obj):
-        return [1, 2, 3, 4, 5]
+        nodes = array([p.split(',') for p in obj['control_points']], dtype=float).T
+        curve = bezier.Curve(nodes, degree=2)
+        if obj.get('along_path', False):
+            steps = [curve.evaluate(ni)[1][0] for ni in linspace(0.0, 1.0, obj['nsteps'])]
+        else:
+            ma = nodes.max()
+            steps = []
+            for i in linspace(0.0, 1.0, obj['nsteps']):
+                curve2 = bezier.Curve([[i, i], [0, ma]], degree=1)
+                intersections = curve.intersect(curve2)
+                output = curve.evaluate_multi(intersections[0, :])[1][0]
+                steps.append(output)
+
+        return steps
 
     def _get_actuation_config(self, name):
         if os.path.isfile(self._actuation_config_path):
@@ -83,4 +112,60 @@ class U2351A(GPActuator):
                 return obj.get(name)
 
 
+if __name__ == '__main__':
+    cfg = '''
+A:  
+ open:
+   control_points:
+    - 0.0,0
+    - 0.5,5
+    - 1.0,5
+   nsteps: 50
+   step_delay: 1
+   degree: 2
+ close:
+   control_points:
+    - 0.0,5
+    - 0.5,0
+    - 0.5,2.5
+    - 1.0,0
+   nsteps: 50
+   step_delay: 1
+   degree: 3
+
+'''
+    ym = yaml.safe_load(cfg)
+    obj = ym['A']['close']
+    nodes = array([p.split(',') for p in obj['control_points']], dtype=float).T
+    print(nodes)
+    curve = bezier.Curve(nodes, degree=obj.get('degree', 1))
+    xs, ys = [], []
+    xs2, ys2 = [], []
+    xs3,ys3 = [],[]
+    ma = nodes.max()
+    for i in linspace(0.0, 1.0, obj['nsteps']):
+        vs = curve.evaluate(i)
+
+        xs.append(vs[0][0])
+        ys.append(vs[1][0])
+        nodes2 = [[i,i], [0, ma]]
+        curve2 = bezier.Curve(nodes2, degree=1)
+        print(nodes2, curve2)
+        intersections = curve.intersect(curve2)
+        print(intersections)
+        # xs2.append(intersections[0][0])
+        # ys2.append(intersections[1][0]*ma)
+
+        s_vals = intersections[0, :]
+        a = curve.evaluate_multi(s_vals)
+
+        xs3.append(a[0][0])
+        ys3.append(a[1][0])
+
+
+    # print(xs)
+    plt.scatter(xs, ys)
+    plt.scatter(xs2, ys2)
+    plt.scatter(xs3, ys3)
+    plt.show()
 # ============= EOF =============================================
