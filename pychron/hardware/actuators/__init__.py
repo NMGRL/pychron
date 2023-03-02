@@ -77,22 +77,23 @@ def trim_affirmative(func):
     return wrapper
 
 
-base = 'pychron.hardware'
-abase = '{}.actuators'.format(base)
+base = "pychron.hardware"
+abase = "{}.actuators".format(base)
 
-PACKAGES = dict(AgilentGPActuator='{}.agilent.agilent_gp_actuator'.format(base),
-                AgilentMultifunction='{}.agilent.agilent_multifunction'.format(base),
-                ArduinoGPActuator='{}.arduino.arduino_gp_actuator'.format(base),
-                QtegraGPActuator='{}.qtegra_gp_actuator'.format(abase),
-                PychronGPActuator='{}.pychron_gp_actuator'.format(abase),
-                NGXGPActuator='{}.ngx_gp_actuator'.format(abase),
-                WiscArGPActuator='{}.wiscar_actuator'.format(abase),
-                NMGRLFurnaceActuator='{}.nmgrl_furnace_actuator'.format(abase),
-                DummyGPActuator='{}.dummy_gp_actuator'.format(abase),
-                RPiGPIO='{}.rpi_gpio'.format(base),
-                T4Actuator='{}.t4_actuator'.format(abase),
-                U3Actuator='{}.u3_actuator'.format(abase),
-                ProXRActuator='{}.proxr_actuator'.format(abase),
-                PLC2000GPActuator='{}.plc2000_gp_actuator'.format(abase),
-                MCCGPActuator='{}.mcc_gp_actuator'.format(abase))
-
+PACKAGES = dict(
+    AgilentGPActuator="{}.agilent.agilent_gp_actuator".format(base),
+    AgilentMultifunction="{}.agilent.agilent_multifunction".format(base),
+    ArduinoGPActuator="{}.arduino.arduino_gp_actuator".format(base),
+    QtegraGPActuator="{}.qtegra_gp_actuator".format(abase),
+    PychronGPActuator="{}.pychron_gp_actuator".format(abase),
+    NGXGPActuator="{}.ngx_gp_actuator".format(abase),
+    WiscArGPActuator="{}.wiscar_actuator".format(abase),
+    NMGRLFurnaceActuator="{}.nmgrl_furnace_actuator".format(abase),
+    DummyGPActuator="{}.dummy_gp_actuator".format(abase),
+    RPiGPIO="{}.rpi_gpio".format(base),
+    T4Actuator="{}.t4_actuator".format(abase),
+    U3Actuator="{}.u3_actuator".format(abase),
+    ProXRActuator="{}.proxr_actuator".format(abase),
+    PLC2000GPActuator="{}.plc2000_gp_actuator".format(abase),
+    MCCGPActuator="{}.mcc_gp_actuator".format(abase),
+)

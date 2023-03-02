@@ -386,6 +386,7 @@ class ExtractionLineManager(Manager, Consoleable):
                     c.update_switch_owned_state(*args, **kw)
                 except BaseException:
                     self.debug_exception()
+
     def set_valve_owner(self, name, owner):
         """
         set flag indicating if the valve is owned by a system
