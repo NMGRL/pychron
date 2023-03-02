@@ -26,6 +26,7 @@ class AquaController(CoreDevice):
         waitfor(dev.is_ready)
 
     """
+
     def trigger(self):
         self.ask("trigger")
 
@@ -36,10 +37,11 @@ class AquaController(CoreDevice):
             try:
                 r = json.loads(r)
             except BaseException:
-                self.warning('failed reading response')
+                self.warning("failed reading response")
                 self.debug_exception()
                 return
 
-            return r['completed']
+            return r["completed"]
+
 
 # ============= EOF =============================================

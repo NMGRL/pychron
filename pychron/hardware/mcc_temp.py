@@ -33,4 +33,6 @@ class MCCTemp(CoreDevice):
 
         g.set_y_title("Temp (C)")
         # g.set_y_title("Heat Power (%)", plotid=1)
+
+
 # ============= EOF =============================================

@@ -24,31 +24,33 @@ from pychron.paths import paths
 class U2351A(GPActuator):
     """
 
-       valve_actuation_config.yaml example
+    valve_actuation_config.yaml example
 
-       A:
-         open:
-           curve:
-           nsteps: 1000
-           step_delay: 1
-         close:
-           curve:
-           nsteps: 1
-           step_delay: 0
-       B:
-         open:
-           curve:
-           nsteps: 1000
-           step_delay: 1
-         close:
-           curve:
-           nsteps: 1
-           step_delay: 0
-       """
+    A:
+      open:
+        curve:
+        nsteps: 1000
+        step_delay: 1
+      close:
+        curve:
+        nsteps: 1
+        step_delay: 0
+    B:
+      open:
+        curve:
+        nsteps: 1000
+        step_delay: 1
+      close:
+        curve:
+        nsteps: 1
+        step_delay: 0
+    """
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
-        self._actuation_config_path = os.path.join(paths.device_dir, 'valve_actuation_config.yaml')
+        self._actuation_config_path = os.path.join(
+            paths.device_dir, "valve_actuation_config.yaml"
+        )
 
     def _actuate(self, obj, action):
         addr = obj.address
@@ -57,18 +59,18 @@ class U2351A(GPActuator):
 
         stepobj = self._get_actuation_steps(state)
         if stepobj:
-            n = stepobj['nsteps']
-            step_delay = stepobj['step_delay']
+            n = stepobj["nsteps"]
+            step_delay = stepobj["step_delay"]
             steps = self._generate_voltage_steps(stepobj)
 
-            self.debug(f'ramping voltage nsteps={n}, step_delay={step_delay}')
+            self.debug(f"ramping voltage nsteps={n}, step_delay={step_delay}")
             for i, step in enumerate(steps):
-                self.debug(f'step {i + 1}/{n} {step}')
+                self.debug(f"step {i + 1}/{n} {step}")
                 # self.communicator.a_out(addr, step)
-                self.ask(f'SOUR:VOLT {step}, (@{addr})')
+                self.ask(f"SOUR:VOLT {step}, (@{addr})")
                 time.sleep(step_delay)
         else:
-            self.ask(f'SOUR:VOLT 5,(@{addr})')
+            self.ask(f"SOUR:VOLT 5,(@{addr})")
         return True
 
     def _generate_voltage_steps(self, obj):
@@ -76,8 +78,9 @@ class U2351A(GPActuator):
 
     def _get_actuation_config(self, name):
         if os.path.isfile(self._actuation_config_path):
-            with open(self._actuation_config_path, 'r') as wfile:
+            with open(self._actuation_config_path, "r") as wfile:
                 obj = yload(wfile)
                 return obj.get(name)
+
 
 # ============= EOF =============================================

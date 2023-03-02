@@ -59,6 +59,7 @@ class OsTechDiodeFactory(LaserFactory):
 
 
 from pychron.paths import paths
+
 path = os.path.join(paths.log_dir, "pps.log.json")
 logger = Logger(observer=jsonFileLogObserver(io.open(path, "w")))
 
@@ -86,4 +87,6 @@ class FurnaceFactory(BaseFactory):
 
 class AquAFactory(BaseFactory):
     protocol_klass = AquAProtocol
+
+
 # ============= EOF =============================================

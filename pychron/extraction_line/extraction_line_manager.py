@@ -384,7 +384,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def update_switch_owned_state(self, *args, **kw):
         for c in self.canvases:
-            if 'state' in kw:
+            if "state" in kw:
                 try:
                     c.update_switch_owned_state(*args, **kw)
                 except BaseException:
@@ -543,12 +543,10 @@ class ExtractionLineManager(Manager, Consoleable):
         app = self.application
         se = self.script_executor
         if not se:
-            se = app.get_service(
-                "pychron.pyscripts.tasks.pyscript_task.ScriptExecutor"
-            )
+            se = app.get_service("pychron.pyscripts.tasks.pyscript_task.ScriptExecutor")
             self.script_executor = se
         # context = {"analysis_type": "blank" if "blank" in name else "unknown"}
-        name = 'aqua.py'
+        name = "aqua.py"
         root = os.path.join(paths.scripts_dir)
         p = os.path.join(root, name)
         if os.path.isfile(p):
@@ -562,13 +560,13 @@ class ExtractionLineManager(Manager, Consoleable):
             )
             self._aqua_active_flag = True
         else:
-            self.warning(f'{p} is not a valid file')
+            self.warning(f"{p} is not a valid file")
 
     def aqua_get_status(self):
         status = {}
         if self.script_executor and self._aqua_active_flag:
             status = self.script_executor.get_script_status()
-            if status.get('completed'):
+            if status.get("completed"):
                 self._aqua_active_flag = False
         return json.dumps(status)
 
@@ -783,7 +781,7 @@ class ExtractionLineManager(Manager, Consoleable):
             return True
 
     def _open_close_valve(
-            self, name, action, description=None, address=None, mode="remote", **kw
+        self, name, action, description=None, address=None, mode="remote", **kw
     ):
         vm = self.switch_manager
         if vm is not None:
@@ -911,13 +909,13 @@ class ExtractionLineManager(Manager, Consoleable):
             package = "pychron.managers.{}".format(manager)
 
         if manager in (
-                "switch_manager",
-                "gauge_manager",
-                "multiplexer_manager",
-                "cryo_manager",
-                "manometer_manager",
-                "heater_manager",
-                "pump_manager",
+            "switch_manager",
+            "gauge_manager",
+            "multiplexer_manager",
+            "cryo_manager",
+            "manometer_manager",
+            "heater_manager",
+            "pump_manager",
         ):
             if manager == "switch_manager":
                 man = self._switch_manager_factory()
