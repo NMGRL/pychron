@@ -20,16 +20,17 @@ import json
 import os
 from pychron.paths import paths
 
+
 class MCCGPActuator(GPActuator, ClientMixin):
     def __init__(self, *args, **kw):
         super(MCCGPActuator, self).__init__(*args, **kw)
-        self._persistence_path = os.path.join(paths.appdata_dir, 'valve_states.json')
+        self._persistence_path = os.path.join(paths.appdata_dir, "valve_states.json")
         self._local_states = {}
 
     def _actuate(self, obj, action):
         addr = obj.address
-        state = action.lower() == 'open'
-        print('actuate. write digital out {} {}'.format(addr, state))
+        state = action.lower() == "open"
+        print("actuate. write digital out {} {}".format(addr, state))
         self.communicator.d_out(addr, state)
         self._local_states[addr] = state
 
@@ -38,17 +39,16 @@ class MCCGPActuator(GPActuator, ClientMixin):
 
     def _dump_states(self):
         p = self._persistence_path
-        with open(p, 'w') as wfile:
+        with open(p, "w") as wfile:
             json.dump(self._local_states, wfile)
 
     def _load_states(self):
         p = self._persistence_path
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 self._local_states = json.load(rfile)
 
     def get_channel_state(self, address, *args, **kw):
-
         read_states_from_mcc = False
         if read_states_from_mcc:
             ret = self.communicator.d_in(address)
@@ -57,8 +57,9 @@ class MCCGPActuator(GPActuator, ClientMixin):
                 self._load_states()
             ret = self._local_states.get(address, False)
 
-        #print(self.local_states)
-        #return self.local_states.get(address, False)
+        # print(self.local_states)
+        # return self.local_states.get(address, False)
         return ret
+
 
 # ============= EOF =============================================
