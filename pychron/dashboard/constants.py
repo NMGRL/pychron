@@ -17,12 +17,9 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-PUBLISH = 'pub'
+PUBLISH = "pub"
 
 NOERROR = 0
 WARNING = 10
 CRITICAL = 20
 # ============= EOF =============================================
-
-
-

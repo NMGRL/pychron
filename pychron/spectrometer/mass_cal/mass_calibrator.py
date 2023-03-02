@@ -17,8 +17,28 @@
 # ============= enthought library imports =======================
 
 from __future__ import absolute_import
-from traits.api import HasTraits, Float, Int, List, Str, Any, Event, Property, on_trait_change, Range
-from traitsui.api import View, Item, HGroup, spring, EnumEditor, ButtonEditor, Group, TextEditor
+from traits.api import (
+    HasTraits,
+    Float,
+    Int,
+    List,
+    Str,
+    Any,
+    Event,
+    Property,
+    on_trait_change,
+    Range,
+)
+from traitsui.api import (
+    View,
+    Item,
+    HGroup,
+    spring,
+    EnumEditor,
+    ButtonEditor,
+    Group,
+    TextEditor,
+)
 
 # ============= standard library imports ========================
 from numpy import array, hstack, Inf, savetxt
@@ -26,12 +46,17 @@ import csv
 import os
 from threading import Thread
 import struct
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.filetools import unique_path
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.paths import paths
 from pychron.spectrometer.jobs.magnet_sweep import MagnetSweep
-from pychron.core.stats.peak_detection import find_peaks, calculate_peak_center, PeakCenterError
+from pychron.core.stats.peak_detection import (
+    find_peaks,
+    calculate_peak_center,
+    PeakCenterError,
+)
 from pychron.core.ui.gui import invoke_in_main_thread
 import six
 from six.moves import zip
@@ -41,7 +66,7 @@ the following points, before a peak may be considered a peak"""
 
 
 class CalibrationPeak(HasTraits):
-    isotope = Str('Ar40')
+    isotope = Str("Ar40")
     dac = Float
     isotopes = List
     ruler = Any
@@ -70,22 +95,22 @@ class MassCalibratorSweep(MagnetSweep):
     fwindow = Float(1)
     fstep_dac = Float(0.1)
     fexecute_button = Event
-    fexecute_label = Property(depends_on='_alive')
-    fine_scan_enabled = Property(depends_on='calibration_peaks:isotope')
+    fexecute_label = Property(depends_on="_alive")
+    fine_scan_enabled = Property(depends_on="calibration_peaks:isotope")
 
     _fine_scanning = False
 
     def setup_graph(self):
         g = self.graph
         g.new_plot()
-        g.set_x_title('DAC')
+        g.set_x_title("DAC")
 
         g.new_series()
 
         mi = min(self.start_dac, self.stop_dac)
         ma = max(self.start_dac, self.stop_dac)
 
-        g.set_x_limits(min_=mi, max_=ma, pad='0.1')
+        g.set_x_limits(min_=mi, max_=ma, pad="0.1")
 
     def _fine_scan(self):
         operiod = self.period
@@ -93,8 +118,7 @@ class MassCalibratorSweep(MagnetSweep):
 
         self._fine_scanning = True
         i = 1
-        self.graph.new_plot(padding_top=10,
-                            xtitle='Relative DAC')
+        self.graph.new_plot(padding_top=10, xtitle="Relative DAC")
         w = self.fwindow / 2.0
         self.graph.set_x_limits(min_=-w, max_=w, plotid=1)
         self._redraw()
@@ -105,7 +129,11 @@ class MassCalibratorSweep(MagnetSweep):
 
             if self.isAlive():
                 self.selected = cp
-                self.info('Fine scan calibration peak {}. {} dac={}'.format(i, cp.isotope, cp.dac))
+                self.info(
+                    "Fine scan calibration peak {}. {} dac={}".format(
+                        i, cp.isotope, cp.dac
+                    )
+                )
                 self._fine_scan_peak(cp)
 
             i += 1
@@ -113,19 +141,18 @@ class MassCalibratorSweep(MagnetSweep):
         self.period = operiod
         self._fine_scanning = False
         if self.isAlive():
-            if self.confirmation_dialog('Save to Database'):
+            if self.confirmation_dialog("Save to Database"):
                 self._save_to_db()
-                if self.confirmation_dialog('Apply Calibration'):
+                if self.confirmation_dialog("Apply Calibration"):
                     self._apply_calibration()
 
     def _pack(self, d):
-        data = ''.join([struct.pack('>ff', x, y)
-                        for x, y in d])
+        data = "".join([struct.pack(">ff", x, y) for x, y in d])
         return data
 
     def _save_to_db(self):
         db = self.db
-        spectrometer = 'Obama'
+        spectrometer = "Obama"
         hist = db.add_mass_calibration_history(spectrometer)
 
         # add coarse scan
@@ -143,19 +170,21 @@ class MassCalibratorSweep(MagnetSweep):
             ys = p.value.get_data()
             d = array((xs, ys)).T
             data = self._pack(d)
-            db.add_mass_calibration_scan(hist,
-                                         cp.isotope,
-                                         blob=data,
-                                         center=cp.dac, )
+            db.add_mass_calibration_scan(
+                hist,
+                cp.isotope,
+                blob=data,
+                center=cp.dac,
+            )
         db.commit()
 
     def _apply_calibration(self):
         """
-            save calibration peaks as mag field table
+        save calibration peaks as mag field table
         """
-        p = os.path.join(paths.spectrometer_dir, 'mftable.csv')
-        with open(p, 'w') as wfile:
-            writer = csv.writer(wfile, delimiter=',')
+        p = os.path.join(paths.spectrometer_dir, "mftable.csv")
+        with open(p, "w") as wfile:
+            writer = csv.writer(wfile, delimiter=",")
             for cp in self.calibration_peaks:
                 if cp.isotope:
                     writer.writerow([cp.isotope, cp.dac])
@@ -179,7 +208,9 @@ class MassCalibratorSweep(MagnetSweep):
             # if not isinstance(center, str):
             [lx, cx, hx], [ly, cy, hy], mx, my = center
             self.graph.add_vertical_rule(cx, plotid=1)
-            self.info('new peak center. {} nominal={} dx={}'.format(cp.isotope, cp.dac, cx))
+            self.info(
+                "new peak center. {} nominal={} dx={}".format(cp.isotope, cp.dac, cx)
+            )
             cp.dac += cx
             self._redraw()
         except PeakCenterError as e:
@@ -189,7 +220,7 @@ class MassCalibratorSweep(MagnetSweep):
 
     def _update_graph_data(self, *args, **kw):
         """
-            add and scale scans
+        add and scale scans
         """
         if self._fine_scanning:
             self._update_fine_graph_data(*args, **kw)
@@ -205,13 +236,13 @@ class MassCalibratorSweep(MagnetSweep):
         ks = sorted(plot.plots.keys())
         cur = plot.plots[ks[-1]][0]
 
-        if hasattr(cur, 'odata'):
-            oys = getattr(cur, 'odata')
+        if hasattr(cur, "odata"):
+            oys = getattr(cur, "odata")
             oys = hstack((oys, intensities[:1]))
         else:
             oys = array(intensities)
 
-        setattr(cur, 'odata', oys)
+        setattr(cur, "odata", oys)
 
         xs = cur.index.get_data()
         xs = hstack((xs, di))
@@ -248,22 +279,22 @@ class MassCalibratorSweep(MagnetSweep):
             super(MassCalibratorSweep, self)._graph_hook(*args, **kw)
 
     def _dump_scan(self):
-        root = os.path.join(paths.data_dir, 'mass_calibration_scans')
+        root = os.path.join(paths.data_dir, "mass_calibration_scans")
         if not os.path.isdir(root):
             os.mkdir(root)
 
-        p, _ = unique_path(root, 'scan')
+        p, _ = unique_path(root, "scan")
 
         d = self._get_coarse_data()
         savetxt(p, d)
 
     def _get_coarse_data(self):
         """
-            return coarse scan as (dac,intensity) pairs
+        return coarse scan as (dac,intensity) pairs
         """
         data = self.graph.plots[0].data
-        xs = data.get_data('x0')
-        ys = data.get_data('y0')
+        xs = data.get_data("x0")
+        ys = data.get_data("y0")
         return array((xs, ys)).T
 
     def _find_peaks(self):
@@ -272,14 +303,12 @@ class MassCalibratorSweep(MagnetSweep):
             self.graph.remove_rulers()
 
             data = self.graph.plots[0].data
-            xs = data.get_data('x0')
-            ys = data.get_data('y0')
+            xs = data.get_data("x0")
+            ys = data.get_data("y0")
             if len(xs) and len(ys):
                 lookahead = max(1, int(self.min_peak_separation / self.fstep_dac))
 
-                mxp, mip = find_peaks(ys, xs,
-                                      lookahead=lookahead,
-                                      delta=self.delta)
+                mxp, mip = find_peaks(ys, xs, lookahead=lookahead, delta=self.delta)
 
                 pks = []
                 isos = list(self.spectrometer.molecular_weights.keys())
@@ -288,20 +317,17 @@ class MassCalibratorSweep(MagnetSweep):
                 for dac, v in mxp:
                     if v > self.min_peak_height:
                         l = self.graph.add_vertical_rule(dac)
-                        pks.append(CalibrationPeak(dac=dac,
-                                                   isotopes=isos,
-                                                   ruler=l))
+                        pks.append(CalibrationPeak(dac=dac, isotopes=isos, ruler=l))
 
                 self.calibration_peaks = pks
             self._redraw()
 
     def _set_x_limits(self):
-
         if self.graph:
             mi = min(self.start_dac, self.stop_dac)
             ma = max(self.start_dac, self.stop_dac)
 
-            self.graph.set_x_limits(min_=mi, max_=ma, pad='0.1')
+            self.graph.set_x_limits(min_=mi, max_=ma, pad="0.1")
 
     def _redraw(self):
         invoke_in_main_thread(self.graph.redraw)
@@ -335,7 +361,7 @@ class MassCalibratorSweep(MagnetSweep):
     # ===================================================================================================================
     # handlers
     # ===================================================================================================================
-    @on_trait_change('min_peak_height, min_peak_separation, delta')
+    @on_trait_change("min_peak_height, min_peak_separation, delta")
     def _handle_peak_detection_change(self):
         self._find_peaks()
 
@@ -345,8 +371,7 @@ class MassCalibratorSweep(MagnetSweep):
             self._end()
         else:
             self._alive = True
-            t = Thread(name='fine scan',
-                       target=self._fine_scan)
+            t = Thread(name="fine scan", target=self._fine_scan)
             t.start()
 
     def _selected_changed(self):
@@ -369,46 +394,58 @@ class MassCalibratorSweep(MagnetSweep):
 
     def traits_view(self):
         coarse_grp = Group(
-            Item('reference_detector', editor=EnumEditor(name='detectors')),
-            Item('start_dac', label='Start'),
-            Item('stop_dac', label='Stop'),
-            Item('step_dac', label='Step'),
-            Item('period', label='Scan Period (ms)'),
-            HGroup(spring, Item('execute_button', editor=ButtonEditor(label_value='execute_label'),
-                                show_label=False)),
-            label='Coarse')
+            Item("reference_detector", editor=EnumEditor(name="detectors")),
+            Item("start_dac", label="Start"),
+            Item("stop_dac", label="Stop"),
+            Item("step_dac", label="Step"),
+            Item("period", label="Scan Period (ms)"),
+            HGroup(
+                spring,
+                Item(
+                    "execute_button",
+                    editor=ButtonEditor(label_value="execute_label"),
+                    show_label=False,
+                ),
+            ),
+            label="Coarse",
+        )
 
         peak_detection_grp = Group(
-            Item('min_peak_height',
-                 label='Min. Height (fA)'),
-            Item('min_peak_separation',
-                 label='Min. Separation (V)',
-                 editor=TextEditor(evaluate=float)),
-            Item('delta',
-                 tooltip=DELTA_TOOLTIP
-                 ),
-            label='Peak Detection')
+            Item("min_peak_height", label="Min. Height (fA)"),
+            Item(
+                "min_peak_separation",
+                label="Min. Separation (V)",
+                editor=TextEditor(evaluate=float),
+            ),
+            Item("delta", tooltip=DELTA_TOOLTIP),
+            label="Peak Detection",
+        )
 
         fine_grp = Group(
-            Item('fwindow', label='Window (V)',
-                 tooltip='+/- volts centered at peak_i'),
-            Item('fperiod', label='Scan Period (ms)',
-                 tooltip='fine scan integration time'
-                 ),
-            HGroup(spring, Item('fexecute_button',
-                                editor=ButtonEditor(label_value='fexecute_label'),
-                                show_label=False)),
-            label='Fine',
-            enabled_when='fine_scan_enabled'
+            Item("fwindow", label="Window (V)", tooltip="+/- volts centered at peak_i"),
+            Item(
+                "fperiod",
+                label="Scan Period (ms)",
+                tooltip="fine scan integration time",
+            ),
+            HGroup(
+                spring,
+                Item(
+                    "fexecute_button",
+                    editor=ButtonEditor(label_value="fexecute_label"),
+                    show_label=False,
+                ),
+            ),
+            label="Fine",
+            enabled_when="fine_scan_enabled",
         )
-        v = View(Group(coarse_grp, peak_detection_grp, fine_grp, layout='tabbed'))
+        v = View(Group(coarse_grp, peak_detection_grp, fine_grp, layout="tabbed"))
         return v
 
     def _get_fine_scan_enabled(self):
-        return len([cp for cp in self.calibration_peaks
-                    if cp.isotope]) > 2
+        return len([cp for cp in self.calibration_peaks if cp.isotope]) > 2
 
     def _get_fexecute_label(self):
-        return 'Stop' if self.isAlive() else 'Start'
+        return "Stop" if self.isAlive() else "Start"
 
         # ============= EOF =============================================

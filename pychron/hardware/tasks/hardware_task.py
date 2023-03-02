@@ -22,21 +22,28 @@ from pyface.tasks.task_layout import PaneItem, TaskLayout, VSplitter, Tabbed
 from traits.api import Instance
 
 from pychron.envisage.tasks.base_task import BaseHardwareTask
-from pychron.hardware.tasks.hardware_pane import CurrentDevicePane, DevicesPane, InfoPane, ConfigurationPane, \
-    TerminalPane
+from pychron.hardware.tasks.hardware_pane import (
+    CurrentDevicePane,
+    DevicesPane,
+    InfoPane,
+    ConfigurationPane,
+    TerminalPane,
+)
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.hardware.tasks.hardwarer import Hardwarer
 
 
 class HardwareTask(BaseHardwareTask):
-    id = 'pychron.hardware'
-    name = 'Hardware'
-    manager = Instance('pychron.hardware.tasks.hardwarer.Hardwarer')
+    id = "pychron.hardware"
+    name = "Hardware"
+    manager = Instance("pychron.hardware.tasks.hardwarer.Hardwarer")
 
     def activated(self):
-        devs = self.application.get_services('pychron.hardware.core.i_core_device.ICoreDevice',
-                                             "display==True")
+        devs = self.application.get_services(
+            "pychron.hardware.core.i_core_device.ICoreDevice", "display==True"
+        )
         self.manager.devices = devs
         if devs:
             self.manager.selected = devs[0]
@@ -46,19 +53,24 @@ class HardwareTask(BaseHardwareTask):
         return pane
 
     def create_dock_panes(self):
-        return [DevicesPane(model=self.manager),
-                InfoPane(model=self.manager),
-                ConfigurationPane(model=self.manager),
-                TerminalPane(model=self.manager)]
+        return [
+            DevicesPane(model=self.manager),
+            InfoPane(model=self.manager),
+            ConfigurationPane(model=self.manager),
+            TerminalPane(model=self.manager),
+        ]
 
     def _default_layout_default(self):
-        l = TaskLayout(left=VSplitter(
-            PaneItem('hardware.devices'),
-            Tabbed(PaneItem('hardware.configuration'),
-                   PaneItem('hardware.info'))))
+        l = TaskLayout(
+            left=VSplitter(
+                PaneItem("hardware.devices"),
+                Tabbed(PaneItem("hardware.configuration"), PaneItem("hardware.info")),
+            )
+        )
         return l
 
     def _manager_default(self):
         return Hardwarer()
+
 
 # ============= EOF =============================================

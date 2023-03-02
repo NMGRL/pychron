@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
+
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -22,7 +23,7 @@ class GosubError(Exception):
         self.path = path
 
     def __str__(self):
-        return 'GosubError: {} does not exist'.format(self.path)
+        return "GosubError: {} does not exist".format(self.path)
 
 
 def KlassError(Exceotion):
@@ -30,7 +31,7 @@ def KlassError(Exceotion):
         self.klass = klass
 
     def __str__(self):
-        return 'KlassError: {} does not exist'.format(self.klass)
+        return "KlassError: {} does not exist".format(self.klass)
 
 
 class PyscriptError(Exception):
@@ -39,16 +40,17 @@ class PyscriptError(Exception):
         self.err = err
 
     def __str__(self):
-        return 'Pyscript error in {}\n\n{}'.format(self.name, self.err)
+        return "Pyscript error in {}\n\n{}".format(self.name, self.err)
 
 
 class IntervalError(Exception):
     def __str__(self):
-        return 'Poorly matched BeginInterval-CompleteInterval'
+        return "Poorly matched BeginInterval-CompleteInterval"
 
 
 class MainError(Exception):
     def __str__(self):
         return 'No "main" function defined'
+
 
 # ============= EOF =============================================

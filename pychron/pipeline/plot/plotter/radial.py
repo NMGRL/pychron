@@ -48,18 +48,17 @@ class Radial(BaseArArFigure):
         for i, p in enumerate(g.plots):
             l, h = self.ymis[i], self.ymas[i]
             print(i, p, l, h)
-            g.set_y_limits(l, h, pad='0.1', plotid=i)
+            g.set_y_limits(l, h, pad="0.1", plotid=i)
 
     def _plot_radial(self, po, plot, pid):
-
         zs = array([nominal_value(a.uage) for a in self.analyses])
         es = array([std_dev(a.uage) for a in self.analyses])
 
-        zm,_ = calculate_weighted_mean(zs, es)
-        zs = (zs - zm)/es
+        zm, _ = calculate_weighted_mean(zs, es)
+        zs = (zs - zm) / es
 
         yma = max(abs(zs))
-        es = 1/es
+        es = 1 / es
         # xs = array([1/std_dev(a.uage) for a in self.analyses])
         # ys = array([nominal_value(a.uage)/(std_dev(a.uage)) for a in self.analyses])
         try:
@@ -70,8 +69,10 @@ class Radial(BaseArArFigure):
             self.ymas.append(yma)
         # overlay = RadialOverlay(plot, xs=xs, ys=ys)
         # plot.overlays.append(overlay)
-        s, _ = self.graph.new_series(es, zs, type='scatter')
+        s, _ = self.graph.new_series(es, zs, type="scatter")
         self._add_scatter_inspector(s)
         self.graph.set_x_limits(min_=0)
         # self.graph.set_y_limits(min_=-a, max_=a, pad='0.1')
+
+
 # ============= EOF =============================================

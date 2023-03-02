@@ -41,15 +41,21 @@ class ExperimentScheduler(Loggable):
         self.start_date = n.date()
 
     def traits_view(self):
-        v = okcancel_view(BorderHGroup(UItem('delayed_start_enabled'),
-                                       UItem('start_date', enabled_when='delayed_start_enabled'),
-                                       UItem('start_time', enabled_when='delayed_start_enabled'),
-                                       label='Start'),
-                          BorderHGroup(UItem('scheduled_stop_enabled'),
-                                       UItem('stop_date', enabled_when='scheduled_stop_enabled'),
-                                       UItem('stop_time', enabled_when='scheduled_stop_enabled'),
-                                       label='Stop'),
-                          title='Configure Scheduler')
+        v = okcancel_view(
+            BorderHGroup(
+                UItem("delayed_start_enabled"),
+                UItem("start_date", enabled_when="delayed_start_enabled"),
+                UItem("start_time", enabled_when="delayed_start_enabled"),
+                label="Start",
+            ),
+            BorderHGroup(
+                UItem("scheduled_stop_enabled"),
+                UItem("stop_date", enabled_when="scheduled_stop_enabled"),
+                UItem("stop_time", enabled_when="scheduled_stop_enabled"),
+                label="Stop",
+            ),
+            title="Configure Scheduler",
+        )
         return v
 
     @property
@@ -68,7 +74,7 @@ class ExperimentScheduler(Loggable):
             return time.mktime(dt.timetuple())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     e = ExperimentScheduler()
     e.setup()
     e.configure_traits()

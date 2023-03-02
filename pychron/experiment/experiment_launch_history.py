@@ -34,11 +34,11 @@ def update_launch_history(path):
     out = []
     exists = False
     if os.path.isfile(paths.experiment_launch_history):
-        with open(paths.experiment_launch_history, 'r') as rfile:
+        with open(paths.experiment_launch_history, "r") as rfile:
             for line in rfile:
                 line = line.strip()
                 if line:
-                    l, t, p = line.split(',')
+                    l, t, p = line.split(",")
                     t = int(t)
                     if p == path:
                         t += 1
@@ -51,14 +51,13 @@ def update_launch_history(path):
         # else:
         # out.append((time.time(), 1, p))
 
-    with open(paths.experiment_launch_history, 'w') as wfile:
-
+    with open(paths.experiment_launch_history, "w") as wfile:
         for o in sorted(out, reverse=True)[:25]:
-            wfile.write('{},{},{}\n'.format(*o))
+            wfile.write("{},{},{}\n".format(*o))
 
 
 class ELHAdapter(TabularAdapter):
-    columns = [('Name', 'name'), ('Last', 'last_run_time'), ('N', 'total_launches')]
+    columns = [("Name", "name"), ("Last", "last_run_time"), ("N", "total_launches")]
 
 
 class LaunchItem(HasTraits):
@@ -83,31 +82,42 @@ class ExperimentLaunchHistory(HasTraits):
         def factory(l):
             l = l.strip()
             if l:
-                l, t, p = l.split(',')
+                l, t, p = l.split(",")
                 n = os.path.basename(p)
                 n, _ = os.path.splitext(n)
 
-                l = get_datetime(float(l)).strftime('%a %H:%M %m-%d-%Y')
+                l = get_datetime(float(l)).strftime("%a %H:%M %m-%d-%Y")
 
-                return LaunchItem(name=n, path=p, last_run_time=l, total_launches=int(t))
+                return LaunchItem(
+                    name=n, path=p, last_run_time=l, total_launches=int(t)
+                )
 
-        with open(paths.experiment_launch_history, 'r') as rfile:
+        with open(paths.experiment_launch_history, "r") as rfile:
             items = [factory(line) for line in rfile]
-            self.items = sorted((i for i in items if i), key=lambda x: x.last_run_time, reverse=True)
+            self.items = sorted(
+                (i for i in items if i), key=lambda x: x.last_run_time, reverse=True
+            )
 
     def traits_view(self):
-        v = okcancel_view(UItem('items', editor=myTabularEditor(adapter=ELHAdapter(),
-                                                                selected='selected',
-                                                                dclicked='dclicked',
-                                                                editable=False)),
-                          handler=ELHHandler(),
-                          width=700,
-                          title='Experiment Launch History')
+        v = okcancel_view(
+            UItem(
+                "items",
+                editor=myTabularEditor(
+                    adapter=ELHAdapter(),
+                    selected="selected",
+                    dclicked="dclicked",
+                    editable=False,
+                ),
+            ),
+            handler=ELHHandler(),
+            width=700,
+            title="Experiment Launch History",
+        )
         return v
 
 
-if __name__ == '__main__':
-    paths.build('_dev')
+if __name__ == "__main__":
+    paths.build("_dev")
     elh = ExperimentLaunchHistory()
     elh.load()
     elh.configure_traits()

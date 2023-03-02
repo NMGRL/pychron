@@ -20,8 +20,18 @@ import os
 from operator import attrgetter
 
 from traits.api import Str, List, HasTraits, Int, Float, Property
+
 # ============= enthought library imports =======================
-from traitsui.api import View, UItem, TabularEditor, HSplit, VSplit, Readonly, VGroup, HGroup
+from traitsui.api import (
+    View,
+    UItem,
+    TabularEditor,
+    HSplit,
+    VSplit,
+    Readonly,
+    VGroup,
+    HGroup,
+)
 from traitsui.tabular_adapter import TabularAdapter
 from uncertainties import nominal_value, std_dev
 
@@ -39,15 +49,17 @@ from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, MSEM, DELTA
 
 # ============= local library imports  ==========================
 
+
 class VerticalFluxTabularAdapter(TabularAdapter):
-    columns = [('Level', 'level'),
-               ('Position', 'position'),
-               ('Identifier', 'identifier'),
-               ('Height', 'z'),
-               ('J', 'j'),
-               (PLUSMINUS_ONE_SIGMA, 'j_err'),
-               ('MSWD', 'mswd')
-               ]
+    columns = [
+        ("Level", "level"),
+        ("Position", "position"),
+        ("Identifier", "identifier"),
+        ("Height", "z"),
+        ("J", "j"),
+        (PLUSMINUS_ONE_SIGMA, "j_err"),
+        ("MSWD", "mswd"),
+    ]
     level_width = Int(50)
     identifier_width = Int(60)
     position_width = Int(60)
@@ -59,7 +71,7 @@ class VerticalFluxTabularAdapter(TabularAdapter):
     j_text = Property
     j_err_text = Property
     mswd_text = Property
-    font = 'modern 10'
+    font = "modern 10"
 
     def _get_mswd_text(self):
         return floatfmt(self.item.mswd, n=2)
@@ -72,12 +84,14 @@ class VerticalFluxTabularAdapter(TabularAdapter):
 
 
 class VerticalFluxGroupTabularAdapter(VerticalFluxTabularAdapter):
-    columns = [('Level', 'level'),
-               ('Z', 'z'),
-               ('Mean', 'j'),
-               (PLUSMINUS_ONE_SIGMA, 'j_err'),
-               ('MSWD', 'mswd'),
-               (DELTA, 'delta')]
+    columns = [
+        ("Level", "level"),
+        ("Z", "z"),
+        ("Mean", "j"),
+        (PLUSMINUS_ONE_SIGMA, "j_err"),
+        ("MSWD", "mswd"),
+        (DELTA, "delta"),
+    ]
 
     delta_text = Property
 
@@ -110,11 +124,11 @@ class VerticalFluxEditor(FigureEditor):
     pdelta = Float
 
     def _populate_zs(self, d, level):
-        p = os.path.join(paths.meta_root, self.irradiation, '{}.json'.format(level))
-        with open(p, 'r') as rfile:
+        p = os.path.join(paths.meta_root, self.irradiation, "{}.json".format(level))
+        with open(p, "r") as rfile:
             obj = json.load(rfile)
 
-        d[level] = obj.get('z', alpha_to_int(level))
+        d[level] = obj.get("z", alpha_to_int(level))
 
     def set_stats(self, items):
         js, es = zip(*[(i.j, i.j_err) for i in items])
@@ -129,7 +143,6 @@ class VerticalFluxEditor(FigureEditor):
     def set_items(self, items, as_analyses=False):
         nitems = []
         if as_analyses:
-
             use_weights = True
             error_kind = self.plotter_options.error_kind
             lambda_k = nominal_value(self.plotter_options.lambda_k)
@@ -139,7 +152,7 @@ class VerticalFluxEditor(FigureEditor):
 
             zs = {}
             items = [i for i in items if not i.is_omitted()]
-            for ip, ans in groupby_key(items, key=attrgetter('identifier')):
+            for ip, ans in groupby_key(items, key=attrgetter("identifier")):
                 ans = list(ans)
                 ref = ans[0]
                 j, mswd = mean_j(ans, use_weights, error_kind, monitor_age, lambda_k)
@@ -151,46 +164,55 @@ class VerticalFluxEditor(FigureEditor):
                     self._populate_zs(zs, level)
                     z = zs[level]
 
-                vi = VerticalFluxItem(j=nominal_value(j), j_err=std_dev(j),
-                                      level=level,
-                                      identifier=ip,
-                                      position=ref.irradiation_position,
-                                      mswd=mswd,
-                                      z=z)
+                vi = VerticalFluxItem(
+                    j=nominal_value(j),
+                    j_err=std_dev(j),
+                    level=level,
+                    identifier=ip,
+                    position=ref.irradiation_position,
+                    mswd=mswd,
+                    z=z,
+                )
                 nitems.append(vi)
 
             gs = []
-            for level, items in groupby_key(nitems, key=attrgetter('level')):
+            for level, items in groupby_key(nitems, key=attrgetter("level")):
                 fs, es, zs = zip(*[(i.j, i.j_err, i.z) for i in items])
                 reg = WeightedMeanRegressor(ys=fs, yserr=es, error_calc_type=error_kind)
                 reg.calculate()
 
-                gi = VerticalFluxGroupItem(level=level,
-                                           j=reg.predict(),
-                                           j_err=reg.predict_error(1),
-                                           mswd=reg.mswd,
-                                           delta=reg.delta,
-                                           z=zs[0])
+                gi = VerticalFluxGroupItem(
+                    level=level,
+                    j=reg.predict(),
+                    j_err=reg.predict_error(1),
+                    mswd=reg.mswd,
+                    delta=reg.delta,
+                    z=zs[0],
+                )
                 gs.append(gi)
             self.groups = gs
             self.set_stats(gs)
         else:
             for i, level in enumerate(items):
-                p = os.path.join(paths.meta_root, self.irradiation, '{}.json'.format(level))
-                with open(p, 'r') as rfile:
+                p = os.path.join(
+                    paths.meta_root, self.irradiation, "{}.json".format(level)
+                )
+                with open(p, "r") as rfile:
                     obj = json.load(rfile)
 
-                    positions = obj['positions']
-                    z = obj['z']
+                    positions = obj["positions"]
+                    z = obj["z"]
 
                     for p in positions:
-                        j, j_err = p['mean_j'], p['mean_j_err']
+                        j, j_err = p["mean_j"], p["mean_j_err"]
                         if j and j_err:
-                            vi = VerticalFluxItem(level=level,
-                                                  position=p['position'],
-                                                  j=j,
-                                                  j_err=j_err,
-                                                  z=z)
+                            vi = VerticalFluxItem(
+                                level=level,
+                                position=p["position"],
+                                j=j,
+                                j_err=j_err,
+                                z=z,
+                            )
                             nitems.append(vi)
 
             self.set_stats(nitems)
@@ -202,9 +224,11 @@ class VerticalFluxEditor(FigureEditor):
             model = self.figure_model_klass()
             self.figure_model = model
 
-        model.trait_set(plot_options=self.plotter_options,
-                        irradiation=self.irradiation,
-                        items=self.items)
+        model.trait_set(
+            plot_options=self.plotter_options,
+            irradiation=self.irradiation,
+            items=self.items,
+        )
         return model
 
     def _set_name(self):
@@ -212,29 +236,44 @@ class VerticalFluxEditor(FigureEditor):
 
     def traits_view(self):
         def freadonly(n, *args, **kw):
-            return Readonly(format_str='%0.{}f'.format(n), *args, **kw)
+            return Readonly(format_str="%0.{}f".format(n), *args, **kw)
 
         g = self.get_component_view()
         g.width = 0.75
 
-        items = VGroup(BorderVGroup(UItem('items',
-                                          width=1 - g.width,
-                                          editor=TabularEditor(adapter=VerticalFluxTabularAdapter())),
-                                    label='Positions'))
+        items = VGroup(
+            BorderVGroup(
+                UItem(
+                    "items",
+                    width=1 - g.width,
+                    editor=TabularEditor(adapter=VerticalFluxTabularAdapter()),
+                ),
+                label="Positions",
+            )
+        )
 
-        stats = VGroup(BorderVGroup(HGroup(freadonly(6, 'min'),
-                                           freadonly(6, 'max')),
-                                    HGroup(freadonly(6, 'delta'),
-                                           freadonly(2, 'pdelta', label='%')),
-                                    label='Stats'))
+        stats = VGroup(
+            BorderVGroup(
+                HGroup(freadonly(6, "min"), freadonly(6, "max")),
+                HGroup(freadonly(6, "delta"), freadonly(2, "pdelta", label="%")),
+                label="Stats",
+            )
+        )
 
-        groups = VGroup(BorderVGroup(UItem('groups',
-                                           width=1 - g.width,
-                                           defined_when='groups',
-                                           editor=TabularEditor(adapter=VerticalFluxGroupTabularAdapter())),
-                                     label='Levels'))
+        groups = VGroup(
+            BorderVGroup(
+                UItem(
+                    "groups",
+                    width=1 - g.width,
+                    defined_when="groups",
+                    editor=TabularEditor(adapter=VerticalFluxGroupTabularAdapter()),
+                ),
+                label="Levels",
+            )
+        )
 
-        v = View(HSplit(g,
-                        VSplit(groups, items, stats)))
+        v = View(HSplit(g, VSplit(groups, items, stats)))
         return v
+
+
 # ============= EOF =============================================

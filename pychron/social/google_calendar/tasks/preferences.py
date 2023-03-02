@@ -25,7 +25,7 @@ from pychron.social.google_calendar.client import GoogleCalendarClient
 
 
 class GoogleCalendarPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.google_calendar'
+    preferences_path = "pychron.google_calendar"
     calendar = Str
     client_secret_path = File
     _calendar_names = List
@@ -45,30 +45,45 @@ class GoogleCalendarPreferences(BasePreferencesHelper):
 
 
 class GoogleCalendarPreferencesPane(PreferencesPane):
-    category = 'Google Calendar'
+    category = "Google Calendar"
     model_factory = GoogleCalendarPreferences
 
     def traits_view(self):
-        v = View(VGroup(Item('client_secret_path'),
-                        Item('calendar', editor=EnumEditor(name='_calendar_names')),))
+        v = View(
+            VGroup(
+                Item("client_secret_path"),
+                Item("calendar", editor=EnumEditor(name="_calendar_names")),
+            )
+        )
         return v
 
 
 class GoogleCalendarExperimentPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.google_calendar.experiment'
+    preferences_path = "pychron.google_calendar.experiment"
     enabled = Bool
     run_delay = Int
 
 
 class GoogleCalendarExperimentPreferencesPane(PreferencesPane):
-    category = 'Experiment'
+    category = "Experiment"
     model_factory = GoogleCalendarExperimentPreferences
 
     def traits_view(self):
-        v = View(VGroup(Item('enabled', label='Enabled', tooltip='Post experiment events to Google Calendar'),
-                        Item('run_delay',
-                             tooltip='Only post an event after at least "Run Delay" runs have been completed',
-                             label='Run Delay')))
+        v = View(
+            VGroup(
+                Item(
+                    "enabled",
+                    label="Enabled",
+                    tooltip="Post experiment events to Google Calendar",
+                ),
+                Item(
+                    "run_delay",
+                    tooltip='Only post an event after at least "Run Delay" runs have been completed',
+                    label="Run Delay",
+                ),
+            )
+        )
         return v
+
 
 # ============= EOF =============================================

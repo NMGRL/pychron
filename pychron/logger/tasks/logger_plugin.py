@@ -26,21 +26,26 @@ from pychron.logger.tasks.logger_task import LoggerTask
 
 
 class LoggerPlugin(BaseTaskPlugin):
-    id = 'pychron.logger'
-    name = 'Logger'
+    id = "pychron.logger"
+    name = "Logger"
 
     def _tasks_default(self):
-        return [TaskFactory(id=self.id,
-                            factory=self._task_factory,
-                            name='Logger')]
+        return [TaskFactory(id=self.id, factory=self._task_factory, name="Logger")]
 
     def _task_factory(self):
         return LoggerTask(application=self.application)
 
     def _task_extensions_default(self):
-        return [TaskExtension(actions=[SchemaAddition(factory=LogViewerAction,
-                                                      path='MenuBar/help.menu'),
-                                       SchemaAddition(factory=CurrentLogViewerAction,
-                                                      path='MenuBar/help.menu')])]
+        return [
+            TaskExtension(
+                actions=[
+                    SchemaAddition(factory=LogViewerAction, path="MenuBar/help.menu"),
+                    SchemaAddition(
+                        factory=CurrentLogViewerAction, path="MenuBar/help.menu"
+                    ),
+                ]
+            )
+        ]
+
 
 # ============= EOF =============================================

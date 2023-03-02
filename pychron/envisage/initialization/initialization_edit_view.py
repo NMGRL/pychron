@@ -27,14 +27,26 @@ from traitsui.tree_node import TreeNode
 import os
 import pickle
 
-
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.ui.tree_editor import TreeEditor
-from pychron.envisage.initialization.nodes import Plugin, PluginTree, PluginTreeNode, GlobalsTreeNode, GlobalTree, \
-    InitializationModel, PackageTreeNode, GlobalValue, BaseNode
-from pychron.envisage.initialization.utilities import DESCRIPTION_MAP, get_initialization_model, NOMINAL_DEFAULTS, \
-    DEFAULTS_MAP
+from pychron.envisage.initialization.nodes import (
+    Plugin,
+    PluginTree,
+    PluginTreeNode,
+    GlobalsTreeNode,
+    GlobalTree,
+    InitializationModel,
+    PackageTreeNode,
+    GlobalValue,
+    BaseNode,
+)
+from pychron.envisage.initialization.utilities import (
+    DESCRIPTION_MAP,
+    get_initialization_model,
+    NOMINAL_DEFAULTS,
+    DEFAULTS_MAP,
+)
 from pychron.paths import paths
 
 
@@ -69,14 +81,13 @@ class InitializationEditView(HasTraits):
     selected = List
     dclicked = Event
     description = Str
-    help_str = 'Enable/Disable the active plugins.\nDouble-click to toggle or Right-click for menu options'
+    help_str = "Enable/Disable the active plugins.\nDouble-click to toggle or Right-click for menu options"
 
     def load_defaults(self):
-
         nominal_defaults = NOMINAL_DEFAULTS[:]
-        p = os.path.join(paths.hidden_dir, 'initialization_defaults')
+        p = os.path.join(paths.hidden_dir, "initialization_defaults")
         if os.path.isfile(p):
-            with open(p, 'r') as rfile:
+            with open(p, "r") as rfile:
                 try:
                     ds = pickle.load(rfile)
                     nominal_defaults.extend(ds)
@@ -100,13 +111,13 @@ class InitializationEditView(HasTraits):
         if new:
             gtree, ptree = self.model.trees
             dd = DEFAULTS_MAP[new]
-            dglobals = dd['globals']
+            dglobals = dd["globals"]
 
             for value in gtree.values:
                 name = value.name
                 value.enabled = name in dglobals if dglobals else False
 
-            for subtree in ('general', 'hardware', 'social'):
+            for subtree in ("general", "hardware", "social"):
                 d = dd[subtree]
                 tree = ptree.get_subtree(subtree)
                 for plugin in tree.plugins:
@@ -124,7 +135,7 @@ class InitializationEditView(HasTraits):
         self.update()
 
     def _selected_changed(self, new):
-        desc = ''
+        desc = ""
         if new:
             node = new[0]
             name = node.name
@@ -133,55 +144,87 @@ class InitializationEditView(HasTraits):
                     desc = DESCRIPTION_MAP[name]
                 except KeyError:
                     pass
-                desc = '{}. {}'.format(name, desc)
+                desc = "{}. {}".format(name, desc)
 
         self.description = desc
 
     def traits_view(self):
         nodes = [
-            TreeNode(node_for=[InitializationModel],
-                     children='trees',
-                     icon_open='',
-                     label='name'),
-            PackageTreeNode(node_for=[PluginTree],
-                            auto_open=True,
-                            children='plugins',
-                            label='name',
-                            menu=MenuManager(Action(name='Enable All',
-                                                    visible_when='not object.all_enabled',
-                                                    action='set_all_enabled'),
-                                             Action(name='Disable All',
-                                                    visible_when='object.all_enabled',
-                                                    action='set_all_disabled'))),
-            PluginTreeNode(node_for=[Plugin, GlobalValue],
-                           menu=MenuManager(Action(name='Enable',
-                                                   action='set_enabled',
-                                                   visible_when='not object.enabled'),
-                                            Action(name='Disable',
-                                                   visible_when='object.enabled',
-                                                   action='set_disabled'), ),
-                           label='name'),
-            GlobalsTreeNode(node_for=[GlobalTree],
-                            label='name',
-                            auto_open=True,
-                            children='values')]
+            TreeNode(
+                node_for=[InitializationModel],
+                children="trees",
+                icon_open="",
+                label="name",
+            ),
+            PackageTreeNode(
+                node_for=[PluginTree],
+                auto_open=True,
+                children="plugins",
+                label="name",
+                menu=MenuManager(
+                    Action(
+                        name="Enable All",
+                        visible_when="not object.all_enabled",
+                        action="set_all_enabled",
+                    ),
+                    Action(
+                        name="Disable All",
+                        visible_when="object.all_enabled",
+                        action="set_all_disabled",
+                    ),
+                ),
+            ),
+            PluginTreeNode(
+                node_for=[Plugin, GlobalValue],
+                menu=MenuManager(
+                    Action(
+                        name="Enable",
+                        action="set_enabled",
+                        visible_when="not object.enabled",
+                    ),
+                    Action(
+                        name="Disable",
+                        visible_when="object.enabled",
+                        action="set_disabled",
+                    ),
+                ),
+                label="name",
+            ),
+            GlobalsTreeNode(
+                node_for=[GlobalTree], label="name", auto_open=True, children="values"
+            ),
+        ]
 
-        v = okcancel_view(VGroup(HGroup(Item('default', label='Predefined Initialization',
-                                             editor=EnumEditor(name='defaults'))),
-                                 UItem('model', editor=TreeEditor(nodes=nodes,
-                                                                  editable=False,
-                                                                  selection_mode='extended',
-                                                                  selected='selected',
-                                                                  dclick='dclicked',
-                                                                  show_disabled=True,
-                                                                  refresh_all_icons='refresh_all_needed',
-                                                                  refresh_icons='refresh_needed')),
-                                 VGroup(UItem('description', style='readonly'), show_border=True),
-                                 VGroup(UItem('help_str', style='readonly'), show_border=True)),
-                          title='Edit Initialization - {}'.format(self.model.path_name),
-                          handler=PEVHandler(),
-                          height=600,
-                          width=400)
+        v = okcancel_view(
+            VGroup(
+                HGroup(
+                    Item(
+                        "default",
+                        label="Predefined Initialization",
+                        editor=EnumEditor(name="defaults"),
+                    )
+                ),
+                UItem(
+                    "model",
+                    editor=TreeEditor(
+                        nodes=nodes,
+                        editable=False,
+                        selection_mode="extended",
+                        selected="selected",
+                        dclick="dclicked",
+                        show_disabled=True,
+                        refresh_all_icons="refresh_all_needed",
+                        refresh_icons="refresh_needed",
+                    ),
+                ),
+                VGroup(UItem("description", style="readonly"), show_border=True),
+                VGroup(UItem("help_str", style="readonly"), show_border=True),
+            ),
+            title="Edit Initialization - {}".format(self.model.path_name),
+            handler=PEVHandler(),
+            height=600,
+            width=400,
+        )
         return v
 
 
@@ -199,6 +242,9 @@ def edit_initialization():
     if info.result:
         pev.save()
         if pev.model.is_dirty():
-            return confirm(None, 'Restart for changes to take effect. Restart now?') == YES
+            return (
+                confirm(None, "Restart for changes to take effect. Restart now?") == YES
+            )
+
 
 # ============= EOF =============================================

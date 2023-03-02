@@ -39,8 +39,9 @@ class BaseLaserAction(Action):
             if app is None:
                 app = event.task.window.application
 
-            manager = app.get_service(ILaserManager,
-                                      'name=="{}"'.format(self.manager_name))
+            manager = app.get_service(
+                ILaserManager, 'name=="{}"'.format(self.manager_name)
+            )
         return manager
 
 
@@ -76,8 +77,8 @@ class LocalLaserAction(BaseLaserAction):
 
 
 class OpenScannerAction(LocalLaserAction):
-    name = 'Open Scanner...'
-    accelerator = 'Ctrl+T'
+    name = "Open Scanner..."
+    accelerator = "Ctrl+T"
 
     def perform(self, event):
         manager = self._get_manager(event)
@@ -86,7 +87,8 @@ class OpenScannerAction(LocalLaserAction):
 
 
 class OpenAutoTunerAction(LocalLaserAction):
-    name = 'Open AutoTuner...'
+    name = "Open AutoTuner..."
+
     # accelerator = 'Ctrl+T'
 
     def perform(self, event):
@@ -113,13 +115,13 @@ class LaserTaskAction(TaskAction):
 
     def _task_changed(self):
         if self.task:
-            if self.task.id in ('pychron.fusions.co2',
-                                'pychron.fusions.diode'):
+            if self.task.id in ("pychron.fusions.co2", "pychron.fusions.diode"):
                 enabled = True
                 if self.enabled_name:
                     if self.object:
-                        enabled = bool(self._get_attr(self.object,
-                                                      self.enabled_name, False))
+                        enabled = bool(
+                            self._get_attr(self.object, self.enabled_name, False)
+                        )
                 if enabled:
                     self._enabled = True
             else:
@@ -127,12 +129,13 @@ class LaserTaskAction(TaskAction):
 
     def _enabled_update(self):
         """
-             reimplement ListeningAction's _enabled_update
+        reimplement ListeningAction's _enabled_update
         """
         if self.enabled_name:
             if self.object:
-                self.enabled = bool(self._get_attr(self.object,
-                                                   self.enabled_name, False))
+                self.enabled = bool(
+                    self._get_attr(self.object, self.enabled_name, False)
+                )
             else:
                 self.enabled = False
         elif self._enabled is not None:
@@ -147,7 +150,7 @@ class LaserTaskAction(TaskAction):
 
 
 class OpenPatternAction(Action):
-    name = 'Open Pattern...'
+    name = "Open Pattern..."
 
     def perform(self, event=None):
         pm = PatternMakerView()
@@ -156,8 +159,8 @@ class OpenPatternAction(Action):
 
 
 class NewPatternAction(Action):
-    name = 'New Pattern...'
-    method = 'new_pattern'
+    name = "New Pattern..."
+    method = "new_pattern"
 
     def perform(self, event=None):
         pm = PatternMakerView()
@@ -167,13 +170,13 @@ class NewPatternAction(Action):
 class LaserCalibrationAction(Action):
     def _get_task(self, event):
         app = event.task.window.application
-        task_id = 'pychron.laser.calibration'
+        task_id = "pychron.laser.calibration"
         task = app.get_task(task_id)
         return task
 
 
 class PowerMapAction(LaserCalibrationAction):
-    name = 'New Power Map...'
+    name = "New Power Map..."
 
     def perform(self, event):
         task = self._get_task(event)
@@ -181,12 +184,12 @@ class PowerMapAction(LaserCalibrationAction):
 
 
 class OpenPowerMapAction(LaserCalibrationAction):
-    name = 'Open Power Map'
-    accelerator = 'Ctrl+3'
+    name = "Open Power Map"
+    accelerator = "Ctrl+3"
 
     def perform(self, event):
         app = event.task.window.application
-        task_id = 'pychron.laser.calibration'
+        task_id = "pychron.laser.calibration"
         task = app.get_task(task_id, activate=False)
         ps = task.get_power_maps()
         if ps:
@@ -199,7 +202,7 @@ class OpenPowerMapAction(LaserCalibrationAction):
 
 
 class PowerCalibrationAction(LaserCalibrationAction):
-    name = 'Power Calibration...'
+    name = "Power Calibration..."
 
     def perform(self, event):
         task = self._get_task(event)
@@ -207,7 +210,7 @@ class PowerCalibrationAction(LaserCalibrationAction):
 
 
 class PyrometerCalibrationAction(LaserCalibrationAction):
-    name = 'Pyrometer Calibration'
+    name = "Pyrometer Calibration"
 
     def perform(self, event):
         task = self._get_task(event)
@@ -215,7 +218,7 @@ class PyrometerCalibrationAction(LaserCalibrationAction):
 
 
 class PIDTuningAction(LaserCalibrationAction):
-    name = 'PID Tuning'
+    name = "PID Tuning"
 
     def perform(self, event):
         task = self._get_task(event)
@@ -223,6 +226,8 @@ class PIDTuningAction(LaserCalibrationAction):
 
 
 class LaserScriptExecuteAction(TaskAction):
-    method = 'show_laser_script_executor'
-    name = 'Laser Script...'
+    method = "show_laser_script_executor"
+    name = "Laser Script..."
+
+
 # ============= EOF =============================================

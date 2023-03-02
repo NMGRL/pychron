@@ -47,13 +47,13 @@ class BrowserModel(BaseBrowserModel):
     fuzzy_search_entry = String
     execute_fuzzy_search = Button
 
-    irradiation_visible = Property(depends_on='filter_focus')
-    analysis_types_visible = Property(depends_on='filter_focus')
-    date_visible = Property(depends_on='filter_focus')
-    mass_spectrometer_visible = Property(depends_on='filter_focus')
-    identifier_visible = Property(depends_on='filter_focus')
-    project_visible = Property(depends_on='filter_focus')
-    principal_investigator_visible = Property(depends_on='filter_focus')
+    irradiation_visible = Property(depends_on="filter_focus")
+    analysis_types_visible = Property(depends_on="filter_focus")
+    date_visible = Property(depends_on="filter_focus")
+    mass_spectrometer_visible = Property(depends_on="filter_focus")
+    identifier_visible = Property(depends_on="filter_focus")
+    project_visible = Property(depends_on="filter_focus")
+    principal_investigator_visible = Property(depends_on="filter_focus")
 
     filter_by_button = Button
     toggle_focus = Button
@@ -75,9 +75,13 @@ class BrowserModel(BaseBrowserModel):
     def __init__(self, *args, **kw):
         super(BrowserModel, self).__init__(*args, **kw)
 
-        prefid = 'pychron.browser'
-        bind_preference(self, 'load_selection_enabled', '{}.load_selection_enabled'.format(prefid))
-        bind_preference(self, 'auto_load_database', '{}.auto_load_database'.format(prefid))
+        prefid = "pychron.browser"
+        bind_preference(
+            self, "load_selection_enabled", "{}.load_selection_enabled".format(prefid)
+        )
+        bind_preference(
+            self, "auto_load_database", "{}.auto_load_database".format(prefid)
+        )
 
     def activated(self, force=False):
         self.reattach()
@@ -87,12 +91,14 @@ class BrowserModel(BaseBrowserModel):
     def activate_browser(self, force=False):
         db = self.db
         self.datasource_url = db.datasource_url
-        self.debug('activate browser autoload={} '
-                   'load_selection_enabled={}'.format(self.auto_load_database,
-                                                      self.load_selection_enabled))
+        self.debug(
+            "activate browser autoload={} "
+            "load_selection_enabled={}".format(
+                self.auto_load_database, self.load_selection_enabled
+            )
+        )
 
         if not self.is_activated or force:
-
             if self.auto_load_database:
                 self.load_selectors()
 
@@ -113,12 +119,12 @@ class BrowserModel(BaseBrowserModel):
         self._load_mass_spectrometers()
 
     def refresh_samples(self):
-        self.debug('refresh samples')
+        self.debug("refresh samples")
         self._filter_by_hook()
 
     def select_sample(self, idx=None, name=None):
         if idx is not None:
-            sams = self.samples[idx:idx + 2]
+            sams = self.samples[idx : idx + 2]
             self.selected_samples = sams
 
     def select_project(self, name):
@@ -137,10 +143,12 @@ class BrowserModel(BaseBrowserModel):
 
     # handlers
     def _execute_fuzzy_search_fired(self):
-        self.debug('execute fuzzy search')
+        self.debug("execute fuzzy search")
         if self.fuzzy_search_entry:
             if len(self.fuzzy_search_entry) < 2:
-                self.warning_dialog('At least two (2) characters are required for "Search"')
+                self.warning_dialog(
+                    'At least two (2) characters are required for "Search"'
+                )
                 return
 
             db = self.db
@@ -181,22 +189,22 @@ class BrowserModel(BaseBrowserModel):
             self._top_level_filter = None
             self.selected_projects = []
 
-    @on_trait_change('irradiation,level')
+    @on_trait_change("irradiation,level")
     def _handle_irradiation_change(self, name, new):
         # obj = self._get_manager()
         # setattr(obj, name, new)
 
         if not self._top_level_filter:
-            self._top_level_filter = 'irradiation'
+            self._top_level_filter = "irradiation"
 
-        if self._top_level_filter == 'irradiation':
+        if self._top_level_filter == "irradiation":
             self._load_projects_for_irradiation()
 
-        if name == 'irradiation':
+        if name == "irradiation":
             self.levels = self.db.get_level_names(new)
 
         # if name == 'irradiation':
-        elif name == 'level':
+        elif name == "level":
             self._load_associated_labnumbers()
 
     def _use_analysis_type_filtering_changed(self):
@@ -225,7 +233,11 @@ class BrowserModel(BaseBrowserModel):
             self.refresh_samples()
 
     def _filter_by_button_fired(self):
-        self.debug('filter by button fired low_post={}, high_post={}'.format(self.low_post, self.high_post))
+        self.debug(
+            "filter by button fired low_post={}, high_post={}".format(
+                self.low_post, self.high_post
+            )
+        )
         if self.sample_view_active:
             self._filter_by_hook()
 
@@ -233,11 +245,13 @@ class BrowserModel(BaseBrowserModel):
             # self.filter_focus = not self.filter_focus
 
     def _load_view_button_fired(self):
-        lm = self.application.get_service('pychron.loading.loading_manager.LoadingManager')
+        lm = self.application.get_service(
+            "pychron.loading.loading_manager.LoadingManager"
+        )
         if lm:
             selection = lm.get_selection()
             if selection:
-                print('load view', selection)
+                print("load view", selection)
                 # lm.trait_set(db=self.db,
                 #              show_group_positions=True)
                 #
@@ -253,7 +267,7 @@ class BrowserModel(BaseBrowserModel):
         self.dump_browser()
 
     def _refresh_selectors_button_fired(self):
-        self.debug('refresh selectors fired')
+        self.debug("refresh selectors fired")
         if self.sample_view_active:
             self.load_selectors()
 
@@ -278,7 +292,7 @@ class BrowserModel(BaseBrowserModel):
     # def _selected_projects_change_hook(self, names):
     #
     #     self.selected_samples = []
-    #     self.analysis_table.analyses = []
+    #     self.table.analyses = []
     #
     #     if not self._top_level_filter:
     #         self._top_level_filter = 'project'
@@ -303,8 +317,13 @@ class BrowserModel(BaseBrowserModel):
                 ms = self.mass_spectrometer_includes
 
         principal_investigators = None
-        if self.principal_investigator_enabled and self.selected_principal_investigators:
-            principal_investigators = [p.name for p in self.selected_principal_investigators]
+        if (
+            self.principal_investigator_enabled
+            and self.selected_principal_investigators
+        ):
+            principal_investigators = [
+                p.name for p in self.selected_principal_investigators
+            ]
 
         if self.project_enabled:
             if self.selected_projects:
@@ -319,38 +338,45 @@ class BrowserModel(BaseBrowserModel):
         samples = None
         if at:
             for a in at:
-                if a == 'monitors':
+                if a == "monitors":
                     if not self.monitor_sample_name:
-                        self.warning_dialog('Please Set Monitor name in preferences. Defaulting to FC-2')
-                        self.monitor_sample_name = 'FC-2'
+                        self.warning_dialog(
+                            "Please Set Monitor name in preferences. Defaulting to FC-2"
+                        )
+                        self.monitor_sample_name = "FC-2"
 
-                    samples = [self.monitor_sample_name, ]
+                    samples = [
+                        self.monitor_sample_name,
+                    ]
                 else:
                     ats.append(a)
 
-        lns = self.db.get_labnumbers(principal_investigators=principal_investigators,
-                                     project_ids=ps,
-                                     # repositories=es,
-                                     samples=samples,
-                                     mass_spectrometers=ms,
-                                     irradiation=self.irradiation if self.irradiation_enabled else None,
-                                     level=self.level if self.irradiation_enabled else None,
-                                     analysis_types=ats,
-                                     high_post=hp,
-                                     low_post=lp,
-                                     loads=ls,
-                                     filter_non_run=self.filter_non_run_samples)
+        lns = self.db.get_labnumbers(
+            principal_investigators=principal_investigators,
+            project_ids=ps,
+            # repositories=es,
+            samples=samples,
+            mass_spectrometers=ms,
+            irradiation=self.irradiation if self.irradiation_enabled else None,
+            level=self.level if self.irradiation_enabled else None,
+            analysis_types=ats,
+            high_post=hp,
+            low_post=lp,
+            loads=ls,
+            filter_non_run=self.filter_non_run_samples,
+        )
         return lns
 
     def _identifier_change_hook(self, db, new, lns):
         if len(new) > 2:
             if self.project_enabled:
+
                 def get_projects():
                     for li in lns:
                         try:
                             yield li.sample.project
                         except AttributeError as e:
-                            print('exception', e)
+                            print("exception", e)
 
                 ps = sorted(list(set(get_projects())))
                 ps = [ProjectRecordView(p) for p in ps]
@@ -358,6 +384,7 @@ class BrowserModel(BaseBrowserModel):
                 self.selected_projects = []
 
             if self.irradiation_enabled:
+
                 def get_irradiations():
                     for li in lns:
                         try:
@@ -376,11 +403,15 @@ class BrowserModel(BaseBrowserModel):
             ms = self.mass_spectrometer_includes
 
         if self.irradiation:
-            self.debug('load projects for irradiation= {}, level= {}'.format(self.irradiation, self.level))
+            self.debug(
+                "load projects for irradiation= {}, level= {}".format(
+                    self.irradiation, self.level
+                )
+            )
 
-            ps = self.db.get_projects(irradiation=self.irradiation,
-                                      level=self.level,
-                                      mass_spectrometers=ms)
+            ps = self.db.get_projects(
+                irradiation=self.irradiation, level=self.level, mass_spectrometers=ms
+            )
 
             ps = self._make_project_records(ps, include_recent_first=True)
             old_selection = [p.name for p in self.selected_projects]
@@ -388,7 +419,7 @@ class BrowserModel(BaseBrowserModel):
             self.selected_projects = [p for p in ps if p.name in old_selection]
 
     def _load_projects_and_irradiations(self):
-        self.debug('load_projects_and_irradiations')
+        self.debug("load_projects_and_irradiations")
         ms = None
         if self.mass_spectrometers_enabled:
             ms = self.mass_spectrometer_includes
@@ -409,7 +440,7 @@ class BrowserModel(BaseBrowserModel):
         if irs:
             self.irradiations = [i.name for i in irs]
         else:
-            self.debug('_load_projects_and_irradiations. no irradiations')
+            self.debug("_load_projects_and_irradiations. no irradiations")
 
     def _load_mass_spectrometers(self):
         db = self.db
@@ -421,11 +452,11 @@ class BrowserModel(BaseBrowserModel):
     def _load_analysis_types(self):
         db = self.db
         ms = [mi.name for mi in db.get_analysis_types()]
-        self.analysis_types = ['Analysis Type', 'None'] + ms
+        self.analysis_types = ["Analysis Type", "None"] + ms
 
     def _load_extraction_devices(self):
         ms = self.db.get_extraction_device_names()
-        self.extraction_devices = ['Extraction Device', 'None'] + ms
+        self.extraction_devices = ["Extraction Device", "None"] + ms
 
     def _get_analysis_types_visible(self):
         return self._get_visible(self.use_analysis_type_filtering)
@@ -434,7 +465,9 @@ class BrowserModel(BaseBrowserModel):
         return self._get_visible(self.irradiation_enabled)
 
     def _get_date_visible(self):
-        return self._get_visible(self.use_low_post or self.use_high_post or self.use_named_date_range)
+        return self._get_visible(
+            self.use_low_post or self.use_high_post or self.use_named_date_range
+        )
 
     def _get_mass_spectrometer_visible(self):
         return self._get_visible(self.mass_spectrometers_enabled)
@@ -451,5 +484,6 @@ class BrowserModel(BaseBrowserModel):
 
     def _get_visible(self, default):
         return True
+
 
 # ============= EOF =============================================

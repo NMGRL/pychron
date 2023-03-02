@@ -17,11 +17,15 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import HasTraits, List, Str, Any, Array, Bool, Float
+
 # ============= standard library imports ========================
 from numpy import vstack, array
+
 # ============= local library imports  ==========================
 from pychron.monitors.monitor import Monitor
-from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
+from pychron.hardware.core.communicators.ethernet_communicator import (
+    EthernetCommunicator,
+)
 import time
 
 
@@ -36,16 +40,17 @@ class Check(HasTraits):
     message = Str
 
     def check_condition(self, v):
-
         vs = (time.time(), v)
         if not len(self.data):
             self.data = array([vs])
         else:
             self.data = vstack((self.data, vs))
 
-        r = eval(self.rule, {'x': v})
+        r = eval(self.rule, {"x": v})
         if r:
-            self.message = 'Automated Run Check tripped. {} {} {}'.format(self.parameter, v, r)
+            self.message = "Automated Run Check tripped. {} {} {}".format(
+                self.parameter, v, r
+            )
             self.tripped = True
 
         return r
@@ -69,36 +74,37 @@ class AutomatedRunMonitor(Monitor):
 
     def has_fatal_error(self):
         """
-            return True if any of the checks yielded a fatal error
+        return True if any of the checks yielded a fatal error
         """
         if self._fatal_errors:
-            self.warning('fatal errors: {}'.format('\n'.join(self._fatal_errors)))
+            self.warning("fatal errors: {}".format("\n".join(self._fatal_errors)))
             return True
 
     def _load_hook(self, config):
         self.checks = []
         ok = True
         for section in config.sections():
-            if section.startswith('Check'):
-                pa = self.config_get(config, section, 'parameter')
+            if section.startswith("Check"):
+                pa = self.config_get(config, section, "parameter")
 
-                if 'Pressure' in pa and not ',' in pa:
+                if "Pressure" in pa and not "," in pa:
                     self.warning_dialog(
-                        'Invalid Pressure Parameter in AutomatedRunMonitor, '
-                        'need to specify controller and name, e.g. Pressure, <controller>,<gauge_name>')
+                        "Invalid Pressure Parameter in AutomatedRunMonitor, "
+                        "need to specify controller and name, e.g. Pressure, <controller>,<gauge_name>"
+                    )
                     ok = False
                     continue
 
                 else:
-                    r = self.config_get(config, section, 'rule', default='')
-                    if 'x' not in r:
-                        self.warning_dialog('Invalid rule. Include "x" variable. e.g "x>10"')
+                    r = self.config_get(config, section, "rule", default="")
+                    if "x" not in r:
+                        self.warning_dialog(
+                            'Invalid rule. Include "x" variable. e.g "x>10"'
+                        )
                         ok = False
                         continue
 
-                    ch = Check(name=section,
-                               parameter=pa,
-                               rule=r)
+                    ch = Check(name=section, parameter=pa, rule=r)
                     self.checks.append(ch)
 
         return ok
@@ -107,8 +113,8 @@ class AutomatedRunMonitor(Monitor):
         ok = True
         for ci in self.checks:
             pa = ci.parameter
-            if pa.startswith('Pressure'):
-                pa, controller, name = pa.split(',')
+            if pa.startswith("Pressure"):
+                pa, controller, name = pa.split(",")
                 v = self.get_pressure(controller, name)
             else:
                 v = self._get_value(pa)
@@ -152,6 +158,7 @@ class AutomatedRunMonitor(Monitor):
 class RemoteAutomatedRunMonitor(AutomatedRunMonitor):
     handle = None
     handles = List
+
     # def __init__(self, host, port, kind, *args, **kw):
     # super(RemoteAutomatedRunMonitor, self).__init__(*args, **kw)
     #     self.handle = EthernetCommunicator()
@@ -160,11 +167,11 @@ class RemoteAutomatedRunMonitor(AutomatedRunMonitor):
     #     self.handle.kind = kind
 
     def load_additional_args(self, config, *args, **kw):
-        sec = 'Communications'
+        sec = "Communications"
         if sec in config.sections:
-            h = self.config_get(config, sec, 'host')
-            p = self.config_get(config, sec, 'port')
-            k = self.config_get(config, sec, 'kind')
+            h = self.config_get(config, sec, "host")
+            p = self.config_get(config, sec, "port")
+            k = self.config_get(config, sec, "kind")
             self.handle = self._handle_factory(h, p, k)
             self.handles.append(self.handle)
 
@@ -182,7 +189,7 @@ class RemoteAutomatedRunMonitor(AutomatedRunMonitor):
     def get_error(self):
         error = False
         for h in self.handles:
-            e = h.ask('GetError')
+            e = h.ask("GetError")
             if e:
                 self._fatal_errors.append(e)
                 error = True
@@ -190,12 +197,12 @@ class RemoteAutomatedRunMonitor(AutomatedRunMonitor):
         return error
 
     def get_pressure(self, controller, name):
-        cmd = 'GetPressure {}, {}'.format(controller, name)
+        cmd = "GetPressure {}, {}".format(controller, name)
         p = self.handle.ask(cmd)
         return self._float(p, default=1.0)
 
     def _get_value(self, name):
-        p = self.handle.ask('Read {}'.format(name))
+        p = self.handle.ask("Read {}".format(name))
         return self._float(p)
 
     def _float(self, p, default=0.0):
@@ -204,5 +211,6 @@ class RemoteAutomatedRunMonitor(AutomatedRunMonitor):
         except (ValueError, TypeError):
             p = default
         return p
+
 
 # ============= EOF =============================================

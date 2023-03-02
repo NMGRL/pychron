@@ -16,8 +16,18 @@
 
 # ============= enthought library imports =======================
 from pyface.tasks.traits_dock_pane import TraitsDockPane
-from traitsui.api import View, UItem, Item, HGroup, VGroup, spring, Spring, \
-    ListEditor, InstanceEditor, ButtonEditor
+from traitsui.api import (
+    View,
+    UItem,
+    Item,
+    HGroup,
+    VGroup,
+    spring,
+    Spring,
+    ListEditor,
+    InstanceEditor,
+    ButtonEditor,
+)
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -25,43 +35,58 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 
 
 class WaitPane(TraitsDockPane):
-    id = 'pychron.wait'
-    name = 'Wait'
+    id = "pychron.wait"
+    name = "Wait"
+    movable = False
+    closable = False
+    floatable = False
 
     def traits_view(self):
-        cview = View(VGroup(
-            CustomLabel('message',
-                        size=14,
-                        weight='bold',
-                        color_name='message_color'),
-
-            HGroup(Spring(width=-5, springy=False),
-                   Item('high', label='Set Max. Seconds'),
-                   spring,
-                   CustomLabel('current_display_time',
-                               size=24,
-                               weight='bold'),
-                   UItem('pause_button',
-                         tooltip='Click to pause. Click again to unpause',
-                         editor=ButtonEditor(label_value='pause_label')),
-                   UItem('continue_button'))))
+        cview = View(
+            VGroup(
+                CustomLabel(
+                    "message", size=14, weight="bold", color_name="message_color"
+                ),
+                HGroup(
+                    Spring(width=-5, springy=False),
+                    Item("high", label="Set Max. Seconds"),
+                    spring,
+                    CustomLabel("current_display_time", size=24, weight="bold"),
+                    UItem(
+                        "pause_button",
+                        tooltip="Click to pause. Click again to unpause",
+                        editor=ButtonEditor(label_value="pause_label"),
+                    ),
+                    UItem("continue_button"),
+                ),
+                show_border=True,
+            ),
+        )
 
         # HGroup(Spring(width=-5, springy=False),
         #        Item('current_time', show_label=False,
         #             editor=RangeEditor(mode='slider', low=1, high_name='duration')))))
 
-        v = View(UItem('active_control',
-                       style='custom',
-                       visible_when='single',
-                       editor=InstanceEditor(view=cview)),
-                 UItem('controls',
-                       editor=ListEditor(
-                           use_notebook=True,
-                           selected='active_control',
-                           page_name='.page_name',
-                           view=cview),
-                       style='custom',
-                       visible_when='not single'))
+        v = View(
+            UItem(
+                "active_control",
+                style="custom",
+                visible_when="single",
+                editor=InstanceEditor(view=cview),
+            ),
+            UItem(
+                "controls",
+                editor=ListEditor(
+                    use_notebook=True,
+                    selected="active_control",
+                    page_name=".page_name",
+                    view=cview,
+                ),
+                style="custom",
+                visible_when="not single",
+            ),
+        )
         return v
+
 
 # ============= EOF =============================================

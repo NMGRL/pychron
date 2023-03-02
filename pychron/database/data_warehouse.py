@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 from __future__ import absolute_import
 import os
 
@@ -23,27 +22,39 @@ from datetime import datetime
 
 from pychron.loggable import Loggable
 
-MONTH_NAMES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', \
-               'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+MONTH_NAMES = [
+    "JAN",
+    "FEB",
+    "MAR",
+    "APR",
+    "MAY",
+    "JUN",
+    "JUL",
+    "AUG",
+    "SEP",
+    "OCT",
+    "NOV",
+    "DEC",
+]
 
 
 class DataWarehouse(Loggable):
-    '''
-        Class to construct data warehouses. A data warehouse is simple
-        file directory with the following structure
-        
-        YEAR
-            MONTH
-                file.ext
-                
-                
-    '''
+    """
+    Class to construct data warehouses. A data warehouse is simple
+    file directory with the following structure
+
+    YEAR
+        MONTH
+            file.ext
+
+
+    """
+
     root = None
     _current_dir = None
 
     def get_current_dir(self):
-        ''' 
-        '''
+        """ """
         return self._current_dir
 
     def build_warehouse(self):
@@ -53,12 +64,11 @@ class DataWarehouse(Loggable):
 
         dirs = []
         if not os.path.isdir(r):
-
             head, tail = os.path.split(r)
-#            print head, tail
+            #            print head, tail
             dirs.append(tail)
             while not os.path.isdir(head):
-#                print head, tail
+                #                print head, tail
                 head, tail = os.path.split(head)
                 dirs.insert(0, tail)
 
@@ -71,15 +81,12 @@ class DataWarehouse(Loggable):
         self._current_dir = self._create_subdirectories()
 
     def _create_subdirectories(self):
-
         today = datetime.today()
         m = MONTH_NAMES[today.month - 1]
         y = today.year
 
         yd = self._create_subdir(self.root, y)
         md = self._create_subdir(yd, m)
-
-
 
         return md
 
@@ -88,19 +95,15 @@ class DataWarehouse(Loggable):
         if not os.path.isdir(d):
             os.mkdir(d)
 
-#        self._lock_path(d)
+        #        self._lock_path(d)
         return d
 
     def _lock_path(self, p):
         os.chown(p, 0, -1)
+
+
 #        os.chmod(p, stat.S_IROTH | stat.S_IRGRP | stat.S_IREAD)
 
-if __name__ == '__main__':
-    d = DataWarehouse(root='/Users/ross/Sandbox/foo/moo')
+if __name__ == "__main__":
+    d = DataWarehouse(root="/Users/ross/Sandbox/foo/moo")
     d.build_warehouse()
-
-
-
-
-
-

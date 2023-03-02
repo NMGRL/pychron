@@ -18,20 +18,24 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
-def confirmation_dialog(msg, return_retval=False,
-                        cancel=False, title='',
-                        timeout=None, size=None,
-                        timeout_ret=None, **kw):
+
+def confirmation_dialog(
+    msg,
+    return_retval=False,
+    cancel=False,
+    title="",
+    timeout=None,
+    size=None,
+    timeout_ret=None,
+    **kw
+):
     if size is None:
         size = (-1, -1)
     from pychron.core.ui.dialogs import myConfirmationDialog
 
     dlg = myConfirmationDialog(
-        cancel=cancel,
-        message=msg,
-        title=title,
-        style='modal',
-        size=size, **kw)
+        cancel=cancel, message=msg, title=title, style="modal", size=size, **kw
+    )
 
     if timeout_ret is not None:
         dlg.timeout_return_code = timeout_ret
@@ -43,14 +47,10 @@ def confirmation_dialog(msg, return_retval=False,
     if return_retval:
         return retval
     else:
-
         return retval in (YES, OK)
 
 
-def remember_confirmation_dialog(msg,
-                                 title='',
-                                 size=None,
-                                 **kw):
+def remember_confirmation_dialog(msg, title="", size=None, **kw):
     if size is None:
         size = (-1, -1)
 
@@ -60,8 +60,10 @@ def remember_confirmation_dialog(msg,
         # cancel=cancel,
         message=msg,
         title=title,
-        style='modal',
-        size=size, **kw)
+        style="modal",
+        size=size,
+        **kw
+    )
 
     # if timeout_ret is not None:
     #     dlg.timeout_return_code = timeout_ret
@@ -70,4 +72,6 @@ def remember_confirmation_dialog(msg,
     from pyface.api import YES, OK
 
     return retval in (YES, OK), dlg.remember
+
+
 # ============= EOF =============================================

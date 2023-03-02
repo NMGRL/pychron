@@ -16,7 +16,18 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from traits.api import HasTraits, provides, Button, Event, Range, Any, Bool, TraitError, Str, Enum
+from traits.api import (
+    HasTraits,
+    provides,
+    Button,
+    Event,
+    Range,
+    Any,
+    Bool,
+    TraitError,
+    Str,
+    Enum,
+)
 from traits.has_traits import on_trait_change
 from traitsui.api import View, UItem, VGroup, HSplit, Item, HGroup, spring, VFold
 from traitsui.menu import Action, ToolBar
@@ -37,26 +48,27 @@ class CameraViewer(HasTraits):
     _device = Any
     configure = Button
     snapshot_event = Event
-    temperature = Range(2000, 15000, mode='slider')
-    tint = Range(200, 2500, mode='slider')
-    hue = Range(-180, 180, mode='slider')
-    saturation = Range(0, 255, mode='slider')
-    brightness = Range(-64, 64, mode='slider')
-    contrast = Range(-100, 100, mode='slider')
-    gamma = Range(0, 180, mode='slider')
+    temperature = Range(2000, 15000, mode="slider")
+    tint = Range(200, 2500, mode="slider")
+    hue = Range(-180, 180, mode="slider")
+    saturation = Range(0, 255, mode="slider")
+    brightness = Range(-64, 64, mode="slider")
+    contrast = Range(-100, 100, mode="slider")
+    gamma = Range(0, 180, mode="slider")
 
     auto_exposure_enabled = Bool
-    exposure_time = Range(0, 100, mode='slider')
-    awb_button = Button('Auto')
-    contrast_default_button = Button('Defaults')
-    hue_default_button = Button('Defaults')
+    exposure_time = Range(0, 100, mode="slider")
+    awb_button = Button("Auto")
+    contrast_default_button = Button("Defaults")
+    hue_default_button = Button("Defaults")
 
     snapshot_name = Str
     use_auto_snapshot_name = Bool(True)
     note = Str
     _no_update = False
 
-    extension = Enum('JPEG', 'PNG', 'TIFF')
+    extension = Enum("JPEG", "PNG", "TIFF")
+
     # @property
     # def persistence_path(self):
     #     try:
@@ -85,11 +97,13 @@ class CameraViewer(HasTraits):
     def _contrast_default_button_fired(self):
         self.trait_set(contrast=0, gamma=100)
 
-    @on_trait_change('hue,saturation,brightness,contrast,gamma,auto_exposure, exposure_time')
+    @on_trait_change(
+        "hue,saturation,brightness,contrast,gamma,auto_exposure, exposure_time"
+    )
     def _handle_color_change(self, name, new):
         if self._device is not None:
             if not self._no_update:
-                getattr(self._device, 'set_{}'.format(name))(new)
+                getattr(self._device, "set_{}".format(name))(new)
 
     def _temperature_changed(self):
         self._set_temp_tint()
@@ -113,9 +127,18 @@ class CameraViewer(HasTraits):
     def _update_parameters(self):
         self._update_temptint()
         with no_update(self):
-            d = {k: getattr(self._device, 'get_{}'.format(k))() for k in
-                 ('hue', 'saturation', 'brightness', 'contrast', 'gamma',
-                  'auto_exposure', 'exposure_time')}
+            d = {
+                k: getattr(self._device, "get_{}".format(k))()
+                for k in (
+                    "hue",
+                    "saturation",
+                    "brightness",
+                    "contrast",
+                    "gamma",
+                    "auto_exposure",
+                    "exposure_time",
+                )
+            }
             try:
                 self.trait_set(**d)
             except TraitError:
@@ -137,9 +160,11 @@ class CameraViewer(HasTraits):
         else:
             name = self.snapshot_name
 
-        self.snapshot_event = {'name': name,
-                               'extension': self.extension,
-                               'note': self.note}
+        self.snapshot_event = {
+            "name": name,
+            "extension": self.extension,
+            "note": self.note,
+        }
 
     def save_settings(self):
         pass
@@ -148,55 +173,62 @@ class CameraViewer(HasTraits):
         pass
 
     def traits_view(self):
-        hue_grp = VGroup(HGroup(spring, UItem('hue_default_button')),
-                         Item('hue'),
-                         Item('saturation'),
-                         Item('brightness'),
-                         show_border=True,
-                         label='Hue/Saturation/Brightness')
+        hue_grp = VGroup(
+            HGroup(spring, UItem("hue_default_button")),
+            Item("hue"),
+            Item("saturation"),
+            Item("brightness"),
+            show_border=True,
+            label="Hue/Saturation/Brightness",
+        )
 
-        c_gamma_grp = VGroup(HGroup(spring, UItem('contrast_default_button')),
-                             Item('contrast'),
-                             Item('gamma'),
-                             show_border=True,
-                             label='Contrast/Gamma')
+        c_gamma_grp = VGroup(
+            HGroup(spring, UItem("contrast_default_button")),
+            Item("contrast"),
+            Item("gamma"),
+            show_border=True,
+            label="Contrast/Gamma",
+        )
 
-        exposure_grp = VGroup(Item('auto_exposure_enabled'),
-                              Item('exposure_time', enabled_when='not auto_exposure_enabled'),
-                              show_border=True,
-                              label='Exposure')
-        white_balance_grp = VGroup(UItem('awb_button'),
-                                   show_border=True,
-                                   label='White Balance')
+        exposure_grp = VGroup(
+            Item("auto_exposure_enabled"),
+            Item("exposure_time", enabled_when="not auto_exposure_enabled"),
+            show_border=True,
+            label="Exposure",
+        )
+        white_balance_grp = VGroup(
+            UItem("awb_button"), show_border=True, label="White Balance"
+        )
         # color_grp = VGroup(label='Color')
-        meta_grp = VGroup(HGroup(Item('use_auto_snapshot_name', label='Use Auto'),
-                                 Item('snapshot_name',
-                                      label='Name',
-                                      enabled_when='not use_auto_snapshot_name'),
-                                 Item('extension')),
-                          VGroup(UItem('note', style='custom'), show_border=True, label='Note'),
-                          show_border=True,
-                          label='Meta')
+        meta_grp = VGroup(
+            HGroup(
+                Item("use_auto_snapshot_name", label="Use Auto"),
+                Item(
+                    "snapshot_name",
+                    label="Name",
+                    enabled_when="not use_auto_snapshot_name",
+                ),
+                Item("extension"),
+            ),
+            VGroup(UItem("note", style="custom"), show_border=True, label="Note"),
+            show_border=True,
+            label="Meta",
+        )
 
-        ctrlgrp = VFold(meta_grp,
-                        hue_grp,
-                        exposure_grp,
-                        c_gamma_grp,
-                        white_balance_grp)
+        ctrlgrp = VFold(meta_grp, hue_grp, exposure_grp, c_gamma_grp, white_balance_grp)
 
-        v = View(HSplit(ctrlgrp,
-                        UItem('_device',
-                              width=640, height=480,
-                              editor=CameraEditor())),
-                 toolbar=ToolBar(Action(action='do_snapshot',
-                                        image=icon('camera'),
-                                        name='Snapshot'
-                                        ),
-                                 # Action(action='save_settings',
-                                 #        image=icon('cog'))
-                                 ),
-                 title='Camera',
-                 resizable=True)
+        v = View(
+            HSplit(
+                ctrlgrp, UItem("_device", width=640, height=480, editor=CameraEditor())
+            ),
+            toolbar=ToolBar(
+                Action(action="do_snapshot", image=icon("camera"), name="Snapshot"),
+                # Action(action='save_settings',
+                #        image=icon('cog'))
+            ),
+            title="Camera",
+            resizable=True,
+        )
         # v = View(VGroup(meta_grp, exposure_grp, c_gamma_grp,
         #                 white_balance_grp))
         return v
@@ -265,7 +297,7 @@ class CameraViewer(HasTraits):
         #     save_image(src, path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     c = CameraViewer()
     c.activate()
     c.configure_traits()

@@ -17,10 +17,12 @@
 # ============= enthought library imports =======================
 
 from traits.api import Str, Int, Bool, Float, Property, Instance, CInt, HasTraits
+
 # ============= standard library imports ========================
 import os
 import pickle
 import time
+
 # ============= local library imports  ==========================
 from pychron.consumer_mixin import ConsumerMixin
 from pychron.hardware.linear_mapper import LinearMapper
@@ -35,7 +37,7 @@ class BaseLinearDrive(HasTraits, ConsumerMixin):
 
     nominal_position = Float
 
-    data_position = Property(depends_on='_data_position')
+    data_position = Property(depends_on="_data_position")
     _data_position = Float
 
     update_position = Float
@@ -45,7 +47,7 @@ class BaseLinearDrive(HasTraits, ConsumerMixin):
     steps = Int(137500)
     min_steps = Int(0)
     sign = Float
-    units = Str('mm')
+    units = Str("mm")
 
     linear_mapper = Instance(LinearMapper)
 
@@ -72,16 +74,16 @@ class BaseLinearDrive(HasTraits, ConsumerMixin):
         if self.data_position != value:
             self.enabled = False
             value = self._convert_value(value)
-            self.info('setting data position {}'.format(value))
+            self.info("setting data position {}".format(value))
             self._set_motor(value)
             #            self.data_position = value
             if block:
-                self.info('waiting for move to complete')
+                self.info("waiting for move to complete")
                 self.block()
-                self.info('move complete')
+                self.info("move complete")
                 self.enabled = True
         else:
-            self.info('not changing pos {}=={}'.format(self.data_position, value))
+            self.info("not changing pos {}=={}".format(self.data_position, value))
 
         return True
 
@@ -92,14 +94,12 @@ class BaseLinearDrive(HasTraits, ConsumerMixin):
         if self.sign == -1:
             mi, ma = ma, mi
 
-        self.linear_mapper = LinearMapper(low_data=mi,
-                                          high_data=ma,
-                                          low_step=self.min_steps,
-                                          high_step=self.steps)
+        self.linear_mapper = LinearMapper(
+            low_data=mi, high_data=ma, low_step=self.min_steps, high_step=self.steps
+        )
 
     def block(self, n=3, tolerance=1, progress=None, homing=False, verbose=False):
-        """
-        """
+        """ """
         fail_cnt = 0
         pos_buffer = []
         success_cnt = 0
@@ -113,7 +113,7 @@ class BaseLinearDrive(HasTraits, ConsumerMixin):
             if steps is None:
                 fail_cnt += 1
                 if fail_cnt > 5:
-                    self.warning('blocking complete because of failure to get position')
+                    self.warning("blocking complete because of failure to get position")
                     break
                 continue
 
@@ -124,15 +124,20 @@ class BaseLinearDrive(HasTraits, ConsumerMixin):
                 # invoke_in_main_thread(self.trait_set, homing_position=steps)
 
             if progress is not None:
-                progress.change_message('{} position = {}'.format(self.name, steps),
-                                        auto_increment=False)
+                progress.change_message(
+                    "{} position = {}".format(self.name, steps), auto_increment=False
+                )
 
             pos_buffer.append(steps)
             if verbose:
-                self.debug('position buffer={}'.format(pos_buffer))
+                self.debug("position buffer={}".format(pos_buffer))
             if len(pos_buffer) == n:
                 if verbose:
-                    self.debug('asdf {} {}'.format(abs(float(sum(pos_buffer)) / n - steps), tolerance))
+                    self.debug(
+                        "asdf {} {}".format(
+                            abs(float(sum(pos_buffer)) / n - steps), tolerance
+                        )
+                    )
                 if abs(float(sum(pos_buffer)) / n - steps) < tolerance:
                     if success_cnt > 2:
                         break
@@ -145,8 +150,7 @@ class BaseLinearDrive(HasTraits, ConsumerMixin):
             time.sleep(0.1)
 
     def load_data_position(self, set_pos=True):
-        """
-        """
+        """ """
         steps = self.read_position()
 
         if steps is not None:
@@ -156,9 +160,9 @@ class BaseLinearDrive(HasTraits, ConsumerMixin):
             if set_pos:
                 self._data_position = pos
 
-            self.debug('Load data position {} {} steps= {}'.format(
-                pos, self.units,
-                steps))
+            self.debug(
+                "Load data position {} {} steps= {}".format(pos, self.units, steps)
+            )
 
         return steps
 
@@ -168,7 +172,7 @@ class BaseLinearDrive(HasTraits, ConsumerMixin):
 
     def timer_factory(self):
         """
-            reuse timer if possible
+        reuse timer if possible
         """
         timer = self.timer
 
@@ -178,7 +182,7 @@ class BaseLinearDrive(HasTraits, ConsumerMixin):
             timer = Timer(250, func)
         else:
             if timer.isActive():
-                self.debug('reusing old timer')
+                self.debug("reusing old timer")
             else:
                 self._not_moving_count = 0
                 timer = Timer(250, func)
@@ -200,45 +204,47 @@ class BaseLinearDrive(HasTraits, ConsumerMixin):
             if len(args) == 3:
                 section, key, cast = args
             else:
-                cast = 'float'
+                cast = "float"
                 section, key = args
 
             self.set_attribute(config, key, section, key, cast=cast)
 
     # homing
     def _set_last_known_position(self, pos):
-        self.debug('Set last known position: {}'.format(pos))
+        self.debug("Set last known position: {}".format(pos))
         hd = self._get_homing_persistence()
         if not hd:
             hd = {}
 
-        hd['last_known_position'] = pos
+        hd["last_known_position"] = pos
         self._dump_homing_persistence(hd)
 
     def _get_last_known_position(self):
         hd = self._get_homing_persistence()
         if hd:
-            return hd.get('last_known_position')
+            return hd.get("last_known_position")
 
     @property
     def homing_path(self):
-        return os.path.join(paths.hidden_dir, '{}-{}-homing.p'.format(self.name, self.unique_id))
+        return os.path.join(
+            paths.hidden_dir, "{}-{}-homing.p".format(self.name, self.unique_id)
+        )
 
     def _dump_homing_persistence(self, hd):
         p = self.homing_path
-        with open(p, 'wb') as wfile:
+        with open(p, "wb") as wfile:
             pickle.dump(hd, wfile)
 
     def _get_homing_persistence(self):
         p = self.homing_path
         if os.path.isfile(p):
-            with open(p, 'rb') as rfile:
+            with open(p, "rb") as rfile:
                 return pickle.load(rfile)
 
     def _get_homing_required(self):
         hd = self._get_homing_persistence()
         if hd:
-            return hd['homing_required']
+            return hd["homing_required"]
 
     def _get_data_position(self):
         return self._data_position
@@ -251,5 +257,6 @@ class BaseLinearDrive(HasTraits, ConsumerMixin):
 
     def _set_velocity(self, v):
         self._velocity = v
+
 
 # ============= EOF =============================================

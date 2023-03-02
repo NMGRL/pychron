@@ -26,7 +26,7 @@ Base = declarative_base()
 
 
 def foreignkey(name):
-    return Column(Integer, ForeignKey('{}.id'.format(name)))
+    return Column(Integer, ForeignKey("{}.id".format(name)))
 
 
 def stringcolumn(size=40, *args, **kw):
@@ -34,9 +34,10 @@ def stringcolumn(size=40, *args, **kw):
 
 
 def doublecolumn(**kw):
-    if 'default' not in kw:
-        kw['default'] = 0
+    if "default" not in kw:
+        kw["default"] = 0
 
     return Column(Float(32), **kw)
+
 
 # ============= EOF =============================================

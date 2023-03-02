@@ -54,23 +54,22 @@ class DevicePreferences(HasTraits):
 
 
 class OpenFlagManagerAction(Action):
-    name = 'Flag Manager'
+    name = "Flag Manager"
 
     def perform(self, event):
         app = event.task.window.application
-        man = app.get_service('pychron.hardware.flag_manager.FlagManager')
+        man = app.get_service("pychron.hardware.flag_manager.FlagManager")
 
         open_view(man)
 
 
 class HardwarePlugin(BaseTaskPlugin):
-    id = 'pychron.hardware.plugin'
-    managers = ExtensionPoint(List(Dict),
-                              id='pychron.hardware.managers')
+    id = "pychron.hardware.plugin"
+    managers = ExtensionPoint(List(Dict), id="pychron.hardware.managers")
 
     # my_managers = List(contributes_to='pychron.hardware.managers')
 
-    sources = List(contributes_to='pychron.video.sources')
+    sources = List(contributes_to="pychron.video.sources")
 
     # def _my_managers_default(self):
     #     return [dict(name='hardware', manager=self._hardware_manager_factory())]
@@ -78,6 +77,7 @@ class HardwarePlugin(BaseTaskPlugin):
     #    def _system_lock_manager_factory(self):
     #        return SystemLockManager(application=self.application)
     _remote_hardware_manager = None
+
     # _remote_hardware_manager = Instance('pychron.remote_hardware.remote_hardware_manager.RemoteHardwareManager')
     # _hardware_manager = Instance('pychron.managers.hardware_manager.HardwareManager')
 
@@ -86,8 +86,8 @@ class HardwarePlugin(BaseTaskPlugin):
         from pychron.envisage.initialization.initializer import Initializer
 
         dp = DevicePreferences()
-        afh = self.application.preferences.get('pychron.hardware.auto_find_handle')
-        awh = self.application.preferences.get('pychron.hardware.auto_write_handle')
+        afh = self.application.preferences.get("pychron.hardware.auto_find_handle")
+        awh = self.application.preferences.get("pychron.hardware.auto_write_handle")
         if afh is not None:
             dp.serial_preference.auto_find_handle = to_bool(afh)
             dp.serial_preference.auto_write_handle = to_bool(awh)
@@ -103,29 +103,36 @@ class HardwarePlugin(BaseTaskPlugin):
             return
 
         # create the hardware proxy server
-        ehs = to_bool(self.application.preferences.get('pychron.hardware.enable_hardware_server'))
+        ehs = to_bool(
+            self.application.preferences.get("pychron.hardware.enable_hardware_server")
+        )
         if ehs:
             # use_tx = to_bool(self.application.preferences.get('pychron.hardware.use_twisted', True))
             use_tx = True
             if use_tx:
                 from pychron.tx.server import TxServer
-                rhm = TxServer()
-                node = self.application.preferences.node('pychron.hardware')
-                ports = eval(node.get('ports', '[]'))
-                factories = eval(node.get('factories', '[]'))
 
-                for protocol in eval(node.get('pnames', '[]')):
+                rhm = TxServer()
+                node = self.application.preferences.node("pychron.hardware")
+                ports = eval(node.get("ports", "[]"))
+                factories = eval(node.get("factories", "[]"))
+
+                for protocol in eval(node.get("pnames", "[]")):
                     factory = import_klass(factories[protocol])
                     port = int(ports[protocol])
 
                     exc = rhm.add_endpoint(port, factory(self.application))
                     if exc:
-                        msg = 'Failed starting Command Server for "{}:{}". Please check that multiple ' \
-                              'instances of pychron are not running on this computer. ' \
-                              'Exception: {}'.format(protocol, port, exc)
+                        msg = (
+                            'Failed starting Command Server for "{}:{}". Please check that multiple '
+                            "instances of pychron are not running on this computer. "
+                            "Exception: {}".format(protocol, port, exc)
+                        )
                         self.warning_dialog(msg)
                     else:
-                        self.info('Added Pychron Proxy Service: {}:{}'.format(protocol, port))
+                        self.info(
+                            "Added Pychron Proxy Service: {}:{}".format(protocol, port)
+                        )
 
             # else:
             #     from pychron.remote_hardware.remote_hardware_manager import RemoteHardwareManager
@@ -140,7 +147,7 @@ class HardwarePlugin(BaseTaskPlugin):
 
         if self.managers:
             for m in self.managers:
-                man = m['manager']
+                man = m["manager"]
                 if man:
                     man.kill()
 
@@ -162,7 +169,6 @@ class HardwarePlugin(BaseTaskPlugin):
     #     return RemoteHardwareManager(application=self.application)
 
     def _service_offers_default(self):
-
         # so_hm = self.service_offer_factory(
         #     protocol=HardwareManager,
         #     factory=self._hardware_manager_factory)
@@ -172,8 +178,8 @@ class HardwarePlugin(BaseTaskPlugin):
         #     factory=self._remote_hardware_manager_factory)
 
         so_fm = self.service_offer_factory(
-            protocol=FlagManager,
-            factory=self._flag_manager_factory)
+            protocol=FlagManager, factory=self._flag_manager_factory
+        )
         #        return [so, so1, so2]
         # return [so_hm, so_rhm, so_fm]
         # return [so_hm, so_fm]
@@ -183,18 +189,31 @@ class HardwarePlugin(BaseTaskPlugin):
         return [HardwarePreferencesPane]
 
     def _sources_default(self):
-        return [('pvs://localhost:1081', 'Hardware')]
+        return [("pvs://localhost:1081", "Hardware")]
 
     def _task_extensions_default(self):
-        return [TaskExtension(actions=[SchemaAddition(id='Flag Manager',
-                                                      factory=OpenFlagManagerAction,
-                                                      path='MenuBar/tools.menu'), ])]
+        return [
+            TaskExtension(
+                actions=[
+                    SchemaAddition(
+                        id="Flag Manager",
+                        factory=OpenFlagManagerAction,
+                        path="MenuBar/tools.menu",
+                    ),
+                ]
+            )
+        ]
 
     def _tasks_default(self):
-        return [TaskFactory(id='tasks.hardware',
-                            name='Hardware',
-                            factory=self._factory,
-                            image='configure-2',
-                            task_group='hardware')]
+        return [
+            TaskFactory(
+                id="tasks.hardware",
+                name="Hardware",
+                factory=self._factory,
+                image="configure-2",
+                task_group="hardware",
+            )
+        ]
+
 
 # ============= EOF =============================================

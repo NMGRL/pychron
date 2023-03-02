@@ -44,7 +44,7 @@ class IrradiationPositionStatus(HasTraits):
 
 class IrradiationStatusModel(HasTraits):
     positions = List
-    filtered_positions = Property(depends_on='positions')
+    filtered_positions = Property(depends_on="positions")
 
     def _get_filtered_positions(self):
         fp = self.positions
@@ -53,13 +53,20 @@ class IrradiationStatusModel(HasTraits):
 
 class IrradiationStatusView(Controller):
     def traits_view(self):
-        v = View(BorderVGroup(UItem('filtered_positions',
-                                    editor=TabularEditor(adapter=IrradiatedPositionAdapter())),
-                              label='Non Analyzed Positions'),
-                 resizable=True,
-                 kind='modal',
-                 buttons=['OK'],
-                 title='Irradiation Status Report')
+        v = View(
+            BorderVGroup(
+                UItem(
+                    "filtered_positions",
+                    editor=TabularEditor(adapter=IrradiatedPositionAdapter()),
+                ),
+                label="Non Analyzed Positions",
+            ),
+            resizable=True,
+            kind="modal",
+            buttons=["OK"],
+            title="Irradiation Status Report",
+        )
         return v
+
 
 # ============= EOF =============================================

@@ -34,9 +34,11 @@ class ArgusSpectrometer(ThermoSpectrometer):
     direct access to RemoteControlServer.cs API via microcontroller
     e.g. microcontroller.ask('GetIntegrationTime')
     """
+
     magnet_klass = ArgusMagnet
     source_klass = ArgusSource
     detector_klass = ArgusDetector
     microcontroller_klass = ArgusController
+
 
 # ============= EOF =============================================

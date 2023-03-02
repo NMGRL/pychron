@@ -15,7 +15,7 @@
 # ===============================================================================
 from traits.api import Float
 from pychron.spectrometer.base_magnet import BaseMagnet
-from pychron.spectrometer.pfeiffer import  PfeifferMixin
+from pychron.spectrometer.pfeiffer import PfeifferMixin
 
 
 class PfeifferMagnet(BaseMagnet, PfeifferMixin):
@@ -27,9 +27,10 @@ class PfeifferMagnet(BaseMagnet, PfeifferMixin):
 
     def traits_view(self):
         from traitsui.api import View, Item, VGroup
-        v = View(VGroup(Item('mass'), show_border=True, label='Control'))
+
+        v = View(VGroup(Item("mass"), show_border=True, label="Control"))
         return v
-        
+
         # v = View(VGroup(VGroup(
         #                        Item('mass'),
         #                             # editor=RangeEditor(mode='slider', low_name='massmin',
@@ -46,4 +47,6 @@ class PfeifferMagnet(BaseMagnet, PfeifferMixin):
         #                        label='Control')))
         #
         # return v
+
+
 # ============= EOF =============================================

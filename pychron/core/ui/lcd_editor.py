@@ -20,5 +20,5 @@
 from __future__ import absolute_import
 from pychron.core.ui.factory import toolkit_factory
 
-LCDEditor = toolkit_factory('lcd_editor', 'LCDEditor')
+LCDEditor = toolkit_factory("lcd_editor", "LCDEditor")
 # ============= EOF =============================================

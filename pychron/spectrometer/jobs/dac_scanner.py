@@ -49,7 +49,6 @@ class ScannerBoundsTool(DragTool):
         self.updated = (mi, ma)
 
     def set_low(self, v):
-
         offset = (self.high - v) * 0.1
         v += offset
         self.low = v
@@ -118,7 +117,7 @@ class MFTableOverlay(AbstractOverlay):
     dacs = List
     one_amu_dac = Float
     isotopes = List
-    font = KivaFont('Helvetica 10')
+    font = KivaFont("Helvetica 10")
 
     def overlay(self, component, gc, view_bounds=None, mode="normal"):
         with gc:
@@ -136,7 +135,7 @@ class MFTableOverlay(AbstractOverlay):
             for d in self.dacs:
                 x = component.map_screen([(d, 0)])[0][0]
                 screen_dacs.append(x)
-                gc.rect(x - w / 2., y, w, h)
+                gc.rect(x - w / 2.0, y, w, h)
             gc.draw_path()
 
             gc.set_line_width(2.5)
@@ -161,13 +160,13 @@ class DACScanner(BaseScanner):
     scan_max_dac = Float(9)
 
     use_mftable_limits = Button
-    scan_time_length = Enum('10 s', '20 s', '30 s', '60 s')
+    scan_time_length = Enum("10 s", "20 s", "30 s", "60 s")
 
-    help_str = 'Drag the green rulers to define the scan limits'
+    help_str = "Drag the green rulers to define the scan limits"
 
-    pattributes = ('step', 'scan_min_dac', 'scan_max_dac', 'min_dac', 'max_dac')
+    pattributes = ("step", "scan_min_dac", "scan_max_dac", "min_dac", "max_dac")
     tool = None
-    
+
     def __init__(self, *args, **kw):
         super(DACScanner, self).__init__(*args, **kw)
         # graph = Graph()
@@ -194,10 +193,10 @@ class DACScanner(BaseScanner):
         self._add_bounds(plot)
         self._add_mftable_overlay(plot)
         self._add_limit_tool(plot)
-        plot.index_range.on_trait_change(self._handle_xbounds_change, 'updated')
+        plot.index_range.on_trait_change(self._handle_xbounds_change, "updated")
         graph.new_series()
-        graph.set_x_title('Magnet DAC (Voltage)')
-        graph.set_y_title('Intensity')
+        graph.set_x_title("Magnet DAC (Voltage)")
+        graph.set_y_title("Intensity")
 
     # scan methods
     def _do_step(self, magnet, step):
@@ -207,7 +206,7 @@ class DACScanner(BaseScanner):
         return self.tool.low, self.tool.high
 
     def _calculate_steps(self, l, h):
-        self.debug('scan limits: low={}, high={}'.format(l, h))
+        self.debug("scan limits: low={}, high={}".format(l, h))
         si = l
         while 1:
             yield si
@@ -224,8 +223,7 @@ class DACScanner(BaseScanner):
 
         :param plot: Plot
         """
-        t = LimitsTool(component=plot,
-                       orientation='x')
+        t = LimitsTool(component=plot, orientation="x")
 
         o = LimitOverlay(component=plot, tool=t)
 
@@ -238,20 +236,17 @@ class DACScanner(BaseScanner):
             isos, mws, dacs, coeffs = mft[self.spectrometer.reference_detector]
         except KeyError:
             return
-        
+
         d = (dacs[1] - dacs[0]) / (mws[1] - mws[0])
 
-        o = MFTableOverlay(dacs=list(dacs),
-                           isotopes=list(isos),
-                           one_amu_dac=d * 0.8)
+        o = MFTableOverlay(dacs=list(dacs), isotopes=list(isos), one_amu_dac=d * 0.8)
         plot.underlays.append(o)
 
     def _add_bounds(self, plot):
         o = ScannerBoundsOverlay()
-        tool = ScannerBoundsTool(component=plot,
-                                 overlay=o)
+        tool = ScannerBoundsTool(component=plot, overlay=o)
         self.tool = tool
-        self.tool.on_trait_change(self._handle_tool_change, 'updated')
+        self.tool.on_trait_change(self._handle_tool_change, "updated")
         plot.tools.append(tool)
         plot.overlays.append(o)
 
@@ -284,13 +279,15 @@ class DACScanner(BaseScanner):
         try:
             isos, mws, dacs, coeffs = mft[self.spectrometer.reference_detector]
         except KeyError:
-            self.warning('{} not in mftable'.format(self.spectrometer.reference_detector))
+            self.warning(
+                "{} not in mftable".format(self.spectrometer.reference_detector)
+            )
             return
 
         mi = min(dacs)
         ma = max(dacs)
 
-        self.graph.set_x_limits(mi, ma, pad='0.1')
+        self.graph.set_x_limits(mi, ma, pad="0.1")
         self.scan_min_dac = self.tool.low
         self.scan_max_dac = self.tool.high
 
@@ -303,7 +300,6 @@ class DACScanner(BaseScanner):
         self.step = st * d / t
 
     def _handle_tool_change(self, new):
-
         self.scan_min_dac = new[0]  # self.tool.low
         self.scan_max_dac = new[1]  # self.tool.high
 
@@ -339,5 +335,6 @@ class DACScanner(BaseScanner):
         if self.max_dac > self.min_dac:
             self.graph.set_x_limits(max_=self.max_dac)
             # self.tool.set_high(self.max_dac)
+
 
 # ============= EOF =============================================

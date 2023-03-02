@@ -19,7 +19,6 @@
 from __future__ import absolute_import
 from traits.api import HasTraits, Bool, Float, Str
 
-
 # ============= standard library imports ========================
 
 # ============= local library imports  ==========================
@@ -27,18 +26,19 @@ from pychron.monitors.laser_monitor import LaserMonitor
 
 
 class MonitorSeries(HasTraits):
-    """
-    """
+    """ """
+
     name = Str
     show = Bool
     value = Float
 
 
 class FusionsUVLaserMonitor(LaserMonitor):
-    """
-    """
+    """ """
+
     def _fcheck_parameters(self):
         man = self.manager
         man.update_parameters()
+
 
 # ============= EOF ====================================

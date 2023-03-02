@@ -18,9 +18,28 @@
 from threading import Thread
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Any, Instance, Float, Event, \
-    Property, Bool, on_trait_change
-from traitsui.api import View, Item, Handler, HGroup, ButtonEditor, spring, VGroup, Spring, UItem, RangeEditor
+from traits.api import (
+    HasTraits,
+    Any,
+    Instance,
+    Float,
+    Event,
+    Property,
+    Bool,
+    on_trait_change,
+)
+from traitsui.api import (
+    View,
+    Item,
+    Handler,
+    HGroup,
+    ButtonEditor,
+    spring,
+    VGroup,
+    Spring,
+    UItem,
+    RangeEditor,
+)
 
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -41,7 +60,7 @@ class Pulse(HasTraits):
     units = Property
 
     pulse_button = Event
-    pulse_label = Property(depends_on='pulsing')
+    pulse_label = Property(depends_on="pulsing")
     pulsing = Bool(False)
     enabled = Bool(False)
 
@@ -52,7 +71,7 @@ class Pulse(HasTraits):
     #         with open(p, 'wb') as f:
     #             pickle.dump(self, f)
 
-    @on_trait_change('manager:enabled')
+    @on_trait_change("manager:enabled")
     def upad(self, obj, name, old, new):
         self.enabled = new
 
@@ -65,11 +84,13 @@ class Pulse(HasTraits):
         self.wait_control.reset()
 
     def _wait_control_default(self):
-        return WaitControl(low_name=0,
-                           auto_start=False,
-                           duration=self.duration,
-                           title='',
-                           dispose_at_end=False)
+        return WaitControl(
+            low_name=0,
+            auto_start=False,
+            duration=self.duration,
+            title="",
+            dispose_at_end=False,
+        )
 
     def start(self):
         self._duration_changed()
@@ -94,7 +115,7 @@ class Pulse(HasTraits):
                 man.set_laser_power(0)
 
     def _get_pulse_label(self):
-        return 'Fire' if not self.pulsing else 'Stop'
+        return "Fire" if not self.pulsing else "Stop"
 
     def _get_units(self):
         return self.manager.units
@@ -111,36 +132,59 @@ class Pulse(HasTraits):
     def traits_view(self):
         v = View(
             VGroup(
-            VGroup(
-                HGroup(Item('power', tooltip='Hit Enter for change to take effect'),
-                       Item('units', style='readonly', show_label=False),
-                       spring,
-                       Item('pulse_button',
-                            editor=ButtonEditor(label_value='pulse_label'),
+                VGroup(
+                    HGroup(
+                        Item("power", tooltip="Hit Enter for change to take effect"),
+                        Item("units", style="readonly", show_label=False),
+                        spring,
+                        Item(
+                            "pulse_button",
+                            editor=ButtonEditor(label_value="pulse_label"),
                             show_label=False,
-                            enabled_when='object.enabled')),
-                Item('duration', label='Duration (s)', tooltip='Set the laser pulse duration in seconds')),
-            VGroup(
-                CustomLabel('object.wait_control.message',
-                            size=14,
-                            weight='bold',
-                            color_name='object.wait_control.message_color'),
-
-                HGroup(Spring(width=-5, springy=False),
-                       Item('object.wait_control.high', label='Set Max. Seconds'),
-                       spring, UItem('object.wait_control.continue_button')),
-                HGroup(Spring(width=-5, springy=False),
-                       Item('object.wait_control.current_time', show_label=False,
-                            editor=RangeEditor(mode='slider',
-                                               low=1,
-                                               # low_name='low_name',
-                                               high_name='object.wait_control.duration')),
-                       CustomLabel('object.wait_control.current_time',
-                                   size=14,
-                                   weight='bold')))),
+                            enabled_when="object.enabled",
+                        ),
+                    ),
+                    Item(
+                        "duration",
+                        label="Duration (s)",
+                        tooltip="Set the laser pulse duration in seconds",
+                    ),
+                ),
+                VGroup(
+                    CustomLabel(
+                        "object.wait_control.message",
+                        size=14,
+                        weight="bold",
+                        color_name="object.wait_control.message_color",
+                    ),
+                    HGroup(
+                        Spring(width=-5, springy=False),
+                        Item("object.wait_control.high", label="Set Max. Seconds"),
+                        spring,
+                        UItem("object.wait_control.continue_button"),
+                    ),
+                    HGroup(
+                        Spring(width=-5, springy=False),
+                        Item(
+                            "object.wait_control.current_time",
+                            show_label=False,
+                            editor=RangeEditor(
+                                mode="slider",
+                                low=1,
+                                # low_name='low_name',
+                                high_name="object.wait_control.duration",
+                            ),
+                        ),
+                        CustomLabel(
+                            "object.wait_control.current_time", size=14, weight="bold"
+                        ),
+                    ),
+                ),
+            ),
             # Item('wait_control', show_label=False, style='custom'),
-            id='pulse',
-            handler=PulseHandler())
+            id="pulse",
+            handler=PulseHandler(),
+        )
         return v
 
 

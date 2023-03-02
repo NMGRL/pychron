@@ -22,7 +22,7 @@ from traitsui.api import View, UItem, VGroup
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.editors import TableEditor
+from traitsui.editors.api import TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -30,25 +30,20 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 
 class DashboardCentralPane(TraitsTaskPane):
     def traits_view(self):
-        url = CustomLabel('url', label='URL')
-        v = View(
-            VGroup(url,
-                   UItem('selected_device',
-                         style='custom')))
+        url = CustomLabel("url", label="URL")
+        v = View(VGroup(url, UItem("selected_device", style="custom")))
 
         return v
 
 
 class DashboardDevicePane(TraitsDockPane):
-    id = 'pychron.dashboard.devices'
+    id = "pychron.dashboard.devices"
 
     def traits_view(self):
-        cols = [CheckboxColumn(name='use'),
-                ObjectColumn(name='name', editable=False)]
+        cols = [CheckboxColumn(name="use"), ObjectColumn(name="name", editable=False)]
 
-        editor = TableEditor(columns=cols,
-                             selected='selected_device')
-        v = View(UItem('devices', editor=editor))
+        editor = TableEditor(columns=cols, selected="selected_device")
+        v = View(UItem("devices", editor=editor))
         return v
 
         # ============= EOF =============================================

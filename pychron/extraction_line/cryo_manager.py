@@ -15,7 +15,7 @@
 # ===============================================================================
 import os
 
-from traits.api import Enum
+from traits.api import Enum, provides, Instance
 from traitsui.api import View, Item, InstanceEditor, ListEditor
 
 from pychron.core.helpers.strtools import csv_to_floats
@@ -23,14 +23,28 @@ from pychron.core.yaml import yload
 from pychron.managers.manager import Manager
 from pychron.paths import paths
 from pychron.pychron_constants import AR_AR, NE, HE, GENERIC
+from pychron.response_recorder import ResponseRecorder
 
 
 class CryoManager(Manager):
-    name = 'Cryo'
+    name = "Cryo"
     species = Enum(HE, AR_AR, NE, GENERIC)
+    response_recorder = Instance(ResponseRecorder)
+
+    def _response_recorder_default(self):
+        r = ResponseRecorder(
+            response_device=self.devices[0], output_device=self.devices[0]
+        )
+        return r
 
     def finish_loading(self, *args, **kw):
         pass
+
+    def start_response_recorder(self):
+        self.response_recorder.start("cryo")
+
+    def stop_response_recorder(self):
+        self.response_recorder.stop()
 
     # def get_pressure(self, controller, name):
     #     dev = next((di for di in self.devices if di.name == controller), None)
@@ -76,7 +90,7 @@ class CryoManager(Manager):
         dev = self.devices[idx]
         return dev.read_input(iput)
 
-    def set_setpoint(self, v1, v2=None, idx=0, block=False, **kw):
+    def set_setpoint(self, v1, v2=None, idx=0, block=False, device_name=None, **kw):
         """
         v is either a float or a str
         if float interpret as degrees K
@@ -90,7 +104,28 @@ class CryoManager(Manager):
             v1, v2 = self._lookup_species_temp(v1)
 
         if v1 is not None:
-            self.devices[idx].set_setpoints(v1, v2, block=block, **kw)
+            dev = None
+            if device_name:
+                dev = next((d for d in self.devices if d.name == device_name), None)
+                if not dev:
+                    names = [d.name for d in self.devices]
+                    self.warning(
+                        "Invalid device name: {}. Valid names: {}".format(
+                            device_name, names
+                        )
+                    )
+            else:
+                try:
+                    dev = self.devices[idx]
+                except IndexError:
+                    self.warning(
+                        "Invalid idx: {}. Valid indices: {}".format(
+                            idx, list(range(len(self.devices)))
+                        )
+                    )
+
+            if dev:
+                dev.set_setpoints(v1, v2, block=block, **kw)
 
         self.debug('set_setpoint returning "{}","{}"'.format(v1, v2))
         return v1, v2
@@ -109,30 +144,40 @@ class CryoManager(Manager):
         :return:
         """
 
-        if v in ('freeze', 'pump', 'release'):
-            s = 'Ar' if self.species == AR_AR else self.species
-            v = '{}_{}'.format(s, v)
+        if v in ("freeze", "pump", "release"):
+            s = "Ar" if self.species == AR_AR else self.species
+            v = "{}_{}".format(s, v)
 
-        p = os.path.join(paths.device_dir, 'cryotemps.yaml')
+        p = os.path.join(paths.device_dir, "cryotemps.yaml")
         if os.path.isfile(p):
             yd = yload(p)
             return csv_to_floats(yd[v])
         else:
-            self.warning('File {} does not exist. Cryostat setpoint can not be set')
+            self.warning("File {} does not exist. Cryostat setpoint can not be set")
 
     def traits_view(self):
         if self.devices:
-            v = View(Item('devices', style='custom',
-                          show_label=False,
-                          editor=ListEditor(mutable=False,
-                                            columns=len(self.devices),
-                                            style='custom',
-                                            editor=InstanceEditor(view='control_view'))),
-                     height=-100)
+            v = View(
+                Item(
+                    "devices",
+                    style="custom",
+                    show_label=False,
+                    editor=ListEditor(
+                        mutable=False,
+                        columns=1,
+                        page_name=".name",
+                        style="custom",
+                        editor=InstanceEditor(view="control_view"),
+                    ),
+                ),
+                height=-100,
+            )
         else:
             v = View()
         return v
 
     def _get_simulation(self):
         return any([dev.simulation for dev in self.devices])
+
+
 # ============= EOF =============================================

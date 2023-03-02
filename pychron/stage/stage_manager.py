@@ -31,7 +31,10 @@ from pychron.core.ui.stage_component_editor import LaserComponentEditor
 from pychron.core.ui.thread import Thread
 from pychron.managers.manager import Manager
 from pychron.paths import paths
-from pychron.stage.calibration.tray_calibration_manager import TrayCalibrationManager, get_hole_calibration
+from pychron.stage.calibration.tray_calibration_manager import (
+    TrayCalibrationManager,
+    get_hole_calibration,
+)
 from pychron.stage.maps.base_stage_map import BaseStageMap
 from pychron.stage.maps.laser_stage_map import LaserStageMap
 
@@ -40,10 +43,10 @@ def get_stage_map_names(root=None):
     if root is None:
         root = paths.map_dir
 
-    sms = glob_list_directory(root, '.txt', remove_extension=True)
+    sms = glob_list_directory(root, ".txt", remove_extension=True)
     print(root, sms)
-    sms = [si for si in sms if not si.endswith('.center')]
-    us = glob_list_directory(paths.user_points_dir, '.yaml', remove_extension=True)
+    sms = [si for si in sms if not si.endswith(".center")]
+    us = glob_list_directory(paths.user_points_dir, ".yaml", remove_extension=True)
     if us:
         sms.extend(us)
     return sms
@@ -66,6 +69,7 @@ class BaseStageManager(Manager):
     temp_position = None
     temp_hole = None
     root = Str
+
     # use_modified = Bool(True)  # set true to use modified affine calculation
     def motor_event_hook(self, name, value, *args, **kw):
         pass
@@ -75,6 +79,7 @@ class BaseStageManager(Manager):
 
     def refresh_stage_map_names(self):
         sms = get_stage_map_names(root=self.root)
+        print(sms, self.root)
         self.stage_map_names = sms
 
     def load(self):
@@ -89,7 +94,7 @@ class BaseStageManager(Manager):
             sm = sms[0]
 
         if sm:
-            self.stage_map_name = ''
+            self.stage_map_name = ""
             self.stage_map_name = sm
 
     def kill(self):
@@ -99,13 +104,13 @@ class BaseStageManager(Manager):
 
     @property
     def stage_map_path(self):
-        return os.path.join(paths.hidden_dir, '{}.stage_map'.format(self.id))
+        return os.path.join(paths.hidden_dir, "{}.stage_map".format(self.id))
 
     def canvas_editor_factory(self):
-        return self.canvas_editor_klass(keyboard_focus='keyboard_focus')
+        return self.canvas_editor_klass(keyboard_focus="keyboard_focus")
 
     def move_to_hole(self, hole, **kw):
-        self._move(self._move_to_hole, hole, name='move_to_hole', **kw)
+        self._move(self._move_to_hole, hole, name="move_to_hole", **kw)
 
     def get_calibrated_position(self, pos, key=None):
         smap = self.stage_map
@@ -117,7 +122,7 @@ class BaseStageManager(Manager):
             # check if a calibration applies to this hole
             hole_calibration = get_hole_calibration(smap.name, key)
             if hole_calibration:
-                self.debug('Using hole calibration')
+                self.debug("Using hole calibration")
                 ca = hole_calibration
 
             if ca:
@@ -125,15 +130,18 @@ class BaseStageManager(Manager):
                 cpos = ca.center
                 scale = ca.scale
 
-                self.debug('Calibration parameters: rot={:0.3f}, cpos={} scale={:0.3f}'.format(rot, cpos, scale))
+                self.debug(
+                    "Calibration parameters: rot={:0.3f}, cpos={} scale={:0.3f}".format(
+                        rot, cpos, scale
+                    )
+                )
                 pos = smap.map_to_calibration(pos, cpos=cpos, rot=rot, scale=scale)
 
         return pos
 
     def update_axes(self):
-        """
-        """
-        self.info('querying axis positions')
+        """ """
+        self.info("querying axis positions")
         self._update_axes()
 
     # private
@@ -156,8 +164,9 @@ class BaseStageManager(Manager):
         if name is None:
             name = func.__name__
 
-        self.move_thread = Thread(name='stage.{}'.format(name),
-                                  target=func, args=(pos,) + args, kwargs=kw)
+        self.move_thread = Thread(
+            name="stage.{}".format(name), target=func, args=(pos,) + args, kwargs=kw
+        )
         self.move_thread.start()
 
     def _canvas_factory(self):
@@ -168,14 +177,14 @@ class BaseStageManager(Manager):
 
     # handlers
     def _calibrated_position_entry_changed(self, new):
-        self.debug('User entered calibrated position {}'.format(new))
+        self.debug("User entered calibrated position {}".format(new))
         self.goto_position(new)
 
     def _stage_map_name_changed(self, old, new):
         if new:
-            self.debug('setting stage map to {}'.format(new))
+            self.debug("setting stage map to {}".format(new))
             root = self.root
-            path = os.path.join(root, add_extension(new, '.txt'))
+            path = os.path.join(root, add_extension(new, ".txt"))
             sm = self.stage_map_klass(file_path=path)
 
             if sm.load():
@@ -195,8 +204,7 @@ class BaseStageManager(Manager):
         return paths.map_dir
 
     def _tray_calibration_manager_default(self):
-        t = TrayCalibrationManager(parent=self,
-                                   canvas=self.canvas)
+        t = TrayCalibrationManager(parent=self, canvas=self.canvas)
         return t
 
     def _canvas_default(self):
@@ -204,23 +212,24 @@ class BaseStageManager(Manager):
 
     def _save_stage_map(self):
         p = self.stage_map_path
-        self.info('saving stage_map {} to {}'.format(self.stage_map_name, p))
-        with open(p, 'wb') as f:
+        self.info("saving stage_map {} to {}".format(self.stage_map_name, p))
+        with open(p, "wb") as f:
             pickle.dump(self.stage_map_name, f)
 
     def _load_previous_stage_map(self):
         p = self.stage_map_path
         if os.path.isfile(p):
-            self.info('loading previous stage map from {}'.format(p))
-            with open(p, 'rb') as f:
+            self.info("loading previous stage map from {}".format(p))
+            with open(p, "rb") as f:
                 try:
                     sm = pickle.load(f)
-                    if not sm.endswith('.center'):
+                    if not sm.endswith(".center"):
                         return sm
                 except (pickle.PickleError, ValueError):
                     pass
                     # def traits_view(self):
                     # self.initialize_stage()
+
 
 # ============= EOF =============================================
 

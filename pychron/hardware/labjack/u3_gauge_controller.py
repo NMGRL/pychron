@@ -21,14 +21,15 @@ from pychron.hardware.core.core_device import CoreDevice
 from pychron.hardware.gauges.base_controller import BaseGaugeController
 from pychron.hardware.labjack.base_u3_lv import BaseU3LV
 
-PARAMS = {'mbar': (6.8, 11.33),
-          'ubar': (5.0, 8.333),
-          'torr': (6.875, 11.46),
-          'mtorr': (5.075, 8.458),
-          'micron': (5.075, 8.458),
-          'Pa': (5.6, 9.333),
-          'kPa': (7.4, 12.33),
-          }
+PARAMS = {
+    "mbar": (6.8, 11.33),
+    "ubar": (5.0, 8.333),
+    "torr": (6.875, 11.46),
+    "mtorr": (5.075, 8.458),
+    "micron": (5.075, 8.458),
+    "Pa": (5.6, 9.333),
+    "kPa": (7.4, 12.33),
+}
 
 
 class PressureMapper(BaseMapper):
@@ -47,8 +48,8 @@ class U3GaugeController(BaseU3LV, BaseGaugeController, CoreDevice):
     def load_additional_args(self, config):
         BaseU3LV.load_additional_args(self, config)
 
-        self.poly_mappers.append(self.mapper_factory(config, 'Conversion1'))
-        self.poly_mappers.append(self.mapper_factory(config, 'Conversion2'))
+        self.poly_mappers.append(self.mapper_factory(config, "Conversion1"))
+        self.poly_mappers.append(self.mapper_factory(config, "Conversion2"))
 
         self._load_gauges(config)
 
@@ -56,7 +57,7 @@ class U3GaugeController(BaseU3LV, BaseGaugeController, CoreDevice):
 
     def mapper_factory(self, config, section):
         mapper = PressureMapper()
-        units = self.config_get(config, section, 'units')
+        units = self.config_get(config, section, "units")
         mapper.units = units
         return mapper
 
@@ -64,5 +65,6 @@ class U3GaugeController(BaseU3LV, BaseGaugeController, CoreDevice):
         idx = self.gauges.index(gauge)
         v = self.read_adc_channel(idx)
         return self.poly_mappers[idx].map_measured(v)
+
 
 # ============= EOF =============================================

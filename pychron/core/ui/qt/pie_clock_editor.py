@@ -18,8 +18,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from pyface.qt.QtCore import Qt, QThread
-from pyface.qt.QtGui import QColor, \
-    QWidget, QPainter, QPainterPath
+from pyface.qt.QtGui import QColor, QWidget, QPainter, QPainterPath
 from traits.api import Str, Event
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
@@ -50,7 +49,6 @@ class PieClock(QWidget):
         qp.end()
 
     def _draw_indicator(self, event, qp):
-
         cx, cy, w, r = self._get_geometry(event)
 
         pen = qp.pen()
@@ -79,13 +77,12 @@ class PieClock(QWidget):
         # qp.translate(0,-ro)
         # qp.drawEllipse(-cr2, -cr2, cr, cr)
 
-
     def _get_geometry(self, event):
         rect = event.rect()
-        #print rect.width(), rect.height()
+        # print rect.width(), rect.height()
 
         w = rect.width() - 10
-        r = w / 2.
+        r = w / 2.0
         cx, cy = r + 5, r + 5
         return cx, cy, w, r
 
@@ -101,14 +98,13 @@ class PieClock(QWidget):
         qp.drawEllipse(cx - r, cy - r, w, w)
 
     def _draw_slices(self, event, qp):
-
-        #qp.setPen(QColor(168, 34, 3))
+        # qp.setPen(QColor(168, 34, 3))
         self._set_pen(qp)
 
         cx, cy, w, r = self._get_geometry(event)
 
         start = 90 * 16
-        cx, cy = cx - w / 2., cy - w / 2.
+        cx, cy = cx - w / 2.0, cy - w / 2.0
         if self.slices:
             hours, colors = list(zip(*self.slices))
             sh = sum(hours)
@@ -172,21 +168,12 @@ class _PieClockEditor(Editor):
     finish_slice_event = Event
     _clock_thread = None
 
-
     def init(self, parent):
         self.control = self._create_control(parent)
-        self.sync_value(self.factory.update_slices_event,
-                        'update_slices_event',
-                        'from')
-        self.sync_value(self.factory.start_event,
-                        'start_event',
-                        'from')
-        self.sync_value(self.factory.stop_event,
-                        'stop_event',
-                        'from')
-        self.sync_value(self.factory.finish_slice_event,
-                        'finish_slice_event',
-                        'from')
+        self.sync_value(self.factory.update_slices_event, "update_slices_event", "from")
+        self.sync_value(self.factory.start_event, "start_event", "from")
+        self.sync_value(self.factory.stop_event, "stop_event", "from")
+        self.sync_value(self.factory.finish_slice_event, "finish_slice_event", "from")
         self._set_slices()
         # direction=QBoxLayout.LeftToRight
         # resizable=True
@@ -205,7 +192,7 @@ class _PieClockEditor(Editor):
         self.control.continue_flag = True
 
     def _set_slices(self):
-        if hasattr(self.value, 'slices'):
+        if hasattr(self.value, "slices"):
             self.control.slices = self.value.slices
             self.control.update()
 
@@ -232,5 +219,6 @@ class PieClockEditor(BasicEditorFactory):
     start_event = Str
     stop_event = Str
     finish_slice_event = Str
+
 
 # ============= EOF =============================================

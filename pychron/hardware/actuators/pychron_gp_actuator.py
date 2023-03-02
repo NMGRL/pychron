@@ -27,68 +27,86 @@ from pychron.hardware.actuators.gp_actuator import GPActuator
 
 class PychronGPActuator(GPActuator, ClientMixin):
     """
-        Used to communicate with PyValve valves
+    Used to communicate with PyValve valves
     """
 
     @trim
     def get_state_checksum(self, vkeys, verbose=False):
-        cmd = 'GetStateChecksum {}'.format(','.join(vkeys))
+        cmd = "GetStateChecksum {}".format(",".join(vkeys))
         resp = self.ask(cmd, verbose=verbose)
         return resp
 
     @trim_bool
     def get_lock_state(self, obj, verbose=False):
-        cmd = 'GetValveLockState {}'.format(get_valve_name(obj))
+        cmd = "GetValveLockState {}".format(get_valve_name(obj))
         return self.ask(cmd, verbose=verbose)
 
     @trim
     def get_owners_word(self, verbose=False):
-        cmd = 'GetValveOwners'
+        cmd = "GetValveOwners"
+        return self.ask(cmd, verbose=verbose)
+
+    @trim
+    def get_pipette_count(self, name, verbose=False):
+        cmd = "GetPipetteCount {}".format(name)
+        return self.ask(cmd, verbose=verbose)
+
+    @trim
+    def get_pipette_counts(self, verbose=False):
+        cmd = "GetPipetteCounts"
         return self.ask(cmd, verbose=verbose)
 
     @trim
     def get_state_word(self, verbose=False):
-        cmd = 'GetStateWord' if os.getenv('PYCHRON_VALVE_VERSION', 0) == 1 else 'GetValveStates'
+        cmd = (
+            "GetStateWord"
+            if os.getenv("PYCHRON_VALVE_VERSION", 0) == "1"
+            else "GetValveStates"
+        )
         return self.ask(cmd, verbose=verbose)
 
     @trim
     def get_lock_word(self, verbose=False):
-        cmd = 'GetLockWord' if os.getenv('PYCHRON_VALVE_VERSION', 0) == 1 else 'GetValveLockStates'
+        cmd = (
+            "GetLockWord"
+            if os.getenv("PYCHRON_VALVE_VERSION", 0) == "1"
+            else "GetValveLockStates"
+        )
         return self.ask(cmd, verbose=verbose)
 
     @trim_bool
     def get_indicator_state(self, obj, verbose=True):
         """
-            Query the hardware for the channel state
+        Query the hardware for the channel state
         """
-        cmd = 'GetIndicatorState {}'.format(get_valve_name(obj))
+        cmd = "GetIndicatorState {}".format(get_valve_name(obj))
         return self.ask(cmd, verbose=verbose)
 
     @trim_bool
     def get_channel_state(self, obj, verbose=True):
         """
-            Query the hardware for the channel state
+        Query the hardware for the channel state
         """
-        cmd = 'GetValveState {}'.format(get_valve_name(obj))
+        cmd = "GetValveState {}".format(get_valve_name(obj))
         return self.ask(cmd, verbose=verbose)
 
     def close_channel(self, obj, excl=False):
         """
-            Close the channel
-            obj: valve object
+        Close the channel
+        obj: valve object
 
-            return True if actuation completed successfully
+        return True if actuation completed successfully
         """
-        return self.actuate(obj, 'Close')
+        return self.actuate(obj, "Close")
 
     def open_channel(self, obj):
         """
-            Open the channel
-            obj: valve object
+        Open the channel
+        obj: valve object
 
-            return True if actuation completed successfully
+        return True if actuation completed successfully
         """
-        return self.actuate(obj, 'Open')
+        return self.actuate(obj, "Open")
 
     def actuate(self, obj, action):
         if self._actuate(obj, action):
@@ -98,17 +116,18 @@ class PychronGPActuator(GPActuator, ClientMixin):
     @trim_bool
     def _actuate(self, obj, action):
         """
-            obj: valve object
-            action: str,  "Open" or "Close"
+        obj: valve object
+        action: str,  "Open" or "Close"
         """
         if self.simulation:
             return True
 
-        cmd = '{} {}'.format(action, get_valve_name(obj))
+        cmd = "{} {}".format(action, get_valve_name(obj))
         return self.ask(cmd)
 
     def _check_actuate(self, obj, action):
-        state = action == 'Open'
+        state = action == "Open"
         return self.get_indicator_state(obj) == state
+
 
 # ============= EOF =====================================

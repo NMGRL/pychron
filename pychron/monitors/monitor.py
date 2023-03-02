@@ -17,9 +17,11 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Float
+
 # ============= standard library imports ========================
 from threading import Thread, Event
 import time
+
 # ============= local library imports  ==========================
 # from pychron.config_loadable import ConfigLoadable
 # from pychron.managers.manager import Manager
@@ -30,8 +32,8 @@ from pychron.paths import paths
 
 
 class Monitor(ConfigLoadable):
-    """
-    """
+    """ """
+
     sample_delay = Float(5)
     manager = None
     _monitoring = False
@@ -49,8 +51,14 @@ class Monitor(ConfigLoadable):
     def load(self):
         config = self.get_configuration()
         if config:
-            self.set_attribute(config, 'sample_delay',
-                               'General', 'sample_delay', cast='float', optional=False)
+            self.set_attribute(
+                config,
+                "sample_delay",
+                "General",
+                "sample_delay",
+                cast="float",
+                optional=False,
+            )
 
             self._invalid_checks = []
             return self._load_hook(config)
@@ -59,27 +67,25 @@ class Monitor(ConfigLoadable):
         return True
 
     def stop(self):
-        """
-        """
+        """ """
         if self._stop_signal:
             self._stop_signal.set()
             #        self.kill = True
-            self.info('Stop monitor')
+            self.info("Stop monitor")
             self._monitoring = False
 
     def warning(self, msg):
         """
-            override loggable warning to issue a warning dialog
+        override loggable warning to issue a warning dialog
         """
         super(Monitor, self).warning(msg)
         invoke_in_main_thread(warning, None, msg)
 
     def monitor(self):
-        """
-        """
+        """ """
         if not self._monitoring:
             self._monitoring = True
-            self.info('Starting monitor')
+            self.info("Starting monitor")
             self._stop_signal = Event()
 
             if self.load():
@@ -92,20 +98,22 @@ class Monitor(ConfigLoadable):
             return True
 
     def reset_start_time(self):
-        """
-        """
+        """ """
         self.start_time = time.time()
 
     def check(self):
         return any([fi() for fi in self._get_checks()])
 
     def _get_checks(self):
-        return [getattr(self, h) for h in dir(self)
-                if '_fcheck' in h and h not in self._invalid_checks]
+        return [
+            getattr(self, h)
+            for h in dir(self)
+            if "_fcheck" in h and h not in self._invalid_checks
+        ]
 
     def _monitor_(self):
-        """
-        """
+        """ """
+
         # load before every monitor call so that changes to the config file
         # are incorpoated
         if self.manager is not None:
@@ -117,14 +125,16 @@ class Monitor(ConfigLoadable):
         #             funcs = [getattr(self, h) for h in dir(self)
         #                      if '_fcheck' in h and h not in self._invalid_checks]
         stop_signal = self._stop_signal
+
         while not stop_signal.isSet():
+            # sleep before running monitor again
+            time.sleep(self.sample_delay)
+
             for fi in self._get_checks():
                 fi()
                 if stop_signal.isSet():
                     break
 
-            # sleep before running monitor again
-            time.sleep(self.sample_delay)
 
 # ============= EOF ====================================
 #    def _monitor_(self, stop_signal):

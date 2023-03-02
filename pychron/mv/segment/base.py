@@ -17,8 +17,12 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import HasTraits
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 class BaseSegmenter(HasTraits):
     pass
+
+
 # ============= EOF =============================================

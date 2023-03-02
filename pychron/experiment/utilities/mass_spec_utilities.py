@@ -21,16 +21,20 @@ import os
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-os.environ['MassSpecDBVersion'] = '16'
+os.environ["MassSpecDBVersion"] = "16"
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
-from pychron.mass_spec.database.massspec_orm import AnalysesTable, IsotopeTable, DetectorTable
+from pychron.mass_spec.database.massspec_orm import (
+    AnalysesTable,
+    IsotopeTable,
+    DetectorTable,
+)
 
 db = MassSpecDatabaseAdapter(bind=False)
-db.host = '129.138.12.160'
-db.name = 'massspecdata'
-db.username = 'jross'
-db.password = 'Jross40*39'
-db.kind = 'mysql'
+db.host = "129.138.12.160"
+db.name = "massspecdata"
+db.username = "jross"
+db.password = "Jross40*39"
+db.kind = "mysql"
 db.connect(test=False)
 
 
@@ -47,7 +51,9 @@ def fix_reference_detector(rd, aid):
 
     for r in q.all():
         if r.Label == rd:
-            print('setting refid current={}  new={}'.format(record.RefDetID, r.DetectorID))
+            print(
+                "setting refid current={}  new={}".format(record.RefDetID, r.DetectorID)
+            )
             record.RefDetID = r.DetectorID
     db.commit()
 
@@ -58,10 +64,10 @@ def fix_reference_detectors(path):
             line = line.strip()
             if line:
                 aid = int(line)
-                fix_reference_detector('H2', aid)
+                fix_reference_detector("H2", aid)
                 # break
 
 
-path = '/Users/ross/Desktop/Untitled.csv'
+path = "/Users/ross/Desktop/Untitled.csv"
 fix_reference_detectors(path)
 # ============= EOF =============================================

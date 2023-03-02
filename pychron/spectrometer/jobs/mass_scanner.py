@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Float
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.spectrometer.jobs.base_scanner import BaseScanner
@@ -26,16 +27,16 @@ class MassScanner(BaseScanner):
     start_mass = Float
     stop_mass = Float
 
-    pattributes = ('step', 'start_mass', 'stop_mass')
+    pattributes = ("step", "start_mass", "stop_mass")
 
     # private
     def _setup_graph(self, graph, plot):
         for d in self.spectrometer.detectors:
-            s, p = graph.new_series(yname='{}y{}'.format(d.name, self.plotid))
+            s, p = graph.new_series(yname="{}y{}".format(d.name, self.plotid))
             s.visible = d.active
 
-        graph.set_x_title('Mass (AMU)')
-        graph.set_y_title('Intensity')
+        graph.set_x_title("Mass (AMU)")
+        graph.set_y_title("Intensity")
 
     # scan methods
     def _do_step(self, magnet, step):
@@ -45,7 +46,7 @@ class MassScanner(BaseScanner):
         return self.start_mass, self.stop_mass
 
     def _calculate_steps(self, l, h):
-        self.debug('scan limits: start_value={}, stop_value={}'.format(l, h))
+        self.debug("scan limits: start_value={}, stop_value={}".format(l, h))
         step_size = self.step
 
         if l > h:
@@ -58,5 +59,6 @@ class MassScanner(BaseScanner):
             if si > h:
                 yield h
                 raise StopIteration
+
 
 # ============= EOF =============================================

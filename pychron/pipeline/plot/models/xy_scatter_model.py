@@ -22,11 +22,13 @@
 
 from __future__ import absolute_import
 from pychron.pipeline.plot.models.figure_model import FigureModel
+
 # from pychron.processing.plot.panels.series_panel import SeriesPanel, DashboardSeriesPanel
 from pychron.pipeline.plot.panels.xy_scatter_panel import XYScatterPanel
 
 
 class XYScatterModel(FigureModel):
     _panel_klass = XYScatterPanel
+
 
 # ============= EOF =============================================

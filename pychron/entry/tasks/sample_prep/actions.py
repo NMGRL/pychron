@@ -23,12 +23,13 @@ from pychron.envisage.ui_actions import UIAction
 
 
 class SamplePrepAction(UIAction):
-    name = 'Sample Prep'
-    id = 'pychron.sample_prep'
+    name = "Sample Prep"
+    id = "pychron.sample_prep"
 
     def perform(self, event):
-        pid = 'pychron.entry.sample.prep.task'
+        pid = "pychron.entry.sample.prep.task"
         app = event.task.window.application
         app.get_task(pid)
+
 
 # ============= EOF =============================================

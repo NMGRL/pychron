@@ -42,7 +42,7 @@ class FractionalLossCalculator(HasTraits):
         fs = [calculate_fractional_loss(ti, self.temp, self.radius) for ti in xs]
         return xs, fs
 
-    @on_trait_change('temp, radius, max_age, min_age')
+    @on_trait_change("temp, radius, max_age, min_age")
     def _replot(self):
         xs, ys = self._calculate_data()
 
@@ -50,12 +50,12 @@ class FractionalLossCalculator(HasTraits):
         self.graph.set_data(ys, axis=1)
 
     def traits_view(self):
-        a = HGroup(Item('temp'), Item('radius'), Item('min_age'), Item('max_age'))
-        v = View(VGroup(a, UItem('graph', style='custom')))
+        a = HGroup(Item("temp"), Item("radius"), Item("min_age"), Item("max_age"))
+        v = View(VGroup(a, UItem("graph", style="custom")))
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     f = FractionalLossCalculator()
     f.configure_traits()
 # ============= EOF =============================================

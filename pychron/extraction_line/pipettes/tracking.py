@@ -16,12 +16,16 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
+
+import json
+
 import six.moves.cPickle as pickle
 
 from traits.api import Str, Int
 
 # ============= standard library imports ========================
 import os
+
 # ============= local library imports  ==========================
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -33,13 +37,14 @@ class PipetteTracker(Loggable):
     outer = Str
     counts = Int
     _shot_loaded = False
+
     #     def __init__(self, *args, **kw):
     #         super(PipetteTracker, self).__init__(*args, **kw)
     #         self.load()
 
     def check_shot(self, name):
         """
-            check shot called only when valve opens
+        check shot called only when valve opens
         """
         if name == self.inner:
             self._shot_loaded = True
@@ -52,10 +57,9 @@ class PipetteTracker(Loggable):
                 return True
 
     def _increment(self):
-
         self.counts += 1
 
-        self.debug('increment shot count {}'.format(self.counts))
+        self.debug(f"increment shot count {self.counts}")
         self.dump()
 
     # ===============================================================================
@@ -64,44 +68,68 @@ class PipetteTracker(Loggable):
     def load(self):
         p = self._get_path_id()
         if os.path.isfile(p):
-            with open(p, 'rb') as rfile:
-                try:
-                    params = pickle.load(rfile)
-                    self._load(params)
-                except (pickle.PickleError, OSError):
-                    pass
+            if p.endswith(".json"):
+                with open(p, "r") as rfile:
+                    self._load(json.load(rfile))
+            else:
+                with open(p, "rb") as rfile:
+                    try:
+                        params = pickle.load(rfile)
+                        self._load(params)
+                    except (pickle.PickleError, OSError, EOFError):
+                        pass
+        else:
+            # try loading old
+            p = self._get_path_id(pickled=True)
+            if os.path.isfile(p):
+                with open(p, "rb") as rfile:
+                    try:
+                        params = pickle.load(rfile)
+                        self._load(params)
+                    except (pickle.PickleError, OSError, EOFError):
+                        pass
+                self.dump()
 
     def dump(self):
         p = self._get_path_id()
-        with open(p, 'wb') as wfile:
-            pickle.dump(self._dump(), wfile)
-            self.debug('saved current shot count {}'.format(self.counts))
+        if p.endswith(".json"):
+            with open(p, "w") as wfile:
+                json.dump(self._dump(), wfile)
+        else:
+            with open(p, "wb") as wfile:
+                pickle.dump(self._dump(), wfile)
+        self.debug(f"saved current shot count {self.counts}")
 
     def _load(self, params):
         if params:
             try:
-                cnts = params['counts']
-                last_shot_time = params['last_shot_time']
+                cnts = params["counts"]
+                last_shot_time = params["last_shot_time"]
             except KeyError:
                 cnts = 0
 
             self.counts = cnts
-            self.debug('loaded current shot count {} time:{}'.format(self.counts,
-                                                                     last_shot_time))
+            self.debug(f"loaded current shot count {self.counts} time:{last_shot_time}")
+
+    def to_dict(self):
+        return self._dump()
 
     def _dump(self):
-        d = dict(
-            counts=self.counts,
-            last_shot_time=generate_datetimestamp())
+        d = dict(counts=self.counts, last_shot_time=generate_datetimestamp())
 
         return d
 
-    def _get_path_id(self):
-        #handle legacy format
-        p = os.path.join(paths.hidden_dir, 'pipette-{}_{}'.format(self.inner, self.outer))
+    def _get_path_id(self, pickled=False):
+        # handle legacy format
+        p = os.path.join(paths.hidden_dir, f"pipette-{self.inner}_{self.outer}")
         if not os.path.isfile(p):
-            p = os.path.join(paths.hidden_dir, '{}_{}-{}'.format(self.name, self.inner, self.outer))
+            name = f"{self.name}_{self.inner}-{self.outer}"
+            if not pickled:
+                name = f"{name}.json"
+
+            p = os.path.join(paths.hidden_dir, name)
 
         return p
+
 
 # ============= EOF =============================================

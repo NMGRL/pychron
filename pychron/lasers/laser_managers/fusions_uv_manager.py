@@ -35,45 +35,46 @@ from pychron.stage.maps.laser_stage_map import UVLaserStageMap
 
 
 class FusionsUVManager(FusionsLaserManager):
-    """
-    """
-    stage_manager_id = 'fusions.uv'
+    """ """
 
-    name = 'FusionsUV'
-    monitor_name = 'uv_laser_monitor'
+    stage_manager_id = "fusions.uv"
+
+    name = "FusionsUV"
+    monitor_name = "uv_laser_monitor"
     monitor_klass = FusionsUVLaserMonitor
 
     atl_controller = Instance(ATLLaserControlUnit)
-    simulation = DelegatesTo('atl_controller')
-    single_shot = Button('Single Shot')
+    simulation = DelegatesTo("atl_controller")
+    single_shot = Button("Single Shot")
     laser_status = Str
 
     fire_button = Event
-    fire_label = Property(depends_on='firing')
-    firing = DelegatesTo('atl_controller')
-    fire_mode = Enum('Burst', 'Continuous', 'Single')
+    fire_label = Property(depends_on="firing")
+    firing = DelegatesTo("atl_controller")
+    fire_mode = Enum("Burst", "Continuous", "Single")
 
     gas_handler = Instance(UVGasHandlerManager)
 
     #    energy = DelegatesTo('atl_controller')
     #    energymin = DelegatesTo('atl_controller')
     #    energymax = DelegatesTo('atl_controller')
-    energy_readback = DelegatesTo('atl_controller')
-    pressure_readback = DelegatesTo('atl_controller')
-    burst_readback = DelegatesTo('atl_controller')
-    status_readback = DelegatesTo('atl_controller')
-    action_readback = DelegatesTo('atl_controller')
+    energy_readback = DelegatesTo("atl_controller")
+    pressure_readback = DelegatesTo("atl_controller")
+    burst_readback = DelegatesTo("atl_controller")
+    status_readback = DelegatesTo("atl_controller")
+    action_readback = DelegatesTo("atl_controller")
 
-    burst_shot = DelegatesTo('atl_controller')
-    reprate = DelegatesTo('atl_controller')
+    burst_shot = DelegatesTo("atl_controller")
+    reprate = DelegatesTo("atl_controller")
 
     _is_tracing = False
     _cancel_tracing = False
 
     add_reference_mark_button = Button
-    reset_reference_marks_button = Button('Reset')
+    reset_reference_marks_button = Button("Reset")
     reference_marks = Instance(ReferenceMarks, ())
-    save_reference_marks_canvas_button = Button('Save')
+    save_reference_marks_canvas_button = Button("Save")
+
     # dbname = paths.uvlaser_db
     # db_root = paths.uvlaser_db_root
 
@@ -96,10 +97,10 @@ class FusionsUVManager(FusionsLaserManager):
 
     def goto_named_position(self, pos):
         self.stage_manager.goto_position(pos)
-        return 'OK'
+        return "OK"
 
     def set_motors_for_point(self, pt):
-        for motor in ('mask', 'attenuator'):
+        for motor in ("mask", "attenuator"):
             if hasattr(pt, motor):
                 self.set_motor(motor, getattr(pt, motor), block=True)
 
@@ -108,13 +109,13 @@ class FusionsUVManager(FusionsLaserManager):
         pt = sm.canvas.get_point(pos)
         #        sm = self.stage_manager._stage_map
         #        pt = sm.get_point(pos)
-        self.debug('goto point. pos={} pt={}'.format(pos, pt))
+        self.debug("goto point. pos={} pt={}".format(pos, pt))
         if pt:
             # self.set_motors_for_point(pt)
             self.stage_manager.move_to_point(pt)
             result = True
         else:
-            result = 'Invalid point'
+            result = "Invalid point"
         return result
 
     def drill_point(self, value, name):
@@ -132,10 +133,10 @@ class FusionsUVManager(FusionsLaserManager):
         self._is_tracing = True
         self._cancel_tracing = False
 
-        if pathname.startswith('r'):
+        if pathname.startswith("r"):
             self._raster_polygon(pathname)
         else:
-            if kind == 'continuous':
+            if kind == "continuous":
                 func = self._continuous_trace_path
                 #            self._continuous_trace_path(value, pathname)
             else:
@@ -146,7 +147,7 @@ class FusionsUVManager(FusionsLaserManager):
 
             t = Thread(target=func, args=(value, pathname))
             t.start()
-        return 'OK'
+        return "OK"
 
     def _raster_polygon(self, name):
         atl = self.atl_controller
@@ -157,21 +158,23 @@ class FusionsUVManager(FusionsLaserManager):
         poly = smap.get_polygon(name)
 
         print(poly)
-        sm._move_polygon(poly['points'], velocity=poly['velocity'],
-                         motors=poly['motors'],
-                         use_outline=poly['use_outline'],
-                         offset=poly['offset'],
-                         use_convex_hull=poly['use_convex_hull'],
-                         scan_size=poly['scan_size'],
-                         start_callback=atl.laser_run,
-                         end_callback=atl.laser_stop)
+        sm._move_polygon(
+            poly["points"],
+            velocity=poly["velocity"],
+            motors=poly["motors"],
+            use_outline=poly["use_outline"],
+            offset=poly["offset"],
+            use_convex_hull=poly["use_convex_hull"],
+            scan_size=poly["scan_size"],
+            start_callback=atl.laser_run,
+            end_callback=atl.laser_stop,
+        )
 
-    def _continuous_trace_path(self, value, path, mode='smooth'):
+    def _continuous_trace_path(self, value, path, mode="smooth"):
         atl = self.atl_controller
         sm = self.stage_manager
 
-        if mode == 'smooth':
-
+        if mode == "smooth":
             atl.set_burst_mode(False)
 
             sc = sm.stage_controller
@@ -183,9 +186,9 @@ class FusionsUVManager(FusionsLaserManager):
             sc.set_smooth_transitions(True)
 
             # enqueue all points
-            sm._move_polyline(line,
-                              start_callback=atl.laser_run,
-                              end_callback=atl.laser_stop)
+            sm._move_polyline(
+                line, start_callback=atl.laser_run, end_callback=atl.laser_stop
+            )
 
             # turn off smooth transitions
             sc.set_smooth_transitions(False)
@@ -193,8 +196,8 @@ class FusionsUVManager(FusionsLaserManager):
             smap = sm.stage_map
             line = smap.get_line(path)
             seg = line[0]
-            x, y = seg['xy']
-            z = seg['z']
+            x, y = seg["xy"]
+            z = seg["z"]
             sm.set_z(z, block=True)
             sm.linear_move(x, y, block=True)
             atl.laser_run()
@@ -202,14 +205,18 @@ class FusionsUVManager(FusionsLaserManager):
                 if self._cancel_tracing:
                     break
 
-                x, y = si['xy']
-                z = si['z']
-                v = si['velocity']
+                x, y = si["xy"]
+                z = si["z"]
+                v = si["velocity"]
                 sm.set_z(z, block=False)
-                sm.linear_move(x, y, velocity=v,
-                               update_hole=False,
-                               use_calibration=False,
-                               block=True)
+                sm.linear_move(
+                    x,
+                    y,
+                    velocity=v,
+                    update_hole=False,
+                    use_calibration=False,
+                    block=True,
+                )
             atl.laser_stop()
 
         self._is_tracing = False
@@ -247,10 +254,10 @@ class FusionsUVManager(FusionsLaserManager):
     def fire_laser(self, action):
         atl = self.atl_controller
         if atl.is_enabled():
-            if action == 'burst':
+            if action == "burst":
                 atl.set_burst_mode(True)
                 atl.laser_run()
-            elif action == 'continuous':
+            elif action == "continuous":
                 atl.set_burst_mode(False)
                 atl.laser_run()
             else:
@@ -258,7 +265,7 @@ class FusionsUVManager(FusionsLaserManager):
 
             return True
         else:
-            return 'laser not on'
+            return "laser not on"
 
     def is_firing(self):
         return self.atl_controller.firing
@@ -309,47 +316,50 @@ class FusionsUVManager(FusionsLaserManager):
             resp = True
         if resp:
             self.atl_controller.laser_off()
-        self.status_readback = ''
-        self.action_readback = ''
+        self.status_readback = ""
+        self.action_readback = ""
         self.firing = False
         return resp
 
     def _add_reference_mark(self):
-
         if not self.enabled:
-            self.warning_dialog('Please enable the laser and wait for it to warm up')
+            self.warning_dialog("Please enable the laser and wait for it to warm up")
             return
 
         if not self.is_ready():
-            self.warning_dialog('Please wait for the laser to warm up')
+            self.warning_dialog("Please wait for the laser to warm up")
             return
 
         refmarks = self.reference_marks
         if not refmarks.check_mark():
-            if not self.confirmation_dialog('Reference Mark "{}" already exists. Are you sure you want to add it '
-                                            'again?'.format(refmarks.mark)):
+            if not self.confirmation_dialog(
+                'Reference Mark "{}" already exists. Are you sure you want to add it '
+                "again?".format(refmarks.mark)
+            ):
                 return
 
         if not self.atl_controller.burst_shot:
-            self.warning_dialog('Please set nbursts')
+            self.warning_dialog("Please set nbursts")
             return
 
         sm = self.stage_manager
         cx, cy = sm.get_current_position()
-        self.debug('Making reference mark "{}":{}'.format(refmarks.mark, refmarks.get_mark()))
+        self.debug(
+            'Making reference mark "{}":{}'.format(refmarks.mark, refmarks.get_mark())
+        )
         for x, y in refmarks.make_mark():
-            self.debug('mark x={}, y={}'.format(x, y))
+            self.debug("mark x={}, y={}".format(x, y))
             sm.linear_move(cx + x, cy - y, use_calibration=False, block=True)
             time.sleep(0.25)
-            ret = self.fire_laser('burst')
+            ret = self.fire_laser("burst")
             if isinstance(ret, str):
-                self.warning('make mark failed')
+                self.warning("make mark failed")
                 break
 
             while self.is_firing():
                 time.sleep(0.1)
         else:
-            self.info('mark mark complete')
+            self.info("mark mark complete")
             refmarks.set_made((cx, cy))
 
     def _save_reference_marks_canvas(self):
@@ -366,22 +376,22 @@ class FusionsUVManager(FusionsLaserManager):
         t.start()
 
     def _reset_reference_marks_button_fired(self):
-        if self.confirmation_dialog('Are you sure you want to continue?'):
+        if self.confirmation_dialog("Are you sure you want to continue?"):
             self.reference_marks.reset()
 
     def _fire_button_fired(self):
         if self.firing:
-            self.info('stopping laser')
+            self.info("stopping laser")
             self.atl_controller.laser_stop()
         else:
-            self.info('firing laser')
-            if self.fire_mode == 'Single':
+            self.info("firing laser")
+            if self.fire_mode == "Single":
                 self.atl_controller.laser_single_shot()
             else:
                 self.atl_controller.laser_run()
 
     def _fire_mode_changed(self):
-        if self.fire_mode == 'Burst':
+        if self.fire_mode == "Burst":
             self.atl_controller.set_burst_mode(True)
         else:
             self.atl_controller.set_burst_mode(False)
@@ -390,26 +400,30 @@ class FusionsUVManager(FusionsLaserManager):
     # property get/set
     # ===============================================================================
     def _get_fire_label(self):
-        return 'Fire' if not self.firing else 'Stop'
+        return "Fire" if not self.firing else "Stop"
 
     # ===============================================================================
     # defaults
     # ===============================================================================
     def _stage_manager_default(self):
-        args = dict(name='stage',
-                    configuration_dir_name='fusions_uv',
-                    stage_controller_klass='Aerotech',
-                    stage_map_klass=UVLaserStageMap)
+        args = dict(
+            name="stage",
+            configuration_dir_name="fusions_uv",
+            stage_controller_klass="Aerotech",
+            stage_map_klass=UVLaserStageMap,
+        )
 
         return self._stage_manager_factory(args)
 
     def _laser_controller_default(self):
-        return FusionsUVLogicBoard(name='laser_controller',
-                                   configuration_dir_name='fusions_uv')
+        return FusionsUVLogicBoard(
+            name="laser_controller", configuration_dir_name="fusions_uv"
+        )
 
     def _atl_controller_default(self):
-        return ATLLaserControlUnit(name='atl_controller',
-                                   configuration_dir_name='fusions_uv')
+        return ATLLaserControlUnit(
+            name="atl_controller", configuration_dir_name="fusions_uv"
+        )
 
     def _gas_handler_default(self):
         uv = UVGasHandlerManager(controller=self.atl_controller)
@@ -417,10 +431,11 @@ class FusionsUVManager(FusionsLaserManager):
         return uv
 
     def _fire_mode_default(self):
-        return 'Burst'
+        return "Burst"
 
     def _laser_script_executor_default(self):
         return UVLaserScriptExecutor(laser_manager=self)
+
 
 # def _shot_history_default(self):
 #        '''

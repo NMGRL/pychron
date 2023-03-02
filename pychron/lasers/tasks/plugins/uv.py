@@ -23,16 +23,16 @@ from pychron.lasers.tasks.plugins.laser_plugin import FusionsPlugin
 
 
 class FusionsUVPlugin(FusionsPlugin):
-    id = 'pychron.fusions.uv'
-    name = 'FusionsUV'
-    klass = ('pychron.lasers.laser_managers.fusions_uv_manager', 'FusionsUVManager')
-    task_name = 'Fusions UV'
-    accelerator = 'Ctrl+Shift+\\'
+    id = "pychron.fusions.uv"
+    name = "FusionsUV"
+    klass = ("pychron.lasers.laser_managers.fusions_uv_manager", "FusionsUVManager")
+    task_name = "Fusions UV"
+    accelerator = "Ctrl+Shift+\\"
 
     def _task_extensions_default(self):
         exts = super(FusionsUVPlugin, self)._task_extensions_default()
 
-        ext1 = TaskExtension(task_id='pychron.fusions.uv')
+        ext1 = TaskExtension(task_id="pychron.fusions.uv")
 
         return exts + [ext1]
 
@@ -41,7 +41,9 @@ class FusionsUVPlugin(FusionsPlugin):
 
     def _task_factory(self):
         from pychron.lasers.tasks.laser_task import FusionsUVTask
+
         t = FusionsUVTask(manager=self._get_manager(), application=self.application)
         return t
+
 
 # ============= EOF =============================================

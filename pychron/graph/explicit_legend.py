@@ -20,7 +20,7 @@ from traits.api import Bool, Int
 
 
 class ExplicitLegend(Legend):
-    bgcolor = 'transparent'
+    bgcolor = "transparent"
     inside = Bool(False)
     xoffset = Int(0)
     yoffset = Int(0)
@@ -59,7 +59,7 @@ class ExplicitLegend(Legend):
                     val = self.plots[key]
                     # Rather than checking for a list/TraitListObject/etc., we just check
                     # for the attribute first
-                    if hasattr(val, 'visible'):
+                    if hasattr(val, "visible"):
                         if val.visible:
                             visible_labels.append(name)
                             visible_plots.append(val)
@@ -79,7 +79,7 @@ class ExplicitLegend(Legend):
         # For the legend title
         if self.title_at_top:
             labels.insert(0, self._create_label(self.title))
-            label_names.insert(0, 'Legend Label')
+            label_names.insert(0, "Legend Label")
             visible_plots.insert(0, None)
         else:
             labels.append(self._create_label(self.title))
@@ -92,13 +92,20 @@ class ExplicitLegend(Legend):
 
         if len(label_sizes) > 0:
             max_label_width = max(label_sizes[:, 0])
-            total_label_height = sum(label_sizes[:, 1]) + (len(label_sizes) - 1) * self.line_spacing
+            total_label_height = (
+                sum(label_sizes[:, 1]) + (len(label_sizes) - 1) * self.line_spacing
+            )
         else:
             max_label_width = 0
             total_label_height = 0
 
-        legend_width = max_label_width + self.icon_spacing + self.icon_bounds[0] \
-                       + self.hpadding + 2 * self.border_padding
+        legend_width = (
+            max_label_width
+            + self.icon_spacing
+            + self.icon_bounds[0]
+            + self.hpadding
+            + 2 * self.border_padding
+        )
         legend_height = total_label_height + self.vpadding + 2 * self.border_padding
 
         self._cached_labels = labels
@@ -114,7 +121,7 @@ class ExplicitLegend(Legend):
         return [legend_width, legend_height]
 
     def _draw_as_overlay(self, gc, view_bounds=None, mode="normal"):
-        """ Draws the overlay layer of a component.
+        """Draws the overlay layer of a component.
 
         Overrides PlotComponent.
         """
@@ -129,10 +136,10 @@ class ExplicitLegend(Legend):
 
         with gc:
             if self.inside:
-                if self.align == 'ur':
+                if self.align == "ur":
                     self.x -= 5
                     self.y -= 5
-                elif self.align == 'ul':
+                elif self.align == "ul":
                     self.x += 5
                     self.y -= 5
             else:
@@ -140,8 +147,7 @@ class ExplicitLegend(Legend):
 
             self.x += self.xoffset
             self.y += self.yoffset
-            gc.clip_to_rect(int(self.x), int(self.y),
-                            int(self.width), int(self.height))
+            gc.clip_to_rect(int(self.x), int(self.y), int(self.width), int(self.height))
             edge_space = self.border_width + self.border_padding
             icon_width, icon_height = self.icon_bounds
 
@@ -180,7 +186,9 @@ class ExplicitLegend(Legend):
                         if len(plots) == 1:
                             plots[0]._render_icon(*render_args)
                         else:
-                            self.composite_icon_renderer.render_icon(plots, *render_args)
+                            self.composite_icon_renderer.render_icon(
+                                plots, *render_args
+                            )
                     elif plots is not None:
                         # Single plot
                         if not plots.visible:
@@ -211,5 +219,6 @@ class ExplicitLegend(Legend):
                     gc.set_alpha(old_alpha)
 
         return
+
 
 # ============= EOF =============================================

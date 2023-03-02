@@ -22,16 +22,20 @@ from pyface.tasks.task_window_layout import TaskWindowLayout
 
 from pychron.applications.pychron_application import PychronApplication
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class PyCO2(PychronApplication):
-    id = 'pychron.co2.application'
-    name = 'pyCO2'
-    shortname = 'co2'
+    id = "pychron.co2.application"
+    name = "pyCO2"
+    shortname = "co2"
 
     default_layout = [
-        TaskWindowLayout('tasks.hardware'),
-        TaskWindowLayout('pychron.fusions.co2')]
+        TaskWindowLayout("tasks.hardware"),
+        TaskWindowLayout("pychron.fusions.co2"),
+    ]
+
 
 # ============= EOF =============================================

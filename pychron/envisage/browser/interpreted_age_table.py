@@ -44,17 +44,22 @@ class InterpretedAgeTable(ColumnSorterMixin):
     tabular_adapter = Instance(InterpretedAgeAdapter)
     append_replace_enabled = Bool(True)
 
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance("pychron.dvc.dvc.DVC")
 
     def set_interpreted_ages(self, ias):
         self.interpreted_ages = self.ointerpreted_ages = ias
 
     def delete(self):
         if self.selected:
+
             def key(s):
-                return os.path.basename(os.path.dirname(os.path.dirname(os.path.dirname(s.path))))
+                return os.path.basename(
+                    os.path.dirname(os.path.dirname(os.path.dirname(s.path)))
+                )
 
             dvc = self.dvc
+
+            author = dvc.get_author()
             for repo, records in groupby_key(self.selected, key):
                 ps = []
                 ns = []
@@ -66,7 +71,9 @@ class InterpretedAgeTable(ColumnSorterMixin):
                         self.interpreted_ages.remove(r)
 
                 if dvc.repository_add_paths(repo, ps):
-                    dvc.repository_commit(repo, 'Removed interpreted ages {}'.format(','.join(ns)))
+                    dvc.repository_commit(
+                        repo, "Removed interpreted ages {}".format(",".join(ns)), author
+                    )
 
     # handlers
     def _interpreted_ages_items_changed(self, old, new):
@@ -83,5 +90,6 @@ class InterpretedAgeTable(ColumnSorterMixin):
         # self.table_configurer.load()
         adapter = InterpretedAgeAdapter()
         return adapter
+
 
 # ============= EOF =============================================

@@ -31,18 +31,19 @@ class PyScriptNode(BaseNode):
     selected = Str
     available_scripts = List
     auto_execute = Bool(False)
-    name = 'PyScript'
+    name = "PyScript"
 
     def _configure_hook(self):
         # load available scripts
-        self.available_scripts = list_directory(paths.pipeline_script_dir, extension='.py', remove_extension=True)
+        self.available_scripts = list_directory(
+            paths.pipeline_script_dir, extension=".py", remove_extension=True
+        )
         if self.available_scripts:
             self.selected = self.available_scripts[0]
 
     def run(self, state):
         spath = self._get_path()
         if spath and os.path.isfile(spath):
-
             root = os.path.dirname(spath)
             name = os.path.basename(spath)
             script = PipelinePyScript(root=root, name=name)
@@ -63,7 +64,7 @@ class PyScriptNode(BaseNode):
     def _get_path(self):
         s = self.selected
         if s:
-            path = os.path.join(paths.pipeline_script_dir, '{}.py'.format(s))
+            path = os.path.join(paths.pipeline_script_dir, "{}.py".format(s))
         else:
             path = self.path
 
@@ -71,10 +72,16 @@ class PyScriptNode(BaseNode):
         return path
 
     def traits_view(self):
-        v = okcancel_view(Item('available_scripts', editor=ListStrEditor(selected='selected', editable=False)),
-                          Item('path', label='Script Location'),
-                          Item('auto_execute'),
-                          title='Select Script')
+        v = okcancel_view(
+            Item(
+                "available_scripts",
+                editor=ListStrEditor(selected="selected", editable=False),
+            ),
+            Item("path", label="Script Location"),
+            Item("auto_execute"),
+            title="Select Script",
+        )
         return v
+
 
 # ============= EOF =============================================

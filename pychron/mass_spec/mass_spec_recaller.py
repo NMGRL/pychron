@@ -47,18 +47,17 @@ class MassSpecRecaller(Loggable):
             dbprod = irrad.production
             name = dbprod.Label
 
-            prod['Ca_K'] = [dbprod.CaOverKMultiplier, dbprod.CaOverKMultiplierEr]
-            prod['Cl_K'] = [dbprod.ClOverKMultiplier, dbprod.ClOverKMultiplierEr]
+            prod["Ca_K"] = [dbprod.CaOverKMultiplier, dbprod.CaOverKMultiplierEr]
+            prod["Cl_K"] = [dbprod.ClOverKMultiplier, dbprod.ClOverKMultiplierEr]
 
             for k, _ in IRRADIATION_KEYS:
                 k = k.capitalize()
-                prod[k] = [getattr(dbprod, k), getattr(dbprod, '{}Er'.format(k))]
-            prod['name'] = name
+                prod[k] = [getattr(dbprod, k), getattr(dbprod, "{}Er".format(k))]
+            prod["name"] = name
 
         return prod
 
     def find_analysis(self, labnumber, aliquot, step):
-
         db = self.db
         with db.session_ctx():
             dbrec = db.get_analysis(labnumber, aliquot, step)
@@ -97,5 +96,6 @@ class MassSpecRecaller(Loggable):
                     # rec.sync_filtering(riso.baseline, prefs)
 
                 return rec
+
 
 # ============= EOF =============================================

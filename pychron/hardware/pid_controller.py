@@ -20,13 +20,16 @@ from traitsui.api import View, Item
 
 from pychron.hardware.core.abstract_device import AbstractDevice
 
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+
 
 class PidController(AbstractDevice):
     def load_additional_args(self, config, **kw):
         from pychron.hardware.eurotherm import Eurotherm
-        self._cdevice = Eurotherm(name='Eurotherm')
+
+        self._cdevice = Eurotherm(name="Eurotherm")
         self._cdevice.load()
 
         return True
@@ -34,16 +37,24 @@ class PidController(AbstractDevice):
 
 # from traits.api import Instance
 from traitsui.api import ButtonEditor
-class DevelopmentPidController(PidController):
 
+
+class DevelopmentPidController(PidController):
     def get_process_value(self, **kw):
         return self._cdevice.get_random_value()
 
     def traits_view(self):
         v = View(
-                 Item('_cdevice', style='custom', show_label=False),
-                 Item('scan_button', show_label=False, editor=ButtonEditor(label_value='scan_label')),
-                 Item('graph', show_label=False, style='custom'))
+            Item("_cdevice", style="custom", show_label=False),
+            Item(
+                "scan_button",
+                show_label=False,
+                editor=ButtonEditor(label_value="scan_label"),
+            ),
+            Item("graph", show_label=False, style="custom"),
+        )
 
         return v
+
+
 # ============= EOF =============================================

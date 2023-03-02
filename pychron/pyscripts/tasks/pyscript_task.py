@@ -22,11 +22,11 @@ import os
 
 from pyface.tasks.action.schema import SToolBar
 from pyface.tasks.task_layout import PaneItem, TaskLayout, Tabbed, VSplitter
-from traits.api import String, List, Instance, Any, \
-    on_trait_change, Bool
+from traits.api import String, List, Instance, Any, on_trait_change, Bool
 from traitsui.api import UItem, EnumEditor
 
 from pychron.core.helpers.filetools import add_extension
+
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.envisage.tasks.editor_task import EditorTask
@@ -35,17 +35,28 @@ from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pyscripts.tasks.git_actions import CommitChangesAction
-from pychron.pyscripts.tasks.pyscript_actions import JumpToGosubAction, ExpandGosubsAction, MakeGosubAction
+from pychron.pyscripts.tasks.pyscript_actions import (
+    JumpToGosubAction,
+    ExpandGosubsAction,
+    MakeGosubAction,
+)
 from pychron.pyscripts.tasks.pyscript_editor import ExtractionEditor, MeasurementEditor
-from pychron.pyscripts.tasks.pyscript_panes import CommandsPane, DescriptionPane, \
-    CommandEditorPane, ControlPane, ScriptBrowserPane, ContextEditorPane, RepoPane
+from pychron.pyscripts.tasks.pyscript_panes import (
+    CommandsPane,
+    DescriptionPane,
+    CommandEditorPane,
+    ControlPane,
+    ScriptBrowserPane,
+    ContextEditorPane,
+    RepoPane,
+)
 
 
 class ScriptExecutorMixin(ExecuteMixin):
     _current_script = Any
 
     def _cancel_execute(self):
-        self.debug('cancel execute')
+        self.debug("cancel execute")
         if self._current_script:
             self._current_script.cancel()
 
@@ -67,10 +78,10 @@ class ScriptExecutorMixin(ExecuteMixin):
     #     self._runner = runner
     #     return True
 
-    def _do_execute(self, name=None, root=None, kind='Extraction', **kw):
+    def _do_execute(self, name=None, root=None, kind="Extraction", **kw):
         self._start_execute()
 
-        self.debug('do execute')
+        self.debug("do execute")
 
         self._current_script = None
 
@@ -85,28 +96,37 @@ class ScriptExecutorMixin(ExecuteMixin):
             self.executing = False
             return ret
 
-    def _execute_extraction(self, name, root, kind, new_thread=True,
-                            delay_start=0,
-                            on_completion=None,
-                            context=None,
-                            manager=None):
+    def _execute_extraction(
+        self,
+        name,
+        root,
+        kind,
+        new_thread=True,
+        delay_start=0,
+        on_completion=None,
+        context=None,
+        manager=None,
+    ):
         from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 
         klass = ExtractionPyScript
-        if kind == 'Laser':
+        if kind == "Laser":
             from pychron.pyscripts.laser_pyscript import LaserPyScript
 
             klass = LaserPyScript
-        elif kind == 'Spectrometer':
+        elif kind == "Spectrometer":
             from pychron.pyscripts.spectrometer_pyscript import SpectrometerPyScript
+
             klass = SpectrometerPyScript
 
         runner = self.application.get_service(IPyScriptRunner)
-        script = klass(application=self.application,
-                       manager=manager,
-                       root=root,
-                       name=add_extension(name, '.py'),
-                       runner=runner)
+        script = klass(
+            application=self.application,
+            manager=manager,
+            root=root,
+            name=add_extension(name, ".py"),
+            runner=runner,
+        )
 
         if script.bootstrap():
             script.set_default_context(**context)
@@ -123,8 +143,11 @@ class ScriptExecutorMixin(ExecuteMixin):
 
             # ret = script.execute(trace=self.use_trace, new_thread=new_thread, delay_start=delay_start,
             #                      on_completion=on_completion)
-            ret = script.execute(new_thread=new_thread, delay_start=delay_start,
-                                 on_completion=on_completion)
+            ret = script.execute(
+                new_thread=new_thread,
+                delay_start=delay_start,
+                on_completion=on_completion,
+            )
             return not script.is_canceled() and ret
 
     # def _runner_factory(self):
@@ -138,20 +161,20 @@ class ScriptExecutor(ScriptExecutorMixin, Loggable):
 
 
 class PyScriptTask(EditorTask, ScriptExecutorMixin):
-    id = 'pychron.pyscript.task'
-    name = 'PyScript'
+    id = "pychron.pyscript.task"
+    name = "PyScript"
     kind = String
-    kinds = List(['Extraction', 'Measurement'])
+    kinds = List(["Extraction", "Measurement"])
     commands_pane = Instance(CommandsPane)
     script_browser_pane = Instance(ScriptBrowserPane)
     command_editor_pane = Instance(CommandEditorPane)
     context_editor_pane = Instance(ContextEditorPane)
 
-    repo_manager = Instance('pychron.git_archive.repo_manager.GitRepoManager')
+    repo_manager = Instance("pychron.git_archive.repo_manager.GitRepoManager")
     repo_pane = None
 
-    wildcard = '*.py'
-    _default_extension = '.py'
+    wildcard = "*.py"
+    _default_extension = ".py"
 
     auto_detab = Bool(True)
     # _current_script = Any
@@ -160,8 +183,9 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
 
     description = String
 
-    tool_bars = [SToolBar(JumpToGosubAction(), ExpandGosubsAction(),
-                          MakeGosubAction()), ]
+    tool_bars = [
+        SToolBar(JumpToGosubAction(), ExpandGosubsAction(), MakeGosubAction()),
+    ]
 
     use_git_repo = Bool
 
@@ -173,9 +197,17 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
         self.bind_preferences()
 
         if self.use_git_repo:
-            if not next((ti for ti in self.tool_bars if ti.id == 'pychron.pyscript.git_toolbar'), None):
-                self.tool_bars.append(SToolBar(CommitChangesAction(),
-                                               name='pychron.pyscript.git_toolbar'))
+            if not next(
+                (
+                    ti
+                    for ti in self.tool_bars
+                    if ti.id == "pychron.pyscript.git_toolbar"
+                ),
+                None,
+            ):
+                self.tool_bars.append(
+                    SToolBar(CommitChangesAction(), name="pychron.pyscript.git_toolbar")
+                )
 
     def set_on_close_handler(self, func):
         self._on_close = func
@@ -225,16 +257,16 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
             self.active_editor.control.enable_replace()
 
     def new(self):
-
         # todo ask for script type
-        info = self.edit_traits(view='kind_select_view')
+        info = self.edit_traits(view="kind_select_view")
         if info.result:
-            self._open_editor(path='')
+            self._open_editor(path="")
             return True
 
     def kind_select_view(self):
-        v = okcancel_view(UItem('kind', editor=EnumEditor(name='kinds')),
-                          title='Select Pyscript kind')
+        v = okcancel_view(
+            UItem("kind", editor=EnumEditor(name="kinds")), title="Select Pyscript kind"
+        )
         return v
 
     # task protocol
@@ -244,9 +276,11 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
         self._use_git_repo_changed(self.use_git_repo)
 
     def bind_preferences(self):
-        self._preference_binder('pychron.pyscript', ('auto_detab', 'use_git_repo'))
+        self._preference_binder("pychron.pyscript", ("auto_detab", "use_git_repo"))
         if self.use_git_repo:
-            self._preference_binder('pychron.pyscript', ('remote',), obj=self.repo_manager)
+            self._preference_binder(
+                "pychron.pyscript", ("remote",), obj=self.repo_manager
+            )
 
     def create_dock_panes(self):
         self.commands_pane = CommandsPane()
@@ -261,11 +295,12 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
             self.control_pane,
             DescriptionPane(model=self),
             self.script_browser_pane,
-            self.context_editor_pane]
+            self.context_editor_pane,
+        ]
 
         if self.use_git_repo:
             self.repo_pane = RepoPane(model=self.repo_manager)
-            self.repo_manager.on_trait_change(self._handle_path_change, 'path_dirty')
+            self.repo_manager.on_trait_change(self._handle_path_change, "path_dirty")
             panes.append(self.repo_pane)
         return panes
 
@@ -367,46 +402,52 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
         return True
 
     def _open_file(self, path, **kw):
-        self.info('opening pyscript: {}'.format(path))
+        self.info("opening pyscript: {}".format(path))
         return self._open_editor(path, **kw)
 
     def _extract_kind(self, path):
-        with open(path, 'r') as rfile:
+        with open(path, "r") as rfile:
             for line in rfile:
-                if line.startswith('#!'):
+                if line.startswith("#!"):
                     return line.strip()[2:]
 
     def _open_editor(self, path, kind=None):
         if path:
             kind = self._extract_kind(path)
 
-        if kind == 'Measurement':
+        if kind == "Measurement":
             klass = MeasurementEditor
         else:
             klass = ExtractionEditor
 
         dets, isotopes, valves = [], [], []
-        man = self.application.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+        man = self.application.get_service(
+            "pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager"
+        )
         if man:
             dets = [di.name for di in man.spectrometer.detectors]
             isotopes = man.spectrometer.isotopes
-        man = self.application.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+        man = self.application.get_service(
+            "pychron.extraction_line.extraction_line_manager.ExtractionLineManager"
+        )
         if man:
             valves = man.get_valve_names()
 
-        editor = klass(path=path,
-                       auto_detab=self.auto_detab,
-                       valves=valves,
-                       isotopes=isotopes,
-                       detectors=dets)
+        editor = klass(
+            path=path,
+            auto_detab=self.auto_detab,
+            valves=valves,
+            isotopes=isotopes,
+            detectors=dets,
+        )
 
         super(PyScriptTask, self)._open_editor(editor)
         return True
 
     def _open_pyscript(self, new, root):
-        new = new.replace('/', ':')
-        new = add_extension(new, '.py')
-        paths = new.split(':')
+        new = new.replace("/", ":")
+        new = add_extension(new, ".py")
+        paths = new.split(":")
 
         for editor in self.editor_area.editors:
             if editor.name == paths[-1]:
@@ -418,41 +459,47 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
             if os.path.isfile(p):
                 self._open_file(p)
             else:
-                self.warning_dialog('File does not exist {}'.format(p))
+                self.warning_dialog("File does not exist {}".format(p))
 
     def _get_example(self):
         if self.selected:
             return self.selected.example
-        return ''
+        return ""
 
     # handlers
     def _handle_path_change(self, new):
-        self.debug('path changed {}'.format(new))
+        self.debug("path changed {}".format(new))
         for ei in self.editor_area.editors:
             if ei.path == new:
                 ei.load()
 
     def _use_git_repo_changed(self, new):
-        self.debug('use git repo changed {}'.format(new))
+        self.debug("use git repo changed {}".format(new))
         if new:
-            self.debug('initialize git repo at {}'.format(paths.scripts_dir))
+            self.debug("initialize git repo at {}".format(paths.scripts_dir))
             if self.repo_manager.init_repo(paths.scripts_dir):
                 pass
                 # self.repo_manager.add_unstaged(None, extension='.py', use_diff=True)
             else:
-                for p in (paths.measurement_dir, paths.extraction_dir,
-                          paths.post_equilibration_dir, paths.post_measurement_dir):
-                    self.debug('add unstaged files from {}'.format(p))
-                    self.repo_manager.add_unstaged(p, extension='.py', use_diff=False)
+                for p in (
+                    paths.measurement_dir,
+                    paths.extraction_dir,
+                    paths.post_equilibration_dir,
+                    paths.post_measurement_dir,
+                ):
+                    self.debug("add unstaged files from {}".format(p))
+                    self.repo_manager.add_unstaged(p, extension=".py", use_diff=False)
 
-                self.debug('committing unstaged pyscripts')
-                self.repo_manager.commit('auto added unstaged pyscripts')
+                self.debug("committing unstaged pyscripts")
+                self.repo_manager.commit("auto added unstaged pyscripts")
 
     def _active_editor_changed(self):
         if self.active_editor:
             self.commands_pane.name = self.active_editor.kind
 
-            self.commands_pane.command_objects = self.active_editor.commands.command_objects
+            self.commands_pane.command_objects = (
+                self.active_editor.commands.command_objects
+            )
             self.commands_pane.commands = self.active_editor.commands.script_commands
 
             self.script_browser_pane.root = os.path.dirname(self.active_editor.path)
@@ -461,44 +508,45 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
             if self.use_git_repo:
                 self.repo_manager.selected = self.active_editor.path
 
-    @on_trait_change('command_editor_pane:insert_button')
+    @on_trait_change("command_editor_pane:insert_button")
     def _insert_fired(self):
         self.active_editor.insert_command(self.command_editor_pane.command_object)
 
-    @on_trait_change('commands_pane:command_object')
+    @on_trait_change("commands_pane:command_object")
     def _update_selected(self, new):
         self.command_editor_pane.command_object = new
         if new:
             self.description = new.description
 
-    @on_trait_change('_current_script:trace_line')
+    @on_trait_change("_current_script:trace_line")
     def _handle_lineno(self, new):
         self.active_editor.highlight_line = new
 
-    @on_trait_change('script_browser_pane:dclicked')
+    @on_trait_change("script_browser_pane:dclicked")
     def _handle_selected_file(self):
         new = self.script_browser_pane.selected
-        self.debug('selected file {}'.format(new))
+        self.debug("selected file {}".format(new))
         root = self.script_browser_pane.root
         self._open_pyscript(new, root)
 
-    @on_trait_change('active_editor:gosub_event')
+    @on_trait_change("active_editor:gosub_event")
     def _handle_selected_gosub(self, new):
-
-        self.debug('selected gosub {}'.format(new))
+        self.debug("selected gosub {}".format(new))
         if new:
             root = os.path.dirname(self.active_editor.path)
             self._open_pyscript(new, root)
             # self.active_editor.trait_set(selected_gosub='', trait_change_notify=False)
 
-    @on_trait_change('active_editor:selected_command')
+    @on_trait_change("active_editor:selected_command")
     def _handle_selected_command(self, new):
-        self.debug('selected command {}'.format(new))
+        self.debug("selected command {}".format(new))
         if new:
             self.commands_pane.set_command(new)
 
     def _runner_factory(self):
-        runner = self.application.get_service('pychron.extraction_line.ipyscript_runner.IPyScriptRunner')
+        runner = self.application.get_service(
+            "pychron.extraction_line.ipyscript_runner.IPyScriptRunner"
+        )
         # get the extraction line manager's mode
         # man = self._get_el_manager()
         #
@@ -553,17 +601,21 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
         #                 PaneItem('pychron.pyscript.commands_editor', height=100, width=125),
         #                 orientation='vertical')
         # bottom = PaneItem('pychron.pyscript.description')
-        left = VSplitter(PaneItem('pychron.pyscript.commands'),
-                         PaneItem('pychron.pyscript.commands_editor'))
+        left = VSplitter(
+            PaneItem("pychron.pyscript.commands"),
+            PaneItem("pychron.pyscript.commands_editor"),
+        )
 
         if self.use_git_repo:
-            right = Tabbed(PaneItem('pychron.pyscript.repo'),
-                           PaneItem('pychron.pyscript.context_editor'))
+            right = Tabbed(
+                PaneItem("pychron.pyscript.repo"),
+                PaneItem("pychron.pyscript.context_editor"),
+            )
         else:
-            right = VSplitter(PaneItem('pychron.pyscript.context_editor', width=200),
-                              PaneItem('pychron.pyscript.script_browser', width=200))
+            right = VSplitter(
+                PaneItem("pychron.pyscript.context_editor", width=200),
+                PaneItem("pychron.pyscript.script_browser", width=200),
+            )
 
-        return TaskLayout(id='pychron.pyscript',
-                          left=left,
-                          right=right)
+        return TaskLayout(id="pychron.pyscript", left=left, right=right)
         # ============= EOF =============================================

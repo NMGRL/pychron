@@ -1,0 +1,24 @@
+{
+    "mark": [],
+    "metadata_version": "2.0",
+    "modifiers": {
+        "allow_any": [],
+        "allow_newer": [],
+        "allow_older": []
+    },
+    "repositories": {
+        "packages": [],
+        "runtimes": [
+            "enthought/free"
+        ]
+    },
+    "requirements": [],
+    "runtime": {
+        "implementation": "cpython",
+        "platform": "win_x86_64",
+        "platform_abi": "msvc2015",
+        "repository": "enthought/free",
+        "sha256": "a763080c00b2790f2c514a7dd3a46f22fa688a85f598bd082a69a253aa4e8c40",
+        "version": "3.6.13+3"
+    }
+}

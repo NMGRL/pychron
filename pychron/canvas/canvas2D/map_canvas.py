@@ -31,14 +31,14 @@ class MapCanvas(SceneCanvas):
     _map = Instance(BaseStageMap)
     calibration_item = Instance(CalibrationObject)
     calibrate = Bool(False)
-    hole_color = Color('white')
+    hole_color = Color("white")
     # show_grids = False
     # show_axes = False
 
     render_map = Bool(False)
     render_calibrated = Bool(False)
     hole_crosshairs_kind = Enum(1, 2)
-    hole_crosshairs_color = Enum('red', 'green', 'blue', 'yellow', 'black')
+    hole_crosshairs_color = Enum("red", "green", "blue", "yellow", "black")
     current_hole = None
     bitmap_scale = Float(1.0)
 
@@ -57,8 +57,8 @@ class MapCanvas(SceneCanvas):
             # and not event.handled
             ca = self.calibration_item
             if ca is not None:
-                if hasattr(event, 'item'):
-                    if hasattr(ca, 'right'):
+                if hasattr(event, "item"):
+                    if hasattr(ca, "right"):
                         if event.item.right is ca.right:
                             return
 
@@ -89,7 +89,6 @@ class MapCanvas(SceneCanvas):
         # over a hole
         ca = self.calibration_item
         if ca:
-
             for obj in self.mp.sample_holes:
                 hole = obj.id
                 pos = obj.x, obj.y
@@ -122,8 +121,8 @@ class MapCanvas(SceneCanvas):
 
     def set_map(self, mp):
         self._map = mp
-        self._map.on_trait_change(self.request_redraw, 'g_shape')
-        self._map.on_trait_change(self.request_redraw, 'g_dimension')
+        self._map.on_trait_change(self.request_redraw, "g_shape")
+        self._map.on_trait_change(self.request_redraw, "g_dimension")
 
     def _draw_underlay(self, gc, *args, **kw):
         if self.render_map:
@@ -134,8 +133,8 @@ class MapCanvas(SceneCanvas):
         if not isinstance(color, (list, tuple)):
             color = color.red(), color.green(), color.blue(), color.alpha()
 
-        if not all([0 <= c <=1 for c in color]):
-            color = [x/255 for x in  color]
+        if not all([0 <= c <= 1 for c in color]):
+            color = [x / 255 for x in color]
         return color
 
     def _draw_map(self, gc, *args, **kw):
@@ -158,7 +157,7 @@ class MapCanvas(SceneCanvas):
 
                 gshape = mp.g_shape
 
-                get_draw_func = lambda x: getattr(self, '_draw_{}'.format(x))
+                get_draw_func = lambda x: getattr(self, "_draw_{}".format(x))
                 func = get_draw_func(gshape)
 
                 w, h = self._get_wh(mp.g_dimension, mp.g_dimension)
@@ -174,7 +173,11 @@ class MapCanvas(SceneCanvas):
                         if ca:
                             tweaked = hole.id in ca.tweak_dict
 
-                        if hole.render.lower() == 'x' or tweaked or not self.use_valid_holes:
+                        if (
+                            hole.render.lower() == "x"
+                            or tweaked
+                            or not self.use_valid_holes
+                        ):
                             tweak = None
 
                             x, y = map_screen([(hole.x, hole.y)])[0]
@@ -200,7 +203,6 @@ class MapCanvas(SceneCanvas):
         w /= 2.0
         h /= 2.0
         with gc:
-
             ca = self.calibration_item
             if ca:
                 # make the crosshairs orthogonal
@@ -225,7 +227,7 @@ class MapCanvas(SceneCanvas):
         # pts = self.map_screen([(diam / 2.0, 0), (0, 0)])
         # rad = pts[0][0] - pts[1][0]
 
-        gc.arc(x, y, w / 2., 0, 360)
+        gc.arc(x, y, w / 2.0, 0, 360)
         gc.draw_path()
 
     def _draw_square(self, gc, x, y, w, h):
@@ -238,5 +240,6 @@ class MapCanvas(SceneCanvas):
 
     def _show_axes_default(self):
         return False
+
 
 # ============= EOF =============================================

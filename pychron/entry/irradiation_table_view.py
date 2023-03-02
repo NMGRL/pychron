@@ -28,13 +28,17 @@ class IrradiationTableView(HasTraits):
     selected = List
 
     def traits_view(self):
-        v = okcancel_view(UItem('irradiations',
-                                editor=ListStrEditor(selected='selected',
-                                                     multi_select=True,
-                                                     editable=False)),
-                          title='Irradiations',
-                          height=500,
-                          kind='modal')
+        v = okcancel_view(
+            UItem(
+                "irradiations",
+                editor=ListStrEditor(
+                    selected="selected", multi_select=True, editable=False
+                ),
+            ),
+            title="Irradiations",
+            height=500,
+            kind="modal",
+        )
         return v
 
         # ============= EOF =============================================

@@ -22,21 +22,23 @@ from pychron.dvc.dvc import DVC
 from pychron.experiment.utilities.identifier import get_analysis_type
 from pychron.experiment.utilities.runid import make_aliquot_step, make_step
 from pychron.loggable import Loggable
-from pychron.mass_spec.database.massspec_database_adapter import MissingAliquotPychronException
+from pychron.mass_spec.database.massspec_database_adapter import (
+    MissingAliquotPychronException,
+)
 from pychron.pychron_constants import DETECTOR_IC
 
 
 def check_list(lst):
     """
-        return True if list is empty or
-        all elements equal e.g [1,1,1,1,1]
+    return True if list is empty or
+    all elements equal e.g [1,1,1,1,1]
     """
     return not lst or [lst[0]] * len(lst) == lst
 
 
 def check_massspec_database_save(identifier):
     ret = True
-    if identifier == 'bu-debug':
+    if identifier == "bu-debug":
         ret = False
     elif get_analysis_type(identifier) == DETECTOR_IC:
         ret = False
@@ -56,43 +58,56 @@ class Datahub(Loggable):
     _new_aliquot = 0
 
     def bind_preferences(self):
-
         # massspec
-        prefid = 'pychron.massspec.database'
-        bind_preference(self, 'massspec_enabled', '{}.enabled'.format(prefid))
+        prefid = "pychron.massspec.database"
+        bind_preference(self, "massspec_enabled", "{}.enabled".format(prefid))
         if self.massspec_enabled:
-            from pychron.experiment.utilities.mass_spec_database_importer import MassSpecDatabaseImporter
+            from pychron.experiment.utilities.mass_spec_database_importer import (
+                MassSpecDatabaseImporter,
+            )
 
             store = MassSpecDatabaseImporter()
-            bind_preference(store.db, 'name', '{}.name'.format(prefid))
-            bind_preference(store.db, 'host', '{}.host'.format(prefid))
-            bind_preference(store.db, 'username', '{}.username'.format(prefid))
-            bind_preference(store.db, 'password', '{}.password'.format(prefid))
+            bind_preference(store.db, "name", "{}.name".format(prefid))
+            bind_preference(store.db, "host", "{}.host".format(prefid))
+            bind_preference(store.db, "username", "{}.username".format(prefid))
+            bind_preference(store.db, "password", "{}.password".format(prefid))
 
-            prefid = 'pychron.massspec.config'
-            bind_preference(store, 'reference_detector_name', '{}.reference_detector_name'.format(prefid))
-            bind_preference(store, 'reference_isotope_name', '{}.reference_isotope_name'.format(prefid))
-            bind_preference(store, 'use_reference_detector_by_isotope',
-                            '{}.use_reference_detector_by_isotope'.format(prefid))
+            prefid = "pychron.massspec.config"
+            bind_preference(
+                store,
+                "reference_detector_name",
+                "{}.reference_detector_name".format(prefid),
+            )
+            bind_preference(
+                store,
+                "reference_isotope_name",
+                "{}.reference_isotope_name".format(prefid),
+            )
+            bind_preference(
+                store,
+                "use_reference_detector_by_isotope",
+                "{}.use_reference_detector_by_isotope".format(prefid),
+            )
 
-            self.stores['massspec'] = store
+            self.stores["massspec"] = store
 
         # isotopedb
-        prefid = 'pychron.pychron.database'
-        bind_preference(self, 'isotopedb_enabled', '{}.enabled'.format(prefid))
+        prefid = "pychron.pychron.database"
+        bind_preference(self, "isotopedb_enabled", "{}.enabled".format(prefid))
         if self.isotopedb_enabled:
             from pychron.database.isotope_database_manager import IsotopeDatabaseManager
-            store = IsotopeDatabaseManager()
-            bind_preference(store.db, 'name', '{}.name'.format(prefid))
-            bind_preference(store.db, 'host', '{}.host'.format(prefid))
-            bind_preference(store.db, 'username', '{}.username'.format(prefid))
-            bind_preference(store.db, 'password', '{}.password'.format(prefid))
-            self.stores['isotopedb'] = store
 
-        self.stores['dvc'] = self.mainstore
+            store = IsotopeDatabaseManager()
+            bind_preference(store.db, "name", "{}.name".format(prefid))
+            bind_preference(store.db, "host", "{}.host".format(prefid))
+            bind_preference(store.db, "username", "{}.username".format(prefid))
+            bind_preference(store.db, "password", "{}.password".format(prefid))
+            self.stores["isotopedb"] = store
+
+        self.stores["dvc"] = self.mainstore
 
     def prepare_destory(self):
-        for s in ('massspec', 'isotopedb', 'dvc'):
+        for s in ("massspec", "isotopedb", "dvc"):
             try:
                 ss = self.stores[s]
                 ss.close_session()
@@ -108,9 +123,8 @@ class Datahub(Loggable):
             pass
 
     def store_connect(self, key):
-
-        enabled = getattr(self, '{}_enabled'.format(key))
-        self.debug('{} enabled {}'.format(key, enabled))
+        enabled = getattr(self, "{}_enabled".format(key))
+        self.debug("{} enabled {}".format(key, enabled))
         if enabled:
             try:
                 store = self.stores[key]
@@ -136,22 +150,22 @@ class Datahub(Loggable):
 
     def is_conflict(self, spec):
         """
-            return str listing the differences if databases are in conflict
+        return str listing the differences if databases are in conflict
         """
 
         self._new_step = -1
         self._new_aliquot = 1
-        self.debug('check for conflicts')
+        self.debug("check for conflicts")
         if check_massspec_database_save(spec.identifier):
-            self.store_connect('massspec')
+            self.store_connect("massspec")
             # self.secondary_connect()
-            self.debug('connected to massspec')
+            self.debug("connected to massspec")
 
-        self.store_connect('isotopedb')
+        self.store_connect("isotopedb")
 
         if spec.is_step_heat():
-            k = 'Stepheat'
-            self.debug('get greatest steps')
+            k = "Stepheat"
+            self.debug("get greatest steps")
             ps, ns, vs = self._get_greatest_steps(spec.identifier, spec.aliquot)
             mv = max(vs) + 1
             step = make_step(mv)
@@ -160,27 +174,33 @@ class Datahub(Loggable):
             self._new_step = mv
             self._new_aliquot = spec.aliquot
         else:
-            k = 'Fusion'
-            self.debug('get greatest aliquots for {}'.format(spec.identifier))
+            k = "Fusion"
+            self.debug("get greatest aliquots for {}".format(spec.identifier))
             try:
                 ps, ns, vs = self._get_greatest_aliquots(spec.identifier)
-                self.debug('greatest aliquots. Sources: {}, Precedences: {}, Aliquots: {}'.format(ns, ps, vs))
+                self.debug(
+                    "greatest aliquots. Sources: {}, Precedences: {}, Aliquots: {}".format(
+                        ns, ps, vs
+                    )
+                )
                 mv = max(vs)
-                self._new_runid = make_aliquot_step(mv + 1, '')
+                self._new_runid = make_aliquot_step(mv + 1, "")
                 self._new_aliquot = mv + 1
             except MissingAliquotPychronException:
-                self.warning('secondary db analyses missing aliquot_pychron')
-                return 'secondary db analyses missing aliquot_pychron'
+                self.warning("secondary db analyses missing aliquot_pychron")
+                return "secondary db analyses missing aliquot_pychron"
 
-        self.debug('{} conflict args. precedence={}, names={}, values={}'.format(k, ps, ns, vs))
+        self.debug(
+            "{} conflict args. precedence={}, names={}, values={}".format(k, ps, ns, vs)
+        )
         if not check_list(list(vs)):
             hn, hv = ns[0], vs[0]
             txt = []
             for ln, lv in zip(ns[1:], vs[1:]):
                 if lv != hv:
-                    txt.append('{}!={} {}!={}'.format(hn, ln, hv, lv))
-            err = ', '.join(txt)
-            self.warning('Datastore conflicts. {}'.format(err))
+                    txt.append("{}!={} {}!={}".format(hn, ln, hv, lv))
+            err = ", ".join(txt)
+            self.warning("Datastore conflicts. {}".format(err))
             return err
 
     def update_spec(self, spec, aliquot_offset=0, step_offset=0):
@@ -188,9 +208,11 @@ class Datahub(Loggable):
         spec.step = self._new_step + step_offset
         spec.conflicts_checked = True
 
-        self.debug('setting AutomatedRunSpec aliquot={}, step={}, increment={}'.format(spec.aliquot,
-                                                                                       spec.step,
-                                                                                       spec.increment))
+        self.debug(
+            "setting AutomatedRunSpec aliquot={}, step={}, increment={}".format(
+                spec.aliquot, spec.step, spec.increment
+            )
+        )
 
     def load_analysis_backend(self, ln, isotope_group):
         dvc = self.mainstore
@@ -204,7 +226,7 @@ class Datahub(Loggable):
     #         sess.flush()
     #         exp.database_identifier = dbexp.id
 
-    def get_greatest_aliquot(self, identifier, store='main'):
+    def get_greatest_aliquot(self, identifier, store="main"):
         # store = getattr(self, '{}store'.format(store))
         # return store.get_greatest_aliquot(identifier)
         try:
@@ -218,18 +240,43 @@ class Datahub(Loggable):
     def _get_greatest_aliquots(self, identifier):
         if not check_massspec_database_save(identifier):
             main = self.mainstore
-            return (main.precedence,), (main.db.name,), (main.get_greatest_aliquot(identifier),)
+            return (
+                (main.precedence,),
+                (main.db.name,),
+                (main.get_greatest_aliquot(identifier),),
+            )
         else:
-
-            return list(zip(*[(store.precedence, store.db.name,
-                          store.get_greatest_aliquot(identifier) or 0 if store.is_connected() else 0)
-                         for store in self.sorted_stores]))
+            return list(
+                zip(
+                    *[
+                        (
+                            store.precedence,
+                            store.db.name,
+                            store.get_greatest_aliquot(identifier) or 0
+                            if store.is_connected()
+                            else 0,
+                        )
+                        for store in self.sorted_stores
+                    ]
+                )
+            )
 
     def _get_greatest_steps(self, identifier, aliquot):
         f = lambda x: x if x is not None else -1
-        return list(zip(*[(store.precedence, store.db.name,
-                      f(store.get_greatest_step(identifier, aliquot)) if store.is_connected() else -1)
-                     for store in self.sorted_stores]))
+        return list(
+            zip(
+                *[
+                    (
+                        store.precedence,
+                        store.db.name,
+                        f(store.get_greatest_step(identifier, aliquot))
+                        if store.is_connected()
+                        else -1,
+                    )
+                    for store in self.sorted_stores
+                ]
+            )
+        )
 
     def _datastores_default(self):
         return []
@@ -264,5 +311,6 @@ class Datahub(Loggable):
         #     # r=sorted((self.mainstore, self.secondarystore))
         #     self._sorted_stores = r
         #     return r
+
 
 # ============= EOF =============================================

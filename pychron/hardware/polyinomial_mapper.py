@@ -30,22 +30,26 @@ class PolynomialMapperMixin(HasTraits):
     mapped_name = Str
 
     def load_mapping(self, config):
-        conv = 'Conversion'
+        conv = "Conversion"
         if config.has_section(conv):
             pmapper = self.factory(config, conv)
             self.poly_mapper = pmapper
-            self.set_attribute(config, 'mapped_name', conv, 'name')
+            self.set_attribute(config, "mapped_name", conv, "name")
 
             if self.mapped_name:
-                u = self.config_get(config, conv, 'units', default='')
-                self.graph_ytitle = '{} ({})'.format(self.mapped_name.capitalize(), u)
+                u = self.config_get(config, conv, "units", default="")
+                self.graph_ytitle = "{} ({})".format(self.mapped_name.capitalize(), u)
 
     def factory(self, config, section):
         pmapper = PolynomialMapper()
-        coeffs = self.config_get(config, section, 'coefficients')
+        coeffs = self.config_get(config, section, "coefficients")
         pmapper.parse_coefficient_string(coeffs)
-        pmapper.output_low = self.config_get(config, section, 'output_low', cast='float')
-        pmapper.output_high = self.config_get(config, section, 'output_high', cast='float')
+        pmapper.output_low = self.config_get(
+            config, section, "output_low", cast="float"
+        )
+        pmapper.output_high = self.config_get(
+            config, section, "output_high", cast="float"
+        )
 
         return pmapper
 
@@ -58,13 +62,13 @@ class BaseMapper(HasTraits):
         raise NotImplementedError
 
 
-
 class PolynomialMapper(BaseMapper):
     """
     list of coefficients. see numpy.poly1d to see exactly how coefficients used
     coefficient = 1,2,3
         ==> 1*x^2+2*x+3
     """
+
     _coefficients = List
 
     output_low = Float(0)
@@ -81,7 +85,7 @@ class PolynomialMapper(BaseMapper):
 
     def map_measured(self, v):
         """
-            convert a measured value to an output value (Voltage -> Temp)
+        convert a measured value to an output value (Voltage -> Temp)
         """
         if self._polynomial:
             v = self._polynomial(v)
@@ -89,12 +93,11 @@ class PolynomialMapper(BaseMapper):
 
     def map_output(self, v):
         """
-            convert an output value to measured value (Voltage <- Temp)
+        convert an output value to measured value (Voltage <- Temp)
         """
-        c=self._coefficients[:]
+        c = self._coefficients[:]
         c[-1] -= v
         return optimize.brentq(poly1d(c), self.output_low, self.output_high)
+
+
 # ============= EOF =============================================
-
-
-

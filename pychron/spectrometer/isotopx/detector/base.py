@@ -134,12 +134,17 @@ class IsotopxDetector(BaseDetector, SpectrometerDevice):
     def traits_view(self):
         from pychron.core.ui.qt.color_square_editor import ColorSquareEditor
 
-        v = View(HGroup(Item('active'),
-                        Item('color', width=25, editor=ColorSquareEditor()),
-                        Item('name', style='readonly'),
-                        # spring,
-                        # Item('deflection', visible_when='use_deflection'),
-                        show_labels=False))
+        v = View(
+            HGroup(
+                Item("active"),
+                Item("color", width=25, editor=ColorSquareEditor()),
+                Item("name", style="readonly"),
+                # spring,
+                # Item('deflection', visible_when='use_deflection'),
+                show_labels=False,
+            )
+        )
         return v
+
 
 # ============= EOF =============================================

@@ -35,12 +35,12 @@ from pychron.paths import paths
 
 class StreamGraphManager(Manager):
     graph = Instance(Graph)
-    graph_scale = Enum('linear', 'log')
+    graph_scale = Enum("linear", "log")
 
     graph_y_auto = Bool
 
-    graph_ymin = Property(Float, depends_on='_graph_ymin')
-    graph_ymax = Property(Float, depends_on='_graph_ymax')
+    graph_ymin = Property(Float, depends_on="_graph_ymin")
+    graph_ymax = Property(Float, depends_on="_graph_ymax")
     _graph_ymin = Float
     _graph_ymax = Float
     graph_scan_width = Float(enter_set=True, auto_set=False)  # in minutes
@@ -50,15 +50,15 @@ class StreamGraphManager(Manager):
     stop_record_button = Button
 
     snapshot_button = Button
-    snapshot_output = Enum('png', 'pdf')
+    snapshot_output = Enum("png", "pdf")
 
     # add_visual_marker_button = Button('Add Visual Marker')
     # marker_text = Str
-    add_marker_button = Button('Add Marker')
+    add_marker_button = Button("Add Marker")
     clear_all_markers_button = Button
     use_vertical_markers = Bool
 
-    record_label = Property(depends_on='_recording')
+    record_label = Property(depends_on="_recording")
     _recording = Bool(False)
     record_data_manager = Instance(CSVDataManager)
 
@@ -72,24 +72,24 @@ class StreamGraphManager(Manager):
 
     def reset_scan_timer(self, func=None, wait=True):
         if self._streaming_active:
-            self.info('reset scan timer')
+            self.info("reset scan timer")
             self._signal_failed_cnt = 0
             self.timer = self._timer_factory(func=func, wait=wait)
 
     def load_settings(self):
-        self.info('load scan settings')
+        self.info("load scan settings")
 
         params = self.get_settings()
         if params:
             self._set_graph_attrs(params)
             self._load_settings(params)
         else:
-            self.warning('no scan settings')
+            self.warning("no scan settings")
 
     def dump_settings(self):
-        self.info('dump scan settings')
-        p = os.path.join(paths.hidden_dir, '{}.p'.format(self.settings_name))
-        with open(p, 'wb') as wfile:
+        self.info("dump scan settings")
+        p = os.path.join(paths.hidden_dir, "{}.p".format(self.settings_name))
+        with open(p, "wb") as wfile:
             d = dict()
             for ki in self.graph_attr_keys:
                 d[ki] = getattr(self, ki)
@@ -97,17 +97,17 @@ class StreamGraphManager(Manager):
             pickle.dump(d, wfile)
 
     def get_settings(self):
-        p = os.path.join(paths.hidden_dir, '{}.p'.format(self.settings_name))
+        p = os.path.join(paths.hidden_dir, "{}.p".format(self.settings_name))
         if os.path.isfile(p):
-            with open(p, 'rb') as f:
+            with open(p, "rb") as f:
                 try:
-                    return pickle.load(f, encoding='utf-8')
+                    return pickle.load(f, encoding="utf-8")
                 except (pickle.PickleError, EOFError, UnicodeDecodeError) as e:
-                    self.warning('Failed unpickling scan settings file {}'.format(p))
+                    self.warning("Failed unpickling scan settings file {}".format(p))
                     self.debug(e)
                     return
         else:
-            self.warning('No scan settings file {}'.format(p))
+            self.warning("No scan settings file {}".format(p))
 
     # private
     def _get_graph_y_min_max(self, plotid=0):
@@ -127,7 +127,6 @@ class StreamGraphManager(Manager):
         pass
 
     def _timer_factory(self, func=None, wait=True):
-
         if func is None:
             func = self._update_scan_graph
 
@@ -152,7 +151,7 @@ class StreamGraphManager(Manager):
         self.reset_scan_timer()
 
     def _update_graph_limits(self, name, new):
-        if 'high' in name:
+        if "high" in name:
             self._graph_ymax = max(new, self._graph_ymin)
         else:
             self._graph_ymin = min(new, self._graph_ymax)
@@ -176,7 +175,7 @@ class StreamGraphManager(Manager):
     def _graph_scan_width_changed(self):
         g = self.graph
         n = self.graph_scan_width
-        n = max(n, 1 / 60.)
+        n = max(n, 1 / 60.0)
         mins = n * 60
         g.set_data_limits(1.8 * mins)
         g.set_scan_widths(mins)
@@ -193,13 +192,13 @@ class StreamGraphManager(Manager):
         self._recording = False
 
     def _snapshot_button_fired(self):
-        self.debug('snapshot button fired')
+        self.debug("snapshot button fired")
         self.graph.save()
 
     def _add_marker_button_fired(self):
-        xs = self.graph.plots[0].data.get_data('x0')
+        xs = self.graph.plots[0].data.get_data("x0")
 
-        self.record_data_manager.write_to_frame(tuple(' '))
+        self.record_data_manager.write_to_frame(tuple(" "))
         self.graph.add_vertical_rule(xs[-1])
 
     # ===============================================================================
@@ -242,15 +241,17 @@ class StreamGraphManager(Manager):
             self.graph.redraw()
 
     def _get_record_label(self):
-        return 'Record' if not self._recording else 'Stop'
+        return "Record" if not self._recording else "Stop"
 
     @property
     def graph_attr_keys(self):
-        return ['graph_scale',
-                'graph_ymin',
-                'graph_ymax',
-                'graph_y_auto',
-                'graph_scan_width']
+        return [
+            "graph_scale",
+            "graph_ymin",
+            "graph_ymax",
+            "graph_y_auto",
+            "graph_scan_width",
+        ]
 
     def _dump_settings(self):
         pass
@@ -260,7 +261,7 @@ class StreamGraphManager(Manager):
             try:
                 setattr(self, pi, params[pi])
             except KeyError as e:
-                print('sm load settings', pi, e)
+                print("sm load settings", pi, e)
 
     # ===============================================================================
     # defaults
@@ -272,6 +273,3 @@ class StreamGraphManager(Manager):
 
 
 # ============= EOF =============================================
-
-
-

@@ -17,7 +17,14 @@
 # ============= enthought library imports =======================
 import six
 from pyface.qt import QtGui
-from pyface.qt.QtGui import QCompleter, QSizePolicy, QComboBox, QHBoxLayout, QPushButton, QWidget
+from pyface.qt.QtGui import (
+    QCompleter,
+    QSizePolicy,
+    QComboBox,
+    QHBoxLayout,
+    QPushButton,
+    QWidget,
+)
 from traits.api import Str, Bool, Event, List, Enum
 from traits.trait_errors import TraitError
 from traitsui.basic_editor_factory import BasicEditorFactory
@@ -36,14 +43,12 @@ class ComboBoxWidget(QWidget):
         layout.setSpacing(2)
         self.combo = combo = QComboBox()
         combo.setSizeAdjustPolicy(QComboBox.AdjustToContents)
-        combo.setSizePolicy(QSizePolicy.Maximum,
-                            QSizePolicy.Fixed)
+        combo.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
 
         self.button = button = QPushButton()
         button.setEnabled(False)
-        button.setIcon(icon('add').create_icon())
-        button.setSizePolicy(QSizePolicy.Fixed,
-                             QSizePolicy.Fixed)
+        button.setIcon(icon("add").create_icon())
+        button.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         button.setFixedWidth(20)
         button.setFixedHeight(20)
 
@@ -98,9 +103,7 @@ class _ComboboxEditor(SimpleEditor):
         # self._no_enum_update = 0
         self.set_tooltip()
         control.setCompleter(QCompleter(control))
-        self.sync_value(self.factory.refresh,
-                        'refresh',
-                        'from')
+        self.sync_value(self.factory.refresh, "refresh", "from")
 
         if self.factory.addable:
             self.control.button.clicked.connect(self.update_add)
@@ -124,8 +127,7 @@ class _ComboboxEditor(SimpleEditor):
             self.control.combo.setEditText(v)
 
     def update_text_object(self, text):
-        """ Handles the user typing text into the combo box text entry field.
-        """
+        """Handles the user typing text into the combo box text entry field."""
         if self._no_enum_update == 0:
             value = six.text_type(text)
             if self.factory.use_strict_values:
@@ -162,7 +164,7 @@ class _ComboboxEditor(SimpleEditor):
                     try:
                         self.control.setEditText(self.str_value)
                     except:
-                        self.control.setEditText('')
+                        self.control.setEditText("")
 
             except TraitError as excp:
                 if self.factory.addable:
@@ -172,8 +174,8 @@ class _ComboboxEditor(SimpleEditor):
             self._no_enum_update -= 1
 
     def update_editor(self):
-        """ Updates the editor when the object trait changes externally to the
-            editor.
+        """Updates the editor when the object trait changes externally to the
+        editor.
         """
         if self._no_enum_update == 0:
             self._no_enum_update += 1
@@ -188,7 +190,7 @@ class _ComboboxEditor(SimpleEditor):
                 try:
                     self.control.setEditText(self.str_value)
                 except:
-                    self.control.setEditText('')
+                    self.control.setEditText("")
             self._no_enum_update -= 1
 
 
@@ -201,6 +203,11 @@ class ComboboxEditor(BasicEditorFactory):
     addable = Bool(False)
     refresh = Str
     use_filter = Bool(True)
-    completion_mode = Enum(('popup', 'inline'))
+    completion_mode = Enum(("popup", "inline"))
+    use_separator = Bool(False)
+    separator = Str
+    use_separator = Bool(False)
+    separator = Str("")
+
 
 # ============= EOF =============================================

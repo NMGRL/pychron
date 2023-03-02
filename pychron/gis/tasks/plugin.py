@@ -21,21 +21,23 @@ from pychron.gis.tasks.predefined import GIS
 
 
 class GISPlugin(BaseTaskPlugin):
-    nodes = List(contributes_to='pychron.pipeline.nodes')
-    predefined_templates = List(contributes_to='pychron.pipeline.predefined_templates')
-    pipeline_group_icon_map = List(contributes_to='pychron.pipeline.pipeline_group_icon_map')
+    nodes = List(contributes_to="pychron.pipeline.nodes")
+    predefined_templates = List(contributes_to="pychron.pipeline.predefined_templates")
+    pipeline_group_icon_map = List(
+        contributes_to="pychron.pipeline.pipeline_group_icon_map"
+    )
 
     # def _preferences_panes_default(self):
     #     return [MDDPreferencesPane]
 
     def _pipeline_group_icon_map_default(self):
-        return [('GIS', 'world')]
+        return [("GIS", "world")]
 
     def _predefined_templates_default(self):
-        return [('GIS', (('Map', GIS),
-                         ))]
+        return [("GIS", (("Map", GIS),))]
 
     def _nodes_default(self):
         return [GISNode, SampleGroupingNode]
+
 
 # ============= EOF =============================================

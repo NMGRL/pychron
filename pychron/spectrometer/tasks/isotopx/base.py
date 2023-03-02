@@ -40,8 +40,6 @@ class IsotopxSpectrometerPlugin(BaseSpectrometerPlugin):
     #         v = new_readout_view(rv)
     #         open_view(rv, view=v)
 
-
-
     # ===============================================================================
     # defaults
     # ===============================================================================
@@ -123,5 +121,6 @@ class IsotopxSpectrometerPlugin(BaseSpectrometerPlugin):
     #
     #     ext.extend((ta1, si, sp))
     #     return ext
+
 
 # ============= EOF =============================================

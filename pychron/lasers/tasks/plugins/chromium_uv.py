@@ -22,10 +22,14 @@ from pychron.lasers.tasks.plugins.chromium import ChromiumPlugin
 
 
 class ChromiumUVPlugin(ChromiumPlugin):
-    id = 'pychron.chromium.uv'
-    name = 'ChromiumUV'
-    klass = ('pychron.lasers.laser_managers.chromium_laser_manager', 'ChromiumUVManager')
-    task_name = 'Chromium UV'
-    task_klass = ('pychron.lasers.tasks.laser_task', 'ChromiumUVTask')
+    id = "pychron.chromium.uv"
+    name = "ChromiumUV"
+    klass = (
+        "pychron.lasers.laser_managers.chromium_laser_manager",
+        "ChromiumUVManager",
+    )
+    task_name = "Chromium UV"
+    task_klass = ("pychron.lasers.tasks.laser_task", "ChromiumUVTask")
+
 
 # ============= EOF =============================================

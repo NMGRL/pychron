@@ -141,7 +141,7 @@ class myPanel(BasePanel):
         # superceded by the title of an "outer" widget (eg. a dock widget).
         title = view.title
         if (is_subpanel or (isinstance(parent, QtGui.QMainWindow) and
-                                not isinstance(parent.parent(), QtGui.QDialog)) or
+                            not isinstance(parent.parent(), QtGui.QDialog)) or
                 isinstance(parent, QtGui.QTabWidget)):
             title = ""
 
@@ -358,7 +358,7 @@ def check_dependencies(debug):
     logger.info('================ Checking Dependencies ================')
     for npkg, req in (('uncertainties', '2.1'),
                       ('pint', '0.5'),
-                      # ('fant', '0.1')
+            # ('fant', '0.1')
                       ):
         try:
             pkg = __import__(npkg)
@@ -481,10 +481,22 @@ def initialize_version(appname, debug):
     paths.write_defaults()
 
     # setup logging. set a basename for log files and logging level
-    logging_setup('pychron', level='DEBUG')
 
     from pychron.core.helpers.exception_helper import set_exception_handler
     set_exception_handler()
+
+    try:
+        logging_setup('pychron', level='DEBUG')
+    except PermissionError as e:
+        warning(None, 'Failed to setup logging due to a PermissionError. '
+                      'Is Pychron already open? Please quit any running instance of Pychron '
+                      'before trying to relaunch.  Error: {}'.format(e))
+        return False
+    except FileExistsError as e:
+        warning(None, 'Failed to setup logging. '
+                      ' Error: {}'.format(e))
+
+        return False
 
     return env
 

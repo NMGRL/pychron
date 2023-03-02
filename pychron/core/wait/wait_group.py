@@ -25,7 +25,7 @@ from pychron.core.wait.wait_control import WaitControl
 class WaitGroup(HasTraits):
     controls = List
     active_control = Any
-    single = Property(depends_on='controls[]')
+    single = Property(depends_on="controls[]")
 
     def _get_single(self):
         return len(self.controls) == 1
@@ -65,13 +65,14 @@ class WaitGroup(HasTraits):
             ci.stop()
 
     def add_control(self, **kw):
-        if 'page_name' not in kw:
-            kw['page_name'] = 'Wait {:02d}'.format(len(self.controls))
+        if "page_name" not in kw:
+            kw["page_name"] = "Wait {:02d}".format(len(self.controls))
         w = WaitControl(**kw)
 
         self.controls.append(w)
         self.active_control = w
 
         return w
+
 
 # ============= EOF =============================================

@@ -20,12 +20,12 @@ from pychron.pipeline.subgrouping import make_interpreted_age_groups
 
 
 class SetInterpretedAgeNode(DVCNode):
-    name = 'Set Interpreted Age'
+    name = "Set Interpreted Age"
 
     configurable = False
 
     def run(self, state):
-        unks = state.run_groups['unknowns']
+        unks = state.run_groups["unknowns"]
 
         # ias = []
         #
@@ -52,5 +52,6 @@ class SetInterpretedAgeNode(DVCNode):
         editor = SetInterpretedAgeEditor()
         editor.set_items(ias)
         state.editors.append(editor)
+
 
 # ============= EOF =============================================

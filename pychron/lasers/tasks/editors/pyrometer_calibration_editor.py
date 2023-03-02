@@ -25,6 +25,7 @@ from traitsui.api import View, UItem
 
 # ============= standard library imports ========================
 from numpy import array
+
 # ============= local library imports  ==========================
 from pychron.lasers.scanner import Scanner
 from pychron.lasers.tasks.editors.laser_editor import LaserEditor
@@ -43,11 +44,11 @@ class PyrometerCalibrationScanner(Scanner):
 
     def start_control_hook(self, ydict):
         self.csv_data_manager = dm = CSVDataManager()
-        p = os.path.join(paths.data_dir, 'pyrometer_calibration')
+        p = os.path.join(paths.data_dir, "pyrometer_calibration")
         dm.new_frame(directory=p)
 
     def _maintain_setpoint(self, t, d):
-        if d == 'equilibrate':
+        if d == "equilibrate":
             py, tc = self._equilibrate(t)
             self._write_calibration((t, py, tc))
 
@@ -55,12 +56,11 @@ class PyrometerCalibrationScanner(Scanner):
             super(PyrometerCalibrationScanner, self)._maintain_setpoint(t, d)
 
     def _equilibrate(self, ctemp):
+        # ctemp=self._current_setpoint
+        # ctemp = self.manager.map_temperature(temp)
 
-        #ctemp=self._current_setpoint
-        #ctemp = self.manager.map_temperature(temp)
-
-        py = self.manager.get_device('pyrometer')
-        tc = self.manager.get_device('temperature_monitor')
+        py = self.manager.get_device("pyrometer")
+        tc = self.manager.get_device("temperature_monitor")
         temps = []
         n = 10
         tol = self._eq_tol
@@ -68,7 +68,7 @@ class PyrometerCalibrationScanner(Scanner):
 
         while self._scanning:
             sti = time.time()
-            #py_t = py.get()
+            # py_t = py.get()
             ref_t = py.temperature
             temps.append(ref_t)
             #            ttemps.append(tc_t)
@@ -115,18 +115,17 @@ class PyrometerCalibrationEditor(LaserEditor):
         return d.read_temperature(verbose=False)
 
     def _do_execute(self):
-        p = os.path.join(paths.scripts_dir, 'pyrometer_calibration.yaml')
-        s = PyrometerCalibrationScanner(control_path=p,
-                                        manager=self._laser_manager)
+        p = os.path.join(paths.scripts_dir, "pyrometer_calibration.yaml")
+        s = PyrometerCalibrationScanner(control_path=p, manager=self._laser_manager)
 
-        s.setup('pyrometer_calibration', 'scan')
+        s.setup("pyrometer_calibration", "scan")
 
-        self._pyrometer = self._laser_manager.get_device('pyrometer')
-        self._thermocouple = self._laser_manager.get_device('temperature_monitor')
+        self._pyrometer = self._laser_manager.get_device("pyrometer")
+        self._thermocouple = self._laser_manager.get_device("temperature_monitor")
 
-        s.new_function(self._scan_pyrometer, name='pyrometer')
-        s.new_function(self._scan_thermocouple, name='thermocouple')
-        #s.new_static_value('Setpoint', 10, plotid=1)
+        s.new_function(self._scan_pyrometer, name="pyrometer")
+        s.new_function(self._scan_thermocouple, name="thermocouple")
+        # s.new_static_value('Setpoint', 10, plotid=1)
 
         g = s.make_graph()
         self.component = g.plotcontainer
@@ -136,8 +135,8 @@ class PyrometerCalibrationEditor(LaserEditor):
             return True
 
     def traits_view(self):
-        v = View(UItem('component',
-                       editor=ComponentEditor()))
+        v = View(UItem("component", editor=ComponentEditor()))
         return v
+
 
 # ============= EOF =============================================

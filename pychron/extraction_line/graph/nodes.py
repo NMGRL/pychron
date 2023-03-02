@@ -79,13 +79,13 @@ class Node(HasTraits):
 
 
 class ValveNode(Node):
-    state = 'closed'
+    state = "closed"
     volume = Property
     _closed_volume = Float(5)
 
-    '''
+    """
         the additional volume when a valve is open
-    '''
+    """
     _open_volume = Float(10)
 
     def _set_volume(self, v):
@@ -95,7 +95,7 @@ class ValveNode(Node):
 
     def _get_volume(self):
         v = self._closed_volume
-        if self.state != 'closed':
+        if self.state != "closed":
             v += self._open_volume
         return v
 
@@ -105,35 +105,42 @@ class RootNode(Node):
 
 
 class GaugeNode(RootNode):
-    tag = 'gauge'
+    tag = "gauge"
+
+
+class ColdFingerNode(RootNode):
+    tag = "coldfinger"
+    precedence = 71
 
 
 class GetterNode(RootNode):
-    tag = 'getter'
+    tag = "getter"
     precedence = 70
 
 
 class PumpNode(RootNode):
-    tag = 'pump'
+    tag = "pump"
+    precedence = 120
 
 
 class SpectrometerNode(RootNode):
-    tag = 'spectrometer'
+    tag = "spectrometer"
     precedence = 80
 
 
 class TankNode(RootNode):
-    tag = 'tank'
+    tag = "tank"
     precedence = 90
 
 
 class PipetteNode(RootNode):
-    tag = 'pipette'
+    tag = "pipette"
     precedence = 100
 
 
 class LaserNode(RootNode):
-    tag = 'laser'
+    tag = "laser"
     precedence = 100
+
 
 # ============= EOF =============================================

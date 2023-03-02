@@ -24,8 +24,7 @@ import time
 from threading import Thread
 
 from traits.api import Str, Float, Any, Button, Int, List, Bool, Property
-from traitsui.api import Item, HGroup, VGroup, \
-    ButtonEditor, spring
+from traitsui.api import Item, HGroup, VGroup, ButtonEditor, spring
 
 # =============local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
@@ -44,9 +43,7 @@ class MassSpecParam(object):
 
 
 class ManagerHandler(ViewableHandler):
-    '''
-        
-    '''
+    """ """
 
     def init(self, info):
         info.object.initialized = True
@@ -89,8 +86,7 @@ class SaveableManagerHandler(SaveableHandler, ManagerHandler):
 
 
 class Manager(Viewable, ConfigLoadable):
-    """
-    """
+    """ """
 
     test = Button
 
@@ -121,14 +117,15 @@ class Manager(Viewable, ConfigLoadable):
     error_code = None
 
     def finish_loading(self):
-        """
-        """
+        """ """
         pass
 
     def ui_opened(self, ui):
         def _loop():
             start = time.time()
-            self.info('Window set to close after {} min'.format(self.close_after_minutes))
+            self.info(
+                "Window set to close after {} min".format(self.close_after_minutes)
+            )
 
             now = time.time()
             while now - start < (self.close_after_minutes * 60) and not self._killed:
@@ -148,7 +145,6 @@ class Manager(Viewable, ConfigLoadable):
         self.add_window(ui)
 
     def add_window(self, ui):
-
         try:
             if self.application is not None:
                 self.application.uis.append(ui)
@@ -161,22 +157,21 @@ class Manager(Viewable, ConfigLoadable):
             self.add_window(ui)
 
         from pychron.core.ui.gui import invoke_in_main_thread
+
         invoke_in_main_thread(_open)
 
     def kill(self, **kw):
-        """
-
-        """
+        """ """
 
         if not self._killed:
-            self.info('killing')
+            self.info("killing")
             self._kill_hook()
 
             self._killed = True
 
             for _k, man in self.get_managers():
                 if man is not None:
-                    if hasattr(man, 'kill'):
+                    if hasattr(man, "kill"):
                         man.kill()
 
     def get_error(self):
@@ -186,14 +181,14 @@ class Manager(Viewable, ConfigLoadable):
             return str(e)
 
     def get_managers(self):
-
-        return [(ma, getattr(self, ma)) for ma in self.traits()
-                if ma.endswith('_manager')
-                and getattr(self, ma) is not None]
+        return [
+            (ma, getattr(self, ma))
+            for ma in self.traits()
+            if ma.endswith("_manager") and getattr(self, ma) is not None
+        ]
 
     def get_device(self, device_name):
-        """
-        """
+        """ """
         from pychron.hardware.core.i_core_device import ICoreDevice
 
         dev = None
@@ -202,17 +197,18 @@ class Manager(Viewable, ConfigLoadable):
         elif hasattr(self.parent, device_name):
             dev = getattr(self.parent, device_name)
         else:
-
             for man in self.get_managers():
                 if hasattr(man, device_name):
                     dev = getattr(man, device_name)
                     break
 
             if self.application:
-                dev = self.application.get_service(ICoreDevice, 'name=="{}"'.format(device_name))
+                dev = self.application.get_service(
+                    ICoreDevice, 'name=="{}"'.format(device_name)
+                )
 
             if dev is None:
-                self.warning('Invalid device {}'.format(device_name))
+                self.warning("Invalid device {}".format(device_name))
 
         return dev
 
@@ -227,12 +223,12 @@ class Manager(Viewable, ConfigLoadable):
             class_factory = getattr(m, klass)
         except ImportError:
             if warn:
-                self.warning(' Invalid manager class {} {}'.format(package, klass))
+                self.warning(" Invalid manager class {} {}".format(package, klass))
 
         except BaseException as e:
             self.debug_exception()
             if warn:
-                self.warning('Problem with manager class {} source'.format(klass))
+                self.warning("Problem with manager class {} source".format(klass))
 
         return class_factory
 
@@ -245,7 +241,9 @@ class Manager(Viewable, ConfigLoadable):
         ff = Flag(f)
         self.flags.append(ff)
         if self.application:
-            fm = self.application.get_service('pychron.hardware.flag_manager.FlagManager')
+            fm = self.application.get_service(
+                "pychron.hardware.flag_manager.FlagManager"
+            )
             if fm is not None:
                 fm.add_flag(ff)
 
@@ -256,7 +254,9 @@ class Manager(Viewable, ConfigLoadable):
         ff = ValveFlag(f, valves=v, manager=self)
         self.flags.append(ff)
         if self.application:
-            fm = self.application.get_service('pychron.hardware.flag_manager.FlagManager')
+            fm = self.application.get_service(
+                "pychron.hardware.flag_manager.FlagManager"
+            )
             if fm is not None:
                 fm.add_valve_flag(ff)
 
@@ -266,7 +266,9 @@ class Manager(Viewable, ConfigLoadable):
         ff = TimedFlag(f)
         self.flags.append(ff)
         if self.application:
-            fm = self.application.get_service('pychron.hardware.flag_manager.FlagManager')
+            fm = self.application.get_service(
+                "pychron.hardware.flag_manager.FlagManager"
+            )
             if fm is not None:
                 fm.add_timed_flag(ff)
 
@@ -277,9 +279,9 @@ class Manager(Viewable, ConfigLoadable):
         if cp is None:
             # open the mass spec parameters file
             cp = self.configparser_factory()
-            cp.read(os.path.join(paths.setup_dir, 'mass_spec_params.cfg'))
+            cp.read(os.path.join(paths.setup_dir, "mass_spec_params.cfg"))
         try:
-            v = cp.get('General', name)
+            v = cp.get("General", name)
             return MassSpecParam(v)
         except Exception:
             pass
@@ -294,19 +296,18 @@ class Manager(Viewable, ConfigLoadable):
         return self._set_flag(name, False)
 
     def create_manager(self, manager, **kw):
-        """
-        """
+        """ """
         klass = self.convert_config_name(manager)
         params = dict(name=manager)
-        params['parent'] = self
-        params['application'] = self.application
+        params["parent"] = self
+        params["application"] = self.application
 
         return self._create_manager(klass, manager, params, **kw)
 
-    def create_device(self, device_name, gdict=None, dev_class=None,
-                      prefix=None, obj=None):
-        """
-        """
+    def create_device(
+        self, device_name, gdict=None, dev_class=None, prefix=None, obj=None
+    ):
+        """ """
         device = None
 
         if dev_class is not None:
@@ -329,16 +330,16 @@ class Manager(Viewable, ConfigLoadable):
                 import traceback
 
                 traceback.print_exc()
-                self.warning('Invalid device class {}'.format(klass))
+                self.warning("Invalid device class {}".format(klass))
                 return
 
         device = class_factory(name=device_name)
         if obj is not None:
-            device.copy_traits(obj, traits=['configuration_dir_name'])
+            device.copy_traits(obj, traits=["configuration_dir_name"])
 
         if device is not None:
             if prefix:
-                device_name = ''.join((prefix, device_name))
+                device_name = "".join((prefix, device_name))
 
             if device_name in self.traits():
                 self.trait_set(**{device_name: device})
@@ -357,8 +358,9 @@ class Manager(Viewable, ConfigLoadable):
     def _kill_hook(self):
         pass
 
-    def _create_manager(self, klass, manager, params,
-                        port=None, host=None, remote=False):
+    def _create_manager(
+        self, klass, manager, params, port=None, host=None, remote=False
+    ):
         raise NotImplementedError
         # from pychron.managers import manager_package_dict
         #
@@ -385,13 +387,11 @@ class Manager(Viewable, ConfigLoadable):
 
     # view factories
     def _button_factory(self, name, label=None, enabled=None, align=None, **kw):
-        """
-
-        """
+        """ """
         b = Item(name, show_label=False, **kw)
 
         if label is None:
-            label = '{}_label'.format(name)
+            label = "{}_label".format(name)
 
         if label is not None:
             b.editor = ButtonEditor(label_value=label)
@@ -400,22 +400,24 @@ class Manager(Viewable, ConfigLoadable):
             b.enabled_when = enabled
 
         if align is not None:
-            if align == 'right':
+            if align == "right":
                 b = HGroup(spring, b)
-            elif align == 'center':
+            elif align == "center":
                 b = HGroup(spring, b, spring)
             else:
                 b = HGroup(b, spring)
 
         return b
 
-    def _button_group_factory(self, buttons, orientation='v'):
-        """
-        """
-        vg = VGroup() if orientation == 'v' else HGroup()
+    def _button_group_factory(self, buttons, orientation="v"):
+        """ """
+        vg = VGroup() if orientation == "v" else HGroup()
 
         for name, label, enabled in buttons:
-            vg.content.append(HGroup(self._button_factory(name, label, enabled), springy=False))
+            vg.content.append(
+                HGroup(self._button_factory(name, label, enabled), springy=False)
+            )
         return vg
+
 
 # =================== EOF =================================================

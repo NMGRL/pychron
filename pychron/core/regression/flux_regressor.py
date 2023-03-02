@@ -17,15 +17,19 @@
 # ============= standard library imports ========================
 from operator import itemgetter
 
-from numpy import asarray, column_stack, ones_like, array, average, ravel
+from numpy import asarray, column_stack, ones_like, array, average, ravel, zeros_like
+
 # ============= local library imports  ==========================
+from scipy.interpolate import Rbf, bisplrep, bisplev, griddata
 from statsmodels.regression.linear_model import WLS, OLS
+
 # ============= enthought library imports =======================
 from traits.api import Bool, Int
 
 from pychron.core.geometry.geometry import calc_distances
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.core.regression.ols_regressor import MultipleLinearRegressor
+from pychron.core.stats.idw import Invdisttree
 
 
 class SpecialFluxRegressor(BaseRegressor):
@@ -41,10 +45,69 @@ class SpecialFluxRegressor(BaseRegressor):
         return x
 
     def _calculate_coefficients(self):
-        return ''
+        return ""
 
     def _calculate_coefficient_errors(self):
-        return ''
+        return ""
+
+
+class InterpolationRegressor(SpecialFluxRegressor):
+    def predict(self, pts):
+        return zeros_like(pts)
+
+    def predict_error(self, pts, **kw):
+        return zeros_like(pts)
+
+
+class BSplineRegressor(InterpolationRegressor):
+    def calculate(self):
+        x, y = self.clean_xs.T
+
+        z = self.clean_ys
+        # self.rbf = Rbf(x, y, z)
+
+        self._tck = bisplrep(x, y, z, kx=4, ky=4)
+
+    def predict_grid(self, x, y):
+        znew = bisplev(x, y, self._tck)
+        return znew
+
+
+class RBFRegressor(InterpolationRegressor):
+    rbf_kind = "multiquadric"
+
+    def calculate(self):
+        x, y = self.clean_xs.T
+
+        z = self.clean_ys
+        self.rbf = Rbf(x, y, z, function=self.rbf_kind)
+
+    def predict_grid(self, x, y):
+        return self.rbf(x, y)
+
+
+class GridDataRegressor(InterpolationRegressor):
+    method = "cubic"
+
+    def calculate(self):
+        pass
+
+    def predict_grid(self, x, y):
+        return griddata(self.clean_xs, self.clean_ys, (x, y), method=self.method)
+
+
+class IDWRegressor(InterpolationRegressor):
+    def calculate(self):
+        leafsize = 10
+        known = self.clean_xs
+        z = self.clean_ys
+        self._invdisttree = Invdisttree(known, z, leafsize=leafsize, stat=1)
+
+    def predict(self, pts):
+        nnear = 8  # 8 2d, 11 3d => 5 % chance one-sided -- Wendel, mathoverflow.com
+        eps = 0.1  # approximate nearest, dist <= (1 + eps) * true nearest
+        p = 2  # weights ~ 1 / distance**p
+        return self._invdisttree(pts, nnear=nnear, eps=eps, p=p)
 
 
 class NearestNeighborFluxRegressor(SpecialFluxRegressor):
@@ -56,10 +119,10 @@ class NearestNeighborFluxRegressor(SpecialFluxRegressor):
             get the n positions that are closest (eucledian distance) to x,y
             """
 
-            v2 = array([[x,y]])
+            v2 = array([[x, y]])
             ds = ravel(calc_distances(self.clean_xs, v2))
             idx = sorted(enumerate(ds), key=itemgetter(1))
-            idx, ds = zip(*idx[:self.n])
+            idx, ds = zip(*idx[: self.n])
 
             v = 0
             if idx:
@@ -69,7 +132,7 @@ class NearestNeighborFluxRegressor(SpecialFluxRegressor):
 
                 if self.use_weighted_fit:
                     es = self.clean_yserr[idx]
-                    ws = es ** -2
+                    ws = es**-2
                     if return_error:
                         v = ws.sum()
                     else:
@@ -147,7 +210,18 @@ class BowlFluxRegressor(MultipleLinearRegressor):
         xs = asarray(xs)
         x1, x2 = xs.T
 
-        return column_stack((x1 ** 2, x2 ** 2, x1 ** 2 * x2, x2 ** 2 * x1, x1 * x2, x1, x2, ones_like(x1)))
+        return column_stack(
+            (
+                x1**2,
+                x2**2,
+                x1**2 * x2,
+                x2**2 * x1,
+                x1 * x2,
+                x1,
+                x2,
+                ones_like(x1),
+            )
+        )
         # return column_stack((x1, x2, x1 ** 2, x2 ** 2, x1 * x2, x1**2*x2, x2**2*x1, ones_like(x1)))
         # return column_stack((x1**2, x2**2, x1, x2, ones_like(x1)))
 
@@ -158,12 +232,13 @@ class PlaneFluxRegressor(MultipleLinearRegressor):
     def _get_weights(self):
         e = self.clean_yserr
         if self._check_integrity(e, e):
-            return 1 / e ** 2
+            return 1 / e**2
 
     def _engine_factory(self, fy, X, check_integrity=True):
         if self.use_weighted_fit:
             return WLS(fy, X, weights=self._get_weights())
         else:
             return OLS(fy, X)
+
 
 # ============= EOF =============================================

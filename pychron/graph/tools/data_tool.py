@@ -27,17 +27,18 @@ from traits.api import Event, Any, Enum, Tuple, Bool, Int
 
 # ============= local library imports  ==========================
 
+
 class DataTool(BaseTool):
     new_value = Event
     last_mouse_position = Tuple
     visible = Bool(True)
-    inspector_key = KeySpec('i')
+    inspector_key = KeySpec("i")
     parent = Any
     plot = Any
     plotid = Int
     use_date_str = True
     normalize_time = False
-    x_format = '{:0.2f}'
+    x_format = "{:0.2f}"
     predict_value_func = None
     filter_components = True
 
@@ -59,12 +60,12 @@ class DataTool(BaseTool):
                     self.new_value = d
                     return
 
-            ind = plot.index.metadata.get('hover')
+            ind = plot.index.metadata.get("hover")
             if ind is not None:
                 y = plot.value.get_data()[ind][0]
                 x = plot.index.get_data()[ind][0]
 
-            d['text'] = self._make_text(plot, x, y)
+            d["text"] = self._make_text(plot, x, y)
             self.new_value = d
             self.last_mouse_position = (event.x, event.y)
 
@@ -79,34 +80,34 @@ class DataTool(BaseTool):
         if self.use_date_str:
             # convert timestamp to str
             date = datetime.fromtimestamp(x)
-            xi = date.strftime('%d/%m %H:%M:%S')
+            xi = date.strftime("%d/%m %H:%M:%S")
         else:
             try:
                 xi = self.x_format.format(x)
             except ValueError:
-                xi = ''
+                xi = ""
 
-        ret = '{},{:0.3f}'.format(xi, y)
+        ret = "{},{:0.3f}".format(xi, y)
         if self.predict_value_func:
-            ret = '{},{}'.format(ret, self.predict_value_func(x, y))
+            ret = "{},{}".format(ret, self.predict_value_func(x, y))
         return ret
 
 
 class DataToolOverlay(TextBoxOverlay):
     border_visible = True
-    bgcolor = 'orange'
+    bgcolor = "orange"
     tool = Any
     visibility = Enum("auto", True, False)
     visible = False
-    font = 'arial 12'
+    # font = "modern 12"
     tooltip_mode = Bool(False)
 
     def _tool_changed(self, old, new):
         if old:
-            old.on_trait_event(self._new_value_updated, 'new_value', remove=True)
+            old.on_trait_event(self._new_value_updated, "new_value", remove=True)
             old.on_trait_change(self._tool_visible_changed, "visible", remove=True)
         if new:
-            new.on_trait_event(self._new_value_updated, 'new_value')
+            new.on_trait_event(self._new_value_updated, "new_value")
             new.on_trait_change(self._tool_visible_changed, "visible")
             self._tool_visible_changed()
 
@@ -124,7 +125,7 @@ class DataToolOverlay(TextBoxOverlay):
         else:
             self.alternate_position = None
 
-        txt = event.get('text', '')
+        txt = event.get("text", "")
         if txt is not None:
             self.text = txt
         self.component.request_redraw()
@@ -136,4 +137,6 @@ class DataToolOverlay(TextBoxOverlay):
         self.visibility = self.tool.visible
         if self.visibility != "auto":
             self.visible = self.visibility
+
+
 # ============= EOF =============================================

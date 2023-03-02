@@ -15,7 +15,6 @@
 # ===============================================================================
 
 
-
 from __future__ import absolute_import
 import socket
 
@@ -25,18 +24,18 @@ from pychron.managers.manager import Manager
 
 
 class RemoteManager(Manager):
-    host = Str('localhost')
+    host = Str("localhost")
     port = Int(8080)
-    kind = Enum('UDP', 'TCP')
+    kind = Enum("UDP", "TCP")
 
     def ask(self, cmd, port=None):
-        r = ''
+        r = ""
         conn = self.get_connection(port=port)
         conn.send(cmd)
         try:
             r = conn.recv(4096)
             r = r.strip()
-            self.info('-----ask----- {} ==> {}'.format(cmd, r))
+            self.info("-----ask----- {} ==> {}".format(cmd, r))
         except socket.error as e:
             self.warning(e)
 
@@ -49,7 +48,7 @@ class RemoteManager(Manager):
             port = self.port
         addr = (self.host, port)
 
-        if self.kind == 'UDP':
+        if self.kind == "UDP":
             packet_kind = socket.SOCK_DGRAM
 
         sock = socket.socket(family, packet_kind)
@@ -59,15 +58,16 @@ class RemoteManager(Manager):
 
 
 class RemoteExtractionLineManager(RemoteManager):
-    '''
-        needs to expose extraction line manager api to an el script
-    '''
+    """
+    needs to expose extraction line manager api to an el script
+    """
+
     def open_valve(self, name, **kw):
         # if the response is OK the valve state actually changed
         # if response is ok valve already in requested state
-        resp = self.ask('Open {}'.format(name))
-        return 'OK' in resp
+        resp = self.ask("Open {}".format(name))
+        return "OK" in resp
 
     def close_valve(self, name, **kw):
-        resp = self.ask('Close {}'.format(name))
-        return 'OK' in resp
+        resp = self.ask("Close {}".format(name))
+        return "OK" in resp

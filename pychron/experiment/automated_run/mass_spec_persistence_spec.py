@@ -15,9 +15,21 @@
 # ===============================================================================
 # ============= standard library imports ========================
 from numpy import std, mean, where, delete
+
 # ============= enthought library imports =======================
-from traits.api import CStr, Str, CInt, Float, \
-    TraitError, Property, Any, Either, Dict, Bool, List
+from traits.api import (
+    CStr,
+    Str,
+    CInt,
+    Float,
+    TraitError,
+    Property,
+    Any,
+    Either,
+    Dict,
+    Bool,
+    List,
+)
 from uncertainties import ufloat
 
 # ============= local library imports  ==========================
@@ -38,7 +50,7 @@ class MassSpecPersistenceSpec(Loggable):
     mass_spectrometer = Str
     extract_device = Str
     tray = Str
-    position = Property(depends_on='_position')
+    position = Property(depends_on="_position")
     _position = Any
 
     timestamp = Float
@@ -58,7 +70,7 @@ class MassSpecPersistenceSpec(Loggable):
     # data_manager = Instance(H5DataManager, ())
     update_rundatetime = Bool
     is_peak_hop = Bool
-    peak_hop_detector = 'CDD'
+    peak_hop_detector = "CDD"
     # ic_factor_v = Float
     # ic_factor_e = Float
 
@@ -78,52 +90,57 @@ class MassSpecPersistenceSpec(Loggable):
         return self.cleanup
 
     def load_record(self, record):
-        attrs = [('labnumber', 'labnumber'),
-                 ('aliquot', 'aliquot'),
-                 ('step', 'step'),
-                 ('uuid', 'uuid'),
-                 ('irradpos', 'labnumber'),
-                 ('timestamp', 'timestamp'),
-                 ('extract_device', 'extract_device'), ('tray', 'tray'),
-                 ('position', 'position'),
-                 ('power_requested', 'extract_value'),
-                 # ('power_achieved', 'extract_value'),
-                 ('extract_value', 'extract_value'),
-                 ('duration', 'duration'),
-                 ('duration_at_request', 'duration'),
-                 ('first_stage_delay', 'duration'),
-                 ('cleanup', 'cleanup'),
-                 ('comment', 'comment'),
-                 ('irradiation', 'irradiation'),
-                 ('irradiation_position', 'irradiation_pos'),
-                 ('irradiation_pos', 'irradiation_pos'),
-                 ('level', 'irradiation_level'),
-                 ('irradiation_level', 'irradiation_level'),
-                 ('isotopes', 'isotopes'),
-                 ('tag', 'tag'),
-                 ('sample', 'sample'),
-                 ('material', 'material'),
-                 ('project', 'project'),
-                 ('mass_spectrometer', 'mass_spectrometer'),
-                 ('age', 'age'),
-                 ('age_err', 'age_err'),
-                 ('age_err_wo_j', 'age_err_wo_j'),
-                 ('age_err_wo_j_irrad', 'age_err_wo_j_irrad'),
-                 ('ar39decayfactor', 'ar39decayfactor'),
-                 ('ar37decayfactor', 'ar37decayfactor'),
-                 ('chron_segments', 'chron_segments'),
-                 ('production_ratios', 'production_ratios',),
-                 ('interference_corrections', 'interference_corrections'),
-                 ('production_name', 'production_name'),
-                 ('j', 'j'),
-                 ]
+        attrs = [
+            ("labnumber", "labnumber"),
+            ("aliquot", "aliquot"),
+            ("step", "step"),
+            ("uuid", "uuid"),
+            ("irradpos", "labnumber"),
+            ("timestamp", "timestamp"),
+            ("extract_device", "extract_device"),
+            ("tray", "tray"),
+            ("position", "position"),
+            ("power_requested", "extract_value"),
+            # ('power_achieved', 'extract_value'),
+            ("extract_value", "extract_value"),
+            ("duration", "duration"),
+            ("duration_at_request", "duration"),
+            ("first_stage_delay", "duration"),
+            ("cleanup", "cleanup"),
+            ("comment", "comment"),
+            ("irradiation", "irradiation"),
+            ("irradiation_position", "irradiation_pos"),
+            ("irradiation_pos", "irradiation_pos"),
+            ("level", "irradiation_level"),
+            ("irradiation_level", "irradiation_level"),
+            ("isotopes", "isotopes"),
+            ("tag", "tag"),
+            ("sample", "sample"),
+            ("material", "material"),
+            ("project", "project"),
+            ("mass_spectrometer", "mass_spectrometer"),
+            ("age", "age"),
+            ("age_err", "age_err"),
+            ("age_err_wo_j", "age_err_wo_j"),
+            ("age_err_wo_j_irrad", "age_err_wo_j_irrad"),
+            ("ar39decayfactor", "ar39decayfactor"),
+            ("ar37decayfactor", "ar37decayfactor"),
+            ("chron_segments", "chron_segments"),
+            (
+                "production_ratios",
+                "production_ratios",
+            ),
+            ("interference_corrections", "interference_corrections"),
+            ("production_name", "production_name"),
+            ("j", "j"),
+        ]
 
         for exp_attr, run_attr in attrs:
             if hasattr(record, run_attr):
                 try:
                     v = getattr(record, run_attr)
                     if v != NULL_STR:
-                        self.debug('setting {} to {}'.format(exp_attr, v))
+                        self.debug("setting {} to {}".format(exp_attr, v))
                         setattr(self, exp_attr, v)
                 except TraitError as e:
                     self.debug(e)
@@ -157,7 +174,7 @@ class MassSpecPersistenceSpec(Loggable):
         try:
             return self.isotopes[key].detector
         except KeyError:
-            return ''
+            return ""
 
     def iter_isotopes(self):
         return ((iso.name, iso.detector) for iso in self.isotopes.values())
@@ -189,7 +206,7 @@ class MassSpecPersistenceSpec(Loggable):
         try:
             b = self.isotopes[iso].blank.get_baseline_corrected_value()
         except KeyError:
-            self.debug('no blank for {} {}'.format(iso, list(self.isotopes.keys())))
+            self.debug("no blank for {} {}".format(iso, list(self.isotopes.keys())))
             b = ufloat(0, 0)
 
         return b
@@ -199,8 +216,7 @@ class MassSpecPersistenceSpec(Loggable):
             ps = self.isotopes[iso].uvalue
             # ps = self.signal_intercepts['{}signal'.format(iso)]
         except KeyError as e:
-            self.debug('no key {} {}'.format(iso,
-                                             list(self.isotopes.keys())))
+            self.debug("no key {} {}".format(iso, list(self.isotopes.keys())))
             ps = ufloat(0, 0)
 
         return ps
@@ -209,27 +225,27 @@ class MassSpecPersistenceSpec(Loggable):
         try:
             f = self.isotopes[iso].get_fit(-1)
         except KeyError:
-            f = 'linear'
+            f = "linear"
         return f
 
     def get_baseline_fit(self, det):
-        return 'average_SEM'
+        return "average_SEM"
 
     def get_baseline_data(self, iso, det, **kw):
         """
-            det is the original detector not the mass spec fooling detector
+        det is the original detector not the mass spec fooling detector
         """
-        self.debug('get baseline data {} {}'.format(iso, det))
+        self.debug("get baseline data {} {}".format(iso, det))
         # if self.is_peak_hop and det == self.peak_hop_detector:
         # iso = None
 
-        return self._get_data('baseline', iso, det)
+        return self._get_data("baseline", iso, det)
 
     def get_signal_data(self, iso, det, **kw):
-        self.debug('get signal data {} {}'.format(iso, det))
-        return self._get_data('signal', iso, det, **kw)
+        self.debug("get signal data {} {}".format(iso, det))
+        return self._get_data("signal", iso, det, **kw)
 
-    def get_filtered_baseline_uvalue(self, iso, nsigma=2, niter=1, error='sem'):
+    def get_filtered_baseline_uvalue(self, iso, nsigma=2, niter=1, error="sem"):
         m, s, fncnts = 0, 0, 0
         # n_filtered_pts = 0
         if iso in self.isotopes:
@@ -240,8 +256,8 @@ class MassSpecPersistenceSpec(Loggable):
             #                                    'std_devs':std_devs}
             #         self.dirty=notify
             fod = iso.baseline.filter_outliers_dict
-            niter = fod.get('iterations', niter)
-            nsigma = fod.get('std_devs', nsigma)
+            niter = fod.get("iterations", niter)
+            nsigma = fod.get("std_devs", nsigma)
             # reg = MeanRegressor(xs=xs, ys=ys)
             # reg.calculate()
             # reg.
@@ -256,8 +272,8 @@ class MassSpecPersistenceSpec(Loggable):
             m, s = mean(ys), std(ys, ddof=1)
             fncnts = ys.shape[0]
 
-        if error == 'sem':
-            s = (s / fncnts ** 0.5) if fncnts else 0
+        if error == "sem":
+            s = (s / fncnts**0.5) if fncnts else 0
 
         return ufloat(m, s), fncnts
 
@@ -299,14 +315,18 @@ class MassSpecPersistenceSpec(Loggable):
     def _get_data(self, group, iso, det, verbose=True):
         try:
             iso = self.isotopes[iso]
-            if group != 'signal':
+            if group != "signal":
                 iso = getattr(iso, group)
             t, v = iso.xs, iso.ys
 
         except KeyError:
-            t, v = [0, ], [0, ]
+            t, v = [
+                0,
+            ], [
+                0,
+            ]
 
-        self.debug('Get data {} {} len t={}'.format(group, iso, len(t)))
+        self.debug("Get data {} {} len t={}".format(group, iso, len(t)))
         return t, v
         #
         # dm = self.data_manager
@@ -342,11 +362,13 @@ class MassSpecPersistenceSpec(Loggable):
 
     def _set_position(self, pos):
         if pos:
-            if ',' in pos:
+            if "," in pos:
                 self._position = csv_to_ints(pos)
             else:
                 self._position = pos
 
     def _get_position(self):
         return self._position
+
+
 # ============= EOF =============================================

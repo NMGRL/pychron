@@ -17,8 +17,7 @@
 from __future__ import absolute_import
 
 from six.moves import range
-from traits.api import List, Property, \
-    Str, Dict
+from traits.api import List, Property, Str, Dict
 from traitsui.api import UItem, HGroup, Item, EnumEditor
 
 # ============= standard library imports ========================
@@ -28,53 +27,71 @@ from pychron.core.templater.templater_view import BaseTemplateView
 
 
 class TitleTemplater(BaseTemplater):
-    attributes = List(['Project', 'Sample', 'Identifier', 'Aliquot', 'Step', 'Material',
-                       'RunID',
-                       'AlphaCounter',
-                       'NumericCounter', '<SPACE>'])
+    attributes = List(
+        [
+            "Project",
+            "Sample",
+            "Identifier",
+            "Aliquot",
+            "Step",
+            "Material",
+            "RunID",
+            "AlphaCounter",
+            "NumericCounter",
+            "<SPACE>",
+        ]
+    )
 
-    attribute_formats = {'sample': '',
-                         'identifier': '',
-                         'project': '',
-                         'aliquot': '02n',
-                         'step': '',
-                         'material': '',
-                         'numericcounter': '',
-                         'alphacounter': ''}
+    attribute_formats = {
+        "sample": "",
+        "identifier": "",
+        "project": "",
+        "aliquot": "02n",
+        "step": "",
+        "material": "",
+        "numericcounter": "",
+        "alphacounter": "",
+    }
 
-    example_context = {'sample': 'NM-001',
-                       'identifier': '20001',
-                       'project': 'J-Curve',
-                       'aliquot': 1,
-                       'step': 'A',
-                       'runid': '20001-01A',
-                       'material': 'GMC',
-                       'numericcounter': 1,
-                       'alphacounter': 'A'}
+    example_context = {
+        "sample": "NM-001",
+        "identifier": "20001",
+        "project": "J-Curve",
+        "aliquot": 1,
+        "step": "A",
+        "runid": "20001-01A",
+        "material": "GMC",
+        "numericcounter": 1,
+        "alphacounter": "A",
+    }
 
-    base_predefined_labels = List(['Sample ( Identifier )',
-                                   'Sample ( Identifier - Aliquot )',
-                                   'Sample ( Identifier - Aliquot Step)',
-                                   'RunID',
-                                   'Sample ( Identifier - Aliquot , Material )',
-                                   'AlphaCounter . <SPACE> Sample ( Identifier - Aliquot , Material )',
-                                   'Sample',
-                                   'Project <SPACE> Sample ( Identifier )'])
+    base_predefined_labels = List(
+        [
+            "Sample ( Identifier )",
+            "Sample ( Identifier - Aliquot )",
+            "Sample ( Identifier - Aliquot Step)",
+            "RunID",
+            "Sample ( Identifier - Aliquot , Material )",
+            "AlphaCounter . <SPACE> Sample ( Identifier - Aliquot , Material )",
+            "Sample",
+            "Project <SPACE> Sample ( Identifier )",
+        ]
+    )
 
     delimiter = Str
-    delimiters = Dict({',': 'Comma',
-                       '\t': 'Tab',
-                       ' ': 'Space',
-                       ':': 'Colon',
-                       ';': 'Semicolon'})
+    delimiters = Dict(
+        {",": "Comma", "\t": "Tab", " ": "Space", ":": "Colon", ";": "Semicolon"}
+    )
 
-    example = Property(depends_on='label, delimiter, leading_text, trailing_text')
-    multi_group_example = Property(depends_on='label, delimiter, leading_text, trailing_text')
+    example = Property(depends_on="label, delimiter, leading_text, trailing_text")
+    multi_group_example = Property(
+        depends_on="label, delimiter, leading_text, trailing_text"
+    )
     leading_text = Str
     trailing_text = Str
-    leading_texts = List(['Project'])
-    trailing_texts = List(['Project'])
-    persistence_name = 'title_maker'
+    leading_texts = List(["Project"])
+    trailing_texts = List(["Project"])
+    persistence_name = "title_maker"
 
     def _get_example(self):
         return self._assemble_example(1)
@@ -93,68 +110,79 @@ class TitleTemplater(BaseTemplater):
         if lt:
             if lt.lower() in self.example_context:
                 lt = self.example_context[lt.lower()]
-            t = '{} {}'.format(lt, t)
+            t = "{} {}".format(lt, t)
 
         tt = self.trailing_text
         if tt:
             if tt.lower() in self.example_context:
                 tt = self.example_context[tt.lower()]
-            t = '{} {}'.format(t, tt)
+            t = "{} {}".format(t, tt)
         return t
 
 
 class LabelTemplater(BaseTemplater):
-    attributes = List(['RunID', 'Sample', 'Aliquot', 'Step', 'Label_name', '<SPACE>'])
-    attribute_formats = {'runid': '',
-                         'step': '',
-                         'aliquot': '02n',
-                         'sample': '',
-                         'label_name': ''}
+    attributes = List(["RunID", "Sample", "Aliquot", "Step", "Label_name", "<SPACE>"])
+    attribute_formats = {
+        "runid": "",
+        "step": "",
+        "aliquot": "02n",
+        "sample": "",
+        "label_name": "",
+    }
 
-    example_context = {'runid': '1000-01A', 'step': 'A',
-                       'aliquot': 1, 'sample': 'NM-001', 'label_name': 'Bar'}
-    base_predefined_labels = List(['Sample - Aliquot Step',
-                                   'Sample',
-                                   'Aliquot Step'])
-    persistence_name = 'label_maker'
+    example_context = {
+        "runid": "1000-01A",
+        "step": "A",
+        "aliquot": 1,
+        "sample": "NM-001",
+        "label_name": "Bar",
+    }
+    base_predefined_labels = List(["Sample - Aliquot Step", "Sample", "Aliquot Step"])
+    persistence_name = "label_maker"
 
 
 class MeanLabelTemplater(BaseTemplater):
-    attributes = List(['Sample', 'Identifier', 'Material', '<SPACE>'])
-    attribute_formats = {'identifier': '',
-                         'sample': '',
-                         'material': ''}
+    attributes = List(["Sample", "Identifier", "Material", "<SPACE>"])
+    attribute_formats = {"identifier": "", "sample": "", "material": ""}
 
-    example_context = {'material': 'GMC', 'identifier': '50102', 'sample': 'NM-001'}
-    base_predefined_labels = List(['Sample',
-                                   'Identifier Sample',
-                                   'Identifier( Sample )'])
-    persistence_name = 'mean_label_maker'
+    example_context = {"material": "GMC", "identifier": "50102", "sample": "NM-001"}
+    base_predefined_labels = List(
+        ["Sample", "Identifier Sample", "Identifier( Sample )"]
+    )
+    persistence_name = "mean_label_maker"
 
 
 class MeanLabelTemplateView(BaseTemplateView):
-    view_title = 'Mean Label Maker'
+    view_title = "Mean Label Maker"
 
 
 class LabelTemplateView(BaseTemplateView):
-    view_title = 'Label Maker'
+    view_title = "Label Maker"
 
 
 class TitleTemplateView(BaseTemplateView):
-    view_title = 'Title Maker'
+    view_title = "Title Maker"
 
     def _get_additional_groups(self):
-        return (HGroup(UItem('multi_group_example', style='readonly'),
-                       show_border=True, label='Multi Group Example'),
-                HGroup(Item('leading_text', label='Leading'),
-                       UItem('leading_text',
-                             width=-25,
-                             editor=EnumEditor(name='leading_texts')),
-                       Item('trailing_text', label='Trailing'),
-                       UItem('trailing_text',
-                             width=-25,
-                             editor=EnumEditor(name='trailing_texts'))),
-                HGroup(Item('delimiter', editor=EnumEditor(name='delimiters'))))
+        return (
+            HGroup(
+                UItem("multi_group_example", style="readonly"),
+                show_border=True,
+                label="Multi Group Example",
+            ),
+            HGroup(
+                Item("leading_text", label="Leading"),
+                UItem(
+                    "leading_text", width=-25, editor=EnumEditor(name="leading_texts")
+                ),
+                Item("trailing_text", label="Trailing"),
+                UItem(
+                    "trailing_text", width=-25, editor=EnumEditor(name="trailing_texts")
+                ),
+            ),
+            HGroup(Item("delimiter", editor=EnumEditor(name="delimiters"))),
+        )
+
 
 # if __name__ == '__main__':
 #     # lm = TitleMaker()

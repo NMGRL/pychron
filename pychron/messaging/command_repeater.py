@@ -18,13 +18,16 @@
 from __future__ import absolute_import
 from traits.api import Button, Instance, String, Property
 from traitsui.api import View, HGroup, Item, Handler
+
 # ============= standard library imports ========================
 import socket
 import os
 from random import random
 from threading import Lock
+
 # ============= local library imports  ==========================
 from pychron.config_loadable import ConfigLoadable
+
 # from pychron.remote_hardware.errors import PychronCommErrorCode
 from pychron.globals import globalv
 from pychron.core.ui.led_editor import LED, LEDEditor
@@ -34,36 +37,33 @@ from six.moves import range
 
 class CRHandler(Handler):
     def init(self, info):
-        """
-        """
+        """ """
         info.object.test_connection()
 
 
 class CommandRepeater(ConfigLoadable):
-    """
-    """
+    """ """
+
     path = String(enter_set=True, auto_set=False)
-    target_name = Property(depends_on='path')
+    target_name = Property(depends_on="path")
     test = Button
     led = Instance(LED, ())
 
     def _get_target_name(self):
         ta = os.path.basename(self.path)
-        ta = ta.replace('hardware-', '')
+        ta = ta.replace("hardware-", "")
         return ta
 
     def load(self, *args, **kw):
-        """
-        """
+        """ """
         config = self.get_configuration()
 
         if config:
-            self.path = self.config_get(config, 'Repeater', 'path')
-            self.info('configured for {}'.format(self.path))
+            self.path = self.config_get(config, "Repeater", "path")
+            self.info("configured for {}".format(self.path))
             return True
 
     def open(self, *args, **kw):
-
         kind = socket.SOCK_STREAM
         if globalv.ipc_dgram:
             kind = socket.SOCK_DGRAM
@@ -78,20 +78,19 @@ class CommandRepeater(ConfigLoadable):
         return True
 
     def get_response(self, rid, data, sender_address, verbose=True):
-        """
-        """
+        """ """
         # intercept the pychron ready command
         # sent a test query
         with self._lock:
             ready_flag = False
-            ready_data = ''
-            if data == 'PychronReady':
+            ready_data = ""
+            if data == "PychronReady":
                 ready_flag = True
-                ready_data = '{:0.3f}'.format(random())
-                rid = 'test'
+                ready_data = "{:0.3f}".format(random())
+                rid = "test"
 
-            elif data == 'RemoteLaunch':
-                return self.remote_launch('pychron')
+            elif data == "RemoteLaunch":
+                return self.remote_launch("pychron")
 
             try:
                 self._sock.connect(self.path)
@@ -99,28 +98,28 @@ class CommandRepeater(ConfigLoadable):
                 # _sock is already connected
                 pass
 
-            s = '{}|{}|{}'.format(rid, data, sender_address)
+            s = "{}|{}|{}".format(rid, data, sender_address)
 
             read_success = False
             send_success, rd = self._send_(s, verbose=verbose)
             if send_success:
                 read_success, rd = self._read_(verbose=verbose)
                 if read_success:
-                    self.led.state = 'green'
+                    self.led.state = "green"
 
             if send_success and read_success:
                 if ready_flag and ready_data == rd:
-                    rd = 'OK'
+                    rd = "OK"
 
                 result = rd
                 # result = rd.split('|')[1] if '|' in rd else rd
 
             else:
-                self.led.state = 'red'
+                self.led.state = "red"
                 result = str(PychronCommErrorCode(self.path, rd))
 
             if ready_flag and data == result:
-                result = 'OK'
+                result = "OK"
 
             return result
 
@@ -128,20 +127,19 @@ class CommandRepeater(ConfigLoadable):
     # commands
     # ===============================================================================
     def test_connection(self, verbose=True):
-        """
-        """
-        ra = '{:0.3f}'.format(random())
+        """ """
+        ra = "{:0.3f}".format(random())
 
-        r = self.get_response('test', ra, None, verbose=verbose)
+        r = self.get_response("test", ra, None, verbose=verbose)
         connected = False
-        if 'ERROR 6' in r:
-            self.led.state = 'red'
+        if "ERROR 6" in r:
+            self.led.state = "red"
         elif r == ra:
-            self.led.state = 'green'
+            self.led.state = "green"
             connected = True
 
         if verbose:
-            self.debug('Connection State - {}'.format(connected))
+            self.debug("Connection State - {}".format(connected))
         return connected
 
     def remote_launch(self, name):
@@ -150,12 +148,12 @@ class CommandRepeater(ConfigLoadable):
         from pychron.paths import paths
 
         # launch pychron
-        p = path.join(paths.pychron_src_root, '{}.app'.format(name))
-        result = 'OK'
+        p = path.join(paths.pychron_src_root, "{}.app".format(name))
+        result = "OK"
         try:
-            subprocess.Popen(['open', p])
+            subprocess.Popen(["open", p])
         except OSError:
-            result = 'ERROR: failed to launch Pychron'
+            result = "ERROR: failed to launch Pychron"
 
         return result
 
@@ -168,7 +166,7 @@ class CommandRepeater(ConfigLoadable):
         try:
             totalsent = 0
             mlen = len(s)
-            s = '{:04X}{}'.format(mlen, s)
+            s = "{:04X}{}".format(mlen, s)
 
             while totalsent < mlen:
                 sent = self._sock.send(s[totalsent:])
@@ -195,7 +193,7 @@ class CommandRepeater(ConfigLoadable):
                 if n == msg_len:
                     break
 
-            rd = ''.join(ss)
+            rd = "".join(ss)
             # self.debug('processor response len {}'.format(len(rd)))
             success = True
         except socket.error as e:
@@ -206,13 +204,13 @@ class CommandRepeater(ConfigLoadable):
     def _handle_socket_send_error(self, e, s, verbose):
         retries = 0
 
-        for ei in ['Errno 32', 'Errno 9', 'Errno 11']:
+        for ei in ["Errno 32", "Errno 9", "Errno 11"]:
             if ei in str(e):
                 retries = 3
                 break
 
         if verbose:
-            self.info('send failed - {} - retrying n={}'.format(e, retries))
+            self.info("send failed - {} - retrying n={}".format(e, retries))
 
         # use a retry loop only if error is a broken pipe
         for i in range(retries):
@@ -222,28 +220,27 @@ class CommandRepeater(ConfigLoadable):
                     self._sock.connect(self.path)
                 except socket.error as e:
                     if verbose:
-                        self.debug('connecting to {} failed. {}'.
-                                   format(self.path, e))
+                        self.debug("connecting to {} failed. {}".format(self.path, e))
 
                 self._send_(s, verbose)
                 #                self._sock.send(s)
                 if verbose:
-                    self.debug('send success on retry {}'.format(i + 1))
+                    self.debug("send success on retry {}".format(i + 1))
                 return True
 
             except socket.error as e:
                 if verbose:
-                    self.debug('send retry {} failed. {}'.format(i + 1, e))
+                    self.debug("send retry {} failed. {}".format(i + 1, e))
 
         if verbose:
-            self.info('send failed after {} retries. {}'.format(retries, e))
+            self.info("send failed after {} retries. {}".format(retries, e))
 
     def _handle_socket_read_error(self, e, count, verbose):
         if verbose:
-            self.debug('read error {}'.format(e))
-        if 'timed out' in e and count < 3:
+            self.debug("read error {}".format(e))
+        if "timed out" in e and count < 3:
             if verbose:
-                self.debug('read timed out. doing recursive retry')
+                self.debug("read timed out. doing recursive retry")
             return self._read_(count=count + 1)
 
         return False, e
@@ -252,35 +249,35 @@ class CommandRepeater(ConfigLoadable):
     # View
     # ==============================================================================
     def _path_changed(self, old, new):
-        """
-        """
+        """ """
         if old:
-            self.info('reconfigured for {}'.format(self.path))
+            self.info("reconfigured for {}".format(self.path))
 
     def _test_fired(self):
-        """
-        """
+        """ """
         self.test_connection()
 
     def simple_view(self):
         v = View(
             HGroup(
-                Item('led', editor=LEDEditor(), show_label=False),
-                Item('target_name',
-                     style='readonly',
-                     width=100,
-                     show_label=False)))
+                Item("led", editor=LEDEditor(), show_label=False),
+                Item("target_name", style="readonly", width=100, show_label=False),
+            )
+        )
         return v
 
     def traits_view(self):
-        """
-        """
-        v = View('path',
-                 HGroup(
-                     Item('led', editor=LEDEditor(), show_label=False),
-                     Item('test', show_label=False)),
-                 handler=CRHandler)
+        """ """
+        v = View(
+            "path",
+            HGroup(
+                Item("led", editor=LEDEditor(), show_label=False),
+                Item("test", show_label=False),
+            ),
+            handler=CRHandler,
+        )
         return v
+
 
 # ============= EOF ====================================
 

@@ -18,25 +18,29 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from chaco.abstract_overlay import AbstractOverlay
+
 # ============= standard library imports ========================
 import Image
 from numpy import array
+
+
 # ============= local library imports  ==========================
+
 
 class ImageUnderlay(AbstractOverlay):
     _cached_img = None
+
     def __init__(self, component, path=None, *args, **kw):
         if path is not None:
-            if hasattr(path, 'seek'):
+            if hasattr(path, "seek"):
                 # if path is a stringio seek back to the beginning
                 path.seek(0)
             try:
                 im = Image.open(path)
-                im = im.convert('RGB')
+                im = im.convert("RGB")
                 self._cached_img = array(im)
             except IOError as e:
-                print('exception', e)
-
+                print("exception", e)
 
         super(ImageUnderlay, self).__init__(component, *args, **kw)
 
@@ -48,13 +52,14 @@ class ImageUnderlay(AbstractOverlay):
                 xoff = padding[0] + padding[1]
                 yoff = padding[2] + padding[3]
                 ch, cw, _ = self._cached_img.shape
-#                sw = (component.width) / float(w)
-#                sh = (component.height) / float(h)
-#                print sw, sh
-#                sw, sh = 0.5, 0.5
+                #                sw = (component.width) / float(w)
+                #                sh = (component.height) / float(h)
+                #                print sw, sh
+                #                sw, sh = 0.5, 0.5
                 sw, sh = float(w - xoff) / float(cw), float(h - yoff) / float(ch)
-#                print sw, sh
+                #                print sw, sh
                 gc.scale_ctm(sw, sh)
                 gc.draw_image(self._cached_img)
+
 
 # ============= EOF =============================================

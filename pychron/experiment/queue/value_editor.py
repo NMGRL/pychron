@@ -21,8 +21,8 @@ from traitsui.api import HGroup, UItem, EnumEditor, Item, TextEditor
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.loggable import Loggable
 
-REPLACE_REGEX = re.compile(r'\d+\.?\d?')
-AUGEMENT_REGEX = re.compile(r'(?P<operand>[\+\*\-])\=(?P<value>\d+\.?\d?)')
+REPLACE_REGEX = re.compile(r"\d+\.?\d?")
+AUGEMENT_REGEX = re.compile(r"(?P<operand>[\+\*\-])\=(?P<value>\d+\.?\d?)")
 
 
 class ValueStr(BaseStr):
@@ -33,11 +33,13 @@ class ValueStr(BaseStr):
             self.error(obj, name, value)
 
 
-MAPPING = {'Extract Value': 'extract_value',
-           'Cleanup': 'cleanup',
-           'Duration': 'duration',
-           'Beam': 'beam_diameter',
-           'Ramp': 'ramp_duration'}
+MAPPING = {
+    "Extract Value": "extract_value",
+    "Cleanup": "cleanup",
+    "Duration": "duration",
+    "Beam": "beam_diameter",
+    "Ramp": "ramp_duration",
+}
 
 
 class ValueEditor(Loggable):
@@ -50,24 +52,31 @@ class ValueEditor(Loggable):
         super(ValueEditor, self).__init__(*args, **kw)
 
     def _value_changed(self, new):
-        if new=='':
+        if new == "":
             return
 
         m = AUGEMENT_REGEX.match(new)
 
         if m:
-            operand = m.group('operand')
-            a = float(m.group('value'))
-            if operand == '+':
+            operand = m.group("operand")
+            a = float(m.group("value"))
+            if operand == "+":
+
                 def func(v):
                     return v + a
-            elif operand == '-':
+
+            elif operand == "-":
+
                 def func(v):
                     return v - a
+
             else:
+
                 def func(v):
                     return v * a
+
         else:
+
             def func(v):
                 return float(new)
 
@@ -85,28 +94,34 @@ class ValueEditor(Loggable):
         return sorted(MAPPING.keys())
 
     def traits_view(self):
-        v = okcancel_view(HGroup(UItem('parameter',
-                                       editor=EnumEditor(name='parameters')),
-                                 Item('value',
-                                      editor=TextEditor(enter_set=True, auto_set=False),
-                                      tooltip='''1. Enter a number to modify all values to entered number. e.g 10
-2. Use +=N to add N to all values. e.g +=10 adds 10 to all values. -= and *= also valid''')),
-                          title='Value Editor',
-                          buttons=['OK', ],
-                          default_button=None)
+        v = okcancel_view(
+            HGroup(
+                UItem("parameter", editor=EnumEditor(name="parameters")),
+                Item(
+                    "value",
+                    editor=TextEditor(enter_set=True, auto_set=False),
+                    tooltip="""1. Enter a number to modify all values to entered number. e.g 10
+2. Use +=N to add N to all values. e.g +=10 adds 10 to all values. -= and *= also valid""",
+                ),
+            ),
+            title="Value Editor",
+            buttons=[
+                "OK",
+            ],
+            default_button=None,
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+
     class I(HasTraits):
         extract_value = Float(1)
         duration = Float(2)
         cleanup = Float(3)
 
-
     class Q:
         selected = List
-
 
     q = Q()
     q.selected = [I(cleanup=i) for i in range(3)]

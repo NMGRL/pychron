@@ -23,15 +23,36 @@ from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
 # ============= standard library imports ========================
-from pyface.qt.QtGui import QColor, QFont, QWidget, QLabel, QSizePolicy, QGraphicsView, QGraphicsScene, QBrush, \
-    QPen, QRadialGradient, QVBoxLayout, QGraphicsItem, QPolygon, QPainter
-from pyface.qt.QtCore import QPropertyAnimation, QObject, Property as QProperty, QPoint, QParallelAnimationGroup, Qt, \
-    QSequentialAnimationGroup
+from pyface.qt.QtGui import (
+    QColor,
+    QFont,
+    QWidget,
+    QLabel,
+    QSizePolicy,
+    QGraphicsView,
+    QGraphicsScene,
+    QBrush,
+    QPen,
+    QRadialGradient,
+    QVBoxLayout,
+    QGraphicsItem,
+    QPolygon,
+    QPainter,
+)
+from pyface.qt.QtCore import (
+    QPropertyAnimation,
+    QObject,
+    Property as QProperty,
+    QPoint,
+    QParallelAnimationGroup,
+    Qt,
+    QSequentialAnimationGroup,
+)
 from six.moves import range
 
 # ============= local library imports  ==========================
 # ============= views ===================================
-COLORS = ['red', 'yellow', 'green', 'black']
+COLORS = ["red", "yellow", "green", "black"]
 QT_COLORS = [QColor(ci) for ci in COLORS]
 
 
@@ -41,13 +62,11 @@ class _LaserStatusEditor(Editor):
     animation_objects = Dict
 
     def init(self, parent):
-        """
-        """
+        """ """
         self.control = self._create_control()
 
     def update_editor(self, *args, **kw):
-        """
-        """
+        """ """
         if self.value:
             self._start_animation()
         else:
@@ -67,7 +86,7 @@ class _LaserStatusEditor(Editor):
         ctrl.setMinimumHeight(h + 22)
         ctrl.setMinimumWidth(w + 22)
 
-        cx, cy = w / 2, h / 2.
+        cx, cy = w / 2, h / 2.0
         ex, ey = cx, cy + 20
         pen = QPen()
         pen.setStyle(Qt.NoPen)
@@ -77,7 +96,7 @@ class _LaserStatusEditor(Editor):
 
         self.animation = QSequentialAnimationGroup()
         self._add_laser_logo(scene, bounding_rect, ex, ey, cx, cy, w, h)
-        self._add_bullet(scene, bounding_rect,ex, ey, cx, cy)
+        self._add_bullet(scene, bounding_rect, ex, ey, cx, cy)
         self._add_fragments(scene, bounding_rect, ex, ey)
 
         self.animation.setLoopCount(-1)
@@ -90,7 +109,7 @@ class _LaserStatusEditor(Editor):
 
         brush = QBrush()
         brush.setStyle(Qt.SolidPattern)
-        brush.setColor(QColor('orange'))
+        brush.setColor(QColor("orange"))
         ganim = QParallelAnimationGroup()
 
         n = 8
@@ -103,12 +122,16 @@ class _LaserStatusEditor(Editor):
                 x = l * math.cos(theta)
                 y = l * math.sin(theta)
 
-                fragment = scene.addEllipse(ex - ed / 2, ey - ed / 2, ed, ed, pen=pen, brush=brush)
+                fragment = scene.addEllipse(
+                    ex - ed / 2, ey - ed / 2, ed, ed, pen=pen, brush=brush
+                )
                 fragment.setParentItem(bounding_rect)
 
-                self.animation_objects['fragment{}{}'.format(l, i)] = w = Wrapper(fragment)
+                self.animation_objects["fragment{}{}".format(l, i)] = w = Wrapper(
+                    fragment
+                )
                 gg = QSequentialAnimationGroup()
-                anim = QPropertyAnimation(w, 'position')
+                anim = QPropertyAnimation(w, "position")
                 anim.setDuration(750)
                 pos = fragment.pos()
                 anim.setKeyValueAt(0, pos)
@@ -116,7 +139,7 @@ class _LaserStatusEditor(Editor):
                 anim.setKeyValueAt(1, QPoint(x, y))
 
                 gg.addAnimation(anim)
-                anim = QPropertyAnimation(w, 'position')
+                anim = QPropertyAnimation(w, "position")
                 anim.setDuration(1)
                 anim.setKeyValueAt(0, pos)
                 anim.setKeyValueAt(1, pos)
@@ -125,19 +148,21 @@ class _LaserStatusEditor(Editor):
                 ganim.addAnimation(gg)
 
         r = 15
-        center = scene.addEllipse(ex - r / 2., ey - r / 2., r, r, pen=pen, brush=brush)
+        center = scene.addEllipse(
+            ex - r / 2.0, ey - r / 2.0, r, r, pen=pen, brush=brush
+        )
         center.setParentItem(bounding_rect)
         center.setBrush(Qt.black)
-        self.animation_objects['center'] = w = Wrapper(center,
-                                                       opos=(ex - r / 2., ey - r / 2.),
-                                                       radius=r)
+        self.animation_objects["center"] = w = Wrapper(
+            center, opos=(ex - r / 2.0, ey - r / 2.0), radius=r
+        )
         gg = QSequentialAnimationGroup()
-        anim = QPropertyAnimation(w, 'radius')
+        anim = QPropertyAnimation(w, "radius")
         anim.setDuration(750)
         anim.setKeyValueAt(0, r)
         anim.setKeyValueAt(1, r * 3)
         gg.addAnimation(anim)
-        anim = QPropertyAnimation(w, 'radius')
+        anim = QPropertyAnimation(w, "radius")
         anim.setDuration(1)
         anim.setKeyValueAt(0, r)
         anim.setKeyValueAt(1, r)
@@ -189,14 +214,14 @@ class _LaserStatusEditor(Editor):
 
     def _add_bullet(self, scene, bounding_rect, ex, ey, cx, cy):
         pen = QPen()
-        pen.setColor(QColor('orange'))
+        pen.setColor(QColor("orange"))
         pen.setWidth(1)
         bullet = scene.addRect(-16, ey - 5, 15, 10, pen=pen)
         bullet.setParentItem(bounding_rect)
         bullet.setBrush(Qt.black)
-        self.animation_objects['bullet'] = w = Wrapper(bullet)
+        self.animation_objects["bullet"] = w = Wrapper(bullet)
 
-        anim = QPropertyAnimation(w, 'position')
+        anim = QPropertyAnimation(w, "position")
         anim.setDuration(500)
         anim.setKeyValueAt(0, bullet.pos())
         anim.setKeyValueAt(1, QPoint(cx + 10, 0))
@@ -230,8 +255,8 @@ class Wrapper(QObject):
         rect = self._item.rect()
         rect.setWidth(r)
         rect.setHeight(r)
-        rect.setX(self._ox - (r - self._radius) / 2.)
-        rect.setY(self._oy - (r - self._radius) / 2.)
+        rect.setX(self._ox - (r - self._radius) / 2.0)
+        rect.setY(self._oy - (r - self._radius) / 2.0)
         self._item.setRect(rect)
 
     position = QProperty(QPoint, get_position, set_position)
@@ -239,9 +264,10 @@ class Wrapper(QObject):
 
 
 class LaserStatusEditor(BasicEditorFactory):
-    """
-    """
+    """ """
+
     klass = _LaserStatusEditor
     message_name = Str
+
 
 # ============= EOF ====================================

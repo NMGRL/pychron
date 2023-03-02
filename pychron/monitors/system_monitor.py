@@ -26,6 +26,7 @@ from pychron.monitors.monitor import Monitor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class VacuumSection(HasTraits):
     gauge_controller = Str
     gauge_name = Str
@@ -40,29 +41,42 @@ class SystemMonitor(Monitor):
 
     def _load_hook(self, config):
         for section in config.sections():
-            if section.startswith('VacuumSection'):
-                g = self.config_get(config, section, 'gauge')
-                if '.' in g:
-                    gc, gn = g.split('.')
+            if section.startswith("VacuumSection"):
+                g = self.config_get(config, section, "gauge")
+                if "." in g:
+                    gc, gn = g.split(".")
                 else:
                     self.warning_dialog(
-                        'Invalid Gauge identifier {}. Should be <GaugeController>.<GaugeName> e.g. Bone.IG'.format(g))
+                        "Invalid Gauge identifier {}. Should be <GaugeController>.<GaugeName> e.g. Bone.IG".format(
+                            g
+                        )
+                    )
                     continue
 
-                ds = self.config_get(config, section, 'disable_valves', default='')
-                ds = ds.split(',')
-                p = self.config_get(config, section, 'pressure_trip', cast='float', default=10)
-                r = self.config_get(config, section, 'pressure_reset', cast='float', default=1e-10)
+                ds = self.config_get(config, section, "disable_valves", default="")
+                ds = ds.split(",")
+                p = self.config_get(
+                    config, section, "pressure_trip", cast="float", default=10
+                )
+                r = self.config_get(
+                    config, section, "pressure_reset", cast="float", default=1e-10
+                )
                 if r > p:
                     self.warning_dialog(
-                        'Invalid pressure_reset {}. Pressure_reset must be less than pressure_trip {}'.format(r, p))
+                        "Invalid pressure_reset {}. Pressure_reset must be less than pressure_trip {}".format(
+                            r, p
+                        )
+                    )
                     continue
 
-                a = VacuumSection(name=section,
-                                  gauge_controller=gc,
-                                  gauge_name=gn,
-                                  disable_valves=ds,
-                                  pressure_trip=p, pressure_reset=r)
+                a = VacuumSection(
+                    name=section,
+                    gauge_controller=gc,
+                    gauge_name=gn,
+                    disable_valves=ds,
+                    pressure_trip=p,
+                    pressure_reset=r,
+                )
                 self.analytical_sections.append(a)
         return True
 
@@ -79,6 +93,7 @@ class SystemMonitor(Monitor):
                     for vi in section.disable_valves:
                         man.disable_valve(vi)
                     section.tripped = False
+
 
 # ============= EOF =============================================
 

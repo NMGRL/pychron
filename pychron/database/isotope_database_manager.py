@@ -20,17 +20,18 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import weakref
+
 # ============= standard library imports ========================
 from itertools import groupby
 
 import six
 from apptools.preferences.preference_binding import bind_preference
 from six.moves import map
-from traits.api import Property, Event, \
-    cached_property, Any, Int, Str
+from traits.api import Property, Event, cached_property, Any, Int, Str
 from traits.has_traits import provides
 
 from pychron.core.helpers.iterfuncs import partition
+
 # ============= local library imports  ==========================
 from pychron.core.i_datastore import IDatastore
 from pychron.core.progress import progress_loader, CancelLoadingError
@@ -52,7 +53,16 @@ class BaseIsotopeDatabaseManager(Loggable):
     datasource_url = Property
     precedence = Int(0)
 
-    def __init__(self, bind=True, connect=True, warn=True, version_warn=False, attribute_warn=False, *args, **kw):
+    def __init__(
+        self,
+        bind=True,
+        connect=True,
+        warn=True,
+        version_warn=False,
+        attribute_warn=False,
+        *args,
+        **kw
+    ):
         super(BaseIsotopeDatabaseManager, self).__init__(*args, **kw)
 
         if bind:
@@ -64,7 +74,9 @@ class BaseIsotopeDatabaseManager(Loggable):
                 traceback.print_exc()
 
         if connect:
-            self.db.connect(warn=warn, version_warn=version_warn, attribute_warn=attribute_warn)
+            self.db.connect(
+                warn=warn, version_warn=version_warn, attribute_warn=attribute_warn
+            )
 
     # IDatastore protocol
     def get_greatest_aliquot(self, identifier):
@@ -92,7 +104,7 @@ class BaseIsotopeDatabaseManager(Loggable):
         return True
 
     def populate_default_tables(self, db=None):
-        self.debug('populating default tables')
+        self.debug("populating default tables")
         if db is None:
             db = self.db
 
@@ -101,21 +113,21 @@ class BaseIsotopeDatabaseManager(Loggable):
                 from pychron.database.defaults import load_isotopedb_defaults
 
                 load_isotopedb_defaults(db)
-                self.debug('defaults finished')
+                self.debug("defaults finished")
                 return True
 
     def bind_preferences(self):
         if self.db is None:
             self.db = self._db_factory()
 
-        prefid = 'pychron.database'
-        bind_preference(self.db, 'kind', '{}.kind'.format(prefid))
-        if self.db.kind == 'mysql':
-            bind_preference(self.db, 'host', '{}.host'.format(prefid))
-            bind_preference(self.db, 'username', '{}.username'.format(prefid))
-            bind_preference(self.db, 'password', '{}.password'.format(prefid))
+        prefid = "pychron.database"
+        bind_preference(self.db, "kind", "{}.kind".format(prefid))
+        if self.db.kind == "mysql":
+            bind_preference(self.db, "host", "{}.host".format(prefid))
+            bind_preference(self.db, "username", "{}.username".format(prefid))
+            bind_preference(self.db, "password", "{}.password".format(prefid))
 
-        bind_preference(self.db, 'name', '{}.db_name'.format(prefid))
+        bind_preference(self.db, "name", "{}.db_name".format(prefid))
         # bind_preference(self.db, 'save_username', '{}.save_username'.format(prefid))
 
     def open_progress(self, n=2, **kw):
@@ -124,10 +136,9 @@ class BaseIsotopeDatabaseManager(Loggable):
     def _open_progress(self, n, close_at_end=True):
         from pychron.core.ui.progress_dialog import myProgressDialog
 
-        pd = myProgressDialog(max=n - 1,
-                              close_at_end=close_at_end,
-                              can_cancel=True,
-                              can_ok=True)
+        pd = myProgressDialog(
+            max=n - 1, close_at_end=close_at_end, can_cancel=True, can_ok=True
+        )
         pd.open()
         # pd.on_trait_change(self._progress_closed, 'closed')
         return pd
@@ -158,8 +169,8 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     irradiation = Str
     level = Str
 
-    irradiations = Property(depends_on='saved, updated')
-    levels = Property(depends_on='irradiation, saved, updated')
+    irradiations = Property(depends_on="saved, updated")
+    levels = Property(depends_on="irradiation, saved, updated")
 
     saved = Event
     updated = Event
@@ -174,7 +185,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 dbflux = db.add_flux(float(v), float(e))
                 dbflux.history = dbhist
                 dbln.selected_flux_history = dbhist
-                self.information_dialog(u'Flux for {} {} \u00b1{} saved to database'.format(labnumber, v, e))
+                self.information_dialog(
+                    "Flux for {} {} \u00b1{} saved to database".format(labnumber, v, e)
+                )
 
     def filter_analysis_tag(self, ans, exclude):
         if not isinstance(exclude, (list, tuple)):
@@ -192,15 +205,18 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     try:
                         iso = ai.isotopes[name]
                         blob = dbiso.signal.data
-                        if dbiso.kind == 'signal':
+                        if dbiso.kind == "signal":
                             iso.unpack_data(blob)
-                        elif dbiso.kind == 'baseline':
+                        elif dbiso.kind == "baseline":
                             iso.baseline.unpack_data(blob)
-                        elif dbiso.kind == 'sniff':
+                        elif dbiso.kind == "sniff":
                             iso.sniff.unpack_data(blob)
                     except KeyError:
-                        self.debug('load_raw_data: no matching isotope for {}, {}'.format(name,
-                                                                                          ','.join(ai.isotope_keys)))
+                        self.debug(
+                            "load_raw_data: no matching isotope for {}, {}".format(
+                                name, ",".join(ai.isotope_keys)
+                            )
+                        )
 
                 # !!using db.get_analysis_isotopes is extremely slow!! why is unknown
 
@@ -226,11 +242,11 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     def _calculate_cached_ages(self, ans, calculate_age, calculate_F):
         if ans:
             if calculate_age:
-                self.debug('calculated cached analysis ages')
+                self.debug("calculated cached analysis ages")
                 for ca in ans:
                     ca.calculate_age()
             elif calculate_F:
-                self.debug('calculated cached analysis F')
+                self.debug("calculated cached analysis F")
                 for ca in ans:
                     ca.calculate_age()
 
@@ -249,7 +265,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         db_ans = []
         for ca in ans:
             if not ca.has_raw_data:
-                print(ca.record_id, 'no rawasffas')
+                print(ca.record_id, "no rawasffas")
                 no_db_ans.append(ca)
             else:
                 if calculate_age:
@@ -286,31 +302,36 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 progress = self._open_progress(n + 2)
         return progress
 
-    def make_analyses(self, ans,
-                      progress=None,
-                      use_progress=True,
-                      exclude=None,
-                      use_cache=True,
-                      unpack=False,
-                      calculate_age=False,
-                      calculate_F=False,
-                      load_aux=False,
-                      **kw):
+    def make_analyses(
+        self,
+        ans,
+        progress=None,
+        use_progress=True,
+        exclude=None,
+        use_cache=True,
+        unpack=False,
+        calculate_age=False,
+        calculate_F=False,
+        load_aux=False,
+        **kw
+    ):
         """
-            loading the analysis' signals appears to be the most expensive operation.
-            the majority of the load time is in _construct_analysis
+        loading the analysis' signals appears to be the most expensive operation.
+        the majority of the load time is in _construct_analysis
         """
         if exclude:
             ans = self.filter_analysis_tag(ans, exclude)
 
         if not ans:
-            self.debug('no analyses to load')
+            self.debug("no analyses to load")
             return []
 
         db = self.db
         with db.session_ctx():
             # partition into DBAnalysis vs IsotopeRecordView
-            db_ans, no_db_ans = list(map(list, partition(ans, lambda x: isinstance(x, DBAnalysis))))
+            db_ans, no_db_ans = list(
+                map(list, partition(ans, lambda x: isinstance(x, DBAnalysis)))
+            )
             self._calculate_cached_ages(db_ans, calculate_age, calculate_F)
             if unpack:
                 for di in db_ans:
@@ -328,8 +349,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             if no_db_ans:
                 if use_cache:
                     # partition into cached and non cached analyses
-                    cached_ans, no_db_ans = partition(no_db_ans,
-                                                      lambda x: x.uuid in ANALYSIS_CACHE)
+                    cached_ans, no_db_ans = partition(
+                        no_db_ans, lambda x: x.uuid in ANALYSIS_CACHE
+                    )
                     cached_ans = list(cached_ans)
                     no_db_ans = list(no_db_ans)
 
@@ -338,7 +360,9 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                     # if unpack is true make sure cached analyses have raw data
                     if unpack or load_aux:
                         if unpack:
-                            a, b = self._unpack_cached_analyses(cns, calculate_age, calculate_F)
+                            a, b = self._unpack_cached_analyses(
+                                cns, calculate_age, calculate_F
+                            )
                             db_ans.extend(a)
                             no_db_ans.extend(b)
                         if load_aux:
@@ -358,11 +382,18 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 if n:
                     # self._clone_vcs_repos(no_db_ans)
                     progress = self._setup_progress(n, progress, use_progress)
-                    db_ans, new_ans = self._construct_analyses(no_db_ans, db_ans, progress,
-                                                               calculate_age, calculate_F,
-                                                               unpack, use_cache,
-                                                               use_progress,
-                                                               load_aux=load_aux, **kw)
+                    db_ans, new_ans = self._construct_analyses(
+                        no_db_ans,
+                        db_ans,
+                        progress,
+                        calculate_age,
+                        calculate_F,
+                        unpack,
+                        use_cache,
+                        use_progress,
+                        load_aux=load_aux,
+                        **kw
+                    )
                     db_ans.extend(new_ans)
 
                     # self.debug('use vcs {}'.format(self.use_vcs))
@@ -393,12 +424,12 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
     def remove_from_cache(self, ans):
         if not isinstance(ans, (list, tuple)):
-            ans = ans,
+            ans = (ans,)
 
         for ai in ans:
             uuid = ai.uuid
             if uuid in ANALYSIS_CACHE:
-                self.debug('remove {} from cache'.format(ai.record_id))
+                self.debug("remove {} from cache".format(ai.record_id))
                 ANALYSIS_CACHE.pop(uuid)
                 ANALYSIS_CACHE_COUNT.pop(uuid)
 
@@ -410,14 +441,23 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
                 # self.db.flush()
                 # self.db.reset()
         elif inform:
-            self.warning_dialog('Not Database available')
+            self.warning_dialog("Not Database available")
 
     # ===============================================================================
     # private
     # ===============================================================================
-    def _construct_analyses(self, no_db_ans, db_ans, progress, calculate_age, calculate_F,
-                            unpack, use_cache, use_progress, **kw):
-
+    def _construct_analyses(
+        self,
+        no_db_ans,
+        db_ans,
+        progress,
+        calculate_age,
+        calculate_F,
+        unpack,
+        use_cache,
+        use_progress,
+        **kw
+    ):
         uuids = [ri.uuid for ri in no_db_ans]
         # for ui in uuids:
         #     self.debug('loading uuid={}'.format(ui))
@@ -436,28 +476,47 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
         def func(x, prog, i, n):
             _, gi = next(dbrecords)
-            self.debug('constructing {}/{} {} {}'.format(i + 1, n, x.record_id, x.uuid))
-            a = construct(x, gi, prog, unpack=unpack,
-                          calculate_age=calculate_age,
-                          calculate_F=calculate_F, **kw)
+            self.debug("constructing {}/{} {} {}".format(i + 1, n, x.record_id, x.uuid))
+            a = construct(
+                x,
+                gi,
+                prog,
+                unpack=unpack,
+                calculate_age=calculate_age,
+                calculate_F=calculate_F,
+                **kw
+            )
             # print a
             if use_cache:
                 add_to_cache(a)
             return a
 
         try:
-            return db_ans, progress_loader(no_db_ans, func, progress=progress, use_progress=use_progress,
-                                           reraise_cancel=True)
+            return db_ans, progress_loader(
+                no_db_ans,
+                func,
+                progress=progress,
+                use_progress=use_progress,
+                reraise_cancel=True,
+            )
         except CancelLoadingError:
             return [], []
 
-    def _construct_analysis(self, rec, group, prog, calculate_age=True, calculate_F=False,
-                            unpack=False, load_aux=False):
+    def _construct_analysis(
+        self,
+        rec,
+        group,
+        prog,
+        calculate_age=True,
+        calculate_F=False,
+        unpack=False,
+        load_aux=False,
+    ):
         atype = None
         if isinstance(rec, meas_AnalysisTable):
             rid = make_runid(rec.labnumber.identifier, rec.aliquot, rec.step)
             atype = rec.measurement.analysis_type.name
-        elif hasattr(rec, 'record_id'):
+        elif hasattr(rec, "record_id"):
             rid = rec.record_id
         else:
             rid = id(rec)
@@ -465,24 +524,24 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         graph_id = 0
         group_id = 0
 
-        if hasattr(rec, 'group_id'):
+        if hasattr(rec, "group_id"):
             group_id = rec.group_id
 
-        if hasattr(rec, 'graph_id'):
+        if hasattr(rec, "graph_id"):
             graph_id = rec.graph_id
 
         if atype is None:
             atype = rec.analysis_type
 
         if prog:
-            m = ''
+            m = ""
             if calculate_age:
-                show_age = atype in ('unknown', 'cocktail')
-                m = 'calculating age' if show_age else ''
+                show_age = atype in ("unknown", "cocktail")
+                m = "calculating age" if show_age else ""
             elif calculate_F:
-                m = 'calculating F'
+                m = "calculating F"
 
-            msg = 'loading {}. {}'.format(rid, m)
+            msg = "loading {}. {}".format(rid, m)
             prog.change_message(msg)
 
         if isinstance(rec, DBAnalysis):
@@ -508,7 +567,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         # timethis(ai.sync, args=(group,),
         #          kwargs=dict(unpack=unpack, load_aux=load_aux))
 
-        if atype in ('unknown', 'cocktail'):
+        if atype in ("unknown", "cocktail"):
             if calculate_age:
                 # timethis(ai.sync, args=(meas_analysis, ),
                 #          kwargs=dict(unpack=unpack, load_aux=load_aux))
@@ -529,7 +588,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
 
     def _add_to_cache(self, rec):
         if rec is None:
-            self.debug('cannot add None to cache')
+            self.debug("cannot add None to cache")
 
         if rec.uuid not in ANALYSIS_CACHE:
             # self.debug('Adding {} to cache'.format(rec.record_id))
@@ -544,7 +603,11 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
             k, v = s[0]
             ANALYSIS_CACHE.pop(k)
             ANALYSIS_CACHE_COUNT.pop(k)
-            self.debug('Cache limit exceeded {}. removing {} n uses={}'.format(CACHE_LIMIT, k, v))
+            self.debug(
+                "Cache limit exceeded {}. removing {} n uses={}".format(
+                    CACHE_LIMIT, k, v
+                )
+            )
 
     # ===============================================================================
     # property get/set
@@ -555,8 +618,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
         db = self.db
         if db and db.connected:
             with db.session_ctx():
-                r = [ri.name for ri in db.get_irradiations()
-                     if ri.name]
+                r = [ri.name for ri in db.get_irradiations() if ri.name]
 
             if r and not self.irradiation:
                 self.irradiation = r[0]
@@ -567,12 +629,10 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     def _get_levels(self):
         r = []
         if self.db and self.db.connected:
-
             with self.db.session_ctx():
                 irrad = self.db.get_irradiation(self.irradiation)
                 if irrad:
-                    r = sorted([ri.name for ri in irrad.levels
-                                if ri.name])
+                    r = sorted([ri.name for ri in irrad.levels if ri.name])
                     if r and not self.level:
                         self.level = r[0]
 
@@ -582,6 +642,7 @@ class IsotopeDatabaseManager(BaseIsotopeDatabaseManager):
     # handlers
     # ===============================================================================
     def _irradiation_changed(self):
-        self.level = ''
+        self.level = ""
+
 
 # ============= EOF =============================================

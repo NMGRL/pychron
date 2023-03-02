@@ -64,4 +64,6 @@ class HeadlessLoggable(HasTraits):
         exc = traceback.format_exc()
         self.logger.debug(exc)
         return exc
+
+
 # ============= EOF =============================================

@@ -23,6 +23,7 @@ from pyface.tasks.topological_sort import before_after_sort
 from traits.api import on_trait_change, Property
 from traitsui.api import UItem
 from traitsui.group import HGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from traitsui.tabular_adapter import TabularAdapter
@@ -32,56 +33,57 @@ from pychron.core.ui.tabular_editor import myTabularEditor
 from pychron.envisage.resources import icon
 from pychron.pychron_constants import FUSIONS_CO2, FUSIONS_UV, FUSIONS_DIODE
 
-ICON_MAP = {'Database': icon('database'),
-            'Social': icon('edit-group'),
-            'Experiment': icon('applications-science_32'),
-            'Console': icon('openterm'),
-            'Processing': icon('tools-anvil'),
-            'Update': icon('update_misc'),
-            'General': icon('home'),
-            'Spectrometer': icon('spectrum_emission'),
-            'Browser': icon('application_form_magnify'),
-            # 'Hardware': icon('speedometer'),
-            'MassSpec': icon('mass_spec'),
-            'DVC': icon('git_orange'),
-            'GitHub': icon('github'),
-            'GitLab': icon('gitlab'),
-            'Pipeline': icon('pipe'),
-            'Hardware': icon('toolbox'),
-            # 'Constants': icon('applications-education-mathematics'),
-            'Constants': icon('lambda'),
-            'Labspy': icon('labspy'),
-            FUSIONS_DIODE: icon('laser'),
-            FUSIONS_UV: icon('laser'),
-            FUSIONS_CO2: icon('laser'),
-            'ExtractionLine': icon('motherboard'),
-            'ClientExtractionLine': icon('motherboard'),
-            'Entry': icon('radioactivity'),
-            'Loading': icon('caterpillar'),
-            'Scripts': icon('scripts_text'),
-            'Dashboard': icon('dashboard'),
-            'NMGRL Furnace': icon('furnace'),
-            'Repositories': icon('git')
-            }
+ICON_MAP = {
+    "Database": icon("database"),
+    "Social": icon("edit-group"),
+    "Experiment": icon("applications-science_32"),
+    "Console": icon("openterm"),
+    "Processing": icon("tools-anvil"),
+    "Update": icon("update_misc"),
+    "General": icon("home"),
+    "Spectrometer": icon("spectrum_emission"),
+    "Browser": icon("application_form_magnify"),
+    # 'Hardware': icon('speedometer'),
+    "MassSpec": icon("mass_spec"),
+    "DVC": icon("git_orange"),
+    "GitHub": icon("github"),
+    "GitLab": icon("gitlab"),
+    "Pipeline": icon("pipe"),
+    "Hardware": icon("toolbox"),
+    # 'Constants': icon('applications-education-mathematics'),
+    "Constants": icon("lambda"),
+    "Labspy": icon("labspy"),
+    FUSIONS_DIODE: icon("laser"),
+    FUSIONS_UV: icon("laser"),
+    FUSIONS_CO2: icon("laser"),
+    "ExtractionLine": icon("motherboard"),
+    "ClientExtractionLine": icon("motherboard"),
+    "Entry": icon("radioactivity"),
+    "Loading": icon("caterpillar"),
+    "Scripts": icon("scripts_text"),
+    "Dashboard": icon("dashboard"),
+    "NMGRL Furnace": icon("furnace"),
+    "Repositories": icon("git"),
+    "Sparrow": icon("sparrow"),
+}
 
 
 class CatergoryAdapter(TabularAdapter):
-    columns = [('Category', 'name')]
+    columns = [("Category", "name")]
     name_image = Property
-    font = 'helvetica 14'
+    font = "helvetica 14"
 
     def _get_name_image(self):
         return ICON_MAP.get(self.item.name)
 
 
 class PreferencesDialog(PD):
-    @on_trait_change('categories, panes')
+    @on_trait_change("categories, panes")
     def _update_tabs(self):
         # Build a { category id -> [ PreferencePane ] } map.
         categories = self.categories[:]
         category_map = dict((category.id, []) for category in categories)
         for pane in self.panes:
-
             # force pane to call trait_context
             # for some reason when using this PreferencesDialog
             # pane._model is None (only set when trait_context called)
@@ -104,19 +106,21 @@ class PreferencesDialog(PD):
         self._selected = tabs[0]
 
     def traits_view(self):
-
-        a = UItem('_tabs', width=-200,
-                  editor=myTabularEditor(adapter=CatergoryAdapter(),
-                                         row_height=32,
-                                         editable=False,
-                                         horizontal_lines=False,
-                                         stretch_last_section=False,
-                                         selected='_selected'))
-        b = UItem('_selected', style='custom')
-        v = okcancel_view(HGroup(a, b),
-                          height=0.75,
-                          width=1200,
-                          title='Preferences')
+        a = UItem(
+            "_tabs",
+            width=-200,
+            editor=myTabularEditor(
+                adapter=CatergoryAdapter(),
+                row_height=32,
+                editable=False,
+                horizontal_lines=False,
+                stretch_last_section=False,
+                selected="_selected",
+            ),
+        )
+        b = UItem("_selected", style="custom")
+        v = okcancel_view(HGroup(a, b), height=0.75, width=1200, title="Preferences")
         return v
+
 
 # ============= EOF =============================================

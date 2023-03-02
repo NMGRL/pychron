@@ -32,9 +32,11 @@ from traitsui.api import View, Item, HGroup
 from pychron.core.displays.display import DisplayController
 from pychron.graph.graph import Graph
 from pychron.paths import paths
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.stage.maps.laser_stage_map import LaserStageMap
+
 # from pychron.displays.rich_text_display import RichTextDisplay
 from pychron.viewable import Viewable
 
@@ -47,9 +49,9 @@ class MapItemSummary(HasTraits):
         return r
 
     def traits_view(self):
-        v = View(Item('display', show_label=False, style='custom'),
-                 width=200,
-                 height=100)
+        v = View(
+            Item("display", show_label=False, style="custom"), width=200, height=100
+        )
         return v
 
 
@@ -90,12 +92,12 @@ class MapView(Viewable):
     holenumber = Str
 
     labnumbers = List
-    name = Property(depends_on='stage_map')
+    name = Property(depends_on="stage_map")
 
     def _get_name(self):
         return self.stage_map.name
 
-    @on_trait_change('stage_map')
+    @on_trait_change("stage_map")
     def _build_map(self):
         #        xs = [1, 2, 3, 4]
         #        ys = [2, 4, 6, 8]
@@ -103,37 +105,37 @@ class MapView(Viewable):
             if not self.stage_map.sample_holes:
                 return
 
-            xs, ys, states, labns = list(zip(*[(h.x, h.y, -1, '') for h in self.stage_map.sample_holes]))
+            xs, ys, states, labns = list(
+                zip(*[(h.x, h.y, -1, "") for h in self.stage_map.sample_holes])
+            )
             g = self.graph
             states = list(states)
             states[len(states) // 2] = -1.2
-            s, _p = g.new_series(xs, ys,
-                                 colors=states,
-                                 type='cmap_scatter',
-                                 marker='circle',
-                                 color_map_name='jet',
-                                 marker_size=10,
-                                 )
+            s, _p = g.new_series(
+                xs,
+                ys,
+                colors=states,
+                type="cmap_scatter",
+                marker="circle",
+                color_map_name="jet",
+                marker_size=10,
+            )
 
-            s.tools.append(ScatterInspector(s,
-                                            selection_mode='single',
-                                            threshold=10
-                                            ))
+            s.tools.append(ScatterInspector(s, selection_mode="single", threshold=10))
 
-            s.index.on_trait_change(self._update, 'metadata_changed')
+            s.index.on_trait_change(self._update, "metadata_changed")
 
             ov = MapOverlay(s)
             s.overlays.append(ov)
             self.scatter = s
             self.labnumbers = list(labns)
 
-            g.set_x_limits(min_=min(xs), max_=max(xs), pad='0.05')
-            g.set_y_limits(min_=min(ys), max_=max(ys), pad='0.05')
+            g.set_x_limits(min_=min(xs), max_=max(xs), pad="0.05")
+            g.set_y_limits(min_=min(ys), max_=max(ys), pad="0.05")
 
     def _update(self, new):
         if new:
-
-            hov = self.scatter.index.metadata.get('hover')
+            hov = self.scatter.index.metadata.get("hover")
             if hov:
                 hid = hov[0]
                 self.labnumber = self.labnumbers[hid]
@@ -142,25 +144,21 @@ class MapView(Viewable):
     def _graph_default(self):
         g = Graph(container_dict=dict(padding=5))
         g.new_plot(padding=5)
-        g.set_axis_traits(axis='y', visible=False)
-        g.set_axis_traits(axis='x', visible=False)
-        g.set_grid_traits(grid='x', visible=False)
-        g.set_grid_traits(grid='y', visible=False)
+        g.set_axis_traits(axis="y", visible=False)
+        g.set_axis_traits(axis="x", visible=False)
+        g.set_grid_traits(grid="x", visible=False)
+        g.set_grid_traits(grid="y", visible=False)
         return g
 
     def traits_view(self):
-        g = Item('graph', style='custom', show_label=False)
+        g = Item("graph", style="custom", show_label=False)
         info = HGroup(
-            Item('holenumber', width=30, style='readonly'),
-            Item('labnumber', style='readonly'),
+            Item("holenumber", width=30, style="readonly"),
+            Item("labnumber", style="readonly"),
         )
-        v = View(info,
-                 g,
-                 width=500,
-                 height=500,
-                 title='Lab Map',
-                 handler=self.handler_klass
-                 )
+        v = View(
+            info, g, width=500, height=500, title="Lab Map", handler=self.handler_klass
+        )
         return v
 
     def set_hole_state(self, holenum, state):
@@ -179,10 +177,10 @@ class MapView(Viewable):
 
 # self.scatter.states[holenum - 1] = 1
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import random
 
-    sm = LaserStageMap(file_path=os.path.join(paths.map_dir, '221-hole.txt'))
+    sm = LaserStageMap(file_path=os.path.join(paths.map_dir, "221-hole.txt"))
     mv = MapView(stage_map=sm)
 
     for i in range(0, 210, 1):

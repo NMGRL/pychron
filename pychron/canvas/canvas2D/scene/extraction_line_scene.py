@@ -23,9 +23,18 @@ from traits.api import Dict
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.base_scene_loader import floatify, colorify
 from pychron.canvas.canvas2D.scene.primitives.lasers import Laser, CircleLaser
-from pychron.canvas.canvas2D.scene.primitives.primitives import Label, BorderLine, Image, ValueLabel
+from pychron.canvas.canvas2D.scene.primitives.primitives import (
+    Label,
+    BorderLine,
+    Image,
+    ValueLabel,
+)
 from pychron.canvas.canvas2D.scene.primitives.pumps import Turbo, IonPump
-from pychron.canvas.canvas2D.scene.primitives.rounded import CircleStage, Spectrometer, Getter
+from pychron.canvas.canvas2D.scene.primitives.rounded import (
+    CircleStage,
+    Spectrometer,
+    Getter,
+)
 from pychron.canvas.canvas2D.scene.primitives.valves import RoughValve, Valve
 from pychron.canvas.canvas2D.scene.scene import Scene
 from pychron.canvas.canvas2D.scene.xml_scene_loader import XMLLoader
@@ -40,13 +49,21 @@ class ExtractionLineScene(Scene):
     def load(self, pathname, configpath, valvepath, canvas):
         self.overlays = []
         self.reset_layers()
-        origin, color_dict, valve_dimension, images = self._load_config(configpath, canvas)
-        if pathname.endswith('.yaml') or pathname.endswith('.yml'):
+        (
+            origin,
+            color_dict,
+            valve_dimension,
+            images,
+            connection_dimension,
+        ) = self._load_config(configpath, canvas)
+        if pathname.endswith(".yaml") or pathname.endswith(".yml"):
             klass = YAMLLoader
         else:
             klass = XMLLoader
 
-        loader = klass(pathname, origin, color_dict, valve_dimension)
+        loader = klass(
+            pathname, origin, color_dict, valve_dimension, connection_dimension
+        )
 
         loader.load_switchables(self, valvepath)
         loader.load_rects(self)
@@ -63,14 +80,19 @@ class ExtractionLineScene(Scene):
 
     def get_is_in(self, px, py, exclude=None):
         if exclude is None:
-            exclude = [Valve, RoughValve, Image, Label,
-                       ValueLabel,
-                       BorderLine, ]
+            exclude = [
+                Valve,
+                RoughValve,
+                Image,
+                Label,
+                ValueLabel,
+                BorderLine,
+            ]
 
         for c in self.iteritems(exclude=exclude):
             # x, y = c.get_xy()
             # w, h = c.get_wh()
-            if c.identifier in ('bounds_rect', 'legend'):
+            if c.identifier in ("bounds_rect", "legend"):
                 continue
 
             if c.is_in(px, py):
@@ -82,34 +104,39 @@ class ExtractionLineScene(Scene):
         color_dict = dict()
         ox, oy = 0, 0
         valve_dimension = 2, 2
+        connection_dimension = 10
         images = []
         if os.path.isfile(p):
             cp = self._get_canvas_parser(p)
             tree = cp.get_tree()
             if tree:
-                images = cp.get_elements('image')
+                images = cp.get_elements("image")
                 xv, yv = self._get_canvas_view_range(cp)
 
                 canvas.view_x_range = xv
                 canvas.view_y_range = yv
-                dim = tree.find('valve_dimension')
+                dim = tree.find("valve_dimension")
                 valve_dimension = 2, 2
                 if dim is not None:
                     valve_dimension = floatify(dim)
 
+                dim = tree.find("connection_dimension")
+                if dim is not None:
+                    connection_dimension = float(dim.text)
+
                 # get label font
-                font = tree.find('font')
+                font = tree.find("font")
                 if font is not None:
                     self.font = font.text.strip()
 
                 # get default colors
-                for c in tree.findall('color'):
-                    k = c.get('tag')
+                for c in tree.findall("color"):
+                    k = c.get("tag")
 
                     color = colorify(c)
-                    if k == 'bgcolor':
-                        if ',' in color:
-                            color = [i / 255. for i in floatify(color)]
+                    if k == "bgcolor":
+                        if "," in color:
+                            color = [i / 255.0 for i in floatify(color)]
                         # if isinstance(color, list):
                         #     color = [ti / 255. for ti in color]
                         canvas.bgcolor = color
@@ -118,10 +145,11 @@ class ExtractionLineScene(Scene):
 
                 # get an origin offset
 
-                o = tree.find('origin')
+                o = tree.find("origin")
                 if o is not None:
                     ox, oy = floatify(o)
 
-        return (ox, oy), color_dict, valve_dimension, images
+        return (ox, oy), color_dict, valve_dimension, images, connection_dimension
+
 
 # ============= EOF =============================================

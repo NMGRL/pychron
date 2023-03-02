@@ -39,8 +39,8 @@ from pychron.paths import paths
 
 
 class ShowMotionConfigureAction(TaskAction):
-    method = 'show_motion_configure'
-    name = 'Motion Configure...'
+    method = "show_motion_configure"
+    name = "Motion Configure..."
 
 
 class ListAction(Action):
@@ -62,8 +62,9 @@ class HopConfig(HasTraits):
     ncycles = Int(1)
 
     def traits_view(self):
-        v = okcancel_view(Item('ncycles', label='Cycles'),
-                          title='Configure Magnet Hops')
+        v = okcancel_view(
+            Item("ncycles", label="Cycles"), title="Configure Magnet Hops"
+        )
         return v
 
 
@@ -72,13 +73,12 @@ class HopsAction(ListAction):
     _alive = False
 
     def perform(self, event):
-
         hc = HopConfig()
-        info = hc.edit_traits(kind='livemodal')
+        info = hc.edit_traits(kind="livemodal")
         if not info.result:
             return
 
-        p = os.path.join(paths.hops_dir, add_extension(self.hop_name, ext='.yaml'))
+        p = os.path.join(paths.hops_dir, add_extension(self.hop_name, ext=".yaml"))
         hops = yload(p)
         prog = self._open_prog(hc.ncycles, hops)
 
@@ -101,7 +101,7 @@ class HopsAction(ListAction):
         nhops = len(hops)
         for hop in hops:
             hop = parse_hop(hop)
-            settle = hop['settle']
+            settle = hop["settle"]
             t += settle
 
         return open_progress(int(t * ncycle + ncycle + nhops))
@@ -120,30 +120,34 @@ class HopsAction(ListAction):
         prog.close()
 
     def _perform(self, app, ncycles, hops, msg_queue):
-        ion = app.get_service('pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager')
-        spec = app.get_service('pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager')
+        ion = app.get_service(
+            "pychron.spectrometer.ion_optics.ion_optics_manager.IonOpticsManager"
+        )
+        spec = app.get_service(
+            "pychron.spectrometer.base_spectrometer_manager.BaseSpectrometerManager"
+        )
         for cycle in range(ncycles):
             for hop in hops:
                 if not self._alive:
                     break
 
                 hop = parse_hop(hop)
-                dets = hop['detectors']
-                defls = hop['deflections']
-                settle = hop['settle']
-                pdets = hop['protect_detectors']
+                dets = hop["detectors"]
+                defls = hop["deflections"]
+                settle = hop["settle"]
+                pdets = hop["protect_detectors"]
 
                 use_dac = False
-                positioning = hop['positioning']
-                if 'dac' in positioning:
+                positioning = hop["positioning"]
+                if "dac" in positioning:
                     use_dac = True
-                    pos = positioning['dac']
-                    detector = ''
+                    pos = positioning["dac"]
+                    detector = ""
                 else:
-                    detector = positioning['detector']
-                    pos = positioning['isotope']
+                    detector = positioning["detector"]
+                    pos = positioning["isotope"]
 
-                use_af_demag = positioning.get('use_af_demag', False)
+                use_af_demag = positioning.get("use_af_demag", False)
 
                 # set deflections
                 deflect = len([d for d in defls if d is not None])
@@ -154,14 +158,22 @@ class HopsAction(ListAction):
                 for pd in pdets:
                     spec.protect_detector(pd, True)
 
-                msg_queue.put('Position {} {}'.format(pos, detector))
-                ion.position(pos, detector, use_dac=use_dac, update_isotopes=False, use_af_demag=use_af_demag)
+                msg_queue.put("Position {} {}".format(pos, detector))
+                ion.position(
+                    pos,
+                    detector,
+                    use_dac=use_dac,
+                    update_isotopes=False,
+                    use_af_demag=use_af_demag,
+                )
 
                 for pd in pdets:
                     spec.protect_detector(pd, False)
 
                 for i in range(settle):
-                    msg_queue.put('Position {} {}. Settle {}'.format(pos, detector, settle - i))
+                    msg_queue.put(
+                        "Position {} {}. Settle {}".format(pos, detector, settle - i)
+                    )
                     time.sleep(1)
 
         self._alive = False
@@ -172,25 +184,30 @@ class SpectrometerScriptAction(ListAction):
 
     def perform(self, event):
         app = event.task.application
-        tid = 'pychron.spectrometer'
+        tid = "pychron.spectrometer"
         manager = app.task_is_open(tid)
-        task = app.get_task('pychron.pyscript.task', activate=False)
+        task = app.get_task("pychron.pyscript.task", activate=False)
         # context = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
 
         context = {}
         root = os.path.dirname(self.script_path)
         name = os.path.basename(self.script_path)
 
-        info = lambda x: '======= {} ======='.format(x)
+        info = lambda x: "======= {} =======".format(x)
         # manager = app.get_service('pychron.spectrometer.scan_manager.ScanManager')
         manager.info(info('Started Spectrometer script "{}"'.format(name)))
 
-        task.execute_script(name, root,
-                            delay_start=1,
-                            manager=manager,
-                            kind='Spectrometer',
-                            on_completion=lambda: manager.info(info('Finished Spectrometer Script "{}"'.format(name))),
-                            context=context)
+        task.execute_script(
+            name,
+            root,
+            delay_start=1,
+            manager=manager,
+            kind="Spectrometer",
+            on_completion=lambda: manager.info(
+                info('Finished Spectrometer Script "{}"'.format(name))
+            ),
+            context=context,
+        )
 
 
 class ProcedureAction(ListAction):
@@ -210,44 +227,56 @@ class ProcedureAction(ListAction):
     def perform(self, event):
         app = event.task.application
 
-        for tid in ('pychron.experiment.task', 'pychron.spectrometer'):
+        for tid in ("pychron.experiment.task", "pychron.spectrometer"):
             task = app.task_is_open(tid)
             if task:
                 # make sure extraction line canvas is visible
-                task.show_pane('pychron.extraction_line.canvas_dock')
+                task.show_pane("pychron.extraction_line.canvas_dock")
                 break
         else:
             # open extraction line task
-            task = app.open_task('pychron.extraction_line')
+            task = app.open_task("pychron.extraction_line")
             task.show_pane(task.wait_pane)
 
-        manager = app.get_service('pychron.extraction_line.extraction_line_manager.ExtractionLineManager')
+        manager = app.get_service(
+            "pychron.extraction_line.extraction_line_manager.ExtractionLineManager"
+        )
 
         root = os.path.dirname(self.script_path)
         name = os.path.basename(self.script_path)
 
-        info = lambda x: '======= {} ======='.format(x)
+        info = lambda x: "======= {} =======".format(x)
 
         manager.info(info('Started Procedure "{}"'.format(name)))
 
         # task = app.get_task('pychron.pyscript.task', activate=False)
         # script_executor = ScriptExecutor(application=app)
-        script_executor = app.get_service('pychron.pyscripts.tasks.pyscript_task.ScriptExecutor')
-        context = {'analysis_type': 'blank' if 'blank' in name else 'unknown'}
+        script_executor = app.get_service(
+            "pychron.pyscripts.tasks.pyscript_task.ScriptExecutor"
+        )
+        context = {"analysis_type": "blank" if "blank" in name else "unknown"}
 
-        script_executor.execute_script(name, root,
-                                       delay_start=1,
-                                       manager=manager,
-                                       on_completion=lambda: manager.info(info('Finished Procedure "{}"'.format(name))),
-                                       context=context)
+        script_executor.execute_script(
+            name,
+            root,
+            delay_start=1,
+            manager=manager,
+            on_completion=lambda: manager.info(
+                info('Finished Procedure "{}"'.format(name))
+            ),
+            context=context,
+        )
 
 
 class CancelProcedureAction(TaskAction):
-    name = 'Cancel Procedure'
+    name = "Cancel Procedure"
 
     def perform(self, event):
         app = event.task.application
-        script_executor = app.get_service('pychron.pyscripts.tasks.pyscript_task.ScriptExecutor')
+        script_executor = app.get_service(
+            "pychron.pyscripts.tasks.pyscript_task.ScriptExecutor"
+        )
         script_executor.cancel()
+
 
 # ============= EOF =============================================

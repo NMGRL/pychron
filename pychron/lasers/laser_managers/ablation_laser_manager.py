@@ -25,7 +25,7 @@ from pychron.lasers.laser_managers.serial_laser_manager import SerialLaserManage
 
 class ReadPositionError(BaseException):
     def __init__(self, xyz):
-        self._msg = 'ReadPosition error. Laser responded={}'.format(xyz)
+        self._msg = "ReadPosition error. Laser responded={}".format(xyz)
 
     def __str__(self):
         return self._msg
@@ -35,8 +35,8 @@ class ReadPositionError(BaseException):
 
 
 class AblationCO2Manager(SerialLaserManager):
-    stage_manager_id = 'ablation.pychron'
-    configuration_dir_name = 'ablation'
+    stage_manager_id = "ablation.pychron"
+    configuration_dir_name = "ablation"
     read_delay = 25
 
     def set_tray(self, t):
@@ -47,7 +47,7 @@ class AblationCO2Manager(SerialLaserManager):
         i = 0
         n = 3
         while 1:
-            re = self._ask('GetVersion')
+            re = self._ask("GetVersion")
             if re:
                 self.connected = True
                 return
@@ -58,8 +58,7 @@ class AblationCO2Manager(SerialLaserManager):
             i += 1
 
     def end_extract(self, *args, **kw):
-
-        self.info('ending extraction. set laser power to 0')
+        self.info("ending extraction. set laser power to 0")
         self.set_laser_power(0)
 
         if self._patterning:
@@ -68,20 +67,24 @@ class AblationCO2Manager(SerialLaserManager):
         self.disable_laser()
 
     def fire_laser(self):
-        self.info('fire laser')
-        self._ask('SetLaserOn 1')
+        self.info("fire laser")
+        self._ask("SetLaserOn 1")
 
     def extract(self, value, units=None, tol=0.1, fire_laser=True, **kw):
         if units is None:
-            units = 'watts'
+            units = "watts"
 
-        self.info('set laser output to {} {}'.format(value, units))
-        if units == 'watts':
+        self.info("set laser output to {} {}".format(value, units))
+        if units == "watts":
             ovalue = value
             value = self.calculate_calibrated_power(value)
             if value < 0:
-                self.warning('Consider changing you calibration curve. '
-                             '{} watts converted to {}%. % must be positive'.format(ovalue, value))
+                self.warning(
+                    "Consider changing you calibration curve. "
+                    "{} watts converted to {}%. % must be positive".format(
+                        ovalue, value
+                    )
+                )
                 value = 0
 
         resp = self.set_laser_power(value)
@@ -95,34 +98,34 @@ class AblationCO2Manager(SerialLaserManager):
             pass
 
     def set_laser_power(self, v):
-        self.debug('setting laser output to {}'.format(v))
-        return self._ask('SetLaserOutput {}'.format(v))
+        self.debug("setting laser output to {}".format(v))
+        return self._ask("SetLaserOutput {}".format(v))
 
     def enable_laser(self, **kw):
         # self._ask('laser.enable ON')
-        self.info('enabling laser')
-        self._ask('SetLaserFireMode 3')  # 3= continuous wave
+        self.info("enabling laser")
+        self._ask("SetLaserFireMode 3")  # 3= continuous wave
         # self._ask('SetLaserOn 1')
         self.enabled = True
 
     def disable_laser(self):
-        self.info('disabling laser')
+        self.info("disabling laser")
         self.set_laser_power(0)
-        self._ask('SetLaserOn 0')
+        self._ask("SetLaserOn 0")
         self.enabled = False
 
     def get_position(self, retry=True):
         x, y, z = self._x, self._y, self._z
-        xyz = self._ask('ReadPosition')
+        xyz = self._ask("ReadPosition")
         if xyz:
             try:
-                x, y, z = [float(v) for v in xyz.split(',')]
+                x, y, z = [float(v) for v in xyz.split(",")]
                 if self.stage_manager.use_sign_position_correction:
                     x = x * self.stage_manager.x_sign
                     y = y * self.stage_manager.y_sign
                     z = z * self.stage_manager.z_sign
             except ValueError:
-                self.warning('failed parsing position: {}'.format(xyz))
+                self.warning("failed parsing position: {}".format(xyz))
                 if retry:
                     time.sleep(0.5)
                     x, y, z = self.get_position(retry=False)
@@ -133,9 +136,9 @@ class AblationCO2Manager(SerialLaserManager):
 
     def _ask(self, cmd, retry=3):
         resp = super(AblationCO2Manager, self)._ask(cmd)
-        if not resp or (resp and resp.strip().startswith('ERROR')):
+        if not resp or (resp and resp.strip().startswith("ERROR")):
             if retry:
-                resp = self._ask(cmd, retry-1)
+                resp = self._ask(cmd, retry - 1)
 
         return resp
 
@@ -143,7 +146,9 @@ class AblationCO2Manager(SerialLaserManager):
         self._move_to_position((x, y), block=block)
 
     def stop(self):
-        self.warning_dialog('The Laser Ablation software does not allow remote stopping of the laser motion')
+        self.warning_dialog(
+            "The Laser Ablation software does not allow remote stopping of the laser motion"
+        )
         # self._ask('stage.stop')
         # self._is_moving = False
         # self.update_position()
@@ -159,7 +164,7 @@ class AblationCO2Manager(SerialLaserManager):
         #     cmd = 1
 
         self._firing = not self._firing
-        self._ask('SetLaserOn {}'.format(int(self._firing)))
+        self._ask("SetLaserOn {}".format(int(self._firing)))
 
     def _output_power_changed(self, new):
         self.extract(new, self.units, fire_laser=False)
@@ -167,19 +172,19 @@ class AblationCO2Manager(SerialLaserManager):
     def _set_x(self, v):
         if self._move_enabled and v != self._x:
             self._is_moving = True
-            self._ask('SetPosition {:0.3f},{:0.3f},{:0.3f}'.format(v, self._y, self._z))
+            self._ask("SetPosition {:0.3f},{:0.3f},{:0.3f}".format(v, self._y, self._z))
             self._single_axis_moving(v, 0)
 
     def _set_y(self, v):
         if self._move_enabled and v != self._y:
             self._is_moving = True
-            self._ask('SetPosition {:0.3f},{:0.3f},{:0.3f}'.format(self._x, v, self._z))
+            self._ask("SetPosition {:0.3f},{:0.3f},{:0.3f}".format(self._x, v, self._z))
             self._single_axis_moving(v, 1)
 
     def _set_z(self, v):
         if self._move_enabled and v != self._z:
             self._is_moving = True
-            self._ask('SetPosition {:0.3f},{:0.3f},{:0.3f}'.format(self._x, self._y, v))
+            self._ask("SetPosition {:0.3f},{:0.3f},{:0.3f}".format(self._x, self._y, v))
             self._single_axis_moving(v, 2)
 
     def _single_axis_moving(self, v, axis):
@@ -189,7 +194,7 @@ class AblationCO2Manager(SerialLaserManager):
                     return True
 
                 # pos =[float(p) for p in xyz.split(','))[axis]
-                pos = float(xyz.split(',')[axis])
+                pos = float(xyz.split(",")[axis])
 
                 return abs(pos - v) > 2
                 # print map(lambda ab: abs(ab[0] - ab[1]) <= 2,
@@ -200,9 +205,9 @@ class AblationCO2Manager(SerialLaserManager):
                 #                    zip(map(float, xyz.split(',')),
                 #                        (xm, ym, zm))))
             except ValueError as e:
-                print('_moving exception {}'.format(e))
+                print("_moving exception {}".format(e))
 
-        self._block(cmd='ReadPosition', cmpfunc=cmpfunc)
+        self._block(cmd="ReadPosition", cmpfunc=cmpfunc)
         time.sleep(0.25)
         self._is_moving = False
         self.update_position()
@@ -220,15 +225,15 @@ class AblationCO2Manager(SerialLaserManager):
         # zs = 100
 
         self._is_moving = True
-        self.debug('pos={}, x={}, y={}'.format(pos, x, y))
+        self.debug("pos={}, x={}, y={}".format(pos, x, y))
 
         if sm.use_sign_position_correction:
             x *= sm.x_sign
             y *= sm.y_sign
             z *= sm.z_sign
 
-        cmd = 'SetPosition {:0.3f},{:0.3f},{:0.3f}'.format(x, y, z)
-        self.info('sending {}'.format(cmd))
+        cmd = "SetPosition {:0.3f},{:0.3f},{:0.3f}".format(x, y, z)
+        self.info("sending {}".format(cmd))
         self._ask(cmd)
 
         time.sleep(1)
@@ -251,25 +256,28 @@ class AblationCO2Manager(SerialLaserManager):
 
                     return not all(abs(a - b) <= 0.01 for a, b in zip(ps, (xm, ym, zm)))
                 except ValueError as e:
-                    print('_moving exception {}'.format(e))
+                    print("_moving exception {}".format(e))
 
-            r = self._block(cmd='ReadPosition', cmpfunc=cmpfunc, period=1)
+            r = self._block(cmd="ReadPosition", cmpfunc=cmpfunc, period=1)
             self._is_moving = False
             time.sleep(0.5)
             self.update_position()
         return r
 
     def _stage_manager_default(self):
-
-        name = 'ablation'
-        args = dict(name='stage',
-                    configuration_name='stage',
-                    configuration_dir_name=name,
-                    parent=self)
+        name = "ablation"
+        args = dict(
+            name="stage",
+            configuration_name="stage",
+            configuration_dir_name=name,
+            parent=self,
+        )
         return self._stage_manager_factory(args)
 
     def _stage_manager_factory(self, args):
-        from pychron.lasers.stage_managers.ablation_stage_manager import AblationStageManager
+        from pychron.lasers.stage_managers.ablation_stage_manager import (
+            AblationStageManager,
+        )
 
         self.stage_args = args
 
@@ -282,9 +290,10 @@ class AblationCO2Manager(SerialLaserManager):
     def _pattern_executor_default(self):
         from pychron.lasers.pattern.pattern_executor import PatternExecutor
 
-        pm = PatternExecutor(application=self.application,
-                             controller=self,
-                             laser_manager=self)
+        pm = PatternExecutor(
+            application=self.application, controller=self, laser_manager=self
+        )
         return pm
+
 
 # ============= EOF =============================================

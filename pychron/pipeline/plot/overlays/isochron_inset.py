@@ -19,6 +19,7 @@ from __future__ import absolute_import
 from chaco.lineplot import LinePlot
 from chaco.scatterplot import ScatterPlot
 from traits.api import Float
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.pipeline.plot.overlays.base_inset import BaseInset
@@ -26,7 +27,7 @@ from pychron.pipeline.plot.overlays.base_inset import BaseInset
 
 class InverseIsochronLineInset(BaseInset, LinePlot):
     def __init__(self, *args, **kw):
-        self.border_visible = kw.get('border_visible', True)
+        self.border_visible = kw.get("border_visible", True)
         BaseInset.__init__(self, *args, **kw)
         LinePlot.__init__(self)
 
@@ -42,8 +43,8 @@ class InverseIsochronPointsInset(BaseInset, ScatterPlot):
         ScatterPlot.__init__(self)
         BaseInset.__init__(self, *args, **kw)
 
-        self.border_visible = kw.get('border_visible', True)
-        self.marker = 'circle'
+        self.border_visible = kw.get("border_visible", True)
+        self.marker = "circle"
         # self.color = 'red'
         # self.marker_size = 1.5
         if not self.visible_axes:
@@ -66,7 +67,9 @@ class InverseIsochronPointsInset(BaseInset, ScatterPlot):
     def _draw_atm(self, gc):
         with gc:
             xl = self.index_range.low
-            pts = self.map_screen([(xl, self.nominal_intercept), (0, self.nominal_intercept)])
+            pts = self.map_screen(
+                [(xl, self.nominal_intercept), (0, self.nominal_intercept)]
+            )
 
             # print x,y
             # gc.move_to(0,y)

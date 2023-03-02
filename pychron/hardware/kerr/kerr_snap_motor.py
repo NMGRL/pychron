@@ -29,36 +29,36 @@ class KerrSnapMotor(KerrMotor):
 
     def _build_io(self):
         """
-            picsrvsc.pdf p.35
-            I/O Control
-            18   04
-            cmd  iobit
+        picsrvsc.pdf p.35
+        I/O Control
+        18   04
+        cmd  iobit
 
-            Bit 0 - Not used (clear to 0 for future compatibility)
-            Bit 1 - Not used (clear to 0 for future compatibility)
-            Bit 2 - Enable limit switch protection, turn motor off when limit is hit
-            Bit 3 - Enable limit switch protection, stop abruptly when limit is hit
-            Bit 4 - Enable 3-Phase commutation output mode
-            Bit 5 - Enable Antiphase PWM output mode
-            Bit 6 - Set fast path option for path control mode
-            Bit 7 - Enable Step & Direction input mode
+        Bit 0 - Not used (clear to 0 for future compatibility)
+        Bit 1 - Not used (clear to 0 for future compatibility)
+        Bit 2 - Enable limit switch protection, turn motor off when limit is hit
+        Bit 3 - Enable limit switch protection, stop abruptly when limit is hit
+        Bit 4 - Enable 3-Phase commutation output mode
+        Bit 5 - Enable Antiphase PWM output mode
+        Bit 6 - Set fast path option for path control mode
+        Bit 7 - Enable Step & Direction input mode
 
 
-            04=00000100
-            08=00001000
-            14(20)=00010100 enable 3 phase
-            24(36)=00100100 enable antiphase
+        04=00000100
+        08=00001000
+        14(20)=00010100 enable 3 phase
+        24(36)=00100100 enable antiphase
         """
-        return '1808'
+        return "1808"
 
     def _build_gains(self):
         """
-            F6  B004 2003 F401 E803 FF 00 E803 01 01 01
-            cmd p    d    i    il   ol cl el   sr db sm
+        F6  B004 2003 F401 E803 FF 00 E803 01 01 01
+        cmd p    d    i    il   ol cl el   sr db sm
 
-            B004 2003 F401 B004 FF 00 6400 010101
+        B004 2003 F401 B004 FF 00 6400 010101
 
-            0064 03e8 0000 0000 ff 00 0fa0 01 01 01
+        0064 03e8 0000 0000 ff 00 0fa0 01 01 01
         """
         flip_nibbles = True
 
@@ -73,7 +73,8 @@ class KerrSnapMotor(KerrMotor):
         db = (1, 2)
         sm = (1, 2)
         gains = self._build_hexstr(p, d, i, il, ol, cl, el, sr, db, sm)
-        return 'F6{}'.format(gains)
+        return "F6{}".format(gains)
+
 
 # return ''.join(['F6'] + map(hexfmt, [p, d, i, il, ol, cl, el, sr, db, sm]))
 

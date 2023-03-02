@@ -15,13 +15,13 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-
 from chaco.array_data_source import ArrayDataSource
 from traits.api import List, Callable
 from traitsui.menu import Action, Menu as MenuManager
 
+from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.tools.point_inspector import PointInspector
+
 # from pychron.pipeline.plot.inspector_item import AnalysisInspectorItem
 from pychron.pychron_constants import PLUSMINUS
 
@@ -33,18 +33,16 @@ class AnalysisPointInspector(PointInspector):
     _selected_indices = List
     index_tag = None
     single_point = False
+    include_x = False
 
     def contextual_menu_contents(self):
-        """
-        """
-        actions = (Action(name='Recall',
-                          on_perform=self._recall_analysis),
-                   Action(name='Set tag',
-                          on_perform=self._set_tag),
-                   Action(name='Set Omit',
-                          on_perform=self._set_omit),
-                   Action(name='Set Invalid',
-                          on_perform=self._set_invalid))
+        """ """
+        actions = (
+            Action(name="Recall", on_perform=self._recall_analysis),
+            Action(name="Set tag", on_perform=self._set_tag),
+            Action(name="Set Omit", on_perform=self._set_omit),
+            Action(name="Set Invalid", on_perform=self._set_invalid),
+        )
         return actions
 
     def get_contextual_menu(self):
@@ -80,19 +78,14 @@ class AnalysisPointInspector(PointInspector):
             ai.trigger_recall()
 
     def _show_menu(self, event):
-        self.get_contextual_menu()
-
         control = event.window.control
 
         menu_manager = self.get_contextual_menu()
         menu = menu_manager.create_menu(control, None)
-
         menu.show()
-        menu_manager.destroy()
         event.handled = True
 
     def assemble_lines(self):
-
         lines = []
         if self.current_position:
             inds = self.get_selected_index()
@@ -108,13 +101,17 @@ class AnalysisPointInspector(PointInspector):
 
                     rid = analysis.record_id
                     name = component.container.y_axis.title
-                    for tag in ('<sub>','</sub>', '<sup>', '</sup>'):
-                        name = name.replace(tag, '')
+                    for tag in ("<sub>", "</sub>", "<sup>", "</sup>"):
+                        name = name.replace(tag, "")
+
+                    xname = component.container.x_axis.title
+                    for tag in ("<sub>", "</sub>", "<sup>", "</sup>"):
+                        xname = xname.replace(tag, "")
 
                     y = ys[ind]
-                    # x = xs[ind]
+                    x = xs[ind]
 
-                    if hasattr(component, 'yerror'):
+                    if hasattr(component, "yerror"):
                         try:
                             yerror = component.yerror
                             if isinstance(yerror, ArrayDataSource):
@@ -127,22 +124,43 @@ class AnalysisPointInspector(PointInspector):
                             if self.value_format:
                                 y = self.value_format(y)
 
-                            y = u'{} {}{} {}'.format(y, PLUSMINUS, ye, pe)
+                            y = "{} {} {} {}".format(y, PLUSMINUS, ye, pe)
                         except IndexError as e:
-                            print('asdf', e)
+                            print("asdf", e)
 
                     else:
                         if self.value_format:
                             y = self.value_format(y)
 
-                    info = [u'Analysis= {} UUID({})'.format(rid, analysis.display_uuid),
-                            u'Tag= {}'.format(analysis.tag),
-                            u'{}= {}'.format(name, y)]
-                    if analysis.comment:
-                        info.insert(1, u'Comment= {}'.format(analysis.comment[:20]))
+                    info = [
+                        "Analysis= {} UUID({})".format(rid, analysis.display_uuid),
+                        "Tag= {}".format(analysis.tag),
+                        "{}= {}".format(name, y),
+                    ]
 
-                    if hasattr(analysis, 'status_text'):
-                        info.insert(1, 'Status= {}'.format(analysis.status_text))
+                    if self.include_x:
+                        if hasattr(component, "xerror"):
+                            try:
+                                xerror = component.xerror
+                                if isinstance(xerror, ArrayDataSource):
+                                    xerror = xerror.get_data()
+
+                                xe = xerror[ind]
+                                pe = self.percent_error(x, xe)
+
+                                x = "{} {} {} {}".format(floatfmt(x), PLUSMINUS, xe, pe)
+                            except IndexError as e:
+                                print("asdf", e)
+                        else:
+                            x = floatfmt(x)
+
+                        info.append("{}= {}".format(xname, x))
+
+                    if analysis.comment:
+                        info.insert(1, "Comment= {}".format(analysis.comment[:20]))
+
+                    if hasattr(analysis, "status_text"):
+                        info.insert(1, "Status= {}".format(analysis.status_text))
                     lines.extend(info)
                     if self.additional_info is not None:
                         ad = self.additional_info(ind, xs[ind], ys[ind], analysis)
@@ -152,8 +170,9 @@ class AnalysisPointInspector(PointInspector):
                             lines.append(ad)
 
                     if i < n - 1:
-                        lines.append('--------')
+                        lines.append("--------")
 
         return lines
+
 
 # ============= EOF =============================================

@@ -25,12 +25,16 @@ from pychron.options.options import SubOptions, AppearanceSubOptions
 
 class VerticalFluxSubOptions(SubOptions):
     def traits_view(self):
-        vg = VGroup(Item('use_j', label='Use J'),
-                    BorderVGroup(Item('selected_monitor', label='Flux Const.'),
-                                 Readonly('lambda_k', label=u'Total \u03BB K'),
-                                 Readonly('monitor_age', label='Monitor Age'),
-                                 label='Monitor',
-                                 enabled_when='use_j'))
+        vg = VGroup(
+            Item("use_j", label="Use J"),
+            BorderVGroup(
+                Item("selected_monitor", label="Flux Const."),
+                Readonly("lambda_k", label="Total \u03BB K"),
+                Readonly("monitor_age", label="Monitor Age"),
+                label="Monitor",
+                enabled_when="use_j",
+            ),
+        )
         return self._make_view(vg)
 
 
@@ -38,6 +42,5 @@ class VerticalFluxAppearanceSubOptions(AppearanceSubOptions):
     pass
 
 
-VIEWS = {'main': VerticalFluxSubOptions,
-         'appearance': VerticalFluxAppearanceSubOptions}
+VIEWS = {"main": VerticalFluxSubOptions, "appearance": VerticalFluxAppearanceSubOptions}
 # ============= EOF =============================================

@@ -40,13 +40,13 @@ class PieChartCanvas(SceneCanvas):
     # aspect_ratio = 1
 
     def load_scene(self, p):
-        s=PieChartScene()
+        s = PieChartScene()
         s.load(p)
 
-        self.scene=s
+        self.scene = s
 
         self.index_axis.tick_visible = False
-        self.value_range.tight_bounds=False
+        self.value_range.tight_bounds = False
 
         # self.value_range.low = 0
         # self.value_range.high = 100
@@ -73,5 +73,5 @@ class PieChartCanvas(SceneCanvas):
         # for i in self.scene.iteritems():
         #     i.index_origin = io
 
-# ============= EOF =============================================
 
+# ============= EOF =============================================

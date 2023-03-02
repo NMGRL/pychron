@@ -25,8 +25,7 @@ from pychron.hardware.core.data_helper import make_bitarray
 
 
 def make_categories(c, av):
-    return int(''.join(['1' if ai in c else '0'
-                        for ai in av][::-1]), 2)
+    return int("".join(["1" if ai in c else "0" for ai in av][::-1]), 2)
 
 
 def parse_categories(cint, av):
@@ -40,9 +39,9 @@ class UserEntry(BaseEntry):
     user = Str
     email = Str
     categories = List
-    available_categories = List(['researcher', 'student', 'visitor'])
-    affiliation = Str('NMGRL')
-    user_style = Enum('simple', 'readonly')
+    available_categories = List(["researcher", "student", "visitor"])
+    affiliation = Str("NMGRL")
+    user_style = Enum("simple", "readonly")
     original_user = Str
 
     def edit(self, name):
@@ -69,7 +68,7 @@ class UserEntry(BaseEntry):
         if self._add_user_db(db, name):
             return True
         else:
-            self.warning_dialog('{} already exists'.format(name))
+            self.warning_dialog("{} already exists".format(name))
 
     def _edit_user(self, db, dbuser):
         self.info('editing user "{}"'.format(dbuser.name))
@@ -77,17 +76,19 @@ class UserEntry(BaseEntry):
         self.user = dbuser.name
         self.original_user = dbuser.name
 
-        self.email = dbuser.email or ''
-        self.affiliation = dbuser.affiliation or ''
+        self.email = dbuser.email or ""
+        self.affiliation = dbuser.affiliation or ""
         category = dbuser.category or 0
 
-        print('ca', category, self.available_categories)
+        print("ca", category, self.available_categories)
         self.categories = parse_categories(category, self.available_categories)
         info = self.edit_traits()
         if info.result:
             if self.user == self.original_user:
                 dbuser.email = self.email
-                dbuser.category = make_categories(self.categories, self.available_categories)
+                dbuser.category = make_categories(
+                    self.categories, self.available_categories
+                )
                 dbuser.affiliation = self.affiliation
             else:
                 self._add_item(db)
@@ -96,67 +97,72 @@ class UserEntry(BaseEntry):
         with db.session_ctx():
             if not db.get_user(name):
                 c = make_categories(self.categories, self.available_categories)
-                db.add_user(name, email=self.email,
-                            category=c,
-                            affiliation=self.affiliation)
+                db.add_user(
+                    name, email=self.email, category=c, affiliation=self.affiliation
+                )
                 return True
 
     def traits_view(self):
-        g = VGroup(Item('user', style=self.user_style),
-                   Item('email'),
-                   Item('affiliation'),
-                   Item('categories',
-                        style='custom',
-                        editor=CheckListEditor(name='available_categories', cols=3)))
-        v = self._new_view(g, title='Edit User')
+        g = VGroup(
+            Item("user", style=self.user_style),
+            Item("email"),
+            Item("affiliation"),
+            Item(
+                "categories",
+                style="custom",
+                editor=CheckListEditor(name="available_categories", cols=3),
+            ),
+        )
+        v = self._new_view(g, title="Edit User")
         return v
+
 
 # ============= EOF =============================================
 #             # db = self.db
-    #             # name = self.user
-    #             # with db.session_ctx():
-    #             # user = db.get_user(self.original_user)
-    #             # if user:
-    #             #     user.na
+#             # name = self.user
+#             # with db.session_ctx():
+#             # user = db.get_user(self.original_user)
+#             # if user:
+#             #     user.na
 
-    # def add_user(self, user):
-    #     db = self.db
-    #     with db.session_ctx():
-    #         dbuser = db.get_user(user)
-    #         print dbuser
-    #         if dbuser:
-    #             self._edit_user(dbuser)
-    #         else:
-    #             self.user = user
-    #
-    #             self._add_user()
-    #
-    #         return self.user
-    #
-    # def _add_user(self, ):
-    #     self.info('adding user')
-    #     db = self.db
-    #     name = self.user
-    #     if not self._add_user_db(db, name):
-    #         while 1:
-    #             info = self.edit_traits()
-    #             if info.result:
-    #
-    #                 name = self.user
-    #                 if self._add_user_db(db, name):
-    #                     break
-    #                 else:
-    #                     self.warning_dialog('{} already exists'.format(name))
-    #                     # with db.session_ctx():
-    #                     #     if not db.get_user(name):
-    #                     #         c = make_categories(self.categories, self.available_categories)
-    #                     #
-    #                     #         db.add_user(name, email=self.email,
-    #                     #                     category=c,
-    #                     #                     affiliation=self.affiliation)
-    #                     #         break
-    #                     #     else:
-    #                     #         self.warning_dialog('{} already exists'.format(name))
-    #             else:
-    #                 break
-    #
+# def add_user(self, user):
+#     db = self.db
+#     with db.session_ctx():
+#         dbuser = db.get_user(user)
+#         print dbuser
+#         if dbuser:
+#             self._edit_user(dbuser)
+#         else:
+#             self.user = user
+#
+#             self._add_user()
+#
+#         return self.user
+#
+# def _add_user(self, ):
+#     self.info('adding user')
+#     db = self.db
+#     name = self.user
+#     if not self._add_user_db(db, name):
+#         while 1:
+#             info = self.edit_traits()
+#             if info.result:
+#
+#                 name = self.user
+#                 if self._add_user_db(db, name):
+#                     break
+#                 else:
+#                     self.warning_dialog('{} already exists'.format(name))
+#                     # with db.session_ctx():
+#                     #     if not db.get_user(name):
+#                     #         c = make_categories(self.categories, self.available_categories)
+#                     #
+#                     #         db.add_user(name, email=self.email,
+#                     #                     category=c,
+#                     #                     affiliation=self.affiliation)
+#                     #         break
+#                     #     else:
+#                     #         self.warning_dialog('{} already exists'.format(name))
+#             else:
+#                 break
+#

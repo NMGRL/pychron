@@ -18,9 +18,11 @@ from datetime import datetime, timedelta
 
 import six
 from sqlalchemy import func, DateTime
+
 # ============= standard library imports ========================
 from sqlalchemy.engine.default import DefaultDialect
 from sqlalchemy.sql.sqltypes import NullType, String as SQLString
+
 # ============= enthought library imports =======================
 from traits.api import String
 
@@ -38,7 +40,9 @@ def in_func(q, col, values):
 
             q = q.filter(col == values)
         else:
-            values = [v.lower() if isinstance(v, (str, six.text_type)) else v for v in values]
+            values = [
+                v.lower() if isinstance(v, (str, six.text_type)) else v for v in values
+            ]
             q = q.filter(col.in_(values))
     return q
 
@@ -71,7 +75,8 @@ class LiteralDialect(DefaultDialect):
         # teach SA about how to literalize a datetime
         DateTime: StringLiteral,
         # don't format py2 long integers to NULL
-        NullType: StringLiteral}
+        NullType: StringLiteral,
+    }
 
 
 def literalquery(statement):
@@ -82,14 +87,16 @@ def literalquery(statement):
 
     return statement.compile(
         dialect=LiteralDialect(),
-        compile_kwargs={'literal_binds': True},
+        compile_kwargs={"literal_binds": True},
     ).string
 
 
 # ==============================================================================
 
+
 def compile_query(query):
     return literalquery(query.statement)
+
 
 # ============= EOF =============================================
 

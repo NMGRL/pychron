@@ -27,27 +27,24 @@ from pychron.paths import paths
 
 
 def default_mapping():
-    j = {'c-01-j': 4358,
-         'c-02-j': 4416,
-         'c-mc-j': 4418,
-         'c-03-j': 4424}
-    f = {'c-02-f': 4415,
-         'c-mc-f': 4417,
-         'c-03-f': 4423}
+    j = {"c-01-j": 4358, "c-02-j": 4416, "c-mc-j": 4418, "c-03-j": 4424}
+    f = {"c-02-f": 4415, "c-mc-f": 4417, "c-03-f": 4423}
 
-    o = {'c-01-o': 4359}
-    return {'MassSpec': {'felix': f, 'jan': j, 'obama': o}}
+    o = {"c-01-o": 4359}
+    return {"MassSpec": {"felix": f, "jan": j, "obama": o}}
 
 
 class IdentifierMapper(Loggable):
-    def map_to_value(self, value, spectrometer, destination='MassSpec'):
+    def map_to_value(self, value, spectrometer, destination="MassSpec"):
         mapping = self._get_spectrometer_mapping(spectrometer.lower(), destination)
         lvalue = value.lower()
         if lvalue in mapping:
             m = mapping[lvalue]
         else:
-            self.debug('value "{}" not in mapping for spectrometer "{}". '
-                       'Available keys={}'.format(value, spectrometer, mapping.keys()))
+            self.debug(
+                'value "{}" not in mapping for spectrometer "{}". '
+                "Available keys={}".format(value, spectrometer, mapping.keys())
+            )
 
             m = value
 
@@ -56,7 +53,6 @@ class IdentifierMapper(Loggable):
 
     # private
     def _get_spectrometer_mapping(self, spec, destination):
-
         mapping = self._get_mapping()
         dmapping = mapping.get(destination, {})
         return dmapping.get(spec, {})
@@ -64,9 +60,14 @@ class IdentifierMapper(Loggable):
     def _get_mapping(self):
         p = paths.identifier_mapping_file
         if not os.path.isfile(p):
-            self.warning('Using the default identifier mapping because {} does not exist'.format(p))
+            self.warning(
+                "Using the default identifier mapping because {} does not exist".format(
+                    p
+                )
+            )
             return default_mapping()
         else:
             return yload(p)
+
 
 # ============= EOF =============================================

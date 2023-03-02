@@ -35,4 +35,5 @@ class XYScatterPanel(FigurePanel):
     def _make_graph_hook(self, g):
         g.refresh()
 
+
 # ============= EOF =============================================

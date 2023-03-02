@@ -17,25 +17,30 @@
 from __future__ import absolute_import
 from traitsui.api import View, Item, TabularEditor, HGroup, Controller
 from traitsui.tabular_adapter import TabularAdapter
+
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 
 class SampleHoleAdapter(TabularAdapter):
-    columns = [('ID', 'id'),
-               ('X', 'x'), ('Y', 'y'),
-               ('XCor', 'x_cor'), ('YCor', 'y_cor'),
-               ('Render', 'render')]
+    columns = [
+        ("ID", "id"),
+        ("X", "x"),
+        ("Y", "y"),
+        ("XCor", "x_cor"),
+        ("YCor", "y_cor"),
+        ("Render", "render"),
+    ]
 
     def set_text(self, obj, trait, row, column, txt):
         if column in [3, 4]:
             try:
                 txt = float(txt)
             except:
-                txt = '0'
+                txt = "0"
 
         setattr(getattr(obj, trait)[row], self.columns[column][1], txt)
-
 
 
 class StageMapView(Controller):
@@ -43,15 +48,15 @@ class StageMapView(Controller):
     def traits_view(self):
         editor = TabularEditor(adapter=SampleHoleAdapter())
         v = View(
-            HGroup(Item('clear_corrections', show_label=False)),
-            HGroup(Item('g_shape'),
-                   Item('g_dimension'), show_labels=False),
-
-            Item('sample_holes',
-                 show_label=False, editor=editor),
-            height=500, width=250,
+            HGroup(Item("clear_corrections", show_label=False)),
+            HGroup(Item("g_shape"), Item("g_dimension"), show_labels=False),
+            Item("sample_holes", show_label=False, editor=editor),
+            height=500,
+            width=250,
             resizable=True,
-            title=self.model.name)
+            title=self.model.name,
+        )
         return v
+
 
 # ============= EOF =============================================

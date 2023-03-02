@@ -54,7 +54,6 @@ def bin_analyses(ans):
 def get_bounds(groups):
     bs = []
     for i, gi in enumerate(groups):
-
         try:
             gii = groups[i + 1]
         except IndexError:
@@ -74,9 +73,9 @@ class BinGroup(HasTraits):
 
 
 class InterpolationEditor(FigureEditor):
-
     def set_references(self, refs):
         self.clear_aux_plot_limits()
         self.references = refs
+
 
 # ============= EOF =============================================

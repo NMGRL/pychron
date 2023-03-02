@@ -20,4 +20,6 @@ from pychron.spectrometer.isotopx.spectrometer.ngx import NGXSpectrometer
 
 class NGXSpectrometerManager(BaseSpectrometerManager):
     spectrometer_klass = NGXSpectrometer
+
+
 # ============= EOF =============================================

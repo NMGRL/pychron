@@ -18,7 +18,17 @@ import shutil
 from operator import attrgetter
 
 from traits.api import HasTraits, Float, Str, List, Bool, Property, Int
-from traitsui.api import View, UItem, Item, HGroup, ListEditor, EnumEditor, Label, InstanceEditor, VGroup
+from traitsui.api import (
+    View,
+    UItem,
+    Item,
+    HGroup,
+    ListEditor,
+    EnumEditor,
+    Label,
+    InstanceEditor,
+    VGroup,
+)
 
 from pychron.core.helpers.iterfuncs import groupby_repo, groupby_key
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
@@ -42,15 +52,19 @@ class ICFactor(HasTraits):
         return self.use and self.det and self.value
 
     def traits_view(self):
-        v = View(HGroup(UItem('use'),
-                        UItem('det', editor=EnumEditor(name='detectors')),
-                        Item('value'),
-                        Label(PLUSMINUS),
-                        UItem('error')))
+        v = View(
+            HGroup(
+                UItem("use"),
+                UItem("det", editor=EnumEditor(name="detectors")),
+                Item("value"),
+                Label(PLUSMINUS),
+                UItem("error"),
+            )
+        )
         return v
 
     def tostr(self):
-        return '{}:{}({})'.format(self.det, self.value, self.error)
+        return "{}:{}({})".format(self.det, self.value, self.error)
 
 
 class BulkOptions(HasTraits):
@@ -67,35 +81,47 @@ class BulkOptions(HasTraits):
         return [ic.tostr() for ic in self.ic_factors if ic.enabled]
 
     def traits_view(self):
-        icgrp = BorderVGroup(UItem('ic_factors',
-                                   editor=ListEditor(mutable=False,
-                                                     style='custom',
-                                                     editor=InstanceEditor())),
-                             label='IC Factors')
+        icgrp = BorderVGroup(
+            UItem(
+                "ic_factors",
+                editor=ListEditor(
+                    mutable=False, style="custom", editor=InstanceEditor()
+                ),
+            ),
+            label="IC Factors",
+        )
 
-        runid_grp = BorderVGroup(HGroup(Item('aliquot'), Item('step')),
-                                 label='RunID')
-        sample_grp = BorderVGroup(Item('sync_sample_enabled',
-                                       label='Sync Sample MetaData',
-                                       tooltip='Sync analysis sample metadata to the database'),
-                                  label='Sample')
-        v = okcancel_view(VGroup(icgrp, runid_grp, sample_grp),
-                          title='Bulk Edit Options')
+        runid_grp = BorderVGroup(HGroup(Item("aliquot"), Item("step")), label="RunID")
+        sample_grp = BorderVGroup(
+            Item(
+                "sync_sample_enabled",
+                label="Sync Sample MetaData",
+                tooltip="Sync analysis sample metadata to the database",
+            ),
+            label="Sample",
+        )
+        v = okcancel_view(
+            VGroup(icgrp, runid_grp, sample_grp), title="Bulk Edit Options"
+        )
         return v
 
     def _ic_factors_default(self):
-        return [ICFactor(detectors=self.detectors),
-                ICFactor(detectors=self.detectors),
-                ICFactor(detectors=self.detectors)]
+        return [
+            ICFactor(detectors=self.detectors),
+            ICFactor(detectors=self.detectors),
+            ICFactor(detectors=self.detectors),
+        ]
 
 
 class BulkEditNode(BaseDVCNode):
     options_klass = BulkOptions
-    name = 'Bulk Edit'
+    name = "Bulk Edit"
 
     def pre_run(self, state, configure=True):
         if state.unknowns:
-            dets = list({iso.detector for ai in state.unknowns for iso in ai.itervalues()})
+            dets = list(
+                {iso.detector for ai in state.unknowns for iso in ai.itervalues()}
+            )
             self.options.detectors = dets
 
         return super(BulkEditNode, self).pre_run(state, configure=configure)
@@ -105,15 +131,26 @@ class BulkEditNode(BaseDVCNode):
 
         icfs = [ic_factor for ic_factor in self.options.ic_factors if ic_factor.enabled]
         if icfs:
+            author = self.dvc.get_author()
             for ai in ans:
                 self._bulk_ic_factor(ai, icfs)
 
-            self.dvc.update_analyses(ans, 'icfactors', '<ICFactor> bulk edit {}'.format(self.options.icfactor_message))
+            self.dvc.update_analyses(
+                ans,
+                "icfactors",
+                "<ICFactor> bulk edit {}".format(self.options.icfactor_message),
+                author,
+            )
 
         if self.options.aliquot or self.options.step:
+            if not author:
+                author = self.dvc.get_author()
+
             paths = {}
             for ai in ans:
-                expid, ps = self._bulk_runid(ai, self.options.aliquot, self.options.step)
+                expid, ps = self._bulk_runid(
+                    ai, self.options.aliquot, self.options.step
+                )
                 if expid in paths:
                     pp = paths[expid]
                     pp.extend(ps)
@@ -124,17 +161,22 @@ class BulkEditNode(BaseDVCNode):
 
             for expid, ps in paths.items():
                 if self.dvc.repository_add_paths(expid, ps):
-                    self.dvc.repository_commit(expid, '<EDIT> RunID')
+                    self.dvc.repository_commit(expid, "<EDIT> RunID", author)
 
         if self.options.sync_sample_enabled:
+            if not author:
+                author = self.dvc.get_author()
+
             for repo, ais in groupby_repo(ans):
                 self.dvc.pull_repository(repo)
                 ps = []
-                for identifier, ais in groupby_key(ais, attrgetter('identifier')):
+                for identifier, ais in groupby_key(ais, attrgetter("identifier")):
                     ps.extend(self.dvc.analyses_db_sync(identifier, ais, repo))
 
                 if self.dvc.repository_add_paths(repo, ps):
-                    self.dvc.repository_commit(repo, '<EDIT> Sync Sample MetaData')
+                    self.dvc.repository_commit(
+                        repo, "<EDIT> Sync Sample MetaData", author
+                    )
 
     def _bulk_runid(self, ai, aliquot, step):
         if not aliquot:
@@ -147,24 +189,24 @@ class BulkEditNode(BaseDVCNode):
         def modify_meta(p):
             jd = dvc_load(p)
 
-            jd['aliquot'] = aliquot
-            jd['increment'] = alpha_to_int(step)
+            jd["aliquot"] = aliquot
+            jd["increment"] = alpha_to_int(step)
 
             dvc_dump(jd, p)
 
         ps = []
         repo_id = ai.repository_identifier
-        sp = analysis_path(('', ai.record_id), repo_id)
+        sp = analysis_path(("", ai.record_id), repo_id)
         if sp:
             modify_meta(sp)
             ps.append(sp)
             # using runid path name
             new_runid = make_runid(ai.identifier, aliquot, step)
             for m in NPATH_MODIFIERS:
-                sp = analysis_path(('', ai.record_id), repo_id, modifier=m)
-                dp = analysis_path(('', new_runid), repo_id, modifier=m, mode='w')
+                sp = analysis_path(("", ai.record_id), repo_id, modifier=m)
+                dp = analysis_path(("", new_runid), repo_id, modifier=m, mode="w")
                 if sp and os.path.isfile(sp):
-                    if os.path.isfile(dp) and m != 'extraction':
+                    if os.path.isfile(dp) and m != "extraction":
                         continue
                     ps.append(sp)
                     ps.append(dp)
@@ -182,19 +224,23 @@ class BulkEditNode(BaseDVCNode):
         keys, fits = [], []
         for ic_factor in icfs:
             keys.append(ic_factor.det)
-            fits.append('bulk_edit')
+            fits.append("bulk_edit")
 
             # print('ic', ic_factor.det, ic_factor.value, ic_factor.error)
-            ic = ai.set_temporary_ic_factor(ic_factor.det, ic_factor.value, ic_factor.error,
-                                            tag='{} IC'.format(ic_factor.det))
+            ic = ai.set_temporary_ic_factor(
+                ic_factor.det,
+                ic_factor.value,
+                ic_factor.error,
+                tag="{} IC".format(ic_factor.det),
+            )
             for iso in ai.get_isotopes_for_detector(ic_factor.det):
                 iso.ic_factor = ic
 
         ai.dump_icfactors(keys, fits, reviewed=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     b = BulkOptions()
-    b.detectors = ['H1', 'AX', 'CDD']
+    b.detectors = ["H1", "AX", "CDD"]
     b.configure_traits()
 # ============= EOF =============================================

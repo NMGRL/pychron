@@ -16,7 +16,9 @@
 
 # ============= enthought library imports =======================
 from __future__ import absolute_import
-from pychron.constants.tasks.arar_constants_preferences import ArArConstantsPreferencesPane
+from pychron.constants.tasks.arar_constants_preferences import (
+    ArArConstantsPreferencesPane,
+)
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -24,9 +26,14 @@ from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 
 
 class ArArConstantsPlugin(BaseTaskPlugin):
-    id = 'pychron.arar_constants'
-    name = 'ArArConstants'
+    id = "pychron.arar_constants"
+    name = "ArArConstants"
+
+    def _preferences_default(self):
+        return self._preferences_factory("arar_constants")
+
     def _preferences_panes_default(self):
         return [ArArConstantsPreferencesPane]
+
 
 # ============= EOF =============================================

@@ -17,8 +17,16 @@
 
 # =============enthought library imports=======================
 from traits.api import Float, Property, Button, Bool, Str, String
-from traitsui.api import Item, spring, Group, HGroup, \
-    RangeEditor, ButtonEditor, UItem, EnumEditor
+from traitsui.api import (
+    Item,
+    spring,
+    Group,
+    HGroup,
+    RangeEditor,
+    ButtonEditor,
+    UItem,
+    EnumEditor,
+)
 
 # =============standard library imports ========================
 
@@ -26,9 +34,15 @@ from traitsui.api import Item, spring, Group, HGroup, \
 from pychron.core.ui.color_map_bar_editor import BarGaugeEditor
 from pychron.hardware.pyrometer import Pyrometer
 
-TIME_CONSTANTS = {'0': 'Intrinsic', '1': '0.01 s',
-                  '2': '0.05 s', '3': '0.25', '4': '1.00 s',
-                  '5': '3.00 s', '6': '10.00 s'}
+TIME_CONSTANTS = {
+    "0": "Intrinsic",
+    "1": "0.01 s",
+    "2": "0.05 s",
+    "3": "0.25",
+    "4": "1.00 s",
+    "5": "3.00 s",
+    "6": "10.00 s",
+}
 
 
 class MikronGA140Pyrometer(Pyrometer):
@@ -44,34 +58,36 @@ class MikronGA140Pyrometer(Pyrometer):
     wait time (tw) at RS485 = 10;
     switch for serial interface (RS485 / RS232) = RS232
     """
-    device_address = '00'
+
+    device_address = "00"
     global_address = 99
     global_address_wo_response = 98
 
-    emissivity = Property(Float(enter_set=True, auto_set=False), depends_on='_emissivity')
+    emissivity = Property(
+        Float(enter_set=True, auto_set=False), depends_on="_emissivity"
+    )
     _emissivity = Float(50.0)
     emmin = Float(10.0)
     emmax = Float(100.0)
 
-    time_constant = Property(String(enter_set=True, auto_set=False), depends_on='_time_constant')
+    time_constant = Property(
+        String(enter_set=True, auto_set=False), depends_on="_time_constant"
+    )
     _time_constant = Str
 
-    units = Str('C')
+    units = Str("C")
 
-    scan_func = 'read_temperature'
+    scan_func = "read_temperature"
 
     def initialize(self, *args, **kw):
-        """
-        """
+        """ """
 
         self.read_emissivity()
         self.read_exposition_time()
         return True
 
     def load_additional_args(self, config):
-        """
-
-        """
+        """ """
         # self.communicator.char_write = True
         return True
 
@@ -80,11 +96,16 @@ class MikronGA140Pyrometer(Pyrometer):
         return self.temperature
 
     def _build_command(self, cmd, value=None, per_mil=False, single_digit=False):
-        """
-
-        """
-        fmt = '{}{}' if value is None else '{}{}{:04d}' if per_mil else \
-            '{}{}{:d}' if single_digit else '{}{}{:02d}'
+        """ """
+        fmt = (
+            "{}{}"
+            if value is None
+            else "{}{}{:04d}"
+            if per_mil
+            else "{}{}{:d}"
+            if single_digit
+            else "{}{}{:02d}"
+        )
         args = (self.device_address, cmd)
 
         if value is not None:
@@ -92,33 +113,29 @@ class MikronGA140Pyrometer(Pyrometer):
 
         return fmt.format(*args)
 
-    def _parse_response(self, resp, scalar=10, response_type='float'):
-        """
-
-        """
+    def _parse_response(self, resp, scalar=10, response_type="float"):
+        """ """
         if resp is None:
-            if response_type == 'float':
+            if response_type == "float":
                 resp = self.get_random_value()
         else:
-
             resp = resp.strip()
-            if response_type == 'float':
+            if response_type == "float":
                 try:
                     resp = int(resp)
                 except ValueError:
                     resp = 0
                 resp /= float(scalar)
-            elif response_type == 'hex_range':
+            elif response_type == "hex_range":
                 low = int(resp[:4], 16)
                 high = int(resp[4:], 16)
                 resp = (low, high)
         return resp
 
     def read_temperature(self, **kw):
-        """
-        """
+        """ """
 
-        cmd = self._build_command('ms')
+        cmd = self._build_command("ms")
         temp = self._parse_response(self.ask(cmd, **kw))
 
         self.temperature = temp or 0
@@ -126,15 +143,13 @@ class MikronGA140Pyrometer(Pyrometer):
         return self.temperature
 
     def read_basic_temperature_range(self):
-        """
-        """
-        cmd = self._build_command('mb')
-        return self._parse_response(self.ask(cmd), response_type='hex_range')
+        """ """
+        cmd = self._build_command("mb")
+        return self._parse_response(self.ask(cmd), response_type="hex_range")
 
     def read_emissivity(self):
-        """
-        """
-        cmd = self._build_command('em')
+        """ """
+        cmd = self._build_command("em")
         emv = self._parse_response(self.ask(cmd), scalar=10)
         if emv and not self.simulation:
             self._emissivity = emv
@@ -142,13 +157,12 @@ class MikronGA140Pyrometer(Pyrometer):
         return emv
 
     def read_internal_temperature(self):
-        """
-        """
-        cmd = self._build_command('gt')
+        """ """
+        cmd = self._build_command("gt")
         return self._parse_response(self.ask(cmd))
 
     def read_exposition_time(self):
-        cmd = self._build_command('ez', single_digit=True)
+        cmd = self._build_command("ez", single_digit=True)
         v = self._parse_response(self.ask(cmd))
         if v is not None and not self.simulation:
             if v in TIME_CONSTANTS:
@@ -157,11 +171,11 @@ class MikronGA140Pyrometer(Pyrometer):
 
     def set_exposition_time(self, value):
         """
-            0 = intrinsic time constant of the device
-            1 = 0.01 s    4 = 1.00 s    2 = 0.05 s
-            5 = 3.00 s    3 = 0.25 s    6 = 10.00 s
+        0 = intrinsic time constant of the device
+        1 = 0.01 s    4 = 1.00 s    2 = 0.05 s
+        5 = 3.00 s    3 = 0.25 s    6 = 10.00 s
         """
-        cmd = self._build_command('ez', value=value, single_digit=True)
+        cmd = self._build_command("ez", value=value, single_digit=True)
         self.ask(cmd)
 
     def _get_time_constant(self):
@@ -169,7 +183,7 @@ class MikronGA140Pyrometer(Pyrometer):
             return TIME_CONSTANTS[self._time_constant]
 
     def _set_time_constant(self, v):
-        self.debug('set time constant ={}'.format(v))
+        self.debug("set time constant ={}".format(v))
         self.set_exposition_time(v)
 
     def _get_emissivity(self):
@@ -189,23 +203,21 @@ class MikronGA140Pyrometer(Pyrometer):
 
     def set_emissivity(self, emv, per_mil=True):
         """
-            set emissivity in %
+        set emissivity in %
         """
 
         v = emv * 10.0 if per_mil else emv
-        cmd = self._build_command('em', value=v, per_mil=per_mil)
+        cmd = self._build_command("em", value=v, per_mil=per_mil)
 
-        resp = self._parse_response(self.ask(cmd), response_type='text')
+        resp = self._parse_response(self.ask(cmd), response_type="text")
         if resp is not None or self.simulation:
             self._emissivity = emv
 
     def set_analog_output(self, output_range_id):
         """
-            0 = 0...20mA  1 = 4...20mA
+        0 = 0...20mA  1 = 4...20mA
         """
-        cmd = self._build_command('as',
-                                  value=output_range_id,
-                                  single_digit=True)
+        cmd = self._build_command("as", value=output_range_id, single_digit=True)
         self.ask(cmd)
 
     def set_laser_pointer(self, onoff):
@@ -215,29 +227,36 @@ class MikronGA140Pyrometer(Pyrometer):
         """
         value = 1 if onoff else 0
 
-        cmd = self._build_command('la', value=value, single_digit=True)
+        cmd = self._build_command("la", value=value, single_digit=True)
         return self.ask(cmd)
 
     def get_control_group(self):
-        cg = Group(HGroup(UItem('pointer', editor=ButtonEditor(label_value='pointer_label')),
-                          Item('time_constant', editor=EnumEditor(values=TIME_CONSTANTS)),
-                          spring, ),
-                   HGroup(Item('temperature',
-                               width=50,
-                               format_str='%0.1f', style='readonly'),
-                          Item('temperature',
-                               width=-150,
-                               show_label=False,
-                               editor=BarGaugeEditor(low=300,
-                                                     high=1500,
-                                                     colormap='hot',
-                                                     scale='linear',
-                                                     width=100))),
-                   Item('emissivity', editor=RangeEditor(format='%0.1f',
-                                                         mode='slider',
-                                                         low_name='emmin',
-                                                         high_name='emmax')))
+        cg = Group(
+            HGroup(
+                UItem("pointer", editor=ButtonEditor(label_value="pointer_label")),
+                Item("time_constant", editor=EnumEditor(values=TIME_CONSTANTS)),
+                spring,
+            ),
+            HGroup(
+                Item("temperature", width=50, format_str="%0.1f", style="readonly"),
+                Item(
+                    "temperature",
+                    width=-150,
+                    show_label=False,
+                    editor=BarGaugeEditor(
+                        low=300, high=1500, colormap="hot", scale="linear", width=100
+                    ),
+                ),
+            ),
+            Item(
+                "emissivity",
+                editor=RangeEditor(
+                    format="%0.1f", mode="slider", low_name="emmin", high_name="emmax"
+                ),
+            ),
+        )
         return cg
+
 
 # ============= EOF =============================================
 

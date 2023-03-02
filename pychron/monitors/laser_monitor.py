@@ -20,13 +20,14 @@ from traits.api import Float, Int
 
 # ============= standard library imports ========================
 import time
+
 # ============= local library imports  ==========================
 from .monitor import Monitor
 
 
 class LaserMonitor(Monitor):
-    """
-    """
+    """ """
+
     max_duration = Float(60)  # in minutes
     gntries = 0
 
@@ -35,20 +36,30 @@ class LaserMonitor(Monitor):
     _md_cnt = 0
 
     def _load_hook(self, config):
-        """
-        """
+        """ """
 
-        self.set_attribute(config, 'max_duration',
-                           'General', 'max_duration', cast='float', optional=True)
+        self.set_attribute(
+            config,
+            "max_duration",
+            "General",
+            "max_duration",
+            cast="float",
+            optional=True,
+        )
 
-        self.set_attribute(config, 'max_duration_period',
-                           'General', 'max_duration_period', cast='float', optional=True)
+        self.set_attribute(
+            config,
+            "max_duration_period",
+            "General",
+            "max_duration_period",
+            cast="float",
+            optional=True,
+        )
 
         return True
 
     def _fcheck_duration(self):
-        """
-        """
+        """ """
         ret = False
         if self._md_cnt % self.max_duration_period == 0:
             ret = self._check_duration()
@@ -59,20 +70,20 @@ class LaserMonitor(Monitor):
         return ret
 
     def _check_duration(self, verbose=True):
-        """
-        """
+        """ """
         # check max duration
         manager = self.manager
         if verbose:
-            self.info('Check lasing duration')
+            self.info("Check lasing duration")
         if not self.start_time:
             self.reset_start_time()
 
         # max duration in mins convert to secs for comparison
         if time.time() - self.start_time > self.max_duration * 60.0:
-            msg = 'Max duration {} (min) exceeded'.format(self.max_duration)
+            msg = "Max duration {} (min) exceeded".format(self.max_duration)
             self.warning(msg)
             manager.emergency_shutoff(reason=msg)
             return True
+
 
 # ============= EOF ====================================

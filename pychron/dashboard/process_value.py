@@ -19,7 +19,15 @@ from __future__ import absolute_import
 import time
 
 from traits.api import HasTraits, Str, Either, Property, Float, Int, Bool, List, Enum
-from traitsui.api import View, VGroup, HGroup, UItem, ListEditor, InstanceEditor, Readonly
+from traitsui.api import (
+    View,
+    VGroup,
+    HGroup,
+    UItem,
+    ListEditor,
+    InstanceEditor,
+    Readonly,
+)
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -36,7 +44,7 @@ class ProcessValue(HasTraits):
     change_threshold = Float(1e-20)
     period = Either(Float, Str)  # "on_change" or number of seconds
     last_time = Float
-    last_time_str = Property(depends_on='last_time')
+    last_time_str = Property(depends_on="last_time")
     enabled = Bool
     last_value = Float
     timeout = Float
@@ -54,7 +62,9 @@ class ProcessValue(HasTraits):
         tt = 60 * 60  # max time (s) allowed without a measurement taken
         # even if the current value is the same as the last value
         threshold = self.change_threshold
-        if abs(self.last_value - v) > threshold or (self.last_time and ct - self.last_time > tt):
+        if abs(self.last_value - v) > threshold or (
+            self.last_time and ct - self.last_time > tt
+        ):
             # a = abs(self.last_value - v) > threshold
             # b = (self.last_time and ct - self.last_time > tt)
             # self.debug('a={} {}-{}>{}, b={}'.format(a, self.last_value, v,threshold, b))
@@ -67,28 +77,38 @@ class ProcessValue(HasTraits):
     def _get_display_name(self):
         n = self.name
         if self.units:
-            n = '{} ({})'.format(n, self.units)
+            n = "{} ({})".format(n, self.units)
         return n
 
     def traits_view(self):
-        v = View(VGroup(HGroup(UItem('enabled'), Readonly('name')),
-                        VGroup(HGroup(Readonly('tag'),
-                                      Readonly('period')),
-                               HGroup(Readonly('last_time_str'),
-                                      Readonly('last_value')),
-                               VGroup(UItem('conditionals', editor=ListEditor(editor=InstanceEditor(),
-                                                                              style='custom',
-                                                                              mutable=False)),
-                                      show_border=True,
-                                      label='Conditionals'),
-                               enabled_when='enabled')))
+        v = View(
+            VGroup(
+                HGroup(UItem("enabled"), Readonly("name")),
+                VGroup(
+                    HGroup(Readonly("tag"), Readonly("period")),
+                    HGroup(Readonly("last_time_str"), Readonly("last_value")),
+                    VGroup(
+                        UItem(
+                            "conditionals",
+                            editor=ListEditor(
+                                editor=InstanceEditor(), style="custom", mutable=False
+                            ),
+                        ),
+                        show_border=True,
+                        label="Conditionals",
+                    ),
+                    enabled_when="enabled",
+                ),
+            )
+        )
         return v
 
     def _get_last_time_str(self):
-        r = ''
+        r = ""
         if self.last_time:
             r = convert_timestamp(self.last_time)
 
         return r
+
 
 # ============= EOF =============================================

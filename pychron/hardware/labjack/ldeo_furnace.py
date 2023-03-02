@@ -17,14 +17,13 @@ import struct
 import time
 from threading import Thread
 
-
 from pychron.hardware.core.core_device import CoreDevice
 
 try:
     import LabJackPython
     import u3
 except ImportError:
-    print('Error loading LabJackPython driver')
+    print("Error loading LabJackPython driver")
 
 
 class LamontFurnaceControl(CoreDevice):
@@ -46,7 +45,7 @@ class LamontFurnaceControl(CoreDevice):
 
     def to_double(self, buf):
         right, left = struct.unpack("<Ii", struct.pack("B" * 8, *buf[0:8]))
-        return float(left) + float(right) / (2 ** 32)
+        return float(left) + float(right) / (2**32)
 
     def return_sn(self):
         return self._device.serialNumber
@@ -58,22 +57,34 @@ class LamontFurnaceControl(CoreDevice):
         try:
             self._device = u3.U3()
         except BaseException:
-            self.warning('failed to create U3 device')
+            self.warning("failed to create U3 device")
             return
         return True
 
     def initialize(self, *args, **kw):
         self.scl_pin = self.dac_pin + 4
         self.sda_pin = self.scl_pin + 1
-        self._device.getFeedback(u3.BitStateWrite(4, 0))  # write both sleep lines low to prevent stepper from moving on load
-        self._device.getFeedback(u3.BitStateWrite(5, 0))  # write both sleep lines low to prevent stepper from moving on load
-        self._device.configIO(FIOAnalog=15, NumberOfTimersEnabled=2, TimerCounterPinOffset=8)
-        self._device.configTimerClock(TimerClockBase=3, TimerClockDivisor=50)  # 3 = 1 Mhz; 50 ==> 1/50 = 20 kHz
-        self._device.getFeedback(u3.Timer0Config(TimerMode=7, Value=100))  # FreqOut mode; Value 20 gives (20 kHz)/(2*100) = 100 Hz
-        self._device.getFeedback(u3.Timer1Config(TimerMode=7, Value=100))  # FreqOut mode; Value 20 gives (20 kHz)/(2*100) = 100 Hz
-        print('device SN is ', self._device.serialNumber)
+        self._device.getFeedback(
+            u3.BitStateWrite(4, 0)
+        )  # write both sleep lines low to prevent stepper from moving on load
+        self._device.getFeedback(
+            u3.BitStateWrite(5, 0)
+        )  # write both sleep lines low to prevent stepper from moving on load
+        self._device.configIO(
+            FIOAnalog=15, NumberOfTimersEnabled=2, TimerCounterPinOffset=8
+        )
+        self._device.configTimerClock(
+            TimerClockBase=3, TimerClockDivisor=50
+        )  # 3 = 1 Mhz; 50 ==> 1/50 = 20 kHz
+        self._device.getFeedback(
+            u3.Timer0Config(TimerMode=7, Value=100)
+        )  # FreqOut mode; Value 20 gives (20 kHz)/(2*100) = 100 Hz
+        self._device.getFeedback(
+            u3.Timer1Config(TimerMode=7, Value=100)
+        )  # FreqOut mode; Value 20 gives (20 kHz)/(2*100) = 100 Hz
+        print("device SN is ", self._device.serialNumber)
         data = self._i2c(0x50, [64], NumI2CBytesToReceive=36)
-        response = data['I2CBytes']
+        response = data["I2CBytes"]
         print(response[0:8])
         self.a_slope = self.to_double(response[0:8])
         self.a_offset = self.to_double(response[8:16])
@@ -83,17 +94,16 @@ class LamontFurnaceControl(CoreDevice):
         self.test_connection()
 
     def test_connection(self):
-
         sn = self.return_sn()
         if 256 <= sn <= 2147483647:
-            self.info('Labjack loaded')
+            self.info("Labjack loaded")
             ret = True
-            err = ''
+            err = ""
 
         else:
-            self.warning('Invalid Labjack serial number: check Labjack connection')
+            self.warning("Invalid Labjack serial number: check Labjack connection")
             ret = False
-            err = 'Invalid Labjack serial number: check Labjack connection'
+            err = "Invalid Labjack serial number: check Labjack connection"
 
         return ret, err
 
@@ -102,39 +112,51 @@ class LamontFurnaceControl(CoreDevice):
         return v
 
     def readTC(self, number):
-        temp = self.read_analog_in(number - 1) / .00004  # replace with actual TC table obviously
+        temp = (
+            self.read_analog_in(number - 1) / 0.00004
+        )  # replace with actual TC table obviously
         return temp
 
     def extract(self, value, units=None, furnace=1):
-
         self.furnace = furnace
 
         print(units)
-        if not units == 'volts' or units == 'temperature':
-            units = 'percent'
+        if not units == "volts" or units == "temperature":
+            units = "percent"
 
-        self.info('set furnace output to {} {}'.format(value, units))
-        if units == 'percent':
+        self.info("set furnace output to {} {}".format(value, units))
+        if units == "percent":
             value = value / 10
             if value < 0:
-                self.warning('Consider changing you calibration curve. '
-                             '{} percent converted to {}volts. Voltage must be positive'.format(value * 10, value))
+                self.warning(
+                    "Consider changing you calibration curve. "
+                    "{} percent converted to {}volts. Voltage must be positive".format(
+                        value * 10, value
+                    )
+                )
                 value = 0
 
-        elif units == 'volts':
+        elif units == "volts":
             if value > 10:
-                self.warning('Did you mean to use percent units? '
-                             '{} volts will set furnace to {}% output power.'.format(value, value * 10))
+                self.warning(
+                    "Did you mean to use percent units? "
+                    "{} volts will set furnace to {}% output power.".format(
+                        value, value * 10
+                    )
+                )
                 value = 0
 
-        elif units == 'temperature':
+        elif units == "temperature":
             minvalue = 100
             if value < minvalue:
-                self.warning('Did you mean to use power control? '
-                             '{} degrees is too low for the furnace.  Set to at least {} degrees.'.format(value,
-                                                                                                          minvalue))
+                self.warning(
+                    "Did you mean to use power control? "
+                    "{} degrees is too low for the furnace.  Set to at least {} degrees.".format(
+                        value, minvalue
+                    )
+                )
                 value = 0
-            self.warning('Temperature control not implemented')
+            self.warning("Temperature control not implemented")
             # Some PID control will be added later
 
         self.set_furnace_setpoint(value)
@@ -150,10 +172,12 @@ class LamontFurnaceControl(CoreDevice):
             v = self._map_voltage(49, value, self.b_slope, self.b_offset)
             self._i2c(0x12, v)
         else:
-            self.warning('Invalid furnace number. Only outputs 1 and 2 available.')
+            self.warning("Invalid furnace number. Only outputs 1 and 2 available.")
 
     def _i2c(self, address, value, **kw):
-        return self._device.i2c(address, value, SDAPinNum=self.sda_pin, SCLPinNum=self.scl_pin, **kw)
+        return self._device.i2c(
+            address, value, SDAPinNum=self.sda_pin, SCLPinNum=self.scl_pin, **kw
+        )
 
     def _map_voltage(self, tag, value, slope, offset):
         m = value * slope + offset
@@ -167,32 +191,35 @@ class LamontFurnaceControl(CoreDevice):
     #     return [tag, value]
 
     def drop_ball(self, position):
-
         def func():
-
             self.goto_ball(position)
             time.sleep(5)
             self.returnfrom_ball(position)
+
         t = Thread(target=func)
         t.start()
 
     def goto_ball(self, position):
-        positions = [[1, 5],
-                     [1, 10],
-                     [1, 15],
-                     [1, 20],
-                     [1, 25],
-                     [1, 30],
-                     [1, 200],
-                     [1, 230],
-                     [1, 260],
-                     [1, 290],
-                     [1, 320],
-                     [1, 350]]
+        positions = [
+            [1, 5],
+            [1, 10],
+            [1, 15],
+            [1, 20],
+            [1, 25],
+            [1, 30],
+            [1, 200],
+            [1, 230],
+            [1, 260],
+            [1, 290],
+            [1, 320],
+            [1, 350],
+        ]
 
         stepper_number, runtime = positions[position - 1]
 
-        self.info('Going to position {}; running for {} seconds'.format(position, runtime))
+        self.info(
+            "Going to position {}; running for {} seconds".format(position, runtime)
+        )
 
         if position == 0:  # position command zero does nothing
             runtime = 0
@@ -202,22 +229,24 @@ class LamontFurnaceControl(CoreDevice):
         elif stepper_number == 2:
             a, b = 4, 5
 
-        self._run_stepper(runtime, 'forward', a, b)
+        self._run_stepper(runtime, "forward", a, b)
         time.sleep(runtime)
 
     def returnfrom_ball(self, position):
-        positions = [[1, 5],
-                     [1, 10],
-                     [1, 15],
-                     [1, 20],
-                     [1, 25],
-                     [1, 30],
-                     [1, 200],
-                     [1, 230],
-                     [1, 260],
-                     [1, 290],
-                     [1, 320],
-                     [1, 350]]
+        positions = [
+            [1, 5],
+            [1, 10],
+            [1, 15],
+            [1, 20],
+            [1, 25],
+            [1, 30],
+            [1, 200],
+            [1, 230],
+            [1, 260],
+            [1, 290],
+            [1, 320],
+            [1, 350],
+        ]
 
         stepper_number, runtime = positions[position - 1]
 
@@ -229,27 +258,37 @@ class LamontFurnaceControl(CoreDevice):
         elif stepper_number == 2:
             a, b = 4, 5
 
-        self._run_stepper(runtime + 3, 'backward', a, b)
+        self._run_stepper(runtime + 3, "backward", a, b)
         time.sleep(runtime)
 
     def get_process_value(self):
         # note it is not possible to read the current setting for the LJTick-DAC, so we must measure voltage
         if self.furnace == 1:
-            pv = self.read_analog_in(2)  # assumes LJTick-DAC first channel is wired to AIN 2
+            pv = self.read_analog_in(
+                2
+            )  # assumes LJTick-DAC first channel is wired to AIN 2
         elif self.furnace == 2:
-            pv = self.read_analog_in(3)  # assumes LJTick-DAC first channel is wired to AIN 3
+            pv = self.read_analog_in(
+                3
+            )  # assumes LJTick-DAC first channel is wired to AIN 3
         else:
-            self.warning('Invalid furnace number. Only outputs 1 and 2 available.')
+            self.warning("Invalid furnace number. Only outputs 1 and 2 available.")
         return pv
 
     def get_summary(self):
-        summary = {"time": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), "OP1": self.read_analog_in(2), "TC1": self.readTC(1), "OP2": self.read_analog_in(3), "TC2": self.readTC(2)}
+        summary = {
+            "time": time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()),
+            "OP1": self.read_analog_in(2),
+            "TC1": self.readTC(1),
+            "OP2": self.read_analog_in(3),
+            "TC2": self.readTC(2),
+        }
         return summary
 
     def _run_stepper(self, runtime, direction, a_id, b_id):
         def func():
             dev = self._device
-            if direction == 'forward':
+            if direction == "forward":
                 dev.getFeedback(u3.BitStateWrite(a_id, 0))
             else:
                 dev.getFeedback(u3.BitStateWrite(a_id, 1))
@@ -257,19 +296,20 @@ class LamontFurnaceControl(CoreDevice):
             # st = time.time()
             dev.getFeedback(u3.BitStateWrite(b_id, 1))
             time.sleep(runtime)
-            self.info('adjk;fdsajf ', runtime)
+            self.info("adjk;fdsajf ", runtime)
             # while time.time() - st < runtime:
             #     time.sleep(1)
 
             dev.getFeedback(u3.BitStateWrite(b_id, 0))
+
         t = Thread(target=func)
         t.start()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testDev = LamontFurnaceControl()
     testDev.drop_ball(1)
-    testDev.extract(3.1, units='volts', furnace=1)
+    testDev.extract(3.1, units="volts", furnace=1)
     print(testDev.readTC(1))
 
 # ============= EOF =============================================

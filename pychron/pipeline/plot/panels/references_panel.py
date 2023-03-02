@@ -30,18 +30,20 @@ from pychron.processing.analysis_graph import ReferencesGraph
 class ReferencesPanel(FigurePanel):
     references = List
     _graph_klass = ReferencesGraph
+    equi_stack = True
 
     def _make_correlation(self, refplot, xtitle):
-
         fi = self.figures[0]
 
         n = len(list(fi.options.get_plotable_aux_plots()))
         plots = list(reversed(fi.graph.plots))
 
-        xs = refplot.data.get_data('y1')
+        xs = refplot.data.get_data("y1")
 
         r, c = filled_grid(n - 1)
-        g = RegressionGraph(container_dict={'kind': 'g', 'shape': (r, c)}, window_title='Correlation')
+        g = RegressionGraph(
+            container_dict={"kind": "g", "shape": (r, c)}, window_title="Correlation"
+        )
         i = 0
         for pp in plots:
             ytitle = pp.y_axis.title
@@ -49,12 +51,12 @@ class ReferencesPanel(FigurePanel):
                 continue
 
             g.new_plot(xtitle=xtitle, ytitle=ytitle, padding=[80, 10, 10, 40])
-            ys = pp.data.get_data('y1')
-            g.new_series(xs, ys, fit='linear', use_error_envelope=False, plotid=i)
+            ys = pp.data.get_data("y1")
+            g.new_series(xs, ys, fit="linear", use_error_envelope=False, plotid=i)
             g.add_correlation_statistics(plotid=i)
 
-            g.set_x_limits(pad='0.1', plotid=i)
-            g.set_y_limits(pad='0.1', plotid=i)
+            g.set_x_limits(pad="0.1", plotid=i)
+            g.set_y_limits(pad="0.1", plotid=i)
             i += 1
 
         g.refresh()
@@ -63,11 +65,11 @@ class ReferencesPanel(FigurePanel):
 
     def _handle_figure_event(self, evt):
         kind, args = evt
-        if kind == 'correlation':
+        if kind == "correlation":
             self._make_correlation(*args)
 
     def _make_graph_hook(self, g):
-        g.on_trait_change(self._handle_figure_event, 'figure_event')
+        g.on_trait_change(self._handle_figure_event, "figure_event")
 
     def _make_figures(self):
         gs = super(ReferencesPanel, self)._make_figures()
@@ -81,5 +83,6 @@ class ReferencesPanel(FigurePanel):
                 break
 
         return gs
+
 
 # ============= EOF =============================================

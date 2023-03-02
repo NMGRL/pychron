@@ -34,8 +34,8 @@ from pychron.paths import paths
 class ShareableRepo(HasTraits):
     name = Str
     enabled = Bool
-    remote_name = Str('origin')
-    remote_url = Str('http://github.com')
+    remote_name = Str("origin")
+    remote_url = Str("http://github.com")
 
 
 remote_re = re.compile(r'\[remote ".+"\]')
@@ -57,14 +57,17 @@ class PushExperimentsModel(HasTraits):
             root = paths.repository_dataset_dir
 
         for exp in ilist_gits(root):
-            cfg = os.path.join(root, exp, '.git', 'config')
-            with open(cfg, 'r') as rfile:
+            cfg = os.path.join(root, exp, ".git", "config")
+            with open(cfg, "r") as rfile:
                 for line in rfile:
                     if remote_re.match(line):
                         break
                 else:
-                    ss.append(ShareableRepo(name=exp, enabled=True,
-                                            root=os.path.join(root, exp)))
+                    ss.append(
+                        ShareableRepo(
+                            name=exp, enabled=True, root=os.path.join(root, exp)
+                        )
+                    )
 
         self.shareables = ss
 
@@ -73,16 +76,18 @@ class PushExperimentsModel(HasTraits):
         return [s.name for s in self.shareables]
 
     def create_remotes(self):
-        cmd = lambda x: ['git', 'remote', 'add', x.remote_name, x.remote_url]
+        cmd = lambda x: ["git", "remote", "add", x.remote_name, x.remote_url]
         for si in self.shareables:
             if si.enabled:
                 root = si.root
                 ret = subprocess.call(cmd(si), cwd=root)
 
                 # check if url exists
-                if subprocess.call(['git', 'ls-remote'], cwd=root):
+                if subprocess.call(["git", "ls-remote"], cwd=root):
                     # add repo to github
-                    org = Organization(self._org, self._usr, self._pwd, self._oauth_token)
+                    org = Organization(
+                        self._org, self._usr, self._pwd, self._oauth_token
+                    )
                     # org.create_repo(si.name)
 
 
@@ -92,27 +97,29 @@ class PushExperimentsView(Controller):
             self.model.create_remotes()
 
     def traits_view(self):
-        cols = [CheckboxColumn(name='enabled', width=30),
-                ObjectColumn(name='name', editable=False),
-                ObjectColumn(name='remote_name', editable=False,
-                             label='Remote', width=50),
-                ObjectColumn(name='remote_url', editable=False,
-                             label='URL', width=300),
-                ]
-        ev = View(UItem('name'),
-                  UItem('enabled'),
-                  VGroup(UItem('remote_name', label='Name'),
-                         UItem('remote_url', label='URL')))
+        cols = [
+            CheckboxColumn(name="enabled", width=30),
+            ObjectColumn(name="name", editable=False),
+            ObjectColumn(name="remote_name", editable=False, label="Remote", width=50),
+            ObjectColumn(name="remote_url", editable=False, label="URL", width=300),
+        ]
+        ev = View(
+            UItem("name"),
+            UItem("enabled"),
+            VGroup(
+                UItem("remote_name", label="Name"), UItem("remote_url", label="URL")
+            ),
+        )
 
-        v = okcancel_view(UItem('shareables',
-                                editor=TableEditor(columns=cols,
-                                                   edit_view=ev)),
-                          title='Shareable Experiments')
+        v = okcancel_view(
+            UItem("shareables", editor=TableEditor(columns=cols, edit_view=ev)),
+            title="Shareable Experiments",
+        )
         return v
 
 
-if __name__ == '__main__':
-    root = '/Users/ross/Sandbox/testdir'
+if __name__ == "__main__":
+    root = "/Users/ross/Sandbox/testdir"
     pm = PushExperimentsModel(root)
     pv = PushExperimentsView(model=pm)
     pv.configure_traits()

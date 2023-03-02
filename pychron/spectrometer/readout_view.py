@@ -15,14 +15,27 @@
 # ===============================================================================
 
 import os
+
 # ============= standard library imports ========================
 import time
 
 import six.moves.configparser
+
 # ============= enthought library imports =======================
 from pyface.timer.do_later import do_after
 from six.moves import zip
-from traits.api import HasTraits, Str, List, Any, Event, Button, Int, Bool, Float, Either
+from traits.api import (
+    HasTraits,
+    Str,
+    List,
+    Any,
+    Event,
+    Button,
+    Int,
+    Bool,
+    Float,
+    Either,
+)
 from traitsui.api import UItem, VGroup, Item, HGroup, View, TableEditor, Tabbed
 from traitsui.api import spring
 from traitsui.handler import Handler
@@ -34,7 +47,7 @@ from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceLoggable
 from pychron.pychron_constants import NULL_STR
 
-DEFAULT_CONFIG = '''-
+DEFAULT_CONFIG = """-
   - name: HighVoltage
     min: 0
     max: 5
@@ -77,7 +90,7 @@ DEFAULT_CONFIG = '''-
     compare: True
   - name: CDD
     compare: True
-'''
+"""
 
 
 class BaseReadout(HasTraits):
@@ -118,9 +131,12 @@ class BaseReadout(HasTraits):
         tolerance = self.percent_tol
         if tolerance:
             try:
-                self.display_tolerance = '{:0.2f}%'.format(tolerance * 100)
+                self.display_tolerance = "{:0.2f}%".format(tolerance * 100)
                 try:
-                    if abs(self.value - self.config_value) / self.config_value > tolerance:
+                    if (
+                        abs(self.value - self.config_value) / self.config_value
+                        > tolerance
+                    ):
                         return self.name, self.value, self.config_value
                 except TypeError:
                     pass
@@ -128,16 +144,16 @@ class BaseReadout(HasTraits):
                 pass
         else:
             try:
-                self.display_tolerance = '{:0.2f}'.format(self.tolerance)
+                self.display_tolerance = "{:0.2f}".format(self.tolerance)
                 if abs(self.value - self.config_value) > self.tolerance:
                     return self.name, self.value, self.config_value
             except TypeError:
                 pass
 
     def compare_message(self):
-        return '{} does not match. Current:{:0.3f}, Config: {:0.3f}, tol.: {}'.format(self.name, self.value,
-                                                                                      self.config_value,
-                                                                                      self.display_tolerance)
+        return "{} does not match. Current:{:0.3f}, Config: {:0.3f}, tol.: {}".format(
+            self.name, self.value, self.config_value, self.display_tolerance
+        )
 
 
 class Readout(BaseReadout):
@@ -148,7 +164,7 @@ class Readout(BaseReadout):
     _last_query = 0
 
     def traits_view(self):
-        v = View(HGroup(Item('value', style='readonly', label=self.name)))
+        v = View(HGroup(Item("value", style="readonly", label=self.name)))
         return v
 
     def query_value(self):
@@ -167,7 +183,10 @@ class Readout(BaseReadout):
 
     @property
     def query_needed(self):
-        return not self._last_query or (time.time() - self._last_query) > self.query_timeout
+        return (
+            not self._last_query
+            or (time.time() - self._last_query) > self.query_timeout
+        )
 
 
 class DeflectionReadout(BaseReadout):
@@ -190,8 +209,8 @@ class ReadoutView(PersistenceLoggable):
     compare_to_config_enabled = Bool(True)
 
     _alive = False
-    pattributes = ('compare_to_config_enabled', 'refresh_period')
-    persistence_name = 'readout'
+    pattributes = ("compare_to_config_enabled", "refresh_period")
+    persistence_name = "readout"
 
     def __init__(self, *args, **kw):
         super(ReadoutView, self).__init__(*args, **kw)
@@ -202,15 +221,16 @@ class ReadoutView(PersistenceLoggable):
         self._load_configuration()
 
     def _load_configuration(self):
-
-        ypath = os.path.join(paths.spectrometer_dir, 'readout.yaml')
+        ypath = os.path.join(paths.spectrometer_dir, "readout.yaml")
         if not os.path.isfile(ypath):
-            path = os.path.join(paths.spectrometer_dir, 'readout.cfg')
+            path = os.path.join(paths.spectrometer_dir, "readout.cfg")
             if os.path.isfile(path):
                 self._load_cfg(path)
             else:
-                if self.confirmation_dialog('no readout configuration file. \n'
-                                            'Would you like to write a default file at {}'.format(ypath)):
+                if self.confirmation_dialog(
+                    "no readout configuration file. \n"
+                    "Would you like to write a default file at {}".format(ypath)
+                ):
                     self._write_default(ypath)
                     self._load_yaml(ypath)
 
@@ -218,12 +238,13 @@ class ReadoutView(PersistenceLoggable):
             self._load_yaml(ypath)
 
     def _load_cfg(self, path):
-        self.warning_dialog('Using readout.cfg is deprecated. Please consider migrating to readout.yaml')
+        self.warning_dialog(
+            "Using readout.cfg is deprecated. Please consider migrating to readout.yaml"
+        )
         config = six.moves.configparser.ConfigParser()
         config.read(path)
         for section in config.sections():
-            rd = Readout(name=section,
-                         spectrometer=self.spectrometer)
+            rd = Readout(name=section, spectrometer=self.spectrometer)
             self.readouts.append(rd)
 
     def _load_yaml(self, path):
@@ -236,28 +257,32 @@ class ReadoutView(PersistenceLoggable):
                 yd = []
 
             for rd in yl:
-                rr = Readout(spectrometer=self.spectrometer,
-                             name=rd['name'],
-                             id=rd.get('id', rd['name']),
-                             hardware_name=rd.get('hardware_name'),
-                             min_value=rd.get('min', 0),
-                             max_value=rd.get('max', 1),
-                             tolerance=rd.get('tolerance', 0.01),
-                             percent_tol=rd.get('percent_tolerance', 0.0),
-                             compare=rd.get('compare', True),
-                             query_timeout=self.refresh_period)
+                rr = Readout(
+                    spectrometer=self.spectrometer,
+                    name=rd["name"],
+                    id=rd.get("id", rd["name"]),
+                    hardware_name=rd.get("hardware_name"),
+                    min_value=rd.get("min", 0),
+                    max_value=rd.get("max", 1),
+                    tolerance=rd.get("tolerance", 0.01),
+                    percent_tol=rd.get("percent_tolerance", 0.0),
+                    compare=rd.get("compare", True),
+                    query_timeout=self.refresh_period,
+                )
                 self.readouts.append(rr)
 
             for rd in yd:
-                rr = DeflectionReadout(spectrometer=self.spectrometer,
-                                       name=rd['name'],
-                                       id=rd.get('id', rd['name']),
-                                       tolerance=rd.get('tolerance', 1),
-                                       compare=rd.get('compare', True))
+                rr = DeflectionReadout(
+                    spectrometer=self.spectrometer,
+                    name=rd["name"],
+                    id=rd.get("id", rd["name"]),
+                    tolerance=rd.get("tolerance", 1),
+                    compare=rd.get("compare", True),
+                )
                 self.deflections.append(rr)
 
     def _write_default(self, ypath):
-        with open(ypath, 'w') as wfile:
+        with open(ypath, "w") as wfile:
             wfile.write(DEFAULT_CONFIG)
 
     @property
@@ -311,6 +336,8 @@ class ReadoutView(PersistenceLoggable):
             for nn, rs in ((ne, self.readouts), (nd, self.deflections)):
                 for r in rs:
                     cv = spec.get_configuration_value(r.id)
+                    if cv is None:
+                        continue
                     r.config_value = cv
                     if r.compare:
                         args = r.config_compare()
@@ -320,51 +347,75 @@ class ReadoutView(PersistenceLoggable):
                     else:
                         r.set_value(NULL_STR)
 
-            ns = ''
+            ns = ""
             if ne:
-                ns = '\n'.join(['{:<16s}\t{:0.3f}\t{:0.3f}'.format(*n) for n in ne])
+                ns = "\n".join(["{:<16s}\t{:0.3f}\t{:0.3f}".format(*n) for n in ne])
 
             if nd:
-                nnn = '\n'.join(['{:<16s}\t\t{:0.0f}\t{:0.0f}'.format(*n) for n in nd])
-                ns = '{}\n{}'.format(ns, nnn)
+                nnn = "\n".join(["{:<16s}\t\t{:0.0f}\t{:0.0f}".format(*n) for n in nd])
+                ns = "{}\n{}".format(ns, nnn)
 
             if ns:
-                msg = 'There is a mismatch between the current spectrometer values and the configuration.\n' \
-                      'Would you like to set the spectrometer to the configuration values?\n\n' \
-                      'Name\t\tCurrent\tConfig\n{}'.format(ns)
+                msg = (
+                    "There is a mismatch between the current spectrometer values and the configuration.\n"
+                    "Would you like to set the spectrometer to the configuration values?\n\n"
+                    "Name\t\tCurrent\tConfig\n{}".format(ns)
+                )
                 if self.confirmation_dialog(msg, size=(725, 300)):
                     spec.send_configuration()
                     spec.set_debug_configuration_values()
 
     def traits_view(self):
         def ff(x):
-            return '{:0.3f}'.format(x) if isinstance(x, float) else x
+            return "{:0.3f}".format(x) if isinstance(x, float) else x
 
-        cols = [ObjectColumn(name='name', label='Name'),
-                ObjectColumn(name='value', format_func=ff,
-                             label='Value', width=50),
-                ObjectColumn(name='config_value', format='%0.3f', label='Config. Value', width=50),
-                ObjectColumn(name='dev', format_func=ff, label='Dev.', width=50),
-                ObjectColumn(name='percent_dev', format_func=ff, label='%Dev.', width=50),
-                ObjectColumn(name='display_tolerance', label='Tol.')]
+        cols = [
+            ObjectColumn(name="name", label="Name"),
+            ObjectColumn(name="value", format_func=ff, label="Value", width=50),
+            ObjectColumn(
+                name="config_value", format="%0.3f", label="Config. Value", width=50
+            ),
+            ObjectColumn(name="dev", format_func=ff, label="Dev.", width=50),
+            ObjectColumn(name="percent_dev", format_func=ff, label="%Dev.", width=50),
+            ObjectColumn(name="display_tolerance", label="Tol."),
+        ]
 
-        dcols = [ObjectColumn(name='name', label='Name', width=100),
-                 ObjectColumn(name='value', format_func=ff, label='Value', width=100),
-                 ObjectColumn(name='dev', format_func=ff, label='Dev.'),
-                 ObjectColumn(name='percent_dev', format_func=ff, label='%Dev.'),
-                 ObjectColumn(name='display_tolerance', label='Tol.')]
+        dcols = [
+            ObjectColumn(name="name", label="Name", width=100),
+            ObjectColumn(name="value", format_func=ff, label="Value", width=100),
+            ObjectColumn(name="dev", format_func=ff, label="Dev."),
+            ObjectColumn(name="percent_dev", format_func=ff, label="%Dev."),
+            ObjectColumn(name="display_tolerance", label="Tol."),
+        ]
 
-        b = VGroup(UItem('readouts', editor=TableEditor(columns=cols, editable=False)), label='General')
-        c = VGroup(UItem('deflections', editor=TableEditor(columns=dcols,
-                                                           sortable=False,
-                                                           editable=False)), label='Deflections')
+        b = VGroup(
+            UItem("readouts", editor=TableEditor(columns=cols, editable=False)),
+            label="General",
+        )
+        c = VGroup(
+            UItem(
+                "deflections",
+                editor=TableEditor(columns=dcols, sortable=False, editable=False),
+            ),
+            label="Deflections",
+        )
 
-        v = View(VGroup(Tabbed(b, c),
-                        HGroup(Item('compare_to_config_enabled', label='Comp. Config',
-                                    tooltip='If checked, compare the current values to the values in the '
-                                            'configuration file. '
-                                            'Warn user if there is a mismatch'),
-                               spring, Item('refresh', show_label=False))))
+        v = View(
+            VGroup(
+                Tabbed(b, c),
+                HGroup(
+                    Item(
+                        "compare_to_config_enabled",
+                        label="Comp. Config",
+                        tooltip="If checked, compare the current values to the values in the "
+                        "configuration file. "
+                        "Warn user if there is a mismatch",
+                    ),
+                    spring,
+                    Item("refresh", show_label=False),
+                ),
+            )
+        )
         return v
 
 
@@ -373,25 +424,40 @@ def new_readout_view(rv):
 
     from pychron.processing.analyses.view.magnitude_editor import MagnitudeColumn
 
-    cols = [ObjectColumn(name='name', label='Name'),
-            ObjectColumn(name='value', format_func=lambda x: '{:0.3f}'.format(x) if isinstance(x, float) else x,
-                         label='Value'),
-            MagnitudeColumn(name='value',
-                            label='',
-                            width=200), ]
-    dcols = [ObjectColumn(name='name', label='Name', width=100),
-             ObjectColumn(name='value', label='Value', width=100)]
+    cols = [
+        ObjectColumn(name="name", label="Name"),
+        ObjectColumn(
+            name="value",
+            format_func=lambda x: "{:0.3f}".format(x) if isinstance(x, float) else x,
+            label="Value",
+        ),
+        MagnitudeColumn(name="value", label="", width=200),
+    ]
+    dcols = [
+        ObjectColumn(name="name", label="Name", width=100),
+        ObjectColumn(name="value", label="Value", width=100),
+    ]
 
-    a = HGroup(Item('refresh_period', label='Period (s)'))
-    b = VGroup(UItem('readouts', editor=TableEditor(columns=cols, editable=False)), label='General')
-    c = VGroup(UItem('deflections', editor=TableEditor(columns=dcols,
-                                                       sortable=False,
-                                                       editable=False)), label='Deflections')
-    v = View(VGroup(a, Tabbed(b, c)),
-             handler=ReadoutHandler(),
-             title='Spectrometer Readout',
-             width=500,
-             resizable=True)
+    a = HGroup(Item("refresh_period", label="Period (s)"))
+    b = VGroup(
+        UItem("readouts", editor=TableEditor(columns=cols, editable=False)),
+        label="General",
+    )
+    c = VGroup(
+        UItem(
+            "deflections",
+            editor=TableEditor(columns=dcols, sortable=False, editable=False),
+        ),
+        label="Deflections",
+    )
+    v = View(
+        VGroup(a, Tabbed(b, c)),
+        handler=ReadoutHandler(),
+        title="Spectrometer Readout",
+        width=500,
+        resizable=True,
+    )
     return v
+
 
 # ============= EOF =============================================

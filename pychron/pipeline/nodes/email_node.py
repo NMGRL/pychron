@@ -17,6 +17,7 @@ from __future__ import absolute_import
 
 import os
 
+from pyface.message_dialog import information
 from traits.api import Instance, List, HasTraits, Str, Bool
 from traitsui.api import UItem, TableEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
@@ -26,7 +27,25 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.core.yaml import yload
 from pychron.paths import paths
 from pychron.pipeline.nodes.base import BaseNode
-from pychron.social.email.emailer import Emailer
+
+try:
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from googleapiclient.discovery import build
+    from googleapiclient.errors import HttpError
+    from pychron.social.email.emailer import Emailer
+except ImportError:
+
+    class Emailer:
+        def send(self, *args, **kw):
+            information(
+                None,
+                "Not all packages that a required to send emails are installed. Please "
+                "install the necessary packages. "
+                "\n"
+                "See https://developers.google.com/gmail/api/quickstart/python",
+            )
 
 
 class Emailee(HasTraits):
@@ -36,22 +55,26 @@ class Emailee(HasTraits):
 
 
 class EmailNode(BaseNode):
-    name = 'Email'
-    emailer = Instance(Emailer)
+    name = "Email"
+    # emailer = Instance(Emailer)
+    emailer = Instance("pychron.social.email.emailer.Emailer")
     addresses = List
 
     def traits_view(self):
-        cols = [CheckboxColumn(name='enabled'),
-                ObjectColumn(name='name'),
-                ObjectColumn(name='email', label='Address')]
+        cols = [
+            CheckboxColumn(name="enabled"),
+            ObjectColumn(name="name"),
+            ObjectColumn(name="email", label="Address"),
+        ]
 
-        v = okcancel_view(UItem('addresses',
-                                editor=TableEditor(columns=cols)),
-                          title='Configure Email')
+        v = okcancel_view(
+            UItem("addresses", editor=TableEditor(columns=cols)),
+            title="Configure Email",
+        )
         return v
 
     def configure(self, *args, **kw):
-        path = os.path.join(paths.setup_dir, 'users.yaml')
+        path = os.path.join(paths.setup_dir, "users.yaml")
         self.addresses = [Emailee(**d) for d in yload(path)]
 
         return super(EmailNode, self).configure(*args, **kw)
@@ -60,12 +83,20 @@ class EmailNode(BaseNode):
         p = state.report_path
         if p:
             addrs = [e.email for e in self.addresses if e.enabled and e.email]
-            sub = 'DailyReport'
+            sub = "DailyReport"
 
-            msg = 'No Report Available'
+            msg = "No Report Available"
             if os.path.isfile(p):
-                msg = 'Daily Report from pychron. See attachment'
+                msg = "Daily Report from pychron. See attachment"
 
-            self.emailer.send(addrs, sub, msg, paths=[p, ])
+            self.emailer.send(
+                addrs,
+                sub,
+                msg,
+                paths=[
+                    p,
+                ],
+            )
+
 
 # ============= EOF =============================================

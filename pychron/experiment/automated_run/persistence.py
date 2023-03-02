@@ -29,7 +29,9 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.core.ui.preference_binding import set_preference
 from pychron.database.adapters.local_lab_adapter import LocalLabAdapter
 from pychron.experiment.automated_run.hop_util import parse_hops
-from pychron.experiment.automated_run.mass_spec_persistence_spec import MassSpecPersistenceSpec
+from pychron.experiment.automated_run.mass_spec_persistence_spec import (
+    MassSpecPersistenceSpec,
+)
 from pychron.loggable import Loggable
 from pychron.managers.data_managers.h5_data_manager import H5DataManager
 from pychron.paths import paths
@@ -57,7 +59,9 @@ class IPersister(Interface):
 
 @provides(IPersister)
 class BasePersister(Loggable):
-    per_spec = Instance('pychron.experiment.automated_run.persistence_spec.PersistenceSpec', ())
+    per_spec = Instance(
+        "pychron.experiment.automated_run.persistence_spec.PersistenceSpec", ()
+    )
     save_enabled = Bool(False)
 
     def set_preferences(self, preferences):
@@ -85,7 +89,7 @@ class BasePersister(Loggable):
         d = get_datetime()
         self.runtime = d.time()
         self.rundate = d.date()
-        self.info('Analysis started at {}'.format(self.runtime))
+        self.info("Analysis started at {}".format(self.runtime))
         self._pre_extraction_save_hook()
 
     def _pre_extraction_save_hook(self):
@@ -105,7 +109,9 @@ def get_sheet(wb, name):
 
 
 class ExcelPersister(BasePersister):
-    data_manager = Instance('pychron.managers.data_managers.xls_data_manager.XLSDataManager', ())
+    data_manager = Instance(
+        "pychron.managers.data_managers.xls_data_manager.XLSDataManager", ()
+    )
 
     def post_extraction_save(self):
         """
@@ -113,21 +119,21 @@ class ExcelPersister(BasePersister):
 
         """
         if DEBUG:
-            self.debug('Not saving extraction to database')
+            self.debug("Not saving extraction to database")
             return
 
-        self.info('post extraction save')
+        self.info("post extraction save")
         wb = self._workbook
-        sh = wb.add_sheet('Meta')
+        sh = wb.add_sheet("Meta")
 
         rs = self.per_spec.run_spec
-        for i, (tag, attr) in enumerate((('User', 'username'),
-                                         ('AnalysisType', 'analysis_type'),
-                                         ('UUID', 'uuid'))):
+        for i, (tag, attr) in enumerate(
+            (("User", "username"), ("AnalysisType", "analysis_type"), ("UUID", "uuid"))
+        ):
             sh.write(i, 0, tag)
             sh.write(i, 1, getattr(rs, attr))
 
-        sh.write(i + 1, 0, 'Load')
+        sh.write(i + 1, 0, "Load")
         sh.write(i + 1, 1, self.load_name)
 
     # def pre_measurement_save(self):
@@ -135,29 +141,30 @@ class ExcelPersister(BasePersister):
     #     """
     #     self.info('pre measurement save')
 
-    def post_measurement_save(self):
+    def post_measurement_save(self, **kw):
         if DEBUG:
-            self.debug('Not measurement saving to xls')
+            self.debug("Not measurement saving to xls")
             return
 
-        self.info('post measurement save')
+        self.info("post measurement save")
         wb = self._workbook
 
-        path = os.path.join(paths.isotope_dir, '{}.xls'.format(self.per_spec.run_spec.runid))
-        sh = wb.add_sheet('data')
+        path = os.path.join(
+            paths.isotope_dir, "{}.xls".format(self.per_spec.run_spec.runid)
+        )
+        sh = wb.add_sheet("data")
         self._save_isotopes(sh)
         wb.save(path)
 
     def _save_isotopes(self, sh):
         for i, (k, iso) in enumerate(self.per_spec.isotope_group.items()):
+            sh.write(0, i, "{} time".format(k))
+            sh.write(0, i + 1, "{} intensity".format(k))
 
-            sh.write(0, i, '{} time'.format(k))
-            sh.write(0, i + 1, '{} intensity'.format(k))
-
-            sh.write(0, i + 2, '{} sniff time'.format(k))
-            sh.write(0, i + 3, '{} sniff intensity'.format(k))
-            sh.write(0, i + 4, '{} baseline time'.format(k))
-            sh.write(0, i + 5, '{} baseline intensity'.format(k))
+            sh.write(0, i + 2, "{} sniff time".format(k))
+            sh.write(0, i + 3, "{} sniff intensity".format(k))
+            sh.write(0, i + 4, "{} baseline time".format(k))
+            sh.write(0, i + 5, "{} baseline intensity".format(k))
 
             for j, x in enumerate(iso.xs):
                 sh.write(j + 1, i, x)
@@ -176,10 +183,10 @@ class ExcelPersister(BasePersister):
 
     def _save_peak_center(self, pc):
         wb = self._workbook
-        sh = wb.add_sheet('PeakCenter')
+        sh = wb.add_sheet("PeakCenter")
         xs, ys = pc.graph.get_data(), pc.graph.get_data(axis=1)
-        sh.write(0, 0, 'DAC (V)')
-        sh.write(0, 1, 'Intensity (fA)')
+        sh.write(0, 0, "DAC (V)")
+        sh.write(0, 1, "Intensity (fA)")
 
         for i, xi in enumerate(xs):
             sh.write(i + 1, 0, xi)
@@ -188,11 +195,11 @@ class ExcelPersister(BasePersister):
             sh.write(i + 1, 1, yi)
 
         xs, ys, _mx, _my = pc.result
-        sh.write(0, 3, 'DAC')
-        sh.write(0, 4, 'Intensity')
-        sh.write(1, 2, 'Low')
-        sh.write(2, 2, 'Center')
-        sh.write(3, 2, 'High')
+        sh.write(0, 3, "DAC")
+        sh.write(0, 4, "Intensity")
+        sh.write(1, 2, "Low")
+        sh.write(2, 2, "Center")
+        sh.write(3, 2, "High")
         for i, xi in enumerate(xs):
             sh.write(i, 3, xi)
         for i, yi in enumerate(ys):
@@ -206,14 +213,15 @@ class AutomatedRunPersister(BasePersister):
     """
     Save automated run data to file and database(s)
 
-    #. save meta data to the local_lab database. This keeps are local record of all analyses run on the local system
+    #. save meta data to the local_lab database. This keeps a local record of all analyses run on the local system
     #. save data to an HDF5 file using a ``H5DataManager``
     #. use the ``Datahub`` to save data to databases
 
     """
+
     dbexperiment_identifier = Long
     # local_lab_db = Instance(LocalLabAdapter)
-    datahub = Instance('pychron.experiment.datahub.Datahub')
+    datahub = Instance("pychron.experiment.datahub.Datahub")
 
     data_manager = Instance(H5DataManager, ())
 
@@ -240,14 +248,30 @@ class AutomatedRunPersister(BasePersister):
         # bind_preference(self, 'use_analysis_grouping', '{}.use_analysis_grouping'.format(prefid))
         # bind_preference(self, 'grouping_threshold', '{}.grouping_threshold'.format(prefid))
         # bind_preference(self, 'grouping_suffix', '{}.grouping_suffix'.format(prefid))
-        self.debug('set preferences')
+        self.debug("set preferences")
 
-        for attr, cast in (('use_analysis_grouping', to_bool),
-                           ('grouping_threshold', float),
-                           ('grouping_suffix', str)):
-            set_preference(preferences, self, attr, 'pychron.experiment.{}'.format(attr), cast)
+        for attr, cast in (
+            ("use_analysis_grouping", to_bool),
+            ("grouping_threshold", float),
+            ("grouping_suffix", str),
+        ):
+            set_preference(
+                preferences, self, attr, "pychron.experiment.{}".format(attr), cast
+            )
 
-        set_preference(preferences, self, 'use_massspec_database', 'pychron.massspec.database.enabled', to_bool)
+        set_preference(
+            preferences,
+            self,
+            "use_massspec_database",
+            "pychron.massspec.database.enabled",
+            to_bool,
+        )
+
+    def insure_run(self):
+        """
+        save the analysis to the local lab db now before the run has actually executed
+        """
+        self._local_db_save()
 
     # ===============================================================================
     # data writing
@@ -260,14 +284,13 @@ class AutomatedRunPersister(BasePersister):
         """
         dm = self.data_manager
         with dm.open_file(self._current_data_frame):
-
-            dm.new_group('peak_centers')
+            dm.new_group("peak_centers")
             for result in pc.get_results():
-                tab = dm.new_table('/peak_centers', result.detector)
+                tab = dm.new_table("/peak_centers", result.detector)
                 for x, y in result.points:
                     nrow = tab.row
-                    nrow['time'] = x
-                    nrow['value'] = y
+                    nrow["time"] = x
+                    nrow["value"] = y
                     nrow.append()
 
                 attrs = tab.attrs
@@ -298,24 +321,29 @@ class AutomatedRunPersister(BasePersister):
                 k = det.name
                 try:
                     if k in keys:
-                        if grpname == 'baseline':
-                            grp = '/{}'.format(grpname)
+                        if grpname == "baseline":
+                            grp = "/{}".format(grpname)
                         else:
-                            grp = '/{}/{}'.format(grpname, det.isotope)
+                            grp = "/{}/{}".format(grpname, det.isotope)
 
-                        tag = '{}/{}'.format(grp, k)
+                        tag = "{}/{}".format(grp, k)
                         if tag in tables:
-                            t = tables['tag']
+                            t = tables["tag"]
                         else:
                             t = dm.get_table(k, grp)
 
                         nrow = t.row
-                        nrow['time'] = x
-                        nrow['value'] = signals[keys.index(k)]
+                        nrow["time"] = x
+                        nrow["value"] = signals[keys.index(k)]
                         nrow.append()
                         t.flush()
                 except AttributeError as e:
-                    self.debug('error: {} group:{} det:{} iso:{}'.format(e, grpname, k, det.isotope))
+                    if det.isotope and grpname and k:
+                        self.debug(
+                            "error: {} group:{} det:{} iso:{}".format(
+                                e, grpname, k, det.isotope
+                            )
+                        )
 
         return write_data
 
@@ -327,20 +355,20 @@ class AutomatedRunPersister(BasePersister):
         :param detectors: list
         """
 
-        self.debug('build tables- {} {}'.format(grpname, detectors))
+        self.debug("build tables- {} {}".format(grpname, detectors))
         dm = self.data_manager
         with dm.open_file(self._current_data_frame):
             dm.new_group(grpname)
             for i, d in enumerate(detectors):
                 iso = d.isotope
                 name = d.name
-                if grpname == 'baseline':
-                    dm.new_table('/{}'.format(grpname), name, n)
-                    self.debug('add group {} table {}'.format(grpname, name))
+                if grpname == "baseline":
+                    dm.new_table("/{}".format(grpname), name, n)
+                    self.debug("add group {} table {}".format(grpname, name))
                 else:
-                    isogrp = dm.new_group(iso, parent='/{}'.format(grpname))
+                    isogrp = dm.new_group(iso, parent="/{}".format(grpname))
                     dm.new_table(isogrp, name, n)
-                    self.debug('add group {} table {}'.format(isogrp, name))
+                    self.debug("add group {} table {}".format(isogrp, name))
 
     def build_peak_hop_tables(self, grpname, hops):
         """
@@ -355,12 +383,12 @@ class AutomatedRunPersister(BasePersister):
         with dm.open_file(self._current_data_frame):
             dm.new_group(grpname)
 
-            for iso, det, is_baseline in parse_hops(hops, ret='iso,det,is_baseline'):
+            for iso, det, is_baseline in parse_hops(hops, ret="iso,det,is_baseline"):
                 if is_baseline:
                     continue
-                isogrp = dm.new_group(iso, parent='/{}'.format(grpname))
+                isogrp = dm.new_group(iso, parent="/{}".format(grpname))
                 dm.new_table(isogrp, det)
-                self.debug('add group {} table {}'.format(isogrp, det))
+                self.debug("add group {} table {}".format(isogrp, det))
 
     def get_last_aliquot(self, identifier):
         return self.datahub.get_greatest_aliquot(identifier)
@@ -381,41 +409,44 @@ class AutomatedRunPersister(BasePersister):
         """
         save extraction blobs, loadtable, and snapshots to the primary db
         """
-        self.debug('AutomatedRunPersister post_extraction_save deprecated')
+        self.debug("AutomatedRunPersister post_extraction_save deprecated")
         return
 
         if DEBUG:
-            self.debug('Not saving extraction to database')
+            self.debug("Not saving extraction to database")
             return
-        self.info('post extraction save')
+        self.info("post extraction save")
 
-        db = self.datahub.get_db('isotopedb')
+        db = self.datahub.get_db("isotopedb")
         if db:
             with db.session_ctx() as sess:
                 loadtable = db.get_loadtable(self.per_spec.load_name)
                 if loadtable is None:
-                    loadtable = db.add_load(self.per_spec.load_name, 'None')
+                    loadtable = db.add_load(self.per_spec.load_name, "None")
 
-                ext = self._save_extraction(db, loadtable=loadtable,
-                                            response_blob=self.per_spec.response_blob,
-                                            output_blob=self.per_spec.output_blob,
-                                            snapshots=self.per_spec.snapshots)
+                ext = self._save_extraction(
+                    db,
+                    loadtable=loadtable,
+                    response_blob=self.per_spec.response_blob,
+                    output_blob=self.per_spec.output_blob,
+                    snapshots=self.per_spec.snapshots,
+                )
                 sess.commit()
                 self._db_extraction_id = int(ext.id)
         else:
-            self.debug('No database instance')
+            self.debug("No database instance")
 
     def pre_measurement_save(self):
         """
         setup hdf5 file
         """
 
-        self.info('pre measurement save')
+        self.info("pre measurement save")
         dm = self.data_manager
         # make a new frame for saving data
 
         name = self.per_spec.run_spec.uuid
-        root, tail = subdirize(paths.isotope_dir, '{}.h5'.format(name), mode='w')
+        root, tail = subdirize(paths.isotope_dir, "{}.h5".format(name), mode="w")
         path = os.path.join(root, tail)
         # path = os.path.join(paths.isotope_dir, '{}.h5'.format(name))
 
@@ -423,12 +454,12 @@ class AutomatedRunPersister(BasePersister):
         frame = dm.new_frame(path)
 
         attrs = frame.root._v_attrs
-        attrs['USER'] = self.per_spec.run_spec.username
-        attrs['ANALYSIS_TYPE'] = self.per_spec.run_spec.analysis_type
+        attrs["USER"] = self.per_spec.run_spec.username
+        attrs["ANALYSIS_TYPE"] = self.per_spec.run_spec.analysis_type
 
         dm.close_file()
 
-    def post_measurement_save(self, save_local=True):
+    def post_measurement_save(self, save_local=True, **kw):
         """
         check for runid conflicts. automatically update runid if conflict
 
@@ -440,12 +471,12 @@ class AutomatedRunPersister(BasePersister):
         # return
 
         if DEBUG:
-            self.debug('Not measurement saving to database')
+            self.debug("Not measurement saving to database")
             return
 
-        self.info('post measurement save')
+        self.info("post measurement save")
         if not self.save_enabled:
-            self.info('Database saving disabled')
+            self.info("Database saving disabled")
             return
 
         # check for conflicts immediately before saving
@@ -552,12 +583,16 @@ class AutomatedRunPersister(BasePersister):
         #         self.debug('pychron save time= {:0.3f} '.format(pt))
         #         # file_log(pt)
 
-        self.debug('$$$$$$$$$$$$$$$ auto_save_detector_ic={}'.format(self.per_spec.auto_save_detector_ic))
+        self.debug(
+            "$$$$$$$$$$$$$$$ auto_save_detector_ic={}".format(
+                self.per_spec.auto_save_detector_ic
+            )
+        )
         if self.per_spec.auto_save_detector_ic:
             try:
                 self._save_detector_ic_csv()
             except BaseException as e:
-                self.debug('Failed auto saving detector ic. {}'.format(e))
+                self.debug("Failed auto saving detector ic. {}".format(e))
 
         # don't save detector_ic runs to mass spec
         # measurement of an isotope on multiple detectors likely possible with mass spec but at this point
@@ -567,20 +602,19 @@ class AutomatedRunPersister(BasePersister):
             from pychron.experiment.datahub import check_massspec_database_save
 
             if check_massspec_database_save(ln):
-                if not self.datahub.store_connect('massspec'):
+                if not self.datahub.store_connect("massspec"):
                     # if not self.massspec_importer or not self.massspec_importer.db.connected:
-                    self.debug('Mass Spec database is not available')
+                    self.debug("Mass Spec database is not available")
                 else:
-                    self.debug('saving post measurement to secondary database')
+                    self.debug("saving post measurement to secondary database")
                     # save to massspec
                     mt = time.time()
                     self._save_to_massspec(cp)
-                    self.debug('mass spec save time= {:0.3f}'.format(time.time() - mt))
+                    self.debug("mass spec save time= {:0.3f}".format(time.time() - mt))
                     # mem_log('post mass spec save')
 
     # private
     def _save_detector_ic_csv(self):
-
         from pychron.experiment.utilities.detector_ic import make_items, save_csv
         from pychron.experiment.utilities.identifier import get_analysis_type
 
@@ -928,18 +962,21 @@ class AutomatedRunPersister(BasePersister):
     def _save_to_massspec(self, p):
         # dm = self.data_manager
         # ms = self.datahub.secondarystore
-        ms = self.datahub.stores['massspec']
+        ms = self.datahub.stores["massspec"]
         h = ms.db.host
         dn = ms.db.name
-        self.info('saving to massspec database {}/{}'.format(h, dn))
+        self.info("saving to massspec database {}/{}".format(h, dn))
 
         exp = self._export_spec_factory()
         self.secondary_database_fail = False
         if ms.add_analysis(exp):
-            self.info('analysis added to mass spec database')
+            self.info("analysis added to mass spec database")
         else:
-            self.secondary_database_fail = 'Could not save {} to Mass Spec database'.format(
-                self.per_spec.run_spec.runid)
+            self.secondary_database_fail = (
+                "Could not save {} to Mass Spec database".format(
+                    self.per_spec.run_spec.runid
+                )
+            )
 
     def _export_spec_factory(self):
         # dc = self.collector
@@ -956,21 +993,22 @@ class AutomatedRunPersister(BasePersister):
 
         # ic = self.per_spec.isotope_group.get_ic_factor('CDD')
 
-        exp = MassSpecPersistenceSpec(runid=rid,
-                                      runscript_name=self.per_spec.runscript_name,
-                                      runscript_text=self.per_spec.runscript_blob,
-                                      # signal_fits=sf,
-                                      mass_spectrometer=self.per_spec.run_spec.mass_spectrometer.capitalize(),
-                                      # blanks=blanks,
-                                      # data_path=p,
-                                      power_achieved=self.per_spec.power_achieved,
-                                      isotopes=self.per_spec.isotope_group.isotopes,
-                                      # signal_intercepts=si,
-                                      # signal_intercepts=self._processed_signals_dict,
-                                      is_peak_hop=self.per_spec.save_as_peak_hop,
-                                      # ic_factor_v=float(nominal_value(ic)),
-                                      # ic_factor_e=float(std_dev(ic))
-                                      )
+        exp = MassSpecPersistenceSpec(
+            runid=rid,
+            runscript_name=self.per_spec.runscript_name,
+            runscript_text=self.per_spec.runscript_blob,
+            # signal_fits=sf,
+            mass_spectrometer=self.per_spec.run_spec.mass_spectrometer.capitalize(),
+            # blanks=blanks,
+            # data_path=p,
+            power_achieved=self.per_spec.power_achieved,
+            isotopes=self.per_spec.isotope_group.isotopes,
+            # signal_intercepts=si,
+            # signal_intercepts=self._processed_signals_dict,
+            is_peak_hop=self.per_spec.save_as_peak_hop,
+            # ic_factor_v=float(nominal_value(ic)),
+            # ic_factor_e=float(std_dev(ic))
+        )
         exp.load_record(self.per_spec.run_spec)
 
         return exp
@@ -999,22 +1037,23 @@ class AutomatedRunPersister(BasePersister):
             uuid = spec.uuid
             cp = self._current_data_frame
 
-            ldb.add_analysis(labnumber=ln,
-                             aliquot=aliquot,
-                             uuid=uuid,
-                             step=step,
-
-                             mass_spectrometer=spec.mass_spectrometer,
-                             extract_device=spec.extract_device,
-                             extract_value=spec.extract_value,
-                             extract_units=spec.extract_units,
-                             duration=spec.duration,
-                             cleanup=spec.cleanup,
-                             pre_cleanup=spec.pre_cleanup,
-                             post_cleanup=spec.post_cleanup,
-                             comment=spec.comment,
-                             weight=spec.weight,
-                             collection_path=cp)
+            ldb.add_analysis(
+                labnumber=ln,
+                aliquot=aliquot,
+                uuid=uuid,
+                step=step,
+                mass_spectrometer=spec.mass_spectrometer,
+                extract_device=spec.extract_device,
+                extract_value=spec.extract_value,
+                extract_units=spec.extract_units,
+                duration=spec.duration,
+                cleanup=spec.cleanup,
+                pre_cleanup=spec.pre_cleanup,
+                post_cleanup=spec.post_cleanup,
+                comment=spec.comment,
+                weight=spec.weight,
+                collection_path=cp,
+            )
 
     def _local_lab_db_factory(self):
         # if self.local_lab_db:
@@ -1028,5 +1067,6 @@ class AutomatedRunPersister(BasePersister):
         # def _get_default_outlier_filtering(self):
         # return dict(filter_outliers=self.filter_outliers, iterations=self.fo_iterations,
         # std_dev=self.fo_std_dev)
+
 
 # ============= EOF =============================================

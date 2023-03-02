@@ -13,16 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+try:
+    from pymodbus.exceptions import ModbusIOException
+except ImportError:
+    pass
+
 from pychron.hardware.actuators.client_gp_actuator import ClientMixin
 from pychron.hardware.actuators.gp_actuator import GPActuator
 from pychron.hardware.core.modbus import ModbusMixin
 
 
 class PLC2000GPActuator(GPActuator, ModbusMixin, ClientMixin):
+    """
+    :::
+    name: PLC2000 GP Actuator
+    description: AutomationDirect.com PLC
+    website: https://automationdirect.com
+
+    """
+
     def _actuate(self, obj, action):
         addr = int(obj.address) - 1
-        state = action.lower() == 'open'
-        self.debug('actuate. write coil {} {}'.format(addr, state))
+        state = action.lower() == "open"
+        self.debug("actuate. write coil {} {}".format(addr, state))
 
         self._write_coil(addr, state)
         return True
@@ -33,7 +46,11 @@ class PLC2000GPActuator(GPActuator, ModbusMixin, ClientMixin):
         except (ValueError, AttributeError):
             address = int(obj)
 
-        resp = self._read_coils(int(address)-1, 1)
-        return bool(resp.bits[0])
+        resp = self._read_coils(int(address) - 1, 1)
+        try:
+            return bool(resp.bits[0])
+        except ModbusIOException:
+            self.debug_exception()
+
 
 # ============= EOF =============================================

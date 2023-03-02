@@ -29,7 +29,7 @@ from .util import Base
 class flux_FluxTable(Base, BaseMixin):
     j = Column(Float)
     j_err = Column(Float)
-    history_id = foreignkey('flux_HistoryTable')
+    history_id = foreignkey("flux_HistoryTable")
 
 
 class flux_MonitorTable(Base, NameMixin):
@@ -37,19 +37,18 @@ class flux_MonitorTable(Base, NameMixin):
     decay_constant_err = Column(Float)
     age = Column(Float)
     age_err = Column(Float)
-    sample_id = foreignkey('gen_SampleTable')
+    sample_id = foreignkey("gen_SampleTable")
 
 
 class flux_HistoryTable(Base, BaseMixin):
-    irradiation_position_id = foreignkey('irrad_PositionTable')
+    irradiation_position_id = foreignkey("irrad_PositionTable")
     note = Column(BLOB)
     create_date = Column(DateTime, default=func.now())
     source = stringcolumn(140)
-    selected = relationship('gen_LabTable',
-                            backref='selected_flux_history',
-                            uselist=False)
-    flux = relationship('flux_FluxTable',
-                        backref='history',
-                        uselist=False)
+    selected = relationship(
+        "gen_LabTable", backref="selected_flux_history", uselist=False
+    )
+    flux = relationship("flux_FluxTable", backref="history", uselist=False)
+
 
 # ============= EOF =============================================

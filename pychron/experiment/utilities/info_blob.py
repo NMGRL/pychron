@@ -19,50 +19,54 @@
 from __future__ import absolute_import
 import struct
 from six.moves import range
+
+
 # ============= local library imports  ==========================
 
+
 class MemoryBlock(object):
-    def __init__(self, blob=b''):
+    def __init__(self, blob=b""):
         self._blob = blob
         self._start = 0
 
     def get_short(self):
-        v = self._get_value('!h', 2)
+        v = self._get_value("!h", 2)
         return v
 
     def get_float(self):
-        v = self._get_value('!f', 4)
+        v = self._get_value("!f", 4)
         return v
 
     def get_double(self):
-        v = self._get_value('!d', 8)
+        v = self._get_value("!d", 8)
         return v
 
     def _get_value(self, fmt, width):
         txt = self._blob
         start = self._start
-        v = struct.unpack(fmt, txt[start:start + width])
+        v = struct.unpack(fmt, txt[start : start + width])
         self._start += width
         return v[0]
 
     def add_short(self, value):
-        self._add_value('!h', value)
+        self._add_value("!h", value)
 
     def add_float(self, value):
-        self._add_value('!f', value)
+        self._add_value("!f", value)
 
     def add_double(self, value):
-        self._add_value('!d', value)
+        self._add_value("!d", value)
 
     def _add_value(self, fmt, value):
         v = struct.pack(fmt, value)
         self._blob += v
 
     def clear(self):
-        self._blob = ''
+        self._blob = ""
 
     def tostring(self):
         return self._blob
+
 
 def decode_infoblob(blob):
     mb = MemoryBlock(blob)
@@ -105,4 +109,6 @@ def encode_infoblob(rpts, pos_segments, bs_segments, bs_seg_params, bs_seg_errs)
             mb.add_double(bs_seg_params[i][k])
         mb.add_float(bs_seg_errs[i])
     return mb.tostring()
+
+
 # ============= EOF =============================================

@@ -28,4 +28,5 @@ class ClientMixin(object):
     def get_state_checksum(self, keys):
         return 0
 
+
 # ============= EOF =============================================

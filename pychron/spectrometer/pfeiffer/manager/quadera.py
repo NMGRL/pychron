@@ -19,4 +19,6 @@ from pychron.spectrometer.pfeiffer.spectrometer.quadera import QuaderaSpectromet
 
 class QuaderaSpectrometerManager(BaseSpectrometerManager):
     spectrometer_klass = QuaderaSpectrometer
+
+
 # ============= EOF =============================================

@@ -16,18 +16,14 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from uncertainties import ufloat, std_dev, nominal_value
+
 # ============= local library imports  ==========================
-# from pychron.pipeline.plot. import ReferencesSeries
-from __future__ import absolute_import
-
-from six.moves import zip
-from uncertainties import ufloat
-
 from pychron.pipeline.plot.plotter.references_series import ReferencesSeries
 
 
 class Blanks(ReferencesSeries):
-    references_name = 'Blanks'
+    references_name = "Blanks"
 
     def _get_interpolated_value(self, po, analysis):
         v, e = 0, 0
@@ -60,5 +56,6 @@ class Blanks(ReferencesSeries):
     def _get_current_data(self, po):
         isos = [self._get_isotope(po, ai) for ai in self.sorted_analyses]
         return [iso.blank.uvalue if iso else ufloat(0, 0) for iso in isos]
+
 
 # ============= EOF =============================================

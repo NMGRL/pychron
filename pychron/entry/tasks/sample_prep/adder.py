@@ -48,28 +48,37 @@ class AddWorker(HasTraits):
     comment = lenstr(140)
 
     def traits_view(self):
-        v = okcancel_view(VGroup(Item('name'),
-                                 Item('fullname'),
-                                 Item('phone'),
-                                 Item('email'),
-                                 VGroup(UItem('comment', style='custom'),
-                                        show_border=True,
-                                        label='Comment')),
-                          title='Add New Worker')
+        v = okcancel_view(
+            VGroup(
+                Item("name"),
+                Item("fullname"),
+                Item("phone"),
+                Item("email"),
+                VGroup(
+                    UItem("comment", style="custom"), show_border=True, label="Comment"
+                ),
+            ),
+            title="Add New Worker",
+        )
         return v
 
 
 class AddSession(HasTraits):
     name = Str
     comment = lenstr(140)
-    title = Str('Add New Session')
+    title = Str("Add New Session")
 
     def traits_view(self):
-        v = okcancel_view(VGroup(Item('name', label='SessionName'),
-                                 VGroup(UItem('comment', style='custom'),
-                                        show_border=True,
-                                        label='Comment')),
-                          title=self.title)
+        v = okcancel_view(
+            VGroup(
+                Item("name", label="SessionName"),
+                VGroup(
+                    UItem("comment", style="custom"), show_border=True, label="Comment"
+                ),
+            ),
+            title=self.title,
+        )
         return v
+
 
 # ============= EOF =============================================

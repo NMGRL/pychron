@@ -19,8 +19,19 @@ from __future__ import absolute_import
 import math
 
 from enable.abstract_overlay import AbstractOverlay
-from traits.api import Any, Button, Enum, Float, Int, Color, \
-    Bool, Range, Instance, on_trait_change, List
+from traits.api import (
+    Any,
+    Button,
+    Enum,
+    Float,
+    Int,
+    Color,
+    Bool,
+    Range,
+    Instance,
+    on_trait_change,
+    List,
+)
 from traitsui.api import View, Item, VGroup, HGroup, UItem, VSplit
 
 from pychron.loggable import Loggable
@@ -31,6 +42,7 @@ from six.moves import range
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class BaseMaker(Loggable):
     canvas = Any
     stage_manager = Any
@@ -39,13 +51,13 @@ class BaseMaker(Loggable):
     #    clear_mode = Enum('all', 'all lines', 'all points', 'current line',
     #                    'current point', 'last point'
     #                    )
-    clear_mode = Enum('all', 'current point')
+    clear_mode = Enum("all", "current point")
     accept_point = Button
 
-    point_color = Color('blue')
+    point_color = Color("blue")
 
     use_simple_render = Bool(False)
-    spot_color = Color('yellow')
+    spot_color = Color("yellow")
     spot_size = Int(8)
 
     def initialize(self):
@@ -57,29 +69,38 @@ class BaseMaker(Loggable):
     def save(self):
         d = dict()
 
-        pts = [dict(identifier=pi.identifier,
-                    z=float(pi.z),
-                    mask=pi.mask, attenuator=pi.attenuator,
-                    xy=[float(pi.x), float(pi.y)],
-                    calibrated_xy=[float(pi.calibrated_x), float(pi.calibrated_y)],
-                    offset_x=float(pi.offset_x),
-                    offset_y=float(pi.offset_y),
-                    ) for pi in self.canvas.get_points()]
+        pts = [
+            dict(
+                identifier=pi.identifier,
+                z=float(pi.z),
+                mask=pi.mask,
+                attenuator=pi.attenuator,
+                xy=[float(pi.x), float(pi.y)],
+                calibrated_xy=[float(pi.calibrated_x), float(pi.calibrated_y)],
+                offset_x=float(pi.offset_x),
+                offset_y=float(pi.offset_y),
+            )
+            for pi in self.canvas.get_points()
+        ]
 
         lines = []
         for li in self.canvas.get_lines():
             segments = []
             for i, pi in enumerate(li.points):
                 v = li.velocity_segments[i / 2]
-                segments.append(dict(xy=[float(pi.x), float(pi.y)],
-                                     z=float(pi.z),
-                                     mask=pi.mask,
-                                     attenuator=pi.attenuator,
-                                     velocity=v))
+                segments.append(
+                    dict(
+                        xy=[float(pi.x), float(pi.y)],
+                        z=float(pi.z),
+                        mask=pi.mask,
+                        attenuator=pi.attenuator,
+                        velocity=v,
+                    )
+                )
             lines.append(segments)
 
-        d['points'] = pts
-        d['lines'] = lines
+        d["points"] = pts
+        d["lines"] = lines
         sd = self._save()
         if sd:
             d.update(sd)
@@ -96,10 +117,10 @@ class BaseMaker(Loggable):
 
     def _clear_fired(self):
         cm = self.clear_mode
-        if cm == 'all':
+        if cm == "all":
             self.canvas.clear_all()
             self.clear_all_hook()
-        elif cm == 'current point':
+        elif cm == "current point":
             self.canvas.pop_point(-1)
 
         # elif cm == 'current point':
@@ -135,8 +156,8 @@ class BaseMaker(Loggable):
 
         sm = self.stage_manager
         lm = sm.parent
-        mask = lm.get_motor('mask')
-        attenuator = lm.get_motor('attenuator')
+        mask = lm.get_motor("mask")
+        attenuator = lm.get_motor("attenuator")
         mask_value, attenuator_value = None, None
         if mask:
             radius = mask.get_discrete_value()
@@ -153,31 +174,34 @@ class BaseMaker(Loggable):
         x, y = list(map(float, (x, y)))
         cx, cy = list(map(float, (cx, cy)))
 
-        x, y = list(map('{:0.3f}'.format, (x, y)))
-        cx, cy = list(map('{:0.3f}'.format, (cx, cy)))
+        x, y = list(map("{:0.3f}".format, (x, y)))
+        cx, cy = list(map("{:0.3f}".format, (cx, cy)))
 
         x, y = list(map(float, (x, y)))
         cx, cy = list(map(float, (cx, cy)))
         z = sm.get_z()
 
         ox, oy = self.canvas.get_screen_offset()
-        ptargs = dict(xy=(x, y),
-                      radius=radius,
-                      z=z,
-                      calibrated_x=cx,
-                      calibrated_y=cy,
-                      spot_color=self.spot_color,
-                      spot_size=self.spot_size,
-                      use_simple_render=self.use_simple_render,
-                      offset_x=ox,
-                      offset_y=oy,
-                      #                      mask=mask_value,
-                      #                      attenuator=attenuator_value,
-                      vline_length=0.1, hline_length=0.1)
+        ptargs = dict(
+            xy=(x, y),
+            radius=radius,
+            z=z,
+            calibrated_x=cx,
+            calibrated_y=cy,
+            spot_color=self.spot_color,
+            spot_size=self.spot_size,
+            use_simple_render=self.use_simple_render,
+            offset_x=ox,
+            offset_y=oy,
+            #                      mask=mask_value,
+            #                      attenuator=attenuator_value,
+            vline_length=0.1,
+            hline_length=0.1,
+        )
         if mask_value is not None:
-            ptargs['mask'] = mask_value
+            ptargs["mask"] = mask_value
         if attenuator_value is not None:
-            ptargs['attenuator'] = attenuator_value
+            ptargs["attenuator"] = attenuator_value
 
         if not self.canvas.point_exists(x, y, z):
             self._accept_point(ptargs)
@@ -206,13 +230,24 @@ class BaseMaker(Loggable):
 
     def traits_view(self):
         g = VGroup(
-                HGroup(Item('accept_point', show_label=False),
-                       Item('clear'), Item('clear_mode'), show_labels=False),
-                Item('use_simple_render', label='Display Labels',
-                     tooltip='Display labels or only a small spot'),
-                Item('spot_color', label='Spot Color',
-                     tooltip='Color for the point indicator spot'),
-                Item('spot_size', label='Spot Size'))
+            HGroup(
+                Item("accept_point", show_label=False),
+                Item("clear"),
+                Item("clear_mode"),
+                show_labels=False,
+            ),
+            Item(
+                "use_simple_render",
+                label="Display Labels",
+                tooltip="Display labels or only a small spot",
+            ),
+            Item(
+                "spot_color",
+                label="Spot Color",
+                tooltip="Color for the point indicator spot",
+            ),
+            Item("spot_size", label="Spot Size"),
+        )
 
         cg = self._get_controls()
         if cg:
@@ -224,10 +259,13 @@ class BaseMaker(Loggable):
 
 class PointMaker(BaseMaker):
     def _accept_point(self, ptargs):
-        npt = self.canvas.new_point(default_color=self.point_color,
-                                    **ptargs)
+        npt = self.canvas.new_point(default_color=self.point_color, **ptargs)
 
-        self.info('added point {}:{:0.5f},{:0.5f} z={:0.5f}'.format(npt.identifier, npt.x, npt.y, npt.z))
+        self.info(
+            "added point {}:{:0.5f},{:0.5f} z={:0.5f}".format(
+                npt.identifier, npt.x, npt.y, npt.z
+            )
+        )
 
 
 class FinishableMaker(BaseMaker):
@@ -240,11 +278,14 @@ class FinishableMaker(BaseMaker):
 
     def traits_view(self):
         g = VGroup(
-                Item('accept_point',
-                     #                      enabled_when='accept_enabled',
-                     show_label=False),
-                HGroup(Item('clear'), Item('clear_mode'), show_labels=False),
-                Item('finish', show_label=False))
+            Item(
+                "accept_point",
+                #                      enabled_when='accept_enabled',
+                show_label=False,
+            ),
+            HGroup(Item("clear"), Item("clear_mode"), show_labels=False),
+            Item("finish", show_label=False),
+        )
 
         cg = self._get_controls()
         if cg:
@@ -258,13 +299,15 @@ class LineMaker(FinishableMaker):
     velocity = Float
 
     def _get_controls(self):
-        return Item('velocity', label='Velocity mm/min')
+        return Item("velocity", label="Velocity mm/min")
 
     def _accept_point(self, ptargs):
-        self.canvas.new_line_point(point_color=self.point_color,
-                                   line_color=self.point_color,
-                                   velocity=self.velocity,
-                                   **ptargs)
+        self.canvas.new_line_point(
+            point_color=self.point_color,
+            line_color=self.point_color,
+            velocity=self.velocity,
+            **ptargs
+        )
 
 
 class PolygonMaker(FinishableMaker):
@@ -276,12 +319,16 @@ class PolygonMaker(FinishableMaker):
     find_min = Bool(True)
 
     def _get_controls(self):
-        g = VGroup(Item('velocity', label='Velocity mm/min'),
-                   Item('use_convex_hull'),
-                   Item('scan_size', label='Scan H (um)'),
-                   Item('find_min', label='Find Min. Lines'),
-                   HGroup(Item('use_outline'), Item('offset', show_label=False, enabled_when='use_outline'))
-                   )
+        g = VGroup(
+            Item("velocity", label="Velocity mm/min"),
+            Item("use_convex_hull"),
+            Item("scan_size", label="Scan H (um)"),
+            Item("find_min", label="Find Min. Lines"),
+            HGroup(
+                Item("use_outline"),
+                Item("offset", show_label=False, enabled_when="use_outline"),
+            ),
+        )
         return g
 
     def _save(self):
@@ -292,10 +339,12 @@ class PolygonMaker(FinishableMaker):
             pts = []
 
             for pi in po.points:
-                d = dict(identifier=pi.identifier,
-                         z=float(pi.z),
-                         #                        mask=pi.mask, attenuator=pi.attenuator,
-                         xy=[float(pi.x), float(pi.y)])
+                d = dict(
+                    identifier=pi.identifier,
+                    z=float(pi.z),
+                    #                        mask=pi.mask, attenuator=pi.attenuator,
+                    xy=[float(pi.x), float(pi.y)],
+                )
                 pts.append(d)
 
             # print int(pe) - 1, i
@@ -309,7 +358,7 @@ class PolygonMaker(FinishableMaker):
                 fm = self.find_min
 
                 motors = dict()
-                for motor in ('mask', 'attenuator'):
+                for motor in ("mask", "attenuator"):
                     m = self.stage_manager.parent.get_motor(motor)
                     if m is not None:
                         motors[motor] = m.data_position
@@ -324,17 +373,18 @@ class PolygonMaker(FinishableMaker):
                 o = po.offset
                 fm = po.find_min
 
-            polys[str(i)] = dict(points=pts,
-                                 motors=motors,
-                                 velocity=v,
-                                 scan_size=ss,
-                                 use_convex_hull=uch,
-                                 use_outline=uo,
-                                 offset=o,
-                                 find_min=fm
-                                 )
+            polys[str(i)] = dict(
+                points=pts,
+                motors=motors,
+                velocity=v,
+                scan_size=ss,
+                use_convex_hull=uch,
+                use_outline=uo,
+                offset=o,
+                find_min=fm,
+            )
 
-        return {'polygons': polys}
+        return {"polygons": polys}
 
     def _use_convex_hull_changed(self):
         poly = self.canvas.polygons[-1]
@@ -342,15 +392,17 @@ class PolygonMaker(FinishableMaker):
         self.canvas.request_redraw()
 
     def _accept_point(self, ptargs):
-        self.canvas.new_polygon_point(point_color=self.point_color,
-                                      line_color=self.point_color,
-                                      use_convex_hull=self.use_convex_hull,
-                                      velocity=self.velocity,
-                                      scan_size=self.scan_size,
-                                      use_outline=self.use_outline,
-                                      find_min=self.find_min,
-                                      offset=self.offset,
-                                      ptargs=ptargs)
+        self.canvas.new_polygon_point(
+            point_color=self.point_color,
+            line_color=self.point_color,
+            use_convex_hull=self.use_convex_hull,
+            velocity=self.velocity,
+            scan_size=self.scan_size,
+            use_outline=self.use_outline,
+            find_min=self.find_min,
+            offset=self.offset,
+            ptargs=ptargs,
+        )
 
 
 class TransectMaker(FinishableMaker):
@@ -362,44 +414,48 @@ class TransectMaker(FinishableMaker):
             pts = []
 
             for pi in tr.points:
-                d = dict(identifier=pi.identifier,
-                         z=float(pi.z),
-                         mask=pi.mask,
-                         attenuator=pi.attenuator,
-                         xy=[float(pi.x), float(pi.y)],
-                         offset_x=float(pi.offset_x),
-                         offset_y=float(pi.offset_y), )
+                d = dict(
+                    identifier=pi.identifier,
+                    z=float(pi.z),
+                    mask=pi.mask,
+                    attenuator=pi.attenuator,
+                    xy=[float(pi.x), float(pi.y)],
+                    offset_x=float(pi.offset_x),
+                    offset_y=float(pi.offset_y),
+                )
                 pts.append(d)
 
             spts = []
             for pi in tr.step_points:
-                d = dict(identifier=pi.identifier,
-                         z=float(pi.z),
-                         mask=pi.mask,
-                         attenuator=pi.attenuator,
-                         xy=[float(pi.x), float(pi.y)],
-                         offset_x=float(pi.offset_x),
-                         offset_y=float(pi.offset_y), )
+                d = dict(
+                    identifier=pi.identifier,
+                    z=float(pi.z),
+                    mask=pi.mask,
+                    attenuator=pi.attenuator,
+                    xy=[float(pi.x), float(pi.y)],
+                    offset_x=float(pi.offset_x),
+                    offset_y=float(pi.offset_y),
+                )
                 spts.append(d)
 
-            trans.append(dict(points=pts,
-                              step_points=spts,
-                              step=tr.step))
+            trans.append(dict(points=pts, step_points=spts, step=tr.step))
 
-        return {'transects': trans}
+        return {"transects": trans}
 
     def _get_controls(self):
-        return Item('step', label='Step (mm)')
+        return Item("step", label="Step (mm)")
 
     def _step_changed(self):
         if self.step:
             self.canvas.set_transect_step(self.step)
 
     def _accept_point(self, ptargs):
-        self.canvas.new_transect_point(point_color=self.point_color,
-                                       line_color=self.point_color,
-                                       step=self.step,
-                                       **ptargs)
+        self.canvas.new_transect_point(
+            point_color=self.point_color,
+            line_color=self.point_color,
+            step=self.step,
+            **ptargs
+        )
 
 
 class GridOverlay(AbstractOverlay):
@@ -418,8 +474,7 @@ class GridOverlay(AbstractOverlay):
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
             comp = self.component
-            gc.clip_to_rect(comp.x, comp.y,
-                            comp.width, comp.height)
+            gc.clip_to_rect(comp.x, comp.y, comp.width, comp.height)
             pos = comp.get_offset_stage_screen_position()
 
             gc.translate_ctm(*pos)
@@ -451,17 +506,17 @@ class GridOverlay(AbstractOverlay):
 
 
 class GridMaker(BaseMaker):
-    ncols = Range(1, 40, 2, mode='spinner')
-    nrows = Range(1, 40, 2, mode='spinner')
+    ncols = Range(1, 40, 2, mode="spinner")
+    nrows = Range(1, 40, 2, mode="spinner")
 
     vspacing = Float(800, enter_set=True, auto_set=False)
     hspacing = Float(800, enter_set=True, auto_set=False)
     grid_overlay = Instance(GridOverlay)
     toggle_grid_visible_button = Button
     indicator_size = Float(60, enter_set=True, auto_set=False)
-    indicator_opacity = Range(0.0, 100., 75.)
+    indicator_opacity = Range(0.0, 100.0, 75.0)
     grid_indices = List
-    rotation = Range(0.0, 360., 0.0, mode='slider')
+    rotation = Range(0.0, 360.0, 0.0, mode="slider")
 
     def __init__(self, *args, **kw):
         super(GridMaker, self).__init__(*args, **kw)
@@ -480,19 +535,23 @@ class GridMaker(BaseMaker):
 
     def _add_grid_overlay(self):
         if not self.grid_overlay:
-            w, h = self.canvas.get_wh(self.hspacing * .001,
-                                      self.vspacing * .001)
+            w, h = self.canvas.get_wh(self.hspacing * 0.001, self.vspacing * 0.001)
 
-            ind_s = self.indicator_size * .001
+            ind_s = self.indicator_size * 0.001
             # convert to screen
             iw, ih = self.canvas.get_wh(ind_s, ind_s)
 
-            go = GridOverlay(component=self.canvas,
-                             indicator_width=iw, indicator_height=ih,
-                             hspacing=w, vspacing=h,
-                             ncols=self.ncols, nrows=self.nrows,
-                             opacity=self.indicator_opacity,
-                             rotation=self.rotation)
+            go = GridOverlay(
+                component=self.canvas,
+                indicator_width=iw,
+                indicator_height=ih,
+                hspacing=w,
+                vspacing=h,
+                ncols=self.ncols,
+                nrows=self.nrows,
+                opacity=self.indicator_opacity,
+                rotation=self.rotation,
+            )
             self.grid_overlay = go
             self.canvas.overlays.append(go)
         else:
@@ -502,27 +561,27 @@ class GridMaker(BaseMaker):
 
     def _accept_point(self, ptargs):
         """
-            only show the labels for first and last point
+        only show the labels for first and last point
 
-            outer loop is always max, inner loop min
+        outer loop is always max, inner loop min
 
-            e.g cols=4, rows=2
+        e.g cols=4, rows=2
 
-             2 4 6 8
-            +1 3 5 7
+         2 4 6 8
+        +1 3 5 7
 
-            cols=2, rows=4
-            8 7
-            6 5
-            4 3
-            2 1+
+        cols=2, rows=4
+        8 7
+        6 5
+        4 3
+        2 1+
 
         """
         hspacing, vspacing = self.hspacing * 0.001, self.vspacing * 0.001
         ncols, nrows = self.ncols, self.nrows
 
-        ox, oy = ptargs['xy']
-        set_sig_figs = lambda v: float('{:0.3f}'.format(float(v)))
+        ox, oy = ptargs["xy"]
+        set_sig_figs = lambda v: float("{:0.3f}".format(float(v)))
 
         vertical = ncols < nrows
 
@@ -542,53 +601,59 @@ class GridMaker(BaseMaker):
                 x = ox + hspacing * ci
 
             for ri in range(ys):
-
                 if vertical:
                     x = ox + hspacing * ri
                 else:
                     y = oy + ri * vspacing
 
-                show_label = (ci == 0 and ri == 0) or (ci == (xs - 1) and ri == (ys - 1))
+                show_label = (ci == 0 and ri == 0) or (
+                    ci == (xs - 1) and ri == (ys - 1)
+                )
 
                 xp = x * math.cos(theta) - y * math.sin(theta)
                 yp = x * math.sin(theta) + y * math.cos(theta)
 
                 xp, yp = set_sig_figs(xp), set_sig_figs(yp)
-                ptargs['xy'] = (xp, yp)
-                npt = self.canvas.new_point(default_color=self.point_color,
-                                            show_label=show_label,
-                                            redraw=False, **ptargs)
+                ptargs["xy"] = (xp, yp)
+                npt = self.canvas.new_point(
+                    default_color=self.point_color,
+                    show_label=show_label,
+                    redraw=False,
+                    **ptargs
+                )
 
-                self.info('added point {}:{:0.5f},{:0.5f} z={:0.5f}'.format(npt.identifier, npt.x, npt.y, npt.z))
+                self.info(
+                    "added point {}:{:0.5f},{:0.5f} z={:0.5f}".format(
+                        npt.identifier, npt.x, npt.y, npt.z
+                    )
+                )
 
         if high_pc > 40:
             self.canvas.downsample_point_labels(self.grid_indices)
 
         self.canvas.request_redraw()
 
-    @on_trait_change('ncols, nrows')
+    @on_trait_change("ncols, nrows")
     def _handle_grid_change(self, name, new):
         if self.grid_overlay:
             self.grid_overlay.trait_set(**{name: new})
             self.grid_overlay.points_invalid = True
             self.canvas.invalidate_and_redraw()
 
-    @on_trait_change('hspacing, vspacing, indicator_size')
+    @on_trait_change("hspacing, vspacing, indicator_size")
     def _handle_spacing_change(self, new):
         if self.grid_overlay:
             # convert to mm then to screen
-            w, h = self.canvas.get_wh(self.hspacing * .001,
-                                      self.vspacing * .001)
+            w, h = self.canvas.get_wh(self.hspacing * 0.001, self.vspacing * 0.001)
 
             # convert to mm
-            ind_s = self.indicator_size * .001
+            ind_s = self.indicator_size * 0.001
             # convert to screen
             iw, ih = self.canvas.get_wh(ind_s, ind_s)
 
-            self.grid_overlay.trait_set(hspacing=w,
-                                        vspacing=h,
-                                        indicator_width=iw,
-                                        indicator_height=ih)
+            self.grid_overlay.trait_set(
+                hspacing=w, vspacing=h, indicator_width=iw, indicator_height=ih
+            )
             self.grid_overlay.points_invalid = True
             self.canvas.invalidate_and_redraw()
 
@@ -610,13 +675,19 @@ class GridMaker(BaseMaker):
             self._add_grid_overlay()
 
     def _get_controls(self):
-        return VGroup(HGroup(Item('ncols', label='N. Cols'),
-                             Item('nrows', label='N. Rows')),
-                      HGroup(Item('hspacing', label='HSpacing (um)'),
-                             Item('vspacing', label='VSpacing (um)')),
-                      Item('rotation'),
-                      Item('indicator_size', label='Indicator Size (um)'),
-                      HGroup(UItem('toggle_grid_visible_button', label='Toggle Grid'),
-                             Item('indicator_opacity', label='Opacity')))
+        return VGroup(
+            HGroup(Item("ncols", label="N. Cols"), Item("nrows", label="N. Rows")),
+            HGroup(
+                Item("hspacing", label="HSpacing (um)"),
+                Item("vspacing", label="VSpacing (um)"),
+            ),
+            Item("rotation"),
+            Item("indicator_size", label="Indicator Size (um)"),
+            HGroup(
+                UItem("toggle_grid_visible_button", label="Toggle Grid"),
+                Item("indicator_opacity", label="Opacity"),
+            ),
+        )
+
 
 # ============= EOF =============================================

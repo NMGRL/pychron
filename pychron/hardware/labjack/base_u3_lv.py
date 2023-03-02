@@ -23,9 +23,10 @@ except ImportError:
     NullHandleException = BaseException
 
 import re
+
 # ============= local library imports  ==========================
 
-DIORE = re.compile(r'^[FCE]IO\d+$')
+DIORE = re.compile(r"^[FCE]IO\d+$")
 
 
 class BaseU3LV:
@@ -37,17 +38,16 @@ class BaseU3LV:
         self._dio_mapping = {}
         config = self.get_configuration()
         if config:
-            section = 'Communications'
-            conn = {'autoOpen': False}
+            section = "Communications"
+            conn = {"autoOpen": False}
             if config.has_section(section):
-                conn['localId'] = config.get(section, 'localId', fallback=None)
-                conn['serial'] = config.get(section, 'serialNum', fallback=None)
-                conn['firstFound'] = False
-            self.debug('connection={}'.format(conn))
+                conn["localId"] = config.get(section, "localId", fallback=None)
+                conn["serial"] = config.get(section, "serialNum", fallback=None)
+                conn["firstFound"] = False
+            self.debug("connection={}".format(conn))
             try:
                 self._device = u3.U3(**conn)
             except NullHandleException:
-
                 self.debug_exception()
                 return
             return self.load_additional_args(config)
@@ -61,16 +61,18 @@ class BaseU3LV:
 
     def load_additional_args(self, config):
         mapping = {}
-        section = 'DIOMapping'
+        section = "DIOMapping"
         if config.has_section(section):
             for option in config.options(section):
                 u3channel = config.get(section, option)
                 mapping[option] = getattr(u3, u3channel)
             self._dio_mapping = mapping
 
-        elif config.has_section('DIOConfig'):
-            channellist = config.get('DIOConfig', 'channellist')
-            self._dio_channels = [getattr(u3, c.strip()) for c in channellist.split(',')]
+        elif config.has_section("DIOConfig"):
+            channellist = config.get("DIOConfig", "channellist")
+            self._dio_channels = [
+                getattr(u3, c.strip()) for c in channellist.split(",")
+            ]
 
         return True
 
@@ -83,7 +85,7 @@ class BaseU3LV:
 
         if chs:
             chs = [v for v in chs if v not in (u3.CIO0, u3.CIO1, u3.CIO2, u3.CIO3)]
-            print('configuring {}'.format(chs))
+            print("configuring {}".format(chs))
             self._device.configDigital(*chs)
 
         return True
@@ -96,17 +98,17 @@ class BaseU3LV:
         @return:
         """
         pin = self._get_pin(ch)
-        print('set channel state {} {} state={}'.format(ch, pin, state))
+        print("set channel state {} {} state={}".format(ch, pin, state))
         if pin is not None:
             self._device.setDOState(pin, int(not state))
             return True
 
     def get_channel_state(self, ch):
         pin = self._get_pin(ch)
-        print('get chanel state {} {}'.format(ch, pin))
+        print("get chanel state {} {}".format(ch, pin))
         if pin is not None:
             r = self._device.getDIOState(pin)
-            print('got channel state {} {}'.format(r, not r))
+            print("got channel state {} {}".format(r, not r))
             return not r
 
     # def read_dac_channel(self, ch):
@@ -128,7 +130,7 @@ class BaseU3LV:
 
     def set_dac_channel(self, dac_id, v):
         bits = self._device.voltageToDACBits(v, dacNumber=dac_id, is16Bits=False)
-        self.debug('setting voltage={}, {}'.format(v, bits))
+        self.debug("setting voltage={}, {}".format(v, bits))
         self._device.getFeedback(u3.DAC0_8(bits))
 
     # private
@@ -140,7 +142,8 @@ class BaseU3LV:
             try:
                 return self._dio_mapping[ch]
             except KeyError:
-                self.warning('Invalid channel {}'.format(ch))
-                self.warning('DIOMapping {}'.format(self._dio_mapping))
+                self.warning("Invalid channel {}".format(ch))
+                self.warning("DIOMapping {}".format(self._dio_mapping))
+
 
 # ============= EOF =============================================

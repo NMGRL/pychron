@@ -15,26 +15,26 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from traits.api import Instance
-
 from pychron.dvc.func import repository_has_staged
-from pychron.pipeline.nodes.base import BaseNode
 from pychron.pipeline.nodes.data import BaseDVCNode
 
 
 class PushNode(BaseDVCNode):
+    def __init__(self, *args, **kw):
+        super(PushNode, self).__init__(*args, **kw)
+        self.configurable = False
+        self.name = "Push"
 
     def run(self, state):
-        ps = {ai.repository_identifier for ans in (state.unknowns, state.references) for ai in ans}
-        # ps.union({ai.repository_identifier})
+        ps = {
+            ai.repository_identifier
+            for ans in (state.unknowns, state.references)
+            for ai in ans
+        }
         if ps:
             changed = repository_has_staged(ps)
-            self.debug('pipeline has changes to {}'.format(changed))
             if changed:
-                # m = 'You have changes to analyses. Would you like to share them?'
-                # ret = self._handle_prompt_for_save(m, 'Share Changes')
-                # if ret == 'save':
                 self.dvc.push_repositories(changed)
+
 
 # ============= EOF =============================================

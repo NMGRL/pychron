@@ -35,17 +35,17 @@ X_OFF = 18
 
 def get(widget):
     """Query a widget for its python value"""
-    if hasattr(widget, 'isChecked'):
+    if hasattr(widget, "isChecked"):
         value = widget.isChecked()
-    elif hasattr(widget, 'value'):
+    elif hasattr(widget, "value"):
         value = widget.value()
-    elif hasattr(widget, 'text'):
+    elif hasattr(widget, "text"):
         value = widget.text()
-    elif hasattr(widget, 'toPlainText'):
+    elif hasattr(widget, "toPlainText"):
         value = widget.toPlainText()
-    elif hasattr(widget, 'sizes'):
+    elif hasattr(widget, "sizes"):
         value = widget.sizes()
-    elif hasattr(widget, 'date'):
+    elif hasattr(widget, "date"):
         value = widget.date().toString(Qt.ISODate)
     else:
         value = None
@@ -70,16 +70,18 @@ class CommitGraphicsItem(QGraphicsItem):
     merge_radius = 18.0
 
     item_shape = QtGui.QPainterPath()
-    item_shape.addRect(commit_radius / -2.0,
-                       commit_radius / -2.0,
-                       commit_radius, commit_radius)
+    item_shape.addRect(
+        commit_radius / -2.0, commit_radius / -2.0, commit_radius, commit_radius
+    )
     item_bbox = item_shape.boundingRect()
 
     inner_rect = QtGui.QPainterPath()
-    inner_rect.addRect(commit_radius / -2.0 + 2.0,
-                       commit_radius / -2.0 + 2.0,
-                       commit_radius - 4.0,
-                       commit_radius - 4.0)
+    inner_rect.addRect(
+        commit_radius / -2.0 + 2.0,
+        commit_radius / -2.0 + 2.0,
+        commit_radius - 4.0,
+        commit_radius - 4.0,
+    )
     inner_rect = inner_rect.boundingRect()
 
     commit_color = QtGui.QColor(Qt.white)
@@ -97,14 +99,16 @@ class CommitGraphicsItem(QGraphicsItem):
     text_pen.setColor(QtGui.QColor(Qt.darkGray))
     text_pen.setWidth(1.0)
 
-    def __init__(self, commit,
-                 notifier,
-                 selectable=QGraphicsItem.ItemIsSelectable,
-                 cursor=Qt.PointingHandCursor,
-                 xpos=commit_radius / 2.0 + 1.0,
-                 cached_commit_color=commit_color,
-                 cached_merge_color=merge_color):
-
+    def __init__(
+        self,
+        commit,
+        notifier,
+        selectable=QGraphicsItem.ItemIsSelectable,
+        cursor=Qt.PointingHandCursor,
+        xpos=commit_radius / 2.0 + 1.0,
+        cached_commit_color=commit_color,
+        cached_merge_color=merge_color,
+    ):
         QGraphicsItem.__init__(self)
 
         self.commit = commit
@@ -114,7 +118,7 @@ class CommitGraphicsItem(QGraphicsItem):
         self.setZValue(0)
         self.setFlag(selectable)
         self.setCursor(cursor)
-        self.setToolTip(commit.oid[:12] + ': ' + commit.summary + ':' + commit.authdate)
+        self.setToolTip(commit.oid[:12] + ": " + commit.summary + ":" + commit.authdate)
 
         if commit.tags:
             self.label = label = Label(commit)
@@ -157,7 +161,7 @@ class CommitGraphicsItem(QGraphicsItem):
                     self.brush = self.commit_color
                 color = self.outline_color
             commit_pen = QtGui.QPen()
-            commit_pen.setWidth(1.0)
+            commit_pen.setWidth(1)
             commit_pen.setColor(color)
             self.commit_pen = commit_pen
 
@@ -173,7 +177,6 @@ class CommitGraphicsItem(QGraphicsItem):
         return self.item_shape
 
     def paint(self, painter, option, _widget, cache=Cache):
-
         # Do not draw outside the exposed rect
         # painter.setClipRect(option.exposedRect)
 
@@ -194,9 +197,7 @@ class CommitGraphicsItem(QGraphicsItem):
 
     def mouseReleaseEvent(self, event):
         QGraphicsItem.mouseReleaseEvent(self, event)
-        if (not self.dragged and
-                self.selected and
-                event.button() == Qt.LeftButton):
+        if not self.dragged and self.selected and event.button() == Qt.LeftButton:
             return
         self.pressed = False
         self.dragged = False
@@ -272,10 +273,10 @@ class Label(QGraphicsItem):
         spacing = self.item_spacing
         QRectF = QtCore.QRectF
 
-        HEAD = 'HEAD'
-        remotes_prefix = 'remotes/'
-        tags_prefix = 'tags/'
-        heads_prefix = 'heads/'
+        HEAD = "HEAD"
+        remotes_prefix = "remotes/"
+        tags_prefix = "tags/"
+        heads_prefix = "heads/"
         remotes_len = len(remotes_prefix)
         tags_len = len(tags_prefix)
         heads_len = len(heads_prefix)
@@ -301,7 +302,8 @@ class Label(QGraphicsItem):
                 painter.setBrush(self.other_color)
 
             text_rect = painter.boundingRect(
-                QRectF(current_width, 0, 0, 0), Qt.TextSingleLine, tag)
+                QRectF(current_width, 0, 0, 0), Qt.TextSingleLine, tag
+            )
             box_rect = text_rect.adjusted(-offset, -offset, offset, offset)
 
             painter.drawRoundedRect(box_rect, border, border)
@@ -313,7 +315,6 @@ class Edge(QGraphicsItem):
     item_type = QGraphicsItem.UserType + 1
 
     def __init__(self, source, dest):
-
         QGraphicsItem.__init__(self)
 
         self.setAcceptedMouseButtons(Qt.NoButton)
@@ -373,7 +374,7 @@ class Edge(QGraphicsItem):
         QPointF = QtCore.QPointF
 
         arc_rect = 8
-        connector_length = -Y_OFF / 4.
+        connector_length = -Y_OFF / 4.0
 
         path = QtGui.QPainterPath()
 
@@ -549,9 +550,7 @@ class DAGraphView(QGraphicsView):
                 y_min = min(y_min, y)
                 y_max = max(y_max, y)
 
-            rect = QtCore.QRectF(x_min, y_min,
-                                 abs(x_max - x_min),
-                                 abs(y_max - y_min))
+            rect = QtCore.QRectF(x_min, y_min, abs(x_max - x_min), abs(y_max - y_min))
 
         x_adjust = abs(DAGraphView.x_adjust)
         y_adjust = abs(DAGraphView.y_adjust)
@@ -809,10 +808,9 @@ class DAGraphView(QGraphicsView):
             # Allocate columns for children which are still without one. Also
             # propagate frontier for children.
             if node.is_fork():
-
-                sorted_children = sorted(node.children,
-                                         key=lambda c: c.generation,
-                                         reverse=True)
+                sorted_children = sorted(
+                    node.children, key=lambda c: c.generation, reverse=True
+                )
                 citer = iter(sorted_children)
                 for child in citer:
                     if child.column is None:
@@ -849,7 +847,7 @@ class DAGraphView(QGraphicsView):
                 # This is a leaf node.
                 self.leave_column(node.column)
 
-        for i, c in enumerate(sorted(self.commits, key=attrgetter('timestamp'))):
+        for i, c in enumerate(sorted(self.commits, key=attrgetter("timestamp"))):
             c.row = i
 
     def position_nodes(self):
@@ -891,5 +889,6 @@ def sort_by_generation(commits):
         return commits
     commits.sort(key=lambda x: x.generation)
     return commits
+
 
 # ============= EOF =============================================

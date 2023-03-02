@@ -24,7 +24,7 @@ from pychron.pychron_constants import DEFAULT_MONITOR_NAME
 
 
 def formatter(x):
-    return x.lower().replace(' ', '_')
+    return x.lower().replace(" ", "_")
 
 
 class FindReferencesConfigModel(HasTraits, PersistenceMixin):
@@ -39,9 +39,9 @@ class FindReferencesConfigModel(HasTraits, PersistenceMixin):
     monitor_sample = Str(DEFAULT_MONITOR_NAME)
     monitor_samples = List
     replace = Bool(False)
-    pattributes = ('analysis_types', 'threshold')
+    pattributes = ("analysis_types", "threshold")
 
-    persistence_name = 'find_references_config'
+    persistence_name = "find_references_config"
 
     @property
     def formatted_analysis_types(self):
@@ -57,33 +57,64 @@ class FindReferencesConfigView(Controller):
             self.model.dump()
 
     def traits_view(self):
-        v = okcancel_view(VGroup(VGroup(UItem('analysis_types',
-                                              style='custom',
-                                              editor=CheckListEditor(values=['Blank Unknown', 'Blank Air',
-                                                                             'Blank Cocktail', 'Blank',
-                                                                             'Air', 'Cocktail'])),
-                                        show_border=True,
-                                        label='Analysis Types'),
-                                 VGroup(UItem('mass_spectrometers', style='custom',
-                                              editor=CheckListEditor(name='available_mass_spectrometers')),
-                                        show_border=True,
-                                        label='Mass Spectrometers'),
-                                 VGroup(UItem('extract_devices', style='custom',
-                                              editor=CheckListEditor(name='available_extract_devices')),
-                                        show_border=True,
-                                        label='Extract Devices'),
-                                 VGroup(UItem('irradiations', style='custom',
-                                              editor=CheckListEditor(name='available_irradiations')),
-                                        Item('monitor_sample',
-                                             editor=EnumEditor(name='monitor_samples')),
-                                        show_border=True,
-                                        label='Monitors'),
-                                 Item('replace',
-                                      label='Replace analyses used to find the references with the references'),
-                                 Item('threshold', label='Threshold (hrs)')),
-
-                          title='Configure Find References')
+        v = okcancel_view(
+            VGroup(
+                VGroup(
+                    UItem(
+                        "analysis_types",
+                        style="custom",
+                        editor=CheckListEditor(
+                            values=[
+                                "Blank Unknown",
+                                "Blank Air",
+                                "Blank Cocktail",
+                                "Blank",
+                                "Air",
+                                "Cocktail",
+                            ]
+                        ),
+                    ),
+                    show_border=True,
+                    label="Analysis Types",
+                ),
+                VGroup(
+                    UItem(
+                        "mass_spectrometers",
+                        style="custom",
+                        editor=CheckListEditor(name="available_mass_spectrometers"),
+                    ),
+                    show_border=True,
+                    label="Mass Spectrometers",
+                ),
+                VGroup(
+                    UItem(
+                        "extract_devices",
+                        style="custom",
+                        editor=CheckListEditor(name="available_extract_devices"),
+                    ),
+                    show_border=True,
+                    label="Extract Devices",
+                ),
+                VGroup(
+                    UItem(
+                        "irradiations",
+                        style="custom",
+                        editor=CheckListEditor(name="available_irradiations"),
+                    ),
+                    Item("monitor_sample", editor=EnumEditor(name="monitor_samples")),
+                    show_border=True,
+                    label="Monitors",
+                ),
+                Item(
+                    "replace",
+                    label="Replace analyses used to find the references with the references",
+                ),
+                Item("threshold", label="Threshold (hrs)"),
+            ),
+            title="Configure Find References",
+        )
 
         return v
+
 
 # ============= EOF =============================================

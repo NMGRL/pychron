@@ -16,29 +16,29 @@
 from pychron.core.utils import alphas, alpha_to_int
 
 
-def make_rid(ln, a, step=''):
+def make_rid(ln, a, step=""):
     """
-        if ln can be converted to integer return runid
-        else return ln-a
+    if ln can be converted to integer return runid
+    else return ln-a
     """
     try:
         _ = int(ln)
         return make_runid(ln, a, step)
     except ValueError:
         if not isinstance(a, str):
-            a = '{:02d}'.format(a)
-        return '{}-{}'.format(ln, a)
+            a = "{:02d}".format(a)
+        return "{}-{}".format(ln, a)
 
 
-def make_runid(ln, a, s=''):
+def make_runid(ln, a, s=""):
     _as = make_aliquot_step(a, s)
-    return '{}-{}'.format(ln, _as)
+    return "{}-{}".format(ln, _as)
 
 
 def make_step(s):
     if isinstance(s, (float, int, int)):
         s = alphas(s)
-    return s or ''
+    return s or ""
 
 
 def make_increment(s):
@@ -47,12 +47,14 @@ def make_increment(s):
 
 def make_aliquot(a):
     if not isinstance(a, str):
-        a = '{:02d}'.format(int(a))
+        a = "{:02d}".format(int(a))
     return a
 
 
 def make_aliquot_step(a, s):
     a = make_aliquot(a)
     s = make_step(s)
-    return '{}{}'.format(a, s)
+    return "{}{}".format(a, s)
+
+
 # ============= EOF =============================================

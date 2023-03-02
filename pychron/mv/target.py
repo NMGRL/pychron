@@ -17,6 +17,8 @@
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 import math
+
+
 # ============= local library imports  ==========================
 
 
@@ -35,8 +37,10 @@ class Target:
 
     @property
     def dev_centroid(self):
-        return ((self.origin[0] - self.centroid[0]),
-                (self.origin[1] - self.centroid[1]))
+        return (
+            (self.origin[0] - self.centroid[0]),
+            (self.origin[1] - self.centroid[1]),
+        )
 
     @property
     def aspect_ratio(self):
@@ -54,6 +58,7 @@ class Target:
 
     @property
     def compactness(self):
-        return 4 * math.pi * self.area / self.pactual ** 2
+        return 4 * math.pi * self.area / self.pactual**2
+
 
 # ============= EOF =============================================

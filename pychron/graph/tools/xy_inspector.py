@@ -14,25 +14,25 @@
 # limitations under the License.
 # ===============================================================================
 
-'''
+"""
     modified from chaco.image_inspector
-'''
+"""
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from enable.api import BaseTool, KeySpec
 from traits.api import Any, Bool, Enum, Event, Tuple
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
 # Enthought library imports
 
 # Chaco imports
-from chaco.api import  TextBoxOverlay
+from chaco.api import TextBoxOverlay
 
 
 class XYInspector(BaseTool):
-    """ A tool that captures the color and underlying values of an image plot.
-    """
+    """A tool that captures the color and underlying values of an image plot."""
 
     # This event fires whenever the mouse moves over a new image point.
     # Its value is a dict with a key "color_value", and possibly a key
@@ -48,7 +48,7 @@ class XYInspector(BaseTool):
 
     # This key will show and hide any ImageInspectorOverlays associated
     # with this tool.
-    inspector_key = KeySpec('p')
+    inspector_key = KeySpec("p")
 
     # Stores the value of self.visible when the mouse leaves the tool,
     # so that it can be restored when the mouse enters again.
@@ -70,28 +70,31 @@ class XYInspector(BaseTool):
             self._old_visible = None
 
     def normal_mouse_move(self, event):
-        """ Handles the mouse being moved.
+        """Handles the mouse being moved.
 
         Fires the **new_value** event with the data (if any) from the event's
         position.
         """
         plot = self.component
         if plot is not None:
-#            ndx = plot.map_index((event.x, event.y))
-#            if ndx == (None, None):
-#                self.new_value = None
-#                return
+            #            ndx = plot.map_index((event.x, event.y))
+            #            if ndx == (None, None):
+            #                self.new_value = None
+            #                return
 
             pos = plot.map_data((event.x, event.y), all_values=True)
-#            x_index, y_index = ndx
+            #            x_index, y_index = ndx
             self.new_value = dict(pos=pos)
+
+
 #            self.last_mouse_position = (event.x, event.y)
 
 
 class XYInspectorOverlay(TextBoxOverlay):
-    """ An overlay that displays a box containing values from an
+    """An overlay that displays a box containing values from an
     ImageInspectorTool instance.
     """
+
     # An instance of ImageInspectorTool; this overlay listens to the tool
     # for changes, and updates its displayed text accordingly.
     inspector = Any
@@ -109,10 +112,10 @@ class XYInspectorOverlay(TextBoxOverlay):
 
     def _inspector_changed(self, old, new):
         if old:
-            old.on_trait_event(self._new_value_updated, 'new_value', remove=True)
+            old.on_trait_event(self._new_value_updated, "new_value", remove=True)
             old.on_trait_change(self._tool_visible_changed, "visible", remove=True)
         if new:
-            new.on_trait_event(self._new_value_updated, 'new_value')
+            new.on_trait_event(self._new_value_updated, "new_value")
             new.on_trait_change(self._tool_visible_changed, "visible")
             self._tool_visible_changed()
 
@@ -132,15 +135,15 @@ class XYInspectorOverlay(TextBoxOverlay):
 
         d = event
         newstring = ""
-#        if 'indices' in d:
-#            newstring += '(%d, %d)' % d['indices'] + '\n'
-#        if 'color_value' in d:
-#            newstring += "(%d, %d, %d)" % tuple(map(int, d['color_value'][:3])) + "\n"
-#        if 'data_value' in d:
-#            newstring += str(d['data_value'])
+        #        if 'indices' in d:
+        #            newstring += '(%d, %d)' % d['indices'] + '\n'
+        #        if 'color_value' in d:
+        #            newstring += "(%d, %d, %d)" % tuple(map(int, d['color_value'][:3])) + "\n"
+        #        if 'data_value' in d:
+        #            newstring += str(d['data_value'])
 
-        if 'pos' in d:
-            newstring += '({:0.2f},{:0.2f})'.format(*d['pos'])
+        if "pos" in d:
+            newstring += "({:0.2f},{:0.2f})".format(*d["pos"])
 
         self.text = newstring
         self.component.request_redraw()

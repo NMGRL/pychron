@@ -29,6 +29,7 @@ class PeakHopCollector(DataCollector):
     Collector class for doing a peak hop measurement. Measure one or more intensities at given mass for ncounts then
     jump magnet to next new mass.
     """
+
     hops = List
     settling_time = 0
     ncycles = Int
@@ -39,7 +40,7 @@ class PeakHopCollector(DataCollector):
 
     def set_hops(self, hops):
         self.hops = hops
-        self.debug('make new hop generatior')
+        self.debug("make new hop generatior")
         self.hop_generator = generate_hops(self.hops)
 
     def _pre_trigger_hook(self):
@@ -62,40 +63,40 @@ class PeakHopCollector(DataCollector):
 
     def _do_hop(self):
         """
-            is it time for a magnet move
+        is it time for a magnet move
         """
         # from pychron.core.ui.gui import invoke_in_main_thread
 
         hop = next(self.hop_generator)
-        hop_idx = hop['idx']
-        cycle = hop['cycle']
-        is_baseline = hop['is_baseline']
-        dets = hop['detectors']
-        isos = hop['isotopes']
-        defls = hop['deflections']
-        settle = hop['settle']
-        count = hop['count']
-        pdets = hop['protect_detectors']
-        active_dets = hop['active_detectors']
+        hop_idx = hop["idx"]
+        cycle = hop["cycle"]
+        is_baseline = hop["is_baseline"]
+        dets = hop["detectors"]
+        isos = hop["isotopes"]
+        defls = hop["deflections"]
+        settle = hop["settle"]
+        count = hop["count"]
+        pdets = hop["protect_detectors"]
+        active_dets = hop["active_detectors"]
 
         current_color = colornames[hop_idx]
 
         use_dac = False
-        positioning = hop['positioning']
+        positioning = hop["positioning"]
         if positioning:
-            if 'dac' in positioning:
+            if "dac" in positioning:
                 use_dac = True
-                isotope = positioning['dac']
-                detector = ''
+                isotope = positioning["dac"]
+                detector = ""
             else:
-                detector = positioning['detector']
-                isotope = positioning['isotope']
+                detector = positioning["detector"]
+                isotope = positioning["isotope"]
         else:
             detector = active_dets[0]
             isotope = isos[0]
 
         if count == 0:
-            self.debug('$$$$$$$$$$$$$$$$$ SETTING is_baseline {}'.format(is_baseline))
+            self.debug("$$$$$$$$$$$$$$$$$ SETTING is_baseline {}".format(is_baseline))
 
         arun = self.automated_run
         if is_baseline:
@@ -106,19 +107,25 @@ class PeakHopCollector(DataCollector):
             ocycles = self.plot_panel.ncycles
             pocounts = self.plot_panel.ncounts
 
-            self.debug('START BASELINE MEASUREMENT {} {}'.format(isotope, detector))
+            self.debug("START BASELINE MEASUREMENT {} {}".format(isotope, detector))
             arun.measurement_script.baselines(count, mass=isotope, detector=detector)
-            self.debug('BASELINE MEASUREMENT COMPLETE')
+            self.debug("BASELINE MEASUREMENT COMPLETE")
 
             arun.measurement_script.increment_series_count(-2, -1)
 
-            change = arun.set_magnet_position(isotope, detector,
-                                              use_dac=use_dac,
-                                              update_detectors=False, update_labels=False,
-                                              update_isotopes=True,
-                                              remove_non_active=False)
+            change = arun.set_magnet_position(
+                isotope,
+                detector,
+                use_dac=use_dac,
+                update_detectors=False,
+                update_labels=False,
+                update_isotopes=True,
+                remove_non_active=False,
+            )
             if change:
-                msg = 'delaying {} for detectors to settle after peak hop'.format(settle)
+                msg = "delaying {} for detectors to settle after peak hop".format(
+                    settle
+                )
                 arun.wait(settle, msg)
                 self.debug(msg)
 
@@ -132,7 +139,10 @@ class PeakHopCollector(DataCollector):
             if self.plot_panel.ncycles != self.ncycles:
                 if cycle >= self.plot_panel.ncycles:
                     self.info(
-                        'user termination. measurement iteration executed {}/{} cycles'.format(cycle, self.ncycles))
+                        "user termination. measurement iteration executed {}/{} cycles".format(
+                            cycle, self.ncycles
+                        )
+                    )
                     self.stop()
                     return
             elif cycle >= self.ncycles:
@@ -140,9 +150,9 @@ class PeakHopCollector(DataCollector):
 
             if count == 0:
                 zd = list(zip(dets, defls))
-                self.debug('Peak hop Detectors={}'.format(dets))
-                self.debug('Peak hop Deflections={}'.format(defls))
-                self.debug('Peak hop DeflectionsPairs={}'.format(zd))
+                self.debug("Peak hop Detectors={}".format(dets))
+                self.debug("Peak hop Deflections={}".format(defls))
+                self.debug("Peak hop DeflectionsPairs={}".format(zd))
                 # set deflections
                 # only set deflections deflections were changed or need changing
                 deflect = len([d for d in defls if d is not None])
@@ -156,13 +166,18 @@ class PeakHopCollector(DataCollector):
                             arun.set_deflection(det, defl)
 
                 self._protect_detectors(pdets)
-                self.debug('----------------------- HOP {} {}'.format(isotope, detector))
-                change = arun.set_magnet_position(isotope, detector,
-                                                  update_detectors=False,
-                                                  update_labels=False,
-                                                  update_isotopes=False,
-                                                  # update_isotopes=not is_baseline,
-                                                  remove_non_active=False)
+                self.debug(
+                    "----------------------- HOP {} {}".format(isotope, detector)
+                )
+                change = arun.set_magnet_position(
+                    isotope,
+                    detector,
+                    update_detectors=False,
+                    update_labels=False,
+                    update_isotopes=False,
+                    # update_isotopes=not is_baseline,
+                    remove_non_active=False,
+                )
 
                 self._protect_detectors(pdets, False)
 
@@ -173,42 +188,56 @@ class PeakHopCollector(DataCollector):
                         for d in active_dets:
                             det = arun.get_detector(d)
 
-                            plot = g.get_plot_by_ytitle('{}{}'.format(det.isotope, det.name))
+                            plot = g.get_plot_by_ytitle(
+                                "{}{}".format(det.isotope, det.name)
+                            )
                             if not plot:
                                 plot = g.get_plot_by_ytitle(det.isotope)
 
                             if plot:
-                                scatter = plot.plots['data{}'.format(self.fit_series_idx)][0]
+                                scatter = plot.plots[
+                                    "data{}".format(self.fit_series_idx)
+                                ][0]
                                 scatter.color = current_color
                                 scatter.outline_color = current_color
                             else:
-                                self.debug('could not locate det={} iso={}'.format(d, det.isotope))
+                                self.debug(
+                                    "could not locate det={} iso={}".format(
+                                        d, det.isotope
+                                    )
+                                )
 
                     try:
                         arun.plot_panel.counts += int(settle)
                     except AttributeError:
                         pass
 
-                    msg = 'delaying {} for detectors to settle after peak hop'.format(settle)
+                    msg = "delaying {} for detectors to settle after peak hop".format(
+                        settle
+                    )
                     arun.wait(settle, msg)
                     self.debug(msg)
 
             # self.debug('cycle {} count {} {}'.format(cycle, count, id(self)))
             if self.plot_panel.is_baseline:
-                isotope = '{}bs'.format(isotope)
+                isotope = "{}bs".format(isotope)
 
             dac = arun.get_current_dac()
             # invoke_in_main_thread(self.plot_panel.trait_set,
             #                       current_cycle='{}({:0.6f}) - {} cyc={} cnt={}'.format(isotope, dac, detector,
             #                                                                             cycle + 1, count + 1),
             #                       current_color=current_color)
-            self.plot_panel.trait_set(current_cycle='{}({:0.6f}) - {} cyc={} cnt={}'.format(isotope, dac, detector,
-                                                                                            cycle + 1, count + 1),
-                                      current_color=current_color)
+            self.plot_panel.trait_set(
+                current_cycle="{}({:0.6f}) - {} cyc={} cnt={}".format(
+                    isotope, dac, detector, cycle + 1, count + 1
+                ),
+                current_color=current_color,
+            )
         return is_baseline, active_dets, isos
 
     def _protect_detectors(self, pdets, protect=True):
         for pd in pdets:
             self.automated_run.protect_detector(pd, protect)
+
 
 # ============= EOF =============================================

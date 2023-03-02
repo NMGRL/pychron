@@ -27,8 +27,8 @@ class RegressionSeriesEditor(FigureEditor):
     # plotter_options_manager = Instance(PlotterOptionsManager)
     # plotter_options_manager_klass = SeriesOptionsManager
     figure_model_klass = RegressionSeriesModel
-    pickle_path = 'regression_series'
-    basename = 'RegressionSeries'
+    pickle_path = "regression_series"
+    basename = "RegressionSeries"
     # model_klass = SeriesModel
     # auto_group = False
 
@@ -43,15 +43,16 @@ class RegressionSeriesEditor(FigureEditor):
     #
     #     self._set_name()
 
-        # def get_component(self, ans, plotter_options):
-        # if plotter_options is None:
-        #         pom = self.plotter_options_manager_klass()
-        #         plotter_options = pom.plotter_options
-        #
-        #     model = self.model_klass(plot_options=plotter_options)
-        #     model.analyses = ans
-        #     iv = FigureContainer(model=model)
-        #
-        #     return model, iv.component
+    # def get_component(self, ans, plotter_options):
+    # if plotter_options is None:
+    #         pom = self.plotter_options_manager_klass()
+    #         plotter_options = pom.plotter_options
+    #
+    #     model = self.model_klass(plot_options=plotter_options)
+    #     model.analyses = ans
+    #     iv = FigureContainer(model=model)
+    #
+    #     return model, iv.component
+
 
 # ============= EOF =============================================

@@ -28,7 +28,7 @@ def get_valve_name(obj):
     if isinstance(obj, (str, int)):
         name = obj
     else:
-        name = obj.name.split('-')[1]
+        name = obj.name.split("-")[1]
     return name
 
 
@@ -47,7 +47,7 @@ def word(func):
         r = func(*args, **kw)
         d = {}
         if not isinstance(r, bool):
-            args = r.split(',')
+            args = r.split(",")
             d = {args[i]: args[i + 1] for i in range(0, len(args), 2)}
 
         return d
@@ -65,11 +65,12 @@ def trim_affirmative(func):
             if isinstance(r, tuple):
                 r, cmd = r
 
-            r = r.strip()
-            if callable(obj.affirmative):
-                r = obj.affirmative(r, cmd)
-            else:
-                r = r == obj.affirmative
+            if r is not None:
+                r = r.strip()
+                if callable(obj.affirmative):
+                    r = obj.affirmative(r, cmd)
+                else:
+                    r = r == obj.affirmative
 
         return r
 
@@ -94,3 +95,4 @@ PACKAGES = dict(AgilentGPActuator='{}.agilent.agilent_gp_actuator'.format(base),
                 ProXRActuator='{}.proxr_actuator'.format(abase),
                 PLC2000GPActuator='{}.plc2000_gp_actuator'.format(abase),
                 MCCGPActuator='{}.mcc_gp_actuator'.format(abase))
+

@@ -37,7 +37,7 @@ class TableSeparator(HasTraits):
     name = Str
 
     def __getattr__(self, attr):
-        return ''
+        return ""
 
 
 def swidth(v=60):
@@ -49,7 +49,7 @@ def ewidth(v=50):
 
 
 class BaseAdapter(TabularAdapter):
-    blank_column_text = Str('')
+    blank_column_text = Str("")
 
     labnumber_width = Int(60)
     aliquot_step_str_width = Int(30)
@@ -74,7 +74,7 @@ class BaseAdapter(TabularAdapter):
     R_width = Int(70)
     R_width = Int(70)
 
-    font = 'Arial 10'
+    font = "Arial 10"
 
     sensitivity_scalar = 1e9
 
@@ -85,9 +85,9 @@ class BaseAdapter(TabularAdapter):
         return self._get_attribute_value(std_dev, attr, n, **kw)
 
     def _get_attribute_value(self, func, attr, n, **kw):
-        v = ''
+        v = ""
         item = self.item
-        if hasattr(item, 'isotopes'):
+        if hasattr(item, "isotopes"):
             # print attr in item.isotopes
             if attr in item.isotopes:
                 v = item.isotopes[attr].get_intensity()
@@ -105,15 +105,15 @@ class BaseAdapter(TabularAdapter):
 
 class BaseGroupAdapter(BaseAdapter):
     columns = [
-        ('Identifier', 'identifier'),
-        ('Sample', 'sample'),
-        ('N', 'nanalyses'),
-        ('Wtd. Age', 'weighted_age'),
-        ('S.E', 'age_se'),
-        ('MSWD', 'mswd'),
-        ('Wtd. K/Ca', 'weighted_kca_error'),
-        ('S.E', 'weighted_kca'),
-        ('', 'blank_column')
+        ("Identifier", "identifier"),
+        ("Sample", "sample"),
+        ("N", "nanalyses"),
+        ("Wtd. Age", "weighted_age"),
+        ("S.E", "age_se"),
+        ("MSWD", "mswd"),
+        ("Wtd. K/Ca", "weighted_kca_error"),
+        ("S.E", "weighted_kca"),
+        ("", "blank_column"),
     ]
 
     nanalyses_width = Int(40)
@@ -133,24 +133,25 @@ class BaseGroupAdapter(BaseAdapter):
     weighted_kca_text = Property
     weighted_kca_error_text = Property
 
-    font = 'Arial 9'
+    font = "Arial 9"
 
     def get_bg_color(self, obj, trait, row, column):
-        return 'white'
+        return "white"
 
     def _get_weighted_age_text(self):
-        return self._get_value('weighted_age')
+        return self._get_value("weighted_age")
 
     def _get_age_se_text(self):
-        return self._get_error('weighted_age')
+        return self._get_error("weighted_age")
 
     def _get_weighted_kca_text(self):
-        return self._get_value('weighted_kca')
+        return self._get_value("weighted_kca")
 
     def _get_weighted_kca_error_text(self):
-        return self._get_error('weighted_kca')
+        return self._get_error("weighted_kca")
 
     def _get_mswd_text(self):
         return floatfmt(self.item.mswd, 2)
+
 
 # ============= EOF =============================================

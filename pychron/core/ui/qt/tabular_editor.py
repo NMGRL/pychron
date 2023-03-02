@@ -19,13 +19,31 @@
 from pickle import dumps
 
 import six
+from PyQt5.QtCore import QSize
 from pyface.qt import QtCore, QtGui
 from pyface.qt.QtGui import QHeaderView, QApplication
-from traits.api import Bool, Str, List, Any, Instance, Property, Int, HasTraits, Color, Either, Callable, Event
+from traits.api import (
+    Bool,
+    Str,
+    List,
+    Any,
+    Instance,
+    Property,
+    Int,
+    HasTraits,
+    Color,
+    Either,
+    Callable,
+    Event,
+)
 from traitsui.api import Item, TabularEditor, Handler
 from traitsui.mimedata import PyMimeData
-from traitsui.qt4.tabular_editor import TabularEditor as qtTabularEditor, \
-    _TableView as TableView, HeaderEventFilter, _ItemDelegate
+from traitsui.qt4.tabular_editor import (
+    TabularEditor as qtTabularEditor,
+    _TableView as TableView,
+    HeaderEventFilter,
+    _ItemDelegate,
+)
 from traitsui.qt4.tabular_model import TabularModel, tabular_mime_type
 
 from pychron.core.helpers.ctx_managers import no_update
@@ -46,7 +64,7 @@ class myTabularEditor(TabularEditor):
 
     bgcolor = Color
     row_height = Int
-    mime_type = Str('pychron.tabular_item')
+    mime_type = Str("pychron.tabular_item")
 
     autoscroll = Bool(False)
     scroll_to_bottom = Str
@@ -71,22 +89,27 @@ class MoveToRow(HasTraits):
         self._row = v
 
     def traits_view(self):
-        v = okcancel_view(Item('row'),
-                          width=300,
-                          title='Move Selected to Row')
+        v = okcancel_view(Item("row"), width=300, title="Move Selected to Row")
         return v
 
 
 class TabularKeyEvent(object):
     def __init__(self, event):
         self.text = event.text().strip()
+        self.key = event.key()
         mods = QtGui.QApplication.keyboardModifiers()
-        self.shift = mods == QtCore.Qt.ShiftModifier
+        self.shift = mods & QtCore.Qt.ShiftModifier
+        self.control = mods & QtCore.Qt.ControlModifier
+
+    def is_key(self, k):
+        if isinstance(k, str):
+            k = ord(k)
+        return self.key == k
 
 
 class UnselectTabularEditorHandler(Handler):
-    refresh_name = Str('refresh_needed')
-    selected_name = Str('selected')
+    refresh_name = Str("refresh_needed")
+    selected_name = Str("selected")
     multiselect = Bool(True)
 
     def unselect(self, info, obj):
@@ -134,10 +157,11 @@ class ItemDelegate(_ItemDelegate):
 # class _TableView(TableView, ConsumerMixin):
 class _TableView(TableView):
     """
-        for drag and drop reference see
-        https://github.com/enthought/traitsui/blob/master/traitsui/qt4/tree_editor.py
+    for drag and drop reference see
+    https://github.com/enthought/traitsui/blob/master/traitsui/qt4/tree_editor.py
 
     """
+
     paste_func = None
     drop_factory = None
     # link_copyable = True
@@ -230,7 +254,7 @@ class _TableView(TableView):
                 return
             else:
                 try:
-                    if not hasattr(ed.instance(), '__iter__'):
+                    if not hasattr(ed.instance(), "__iter__"):
                         return
                 except AttributeError:
                     return
@@ -250,7 +274,7 @@ class _TableView(TableView):
     def dropEvent(self, e):
         if self.is_external():
             data = PyMimeData.coerce(e.mimeData()).instance()
-            if not hasattr(data, '__iter__'):
+            if not hasattr(data, "__iter__"):
                 return
 
             df = self.drop_factory
@@ -287,16 +311,48 @@ class _TableView(TableView):
         # print 'is_external', self._editor.factory.drag_external and not self._dragging
         return self._editor.factory.drag_external  # and not self._dragging
 
+    def columnResized(self, index, old, new):
+        """Handle user-driven resizing of columns.
+
+        This affects the column widths when not using auto-sizing.
+        """
+        if not self._is_resizing:
+            if self._user_widths is None:
+                self._user_widths = [None] * len(self._editor.adapter.columns)
+            try:
+                self._user_widths[index] = new
+            except IndexError:
+                pass
+
+            if (
+                self._editor.factory is not None
+                and not self._editor.factory.auto_resize
+            ):
+                self.resizeColumnsToContents()
+
     def keyPressEvent(self, event):
+        # print('asfd', event, event.key(), event.modifiers(), QtGui.QKeySequence('Cmd+N'))
+        # print(int(event.modifiers() & QtCore.Qt.MetaModifier),
+        #       int(event.modifiers() & QtCore.Qt.ControlModifier),
+        #
+        #       # int(event.modifiers() & QtCore.Qt.Key_Control),
+        #       # int(event.modifiers() & QtCore.Qt.Key_Shift),
+        #       bin(int(event.modifiers())),
+        #       # bin(int(QtCore.Qt.Key_Control)),
+        #       bin(int(QtCore.Qt.MetaModifier)),
+        #       bin(int(QtCore.Qt.ControlModifier))
+        #       )
+        selection_idx = [ci.row() for ci in self.selectedIndexes()]
         if event.matches(QtGui.QKeySequence.Copy):
             self._cut_indices = None
 
             # add the selected rows to the clipboard
             self._copy()
-
+        # elif event.key() == 78 and event.modifiers() & QtCore.Qt.ControlModifier:
+        #     print('asfasdfasdfsafasdf')
+        #     self._editor.key_pressed = TabularKeyEvent(event)
         elif event.matches(QtGui.QKeySequence.Cut):
-            self._cut_indices = [ci.row() for ci in self.selectionModel().selectedRows()]
-
+            self._cut_indices = selection_idx
         elif event.matches(QtGui.QKeySequence.Paste):
             if self.pastable:
                 self._paste()
@@ -304,6 +360,24 @@ class _TableView(TableView):
             self._editor.key_pressed = TabularKeyEvent(event)
 
             self._key_press_hook(event)
+
+    def resizeColumnsToContents(self):
+        try:
+            super(_TableView, self).resizeColumnsToContents()
+        except AttributeError:
+            pass
+
+    def sizeHintForColumn(self, column):
+        try:
+            return super(_TableView, self).sizeHintForColumn(column)
+        except AttributeError:
+            pass
+
+    def sizeHint(self):
+        try:
+            return super(_TableView, self).sizeHint()
+        except TypeError:
+            return QSize()
 
     # private
     def _copy(self):
@@ -314,7 +388,7 @@ class _TableView(TableView):
         try:
             pdata = dumps(copy_object)
         except BaseException as e:
-            print('tabular editor copy failed')
+            print("tabular editor copy failed")
             self._editor.value[rows[0]].tocopy(verbose=True)
             return
 
@@ -337,10 +411,10 @@ class _TableView(TableView):
             editor = self._editor
             model = editor.model
 
-            insert_mode = 'after'
+            insert_mode = "after"
             selection = self.selectedIndexes()
             if len(selection):
-                offset = 1 if insert_mode == 'after' else 0
+                offset = 1 if insert_mode == "after" else 0
                 idx = selection[-1].row() + offset
             else:
                 idx = len(editor.value)
@@ -373,9 +447,9 @@ class _TableView(TableView):
         return [ci.row() for ci in rows]
 
     def _key_press_hook(self, event):
-        """ Reimplemented to support edit, insert, and delete by keyboard.
+        """Reimplemented to support edit, insert, and delete by keyboard.
 
-            reimplmented to support no_update context manager.
+        reimplmented to support no_update context manager.
 
         """
         editor = self._editor
@@ -383,9 +457,12 @@ class _TableView(TableView):
 
         # Note that setting 'EditKeyPressed' as an edit trigger does not work on
         # most platforms, which is why we do this here.
-        if (event.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return) and
-                self.state() != QtGui.QAbstractItemView.EditingState and
-                factory.editable and 'edit' in factory.operations):
+        if (
+            event.key() in (QtCore.Qt.Key_Enter, QtCore.Qt.Key_Return)
+            and self.state() != QtGui.QAbstractItemView.EditingState
+            and factory.editable
+            and "edit" in factory.operations
+        ):
             if factory.multi_select:
                 rows = editor.multi_selected_rows
                 row = rows[0] if len(rows) == 1 else -1
@@ -396,16 +473,19 @@ class _TableView(TableView):
                 event.accept()
                 self.edit(editor.model.index(row, 0))
 
-        elif (event.key() in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete) and
-              factory.editable and 'delete' in factory.operations):
+        elif (
+            event.key() in (QtCore.Qt.Key_Backspace, QtCore.Qt.Key_Delete)
+            and factory.editable
+            and "delete" in factory.operations
+        ):
             event.accept()
-            '''
+            """
                 sets _no_update and update_needed on the editor.object e.g
 
                 editor.object== ExperimentQueue
                 editor is editing ExperimentQueue.automated_runs
 
-            '''
+            """
 
             with no_update(editor.object):
                 if factory.multi_select:
@@ -414,8 +494,11 @@ class _TableView(TableView):
                 elif editor.selected_row != -1:
                     editor.model.removeRow(editor.selected_row)
 
-        elif (event.key() == QtCore.Qt.Key_Insert and
-              factory.editable and 'insert' in factory.operations):
+        elif (
+            event.key() == QtCore.Qt.Key_Insert
+            and factory.editable
+            and "insert" in factory.operations
+        ):
             event.accept()
 
             if factory.multi_select:
@@ -440,7 +523,7 @@ class _TabularModel(TabularModel):
         # this is a drag from a tabular model
         data = mime_data.data(tabular_mime_type)
         if not data.isNull() and action == QtCore.Qt.MoveAction:
-            id_and_rows = [int(di) for di in data.split(' ')]
+            id_and_rows = [int(di) for di in data.split(" ")]
             table_id = id_and_rows[0]
             # is it from ourself?
             if table_id == id(self):
@@ -463,16 +546,14 @@ class _TabularModel(TabularModel):
             if row == -1 and adapter.len(object, name) == 0:
                 # if empty list, target is after end of list
                 row = 0
-            if all(adapter.get_can_drop(object, name, row, item)
-                   for item in data):
+            if all(adapter.get_can_drop(object, name, row, item) for item in data):
                 for item in reversed(data):
                     self.dropItem(item, row)
                 return True
         return False
 
     def data(self, mi, role=None):
-        """ Reimplemented to return the data.
-        """
+        """Reimplemented to return the data."""
         if role is None:
             role = QtCore.Qt.DisplayRole
 
@@ -503,13 +584,13 @@ class _TabularEditor(qtTabularEditor):
 
         # Set up the selection listener
         if factory.multi_select:
-            self.sync_value(factory.selected, 'multi_selected', 'both',
-                            is_list=True)
-            self.sync_value(factory.selected_row, 'multi_selected_rows', 'both',
-                            is_list=True)
+            self.sync_value(factory.selected, "multi_selected", "both", is_list=True)
+            self.sync_value(
+                factory.selected_row, "multi_selected_rows", "both", is_list=True
+            )
         else:
-            self.sync_value(factory.selected, 'selected', 'both')
-            self.sync_value(factory.selected_row, 'selected_row', 'both')
+            self.sync_value(factory.selected, "selected", "both")
+            self.sync_value(factory.selected_row, "selected_row", "both")
 
         # Connect to the mode specific selection handler
         if factory.multi_select:
@@ -524,24 +605,30 @@ class _TabularEditor(qtTabularEditor):
         control.selectionModel().selectionChanged.connect(slot)
 
         # Synchronize other interesting traits as necessary:
-        self.sync_value(factory.update, 'update', 'from')
-        self.sync_value(factory.refresh, 'refresh', 'from')
-        self.sync_value(factory.activated, 'activated', 'to')
-        self.sync_value(factory.activated_row, 'activated_row', 'to')
-        self.sync_value(factory.clicked, 'clicked', 'to')
-        self.sync_value(factory.dclicked, 'dclicked', 'to')
-        self.sync_value(factory.right_clicked, 'right_clicked', 'to')
-        self.sync_value(factory.right_dclicked, 'right_dclicked', 'to')
-        self.sync_value(factory.column_clicked, 'column_clicked', 'to')
-        self.sync_value(factory.column_right_clicked, 'column_right_clicked', 'to')
+        self.sync_value(factory.update, "update", "from")
+        self.sync_value(factory.refresh, "refresh", "from")
+        self.sync_value(factory.activated, "activated", "to")
+        self.sync_value(factory.activated_row, "activated_row", "to")
+        self.sync_value(factory.clicked, "clicked", "to")
+        self.sync_value(factory.dclicked, "dclicked", "to")
+        self.sync_value(factory.right_clicked, "right_clicked", "to")
+        self.sync_value(factory.right_dclicked, "right_dclicked", "to")
+        self.sync_value(factory.column_clicked, "column_clicked", "to")
+        self.sync_value(factory.column_right_clicked, "column_right_clicked", "to")
         try:
-            self.sync_value(factory.scroll_to_row, 'scroll_to_row', 'from', is_event=True)
-            self.sync_value(factory.scroll_to_bottom, 'scroll_to_bottom', 'from', is_event=True)
-            self.sync_value(factory.scroll_to_top, 'scroll_to_top', 'from', is_event=True)
+            self.sync_value(
+                factory.scroll_to_row, "scroll_to_row", "from", is_event=True
+            )
+            self.sync_value(
+                factory.scroll_to_bottom, "scroll_to_bottom", "from", is_event=True
+            )
+            self.sync_value(
+                factory.scroll_to_top, "scroll_to_top", "from", is_event=True
+            )
         except TypeError:
-            self.sync_value(factory.scroll_to_row, 'scroll_to_row', 'from')
-            self.sync_value(factory.scroll_to_bottom, 'scroll_to_bottom', 'from')
-            self.sync_value(factory.scroll_to_top, 'scroll_to_top', 'from')
+            self.sync_value(factory.scroll_to_row, "scroll_to_row", "from")
+            self.sync_value(factory.scroll_to_bottom, "scroll_to_bottom", "from")
+            self.sync_value(factory.scroll_to_top, "scroll_to_top", "from")
 
         # Connect other signals as necessary
         # signal = QtCore.SIGNAL('activated(QModelIndex)')
@@ -576,7 +663,8 @@ class _TabularEditor(qtTabularEditor):
         # replacements:
         try:
             self.context_object.on_trait_change(
-                self.update_editor, self.extended_name + '_items', dispatch='ui')
+                self.update_editor, self.extended_name + "_items", dispatch="ui"
+            )
         except:
             pass
 
@@ -584,25 +672,24 @@ class _TabularEditor(qtTabularEditor):
         # appropriate listeners:
         if factory.auto_update:
             self.context_object.on_trait_change(
-                self.refresh_editor, self.extended_name + '.-', dispatch='ui')
+                self.refresh_editor, self.extended_name + ".-", dispatch="ui"
+            )
 
         # Create the mapping from user supplied images to QImages:
         for image_resource in factory.images:
             self._add_image(image_resource)
 
         # Refresh the editor whenever the adapter changes:
-        self.on_trait_change(self.refresh_editor, 'adapter.+update',
-                             dispatch='ui')
+        self.on_trait_change(self.refresh_editor, "adapter.+update", dispatch="ui")
 
         # Rebuild the editor columns and headers whenever the adapter's
         # 'columns' changes:
-        self.on_trait_change(self.update_editor, 'adapter.columns',
-                             dispatch='ui')
+        self.on_trait_change(self.update_editor, "adapter.columns", dispatch="ui")
 
-        self.on_trait_change(self.set_column_widths, 'adapter.column_widths')
+        self.on_trait_change(self.set_column_widths, "adapter.column_widths")
 
-        self.sync_value(factory.col_widths, 'col_widths', 'to')
-        self.sync_value(factory.key_pressed, 'key_pressed', 'to')
+        self.sync_value(factory.col_widths, "col_widths", "to")
+        self.sync_value(factory.key_pressed, "key_pressed", "to")
 
         # somehow this was causing all the majority of the lagginess
         if factory.bgcolor:
@@ -612,7 +699,7 @@ class _TabularEditor(qtTabularEditor):
             control.paste_func = getattr(self.object, factory.paste_function)
 
         if factory.drop_factory:
-            if hasattr(factory.drop_factory, '__call__'):
+            if hasattr(factory.drop_factory, "__call__"):
                 control.drop_factory = factory.drop_factory
 
             elif hasattr(self.object, factory.drop_factory):
@@ -637,15 +724,16 @@ class _TabularEditor(qtTabularEditor):
         if control:
             for k, v in v.items():
                 for idx, col in enumerate(self.adapter.columns):
-                    if '{}_width'.format(col[1]) == k:
+                    if "{}_width".format(col[1]) == k:
                         self.control.setColumnWidth(idx, v)
+
     # private
     def _add_image(self, image_resource):
-        """ Adds a new image to the image map.
+        """Adds a new image to the image map.
 
-            reimplement to display images instead of icons
-            images respect their original size
-            icons are scaled down to 16x16
+        reimplement to display images instead of icons
+        images respect their original size
+        icons are scaled down to 16x16
         """
         image = image_resource.create_image()
 
@@ -685,6 +773,7 @@ class _TabularEditor(qtTabularEditor):
 
     def _scroll_to_top_changed(self):
         self.control.scrollToTop()
+
 
 # ============= EOF =============================================
 # def _paste(self):

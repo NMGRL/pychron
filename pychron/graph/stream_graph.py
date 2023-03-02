@@ -24,9 +24,11 @@ from pychron.core.ui import set_qt
 set_qt()
 # =============enthought library imports=======================
 from pyface.timer.api import do_after as do_after_timer
+
 # =============standard library imports ========================
 from numpy import hstack, Inf
 import time
+
 # =============local library imports  ==========================
 # from pychron.graph.editors.stream_plot_editor import StreamPlotEditor
 from .stacked_graph import StackedGraph
@@ -36,12 +38,10 @@ MAX_LIMIT = int(-1 * 60 * 60 * 24)
 
 
 def time_generator(start):
-    """
-    """
+    """ """
     yt = start
     prev_time = 0
     while 1:
-
         current_time = time.time()
         if prev_time != 0:
             interval = current_time - prev_time
@@ -52,8 +52,8 @@ def time_generator(start):
 
 
 class StreamGraph(Graph):
-    """
-    """
+    """ """
+
     # plot_editor_klass = StreamPlotEditor
     global_time_generator = None
 
@@ -101,10 +101,9 @@ class StreamGraph(Graph):
         super(StreamGraph, self).clear()
 
     def new_plot(self, **kw):
-        """
-        """
-        dl = kw.get('data_limit', 500)
-        sw = kw.get('scan_width', 60)
+        """ """
+        dl = kw.get("data_limit", 500)
+        sw = kw.get("scan_width", 60)
 
         self.scan_widths.append(sw)
         self.data_limits.append(dl)
@@ -165,12 +164,9 @@ class StreamGraph(Graph):
             mi = ma - sw
             ma += sw * 0.05
 
-        self.set_x_limits(max_=ma,
-                          min_=mi,
-                          plotid=plotid)
+        self.set_x_limits(max_=ma, min_=mi, plotid=plotid)
 
     def record(self, y, x=None, series=0, plotid=0, track_x=True, track_y=True):
-
         xn, yn = self.series[plotid][series]
 
         plot = self.plots[plotid]
@@ -189,11 +185,12 @@ class StreamGraph(Graph):
 
         dl = self.data_limits[plotid]
 
-        if self.force_track_x_flag or (track_x and (self.track_x_min or self.track_x_max)):
+        if self.force_track_x_flag or (
+            track_x and (self.track_x_min or self.track_x_max)
+        ):
             self._set_xlimits(nx, plotid)
 
         if track_y and (self.track_y_min[plotid] or self.track_y_max[plotid]):
-
             if not self.track_y_max[plotid]:
                 ma = None
             else:
@@ -204,10 +201,7 @@ class StreamGraph(Graph):
             else:
                 mi = self.cur_min[plotid]
 
-            self.set_y_limits(max_=ma,
-                              min_=mi,
-                              pad='0.1',
-                              plotid=plotid)
+            self.set_y_limits(max_=ma, min_=mi, pad="0.1", plotid=plotid)
         lim = int(-dl)
 
         new_xd = hstack((xd[lim:], [nx]))
@@ -249,12 +243,11 @@ class StreamStackedGraph(StreamGraph, StackedGraph):
     pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from traits.has_traits import HasTraits
     from traits.trait_types import Button
     import random
     from traitsui.view import View
-
 
     class Demo(HasTraits):
         test = Button
@@ -262,9 +255,9 @@ if __name__ == '__main__':
         def _test_fired(self):
             s = StreamGraph()
             s.new_plot(scan_width=5)
-            s.new_series(type='scatter')
-            s.new_series(type='line', plotid=0)
-            s.new_series(type='line', plotid=0)
+            s.new_series(type="scatter")
+            s.new_series(type="line", plotid=0)
+            s.new_series(type="line", plotid=0)
 
             s.edit_traits()
             self.g = s
@@ -279,9 +272,8 @@ if __name__ == '__main__':
             do_after_timer(999.5 - (time.time() - st) * 1000, self._iter)
 
         def traits_view(self):
-            v = View('test')
+            v = View("test")
             return v
-
 
     d = Demo()
 

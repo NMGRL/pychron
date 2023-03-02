@@ -29,14 +29,14 @@ class TempHumMicroServer(CoreDevice):
     tested with iTHX-W
     """
 
-    scan_func = 'read_temperature'
+    scan_func = "read_temperature"
 
     def read_temperature(self, **kw):
-        v = self.ask('*SRTF', timeout=1.0, **kw)
+        v = self.ask("*SRTF", timeout=1.0, **kw)
         return self._parse_response(v)
 
     def read_humidity(self, **kw):
-        v = self.ask('*SRH', timeout=1.0, **kw)
+        v = self.ask("*SRH", timeout=1.0, **kw)
         return self._parse_response(v)
 
     def _parse_response(self, v):
@@ -47,6 +47,3 @@ class TempHumMicroServer(CoreDevice):
 
 
 # ============= EOF =============================================
-
-
-

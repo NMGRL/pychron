@@ -3,23 +3,24 @@ from __future__ import print_function
 from pylab import *
 from six.moves import map
 from six.moves import range
+
+
 def plot_mem(p, use_histogram=True):
-    with open(p, 'r') as rfile:
+    with open(p, "r") as rfile:
         ms = []
         started = False
         mx, mn = -Inf, Inf
         for line in rfile:
-
             # print line
-            msg, mem = list(map(str.strip, line.split(':')))
+            msg, mem = list(map(str.strip, line.split(":")))
             x = float(mem)
             mn = min(mn, x)
             mx = max(mx, x)
-#             print msg, mem
-            if not started and msg.startswith('<'):
+            #             print msg, mem
+            if not started and msg.startswith("<"):
                 started = True
                 s = x
-            elif started and msg.startswith('>'):
+            elif started and msg.startswith(">"):
                 started = False
                 ms.append(x - s)
 
@@ -28,8 +29,8 @@ def plot_mem(p, use_histogram=True):
         else:
             plot(list(range(len(ms))), ms)
 
-
         print(mn, mx, len(ms), (mx - mn) / float(len(ms)))
+
 
 #             try:
 #                 yi = float(mem)
@@ -38,10 +39,7 @@ def plot_mem(p, use_histogram=True):
 #                 continue
 
 
-
-def plot_file(p, normalize=False, stacked=False,
-              use_gradient=False, memory=False):
-
+def plot_file(p, normalize=False, stacked=False, use_gradient=False, memory=False):
     x = []
     y = []
     ts = []
@@ -54,24 +52,23 @@ def plot_file(p, normalize=False, stacked=False,
 
     mxs = []
     mys = []
-    with open(p, 'r') as rfile:
+    with open(p, "r") as rfile:
         xi = 0
         ticked = False
-#         for line in fp:
-#             msg, mem = map(str.strip, line.split(':'))
-#             if msg.startswith('exp start'):
-#                 break
+        #         for line in fp:
+        #             msg, mem = map(str.strip, line.split(':'))
+        #             if msg.startswith('exp start'):
+        #                 break
 
         for line in rfile:
-
             # print line
-            msg, mem = list(map(str.strip, line.split(':')))
-#             print msg, mem
-#             if msg.startswith('exp start'):
-#                 continue
+            msg, mem = list(map(str.strip, line.split(":")))
+            #             print msg, mem
+            #             if msg.startswith('exp start'):
+            #                 continue
 
-#            if msg.startswith('collect'):
-#                continue
+            #            if msg.startswith('collect'):
+            #                continue
             try:
                 yi = float(mem)
                 y.append(yi)
@@ -84,7 +81,7 @@ def plot_file(p, normalize=False, stacked=False,
             except ValueError:
                 continue
 
-            if msg.startswith('>'):
+            if msg.startswith(">"):
                 n += 1
                 if not ticked and stacked:
                     xticks(x, ts, rotation=-90)
@@ -102,7 +99,7 @@ def plot_file(p, normalize=False, stacked=False,
                 if use_gradient:
                     x = x[1:]
                     y = diff(y)
-#                     y = gradient(y)
+                #                     y = gradient(y)
 
                 plot(x, y, label=os.path.basename(p) + str(cnt))
                 if stacked:
@@ -122,7 +119,7 @@ def plot_file(p, normalize=False, stacked=False,
             if use_gradient:
                 y = diff(y)
                 x = x[1:]
-#                 y = gradient(y)
+            #                 y = gradient(y)
 
             if not ticked and stacked:
                 xticks(x, ts, rotation=-90)
@@ -133,43 +130,48 @@ def plot_file(p, normalize=False, stacked=False,
             print(mxs)
             plot(mxs, mys)
 
-        print('Min: {}  Max: {} avg: {} n: {}'.format(mi, ma, (ma - mi) / float(n), n))
+        print("Min: {}  Max: {} avg: {} n: {}".format(mi, ma, (ma - mi) / float(n), n))
+
+
 #         print 'start: {} end: {}'.format(start_mem, end_mem)
-if __name__ == '__main__':
+if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser()
-    parser.add_argument('-n,--normalize', dest='normalize',
-                        action='store_const',
-                        const=bool,
-                        default=False)
-    parser.add_argument('-s,--stacked', dest='stacked',
-                        action='store_const',
-                        const=bool,
-                        default=False)
-    parser.add_argument('-g,--gradient', dest='gradient',
-                        action='store_const',
-                        const=bool,
-                        default=False)
-    parser.add_argument('-m,', dest='memory',
-                        action='store_const',
-                        const=bool,
-                        default=False)
-    parser.add_argument('-u,', dest='usize',
-                        action='store_const',
-                        const=bool,
-                        default=False)
+    parser.add_argument(
+        "-n,--normalize",
+        dest="normalize",
+        action="store_const",
+        const=bool,
+        default=False,
+    )
+    parser.add_argument(
+        "-s,--stacked", dest="stacked", action="store_const", const=bool, default=False
+    )
+    parser.add_argument(
+        "-g,--gradient",
+        dest="gradient",
+        action="store_const",
+        const=bool,
+        default=False,
+    )
+    parser.add_argument(
+        "-m,", dest="memory", action="store_const", const=bool, default=False
+    )
+    parser.add_argument(
+        "-u,", dest="usize", action="store_const", const=bool, default=False
+    )
 
-    parser.add_argument('-U,', dest='uhist',
-                        action='store_const',
-                        const=bool,
-                        default=False)
+    parser.add_argument(
+        "-U,", dest="uhist", action="store_const", const=bool, default=False
+    )
 
-    parser.add_argument('paths', metavar='p', nargs='+')
+    parser.add_argument("paths", metavar="p", nargs="+")
     args = parser.parse_args()
     print(args)
 
-    root = os.path.expanduser('~')
-    d = os.path.join(root, 'Desktop', 'memtest')
+    root = os.path.expanduser("~")
+    d = os.path.join(root, "Desktop", "memtest")
     if args:
         paths = args.paths
         normalize = args.normalize
@@ -179,14 +181,14 @@ if __name__ == '__main__':
         usize = args.usize
         uhist = args.uhist
 
-        if paths[0] == 'last':
+        if paths[0] == "last":
             i = 1
             while 1:
-                pa = os.path.join(d, 'mem-{:03d}.txt'.format(i))
+                pa = os.path.join(d, "mem-{:03d}.txt".format(i))
                 if os.path.isfile(pa):
                     i += 1
                 else:
-                    pa = os.path.join(d, 'mem-{:03d}.txt'.format(i - 1))
+                    pa = os.path.join(d, "mem-{:03d}.txt".format(i - 1))
                     if os.path.isfile(pa):
                         break
                     else:
@@ -197,19 +199,26 @@ if __name__ == '__main__':
             elif uhist:
                 plot_mem(pa, use_histogram=True)
             else:
-                plot_file(pa, normalize=normalize,
-                      stacked=stacked,
-                      use_gradient=grad,
-                      memory=mem
-                      )
+                plot_file(
+                    pa,
+                    normalize=normalize,
+                    stacked=stacked,
+                    use_gradient=grad,
+                    memory=mem,
+                )
             tight_layout()
             show()
 
         else:
             for ai in paths:
-                n = 'mem-{:03d}.txt'.format(int(ai))
+                n = "mem-{:03d}.txt".format(int(ai))
                 p = os.path.join(d, n)
-                plot_file(p, normalize=normalize, stacked=stacked, use_gradient=grad,)
-#                legend(loc='upper left')
+                plot_file(
+                    p,
+                    normalize=normalize,
+                    stacked=stacked,
+                    use_gradient=grad,
+                )
+                #                legend(loc='upper left')
                 tight_layout()
                 show()

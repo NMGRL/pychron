@@ -19,8 +19,7 @@
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from __future__ import absolute_import
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg \
-    as FigureCanvas
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from traitsui.basic_editor_factory import BasicEditorFactory
 from traitsui.qt4.editor import Editor
 
@@ -48,5 +47,5 @@ class _MPLFigureEditor(Editor):
 class MPLFigureEditor(BasicEditorFactory):
     klass = _MPLFigureEditor
 
-# ============= EOF =============================================
 
+# ============= EOF =============================================

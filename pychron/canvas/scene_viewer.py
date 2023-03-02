@@ -20,38 +20,38 @@ from traits.api import HasTraits, Instance
 from traitsui.api import View, Item, HGroup, Group
 
 from pychron.loggable import Loggable
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from enable.component_editor import ComponentEditor
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
 from pychron.core.geometry.geometry import sort_clockwise
+
 # from pychron.canvas.canvas2D.scene.primitives.primitives import Polygon, RasterPolygon
 from pychron.core.geometry.scan_line import raster
 from pychron.canvas.canvas2D.scene.primitives.laser_primitives import RasterPolygon
 from six.moves import range
 from six.moves import zip
 
+
 class SceneViewer(Loggable):
     canvas = Instance(SceneCanvas)
+
     def traits_view(self):
-        v = View(
-                 self._get_canvas_group(),
-                 resizable=True,
-                 width=700,
-                 height=600
-                 )
+        v = View(self._get_canvas_group(), resizable=True, width=700, height=600)
         return v
 
     def _get_canvas_group(self):
-        g = HGroup(Item('object.canvas.scene',
-                             show_label=False, style='custom',
-                             width=0.3
-                             ),
-                        Item('canvas', editor=ComponentEditor(),
-                             show_label=False, style='custom',
-                             width=0.7
-                             )
-                        )
+        g = HGroup(
+            Item("object.canvas.scene", show_label=False, style="custom", width=0.3),
+            Item(
+                "canvas",
+                editor=ComponentEditor(),
+                show_label=False,
+                style="custom",
+                width=0.7,
+            ),
+        )
         return g
 
 
@@ -69,17 +69,17 @@ from traits.api import Any, on_trait_change
 from pychron.graph.graph import Graph
 from numpy import array, vstack
 
+
 class CanvasGraphItem(HasTraits):
     canvas = Instance(SceneCanvas)
     graph = Instance(Graph)
 
-    @on_trait_change('canvas:scene:selected')
+    @on_trait_change("canvas:scene:selected")
     def _selected_changed(self, new):
-
         if isinstance(new, RasterPolygon):
             self._replot_polygon(new)
 
-    @on_trait_change('canvas:_layout_needed')
+    @on_trait_change("canvas:_layout_needed")
     def _layout_needed_changed(self, new):
         if new:
             sel = self.canvas.scene.selected
@@ -89,41 +89,42 @@ class CanvasGraphItem(HasTraits):
     def _replot_polygon(self, poly):
         pts = [(pi.x, pi.y) for pi in poly.points]
         pts = sort_clockwise(pts, pts)
-#        pts = pts + pts[:1]
+        #        pts = pts + pts[:1]
         pts = array(pts)
         scale = 1000
         pts *= scale
         use_convex_hull = False
         find_min = poly.find_min
-        npoints, lens, theta = raster(pts,
-                         step=poly.scan_size,
-                         offset=-poly.offset if poly.use_outline else 0,
-                         use_convex_hull=use_convex_hull,
-                         find_min=find_min,
-                         theta=poly.theta
-                         )
-
+        npoints, lens, theta = raster(
+            pts,
+            step=poly.scan_size,
+            offset=-poly.offset if poly.use_outline else 0,
+            use_convex_hull=use_convex_hull,
+            find_min=find_min,
+            theta=poly.theta,
+        )
 
         poly._set_theta(theta)
-#        poly.trait_set(theta=theta)
-
+        #        poly.trait_set(theta=theta)
 
         g = self.graph
         g.clear()
 
         g.plotcontainer.padding = 5
-        g.new_plot(padding=[60, 30, 30, 50],
-#                   bounds=[400, 400],
-#                   resizable='h',
-                   xtitle='X (microns)',
-                   ytitle='Y (microns)')
-        g.new_plot(padding=[50, 30, 30, 30],
-               xtitle='Theta (degrees)',
-               ytitle='Num. Scan Lines',
-#               bounds=[400, 100],
-#               resizable='h'
-               )
-
+        g.new_plot(
+            padding=[60, 30, 30, 50],
+            #                   bounds=[400, 400],
+            #                   resizable='h',
+            xtitle="X (microns)",
+            ytitle="Y (microns)",
+        )
+        g.new_plot(
+            padding=[50, 30, 30, 30],
+            xtitle="Theta (degrees)",
+            ytitle="Num. Scan Lines",
+            #               bounds=[400, 100],
+            #               resizable='h'
+        )
 
         if find_min:
             ts, ls = list(zip(*lens))
@@ -133,17 +134,17 @@ class CanvasGraphItem(HasTraits):
         pts = vstack((pts, pts[:1]))
         xs, ys = pts.T
         self.graph.new_series(xs, ys, plotid=0)
-        self.graph.set_x_limits(min(xs), max(xs), pad='0.1')
-        self.graph.set_y_limits(min(ys), max(ys), pad='0.1')
+        self.graph.set_x_limits(min(xs), max(xs), pad="0.1")
+        self.graph.set_y_limits(min(ys), max(ys), pad="0.1")
 
         for ps in npoints:
             for i in range(0, len(ps), 2):
                 p1, p2 = ps[i], ps[i + 1]
-                g.new_series((p1[0], p2[0]),
-                             (p1[1], p2[1]), color='black', plotid=0)
+                g.new_series((p1[0], p2[0]), (p1[1], p2[1]), color="black", plotid=0)
 
         if poly.use_outline:
             from pychron.core.geometry.polygon_offset import polygon_offset
+
             opoly = polygon_offset(pts, -1 * poly.offset)
             opoly = array(opoly)
             xs, ys, _ = opoly.T
@@ -155,64 +156,63 @@ class CanvasGraphItem(HasTraits):
 
     def traits_view(self):
         tg = Group(
-                   Item('canvas', editor=ComponentEditor(),
-                             show_label=False, style='custom',
-                             width=0.7
-                             ),
-                   Item('graph', style='custom', show_label=False),
-                   layout='tabbed'
-                   )
+            Item(
+                "canvas",
+                editor=ComponentEditor(),
+                show_label=False,
+                style="custom",
+                width=0.7,
+            ),
+            Item("graph", style="custom", show_label=False),
+            layout="tabbed",
+        )
         v = View(tg)
         return v
+
 
 class LaserMineViewer(SceneViewer):
     selected_polygon = Any
     canvas_graph_item = Instance(CanvasGraphItem)
 
-    @on_trait_change('canvas')
+    @on_trait_change("canvas")
     def _update_canvas_graph_item(self):
         self.canvas_graph_item.canvas = self.canvas
 
     def traits_view(self):
-        g = HGroup(Item('object.canvas.scene',
-                             show_label=False, style='custom',
-                             width=0.3
-                             ),
-                    Item('canvas_graph_item', show_label=False,
-                         style='custom', width=0.7)
-                        )
-        v = View(g,
-                 resizable=True,
-                 width=700,
-                 height=600,
-                 buttons=['OK', 'Cancel']
-                 )
+        g = HGroup(
+            Item("object.canvas.scene", show_label=False, style="custom", width=0.3),
+            Item("canvas_graph_item", show_label=False, style="custom", width=0.7),
+        )
+        v = View(g, resizable=True, width=700, height=600, buttons=["OK", "Cancel"])
         return v
 
     def _replot(self):
         pass
-#        if use_convex_hull:
-#            poly = convex_hull(poly)
-#            xs, ys = poly.T
-#            xs = hstack((xs, xs[0]))
-#            ys = hstack((ys, ys[0]))
-#        else:
-#            xs, ys = poly.T
-#            xs = hstack((xs, xs[0]))
-#            ys = hstack((ys, ys[0]))
-#
-#        # plot original
-#        g.new_series(xs, ys)
+
+    #        if use_convex_hull:
+    #            poly = convex_hull(poly)
+    #            xs, ys = poly.T
+    #            xs = hstack((xs, xs[0]))
+    #            ys = hstack((ys, ys[0]))
+    #        else:
+    #            xs, ys = poly.T
+    #            xs = hstack((xs, xs[0]))
+    #            ys = hstack((ys, ys[0]))
+    #
+    #        # plot original
+    #        g.new_series(xs, ys)
 
     def _canvas_graph_item_default(self):
-        g = CanvasGraphItem(canvas=self.canvas,
-                            )
+        g = CanvasGraphItem(
+            canvas=self.canvas,
+        )
         return g
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from launchers.helpers import build_version
-    build_version('_uv')
+
+    build_version("_uv")
     sv = LaserMineViewer()
     sv.configure_traits()
 

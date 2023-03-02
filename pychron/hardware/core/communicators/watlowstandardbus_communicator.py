@@ -27,21 +27,21 @@ class WatlowstandardbusCommunicator(SerialCommunicator):
         pass
 
     def read_temperature(self):
-        return self.handle.read(instance='01')
+        return self.handle.read(instance="01")
 
-    def read(self, param, response_type='float', verbose=False, *args, **kw):
+    def read(self, param, response_type="float", verbose=False, *args, **kw):
         rt = float
-        if response_type == 'int':
+        if response_type == "int":
             rt = int
 
         resp = self.handle.readParam(param, rt)
         if verbose:
-            self.debug('param={}, resp={}'.format(param, resp))
-        if resp['error'] is None:
-            return resp['data']
+            self.debug("param={}, resp={}".format(param, resp))
+        if resp["error"] is None:
+            return resp["data"]
 
     def write(self, param, value, *args, **kw):
-        if type(value)==int:
+        if type(value) == int:
             dt = int
         else:
             dt = float
@@ -50,4 +50,6 @@ class WatlowstandardbusCommunicator(SerialCommunicator):
 
     def tell(self, *args, **kw):
         self.write(*args, **kw)
+
+
 # ============= EOF =============================================

@@ -19,6 +19,7 @@ from traitsui.api import UItem, TabularEditor, EnumEditor, VGroup
 
 from pychron.core.helpers.iterfuncs import groupby_repo
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+from pychron.dvc import HISTORY_PATHS, HISTORY_TAGS
 from pychron.git_archive.utils import get_commits
 from pychron.git_archive.views import CommitAdapter
 from pychron.pipeline.nodes.data import BaseDVCNode
@@ -30,31 +31,54 @@ class CommitSelector(HasTraits):
     repo = Any
     branches = List
     branch = Str
+    paths = List
+    greps = List
+
+    def __init__(self, repo, unks, *args, **kw):
+        super(CommitSelector, self).__init__(*args, **kw)
+        self.repo = repo
+        self.set_paths(unks)
+        self.load_branches()
+        self.load_commits()
+
+    def _branch_changed(self):
+        self.load_commits()
 
     def load_branches(self):
         self.branches = self.repo.get_branch_names()
         b = self.repo.get_active_branch()
         self.branch = b
 
+    def set_paths(self, unks):
+        self.paths = [a.make_path(p) for a in unks for p in HISTORY_PATHS]
+        greps = ["--grep=^<{}>".format(t) for t in HISTORY_TAGS]
+        self.greps = greps
+
     def load_commits(self):
-        cs = get_commits(self.repo.path, self.branch, None, '')
+        cs = get_commits(self.repo.path, self.branch, self.paths, "", greps=self.greps)
         self.commits = cs
 
     def traits_view(self):
-        v = okcancel_view(VGroup(UItem('branch',
-                                       editor=EnumEditor(name='branches')),
-                                 UItem('commits',
-                                       editor=TabularEditor(adapter=CommitAdapter(),
-                                                            editable=False,
-                                                            selected='selected'))),
-                          height=600,
-                          width=700)
+        v = okcancel_view(
+            VGroup(
+                UItem("branch", editor=EnumEditor(name="branches")),
+                UItem(
+                    "commits",
+                    editor=TabularEditor(
+                        adapter=CommitAdapter(), editable=False, selected="selected"
+                    ),
+                ),
+            ),
+            title="Change Selector",
+            height=600,
+            width=700,
+        )
         return v
 
 
 class DVCHistoryNode(BaseDVCNode):
     options_klass = CommitSelector
-    name = 'History Select'
+    name = "History Select"
 
     def pre_run(self, state, configure=True):
         unks = state.unknowns
@@ -62,13 +86,10 @@ class DVCHistoryNode(BaseDVCNode):
         state.selected_commits = {}
         for repo, unks in groupby_repo(unks):
             # cs = get_commits(repo, , None, '')()
-            cv = CommitSelector()
             repo = self.dvc.get_repository(repo)
-            cv.repo = repo
-            cv.load_branches()
-            cv.load_commits()
+            cv = CommitSelector(repo, unks)
 
-            info = cv.edit_traits(kind='livemodal')
+            info = cv.edit_traits(kind="livemodal")
             if not info.result:
                 return
 
@@ -79,25 +100,31 @@ class DVCHistoryNode(BaseDVCNode):
 
     def run(self, state):
         unks = state.unknowns
-
         for repo, ans in groupby_repo(unks):
             repo = self.dvc.get_repository(repo)
             abranch = repo.get_current_branch()
-            branchname = 'history'
-            repo.create_branch(branchname, state.selected_commits[repo.name], inform=False)
+            branchname = "history"
+            try:
+                repo.create_branch(
+                    branchname, state.selected_commits[repo.name], inform=False
+                )
 
-            pans = self.dvc.make_analyses(list(ans), reload=True)
+                pans = self.dvc.make_analyses(list(ans), reload=True)
+                if pans:
+                    # only allow one history group for right now.
+                    # in the future add a history_group_id
+                    # analyses are then partitioned by group_id then history_group_id
+                    for unk in pans:
+                        unk.group_id = 1
+                        unk.history_id = 1
 
-            # only allow one history group for right now.
-            # in the future add a history_group_id
-            # analyses are then partitioned by group_id then history_group_id
-            for unk in pans:
-                unk.group_id = 1
-                unk.history_id = 1
+                    unks.extend(pans)
+            except BaseException:
+                pass
+            finally:
+                branch = repo.get_branch(abranch)
+                branch.checkout()
+                repo.delete_branch(branchname)
 
-            branch = repo.get_branch(abranch)
-            branch.checkout()
-            repo.delete_branch(branchname)
-            unks.extend(pans)
 
 # ============= EOF =============================================

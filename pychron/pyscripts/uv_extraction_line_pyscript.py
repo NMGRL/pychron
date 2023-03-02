@@ -25,81 +25,93 @@ command_register = makeRegistry()
 
 
 class UVExtractionPyScript(ExtractionPyScript):
-
     def get_command_register(self):
         cm = super(UVExtractionPyScript, self).get_command_register()
         return list(command_register.commands.items()) + cm
 
     def set_default_context(self):
         super(UVExtractionPyScript, self).set_default_context()
-        self.setup_context(reprate=0,
-                           mask=0,
-                           attenuator=0)
+        self.setup_context(reprate=0, mask=0, attenuator=0)
 
     @property
     def reprate(self):
-        return self.get_context()['reprate']
+        return self.get_context()["reprate"]
 
     @verbose_skip
     @command_register
-    def set_reprate(self, value=''):
-        if value=='':
-            value=self.reprate
+    def set_reprate(self, value=""):
+        if value == "":
+            value = self.reprate
 
-        self._manager_actions([('set_reprate', (value,), {})],
-                              protocol=ILaserManager,
-                              name=self.extract_device)
-
+        self._manager_actions(
+            [("set_reprate", (value,), {})],
+            protocol=ILaserManager,
+            name=self.extract_device,
+        )
 
     @verbose_skip
     @command_register
-    def drill_point(self, value='', name=''):
-        if name == '':
+    def drill_point(self, value="", name=""):
+        if name == "":
             name = self.position
 
-        if value == '':
+        if value == "":
             value = self.extract_value
 
-        self._manager_actions([('drill_point', (value, name,), {})],
-                              protocol=ILaserManager,
-                              name=self.extract_device)
+        self._manager_actions(
+            [
+                (
+                    "drill_point",
+                    (
+                        value,
+                        name,
+                    ),
+                    {},
+                )
+            ],
+            protocol=ILaserManager,
+            name=self.extract_device,
+        )
 
     @verbose_skip
     @command_register
-    def trace_path(self, name='', value='', kind='continuous'):
-        if name == '':
+    def trace_path(self, name="", value="", kind="continuous"):
+        if name == "":
             name = self.position
 
-        if value == '':
+        if value == "":
             value = self.extract_value
 
-        self._manager_actions([('trace_path', (value, name, kind), {})],
-                              protocol=ILaserManager,
-                              name=self.extract_device)
+        self._manager_actions(
+            [("trace_path", (value, name, kind), {})],
+            protocol=ILaserManager,
+            name=self.extract_device,
+        )
 
     @verbose_skip
     @command_register
-    def extract(self, power='', units='', position=None):
-        if power == '':
-            power=self.extract_value
+    def extract(self, power="", units="", position=None):
+        if power == "":
+            power = self.extract_value
         if units:
-            units=self.extract_units
+            units = self.extract_units
 
         if not position is None:
             self.move_to_position(position)
 
-            po=position[0]
+            po = position[0]
 
-            if po in ('r','l'):
+            if po in ("r", "l"):
                 self.trace_path(power, position)
-            elif po=='s':
-                self.trace_path(power, position, kind='step')
-            elif po=='d':
+            elif po == "s":
+                self.trace_path(power, position, kind="step")
+            elif po == "d":
                 self.drill_point(power, position)
             else:
                 super(UVExtractionPyScript, self).extract(power=power, units=units)
 
         else:
             super(UVExtractionPyScript, self).extract(power=power, units=units)
+
 
 # ============= EOF =============================================

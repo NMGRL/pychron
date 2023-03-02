@@ -17,6 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from traits.api import Event, Any, Instance, Int, on_trait_change
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.scene_canvas import SceneCanvas
@@ -28,25 +29,36 @@ class VideoCanvas(SceneCanvas):
     video = Any
     padding = 0
     closed_event = Event
-    fps = Int(24)
+    fps = Int(5)
     video_underlay = Instance(VideoUnderlay)
 
     def __init__(self, *args, **kw):
         super(VideoCanvas, self).__init__(*args, **kw)
 
-        self.video_underlay = VideoUnderlay(component=self,
-                                            video=self.video)
+        self.video_underlay = VideoUnderlay(component=self, video=self.video)
 
         self.underlays.insert(0, self.video_underlay)
 
-        for key, d in [('x_grid', dict(line_color=(1, 1, 0),
-                                       line_width=1,
-                                       line_style='dash',
-                                       visible=self.show_grids)),
-                       ('y_grid', dict(line_color=(1, 1, 0),
-                                       line_width=1,
-                                       line_style='dash',
-                                       visible=self.show_grids))]:
+        for key, d in [
+            (
+                "x_grid",
+                dict(
+                    line_color=(1, 1, 0),
+                    line_width=1,
+                    line_style="dash",
+                    visible=self.show_grids,
+                ),
+            ),
+            (
+                "y_grid",
+                dict(
+                    line_color=(1, 1, 0),
+                    line_width=1,
+                    line_style="dash",
+                    visible=self.show_grids,
+                ),
+            ),
+        ]:
             o = getattr(self, key)
             o.trait_set(**d)
 
@@ -60,8 +72,9 @@ class VideoCanvas(SceneCanvas):
         if self.video_underlay:
             self.video_underlay.video = self.video
 
-    @on_trait_change('video:fps')
+    @on_trait_change("video:fps")
     def _update_fps(self, new):
         self.fps = new
+
 
 # ============= EOF ====================================

@@ -47,47 +47,46 @@ class DiffusionGraph(Graph):
 
     zdataname_generators = None
 
-
     def new_graph(self, n, bgcolor=None, padding=None):
         self.plotcontainer = self.container_factory()
         # n = len(self.include_panels)
         # padding = [50, 5, 10, 30]  # if n>2 else [25,5,50,30]
 
         for _ in range(n):
-            p = self.new_plot(pan=True,
-                              zoom=True)
+            p = self.new_plot(pan=True, zoom=True)
             if padding:
                 p.padding = padding
             if bgcolor:
                 p.bgcolor = bgcolor
 
     def build_spectrum(self, ar39, age, ar39_err=None, age_err=None, pid=0, **kw):
-        """
-
-        """
+        """ """
         plots = []
         if ar39_err is not None and age_err is not None:
-            a, _p = self.new_series(ar39_err, age_err, plotid=pid,
-                                    type='polygon',
-                                    color=kw['color'] if 'color' in kw else 'orange')
+            a, _p = self.new_series(
+                ar39_err,
+                age_err,
+                plotid=pid,
+                type="polygon",
+                color=kw["color"] if "color" in kw else "orange",
+            )
             plots.append(a)
 
         b, _p = self.new_series(ar39, age, plotid=pid, **kw)
         plots.append(b)
 
-        xtitle = 'Cum. 39Ar %'
+        xtitle = "Cum. 39Ar %"
         self.set_x_title(xtitle, plotid=pid)
-        self.set_y_title('Age (Ma)', plotid=pid)
+        self.set_y_title("Age (Ma)", plotid=pid)
         return plots
 
     def build_logr_ro(self, ar39, logr, pid=1, **kw):
-        """
-        """
+        """ """
         a, _ = self.new_series(ar39, logr, plotid=pid, **kw)
 
-        self.set_x_title('Cum. 39Ar %', plotid=pid)
+        self.set_x_title("Cum. 39Ar %", plotid=pid)
 
-        ytitle = 'log r/ro'
+        ytitle = "log r/ro"
 
         self.set_y_title(ytitle, plotid=pid)
         return [a]
@@ -96,20 +95,20 @@ class DiffusionGraph(Graph):
         return self.build_arrhenius(*args, **kw)
 
     def build_arrhenius(self, t, dta, pid=2, **kw):
-        """
-        """
-        a, _p = self.new_series(t, dta, type='scatter', plotid=pid, marker_size=2.5, **kw)
+        """ """
+        a, _p = self.new_series(
+            t, dta, type="scatter", plotid=pid, marker_size=2.5, **kw
+        )
 
-        self.set_x_title('10000/T (K)', plotid=pid)
-        ytitle = 'log D/a (1/s)'
+        self.set_x_title("10000/T (K)", plotid=pid)
+        ytitle = "log D/a (1/s)"
         self.set_y_title(ytitle, plotid=pid)
         return [a]
 
     def build_cooling_history(self, ts, tsl, tsh, pid=3, colors=None):
-        """
-        """
-        self.set_x_title('t (Ma)', plotid=pid)
-        self.set_y_title('Temp (C)', plotid=pid)
+        """ """
+        self.set_x_title("t (Ma)", plotid=pid)
+        self.set_y_title("Temp (C)", plotid=pid)
         self.set_y_limits(min_=100, plotid=pid)
 
         if colors:
@@ -120,21 +119,21 @@ class DiffusionGraph(Graph):
             p2 = next(cg)
 
         if ts:
-            self.new_series(ts, tsl, type='polygon', plotid=pid, color=p1)
-            self.new_series(ts, tsh, type='polygon', plotid=pid, color=p2)
+            self.new_series(ts, tsl, type="polygon", plotid=pid, color=p1)
+            self.new_series(ts, tsh, type="polygon", plotid=pid, color=p2)
 
             self.redraw()
 
     def build_unconstrained_thermal_history(self, datacontainer, pid=4, contour=True):
-        self.set_x_title('t (Ma)', plotid=pid)
-        self.set_y_title('Temp (C)', plotid=pid)
+        self.set_x_title("t (Ma)", plotid=pid)
+        self.set_y_title("Temp (C)", plotid=pid)
         self.set_y_limits(min_=100, plotid=pid)
 
         if contour:
             if not self.zdataname_generators:
-                self.zdataname_generators = [name_generator('z')]
+                self.zdataname_generators = [name_generator("z")]
             else:
-                self.zdataname_generators.append(name_generator('z'))
+                self.zdataname_generators.append(name_generator("z"))
 
             zname = next(self.zdataname_generators[-1])
             x = [10, 350]
@@ -142,24 +141,22 @@ class DiffusionGraph(Graph):
             plot, names, rd = self._series_factory(x, y, plotid=pid)
             plot.data.set_data(zname, datacontainer)
 
-            rd['xbounds'] = tuple(x)
-            rd['ybounds'] = tuple(y)
+            rd["xbounds"] = tuple(x)
+            rd["ybounds"] = tuple(y)
 
-            cmap = 'yarg'
+            cmap = "yarg"
             cmap = color_map_name_dict.get(cmap)
-            rd['colormap'] = cmap
+            rd["colormap"] = cmap
 
             #            contour = plot.img_plot(zname,
             #                                    hide_grids=False,
             #                                     **rd)[0]
 
-            pline = plot.contour_plot(zname,
-                                      hide_grids=False,
-                                      **rd)[0]
+            pline = plot.contour_plot(zname, hide_grids=False, **rd)[0]
 
-            ppoly = plot.contour_plot(zname, type='poly', poly_cmap=cmap,
-                                      hide_grids=False,
-                                      **rd)[0]
+            ppoly = plot.contour_plot(
+                zname, type="poly", poly_cmap=cmap, hide_grids=False, **rd
+            )[0]
             #            self.groups['unconstrained_thermal_history'].append([pline, ppoly])
             # remove zoom
             self.plots[pid].overlays.pop()
@@ -173,6 +170,7 @@ class DiffusionGraph(Graph):
                 a, _ = self.new_series(xs, ys)
                 plots.append(a)
             return plots
+
 
 # ============= EOF ====================================
 # def set_group_binding(self, pid, value):

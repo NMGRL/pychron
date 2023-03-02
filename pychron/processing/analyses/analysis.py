@@ -20,7 +20,8 @@ from math import ceil
 from operator import attrgetter
 
 import six
-from numpy import Inf, polyfit, polyval
+from chaco.array_data_source import ArrayDataSource
+from numpy import Inf, polyfit, polyval, arange, argmin
 from pyface.message_dialog import information
 from pyface.qt import QtCore
 from traits.api import Event, Dict, List, Str
@@ -32,19 +33,25 @@ from pychron.core.helpers.fits import convert_fit
 from pychron.core.helpers.formatting import format_percent_error, floatfmt
 from pychron.core.helpers.isotope_utils import sort_isotopes
 from pychron.core.helpers.logger_setup import new_logger
+from pychron.core.regression.ols_regressor import PolynomialRegressor
 from pychron.envisage.view_util import open_view
 from pychron.experiment.utilities.runid import make_runid, make_aliquot_step
-from pychron.graph.stacked_regression_graph import ColumnStackedRegressionGraph, StackedRegressionGraph
+from pychron.graph.error_bar_overlay import ErrorBarOverlay
+from pychron.graph.regression_graph import RegressionGraph
+from pychron.graph.stacked_regression_graph import StackedRegressionGraph
 from pychron.processing.arar_age import ArArAge
 from pychron.processing.arar_constants import ArArConstants
 from pychron.processing.isotope import Isotope
 from pychron.pychron_constants import PLUSMINUS, NULL_STR, AR_AR, EXCLUDE_TAGS
 
-Fit = namedtuple('Fit', 'fit '
-                        'filter_outliers filter_outlier_iterations filter_outlier_std_devs '
-                        'error_type include_baseline_error, time_zero_offset')
+Fit = namedtuple(
+    "Fit",
+    "fit "
+    "filter_outliers filter_outlier_iterations filter_outlier_std_devs "
+    "error_type include_baseline_error, time_zero_offset",
+)
 
-logger = new_logger('Analysis')
+logger = new_logger("Analysis")
 
 
 def min_max(a, b, vs):
@@ -70,17 +77,187 @@ class CloseHandler(Handler):
         info.ui.control.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
 
-def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibration=False, show_baseline=False,
-                            show_statistics=False, ncols=1, scale_to_equilibration=False):
+def show_inspection_factory(record_id, isotopes):
+    from pychron.graph.stacked_graph import StackedGraph
+
+    def calculate(dxs, dys, fit):
+        reg = PolynomialRegressor(xs=dxs, ys=dys)
+        reg.fit = fit
+        ts = arange(4, len(dxs), 10)
+        ys, iys = [], []
+        for ti in ts:
+            reg.set_truncate(str(ti))
+            reg.calculate()
+            ys.append(reg.predict_error(0))
+            iys.append(reg.predict(0))
+
+        return ts, ys, iys
+
+    iso = isotopes[0]
+    dxs, dys = iso.offset_xs, iso.ys
+
+    g = StackedGraph()
+
+    g.new_plot(show_legend="ur")
+    g.new_plot()
+
+    g.set_y_title("Intercept Error %", plotid=0)
+    g.set_y_title("T-zero Intensity", plotid=1)
+
+    xs, ys, iys = calculate(dxs, dys, "linear")
+    lmin, lidx = min(ys), argmin(ys)
+
+    g.new_series(xs, ys, plotid=0)
+    g.new_series(xs, iys, plotid=1)
+    g.set_series_label("Linear", plotid=0)
+
+    xs, ys, iys = calculate(dxs, dys, "parabolic")
+    pmin, pidx = min(ys), argmin(ys)
+
+    g.new_series(xs, ys, plotid=0)
+    g.new_series(xs, iys, plotid=1)
+    g.set_series_label("Parabolic", plotid=0)
+
+    # g.add_vertical_rule(lidx, plotid=0, color='black')
+    # g.add_vertical_rule(pidx, plotid=0, color='green')
+
+    g.set_y_limits(min_=0, plotid=0)
+    g.window_title = "{} Inspection".format(make_title(record_id, isotopes))
+    return g
+
+
+def show_equilibration_inspector(record_id, ar_ar_age):
+    g = StackedRegressionGraph()
+    g.plotcontainer.spacing = 10
+    g.window_title = "{} Equilibration Inspector".format(record_id)
+    at = ar_ar_age.analysis_type
+    if at == "air" or at.startswith("blank"):
+        if at == "air":
+            args = (("Ar40", "Ar38"), ("Ar40", "Ar36"))
+        else:
+            args = (
+                ("Ar40", "Ar39"),
+                ("Ar40", "Ar38"),
+                ("Ar40", "Ar37"),
+                ("Ar40", "Ar36"),
+            )
+
+        for i, (num, den) in enumerate(args):
+            g.new_plot(padding_right=75, padding_left=100)
+            g.set_y_title("{}/{}".format(num, den))
+
+            counts, ratios = ar_ar_age.equilibration_ratios(num, den)
+            ratios = [nominal_value(a) for a in ratios]
+            # errors = [std_dev(a) for a in ages]
+            plot, scatter, line = g.new_series(counts, ratios, fit="average")
+
+            g.add_axis_tool(plot, plot.y_axis)
+            g.add_axis_tool(plot, plot.x_axis)
+            g.add_limit_tool(plot, "x")
+            g.add_limit_tool(plot, "y")
+            g.set_y_limits(pad="0.1", plotid=i)
+            g.set_x_limits(pad="0.05", plotid=i)
+
+    else:
+        for i, (num, den) in enumerate(
+            (("age", "age"), ("Ar40", "Ar39"), ("Ar40", "Ar36"))
+        ):
+            g.new_plot(padding_right=75, padding_left=100)
+
+            kw = {"fit": "average"}
+            if num == "age":
+                counts, ratios = ar_ar_age.equilibration_ages()
+                g.set_y_title("Age")
+                errors = [std_dev(r) for r in ratios]
+                kw = {"fit": "weighted mean", "yerror": errors}
+            else:
+                counts, ratios = ar_ar_age.equilibration_ratios(num, den)
+                g.set_y_title("{}/{}".format(num, den))
+
+            ratios = [nominal_value(a) for a in ratios]
+            plot, scatter, line = g.new_series(counts, ratios, **kw)
+
+            if num == "age":
+                ebo = ErrorBarOverlay(
+                    component=scatter,
+                    orientation="y",
+                )
+                scatter.underlays.append(ebo)
+                setattr(scatter, "yerror", ArrayDataSource(errors))
+
+            g.add_axis_tool(plot, plot.y_axis)
+            g.add_axis_tool(plot, plot.x_axis)
+            g.add_limit_tool(plot, "x")
+            g.add_limit_tool(plot, "y")
+
+            g.set_y_limits(pad="0.1", plotid=i)
+            g.set_x_limits(pad="0.05", plotid=i)
+
+    g.set_x_title("N counts")
+    g.refresh()
+
+    return g
+
+
+def show_residuals_factory(record_id, isotopes):
+    from pychron.graph.residuals_graph import ResidualsGraph
+
+    iso = isotopes[0]
+
+    g = ResidualsGraph()
+    g.new_plot(padding_right=75, padding_left=100)
+    g.set_x_title("Time (s)")
+    g.set_y_title("Intensity ({})".format(iso.units))
+
+    if iso.fit is None:
+        iso.fit = "linear"
+
+    xs, ys = iso.get_data()
+    g.new_series(
+        xs,
+        ys,
+        fit=iso.efit,
+        truncate=iso.truncate,
+        filter_outliers_dict=iso.filter_outliers_dict,
+        color="black",
+    )
+    g.set_regressor(iso.regressor, 0)
+    g.set_x_limits(min_=0, pad="0.1", pad_style="upper")
+    g.set_y_limits(pad="0.1")
+    g.refresh()
+
+    g.window_title = "{} Residuals".format(make_title(record_id, isotopes))
+    return g
+
+
+def show_evolutions_factory(
+    record_id,
+    isotopes,
+    show_evo=True,
+    show_equilibration=False,
+    show_baseline=False,
+    show_statistics=False,
+    ncols=1,
+    scale_to_equilibration=False,
+    **kw
+):
+    from pychron.graph.stacked_regression_graph import (
+        ColumnStackedRegressionGraph,
+        StackedRegressionGraph,
+    )
+
     if WINDOW_CNT > 20:
-        information(None, 'You have too many Isotope Evolution windows open. Close some before proceeding')
+        information(
+            None,
+            "You have too many Isotope Evolution windows open. Close some before proceeding",
+        )
         return
 
     if ncols > 1:
-        isotopes = sort_isotopes(isotopes, reverse=True, key=attrgetter('name'))
+        isotopes = sort_isotopes(isotopes, reverse=True, key=attrgetter("name"))
 
         def reorder(l, n):
-            l = [l[i:i + n] for i in range(0, len(l), n)]
+            l = [l[i : i + n] for i in range(0, len(l), n)]
             nl = []
             for ri in range(len(l[0])):
                 for col in l:
@@ -92,19 +269,35 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
 
         nrows = ceil(len(isotopes) / ncols)
         isotopes = reorder(isotopes, nrows)
-        g = ColumnStackedRegressionGraph(resizable=True, ncols=ncols, nrows=nrows,
-                                         container_dict={'padding_top': 15 * nrows,
-                                                         'spacing': (0, 15),
-                                                         'padding_bottom': 40},
-                                         show_grouping=True)
-        resizable = 'hv'
+        g = ColumnStackedRegressionGraph(
+            resizable=True,
+            ncols=ncols,
+            nrows=nrows,
+            container_dict={
+                "padding_top": 15 * nrows,
+                "spacing": (0, 15),
+                "padding_bottom": 40,
+            },
+            show_grouping=True,
+        )
+        resizable = "hv"
     else:
-        resizable = 'h'
-        isotopes = sort_isotopes(isotopes, reverse=False, key=attrgetter('name'))
-        g = StackedRegressionGraph(resizable=True, container_dict={'spacing': 15},
-                                   show_grouping=True)
+        resizable = "h"
+        isotopes = sort_isotopes(isotopes, reverse=False, key=attrgetter("name"))
+        g = StackedRegressionGraph(
+            resizable=True, container_dict={"spacing": 15}, show_grouping=True
+        )
 
-    args = g, isotopes, resizable, show_evo, show_equilibration, show_baseline, show_statistics, scale_to_equilibration
+    args = (
+        g,
+        isotopes,
+        resizable,
+        show_evo,
+        show_equilibration,
+        show_baseline,
+        show_statistics,
+        scale_to_equilibration,
+    )
 
     def update_grouping(n):
         for iso in isotopes:
@@ -112,7 +305,7 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
 
         make_graph(*args)
 
-    g.on_trait_change(update_grouping, 'grouping')
+    g.on_trait_change(update_grouping, "grouping")
     # g.plotcontainer.spacing = 10
     g.window_height = min(275 * len(isotopes), 800)
     g.window_x = OX + XOFFSET * WINDOW_CNT
@@ -120,15 +313,25 @@ def show_evolutions_factory(record_id, isotopes, show_evo=True, show_equilibrati
 
     make_graph(*args)
 
-    g.window_title = '{} {}'.format(record_id, ','.join([i.name for i in reversed(isotopes)]))
+    g.window_title = make_title(record_id, isotopes)
 
     return g
 
 
-def make_graph(g, isotopes, resizable, show_evo=True, show_equilibration=False, show_baseline=False,
-               show_statistics=False,
-               scale_to_equilibration=False):
+def make_title(record_id, isotopes):
+    return "{} {}".format(record_id, ",".join([i.name for i in reversed(isotopes)]))
 
+
+def make_graph(
+    g,
+    isotopes,
+    resizable,
+    show_evo=True,
+    show_equilibration=False,
+    show_baseline=False,
+    show_statistics=False,
+    scale_to_equilibration=False,
+):
     g.clear()
 
     if not show_evo:
@@ -141,8 +344,8 @@ def make_graph(g, isotopes, resizable, show_evo=True, show_equilibration=False, 
         ymi, yma = Inf, -Inf
 
         p = g.new_plot(padding=[80, 10, 10, 40], resizable=resizable)
-        g.add_limit_tool(p, 'x')
-        g.add_limit_tool(p, 'y')
+        g.add_limit_tool(p, "x")
+        g.add_limit_tool(p, "y")
         g.add_axis_tool(p, p.x_axis)
         g.add_axis_tool(p, p.y_axis)
         if show_statistics:
@@ -152,23 +355,25 @@ def make_graph(g, isotopes, resizable, show_evo=True, show_equilibration=False, 
         if show_equilibration:
             sniff = iso.sniff
             if sniff.xs.shape[0]:
-                g.new_series(sniff.offset_xs, sniff.ys,
-                             type='scatter',
-                             fit=None,
-                             color='red')
+                g.new_series(
+                    sniff.offset_xs, sniff.ys, type="scatter", fit=None, color="red"
+                )
                 ymi, yma = min_max(ymi, yma, sniff.ys)
                 xmi, xma = min_max(xmi, xma, sniff.offset_xs)
 
         if show_evo:
             if iso.fit is None:
-                iso.fit = 'linear'
+                iso.fit = "linear"
 
             xs, ys = iso.get_data()
-            g.new_series(xs, ys,
-                         fit=iso.efit,
-                         truncate=iso.truncate,
-                         filter_outliers_dict=iso.filter_outliers_dict,
-                         color='black')
+            g.new_series(
+                xs,
+                ys,
+                fit=iso.efit,
+                truncate=iso.truncate,
+                filter_outliers_dict=iso.filter_outliers_dict,
+                color="black",
+            )
             g.set_regressor(iso.regressor, i)
 
             xmi, xma = min_max(xmi, xma, iso.offset_xs)
@@ -177,23 +382,27 @@ def make_graph(g, isotopes, resizable, show_evo=True, show_equilibration=False, 
 
         if show_baseline:
             baseline = iso.baseline
-            g.new_series(baseline.offset_xs, baseline.ys,
-                         type='scatter', fit=baseline.efit,
-                         filter_outliers_dict=baseline.filter_outliers_dict,
-                         color='blue')
+            g.new_series(
+                baseline.offset_xs,
+                baseline.ys,
+                type="scatter",
+                fit=baseline.efit,
+                filter_outliers_dict=baseline.filter_outliers_dict,
+                color="blue",
+            )
             xmi, xma = min_max(xmi, xma, baseline.offset_xs)
             if not scale_to_equilibration:
                 ymi, yma = min_max(ymi, yma, baseline.ys)
 
-        xpad = '0.025,0.05'
-        ypad = '0.05'
+        xpad = "0.025,0.05"
+        ypad = "0.05"
         if scale_to_equilibration:
             ypad = None
             r = (yma - ymi) * 0.02
             # ymi = yma - r
 
             fit = iso.fit
-            if fit != 'average':
+            if fit != "average":
                 fit, _ = convert_fit(iso.fit)
                 fy = polyval(polyfit(iso.offset_xs, iso.ys, fit), 0)
                 if ymi > fy:
@@ -210,8 +419,8 @@ def make_graph(g, isotopes, resizable, show_evo=True, show_equilibration=False, 
         g.set_x_limits(min_=xmi, max_=xma, pad=xpad)
         g.set_y_limits(min_=ymi, max_=yma, pad=ypad, plotid=i)
 
-        g.set_x_title('Time (s)', plotid=i)
-        g.set_y_title('{} ({})'.format(iso.name, iso.units), plotid=i)
+        g.set_x_title("Time (s)", plotid=i)
+        g.set_y_title("{} ({})".format(iso.name, iso.units), plotid=i)
 
     g.refresh()
 
@@ -222,23 +431,23 @@ class IdeogramPlotable(HasTraits):
     graph_id = 0
     aux_id = 0
     tab_id = 0
-    group = ''
-    aux_name = ''
+    group = ""
+    aux_name = ""
 
     _label_name = None
 
-    tag = 'ok'
-    tag_note = ''
+    tag = "ok"
+    tag_note = ""
     uage = None
-    temp_status = Str('ok')
+    temp_status = Str("ok")
     otemp_status = None
     _record_id = None
     temp_selected = False
-    comment = ''
+    comment = ""
     j = None
-    labnumber = ''
+    labnumber = ""
     aliquot = 0
-    step = ''
+    step = ""
     timestamp = 0
     uuid = None
 
@@ -284,20 +493,19 @@ class IdeogramPlotable(HasTraits):
         return self.tag in tags
 
     def set_temp_status(self, tag):
-
         tag = tag.lower()
-        if tag != 'ok':
+        if tag != "ok":
             self.otemp_status = tag
         else:
-            self.otemp_status = 'omit'
+            self.otemp_status = "omit"
 
         self.temp_status = tag
 
     def set_tag(self, tag):
         if isinstance(tag, dict):
-            self.tag_note = tag.get('note', '')
-            self.tag = tag.get('name', '')
-            self.subgroup = tag.get('subgroup', '')
+            self.tag_note = tag.get("note", "")
+            self.tag = tag.get("name", "")
+            self.subgroup = tag.get("subgroup", "")
         else:
             self.tag = tag
 
@@ -306,20 +514,20 @@ class IdeogramPlotable(HasTraits):
     def value_string(self, t):
         a, e = self._value_string(t)
         pe = format_percent_error(a, e)
-        return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
+        return "{} {}{} ({}%)".format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
 
     @property
     def display_uuid(self):
         u = self.uuid
         if not u:
-            u = ''
+            u = ""
         return u[:8]
 
     @property
     def label_name(self):
         n = self._label_name
         if n is None:
-            n = '{:02n}'.format(self.aliquot)
+            n = "{:02n}".format(self.aliquot)
 
         return n
 
@@ -333,7 +541,7 @@ class IdeogramPlotable(HasTraits):
 
     @property
     def identifier_aliquot_pair(self):
-        return '{}-{}'.format(self.identifier, self.aliquot)
+        return "{}-{}".format(self.identifier, self.aliquot)
 
     @property
     def identifier(self):
@@ -363,44 +571,51 @@ class IdeogramPlotable(HasTraits):
 
 
 class Analysis(ArArAge, IdeogramPlotable):
-    analysis_view_klass = ('pychron.processing.analyses.view.analysis_view', 'AnalysisView')
-    _analysis_view = None  # Instance('pychron.processing.analyses.analysis_view.AnalysisView')
+    analysis_view_klass = (
+        "pychron.processing.analyses.view.analysis_view",
+        "AnalysisView",
+    )
+    _analysis_view = (
+        None  # Instance('pychron.processing.analyses.analysis_view.AnalysisView')
+    )
 
     # sample
-    sample = ''
-    material = ''
-    grainsize = ''
-    project = ''
-    principal_investigator = ''
+    sample = ""
+    material = ""
+    grainsize = ""
+    project = ""
+    principal_investigator = ""
     elevation = 0
-    igsn = ''
-    lithology = ''
-    lithology_type = ''
-    lithology_group = ''
-    lithology_class = ''
+    igsn = ""
+    lithology = ""
+    lithology_type = ""
+    lithology_group = ""
+    lithology_class = ""
     latitude = 0
     longitude = 0
-    reference = ''
-    rlocation = ''
-    mask_position = ''
-    mask_name = ''
-    reprate = ''
+    reference = ""
+    rlocation = ""
+    mask_position = ""
+    mask_name = ""
+    reprate = ""
+    sample_prep_comment = ""
+    sample_note = ""
 
     # collection
     experiment_type = AR_AR
     acquisition_software = None
     data_reduction_software = None
-    laboratory = ''
-    instrument_name = ''
-    analystName = ''
+    laboratory = ""
+    instrument_name = ""
+    analystName = ""
     measured_response_stream = None
     requested_output_stream = None
     setpoint_stream = None
-    load_name = ''
-    load_holder = ''
-    light_value = ''
+    load_name = ""
+    load_holder = ""
+    light_value = ""
 
-    experiment_queue_name = ''
+    experiment_queue_name = ""
 
     # environmentals
     lab_temperature = 0
@@ -408,28 +623,28 @@ class Analysis(ArArAge, IdeogramPlotable):
     lab_airpressure = 0
 
     increment = None
-    aliquot_step_str = ''
-    mass_spectrometer = ''
-    analysis_type = ''
+    aliquot_step_str = ""
+    mass_spectrometer = ""
+    analysis_type = ""
     extract_value = 0
-    extract_units = ''
+    extract_units = ""
     cleanup_duration = 0
     pre_cleanup_duration = 0
     post_cleanup_duration = 0
     cryo_temperature = 0
     extract_duration = 0
-    extract_device = ''
-    position = ''
-    experiment_txt = ''
-    extraction_script_blob = ''
-    measurement_script_blob = ''
+    extract_device = ""
+    position = ""
+    experiment_txt = ""
+    extraction_script_blob = ""
+    measurement_script_blob = ""
     snapshots = List
-    extraction_script_name = ''
-    measurement_script_name = ''
-    xyz_position = ''
+    extraction_script_name = ""
+    measurement_script_name = ""
+    xyz_position = ""
     collection_time_zero_offset = 0
     beam_diameter = 0
-    pattern = ''
+    pattern = ""
     ramp_duration = 0
     ramp_rate = 0
     peak_center = 0
@@ -439,12 +654,13 @@ class Analysis(ArArAge, IdeogramPlotable):
     peak_center_interpolation_kind = None
     peak_center_use_interpolation = False
     peak_center_reference_isotope = None
-    collection_version = ''
+    collection_version = ""
     source_parameters = Dict
     filament_parameters = Dict
     deflections = Dict
     gains = Dict
-    repository_identifier = ''
+    repository_identifier = ""
+    flux_history = ""
 
     admit_delay = 0
     # processing
@@ -455,7 +671,7 @@ class Analysis(ArArAge, IdeogramPlotable):
     # value_filter_omit = False
     # table_filter_omit = False
     # tag = ''
-    data_reduction_tag = ''
+    data_reduction_tag = ""
     branch = NULL_STR
 
     # status_text = Property
@@ -490,9 +706,9 @@ class Analysis(ArArAge, IdeogramPlotable):
             return self._extraction_type
 
         if self.step:
-            return 'Incremental Heating'
+            return "Incremental Heating"
         else:
-            return 'Laser Fusion'
+            return "Laser Fusion"
 
     @extraction_type.setter
     def extraction_type(self, v):
@@ -524,7 +740,14 @@ class Analysis(ArArAge, IdeogramPlotable):
                     try:
                         iso = self.isotopes[i]
                     except KeyError:
-                        iso = next((ii.baseline for ii in self.isotopes.values() if ii.detector == i), None)
+                        iso = next(
+                            (
+                                ii.baseline
+                                for ii in self.isotopes.values()
+                                if ii.detector == i
+                            ),
+                            None,
+                        )
                     if iso:
                         nisotopes.append(iso)
                 isotopes = nisotopes
@@ -532,10 +755,18 @@ class Analysis(ArArAge, IdeogramPlotable):
             isotopes = list(self.isotopes.values())
 
         if load_data:
-            keys = ['{}{}'.format(k.name, k.detector) for k in isotopes]
+            keys = ["{}{}".format(k.name, k.detector) for k in isotopes]
             self.load_raw_data(keys=keys)
 
-        return show_evolutions_factory(self.record_id, isotopes, **kw)
+        if kw.get("show_inspection"):
+            return show_inspection_factory(self.record_id, isotopes)
+        elif kw.get("show_residuals"):
+            return show_residuals_factory(self.record_id, isotopes)
+        elif kw.get("show_equilibration_inspector"):
+            self.load_raw_data()
+            return show_equilibration_inspector(self.record_id, self)
+        else:
+            return show_evolutions_factory(self.record_id, isotopes, **kw)
 
     def show_isotope_evolutions(self, *args, **kw):
         g = self.get_isotope_evolutions(*args, **kw)
@@ -545,24 +776,32 @@ class Analysis(ArArAge, IdeogramPlotable):
 
     def trigger_recall(self, analyses=None):
         if analyses is None:
-            analyses = [self, ]
+            analyses = [
+                self,
+            ]
 
         self.recall_event = analyses
 
     def trigger_tag(self, analyses=None):
         if analyses is None:
-            analyses = [self, ]
+            analyses = [
+                self,
+            ]
 
         self.tag_event = analyses
 
     def trigger_invalid(self, analyses=None):
         if analyses is None:
-            analyses = [self, ]
+            analyses = [
+                self,
+            ]
         self.invalid_event = analyses
 
     def trigger_omit(self, analyses=None):
         if analyses is None:
-            analyses = [self, ]
+            analyses = [
+                self,
+            ]
         self.omit_event = analyses
 
     def sync(self, obj, **kw):
@@ -570,8 +809,7 @@ class Analysis(ArArAge, IdeogramPlotable):
         self.aliquot_step_str = make_aliquot_step(self.aliquot, self.step)
 
     def _sync(self, *args, **kw):
-        """
-        """
+        """ """
         return
 
     def refresh_view(self):
@@ -582,29 +820,38 @@ class Analysis(ArArAge, IdeogramPlotable):
     def analysis_view(self):
         v = self._analysis_view
         if v is None:
-            mod, klass = self.analysis_view_klass
-            mod = __import__(mod, fromlist=[klass, ])
-            klass = getattr(mod, klass)
-            # v = self.analysis_view_klass()
-            v = klass()
-            self._analysis_view = v
-            self._sync_view(v)
+            v = self.analysis_view_factory()
 
+        return v
+
+    def analysis_view_factory(self, quick=False):
+        mod, klass = self.analysis_view_klass
+        mod = __import__(
+            mod,
+            fromlist=[
+                klass,
+            ],
+        )
+        klass = getattr(mod, klass)
+        # v = self.analysis_view_klass()
+        v = klass()
+        self._analysis_view = v
+        self._sync_view(v, quick=quick)
         return v
 
     def sync_view(self, **kw):
         self._sync_view(**kw)
 
-    def _sync_view(self, av=None, **kw):
+    def _sync_view(self, av=None, quick=False, **kw):
         if av is None:
             av = self.analysis_view
         try:
-            av.load(self)
+            av.load(self, quick=quick)
         except BaseException as e:
             import traceback
 
             traceback.print_exc()
-            print('sync view {}'.format(e))
+            print("sync view {}".format(e))
 
     @property
     def age_string(self):
@@ -612,12 +859,12 @@ class Analysis(ArArAge, IdeogramPlotable):
         e = self.age_err
         pe = format_percent_error(a, e)
 
-        return u'{} {}{} ({}%)'.format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
+        return "{} {}{} ({}%)".format(floatfmt(a), PLUSMINUS, floatfmt(e), pe)
 
     def _value_string(self, t):
-        if t == 'uF':
+        if t == "uF":
             a, e = self.f, self.f_err
-        elif t == 'uage':
+        elif t == "uage":
             a, e = nominal_value(self.uage), std_dev(self.uage)
         else:
             v = self.get_value(t)
@@ -635,6 +882,7 @@ class Analysis(ArArAge, IdeogramPlotable):
         return d
 
     def __str__(self):
-        return '{}<{}>'.format(self.record_id, self.__class__.__name__)
+        return "{}<{}>".format(self.record_id, self.__class__.__name__)
+
 
 # ============= EOF =============================================

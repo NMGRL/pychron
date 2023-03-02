@@ -22,7 +22,7 @@ from traitsui.api import View, UItem, VGroup, HGroup, Group, VSplit
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
-from traitsui.editors import TableEditor, InstanceEditor, ListEditor
+from traitsui.editors.api import TableEditor, InstanceEditor, ListEditor
 from traitsui.extras.checkbox_column import CheckboxColumn
 from traitsui.table_column import ObjectColumn
 from pychron.core.ui.custom_label_editor import CustomLabel
@@ -30,14 +30,21 @@ from pychron.core.ui.custom_label_editor import CustomLabel
 
 class DashboardCentralPane(TraitsTaskPane):
     def traits_view(self):
-        url = CustomLabel('object.notifier.url', label='URL')
+        url = CustomLabel("object.notifier.url", label="URL")
 
-        agrp = VGroup(UItem('devices', editor=ListEditor(mutable=False,
-                                                         style='custom',
-                                                         editor=InstanceEditor(
-                                                             view=View(UItem('graph', style='custom'))))), label='All')
-        igrp = VGroup(UItem('selected_device', style='custom'), label='Individual')
-        tgrp = HGroup(url, UItem('clear_button', tooltip='Clear current errors'))
+        agrp = VGroup(
+            UItem(
+                "devices",
+                editor=ListEditor(
+                    mutable=False,
+                    style="custom",
+                    editor=InstanceEditor(view=View(UItem("graph", style="custom"))),
+                ),
+            ),
+            label="All",
+        )
+        igrp = VGroup(UItem("selected_device", style="custom"), label="Individual")
+        tgrp = HGroup(url, UItem("clear_button", tooltip="Clear current errors"))
 
         # v = View(
         # VGroup(HGroup(url, UItem('clear_button', tooltip='Clear current errors')),
@@ -45,29 +52,29 @@ class DashboardCentralPane(TraitsTaskPane):
         #                  style='custom'),
         #
         #     )))
-        v = View(VGroup(tgrp, Group(agrp, igrp, layout='tabbed')))
+        v = View(VGroup(tgrp, Group(agrp, igrp, layout="tabbed")))
         return v
 
 
 class DashboardDevicePane(TraitsDockPane):
-    id = 'pychron.dashboard.devices'
+    id = "pychron.dashboard.devices"
 
     def traits_view(self):
-        cols = [CheckboxColumn(name='use'),
-                ObjectColumn(name='name', editable=False)]
+        cols = [CheckboxColumn(name="use"), ObjectColumn(name="name", editable=False)]
 
-        editor = TableEditor(columns=cols,
-                             selected='selected_device')
+        editor = TableEditor(columns=cols, selected="selected_device")
 
-        cols = [ObjectColumn(name='name', label='Name'),
-                ObjectColumn(name='last_value', label='Value'),
-                ObjectColumn(name='last_time_str', label='Timestamp')]
+        cols = [
+            ObjectColumn(name="name", label="Name"),
+            ObjectColumn(name="last_value", label="Value"),
+            ObjectColumn(name="last_time_str", label="Timestamp"),
+        ]
 
-        veditor = TableEditor(columns=cols,
-                              editable=False)
+        veditor = TableEditor(columns=cols, editable=False)
 
-        v = View(VSplit(UItem('devices', editor=editor),
-                        UItem('values', editor=veditor)))
+        v = View(
+            VSplit(UItem("devices", editor=editor), UItem("values", editor=veditor))
+        )
         return v
 
         # ============= EOF =============================================

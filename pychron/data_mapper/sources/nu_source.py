@@ -55,10 +55,10 @@ class NuFileSource(FileSource):
         nanalysis_cycles = next(f)
         toffset = next(f)
 
-        pspec.timestamp = datetime.strptime(get_next(f, 1), '#%Y-%m-%d %H:%M:%S#')
+        pspec.timestamp = datetime.strptime(get_next(f, 1), "#%Y-%m-%d %H:%M:%S#")
 
         collector_gains = next(f)
-        print('casd', collector_gains)
+        print("casd", collector_gains)
         # int_posts = [next(f) for i in range(41)]
         # print(int_posts)
         while 1:
@@ -67,7 +67,7 @@ class NuFileSource(FileSource):
                 npeakscentered = i[1]
                 break
 
-        print('fff', npeakscentered)
+        print("fff", npeakscentered)
         ndeflectors = next(f)[1]
         source_ht = next(f)
         half_plate_v = next(f)
@@ -101,18 +101,18 @@ class NuFileSource(FileSource):
 
         # trim off quotes
         ati = analysis_type_info[1:-1]
-        ati = ati.split(' ')
+        ati = ati.split(" ")
 
-        if ati[0] == 'Blank':
-            pspec.run_spec.labnumber = 'ba-01'
-            pspec.run_spec.irradiation = 'NoIrradiation'
-            pspec.run_spec.irradiation_level = 'A'
+        if ati[0] == "Blank":
+            pspec.run_spec.labnumber = "ba-01"
+            pspec.run_spec.irradiation = "NoIrradiation"
+            pspec.run_spec.irradiation_level = "A"
             pspec.run_spec.irradiation_position = 1
-        elif ati[0] == 'Air':
+        elif ati[0] == "Air":
             a = int(ati[1])
-            pspec.run_spec.labnumber = 'a-{:02n}'.format(a)
-            pspec.run_spec.irradiation = 'NoIrradiation'
-            pspec.run_spec.irradiation_level = 'A'
+            pspec.run_spec.labnumber = "a-{:02n}".format(a)
+            pspec.run_spec.irradiation = "NoIrradiation"
+            pspec.run_spec.irradiation_level = "A"
             pspec.run_spec.irradiation_position = a + 1
 
         ics = next(f)
@@ -130,24 +130,23 @@ class NuFileSource(FileSource):
 
         signals = array(signals)
 
-        with open(self.nice_path, 'r') as nice:
-
+        with open(self.nice_path, "r") as nice:
             isotopes = {}
             parser = NiceParser(signals)
             for line in nice:
                 try:
-                    lhs, rhs = list(map(str.strip, line.split('=')))
+                    lhs, rhs = list(map(str.strip, line.split("=")))
                 except ValueError:
                     continue
 
-                if lhs.startswith('Result'):
+                if lhs.startswith("Result"):
                     break
 
-                parser.set_tokens(rhs.split(' '))
+                parser.set_tokens(rhs.split(" "))
 
                 ret, det_idx = parser.exp()
 
-                iso = Isotope(lhs, 'IC{}'.format(det_idx))
+                iso = Isotope(lhs, "IC{}".format(det_idx))
                 iso.name = lhs
                 iso.xs = ret.xs
                 iso.ys = ret.ys
@@ -156,5 +155,6 @@ class NuFileSource(FileSource):
 
         pspec.isotope_group = IsotopeGroup(isotopes=isotopes)
         return pspec
+
 
 # ============= EOF =============================================

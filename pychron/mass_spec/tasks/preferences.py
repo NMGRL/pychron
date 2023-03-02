@@ -23,20 +23,25 @@ from traitsui.api import View, Item, HGroup, VGroup, Spring, Label, EnumEditor
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.ui.custom_label_editor import CustomLabel
-from pychron.database.tasks.connection_preferences import ConnectionMixin, show_databases
+from pychron.database.tasks.connection_preferences import (
+    ConnectionMixin,
+    show_databases,
+)
 from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class MassSpecConnectionPreferences(BasePreferencesHelper, ConnectionMixin):
-    preferences_path = 'pychron.massspec.database'
+    preferences_path = "pychron.massspec.database"
     name = Str
     username = Str
     password = Password
     host = Str
-    _adapter_klass = 'pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter'
+    _adapter_klass = (
+        "pychron.mass_spec.database.massspec_database_adapter.MassSpecDatabaseAdapter"
+    )
     enabled = Bool
-    _schema_identifier = 'AnalysesTable'
+    _schema_identifier = "AnalysesTable"
     _names = List
     load_names_button = Button
 
@@ -47,7 +52,13 @@ class MassSpecConnectionPreferences(BasePreferencesHelper, ConnectionMixin):
     def _load_names(self):
         if self.username and self.password and self.host:
             if self.host:
-                self._names = show_databases('mysql', self.host, self.username, self.password, self._schema_identifier)
+                self._names = show_databases(
+                    "mysql",
+                    self.host,
+                    self.username,
+                    self.password,
+                    self._schema_identifier,
+                )
 
     # def _anytrait_changed(self, name, old, new):
     #     if name not in ('_connected_label', '_connected_color',
@@ -63,39 +74,51 @@ class MassSpecConnectionPreferences(BasePreferencesHelper, ConnectionMixin):
         self._load_names()
 
     def _get_connection_dict(self):
-        return dict(username=self.username,
-                    host=self.host,
-                    password=self.password,
-                    name=self.name,
-                    kind='mysql')
+        return dict(
+            username=self.username,
+            host=self.host,
+            password=self.password,
+            name=self.name,
+            kind="mysql",
+        )
 
 
 class MassSpecConfigPreferences(BasePreferencesHelper):
-    preferences_path = 'pychron.massspec.config'
+    preferences_path = "pychron.massspec.config"
     reference_detector_name = Str
     reference_isotope_name = Str
     use_reference_detector_by_isotope = Bool
 
-    _reference_isotope_names = List(('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'))
-    _reference_detector_names = List(('H2', 'H1', 'AX', 'L1', 'L2', 'CDD'))
+    _reference_isotope_names = List(("Ar40", "Ar39", "Ar38", "Ar37", "Ar36"))
+    _reference_detector_names = List(("H2", "H1", "AX", "L1", "L2", "CDD"))
 
 
 class MassSpecConfigPane(PreferencesPane):
     model_factory = MassSpecConfigPreferences
-    category = 'MassSpec'
+    category = "MassSpec"
 
     def traits_view(self):
-        dgrp = VGroup(Item('use_reference_detector_by_isotope', label='Set By Isotope'),
-                      Item('reference_detector_name', label='Reference Detector',
-                           editor=EnumEditor(name='_reference_detector_names'),
-                           enabled_when='not use_reference_detector_by_isotope'),
-                      label='Detector',
-                      show_border=True)
+        dgrp = VGroup(
+            Item("use_reference_detector_by_isotope", label="Set By Isotope"),
+            Item(
+                "reference_detector_name",
+                label="Reference Detector",
+                editor=EnumEditor(name="_reference_detector_names"),
+                enabled_when="not use_reference_detector_by_isotope",
+            ),
+            label="Detector",
+            show_border=True,
+        )
 
-        iso_grp = VGroup(Item('reference_isotope_name', label='Reference Isotope',
-                              editor=EnumEditor(name='_reference_isotope_names')),
-                         show_border=True,
-                         label='Isotope')
+        iso_grp = VGroup(
+            Item(
+                "reference_isotope_name",
+                label="Reference Isotope",
+                editor=EnumEditor(name="_reference_isotope_names"),
+            ),
+            show_border=True,
+            label="Isotope",
+        )
 
         v = View(HGroup(iso_grp, dgrp))
         return v
@@ -103,32 +126,42 @@ class MassSpecConfigPane(PreferencesPane):
 
 class MassSpecConnectionPane(PreferencesPane):
     model_factory = MassSpecConnectionPreferences
-    category = 'MassSpec'
+    category = "MassSpec"
 
     def traits_view(self):
-        cgrp = HGroup(Spring(width=10, springy=False),
-                      icon_button_editor('test_connection_button', 'database_connect',
-                                         tooltip='Test connection'),
-                      icon_button_editor('load_names_button', 'arrow_refresh'),
-                      Spring(width=10, springy=False),
-                      Label('Status:'),
-                      CustomLabel('_connected_label',
-                                  label='Status',
-                                  weight='bold',
-                                  color_name='_connected_color'))
+        cgrp = HGroup(
+            Spring(width=10, springy=False),
+            icon_button_editor(
+                "test_connection_button", "database_connect", tooltip="Test connection"
+            ),
+            icon_button_editor("load_names_button", "arrow_refresh"),
+            Spring(width=10, springy=False),
+            Label("Status:"),
+            CustomLabel(
+                "_connected_label",
+                label="Status",
+                weight="bold",
+                color_name="_connected_color",
+            ),
+        )
 
-        massspec_grp = VGroup(Item('enabled', label='Use MassSpec'),
-                              VGroup(Item('name', label='Database', editor=EnumEditor(name='_names')),
-                                     Item('host', label='Host'),
-                                     Item('username', label='User'),
-                                     Item('password', label='Password'),
-                                     cgrp,
-                                     enabled_when='enabled',
-                                     show_border=True,
-                                     label='Connection'),
-                              label='MassSpec DB',
-                              show_border=True)
+        massspec_grp = VGroup(
+            Item("enabled", label="Use MassSpec"),
+            VGroup(
+                Item("name", label="Database", editor=EnumEditor(name="_names")),
+                Item("host", label="Host"),
+                Item("username", label="User"),
+                Item("password", label="Password"),
+                cgrp,
+                enabled_when="enabled",
+                show_border=True,
+                label="Connection",
+            ),
+            label="MassSpec DB",
+            show_border=True,
+        )
 
         return View(massspec_grp)
+
 
 # ============= EOF =============================================

@@ -26,8 +26,11 @@ from traits.api import Any
 # ============= local library imports  ==========================
 from sqlalchemy.orm.exc import NoResultFound
 from pychron.core.helpers.logger_setup import wrap
+
 # from pychron.database.orms.isotope.util import Base
 from pychron.loggable import Loggable
+
+
 #
 #
 def quick_mapper(table):
@@ -42,7 +45,7 @@ def quick_mapper(table):
 #
 #
 class BaseDatabaseBridge(Loggable):
-    kind = 'sqlite'
+    kind = "sqlite"
     # def init(self, p=None):
     #
     # #create a default db
@@ -65,7 +68,7 @@ class BaseDatabaseBridge(Loggable):
     def push(self):
         pass
 
-    def _copy_record(self, meta, dest, src, pid, tn, verbose=True, attr='id'):
+    def _copy_record(self, meta, dest, src, pid, tn, verbose=True, attr="id"):
         # meta = Base.metadata
         meta.bind = dest.bind
 
@@ -85,19 +88,20 @@ class BaseDatabaseBridge(Loggable):
             columns = list(table.columns.keys())
 
             if verbose:
-                msg = 'Transferring records {}'.format(tn)
+                msg = "Transferring records {}".format(tn)
                 if verbose == 1:
                     cols = wrap(columns)
-                    msg = '{} {}'.format(msg, 'Columns={}'.format(tn, cols))
+                    msg = "{} {}".format(msg, "Columns={}".format(tn, cols))
 
                 self.debug(msg)
 
                 q = src.query(table)
                 q = q.filter(getattr(table.c, attr) == pid)
             try:
-
                 record = q.one()
-                data = dict([(str(column), getattr(record, column)) for column in columns])
+                data = dict(
+                    [(str(column), getattr(record, column)) for column in columns]
+                )
                 dest.merge(nrec(**data))
             except NoResultFound:
                 pass
@@ -397,4 +401,6 @@ class BaseDatabaseBridge(Loggable):
                 # # if __name__=='__main__':
                 # # o=OfflineBridge()
                 # # o.init('/Users/ross/Sandbox/data.db')
+
+
 # ============= EOF =============================================

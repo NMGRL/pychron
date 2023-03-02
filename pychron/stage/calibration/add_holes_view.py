@@ -27,11 +27,12 @@ from six.moves import range
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 def parse_holestr(hstr):
     hs = []
-    for sublist in hstr.split(','):
-        if '-' in sublist:
-            s, e = sublist.split('-')
+    for sublist in hstr.split(","):
+        if "-" in sublist:
+            s, e = sublist.split("-")
             s, e = int(s.strip()), int(e.strip())
             for i in range(s, e + 1):
                 hs.append(i)
@@ -63,8 +64,8 @@ class AddHolesView(HasTraits):
         return md5(str(self.holes)).hexdigest()
 
     def traits_view(self):
-        v = View(UItem('hole_str'),
-                 buttons=['OK', 'Cancel'])
+        v = View(UItem("hole_str"), buttons=["OK", "Cancel"])
         return v
+
 
 # ============= EOF =============================================

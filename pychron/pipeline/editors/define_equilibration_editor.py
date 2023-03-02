@@ -24,9 +24,11 @@ from pychron.graph.graph import Graph
 
 
 class DefineEquilibrationResultsAdapter(TabularAdapter):
-    columns = [('RunID', 'record_id'),
-               ('UUID', 'display_uuid'),
-               ('Equilibration Times', 'equilibration_times')]
+    columns = [
+        ("RunID", "record_id"),
+        ("UUID", "display_uuid"),
+        ("Equilibration Times", "equilibration_times"),
+    ]
     record_id_width = Int(100)
 
 
@@ -47,7 +49,7 @@ class DefineEquilibrationResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
         super(DefineEquilibrationResultsEditor, self).__init__(*args, **kw)
 
         na = grouped_name([r.identifier for r in results if r.identifier])
-        self.name = 'Define Eq. Results {}'.format(na)
+        self.name = "Define Eq. Results {}".format(na)
 
         self.results = results
         self.selected = results[0]
@@ -69,12 +71,14 @@ class DefineEquilibrationResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
 
     def _selected_changed(self, new):
         if new:
-            self.graph = new.analysis.get_isotope_evolutions(new.isotopes,
-                                                             load_data=False,
-                                                             show_equilibration=True,
-                                                             ncols=self.options.ncols,
-                                                             show_statistics=self.options.show_statistics,
-                                                             scale_to_equilibration=True)
+            self.graph = new.analysis.get_isotope_evolutions(
+                new.isotopes,
+                load_data=False,
+                show_equilibration=True,
+                ncols=self.options.ncols,
+                show_statistics=self.options.show_statistics,
+                scale_to_equilibration=True,
+            )
             idx = self.results.index(new)
             if idx == len(self.results) - 1:
                 self.next_enabled = False
@@ -87,18 +91,35 @@ class DefineEquilibrationResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
                 self.previous_enabled = True
 
     def traits_view(self):
-        v = View(VSplit(VGroup(HGroup(icon_button_editor('previous_button', 'arrow_left',
-                                                         enabled_when='previous_enabled'),
-                                      icon_button_editor('next_button', 'arrow_right',
-                                                         enabled_when='next_enabled')),
-
-                               UItem('results', editor=TabularEditor(adapter=self.adapter,
-                                                                     editable=False,
-                                                                     multi_select=False,
-                                                                     selected='selected',
-                                                                     column_clicked='column_clicked',
-                                                                     # dclicked='dclicked'
-                                                                     ))),
-                        UItem('graph', style='custom', height=600)))
+        v = View(
+            VSplit(
+                VGroup(
+                    HGroup(
+                        icon_button_editor(
+                            "previous_button",
+                            "arrow_left",
+                            enabled_when="previous_enabled",
+                        ),
+                        icon_button_editor(
+                            "next_button", "arrow_right", enabled_when="next_enabled"
+                        ),
+                    ),
+                    UItem(
+                        "results",
+                        editor=TabularEditor(
+                            adapter=self.adapter,
+                            editable=False,
+                            multi_select=False,
+                            selected="selected",
+                            column_clicked="column_clicked",
+                            # dclicked='dclicked'
+                        ),
+                    ),
+                ),
+                UItem("graph", style="custom", height=600),
+            )
+        )
         return v
+
+
 # ============= EOF =============================================

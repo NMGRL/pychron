@@ -40,7 +40,7 @@ class Position(HasTraits):
             x /= 25.4
             y /= 25.4
 
-        return '{},{:0.5f},{:0.5f}'.format(self.id, x, y)
+        return "{},{:0.5f},{:0.5f}".format(self.id, x, y)
 
 
 class TrayMaker(Loggable):
@@ -49,33 +49,35 @@ class TrayMaker(Loggable):
     add_position_button = Button
     refresh_button = Button
     names = List
-    name = RestrictedStr(name='names')
+    name = RestrictedStr(name="names")
     save_button = Button
 
     def gen(self):
-        rows = [(5, -2),
-                (9, -4),
-                (13, -6),
-                (15, -7),
-                (17, -8),
-                (19, -9),
-                (19, -9),
-                (21, -10),
-                (21, -10),
-                (23, -11),
-                (23, -11),
-                (23, -11),
-                (23, -11),
-                (23, -11),
-                (21, -10),
-                (21, -10),
-                (19, -9),
-                (19, -9),
-                (17, -8),
-                (15, -7),
-                (13, -6),
-                (9, -4),
-                (5, -2)]
+        rows = [
+            (5, -2),
+            (9, -4),
+            (13, -6),
+            (15, -7),
+            (17, -8),
+            (19, -9),
+            (19, -9),
+            (21, -10),
+            (21, -10),
+            (23, -11),
+            (23, -11),
+            (23, -11),
+            (23, -11),
+            (23, -11),
+            (21, -10),
+            (21, -10),
+            (19, -9),
+            (19, -9),
+            (17, -8),
+            (15, -7),
+            (13, -6),
+            (9, -4),
+            (5, -2),
+        ]
         space = 2
         oy = 24
         ps = []
@@ -97,14 +99,14 @@ class TrayMaker(Loggable):
         self.positions.append(p)
 
     def _save_button_fired(self):
-        out = 'out.txt'
-        with open(out, 'w') as wfile:
-            wfile.write('circle, 0.02\n')
-            wfile.write('\n\n')
+        out = "out.txt"
+        with open(out, "w") as wfile:
+            wfile.write("circle, 0.02\n")
+            wfile.write("\n\n")
             for p in self.positions:
-                wfile.write('{}\n'.format(p.dump('inches')))
+                wfile.write("{}\n".format(p.dump("inches")))
 
-    @on_trait_change('positions[], positions:[x,y]')
+    @on_trait_change("positions[], positions:[x,y]")
     def _positions_changed(self):
         for i, p in enumerate(self.positions):
             p.id = i + 1
@@ -113,27 +115,27 @@ class TrayMaker(Loggable):
         self.canvas.invalidate_and_redraw()
 
     def traits_view(self):
-        cols = [ObjectColumn(name='id'),
-                ObjectColumn(name='x'),
-                ObjectColumn(name='y')]
+        cols = [ObjectColumn(name="id"), ObjectColumn(name="x"), ObjectColumn(name="y")]
 
-        v = okcancel_view(HGroup(icon_button_editor('add_position_button', 'add'),
-                                 icon_button_editor('save_button', 'save')),
-                          UItem('name'),
-                          HSplit(UItem('positions', width=0.25,
-                                       editor=TableEditor(columns=cols)),
-                                 UItem('canvas',
-                                       width=0.75,
-                                       editor=ComponentEditor())),
-                          width=900,
-                          height=900,
-                          )
+        v = okcancel_view(
+            HGroup(
+                icon_button_editor("add_position_button", "add"),
+                icon_button_editor("save_button", "save"),
+            ),
+            UItem("name"),
+            HSplit(
+                UItem("positions", width=0.25, editor=TableEditor(columns=cols)),
+                UItem("canvas", width=0.75, editor=ComponentEditor()),
+            ),
+            width=900,
+            height=900,
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     t = TrayMaker()
     t.gen()
-    t.names = ['a', 'bc']
+    t.names = ["a", "bc"]
     t.configure_traits()
 # ============= EOF =============================================

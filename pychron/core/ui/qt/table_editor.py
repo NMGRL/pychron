@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 
 from pyface.qt import QtGui
-from pyface.qt.QtCore import Qt
+from pyface.qt.QtCore import Qt, QSize
 from pyface.qt.QtGui import QFont, QFontMetrics, QApplication
 from traits.api import Event, Callable, Bool
 from traitsui.editors.table_editor import TableEditor
@@ -66,17 +66,25 @@ class myTableView(TableView):
         if self.clear_selection_on_dclicked:
             self.clearSelection()
 
+    def sizeHintForColumn(self, column_index):
+        try:
+            return super(myTableView, self).sizeHintForColumn(column_index)
+        except AttributeError:
+            return 0
+
     def _paste(self):
         if self._editor.factory.paste_factory:
             clipboard = QApplication.clipboard()
             md = clipboard.mimeData()
-            if md.hasFormat('text/plain'):
-                txt = md.data('text/plain')
+            if md.hasFormat("text/plain"):
+                txt = md.data("text/plain")
 
-                rows = txt.split('\n')
-                if len({len(row.split('\t')) for row in rows}) <= 1:
-                    vs = [self._editor.factory.paste_factory(i, row.data().decode('utf8')) for i, row in enumerate(
-                        rows)]
+                rows = txt.split("\n")
+                if len({len(row.split("\t")) for row in rows}) <= 1:
+                    vs = [
+                        self._editor.factory.paste_factory(i, row.data().decode("utf8"))
+                        for i, row in enumerate(rows)
+                    ]
                     self._editor.value.extend(vs)
 
 
@@ -93,5 +101,6 @@ class myTableEditor(TableEditor):
 
     def _get_custom_editor_class(self):
         return self.simple_editor_class
+
 
 # ============= EOF =============================================

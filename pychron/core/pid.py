@@ -28,11 +28,10 @@ from traitsui.api import View, Item, HGroup, VGroup
 from pychron.core.yaml import yload
 from pychron.paths import paths
 
-ATTRS = ('kp', 'ki', 'kd', 'kdt')
+ATTRS = ("kp", "ki", "kd", "kdt")
 
 
 class PID(HasTraits):
-
     kp = Range(0.0, 10.0, 1.25)
     ki = Range(0.0, 2.0, 0.25)
     kd = Range(0.0, 2.0, 0.25)
@@ -66,13 +65,13 @@ class PID(HasTraits):
 
     def dump(self):
         p = self.persistence_path
-        with open(p, 'wb') as wfile:
+        with open(p, "wb") as wfile:
             obj = self.get_dump_obj()
             yaml.dump(obj, wfile)
 
     @property
     def persistence_path(self):
-        return os.path.join(paths.setup_dir, 'pid.yaml')
+        return os.path.join(paths.setup_dir, "pid.yaml")
 
     def reset(self):
         self._integral_err = 0
@@ -80,20 +79,29 @@ class PID(HasTraits):
 
     def get_value(self, error):
         dt = self.kdt
-        self._integral_err += (error * dt)
+        self._integral_err += error * dt
         derivative = (error - self._prev_err) / dt
-        output = (self.kp * error) + (self.ki * self._integral_err) + (self.kd * derivative)
+        output = (
+            (self.kp * error) + (self.ki * self._integral_err) + (self.kd * derivative)
+        )
         self._prev_err = error
         return min(self.max_output, max(self.min_output, output))
 
     def traits_view(self):
-        v = View(VGroup(VGroup(Item('kp', label='P'),
-                        Item('ki', label='I'),
-                        Item('kd', label='D'),
-                        Item('kdt', label='Dt')),
-                        HGroup(Item('min_output'),
-                               Item('max_output'))),
-                 title='Edit PID',
-                 buttons=['OK','Cancel'])
+        v = View(
+            VGroup(
+                VGroup(
+                    Item("kp", label="P"),
+                    Item("ki", label="I"),
+                    Item("kd", label="D"),
+                    Item("kdt", label="Dt"),
+                ),
+                HGroup(Item("min_output"), Item("max_output")),
+            ),
+            title="Edit PID",
+            buttons=["OK", "Cancel"],
+        )
         return v
+
+
 # ============= EOF =============================================

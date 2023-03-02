@@ -38,7 +38,7 @@ from pychron.mv.lumen_detector import LumenDetector
 
 
 class TestAutocenter(HasTraits):
-    test1_button = Button('Test1')
+    test1_button = Button("Test1")
     display_image = Instance(FrameImage)
 
     def init(self):
@@ -53,8 +53,11 @@ class TestAutocenter(HasTraits):
         self.display_image = a.display_image
         self.manager = a
 
+    def _test_co2_locator(self):
+        self.manager.calculate_new_center(0, 0, 0, 0, 1)
+
     def _test1(self):
-        print('test1')
+        print("test1")
         ld = LumenDetector()
 
         def func():
@@ -67,10 +70,7 @@ class TestAutocenter(HasTraits):
             cropdim = dim * 2.5
             src = ld.crop(src, cropdim, cropdim, offx, offy, verbose=False)
 
-            ld.find_targets(self.display_image, src, dim, mask=mask_dim,
-                            search={'start_offset_scalar': 1,
-                                    # 'width': 2
-                                    })
+            ld.find_targets(self.display_image, src, dim, mask=mask_dim)
             # self.manager.calculate_new_center(0, 0, 0, 0, dim=1.25)
 
         t = Thread(target=func)
@@ -79,11 +79,12 @@ class TestAutocenter(HasTraits):
 
     def _set_test_image(self):
         from pychron.globals import globalv
+
         # p = '/Users/ross/Sandbox/test_target.jpg'
         # p = '/Users/ross/Sandbox/pos_err/pos_err_200_0-002.jpg'
-        p = '/Users/ross/Sandbox/poserror/pos_err_221_0-007.jpg'
-        p = '/Users/ross/Sandbox/poserror/snapshot009.jpg'
-        p = '/Users/ross/Sandbox/graintest/image0269.png'
+        p = "/Users/ross/Sandbox/poserror/pos_err_221_0-007.jpg"
+        p = "/Users/ross/Sandbox/poserror/snapshot009.jpg"
+        p = "/Users/ross/Sandbox/graintest/image0269.png"
         # p = '/Users/argonlab3/Pychron_co2/data/snapshots/pos_err_220_0--001.jpg'
 
         globalv.video_test_path = p
@@ -91,18 +92,27 @@ class TestAutocenter(HasTraits):
 
     def _test1_button_fired(self):
         self._set_test_image()
-        self._test1()
+        # self._test1()
+        self._test_co2_locator()
 
 
-if __name__ == '__main__':
-    logging_setup('mv', use_archiver=False, use_file=False)
+if __name__ == "__main__":
+    logging_setup("mv", use_archiver=False, use_file=False)
     t = TestAutocenter()
     t.init()
-    t.configure_traits(view=View(UItem('test1_button'),
-                                 UItem('object.display_image.source_frame',
-                                       width=254, height=254,
-                                       editor=ImageEditor(refresh='object.display_image.refresh_needed')),
-                                 width=500, height=300))
+    t.configure_traits(
+        view=View(
+            UItem("test1_button"),
+            UItem(
+                "object.display_image.source_frame",
+                width=254,
+                height=254,
+                editor=ImageEditor(refresh="object.display_image.refresh_needed"),
+            ),
+            width=500,
+            height=300,
+        )
+    )
 
 # ============= EOF =============================================
 

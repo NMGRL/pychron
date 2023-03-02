@@ -19,35 +19,42 @@
 # ============= local library imports  ==========================
 from __future__ import absolute_import
 from pychron.envisage.initialization.initialization_parser import InitializationParser
-from pychron.extraction_line.client_extraction_line_manager import ClientExtractionLineManager
+from pychron.extraction_line.client_extraction_line_manager import (
+    ClientExtractionLineManager,
+)
 from pychron.extraction_line.pyscript_runner import RemotePyScriptRunner
-from pychron.extraction_line.tasks.client_extraction_line_preferences import ClientExtractionLinePreferencesPane
+from pychron.extraction_line.tasks.client_extraction_line_preferences import (
+    ClientExtractionLinePreferencesPane,
+)
 from pychron.extraction_line.tasks.extraction_line_plugin import ExtractionLinePlugin
-from pychron.extraction_line.tasks.extraction_line_preferences import ConsolePreferencesPane
+from pychron.extraction_line.tasks.extraction_line_preferences import (
+    ConsolePreferencesPane,
+)
 
 
 class ClientExtractionLinePlugin(ExtractionLinePlugin):
-    id = 'pychron.client_extraction_line'
-    name = 'ClientExtractionLine'
+    id = "pychron.client_extraction_line"
+    name = "ClientExtractionLine"
     extraction_line_manager_klass = ClientExtractionLineManager
 
     def _runner_factory(self):
-
         ip = InitializationParser()
-        elm = ip.get_plugin('ClientExtractionLine', category='hardware')
-        runner = elm.find('runner')
+        elm = ip.get_plugin("ClientExtractionLine", category="hardware")
+        runner = elm.find("runner")
         if runner is None:
-            self.warning_dialog('Script Runner is not configured in the Initialization file. See documentation')
+            self.warning_dialog(
+                "Script Runner is not configured in the Initialization file. See documentation"
+            )
             return
 
         host, port, kind, frame = None, None, None, None
 
         if runner is not None:
-            comms = runner.find('communications')
-            host = comms.find('host')
-            port = comms.find('port')
-            kind = comms.find('kind')
-            frame = comms.find('message_frame')
+            comms = runner.find("communications")
+            host = comms.find("host")
+            port = comms.find("port")
+            kind = comms.find("kind")
+            frame = comms.find("message_frame")
 
         if host is not None:
             host = host.text  # if host else 'localhost'
@@ -64,7 +71,5 @@ class ClientExtractionLinePlugin(ExtractionLinePlugin):
     def _preferences_panes_default(self):
         return [ClientExtractionLinePreferencesPane, ConsolePreferencesPane]
 
+
 # ============= EOF =============================================
-
-
-

@@ -27,28 +27,29 @@ from pychron.canvas.canvas2D.laser_tray_canvas import ImageOverlay
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 
+
 class ImageOverlayManager(HasTraits):
     canvas = Any
     overlays = List
+
     def set_canvas(self, canvas):
-        ov = [o for o in reversed(canvas.overlays)
-                         if isinstance(o, ImageOverlay)]
+        ov = [o for o in reversed(canvas.overlays) if isinstance(o, ImageOverlay)]
         self.overlays = ov
         self.canvas = canvas
 
     def traits_view(self):
-        cols = [ObjectColumn(name='name', label='Name', editable=False),
-                CheckboxColumn(name='visible', label='Visible'),
-                ObjectColumn(name='alpha', label='Opacity', width=200),
-                ObjectColumn(name='dirname', label='Directory', editable=False)
-                ]
-        v = View(UItem('overlays', editor=TableEditor(columns=cols,
-                                                      sortable=False
-                                                      )))
+        cols = [
+            ObjectColumn(name="name", label="Name", editable=False),
+            CheckboxColumn(name="visible", label="Visible"),
+            ObjectColumn(name="alpha", label="Opacity", width=200),
+            ObjectColumn(name="dirname", label="Directory", editable=False),
+        ]
+        v = View(UItem("overlays", editor=TableEditor(columns=cols, sortable=False)))
         return v
 
-    @on_trait_change('overlays:[visible,alpha]')
+    @on_trait_change("overlays:[visible,alpha]")
     def redraw(self, obj, name, old, new):
         self.canvas.request_redraw()
+
 
 # ============= EOF =============================================

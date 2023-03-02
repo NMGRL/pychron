@@ -29,8 +29,12 @@ from pychron.pychron_constants import DETECTOR_ORDER, DETECTOR_IC
 
 
 class ResultsAdapter(TabularAdapter):
-    columns = [('Detector', 'detector'), ('Current Gain', 'current_gain'),
-               ('Adj.', 'gfactor'), ('New Gain', 'new_gain')]
+    columns = [
+        ("Detector", "detector"),
+        ("Current Gain", "current_gain"),
+        ("Adj.", "gfactor"),
+        ("New Gain", "new_gain"),
+    ]
 
 
 class GainCalibrationResult(HasTraits):
@@ -44,7 +48,7 @@ class GainCalibrationResult(HasTraits):
 
 
 class GainCalibrationEditor(BaseTraitsEditor):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance("pychron.dvc.dvc.DVC")
 
     lhs_ms = Str
     lhs_available_ms = List
@@ -61,7 +65,7 @@ class GainCalibrationEditor(BaseTraitsEditor):
 
     lhs_items = List
     rhs_items = List
-    _isotope_key = 'Ar40'
+    _isotope_key = "Ar40"
     tabular_adapter = Instance(DetectorICTabularAdapter, ())
     gains_dict = Dict
 
@@ -73,9 +77,8 @@ class GainCalibrationEditor(BaseTraitsEditor):
 
     # private
     def _get_analysis(self, rid):
-
-        args = rid.split('-')
-        ln = '-'.join(args[:-1])
+        args = rid.split("-")
+        ln = "-".join(args[:-1])
         a = args[-1]
         try:
             int(a[-1])
@@ -98,11 +101,18 @@ class GainCalibrationEditor(BaseTraitsEditor):
         lhs_an = self._get_analysis(self.lhs_runid)
         self.lhs_items = make_items(lhs_an.isotopes)
 
-        isotopes = [lhs_an.isotopes[k] for k in lhs_an.isotope_keys if k.startswith(self._isotope_key)]
+        isotopes = [
+            lhs_an.isotopes[k]
+            for k in lhs_an.isotope_keys
+            if k.startswith(self._isotope_key)
+        ]
 
         detcols = get_columns(isotopes)
 
-        self.tabular_adapter.columns = [('', 'name'), ('Intensity', 'intensity')] + detcols
+        self.tabular_adapter.columns = [
+            ("", "name"),
+            ("Intensity", "intensity"),
+        ] + detcols
         self._make_results()
 
     def _get_current_gains(self, ms):
@@ -111,8 +121,11 @@ class GainCalibrationEditor(BaseTraitsEditor):
         self.gains_dict = self.dvc.meta_repo.get_gains(ms)
 
     def _make_results(self):
-        refdet = 'H1'
-        results = [GainCalibrationResult(current_gain=self.gains_dict.get(k, 1), detector=k) for k in DETECTOR_ORDER]
+        refdet = "H1"
+        results = [
+            GainCalibrationResult(current_gain=self.gains_dict.get(k, 1), detector=k)
+            for k in DETECTOR_ORDER
+        ]
 
         """
             lv_i = (AX/H1)o
@@ -160,30 +173,44 @@ class GainCalibrationEditor(BaseTraitsEditor):
 
     def _get_runids(self, ms):
         db = self.dvc.db
-        ans = db.get_analyses(analysis_type=DETECTOR_IC,
-                              mass_spectrometer=ms,
-                              reverse_order=True
-                              )
+        ans = db.get_analyses(
+            analysis_type=DETECTOR_IC, mass_spectrometer=ms, reverse_order=True
+        )
         return [ai.record_id for ai in ans]
 
     def traits_view(self):
-        editor = TabularEditor(adapter=self.tabular_adapter,
-                               editable=False,
-                               stretch_last_section=False)
+        editor = TabularEditor(
+            adapter=self.tabular_adapter, editable=False, stretch_last_section=False
+        )
 
-        l_grp = VGroup(VGroup(Item('lhs_ms', width=200, editor=EnumEditor(name='lhs_available_ms')),
-                              Item('lhs_runid', width=200, editor=EnumEditor(name='lhs_runids'))),
-                       UItem('lhs_items', editor=editor))
+        l_grp = VGroup(
+            VGroup(
+                Item("lhs_ms", width=200, editor=EnumEditor(name="lhs_available_ms")),
+                Item("lhs_runid", width=200, editor=EnumEditor(name="lhs_runids")),
+            ),
+            UItem("lhs_items", editor=editor),
+        )
 
-        r_grp = VGroup(VGroup(Item('rhs_ms', width=200, editor=EnumEditor(name='rhs_available_ms')),
-                              Item('rhs_runid', width=200, editor=EnumEditor(name='rhs_runids'))),
-                       UItem('rhs_items', editor=editor))
+        r_grp = VGroup(
+            VGroup(
+                Item("rhs_ms", width=200, editor=EnumEditor(name="rhs_available_ms")),
+                Item("rhs_runid", width=200, editor=EnumEditor(name="rhs_runids")),
+            ),
+            UItem("rhs_items", editor=editor),
+        )
 
-        results_grp = VGroup(UItem('results', editor=TabularEditor(adapter=ResultsAdapter(),
-                                                                   editable=False)))
+        results_grp = VGroup(
+            UItem(
+                "results",
+                editor=TabularEditor(adapter=ResultsAdapter(), editable=False),
+            )
+        )
 
-        v = okcancel_view(VGroup(HGroup(l_grp, r_grp), results_grp),
-                          title='Configure Gain Calibration')
+        v = okcancel_view(
+            VGroup(HGroup(l_grp, r_grp), results_grp),
+            title="Configure Gain Calibration",
+        )
         return v
+
 
 # ============= EOF =============================================

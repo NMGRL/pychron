@@ -27,13 +27,15 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import floatfmt, format_percent_error
 from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, PLUSMINUS_PERCENT
 
-MAPPING = {'k4039': ('(Ar40/Ar39)K'),
-           'k3839': ('(Ar38/Ar39)K'),
-           'k3739': ('(Ar37/Ar39)K'),
-           'ca3937': ('(Ar39/Ar37)Ca'),
-           'ca3837': ('(Ar38/Ar37)Ca'),
-           'ca3637': ('(Ar36/Ar37)Ca'),
-           'cl3638': ('(Ar36/Ar38)Cl')}
+MAPPING = {
+    "k4039": ("(Ar40/Ar39)K"),
+    "k3839": ("(Ar38/Ar39)K"),
+    "k3739": ("(Ar37/Ar39)K"),
+    "ca3937": ("(Ar39/Ar37)Ca"),
+    "ca3837": ("(Ar38/Ar37)Ca"),
+    "ca3637": ("(Ar36/Ar37)Ca"),
+    "cl3638": ("(Ar36/Ar38)Cl"),
+}
 
 
 class Interference(HasTraits):
@@ -43,14 +45,17 @@ class Interference(HasTraits):
 
 
 class InterferenceAdapter(TabularAdapter):
-    columns = [('Correction', 'name'),
-               ('Value', 'value'), (PLUSMINUS_ONE_SIGMA, 'error'),
-               (PLUSMINUS_PERCENT, 'percent_error')]
+    columns = [
+        ("Correction", "name"),
+        ("Value", "value"),
+        (PLUSMINUS_ONE_SIGMA, "error"),
+        (PLUSMINUS_PERCENT, "percent_error"),
+    ]
 
     value_text = Property
     error_text = Property
     percent_error_text = Property
-    font = '10'
+    font = "10"
 
     def _get_value_text(self):
         return floatfmt(self.item.value, n=7, use_scientific=True)
@@ -65,7 +70,7 @@ class InterferenceAdapter(TabularAdapter):
 class InterferencesView(HasTraits):
     interferences = List
     productions = List
-    name = 'Interferences'
+    name = "Interferences"
 
     def __init__(self, an, *args, **kw):
         super(InterferencesView, self).__init__(*args, **kw)
@@ -82,28 +87,33 @@ class InterferencesView(HasTraits):
             if k in MAPPING:
                 k = MAPPING[k]
 
-            a.append(Interference(name=k, value=nominal_value(v),
-                                  error=std_dev(v)))
+            a.append(Interference(name=k, value=nominal_value(v), error=std_dev(v)))
         self.interferences = a
 
         p = []
         for k, v in an.production_ratios.items():
-            p.append(Interference(name=k.replace('_', '/'),
-                                  value=nominal_value(v),
-                                  error=std_dev(v)))
+            p.append(
+                Interference(
+                    name=k.replace("_", "/"), value=nominal_value(v), error=std_dev(v)
+                )
+            )
         self.productions = p
 
     def traits_view(self):
-        v = View(VGroup(
-            HGroup(Item('pr_name',
-                        label='Name',
-                        style='readonly')),
-            UItem('interferences',
-                  editor=TabularEditor(adapter=InterferenceAdapter(),
-                                       editable=False)),
-            UItem('productions', editor=TabularEditor(adapter=InterferenceAdapter(),
-                                                      editable=False))))
+        v = View(
+            VGroup(
+                HGroup(Item("pr_name", label="Name", style="readonly")),
+                UItem(
+                    "interferences",
+                    editor=TabularEditor(adapter=InterferenceAdapter(), editable=False),
+                ),
+                UItem(
+                    "productions",
+                    editor=TabularEditor(adapter=InterferenceAdapter(), editable=False),
+                ),
+            )
+        )
         return v
 
-# ============= EOF =============================================
 
+# ============= EOF =============================================

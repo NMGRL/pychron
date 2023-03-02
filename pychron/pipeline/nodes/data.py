@@ -28,13 +28,18 @@ from traitsui.api import Item, EnumEditor, CheckListEditor
 from pychron.core.helpers.strtools import to_bool, get_case_insensitive, to_int
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.globals import globalv
-from pychron.pipeline.csv_dataset_factory import CSVDataSetFactory, CSVSpectrumDataSetFactory
+from pychron.pipeline.csv_dataset_factory import (
+    CSVDataSetFactory,
+    CSVSpectrumDataSetFactory,
+    CSVIsochronDataSetFactory,
+    CSVRegressionDataSetFactory,
+)
 from pychron.pipeline.nodes.base import BaseNode
 from pychron.pychron_constants import ANALYSIS_TYPES
 
 
 class BaseDVCNode(BaseNode):
-    dvc = Instance('pychron.dvc.dvc.DVC')
+    dvc = Instance("pychron.dvc.dvc.DVC")
 
 
 class DVCNode(BaseDVCNode):
@@ -44,7 +49,7 @@ class DVCNode(BaseDVCNode):
     retrieving analyses
     """
 
-    browser_model = Instance('pychron.envisage.browser.browser_model.BrowserModel')
+    browser_model = Instance("pychron.envisage.browser.browser_model.BrowserModel")
 
     def get_browser_analyses(self, irradiation=None, level=None):
         # from pychron.envisage.browser.view import SampleBrowserView
@@ -59,7 +64,7 @@ class DVCNode(BaseDVCNode):
                 self.browser_model.level = level
 
         # browser_view = SampleBrowserView(model=self.browser_model)
-        info = self.browser_model.browser_view.edit_traits(kind='livemodal')
+        info = self.browser_model.browser_view.edit_traits(kind="livemodal")
         records = None
         if info.result:
             self.browser_model.add_analysis_set()
@@ -83,7 +88,7 @@ class DVCNode(BaseDVCNode):
 
 
 class InterpretedAgeNode(DVCNode):
-    name = 'Interpreted Ages'
+    name = "Interpreted Ages"
     interpreted_ages = List
 
     def configure(self, pre_run=False, **kw):
@@ -95,7 +100,7 @@ class InterpretedAgeNode(DVCNode):
         self.browser_model.activated()
 
         browser_view = InterpretedAgeBrowserView(model=self.browser_model)
-        info = browser_view.edit_traits(kind='livemodal')
+        info = browser_view.edit_traits(kind="livemodal")
 
         if info.result:
             self.browser_model.dump_browser()
@@ -115,7 +120,7 @@ class InterpretedAgeNode(DVCNode):
 
 
 class DataNode(DVCNode):
-    name = 'Data'
+    name = "Data"
 
     analysis_kind = None
 
@@ -131,7 +136,7 @@ class DataNode(DVCNode):
 
 
 class SampleNode(BaseDVCNode):
-    name = 'Sample'
+    name = "Sample"
     samples = List
 
     def configure(self, pre_run=False, **kw):
@@ -160,15 +165,15 @@ class BaseCSVNode(BaseDVCNode):
 
     def reset(self):
         super(BaseCSVNode, self).reset()
-        self.path = ''
+        self.path = ""
         self.unknowns = []
 
     def configure(self, pre_run=False, **kw):
-        if to_bool(os.getenv('CSV_DEBUG')):
-            self.path = '/Users/ross/PychronDev/data/csv/Murphy ideo ages2.csv'
-            self.path = '/Users/ross/Downloads/Takahe_Ideo.csv'
-            self.path = '/Users/ross/Downloads/VallesTest.csv'
-            self.path = '/Users/ross/Sandbox/cluster.csv'
+        if to_bool(os.getenv("CSV_DEBUG")):
+            self.path = "/Users/ross/PychronDev/data/csv/Murphy ideo ages2.csv"
+            self.path = "/Users/ross/Downloads/Takahe_Ideo.csv"
+            self.path = "/Users/ross/Downloads/VallesTest.csv"
+            self.path = "/Users/ross/Sandbox/cluster.csv"
 
         ret = bool(self.path)
         if not pre_run:
@@ -206,23 +211,27 @@ class BaseCSVNode(BaseDVCNode):
     def _load_analyses(self):
         from pychron.core.csv.csv_parser import CSVColumnParser
 
-        par = CSVColumnParser(delimiter=',')
+        par = CSVColumnParser(delimiter=",")
         par.load(self.path)
 
         if par.check(self.required_columns):
             return self._get_items_from_file(par)
         else:
-            warning(None, 'Invalid file format. Minimum columns required are {}'.format(self.required_columns))
+            warning(
+                None,
+                "Invalid file format. Minimum columns required are {}".format(
+                    self.required_columns
+                ),
+            )
 
 
 class CSVNode(BaseCSVNode):
-    name = 'CSV Data'
-    required_columns = ('runid', 'age', 'age_err')
+    name = "CSV Data"
+    required_columns = ("runid", "age", "age_err")
 
     def _get_items_from_file(self, parser):
         try:
-            ans = [self._analysis_factory(d)
-                   for d in parser.values()]
+            ans = [self._analysis_factory(d) for d in parser.values()]
 
             return ans
 
@@ -231,26 +240,37 @@ class CSVNode(BaseCSVNode):
 
     def _analysis_factory(self, d):
         from pychron.processing.analyses.file_analysis import FileAnalysis
-        fa = FileAnalysis(age=float(get_case_insensitive(d, 'age')),
-                          age_err=float(get_case_insensitive(d, 'age_err')),
-                          record_id=get_case_insensitive(d, 'runid'),
-                          sample=get_case_insensitive(d, 'sample', ''),
-                          label_name=get_case_insensitive(d, 'label_name', ''),
-                          group=to_int(get_case_insensitive(d, 'group', '')),
-                          aliquot=int(get_case_insensitive(d, 'aliquot', 0)))
+
+        fa = FileAnalysis(
+            age=float(get_case_insensitive(d, "age", default=0)),
+            age_err=float(get_case_insensitive(d, "age_err", default=0)),
+            record_id=get_case_insensitive(d, "runid"),
+            sample=get_case_insensitive(d, "sample", ""),
+            label_name=get_case_insensitive(d, "label_name", ""),
+            group=to_int(get_case_insensitive(d, "group", "")),
+            aliquot=int(get_case_insensitive(d, "aliquot", 0)),
+        )
         return fa
 
 
 class CSVSpectrumNode(CSVNode):
-    required_columns = ('runid', 'age', 'age_err', 'k39', 'k39_err', 'rad40', 'rad40_err')
+    required_columns = (
+        "runid",
+        "age",
+        "age_err",
+        "k39",
+        "k39_err",
+        "rad40",
+        "rad40_err",
+    )
     _factory_klass = CSVSpectrumDataSetFactory
 
     def _analysis_factory(self, d):
         f = super(CSVSpectrumNode, self)._analysis_factory(d)
 
-        for k in ('k39', 'rad40'):
-            for kk in ('', '_err'):
-                kk = '{}{}'.format(k, kk)
+        for k in ("k39", "rad40"):
+            for kk in ("", "_err"):
+                kk = "{}{}".format(k, kk)
                 setattr(f, kk, float(get_case_insensitive(d, kk)))
 
         # f.k39 = float(get_case_insensitive(d, 'k39'))
@@ -260,9 +280,36 @@ class CSVSpectrumNode(CSVNode):
         return f
 
 
+class CSVIsochronNode(CSVNode):
+    required_columns = (
+        "runid",
+        "ar40",
+        "ar40_err",
+        "ar39",
+        "ar39_err",
+        "ar36",
+        "ar36_err",
+    )
+    _factory_klass = CSVIsochronDataSetFactory
+
+
+class CSVRegressionNode(CSVNode):
+    required_columns = ("runid", "x", "y")
+    _factory_klass = CSVRegressionDataSetFactory
+
+    def _analysis_factory(self, d):
+        f = super(CSVRegressionNode, self)._analysis_factory(d)
+
+        for k in ("x", "y"):
+            for kk in ("", "_err"):
+                kk = "{}{}".format(k, kk)
+                setattr(f, kk, float(get_case_insensitive(d, kk)))
+        return f
+
+
 class UnknownNode(DataNode):
-    name = 'Unknowns'
-    analysis_kind = 'unknowns'
+    name = "Unknowns"
+    analysis_kind = "unknowns"
 
     def set_last_n_analyses(self, n):
         db = self.dvc.db
@@ -284,12 +331,12 @@ class UnknownNode(DataNode):
         items = getattr(state, self.analysis_kind)
         items.extend(self.unknowns)
 
-        state.projects = {ai.project for ai in state.unknowns if hasattr(ai, 'project')}
+        state.projects = {ai.project for ai in state.unknowns if hasattr(ai, "project")}
 
 
 class ReferenceNode(DataNode):
-    name = 'References'
-    analysis_kind = 'references'
+    name = "References"
+    analysis_kind = "references"
 
     def pre_run(self, state, configure=True):
         self.unknowns = state.unknowns
@@ -308,8 +355,8 @@ class ReferenceNode(DataNode):
 
 
 class FluxMonitorsNode(DataNode):
-    name = 'Flux Monitors'
-    analysis_kind = 'unknowns'
+    name = "Flux Monitors"
+    analysis_kind = "unknowns"
     auto_configure = False
 
     def run(self, state):
@@ -318,11 +365,11 @@ class FluxMonitorsNode(DataNode):
 
 
 class BaseAutoUnknownNode(UnknownNode):
-    mode = Enum('Normal', 'Window')
+    mode = Enum("Normal", "Window")
     hours = Int(12)
     mass_spectrometer = Str
     available_spectrometers = List
-    analysis_types = List(['Unknown'])
+    analysis_types = List(["Unknown"])
     available_analysis_types = List(ANALYSIS_TYPES)
     engine = None
     single_shot = False
@@ -347,19 +394,38 @@ class BaseAutoUnknownNode(UnknownNode):
         return BaseNode.configure(self, pre_run=pre_run, *args, **kw)
 
     def traits_view(self):
-        v = okcancel_view(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
-                                               'Window: get analyses between now and now - hours'),
-                          Item('hours'),
-                          Item('period', label='Update Period (s)',
-                               tooltip='Default time (s) to delay between "check for new analyses"'),
-                          Item('mass_spectrometer', label='Mass Spectrometer',
-                               editor=EnumEditor(name='available_spectrometers')),
-                          Item('analysis_types', style='custom',
-                               editor=CheckListEditor(name='available_analysis_types',
-                                                      cols=len(self.available_analysis_types))),
-                          Item('post_analysis_delay', label='Post Analysis Found Delay',
-                               tooltip='Time (min) to delay before next "check for new analyses"'),
-                          Item('verbose'))
+        v = okcancel_view(
+            Item(
+                "mode",
+                tooltip="Normal: get analyses between now and start of pipeline - hours\n"
+                "Window: get analyses between now and now - hours",
+            ),
+            Item("hours"),
+            Item(
+                "period",
+                label="Update Period (s)",
+                tooltip='Default time (s) to delay between "check for new analyses"',
+            ),
+            Item(
+                "mass_spectrometer",
+                label="Mass Spectrometer",
+                editor=EnumEditor(name="available_spectrometers"),
+            ),
+            Item(
+                "analysis_types",
+                style="custom",
+                editor=CheckListEditor(
+                    name="available_analysis_types",
+                    cols=len(self.available_analysis_types),
+                ),
+            ),
+            Item(
+                "post_analysis_delay",
+                label="Post Analysis Found Delay",
+                tooltip='Time (min) to delay before next "check for new analyses"',
+            ),
+            Item("verbose"),
+        )
         return v
 
     def post_run(self, engine, state):
@@ -379,7 +445,7 @@ class BaseAutoUnknownNode(UnknownNode):
 
     def _finish_load_hook(self):
         if globalv.auto_pipeline_debug:
-            self.mass_spectrometer = 'jan'
+            self.mass_spectrometer = "jan"
             self.period = 15
             self.hours = 48
 
@@ -399,17 +465,20 @@ class BaseAutoUnknownNode(UnknownNode):
         high = datetime.now()
         updated = False
 
-        if self.mode == 'Normal':
+        if self.mode == "Normal":
             low = self._low - td
         else:
             low = high - td
 
         with self.dvc.session_ctx(use_parent_session=False):
-            ats = [a.lower().replace(' ', '_') for a in self.analysis_types]
-            records = self.dvc.get_analyses_by_date_range(low, high,
-                                                          analysis_types=ats,
-                                                          mass_spectrometers=self.mass_spectrometer,
-                                                          verbose=self.verbose)
+            ats = [a.lower().replace(" ", "_") for a in self.analysis_types]
+            records = self.dvc.get_analyses_by_date_range(
+                low,
+                high,
+                analysis_types=ats,
+                mass_spectrometers=self.mass_spectrometer,
+                verbose=self.verbose,
+            )
 
             if not self._cached_unknowns:
                 updated = True
@@ -418,7 +487,14 @@ class BaseAutoUnknownNode(UnknownNode):
                 ans = []
                 ais = []
                 for ri in records:
-                    ca = next((ci for ci in self._cached_unknowns if ci.record_id == ri.record_id), None)
+                    ca = next(
+                        (
+                            ci
+                            for ci in self._cached_unknowns
+                            if ci.record_id == ri.record_id
+                        ),
+                        None,
+                    )
                     if ca is not None:
                         ans.append(ca)
                     else:
@@ -443,7 +519,7 @@ class BaseAutoUnknownNode(UnknownNode):
 
 
 class ListenUnknownNode(BaseAutoUnknownNode):
-    name = 'Unknowns (Auto)'
+    name = "Unknowns (Auto)"
 
     exclude_uuids = List
     period = Int(15)
@@ -485,21 +561,39 @@ class ListenUnknownNode(BaseAutoUnknownNode):
         engine.pipeline.active = True
 
     def traits_view(self):
-        v = okcancel_view(Item('mode', tooltip='Normal: get analyses between now and start of pipeline - hours\n'
-                                               'Window: get analyses between now and now - hours'),
-                          Item('hours'),
-                          Item('period', label='Update Period (s)',
-                               tooltip='Default time (s) to delay between "check for new analyses"'),
-                          Item('mass_spectrometer', label='Mass Spectrometer',
-                               editor=EnumEditor(name='available_spectrometers')),
-                          Item('analysis_types', style='custom',
-                               editor=CheckListEditor(name='available_analysis_types',
-                                                      cols=len(self.available_analysis_types))),
-                          Item('post_analysis_delay', label='Post Analysis Found Delay',
-                               tooltip='Time (min) to delay before next "check for new analyses"'),
-                          Item('verbose'),
-                          title='Configure',
-                          )
+        v = okcancel_view(
+            Item(
+                "mode",
+                tooltip="Normal: get analyses between now and start of pipeline - hours\n"
+                "Window: get analyses between now and now - hours",
+            ),
+            Item("hours"),
+            Item(
+                "period",
+                label="Update Period (s)",
+                tooltip='Default time (s) to delay between "check for new analyses"',
+            ),
+            Item(
+                "mass_spectrometer",
+                label="Mass Spectrometer",
+                editor=EnumEditor(name="available_spectrometers"),
+            ),
+            Item(
+                "analysis_types",
+                style="custom",
+                editor=CheckListEditor(
+                    name="available_analysis_types",
+                    cols=len(self.available_analysis_types),
+                ),
+            ),
+            Item(
+                "post_analysis_delay",
+                label="Post Analysis Found Delay",
+                tooltip='Time (min) to delay before next "check for new analyses"',
+            ),
+            Item("verbose"),
+            title="Configure",
+        )
         return v
 
     def run(self, state):
@@ -513,7 +607,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
 
     def _finish_load_hook(self):
         if globalv.auto_pipeline_debug:
-            self.mass_spectrometer = 'jan'
+            self.mass_spectrometer = "jan"
             self.period = 15
             self.hours = 48
 
@@ -527,10 +621,14 @@ class ListenUnknownNode(BaseAutoUnknownNode):
 
         st = None
         if updated:
-
             self.state.unknowns = unks
             self.unknowns = unks
-            self.engine.run(post_run=False, pipeline=self.pipeline, state=self.state, configure=False)
+            self.engine.run(
+                post_run=False,
+                pipeline=self.pipeline,
+                state=self.state,
+                configure=False,
+            )
 
             self.engine.post_run_refresh(state=self.state)
             self.engine.refresh_figure_editors()
@@ -542,7 +640,9 @@ class ListenUnknownNode(BaseAutoUnknownNode):
             st = time.time()
             if last_update:
                 if self._between_updates:
-                    self._between_updates = ((st - last_update) + self._between_updates) / 2.
+                    self._between_updates = (
+                        (st - last_update) + self._between_updates
+                    ) / 2.0
                 else:
                     self._between_updates = st - last_update
 
@@ -557,7 +657,7 @@ class ListenUnknownNode(BaseAutoUnknownNode):
 
 
 class CalendarUnknownNode(BaseAutoUnknownNode):
-    name = 'Unknowns (Calendar)'
+    name = "Unknowns (Calendar)"
     run_time = Time
     _ran = False
 
@@ -587,10 +687,15 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
             return
 
         now = datetime.now()
-        print('now={} run_time={}. hourmatch={}, minutematch={} ran={}'.format(now, self.run_time,
-                                                                               now.hour >= self.run_time.hour,
-                                                                               now.minute >= self.run_time.minute,
-                                                                               self._ran))
+        print(
+            "now={} run_time={}. hourmatch={}, minutematch={} ran={}".format(
+                now,
+                self.run_time,
+                now.hour >= self.run_time.hour,
+                now.minute >= self.run_time.minute,
+                self._ran,
+            )
+        )
         if now.hour >= self.run_time.hour:
             if now.minute >= self.run_time.minute:
                 if not self._ran:
@@ -598,7 +703,7 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
                     unks, updated = self._load_analyses()
                     if not self._alive:
                         return
-                    print('updated={} loaded unks={}'.format(updated, unks))
+                    print("updated={} loaded unks={}".format(updated, unks))
 
                     if unks:
                         self.engine.rerun_with(unks, post_run=False)
@@ -609,17 +714,29 @@ class CalendarUnknownNode(BaseAutoUnknownNode):
         do_after(1000 * period, self._iter)
 
     def traits_view(self):
-        v = okcancel_view(Item('run_time'),
-                          Item('hours'),
-                          # Item('period', label='Update Period (s)',
-                          #      tooltip='Defauly time (s) to delay between "check for new analyses"'),
-                          Item('mass_spectrometer', label='Mass Spectrometer',
-                               editor=EnumEditor(name='available_spectrometers')),
-                          Item('analysis_types', style='custom',
-                               editor=CheckListEditor(name='available_analysis_types',
-                                                      cols=len(self.available_analysis_types))),
-                          # Item('post_analysis_delay', label='Post Analysis Found Delay',
-                          #      tooltip='Time (min) to delay before next "check for new analyses"'),
-                          Item('verbose'))
+        v = okcancel_view(
+            Item("run_time"),
+            Item("hours"),
+            # Item('period', label='Update Period (s)',
+            #      tooltip='Defauly time (s) to delay between "check for new analyses"'),
+            Item(
+                "mass_spectrometer",
+                label="Mass Spectrometer",
+                editor=EnumEditor(name="available_spectrometers"),
+            ),
+            Item(
+                "analysis_types",
+                style="custom",
+                editor=CheckListEditor(
+                    name="available_analysis_types",
+                    cols=len(self.available_analysis_types),
+                ),
+            ),
+            # Item('post_analysis_delay', label='Post Analysis Found Delay',
+            #      tooltip='Time (min) to delay before next "check for new analyses"'),
+            Item("verbose"),
+        )
         return v
+
+
 # ============= EOF =============================================

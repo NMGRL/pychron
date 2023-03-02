@@ -30,7 +30,7 @@ class MeltingPointCalibrator(Loggable, ExecuteMixin):
     graph = Instance(StreamStackedGraph)
     setpoint = Float(enter_set=True, auto_set=False)
     record_data_manager = None
-    detector = 'L2(CDD)'
+    detector = "L2(CDD)"
 
     def setup(self):
         self.record_data_manager = CSVDataManager()
@@ -41,7 +41,7 @@ class MeltingPointCalibrator(Loggable, ExecuteMixin):
         self.graph.new_plot()
         self.graph.new_series(plotid=1)
 
-        dl = 1.8*600
+        dl = 1.8 * 600
         self.graph.set_data_limits(dl)
         self.graph.set_scan_widths(600)
 
@@ -76,10 +76,14 @@ class MeltingPointCalibrator(Loggable, ExecuteMixin):
         self.record_data_manager.write_to_frame((t, intensity, temperature))
 
     def traits_view(self):
-        tgrp = HGroup(UItem('execute', editor=ButtonEditor(label_value='execute_label')), UItem('setpoint'))
-        ggrp = VGroup(UItem('graph', style='custom'))
+        tgrp = HGroup(
+            UItem("execute", editor=ButtonEditor(label_value="execute_label")),
+            UItem("setpoint"),
+        )
+        ggrp = VGroup(UItem("graph", style="custom"))
 
-        v = View(VGroup(tgrp, ggrp), resizable=True, title='Melting Point Calibration')
+        v = View(VGroup(tgrp, ggrp), resizable=True, title="Melting Point Calibration")
         return v
+
 
 # ============= EOF =============================================

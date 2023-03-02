@@ -26,4 +26,4 @@ from pychron.pipeline.plot.models.blanks_model import BlanksModel
 
 class BlanksEditor(InterpolationEditor):
     figure_model_klass = BlanksModel
-    basename = 'Blanks'
+    basename = "Blanks"

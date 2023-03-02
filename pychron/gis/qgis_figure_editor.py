@@ -19,16 +19,30 @@ from operator import attrgetter
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QVariant
 from PyQt5.QtWidgets import QMenu, QSplitter
-from qgis.core import QgsVectorLayer, QgsPointXY, QgsGeometry, QgsFeature, QgsProject, QgsRasterLayer, \
-    QgsApplication, \
-    QgsCoordinateReferenceSystem, QgsField, QgsMarkerSymbol, QgsCategorizedSymbolRenderer, QgsRendererCategory, \
-    QgsLayerTreeModel
-from qgis.gui import QgsMapCanvas, QgsLayerTreeViewMenuProvider, QgsMapToolIdentifyFeature, QgsLayerTreeView
+from qgis.core import (
+    QgsVectorLayer,
+    QgsPointXY,
+    QgsGeometry,
+    QgsFeature,
+    QgsProject,
+    QgsRasterLayer,
+    QgsApplication,
+    QgsCoordinateReferenceSystem,
+    QgsField,
+    QgsMarkerSymbol,
+    QgsCategorizedSymbolRenderer,
+    QgsRendererCategory,
+    QgsLayerTreeModel,
+)
+from qgis.gui import (
+    QgsMapCanvas,
+    QgsLayerTreeViewMenuProvider,
+    QgsMapToolIdentifyFeature,
+    QgsLayerTreeView,
+)
 from traits.api import HasTraits, Instance, Str, Event, Float, Any, List, Button, Bool
-from traitsui.api import View, Item, UItem, HSplit, HGroup
-from traitsui.qt4.basic_editor_factory import BasicEditorFactory
+from traitsui.api import View, Item, UItem, HSplit, HGroup, BasicEditorFactory
 from traitsui.qt4.editor import Editor
-
 from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.iterfuncs import groupby_key
 from pychron.options.options_manager import IdeogramOptionsManager
@@ -111,8 +125,8 @@ class _QGISEditor(Editor):
 
     def init(self, parent):
         self.control = self._create_control(parent)
-        self.sync_value(self.factory.refresh, 'refresh', 'from')
-        self.sync_value(self.factory.selected_feature, 'selected_feature', 'to')
+        self.sync_value(self.factory.refresh, "refresh", "from")
+        self.sync_value(self.factory.selected_feature, "selected_feature", "to")
         self.infotool()
         # self.update_editor()
 
@@ -177,12 +191,13 @@ class _QGISEditor(Editor):
         self.toolInfo.featureIdentified.connect(self.feature_identified)
 
         qproject = QgsProject.instance()
-        uri = 'Point?crs=epsg:4326&field=id:integer'
-        self.data_layer = layer = QgsVectorLayer(uri, 'Data', 'memory')
+        uri = "Point?crs=epsg:4326&field=id:integer"
+        self.data_layer = layer = QgsVectorLayer(uri, "Data", "memory")
         provider = layer.dataProvider()
 
-        provider.addAttributes([QgsField('uuid', QVariant.String),
-                                QgsField('group_id', QVariant.Int)])
+        provider.addAttributes(
+            [QgsField("uuid", QVariant.String), QgsField("group_id", QVariant.Int)]
+        )
         layer.updateFields()
 
         self.set_symbol()
@@ -192,7 +207,7 @@ class _QGISEditor(Editor):
         if rlayer.isValid():
             qproject.addMapLayer(rlayer)
         else:
-            print('basemap layer invalid', rlayer, self.value.basemap)
+            print("basemap layer invalid", rlayer, self.value.basemap)
 
         qproject.addMapLayer(layer)
         canvas.setLayers([layer, rlayer])
@@ -210,8 +225,12 @@ class _QGISEditor(Editor):
         layout.addWidget(view)
         view.setMaximumWidth(200)
         layout.addWidget(canvas)
-        layout.setSizePolicy(QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,
-                                                   QtWidgets.QSizePolicy.MinimumExpanding))
+        layout.setSizePolicy(
+            QtWidgets.QSizePolicy(
+                QtWidgets.QSizePolicy.MinimumExpanding,
+                QtWidgets.QSizePolicy.MinimumExpanding,
+            )
+        )
 
         self.toolInfo.setLayer(layer)
         self.canvas = canvas
@@ -223,13 +242,13 @@ class _QGISEditor(Editor):
             layer = self.data_layer
 
         if options is None:
-            options = [{'name': 'circle', 'size': '4', 'color': 'blue'}]
+            options = [{"name": "circle", "size": "4", "color": "blue"}]
 
-        renderer = QgsCategorizedSymbolRenderer(attrName='group_id')
+        renderer = QgsCategorizedSymbolRenderer(attrName="group_id")
         for i, option in enumerate(options):
             symbol = QgsMarkerSymbol.createSimple(option)
-            symbol.setOpacity(float(option.get('opacity', 1)))
-            cat = QgsRendererCategory(str(i), symbol, '')
+            symbol.setOpacity(float(option.get("opacity", 1)))
+            cat = QgsRendererCategory(str(i), symbol, "")
             renderer.addCategory(cat)
         layer.setRenderer(renderer)
 
@@ -253,7 +272,9 @@ class _QGISEditor(Editor):
                 layer = QgsRasterLayer(loption.uri, loption.label)
 
             if layer.isValid():
-                layer.renderer().setSymbol(QgsMarkerSymbol.createSimple(loption.symbolargs))
+                layer.renderer().setSymbol(
+                    QgsMarkerSymbol.createSimple(loption.symbolargs)
+                )
 
                 # make sure to add layer after setting renderer
                 # probably a way to sync the tree view with the renderer but by
@@ -268,7 +289,7 @@ class _QGISEditor(Editor):
                 else:
                     mext.combineExtentWith(ext)
             else:
-                print('not valid', layer, loption.uri)
+                print("not valid", layer, loption.uri)
 
             if loption.visible:
                 layers.insert(0, layer)
@@ -285,8 +306,8 @@ class _QGISEditor(Editor):
         for i, fs in enumerate(fgs):
             for f in fs:
                 fet = QgsFeature(dlayer.fields())
-                fet.setAttribute('uuid', f.uuid)
-                fet.setAttribute('group_id', i)
+                fet.setAttribute("uuid", f.uuid)
+                fet.setAttribute("group_id", i)
                 fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(f.x, f.y)))
                 fets.append(fet)
 
@@ -318,26 +339,30 @@ class Feature(HasTraits):
     analysis_group = Instance(AnalysisGroup, ())
 
     def traits_view(self):
-        return View(HGroup(Item('x'), Item('y')),
-                    Item('object.analysis_group.sample'),
-                    Item('object.analysis_group.weighted_age'),
-                    Item('object.analysis_group.mswd'),
-                    Item('object.analysis_group.age_span'))
+        return View(
+            HGroup(Item("x"), Item("y")),
+            Item("object.analysis_group.sample"),
+            Item("object.analysis_group.weighted_age"),
+            Item("object.analysis_group.mswd"),
+            Item("object.analysis_group.age_span"),
+        )
 
 
 class QGISMap(HasTraits):
     feature_groups = List
     layers = List
-    uri = Str('type=xyz&url=http://tile.openstreetmap.org/{z}/{x}/{y}.png&zmax=19&zmin=5')
-    crs = Str('EPSG:4326')
+    uri = Str(
+        "type=xyz&url=http://tile.openstreetmap.org/{z}/{x}/{y}.png&zmax=19&zmin=5"
+    )
+    crs = Str("EPSG:4326")
 
     @property
     def basemap(self):
         uri = self.uri
-        if any(uri.endswith(e) for e in ('.png', '.tif', '.tiff', '.jpeg', '.jpg')):
-            args = (uri, 'BaseMap')
+        if any(uri.endswith(e) for e in (".png", ".tif", ".tiff", ".jpeg", ".jpg")):
+            args = (uri, "BaseMap")
         else:
-            args = (uri, 'BaseMap', 'wms')
+            args = (uri, "BaseMap", "wms")
 
         return args
 
@@ -357,7 +382,7 @@ class GISFigureEditor(BaseEditor):
         self._load_qmap()
 
     def _selected_feature_changed(self, new):
-        u = new.attribute('uuid')
+        u = new.attribute("uuid")
 
         fs = (fi for fs, _ in self.qmap.feature_groups for fi in fs)
         for f in fs:
@@ -371,21 +396,22 @@ class GISFigureEditor(BaseEditor):
         self.ideogram.refresh_needed = True
 
     def load(self):
-
         p = IdeogramOptionsManager()
         options = p.selected_options
 
-        options.trait_set(padding_left=40,
-                          padding_right=10,
-                          padding_top=20,
-                          padding_bottom=40,
-                          include_group_legend=False)
+        options.trait_set(
+            padding_left=40,
+            padding_right=10,
+            padding_top=20,
+            padding_bottom=40,
+            include_group_legend=False,
+        )
         ap = options.aux_plots[1]
-        ap.name = 'Ideogram'
+        ap.name = "Ideogram"
         ap.plot_enabled = True
 
         ap = options.aux_plots[0]
-        ap.name = 'Analysis Number'
+        ap.name = "Analysis Number"
         ap.plot_enabled = True
         ap.x_error = True
 
@@ -408,12 +434,18 @@ class GISFigureEditor(BaseEditor):
         # feature_group_id set by SampleGroupingNode
         feature_groups = []
         po = self.plotter_options
-        for i, (feature_group, agis) in enumerate(groupby_key(ags, key=attrgetter('featuregroup_id'))):
-            features = [Feature(x=ag.longitude,
-                                y=ag.latitude,
-                                uuid=str(uuid.uuid4()),
-                                analysis_group=ag
-                                ) for ag in agis]
+        for i, (feature_group, agis) in enumerate(
+            groupby_key(ags, key=attrgetter("featuregroup_id"))
+        ):
+            features = [
+                Feature(
+                    x=ag.longitude,
+                    y=ag.latitude,
+                    uuid=str(uuid.uuid4()),
+                    analysis_group=ag,
+                )
+                for ag in agis
+            ]
 
             feature_options = po.get_feature_options(i)
             feature_groups.append((features, feature_options))
@@ -429,36 +461,42 @@ class GISFigureEditor(BaseEditor):
         self.refresh_map()
 
     def traits_view(self):
-
         # center_grp = VGroup(HGroup(
         #     UReadonly('object.fmap.center.ylabel'), UItem('object.fmap.center.y'),
         #     UReadonly('object.fmap.center.xlabel'), UItem('object.fmap.center.x')))
         #
         # ctrl_grp = VGroup(center_grp)
         v = View(
-            UItem('active_feature', style='custom'),
-            UItem('refresh_button'),
-            HSplit(UItem('qmap', editor=QGISEditor(refresh='refresh',
-                                                   selected_feature='selected_feature')),
-                   UItem('ideogram', style='custom')
-                   ),
+            UItem("active_feature", style="custom"),
+            UItem("refresh_button"),
+            HSplit(
+                UItem(
+                    "qmap",
+                    editor=QGISEditor(
+                        refresh="refresh", selected_feature="selected_feature"
+                    ),
+                ),
+                UItem("ideogram", style="custom"),
+            ),
             # width=500, height=500,
-            resizable=True)
+            resizable=True,
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     m = GISFigureEditor()
 
     qgs = QgsApplication([], False)
     qgs.initQgis()
     from pychron.paths import paths
 
-    paths.build('PychronDev')
-
+    paths.build("PychronDev")
 
     class Options:
-        basemap_uri = 'type=xyz&url=http://tile.openstreetmap.org/{z}/{x}/{y}.png&zmax=19&zmin=5'
+        basemap_uri = (
+            "type=xyz&url=http://tile.openstreetmap.org/{z}/{x}/{y}.png&zmax=19&zmin=5"
+        )
         # basemap_uri = 'type=xyz&url=http://a.tile.stamen.com/terrain/{z}/{x}/{y}.png&zmax=19&zmin=5'
         # basemap_uri = 'type=xyz&url=http://a.tile.opentopomap.org/{z}/{x}/{y}.png&zmax=19&zmin=5'
         # basemap_uri = 'type=xyz&url=https://basemap.nationalmap.gov/arcgis/rest/services/' \
@@ -467,16 +505,18 @@ if __name__ == '__main__':
         # basemap_uri = 'url=https://landsatlook.usgs.gov/arcgis/services/LandsatLook/ImageServer/WMSServer'
         # basemap_uri = 'type=xyz&url=http://tiles.wmflabs.org/hillshading/{z}/{x}/{y}.png&zmax=19&zmin=5'
         layers = []
-        symbol_kind = 'circle'
+        symbol_kind = "circle"
 
         # def symbol_style(self):
         #     return {'name': self.symbol_kind, 'size': '4'}
         def get_feature_options(self, i):
-            return {'name': 'pentagon', 'size': '10',
-                    'angle': '25',
-                    'opacity': '.25',
-                    'color': colornames[i + 2]}
-
+            return {
+                "name": "pentagon",
+                "size": "10",
+                "angle": "25",
+                "opacity": ".25",
+                "color": colornames[i + 2],
+            }
 
     class MockItem(NonDBAnalysis):
         def __init__(self, sample, gid, mid, lat, lon, age, omit=False):
@@ -489,23 +529,20 @@ if __name__ == '__main__':
             self.featuregroup_id = mid
 
             if omit:
-                self.set_tag('omit')
+                self.set_tag("omit")
             super(MockItem, self).__init__()
 
-
     m.items = [
-        MockItem('foo', 0, 0, 34, -106, 1.5),
-        MockItem('foo', 0, 0, 34, -106, 1.3),
-        MockItem('foo', 0, 0, 34, -106, 1.1),
-
-        MockItem('bar', 1, 0, 35.1, -106.1, 21.1),
-        MockItem('bar', 1, 0, 35.1, -106.1, 21.2),
-        MockItem('bar', 1, 0, 35.1, -106.1, 21.4),
-
-        MockItem('moo', 2, 1, 35.3, -106.5, 1.4),
-        MockItem('moo', 2, 1, 35.3, -106.5, 1.2, omit=True),
-        MockItem('moo', 2, 1, 35.3, -106.5, 1.5),
-        MockItem('moo', 2, 1, 35.3, -106.5, 1.6),
+        MockItem("foo", 0, 0, 34, -106, 1.5),
+        MockItem("foo", 0, 0, 34, -106, 1.3),
+        MockItem("foo", 0, 0, 34, -106, 1.1),
+        MockItem("bar", 1, 0, 35.1, -106.1, 21.1),
+        MockItem("bar", 1, 0, 35.1, -106.1, 21.2),
+        MockItem("bar", 1, 0, 35.1, -106.1, 21.4),
+        MockItem("moo", 2, 1, 35.3, -106.5, 1.4),
+        MockItem("moo", 2, 1, 35.3, -106.5, 1.2, omit=True),
+        MockItem("moo", 2, 1, 35.3, -106.5, 1.5),
+        MockItem("moo", 2, 1, 35.3, -106.5, 1.6),
     ]
     m.plotter_options = Options()
     m.load()

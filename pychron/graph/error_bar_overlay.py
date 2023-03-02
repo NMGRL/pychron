@@ -15,8 +15,10 @@
 # ===============================================================================
 
 # =============enthought library imports=======================
+
 from chaco.api import AbstractOverlay
-from enable.colors import color_table
+from enable.colors import color_table, QtGui
+
 # ============= standard library imports ========================
 from numpy import column_stack
 from traits.api import Enum, Bool, Float, on_trait_change
@@ -26,9 +28,9 @@ from traits.api import Enum, Bool, Float, on_trait_change
 
 
 class ErrorBarOverlay(AbstractOverlay):
-    orientation = Enum('x', 'y')
+    orientation = Enum("x", "y")
     use_component = True
-    draw_layer = 'underlay'
+    draw_layer = "underlay"
     nsigma = 1
     use_end_caps = Bool(True)
     line_width = Float(1)
@@ -38,7 +40,7 @@ class ErrorBarOverlay(AbstractOverlay):
     index = None
     value = None
     error = None
-    data_orientation = 'x'
+    data_orientation = "x"
 
     def _get_cached_points(self):
         pts = self._cached_points
@@ -52,8 +54,7 @@ class ErrorBarOverlay(AbstractOverlay):
                 x = comp.index.get_data()
                 y = comp.value.get_data()
 
-            if self.orientation == 'x':
-
+            if self.orientation == "x":
                 err = self.error
                 if self.use_component:
                     err = comp.xerror.get_data()
@@ -61,14 +62,18 @@ class ErrorBarOverlay(AbstractOverlay):
                 if err is not None:
                     scaled_err = err * self.nsigma
                     # print(xlow, y)
-                    if self.data_orientation == 'x':
+                    if self.data_orientation == "x":
                         y = comp.value_mapper.map_screen(y)
                         xlow, xhigh = x - scaled_err, x + scaled_err
                         xlow = comp.index_mapper.map_screen(xlow)
                         xhigh = comp.index_mapper.map_screen(xhigh)
                         start, end = column_stack((xlow, y)), column_stack((xhigh, y))
-                        lstart, lend = column_stack((xlow, y - 5)), column_stack((xlow, y + 5))
-                        ustart, uend = column_stack((xhigh, y - 5)), column_stack((xhigh, y + 5))
+                        lstart, lend = column_stack((xlow, y - 5)), column_stack(
+                            (xlow, y + 5)
+                        )
+                        ustart, uend = column_stack((xhigh, y - 5)), column_stack(
+                            (xhigh, y + 5)
+                        )
 
                     else:
                         x = comp.index_mapper.map_screen(x)
@@ -76,8 +81,12 @@ class ErrorBarOverlay(AbstractOverlay):
                         ylow = comp.value_mapper.map_screen(ylow)
                         yhigh = comp.value_mapper.map_screen(yhigh)
                         start, end = column_stack((ylow, x)), column_stack((yhigh, x))
-                        lstart, lend = column_stack((ylow, x - 5)), column_stack((ylow, x + 5))
-                        ustart, uend = column_stack((yhigh, x - 5)), column_stack((yhigh, x + 5))
+                        lstart, lend = column_stack((ylow, x - 5)), column_stack(
+                            (ylow, x + 5)
+                        )
+                        ustart, uend = column_stack((yhigh, x - 5)), column_stack(
+                            (yhigh, x + 5)
+                        )
 
                     pts = start, end, lstart, lend, ustart, uend
 
@@ -95,8 +104,12 @@ class ErrorBarOverlay(AbstractOverlay):
                     yhigh = comp.value_mapper.map_screen(yhigh)
 
                     start, end = column_stack((x, ylow)), column_stack((x, yhigh))
-                    lstart, lend = column_stack((x - 5, ylow)), column_stack((x + 5, ylow))
-                    ustart, uend = column_stack((x - 5, yhigh)), column_stack((x + 5, yhigh))
+                    lstart, lend = column_stack((x - 5, ylow)), column_stack(
+                        (x + 5, ylow)
+                    )
+                    ustart, uend = column_stack((x - 5, yhigh)), column_stack(
+                        (x + 5, yhigh)
+                    )
 
                     pts = start, end, lstart, lend, ustart, uend
             self._cached_points = pts
@@ -104,16 +117,23 @@ class ErrorBarOverlay(AbstractOverlay):
 
         return pts
 
-    def overlay(self, component, gc, view_bounds, mode='normal'):
+    def overlay(self, component, gc, view_bounds, mode="normal"):
         with gc:
             pts = self._get_cached_points()
             if pts:
-                gc.clip_to_rect(component.x, component.y,
-                                component.width, component.height)
+                gc.clip_to_rect(
+                    component.x, component.y, component.width, component.height
+                )
                 # draw normal
                 color = component.color
                 if isinstance(color, str):
                     color = color_table[color]
+                elif isinstance(color, QtGui.QColor):
+                    color = (
+                        color.red() / 255.0,
+                        color.green() / 255.0,
+                        color.blue() / 255.0,
+                    )
 
                 gc.set_line_width(self.line_width)
                 gc.set_stroke_color(color)
@@ -128,11 +148,15 @@ class ErrorBarOverlay(AbstractOverlay):
 
                 gc.draw_path()
 
-    @on_trait_change('component:[bounds, _layout_needed, index_mapper:updated, value_mapper:updated]')
+    @on_trait_change(
+        "component:[bounds, _layout_needed, index_mapper:updated, value_mapper:updated]"
+    )
     def _handle_component_change(self, obj, name, new):
         self._cache_valid = False
 
     def invalidate(self):
         self._cache_valid = False
         self.invalidate_and_redraw()
+
+
 # ============= EOF =====================================

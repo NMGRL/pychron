@@ -49,7 +49,7 @@ class ExperimentStats(Loggable):
     def get_run_duration(self, run, as_str=False):
         sh = run.script_hash
         if sh in self.duration_tracker:
-            self.debug('using duration tracker value')
+            self.debug("using duration tracker value")
             rd = self.duration_tracker[sh]
         else:
             rd = run.get_estimated_duration(force=True)
@@ -57,12 +57,11 @@ class ExperimentStats(Loggable):
         if as_str:
             rd = str(timedelta(seconds=rd))
 
-        self.debug('run duration: {}'.format(rd))
+        self.debug("run duration: {}".format(rd))
         return rd
 
     # private
     def _calculate_duration(self, runs):
-
         dur = 0
         if runs:
             script_ctx = dict()
@@ -79,15 +78,22 @@ class ExperimentStats(Loggable):
                     run_dur += self.duration_tracker[sh]
                 else:
                     run_dur += a.get_estimated_duration(script_ctx, warned, True)
-                d = a.get_delay_after(self.delay_between_analyses, self.delay_after_blank, self.delay_after_air)
+                d = a.get_delay_after(
+                    self.delay_between_analyses,
+                    self.delay_after_blank,
+                    self.delay_after_air,
+                )
                 btw += d
 
             # subtract the last delay_after because experiment doesn't delay after last analysis
             btw -= d
 
             dur = run_dur + self.delay_before_analyses + btw
-            self.debug('nruns={} before={}, run_dur={}, btw={}'.format(ni, self.delay_before_analyses,
-                                                                       run_dur, btw))
+            self.debug(
+                "nruns={} before={}, run_dur={}, btw={}".format(
+                    ni, self.delay_before_analyses, run_dur, btw
+                )
+            )
 
         return dur
 
@@ -104,19 +110,20 @@ class StatsGroup(Loggable):
     nruns_finished = Int
     run_duration = String
     current_run_duration = String
+    current_run_duration_f = Float
 
     _timer = Any
 
-    elapsed = Property(depends_on='_elapsed')
+    elapsed = Property(depends_on="_elapsed")
     _elapsed = Float
 
-    run_elapsed = Property(depends_on='_run_elapsed')
+    run_elapsed = Property(depends_on="_run_elapsed")
     _run_elapsed = Float
 
-    total_time = Property(depends_on='_total_time')
+    total_time = Property(depends_on="_total_time")
     _total_time = Float
 
-    remaining = Property(depends_on='_elapsed, _total_time')
+    remaining = Property(depends_on="_elapsed, _total_time")
 
     _post = None
     _run_start = 0
@@ -144,9 +151,10 @@ class StatsGroup(Loggable):
         queue = self.active_queue
         if queue is None:
             queue = self.experiment_queues[0]
-        
+
         if queue:
             queue.stats.update_run_duration(*args, **kw)
+
     # ====================================
 
     def start_timer(self):
@@ -155,21 +163,25 @@ class StatsGroup(Loggable):
 
         def update_time():
             e = round(time.time() - st)
-            d = {'_elapsed': e}
+            d = {"_elapsed": e}
             if self._run_start:
                 re = round(time.time() - self._run_start)
-                d['_run_elapsed'] = re
+                d["_run_elapsed"] = re
             self.trait_set(**d)
 
         self._timer = Timer(900, update_time)
 
     def stop_timer(self):
-        self.debug('Stop timer. self._timer: {}'.format(self._timer))
+        self.debug("Stop timer. self._timer: {}".format(self._timer))
         if self._timer:
             tt = self._total_time
             et = self._elapsed
             dt = tt - et
-            self.info('Estimated total time= {:0.1f}, elapsed time= {:0.1f}, deviation= {:0.1f}'.format(tt, et, dt))
+            self.info(
+                "Estimated total time= {:0.1f}, elapsed time= {:0.1f}, deviation= {:0.1f}".format(
+                    tt, et, dt
+                )
+            )
             self._timer.stop()
 
     def reset(self):
@@ -183,42 +195,55 @@ class StatsGroup(Loggable):
 
     def start_run(self, run):
         self._run_start = time.time()
-        self.current_run_duration = self.active_queue.stats.get_run_duration(run.spec, as_str=True)
+        self.current_run_duration = self.active_queue.stats.get_run_duration(
+            run.spec, as_str=True
+        )
+        self.current_run_duration_f = self.active_queue.stats.get_run_duration(run.spec)
 
     def finish_run(self):
         self._run_start = 0
         self.nruns_finished += 1
-        self.debug('finish run. runs completed={}'.format(self.nruns_finished))
+        self.debug("finish run. runs completed={}".format(self.nruns_finished))
 
     def calculate(self, force=False):
         """
-            calculate the total duration
-            calculate the estimated time of finish
+        calculate the total duration
+        calculate the estimated time of finish
         """
 
         if force or not self._total_time:
-            self.nruns = sum([len(ei.cleaned_automated_runs) for ei in self.experiment_queues])
+            self.nruns = sum(
+                [len(ei.cleaned_automated_runs) for ei in self.experiment_queues]
+            )
 
-            self.debug('calculating experiment stats')
-            tt = sum([ei.stats.calculate_duration(ei.cleaned_automated_runs)
-                      for ei in self.experiment_queues])
+            self.debug("calculating experiment stats")
+            tt = sum(
+                [
+                    ei.stats.calculate_duration(ei.cleaned_automated_runs)
+                    for ei in self.experiment_queues
+                ]
+            )
 
-            self.debug('total_time={}'.format(tt))
+            self.debug("total_time={}".format(tt))
             self._total_time = tt
             self.etf = self.format_duration(tt)
 
     def recalculate_etf(self):
-        tt = sum([ei.stats.calculate_duration(ei.cleaned_automated_runs)
-                  for ei in self.experiment_queues])
+        tt = sum(
+            [
+                ei.stats.calculate_duration(ei.cleaned_automated_runs)
+                for ei in self.experiment_queues
+            ]
+        )
 
         self._total_time = tt + self._elapsed
         self.etf = self.format_duration(tt, post=datetime.now())
 
     def calculate_at(self, sel, at_times=True):
         """
-            calculate the time at which a selected run will execute
+        calculate the time at which a selected run will execute
         """
-        self.debug('calculating time of run {}'.format(sel.runid))
+        self.debug("calculating time of run {}".format(sel.runid))
         st, et = self._calculate_at(sel)
 
         if at_times:
@@ -234,21 +259,21 @@ class StatsGroup(Loggable):
         st, et = self._calculate_at(sel)
         return st
 
-    def format_duration(self, dur, post=None, fmt='%H:%M:%S %a %m/%d'):
+    def format_duration(self, dur, post=None, fmt="%H:%M:%S %a %m/%d"):
         if post is None:
             post = self._post
             if not post:
                 post = datetime.now()
 
         dt = post + timedelta(seconds=int(dur))
-        if fmt == 'iso':
+        if fmt == "iso":
             return dt.isoformat()
         else:
             return dt.strftime(fmt)
 
     @property
     def etf_iso(self):
-        return self.format_duration(self._total_time, fmt='iso')
+        return self.format_duration(self._total_time, fmt="iso")
 
     def _calculate_at(self, sel):
         et = 0
@@ -256,11 +281,14 @@ class StatsGroup(Loggable):
         for ei in self.experiment_queues:
             stats = ei.stats
             if sel in ei.cleaned_automated_runs:
-
                 si = ei.cleaned_automated_runs.index(sel)
 
-                st += stats.calculate_duration(ei.executed_runs + ei.cleaned_automated_runs[:si]) + \
-                      ei.delay_between_analyses
+                st += (
+                    stats.calculate_duration(
+                        ei.executed_runs + ei.cleaned_automated_runs[:si]
+                    )
+                    + ei.delay_between_analyses
+                )
 
                 rd = stats.get_run_duration(sel)
                 et = st + rd
@@ -288,4 +316,6 @@ class StatsGroup(Loggable):
         else:
             dur = timedelta(seconds=round(self._total_time - self._elapsed))
         return str(dur)
+
+
 # ============= EOF =============================================

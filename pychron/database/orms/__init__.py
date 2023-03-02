@@ -18,7 +18,7 @@ from sqlalchemy import Column, Integer, ForeignKey, String
 
 
 def foreignkey(name):
-    return Column(Integer, ForeignKey('{}.id'.format(name)))
+    return Column(Integer, ForeignKey("{}.id".format(name)))
 
 
 def stringcolumn(size=40, *args, **kw):

@@ -38,24 +38,24 @@ class RotaryDumper(HeadlessCoreDevice):
             self.energize(325)
             for i in range(100):
                 if not self.is_moving():
-                    print('not moving')
+                    print("not moving")
                     break
                 time.sleep(1)
         self.denergize()
 
     def energize(self, nsteps, rpm=None):
         if rpm:
-            self.ask('{},{};'.format(RPM, rpm))
+            self.ask("{},{};".format(RPM, rpm))
 
-        self.ask('{},1;'.format(MAGNET))
-        self.ask('{},{};'.format(MOVE, nsteps))
+        self.ask("{},1;".format(MAGNET))
+        self.ask("{},{};".format(MOVE, nsteps))
         self._nsteps = nsteps
 
     def is_moving(self):
         ret = False
-        s = self.ask('{};'.format(STATUS), verbose=True)
+        s = self.ask("{};".format(STATUS), verbose=True)
         if s:
-            s = s.split(',')[1][:-1]
+            s = s.split(",")[1][:-1]
             ret = int(s) > 4
         return ret
 
@@ -74,22 +74,23 @@ class RotaryDumper(HeadlessCoreDevice):
         if nsteps > 0:
             nsteps = -nsteps
 
-        self.ask('{},0;'.format(MAGNET))
-        self.ask('{},{};'.format(MOVE, nsteps))
+        self.ask("{},0;".format(MAGNET))
+        self.ask("{},{};".format(MOVE, nsteps))
 
     def is_energized(self):
         """
-          /* return status as a integer
-   *  Bit 0 =  mode 0==software 1 manual
-   *      1 =  moving 0 stop 1 in motion
-   *      2 =  magnet 0 off 1 on
-   */
-        @return:
+               /* return status as a integer
+        *  Bit 0 =  mode 0==software 1 manual
+        *      1 =  moving 0 stop 1 in motion
+        *      2 =  magnet 0 off 1 on
+        */
+             @return:
         """
-        state = self.ask('{};'.format(STATUS))
+        state = self.ask("{};".format(STATUS))
         return int(state) >= 6
 
     def _get_dump_state(self):
         return self.is_energized()
+
 
 # ============= EOF =============================================

@@ -36,23 +36,28 @@ from pychron.experiment.utilities.runid import make_runid
 from pychron.loggable import Loggable
 from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter
 
-mkeys = ['l2 value', 'l1 value', 'ax value', 'h1 value', 'h2 value']
+mkeys = ["l2 value", "l1 value", "ax value", "h1 value", "h2 value"]
 
-'''
+"""
 following information is necessary
 
 
-'''
+"""
 
 RUN_TYPE_DICT = dict(Unknown=1, Air=2, Blank=5)
 # SAMPLE_DICT = dict(Air=2, Blank=1)
 # ISO_LABELS = dict(H1='Ar40', AX='Ar39', L1='Ar38', L2='Ar37', CDD='Ar36')
 
-PEAK_HOP_MAP = {'Ar41': 'H2', 'Ar40': 'H1',
-                'Ar39': 'AX', 'Ar38': 'L1',
-                'Ar37': 'L2', 'Ar36': 'CDD'}
+PEAK_HOP_MAP = {
+    "Ar41": "H2",
+    "Ar40": "H1",
+    "Ar39": "AX",
+    "Ar38": "L1",
+    "Ar37": "L2",
+    "Ar36": "CDD",
+}
 
-DBVERSION = float(os.environ.get('MassSpecDBVersion', 16.3))
+DBVERSION = float(os.environ.get("MassSpecDBVersion", 16.3))
 
 
 @provides(IDatastore)
@@ -79,7 +84,6 @@ class MassSpecDatabaseImporter(Loggable):
 
     # IDatastore protocol
     def get_greatest_step(self, identifier, aliquot):
-
         ret = 0
         if self.db:
             with self.db.session_ctx():
@@ -127,7 +131,7 @@ class MassSpecDatabaseImporter(Loggable):
             self.sample_loading_id = sl.SampleLoadingID
 
     def add_login_session(self, ms):
-        self.info('adding new session for {}'.format(ms))
+        self.info("adding new session for {}".format(ms))
         db = self.db
         ls = db.add_login_session(ms)
         db.flush()
@@ -159,30 +163,32 @@ class MassSpecDatabaseImporter(Loggable):
 
     def get_identifier(self, spec):
         """
-            convert cocktails into mass spec labnumbers
+        convert cocktails into mass spec labnumbers
 
-            spec is either ExportSpec, int or str
-            return identifier
+        spec is either ExportSpec, int or str
+        return identifier
         """
 
         if isinstance(spec, (int, str)):
             identifier = spec
-            mass_spectrometer = ''
+            mass_spectrometer = ""
             if isinstance(identifier, str):
-                if '-' in identifier:
-                    a = identifier.split('-')[-1]
-                    if a.lower() == 'o':
-                        mass_spectrometer = 'obama'
-                    elif a.lower() == 'j':
-                        mass_spectrometer = 'jan'
-                    elif a.lower() == 'f':
-                        mass_spectrometer = 'felix'
+                if "-" in identifier:
+                    a = identifier.split("-")[-1]
+                    if a.lower() == "o":
+                        mass_spectrometer = "obama"
+                    elif a.lower() == "j":
+                        mass_spectrometer = "jan"
+                    elif a.lower() == "f":
+                        mass_spectrometer = "felix"
         else:
             mass_spectrometer = spec.mass_spectrometer.lower()
 
         identifier = str(spec if isinstance(spec, (int, str)) else spec.labnumber)
 
-        return self.identifier_mapper.map_to_value(identifier, mass_spectrometer, 'MassSpec')
+        return self.identifier_mapper.map_to_value(
+            identifier, mass_spectrometer, "MassSpec"
+        )
 
     def add_irradiation(self, irrad, level, pid):
         sid = 0
@@ -207,17 +213,17 @@ class MassSpecDatabaseImporter(Loggable):
             trid = rid.lower()
             identifier = spec.labnumber
 
-            if trid.startswith('b'):
-                runtype = 'Blank'
+            if trid.startswith("b"):
+                runtype = "Blank"
                 irradpos = -1
-            elif trid.startswith('a'):
-                runtype = 'Air'
+            elif trid.startswith("a"):
+                runtype = "Air"
                 irradpos = -2
-            elif trid.startswith('c'):
-                runtype = 'Unknown'
+            elif trid.startswith("c"):
+                runtype = "Unknown"
                 identifier = irradpos = self.get_identifier(spec)
             else:
-                runtype = 'Unknown'
+                runtype = "Unknown"
 
             rid = make_runid(identifier, spec.aliquot, spec.step)
 
@@ -229,10 +235,15 @@ class MassSpecDatabaseImporter(Loggable):
                 return ret
             except Exception as e:
                 import traceback
-                self.debug('Mass Spec save exception. {}'.format(e))
+
+                self.debug("Mass Spec save exception. {}".format(e))
                 tb = traceback.format_exc()
                 self.debug(tb)
-                self.message('Could not save spec. runid={} rid={} to MassSpec DB.\n{}'.format(spec.runid, rid, tb))
+                self.message(
+                    "Could not save spec. runid={} rid={} to MassSpec DB.\n{}".format(
+                        spec.runid, rid, tb
+                    )
+                )
                 # if i == 2:
                 #     self.message('Could not save spec.runid={} rid={} '
                 #                  'to Mass Spec database.\n {}'.format(spec.runid, rid, tb))
@@ -244,14 +255,13 @@ class MassSpecDatabaseImporter(Loggable):
                 self.db.reraise = True
 
     def _add_analysis(self, sess, spec, irradpos, rid, runtype):
-
         gst = time.time()
 
         db = self.db
 
         spectrometer = spec.mass_spectrometer
-        if spectrometer.lower() == 'argus':
-            spectrometer = 'UM'
+        if spectrometer.lower() == "argus":
+            spectrometer = "UM"
         tray = spec.tray
 
         pipetted_isotopes = self._make_pipetted_isotopes(runtype)
@@ -261,8 +271,8 @@ class MassSpecDatabaseImporter(Loggable):
         # =======================================================================
         # get the sample_id
         sample_id = 0
-        if runtype == 'Air':
-            sample = db.get_sample('Air')
+        if runtype == "Air":
+            sample = db.get_sample("Air")
             if sample:
                 sample_id = sample.SampleID
         else:
@@ -271,26 +281,28 @@ class MassSpecDatabaseImporter(Loggable):
                 sample_id = db_irradpos.SampleID
             else:
                 self.warning(
-                    'no irradiation position found for {}. not importing analysis {}'.format(irradpos, spec.runid))
+                    "no irradiation position found for {}. not importing analysis {}".format(
+                        irradpos, spec.runid
+                    )
+                )
                 return
                 # add runscript
-        rs = db.add_runscript(spec.runscript_name,
-                              spec.runscript_text)
+        rs = db.add_runscript(spec.runscript_name, spec.runscript_text)
 
         self.create_import_session(spectrometer, tray)
 
         if not self.reference_isotope_name:
-            self.reference_isotope_name = 'Ar40'
+            self.reference_isotope_name = "Ar40"
 
         if self.use_reference_detector_by_isotope:
             rd = spec.get_detector_by_isotope(self.reference_isotope_name)
         else:
             if not self.reference_detector_name:
-                self.reference_detector_name = 'H1'
+                self.reference_detector_name = "H1"
             rd = self.reference_detector_name
 
-        self.debug('Reference Isotope={}'.format(self.reference_isotope_name))
-        self.debug('Reference Detector={}'.format(rd))
+        self.debug("Reference Isotope={}".format(self.reference_isotope_name))
+        self.debug("Reference Detector={}".format(rd))
 
         # add the reference detector
         if DBVERSION >= 16.3:
@@ -302,31 +314,33 @@ class MassSpecDatabaseImporter(Loggable):
 
         spec.runid = rid
 
-        params = dict(RedundantSampleID=sample_id,
-                      HeatingItemName=spec.extract_device,
-                      PwrAchieved=spec.power_achieved,
-                      PwrAchieved_Max=spec.power_achieved,
-                      PwrAchievedSD=0,
-                      FinalSetPwr=spec.power_requested,
-                      TotDurHeating=spec.duration,
-                      TotDurHeatingAtReqPwr=spec.duration_at_request,
-                      FirstStageDly=spec.first_stage_delay,
-                      SecondStageDly=spec.second_stage_delay,
-                      PipettedIsotopes=pipetted_isotopes,
-                      RefDetID=refdbdet.DetectorID,
-                      SampleLoadingID=self.sample_loading_id,
-                      LoginSessionID=self.login_session_id,
-                      RunScriptID=rs.RunScriptID)
+        params = dict(
+            RedundantSampleID=sample_id,
+            HeatingItemName=spec.extract_device,
+            PwrAchieved=spec.power_achieved,
+            PwrAchieved_Max=spec.power_achieved,
+            PwrAchievedSD=0,
+            FinalSetPwr=spec.power_requested,
+            TotDurHeating=spec.duration,
+            TotDurHeatingAtReqPwr=spec.duration_at_request,
+            FirstStageDly=spec.first_stage_delay,
+            SecondStageDly=spec.second_stage_delay,
+            PipettedIsotopes=pipetted_isotopes,
+            RefDetID=refdbdet.DetectorID,
+            SampleLoadingID=self.sample_loading_id,
+            LoginSessionID=self.login_session_id,
+            RunScriptID=rs.RunScriptID,
+        )
         if DBVERSION >= 16.3:
-            params['SignalRefIsot'] = self.reference_isotope_name
-            params['RedundantUserID'] = 1
+            params["SignalRefIsot"] = self.reference_isotope_name
+            params["RedundantUserID"] = 1
 
         else:
-            params['ReferenceDetectorLabel'] = refdbdet.Label
+            params["ReferenceDetectorLabel"] = refdbdet.Label
 
-        analysis = db.add_analysis(rid, spec.aliquot, spec.step,
-                                   irradpos,
-                                   RUN_TYPE_DICT[runtype], **params)
+        analysis = db.add_analysis(
+            rid, spec.aliquot, spec.step, irradpos, RUN_TYPE_DICT[runtype], **params
+        )
         sess.commit()
         if spec.update_rundatetime:
             d = datetime.fromtimestamp(spec.timestamp)
@@ -339,7 +353,9 @@ class MassSpecDatabaseImporter(Loggable):
         # =======================================================================
         item = db.add_changeable_items(analysis, self.data_reduction_session_id)
 
-        self.debug('%%%%%%%%%%%%%%%%%%%% Comment: {} %%%%%%%%%%%%%%%%%%%'.format(spec.comment))
+        self.debug(
+            "%%%%%%%%%%%%%%%%%%%% Comment: {} %%%%%%%%%%%%%%%%%%%".format(spec.comment)
+        )
         item.Comment = spec.comment
         sess.flush()
         analysis.ChangeableItemsID = item.ChangeableItemsID
@@ -348,7 +364,7 @@ class MassSpecDatabaseImporter(Loggable):
         sess.flush()
 
         t = time.time() - gst
-        self.debug('{} added analysis time {}s'.format(spec.runid, t))
+        self.debug("{} added analysis time {}s".format(spec.runid, t))
         return analysis
 
     def _add_isotopes(self, analysis, spec, refdet, runtype):
@@ -358,7 +374,7 @@ class MassSpecDatabaseImporter(Loggable):
 
         bs = []
         for iso, det in isotopes:
-            self.debug('adding isotope {} {}'.format(iso, det))
+            self.debug("adding isotope {} {}".format(iso, det))
             dbiso, dbdet = self._add_isotope(analysis, spec, iso, det, refdet)
 
             if dbdet.detector_type.Label not in bs:
@@ -409,12 +425,12 @@ class MassSpecDatabaseImporter(Loggable):
         # peak time
         # ===================================================================
         """
-            build two blobs
-            blob 1 PeakTimeBlob
-            x, y -
+        build two blobs
+        blob 1 PeakTimeBlob
+        x, y -
 
-            blob 2
-            y list
+        blob 2
+        y list
         """
         db = self.db
 
@@ -429,7 +445,7 @@ class MassSpecDatabaseImporter(Loggable):
         cvb = array(vb) - baseline.nominal_value
         blob1 = self._build_timeblob(tb, cvb)
 
-        blob2 = b''.join([struct.pack('>f', v) for v in vb])
+        blob2 = b"".join([struct.pack(">f", v) for v in vb])
         db.add_peaktimeblob(blob1, blob2, dbiso)
 
         # @todo: add filtered points blob
@@ -440,30 +456,33 @@ class MassSpecDatabaseImporter(Loggable):
         signal = spec.get_signal_uvalue(iso, det)
         sfit = spec.get_signal_fit(iso)
 
-        is_blank = runtype == 'Blank'
+        is_blank = runtype == "Blank"
         if is_blank:
             ublank = signal - nominal_value(baseline)
         else:
             ublank = spec.get_blank_uvalue(iso)
 
-        db.add_isotope_result(dbiso, self.data_reduction_session_id,
-                              signal,
-                              baseline,
-                              ublank,
-                              sfit,
-                              dbdet,
-                              is_blank=is_blank)
+        db.add_isotope_result(
+            dbiso,
+            self.data_reduction_session_id,
+            signal,
+            baseline,
+            ublank,
+            sfit,
+            dbdet,
+            is_blank=is_blank,
+        )
 
     def _add_baseline(self, spec, dbiso, dbdet, odet):
         iso = dbiso.Label
-        self.debug('add baseline dbdet= {}. original det= {}'.format(iso, odet))
+        self.debug("add baseline dbdet= {}. original det= {}".format(iso, odet))
         det = dbdet.detector_type.Label
         tb, vb = spec.get_baseline_data(iso, odet)
         pos = spec.get_baseline_position(iso)
         blob = self._build_timeblob(tb, vb)
 
         db = self.db
-        label = '{} Baseline'.format(det.upper())
+        label = "{} Baseline".format(det.upper())
         ncnts = len(tb)
         db_baseline = db.add_baseline(blob, label, ncnts, dbiso)
         db.flush()
@@ -476,46 +495,48 @@ class MassSpecDatabaseImporter(Loggable):
         # sem = bs.std_dev / (fncnts) ** 0.5 if fncnts else 0
 
         bfit = spec.get_baseline_fit(iso)
-        self.debug('baseline {}. v={}, e={}'.format(iso, nominal_value(bs), std_dev(bs)))
+        self.debug(
+            "baseline {}. v={}, e={}".format(iso, nominal_value(bs), std_dev(bs))
+        )
         infoblob = self._make_infoblob(nominal_value(bs), std_dev(bs), fncnts, pos)
-        db_changeable = db.add_baseline_changeable_item(self.data_reduction_session_id,
-                                                        bfit,
-                                                        infoblob)
+        db_changeable = db.add_baseline_changeable_item(
+            self.data_reduction_session_id, bfit, infoblob
+        )
 
         # baseline and baseline changeable items need matching BslnID
         db_changeable.BslnID = db_baseline.BslnID
         db.flush()
 
     def _make_pipetted_isotopes(self, runtype):
-        blob = ''
-        if runtype == 'Air':
+        blob = ""
+        if runtype == "Air":
             isos = []
-            for a, v in (('Ar40', 295.5e-13), ('Ar38', 0.18762e-13), ('Ar36', 1e-13)):
-                isos.append('{}\t{}'.format(a, v))
-            blob = '\r'.join(isos)
+            for a, v in (("Ar40", 295.5e-13), ("Ar38", 0.18762e-13), ("Ar36", 1e-13)):
+                isos.append("{}\t{}".format(a, v))
+            blob = "\r".join(isos)
         return blob
 
     def _build_timeblob(self, t, v):
-        """
-        """
-        blob = b''
+        """ """
+        blob = b""
         for ti, vi in zip(t, v):
-            blob += struct.pack('>ff', vi, ti)
+            blob += struct.pack(">ff", vi, ti)
         return blob
 
     def _make_infoblob(self, baseline, baseline_err, n, baseline_position):
         rpts = n
         pos_segments = [baseline_position]
 
-        bs_segments = [1.0000000200408773e+20]
+        bs_segments = [1.0000000200408773e20]
         bs_seg_params = [[baseline, 0, 0, 0]]
         bs_seg_errs = [baseline_err]
         b = encode_infoblob(rpts, pos_segments, bs_segments, bs_seg_params, bs_seg_errs)
         return b
 
     def _db_default(self):
-        db = MassSpecDatabaseAdapter(kind='mysql', autoflush=False)
+        db = MassSpecDatabaseAdapter(kind="mysql", autoflush=False)
 
         return db
+
 
 # ============= EOF ====================================

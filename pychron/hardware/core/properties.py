@@ -22,6 +22,8 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import six
+
+
 class Processor(object):
     def __init__(self, func):
         self._func = func
@@ -46,8 +48,17 @@ class ReverseMapProcessor(MappingProcessor):
 
 
 class DeviceProperty(object):
-    def __init__(self, getprocs=None, values=None, fget=None, fset=None, frandom=None, read_once=False, *args, **kw):
-
+    def __init__(
+        self,
+        getprocs=None,
+        values=None,
+        fget=None,
+        fset=None,
+        frandom=None,
+        read_once=False,
+        *args,
+        **kw
+    ):
         self.fget = fget
         self.fset = fset
         self.frandom = frandom
@@ -63,7 +74,7 @@ class DeviceProperty(object):
             self.get_processors.append(MapProcessor(values))
         if getprocs:
             if not isinstance(getprocs, (list, tuple)):
-                getprocs = (getprocs, )
+                getprocs = (getprocs,)
 
             for g in getprocs:
                 self.get_processors.append(Processor(g))
@@ -128,27 +139,25 @@ class DeviceProperty(object):
         return self.get(instance)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+
     class A(object):
         simulation = False
 
-        @DeviceProperty(values={'1': 'on', '0': 'off'})
+        @DeviceProperty(values={"1": "on", "0": "off"})
         def voltage_onoff(self):
-            return '1'
+            return "1"
 
         @DeviceProperty(float)
         def ambtemp(self):
-            return '10.34'
+            return "10.34"
 
         def critical(self, msg):
             print(msg)
 
     a = A()
-    print('voltage_onoff {} type={}'.format(a.voltage_onoff, type(a.voltage_onoff)))
-    print('ambtemp {} type={}'.format(a.ambtemp, type(a.ambtemp)))
+    print("voltage_onoff {} type={}".format(a.voltage_onoff, type(a.voltage_onoff)))
+    print("ambtemp {} type={}".format(a.ambtemp, type(a.ambtemp)))
 
     # print a.voltage_in, type(a.voltage_in)
 # ============= EOF =============================================
-
-
-

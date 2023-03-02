@@ -18,9 +18,20 @@
 from __future__ import absolute_import
 from traits.api import Event, Color, Str, Any, Int
 from traitsui.qt4.editor import Editor
+
 # ============= standard library imports ========================
-from pyface.qt.QtGui import QTextEdit, QPalette, QTextCursor, QTextTableFormat, QTextFrameFormat, \
-    QTextTableCellFormat, QColor, QFont, QPlainTextEdit, QTextCharFormat
+from pyface.qt.QtGui import (
+    QTextEdit,
+    QPalette,
+    QTextCursor,
+    QTextTableFormat,
+    QTextFrameFormat,
+    QTextTableCellFormat,
+    QColor,
+    QFont,
+    QPlainTextEdit,
+    QTextCharFormat,
+)
 from traitsui.basic_editor_factory import BasicEditorFactory
 
 
@@ -44,9 +55,7 @@ class _TextTableEditor(Editor):
     control_klass = QTextEdit
 
     def init(self, parent):
-        """
-
-        """
+        """ """
         if self.control is None:
             self.control = self.control_klass()
 
@@ -58,14 +67,13 @@ class _TextTableEditor(Editor):
 
         # self.object.on_trait_change(self._on_clear, self.factory.clear)
 
-        self.sync_value(self.factory.refresh, 'refresh', mode='from')
+        self.sync_value(self.factory.refresh, "refresh", mode="from")
 
     def _refresh_fired(self):
         self.update_editor()
 
     def update_editor(self, *args, **kw):
-        """
-        """
+        """ """
         self.control.clear()
         adapter = self.factory.adapter
         tables = adapter.make_tables(self.value)
@@ -73,7 +81,6 @@ class _TextTableEditor(Editor):
         n = len(tables)
 
         for i, ti in enumerate(tables):
-
             self._add_table(ti, cursor)
             #             timethis(self._add_table, args=(ti, cursor), msg='add_table')
             if i < n - 1:
@@ -83,7 +90,6 @@ class _TextTableEditor(Editor):
         pass
 
     def _add_table(self, tab, cursor):
-
         tab_fmt = QTextTableFormat()
         tab_fmt.setCellSpacing(0)
         tab_fmt.setCellPadding(3)
@@ -109,7 +115,7 @@ class _TextTableEditor(Editor):
 
             cell_fmt = QTextTableCellFormat()
             cell_fmt.setFontPointSize(10)
-            css = '''font-size:{}px;'''.format(10)
+            css = """font-size:{}px;""".format(10)
             self.control.setStyleSheet(css)
             max_cols = max([len(row.cells) for row in tab.items])
 
@@ -146,8 +152,8 @@ class _TextTableEditor(Editor):
 
                     tcell = table.cellAt(ri, ci + span_offset)
                     cur = tcell.firstCursorPosition()
-                    if hasattr(cell, 'html'):
-                        cur.insertHtml('{}'.format(cell.html))
+                    if hasattr(cell, "html"):
+                        cur.insertHtml("{}".format(cell.html))
 
                     else:
                         tcell.setFormat(cell_fmt)
@@ -159,16 +165,16 @@ class _TextTableEditor(Editor):
 
 class _FastTextTableEditor(_TextTableEditor):
     """
-        Uses a QPlainTextEdit instead of QTextEdit.
+    Uses a QPlainTextEdit instead of QTextEdit.
 
-        doesn't use QTextTable.
-        uses static column widths defined by the adapter
+    doesn't use QTextTable.
+    uses static column widths defined by the adapter
     """
 
     control_klass = QPlainTextEdit
 
     def _add_table_hook(self, cursor):
-        cursor.insertText('\n')
+        cursor.insertText("\n")
 
     def _add_table(self, tab, cursor):
         fmt = QTextCharFormat()
@@ -201,10 +207,13 @@ class _FastTextTableEditor(_TextTableEditor):
                 if c:
                     fmt.setBackground(c)
 
-                txt = ''.join([u'{{:<{}s}}'.format(cell.width).format(cell.text)
-                               for cell in row.cells
-                               ])
-                cursor.insertText(txt + '\n', fmt)
+                txt = "".join(
+                    [
+                        "{{:<{}s}}".format(cell.width).format(cell.text)
+                        for cell in row.cells
+                    ]
+                )
+                cursor.insertText(txt + "\n", fmt)
 
 
 class TextTableEditor(BasicEditorFactory):
@@ -217,14 +226,16 @@ class TextTableEditor(BasicEditorFactory):
     adapter = Any
     refresh = Str
     font_size = Int(12)
-    font_name = Str('courier')
+    font_name = Str("courier")
 
 
 class FastTextTableEditor(TextTableEditor):
-    '''    
+    """
     fast text table editor may no longer be necessary
     texttableeditor sped up significantly using beginEditBlock/endEditBlock
-    '''
+    """
+
     klass = _FastTextTableEditor  # _TextTableEditor
+
 
 # ============= EOF =============================================

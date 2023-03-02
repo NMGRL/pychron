@@ -15,8 +15,6 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import socket
 
@@ -26,7 +24,6 @@ from traits.api import Str
 
 from pychron.media_storage.storage import RemoteStorage
 from pychron.paths import paths
-import six
 
 
 def cache_path(src):
@@ -35,30 +32,31 @@ def cache_path(src):
 
 class SMBStorage(RemoteStorage):
     service_name = Str
-    url_name = 'SMB'
+    url_name = "SMB"
 
     def __init__(self, bind=True, *args, **kw):
         super(SMBStorage, self).__init__(bind=bind, *args, **kw)
         if bind:
-            bind_preference(self, 'service_name', 'pychron.media_storage.smb_service_name')
+            bind_preference(
+                self, "service_name", "pychron.media_storage.smb_service_name"
+            )
 
     def get_base_url(self):
-        return 'SMB://{}/{}'.format(self.host, self.service_name)
+        return "SMB://{}/{}".format(self.host, self.service_name)
 
     def getlist(self):
         conn = self._get_connection()
         if conn:
-            for sf in conn.listPath(self.service_name, '/'):
+            for sf in conn.listPath(self.service_name, "/"):
                 print(sf.filename)
 
             conn.close()
 
     def get(self, src, dest, use_cache=True):
+        src = ":".join(src.split(":")[2:])
 
-        src = ':'.join(src.split(':')[2:])
-
-        if isinstance(dest, (str, six.text_type)):
-            dest = open(dest, 'wb')
+        if isinstance(dest, str):
+            dest = open(dest, "wb")
 
         self._get_file(src, dest, use_cache)
 
@@ -69,10 +67,10 @@ class SMBStorage(RemoteStorage):
             if os.path.basename(dest) != dest:
                 self._r_mkdir(os.path.dirname(dest), conn)
 
-            if not isinstance(src, (str, six.text_type)):
+            if not isinstance(src, str):
                 conn.storeFile(self.service_name, dest, src)
             else:
-                with open(src, 'rb') as rfile:
+                with open(src, "rb") as rfile:
                     conn.storeFile(self.service_name, dest, rfile)
             conn.close()
 
@@ -90,7 +88,7 @@ class SMBStorage(RemoteStorage):
             dest.seek(0)
             if use_cache:
                 cp = cache_path(src)
-                with open(cp, 'wb') as cache:
+                with open(cp, "wb") as cache:
                     cache.write(dest.read())
 
                     # os.chmod(cp, stat.S_IRUSR)
@@ -99,7 +97,7 @@ class SMBStorage(RemoteStorage):
     def _get_cached(self, src, dest):
         p = cache_path(src)
         if os.path.isfile(p):
-            with open(p, 'rb') as rfile:
+            with open(p, "rb") as rfile:
                 dest.write(rfile.read())
                 return True
 
@@ -109,42 +107,47 @@ class SMBStorage(RemoteStorage):
 
         sep = os.path.sep
         directories = dest.split(sep)
-        tmp_path = ''
+        tmp_path = ""
         for d in directories:
             dir_content = conn.listPath(self.service_name, tmp_path)
             if d not in [x.filename for x in dir_content if x.isDirectory]:
-                self.info('Directory {} is missing. Create it'.format(d))
-                conn.createDirectory(self.service_name, '{}{}{}'.format(tmp_path, sep, d))
-            tmp_path = '{}{}{}'.format(tmp_path, sep, d)
+                self.info("Directory {} is missing. Create it".format(d))
+                conn.createDirectory(
+                    self.service_name, "{}{}{}".format(tmp_path, sep, d)
+                )
+            tmp_path = "{}{}{}".format(tmp_path, sep, d)
 
     def _get_connection(self):
         localname = socket.gethostname()
-        remotename = 'agustin'
-        conn = SMBConnection(self.username, self.password,
-                             localname, remotename)
-        self.debug('get connection {}'.format(self.host))
-        if conn.connect(self.host):
+        remotename = "agustin"
+        conn = SMBConnection(
+            self.username, self.password, localname, remotename, is_direct_tcp=True
+        )
+        self.debug("get connection {}".format(self.host))
+        if conn.connect(self.host, 445):
             return conn
         else:
-            print('failed to connect')
+            print("failed to connect")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import logging
 
-    logger = logging.getLogger('SMB')
+    logger = logging.getLogger("SMB")
     logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler())
 
-    s = SMBStorage(bind=False,
-                   host='agustin.nmbgmr.nmt.edu',
-                   service_name='argon',
-                   username=os.getenv('bureau_username'),
-                   password=os.getenv('bureau_password'))
+    s = SMBStorage(
+        bind=False,
+        host="agustin.nmbgmr.nmt.edu",
+        service_name="argon",
+        username=os.getenv("bureau_username"),
+        password=os.getenv("bureau_password"),
+    )
     # s.getlist()
 
-    src = '/Users/argonlab3/Pychron/data/videos/1842/65941-10C-001.avi'
-    dest = 'FusionsCO2/1842/65941-10C-001qwe22.avi'
+    src = "/Users/argonlab3/Pychron/data/videos/1842/65941-10C-001.avi"
+    dest = "FusionsCO2/1842/65941-10C-001qwe22.avi"
     s.put(src, dest)
     # s.put('/Users/ross/Desktop/argonfiles.txt', 'test/a/argonfiles.txt')
     # s._r_mkdir('test/a')

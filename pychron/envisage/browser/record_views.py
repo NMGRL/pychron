@@ -34,24 +34,24 @@ class RecordView(object):
 
 
 class InterpretedAgeRecordView(object):
-    name = ''
-    identifier = ''
-    path = ''
+    name = ""
+    identifier = ""
+    path = ""
 
     def __init__(self, idn, path, obj):
         self.identifier = idn
-        self.name = obj.get('name')
+        self.name = obj.get("name")
         self.path = path
 
-        pf = obj.get('preferred')
-        self.age = pf.get('age')
-        self.age_err = pf.get('age_err')
+        pf = obj.get("preferred")
+        self.age = pf.get("age")
+        self.age_err = pf.get("age_err")
 
-        kinds = pf.get('preferred_kinds')
+        kinds = pf.get("preferred_kinds")
         for k in kinds:
-            if k['attr'] == 'age':
-                self.age_kind = k['kind']
-                self.age_error_kind = k['error_kind']
+            if k["attr"] == "age":
+                self.age_kind = k["kind"]
+                self.age_error_kind = k["error_kind"]
 
         # self.age_kind = .get('age_kind')
         # self.age_error_kind = obj.get('age_error_kind')
@@ -73,18 +73,18 @@ class SampleImageRecordView(RecordView):
 
 
 class SampleRecordView(RecordView):
-    name = ''
-    material = ''
-    project = ''
-    grainsize = ''
+    name = ""
+    material = ""
+    project = ""
+    grainsize = ""
     lat = 0
     lon = 0
     elevation = 0
-    lithology = ''
-    rock_type = ''
-    identifier = ''
-    principal_investigator = ''
-    note = ''
+    lithology = ""
+    rock_type = ""
+    identifier = ""
+    principal_investigator = ""
+    note = ""
     id = None
 
     def __str__(self):
@@ -95,15 +95,26 @@ class SampleRecordView(RecordView):
 
         if dbrecord.material:
             self.material = dbrecord.material.name
-            self.grainsize = dbrecord.material.grainsize or ''
+            self.grainsize = dbrecord.material.grainsize or ""
 
         if dbrecord.project:
             self.project = dbrecord.project.name
             if dbrecord.project.principal_investigator:
-                self.principal_investigator = dbrecord.project.principal_investigator.name
+                self.principal_investigator = (
+                    dbrecord.project.principal_investigator.name
+                )
 
-        for attr in ('name', 'lat', ('lon', 'long'),
-                     'elevation', 'lithology', 'location', 'igsn', 'rock_type', 'note'):
+        for attr in (
+            "name",
+            "lat",
+            ("lon", "long"),
+            "elevation",
+            "lithology",
+            "location",
+            "igsn",
+            "rock_type",
+            "note",
+        ):
             if isinstance(attr, tuple):
                 attr, dbattr = attr
             else:
@@ -117,27 +128,27 @@ class SampleRecordView(RecordView):
 
 
 class LabnumberRecordView(RecordView):
-    name = ''
-    material = ''
-    project = ''
-    labnumber = ''
-    sample = ''
+    name = ""
+    material = ""
+    project = ""
+    labnumber = ""
+    sample = ""
 
     lat = 0
     lon = 0
     elevation = 0
-    lithology = ''
+    lithology = ""
 
-    alt_name = ''
+    alt_name = ""
     low_post = None
 
-    irradiation = ''
-    irradiation_level = ''
-    irradiation_pos = ''
-    packet = ''
+    irradiation = ""
+    irradiation_level = ""
+    irradiation_pos = ""
+    packet = ""
 
     def _create(self, dbrecord):
-        self.labnumber = dbrecord.identifier or ''
+        self.labnumber = dbrecord.identifier or ""
 
         pos = dbrecord
         # pos = dbrecord.irradiation_position
@@ -164,8 +175,15 @@ class LabnumberRecordView(RecordView):
                 else:
                     self.project = sample.project.name
 
-        for attr in ('name', 'lat', ('lon', 'long'),
-                     'elevation', 'lithology', 'location', 'igsn'):
+        for attr in (
+            "name",
+            "lat",
+            ("lon", "long"),
+            "elevation",
+            "lithology",
+            "location",
+            "igsn",
+        ):
             if isinstance(attr, tuple):
                 attr, dbattr = attr
             else:
@@ -192,7 +210,7 @@ class LabnumberRecordView(RecordView):
     #     return '{}{}'.format(self.irradiation, self.irradiation_level)
     @property
     def irradiation_and_level(self):
-        return '{}{}'.format(self.irradiation, self.irradiation_level)
+        return "{}{}".format(self.irradiation, self.irradiation_level)
 
     # mirror labnumber as identifier
     @property
@@ -244,9 +262,9 @@ class ProjectRecordView(RecordView, NameView):
                 self.principal_investigator = dbrecord.principal_investigator.name
             self.unique_id = dbrecord.id
             self.checkin_date = dbrecord.checkin_date
-            self.db_comment = self.comment = dbrecord.comment or ''
-            self.lab_contact = dbrecord.lab_contact or ''
-            self.institution = dbrecord.institution or ''
+            self.db_comment = self.comment = dbrecord.comment or ""
+            self.lab_contact = dbrecord.lab_contact or ""
+            self.institution = dbrecord.institution or ""
 
         else:
             self.name = dbrecord
@@ -265,24 +283,25 @@ class AnalysisGroupRecordView(RecordView):
 
     def _create(self, dbrecord):
         self.id = dbrecord.id
-        for attr in ('name', 'create_date', 'last_modified'):
+        for attr in ("name", "create_date", "last_modified"):
             setattr(self, attr, getattr(dbrecord, attr))
 
 
 class AnalysisRecordView(RecordView):
     def _create(self, dbrecord):
-        for attr in ('record_id', 'tag'):
+        for attr in ("record_id", "tag"):
             setattr(self, attr, getattr(dbrecord, attr))
 
 
 class PrincipalInvestigatorRecordView(RecordView, NameView):
-    name = ''
-    email = ''
-    affiliation = ''
+    name = ""
+    email = ""
+    affiliation = ""
 
     def _create(self, dbrecord):
         self.name = dbrecord.name
         self.email = dbrecord.email
         self.affiliation = dbrecord.affiliation
+
 
 # ============= EOF =============================================

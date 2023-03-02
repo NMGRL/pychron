@@ -23,18 +23,32 @@ from traits.api import Instance
 from uncertainties import std_dev, nominal_value
 
 from pychron.entry.export.base_irradiation_exporter import BaseIrradiationExporter
-from pychron.mass_spec.database.massspec_database_adapter import MassSpecDatabaseAdapter, PR_KEYS
+from pychron.mass_spec.database.massspec_database_adapter import (
+    MassSpecDatabaseAdapter,
+    PR_KEYS,
+)
 from six.moves import zip
 
-SRC_PR_KEYS = ('Ca3637', 'Ca3637_err',
-               'Ca3937', 'Ca3937_err',
-               'K4039', 'K4039_err',
-               'Cl3638', 'Cl3638_err',
-               'Ca3837', 'Ca3837_err',
-               'K3839', 'K3839_err',
-               'K3739', 'K3739_err',
-               'Cl_K', 'Cl_K',
-               'Ca_K', 'Ca_K')
+SRC_PR_KEYS = (
+    "Ca3637",
+    "Ca3637_err",
+    "Ca3937",
+    "Ca3937_err",
+    "K4039",
+    "K4039_err",
+    "Cl3638",
+    "Cl3638_err",
+    "Ca3837",
+    "Ca3837_err",
+    "K3839",
+    "K3839_err",
+    "K3739",
+    "K3739_err",
+    "Cl_K",
+    "Cl_K",
+    "Ca_K",
+    "Ca_K",
+)
 
 
 def generate_production_ratios_id(vs):
@@ -44,7 +58,7 @@ def generate_production_ratios_id(vs):
     :param vs:
     :return:
     """
-    txt = b''.join([struct.pack('>f', vi) for vi in vs])
+    txt = b"".join([struct.pack(">f", vi) for vi in vs])
     return binascii.crc32(txt)
 
 
@@ -59,7 +73,7 @@ def generate_source_pr_id(dbpr):
 
 def pr_dict(dbpr):
     d = {dk: getattr(dbpr, sk) for sk, dk in zip(SRC_PR_KEYS, PR_KEYS)}
-    dd = {dk: getattr(dbpr, sk) for sk, dk in zip(('name',), ('Label',))}
+    dd = {dk: getattr(dbpr, sk) for sk, dk in zip(("name",), ("Label",))}
 
     d.update(dd)
 
@@ -68,13 +82,14 @@ def pr_dict(dbpr):
 
 class MassSpecIrradiationExporter(BaseIrradiationExporter):
     """
-        export irradiation from the pychron database to a mass spec database
+    export irradiation from the pychron database to a mass spec database
     """
+
     destination = Instance(MassSpecDatabaseAdapter)
 
     def setup(self):
         """
-            return True if connection to dest made
+        return True if connection to dest made
         """
         dest = MassSpecDatabaseAdapter(bind=False)
         dest.trait_set(**self.destination_spec)
@@ -89,14 +104,16 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
     def _export(self, dbirrad):
         # check if irradiation already exists
         dest = self.destination
-        action = 'Skipping'
+        action = "Skipping"
 
         irradname = dbirrad.name
         with dest.session_ctx():
             if not dest.get_irradiation_exists(irradname):
                 self._export_chronology(dbirrad)
             else:
-                self.debug('Irradiation="{}" already exists. {}'.format(irradname, action))
+                self.debug(
+                    'Irradiation="{}" already exists. {}'.format(irradname, action)
+                )
 
             for level in dbirrad.levels:
                 self._export_level(irradname, level)
@@ -108,35 +125,37 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
         chron = self.source.get_chronology(src_irr.name)
 
         for p, s, e in chron.get_doses():
-            self.debug('Adding dose power={} start={} end={}'.format(p, s, e))
+            self.debug("Adding dose power={} start={} end={}".format(p, s, e))
             dest.add_irradiation_chronology_entry(src_irr.name, s, e)
 
     def _export_level(self, irradname, src_level):
-        action = 'Skipping'
+        action = "Skipping"
         dest = self.destination
         levelname = src_level.name
 
         dest_level = dest.get_irradiation_level(irradname, levelname)
         if not dest_level:
-            self.debug('Exporting level {} {}'.format(irradname, levelname))
+            self.debug("Exporting level {} {}".format(irradname, levelname))
             dest_pr = self._export_production_ratios(irradname, levelname)
             try:
                 holder = src_level.holder
             except AttributeError:
-                holder = ''
+                holder = ""
 
-            dest.add_irradiation_level(irradname, src_level.name,
-                                       holder, dest_pr)
+            dest.add_irradiation_level(irradname, src_level.name, holder, dest_pr)
         else:
-            self.debug('Irradiation="{}", Level="{}" already exists. {}'.format(irradname, levelname, action))
+            self.debug(
+                'Irradiation="{}", Level="{}" already exists. {}'.format(
+                    irradname, levelname, action
+                )
+            )
 
         for pos in src_level.positions:
             self._export_position(dest, irradname, src_level.name, pos)
 
     def _export_production_ratios(self, irrad, level):
-
         dest = self.destination
-        action = 'Skipping'
+        action = "Skipping"
 
         name, source_pr = self.source.get_production(irrad, level)
         pid = generate_source_pr_id(source_pr)
@@ -144,24 +163,31 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
         if not dest_pr:
             self.debug('Add Production Ratios="{}"'.format(source_pr.name))
             pdict = pr_dict(source_pr)
-            pdict['ProductionRatiosID'] = pid
+            pdict["ProductionRatiosID"] = pid
             dest_pr = dest.add_production_ratios(pdict)
             dest.flush()
         else:
-            self.debug('Production Ratios="{}" already exists. {}'.format(source_pr.name, action))
+            self.debug(
+                'Production Ratios="{}" already exists. {}'.format(
+                    source_pr.name, action
+                )
+            )
 
         return dest_pr
 
-    def _export_position(self, dest, irrad, level, pos):
-        action = 'Skipping'
+    def _export_position(self, dest, irrad, level, pos, check_for_existing=True):
+        action = "Skipping"
 
         idn = pos.identifier
         if not idn:
             return
 
-        dest_pos = dest.get_irradiation_position(idn)
+        dest_pos = None
+        if check_for_existing:
+            dest_pos = dest.get_irradiation_position(idn)
+
         if not dest_pos:
-            self.debug('Exporting position {} {}{}'.format(idn, irrad, level))
+            self.debug("Exporting position {} {}{}".format(idn, irrad, level))
             try:
                 mat = pos.sample.material.name
                 dbmat = dest.get_material(mat)
@@ -169,7 +195,7 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
                     dest.add_material(mat)
 
             except AttributeError:
-                mat = ''
+                mat = ""
             try:
                 # f = pos.labnumber.selected_flux_history.flux
                 # j, jerr = f.j, f.j_err
@@ -188,8 +214,10 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
                     pname = pos.sample.project.name
                     proj = dest.get_project(pname)
                     if not proj:
-                        proj = dest.add_project(pname,
-                                                PrincipalInvestigator=pos.sample.project.principal_investigator.name)
+                        proj = dest.add_project(
+                            pname,
+                            PrincipalInvestigator=pos.sample.project.principal_investigator.name,
+                        )
                 except AttributeError:
                     proj = None
 
@@ -201,12 +229,21 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
                 sam = dest.get_sample(sample_name)
                 sampleid = sam.SampleID
 
-            dest.add_irradiation_position(idn, '{}{}'.format(irrad, level), pos.position,
-                                          material=mat,
-                                          sample=sampleid,
-                                          j=float(j), jerr=float(jerr), note=note)
+            dest.add_irradiation_position(
+                idn,
+                "{}{}".format(irrad, level),
+                pos.position,
+                material=mat,
+                sample=sampleid,
+                j=float(j),
+                jerr=float(jerr),
+                note=note,
+            )
 
         else:
-            self.debug('Irradiation Position="{}" already exists {}'.format(idn, action))
+            self.debug(
+                'Irradiation Position="{}" already exists {}'.format(idn, action)
+            )
+
 
 # ============= EOF =============================================

@@ -19,6 +19,7 @@ import math
 
 # ============= enthought library imports =======================
 from chaco.api import AbstractOverlay
+
 # ============= standard library imports ========================
 from numpy import linspace, hstack, sqrt, corrcoef, column_stack, array
 from numpy.linalg import eig
@@ -35,19 +36,18 @@ from pychron.pychron_constants import ELLIPSE_KINDS, ELLIPSE_KIND_SCALE_FACTORS
 
 def error_ellipse(sx, sy, pxy, kind, aspectratio=1):
     """
-        return  a, b axes and rotation
+    return  a, b axes and rotation
 
-        http://www.earth-time.org/projects/upb/public_docs/ErrorEllipses.pdf
+    http://www.earth-time.org/projects/upb/public_docs/ErrorEllipses.pdf
 
     """
     covar = pxy * sx * sy
-    covmat = [[sx * sx, covar],
-              [covar, sy * sy]]
+    covmat = [[sx * sx, covar], [covar, sy * sy]]
     w, v = eig(covmat)
 
     mi_w, ma_w = min(w), max(w)
-    a = mi_w ** 0.5
-    b = ma_w ** 0.5
+    a = mi_w**0.5
+    b = ma_w**0.5
     if sx > sy:
         b, a = a, b
     # else:
@@ -56,7 +56,7 @@ def error_ellipse(sx, sy, pxy, kind, aspectratio=1):
     sf = ELLIPSE_KIND_SCALE_FACTORS.get(kind, 1)
     a, b = a * sf, b * sf
     #        print aspectratio, dx, dy, width, height
-    rotation = 0.5 * math.atan(1 / aspectratio * (2 * covar) / (sx ** 2 - sy ** 2))
+    rotation = 0.5 * math.atan(1 / aspectratio * (2 * covar) / (sx**2 - sy**2))
 
     return a, b, rotation
 
@@ -65,10 +65,8 @@ class ErrorEllipseOverlay(AbstractOverlay):
     fill = Bool(True)
     kind = Enum(ELLIPSE_KINDS)
 
-    def overlay(self, component, gc, view_bounds=None, mode='normal'):
-        """
-
-        """
+    def overlay(self, component, gc, view_bounds=None, mode="normal"):
+        """ """
         gc.clip_to_rect(component.x, component.y, component.width, component.height)
 
         # x = component.index.get_data()
@@ -80,14 +78,12 @@ class ErrorEllipseOverlay(AbstractOverlay):
         xer = self.reg.xserr
         yer = self.reg.yserr
 
-        sel = component.index.metadata['selections']
+        sel = component.index.metadata["selections"]
 
         pxy = array(self.reg.calculate_correlation_coefficients(clean=False))
 
-        dx = abs(component.index_mapper.range.low -
-                 component.index_mapper.range.high)
-        dy = abs(component.value_mapper.range.low -
-                 component.value_mapper.range.high)
+        dx = abs(component.index_mapper.range.low - component.index_mapper.range.high)
+        dy = abs(component.value_mapper.range.low - component.value_mapper.range.high)
 
         height = component.height
         width = component.width
@@ -97,12 +93,14 @@ class ErrorEllipseOverlay(AbstractOverlay):
         try:
             for i, (cx, cy, sx, sy, pxyi) in enumerate(zip(x, y, xer, yer, pxy)):
                 state = i not in sel
-                a, b, rot = error_ellipse(sx, sy, pxyi, self.kind, aspectratio=aspectratio)
+                a, b, rot = error_ellipse(
+                    sx, sy, pxyi, self.kind, aspectratio=aspectratio
+                )
                 with gc:
                     self._draw_ellipse(gc, component, cx, cy, a, b, rot, state)
 
         except Exception as e:
-            print('exception', e)
+            print("exception", e)
 
     def _draw_ellipse(self, gc, component, cx, cy, a, b, rot, state):
         if not state:
@@ -139,7 +137,7 @@ class ErrorEllipseOverlay(AbstractOverlay):
             gc.stroke_path()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     x = [1, 2, 3, 4, 4.1]
     y = [1, 2, 3, 4, 5.5]
     xer = [0.1, 0.1, 0.1, 0.1, 0.1]
@@ -151,8 +149,7 @@ if __name__ == '__main__':
     pxy = corrcoef(x, y)[0][1]
 
     covar = ox * oy * pxy
-    covmat = [[ox * ox, covar],
-              [covar, oy * oy]]
+    covmat = [[ox * ox, covar], [covar, oy * oy]]
     w, _v = eig(covmat)
 
     if ox > oy:
@@ -167,7 +164,9 @@ if __name__ == '__main__':
     height = 1
     width = 1
     aspectratio = (dy / height) / (dx / width)
-    rotation = math.degrees(0.5 * math.atan(1 / aspectratio * (2 * covar) / (ox ** 2 - oy ** 2)))
+    rotation = math.degrees(
+        0.5 * math.atan(1 / aspectratio * (2 * covar) / (ox**2 - oy**2))
+    )
 
 #
 # #        gc.begin_path()

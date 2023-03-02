@@ -20,7 +20,11 @@ import pickle
 
 from envisage.extension_point import ExtensionPoint
 from envisage.ui.tasks.task_window_event import VetoableTaskWindowEvent, TaskWindowEvent
-from envisage.ui.tasks.tasks_application import TasksApplication, TasksApplicationState, logger
+from envisage.ui.tasks.tasks_application import (
+    TasksApplication,
+    TasksApplicationState,
+    logger,
+)
 from pyface.dialog import Dialog
 from pyface.tasks.task_window_layout import TaskWindowLayout
 from traits.api import List, Instance
@@ -40,7 +44,7 @@ class BaseTasksApplication(TasksApplication, Loggable):
     about_dialog = Instance(Dialog)
     startup_tester = Instance(StartupTester)
     uis = List
-    available_task_extensions = ExtensionPoint(id='pychron.available_task_extensions')
+    available_task_extensions = ExtensionPoint(id="pychron.available_task_extensions")
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
@@ -50,19 +54,15 @@ class BaseTasksApplication(TasksApplication, Loggable):
         if globalv.use_startup_tests:
             self.do_startup_tests()
 
-        if globalv.use_testbot:
-            from pychron.testbot.testbot import TestBot
-
-            testbot = TestBot(application=self)
-            testbot.run()
-
     def do_startup_tests(self, force_show_results=False, **kw):
         st = StartupTester()
         for plugin in iter(self.plugin_manager):
             st.test_plugin(plugin)
 
         if st.results:
-            if force_show_results or (globalv.show_startup_results or not st.all_passed):
+            if force_show_results or (
+                globalv.show_startup_results or not st.all_passed
+            ):
                 v = ResultsView(model=st, **kw)
                 open_view(v)
 
@@ -73,10 +73,10 @@ class BaseTasksApplication(TasksApplication, Loggable):
         yl = yload(paths.task_extensions_file)
         for yi in yl:
             # print yi['plugin_id'], pid
-            if yi['plugin_id'].startswith(pid):
-                tid = yi.get('task_id', '')
-                for ai in yi['actions']:
-                    a, e = ai.split(',')
+            if yi["plugin_id"].startswith(pid):
+                tid = yi.get("task_id", "")
+                for ai in yi["actions"]:
+                    a, e = ai.split(",")
                     # print tid, a, e
                     if to_bool(e):
                         yield tid, a
@@ -156,49 +156,46 @@ class BaseTasksApplication(TasksApplication, Loggable):
             si.close()
 
     def _load_state(self):
-        """ Loads saved application state, if possible.
-        """
+        """Loads saved application state, if possible."""
         state = TasksApplicationState()
-        filename = os.path.join(self.state_location, 'application_memento')
+        filename = os.path.join(self.state_location, "application_memento")
         if os.path.exists(filename):
             # Attempt to unpickle the saved application state.
             try:
-                with open(filename, 'rb') as f:
+                with open(filename, "rb") as f:
                     try:
                         restored_state = pickle.load(f)
                         if state.version == restored_state.version:
                             state = restored_state
                         else:
-                            logger.warn('Discarding outdated application layout')
+                            logger.warn("Discarding outdated application layout")
                     except EOFError:
-                        logger.exception('EOFerror: Restoring application layout from %s',
-                                         filename)
+                        logger.exception(
+                            "EOFerror: Restoring application layout from %s", filename
+                        )
             except:
                 # If anything goes wrong, log the error and continue.
-                logger.exception('Restoring application layout from %s',
-                                 filename)
+                logger.exception("Restoring application layout from %s", filename)
         self._state = state
 
     def _save_state(self):
-        """ Saves the application state.
-        """
+        """Saves the application state."""
         # Grab the current window layouts.
         window_layouts = [w.get_window_layout() for w in self.windows]
         self._state.previous_window_layouts = window_layouts
 
         # Attempt to pickle the application state.
-        filename = os.path.join(self.state_location, 'application_memento')
+        filename = os.path.join(self.state_location, "application_memento")
         try:
-            with open(filename, 'wb') as f:
+            with open(filename, "wb") as f:
                 pickle.dump(self._state, f)
         except:
             # If anything goes wrong, log the error and continue.
-            logger.exception('Saving application layout')
+            logger.exception("Saving application layout")
 
     def _on_window_closing(self, window, trait_name, event):
         # Event notification.
-        self.window_closing = window_event = VetoableTaskWindowEvent(
-            window=window)
+        self.window_closing = window_event = VetoableTaskWindowEvent(window=window)
 
         if window_event.veto:
             event.veto = True
@@ -214,15 +211,20 @@ class BaseTasksApplication(TasksApplication, Loggable):
                     self._prepare_exit()
             else:
                 if len(self.windows) == 1:
-                    if not self.confirmation_dialog('Closing the last open window will quit Pychron. '
-                                                    'Are you sure you want to continue?'):
+                    if not self.confirmation_dialog(
+                        "Closing the last open window will quit Pychron. "
+                        "Are you sure you want to continue?"
+                    ):
                         window_event.veto = True
                         event.veto = True
                     else:
                         self._prepare_exit()
 
     def _on_window_closed(self, window, trait_name, event):
-        self.windows.remove(window)
+        try:
+            self.windows.remove(window)
+        except ValueError:
+            self.debug("window {} already removed".format(window))
 
         # Event notification.
         self.window_closed = TaskWindowEvent(window=window)
@@ -230,5 +232,6 @@ class BaseTasksApplication(TasksApplication, Loggable):
         # Was this the last window?
         if len(self.windows) == 0:
             self.stop()
+
 
 # ============= EOF =============================================

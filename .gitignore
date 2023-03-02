@@ -13,3 +13,4 @@ htmlcov
 notes
 alembic.ini
 update_alembic.ini
+/pychron/hddocs.md

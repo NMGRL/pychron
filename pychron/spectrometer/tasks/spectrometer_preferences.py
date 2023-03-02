@@ -26,9 +26,9 @@ from pychron.envisage.tasks.base_preferences_helper import BasePreferencesHelper
 
 
 class SpectrometerPreferences(BasePreferencesHelper):
-    name = 'Spectrometer'
-    preferences_path = 'pychron.spectrometer'
-    id = 'pychron.spectrometer.preferences_page'
+    name = "Spectrometer"
+    preferences_path = "pychron.spectrometer"
+    id = "pychron.spectrometer.preferences_page"
     send_config_on_startup = Bool
     force_send_configuration = Bool(True)
     use_local_mftable_archive = Bool
@@ -39,51 +39,81 @@ class SpectrometerPreferences(BasePreferencesHelper):
     use_vertical_markers = Bool
     auto_open_readout = Bool
     use_default_scan_settings = Bool
-    default_isotope = Enum(('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36'))
-    default_detector = Enum(('H2', 'H1', 'AX', 'L1', 'L2', 'CDD'))
+    default_isotope = Enum(("Ar40", "Ar39", "Ar38", "Ar37", "Ar36"))
+    default_detector = Enum(("H2", "H1", "AX", "L1", "L2", "CDD"))
 
 
 class SpectrometerPreferencesPane(PreferencesPane):
     model_factory = SpectrometerPreferences
-    category = 'Spectrometer'
+    category = "Spectrometer"
 
     def traits_view(self):
-        magnet_grp = VGroup(Item('confirmation_threshold_mass',
-                                 tooltip='Request confirmation if magnet move is greater than threshold',
-                                 label='Confirmation Threshold (amu)'),
-                            show_border=True,
-                            label='Magnet')
-        mf_grp = VGroup(Item('use_local_mftable_archive',
-                             tooltip='Archive mftable to a local git repository',
-                             label='Local Archive'),
-                        Item('use_db_mftable_archive',
-                             tooltip='Archive mftable to central database',
-                             label='DB Archive'),
-                        show_border=True,
-                        label='MFTable')
-        gen_grp = VGroup(Item('send_config_on_startup',
-                              tooltip='Load the spectrometer parameters on startup', ),
-                         Item('force_send_configuration',
-                              tooltip='If disabled pychron will only set configuration values that are out of date'),
-                         Item('auto_open_readout',
-                              tooltip='Open readout view when Spectrometer plugin starts'))
-        scan_grp = VGroup(Item('use_detector_safety',
-                               label='Detector Safety',
-                               tooltip='Abort magnet moves '
-                                       'if move will place an intensity greater than X on the current detector'),
-                          Item('use_log_events', label='Event Logging',
-                               tooltip='Display events such as valve open/close, magnet moves on Scan graph'),
-                          Item('use_vertical_markers', label='Vertical Markers'),
-                          HGroup(Item('use_default_scan_settings',
-                                      label='Use Defaults'),
-                                 Item('default_detector',
-                                      label='Detector',
-                                      enabled_when='use_default_scan_settings'),
-                                 Item('default_isotope',
-                                      label='Isotope',
-                                      enabled_when='use_default_scan_settings')),
-                          label='Scan',
-                          show_border=True)
+        magnet_grp = VGroup(
+            Item(
+                "confirmation_threshold_mass",
+                tooltip="Request confirmation if magnet move is greater than threshold",
+                label="Confirmation Threshold (amu)",
+            ),
+            show_border=True,
+            label="Magnet",
+        )
+        mf_grp = VGroup(
+            Item(
+                "use_local_mftable_archive",
+                tooltip="Archive mftable to a local git repository",
+                label="Local Archive",
+            ),
+            Item(
+                "use_db_mftable_archive",
+                tooltip="Archive mftable to central database",
+                label="DB Archive",
+            ),
+            show_border=True,
+            label="MFTable",
+        )
+        gen_grp = VGroup(
+            Item(
+                "send_config_on_startup",
+                tooltip="Load the spectrometer parameters on startup",
+            ),
+            Item(
+                "force_send_configuration",
+                tooltip="If disabled pychron will only set configuration values that are out of date",
+            ),
+            Item(
+                "auto_open_readout",
+                tooltip="Open readout view when Spectrometer plugin starts",
+            ),
+        )
+        scan_grp = VGroup(
+            Item(
+                "use_detector_safety",
+                label="Detector Safety",
+                tooltip="Abort magnet moves "
+                "if move will place an intensity greater than X on the current detector",
+            ),
+            Item(
+                "use_log_events",
+                label="Event Logging",
+                tooltip="Display events such as valve open/close, magnet moves on Scan graph",
+            ),
+            Item("use_vertical_markers", label="Vertical Markers"),
+            HGroup(
+                Item("use_default_scan_settings", label="Use Defaults"),
+                Item(
+                    "default_detector",
+                    label="Detector",
+                    enabled_when="use_default_scan_settings",
+                ),
+                Item(
+                    "default_isotope",
+                    label="Isotope",
+                    enabled_when="use_default_scan_settings",
+                ),
+            ),
+            label="Scan",
+            show_border=True,
+        )
 
         return View(VGroup(gen_grp, mf_grp, scan_grp, magnet_grp))
 
@@ -91,16 +121,16 @@ class SpectrometerPreferencesPane(PreferencesPane):
 class NGXSpectrometerPreferences(BasePreferencesHelper):
     username = Str
     password = Password
-    preferences_path = 'pychron.spectrometer.ngx'
+    preferences_path = "pychron.spectrometer.ngx"
 
 
 class NGXSpectrometerPreferencesPane(PreferencesPane):
     model_factory = NGXSpectrometerPreferences
-    category = 'Spectrometer'
+    category = "Spectrometer"
 
     def traits_view(self):
-        v = View(Item('username'),
-                 Item('password'))
+        v = View(Item("username"), Item("password"))
         return v
+
 
 # ============= EOF =============================================

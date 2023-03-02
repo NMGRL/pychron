@@ -23,13 +23,21 @@ from traits.api import Any, Dict, List, provides
 
 from pychron.core.helpers.logger_setup import logging_setup
 from pychron.extraction_line.ipyscript_runner import IPyScriptRunner
-from pychron.hardware.core.communicators.ethernet_communicator import EthernetCommunicator
+from pychron.hardware.core.communicators.ethernet_communicator import (
+    EthernetCommunicator,
+)
 from pychron.loggable import Loggable
 
 
 class LocalResource(Event):
     def read(self, *args, **kw):
         return self.is_set()
+
+    def set(self, value):
+        if value:
+            super(LocalResource, self).set()
+        else:
+            super(LocalResource, self).clear()
 
 
 @provides(IPyScriptRunner)
@@ -83,13 +91,13 @@ class RemoteResource(object):
         self._ping_evt = None
 
     def ping(self):
-        return self.handle.ask('Ping {}'.format(self.name), verbose=True)
+        return self.handle.ask("Ping {}".format(self.name), verbose=True)
 
     # ===============================================================================
     # threading.Event interface
     # ===============================================================================
     def read(self, verbose=True):
-        resp = self.handle.ask('Read {}'.format(self.name), verbose=verbose)
+        resp = self.handle.ask("Read {}".format(self.name), verbose=verbose)
         if resp is not None:
             resp = resp.strip()
             # resp = resp[4:-4]
@@ -113,17 +121,21 @@ class RemoteResource(object):
     def _ping_loop(self):
         evt = self._ping_evt
         while not evt.is_set():
-            if self.ping() == 'Complete':
+            ping = self.ping()
+            if ping and ping.strip() == "Complete":
                 break
 
-            time.sleep(3)
+            evt.wait(3)
 
     def _set(self, v):
-        self.handle.ask('Set {} {}'.format(self.name, v))
+        self.handle.ask("Set {} {}".format(self.name, v))
         if v:
+            if self._ping_evt:
+                self._ping_evt.set()
+
             self._ping_evt = Event()
             self._ping_thread = Thread(target=self._ping_loop)
-            self._ping_thread.setDaemon(1)
+            self._ping_thread.setDaemon(True)
             self._ping_thread.start()
         else:
             if self._ping_evt:
@@ -158,6 +170,8 @@ class RemotePyScriptRunner(PyScriptRunner):
         handle.kind = self.kind
         handle.message_frame = self.frame
         handle.use_end = True
+        handle.write_terminator = "\r\n"
+        handle.read_terminator = "\r\n"
         return handle
 
     def _get_resource(self, name):
@@ -171,8 +185,8 @@ class RemotePyScriptRunner(PyScriptRunner):
         return self.handle.open()
 
 
-if __name__ == '__main__':
-    logging_setup('py_runner')
+if __name__ == "__main__":
+    logging_setup("py_runner")
     p = PyScriptRunner()
 
     p.configure_traits()

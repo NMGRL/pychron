@@ -25,8 +25,7 @@ from .base_regressor import BaseRegressor
 
 
 class MeanRegressor(BaseRegressor):
-
-    _fit = 'average'
+    _fit = "average"
 
     def get_exog(self, pts):
         return pts
@@ -41,7 +40,7 @@ class MeanRegressor(BaseRegressor):
             self.calculate_filtered_data()
 
     def calculate_outliers(self):
-        nsigma = self.filter_outliers_dict.get('std_devs', 2)
+        nsigma = self.filter_outliers_dict.get("std_devs", 2)
         res = abs(self.ys - self.mean)
         s = self.std
         self.filter_bound_value = s * nsigma
@@ -59,15 +58,16 @@ class MeanRegressor(BaseRegressor):
 
     @property
     def summary(self):
-
         m = self.mean
         e = self.std
         sem = self.sem
-        return '''mean={}
+        return """mean={}
 std={}
 sem={}
 
-'''.format(m, e, sem)
+""".format(
+            m, e, sem
+        )
 
     def predict(self, xs=None, *args):
         if xs is not None:
@@ -93,40 +93,43 @@ sem={}
         return ly, uy
 
     def tostring(self, sig_figs=3):
-
         m = self.mean
         std = self.std
         sem = self.sem
+        se = self.se
 
         sm = floatfmt(m, n=9)
         sstd = floatfmt(std, n=9)
         ssem = floatfmt(sem, n=9)
+        sse = floatfmt(se, n=9)
 
         pstd = self.format_percent_error(m, std)
         psem = self.format_percent_error(m, sem)
+        pse = self.format_percent_error(m, se)
 
         n = self.n
         tn = self.xs.shape[0]
-        s = 'mean={}, n={}({}), std={} ({}), sem={} ({})'.format(sm, n, tn, sstd, pstd, ssem, psem)
+        s = "mean={}, n={}({}), std={} ({}), sem={} ({}) se={} ({})".format(
+            sm, n, tn, sstd, pstd, ssem, psem, sse, pse
+        )
         # s = fmt.format(m, std, self.percent_error(m, std),
         #                sem, self.percent_error(m, sem))
         return s
 
     def make_equation(self):
-        return 'Mean'
+        return "Mean"
 
     def predict_error(self, x, error_calc=None):
         if error_calc is None:
             error_calc = self.error_calc_type
             if not error_calc:
-                error_calc = 'SEM' if 'sem' in self.fit.lower() else 'SD'
+                error_calc = "SEM" if "sem" in self.fit.lower() else "SD"
 
         error_calc = error_calc.lower()
-
         if error_calc == SEM.lower():
             e = self.sem
-        elif error_calc in (MSEM.lower(), 'msem'):
-            e = self.sem * (self.mswd ** 0.5 if self.mswd > 1 else 1)
+        elif error_calc in (MSEM.lower(), "msem"):
+            e = self.se * (self.mswd**0.5 if self.mswd > 1 else 1)
         else:
             e = self.std
 
@@ -154,7 +157,6 @@ sem={}
 
 
 class WeightedMeanRegressor(MeanRegressor):
-
     def fast_predict2(self, endog, exog):
         # ws = 1 / self.clean_yserr ** 2
         ws = self._get_weights()
@@ -188,6 +190,7 @@ class WeightedMeanRegressor(MeanRegressor):
     def _get_weights(self):
         e = self.clean_yserr
         if self._check_integrity(e, e):
-            return 1 / e ** 2
+            return 1 / e**2
+
 
 # ============= EOF =============================================

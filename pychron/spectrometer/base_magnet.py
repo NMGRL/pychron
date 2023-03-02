@@ -29,20 +29,20 @@ from pychron.spectrometer.spectrometer_device import SpectrometerDevice
 
 
 class BaseMagnet(SpectrometerDevice, FieldMixin):
-    dac = Property(Float, depends_on='_dac')
+    dac = Property(Float, depends_on="_dac")
     mass = Float(enter_set=True, auto_set=False)
 
     _dac = Float
     dacmin = Float(0.0)
     dacmax = Float(10.0)
 
-    massmin = Property(Float, depends_on='_massmin')
-    massmax = Property(Float, depends_on='_massmax')
+    massmin = Property(Float, depends_on="_massmin")
+    massmax = Property(Float, depends_on="_massmax")
     _massmin = Float(0.0)
     _massmax = Float(200.0)
 
     settling_time = 0.5
-    detector = Instance('pychron.spectrometer.base_detector.BaseDetector')
+    detector = Instance("pychron.spectrometer.base_detector.BaseDetector")
 
     dac_changed = Event
 
@@ -110,9 +110,11 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
         """
 
         dac = self.field_table.map_mass_to_dac(mass, detname)
-        self.debug('{} map mass to dac {} >> {}'.format(detname, mass, dac))
+        self.debug("{} map mass to dac {} >> {}".format(detname, mass, dac))
         if dac is None:
-            self.warning('Could not map mass to dac. Returning current DAC {}'.format(self._dac))
+            self.warning(
+                "Could not map mass to dac. Returning current DAC {}".format(self._dac)
+            )
             dac = self._dac
 
         return dac
@@ -182,60 +184,79 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
             try:
                 yd = yload(p)
             except BaseException as e:
-                self.warning_dialog('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
+                self.warning_dialog(
+                    "AF Demagnetization unavailable. Syntax error in file. Error: {}".format(
+                        e
+                    )
+                )
                 return
 
             if not isinstance(yd, dict):
-                self.warning_dialog('AF Demagnetization unavailable. Syntax error in file')
+                self.warning_dialog(
+                    "AF Demagnetization unavailable. Syntax error in file"
+                )
                 return
 
-            self.use_af_demagnetization = yd.get('enabled', True)
-            self.af_demag_threshold = yd.get('threshold', 1)
+            self.use_af_demagnetization = yd.get("enabled", True)
+            self.af_demag_threshold = yd.get("threshold", 1)
 
     def _do_af_demagnetization(self, target, setfunc):
-
         p = paths.af_demagnetization
         if os.path.isfile(p):
             try:
                 yd = yload(p)
             except BaseException as e:
-                self.warning('AF Demagnetization unavailable. Syntax error in file. Error: {}'.format(e))
+                self.warning(
+                    "AF Demagnetization unavailable. Syntax error in file. Error: {}".format(
+                        e
+                    )
+                )
                 return
 
-            period = yd.get('period', None)
+            period = yd.get("period", None)
             if period is None:
-                frequency = yd.get('frequency')
+                frequency = yd.get("frequency")
                 if frequency is None:
-                    self.warning('AF Demagnetization unavailable. '
-                                 'Need to specify "period" or "frequency" in "{}"'.format(p))
+                    self.warning(
+                        "AF Demagnetization unavailable. "
+                        'Need to specify "period" or "frequency" in "{}"'.format(p)
+                    )
                     return
                 else:
                     period = 1 / float(frequency)
             else:
                 frequency = 1 / float(period)
 
-            duration = yd.get('duration')
+            duration = yd.get("duration")
             if duration is None:
                 duration = 5
-                self.debug('defaulting to duration={}'.format(duration))
+                self.debug("defaulting to duration={}".format(duration))
 
-            start_amplitude = yd.get('start_amplitude')
+            start_amplitude = yd.get("start_amplitude")
             if start_amplitude is None:
-                self.warning('AF Demagnetization unavailable. '
-                             'Need to specify "start_amplitude" in "{}"'.format(p))
+                self.warning(
+                    "AF Demagnetization unavailable. "
+                    'Need to specify "start_amplitude" in "{}"'.format(p)
+                )
                 return
 
             sx = arange(0.5 * period, duration, period)
             slope = start_amplitude / float(duration)
             dacs = slope * sx * sin(frequency * pi * sx)
-            self.info('Doing AF Demagnetization around target={}. '
-                      'duration={}, start_amplitude={}, period={}'.format(target, duration, start_amplitude, period))
+            self.info(
+                "Doing AF Demagnetization around target={}. "
+                "duration={}, start_amplitude={}, period={}".format(
+                    target, duration, start_amplitude, period
+                )
+            )
             for dac in reversed(dacs):
-                self.debug('set af dac raw:{} dac:{}'.format(dac, target + dac))
+                self.debug("set af dac raw:{} dac:{}".format(dac, target + dac))
                 setfunc(target + dac)
                 time.sleep(period)
         else:
-            self.warning('AF Demagnetization unavailable. {} not a valid file'.format(p))
+            self.warning(
+                "AF Demagnetization unavailable. {} not a valid file".format(p)
+            )
 
     def _validate_mass_change(self, cm, m):
         ct = self.confirmation_threshold_mass
@@ -243,19 +264,25 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
         move_ok = True
         if ct and abs(cm - m) > ct:
             move_ok = False
-            self.info('Requested move greater than threshold. Current={}, Request={}, Threshold={}'.format(cm, m, ct))
-            if self.confirmation_dialog('Requested magnet move is greater than threshold.\n'
-                                        'Current Mass={}\n'
-                                        'Requested Mass={}\n'
-                                        'Threshold={}\n'
-                                        'Are you sure you want to continue?'.format(cm, m, ct)):
+            self.info(
+                "Requested move greater than threshold. Current={}, Request={}, Threshold={}".format(
+                    cm, m, ct
+                )
+            )
+            if self.confirmation_dialog(
+                "Requested magnet move is greater than threshold.\n"
+                "Current Mass={}\n"
+                "Requested Mass={}\n"
+                "Threshold={}\n"
+                "Are you sure you want to continue?".format(cm, m, ct)
+            ):
                 move_ok = True
         return move_ok
 
     def _mass_changed(self, old, new):
         if self._suppress_mass_update:
             return
-        self.debug('mass changed old={}, new={}'.format(old, new))
+        self.debug("mass changed old={}, new={}".format(old, new))
         if self._validate_mass_change(old, new):
             self._set_mass(new)
         else:
@@ -263,7 +290,7 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
 
     def _set_mass(self, m):
         if self.detector:
-            self.debug('setting mass {}'.format(m))
+            self.debug("setting mass {}".format(m))
             dac = self.map_mass_to_dac(m, self.detector.name)
             dac = self.spectrometer.correct_dac(self.detector, dac)
             self.dac = dac
@@ -319,24 +346,38 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
     def traits_view(self):
         from traitsui.api import View, Item, VGroup, HGroup, Spring, RangeEditor
 
-        v = View(VGroup(VGroup(Item('dac', editor=RangeEditor(low_name='dacmin',
-                                                              high_name='dacmax',
-                                                              format='%0.5f')),
-
-                               Item('mass',
-                                    editor=RangeEditor(mode='slider', low_name='massmin',
-                                                       high_name='massmax',
-                                                       format='%0.3f')),
-                               HGroup(Spring(springy=False,
-                                             width=48),
-                                      Item('massmin', width=-40), Spring(springy=False,
-                                                                         width=138),
-                                      Item('massmax', width=-55),
-
-                                      show_labels=False),
-                               show_border=True,
-                               label='Control')))
+        v = View(
+            VGroup(
+                VGroup(
+                    Item(
+                        "dac",
+                        editor=RangeEditor(
+                            low_name="dacmin", high_name="dacmax", format="%0.5f"
+                        ),
+                    ),
+                    Item(
+                        "mass",
+                        editor=RangeEditor(
+                            mode="slider",
+                            low_name="massmin",
+                            high_name="massmax",
+                            format="%0.3f",
+                        ),
+                    ),
+                    HGroup(
+                        Spring(springy=False, width=48),
+                        Item("massmin", width=-40),
+                        Spring(springy=False, width=138),
+                        Item("massmax", width=-55),
+                        show_labels=False,
+                    ),
+                    show_border=True,
+                    label="Control",
+                )
+            )
+        )
 
         return v
+
 
 # ============= EOF =============================================

@@ -13,17 +13,46 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from traits.api import Str, Float
+from traits.api import Str, Float, Property, cached_property
 
 from pychron.core.helpers.formatting import floatfmt
 from pychron.pipeline.results.base import BaseResult
 
-GOODNESS_TAGS = ('int_err', 'slope', 'outlier', 'curvature', 'rsquared', 'signal_to_blank')
-GOODNESS_NAMES = ('Intercept Error', 'Slope', 'Outliers', 'Curvature', 'RSquared', 'Blank/Signal %')
-INVERTED_GOODNESS = ('rsquared',)
+GOODNESS_TAGS = (
+    "int_err",
+    "slope",
+    "outlier",
+    "curvature",
+    "rsquared",
+    "signal_to_blank",
+    "signal_to_baseline",
+    "smart_filter",
+)
+GOODNESS_NAMES = (
+    "Intercept Error",
+    "Slope",
+    "Outliers",
+    "Curvature",
+    "RSquared",
+    "Blank/Signal %",
+    "Baseline/Signal %",
+    "Smart Filter",
+)
+INVERTED_GOODNESS = ("rsquared",)
+
+ISO_EVO_RESULT_ARGS = (
+    "intercept_value",
+    "intercept_error",
+    "normalized_error",
+    "slope",
+    "outlier",
+    "curvature",
+    "rsquared",
+)
 
 
 class IsoEvoResult(BaseResult):
+    isotope_obj = None
     n = Str
     fit = Str
     intercept_value = Float
@@ -36,6 +65,8 @@ class IsoEvoResult(BaseResult):
     curvature_goodness = None
     rsquared_goodness = None
     signal_to_blank_goodness = None
+    signal_to_baseline_goodness = None
+    smart_filter_goodness = None
 
     int_err_threshold = None
     slope_threshold = None
@@ -44,19 +75,32 @@ class IsoEvoResult(BaseResult):
     rsquared_threshold = None
     signal_to_blank_threshold = None
     signal_to_baseline_threshold = None
+    signal_to_baseline_percent_threshold = None
+    smart_filter_threshold = None
 
     int_err = None
     slope = None
     outlier = None
     curvature = None
     rsquared = None
+    normalized_err = None
     signal_to_blank = None
+    signal_to_baseline = None
+    smart_filter = None
+
+    hover_text = Property
+
+    @cached_property
+    def _get_hover_text(self):
+        a = "RunID: {}".format(self.record_id)
+        lines = [a]
+        return lines
 
     @property
     def goodness(self):
         good = True
         for g in GOODNESS_TAGS:
-            v = getattr(self, '{}_goodness'.format(g))
+            v = getattr(self, "{}_goodness".format(g))
             if v is not None:
                 good &= v
 
@@ -64,20 +108,19 @@ class IsoEvoResult(BaseResult):
 
     @property
     def tooltip(self):
-
         def f(t, m):
-            g = getattr(self, '{}_goodness'.format(t))
+            g = getattr(self, "{}_goodness".format(t))
             v = getattr(self, t)
-            th = getattr(self, '{}_threshold'.format(t))
+            th = getattr(self, "{}_threshold".format(t))
             if g is not None:
-                comp = '<' if t in INVERTED_GOODNESS else '>'
-                g = 'OK' if g else "Bad {}{}{}".format(floatfmt(v, n=4), comp, th)
+                comp = "<" if t in INVERTED_GOODNESS else ">"
+                g = "OK" if g else "Bad {}{}{}".format(floatfmt(v, n=4), comp, th)
             else:
-                g = 'Not Tested'
+                g = "Not Tested"
 
-            return '{:<25}: {}'.format(m, g)
+            return "{:<25}: {}".format(m, g)
 
-        return '\n'.join([f(g, n) for g, n in zip(GOODNESS_TAGS, GOODNESS_NAMES)])
+        return "\n".join([f(g, n) for g, n in zip(GOODNESS_TAGS, GOODNESS_NAMES)])
 
 
 # ============= EOF =============================================

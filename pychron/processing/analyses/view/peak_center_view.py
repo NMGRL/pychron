@@ -21,59 +21,72 @@ from numpy import array, linspace
 from scipy.interpolate import interpolate
 from traits.api import HasTraits, Instance
 from traitsui.api import View, UItem
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from uncertainties import nominal_value
 
-from pychron.core.stats.peak_detection import calculate_resolution, calculate_resolving_power
+from pychron.core.stats.peak_detection import (
+    calculate_resolution,
+    calculate_resolving_power,
+)
 from pychron.graph.stacked_graph import StackedGraph
 
 
 def calculate_peak_statistics(xs, ys, det, center=None):
-    r, rdata = calculate_resolution(xs, ys, format_str='{:0.1f}', return_all=True)
-    lrp, hrp, lrpdata, hrpdata = calculate_resolving_power(xs, ys, format_str='{:0.1f}', return_all=True)
+    r, rdata = calculate_resolution(xs, ys, format_str="{:0.1f}", return_all=True)
+    lrp, hrp, lrpdata, hrpdata = calculate_resolving_power(
+        xs, ys, format_str="{:0.1f}", return_all=True
+    )
     if center is not None:
-        txt = '{} Center={:0.5f} V'.format(det, center)
+        txt = "{} Center={:0.5f} V".format(det, center)
     else:
-        txt = '{}'.format(det)
+        txt = "{}".format(det)
 
-    txt = '{}\nRes={}, LRP,HRP={}, {}'.format(txt, r, lrp, hrp)
+    txt = "{}\nRes={}, LRP,HRP={}, {}".format(txt, r, lrp, hrp)
     return txt, rdata, lrpdata, hrpdata
 
 
 class PeakCenterView(HasTraits):
     graph = Instance(StackedGraph, ())
-    name = 'PeakCenter'
+    name = "PeakCenter"
 
     def load(self, an):
-
         if an.peak_center_data:
             g = self.graph
             g.plotcontainer.spacing = 10
             g.equi_stack = False
-            p = g.new_plot(xtitle='DAC', ytitle='Intensity', padding_left=70,
-                           padding_right=5,
-                           show_legend='ur',
-                           legend_kw=dict(font='modern 12', line_spacing=1))
+            p = g.new_plot(
+                xtitle="DAC",
+                ytitle="Intensity",
+                padding_left=70,
+                padding_right=5,
+                show_legend="ur",
+                legend_kw=dict(font="modern 12", line_spacing=1),
+            )
 
             g.add_axis_tool(p, p.x_axis)
             g.add_axis_tool(p, p.y_axis)
 
             ref_xs, ref_ys = list(map(array, an.peak_center_data))
             ref_k = an.peak_center_reference_detector
-            s, p = g.new_series(ref_xs, ref_ys, type='scatter')
-            s.index.sort_order = 'ascending'
+            s, p = g.new_series(ref_xs, ref_ys, type="scatter")
+            s.index.sort_order = "ascending"
 
             if an.peak_center_use_interpolation:
                 fxs = linspace(ref_xs.min(), ref_xs.max(), 1000)
-                f = interpolate.interp1d(ref_xs, ref_ys, kind=an.peak_center_interpolation_kind)
+                f = interpolate.interp1d(
+                    ref_xs, ref_ys, kind=an.peak_center_interpolation_kind
+                )
                 ys = f(fxs)
                 xs = fxs
             else:
                 xs, ys = ref_xs, ref_ys
 
             g.new_series(xs, ys, color=s.color)
-            g.set_series_label('*{}({})'.format(ref_k, an.peak_center_reference_isotope))
+            g.set_series_label(
+                "*{}({})".format(ref_k, an.peak_center_reference_isotope)
+            )
 
             # t = CursorTool(s,
             #                drag_button="left",
@@ -88,13 +101,15 @@ class PeakCenterView(HasTraits):
             label_text = None
             if v is not None:
                 g.add_vertical_rule(v)
-                txt, rdata, lrpdata, hrpdata = calculate_peak_statistics(xs, ys, ref_k, v)
+                txt, rdata, lrpdata, hrpdata = calculate_peak_statistics(
+                    xs, ys, ref_k, v
+                )
                 label_text = [txt]
                 # g.new_series(rdata[0], rdata[1], type='scatter', marker_size=4, edge_color='black', color=s.color)
                 # g.new_series(lrpdata[0], lrpdata[1], type='scatter', marker_size=4, edge_color='green')
                 # g.new_series(hrpdata[0], hrpdata[1], type='scatter', marker_size=4, edge_color='blue')
 
-            g.set_y_limits(pad='0.05', plotid=0)
+            g.set_y_limits(pad="0.05", plotid=0)
 
             miR = min(ref_ys)
             maR = max(ref_ys)
@@ -123,10 +138,12 @@ class PeakCenterView(HasTraits):
 
                         ys1 = (ys - mir) * R / r + miR
 
-                        s, p = g.new_series(xs, ys1, type='scatter', plotid=0)
+                        s, p = g.new_series(xs, ys1, type="scatter", plotid=0)
 
                         if an.peak_center_use_interpolation:
-                            f = interpolate.interp1d(xs, ys1, kind=an.peak_center_interpolation_kind)
+                            f = interpolate.interp1d(
+                                xs, ys1, kind=an.peak_center_interpolation_kind
+                            )
                             ys = f(fxs)
                             xs = fxs
                         else:
@@ -153,18 +170,21 @@ class PeakCenterView(HasTraits):
                         # g.set_series_label('{}/{}'.format(ref_k, k), plotid=2)
                         # g.set_y_limits(-200, 200, plotid=2)
             if label_text:
-                g.add_plot_label('\n'.join(label_text),
-                                 x_offset=10,
-                                 y_offset=-10,
-                                 border_visible=True,
-                                 border_width=1,
-                                 bgcolor='white',
-                                 font='modern 10',
-                                 color='black')
+                g.add_plot_label(
+                    "\n".join(label_text),
+                    x_offset=10,
+                    y_offset=-10,
+                    border_visible=True,
+                    border_width=1,
+                    bgcolor="white",
+                    font="modern 10",
+                    color="black",
+                )
             return True
 
     def traits_view(self):
-        v = View(UItem('graph', style='custom'))
+        v = View(UItem("graph", style="custom"))
         return v
+
 
 # ============= EOF =============================================

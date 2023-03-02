@@ -30,7 +30,7 @@ def count_verbose_skip(func):
             func(obj, calc_time=True, *args, **kw)
             return 0
 
-        obj.debug('{} {} {}'.format(fname, args, kw))
+        obj.debug("{} {} {}".format(fname, args, kw))
 
         return func(obj, *args, **kw)
 
@@ -39,7 +39,12 @@ def count_verbose_skip(func):
 
 def skip(func):
     def decorator(obj, *args, **kw):
-        if obj.testing_syntax or obj.is_canceled() or obj.is_truncated() or obj.is_aborted():
+        if (
+            obj.testing_syntax
+            or obj.is_canceled()
+            or obj.is_truncated()
+            or obj.is_aborted()
+        ):
             return
         return func(obj, *args, **kw)
 
@@ -48,34 +53,49 @@ def skip(func):
 
 def check_parameters(func, pargs, pkw):
     fname = func.__name__
-    if fname.startswith('_m_'):
+    if fname.startswith("_m_"):
         fname = fname[3:]
 
     signature = inspect.signature(func)
-    args1 = [p.name for p in signature.parameters.values()
-             if p.kind not in (inspect._VAR_KEYWORD, inspect._VAR_POSITIONAL)]
+    args1 = [
+        p.name
+        for p in signature.parameters.values()
+        if p.kind not in (inspect._VAR_KEYWORD, inspect._VAR_POSITIONAL)
+    ]
 
-    defaults = [p.default for p in signature.parameters.values() if p.default is not inspect._empty]
+    defaults = [
+        p.default
+        for p in signature.parameters.values()
+        if p.default is not inspect._empty
+    ]
     nd = len(defaults)
     min_args = len(args1) - 1 - nd
     an = len(pargs) + len(pkw)
     if an < min_args:
-        raise PyscriptError(fname, 'invalid arguments count for {}, min={}, n={} '
-                                   'args={} kwargs={}'.format(fname, min_args, an, pargs, pkw))
+        raise PyscriptError(
+            fname,
+            "invalid arguments count for {}, min={}, n={} "
+            "args={} kwargs={}".format(fname, min_args, an, pargs, pkw),
+        )
     return fname
 
 
 def verbose_skip(func):
-    if os.environ.get('RTD', 'False') == 'True':
+    if os.environ.get("RTD", "False") == "True":
         return func
     else:
-        def decorator(obj, *args, **kw):
 
+        def decorator(obj, *args, **kw):
             fname = check_parameters(func, args, kw)
-            if obj.testing_syntax or obj.is_canceled() or obj.is_truncated() or obj.is_aborted():
+            if (
+                obj.testing_syntax
+                or obj.is_canceled()
+                or obj.is_truncated()
+                or obj.is_aborted()
+            ):
                 return 0
 
-            obj.debug('func_name={} args={} kw={}'.format(fname, args, kw))
+            obj.debug("func_name={} args={} kw={}".format(fname, args, kw))
 
             return func(obj, *args, **kw)
 
@@ -113,4 +133,6 @@ def makeNamedRegistry(cmd_register):
         return decorator
 
     return named_register
+
+
 # ============= EOF =============================================

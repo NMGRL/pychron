@@ -30,28 +30,38 @@ from traits.api import Any
 
 class VideoUnderlay(AbstractOverlay):
     """
-        video only needs to be an object the implements
-        get_image_data([,size=(w,h)])
-            returns  ndarray
+    video only needs to be an object the implements
+    get_image_data([,size=(w,h)])
+        returns  ndarray
     """
+
     video = Any
     _cached_image = None
 
     def overlay(self, component, gc, *args, **kw):
-        """
-        """
+        """ """
 
         if self.video:
             with gc:
                 img = self.video.get_image_data()
                 if img is not None:
-                    x, y, w, h = component.x, component.y, component.width, component.height
+                    x, y, w, h = (
+                        component.x,
+                        component.y,
+                        component.width,
+                        component.height,
+                    )
                     gc.clip_to_rect(x, y, w, h)
                     gc.translate_ctm(x, y)
                     try:
-                        gc.draw_image(asarray(resize(img, (int(h), int(w)), preserve_range=True),
-                                              dtype=uint8))
-                    except IndexError:
+                        gc.draw_image(
+                            asarray(
+                                resize(img, (int(h), int(w)), preserve_range=True),
+                                dtype=uint8,
+                            )
+                        )
+                    except (IndexError, ValueError):
                         pass
+
 
 # ============= EOF ====================================

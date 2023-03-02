@@ -21,12 +21,15 @@ from traitsui.api import UItem, Item, TableEditor, ObjectColumn, VGroup
 from traitsui.extras.checkbox_column import CheckboxColumn
 
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
+
 # ============= enthought library imports =======================
 from pychron.core.utils import autodoc_helper
 from pychron.paths import paths
 from pychron.persistence_loggable import PersistenceMixin
 from pychron.pipeline.editors.group_age_editor import SubGroupAgeEditor, GroupAgeEditor
-from pychron.pipeline.editors.interpreted_age_table_editor import InterpretedAgeTableEditor
+from pychron.pipeline.editors.interpreted_age_table_editor import (
+    InterpretedAgeTableEditor,
+)
 from pychron.pipeline.nodes.data import BaseDVCNode
 from pychron.pipeline.nodes.group_age import GroupAgeNode
 from pychron.pychron_constants import PLUSMINUS_NSIGMA
@@ -42,7 +45,6 @@ class GroupAnalysisTableNode(GroupAgeNode):
 
 class SubGroupAnalysisTableNode(GroupAgeNode):
     editor_klass = SubGroupAgeEditor
-
 
 
 # class XLSXAnalysisTableNode(AnalysisTableNode):
@@ -63,7 +65,7 @@ class SubGroupAnalysisTableNode(GroupAgeNode):
 #     self.set_groups(state)
 
 
-TableOptions = autodoc_helper('TableOptions', (HasTraits, PersistenceMixin))
+TableOptions = autodoc_helper("TableOptions", (HasTraits, PersistenceMixin))
 
 
 class AnalysisTableOptions(TableOptions):
@@ -84,7 +86,9 @@ class InterpretedAgeTableOptions(TableOptions):
 
     def __init__(self, *args, **kw):
         super(InterpretedAgeTableOptions, self).__init__(*args, **kw)
-        self.persistence_path = os.path.join(paths.hidden_dir, 'interpreted_age_table_options.p')
+        self.persistence_path = os.path.join(
+            paths.hidden_dir, "interpreted_age_table_options.p"
+        )
 
     def _kca_nsigma_default(self):
         return 2
@@ -105,37 +109,47 @@ class InterpretedAgeTableOptions(TableOptions):
         return [int(c.sigfigs) for c in self.columns if c.sigfigs]
 
     def _columns_default(self):
-        cs = (('Status', 'status', ''),
-              ('Name', 'name', ''),
-              ('Sample', 'sample', ''),
-              ('Identifier', 'identifier', ''),
-              ('Material', 'material', ''),
-              ('Irradiation', 'irradiation', ''),
-              ('Age Kind', 'age_kind', ''),
-              ('MSWD', 'mswd', 3),
-              ('K/Ca', 'kca', 3),
-              ('K/Ca Error', 'kca_err', 3),
-              ('N', 'nanalyses', ''),
-              ('Age', 'display_age', 3),
-              ('Age Error', 'display_age_err', 3))
+        cs = (
+            ("Status", "status", ""),
+            ("Name", "name", ""),
+            ("Sample", "sample", ""),
+            ("Identifier", "identifier", ""),
+            ("Material", "material", ""),
+            ("Irradiation", "irradiation", ""),
+            ("Age Kind", "age_kind", ""),
+            ("MSWD", "mswd", 3),
+            ("K/Ca", "kca", 3),
+            ("K/Ca Error", "kca_err", 3),
+            ("N", "nanalyses", ""),
+            ("Age", "display_age", 3),
+            ("Age Error", "display_age_err", 3),
+        )
 
-        cols = [TableColumn(name=attr, key=key, sigfigs=str(sigfigs)) for attr, key, sigfigs in cs]
+        cols = [
+            TableColumn(name=attr, key=key, sigfigs=str(sigfigs))
+            for attr, key, sigfigs in cs
+        ]
         return cols
 
     def traits_view(self):
-        cols = [ObjectColumn(name='name', editable=False),
-                CheckboxColumn(name='display'),
-                ObjectColumn(name='sigfigs')]
+        cols = [
+            ObjectColumn(name="name", editable=False),
+            CheckboxColumn(name="display"),
+            ObjectColumn(name="sigfigs"),
+        ]
 
-        sigma = VGroup(Item('age_nsigma'), Item('kca_nsigma'))
+        sigma = VGroup(Item("age_nsigma"), Item("kca_nsigma"))
 
-        v = okcancel_view(VGroup(UItem('columns', editor=TableEditor(columns=cols, sortable=False)),
-                                 sigma,
-                                 ),
-                          title='Interpreted Age Table Options',
-                          resizable=True,
-                          height=500,
-                          width=300)
+        v = okcancel_view(
+            VGroup(
+                UItem("columns", editor=TableEditor(columns=cols, sortable=False)),
+                sigma,
+            ),
+            title="Interpreted Age Table Options",
+            resizable=True,
+            height=500,
+            width=300,
+        )
         return v
 
 
@@ -186,7 +200,7 @@ class InterpretedAgeTableOptions(TableOptions):
 #
 #
 class InterpretedAgeTableNode(TableNode):
-    name = 'Interpreted Age Table'
+    name = "Interpreted Age Table"
     options_klass = InterpretedAgeTableOptions
 
     def _finish_configure(self):
@@ -204,18 +218,23 @@ class InterpretedAgeTableNode(TableNode):
         ta = editor.tabular_adapter
         cols = [c for c in ta.columns if c[1] in self.options.column_keys]
         if cols:
-
             ta.kca_nsigma = self.options.kca_nsigma
             ta.display_age_nsigma = self.options.age_nsigma
 
             for i, c in enumerate(cols):
-                if c[1] == 'kca_err':
-                    cols[i] = (PLUSMINUS_NSIGMA.format(self.options.kca_nsigma), 'kca_err')
-                elif c[1] == 'display_age_err':
-                    cols[i] = (PLUSMINUS_NSIGMA.format(self.options.age_nsigma), 'display_age_err')
+                if c[1] == "kca_err":
+                    cols[i] = (
+                        PLUSMINUS_NSIGMA.format(self.options.kca_nsigma),
+                        "kca_err",
+                    )
+                elif c[1] == "display_age_err":
+                    cols[i] = (
+                        PLUSMINUS_NSIGMA.format(self.options.age_nsigma),
+                        "display_age_err",
+                    )
 
             for c, si in zip(cols, self.options.column_sigfigs):
-                attr = '{}_sigfigs'.format(c[1])
+                attr = "{}_sigfigs".format(c[1])
                 if hasattr(ta, attr):
                     setattr(ta, attr, si)
 
@@ -223,5 +242,6 @@ class InterpretedAgeTableNode(TableNode):
 
         editor.interpreted_ages = state.interpreted_ages
         state.editors.append(editor)
+
 
 # ============= EOF =============================================

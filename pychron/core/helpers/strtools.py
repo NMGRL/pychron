@@ -14,46 +14,51 @@
 # limitations under the License.
 # ===============================================================================
 
+
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+def ps(t):
+    return "{}s".format(t)
+
 
 def camel_case(name, delimiters=None):
     if delimiters is None:
-        delimiters = ('_', '/', ' ')
+        delimiters = ("_", "/", " ")
 
-    name = '{}{}'.format(name[0].upper(), name[1:])
+    name = "{}{}".format(name[0].upper(), name[1:])
     for d in delimiters:
         if d in name:
-            name = ''.join(a.title() for a in name.split(d))
+            name = "".join(a.title() for a in name.split(d))
 
     return name
 
 
-def to_list(a, delimiter=',', mapping=None):
-    l = a.split(delimiter)
-    if mapping:
-        l = [mapping[li] for li in l]
+def to_list(a, delimiter=",", mapping=None):
+    if a is not None:
+        la = a.split(delimiter)
+        if mapping:
+            la = [mapping[li] for li in la]
 
-    return l
+        return la
 
 
 def to_terminator(t):
-    if t=='\n' or '\\n' or t=='chr(10)':
-        t=chr(10)
-    elif t=='\r' or t=='\\r' or t=='char(13)':
-        t=chr(13)
+    if t == "\n" or "\\n" or t == "chr(10)":
+        t = chr(10)
+    elif t == "\r" or t == "\\r" or t == "char(13)":
+        t = chr(13)
 
     return t
 
 
 def to_bool(a):
     """
-        a: a str or bool object
+    a: a str or bool object
 
-        if a is string
-            'true', 't', 'yes', 'y', '1', 'ok' ==> True
-            'false', 'f', 'no', 'n', '0' ==> False
+    if a is string
+        'true', 't', 'yes', 'y', '1', 'ok' ==> True
+        'false', 'f', 'no', 'n', '0' ==> False
     """
 
     if isinstance(a, bool):
@@ -63,8 +68,8 @@ def to_bool(a):
     elif isinstance(a, (int, float)):
         return bool(a)
 
-    tks = ['true', 't', 'yes', 'y', '1', 'ok', 'open']
-    fks = ['false', 'f', 'no', 'n', '0', 'closed']
+    tks = ["true", "t", "yes", "y", "1", "ok", "open"]
+    fks = ["false", "f", "no", "n", "0", "closed"]
 
     # if a is not None:
     #     a = str(a).strip().lower()
@@ -86,17 +91,17 @@ def csv_to_ints(*args, **kw):
     return csv_to_cast(int, *args, **kw)
 
 
-def csv_to_cast(cast, a, delimiter=','):
+def csv_to_cast(cast, a, delimiter=","):
     return [cast(ai) for ai in a.split(delimiter)]
 
 
-def to_csv_str(iterable, delimiter=','):
+def to_csv_str(iterable, delimiter=","):
     return delimiter.join([str(v) for v in iterable])
 
 
 def ratio(xs, ys=None, invert=False):
     def r(a, b):
-        return '{}/{}'.format(a, b)
+        return "{}/{}".format(a, b)
 
     if ys is None:
         ys = xs
@@ -137,7 +142,12 @@ def to_int(i):
         pass
     return i
 
-if __name__ == '__main__':
-    for ret in ratio('abc'):
+
+def streq(a, b):
+    return a and b and a.casefold() == b.casefold()
+
+
+if __name__ == "__main__":
+    for ret in ratio("abc"):
         print(ret)
 # ============= EOF =============================================

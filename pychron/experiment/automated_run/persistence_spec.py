@@ -16,8 +16,22 @@
 
 # ============= enthought library imports =======================
 
-from traits.api import HasTraits, Str, Int, Bool, Any, Float, \
-    Dict, Instance, List, Date, Time, Long, Bytes, Tuple
+from traits.api import (
+    HasTraits,
+    Str,
+    Int,
+    Bool,
+    Any,
+    Float,
+    Dict,
+    Instance,
+    List,
+    Date,
+    Time,
+    Long,
+    Bytes,
+    Tuple,
+)
 
 
 # ============= standard library imports ========================
@@ -25,9 +39,9 @@ from traits.api import HasTraits, Str, Int, Bool, Any, Float, \
 
 
 class PersistenceSpec(HasTraits):
-    run_spec = Instance('pychron.experiment.automated_run.spec.AutomatedRunSpec')
-    monitor = Instance('pychron.monitors.automated_run_monitor.AutomatedRunMonitor')
-    isotope_group = Instance('pychron.processing.isotope_group.IsotopeGroup')
+    run_spec = Instance("pychron.experiment.automated_run.spec.AutomatedRunSpec")
+    monitor = Instance("pychron.monitors.automated_run_monitor.AutomatedRunMonitor")
+    isotope_group = Instance("pychron.processing.isotope_group.IsotopeGroup")
 
     auto_save_detector_ic = Bool
     signal_fods = Dict
@@ -54,7 +68,7 @@ class PersistenceSpec(HasTraits):
 
     hops_name = Str
     hops_blob = Str
-    
+
     positions = List  # list of position names
     extraction_positions = List  # list of x,y or x,y,z tuples
 
@@ -84,7 +98,7 @@ class PersistenceSpec(HasTraits):
     whiff_result = None
     timestamp = None
     use_repository_association = True
-    tag = 'ok'
+    tag = "ok"
     peak_center = None
     intensity_scalar = 1.0
 
@@ -92,6 +106,7 @@ class PersistenceSpec(HasTraits):
     response_blob = Bytes
     output_blob = Bytes
     setpoint_blob = Bytes
+    cryo_response_blob = Bytes
     snapshots = List
     videos = List
     extraction_context = Dict
@@ -106,9 +121,12 @@ class PersistenceSpec(HasTraits):
     lab_humiditys = List
     lab_pneumatics = List
 
+    pipette_counts = List
+    time_zero = Float
     # lithographic_unit = Str
     # lat_long = Str
     # rock_type = Str
     # reference = Str
+
 
 # ============= EOF =============================================

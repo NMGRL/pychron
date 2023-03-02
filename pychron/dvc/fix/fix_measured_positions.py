@@ -20,46 +20,75 @@ DRY = False
 
 
 def get_analysis(dvc, runid):
-    args = runid.split('-')
-    idn, aliquot = '-'.join(args[:-1]), args[-1]
+    args = runid.split("-")
+    idn, aliquot = "-".join(args[:-1]), args[-1]
     return dvc.get_analysis_runid(idn, aliquot)
 
 
 def fix_load(dvc, sess, load, ms):
-    start_dban = get_analysis(dvc, load['start'])
-    end_dban = get_analysis(dvc, load['end'])
+    start_dban = get_analysis(dvc, load["start"])
+    end_dban = get_analysis(dvc, load["end"])
 
     # add the new load
-    load_name = load['load']
+    load_name = load["load"]
     if not DRY:
-        dvc.add_load(load_name, load['holder'], 'NMGRL')
+        dvc.add_load(load_name, load["holder"], "NMGRL")
 
     # get all analyses between start and end inclusive
     q = sess.query(AnalysisTbl)
 
-    print('starttime', load['start'], start_dban.timestamp)
-    print('endtime', load['end'], end_dban.timestamp)
+    print("starttime", load["start"], start_dban.timestamp)
+    print("endtime", load["end"], end_dban.timestamp)
 
     q = q.filter(AnalysisTbl.timestamp >= start_dban.timestamp)
     q = q.filter(AnalysisTbl.timestamp <= end_dban.timestamp)
     q = q.filter(AnalysisTbl.mass_spectrometer == ms)
-    print('n analyses', len(q.all()))
+    print("n analyses", len(q.all()))
     for i, a in enumerate(q.all()):
-        print('added measured position for {},{},{}'.format(load_name, i, a.id, a.timestamp))
+        print(
+            "added measured position for {},{},{}".format(
+                load_name, i, a.id, a.timestamp
+            )
+        )
         # add new measured position
         if not DRY:
             dvc.add_measured_position(a, load=load_name)
 
 
-
 def main():
-    ms = 'jan'
-    loads = ({'load': 'C0185', 'start': 'ba-02-J-1507', 'end': 'a-02-J-3080', 'holder': '221-hole'},
-             {'load': 'C0186', 'start': 'ba-02-J-1509', 'end': 'c-03-J-2536', 'holder': '221-hole'},
-             {'load': 'C0187', 'start': 'bu-FC-J-13279', 'end': 'a-02-J-3095', 'holder': '221-hole'},
-             {'load': 'C0188', 'start': 'ba-03-J-05', 'end': 'c-03-J-2542', 'holder': '221-hole'},
-             {'load': 'C0189', 'start': 'bu-FC-J-13289', 'end': 'c-03-J-2547', 'holder': '221-hole'},
-             )
+    ms = "jan"
+    loads = (
+        {
+            "load": "C0185",
+            "start": "ba-02-J-1507",
+            "end": "a-02-J-3080",
+            "holder": "221-hole",
+        },
+        {
+            "load": "C0186",
+            "start": "ba-02-J-1509",
+            "end": "c-03-J-2536",
+            "holder": "221-hole",
+        },
+        {
+            "load": "C0187",
+            "start": "bu-FC-J-13279",
+            "end": "a-02-J-3095",
+            "holder": "221-hole",
+        },
+        {
+            "load": "C0188",
+            "start": "ba-03-J-05",
+            "end": "c-03-J-2542",
+            "holder": "221-hole",
+        },
+        {
+            "load": "C0189",
+            "start": "bu-FC-J-13289",
+            "end": "c-03-J-2547",
+            "holder": "221-hole",
+        },
+    )
 
     dvc = get_dvc()
     dvc.connect()
@@ -69,6 +98,6 @@ def main():
             fix_load(dvc, sess, l, ms)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 # ============= EOF =============================================

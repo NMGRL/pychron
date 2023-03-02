@@ -26,8 +26,10 @@ from traitsui.api import View, UItem, HGroup, VGroup
 # ============= standard library imports ========================
 import time
 from numpy import zeros, ogrid
+
 # ============= local library imports  ==========================
 from pychron.graph.graph import Graph
+
 # from pychron.lasers.pattern.dragonfly_pattern import dragonfly, DragonFlyPattern
 from pychron.lasers.pattern.pattern_executor import CurrentPointOverlay
 from pychron.mv.lumen_detector import LumenDetector
@@ -109,7 +111,7 @@ class SeekTester(HasTraits):
         while self.alive:
             x, y = self._get_xy(cnt)
             frm = self._frame(x, y)
-            p.data.set_data('imagedata', frm)
+            p.data.set_data("imagedata", frm)
             lm.stage_manager.frame = frm
             time.sleep(0.25)
             cnt += 1
@@ -126,7 +128,7 @@ class SeekTester(HasTraits):
         return x, y
 
     def _frame(self, ox, oy):
-        cx, cy = self.width / 2., self.height / 2.
+        cx, cy = self.width / 2.0, self.height / 2.0
         cx += ox
         cy += oy
 
@@ -135,18 +137,23 @@ class SeekTester(HasTraits):
         src = zeros((int(self.width * self.pxpermm), int(self.height * self.pxpermm)))
         radius = int(self.radius * self.pxpermm)
         y, x = ogrid[-radius:radius, -radius:radius]
-        index = x ** 2 + y ** 2 <= radius ** 2
+        index = x**2 + y**2 <= radius**2
 
-        src[cy - radius:cy + radius, cx - radius:cx + radius][index] = 255
+        src[cy - radius : cy + radius, cx - radius : cx + radius][index] = 255
         return src
 
     def traits_view(self):
-        src = HGroup(UItem('src_graph', style='custom'))
-        bgrp = HGroup(UItem('start_button'), UItem('stop_button', enabled_when='alive'))
-        pgrp = VGroup(UItem('pos_graph', style='custom'))
-        v = View(VGroup(bgrp, src,
-                        # pgrp
-                        ), resizable=True)
+        src = HGroup(UItem("src_graph", style="custom"))
+        bgrp = HGroup(UItem("start_button"), UItem("stop_button", enabled_when="alive"))
+        pgrp = VGroup(UItem("pos_graph", style="custom"))
+        v = View(
+            VGroup(
+                bgrp,
+                src,
+                # pgrp
+            ),
+            resizable=True,
+        )
         return v
 
     def _start_button_fired(self):
@@ -158,14 +165,16 @@ class SeekTester(HasTraits):
     def _src_graph_default(self):
         g = Graph()
         p = g.new_plot(padding_top=10)
-        p.data.set_data('imagedata', zeros((self.height * self.pxpermm,
-                                            self.width * self.pxpermm)))
-        p.img_plot('imagedata', colormap=jet)
+        p.data.set_data(
+            "imagedata", zeros((self.height * self.pxpermm, self.width * self.pxpermm))
+        )
+        p.img_plot("imagedata", colormap=jet)
 
         p = g.new_plot(padding_bottom=10)
-        p.data.set_data('imagedata', zeros((self.height * self.pxpermm,
-                                            self.width * self.pxpermm)))
-        p.img_plot('imagedata', colormap=jet)
+        p.data.set_data(
+            "imagedata", zeros((self.height * self.pxpermm, self.width * self.pxpermm))
+        )
+        p.img_plot("imagedata", colormap=jet)
 
         return g
 
@@ -179,7 +188,7 @@ class SeekTester(HasTraits):
         return g
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     s = SeekTester()
     s.configure_traits()
 # ============= EOF =============================================

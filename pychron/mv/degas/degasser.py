@@ -24,6 +24,7 @@ from threading import Event, Thread
 import yaml
 from chaco.plot_containers import HPlotContainer
 from enable.component_editor import ComponentEditor
+
 # ============= standard library imports ========================
 from numpy import uint8, zeros, random, uint16
 from skimage.color import gray2rgb
@@ -78,7 +79,7 @@ class Degasser(Loggable):
     _info = None
 
     def stop(self):
-        self.debug('stop')
+        self.debug("stop")
         self.dump()
         if self._lum_evt:
             self._lum_evt.set()
@@ -88,27 +89,27 @@ class Degasser(Loggable):
 
     @property
     def persistence_path(self):
-        return os.path.join(paths.setup_dir, 'pid_degasser.yaml')
+        return os.path.join(paths.setup_dir, "pid_degasser.yaml")
 
     def load(self):
-        self.debug('loading')
+        self.debug("loading")
         self.pid = PID()
         p = self.persistence_path
         if not os.path.isfile(p):
-            self.warning('No PID degasser file located at {}'.format(p))
+            self.warning("No PID degasser file located at {}".format(p))
             return
 
         jd = yload(p)
         if jd:
-            self.threshold = jd['threshold']
-            self.pid.load_from_obj(jd['pid'])
+            self.threshold = jd["threshold"]
+            self.pid.load_from_obj(jd["pid"])
 
     def dump(self):
-        self.debug('dump')
+        self.debug("dump")
         obj = self.pid.get_dump_obj()
-        jd = {'pid': obj, 'threshold': self.threshold}
-        with open(self.persistence_path, 'wb') as wfile:
-            yaml.dump(jd, wfile, encoding='utf-8')
+        jd = {"pid": obj, "threshold": self.threshold}
+        with open(self.persistence_path, "wb") as wfile:
+            yaml.dump(jd, wfile, encoding="utf-8")
 
     def degas(self, lumens=None, autostart=True):
         self.load()
@@ -133,7 +134,7 @@ class Degasser(Loggable):
         self._lum_thread.start()
 
     def _edit_pid_button_fired(self):
-        info = self.pid.edit_traits(kind='livemodal')
+        info = self.pid.edit_traits(kind="livemodal")
         if info.result:
             self.dump()
 
@@ -144,7 +145,7 @@ class Degasser(Loggable):
         if self._testing:
             self.stop()
             self.laser_manager.disable_laser()
-            self.stream_graph.export_data(path='/Users/argonlab3/Desktop/degas.csv')
+            self.stream_graph.export_data(path="/Users/argonlab3/Desktop/degas.csv")
         else:
             self.laser_manager.enable_laser()
             self.start()
@@ -157,13 +158,13 @@ class Degasser(Loggable):
         g.clear()
         g.new_plot(padding_left=70, padding_right=10)
         g.new_series(plotid=0)
-        g.set_y_title('Lumens', plotid=0)
+        g.set_y_title("Lumens", plotid=0)
         g.new_plot(padding_left=70, padding_right=10)
         g.new_series(plotid=1)
-        g.set_y_title('Error', plotid=1)
+        g.set_y_title("Error", plotid=1)
         g.new_plot(padding_left=70, padding_right=10)
         g.new_series(plotid=2)
-        g.set_y_title('Output', plotid=2)
+        g.set_y_title("Output", plotid=2)
 
         g = self.img_graph
         g.clear()
@@ -174,14 +175,13 @@ class Degasser(Loggable):
         imgplot.x_grid.visible = False
         imgplot.y_grid.visible = False
 
-        imgplot.data.set_data('imagedata', zeros((150, 150, 3), dtype=uint8))
-        imgplot.img_plot('imagedata', origin='top left')
+        imgplot.data.set_data("imagedata", zeros((150, 150, 3), dtype=uint8))
+        imgplot.img_plot("imagedata", origin="top left")
 
         self.plot_container.add(self.stream_graph.plotcontainer)
         self.plot_container.add(self.img_graph.plotcontainer)
 
     def _degas(self, lumens, pid):
-
         self.lumens = lumens
         g = self.stream_graph
         img = self.img_graph.plots[0]
@@ -193,14 +193,14 @@ class Degasser(Loggable):
             g.record(o, plotid=2)
 
             if src.dtype == uint16:
-                src = src.astype('uint32')
+                src = src.astype("uint32")
                 src = src / 4095 * 255
-                src = src.astype('uint8')
+                src = src.astype("uint8")
 
             imgdata = gray2rgb(src)
             ld.draw_targets(imgdata, targets)
 
-            img.data.set_data('imagedata', imgdata)
+            img.data.set_data("imagedata", imgdata)
 
         evt = self._lum_evt
         set_laser_power = self.laser_manager.set_laser_power_hook
@@ -223,7 +223,7 @@ class Degasser(Loggable):
             invoke_in_main_thread(update, current, err, out, src, targets)
 
             if abs(prev - out) > 0.02:
-                self.debug('set power output={}'.format(out))
+                self.debug("set power output={}".format(out))
                 set_laser_power(out)
                 prev = out
 
@@ -237,14 +237,18 @@ class Degasser(Loggable):
                 evt.wait(dt)
 
     def traits_view(self):
-        v = View(VGroup(Item('pid', style='custom'),
-                        Item('threshold', label='T'),
-                        Item('test'),
-                        UItem('plot_container', style='custom', editor=ComponentEditor())))
+        v = View(
+            VGroup(
+                Item("pid", style="custom"),
+                Item("threshold", label="T"),
+                Item("test"),
+                UItem("plot_container", style="custom", editor=ComponentEditor()),
+            )
+        )
         return v
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     d = Degasser(laser_manager=LM(30))
     d.configure_traits()
     # ============= EOF =============================================

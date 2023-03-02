@@ -21,13 +21,21 @@ from pychron.core.helpers.traitsui_shortcuts import okcancel_view
 from pychron.experiment.script.script import Script
 from pychron.loggable import Loggable
 
-ATTRS = ('pattern', 'duration', 'cleanup', 'extract_value', 'beam_diameter', 'ramp_duration')
+ATTRS = (
+    "pattern",
+    "duration",
+    "cleanup",
+    "extract_value",
+    "beam_diameter",
+    "ramp_duration",
+)
 
 
 class BulkRunFixer(Loggable):
     """
     used by ExperimentEditor when it validates its queue before saving
     """
+
     extraction_script = Instance(Script, ())
     measurement_script = Instance(Script, ())
     post_measurement_script = Instance(Script, ())
@@ -55,12 +63,12 @@ class BulkRunFixer(Loggable):
     title = Str
 
     def fix(self, runs):
-        if not self.confirmation_dialog('Would you like to run the Bulk Run Fixer?'):
+        if not self.confirmation_dialog("Would you like to run the Bulk Run Fixer?"):
             return
 
-        for atype, ris in groupby_key(runs, 'analysis_type'):
+        for atype, ris in groupby_key(runs, "analysis_type"):
             ris = list(ris)
-            self.unknown_enabled = atype == 'unknown'
+            self.unknown_enabled = atype == "unknown"
             es, ms = zip(*[(r.extraction_script, r.measurement_script) for r in ris])
             es, ms = list(set(es)), list(set(ms))
             # es,ms = zip(*list({r.extraction_script for r in ris}))
@@ -73,13 +81,12 @@ class BulkRunFixer(Loggable):
 
             if self.unknown_enabled:
                 for attr in ATTRS:
-
                     ats = list({getattr(r, attr) for r in ris})
                     if len(ats) > 1:
                         setattr(self, attr, ats[0])
-                        setattr(self, 'enabled_{}'.format(attr), True)
+                        setattr(self, "enabled_{}".format(attr), True)
                     else:
-                        setattr(self, 'enabled_{}'.format(attr), False)
+                        setattr(self, "enabled_{}".format(attr), False)
 
             self.title = atype.capitalize()
             info = self.edit_traits()
@@ -90,72 +97,85 @@ class BulkRunFixer(Loggable):
 
     def _apply(self, ris):
         for r in ris:
-            for tag in ('extraction', 'measurement'):
-                tag = '{}_script'.format(tag)
-                if getattr(self, '{}_enabled'.format(tag)):
+            for tag in ("extraction", "measurement"):
+                tag = "{}_script".format(tag)
+                if getattr(self, "{}_enabled".format(tag)):
                     setattr(r, tag, getattr(self, tag))
 
             if self.unknown_enabled:
                 for attr in ATTRS:
-                    if attr == 'extract_value' and r.aliquot:
+                    if attr == "extract_value" and r.aliquot:
                         continue
 
-                    if getattr('enabled_{}'.format(attr)):
+                    if getattr("enabled_{}".format(attr)):
                         setattr(r, attr, getattr(self, attr))
 
     def traits_view(self):
-        script_grp = VGroup(HGroup(UItem('extraction_script_enabled', label='Enabled'),
-                                   UItem('extraction_script', style='custom',
-                                         enabled_when='extraction_script_enabled')),
-
-                            HGroup(UItem('measurement_script_enabled', label='Enabled'),
-                                   UItem('measurement_script', style='custom',
-                                         enabled_when='measurement_script_enabled')),
-                            # UItem('post_equilibration_script', style='custom'),
-                            # UItem('post_measurement_script', style='custom')
-                            label='Script',
-                            show_border=True
-                            )
-        unk_grp = VGroup(HGroup(UItem('enabled_pattern'), Item('pattern', editor=EnumEditor(name='patterns'))),
-                         HGroup(UItem('enabled_extract_value'), Item('extract_value', label='Extract')),
-                         HGroup(UItem('enabled_duration'), Item('duration')),
-                         HGroup(UItem('enabled_cleanup'), Item('cleanup')),
-                         HGroup(UItem('enabled_beam_diameter'), Item('beam_diameter')),
-                         HGroup(UItem('enabled_ramp_duration'), Item('ramp_duration')),
-                         visible_when='unknown_enabled',
-                         show_border=True,
-                         label='Unknown')
-        v = okcancel_view(VGroup(unk_grp,
-                                 script_grp),
-                          title=self.title)
+        script_grp = VGroup(
+            HGroup(
+                UItem("extraction_script_enabled", label="Enabled"),
+                UItem(
+                    "extraction_script",
+                    style="custom",
+                    enabled_when="extraction_script_enabled",
+                ),
+            ),
+            HGroup(
+                UItem("measurement_script_enabled", label="Enabled"),
+                UItem(
+                    "measurement_script",
+                    style="custom",
+                    enabled_when="measurement_script_enabled",
+                ),
+            ),
+            # UItem('post_equilibration_script', style='custom'),
+            # UItem('post_measurement_script', style='custom')
+            label="Script",
+            show_border=True,
+        )
+        unk_grp = VGroup(
+            HGroup(
+                UItem("enabled_pattern"),
+                Item("pattern", editor=EnumEditor(name="patterns")),
+            ),
+            HGroup(
+                UItem("enabled_extract_value"), Item("extract_value", label="Extract")
+            ),
+            HGroup(UItem("enabled_duration"), Item("duration")),
+            HGroup(UItem("enabled_cleanup"), Item("cleanup")),
+            HGroup(UItem("enabled_beam_diameter"), Item("beam_diameter")),
+            HGroup(UItem("enabled_ramp_duration"), Item("ramp_duration")),
+            visible_when="unknown_enabled",
+            show_border=True,
+            label="Unknown",
+        )
+        v = okcancel_view(VGroup(unk_grp, script_grp), title=self.title)
         return v
 
     def _measurement_script_default(self):
-        s = Script(label='measurement')
+        s = Script(label="measurement")
         return s
 
     def _extraction_script_default(self):
-        s = Script(label='extraction')
+        s = Script(label="extraction")
         return s
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from pychron.paths import paths
 
-    paths.build('~/PychronDev')
+    paths.build("~/PychronDev")
     af = BulkRunFixer()
 
-
     class Run:
-        extraction_script = 'Foo'
-        measurement_script = 'Bar'
-        analysis_type = 'unknown'
-
+        extraction_script = "Foo"
+        measurement_script = "Bar"
+        analysis_type = "unknown"
 
     a = Run()
-    a.analysis_type = 'air'
+    a.analysis_type = "air"
     b = Run()
-    b.analysis_type = 'blank'
+    b.analysis_type = "blank"
     c = Run()
     runs = [a, b, c]
     af.auto_fix(runs)

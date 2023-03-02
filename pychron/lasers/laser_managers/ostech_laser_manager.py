@@ -27,15 +27,17 @@ class OsTechLaserManager(LaserManager):
     laser_controller = Instance(OsTechLaserController)
 
     def _laser_controller_default(self):
-        return OsTechLaserController(name='laser_controller',
-                                     configuration_name='laser_controller',
-                                     configuration_dir_name=self.configuration_dir_name)
+        return OsTechLaserController(
+            name="laser_controller",
+            configuration_name="laser_controller",
+            configuration_dir_name=self.configuration_dir_name,
+        )
 
 
 class OsTechDiodeManager(OsTechLaserManager, WatlowMixin, PyrometerMixin):
-    stage_manager_id = 'ostech.diode'
-    configuration_dir_name = 'ostech_diode'
-    stage_controller_klass = 'Zaber'
+    stage_manager_id = "ostech.diode"
+    configuration_dir_name = "ostech_diode"
+    stage_controller_klass = "Zaber"
     fiber_light = Instance(FiberLight)
     pyrometer_klass = MicroEpsilonPyrometer
 
@@ -58,15 +60,22 @@ class OsTechDiodeManager(OsTechLaserManager, WatlowMixin, PyrometerMixin):
         return super(OsTechDiodeManager, self)._disable_hook()
 
     def get_additional_controls(self):
-        gs = [VGroup(UCustom('temperature_controller',
-                             editor=InstanceEditor(view='control_view')),
-                     label='Watlow'),
-              VGroup(UCustom('pyrometer', style='custom'),
-                     label='Pyrometer'),
-              VGroup(UCustom('fiber_light'), label='FiberLight')]
+        gs = [
+            VGroup(
+                UCustom(
+                    "temperature_controller", editor=InstanceEditor(view="control_view")
+                ),
+                label="Watlow",
+            ),
+            VGroup(UCustom("pyrometer", style="custom"), label="Pyrometer"),
+            VGroup(UCustom("fiber_light"), label="FiberLight"),
+        ]
         return gs
 
     def _fiber_light_default(self):
-        return FiberLight(name='fiber_light',
-                          configuration_dir_name=self.configuration_dir_name)
+        return FiberLight(
+            name="fiber_light", configuration_dir_name=self.configuration_dir_name
+        )
+
+
 # ============= EOF =============================================

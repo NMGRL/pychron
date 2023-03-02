@@ -29,20 +29,27 @@ from pychron.envisage.initialization.initialization_parser import Initialization
 from pychron.envisage.tasks.base_task_plugin import BaseTaskPlugin
 from pychron.envisage.tasks.list_actions import PatternAction, ShowMotionConfigureAction
 from pychron.lasers.laser_managers.ilaser_manager import ILaserManager
-from pychron.lasers.tasks.laser_actions import OpenPowerMapAction, OpenPatternAction, NewPatternAction, \
-    LaserScriptExecuteAction
+from pychron.lasers.tasks.laser_actions import (
+    OpenPowerMapAction,
+    OpenPatternAction,
+    NewPatternAction,
+    LaserScriptExecuteAction,
+)
+
 # from pychron.lasers.tasks.laser_calibration_task import LaserCalibrationTask
 from pychron.paths import paths
 
 
 def pattern_action(name, application, manager_name, lase=False):
     def factory():
-        a = PatternAction(id='pattern.action.{}'.format(name),
-                          name=name.capitalize(),
-                          application=application,
-                          manager_name=manager_name,
-                          pattern_path=os.path.join(paths.pattern_dir, name),
-                          lase=lase)
+        a = PatternAction(
+            id="pattern.action.{}".format(name),
+            name=name.capitalize(),
+            application=application,
+            manager_name=manager_name,
+            pattern_path=os.path.join(paths.pattern_dir, name),
+            lase=lase,
+        )
         return a
 
     return factory
@@ -54,20 +61,23 @@ class CoreClientLaserPlugin(BaseTaskPlugin):
 
 class CoreLaserPlugin(BaseTaskPlugin):
     def _task_extensions_default(self):
-        actions = [SchemaAddition(factory=OpenPowerMapAction,
-                                  path='MenuBar/file.menu/Open'),
-                   SchemaAddition(id='Open Pattern',
-                                  factory=OpenPatternAction,
-                                  path='MenuBar/file.menu/Open'),
-                   SchemaAddition(id='New Pattern',
-                                  factory=NewPatternAction,
-                                  path='MenuBar/file.menu/New')]
+        actions = [
+            SchemaAddition(factory=OpenPowerMapAction, path="MenuBar/file.menu/Open"),
+            SchemaAddition(
+                id="Open Pattern",
+                factory=OpenPatternAction,
+                path="MenuBar/file.menu/Open",
+            ),
+            SchemaAddition(
+                id="New Pattern", factory=NewPatternAction, path="MenuBar/file.menu/New"
+            ),
+        ]
 
         return [TaskExtension(actions=actions)]
 
 
 class BaseLaserPlugin(BaseTaskPlugin):
-    managers = List(contributes_to='pychron.hardware.managers')
+    managers = List(contributes_to="pychron.hardware.managers")
     klass = None
     mode = None
 
@@ -75,39 +85,44 @@ class BaseLaserPlugin(BaseTaskPlugin):
     accelerator = None
 
     def _tasks_default(self):
-        return [TaskFactory(id=self.id,
-                            task_group='hardware',
-                            factory=self._task_factory,
-                            name=self.task_name,
-                            image='laser',
-                            accelerator=self.accelerator),
-                ]
+        return [
+            TaskFactory(
+                id=self.id,
+                task_group="hardware",
+                factory=self._task_factory,
+                name=self.task_name,
+                image="laser",
+                accelerator=self.accelerator,
+            ),
+        ]
 
     def test_communication(self):
         man = self._get_manager()
         return man.test_connection()
 
     def _service_offers_default(self):
-        """
-        """
+        """ """
         if self.klass is None:
             raise NotImplementedError
 
-        so = self.service_offer_factory(protocol=ILaserManager, factory=self._manager_factory)
+        so = self.service_offer_factory(
+            protocol=ILaserManager, factory=self._manager_factory
+        )
         return [so]
 
     def _manager_factory(self):
-        """
-        """
+        """ """
 
         ip = InitializationParser()
-        plugin = ip.get_plugin(self.klass[1].replace('Manager', ''), category='hardware')
-        mode = ip.get_parameter(plugin, 'mode')
+        plugin = ip.get_plugin(
+            self.klass[1].replace("Manager", ""), category="hardware"
+        )
+        mode = ip.get_parameter(plugin, "mode")
         self.mode = mode
-        klass = ip.get_parameter(plugin, 'klass')
-        if klass is None and mode == 'client':
-            klass = 'PychronLaserManager'
-            pkg = 'pychron.lasers.laser_managers.pychron_laser_manager'
+        klass = ip.get_parameter(plugin, "klass")
+        if klass is None and mode == "client":
+            klass = "PychronLaserManager"
+            pkg = "pychron.lasers.laser_managers.pychron_laser_manager"
             factory = __import__(pkg, fromlist=[klass])
             klassfactory = getattr(factory, klass)
         else:
@@ -115,16 +130,21 @@ class BaseLaserPlugin(BaseTaskPlugin):
             klassfactory = getattr(factory, self.klass[1])
 
         params = dict(name=self.name)
-        if mode == 'client':
+        if mode == "client":
             try:
-                tag = ip.get_parameter(plugin, 'communications', element=True)
-                for attr in ['host', 'port', 'kind', 'timeout',
-                             'baudrate',
-                             'parity',
-                             'stopbits',
-                             'message_frame',
-                             ('write_terminator', to_terminator),
-                             ('use_end', to_bool)]:
+                tag = ip.get_parameter(plugin, "communications", element=True)
+                for attr in [
+                    "host",
+                    "port",
+                    "kind",
+                    "timeout",
+                    "baudrate",
+                    "parity",
+                    "stopbits",
+                    "message_frame",
+                    ("write_terminator", to_terminator),
+                    ("use_end", to_bool),
+                ]:
                     func = None
                     if isinstance(attr, tuple):
                         attr, func = attr
@@ -138,11 +158,11 @@ class BaseLaserPlugin(BaseTaskPlugin):
 
                             params[attr] = v
                         else:
-                            self.debug('No communications attribute {}'.format(attr))
+                            self.debug("No communications attribute {}".format(attr))
                     except Exception as e:
-                        print('client comms fail a', attr, e)
+                        print("client comms fail a", attr, e)
             except Exception as e:
-                print('client comms fail b', e)
+                print("client comms fail b", e)
 
         m = klassfactory(**params)
         m.mode = mode
@@ -152,19 +172,20 @@ class BaseLaserPlugin(BaseTaskPlugin):
         return m
 
     def _managers_default(self):
-        """
-        """
+        """ """
         d = []
 
         if self.klass is not None:
-            d = [dict(name=self.name,
-                      plugin_name=self.name,
-                      manager=self._get_manager())]
+            d = [
+                dict(name=self.name, plugin_name=self.name, manager=self._get_manager())
+            ]
 
         return d
 
     def _get_manager(self):
-        return self.application.get_service(ILaserManager, 'name=="{}"'.format(self.name))
+        return self.application.get_service(
+            ILaserManager, 'name=="{}"'.format(self.name)
+        )
 
         # def execute_pattern(self, name):
         #     self._get_manager().execute_pattern(name)
@@ -181,42 +202,68 @@ class BaseLaserPlugin(BaseTaskPlugin):
             actions = []
 
         lactions = []
-        for f in glob_list_directory(paths.pattern_dir, extension='.lp', remove_extension=True):
-            actions.append(SchemaAddition(id='pattern.{}'.format(f),
-                                          factory=pattern_action(f, self.application, self.name),
-                                          path='MenuBar/laser.menu/patterns.menu'))
-            lactions.append(SchemaAddition(id='pattern.lase.{}'.format(f),
-                                           factory=pattern_action(f, self.application, self.name, lase=True),
-                                           path='MenuBar/laser.menu/patterns.lase.menu'))
+        for f in glob_list_directory(
+            paths.pattern_dir, extension=".lp", remove_extension=True
+        ):
+            actions.append(
+                SchemaAddition(
+                    id="pattern.{}".format(f),
+                    factory=pattern_action(f, self.application, self.name),
+                    path="MenuBar/laser.menu/patterns.menu",
+                )
+            )
+            lactions.append(
+                SchemaAddition(
+                    id="pattern.lase.{}".format(f),
+                    factory=pattern_action(f, self.application, self.name, lase=True),
+                    path="MenuBar/laser.menu/patterns.lase.menu",
+                )
+            )
 
         if actions:
+            actions.insert(
+                0,
+                SchemaAddition(
+                    id="patterns.menu",
+                    factory=lambda: SMenu(name="Execute Patterns", id="patterns.menu"),
+                    path="MenuBar/laser.menu",
+                ),
+            )
 
-            actions.insert(0, SchemaAddition(id='patterns.menu',
-                                             factory=lambda: SMenu(name='Execute Patterns', id='patterns.menu'),
-                                             path='MenuBar/laser.menu'))
-
-            lactions.insert(0, SchemaAddition(id='patterns.lase.menu',
-                                              factory=lambda: SMenu(name='Execute and Lase Patterns',
-                                                                    id='patterns.lase.menu'),
-                                              path='MenuBar/laser.menu'))
+            lactions.insert(
+                0,
+                SchemaAddition(
+                    id="patterns.lase.menu",
+                    factory=lambda: SMenu(
+                        name="Execute and Lase Patterns", id="patterns.lase.menu"
+                    ),
+                    path="MenuBar/laser.menu",
+                ),
+            )
 
             exts.append(TaskExtension(actions=lactions))
             exts.append(TaskExtension(actions=actions))
         else:
-            self.warning('no patterns scripts located in "{}"'.format(paths.pattern_dir))
+            self.warning(
+                'no patterns scripts located in "{}"'.format(paths.pattern_dir)
+            )
 
     def _create_task_extensions(self):
-
         exts = []
-        if self.mode != 'client':
-            def efactory():
-                return SMenu(id='laser.menu', name='Laser')
+        if self.mode != "client":
 
-            actions = [SchemaAddition(id='Laser',
-                                      factory=efactory,
-                                      path='MenuBar',
-                                      before='tools.menu',
-                                      after='view.menu')]
+            def efactory():
+                return SMenu(id="laser.menu", name="Laser")
+
+            actions = [
+                SchemaAddition(
+                    id="Laser",
+                    factory=efactory,
+                    path="MenuBar",
+                    before="tools.menu",
+                    after="view.menu",
+                )
+            ]
 
             exts = [TaskExtension(actions=actions)]
 
@@ -224,13 +271,12 @@ class BaseLaserPlugin(BaseTaskPlugin):
 
 
 class FusionsPlugin(BaseLaserPlugin):
-    sources = List(contributes_to='pychron.video.sources')
+    sources = List(contributes_to="pychron.video.sources")
 
     def _sources_default(self):
         ip = InitializationParser()
-        plugin = ip.get_plugin(self.task_name.replace(' ', ''),
-                               category='hardware')
-        source = ip.get_parameter(plugin, 'video_source')
+        plugin = ip.get_plugin(self.task_name.replace(" ", ""), category="hardware")
+        source = ip.get_parameter(plugin, "video_source")
         rs = []
         if source:
             rs = [(source, self.task_name)]
@@ -239,13 +285,18 @@ class FusionsPlugin(BaseLaserPlugin):
     def _task_extensions_default(self):
         exts = self._create_task_extensions()
 
-        if self.mode != 'client':
-            actions = [SchemaAddition(factory=ShowMotionConfigureAction,
-                                      path='MenuBar/laser.menu'),
-                       SchemaAddition(factory=LaserScriptExecuteAction,
-                                      path='MenuBar/laser.menu')]
+        if self.mode != "client":
+            actions = [
+                SchemaAddition(
+                    factory=ShowMotionConfigureAction, path="MenuBar/laser.menu"
+                ),
+                SchemaAddition(
+                    factory=LaserScriptExecuteAction, path="MenuBar/laser.menu"
+                ),
+            ]
             self._setup_pattern_extensions(exts, actions)
 
         return exts
+
 
 # ============= EOF =============================================

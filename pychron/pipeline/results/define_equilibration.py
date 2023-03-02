@@ -21,4 +21,6 @@ from pychron.pipeline.results.base import BaseResult
 class DefineEquilibrationResult(BaseResult):
     isotopes = List
     equilibration_times = Str
+
+
 # ============= EOF =============================================

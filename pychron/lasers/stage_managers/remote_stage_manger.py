@@ -37,16 +37,21 @@ class RemoteStageManager(StageManager):
 
     def load(self):
         config = self.get_configuration()
-        for a in ('x', 'y', 'z'):
-            low, high = csv_to_floats(config.get('Axes Limits', a))
-            setattr(self, '{}min'.format(a), low)
-            setattr(self, '{}max'.format(a), high)
+        for a in ("x", "y", "z"):
+            low, high = csv_to_floats(config.get("Axes Limits", a))
+            setattr(self, "{}min".format(a), low)
+            setattr(self, "{}max".format(a), high)
 
-            v = config.get('Signs', a)
-            setattr(self, '{}_sign'.format(a), int(v))
+            v = config.get("Signs", a)
+            setattr(self, "{}_sign".format(a), int(v))
 
-        self.set_attribute(config, 'use_sign_position_correction', 'Signs', 'use_sign_position_correction',
-                           cast='boolean')
+        self.set_attribute(
+            config,
+            "use_sign_position_correction",
+            "Signs",
+            "use_sign_position_correction",
+            cast="boolean",
+        )
 
         return super(RemoteStageManager, self).load()
 
@@ -55,10 +60,11 @@ class RemoteStageManager(StageManager):
             self.parent.update_position()
         except BaseException:
             if warn:
-                self.warning_dialog('Failed updated the position from the laser.')
+                self.warning_dialog("Failed updated the position from the laser.")
                 return
 
-        self.debug('get_current_position {},{}'.format(self.parent.x, self.parent.y))
+        self.debug("get_current_position {},{}".format(self.parent.x, self.parent.y))
         return self.parent.x, self.parent.y
+
 
 # ============= EOF =============================================

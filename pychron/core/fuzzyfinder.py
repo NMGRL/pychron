@@ -19,6 +19,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 import re
+
 # ============= local library imports  ==========================
 """
 http://blog.amjith.com/fuzzyfinder-in-10-lines-of-python
@@ -36,27 +37,30 @@ def func(regex, item, attr):
 
 
 def fuzzyfinder(user_input, collection, attr=None):
-    pattern = '.*'.join(user_input)  # Converts 'djm' to 'd.*?j.*?m'
+    pattern = ".*".join(user_input)  # Converts 'djm' to 'd.*?j.*?m'
     try:
         regex = re.compile(pattern, re.IGNORECASE)  # Compiles a regex.
     except re.error:
         return []
 
-    suggestions = [x for x in [func(regex, item, attr) for item in collection] if x is not None]
+    suggestions = [
+        x for x in [func(regex, item, attr) for item in collection] if x is not None
+    ]
     return [x for _, _, x in suggestions]
 
 
+if __name__ == "__main__":
+    collection = [
+        "django_migrations.py",
+        "django_admin_log.py",
+        "main_generator.py",
+        "migrations.py",
+        "api_user.doc",
+        "user_group.doc",
+        "accounts.txt",
+    ]
 
-if __name__ == '__main__':
-    collection = ['django_migrations.py',
-                  'django_admin_log.py',
-                  'main_generator.py',
-                  'migrations.py',
-                  'api_user.doc',
-                  'user_group.doc',
-                  'accounts.txt']
-
-    print(fuzzyfinder('djm', collection))
-    print(fuzzyfinder('mig', collection))
-    print(fuzzyfinder('user', collection))
+    print(fuzzyfinder("djm", collection))
+    print(fuzzyfinder("mig", collection))
+    print(fuzzyfinder("user", collection))
 # ============= EOF =============================================

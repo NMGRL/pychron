@@ -20,8 +20,11 @@ from pychron.spectrometer.base_source import BaseSource
 
 class IsotopxSource(BaseSource):
     def traits_view(self):
-        v = View(Item('nominal_hv', format_str='%0.4f'),
-                 Item('current_hv', format_str='%0.4f', style='readonly'))
+        v = View(
+            Item("nominal_hv", format_str="%0.4f"),
+            Item("current_hv", format_str="%0.4f", style="readonly"),
+        )
         return v
+
 
 # ============= EOF =============================================
