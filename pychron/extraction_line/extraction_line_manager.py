@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 import logging
+import os
 import time
 from socket import gethostbyname, gethostname
 from threading import Thread
@@ -52,6 +53,7 @@ from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
+from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
 
 MANAGERS = {
@@ -533,6 +535,38 @@ class ExtractionLineManager(Manager, Consoleable):
         t = Thread(target=sample)
         t.start()
 
+    script_executor = None
+
+    def aqua_trigger(self):
+        app = self.application
+        script_executor = app.get_service(
+            "pychron.pyscripts.tasks.pyscript_task.ScriptExecutor"
+        )
+        self.script_executor = script_executor
+        # context = {"analysis_type": "blank" if "blank" in name else "unknown"}
+        name = 'aqua.py'
+        root = os.path.join(paths.scripts_dir)
+        p = os.path.join(root, name)
+        if os.path.isfile(p):
+            context = {}
+            script_executor.execute_script(
+                name,
+                root,
+                delay_start=1,
+                manager=self,
+                context=context,
+            )
+        else:
+            self.warning(f'{p} is not a valid file')
+
+    def aqua_get_status(self):
+        status = {}
+        if self.script_executor:
+            status['completed'] = self.script_executor._current_script._completed
+            status['canceled'] = self.script_executor._current_script.is_canceled()
+            status['aborted'] = self.script_executor._current_script.is_aborted()
+        return status
+
     def cycle(self, name, **kw):
         def cycle():
             valve = self.switch_manager.get_switch_by_name(name)
@@ -744,7 +778,7 @@ class ExtractionLineManager(Manager, Consoleable):
             return True
 
     def _open_close_valve(
-        self, name, action, description=None, address=None, mode="remote", **kw
+            self, name, action, description=None, address=None, mode="remote", **kw
     ):
         vm = self.switch_manager
         if vm is not None:
@@ -872,13 +906,13 @@ class ExtractionLineManager(Manager, Consoleable):
             package = "pychron.managers.{}".format(manager)
 
         if manager in (
-            "switch_manager",
-            "gauge_manager",
-            "multiplexer_manager",
-            "cryo_manager",
-            "manometer_manager",
-            "heater_manager",
-            "pump_manager",
+                "switch_manager",
+                "gauge_manager",
+                "multiplexer_manager",
+                "cryo_manager",
+                "manometer_manager",
+                "heater_manager",
+                "pump_manager",
         ):
             if manager == "switch_manager":
                 man = self._switch_manager_factory()

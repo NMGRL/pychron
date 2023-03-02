@@ -24,6 +24,7 @@ from twisted.internet.protocol import Factory
 from twisted.logger import Logger
 from twisted.logger import jsonFileLogObserver
 
+from pychron.tx.protocols.aqua import AquAProtocol
 from pychron.tx.protocols.furnace import FurnaceProtocol
 from pychron.tx.protocols.laser import LaserProtocol
 from pychron.tx.protocols.valve import ValveProtocol
@@ -58,15 +59,7 @@ class OsTechDiodeFactory(LaserFactory):
 
 
 from pychron.paths import paths
-
 path = os.path.join(paths.log_dir, "pps.log.json")
-
-logger = Logger(observer=jsonFileLogObserver(io.open(path, "w")))
-
-from pychron.paths import paths
-
-path = os.path.join(paths.log_dir, "pps.log.json")
-
 logger = Logger(observer=jsonFileLogObserver(io.open(path, "w")))
 
 
@@ -91,4 +84,6 @@ class FurnaceFactory(BaseFactory):
     protocol_klass = FurnaceProtocol
 
 
+class AquAFactory(BaseFactory):
+    protocol_klass = AquAProtocol
 # ============= EOF =============================================
