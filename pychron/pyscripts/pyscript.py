@@ -123,6 +123,9 @@ class PyScript(Loggable):
     def is_truncated(self):
         return self._truncate
 
+    def is_completed(self):
+        return self._completed
+
     def finish(self):
         self._finish()
 

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import json
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -25,16 +26,20 @@ class AquaController(CoreDevice):
         waitfor(dev.is_ready)
 
     """
-
     def trigger(self):
         self.ask("trigger")
 
     def is_ready(self):
-        r = self.ask("is_ready")
-        return r and r.strip() == "OK"
+        r = self.ask("status")
 
-    def get_status(self):
-        return self.ask("getstatus")
+        if r:
+            try:
+                r = json.loads(r)
+            except BaseException:
+                self.warning('failed reading response')
+                self.debug_exception()
+                return
 
+            return r['completed']
 
 # ============= EOF =============================================

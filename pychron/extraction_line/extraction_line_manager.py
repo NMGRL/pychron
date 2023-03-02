@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import json
 import logging
 import os
 import time
@@ -383,7 +384,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def update_switch_owned_state(self, *args, **kw):
         for c in self.canvases:
-            if state in kw:
+            if 'state' in kw:
                 try:
                     c.update_switch_owned_state(*args, **kw)
                 except BaseException:
@@ -536,36 +537,40 @@ class ExtractionLineManager(Manager, Consoleable):
         t.start()
 
     script_executor = None
+    _aqua_active_flag = False
 
     def aqua_trigger(self):
         app = self.application
-        script_executor = app.get_service(
-            "pychron.pyscripts.tasks.pyscript_task.ScriptExecutor"
-        )
-        self.script_executor = script_executor
+        se = self.script_executor
+        if not se:
+            se = app.get_service(
+                "pychron.pyscripts.tasks.pyscript_task.ScriptExecutor"
+            )
+            self.script_executor = se
         # context = {"analysis_type": "blank" if "blank" in name else "unknown"}
         name = 'aqua.py'
         root = os.path.join(paths.scripts_dir)
         p = os.path.join(root, name)
         if os.path.isfile(p):
             context = {}
-            script_executor.execute_script(
+            se.execute_script(
                 name,
                 root,
                 delay_start=1,
                 manager=self,
                 context=context,
             )
+            self._aqua_active_flag = True
         else:
             self.warning(f'{p} is not a valid file')
 
     def aqua_get_status(self):
         status = {}
-        if self.script_executor:
-            status['completed'] = self.script_executor._current_script._completed
-            status['canceled'] = self.script_executor._current_script.is_canceled()
-            status['aborted'] = self.script_executor._current_script.is_aborted()
-        return status
+        if self.script_executor and self._aqua_active_flag:
+            status = self.script_executor.get_script_status()
+            if status.get('completed'):
+                self._aqua_active_flag = False
+        return json.dumps(status)
 
     def cycle(self, name, **kw):
         def cycle():
