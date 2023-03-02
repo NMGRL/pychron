@@ -381,8 +381,11 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def update_switch_owned_state(self, *args, **kw):
         for c in self.canvases:
-            c.update_switch_owned_state(*args, **kw)
-
+            if state in kw:
+                try:
+                    c.update_switch_owned_state(*args, **kw)
+                except BaseException:
+                    self.debug_exception()
     def set_valve_owner(self, name, owner):
         """
         set flag indicating if the valve is owned by a system
