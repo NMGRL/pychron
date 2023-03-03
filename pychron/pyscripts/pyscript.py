@@ -369,6 +369,11 @@ class PyScript(Loggable):
 
     @command_register
     def abort(self):
+        """
+        Abort the current script.
+        :return:
+        """
+
         self._aborted = True
         if self._gosub_script is not None:
             if not self._gosub_script.is_aborted():
@@ -384,6 +389,12 @@ class PyScript(Loggable):
 
     @command_register
     def cancel(self, **kw):
+        """
+        Cancel the current script
+
+
+        :return:
+        """
         self._cancel = True
         if self._gosub_script is not None:
             if not self._gosub_script.is_canceled():
@@ -437,6 +448,17 @@ class PyScript(Loggable):
     @calculate_duration
     @command_register
     def gosub(self, name=None, root=None, klass=None, argv=None, calc_time=False, **kw):
+        """
+        Execute a GoSub, aka another script
+
+        :param name:
+        :param root:
+        :param klass:
+        :param argv:
+
+        :return:
+        """
+
         if not name.endswith(".py"):
             name += ".py"
 
@@ -545,6 +567,15 @@ class PyScript(Loggable):
     @calculate_duration
     @command_register
     def begin_interval(self, duration, name=None, calc_time=False):
+        """
+
+        Args:
+            duration (`float`, `int`): Duration of interval in seconds
+            name (`str`, optional): Optional name of this interval. Useful for logging
+
+        Returns:
+            None
+        """
         duration = float(duration)
         if calc_time:
             self._estimated_duration += duration

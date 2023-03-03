@@ -32,7 +32,7 @@ jobs:
           scipy sqlalchemy traits xlrd xlsxwriter xlwt pytest statsmodels
       - name: Install PIP dependencies
         run: >
-          ~/.edm/envs/edm/bin/python -m pip install --no-dependencies uncertainties qimage2ndarray peakutils
+          ~/.edm/envs/edm/bin/python -m pip install --no-dependencies uncertainties qimage2ndarray peakutils lazydocs
       - name: build hardware docs
         run: |
           ~/.edm/envs/edm/bin/python pychron/docs_hardware.py

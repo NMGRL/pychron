@@ -17,6 +17,7 @@
 import sys, os
 from types import FunctionType
 
+
 root = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(root)
 
@@ -24,37 +25,67 @@ from pychron.pyscripts.pyscript import PyScript
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 
 
+def make_context_item(k, v):
+    txt = f"### {k}\n    Type: {type(v).__name__}\n\n"
+    return txt
+
+
+from lazydocs import MarkdownGenerator
+generator = MarkdownGenerator()
+
 def assemble_docs():
     s = ExtractionPyScript()
     commands = s.get_commands()
     contents = []
-    for ci in commands:
+    for ci in sorted(commands, key=lambda x: x[0]):
         func = getattr(s, ci[1])
 
         try:
             closure = (c.cell_contents for c in func.__closure__)
-            f = next((c for c in closure if isinstance(c, FunctionType)), None)
-            docstr = f.__doc__
+            func = next((c for c in closure if isinstance(c, FunctionType)), None)
+
+            # docstr = f.__doc__
             # print(f, f.__doc__)
         except TypeError as e:
-            docstr = func.__doc__
+            # docstr = func.__doc__
+            pass
 
-        if docstr is None:
-            docstr = ""
+        # if docstr is None:
+        #     docstr = ""
+        # else:
+        docstr = ''
+        if func is not None:
+            # Select a module (e.g. my_module) to generate markdown documentation
+            docstr = generator.func2md(func)
 
-        command = f"### {ci[0]}\n{docstr}\n\n"
-        contents.append(command)
+            # command = f"### {ci[0]}\n{docstr}\n\n"
+            contents.append(docstr)
 
     s.set_default_context()
 
     context = []
-    for k, v in s._ctx.items():
-        context.append(f"### {k}\n    Type: {type(v).__name__}\n\n")
+
+    ks = sorted(s._ctx.keys())
+    for k in ks:
+        if k in ('ex', 'testing_syntax'):
+            continue
+
+        v = s._ctx[k]
+        txt = make_context_item(k, v)
+        context.append(txt)
+        # context.append(f"### {k}\n    Type: {type(v).__name__}\n\n")
 
     context = "\n".join(context)
-    print("asfd", context)
     contents = "\n".join(contents)
-    content = f"# Pyscript API\n## Commands\n{contents}\n## Context\n{context}"
+    commandhelptxt = '''
+Below are all the available functions that may be used within a PyScript. Python builtins are also available 
+and additional modules may be imported similar to any normal python script.
+    '''
+    contexthelpstr = '''
+Below are all the "contextual" values availiable to a PyScript. These contextual values are typically set by the 
+Experiment Editor and used when running an Automated Analysis
+    '''
+    content = f"# Pyscript API\n## Commands\n{commandhelptxt}\n{contents}\n## Context\n{contexthelpstr}\n{context}"
     pname = os.environ.get("PNAME", "pyscriptdocs.md")
     with open(os.path.join(root, "pychron", pname), "w") as wfile:
         wfile.write(content)
