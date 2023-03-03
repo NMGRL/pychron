@@ -17,87 +17,11 @@
 import sys, os
 from types import FunctionType
 
-import yaml
-
-from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
-from pychron.pyscripts.pyscript import PyScript
-
 root = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(root)
 
-
-# from pychron.hardware.actuators import PACKAGES
-# from pychron.hardware import HW_PACKAGE_MAP
-
-#
-# def extract_doc(mod, cf):
-#     classname = cf.__name__
-#     name = classname
-#     rdoc = cf.__doc__
-#     doc = ""
-#     description = ""
-#     if rdoc:
-#         active = False
-#         lines = rdoc.split("\n")
-#         for i, line in enumerate(lines):
-#             if line.strip() == ":::":
-#                 active = True
-#                 break
-#
-#         if active:
-#             doc = "\n".join(lines[i + 1 :])
-#             try:
-#                 ydoc = yaml.load(doc, Loader=yaml.SafeLoader)
-#                 description = ydoc.pop("description", description)
-#                 name = ydoc.pop("name", classname)
-#                 doc = yaml.dump(ydoc)
-#             except yaml.YamlError as e:
-#                 print("asdf", e)
-#
-#     return f"""{name}
-# ==========================
-#
-# <p>
-# {description}
-# </p>
-#
-# <b>Module:</b> {mod}<br>
-# <b>Class:</b> {classname}
-#
-# ```yaml
-# {doc}
-# ```
-# """
-#
-#
-# def assemble_docs():
-#     contents = []
-#
-#     for klass, package in sorted(list(HW_PACKAGE_MAP.items()) + list(PACKAGES.items())):
-#         print(klass, package)
-#
-#         # package = HW_PACKAGE_MAP[klass]
-#         try:
-#             m = __import__(package, globals(), locals(), [klass])
-#         except ModuleNotFoundError as e:
-#             print("No module", e)
-#             continue
-#
-#         try:
-#             class_factory = getattr(m, klass)
-#         except AttributeError as e:
-#             print("No klass", e)
-#             if klass == "Eurotherm":
-#                 print(dir(m))
-#             continue
-#         print("built", klass)
-#         description_doc = extract_doc(package, class_factory)
-#         contents.append(description_doc)
-#
-#     content = "# Available Hardware Drivers\n".join(contents)
-#     pname = os.environ.get("PNAME", "hardwaredocs.md")
-#     with open(os.path.join(root, "pychron", pname), "w") as wfile:
-#         wfile.write(content)
+from pychron.pyscripts.pyscript import PyScript
+from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 
 
 def assemble_docs():
