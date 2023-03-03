@@ -99,6 +99,7 @@ sys.path.append(root)
 #     with open(os.path.join(root, "pychron", pname), "w") as wfile:
 #         wfile.write(content)
 
+
 def assemble_docs():
     s = ExtractionPyScript()
     commands = s.get_commands()
@@ -115,20 +116,20 @@ def assemble_docs():
             docstr = func.__doc__
 
         if docstr is None:
-            docstr = ''
+            docstr = ""
 
-        command = f'### {ci[0]}\n{docstr}\n\n'
+        command = f"### {ci[0]}\n{docstr}\n\n"
         contents.append(command)
 
     s.set_default_context()
 
     context = []
     for k, v in s._ctx.items():
-        context.append(f'### {k}\n    Type: {type(v).__name__}\n\n')
+        context.append(f"### {k}\n    Type: {type(v).__name__}\n\n")
 
-    context = '\n'.join(context)
-    print('asfd', context)
-    contents = '\n'.join(contents)
+    context = "\n".join(context)
+    print("asfd", context)
+    contents = "\n".join(contents)
     content = f"# Pyscript API\n## Commands\n{contents}\n## Context\n{context}"
     pname = os.environ.get("PNAME", "pyscriptdocs.md")
     with open(os.path.join(root, "pychron", pname), "w") as wfile:

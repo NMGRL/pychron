@@ -518,9 +518,7 @@ class PyScript(Loggable):
 
     @command_register
     def complete_interval(self):
-        '''
-
-        '''
+        """ """
         if self._cancel:
             return
 
