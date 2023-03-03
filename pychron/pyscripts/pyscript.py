@@ -510,10 +510,17 @@ class PyScript(Loggable):
 
     @command_register
     def interval(self, dur):
+        """
+        :type dur: float, int
+
+        """
         return IntervalContext(self, dur)
 
     @command_register
     def complete_interval(self):
+        '''
+
+        '''
         if self._cancel:
             return
 
