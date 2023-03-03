@@ -1,4 +1,4 @@
-name: Hardware Docs
+name: Wiki Docs
 on:
   pull_request:
     branches: [dev/dc, hot/dc]
@@ -55,4 +55,4 @@ jobs:
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@v4.1.2
         with:
-          commit_message: built hardware docs
+          commit_message: built wiki docs
