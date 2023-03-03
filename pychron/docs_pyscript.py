@@ -31,7 +31,9 @@ def make_context_item(k, v):
 
 
 from lazydocs import MarkdownGenerator
+
 generator = MarkdownGenerator()
+
 
 def assemble_docs():
     s = ExtractionPyScript()
@@ -53,7 +55,7 @@ def assemble_docs():
         # if docstr is None:
         #     docstr = ""
         # else:
-        docstr = ''
+        docstr = ""
         if func is not None:
             # Select a module (e.g. my_module) to generate markdown documentation
             docstr = generator.func2md(func)
@@ -67,7 +69,7 @@ def assemble_docs():
 
     ks = sorted(s._ctx.keys())
     for k in ks:
-        if k in ('ex', 'testing_syntax'):
+        if k in ("ex", "testing_syntax"):
             continue
 
         v = s._ctx[k]
@@ -77,14 +79,14 @@ def assemble_docs():
 
     context = "\n".join(context)
     contents = "\n".join(contents)
-    commandhelptxt = '''
+    commandhelptxt = """
 Below are all the available functions that may be used within a PyScript. Python builtins are also available 
 and additional modules may be imported similar to any normal python script.
-    '''
-    contexthelpstr = '''
+    """
+    contexthelpstr = """
 Below are all the "contextual" values availiable to a PyScript. These contextual values are typically set by the 
 Experiment Editor and used when running an Automated Analysis
-    '''
+    """
     content = f"# Pyscript API\n## Commands\n{commandhelptxt}\n{contents}\n## Context\n{contexthelpstr}\n{context}"
     pname = os.environ.get("PNAME", "pyscriptdocs.md")
     with open(os.path.join(root, "pychron", pname), "w") as wfile:
