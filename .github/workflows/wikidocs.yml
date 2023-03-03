@@ -5,8 +5,8 @@ on:
   push:
     branches: [dev/dc, hot/dc]
 jobs:
-  build_hardware_docs:
-    name: Build hardware docs (${{ matrix.python-version }}, ${{ matrix.os }})
+  build_wiki_docs:
+    name: Build wiki docs (${{ matrix.python-version }}, ${{ matrix.os }})
     strategy:
       matrix:
         os: [ macos-latest ]
