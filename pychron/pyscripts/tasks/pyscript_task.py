@@ -106,21 +106,21 @@ class ScriptExecutorMixin(ExecuteMixin):
             return ret
 
     def _execute_extraction(
-            self,
-            name,
-            root,
-            kind,
-            new_thread=True,
-            delay_start=0,
-            on_completion=None,
-            context=None,
-            manager=None,
+        self,
+        name,
+        root,
+        kind,
+        new_thread=True,
+        delay_start=0,
+        on_completion=None,
+        context=None,
+        manager=None,
     ):
         from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 
         klass = ExtractionPyScript
-        if kind != 'Extraction':
-            path = f'pychron.pyscripts.{kind.lower()}_pyscript import {kind}PyScript'
+        if kind != "Extraction":
+            path = f"pychron.pyscripts.{kind.lower()}_pyscript import {kind}PyScript"
             klass = import_klass(path)
 
         # if kind == "Laser":
@@ -210,12 +210,12 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
 
         if self.use_git_repo:
             if not next(
-                    (
-                            ti
-                            for ti in self.tool_bars
-                            if ti.id == "pychron.pyscript.git_toolbar"
-                    ),
-                    None,
+                (
+                    ti
+                    for ti in self.tool_bars
+                    if ti.id == "pychron.pyscript.git_toolbar"
+                ),
+                None,
             ):
                 self.tool_bars.append(
                     SToolBar(CommitChangesAction(), name="pychron.pyscript.git_toolbar")
@@ -494,10 +494,10 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
                 # self.repo_manager.add_unstaged(None, extension='.py', use_diff=True)
             else:
                 for p in (
-                        paths.measurement_dir,
-                        paths.extraction_dir,
-                        paths.post_equilibration_dir,
-                        paths.post_measurement_dir,
+                    paths.measurement_dir,
+                    paths.extraction_dir,
+                    paths.post_equilibration_dir,
+                    paths.post_measurement_dir,
                 ):
                     self.debug("add unstaged files from {}".format(p))
                     self.repo_manager.add_unstaged(p, extension=".py", use_diff=False)

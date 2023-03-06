@@ -32,24 +32,35 @@ class AquaPyScript(ExtractionPyScript):
     _runthread = None
 
     @command_register
-    def start_recording(self, period=15,
-                        valve_names=('A', 'B'),
-                        temperature_name='aqua_temperature_controller',
-                        pressure_name='aqua_pressure_controller',
-                        actuator_name='aqua_actuator'):
-        self.data_manager.new_frame(directory='aqua',
-                                    base_frame_name='sequence')
-        self.data_manager.write_to_frame(['timestamp', 'elapsed', 'ch2', 'ch3', 'ch4', 'V1_voltage', 'V2_voltage'])
+    def start_recording(
+        self,
+        period=15,
+        valve_names=("A", "B"),
+        temperature_name="aqua_temperature_controller",
+        pressure_name="aqua_pressure_controller",
+        actuator_name="aqua_actuator",
+    ):
+        self.data_manager.new_frame(directory="aqua", base_frame_name="sequence")
+        self.data_manager.write_to_frame(
+            ["timestamp", "elapsed", "ch2", "ch3", "ch4", "V1_voltage", "V2_voltage"]
+        )
         self._end_evt = Event()
 
         temp_dev = self.get_device(temperature_name)
         pressure_dev = self.get_device(pressure_name)
         valve_actuator = self.get_device(actuator_name)
 
-        self._runthread = Thread(target=self._record, args=(self._end_evt,
-                                                            period,
-                                                            temp_dev, pressure_dev, valve_actuator,
-                                                            valve_names))
+        self._runthread = Thread(
+            target=self._record,
+            args=(
+                self._end_evt,
+                period,
+                temp_dev,
+                pressure_dev,
+                valve_actuator,
+                valve_names,
+            ),
+        )
         self._runthread.start()
 
     @command_register
@@ -87,5 +98,6 @@ class AquaPyScript(ExtractionPyScript):
         ts = datetime.now()
         elapsed = time.time() - self._aqua_start_timestamp
         return [ts.isoformat(), elapsed, ch2, ch3, ch4, pressure, vaf, vbf]
+
 
 # ============= EOF =============================================

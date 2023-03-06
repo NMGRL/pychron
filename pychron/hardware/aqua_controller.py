@@ -26,8 +26,9 @@ class AquaController(CoreDevice):
         waitfor(dev.is_ready)
 
     """
+
     def get_report(self):
-        r = self.ask('report')
+        r = self.ask("report")
         if r:
             try:
                 r = json.loads(r)
