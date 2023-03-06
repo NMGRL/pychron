@@ -21,6 +21,7 @@ from matplotlib import pyplot as plt
 from numpy import array, linspace
 
 from pychron.core.yaml import yload
+from pychron.hardware import get_float
 from pychron.hardware.actuators.gp_actuator import GPActuator
 from pychron.paths import paths
 
@@ -68,6 +69,12 @@ class U2351A(GPActuator):
             paths.device_dir, "valve_actuation_config.yaml"
         )
 
+    @get_float()
+    def get_output_voltage(self, obj):
+        addr = obj.address
+        resp = self.ask(f"SOUR:VOLT?, (@{addr})")
+        return resp
+
     def _actuate(self, obj, action):
         addr = obj.address
         state = action.lower() == "open"
@@ -85,7 +92,7 @@ class U2351A(GPActuator):
                 self.ask(f"SOUR:VOLT {step}, (@{addr})")
                 time.sleep(step_delay)
         else:
-            v = 5 if state else 0
+            v = 10 if state else 0
             self.ask(f"SOUR:VOLT {v},(@{addr})")
         return True
 

@@ -26,7 +26,9 @@ class AquAProtocol(ServiceProtocol):
         self._manager = man
         self._addr = addr
 
-        services = (("trigger", "aqua_trigger"), ("status", "aqua_get_status"))
+        services = (("trigger", "aqua_trigger"),
+                    ("status", "aqua_get_status"),
+                    "report", "aqua_get_report")
         self._register_services(services)
 
 
