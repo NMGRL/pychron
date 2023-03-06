@@ -13,35 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import json
-from pychron.hardware.core.core_device import CoreDevice
+from pychron.hardware.core.i_core_device import ICoreDevice
+from pychron.pychron_constants import EL_PROTOCOL
+from pychron.tx.protocols.service import ServiceProtocol
 
 
-class AquaController(CoreDevice):
-    """
+class AquAProtocol(ServiceProtocol):
+    def __init__(self, application, addr, logger):
+        ServiceProtocol.__init__(self, logger=logger)
+        man = application.get_service(EL_PROTOCOL)
 
-    def main():
-        aqua = get_device('aqua_controller')
-        aqua.trigger()
-        waitfor(dev.is_ready)
+        self._manager = man
+        self._addr = addr
 
-    """
-
-    def trigger(self):
-        self.ask("trigger")
-
-    def is_ready(self):
-        r = self.ask("status")
-
-        if r:
-            try:
-                r = json.loads(r)
-            except BaseException:
-                self.warning("failed reading response")
-                self.debug_exception()
-                return
-
-            return r["completed"]
+        services = (("trigger", "aqua_trigger"), ("status", "aqua_get_status"))
+        self._register_services(services)
 
 
 # ============= EOF =============================================

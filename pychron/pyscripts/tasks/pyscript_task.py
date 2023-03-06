@@ -66,6 +66,14 @@ class ScriptExecutorMixin(ExecuteMixin):
     def execute_script(self, *args, **kw):
         return self._do_execute(*args, **kw)
 
+    def get_script_status(self):
+        status = {
+            "completed": self._current_script.is_completed(),
+            "canceled": self._current_script.is_canceled(),
+            "aborted": self._current_script.is_aborted(),
+        }
+        return status
+
     # def _start_execute(self):
     #     self.debug('start execute')
     #     return True

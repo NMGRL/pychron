@@ -13,35 +13,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-import json
 from pychron.hardware.core.core_device import CoreDevice
 
 
-class AquaController(CoreDevice):
-    """
+class MCCTemp(CoreDevice):
+    def initialize(self):
+        self.scan_func = "update_scan"
+        return True
 
-    def main():
-        aqua = get_device('aqua_controller')
-        aqua.trigger()
-        waitfor(dev.is_ready)
+    def update_scan(self):
+        pass
 
-    """
+    def graph_builder(self, g, **kw):
+        g.new_plot(padding_left=40, padding_right=5, zoom=True, pan=True, **kw)
+        # g.new_plot(padding_left=40, padding_right=5, zoom=True, pan=True, **kw)
 
-    def trigger(self):
-        self.ask("trigger")
+        g.new_series()
+        # g.new_series(plotid=1)
 
-    def is_ready(self):
-        r = self.ask("status")
-
-        if r:
-            try:
-                r = json.loads(r)
-            except BaseException:
-                self.warning("failed reading response")
-                self.debug_exception()
-                return
-
-            return r["completed"]
+        g.set_y_title("Temp (C)")
+        # g.set_y_title("Heat Power (%)", plotid=1)
 
 
 # ============= EOF =============================================
