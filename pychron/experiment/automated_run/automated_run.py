@@ -358,10 +358,10 @@ class AutomatedRun(Loggable):
 
     def py_generate_ic_mftable(self, detectors, refiso, peak_center_config=None, n=1):
         pairs = [(di, refiso) for di in detectors]
-        return self._generate_ic_mftable(pairs, peak_center_config, n)
+        return self._generate_mftable(pairs, peak_center_config, n)
 
     def py_generate_peakhop_mftable(self, pairs, peak_center_config=None, n=1):
-        return self._generate_ic_mftable(pairs, peak_center_config, n)
+        return self._generate_mftable(pairs, peak_center_config, n)
 
     def py_whiff(
         self, ncounts, conditionals, starttime, starttime_offset, series=0, fit_series=0
