@@ -157,10 +157,11 @@ class MeasurementPyScript(ValvePyScript):
             "py_generate_ic_mftable", detectors, refiso, peak_center_config, n
         ):
             self.cancel()
+
     @verbose_skip
     @command_register
     def generate_peakhop_mftable(
-            self, pairs, peak_center_config="", n=1, calc_time=False
+        self, pairs, peak_center_config="", n=1, calc_time=False
     ):
         """
         Generate an Peakhop MFTable.
@@ -178,9 +179,10 @@ class MeasurementPyScript(ValvePyScript):
             return
 
         if not self._automated_run_call(
-                "py_generate_peakhop_mftable", pairs, peak_center_config, n
+            "py_generate_peakhop_mftable", pairs, peak_center_config, n
         ):
             self.cancel()
+
     @verbose_skip
     @command_register
     def extraction_gosub(self, *args, **kw):

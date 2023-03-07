@@ -25,9 +25,7 @@ ARGON_IC_MFTABLE = True
 
 
 class ICMFTableGenerator(Loggable):
-    def make_mftable(
-        self, arun, pairs, peak_center_config="ic_peakhop", n=1
-    ):
+    def make_mftable(self, arun, pairs, peak_center_config="ic_peakhop", n=1):
         """
             peak center `refiso` for each detector in detectors
         :return:
@@ -69,9 +67,7 @@ class ICMFTableGenerator(Loggable):
                         ion.do_peak_center(new_thread=False, save=False, warn=False)
                         apc = ion.adjusted_peak_center_result
                         if apc:
-                            self.info(
-                                "Peak Center {}@{}={:0.6f}".format(di, ri, apc)
-                            )
+                            self.info("Peak Center {}@{}={:0.6f}".format(di, ri, apc))
                             results.append((di, ri, apc))
                             time.sleep(0.25)
                         else:
