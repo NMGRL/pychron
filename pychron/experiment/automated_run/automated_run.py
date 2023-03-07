@@ -357,7 +357,11 @@ class AutomatedRun(Loggable):
             self.plot_panel.add_isotope_graph(name)
 
     def py_generate_ic_mftable(self, detectors, refiso, peak_center_config=None, n=1):
-        return self._generate_ic_mftable(detectors, refiso, peak_center_config, n)
+        pairs = [(di, refiso) for di in detectors]
+        return self._generate_ic_mftable(pairs, peak_center_config, n)
+
+    def py_generate_peakhop_mftable(self, pairs, peak_center_config=None, n=1):
+        return self._generate_ic_mftable(pairs, peak_center_config, n)
 
     def py_whiff(
         self, ncounts, conditionals, starttime, starttime_offset, series=0, fit_series=0
@@ -2002,14 +2006,23 @@ anaylsis_type={}
         else:
             self.heading("Post Equilibration Finished unsuccessfully")
 
-    def _generate_ic_mftable(self, detectors, refiso, peak_center_config, n):
+    def _generate_mftable(self, det_iso_pairs, peak_center_config, n):
         ret = True
         from pychron.experiment.ic_mftable_generator import ICMFTableGenerator
 
         e = ICMFTableGenerator()
-        if not e.make_mftable(self, detectors, refiso, peak_center_config, n):
+        if not e.make_mftable(self, det_iso_pairs, peak_center_config, n):
             ret = False
         return ret
+
+    # def _generate_ic_mftable(self, detectors, refiso, peak_center_config, n):
+    #     ret = True
+    #     from pychron.experiment.ic_mftable_generator import ICMFTableGenerator
+    #
+    #     e = ICMFTableGenerator()
+    #     if not e.make_mftable(self, detectors, refiso, peak_center_config, n):
+    #         ret = False
+    #     return ret
 
     def _add_system_conditionals(self):
         self.debug("add default conditionals")
