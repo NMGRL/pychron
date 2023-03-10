@@ -16,6 +16,7 @@
 import json
 import struct
 import time
+from datetime import datetime
 from numpy import append as npappend
 
 from traits.api import List
@@ -68,7 +69,7 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
     def set_data_pump_mode(self, mode):
         pass
 
-    def sink_data(self, writer, n, delay):
+    def sink_data(self, writer, n, delay, buffer_delay):
         client = self.microcontroller.communicator
         handle = client.get_handler()
         sock = handle.sock
@@ -77,26 +78,50 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         cnt = 1
         start_time = st = time.time()
         isotopes = {}
+        nowdate = datetime.now().date()
+        buffer_empty = False
         while 1:
             if cnt > n:
                 break
 
-            et = time.time() - st
-            if et < delay:
-                time.sleep(delay - et)
+            # et = time.time() - st
+            # if et < delay:
+            #     time.sleep(delay - et)
 
-            st = time.time()
+            # st = time.time()
             size = sock.recv(4)
             size = struct.unpack("i", size)[0]
             str_data = sock.recv(size)
+
             # self.debug(str_data)
-            s = str_data.decode("ascii")
+            s = str_data.decode("utf-8")
 
             self.debug(s)
 
             s = s.replace("False", '"False"')
             s = s.replace("True", '"True"')
             obj = json.loads(s)
+
+            # read all the buffered messages
+            if not buffer_empty and "Time" in obj:
+                t = obj["Time"]
+                try:
+                    v = datetime.strptime(t, "%I:%M:%S %p")
+                except ValueError:
+                    self.debug('Invalid "Time" in message. continuing')
+                    self.debug_exception()
+                    continue
+
+                v = datetime.combine(nowdate, v.time())
+
+                dt = abs(v - datetime.now())
+                self.debug(f"reading buffer message.  behind {dt.total_seconds()}")
+                if dt.total_seconds() > buffer_delay:
+                    self.debug(f"skipping {obj}")
+                    continue
+                else:
+                    buffer_empty = True
+
             # if not i:
             # construct and write the header
             keys = list(obj.keys())
@@ -117,8 +142,10 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
                 writer.writerow(header)
 
             raw = [obj[h] for h in keys]
+
             intensities = obj["intensity"]
             ct = time.time()
+
             for m, si in zip(obj["amuNames"], intensities):
                 if m not in isotopes:
                     iso = Isotope(m, "Detector")
@@ -138,9 +165,14 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
                 + intensities
                 + raw
             )
-            self.debug("sinking row: {}".format(row))
+            self.debug(f"sinking row {cnt}/{n}: {row}")
             writer.writerow(row)
             cnt += 1
+
+            et = time.time() - st
+            if et < delay:
+                time.sleep(delay - et)
+
         return IsotopeGroup(isotopes=isotopes)
 
     # def set_data_pump_mode(self, mode):

@@ -310,7 +310,7 @@ class AutomatedRun(Loggable):
     # ===============================================================================
     # pyscript interface
     # ===============================================================================
-    def py_sink_data(self, n=100, delay=1):
+    def py_sink_data(self, n=100, delay=1, root=None, buffer_delay=5):
         """
 
         new measurement interface for just sinking the data from a ring buffer
@@ -319,10 +319,20 @@ class AutomatedRun(Loggable):
 
         spec = self.spectrometer_manager.spectrometer
         spec.set_data_pump_mode(1)
-        p, _ = unique_path2(paths.csv_data_dir, self.runid, extension=".csv")
+
+        if root is None:
+            root = paths.csv_data_dir
+
+        if not os.path.isdir(root):
+            root = paths.csv_data_dir
+
+        v = self.extraction_line_manager.get_valve_by_name("9")
+        rid = f"{self.runid}-{v.actuations}"
+        p, _ = unique_path2(root, rid, extension=".csv")
+        self.debug(f"saving analysis to {p}")
         with open(p, "w") as rfile:
             writer = csv.writer(rfile)
-            ig = spec.sink_data(writer, n, delay)
+            ig = spec.sink_data(writer, n, delay, buffer_delay)
 
             if self.use_dvc_persistence:
                 pspec = self.persistence_spec
@@ -849,7 +859,7 @@ class AutomatedRun(Loggable):
         check_intensity=None,
         peak_center_threshold=None,
         peak_center_threshold_window=None,
-        **kw
+        **kw,
     ):
         if not self._alive:
             return
@@ -903,7 +913,7 @@ class AutomatedRun(Loggable):
                 directions=directions,
                 config_name=config_name,
                 use_configuration_dac=False,
-                **kw
+                **kw,
             )
             self.peak_center = pc
             self.debug("do peak center. {}".format(pc))
@@ -1360,7 +1370,7 @@ class AutomatedRun(Loggable):
                 tag=tag,
                 tripped_conditional=self.tripped_conditional,
                 pipette_counts=self.extraction_line_manager.get_pipette_counts(),
-                **env
+                **env,
             )
 
             self.spec.new_result(self)
