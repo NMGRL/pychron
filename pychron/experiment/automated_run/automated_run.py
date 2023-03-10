@@ -1370,7 +1370,7 @@ class AutomatedRun(Loggable):
                 tag=tag,
                 tripped_conditional=self.tripped_conditional,
                 pipette_counts=self.extraction_line_manager.get_pipette_counts(),
-                **env
+                **env,
             )
 
             self.spec.new_result(self)
