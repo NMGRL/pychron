@@ -53,7 +53,6 @@ class ContourGraph(Graph):
         plot, names, rd = self._series_factory(x, y, plotid=plotid, **kw)
 
         if style in ["xy", "cmap_scatter"]:
-
             if style == "cmap_scatter":
                 c = "c1"
                 self.series[plotid][1] += (c,)
@@ -70,7 +69,6 @@ class ContourGraph(Graph):
             return plot.plot(names, **rd)
 
         else:
-
             rd["xbounds"] = (0, 1) if "xbounds" not in kw else kw.get("xbounds")
             rd["ybounds"] = (0, 1) if "ybounds" not in kw else kw.get("ybounds")
             cmap = "hot" if "cmap" not in kw else kw.get("cmap")
@@ -180,7 +178,6 @@ class ContourGraph(Graph):
 
 class FluxVisualizationGraph(ContourGraph):
     def metadata_changed(self):
-
         plot = self.plots[0]
         contour_pp = plot.plots["imgplot"][0]
         means_pp = plot.plots["meansplot"][0]

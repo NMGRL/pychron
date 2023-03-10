@@ -82,7 +82,7 @@ class ExtractionLineGraph(HasTraits):
         if self._cp:
             a = elem.find(tag).text
         else:
-            a = elem.get(tag)["name"]
+            a = str(elem.get(tag)["name"])
 
         return a.strip()
 
@@ -97,7 +97,7 @@ class ExtractionLineGraph(HasTraits):
         if self._cp:
             t = v.text
         else:
-            t = v.get("name", "")
+            t = str(v.get("name", ""))
         return t.strip()
 
     def _get_elements(self, key):
@@ -236,7 +236,6 @@ class ExtractionLineGraph(HasTraits):
                 self._clear_visited()
 
     def _set_state(self, n, scene=None):
-
         if n:
             if n.state == "closed" and not n.visited:
                 n.visited = True
@@ -359,7 +358,6 @@ class ExtractionLineGraph(HasTraits):
             color = scene.get_item(term).default_color
 
         if isinstance(obj, Valve):
-
             # set the color of the valve to
             # the max state if the valve is open
             if self.inherit_state:

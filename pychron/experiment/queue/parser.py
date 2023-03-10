@@ -39,6 +39,8 @@ from pychron.pychron_constants import (
     OVERLAP,
     EXTRACT_UNITS,
     CRYO_TEMP,
+    DISABLE_BETWEEN_POSITIONS,
+    AUTOCENTER,
 )
 from pychron.regex import ALIQUOT_REGEX
 
@@ -132,17 +134,15 @@ class RunParser(Loggable):
             LIGHT_VALUE,
             "frequency_group",
         ]:
-
             v = self._get_attr_value(header, args, attr, cast=float)
             if v is not None:
                 params[v[0]] = v[1]
 
     def _load_booleans(self, header, args, params):
-
         for attr in [
-            "autocenter",
+            AUTOCENTER,
             USE_CDD_WARMING,
-            ("disable_between_positions", "dis_btw_pos"),
+            (DISABLE_BETWEEN_POSITIONS, "dis_btw_pos"),
         ]:
             v = self._get_attr_value(
                 header, args, attr, cast=lambda x: to_bool(x.strip())

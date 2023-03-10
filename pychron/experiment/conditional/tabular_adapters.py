@@ -62,6 +62,7 @@ class ConditionalsAdapter(BaseConditionalsAdapter):
         ("Level", "level"),
         ("Attribute", "attr"),
         ("Start", "start_count"),
+        ("N. trips", "ntrips"),
         ("Frequency", "frequency"),
         ("Check", "teststr"),
         ("Location", "location"),
@@ -82,7 +83,19 @@ class EConditionalsAdapter(ConditionalsAdapter):
         ("Attribute", "attr"),
         ("Start", "start_count"),
         ("Frequency", "frequency"),
+        ("N. trips", "ntrips"),
         ("Check", "teststr"),
+    ]
+
+
+class ETruncationConditionalsAdapter(ConditionalsAdapter):
+    columns = [
+        ("Attribute", "attr"),
+        ("Start", "start_count"),
+        ("Frequency", "frequency"),
+        ("N. trips", "ntrips"),
+        ("Check", "teststr"),
+        ("Trunc. Count Ratio", "abbreviated_count_ratio"),
     ]
 
 
@@ -91,6 +104,7 @@ class EActionConditionalsAdapter(ConditionalsAdapter):
         ("Attribute", "attr"),
         ("Start", "start_count"),
         ("Frequency", "frequency"),
+        ("N. trips", "ntrips"),
         ("Check", "teststr"),
         ("Action", "action"),
     ]
@@ -101,6 +115,7 @@ class EModificationConditionalsAdapter(ConditionalsAdapter):
         ("Attribute", "attr"),
         ("Start", "start_count"),
         ("Frequency", "frequency"),
+        ("N. trips", "ntrips"),
         ("Check", "teststr"),
         ("Action", "action"),
         ("Skip N", "nskip"),

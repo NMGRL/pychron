@@ -216,7 +216,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         *args,
         **kw
     ):
-
         kw["marker"] = marker
         kw["marker_size"] = marker_size
 
@@ -291,7 +290,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         add_point_inspector=True,
         add_selection=True,
     ):
-
         if add_inspector:
             # add a regression inspector tool to the line
             if line:
@@ -363,7 +361,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             scatter.fit = "{}_{}".format(f, fi)
 
     def set_fit(self, fi, plotid=0, series=0):
-
         fi = fi.lower()
         plot = self.plots[plotid]
         key = "data{}".format(series)
@@ -546,7 +543,6 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         return r
 
     def _set_regressor(self, scatter, r):
-
         selection = scatter.index.metadata["selections"]
 
         selection = set(selection) - set(r.outlier_excluded + r.truncate_excluded)
@@ -595,15 +591,14 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
         if r.ys.shape[0] < minpoints:
             return
 
-        r.determine_fit()
         r.set_truncate(scatter.truncate)
+        r.determine_fit()
         r.calculate()
 
         self._set_excluded(scatter, r)
         return r
 
     def _exponential_regress(self, scatter, r, fit):
-
         from pychron.core.regression.least_squares_regressor import (
             ExponentialRegressor,
             FitError,

@@ -56,7 +56,7 @@ class CanvasDockPane(TraitsDockPane):
     canvas = Any
 
     def traits_view(self):
-        v = View(UItem("canvas", editor=InstanceEditor(), style="custom", width=500))
+        v = View(UItem("canvas", editor=InstanceEditor(), style="custom"))
         return v
 
 

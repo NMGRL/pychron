@@ -42,8 +42,10 @@ SPECIAL_KEYS = []  # ba
 
 
 def load_identifiers_file():
-    p = os.path.join(paths.hidden_dir, "identifiers.yaml")
-    if os.path.isfile(p):
+    p = None
+    if paths.hidden_dir:
+        p = os.path.join(paths.hidden_dir, "identifiers.yaml")
+    if p and os.path.isfile(p):
         yd = yload(p)
     else:
         yd = yload(IDENTIFIERS_DEFAULT)
@@ -144,6 +146,15 @@ def get_analysis_type(idn):
                 return atype
 
     return "unknown"
+
+
+def get_analysis_type_shortname(idn):
+    at = get_analysis_type(idn)
+    if at != "unknown":
+        at = SPECIAL_MAPPING[at]
+    else:
+        at = "u"
+    return at
 
 
 def strip_runid(r):

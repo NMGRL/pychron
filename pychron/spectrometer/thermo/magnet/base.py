@@ -21,6 +21,7 @@ import time
 from traits.api import List, Float, Bool
 
 from pychron.core.helpers.strtools import to_bool
+from pychron.globals import globalv
 from pychron.hardware import get_float
 from pychron.spectrometer.base_magnet import BaseMagnet
 from six.moves import range
@@ -52,7 +53,6 @@ class ThermoMagnet(BaseMagnet):
         use_dac_changed=True,
         use_af_demag=True,
     ):
-
         # if not self._wait_lock(2):
         #     self.debug('Unabled to obtain set_dac lock. Another thread is moving the magnet')
         #     return
@@ -157,6 +157,10 @@ class ThermoMagnet(BaseMagnet):
                     self.ask("BlankBeam False", verbose=verbose)
 
         self._dac = v
+
+        if globalv.experiment_debug:
+            change = True
+
         if verbose:
             self.debug("set_dac. change={}".format(change))
         # self._wait_release()

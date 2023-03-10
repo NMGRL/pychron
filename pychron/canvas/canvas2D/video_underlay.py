@@ -60,7 +60,7 @@ class VideoUnderlay(AbstractOverlay):
                                 dtype=uint8,
                             )
                         )
-                    except IndexError:
+                    except (IndexError, ValueError):
                         pass
 
 

@@ -71,7 +71,6 @@ class Switch(Connectable, Circle):
             p.render(gc)
 
     def is_in(self, sx, sy):
-
         x, y = self.get_xy()
         r = self.map_dimension(self.radius)
         return ((x + r - sx) ** 2 + (y + r / 2.0 - sy) ** 2) ** 0.5 < r
@@ -277,7 +276,6 @@ class RoughValve(BaseValve, Bordered):
                 gc.draw_path()
 
     def _draw_state_indicator(self, gc, x, y, w, h, cr):
-
         if not self.state:
             with gc:
                 gc.translate_ctm(x, y)

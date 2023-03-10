@@ -40,7 +40,6 @@ class Check(HasTraits):
     message = Str
 
     def check_condition(self, v):
-
         vs = (time.time(), v)
         if not len(self.data):
             self.data = array([vs])

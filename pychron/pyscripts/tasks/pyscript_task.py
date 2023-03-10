@@ -66,6 +66,14 @@ class ScriptExecutorMixin(ExecuteMixin):
     def execute_script(self, *args, **kw):
         return self._do_execute(*args, **kw)
 
+    def get_script_status(self):
+        status = {
+            "completed": self._current_script.is_completed(),
+            "canceled": self._current_script.is_canceled(),
+            "aborted": self._current_script.is_aborted(),
+        }
+        return status
+
     # def _start_execute(self):
     #     self.debug('start execute')
     #     return True
@@ -257,7 +265,6 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
             self.active_editor.control.enable_replace()
 
     def new(self):
-
         # todo ask for script type
         info = self.edit_traits(view="kind_select_view")
         if info.result:
@@ -532,7 +539,6 @@ class PyScriptTask(EditorTask, ScriptExecutorMixin):
 
     @on_trait_change("active_editor:gosub_event")
     def _handle_selected_gosub(self, new):
-
         self.debug("selected gosub {}".format(new))
         if new:
             root = os.path.dirname(self.active_editor.path)

@@ -443,7 +443,6 @@ class InverseIsochron(Isochron):
             self._add_info_label(plot, ts, font=self.options.info_font)
 
     def _add_inset(self, plot, reg):
-
         opt = self.options
         group = opt.get_group(self.group_id)
         insetp = InverseIsochronPointsInset(
@@ -527,7 +526,6 @@ class InverseIsochron(Isochron):
         )
 
     def _add_results_info(self, plot, label=None, text_color="black"):
-
         ag = self.analysis_group
 
         age = ag.isochron_age
@@ -602,6 +600,24 @@ class InverseIsochron(Isochron):
             mse_text,
         )
         mswd_line = "N={} MSWD={}".format(n, mswd)
+
+        if opt.show_results_info_location == "Bottom Right":
+            overlay_position = "inside bottom"
+            hjustify = "right"
+            ox = -2
+        elif opt.show_results_info_location == "Top Right":
+            overlay_position = "inside top"
+            hjustify = "right"
+            ox = -2
+        elif opt.show_results_info_location == "Top Left":
+            overlay_position = "inside top"
+            hjustify = "inside left"
+            ox = 2
+        else:
+            overlay_position = "inside bottom"
+            hjustify = "left"
+            ox = 2
+
         if label is None:
             th = 0
             for overlay in plot.overlays:
@@ -610,10 +626,11 @@ class InverseIsochron(Isochron):
                     th += h + opt.results_info_spacing
 
             label = OffsetPlotLabel(
-                offset=(1, th),
+                offset=(ox, th + 2),
                 component=plot,
-                overlay_position="inside bottom",
-                hjustify="left",
+                overlay_position=overlay_position,
+                border_visible=False,
+                hjustify=hjustify,
                 bgcolor="transparent",
                 font=opt.results_font,
                 color=text_color,
@@ -680,14 +697,13 @@ class InverseIsochron(Isochron):
                 fit.underlays.append(ee)
                 fit.error_envelope = ee
             else:
-
                 fit.error_envelope.invalidate()
 
                 fit.error_envelope.lower = lci
                 fit.error_envelope.upper = uci
 
         if self.options.display_inset and self.options.inset_link_status:
-            plot = self.graph.plots[self.group_id]
+            plot = self.graph.plots[0]
             if plot:
                 for o in plot.overlays:
                     if isinstance(o, InverseIsochronLineInset):

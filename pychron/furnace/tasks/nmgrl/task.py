@@ -24,7 +24,7 @@ from pychron.furnace.tasks.task import BaseFurnaceTask
 
 
 class NMGRLFurnaceTask(BaseFurnaceTask):
-    id = "pychron.furnace.task"
+    id = "pychron.furnace.nmgrl.task"
     name = "Furnace"
 
     def create_dock_panes(self):

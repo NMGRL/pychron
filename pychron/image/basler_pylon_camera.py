@@ -29,7 +29,6 @@ from pychron.loggable import Loggable
 
 class BaslerPylonCamera(Loggable):
     def __init__(self, identifier, *args, **kw):
-
         # available_cameras = pypylon.factory.find_devices()
         factory = pylon.TlFactory.GetInstance()
         available_cameras = factory.EnumerateDevices()
@@ -69,7 +68,6 @@ class BaslerPylonCamera(Loggable):
             self._cam.StopGrabbing()
             dev = cfg.get("Device")
             if dev:
-
                 for k, v in dev.get("PylonParameters", {}).items():
                     try:
                         setattr(self._cam, k, v)
@@ -97,12 +95,13 @@ class BaslerPylonCamera(Loggable):
         if self._cam and not self._setting_config:
             try:
                 res = self._cam.RetrieveResult(0, pylon.TimeoutHandling_Return)
-                if res.IsValid():
-                    ok = True
-                    img = res.Array
-                res.Release()
-            except GenericException:
+            except RuntimeError:
                 pass
+
+            if res.IsValid():
+                ok = True
+                img = res.Array
+            res.Release()
 
         return ok, img
 
@@ -124,7 +123,6 @@ class BaslerPylonCamera(Loggable):
         self._cam.Close()
 
     def reload_configuration(self, p):
-
         # if self._cam:
         #     self._cam.stop_grabbing()
         #     self._grabber = None

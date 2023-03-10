@@ -99,7 +99,7 @@ class DataToolOverlay(TextBoxOverlay):
     tool = Any
     visibility = Enum("auto", True, False)
     visible = False
-    font = "arial 12"
+    # font = "modern 12"
     tooltip_mode = Bool(False)
 
     def _tool_changed(self, old, new):

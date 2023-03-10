@@ -153,7 +153,7 @@ class MetaRepo(GitRepoManager):
         )
 
     def update_level_production(self, irrad, name, prname, note=None):
-        prname = prname.replace(" ", "_")
+        # prname = prname.replace(" ", "_")
 
         pathname = add_extension(prname, ".json")
 
@@ -461,7 +461,6 @@ class MetaRepo(GitRepoManager):
         save_predicted=True,
         jd=None,
     ):
-
         self.info(
             "Saving j for {}{}:{} {}, j={} +/-{}".format(
                 irradiation, level, pos, identifier, j, e

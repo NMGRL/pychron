@@ -98,7 +98,7 @@ class ContextualMenuTool(Interactor):
 
         # menu.show(x, y)
         menu.show()
-        menu_manager.destroy()
+        # menu_manager.destroy()
         event.handled = True
 
 

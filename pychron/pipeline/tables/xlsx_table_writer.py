@@ -156,7 +156,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return sort_detectors(d)
 
     def _get_columns(self, name, grps):
-
         detectors = self._get_detectors(grps)
 
         options = self._options
@@ -523,33 +522,67 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _get_irradiation_columns(self, ubit):
         fmt = "correction"
 
-        cols = [
-            c
-            for (ai, am), (bi, bm), e in (
-                (("Ar", 40), ("Ar", 39), "K"),
-                (("Ar", 38), ("Ar", 39), "K"),
-                (("Ar", 37), ("Ar", 39), "K"),
-                (("Ar", 39), ("Ar", 37), "Ca"),
-                (("Ar", 38), ("Ar", 37), "Ca"),
-                (("Ar", 36), ("Ar", 37), "Ca"),
-                (("Ar", 36), ("Ar", 38), "Cl"),
-            )
-            for c in (
-                Column(
-                    label=(
-                        "(",
-                        "<sup>{}</sup>".format(am),
-                        "{}/".format(ai),
-                        "<sup>{}</sup>".format(bm),
-                        "{})".format(bm),
-                        "<sub>{}</sub>".format(e),
-                    ),
-                    attr="{}{}{}".format(e, am, bm),
-                    sigformat=fmt,
+        cols = []
+        for am, bm, e in [
+            (40, 39, "K"),
+            (38, 39, "K"),
+            (37, 39, "K"),
+            (39, 37, "Ca"),
+            (38, 37, "Ca"),
+            (36, 37, "Ca"),
+            (36, 38, "Cl"),
+        ]:
+            attr = "{}{}{}".format(e, am, bm)
+            c = Column(
+                label=(
+                    "(",
+                    "<sup>{}</sup>".format(am),
+                    "Ar/",
+                    "<sup>{}</sup>".format(bm),
+                    "Ar)",
+                    "<sub>{}</sub>".format(e),
                 ),
-                EColumn(attr="{}{}{}".format(e, am, bm), sigformat=fmt),
+                attr=attr,
+                sigformat=fmt,
             )
-        ]
+            ec = EColumn(attr=attr, sigformat=fmt)
+            cols.append(c)
+            cols.append(ec)
+
+        # cols = [c
+        #     for am, bm, e in [(40, 39, "K"),
+        #                       (38, 38, "K"),
+        #                       (37, 39, "K"),
+        #                       (39, 37, "Ca"),
+        #                       (38, 37, "Ca"),
+        #                       (36, 37, "Ca"),
+        #                       (36, 38, "Cl")
+        #                       ]
+        #     # for (ai, am), (bi, bm), e in (
+        #     #     (("Ar", 40), ("Ar", 39), "K"),
+        #     #     (("Ar", 38), ("Ar", 39), "K"),
+        #     #     (("Ar", 37), ("Ar", 39), "K"),
+        #     #     (("Ar", 39), ("Ar", 37), "Ca"),
+        #     #     (("Ar", 38), ("Ar", 37), "Ca"),
+        #     #     (("Ar", 36), ("Ar", 37), "Ca"),
+        #     #     (("Ar", 36), ("Ar", 38), "Cl"),
+        #     # )
+        #     for c in (
+        #         Column(
+        #             label=(
+        #                 "(",
+        #                 "<sup>{}</sup>".format(am),
+        #                 "Ar/",
+        #                 "<sup>{}</sup>".format(bm),
+        #                 "Ar)",
+        #                 "<sub>{}</sub>".format(e),
+        #             ),
+        #             attr="{}{}{}".format(e, am, bm),
+        #             sigformat=fmt,
+        #         ),
+        #         EColumn(attr="{}{}{}".format(e, am, bm), sigformat=fmt),
+        #     )
+        # ]
 
         cols.extend(
             [
@@ -992,7 +1025,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._current_row += 1
 
     def _make_column_header(self, sh, cols, it):
-
         start = next((i for i, c in enumerate(cols) if c.attr == "Ar40"), 9)
 
         if self._options.repeat_header and it > 0:
@@ -1128,6 +1160,13 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         sh.write_number(row, age_idx + 2, nominal_value(ag.kca), kcafmt)
         sh.write_number(row, age_idx + 3, std_dev(ag.kca), kcafmt)
 
+        # need to fill in any gaps
+        c = age_idx + 4
+        while 1:
+            if c < cum_idx:
+                sh.write(row, c, "", border)
+                c += 1
+
         if label == "plateau":
             sh.write_number(row, cum_idx, ag.plateau_total_ar39(), fmt)
         else:
@@ -1145,7 +1184,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         if use_scientific:
             fmt = "0.0E+00"
         else:
-
             fmt = "0.{}".format("0" * sig_figs)
 
         # if not self._options.ensure_trailing_zeros:
@@ -1389,7 +1427,10 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             self._current_row += 1
 
     def _make_notes(self, groups, sh, ncols, key):
-        top = self._workbook.add_format({"top": 1, "bold": True})
+        fmt = {"bold": True}
+        if self._options.include_notes_border:
+            fmt["top"] = 1
+        top = self._workbook.add_format(fmt)
 
         sh.write_string(self._current_row, 0, "Notes:", top)
         for i in range(1, ncols):
@@ -1407,7 +1448,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         self._write_notes(sh, notes)
 
     def _make_unknown_notes(self, groups, sh):
-
         g = groups[0]
         monitor_age, decay_ref = g.monitor_info
 

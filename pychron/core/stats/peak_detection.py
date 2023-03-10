@@ -362,7 +362,6 @@ def fast_find_peaks(ys, xs, **kw):
         peak_x_ranges.append((xmin, xmax))
 
     try:
-
         return peaks_x, ys[idx], peak_x_ranges
     except IndexError:
         # from pyface.message_dialog import warning

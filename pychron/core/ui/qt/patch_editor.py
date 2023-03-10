@@ -264,7 +264,6 @@ class _PatchEditor(Editor):
         cursor.endEditBlock()
 
     def _highlight(self, lineno, kind):
-
         if kind == "addition":
             color = QColor(225, 254, 229)  # light green
         elif kind == "deletion":

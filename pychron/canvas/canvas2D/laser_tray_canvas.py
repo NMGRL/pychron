@@ -228,7 +228,9 @@ class LaserTrayCanvas(StageCanvas):
             radius = self.beam_radius
 
         if screen:
-            radius = self.get_wh(radius, 0)[0]
+            w, h = self.get_wh(radius, radius)
+            radius = (w + h) / 2.0
+
         return radius
 
     def add_image_underlay(self, p, alpha=1.0):
@@ -361,7 +363,6 @@ class LaserTrayCanvas(StageCanvas):
         self.scene.pop_item(idx, klass=LaserPoint)
 
     def new_point(self, xy=None, redraw=True, **kw):
-
         if xy is None:
             xy = self._stage_position
 
@@ -474,7 +475,6 @@ class LaserTrayCanvas(StageCanvas):
             return
 
         if delta is None:
-
             vrange = getattr(self, "{}_mapper".format(mapper)).range
 
             vmi = vrange.low

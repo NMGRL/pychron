@@ -177,6 +177,15 @@ class Ideogram(BaseArArFigure):
             warning(None, "X Value not set. Defaulting to Age")
             index_attr = "uage"
 
+        if index_attr == "equilibration_age":
+            import time
+
+            st = time.time()
+            print("fffff")
+            for a in self.analyses:
+                a.load_raw_data()
+            print("sdffasdf", time.time() - st)
+
         graph = self.graph
 
         try:
@@ -330,8 +339,8 @@ class Ideogram(BaseArArFigure):
                 offset, _ = calculate_weighted_mean(xs, es)
             xs -= offset
 
-            print("asfd", offset)
-        print(xs)
+            # print("asfd", offset)
+        # print(xs)
         return xs
 
     # ===============================================================================
@@ -644,6 +653,16 @@ class Ideogram(BaseArArFigure):
         # if ogid == 0:
         plot.index_mapper.range.on_trait_change(self.update_index_mapper, "updated")
 
+        for gi in self.options.guides:
+            if gi.visible and gi.should_plot(pid):
+                graph.add_guide(gi.value, **gi.to_kwargs(), plotid=pid)
+
+        for gi in self.options.ranges:
+            if gi.visible and gi.should_plot(pid):
+                graph.add_range_guide(
+                    gi.minvalue, gi.maxvalue, **gi.to_kwargs(), plotid=pid
+                )
+
         if self.options.display_inset:
             xs = self.xs
             n = xs.shape[0]
@@ -728,7 +747,6 @@ class Ideogram(BaseArArFigure):
                     ov.set_y_limits(0, yma2)
 
     def _add_group_legend(self, plot, plots, labels):
-
         ln, ns, _ = zip(*labels)
         labels = list(zip(ln, ns))
 
@@ -770,6 +788,7 @@ class Ideogram(BaseArArFigure):
                         line,
                         data_point=(xi, yi),
                         label_text=txt,
+                        font=opt.label_font,
                         border_visible=bool(border),
                         border_width=border,
                         border_color=border_color,
@@ -901,7 +920,6 @@ class Ideogram(BaseArArFigure):
                 ov.set_x(wm)
                 ov.error = we
                 if ov.label:
-
                     mswd_args = None
                     if opt.display_mean_mswd:
                         mswd_args = (mswd, valid_mswd, n, pvalue)

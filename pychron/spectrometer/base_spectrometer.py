@@ -536,6 +536,7 @@ class BaseSpectrometer(SpectrometerDevice):
             yaml.dump(dets, wfile)
 
     def _load_detectors_yaml(self, ypath):
+        self.debug("loading detectors yaml {}".format(ypath))
         with open(ypath, "r") as rfile:
             for i, det in enumerate(yaml.load(rfile, Loader=SafeLoader)):
                 name = det.get("name")
@@ -695,6 +696,9 @@ class BaseSpectrometer(SpectrometerDevice):
 
         return keys, array(gsignals), t, inc
 
+    def _handle_no_intensity_change(self):
+        pass
+
     def _check_intensity_no_change(self, signals):
         if self.simulation:
             return
@@ -706,6 +710,8 @@ class BaseSpectrometer(SpectrometerDevice):
 
         if signals is None:
             self._no_intensity_change_cnt += 1
+            self._handle_no_intensity_change()
+
         elif self._prev_signals is not None:
             try:
                 test = (signals == self._prev_signals).all()
@@ -778,7 +784,13 @@ class BaseSpectrometer(SpectrometerDevice):
     def read_intensities(self):
         raise NotImplementedError
 
-    def read_deflection_word(self):
+    def read_deflection_word(self, *args, **kw):
+        return []
+
+    def get_configuration_value(self, *args, **kw):
+        pass
+
+    def get_hardware_name(self, *args, **kw):
         pass
 
     def read_parameter_word(self):

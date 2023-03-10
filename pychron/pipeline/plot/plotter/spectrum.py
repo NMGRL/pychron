@@ -242,7 +242,7 @@ class Spectrum(BaseArArFigure):
                 text,
                 font=op.integrated_font,
                 relative_position=self.group_id,
-                color=spec.color,
+                color=grp.line_color,
             )
         self._add_info(graph, plot)
 
@@ -262,7 +262,6 @@ class Spectrum(BaseArArFigure):
                     self._add_info_label(plot, ts)
 
     def _add_age_label(self, plot, text, font="modern 10", relative_position=0, **kw):
-
         o = RelativePlotLabel(
             component=plot,
             text=text,
@@ -294,9 +293,10 @@ class Spectrum(BaseArArFigure):
         ls = group.center_line_style
         if not ls == "No Line":
             ds.line_style = ls
-            ds.line_width = group.center_line_width
+            ds.line_width = group.center_line_widthh
         else:
             ds.line_width = 0
+            ds.color = "transparent"
 
         ds.value_mapper.fill_value = 1e-20
         ds.index.on_trait_change(self.update_graph_metadata, "metadata_changed")
@@ -435,7 +435,6 @@ class Spectrum(BaseArArFigure):
     def _calculate_spectrum(
         self, excludes=None, group_id=0, index_key="k39", value_key="uage"
     ):
-
         if excludes is None:
             excludes = []
 

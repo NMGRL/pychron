@@ -123,6 +123,9 @@ class PyScript(Loggable):
     def is_truncated(self):
         return self._truncate
 
+    def is_completed(self):
+        return self._completed
+
     def finish(self):
         self._finish()
 
@@ -198,7 +201,6 @@ class PyScript(Loggable):
 
     def test(self, argv=None):
         if not self.syntax_checked:
-
             self.debug("testing...")
             self._estimated_duration = 0
             self.syntax_checked = True
@@ -250,7 +252,6 @@ class PyScript(Loggable):
                 return MainError
 
         else:
-
             try:
                 code = compile(snippet, "<string>", "exec")
             except BaseException as e:
@@ -369,7 +370,13 @@ class PyScript(Loggable):
         if self._gosub_script is not None:
             self._gosub_script.truncate(style=style)
 
+    @command_register
     def abort(self):
+        """
+        Abort the current script.
+        :return:
+        """
+
         self._aborted = True
         if self._gosub_script is not None:
             if not self._gosub_script.is_aborted():
@@ -385,6 +392,12 @@ class PyScript(Loggable):
 
     @command_register
     def cancel(self, **kw):
+        """
+        Cancel the current script
+
+
+        :return:
+        """
         self._cancel = True
         if self._gosub_script is not None:
             if not self._gosub_script.is_canceled():
@@ -438,6 +451,16 @@ class PyScript(Loggable):
     @calculate_duration
     @command_register
     def gosub(self, name=None, root=None, klass=None, argv=None, calc_time=False, **kw):
+        """
+        Execute a GoSub, aka another script
+
+        :param name:
+        :param root:
+        :param klass:
+        :param argv:
+
+        :return:
+        """
 
         if not name.endswith(".py"):
             name += ".py"
@@ -512,10 +535,15 @@ class PyScript(Loggable):
 
     @command_register
     def interval(self, dur):
+        """
+        :type dur: float, int
+
+        """
         return IntervalContext(self, dur)
 
     @command_register
     def complete_interval(self):
+        """ """
         if self._cancel:
             return
 
@@ -542,6 +570,15 @@ class PyScript(Loggable):
     @calculate_duration
     @command_register
     def begin_interval(self, duration, name=None, calc_time=False):
+        """
+
+        Args:
+            duration (`float`, `int`): Duration of interval in seconds
+            name (`str`, optional): Optional name of this interval. Useful for logging
+
+        Returns:
+            None
+        """
         duration = float(duration)
         if calc_time:
             self._estimated_duration += duration
@@ -654,7 +691,6 @@ class PyScript(Loggable):
     # private
     # ===============================================================================
     def _execute(self, **kw):
-
         self._cancel = False
         self._completed = False
         self._truncate = False

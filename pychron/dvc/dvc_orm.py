@@ -293,10 +293,13 @@ class AnalysisTbl(Base, IDMixin):
         self.load_name = self.get_load_name()
         self.load_holder = self.get_load_holder()
 
-        # force binding of irradiation_position
+        # force binding of irradiation_position, sample, material, project, pi
         self.irradiation_position
         self.irradiation_level
         self.irradiation
+        self.material
+        self.project
+        self.principal_investigator
 
 
 # class AnalysisIntensitiesTbl(Base, IDMixin):

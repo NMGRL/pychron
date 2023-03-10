@@ -109,7 +109,6 @@ class CommitGraphicsItem(QGraphicsItem):
         cached_commit_color=commit_color,
         cached_merge_color=merge_color,
     ):
-
         QGraphicsItem.__init__(self)
 
         self.commit = commit
@@ -162,7 +161,7 @@ class CommitGraphicsItem(QGraphicsItem):
                     self.brush = self.commit_color
                 color = self.outline_color
             commit_pen = QtGui.QPen()
-            commit_pen.setWidth(1.0)
+            commit_pen.setWidth(1)
             commit_pen.setColor(color)
             self.commit_pen = commit_pen
 
@@ -178,7 +177,6 @@ class CommitGraphicsItem(QGraphicsItem):
         return self.item_shape
 
     def paint(self, painter, option, _widget, cache=Cache):
-
         # Do not draw outside the exposed rect
         # painter.setClipRect(option.exposedRect)
 
@@ -317,7 +315,6 @@ class Edge(QGraphicsItem):
     item_type = QGraphicsItem.UserType + 1
 
     def __init__(self, source, dest):
-
         QGraphicsItem.__init__(self)
 
         self.setAcceptedMouseButtons(Qt.NoButton)
@@ -811,7 +808,6 @@ class DAGraphView(QGraphicsView):
             # Allocate columns for children which are still without one. Also
             # propagate frontier for children.
             if node.is_fork():
-
                 sorted_children = sorted(
                     node.children, key=lambda c: c.generation, reverse=True
                 )

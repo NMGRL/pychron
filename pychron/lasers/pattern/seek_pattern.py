@@ -163,7 +163,6 @@ class Triangle:
 
     def point_xy(self, idx=None):
         if idx is None:
-
             pts = sorted(
                 [p for p in self._points], key=lambda px: px.score, reverse=True
             )
@@ -218,7 +217,6 @@ class Triangle:
         return [(p.x, p.y, p.score) for p in self._points]
 
     def is_equilateral(self):
-
         p1, p2, p3 = self._points
         d1 = ((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2) ** 0.5
         d2 = ((p1.x - p3.x) ** 2 + (p1.y - p3.y) ** 2) ** 0.5
@@ -304,6 +302,7 @@ class SeekPattern(Pattern):
         return imgplot, cp
 
     def validate(self, xx, yy):
+        print("validate", xx, yy, self.cy, self.cy, self.perimeter_radius)
         return (
             (xx - self.cx) ** 2 + (yy - self.cy) ** 2
         ) ** 0.5 <= self.perimeter_radius
@@ -328,7 +327,6 @@ class SeekPattern(Pattern):
 
     def point_generator(self):
         def gen():
-
             self._tri = tri = Triangle(self.base)
 
             yield tri.point_xy(0)

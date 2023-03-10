@@ -64,7 +64,7 @@ class MagnetSweep(BaseSweep):
 
     def _make_pseudo(self, values, channels):
         self._peak_generator = pseudo_peak(
-            values[len(values) / 2] + 0.001,
+            values[len(values) // 2] + 0.001,
             values[0],
             values[-1],
             len(values),

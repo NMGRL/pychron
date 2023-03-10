@@ -18,6 +18,7 @@ import os
 import subprocess
 import sys
 
+import git
 import requests
 
 # ============= enthought library imports =======================
@@ -34,6 +35,7 @@ from pychron.loggable import Loggable
 from pychron.paths import r_mkdir
 from pychron.pychron_constants import STARTUP_MESSAGE_POSITION
 from pychron.updater.commit_view import CommitView, UpdateGitHistory
+from pychron.globals import globalv
 
 
 def gitcommand(repo, name, tag, func):
@@ -322,7 +324,10 @@ class Updater(Loggable):
     def _validate_origin(self, name):
         cmd = "https://github.com/{}".format(name)
         try:
-            requests.get(cmd)
+            kw = {}
+            if globalv.cert_file:
+                kw["verify"] = globalv.cert_file
+            requests.get(cmd, **kw)
             return True
         except BaseException as e:
             print("excepiton validating origin", cmd, e)
@@ -462,7 +467,17 @@ class Updater(Loggable):
                     )
                     return
             else:
-                repo = Repo(p)
+                try:
+                    repo = Repo(p)
+                except git.GitError as e:
+                    self.information_dialog(
+                        "The build directory you have selected is invalid. {}".format(
+                            e
+                        ),
+                        position=STARTUP_MESSAGE_POSITION,
+                    )
+                    return
+
             self._repo = repo
         return self._repo
 

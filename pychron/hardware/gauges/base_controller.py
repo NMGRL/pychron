@@ -30,6 +30,14 @@ class BaseGauge(HasTraits):
     color_scalar = 1
     width = Int(100)
     channel = Str
+    map_function = Str
+
+    def voltage_to_pressure(self, v):
+        # convert a voltage to a pressure
+        if self.map_function:
+            tag = "x" if "x" in self.map_function else "v"
+            v = eval(self.map_function, {tag: v})
+        return v
 
     def traits_view(self):
         v = View(

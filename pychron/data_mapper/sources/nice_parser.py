@@ -63,7 +63,6 @@ class NiceParser:
         self._current = tokens[0]
 
     def exp(self):
-
         mt = detregex.match(self._tokens[0])
 
         result = self.term()

@@ -80,7 +80,6 @@ class myCodeWidget(CodeWidget):
         cursor.endEditBlock()
 
     def replace_selection(self, txt):
-
         cursor = self.textCursor()
         #  #     QtGui.QTextCursor.StartOfLine, QtGui.QTextCursor.KeepAnchor, txt.count('\n'))
         cursor.beginEditBlock()

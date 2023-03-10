@@ -59,6 +59,7 @@ from pychron.core.ui.dialogs import cinformation
 from pychron.core.ui.strings import SpacelessStr
 from pychron.core.ui.table_editor import myTableEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
+from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.processing.analyses.file_analysis import FileAnalysis
 from pychron.processing.isotope import Isotope
@@ -169,6 +170,9 @@ class CSVRegressionRecord(CSVRecord):
             self.x_err = random()
             self.y_err = random()
 
+    def valid(self):
+        return (self.x or self.x_err) and (self.y or self.y_err)
+
 
 class CSVRecordGroup(HasTraits):
     name = Str
@@ -186,24 +190,31 @@ class CSVRecordGroup(HasTraits):
     max = Float
     dev = Float
     percent_dev = Float
+    calculate_name = "records:[age,age_err,status]"
 
     def __init__(self, name, records, *args, **kw):
         super(CSVRecordGroup, self).__init__(*args, **kw)
 
         self.name = str(name)
         self.records = list(records)
+        self.on_trait_change(self.calculate, self.calculate_name)
         self.calculate()
 
-    @on_trait_change("records:[age,age_err,status]")
     def calculate(self):
         total = len(self.records)
         if not total:
             return
 
-        data = [(a.age, a.age_err) for a in self.records if a.status]
+        data = self._get_data()
         if not data:
             return
 
+        self._calculate(total, data)
+
+    def _get_data(self):
+        return [(a.age, a.age_err) for a in self.records if a.status]
+
+    def _calculate(self, total, data):
         data = array(data)
         x, errs = data.T
 
@@ -243,7 +254,14 @@ class CSVDataSetFactoryHandler(Handler):
         return True
 
 
-class CSVDataSetFactory(HasTraits):
+class CSVRegressionRecordGroup(CSVRecordGroup):
+    calculate_name = "records:[y,y_err,status]"
+
+    def _get_data(self):
+        return [(a.y, a.y_err) for a in self.records if a.status]
+
+
+class CSVDataSetFactory(Loggable):
     records = List
     groups = List
 
@@ -271,6 +289,7 @@ class CSVDataSetFactory(HasTraits):
     repo_filter = Str
     dirty = False
     _record_klass = CSVRecord
+    _group_klass = CSVRecordGroup
 
     _message_text = """Create/select a file with a column header as the first line.<br/><br/>
         
@@ -316,7 +335,6 @@ e.g.
                 "Otherwise please select a repository to save the data "
                 "file",
             ):
-
                 dlg = FileDialog(action="save as", default_directory=paths.csv_data_dir)
                 if dlg.open():
                     local_path = dlg.path
@@ -345,8 +363,12 @@ e.g.
     #     for gi in self.groups:
     #         gi.calculate()
 
+    def _record_factory(self):
+        record = self._record_klass()
+        return record
+
     def _add_record_button_fired(self):
-        self.records.append(self._record_klass())
+        self.records.append(self._record_factory())
         self._make_groups()
 
     def _name_filter_changed(self, new):
@@ -407,20 +429,28 @@ e.g.
 
     def _make_groups(self):
         rs = [r for r in self.records if r.valid()]
-        self.groups = [CSVRecordGroup(gid, rs) for gid, rs in groupby_key(rs, "group")]
+        self.groups = [
+            self._group_klass(gid, rs) for gid, rs in groupby_key(rs, "group")
+        ]
 
     def _load_csv_data(self, p):
         if os.path.isfile(p):
-            parser = CSVColumnParser()
-            parser.load(p)
+            try:
+                parser = CSVColumnParser()
+                parser.load(p)
 
-            records = [self._record_klass(**row) for row in parser.values()]
-            self.records = records
+                records = [self._record_klass(**row) for row in parser.values()]
+                self.records = records
 
-            self._make_groups()
+                self._make_groups()
 
-            self.data_path = p
-            self.dirty = False
+                self.data_path = p
+                self.dirty = False
+            except BaseException:
+                self.debug_exception()
+                self.warning_dialog(
+                    "Failed to load csv file '{}'. Please check its format!".format(p)
+                )
 
     def _make_csv_data(self):
         header = self.records[0].header
@@ -774,6 +804,11 @@ class CSVRegressionDataSetFactory(CSVDataSetFactory):
         </table>
     """
     _record_klass = CSVRegressionRecord
+    _group_klass = CSVRegressionRecordGroup
+
+    def _record_factory(self):
+        record = self._record_klass(test=len(self.records) + 1)
+        return record
 
     def _get_columns(self):
         cols = [

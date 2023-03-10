@@ -31,7 +31,6 @@ from six.moves import range
 
 def outward_square_spiral(base):
     def gen():
-
         b = base
         prevx, prevy = b, 0
         while 1:

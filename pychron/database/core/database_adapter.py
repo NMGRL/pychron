@@ -78,14 +78,15 @@ class SessionCTX(object):
         self._psession = None
 
     def __enter__(self):
-        if self._use_parent_session:
-            self._parent.create_session()
-            return self._parent.session
-        else:
-            self._psession = self._parent.session
-            self._session = self._parent.session_factory()
-            self._parent.session = self._session
-            return self._session
+        if self._parent:
+            if self._use_parent_session:
+                self._parent.create_session()
+                return self._parent.session
+            else:
+                self._psession = self._parent.session
+                self._session = self._parent.session_factory()
+                self._parent.session = self._session
+                return self._session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._session:
@@ -420,7 +421,6 @@ host= {}\nurl= {}'.format(
                 os.path.basename(self.path),
             )
         else:
-
             url = "{}:{}".format(obscure_host(self.host), self.name)
         return url
 
@@ -509,7 +509,6 @@ host= {}\nurl= {}'.format(
         return driver
 
     def _import_mysql_driver(self):
-
         try:
             """
             pymysql
@@ -538,7 +537,7 @@ host= {}\nurl= {}'.format(
 
         try:
             self.info("testing database connection {}".format(self.test_func))
-            vers = getattr(self, self.test_func)(reraise=True)
+            getattr(self, self.test_func)(reraise=True)
             if version_warn:
                 self._version_warn_hook()
 
@@ -641,7 +640,6 @@ host= {}\nurl= {}'.format(
         group_by=None,
         verbose_query=False,
     ):
-
         sess = self.session
         if sess is None or isinstance(sess, MockSession):
             self.debug("USING MOCKSESSION************** {}".format(sess))
@@ -757,7 +755,6 @@ host= {}\nurl= {}'.format(
                 raise e
 
     def _append_filters(self, f, kw):
-
         filters = kw.get("filters", [])
         if isinstance(f, (tuple, list)):
             filters.extend(f)
@@ -787,7 +784,6 @@ host= {}\nurl= {}'.format(
         verbose=True,
         verbose_query=False,
     ):
-
         if not isinstance(value, (str, int, six.text_type, int, float, list, tuple)):
             return value
 
@@ -882,7 +878,6 @@ host= {}\nurl= {}'.format(
         order=None,
         key=None,
     ):
-
         if isinstance(join_table, str):
             join_table = gtables[join_table]
 

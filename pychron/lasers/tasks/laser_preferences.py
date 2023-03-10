@@ -29,6 +29,8 @@ from pychron.pychron_constants import (
     FUSIONS_CO2,
     FUSIONS_UV,
     OSTECH_DIODE,
+    TAP_DIODE,
+    UC2000_CO2,
 )
 
 
@@ -76,9 +78,11 @@ class LaserPreferences(BasePreferencesHelper):
     crosshairs_offset_color = Color("blue")
     crosshairs_line_width = Float(1.0)
 
+    aux_crosshairs_kind = Enum("BeamRadius", "UserRadius", "MaskRadius")
     aux_crosshairs_radius = Range(0.0, 10.0, 1.0)
     aux_crosshairs_offsetx = Float(0)
     aux_crosshairs_offsety = Float(0)
+    aux_crosshairs_offset_color = Color("red")
     aux_crosshairs_color = Color("red")
     aux_crosshairs_line_width = Float(1.0)
 
@@ -131,6 +135,16 @@ class FusionsUVPreferences(FusionsLaserPreferences):
 class OsTechDiodePreferences(LaserPreferences):
     name = OSTECH_DIODE
     preferences_path = "pychron.ostech.diode"
+
+
+class TAPDiodePreferences(LaserPreferences):
+    name = TAP_DIODE
+    preferences_path = "pychron.tap.diode"
+
+
+class UC2000CO2Preferences(LaserPreferences):
+    name = UC2000_CO2
+    preferences_path = "pychron.uc2000.co2"
 
 
 # ===============================================================================
@@ -298,7 +312,7 @@ class LaserPreferencesPane(PreferencesPane):
         return [canvasgrp, videogrp, autocenter_grp, patgrp, powergrp]
 
 
-class FusionsLaserPreferencesPane(PreferencesPane):
+class FusionsLaserPreferencesPane(LaserPreferencesPane):
     pass
 
 
@@ -320,6 +334,16 @@ class FusionsUVPreferencesPane(FusionsLaserPreferencesPane):
 class OsTechDiodePreferencesPane(LaserPreferencesPane):
     category = OSTECH_DIODE
     model_factory = OsTechDiodePreferences
+
+
+class TAPDiodePreferencesPane(LaserPreferencesPane):
+    category = TAP_DIODE
+    model_factory = TAPDiodePreferences
+
+
+class UC2000CO2PreferencesPane(LaserPreferencesPane):
+    category = UC2000_CO2
+    model_factory = UC2000CO2Preferences
 
 
 # ============= EOF =============================================

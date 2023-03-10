@@ -58,7 +58,6 @@ class LegacyBinaryZaberMotionController(MotionController):
     # _wrapper = None
 
     def load(self, *args, **kw):
-
         config = self.get_configuration()
         if config:
             section = "Communications"

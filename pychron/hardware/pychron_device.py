@@ -31,6 +31,7 @@ class RemoteDeviceMixin(Loggable):
     use_end = Bool
     timeout = CInt
     write_terminator = chr(10)
+    read_terminator = ""
 
     def open(self):
         return self.setup_communicator()
@@ -72,12 +73,7 @@ class SerialDeviceMixin(RemoteDeviceMixin):
         )
         ec.set_parity(self.parity)
         ec.set_stopbits(self.stopbits)
-        r = ec.open(timeout=self.timeout)
-        # if r:
-        #     r = self.opened()
-        #     self.connected = bool(r)
-
-        return r
+        return ec.open(timeout=self.timeout)
 
 
 class EthernetDeviceMixin(RemoteDeviceMixin):
@@ -85,27 +81,36 @@ class EthernetDeviceMixin(RemoteDeviceMixin):
     host = Str
     timeout = CInt
 
-    def setup_communicator(self):
+    def setup_communicator(
+        self, write_terminator=None, read_terminator=None, force=False
+    ):
         from pychron.hardware.core.communicators.ethernet_communicator import (
             EthernetCommunicator,
         )
 
-        self.communicator = ec = EthernetCommunicator(
-            host=self.host,
-            port=self.port,
-            kind=self.kind,
-            use_end=self.use_end,
-            message_frame=self.message_frame,
-            write_terminator=self.write_terminator,
-            timeout=self.timeout,
-        )
+        if write_terminator is None:
+            write_terminator = self.write_terminator
 
-        r = ec.open()
-        # if r:
-        #     r = self.opened()
-        #     self.connected = bool(r)
+        if read_terminator is None:
+            read_terminator = self.read_terminator
 
-        return r
+        ret = True
+        if force or self.communicator is None:
+            self.communicator = ec = EthernetCommunicator(
+                host=self.host,
+                port=self.port,
+                kind=self.kind,
+                use_end=self.use_end,
+                message_frame=self.message_frame,
+                write_terminator=write_terminator,
+                read_terminator=read_terminator,
+                timeout=self.timeout,
+            )
+            ret = ec.open()
+            if self.communicator:
+                self.communicator.report()
+
+        return ret
 
 
 # ============= EOF =============================================

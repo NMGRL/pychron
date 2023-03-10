@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import json
 import logging
+import os
 import time
 from socket import gethostbyname, gethostname
 from threading import Thread
@@ -33,6 +35,7 @@ from traits.api import (
     File,
     Float,
     Enum,
+    Color,
 )
 
 from pychron.canvas.canvas_editor import CanvasEditor
@@ -51,8 +54,8 @@ from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
+from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
-
 
 MANAGERS = {
     "manometer_manager": (
@@ -117,7 +120,7 @@ class ExtractionLineManager(Manager, Consoleable):
     file_listener = None
 
     wait_group = Instance(WaitGroup, ())
-    console_bgcolor = "black"
+    console_bgcolor = Color("black")
 
     _active = False
     _update_status_flag = None
@@ -140,7 +143,6 @@ class ExtractionLineManager(Manager, Consoleable):
         self.devices = devs
 
     def deactivate(self):
-
         for t in ("gauge", "heater", "pump"):
             self.info("start {} scans".format(t))
             man = getattr(self, "{}_manager".format(t))
@@ -153,7 +155,6 @@ class ExtractionLineManager(Manager, Consoleable):
         self._deactivate_hook()
 
     def bind_preferences(self):
-
         prefid = "pychron.extraction_line"
 
         attrs = (
@@ -360,7 +361,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
             c.load_canvas_file()
             if self.switch_manager:
-
                 for k, v in self.switch_manager.switches.items():
                     vc = c.get_object(k)
                     if vc:
@@ -384,7 +384,11 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def update_switch_owned_state(self, *args, **kw):
         for c in self.canvases:
-            c.update_switch_owned_state(*args, **kw)
+            if "state" in kw:
+                try:
+                    c.update_switch_owned_state(*args, **kw)
+                except BaseException:
+                    self.debug_exception()
 
     def set_valve_owner(self, name, owner):
         """
@@ -477,6 +481,18 @@ class ExtractionLineManager(Manager, Consoleable):
             names = self.switch_manager.get_valve_names()
         return names
 
+    def get_pipette_counts(self):
+        counts = []
+        if self.switch_manager is not None:
+            counts = self.switch_manager.get_pipette_counts()
+        return counts
+
+    def get_pipette_count(self, name):
+        count = 0
+        if self.switch_manager is not None:
+            count = self.switch_manager.get_pipette_count(name)
+        return count
+
     def get_pressure(self, controller, name):
         if self.gauge_manager:
             return self.gauge_manager.get_pressure(controller, name)
@@ -520,9 +536,42 @@ class ExtractionLineManager(Manager, Consoleable):
         t = Thread(target=sample)
         t.start()
 
+    script_executor = None
+    _aqua_active_flag = False
+
+    def aqua_trigger(self):
+        app = self.application
+        se = self.script_executor
+        if not se:
+            se = app.get_service("pychron.pyscripts.tasks.pyscript_task.ScriptExecutor")
+            self.script_executor = se
+        # context = {"analysis_type": "blank" if "blank" in name else "unknown"}
+        name = "aqua.py"
+        root = os.path.join(paths.scripts_dir)
+        p = os.path.join(root, name)
+        if os.path.isfile(p):
+            context = {}
+            se.execute_script(
+                name,
+                root,
+                delay_start=1,
+                manager=self,
+                context=context,
+            )
+            self._aqua_active_flag = True
+        else:
+            self.warning(f"{p} is not a valid file")
+
+    def aqua_get_status(self):
+        status = {}
+        if self.script_executor and self._aqua_active_flag:
+            status = self.script_executor.get_script_status()
+            if status.get("completed"):
+                self._aqua_active_flag = False
+        return json.dumps(status)
+
     def cycle(self, name, **kw):
         def cycle():
-
             valve = self.switch_manager.get_switch_by_name(name)
             if valve is not None:
                 n = valve.cycle_n
@@ -600,6 +649,18 @@ class ExtractionLineManager(Manager, Consoleable):
             self.warning("cryo manager not available")
             return 0
 
+    def get_cryo_response_blob(self):
+        if self.cryo_manager:
+            return self.cryo_manager.response_recorder.get_response_blob()
+
+    def start_cryo_recorder(self):
+        if self.cryo_manager:
+            self.cryo_manager.start_response_recorder()
+
+    def stop_cryo_recorder(self):
+        if self.cryo_manager:
+            self.cryo_manager.stop_response_recorder()
+
     # ===============================================================================
 
     # ============= Manometer =======================================================
@@ -627,7 +688,6 @@ class ExtractionLineManager(Manager, Consoleable):
             self.canvases.append(c)
 
     def _activate_hook(self):
-
         self.monitor = SystemMonitor(manager=self, name="system_monitor")
         self.monitor.monitor()
 
@@ -775,6 +835,8 @@ class ExtractionLineManager(Manager, Consoleable):
 
             return result
 
+        return True, True
+
     def _change_switch_state(self, name, mode, action, sender_address=None, **kw):
         result, change = False, False
         if self._check_ownership(name, sender_address):
@@ -819,7 +881,7 @@ class ExtractionLineManager(Manager, Consoleable):
     def _set_pipette_counts(self, name, value):
         for c in self.canvases:
             scene = c.canvas2D.scene
-            obj = scene.get_item("vlabel_{}Pipette".format(name))
+            obj = scene.get_item("vlabel_{}".format(name))
             if obj is not None:
                 obj.value = int(value)
                 c.refresh()

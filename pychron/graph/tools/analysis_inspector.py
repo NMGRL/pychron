@@ -50,11 +50,9 @@ class AnalysisPointInspector(PointInspector):
         return ctx_menu
 
     def normal_right_down(self, event):
-        print("nsdo", event, self.current_position)
         self._selected_indices = []
         if self.current_position:
             inds = self.get_selected_index()
-            print("insdf", inds)
             if inds is not None:
                 self._selected_indices = list(inds)
                 self._show_menu(event)
@@ -80,19 +78,14 @@ class AnalysisPointInspector(PointInspector):
             ai.trigger_recall()
 
     def _show_menu(self, event):
-        self.get_contextual_menu()
-
         control = event.window.control
 
         menu_manager = self.get_contextual_menu()
         menu = menu_manager.create_menu(control, None)
-
         menu.show()
-        menu_manager.destroy()
         event.handled = True
 
     def assemble_lines(self):
-
         lines = []
         if self.current_position:
             inds = self.get_selected_index()
@@ -146,7 +139,6 @@ class AnalysisPointInspector(PointInspector):
                     ]
 
                     if self.include_x:
-
                         if hasattr(component, "xerror"):
                             try:
                                 xerror = component.xerror

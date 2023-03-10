@@ -38,7 +38,6 @@ class ClientExtractionLinePlugin(ExtractionLinePlugin):
     extraction_line_manager_klass = ClientExtractionLineManager
 
     def _runner_factory(self):
-
         ip = InitializationParser()
         elm = ip.get_plugin("ClientExtractionLine", category="hardware")
         runner = elm.find("runner")

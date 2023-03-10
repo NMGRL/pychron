@@ -100,7 +100,6 @@ class Viewable(Loggable):
         pass
 
     def close(self, ok):
-
         for ai in self.associated_windows:
             ai.close_ui()
 

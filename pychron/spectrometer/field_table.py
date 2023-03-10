@@ -145,7 +145,6 @@ class FieldTable(Loggable):
                 )
 
     def map_mass_to_dac(self, mass, detname):
-
         if isinstance(mass, str):
             mass = self.molweights[mass]
 

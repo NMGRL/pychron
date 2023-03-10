@@ -81,7 +81,6 @@ class ExtractionLinePlugin(BaseTaskPlugin):
         return self._test("test_valve_communication")
 
     def _test(self, func):
-
         man = self.application.get_service(ExtractionLineManager)
         return getattr(man, func)()
 
@@ -116,7 +115,6 @@ class ExtractionLinePlugin(BaseTaskPlugin):
         ]
 
         if self.application.get_plugin("pychron.pyscript.plugin"):
-
             actions = []
             for f in glob_list_directory(
                 paths.procedures_dir, extension=".py", remove_extension=True

@@ -74,7 +74,6 @@ class FigureContainer(HasTraits):
         self.model_changed(True)
 
     def _component_factory(self, r, c):
-
         op = GridPlotContainer(
             shape=(r, c),
             bgcolor="white",

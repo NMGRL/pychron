@@ -144,7 +144,6 @@ class YorkRegressor(OLSRegressor):
         return self._intercept
 
     def get_intercept_error(self):
-
         if self.error_calc_type == "CI":
             e = self.calculate_ci_error(0)[0]
         # elif self.error_calc_type in (SEM, MSEM):

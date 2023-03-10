@@ -61,6 +61,11 @@ class MeasurementPyScript(ValvePyScript):
 
     _fit_series_count = 0
 
+    def abort(self):
+        if not self.is_aborted():
+            super(MeasurementPyScript, self).abort()
+            self._automated_run_call("abort_run", do_post_equilibration=False)
+
     def gosub(self, *args, **kw):
         kw["automated_run"] = self.automated_run
         s = super(MeasurementPyScript, self).gosub(*args, **kw)
@@ -152,6 +157,31 @@ class MeasurementPyScript(ValvePyScript):
 
         if not self._automated_run_call(
             "py_generate_ic_mftable", detectors, refiso, peak_center_config, n
+        ):
+            self.cancel()
+
+    @verbose_skip
+    @command_register
+    def generate_peakhop_mftable(
+        self, pairs, peak_center_config="", n=1, calc_time=False
+    ):
+        """
+        Generate an Peakhop MFTable.
+
+        cancel script if generating mftable fails
+
+        :param detectors: list of detectors to peak center
+        :type detectors: list
+        :param refiso: isotope to peak center
+        :type refiso: str
+        """
+
+        if calc_time:
+            self._estimated_duration += (len(pairs) * 30) * n
+            return
+
+        if not self._automated_run_call(
+            "py_generate_peakhop_mftable", pairs, peak_center_config, n
         ):
             self.cancel()
 
@@ -737,7 +767,6 @@ class MeasurementPyScript(ValvePyScript):
         action=None,
         resume=False,
     ):
-
         self._automated_run_call(
             "py_add_action",
             attr=attr,

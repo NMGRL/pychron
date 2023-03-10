@@ -36,7 +36,6 @@ class CompositeOptions(FigureOptions):
         state["isochron_options"] = self.isochron_options.make_state()
 
     def _load_state_hook(self, state):
-
         so = state.pop("isochron_options")
         if so:
             try:
@@ -85,7 +84,7 @@ class CompositeOptions(FigureOptions):
             "calculations(spec.)",
         ):
             obj = klass(model=self.spectrum_options)
-        elif name in ("isochron", "appearance(iso.)"):
+        elif name in ("isochron", "calculations(iso.)", "appearance(iso.)"):
             obj = klass(model=self.isochron_options)
         else:
             obj = klass(model=self)
@@ -99,6 +98,7 @@ class CompositeOptions(FigureOptions):
             "Display(Spec.)",
             "Calculations(Spec.)",
             "Isochron",
+            "Calculations(Iso.)",
             "Appearance(Iso.)",
             "Layout",
             "Title",

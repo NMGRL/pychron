@@ -220,6 +220,8 @@ class DVCPreferencesPane(PreferencesPane):
 class DVCExperimentPreferences(BasePreferencesHelper):
     preferences_path = "pychron.dvc.experiment"
     use_dvc_persistence = Bool
+    dvc_save_timeout_minutes = Int
+    use_dvc_overlap_save = Bool
 
 
 class DVCExperimentPreferencesPane(PreferencesPane):
@@ -229,7 +231,14 @@ class DVCExperimentPreferencesPane(PreferencesPane):
     def traits_view(self):
         v = View(
             BorderVGroup(
-                Item("use_dvc_persistence", label="Use DVC Persistence"), label="DVC"
+                Item("use_dvc_persistence", label="Use DVC Persistence"),
+                Item("use_dvc_overlap_save", label="Use DVC Overlap Save"),
+                Item(
+                    "dvc_save_timeout_minutes",
+                    label="DVC Save timeout (minutes)",
+                    enabled_when="use_dvc_overlap_save",
+                ),
+                label="DVC",
             )
         )
         return v

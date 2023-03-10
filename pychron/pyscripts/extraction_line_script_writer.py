@@ -166,7 +166,6 @@ class ExtractionLineScriptWriter(Loggable):
 
     # private
     def _actuate(self, valve, state, mode):
-
         if self.record_valve_actions and mode == "normal":
             cmd = "open" if state else "close"
             cvalve = self.canvas.scene.get_item(valve)
@@ -183,7 +182,6 @@ class ExtractionLineScriptWriter(Loggable):
             wfile.write(self.script_text)
 
     def _open_file(self, p):
-
         if not os.path.isfile(p):
             self.debug("{} does not exist".format(p))
             return

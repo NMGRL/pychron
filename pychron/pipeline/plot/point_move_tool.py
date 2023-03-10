@@ -111,7 +111,7 @@ class OverlayMoveTool(PointMoveTool):
             dx, dy = px - event.x, py - event.y
             self._start_pt = event.x, event.y
             self.component.update_offset(dx, dy)
-
+            self.component.do_layout()
         except ValueError:
             pass
 

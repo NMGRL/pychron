@@ -102,12 +102,18 @@ class ExtractionPyScript(ValvePyScript):
             m = self._extraction_action(("get_grain_polygon_blob", (), {}))
         return m
 
+    def get_cryo_response_blob(self):
+        return self._manager_action(
+            ("get_cryo_response_blob", (), {}), protocol=EL_PROTOCOL
+        )
+
     def get_response_blob(self):
         """
         Get the extraction device's response blob
 
-        :return: response blob. binary string representing time v measured output
-        :rtype: str
+        Returns:
+            `bytes`: binary string representing time v measured output
+
         """
         result = self._extraction_action(("get_response_blob", (), {}))
         return result or b""
@@ -116,8 +122,8 @@ class ExtractionPyScript(ValvePyScript):
         """
         Get the extraction device's output blob
 
-        :return: output blob: binary string representing time v percent output
-        :rtype: str
+        Returns:
+            `bytes`: binary string representing time v percent output
         """
 
         result = self._extraction_action(("get_output_blob", (), {}))
@@ -225,7 +231,30 @@ class ExtractionPyScript(ValvePyScript):
 
     @verbose_skip
     @command_register
+    def start_cryo_recorder(self):
+        result = self._manager_action(("start_cryo_recorder",), protocol=EL_PROTOCOL)
+        return result
+
+    @verbose_skip
+    @command_register
+    def stop_cryo_recorder(self):
+        result = self._manager_action(("stop_cryo_recorder",), protocol=EL_PROTOCOL)
+        return result
+
+    @verbose_skip
+    @command_register
     def set_cryo(self, value, device_name=None, block=False, delay=1):
+        """
+        Set the cryotrap to setpoint `value` in degrees K.
+
+        Args:
+            value (`float,int`): Setpoint in degrees K
+            block (`bool,float,int`, optional): If `True` command is blocking, i.e. the command will not return
+                until setpoint reached. If `block` is a number than block until `block>abs(current_temp-setpoint)`
+            delay (`float,int`): Delay in seconds between each check to determine if blocking is complete.
+
+        """
+
         result = self._manager_action(
             (
                 "set_cryo",
@@ -235,7 +264,7 @@ class ExtractionPyScript(ValvePyScript):
             protocol=EL_PROTOCOL,
         )
 
-        self.debug("set cyro result={}".format(result))
+        self.debug("set cryo result={}".format(result))
         return result
 
     @verbose_skip
@@ -790,13 +819,12 @@ class ExtractionPyScript(ValvePyScript):
 
         def func(i, ramp_step):
             if self._cancel:
+                self.debug("script canceled. exit ramp")
                 return
 
             self.console_info("ramp step {}. setpoint={}".format(i, ramp_step))
             if not self._extraction_action(("set_laser_power", (ramp_step,), {})):
-                return
-
-            if self._cancel:
+                self.debug("setting laser power during ramping failed")
                 return
 
             return True

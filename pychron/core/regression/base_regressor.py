@@ -241,8 +241,13 @@ class BaseRegressor(HasTraits):
             m = re.match(r"[A-Za-z]+", self.truncate)
             if m:
                 k = m.group(0)
-                exclude = eval(self.truncate, {k: self.xs})
-                excludes = list(exclude.nonzero()[0])
+                if k.lower() == "n":
+                    excludes = [
+                        i for i, _ in enumerate(self.xs) if eval(self.truncate, {k: i})
+                    ]
+                else:
+                    exclude = eval(self.truncate, {k: self.xs})
+                    excludes = list(exclude.nonzero()[0])
                 self.truncate_excluded = excludes
                 self.dirty = True
             else:
@@ -271,7 +276,6 @@ class BaseRegressor(HasTraits):
         raise NotImplementedError
 
     def calculate_pearsons_r(self, X, Y):
-
         Xbar = X.mean()
         Ybar = Y.mean()
 
@@ -396,7 +400,6 @@ class BaseRegressor(HasTraits):
         return ((x - xm) ** 2).sum()
 
     def tostring(self, sig_figs=5):
-
         cs = self.coefficients[::-1]
         ce = self.coefficient_errors[::-1]
 
@@ -460,7 +463,6 @@ class BaseRegressor(HasTraits):
         return cors
 
     def _calculate_confidence_interval(self, x, observations, rx, confidence=95):
-
         alpha = 1.0 - confidence / 100.0
 
         n = len(observations)

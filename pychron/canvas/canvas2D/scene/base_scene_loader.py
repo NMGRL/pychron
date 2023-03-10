@@ -94,11 +94,12 @@ def make_color(c):
 
 
 class BaseLoader:
-    def __init__(self, path, origin, color_dict, valve_dimension):
+    def __init__(self, path, origin, color_dict, valve_dimension, connection_dimension):
         self._path = path
         self._origin = origin
         self._color_dict = color_dict
         self._valve_dimension = valve_dimension
+        self._connection_dimension = connection_dimension
 
     def _get_items(self, key):
         raise NotImplementedError
@@ -139,7 +140,7 @@ class BaseLoader:
             klass = Label
 
         # tran = label_dict['translation']
-        x, y = self._get_translation(label_dict["translation"])
+        x, y = self._get_translation(label_dict)
         # x, y = 0, 0
         # trans = label.find('translation')
         # if trans is not None:

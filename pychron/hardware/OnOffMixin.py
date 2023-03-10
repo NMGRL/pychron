@@ -53,7 +53,6 @@ class OnOffMixin(HasTraits):
         return getattr(self, name)
 
     def _onoff_button_fired(self):
-
         if self.use_confirmation:
             state = not self._get_onoff_state()
             state = "On" if state else "Off"

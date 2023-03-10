@@ -29,8 +29,18 @@ from uncertainties import std_dev, nominal_value
 from yaml import YAMLError
 
 from pychron.core.helpers.binpack import encode_blob, pack
+from pychron.core.helpers.datetime_tools import get_datetime
 from pychron.core.yaml import yload
-from pychron.dvc import dvc_dump, analysis_path, repository_path, NPATH_MODIFIERS
+from pychron.dvc import (
+    dvc_dump,
+    analysis_path,
+    repository_path,
+    NPATH_MODIFIERS,
+    INTERCEPTS,
+    BLANKS,
+    BASELINES,
+    ICFACTORS,
+)
 from pychron.experiment.automated_run.persistence import BasePersister
 from pychron.experiment.automated_run.persistence_spec import PersistenceSpec
 from pychron.experiment.automated_run.spec import AutomatedRunSpec
@@ -78,6 +88,7 @@ class DVCPersister(BasePersister):
     stage_files = Bool(True)
     default_principal_investigator = Str
     _positions = None
+    use_data_collection_branch = Bool(False)
 
     save_log_enabled = Bool(False)
     arar_mapping = None
@@ -87,6 +98,12 @@ class DVCPersister(BasePersister):
         if bind:
             bind_preference(
                 self, "use_uuid_path_name", "pychron.experiment.use_uuid_path_name"
+            )
+
+            bind_preference(
+                self,
+                "use_data_collection_branch",
+                "pychron.experiment.use_data_collection_branch",
             )
 
         if load_mapping:
@@ -160,22 +177,25 @@ class DVCPersister(BasePersister):
         rblob = per_spec.response_blob  # time vs measured response
         oblob = per_spec.output_blob  # time vs %output
         sblob = per_spec.setpoint_blob  # time vs requested
+        cblob = per_spec.cryo_response_blob  # time vs measured response
+
         gp = per_spec.grain_polygons
 
-        if rblob is not None:
-            rblob = encode_blob(rblob)
-        if oblob is not None:
-            oblob = encode_blob(oblob)
-        if sblob is not None:
-            sblob = encode_blob(sblob)
+        obj = {}
+        for key, blob in (
+            ("measured_response", rblob),
+            ("requested_output", oblob),
+            ("setpoint_stream", sblob),
+            ("cryo_response", cblob),
+        ):
+            if blob is not None:
+                blob = encode_blob(blob)
+            obj[key] = blob
 
         if gp:
             gp = [encode_blob(g) for g in gp]
 
         obj = {
-            "measured_response": rblob,
-            "requested_output": oblob,
-            "setpoint_stream": sblob,
             "snapshots": per_spec.snapshots,
             "videos": per_spec.videos,
             "grain_polygons": gp,
@@ -234,7 +254,8 @@ class DVCPersister(BasePersister):
 
         hexsha = self.dvc.get_meta_head()
         obj["commit"] = str(hexsha)
-
+        obj["pipette_counts"] = self.per_spec.pipette_counts
+        obj["timestamp"] = datetime.now().isoformat()
         path = self._make_path(modifier="extraction")
         dvc_dump(obj, path)
         self.info("================= post extraction save finished =================")
@@ -242,7 +263,14 @@ class DVCPersister(BasePersister):
     def pre_measurement_save(self):
         pass
 
-    def post_measurement_save(self, commit=True, commit_tag="COLLECTION", push=True):
+    def post_measurement_save(
+        self,
+        commit=True,
+        commit_tag="COLLECTION",
+        push=True,
+        exception_queue=None,
+        complete_event=None,
+    ):
         """
         save
             - analysis.json
@@ -251,10 +279,11 @@ class DVCPersister(BasePersister):
         check if unique spectrometer.json
         commit changes
         push changes
+
+
         :return:
         """
         self.info("================= post measurement save started =================")
-        ret = True
 
         ar = self.active_repository
 
@@ -279,6 +308,15 @@ class DVCPersister(BasePersister):
         self._check_repository_identifier()
 
         self._save_analysis(timestamp)
+        dvc = self.dvc
+        with dvc.session_ctx():
+            try:
+                self._save_analysis_db(timestamp)
+            except DatabaseError as e:
+                self.debug_exception()
+                self.warning(e)
+                if exception_queue:
+                    exception_queue.put(("Fatal", "DatabaseError. see log"))
 
         # save monitor
         self._save_monitor()
@@ -287,92 +325,108 @@ class DVCPersister(BasePersister):
         self._save_peak_center(self.per_spec.peak_center)
 
         # stage files
-        dvc = self.dvc
 
         if self.stage_files:
             if commit:
+                if self.use_data_collection_branch:
+                    ar.create_branch("data_collection", inform=False, push=True)
+                    try:
+                        ar.checkout_branch(
+                            "data_collection", inform=False, load_history=False
+                        )
+                    except GitCommandError:
+                        ar.reset()
+                        ar.checkout_branch(
+                            "data_collection", inform=False, load_history=False
+                        )
+
+                    ar.smart_pull(branch="data_collection", accept_our=True)
+
+                paths = [
+                    spec_path,
+                ] + [self._make_path(modifier=m) for m in NPATH_MODIFIERS]
+
+                for p in paths:
+                    if os.path.isfile(p):
+                        ar.add(p, commit=False)
+                    else:
+                        self.debug("not at valid file {}".format(p))
+
+                # commit files
+                ar.commit("<{}>".format(commit_tag))
+
+                # commit default data reduction
+                add = False
+                p = self._make_path(INTERCEPTS)
+                if os.path.isfile(p):
+                    ar.add(p, commit=False)
+                    add = True
+
+                p = self._make_path(BASELINES)
+                if os.path.isfile(p):
+                    ar.add(p, commit=False)
+                    add = True
+
+                if add:
+                    ar.commit("<ISOEVO> default collection fits")
+
+                for pp, tag, msg in (
+                    (
+                        "blanks",
+                        "BLANKS",
+                        "preceding {}".format(self.per_spec.previous_blank_runid),
+                    ),
+                    ("icfactors", "ICFactor", "default"),
+                ):
+                    p = self._make_path(pp)
+                    if os.path.isfile(p):
+                        ar.add(p, commit=False)
+                        ar.commit("<{}> {}".format(tag, msg))
                 try:
-                    ar.smart_pull(accept_their=True)
-
-                    paths = [
-                        spec_path,
-                    ] + [self._make_path(modifier=m) for m in NPATH_MODIFIERS]
-
-                    for p in paths:
-                        if os.path.isfile(p):
-                            ar.add(p, commit=False)
-                        else:
-                            self.debug("not at valid file {}".format(p))
-
-                    # commit files
-                    ar.commit("<{}>".format(commit_tag))
-
-                    # commit default data reduction
-                    add = False
-                    p = self._make_path("intercepts")
-                    if os.path.isfile(p):
-                        ar.add(p, commit=False)
-                        add = True
-
-                    p = self._make_path("baselines")
-                    if os.path.isfile(p):
-                        ar.add(p, commit=False)
-                        add = True
-
-                    if add:
-                        ar.commit("<ISOEVO> default collection fits")
-
-                    for pp, tag, msg in (
-                        (
-                            "blanks",
-                            "BLANKS",
-                            "preceding {}".format(self.per_spec.previous_blank_runid),
-                        ),
-                        ("icfactors", "ICFactor", "default"),
-                    ):
-                        p = self._make_path(pp)
-                        if os.path.isfile(p):
-                            ar.add(p, commit=False)
-                            ar.commit("<{}> {}".format(tag, msg))
                     if push:
                         # push changes
                         dvc.push_repository(ar)
-
-                    # update meta
-                    dvc.meta_pull(accept_our=True)
-
-                    dvc.meta_commit(
-                        "repo updated for analysis {}".format(
-                            self.per_spec.run_spec.runid
+                except GitCommandError as e:
+                    self.debug_exception()
+                    self.warning(e)
+                    if exception_queue:
+                        exception_queue.put(
+                            (
+                                "NonFatal",
+                                "NON FATAL\n\n"
+                                "DVC/Git upload of analysis not successful."
+                                "Do you want to CANCEL the experiment?\n",
+                            )
                         )
-                    )
 
+                # update meta
+                dvc.meta_pull(accept_our=True)
+
+                dvc.meta_commit(
+                    "repo updated for analysis {}".format(self.per_spec.run_spec.runid)
+                )
+
+                try:
                     if push:
                         # push commit
                         dvc.meta_push()
                 except GitCommandError as e:
+                    self.debug_exception()
                     self.warning(e)
-                    if self.confirmation_dialog(
-                        "NON FATAL\n\n"
-                        "DVC/Git upload of analysis not successful."
-                        "Do you want to CANCEL the experiment?\n",
-                        timeout_ret=False,
-                        timeout=30,
-                    ):
-                        ret = False
-
-        with dvc.session_ctx():
-            try:
-                ret = self._save_analysis_db(timestamp) and ret
-            except DatabaseError as e:
-                self.warning_dialog(
-                    "Fatal Error. Cannot save analysis to database. Cancelling "
-                    "experiment.  {}".format(e)
-                )
-                ret = False
+                    if exception_queue:
+                        exception_queue.put(
+                            (
+                                "NonFatal",
+                                "NON FATAL\n\n"
+                                "DVC/Git upload of analysis not successful."
+                                "Do you want to CANCEL the experiment?\n",
+                            )
+                        )
 
         self.info("================= post measurement save finished =================")
-        return ret
+        if complete_event:
+            self.debug("clear save flag")
+            complete_event.clear()
 
     def save_run_log_file(self, path):
         if self.save_enabled and self.save_log_enabled:
@@ -381,7 +435,7 @@ class DVCPersister(BasePersister):
             npath = self._make_path("logs", ".log")
             shutil.copyfile(path, npath)
             ar = self.active_repository
-            ar.smart_pull(accept_their=True)
+            ar.smart_pull(accept_our=True)
             ar.add(npath, commit=False)
             ar.commit("<COLLECTION> log")
             self.dvc.push_repository(ar)
@@ -436,7 +490,6 @@ class DVCPersister(BasePersister):
                 db.add_repository("NoRepo", self.default_principal_investigator)
 
     def _save_analysis_db(self, timestamp):
-
         ps = self.per_spec
         rs = ps.run_spec
         d = {
@@ -540,7 +593,6 @@ class DVCPersister(BasePersister):
     def _save_currents(self, dban):
         dvc = self.dvc
         if dvc.update_currents_enabled:
-
             ps = self.per_spec
             db = dvc.db
 
@@ -581,7 +633,6 @@ class DVCPersister(BasePersister):
                 db.add_current(dban, iso.n, None, param, "int")
 
     def _save_analysis(self, timestamp):
-
         isos = {}
         dets = {}
         signals = []
@@ -675,6 +726,8 @@ class DVCPersister(BasePersister):
         from pychron.dvc import __version__ as dversion
 
         obj["timestamp"] = timestamp.isoformat()
+        if per_spec.time_zero:
+            obj["time_zero_timestamp"] = get_datetime(per_spec.time_zero).isoformat()
 
         obj["collection_version"] = "{}:{}".format(eversion, dversion)
         obj["acquisition_software"] = "pychron {}".format(pversion)
@@ -737,29 +790,30 @@ class DVCPersister(BasePersister):
         self._save_macrochron(obj)
 
         hexsha = str(self.dvc.get_meta_head())
-        obj["commit"] = hexsha
-
+        obj["meta_commit"] = hexsha
+        dchexsha = str(self.dvc.get_version())
+        obj["data_collection_commit"] = dchexsha
         # dump runid.json
         p = self._make_path()
         dvc_dump(obj, p)
 
-        p = self._make_path(modifier="intercepts")
+        p = self._make_path(modifier=INTERCEPTS)
         dvc_dump(intercepts, p)
 
         # dump runid.blank.json
-        p = self._make_path(modifier="blanks")
+        p = self._make_path(modifier=BLANKS)
         dvc_dump(blanks, p)
 
-        p = self._make_path(modifier="baselines")
+        p = self._make_path(modifier=BASELINES)
         dvc_dump(cbaselines, p)
 
-        p = self._make_path(modifier="icfactors")
+        p = self._make_path(modifier=ICFACTORS)
         dvc_dump(icfactors, p)
 
         # dump runid.data.json
         p = self._make_path(modifier=".data")
         data = {
-            "commit": hexsha,
+            "data_collection_commit": dchexsha,
             "encoding": "base64",
             "format": "{}ff".format(endianness),
             "signals": signals,

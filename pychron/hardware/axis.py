@@ -71,6 +71,10 @@ class Axis(ConfigLoadable):
     def ask(self, cmd):
         return self.parent.ask(cmd)
 
+    @property
+    def calibrated_velocity(self):
+        return min(self.max_velocity, max(self.min_velocity, self.velocity))
+
     # private
     def _get_velocity(self):
         return self._velocity
@@ -82,7 +86,6 @@ class Axis(ConfigLoadable):
         return self._deceleration
 
     def _get_parameters(self, path):
-
         params = []
         if not os.path.isfile(path):
             path = os.path.join(path, "{}axis.cfg".format(self.name))
