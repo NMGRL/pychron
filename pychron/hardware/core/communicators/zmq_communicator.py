@@ -19,7 +19,6 @@ from pychron.hardware.core.communicators.communicator import Communicator
 
 
 class ZmqCommunicator(Communicator):
-
     def open(self, *args, **kw):
         context = zmq.Context()
         sock = context.socket(zmq.REQ)
@@ -31,7 +30,9 @@ class ZmqCommunicator(Communicator):
         self.handle.send_string(msg)
         resp = self.handle.recv()
         if verbose:
-            self.debug(f'{msg} => {resp}')
+            self.debug(f"{msg} => {resp}")
 
         return resp
+
+
 # ============= EOF =============================================
