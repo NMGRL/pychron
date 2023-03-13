@@ -27,8 +27,8 @@ class ZmqCommunicator(Communicator):
         self.handle = sock
 
     def ask(self, msg, verbose=True, *args, **kw):
-        self.handle.send_string(msg)
-        resp = self.handle.recv()
+        self.handle.send_json(msg)
+        resp = self.handle.recv_json()
         if verbose:
             self.debug(f"{msg} => {resp}")
 
