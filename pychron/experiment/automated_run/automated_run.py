@@ -285,14 +285,14 @@ class AutomatedRun(Loggable):
         self.debug("set preferences")
 
         for attr, cast in (
-                ("experiment_type", str),
-                ("laboratory", str),
-                ("instrument_name", str),
-                ("use_equilibration_analysis", to_bool),
-                ("use_peak_center_threshold", to_bool),
-                ("peak_center_threshold", float),
-                ("peak_center_threshold_window", int),
-                ("failed_intensity_count_threshold", int),
+            ("experiment_type", str),
+            ("laboratory", str),
+            ("instrument_name", str),
+            ("use_equilibration_analysis", to_bool),
+            ("use_peak_center_threshold", to_bool),
+            ("peak_center_threshold", float),
+            ("peak_center_threshold_window", int),
+            ("failed_intensity_count_threshold", int),
         ):
             set_preference(
                 preferences, self, attr, "pychron.experiment.{}".format(attr), cast
@@ -327,9 +327,9 @@ class AutomatedRun(Loggable):
             root = paths.csv_data_dir
 
         rid = self.runid
-        if os.environ.get('LAB') == 'UIllinoisHAL':
+        if os.environ.get("LAB") == "UIllinoisHAL":
             v = self.extraction_line_manager.get_valve_by_name("9")
-            rid = f'{rid}-{v.actuations}'
+            rid = f"{rid}-{v.actuations}"
 
         p, _ = unique_path2(root, rid, extension=".csv")
         self.debug(f"saving analysis to {p}")
@@ -377,7 +377,7 @@ class AutomatedRun(Loggable):
         return self._generate_mftable(pairs, peak_center_config, n)
 
     def py_whiff(
-            self, ncounts, conditionals, starttime, starttime_offset, series=0, fit_series=0
+        self, ncounts, conditionals, starttime, starttime_offset, series=0, fit_series=0
     ):
         return self._whiff(
             ncounts, conditionals, starttime, starttime_offset, series, fit_series
@@ -503,15 +503,15 @@ class AutomatedRun(Loggable):
             self.spectrometer_manager.spectrometer.ask(cmd)
 
     def py_data_collection(
-            self,
-            obj,
-            ncounts,
-            starttime,
-            starttime_offset,
-            series=0,
-            fit_series=0,
-            group="signal",
-            integration_time=None,
+        self,
+        obj,
+        ncounts,
+        starttime,
+        starttime_offset,
+        series=0,
+        fit_series=0,
+        group="signal",
+        integration_time=None,
     ):
         if not self._alive:
             return
@@ -550,13 +550,13 @@ class AutomatedRun(Loggable):
     _equilibration_evt = None
 
     def py_equilibration(
-            self,
-            eqtime=None,
-            inlet=None,
-            outlet=None,
-            do_post_equilibration=True,
-            close_inlet=True,
-            delay=None,
+        self,
+        eqtime=None,
+        inlet=None,
+        outlet=None,
+        do_post_equilibration=True,
+        close_inlet=True,
+        delay=None,
     ):
         # evt = TEvent()
         # if not self._alive:
@@ -650,18 +650,18 @@ class AutomatedRun(Loggable):
             return True
 
     def py_baselines(
-            self,
-            ncounts,
-            starttime,
-            starttime_offset,
-            mass,
-            detector,
-            series=0,
-            fit_series=0,
-            settling_time=4,
-            integration_time=None,
-            use_dac=False,
-            check_conditionals=True,
+        self,
+        ncounts,
+        starttime,
+        starttime_offset,
+        mass,
+        detector,
+        series=0,
+        fit_series=0,
+        settling_time=4,
+        integration_time=None,
+        use_dac=False,
+        check_conditionals=True,
     ):
         if not self._alive:
             return
@@ -804,16 +804,16 @@ class AutomatedRun(Loggable):
         # self.plot_panel.analysis_view.load(self)
 
     def py_peak_hop(
-            self,
-            cycles,
-            counts,
-            hops,
-            mftable,
-            starttime,
-            starttime_offset,
-            series=0,
-            fit_series=0,
-            group="signal",
+        self,
+        cycles,
+        counts,
+        hops,
+        mftable,
+        starttime,
+        starttime_offset,
+        series=0,
+        fit_series=0,
+        group="signal",
     ):
         if not self._alive:
             return
@@ -853,16 +853,16 @@ class AutomatedRun(Loggable):
         return ret
 
     def py_peak_center(
-            self,
-            detector=None,
-            save=True,
-            isotope=None,
-            directions="Increase",
-            config_name="default",
-            check_intensity=None,
-            peak_center_threshold=None,
-            peak_center_threshold_window=None,
-            **kw,
+        self,
+        detector=None,
+        save=True,
+        isotope=None,
+        directions="Increase",
+        config_name="default",
+        check_intensity=None,
+        peak_center_threshold=None,
+        peak_center_threshold_window=None,
+        **kw,
     ):
         if not self._alive:
             return
@@ -1147,11 +1147,11 @@ class AutomatedRun(Loggable):
 
         if self.spec:
             if self.spec.state not in (
-                    "not run",
-                    CANCELED,
-                    SUCCESS,
-                    TRUNCATED,
-                    "aborted",
+                "not run",
+                CANCELED,
+                SUCCESS,
+                TRUNCATED,
+                "aborted",
             ):
                 self.spec.state = FAILED
                 self.experiment_queue.refresh_table_needed = True
@@ -2255,7 +2255,7 @@ anaylsis_type={}
         self._previous_loaded = True
 
         if not self.spec.analysis_type.startswith(
-                "blank"
+            "blank"
         ) and not self.spec.analysis_type.startswith("background"):
             runid, blanks = self.previous_blanks
 
@@ -2317,7 +2317,7 @@ anaylsis_type={}
 
                 if failure:
                     if not self.confirmation_dialog(
-                            "Failed to add Conditionals. Would you like to continue?"
+                        "Failed to add Conditionals. Would you like to continue?"
                     ):
                         self.cancel_run(do_post_equilibration=False)
             else:
@@ -2387,14 +2387,14 @@ anaylsis_type={}
         return valve
 
     def _equilibrate(
-            self,
-            evt,
-            eqtime=15,
-            inlet=None,
-            outlet=None,
-            delay=3,
-            do_post_equilibration=True,
-            close_inlet=True,
+        self,
+        evt,
+        eqtime=15,
+        inlet=None,
+        outlet=None,
+        delay=3,
+        do_post_equilibration=True,
+        close_inlet=True,
     ):
         inlet = self._convert_valve(inlet)
         elm = self.extraction_line_manager
@@ -2445,10 +2445,10 @@ anaylsis_type={}
                     continue
 
                 for ni, color, yoff in (
-                        (5, "red", 30),
-                        (4, "green", 10),
-                        (3, "blue", -10),
-                        (2, "orange", -30),
+                    (5, "red", 30),
+                    (4, "green", 10),
+                    (3, "blue", -10),
+                    (2, "orange", -30),
                 ):
                     xsi, ysi = xs[-ni:], ys[-ni:]
 
@@ -2519,27 +2519,27 @@ anaylsis_type={}
         self._load_previous()
 
     def _set_hv_position(
-            self,
-            pos,
-            detector,
-            update_detectors=True,
-            update_labels=True,
-            update_isotopes=True,
+        self,
+        pos,
+        detector,
+        update_detectors=True,
+        update_labels=True,
+        update_isotopes=True,
     ):
         ion = self.ion_optics_manager
         if ion is not None:
             change = ion.hv_position(pos, detector, update_isotopes=update_isotopes)
 
     def _set_magnet_position(
-            self,
-            pos,
-            detector,
-            use_dac=False,
-            update_detectors=True,
-            update_labels=True,
-            update_isotopes=True,
-            remove_non_active=True,
-            for_collection=True,
+        self,
+        pos,
+        detector,
+        use_dac=False,
+        update_detectors=True,
+        update_labels=True,
+        update_isotopes=True,
+        remove_non_active=True,
+        for_collection=True,
     ):
         change = False
         ion = self.ion_optics_manager
@@ -2654,7 +2654,7 @@ anaylsis_type={}
         # return gen()
 
     def _whiff(
-            self, ncounts, conditionals, starttime, starttime_offset, series, fit_series
+        self, ncounts, conditionals, starttime, starttime_offset, series, fit_series
     ):
         """
         conditionals: list of dicts
@@ -2684,15 +2684,15 @@ anaylsis_type={}
         return result
 
     def _peak_hop(
-            self,
-            ncycles,
-            ncounts,
-            hops,
-            grpname,
-            starttime,
-            starttime_offset,
-            series,
-            check_conditionals,
+        self,
+        ncycles,
+        ncounts,
+        hops,
+        grpname,
+        starttime,
+        starttime_offset,
+        series,
+        check_conditionals,
     ):
         """
         ncycles: int
@@ -2754,16 +2754,16 @@ anaylsis_type={}
         return result
 
     def _measure(
-            self,
-            grpname,
-            data_writer,
-            ncounts,
-            starttime,
-            starttime_offset,
-            series,
-            check_conditionals,
-            color,
-            script=None,
+        self,
+        grpname,
+        data_writer,
+        ncounts,
+        starttime,
+        starttime_offset,
+        series,
+        check_conditionals,
+        color,
+        script=None,
     ):
         if script is None:
             script = self.measurement_script
@@ -3200,5 +3200,6 @@ anaylsis_type={}
     @property
     def elapsed_ms_pumptime(self):
         return time.time() - self.ms_pumptime_start
+
 
 # ============= EOF =============================================
