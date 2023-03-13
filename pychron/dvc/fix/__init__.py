@@ -21,7 +21,7 @@ from pychron.dvc.dvc import DVC
 from pychron.paths import paths
 
 
-def get_dvc():
+def get_dvc(**kw):
     conn = dict(
         host=os.environ.get("ARGONSERVER_HOST"),
         username=os.environ.get("ARGONSERVER_DB_USER"),
@@ -29,6 +29,7 @@ def get_dvc():
         name="pychrondvc",
         kind="mysql",
     )
+    conn.update(**kw)
 
     paths.build("~/PychronDev")
     meta_name = "NMGRLMetaData"
