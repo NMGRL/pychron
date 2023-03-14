@@ -28,7 +28,7 @@ from pychron.loggable import Loggable
 from traitsui.api import View, UItem, ListStrEditor, HGroup, VGroup, TextEditor, Item
 from traits.api import Int, List, Button, Str, HasTraits, Property
 
-from pychron.paths import paths
+from pychron.paths import paths, r_mkdir
 
 
 def memoize(function):
@@ -169,9 +169,12 @@ class SettingsManager(Loggable):
             args = s.split(".")
             name = ".".join(args[1:])
             basedir = args[0]
-            destpath = os.path.join(
-                paths.plotter_options_dir, globalv.username, basedir, name
-            )
+
+            root = os.path.join(paths.plotter_options_dir, globalv.username, basedir)
+            r_mkdir(root)
+
+            destpath = os.path.join(root, name)
+
             with open(destpath, "w") as wfile:
                 wfile.write(sfile)
             self.information_dialog(f'"{s}" installed successfully')

@@ -190,7 +190,7 @@ class InstalledAppFlow(object):
                 :class:`~google.auth.credentials.Credentials` instance.
         """
         kwargs["verify"] = globalv.verify_ssl
-        if os.path.isfile(globalv.cert_file):
+        if globalv.cert_file and os.path.isfile(globalv.cert_file):
             kwargs["cert"] = globalv.cert_file
 
         kwargs.setdefault("client_secret", self.client_config["client_secret"])
