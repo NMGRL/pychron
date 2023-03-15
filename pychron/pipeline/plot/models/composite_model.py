@@ -25,7 +25,6 @@ from pychron.pipeline.plot.panels.spectrum_panel import SpectrumPanel
 
 class CompositeModel(FigureModel):
     def _make_panel_groups(self):
-
         # do to a quirk in how ArArFigure.build is handling columns we need to artifically double the fixed width
         # for the options layout
         specopts = copy.deepcopy(self.plot_options.spectrum_options)
@@ -35,12 +34,8 @@ class CompositeModel(FigureModel):
         isoopts.layout.fixed_width *= 2
 
         gs = [
-            SpectrumPanel(
-                analyses=self.analyses, plot_options=specopts
-            ),
-            InverseIsochronPanel(
-                analyses=self.analyses, plot_options=isoopts
-            ),
+            SpectrumPanel(analyses=self.analyses, plot_options=specopts),
+            InverseIsochronPanel(analyses=self.analyses, plot_options=isoopts),
         ]
         return gs
 
@@ -56,5 +51,6 @@ class CompositeModel(FigureModel):
                     gi.title = gi.plot_options.generate_title(gi.analyses, i)
 
         return gs
+
 
 # ============= EOF =============================================
