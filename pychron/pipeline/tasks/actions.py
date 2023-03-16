@@ -25,6 +25,8 @@ from traitsui.menu import Action
 
 from pychron.envisage.resources import icon
 from pychron.envisage.ui_actions import UIAction, UITaskAction
+from pychron.pipeline.data_reduction_logbook import DataReductionLogbook
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class EditorAction(TaskAction):
@@ -244,8 +246,8 @@ class ClearAnalysisSetsAction(UIAction):
         p = paths.hidden_path("analysis_sets")
         if os.path.isfile(p):
             if (
-                confirm(None, "Are you sure you want to clear the Analysis Sets?")
-                == YES
+                    confirm(None, "Are you sure you want to clear the Analysis Sets?")
+                    == YES
             ):
                 os.remove(p)
         else:
@@ -345,6 +347,16 @@ class ImportOptionsActions(PipelineAction):
     action = "import_options"
 
 
+class DataReductionLogAction(UIAction):
+    name = 'Data Reduction Log'
+    def perform(self, event):
+        app = event.task.window.application
+        dvc = app.get_service(DVC_PROTOCOL)
+        d = DataReductionLogbook(dvc=dvc)
+        d.populate()
+        d.edit_traits()
+
+
 # ============= Quick Series ====================================
 # class LastNAnalysesSeriesAction(PipelineAction):
 #     name = 'Last N...'
@@ -423,6 +435,5 @@ class SaveTableAction(TaskAction):
     method = "save_table"
     image = icon("table_save")
     enabled_name = "set_interpreted_enabled"
-
 
 # ============= EOF =============================================

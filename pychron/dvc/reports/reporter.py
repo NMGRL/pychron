@@ -28,7 +28,7 @@ from pychron.dvc.dvc_orm import (
     ProjectTbl,
     MaterialTbl,
 )
-from pychron.dvc.fix import get_dvc
+from pychron.dvc.dvc_helper import get_dvc
 
 ANALYSIS_HEADER = [
     "sample",

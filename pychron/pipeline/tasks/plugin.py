@@ -51,7 +51,7 @@ from pychron.pipeline.tasks.actions import (
     IdentifyPeaksDemoAction,
     ImportOptionsActions,
     DVCRecallAction,
-    SignalEstimatorAction,
+    SignalEstimatorAction, DataReductionLogAction,
 )
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
@@ -205,6 +205,7 @@ class PipelinePlugin(BaseTaskPlugin):
             (AnalysisTableAction, "table"),
             (FreezeProductionRatios, "freeze_production"),
             (MassSpecReducedAction, "mass_spec_reduced"),
+            (DataReductionLogAction, "data_reduction_log"),
         ):
             fit_actions.append(
                 SchemaAddition(

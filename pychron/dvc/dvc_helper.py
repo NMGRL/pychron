@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2018 ross
+# Copyright 2023 ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,32 +15,31 @@
 # ===============================================================================
 import os
 
-from pychron.dvc import analysis_path
-from pychron.dvc.dvc_helper import get_dvc
+from pyface.message_dialog import warning
+
+from pychron.dvc.dvc import DVC
 from pychron.paths import paths
 
 
-def get_runlist():
-    runlist = [("bu-FC-J-{}".format(i), i) for i in range(4389, 4439)]
-    return runlist
+def get_dvc(**kw):
+    conn = dict(
+        host=os.environ.get("ARGONSERVER_HOST"),
+        username=os.environ.get("ARGONSERVER_DB_USER"),
+        password=os.environ.get("ARGONSERVER_DB_PWD"),
+        name="pychrondvc",
+        kind="mysql",
+    )
+    conn.update(**kw)
 
-
-def fix_timestamp():
-    dvc = get_dvc()
-    dvc.connect()
-    dvc.create_session()
-    runlist = get_runlist()
-    for run, aliquot in runlist:
-        an = dvc.get_analysis_runid("bu-FC-J", aliquot)
-        print("ff", an, an.repository_identifier)
-
-        p = analysis_path(run, "Streck2015")
-        ip = analysis_path(run, "Irradiation-NM-276")
-        print(p, os.path.isfile(p), os.path.isfile(ip))
-        # print('run {}'.format(run))
-
-
-if __name__ == "__main__":
     paths.build("~/PychronDev")
-    fix_timestamp()
+    meta_name = "NMGRLMetaData"
+    dvc = DVC(bind=False, organization="NMGRLData", meta_repo_name=meta_name)
+    paths.meta_root = os.path.join(paths.dvc_dir, dvc.meta_repo_name)
+    dvc.db.trait_set(**conn)
+    if not dvc.initialize():
+        warning(None, "Failed to initialize DVC")
+        return
+
+    dvc.meta_repo.smart_pull()
+    return dvc
 # ============= EOF =============================================

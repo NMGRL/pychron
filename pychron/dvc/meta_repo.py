@@ -113,6 +113,22 @@ def get_frozen_flux(repo, irradiation):
 class MetaRepo(GitRepoManager):
     clear_cache = Bool
 
+    @property
+    def data_reduction_log_path(self):
+        return os.path.join(paths.meta_root, "data_reduction_log.json")
+
+    def get_data_reduction_loads(self):
+        return dvc_load(self.data_reduction_log_path)
+
+    def save_data_reduction_loads(self, objs):
+        return dvc_dump(objs, self.data_reduction_log_path)
+
+    def share_data_reduction_loads(self):
+        self.smart_pull()
+        self.add(self.data_reduction_log_path)
+        self.commit('updated date reduction log')
+        self.push()
+
     def get_correlation_ellipses(self):
         p = os.path.join(paths.meta_root, "correlation_ellipses.json")
         return dvc_load(p)

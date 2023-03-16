@@ -16,7 +16,7 @@
 from itertools import groupby
 from operator import attrgetter
 
-from pychron.dvc.fix import get_dvc
+from pychron.dvc.dvc_helper import get_dvc
 
 DRY = True
 
