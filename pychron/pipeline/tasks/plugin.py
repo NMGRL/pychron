@@ -51,7 +51,8 @@ from pychron.pipeline.tasks.actions import (
     IdentifyPeaksDemoAction,
     ImportOptionsActions,
     DVCRecallAction,
-    SignalEstimatorAction, DataReductionLogAction,
+    SignalEstimatorAction,
+    DataReductionLogAction,
 )
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 

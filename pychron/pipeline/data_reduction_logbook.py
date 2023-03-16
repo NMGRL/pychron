@@ -35,17 +35,19 @@ from pychron.paths import paths
 
 
 class LoadAdapter(TabularAdapter):
-    columns = [('Name', 'name'),
-               ('Status', 'status'),
-               ('Completion Date', 'completion_date'),
-               ('Comment', 'comment')]
+    columns = [
+        ("Name", "name"),
+        ("Status", "status"),
+        ("Completion Date", "completion_date"),
+        ("Comment", "comment"),
+    ]
 
     completion_date_text = Property
 
     def _get_bg_color(self):
-        c = 'lightsalmon'
-        if self.item.status == 'complete':
-            c = 'lightgreen'
+        c = "lightsalmon"
+        if self.item.status == "complete":
+            c = "lightgreen"
         return c
 
     def _get_completion_date_text(self):
@@ -57,11 +59,15 @@ class LoadAdapter(TabularAdapter):
 
 
 class ProjectAdapter(TabularAdapter):
-    columns = [('Project Name', 'name'), ]
+    columns = [
+        ("Project Name", "name"),
+    ]
 
 
 class SampleAdapter(TabularAdapter):
-    columns = [('Sample Name', 'name'), ]
+    columns = [
+        ("Sample Name", "name"),
+    ]
 
 
 class ProjectDetail(HasTraits):
@@ -71,13 +77,13 @@ class ProjectDetail(HasTraits):
     def __init__(self, record=None, *args, **kw):
         super().__init__(*args, **kw)
         if record:
-            if hasattr(record, 'name'):
+            if hasattr(record, "name"):
                 self.name = record.name
             else:
-                self.name = record.get('name')
+                self.name = record.get("name")
 
     def tohistory(self):
-        return {'name': self.name}
+        return {"name": self.name}
 
 
 # class LoadDetail(HasTraits):
@@ -122,7 +128,7 @@ class ProjectDetail(HasTraits):
 
 class DataReductionLoad(HasTraits):
     name = Str
-    status = Enum('notstarted', 'complete', 'incomplete')
+    status = Enum("notstarted", "complete", "incomplete")
     comment = Str
     completion_date = Date
     projects = List
@@ -133,27 +139,27 @@ class DataReductionLoad(HasTraits):
             self.name = record.name
 
     def set_history(self, obj):
-        self.comment = obj.get('comment', '')
-        self.status = obj.get('status', 'notstarted')
-        d = obj.get('completion_date')
+        self.comment = obj.get("comment", "")
+        self.status = obj.get("status", "notstarted")
+        d = obj.get("completion_date")
         if d:
-            self.completion_date = datetime.datetime.strptime(d, '%Y-%m-%dT%H:%M:%S.%f')
+            self.completion_date = datetime.datetime.strptime(d, "%Y-%m-%dT%H:%M:%S.%f")
 
     def tohistory(self):
-        hist = {k: getattr(self, k) for k in ('comment', 'status', 'name')}
-        hist['projects'] = [p.tohistory() for p in self.projects]
+        hist = {k: getattr(self, k) for k in ("comment", "status", "name")}
+        hist["projects"] = [p.tohistory() for p in self.projects]
         if self.completion_date:
-            hist['completion_date'] = self.completion_date.isoformat()
+            hist["completion_date"] = self.completion_date.isoformat()
         return hist
 
     def _status_changed(self, new):
-        if new == 'complete':
+        if new == "complete":
             self.completion_date = datetime.datetime.now()
 
 
 class DataReductionLogbookHandler(Handler):
     def closed(self, info, is_ok):
-        info.ui.context['object'].closed()
+        info.ui.context["object"].closed()
 
 
 class DataReductionLogbook(Loggable):
@@ -168,83 +174,94 @@ class DataReductionLogbook(Loggable):
         for li in self.dvc.get_loads():
             la = DataReductionLoad(li)
             for lj in loads:
-                if lj['name'] == la.name:
+                if lj["name"] == la.name:
                     la.set_history(lj)
                     break
             ls.append(la)
         self.loads = ls
 
     def save(self, *args, **kw):
-        self.debug('save')
+        self.debug("save")
         objs = [l.tohistory() for l in self.loads]
         self.dvc.save_data_reduction_loads(objs)
 
     def share(self):
         self.save()
         self.dvc.share_data_reduction_loads()
-        self.information_dialog('Data Reduction Log shared')
+        self.information_dialog("Data Reduction Log shared")
 
     def closed(self):
-        if self.confirmation_dialog('Would you like to share your changes?'):
+        if self.confirmation_dialog("Would you like to share your changes?"):
             self.share()
 
     def _selected_changed(self):
         # get all projects for this load
         objs = self.dvc.get_data_reduction_loads()
         for oi in objs:
-            if oi['name'] == self.selected.name:
-                if 'projects' in oi:
-                    ps = oi['projects']
+            if oi["name"] == self.selected.name:
+                if "projects" in oi:
+                    ps = oi["projects"]
                     if ps:
                         break
         else:
             with self.dvc.session_ctx() as sess:
                 load = self.dvc.get_load(self.selected.name)
 
-                ps = [p.analysis.irradiation_position.sample.project
-                      for p in load.measured_positions]
-                ps = [p for p in ps if p.name not in ['REFERENCES', ]]
+                ps = [
+                    p.analysis.irradiation_position.sample.project
+                    for p in load.measured_positions
+                ]
+                ps = [
+                    p
+                    for p in ps
+                    if p.name
+                    not in [
+                        "REFERENCES",
+                    ]
+                ]
 
                 ps = [next(pis) for g, pis in groupby_key(ps, key=lambda x: x.name)]
 
         self.selected.projects = [ProjectDetail(p) for p in ps]
 
     def traits_view(self):
-        v = okcancel_view(UItem('loads',
-                                editor=TabularEditor(
-                                    selected='selected',
-                                    auto_update=True,
-                                    adapter=LoadAdapter())),
-                          HGroup(VGroup(BorderVGroup(UItem('object.selected.status'),
-                                                     label='Status'),
-                                        BorderVGroup(UItem('object.selected.comment', style='custom'),
-                                                     label='Comment')
-                                        ),
-                                 UItem("object.selected.projects",
-                                       editor=TabularEditor(
-                                           selected='selected_project',
-                                           adapter=ProjectAdapter())
-                                       )
-                                 ),
-                          # UItem('object.selected_project.samples',
-                          #       editor=TabularEditor(adapter=SampleAdapter()))),
-                          width=800,
-                          toolbar=ToolBar(
-                              Action(name="Save",
-                                     image=icon('database_save'),
-                                     action="save"),
-                              Action(name="Share",
-                                     image=icon('share'),
-                                     action="share"),
-                          ),
-                          title='Data Reduction Log',
-                          handler=DataReductionLogbookHandler()
-                          )
+        v = okcancel_view(
+            UItem(
+                "loads",
+                editor=TabularEditor(
+                    selected="selected", auto_update=True, adapter=LoadAdapter()
+                ),
+            ),
+            HGroup(
+                VGroup(
+                    BorderVGroup(UItem("object.selected.status"), label="Status"),
+                    BorderVGroup(
+                        UItem("object.selected.comment", style="custom"),
+                        label="Comment",
+                    ),
+                ),
+                UItem(
+                    "object.selected.projects",
+                    editor=TabularEditor(
+                        selected="selected_project", adapter=ProjectAdapter()
+                    ),
+                ),
+            ),
+            # UItem('object.selected_project.samples',
+            #       editor=TabularEditor(adapter=SampleAdapter()))),
+            width=800,
+            toolbar=ToolBar(
+                Action(name="Save", image=icon("database_save"), action="save"),
+                Action(name="Share", image=icon("share"), action="share"),
+            ),
+            title="Data Reduction Log",
+            handler=DataReductionLogbookHandler(),
+        )
         return v
 
 
-if __name__ == '__main__':
-    paths.build('~/PychronDev')
+if __name__ == "__main__":
+    paths.build("~/PychronDev")
     dr = DataReductionLogbook(dvc=get_dvc())
     dr.populate()
     dr.configure_traits()

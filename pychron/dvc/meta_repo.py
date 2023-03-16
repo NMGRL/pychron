@@ -126,7 +126,7 @@ class MetaRepo(GitRepoManager):
     def share_data_reduction_loads(self):
         self.smart_pull()
         self.add(self.data_reduction_log_path)
-        self.commit('updated date reduction log')
+        self.commit("updated date reduction log")
         self.push()
 
     def get_correlation_ellipses(self):

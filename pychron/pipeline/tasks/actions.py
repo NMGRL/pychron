@@ -246,8 +246,8 @@ class ClearAnalysisSetsAction(UIAction):
         p = paths.hidden_path("analysis_sets")
         if os.path.isfile(p):
             if (
-                    confirm(None, "Are you sure you want to clear the Analysis Sets?")
-                    == YES
+                confirm(None, "Are you sure you want to clear the Analysis Sets?")
+                == YES
             ):
                 os.remove(p)
         else:
@@ -348,7 +348,8 @@ class ImportOptionsActions(PipelineAction):
 
 
 class DataReductionLogAction(UIAction):
-    name = 'Data Reduction Log'
+    name = "Data Reduction Log"
+
     def perform(self, event):
         app = event.task.window.application
         dvc = app.get_service(DVC_PROTOCOL)
@@ -435,5 +436,6 @@ class SaveTableAction(TaskAction):
     method = "save_table"
     image = icon("table_save")
     enabled_name = "set_interpreted_enabled"
+
 
 # ============= EOF =============================================
