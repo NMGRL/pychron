@@ -317,7 +317,9 @@ class AutomatedRun(Loggable):
         """
         import csv
 
-        spec = self.spectrometer_manager.spectrometer
+        # spec = self.spectrometer_manager.spectrometer
+        spec = self.application.get_service('pychron.spectrometer.pfeiffer.manager.quadera.QuaderaSpectrometerManager')
+
         spec.set_data_pump_mode(1)
 
         if root is None:
