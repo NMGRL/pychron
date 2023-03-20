@@ -61,7 +61,7 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         # service = 'pychron.hardware.quadera_spectrometer_controller.QuaderaController'
         # s = self.application.get_service(service)
 
-        s = QuaderaController(name="spectrometer_microcontroller")
+        s = QuaderaController(name="quad_spectrometer_microcontroller")
         s.bootstrap()
         s.communicator.simulation = True
         return s
