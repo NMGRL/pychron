@@ -34,7 +34,7 @@ class WatlowstandardbusCommunicator(SerialCommunicator):
         pass
 
     def read_temperature(self):
-        return self.handle.read()#instance=self.slave_address)
+        return self.handle.read()  # instance=self.slave_address)
 
     def read(self, param, response_type="float", verbose=False, *args, **kw):
         rt = float
