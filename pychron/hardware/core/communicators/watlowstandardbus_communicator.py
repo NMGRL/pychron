@@ -18,6 +18,13 @@ from pywatlow.watlow import Watlow
 
 
 class WatlowstandardbusCommunicator(SerialCommunicator):
+    slave_address = '01'
+
+    def load(self, config, path):
+        """ """
+        super(WatlowstandardbusCommunicator, self).load(config, path)
+        self.set_attribute(config, "slave_address", "Communications", "slave_address")
+
     def open(self, **kw):
         self.handle = Watlow(port=self.port)
         self.simulation = False
@@ -27,7 +34,7 @@ class WatlowstandardbusCommunicator(SerialCommunicator):
         pass
 
     def read_temperature(self):
-        return self.handle.read(instance="01")
+        return self.handle.read(instance=self.slave_address)
 
     def read(self, param, response_type="float", verbose=False, *args, **kw):
         rt = float
@@ -50,6 +57,5 @@ class WatlowstandardbusCommunicator(SerialCommunicator):
 
     def tell(self, *args, **kw):
         self.write(*args, **kw)
-
 
 # ============= EOF =============================================
