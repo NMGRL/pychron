@@ -557,17 +557,19 @@ class HistoryView(DVCCommitView):
     def _show_all_commits_changed(self):
         self._load_commits()
 
-    def initialize(self, an, force=False):
-        self.repo = Repo(
-            os.path.join(paths.repository_dataset_dir, an.repository_identifier)
-        )
+    def initialize(self, an, force=False, repo=None):
+        if repo is None:
+            repo = Repo(
+                os.path.join(paths.repository_dataset_dir, an.repository_identifier)
+            )
+
+        self.repo = repo
         self.record_id = an.record_id
         self.uuid = an.uuid
         self.repository_identifier = an.repository_identifier
         # self.sample_prep_comment = an.sample_prep_comment
         # self.sample_note = an.sample_note
         self._analysis = an
-
         ps = [an.make_path(p) for p in HISTORY_PATHS]
         ps = [pi for pi in ps if pi is not None]
         self._paths = ps
@@ -589,7 +591,6 @@ class HistoryView(DVCCommitView):
         args.extend(self._paths)
 
         txt = repo.git.log(*args)
-
         cs = []
         if txt:
             cs = [from_gitlog(l.strip()) for l in txt.split("\n")]

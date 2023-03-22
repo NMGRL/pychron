@@ -431,7 +431,7 @@ class IrradiationPositionTbl(Base, IDMixin):
     j_err = Column(Float)
     packet = stringcolumn(40)
 
-    # analyses = relationship('AnalysisTbl', backref='irradiation_position')
+    analyses = relationship('AnalysisTbl')
 
     @property
     def analysis_count(self):
