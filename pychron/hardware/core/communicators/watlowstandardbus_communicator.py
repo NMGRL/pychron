@@ -18,7 +18,7 @@ from pywatlow.watlow import Watlow
 
 
 class WatlowstandardbusCommunicator(SerialCommunicator):
-    slave_address = '01'
+    slave_address = "01"
 
     def load(self, config, path):
         """ """
@@ -57,5 +57,6 @@ class WatlowstandardbusCommunicator(SerialCommunicator):
 
     def tell(self, *args, **kw):
         self.write(*args, **kw)
+
 
 # ============= EOF =============================================
