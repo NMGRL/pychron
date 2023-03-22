@@ -19,7 +19,18 @@ from operator import attrgetter
 from traitsui.handler import Handler
 from traitsui.tabular_adapter import TabularAdapter
 from traitsui.api import View, UItem, TabularEditor, HGroup, VGroup, Item, HSplit
-from traits.api import List, Instance, HasTraits, Any, Long, Str, Enum, Date, Property, Event
+from traits.api import (
+    List,
+    Instance,
+    HasTraits,
+    Any,
+    Long,
+    Str,
+    Enum,
+    Date,
+    Property,
+    Event,
+)
 from traitsui.menu import Action, ToolBar
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
@@ -30,7 +41,11 @@ from pychron.core.pychron_traits import BorderVGroup
 from pychron.dvc.dvc import DVC
 from pychron.dvc.dvc_helper import get_dvc
 from pychron.envisage.browser.adapters import ProjectAdapter
-from pychron.envisage.browser.record_views import ProjectRecordView, SampleRecordView, LabnumberRecordView
+from pychron.envisage.browser.record_views import (
+    ProjectRecordView,
+    SampleRecordView,
+    LabnumberRecordView,
+)
 from pychron.envisage.resources import icon
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -38,11 +53,13 @@ from pychron.processing.analyses.view.dvc_commit_view import DVCCommitView, Hist
 
 
 class LoadAdapter(TabularAdapter):
-    columns = [('Name', 'name'),
-               ('Status', 'status'),
-               ('Run Date', 'run_date'),
-               ('Completion Date', 'completion_date'),
-               ('Comment', 'comment')]
+    columns = [
+        ("Name", "name"),
+        ("Status", "status"),
+        ("Run Date", "run_date"),
+        ("Completion Date", "completion_date"),
+        ("Comment", "comment"),
+    ]
 
     completion_date_text = Property
     run_date_text = Property
@@ -75,21 +92,22 @@ class ProjectAdapter(TabularAdapter):
 
 
 class SampleAdapter(TabularAdapter):
-    columns = [('Sample Name', 'name'),
-               ('Identifier', 'identifier'),
-               ('Analysis Count', 'analysis_count'),
-               ('Reduction', 'reduction_state')
-               ]
+    columns = [
+        ("Sample Name", "name"),
+        ("Identifier", "identifier"),
+        ("Analysis Count", "analysis_count"),
+        ("Reduction", "reduction_state"),
+    ]
 
     def _get_bg_color(self):
-        color = 'grey'
+        color = "grey"
         if self.item.reduction_state is not None:
-            if self.item.reduction_state == 'complete':
-                color = 'lightgreen'
-            elif self.item.reduction_state == 'partial':
-                color = 'yellow'
+            if self.item.reduction_state == "complete":
+                color = "lightgreen"
+            elif self.item.reduction_state == "partial":
+                color = "yellow"
             else:
-                color = 'lightsalmon'
+                color = "lightsalmon"
 
         return color
 
@@ -172,9 +190,9 @@ class DataReductionLoad(HasTraits):
         if d:
             self.completion_date = datetime.datetime.strptime(d, "%Y-%m-%dT%H:%M:%S.%f")
 
-        d = obj.get('run_date')
+        d = obj.get("run_date")
         if d:
-            self.run_date = datetime.datetime.strptime(d, '%Y-%m-%dT%H:%M:%S')
+            self.run_date = datetime.datetime.strptime(d, "%Y-%m-%dT%H:%M:%S")
             # try:
             #     self.run_date = datetime.datetime.strptime(d, '%Y-%m-%dT%H:%M:%S.%f')
             # except ValueError:
@@ -183,10 +201,10 @@ class DataReductionLoad(HasTraits):
         hist = {k: getattr(self, k) for k in ("comment", "status", "name")}
         hist["projects"] = [p.tohistory() for p in self.projects]
         if self.completion_date:
-            hist['completion_date'] = self.completion_date.isoformat()
+            hist["completion_date"] = self.completion_date.isoformat()
 
         if self.run_date:
-            hist['run_date'] = self.run_date.isoformat()
+            hist["run_date"] = self.run_date.isoformat()
 
         return hist
 
@@ -214,20 +232,25 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
     update = Event
 
     def examine(self):
-        self.debug('examine')
+        self.debug("examine")
         if self.selected:
-
             # get all the analyses for this load
             with self.dvc.session_ctx():
                 l = self.dvc.get_load(self.selected.name)
                 anss = []
                 for m in l.measured_positions:
                     if self.selected_project:
-                        if self.selected_project.name != m.analysis.irradiation_position.sample.project.name:
+                        if (
+                            self.selected_project.name
+                            != m.analysis.irradiation_position.sample.project.name
+                        ):
                             continue
 
                     if self.selected_sample:
-                        if self.selected_sample.name != m.analysis.irradiation_position.sample.name:
+                        if (
+                            self.selected_sample.name
+                            != m.analysis.irradiation_position.sample.name
+                        ):
                             # print('skippoing', m.analysis.irradiation_position.sample.name)
                             continue
 
@@ -235,10 +258,12 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
 
                 anns = self.dvc.make_analyses(anss)
 
-                for rname, gs in groupby_key(anns, key=lambda x: x.repository_identifier):
+                for rname, gs in groupby_key(
+                    anns, key=lambda x: x.repository_identifier
+                ):
                     repo = self.dvc.get_repository(rname)
                     for sa, ais in groupby_key(list(gs), key=lambda x: x.identifier):
-                        reduction_state = 'no reduction'
+                        reduction_state = "no reduction"
                         states = []
                         for ai in ais:
                             dcv = HistoryView()
@@ -250,11 +275,13 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                                 ai.is_reduced = True
 
                         if all(states):
-                            reduction_state = 'complete'
+                            reduction_state = "complete"
                         elif any(states):
-                            reduction_state = 'partial'
+                            reduction_state = "partial"
 
-                        ss = next((s for s in self.selected.samples if s.identifier == sa))
+                        ss = next(
+                            (s for s in self.selected.samples if s.identifier == sa)
+                        )
                         ss.reduction_state = reduction_state
                 self.update = True
 
@@ -294,7 +321,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             # for o in self.oloads:
             #     print(o.name.lower(),o.name.lower().startswith(new), new)
             # self.loads = [l for l in self.oloads if l.name.lower().startswith(new.lower())]
-            self.loads = fuzzyfinder(new, self.oloads, 'name')
+            self.loads = fuzzyfinder(new, self.oloads, "name")
 
     def _selected_changed(self):
         # get all projects for this load
@@ -317,9 +344,9 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                     p
                     for p in ps
                     if p.name
-                       not in [
-                           "REFERENCES",
-                       ]
+                    not in [
+                        "REFERENCES",
+                    ]
                 ]
 
                 ps = [next(pis) for g, pis in groupby_key(ps, key=lambda x: x.name)]
@@ -337,56 +364,67 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             self.selected.samples = ls
 
     def traits_view(self):
-        v = View(UItem('search_entry'),
-                 UItem('loads',
-                       editor=TabularEditor(
-                           column_clicked="column_clicked",
-                           selected='selected',
-                           editable=False,
-                           auto_update=True,
-                           adapter=LoadAdapter())),
-                 HSplit(VGroup(BorderVGroup(UItem('object.selected.status'),
-                                            label='Status'),
-                               BorderVGroup(UItem('object.selected.comment', style='custom'),
-                                            label='Comment',
-                                            )
-                               ),
-                        HGroup(UItem("object.selected.projects",
-                                     width=300,
-                                     editor=TabularEditor(
-                                         selected='selected_project',
-                                         editable=False,
-                                         adapter=ProjectAdapter())
-                                     ),
-                               UItem('object.selected.samples',
-                                     width=300,
-                                     editor=TabularEditor(adapter=SampleAdapter(),
-                                                          editable=False,
-                                                          update='update',
-                                                          selected='object.selected_sample',
-                                                          column_clicked="sample_column_clicked",
-                                                          stretch_last_section=False)
-                                     ))
+        v = View(
+            UItem("search_entry"),
+            UItem(
+                "loads",
+                editor=TabularEditor(
+                    column_clicked="column_clicked",
+                    selected="selected",
+                    editable=False,
+                    auto_update=True,
+                    adapter=LoadAdapter(),
+                ),
+            ),
+            HSplit(
+                VGroup(
+                    BorderVGroup(UItem("object.selected.status"), label="Status"),
+                    BorderVGroup(
+                        UItem("object.selected.comment", style="custom"),
+                        label="Comment",
+                    ),
+                ),
+                HGroup(
+                    UItem(
+                        "object.selected.projects",
+                        width=300,
+                        editor=TabularEditor(
+                            selected="selected_project",
+                            editable=False,
+                            adapter=ProjectAdapter(),
                         ),
-                 # UItem('object.selected_project.samples',
-                 #       editor=TabularEditor(adapter=SampleAdapter()))),
-                 width=900,
-                 toolbar=ToolBar(
-                     Action(name="Save",
-                            image=icon('database_save'),
-                            action="save"),
-                     Action(name="Share",
-                            image=icon('share'),
-                            action="share"),
-                     Action(name='History',
-                            image=icon('history'),
-                            action='examine',
-                            enabled_when='object.selected')
-                 ),
-                 title='Data Reduction Log',
-                 handler=DataReductionLogbookHandler(),
-                 resizable=True
-                 )
+                    ),
+                    UItem(
+                        "object.selected.samples",
+                        width=300,
+                        editor=TabularEditor(
+                            adapter=SampleAdapter(),
+                            editable=False,
+                            update="update",
+                            selected="object.selected_sample",
+                            column_clicked="sample_column_clicked",
+                            stretch_last_section=False,
+                        ),
+                    ),
+                ),
+            ),
+            # UItem('object.selected_project.samples',
+            #       editor=TabularEditor(adapter=SampleAdapter()))),
+            width=900,
+            toolbar=ToolBar(
+                Action(name="Save", image=icon("database_save"), action="save"),
+                Action(name="Share", image=icon("share"), action="share"),
+                Action(
+                    name="History",
+                    image=icon("history"),
+                    action="examine",
+                    enabled_when="object.selected",
+                ),
+            ),
+            title="Data Reduction Log",
+            handler=DataReductionLogbookHandler(),
+            resizable=True,
+        )
         return v
 
 
