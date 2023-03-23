@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import json
 import os
 
 from traits.api import Enum, Bool, Str, Int, Float, Color, List, Directory
@@ -25,12 +26,13 @@ from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.core.pychron_traits import SingleStr, BorderHGroup, BorderVGroup
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.yaml import yload
+from pychron.options.options import BaseOptions
 from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
 from pychron.pychron_constants import SIGMA, AGE_SORT_KEYS
 
 
-class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
+class XLSXAnalysisTableWriterOptions(BaseOptions):
     sig_figs = dumpable(Int(6))
     j_sig_figs = dumpable(Int(6))
     ic_sig_figs = dumpable(Int(6))
@@ -84,9 +86,12 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
 
     include_blanks = dumpable(Bool(True))
     include_intercepts = dumpable(Bool(True))
+    include_corrected_intensities = dumpable(Bool(True))
     include_percent_ar39 = dumpable(Bool(True))
     include_icfactors = dumpable(Bool(True))
     include_discrimination = dumpable(Bool(True))
+    include_decay_factors = dumpable(Bool(True))
+    include_j = dumpable(Bool(True))
     include_lambda_k = dumpable(Bool(True))
     include_monitor_age = dumpable(Bool(True))
     include_monitor_name = dumpable(Bool(True))
@@ -212,7 +217,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     include_decay_error = dumpable(Bool(False))
 
     human_sheet_name = dumpable(Str("Unknowns"))
-    machine_sheet_name = dumpable(Str("Unknowns (Machine)"))
+    machine_sheet_name = dumpable(Str("Nonformatted"))
     summary_sheet_name = dumpable(Str("Summary"))
 
     exclude_hidden_columns = dumpable(Bool(False))
@@ -220,8 +225,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
     overwrite = Bool(False)
 
-    def __init__(self, name, *args, **kw):
-        self._persistence_name = name
+    def __init__(self, *args, **kw):
+        # self._persistence_name = name
 
         super(XLSXAnalysisTableWriterOptions, self).__init__(*args, **kw)
         # self.load_notes()
@@ -229,6 +234,14 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
         self._load_notes()
         self._unknown_note_name_changed(self.unknown_note_name)
+
+    # def dump(self, wfile):
+    #     state = self.make_state()
+    #     json.dump(state, wfile, indent=4, sort_keys=True)
+    def _get_state_hook(self, state):
+        d = {k: getattr(self, k) for k in self.traits(dump=True).keys()}
+
+        state.update(**d)
 
     def _load_notes(self):
         p = os.path.join(paths.user_pipeline_dir, "table_notes.yaml")
@@ -467,14 +480,17 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
             Item("tag_enabled", label="Tag"),
             iinc("rundate", "Analysis RunDate"),
             iinc("blanks", "Applied Blank"),
+            iinc("corrected_intensities", "Corrected Intensities"),
             iinc("intercepts", "Intercepts"),
             iinc("icfactors", "ICFactors"),
             iinc("discrimination", "Discrimination"),
+            iinc("decay_factors", "Decay Factors"),
+            iinc("j", "J"),
             Item(
                 "use_sample_metadata_saved_with_run",
                 label="Use Sample Metadata Saved with Run",
                 tooltip="If checked use the sample metadata saved with the run at the time of "
-                "analysis otherwise query the database to sync metadata",
+                        "analysis otherwise query the database to sync metadata",
             ),
             label="General",
         )

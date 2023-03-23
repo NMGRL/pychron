@@ -369,6 +369,15 @@ class MainOptions(SubOptions):
 # ===============================================================
 # ===============================================================
 
+def convert_color(ss):
+    from pyface.qt.QtGui import QColor
+
+    nd = {}
+    for k, v in ss.items():
+        if isinstance(v, QColor):
+            nd[k] = v.rgba()
+    ss.update(**nd)
+
 
 class BaseOptions(HasTraits):
     fontname = Enum(*FONTS)
@@ -378,14 +387,6 @@ class BaseOptions(HasTraits):
     _subview_cache = None
 
     def make_state(self):
-        def convert_color(ss):
-            from pyface.qt.QtGui import QColor
-
-            nd = {}
-            for k, v in ss.items():
-                if isinstance(v, QColor):
-                    nd[k] = v.rgba()
-            ss.update(**nd)
 
         state = self.__getstate__()
         state["klass"] = str(self.__class__)
@@ -419,6 +420,8 @@ class BaseOptions(HasTraits):
 
         convert_color(state)
         self._get_state_hook(state)
+        convert_color(state)
+
         return state
 
     def dump(self, wfile):

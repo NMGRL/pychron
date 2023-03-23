@@ -387,9 +387,9 @@ class XLSXAnalysisTablePersistNode(BaseDVCNode):
         if state.unknowns:
             ri = tuple({ai.repository_identifier for ai in state.unknowns})
             options = self.options.selected_options
-
-            if not options.root_name:
-                options.root_name = ri[0]
+            if options:
+                if not options.root_name:
+                    options.root_name = ri[0]
 
     def _finish_configure(self):
         self.options.dump()

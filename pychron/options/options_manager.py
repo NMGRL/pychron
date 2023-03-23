@@ -470,7 +470,7 @@ class OptionsManager(BaseOptionsManager):
             self.selected_options = obj
 
             o = self.selected_subview
-            if not o:
+            if not o and self.subview_names:
                 o = self.subview_names[0]
 
             self.selected_subview = ""
