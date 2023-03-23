@@ -244,15 +244,15 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                 for m in l.measured_positions:
                     if self.selected_project:
                         if (
-                                self.selected_project.name
-                                != m.analysis.irradiation_position.sample.project.name
+                            self.selected_project.name
+                            != m.analysis.irradiation_position.sample.project.name
                         ):
                             continue
 
                     if self.selected_sample:
                         if (
-                                self.selected_sample.name
-                                != m.analysis.irradiation_position.sample.name
+                            self.selected_sample.name
+                            != m.analysis.irradiation_position.sample.name
                         ):
                             # print('skippoing', m.analysis.irradiation_position.sample.name)
                             continue
@@ -262,7 +262,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                 anns = self.dvc.make_analyses(anss)
 
                 for rname, gs in groupby_key(
-                        anns, key=lambda x: x.repository_identifier
+                    anns, key=lambda x: x.repository_identifier
                 ):
                     repo = self.dvc.get_repository(rname)
                     for sa, ais in groupby_key(list(gs), key=lambda x: x.identifier):
@@ -348,9 +348,10 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                 ps = [
                     p
                     for p in ps
-                    if p.name not in [
-                           "REFERENCES",
-                       ]
+                    if p.name
+                    not in [
+                        "REFERENCES",
+                    ]
                 ]
 
                 ps = [next(pis) for g, pis in groupby_key(ps, key=lambda x: x.name)]
@@ -364,7 +365,9 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
     def _selected_project_changed(self, new):
         with self.dvc.session_ctx() as sess:
             ls = []
-            for li in self.dvc.get_labnumbers(projects=[new.name], loads=[self.selected.name]):
+            for li in self.dvc.get_labnumbers(
+                projects=[new.name], loads=[self.selected.name]
+            ):
                 if li.analyzed:
                     r = LabnumberRecordView(li)
                     ls.append(r)
