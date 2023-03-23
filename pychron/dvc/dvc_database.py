@@ -2178,7 +2178,7 @@ class DVCDatabase(DatabaseAdapter):
             if loads:
                 return [ui.name for ui in loads]
 
-    def get_loads(self, names=None, exclude_archived=True, archived_only=False, **kw):
+    def get_loads(self, names=None, projects=None, exclude_archived=True, archived_only=False, **kw):
         with self.session_ctx():
             if "order" not in kw:
                 kw["order"] = LoadTbl.create_date.desc()
@@ -2186,11 +2186,20 @@ class DVCDatabase(DatabaseAdapter):
             if archived_only:
                 kw = self._append_filters(LoadTbl.archived, kw)
             else:
+                if projects:
+                    kw = self._append_joins((MeasuredPositionTbl,
+                                             AnalysisTbl,
+                                             IrradiationPositionTbl,
+                                             SampleTbl, ProjectTbl), kw)
+
                 if exclude_archived:
                     kw = self._append_filters(not_(LoadTbl.archived), kw)
 
                 if names:
                     kw = self._append_filters(LoadTbl.name.in_(names), kw)
+
+                if projects:
+                    kw = self._append_filters(ProjectTbl.name.in_(projects), kw)
 
             loads = self._retrieve_items(LoadTbl, **kw)
             return loads
@@ -2473,12 +2482,15 @@ class DVCDatabase(DatabaseAdapter):
         mass_spectrometers=None,
         order=None,
         verbose_query=False,
+        orderby=None
     ):
         if order:
             order = getattr(ProjectTbl.name, order)()
+        elif orderby:
+            order = orderby
 
-        if principal_investigators or irradiation or mass_spectrometers:
-            with self.session_ctx() as sess:
+        with self.session_ctx() as sess:
+            if principal_investigators or irradiation or mass_spectrometers:
                 q = sess.query(ProjectTbl)
 
                 # joins
@@ -2510,10 +2522,11 @@ class DVCDatabase(DatabaseAdapter):
                     q = q.order_by(order)
 
                 ps = self._query_all(q, verbose_query=verbose_query)
-        else:
-            ps = self._retrieve_items(
-                ProjectTbl, order=order, verbose_query=verbose_query
-            )
+            else:
+                ps = self._retrieve_items(
+                    ProjectTbl, order=order, verbose_query=verbose_query
+                )
+
         return ps
 
     def get_materials(self):

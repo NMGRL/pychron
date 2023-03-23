@@ -19,7 +19,7 @@ from operator import attrgetter
 
 from traitsui.handler import Handler
 from traitsui.tabular_adapter import TabularAdapter
-from traitsui.api import View, UItem, TabularEditor, HGroup, VGroup, Item, HSplit
+from traitsui.api import View, UItem, TabularEditor, HGroup, VGroup, Item, HSplit, VSplit
 from traits.api import (
     List,
     Instance,
@@ -31,6 +31,7 @@ from traits.api import (
     Date,
     Property,
     Event,
+    Int
 )
 from traitsui.menu import Action, ToolBar
 
@@ -47,6 +48,7 @@ from pychron.envisage.browser.record_views import (
     SampleRecordView,
     LabnumberRecordView,
 )
+from pychron.envisage.icon_button_editor import icon_button_editor
 from pychron.envisage.resources import icon
 from pychron.loggable import Loggable
 from pychron.paths import paths
@@ -61,7 +63,9 @@ class LoadAdapter(TabularAdapter):
         ("Completion Date", "completion_date"),
         ("Comment", "comment"),
     ]
-
+    name_width = Int(75)
+    status_width = Int(85)
+    run_date_width = Int(100)
     completion_date_text = Property
     run_date_text = Property
 
@@ -89,6 +93,7 @@ class LoadAdapter(TabularAdapter):
 class ProjectAdapter(TabularAdapter):
     columns = [
         ("Project Name", "name"),
+        ("UniqueID", "unique_id")
     ]
 
 
@@ -117,16 +122,20 @@ class ProjectDetail(HasTraits):
     name = Str
     samples = List
 
+    unique_id = Long
+
     def __init__(self, record=None, *args, **kw):
         super().__init__(*args, **kw)
         if record:
             if hasattr(record, "name"):
                 self.name = record.name
+                self.unique_id = record.id
             else:
                 self.name = record.get("name")
+                self.unique_id = record.get("unique_id", 0)
 
     def tohistory(self):
-        return {"name": self.name}
+        return {"name": self.name, "unique_id": self.unique_id}
 
 
 # class LoadDetail(HasTraits):
@@ -223,11 +232,21 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
     loads = List
     oloads = List
 
+    projects = List
+    oprojects = List
+
     dvc = Instance(DVC)
     selected = Instance(DataReductionLoad, ())
     selected_project = Instance(ProjectDetail, ())
     selected_sample = Instance(SampleRecordView)
     search_entry = Str  # (auto_set=False, enter_set=True)
+    search_entry_clear = Event
+
+    project_search_entry = Str
+    project_search_entry_clear = Event
+
+    selected_project2 = Instance(ProjectRecordView)
+
     sample_column_clicked = Event
 
     update = Event
@@ -288,19 +307,31 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                         ss.reduction_state = reduction_state
                 self.update = True
 
-    def populate(self):
+    def get_loads(self, projects=None):
         loads = self.dvc.get_data_reduction_loads()
-        ls = []
-        for li in self.dvc.get_loads():
-            la = DataReductionLoad(li)
-            for lj in loads:
-                if lj["name"] == la.name:
-                    la.set_history(lj)
-                    break
-            ls.append(la)
+        with self.dvc.session_ctx():
+            ls = []
+            for li in self.dvc.get_loads(projects=projects):
+                la = DataReductionLoad(li)
+                for lj in loads:
+                    if lj["name"] == la.name:
+                        la.set_history(lj)
+                        break
+                ls.append(la)
 
-        self.loads = ls
-        self.oloads = ls
+            self.loads = ls
+            self.oloads = ls
+
+    def get_projects(self):
+        ps = sorted([ProjectRecordView(p) for p in self.dvc.get_projects()],
+                    key=lambda x: x.unique_id, reverse=True)
+        self.projects = ps
+        self.oprojects = ps
+
+    def populate(self):
+        with self.dvc.session_ctx():
+            self.get_loads()
+            self.get_projects()
 
     def save(self, *args, **kw):
         self.debug("save")
@@ -316,8 +347,18 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
         if self.confirmation_dialog("Would you like to share your changes?"):
             self.share()
 
+    def _search_entry_clear_fired(self):
+        self.get_loads()
+
+    # def _project_search_entry_clear_fired(self):
+    #     self.get_projects()
+
     def _sample_column_clicked_fired(self, new):
         self._column_clicked_handled(new)
+
+    def _project_search_entry_changed(self, new):
+        if new:
+            self.projects = fuzzyfinder(new, self.oprojects, "name")
 
     def _search_entry_changed(self, new):
         if new:
@@ -348,8 +389,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                 ps = [
                     p
                     for p in ps
-                    if p.name
-                    not in [
+                    if p.name not in [
                         "REFERENCES",
                     ]
                 ]
@@ -357,10 +397,18 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                 ps = [next(pis) for g, pis in groupby_key(ps, key=lambda x: x.name)]
                 save = True
 
-        self.selected.projects = [ProjectDetail(p) for p in ps]
+        ps = [ProjectDetail(p) for p in ps]
+        if self.selected_project2:
+            ps = [p for p in ps if p.name == self.selected_project2.name]
+            self.selected_project = ps[0]
+
+        self.selected.projects = ps
         if save:
             self.save()
             self.dvc.clear_data_reduction_loads_cache()
+
+    def _selected_project2_changed(self, new):
+        self.get_loads(projects=[new.name])
 
     def _selected_project_changed(self, new):
         with self.dvc.session_ctx() as sess:
@@ -375,53 +423,63 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             self.selected.samples = ls
 
     def traits_view(self):
+        grp = BorderVGroup(HGroup(UItem("search_entry"),
+                                  icon_button_editor('search_entry_clear', 'clear')),
+                           UItem(
+                               "loads",
+                               editor=TabularEditor(
+                                   column_clicked="column_clicked",
+                                   selected="selected",
+                                   editable=False,
+                                   auto_update=True,
+                                   adapter=LoadAdapter(),
+                               )),
+                           label='Loads')
+
+        grp1 = BorderVGroup(HGroup(UItem("project_search_entry"),
+                                   icon_button_editor('project_search_entry_clear', 'clear')),
+                            UItem("projects", editor=TabularEditor(selected='selected_project2',
+                                                                   stretch_last_section=False,
+                                                                   adapter=ProjectAdapter())),
+                            label='Project')
         v = View(
-            UItem("search_entry"),
-            UItem(
-                "loads",
-                editor=TabularEditor(
-                    column_clicked="column_clicked",
-                    selected="selected",
-                    editable=False,
-                    auto_update=True,
-                    adapter=LoadAdapter(),
-                ),
-            ),
-            HSplit(
-                VGroup(
-                    BorderVGroup(UItem("object.selected.status"), label="Status"),
-                    BorderVGroup(
-                        UItem("object.selected.comment", style="custom"),
-                        label="Comment",
-                    ),
-                ),
-                HGroup(
-                    UItem(
-                        "object.selected.projects",
-                        width=300,
-                        editor=TabularEditor(
-                            selected="selected_project",
-                            editable=False,
-                            adapter=ProjectAdapter(),
-                        ),
-                    ),
-                    UItem(
-                        "object.selected.samples",
-                        width=300,
-                        editor=TabularEditor(
-                            adapter=SampleAdapter(),
-                            editable=False,
-                            update="update",
-                            selected="object.selected_sample",
-                            column_clicked="sample_column_clicked",
-                            stretch_last_section=False,
-                        ),
-                    ),
-                ),
-            ),
+            VSplit(HGroup(grp, grp1),
+                   HSplit(
+                       VGroup(
+                           BorderVGroup(UItem("object.selected.status"), label="Status"),
+                           BorderVGroup(
+                               UItem("object.selected.comment", style="custom"),
+                               label="Comment",
+                           ),
+                       ),
+                       HGroup(
+                           UItem(
+                               "object.selected.projects",
+                               width=300,
+                               editor=TabularEditor(
+                                   selected="selected_project",
+                                   editable=False,
+                                   adapter=ProjectAdapter(),
+                               ),
+                           ),
+                           UItem(
+                               "object.selected.samples",
+                               width=300,
+                               editor=TabularEditor(
+                                   adapter=SampleAdapter(),
+                                   editable=False,
+                                   update="update",
+                                   selected="object.selected_sample",
+                                   column_clicked="sample_column_clicked",
+                                   stretch_last_section=False,
+                               ),
+                           ),
+                       ),
+                   )
+                   ),
             # UItem('object.selected_project.samples',
             #       editor=TabularEditor(adapter=SampleAdapter()))),
-            width=900,
+            width=1200,
             toolbar=ToolBar(
                 Action(name="Save", image=icon("database_save"), action="save"),
                 Action(name="Share", image=icon("share"), action="share"),

@@ -687,7 +687,7 @@ host= {}\nurl= {}'.format(
             q = query_hook(q)
 
         if verbose_query or self.verbose_retrieve_query:
-            # print compile_query(q)
+            # print(compile_query(q))
             self.debug(compile_query(q))
 
         items = self._query(q, func, reraise)
