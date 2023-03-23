@@ -112,6 +112,7 @@ def get_plateau_ar39(ag, *args):
 def get_trapped_ratio_error(opt):
     def func(ag, *args):
         return std_dev(ag.isochron_4036) * opt.summary_trapped_ratio_nsigma
+
     return func
 
 
@@ -125,8 +126,8 @@ def get_age(attr, opt):
 def get_age_error(attr, opt):
     def f(ag, *args):
         return (
-                ag.scaled_age(std_dev(getattr(ag, attr)), opt.age_units)
-                * opt.summary_age_nsigma
+            ag.scaled_age(std_dev(getattr(ag, attr)), opt.age_units)
+            * opt.summary_age_nsigma
         )
 
     return f
@@ -433,7 +434,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     units="(days)",
                     attr="decay_days",
                 ),
-                SigFigColumn(visible=ubit and options.include_j, label="J", attr="j", sigformat="j"),
+                SigFigColumn(
+                    visible=ubit and options.include_j,
+                    label="J",
+                    attr="j",
+                    sigformat="j",
+                ),
                 SigFigEColumn(visible=ubit and options.include_j, attr="j"),
                 VColumn(
                     visible=ubit and options.include_decay_factors,
@@ -451,7 +457,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         )
 
     def _intercalibration_columns(
-            self, columns, detectors, ic_visible=True, disc_visible=True
+        self, columns, detectors, ic_visible=True, disc_visible=True
     ):
         disc = [
             SigFigColumn(
@@ -486,9 +492,9 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _signal_columns(self, columns, cbit, ibit, bkbit):
         isos = (("Ar", 40), ("Ar", 39), ("Ar", 38), ("Ar", 37), ("Ar", 36))
         for bit, tag in (
-                (cbit, "disc_ic_corrected"),
-                (ibit, "intercept"),
-                (bkbit, "blank"),
+            (cbit, "disc_ic_corrected"),
+            (ibit, "intercept"),
+            (bkbit, "blank"),
         ):
             cols = [
                 c
@@ -687,7 +693,6 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         age_units = "({})".format(opt.age_units)
 
         cols = [
-
             Column(visible=opt.include_summary_sample, label="Sample", attr="sample"),
             Column(
                 visible=opt.include_summary_identifier,
@@ -849,7 +854,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
     def _make_subgroup_summary_sheet(self, unks, sunks):
         self._current_row = 1
 
-        name = 'Subgroup Summary'
+        name = "Subgroup Summary"
 
         sh = self._workbook.add_worksheet(name)
         self._format_generic_worksheet(sh)
@@ -891,11 +896,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         # hide extra age columns
         for hidden in (
-                "WeightedMeanAge",
-                "ArithmeticMeanAge",
-                "IsochronAge",
-                "PlateauAge",
-                "IntegratedAge",
+            "WeightedMeanAge",
+            "ArithmeticMeanAge",
+            "IsochronAge",
+            "PlateauAge",
+            "IntegratedAge",
         ):
             hc = next((i for i, c in enumerate(cols) if c.label == hidden), None)
             if hc is not None:
@@ -1170,8 +1175,8 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                     args = []
                     for cii in ci:
                         for reg, fmt in (
-                                (supreg, self._superscript),
-                                (subreg, self._subscript),
+                            (supreg, self._superscript),
+                            (subreg, self._subscript),
                         ):
                             m = reg.match(cii)
                             if m:
@@ -1316,7 +1321,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         return fn
 
     def _make_analysis(
-            self, sh, cols, item, is_last=False, is_plateau_step=None, cum=""
+        self, sh, cols, item, is_last=False, is_plateau_step=None, cum=""
     ):
         row = self._current_row
 
@@ -1703,6 +1708,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         if isinstance(v, Variable):
             v = nominal_value(v)
         return v
+
 
 # ============= EOF =============================================
 # if __name__ == '__main__':

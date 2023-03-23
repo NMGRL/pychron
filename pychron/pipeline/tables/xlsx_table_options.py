@@ -490,7 +490,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
                 "use_sample_metadata_saved_with_run",
                 label="Use Sample Metadata Saved with Run",
                 tooltip="If checked use the sample metadata saved with the run at the time of "
-                        "analysis otherwise query the database to sync metadata",
+                "analysis otherwise query the database to sync metadata",
             ),
             label="General",
         )

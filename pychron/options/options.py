@@ -369,6 +369,7 @@ class MainOptions(SubOptions):
 # ===============================================================
 # ===============================================================
 
+
 def convert_color(ss):
     from pyface.qt.QtGui import QColor
 
@@ -387,7 +388,6 @@ class BaseOptions(HasTraits):
     _subview_cache = None
 
     def make_state(self):
-
         state = self.__getstate__()
         state["klass"] = str(self.__class__)
 
