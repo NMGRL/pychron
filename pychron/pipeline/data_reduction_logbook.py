@@ -19,7 +19,16 @@ from operator import attrgetter
 
 from traitsui.handler import Handler
 from traitsui.tabular_adapter import TabularAdapter
-from traitsui.api import View, UItem, TabularEditor, HGroup, VGroup, Item, HSplit, VSplit
+from traitsui.api import (
+    View,
+    UItem,
+    TabularEditor,
+    HGroup,
+    VGroup,
+    Item,
+    HSplit,
+    VSplit,
+)
 from traits.api import (
     List,
     Instance,
@@ -31,7 +40,7 @@ from traits.api import (
     Date,
     Property,
     Event,
-    Int
+    Int,
 )
 from traitsui.menu import Action, ToolBar
 
@@ -91,10 +100,7 @@ class LoadAdapter(TabularAdapter):
 
 
 class ProjectAdapter(TabularAdapter):
-    columns = [
-        ("Project Name", "name"),
-        ("UniqueID", "unique_id")
-    ]
+    columns = [("Project Name", "name"), ("UniqueID", "unique_id")]
 
 
 class SampleAdapter(TabularAdapter):
@@ -323,8 +329,11 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             self.oloads = ls
 
     def get_projects(self):
-        ps = sorted([ProjectRecordView(p) for p in self.dvc.get_projects()],
-                    key=lambda x: x.unique_id, reverse=True)
+        ps = sorted(
+            [ProjectRecordView(p) for p in self.dvc.get_projects()],
+            key=lambda x: x.unique_id,
+            reverse=True,
+        )
         self.projects = ps
         self.oprojects = ps
 
@@ -389,7 +398,8 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                 ps = [
                     p
                     for p in ps
-                    if p.name not in [
+                    if p.name
+                    not in [
                         "REFERENCES",
                     ]
                 ]
@@ -423,60 +433,74 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             self.selected.samples = ls
 
     def traits_view(self):
-        grp = BorderVGroup(HGroup(UItem("search_entry"),
-                                  icon_button_editor('search_entry_clear', 'clear')),
-                           UItem(
-                               "loads",
-                               editor=TabularEditor(
-                                   column_clicked="column_clicked",
-                                   selected="selected",
-                                   editable=False,
-                                   auto_update=True,
-                                   adapter=LoadAdapter(),
-                               )),
-                           label='Loads')
+        grp = BorderVGroup(
+            HGroup(
+                UItem("search_entry"), icon_button_editor("search_entry_clear", "clear")
+            ),
+            UItem(
+                "loads",
+                editor=TabularEditor(
+                    column_clicked="column_clicked",
+                    selected="selected",
+                    editable=False,
+                    auto_update=True,
+                    adapter=LoadAdapter(),
+                ),
+            ),
+            label="Loads",
+        )
 
-        grp1 = BorderVGroup(HGroup(UItem("project_search_entry"),
-                                   icon_button_editor('project_search_entry_clear', 'clear')),
-                            UItem("projects", editor=TabularEditor(selected='selected_project2',
-                                                                   stretch_last_section=False,
-                                                                   adapter=ProjectAdapter())),
-                            label='Project')
+        grp1 = BorderVGroup(
+            HGroup(
+                UItem("project_search_entry"),
+                icon_button_editor("project_search_entry_clear", "clear"),
+            ),
+            UItem(
+                "projects",
+                editor=TabularEditor(
+                    selected="selected_project2",
+                    stretch_last_section=False,
+                    adapter=ProjectAdapter(),
+                ),
+            ),
+            label="Project",
+        )
         v = View(
-            VSplit(HGroup(grp, grp1),
-                   HSplit(
-                       VGroup(
-                           BorderVGroup(UItem("object.selected.status"), label="Status"),
-                           BorderVGroup(
-                               UItem("object.selected.comment", style="custom"),
-                               label="Comment",
-                           ),
-                       ),
-                       HGroup(
-                           UItem(
-                               "object.selected.projects",
-                               width=300,
-                               editor=TabularEditor(
-                                   selected="selected_project",
-                                   editable=False,
-                                   adapter=ProjectAdapter(),
-                               ),
-                           ),
-                           UItem(
-                               "object.selected.samples",
-                               width=300,
-                               editor=TabularEditor(
-                                   adapter=SampleAdapter(),
-                                   editable=False,
-                                   update="update",
-                                   selected="object.selected_sample",
-                                   column_clicked="sample_column_clicked",
-                                   stretch_last_section=False,
-                               ),
-                           ),
-                       ),
-                   )
-                   ),
+            VSplit(
+                HGroup(grp, grp1),
+                HSplit(
+                    VGroup(
+                        BorderVGroup(UItem("object.selected.status"), label="Status"),
+                        BorderVGroup(
+                            UItem("object.selected.comment", style="custom"),
+                            label="Comment",
+                        ),
+                    ),
+                    HGroup(
+                        UItem(
+                            "object.selected.projects",
+                            width=300,
+                            editor=TabularEditor(
+                                selected="selected_project",
+                                editable=False,
+                                adapter=ProjectAdapter(),
+                            ),
+                        ),
+                        UItem(
+                            "object.selected.samples",
+                            width=300,
+                            editor=TabularEditor(
+                                adapter=SampleAdapter(),
+                                editable=False,
+                                update="update",
+                                selected="object.selected_sample",
+                                column_clicked="sample_column_clicked",
+                                stretch_last_section=False,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
             # UItem('object.selected_project.samples',
             #       editor=TabularEditor(adapter=SampleAdapter()))),
             width=1200,

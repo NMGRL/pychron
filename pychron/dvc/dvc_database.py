@@ -2178,7 +2178,14 @@ class DVCDatabase(DatabaseAdapter):
             if loads:
                 return [ui.name for ui in loads]
 
-    def get_loads(self, names=None, projects=None, exclude_archived=True, archived_only=False, **kw):
+    def get_loads(
+        self,
+        names=None,
+        projects=None,
+        exclude_archived=True,
+        archived_only=False,
+        **kw
+    ):
         with self.session_ctx():
             if "order" not in kw:
                 kw["order"] = LoadTbl.create_date.desc()
@@ -2187,10 +2194,16 @@ class DVCDatabase(DatabaseAdapter):
                 kw = self._append_filters(LoadTbl.archived, kw)
             else:
                 if projects:
-                    kw = self._append_joins((MeasuredPositionTbl,
-                                             AnalysisTbl,
-                                             IrradiationPositionTbl,
-                                             SampleTbl, ProjectTbl), kw)
+                    kw = self._append_joins(
+                        (
+                            MeasuredPositionTbl,
+                            AnalysisTbl,
+                            IrradiationPositionTbl,
+                            SampleTbl,
+                            ProjectTbl,
+                        ),
+                        kw,
+                    )
 
                 if exclude_archived:
                     kw = self._append_filters(not_(LoadTbl.archived), kw)
@@ -2482,7 +2495,7 @@ class DVCDatabase(DatabaseAdapter):
         mass_spectrometers=None,
         order=None,
         verbose_query=False,
-        orderby=None
+        orderby=None,
     ):
         if order:
             order = getattr(ProjectTbl.name, order)()
