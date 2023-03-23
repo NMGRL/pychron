@@ -117,8 +117,16 @@ class MetaRepo(GitRepoManager):
     def data_reduction_log_path(self):
         return os.path.join(paths.meta_root, "data_reduction_log.json")
 
+    _cached_loads = None
+
     def get_data_reduction_loads(self):
-        return dvc_load(self.data_reduction_log_path)
+        objs = self._cached_loads
+        if objs is None:
+            objs = dvc_load(self.data_reduction_log_path)
+            self._cached_loads = objs
+        return self._cached_loads
+    def clear_data_reduction_loads_cache(self):
+        self._cached_loads = None
 
     def save_data_reduction_loads(self, objs):
         return dvc_dump(objs, self.data_reduction_log_path)
@@ -180,7 +188,7 @@ class MetaRepo(GitRepoManager):
             self.warning_dialog("Invalid production name".format(prname))
 
     def update_level_monitor(
-        self, irradiation, level, monitor_name, monitor_material, monitor_age, lambda_k
+            self, irradiation, level, monitor_name, monitor_material, monitor_age, lambda_k
     ):
         obj, path = self.get_level_obj(irradiation, level)
         positions = self._get_level_positions(irradiation, level)
@@ -201,7 +209,7 @@ class MetaRepo(GitRepoManager):
         self.add(path)
 
     def add_production_to_irradiation(
-        self, irrad, name, params, add=True, commit=False
+            self, irrad, name, params, add=True, commit=False
     ):
         self.debug("adding production {} to irradiation={}".format(name, irrad))
 
@@ -459,23 +467,23 @@ class MetaRepo(GitRepoManager):
                 self.add(p, commit=False)
 
     def update_flux(
-        self,
-        irradiation,
-        level,
-        pos,
-        identifier,
-        j,
-        e,
-        mj=0,
-        me=0,
-        mmwsd=0,
-        decay=None,
-        position_jerr=None,
-        analyses=None,
-        options=None,
-        add=True,
-        save_predicted=True,
-        jd=None,
+            self,
+            irradiation,
+            level,
+            pos,
+            identifier,
+            j,
+            e,
+            mj=0,
+            me=0,
+            mmwsd=0,
+            decay=None,
+            position_jerr=None,
+            analyses=None,
+            options=None,
+            add=True,
+            save_predicted=True,
+            jd=None,
     ):
         self.info(
             "Saving j for {}{}:{} {}, j={} +/-{}".format(
@@ -790,6 +798,5 @@ class MetaRepo(GitRepoManager):
                 wfile.write(path_or_blob)
 
         self.add(p, commit=False)
-
 
 # ============= EOF =============================================
