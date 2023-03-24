@@ -346,6 +346,10 @@ class ProjectTbl(Base, NameMixin):
             else self.name
         )
 
+    @property
+    def unique_id(self):
+        return self.id
+
 
 class MaterialTbl(Base, NameMixin):
     samples = relationship("SampleTbl", backref="material")

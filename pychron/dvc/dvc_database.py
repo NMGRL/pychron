@@ -832,11 +832,18 @@ class DVCDatabase(DatabaseAdapter):
 
     def get_fuzzy_analysis(self, search_str):
         with self.session_ctx() as sess:
+            q = sess.query(AnalysisTbl)
+
             comps = [AnalysisTbl.uuid.like("{}%".format(search_str))]
             if "-" in search_str:
                 aliquot = search_str.split("-")[-1]
                 comps.append(AnalysisTbl.aliquot.like("%{}%".format(aliquot)))
-            q = sess.query(AnalysisTbl)
+            else:
+                q = q.join(IrradiationPositionTbl)
+                comps.append(IrradiationPositionTbl.identifier.like(f"{search_str}%"))
+
+                # comps.append(AnalysisTbl.irradiation_position.identifier.like(f"{search_str}%"))
+
             # f = or_(
             #     AnalysisTbl.uuid.like("{}%".format(search_str)),
             #     AnalysisTbl.aliquot.like("{}%".format(search_str)),

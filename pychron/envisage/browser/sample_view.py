@@ -192,12 +192,13 @@ load_grp = BorderVGroup(
 search_grp = BorderHGroup(
     UItem(
         "fuzzy_search_entry",
-        tooltip="Enter a simple search, Pychron will do the "
-        "rest. Must enter at least 3 characters. Some example searches.\n"
-        "foo ---  Find all samples with `foo` in the name, find all projects that start with `foo`\n"
-        "a-1234 --- Find all analyses with aliquot = 1234"
-        "e776519e-60 --- Find the analysis with a UUID that starts with e776519e-60",
+        # tooltip="Enter a simple search, Pychron will do the "
+        # "rest. Must enter at least 3 characters. \n\nSome example searches.\n\n"
+        # "foo => Find all samples with `foo` in the name, find all projects that start with `foo`\n"
+        # "a-1234 => Find all analyses with aliquot = 1234\n"
+        # "e776519e-60 => Find the analysis with a UUID that starts with e776519e-60",
     ),
+    UItem("fuzzy_search_type"),
     icon_button_editor(
         "execute_fuzzy_search",
         "eye",
