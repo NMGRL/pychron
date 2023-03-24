@@ -1467,7 +1467,7 @@ class DVCDatabase(DatabaseAdapter):
         mass_spectrometers=None,
         filter_non_run=True,
         verbose_query=True,
-        **kw
+        **kw,
     ):
         with self.session_ctx() as sess:
             q = sess.query(IrradiationPositionTbl)
@@ -2191,7 +2191,7 @@ class DVCDatabase(DatabaseAdapter):
         projects=None,
         exclude_archived=True,
         archived_only=False,
-        **kw
+        **kw,
     ):
         with self.session_ctx():
             if "order" not in kw:
@@ -2346,7 +2346,7 @@ class DVCDatabase(DatabaseAdapter):
         project_like=None,
         name_like=None,
         name=None,
-        **kw
+        **kw,
     ):
         with self.session_ctx() as sess:
             q = sess.query(SampleTbl)
@@ -2445,7 +2445,7 @@ class DVCDatabase(DatabaseAdapter):
         mass_spectrometers=None,
         exclude_name=None,
         sort_name_key=None,
-        **kw
+        **kw,
     ):
         if names is not None:
             if hasattr(names, "__call__"):
