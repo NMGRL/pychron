@@ -74,6 +74,7 @@ class GroupAdapter(BaseAdapter):
 class SubGroupAdapter(GroupAdapter):
     columns = [
         ("Status", "tag"),
+        ("Sample", "sample"),
         ("Group", "group_id"),
         ("SubGroup", "subgroup_id"),
         ("Label", "label_name"),
@@ -97,6 +98,7 @@ class SubGroupAdapter(GroupAdapter):
 class AnalysesAdapter(SubGroupAdapter):
     columns = [
         ("RunID", "record_id"),
+        ("Sample", "sample"),
         ("Tag", "tag"),
         ("Group", "group_id"),
         ("SubGroup", "subgroup"),
