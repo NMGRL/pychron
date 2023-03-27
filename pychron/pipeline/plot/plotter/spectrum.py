@@ -441,7 +441,7 @@ class Spectrum(BaseArArFigure):
         return array(ages).T
 
     def _calculate_spectrum(
-        self, excludes=None, group_id=0, index_key="k39", value_key="uage"
+            self, excludes=None, group_id=0, index_key="k39", value_key="uage"
     ):
         if excludes is None:
             excludes = []
@@ -491,7 +491,7 @@ class Spectrum(BaseArArFigure):
         n = self.options.nsigma
         a = 1
         if ec == MSEM and mswd > 1:
-            a = mswd**0.5
+            a = mswd ** 0.5
         return we * a * n
 
     # ===============================================================================
@@ -522,7 +522,13 @@ class Spectrum(BaseArArFigure):
         fixed_steps = ag.fixed_steps
         if fixed_steps:
             if fixed_steps[0] or fixed_steps[1]:
-                fixed = "Fixed ({}-{})".format(*fixed_steps)
+                a, b = fixed_steps
+                if a:
+                    a = f'{a.upper()}'
+                if b:
+                    b = f'{b.upper()}'
+
+                fixed = "Fixed ({}-{})".format(a, b)
 
         text = "{}Plateau = {}".format(fixed, text)
 
@@ -596,6 +602,5 @@ class Spectrum(BaseArArFigure):
             )
 
         return "Integrated Age = {}".format(txt)
-
 
 # ============= EOF =============================================
