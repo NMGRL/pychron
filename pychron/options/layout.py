@@ -80,6 +80,7 @@ class FigureLayout(HasTraits):
     fixed = Enum("column", "row", "filled_grid")
     fixed_width = Int(0)
     fixed_height = Int(0)
+
     stretch_vertical = Bool
     row_enabled = Property(depends_on="fixed")
     column_enabled = Property(depends_on="fixed")
@@ -154,14 +155,14 @@ class FigureLayout(HasTraits):
                 Item("fixed"),
                 # enabled_when="not fixed_width",
             ),
-            HGroup(
-                Item(
-                    "stretch_vertical",
-                    label="Vertical Stretch",
-                    tooltip="Resize the main plot to fill the vertical space. "
-                    "Best used when only using either a single figure or a single row of figures",
-                )
-            ),
+            # HGroup(
+            #     Item(
+            #         "stretch_vertical",
+            #         label="Vertical Stretch",
+            #         tooltip="Resize the main plot to fill the vertical space. "
+            #         "Best used when only using either a single figure or a single row of figures",
+            #     )
+            # ),
             label="Layout",
             show_border=True,
         )

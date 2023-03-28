@@ -181,8 +181,26 @@ class AppearanceSubOptions(SubOptions):
         )
         return hg
 
+    def _get_margin_group(self):
+        return BorderVGroup(
+            HGroup(
+                Spring(springy=False, width=100),
+                Item("margin_top", label="Top"),
+                spring,
+            ),
+            HGroup(
+                Item("margin_left", label="Left"), Item("margin_right", label="Right")
+            ),
+            HGroup(
+                Spring(springy=False, width=100),
+                Item("margin_bottom", label="Bottom"),
+                spring,
+            ),
+            label='Page Margins'
+        )
+
     def _get_padding_group(self):
-        return VGroup(
+        return BorderVGroup(
             HGroup(
                 Spring(springy=False, width=100),
                 Item("padding_top", label="Top"),
@@ -201,7 +219,6 @@ class AppearanceSubOptions(SubOptions):
             ),
             enabled_when="not formatting_options",
             label="Padding/Spacing",
-            show_border=True,
         )
 
     def _get_bg_group(self):
@@ -234,6 +251,7 @@ class AppearanceSubOptions(SubOptions):
         g = VGroup(
             self._get_bg_group(),
             self._get_layout_group(),
+            self._get_margin_group(),
             self._get_padding_group(),
             self._get_grid_group(),
         )
@@ -619,6 +637,12 @@ class FigureOptions(BaseOptions, GroupMixin):
     padding_right = Int(100)
     padding_top = Int(100)
     padding_bottom = Int(100)
+
+    margin_left = Int(100)
+    margin_right = Int(100)
+    margin_top = Int(100)
+    margin_bottom = Int(100)
+
     auto_generate_title = Bool
     include_legend = Bool(False)
     include_sample_in_legend = Bool
@@ -647,6 +671,7 @@ class FigureOptions(BaseOptions, GroupMixin):
     xtitle_font = Property
     xtitle_fontsize = Enum(*SIZES)
     xtitle_fontname = Enum(*FONTS)
+    xtitle = Str
 
     ytick_font = Property
     ytick_fontsize = Enum(*SIZES)
@@ -678,6 +703,13 @@ class FigureOptions(BaseOptions, GroupMixin):
     # def initialize(self):
     #     if not self.groups:
     #         self.groups = self._groups_default()
+    def get_page_size(self):
+        fw, fh = self.layout.fixed_width, self.layout.fixed_height
+        if fw or fh:
+            return fw, fh
+
+    def get_page_margins(self):
+        return self.margin_left, self.margin_right, self.margin_top, self.margin_bottom
 
     def get_paddings(self):
         return (

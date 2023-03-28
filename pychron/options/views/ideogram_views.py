@@ -351,6 +351,7 @@ class IdeogramAppearance(AppearanceSubOptions):
             subgroup,
             self._get_nominal_group(),
             self._get_layout_group(),
+            self._get_margin_group(),
             self._get_padding_group(),
             fgrp,
         )

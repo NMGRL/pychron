@@ -46,7 +46,7 @@ class BrowserModel(BaseBrowserModel):
     use_focus_switching = Bool(True)
     fuzzy_search_entry = String
     execute_fuzzy_search = Button
-    fuzzy_search_type = Enum("Project", "Sample", "Analysis")
+    fuzzy_search_type = Enum("Sample", "Analysis", "Project")
 
     irradiation_visible = Property(depends_on="filter_focus")
     analysis_types_visible = Property(depends_on="filter_focus")

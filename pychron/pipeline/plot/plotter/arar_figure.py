@@ -142,7 +142,7 @@ class BaseArArFigure(SelectionFigure):
         layout = self.options.layout
         fw = layout.fixed_width
         fh = layout.fixed_height
-        stretch_vertical = layout.stretch_vertical
+        # stretch_vertical = layout.stretch_vertical
 
         if fw and col[1] > 0:
             fw = int(fw / col[1])
@@ -155,7 +155,7 @@ class BaseArArFigure(SelectionFigure):
                 kw.update(plot_dict)
 
             if fw:
-                r = ""
+                r = ''
                 if fh:
                     if i == 0 and not po.height:
                         height = fh - oheights
@@ -163,10 +163,8 @@ class BaseArArFigure(SelectionFigure):
                         height = po.height
                 else:
                     height = po.height
-                    if stretch_vertical:
-                        if i == 0:
-                            r = "v"
-
+                    # if i == 0 and stretch_vertical:
+                    #     r = 'v'
                 kw["bounds"] = [fw, height]
                 kw["resizable"] = r
             elif fh:
@@ -179,7 +177,7 @@ class BaseArArFigure(SelectionFigure):
                 kw["bounds"] = [50, height]
             elif po.height:
                 kw["bounds"] = [50, po.height]
-                kw["resizable"] = "h"
+                kw["resizable"] = "vh"
 
             # if self.options.layout.fixed_width:
             #     kw['bounds'] = [self.options.layout.fixed_width, kw['bounds'][1]]
@@ -199,6 +197,7 @@ class BaseArArFigure(SelectionFigure):
 
             kw["padding"] = self.options.get_paddings()
 
+            print(kw)
             p = graph.new_plot(**kw)
             if i == (len(plots) - 1):
                 p.title_font = self.options.title_font
@@ -364,7 +363,7 @@ class BaseArArFigure(SelectionFigure):
         return x.timestamp or 0
 
     def _unpack_attr(
-        self, attr, scalar=1, exclude_omit=False, nonsorted=False, ans=None
+            self, attr, scalar=1, exclude_omit=False, nonsorted=False, ans=None
     ):
         if ans is None:
             ans = self.sorted_analyses
@@ -562,7 +561,7 @@ class BaseArArFigure(SelectionFigure):
         scatter.underlays.append(ov)
 
     def _add_error_bars(
-        self, scatter, errors, axis, nsigma, line_width=1, end_caps=True, visible=True
+            self, scatter, errors, axis, nsigma, line_width=1, end_caps=True, visible=True
     ):
         ebo = ErrorBarOverlay(
             component=scatter,
@@ -578,18 +577,18 @@ class BaseArArFigure(SelectionFigure):
         return ebo
 
     def _add_scatter_inspector(
-        self,
-        scatter,
-        inspector=None,
-        add_tool=True,
-        add_selection=True,
-        value_format=None,
-        additional_info=None,
-        index_tag=None,
-        index_attr=None,
-        convert_index=None,
-        items=None,
-        update_meta_func=None,
+            self,
+            scatter,
+            inspector=None,
+            add_tool=True,
+            add_selection=True,
+            value_format=None,
+            additional_info=None,
+            index_tag=None,
+            index_attr=None,
+            convert_index=None,
+            items=None,
+            update_meta_func=None,
     ):
         if add_tool:
             # broadcaster = BroadcasterTool()
@@ -597,12 +596,10 @@ class BaseArArFigure(SelectionFigure):
 
             if inspector is None:
                 if value_format is None:
-
                     def value_format(x):
                         return "{:0.5f}".format(x)
 
                 if convert_index is None:
-
                     def convert_index(x):
                         return "{:0.3f}".format(x)
 
@@ -680,15 +677,15 @@ class BaseArArFigure(SelectionFigure):
         plot.tools.append(OverlayMoveTool(component=ov))
 
     def _add_data_label(
-        self,
-        s,
-        text,
-        point,
-        bgcolor="transparent",
-        label_position="top right",
-        color=None,
-        append=True,
-        **kw
+            self,
+            s,
+            text,
+            point,
+            bgcolor="transparent",
+            label_position="top right",
+            color=None,
+            append=True,
+            **kw
     ):
         if color is None:
             color = s.color
@@ -726,17 +723,17 @@ class BaseArArFigure(SelectionFigure):
         return n
 
     def _build_label_text(
-        self,
-        x,
-        we,
-        n,
-        mswd_args=None,
-        display_n=True,
-        display_mswd=True,
-        display_mswd_pvalue=False,
-        percent_error=False,
-        sig_figs=3,
-        mswd_sig_figs=3,
+            self,
+            x,
+            we,
+            n,
+            mswd_args=None,
+            display_n=True,
+            display_mswd=True,
+            display_mswd_pvalue=False,
+            percent_error=False,
+            sig_figs=3,
+            mswd_sig_figs=3,
     ):
         display_mswd = n >= 2 and display_mswd
 
@@ -835,6 +832,5 @@ class BaseArArFigure(SelectionFigure):
 
     def _set_analysis_group(self, v):
         self._analysis_group = v
-
 
 # ============= EOF =============================================
