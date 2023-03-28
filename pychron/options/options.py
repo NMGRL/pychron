@@ -196,7 +196,7 @@ class AppearanceSubOptions(SubOptions):
                 Item("margin_bottom", label="Bottom"),
                 spring,
             ),
-            label='Page Margins'
+            label="Page Margins",
         )
 
     def _get_padding_group(self):

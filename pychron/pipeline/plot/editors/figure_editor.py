@@ -95,9 +95,11 @@ class FigureEditor(GraphEditor):
         if model == omodel:
             self.figure_container.model_changed()
 
-        self.figure_container.component.padding = self.plotter_options.get_page_margins()
+        self.figure_container.component.padding = (
+            self.plotter_options.get_page_margins()
+        )
         size = self.plotter_options.get_page_size()
-        print('asdfasdfasd', size)
+        print("asdfasdfasd", size)
         if size is not None:
             width, height = size
             self.figure_container.component.bounds = [width, height]
@@ -126,10 +128,13 @@ class FigureEditor(GraphEditor):
         return UItem(
             "component",
             style="custom",
-            width=-(self.plotter_options.layout.fixed_width +
-                    self.plotter_options.margin_left +
-                    self.plotter_options.margin_right),
+            width=-(
+                self.plotter_options.layout.fixed_width
+                + self.plotter_options.margin_left
+                + self.plotter_options.margin_right
+            ),
             editor=ComponentEditor(),
         )
+
 
 # ============= EOF =============================================
