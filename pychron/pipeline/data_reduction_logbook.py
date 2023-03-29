@@ -128,9 +128,11 @@ class LabnumberRecordViewDRDetai(LabnumberRecordView):
     reduction_state = "no reduction"
 
     def tohistory(self):
-        return {"identifier": self.identifier,
-                "analysis_count": self.analysis_count,
-                "reduction_state": self.reduction_state}
+        return {
+            "identifier": self.identifier,
+            "analysis_count": self.analysis_count,
+            "reduction_state": self.reduction_state,
+        }
 
 
 class ProjectDetail(HasTraits):
@@ -150,18 +152,20 @@ class ProjectDetail(HasTraits):
                 self.unique_id = record.get("unique_id", 0)
 
     def determine_reduction_state(self):
-        r = 'notstarted'
-        if all((s.reduction_state == 'complete' for s in self.samples)):
-            r = 'complete'
-        elif any((s.reduction_state == 'complete' for s in self.samples)):
-            r = 'incomplete'
+        r = "notstarted"
+        if all((s.reduction_state == "complete" for s in self.samples)):
+            r = "complete"
+        elif any((s.reduction_state == "complete" for s in self.samples)):
+            r = "incomplete"
         return r
 
     def tohistory(self):
-        return {"name": self.name,
-                "unique_id": self.unique_id,
-                "reduction_state": self.determine_reduction_state(),
-                "samples": [si.tohistory() for si in self.samples]}
+        return {
+            "name": self.name,
+            "unique_id": self.unique_id,
+            "reduction_state": self.determine_reduction_state(),
+            "samples": [si.tohistory() for si in self.samples],
+        }
 
 
 # class LoadDetail(HasTraits):
@@ -246,10 +250,14 @@ class DataReductionLoad(HasTraits):
 
     def determine_status(self):
         if self.projects:
-            if all((p.determine_reduction_state() == 'complete' for p in self.projects)):
-                self.status = 'complete'
-            elif any((p.determine_reduction_state() == 'complete' for p in self.projects)):
-                self.status = 'incomplete'
+            if all(
+                (p.determine_reduction_state() == "complete" for p in self.projects)
+            ):
+                self.status = "complete"
+            elif any(
+                (p.determine_reduction_state() == "complete" for p in self.projects)
+            ):
+                self.status = "incomplete"
 
     def _status_changed(self, new):
         if new == "complete":
@@ -299,10 +307,10 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
         drloads = self.dvc.get_data_reduction_loads()
 
         def get_dr_match(lname):
-            return next((li for li in drloads if li['name'] == lname), None)
+            return next((li for li in drloads if li["name"] == lname), None)
 
         def get_dr_proj(dr, pname):
-            return next((p for p in dr['projects'] if p['name'] == pname), None)
+            return next((p for p in dr["projects"] if p["name"] == pname), None)
 
         for li in self.loads[:20]:
             # for lj in drloads:
@@ -311,18 +319,18 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             #             break
             # else:
             drload = get_dr_match(li.name)
-            if drload and drload['status'] == 'complete':
+            if drload and drload["status"] == "complete":
                 continue
 
-            print(f'examine load {li.name}')
-            self.debug(f'examing load {li.name}')
+            print(f"examine load {li.name}")
+            self.debug(f"examing load {li.name}")
 
             self.selected = li
             self._selected_changed()
             for p in self.selected.projects:
                 if drload:
                     drproj = get_dr_proj(drload, p.name)
-                    if drproj and drproj['reduction_state'] == 'complete':
+                    if drproj and drproj["reduction_state"] == "complete":
                         continue
 
                 self.selected_project = p
@@ -369,7 +377,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
         #             self.save()
 
     def examine(self, loadname=None):
-        """ examine the load and update the json file"""
+        """examine the load and update the json file"""
 
         if loadname is None:
             loadname = self.selected.name
@@ -387,15 +395,15 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             for m in l.measured_positions:
                 if self.selected_project:
                     if (
-                            self.selected_project.name
-                            != m.analysis.irradiation_position.sample.project.name
+                        self.selected_project.name
+                        != m.analysis.irradiation_position.sample.project.name
                     ):
                         continue
 
                 if self.selected_sample:
                     if (
-                            self.selected_sample.name
-                            != m.analysis.irradiation_position.sample.name
+                        self.selected_sample.name
+                        != m.analysis.irradiation_position.sample.name
                     ):
                         # print('skippoing', m.analysis.irradiation_position.sample.name)
                         continue
@@ -404,9 +412,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
 
             anns = self.dvc.make_analyses(anss)
             print(len(anns))
-            for rname, gs in groupby_key(
-                    anns, key=lambda x: x.repository_identifier
-            ):
+            for rname, gs in groupby_key(anns, key=lambda x: x.repository_identifier):
                 repo = self.dvc.get_repository(rname)
                 for sa, ais in groupby_key(list(gs), key=lambda x: x.identifier):
                     reduction_state = "no reductionfff"
@@ -427,9 +433,13 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                     print(self.selected, reduction_state)
                     if self.selected:
                         ss = next(
-                            (s for s in self.selected_project.samples if s.identifier == sa)
+                            (
+                                s
+                                for s in self.selected_project.samples
+                                if s.identifier == sa
+                            )
                         )
-                        print('llllll', ss)
+                        print("llllll", ss)
                         ss.reduction_state = reduction_state
             self.update = True
 
@@ -520,9 +530,9 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                     p
                     for p in ps
                     if p.name
-                       not in [
-                           "REFERENCES",
-                       ]
+                    not in [
+                        "REFERENCES",
+                    ]
                 ]
 
                 ps = [next(pis) for g, pis in groupby_key(ps, key=lambda x: x.name)]
@@ -545,7 +555,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
         with self.dvc.session_ctx() as sess:
             ls = []
             for li in self.dvc.get_labnumbers(
-                    projects=[new.name], loads=[self.selected.name]
+                projects=[new.name], loads=[self.selected.name]
             ):
                 if li.analyzed:
                     r = LabnumberRecordViewDRDetai(li)
