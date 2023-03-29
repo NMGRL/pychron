@@ -666,7 +666,10 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
 
 if __name__ == "__main__":
     paths.build("~/PychronDev")
-    dr = DataReductionLogbook(dvc=get_dvc())
+    dr = DataReductionLogbook(dvc=get_dvc(host='localhost',
+                                          username='root',
+                                          password='argon4039'))
+    # dr.auto_examine()
     dr.populate()
     dr.configure_traits()
 # ============= EOF =============================================
