@@ -98,8 +98,11 @@ def dvc_dump(obj, path):
             print("dvc dump exception. error:{}, {}".format(e, pformat(obj)))
 
 
-def dvc_load(path):
-    ret = {}
+def dvc_load(path, default=None):
+    if default is None:
+        ret = {}
+    else:
+        ret = default
     if path and os.path.isfile(path):
         with open(path, "r") as rfile:
             try:

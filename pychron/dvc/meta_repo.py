@@ -122,7 +122,7 @@ class MetaRepo(GitRepoManager):
     def get_data_reduction_loads(self):
         objs = self._cached_loads
         if objs is None:
-            objs = dvc_load(self.data_reduction_log_path)
+            objs = dvc_load(self.data_reduction_log_path, default=[])
             self._cached_loads = objs
         return self._cached_loads
 

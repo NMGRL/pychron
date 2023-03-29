@@ -19,41 +19,13 @@ from itertools import groupby
 from sqlalchemy import func, extract, cast, Date
 
 from pychron.dvc.dvc_irradiationable import DVCAble
-from pychron.dvc.dvc_orm import (
-    AnalysisTbl,
-    IrradiationPositionTbl,
-    LevelTbl,
-    IrradiationTbl,
-    SampleTbl,
-    ProjectTbl,
-    MaterialTbl,
-)
-from pychron.dvc.dvc_helper import get_dvc
+from pychron.dvc.dvc_orm import AnalysisTbl, IrradiationPositionTbl, LevelTbl, IrradiationTbl, SampleTbl, ProjectTbl, \
+    MaterialTbl, AnalysisChangeTbl
+from pychron.dvc.fix import get_dvc
 
-ANALYSIS_HEADER = [
-    "sample",
-    "material",
-    "project",
-    "pi",
-    "irradiation",
-    "irradiation_info",
-    "identifier",
-    "runid",
-    "timestamp",
-    "latitude",
-    "longitude",
-]
-SAMPLE_HEADER = [
-    "sample",
-    "material",
-    "project",
-    "pi",
-    "irradiation",
-    "irradiation_info",
-    "identifier",
-    "latitude",
-    "longitude",
-]
+ANALYSIS_HEADER = ['sample', 'project', 'irradiation', 'identifier', 'runid', 'timestamp']
+SAMPLE_HEADER = ['sample', 'material', 'project', 'pi', 'irradiation', 'irradiation_info', 'identifier', 'latitude',
+                 'longitude']
 
 
 def make_sample_row(record):
@@ -73,27 +45,23 @@ def make_sample_row(record):
     return row
 
 
-def make_row(record):
+def make_analysis_row(record):
     ip = record.irradiation_position
     sample = ip.sample
-    row = [
-        sample.name,
-        sample.material.name,
-        sample.project.name,
-        sample.project.principal_investigator.name,
-        ip.level.irradiation.name,
-        record.irradiation_info,
-        ip.identifier,
-        record.record_id,
-        record.timestamp,
-        sample.lat,
-        sample.lon,
-    ]
+    row = [sample.name,
+           sample.project.name,
+           ip.level.irradiation.name,
+           ip.identifier,
+           record.record_id,
+           record.timestamp,
+           ]
     return row
 
 
 def make_report():
-    dvc = get_dvc()
+    dvc = get_dvc(host='129.138.12.160',
+                  username='jross',
+                  password='argon4039')
     dvc.connect()
     with dvc.session_ctx() as sess:
         make_yearly_report(sess, 2021)
@@ -101,6 +69,7 @@ def make_report():
 
 def make_yearly_report(sess, year):
     q = sess.query(AnalysisTbl)
+    q = q.join(AnalysisChangeTbl)
     q = q.join(IrradiationPositionTbl)
     q = q.join(LevelTbl)
     q = q.join(IrradiationTbl)
@@ -108,33 +77,32 @@ def make_yearly_report(sess, year):
     q = q.join(MaterialTbl)
     q = q.join(ProjectTbl)
 
-    q = q.filter(ProjectTbl.name.notin_(["REFERENCES", "CorrectionFactors"]))
-    q = q.filter(ProjectTbl.name.notlike("Irradiation%"))
-
-    q = q.filter(extract("year", cast(AnalysisTbl.timestamp, Date)) == year)
+    q = q.filter(ProjectTbl.name.notin_(['REFERENCES', 'CorrectionFactors']))
+    q = q.filter(ProjectTbl.name.notlike('Irradiation%'))
+    q = q.filter(extract('year', cast(AnalysisTbl.timestamp, Date)) == year)
+    q = q.filter(AnalysisChangeTbl.tag != 'invalid')
     q = q.order_by(AnalysisTbl.timestamp.desc())
 
     records = q.all()
 
-    with open(f"samples.{year}.csv", "w") as wfile:
-        writer = csv.writer(wfile)
-        writer.writerow(SAMPLE_HEADER)
-
-        grecords = groupby(
-            sorted(records, key=lambda x: x.sample), key=lambda r: r.sample
-        )
-        srows = [next(rs) for (s, rs) in grecords]
-
-        for i, r in enumerate(sorted(srows, key=lambda x: x.project)):
-            print(f"writing sample {i}")
-            writer.writerow(make_sample_row(r))
+    # with open(f'samples.{year}.csv', 'w') as wfile:
+    #     writer = csv.writer(wfile)
+    #     writer.writerow(SAMPLE_HEADER)
+    #
+    #     grecords = groupby(sorted(records, key=lambda x: x.sample),
+    #                        key=lambda xi: xi.sample)
+    #     srows = [next(rs) for (s, rs) in grecords]
+    #
+    #     for i, r in enumerate(sorted(srows, key=lambda x: x.project)):
+    #         print(f'writing sample {i}')
+    #         writer.writerow(make_sample_row(r))
 
     with open(f"analysis.{year}.csv", "w") as wfile:
         writer = csv.writer(wfile)
         writer.writerow(ANALYSIS_HEADER)
         for i, ri in enumerate(records):
-            print(f"writing analysis {i}")
-            writer.writerow(make_row(ri))
+            print(f'writing analysis {i}')
+            writer.writerow(make_analysis_row(ri))
 
 
 if __name__ == "__main__":

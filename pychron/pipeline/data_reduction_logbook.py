@@ -124,6 +124,15 @@ class SampleAdapter(TabularAdapter):
         return color
 
 
+class LabnumberRecordViewDRDetai(LabnumberRecordView):
+    reduction_state = "no reduction"
+
+    def tohistory(self):
+        return {"identifier": self.identifier,
+                "analysis_count": self.analysis_count,
+                "reduction_state": self.reduction_state}
+
+
 class ProjectDetail(HasTraits):
     name = Str
     samples = List
@@ -140,8 +149,19 @@ class ProjectDetail(HasTraits):
                 self.name = record.get("name")
                 self.unique_id = record.get("unique_id", 0)
 
+    def determine_reduction_state(self):
+        r = 'notstarted'
+        if all((s.reduction_state == 'complete' for s in self.samples)):
+            r = 'complete'
+        elif any((s.reduction_state == 'complete' for s in self.samples)):
+            r = 'incomplete'
+        return r
+
     def tohistory(self):
-        return {"name": self.name, "unique_id": self.unique_id}
+        return {"name": self.name,
+                "unique_id": self.unique_id,
+                "reduction_state": self.determine_reduction_state(),
+                "samples": [si.tohistory() for si in self.samples]}
 
 
 # class LoadDetail(HasTraits):
@@ -224,6 +244,13 @@ class DataReductionLoad(HasTraits):
 
         return hist
 
+    def determine_status(self):
+        if self.projects:
+            if all((p.determine_reduction_state() == 'complete' for p in self.projects)):
+                self.status = 'complete'
+            elif any((p.determine_reduction_state() == 'complete' for p in self.projects)):
+                self.status = 'incomplete'
+
     def _status_changed(self, new):
         if new == "complete":
             self.completion_date = datetime.datetime.now()
@@ -259,59 +286,152 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
 
     _cached_loads = None
 
-    def examine(self):
-        self.debug("examine")
-        if self.selected:
-            # get all the analyses for this load
-            with self.dvc.session_ctx():
-                l = self.dvc.get_load(self.selected.name)
-                anss = []
-                for m in l.measured_positions:
-                    if self.selected_project:
-                        if (
+    def auto_examine(self):
+        """
+        for each load in all the loads in the db
+        for each project in a given load
+        for each sample in a given project in a given load
+        for each analysis in a given sample in a given project in a given load
+        """
+
+        self.populate()
+
+        drloads = self.dvc.get_data_reduction_loads()
+
+        def get_dr_match(lname):
+            return next((li for li in drloads if li['name'] == lname), None)
+
+        def get_dr_proj(dr, pname):
+            return next((p for p in dr['projects'] if p['name'] == pname), None)
+
+        for li in self.loads[:20]:
+            # for lj in drloads:
+            #     if lj["name"] == li.name:
+            #         if lj["status"] == "complete":
+            #             break
+            # else:
+            drload = get_dr_match(li.name)
+            if drload and drload['status'] == 'complete':
+                continue
+
+            print(f'examine load {li.name}')
+            self.debug(f'examing load {li.name}')
+
+            self.selected = li
+            self._selected_changed()
+            for p in self.selected.projects:
+                if drload:
+                    drproj = get_dr_proj(drload, p.name)
+                    if drproj and drproj['reduction_state'] == 'complete':
+                        continue
+
+                self.selected_project = p
+                self._selected_project_changed(p)
+                self.examine()
+
+                # for s in self.selected_project.samples:
+                #     self.selected_sample = s
+                #     self._selected_sample_changed()
+            payload = self.selected.tohistory()
+            if drload:
+                idx = drloads.index(drload)
+                drloads.remove(drload)
+                drloads.insert(idx, payload)
+            else:
+                self.selected.determine_status()
+                payload = self.selected.tohistory()
+                drloads.append(payload)
+
+        self.save(payload=drloads)
+
+        # if not drload:
+        #     payload = self.selected.tohistory()
+        #     drloads.append(payload)
+        # else:
+        #
+        # self.examine_projects(li.name)
+        # self.save()
+        # self.save()
+        # with self.dvc.session_ctx():
+        #     ls = []
+        #     for li in self.dvc.get_loads():
+        #         print(li)
+        #         for lj in drloads:
+        #             if lj["name"] == li.name:
+        #                 if lj["status"] == "complete":
+        #                     break
+        #         else:
+        #             # load is not complete according to dr json file.
+        #             print(f'examine load {li.name}')
+        #             self.debug(f'examing load {li.name}')
+        #             self.selected = DataReductionLoad(record=li)
+        #             self.examine(li.name)
+        #             self.save()
+
+    def examine(self, loadname=None):
+        """ examine the load and update the json file"""
+
+        if loadname is None:
+            loadname = self.selected.name
+
+        if not self.selected:
+            return
+
+        self.debug(f"examining {loadname}")
+
+        # get all the analyses for this load
+        with self.dvc.session_ctx():
+            l = self.dvc.get_load(loadname)
+
+            anss = []
+            for m in l.measured_positions:
+                if self.selected_project:
+                    if (
                             self.selected_project.name
                             != m.analysis.irradiation_position.sample.project.name
-                        ):
-                            continue
+                    ):
+                        continue
 
-                    if self.selected_sample:
-                        if (
+                if self.selected_sample:
+                    if (
                             self.selected_sample.name
                             != m.analysis.irradiation_position.sample.name
-                        ):
-                            # print('skippoing', m.analysis.irradiation_position.sample.name)
-                            continue
+                    ):
+                        # print('skippoing', m.analysis.irradiation_position.sample.name)
+                        continue
 
-                    anss.append(m.analysis)
+                anss.append(m.analysis)
 
-                anns = self.dvc.make_analyses(anss)
-
-                for rname, gs in groupby_key(
+            anns = self.dvc.make_analyses(anss)
+            print(len(anns))
+            for rname, gs in groupby_key(
                     anns, key=lambda x: x.repository_identifier
-                ):
-                    repo = self.dvc.get_repository(rname)
-                    for sa, ais in groupby_key(list(gs), key=lambda x: x.identifier):
-                        reduction_state = "no reduction"
-                        states = []
-                        for ai in ais:
-                            dcv = HistoryView()
-                            dcv.initialize(ai, repo=repo._repo)
+            ):
+                repo = self.dvc.get_repository(rname)
+                for sa, ais in groupby_key(list(gs), key=lambda x: x.identifier):
+                    reduction_state = "no reductionfff"
+                    states = []
+                    for ai in ais:
+                        dcv = HistoryView()
+                        dcv.initialize(ai, repo=repo._repo)
 
-                            state = len(dcv.commits) > 4
-                            states.append(state)
-                            if state:
-                                ai.is_reduced = True
+                        state = len(dcv.commits) > 4
+                        states.append(state)
+                        if state:
+                            ai.is_reduced = True
 
-                        if all(states):
-                            reduction_state = "complete"
-                        elif any(states):
-                            reduction_state = "partial"
-
+                    if all(states):
+                        reduction_state = "complete"
+                    elif any(states):
+                        reduction_state = "partial"
+                    print(self.selected, reduction_state)
+                    if self.selected:
                         ss = next(
-                            (s for s in self.selected.samples if s.identifier == sa)
+                            (s for s in self.selected_project.samples if s.identifier == sa)
                         )
+                        print('llllll', ss)
                         ss.reduction_state = reduction_state
-                self.update = True
+            self.update = True
 
     def get_loads(self, projects=None):
         loads = self.dvc.get_data_reduction_loads()
@@ -342,10 +462,11 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             self.get_loads()
             self.get_projects()
 
-    def save(self, *args, **kw):
+    def save(self, payload=None, *args, **kw):
         self.debug("save")
-        objs = [l.tohistory() for l in self.loads]
-        self.dvc.save_data_reduction_loads(objs)
+        if payload is None:
+            payload = [l.tohistory() for l in self.loads]
+        self.dvc.save_data_reduction_loads(payload)
 
     def share(self):
         self.save()
@@ -399,23 +520,23 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                     p
                     for p in ps
                     if p.name
-                    not in [
-                        "REFERENCES",
-                    ]
+                       not in [
+                           "REFERENCES",
+                       ]
                 ]
 
                 ps = [next(pis) for g, pis in groupby_key(ps, key=lambda x: x.name)]
-                save = True
+                # save = True
 
         ps = [ProjectDetail(p) for p in ps]
         if self.selected_project2:
             ps = [p for p in ps if p.name == self.selected_project2.name]
             self.selected_project = ps[0]
-
+        # print(ps)
         self.selected.projects = ps
-        if save:
-            self.save()
-            self.dvc.clear_data_reduction_loads_cache()
+        # if save:
+        #     self.save()
+        #     self.dvc.clear_data_reduction_loads_cache()
 
     def _selected_project2_changed(self, new):
         self.get_loads(projects=[new.name])
@@ -424,13 +545,13 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
         with self.dvc.session_ctx() as sess:
             ls = []
             for li in self.dvc.get_labnumbers(
-                projects=[new.name], loads=[self.selected.name]
+                    projects=[new.name], loads=[self.selected.name]
             ):
                 if li.analyzed:
-                    r = LabnumberRecordView(li)
+                    r = LabnumberRecordViewDRDetai(li)
                     ls.append(r)
-
             self.selected.samples = ls
+            self.selected_project.samples = ls
 
     def traits_view(self):
         grp = BorderVGroup(
