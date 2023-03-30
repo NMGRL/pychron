@@ -126,7 +126,11 @@ class FigureEditor(GraphEditor):
 
     def get_component_view(self):
         if self.plotter_options.layout.fixed_width:
-            width = -(self.plotter_options.layout.fixed_width+self.plotter_options.margin_left+self.plotter_options.margin_right)
+            width = -(
+                self.plotter_options.layout.fixed_width
+                + self.plotter_options.margin_left
+                + self.plotter_options.margin_right
+            )
         else:
             width = 1.0
 
