@@ -638,10 +638,10 @@ class FigureOptions(BaseOptions, GroupMixin):
     padding_top = Int(100)
     padding_bottom = Int(100)
 
-    margin_left = Int(100)
-    margin_right = Int(100)
-    margin_top = Int(100)
-    margin_bottom = Int(100)
+    margin_left = Int(10)
+    margin_right = Int(10)
+    margin_top = Int(10)
+    margin_bottom = Int(10)
 
     auto_generate_title = Bool
     include_legend = Bool(False)

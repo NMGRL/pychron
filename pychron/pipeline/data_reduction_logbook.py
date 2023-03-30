@@ -97,7 +97,8 @@ class LoadAdapter(ColorTabularAdapter):
             c = "lightgreen"
         elif self.item.reduction_state == "incomplete":
             c = "yellow"
-
+        elif not self.item.examined:
+            c = "lightblue"
         return c
 
     def _get_run_date_text(self):
@@ -228,6 +229,7 @@ class ProjectDetail(HasTraits):
 class DataReductionLoad(HasTraits):
     name = Str
     reduction_state = Enum("notstarted", "complete", "incomplete")
+    examined = False
     comment = Str
     completion_date = Date
     projects = List
@@ -305,7 +307,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
     project_search_entry = Str
     project_search_entry_clear = Event
 
-    selected_project2 = Instance(ProjectRecordView)
+    selected_project2 = Instance(ProjectDetail)
 
     sample_column_clicked = Event
 
@@ -320,6 +322,9 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             if os.path.isfile(manifest_path):
                 with open(manifest_path, "r") as rfile:
                     loaded_manifest = json.load(rfile)
+            for li in self.loads:
+                if li.name in loaded_manifest:
+                    li.examined = True
 
         self.stats = f"{len(loaded_manifest)}/{len(self.loads)}"
 
@@ -639,7 +644,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             HGroup(
                 UItem("search_entry"), icon_button_editor("search_entry_clear", "clear")
             ),
-            HGroup(UItem("stats")),
+            # HGroup(UItem("stats")),
             UItem(
                 "loads",
                 editor=TabularEditor(
@@ -689,6 +694,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                                 selected="selected_project",
                                 update="update",
                                 editable=False,
+                                stretch_last_section=False,
                                 adapter=ProjectAdapter(),
                             ),
                         ),
