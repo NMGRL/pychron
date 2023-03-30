@@ -130,7 +130,14 @@ class MetaRepo(GitRepoManager):
         self._cached_loads = None
 
     def save_data_reduction_loads(self, objs):
-        return dvc_dump(objs, self.data_reduction_log_path)
+        ret = dvc_dump(objs, self.data_reduction_log_path)
+        self.add(self.data_reduction_log_path, commit=False)
+
+        return ret
+
+    def backup_data_reduction_loads(self):
+        p = os.path.join(paths.meta_root, "data_reduction_log.json.bak")
+        shutil.copy(self.data_reduction_log_path, p)
 
     def share_data_reduction_loads(self):
         self.smart_pull()

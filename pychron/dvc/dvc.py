@@ -159,6 +159,9 @@ class DVC(Loggable):
     def save_data_reduction_loads(self, objs):
         self.meta_repo.save_data_reduction_loads(objs)
 
+    def backup_data_reduction_loads(self):
+        self.meta_repo.backup_data_reduction_loads()
+
     def share_data_reduction_loads(self):
         self.meta_repo.share_data_reduction_loads()
 
@@ -1099,6 +1102,7 @@ class DVC(Loggable):
         use_cached=True,
         sync_repo=True,
         use_flux_histories=True,
+        warn=True,
     ):
         if not records:
             return []
@@ -1134,12 +1138,13 @@ class DVC(Loggable):
 
         bad_records = [r for r in records if r.repository_identifier is None]
         if bad_records:
-            self.warning_dialog(
-                "Missing Repository Associations. Contact an expert!"
-                'Cannot load analyses "{}"'.format(
-                    ",".join([r.record_id for r in bad_records])
+            if warn:
+                self.warning_dialog(
+                    "Missing Repository Associations. Contact an expert!"
+                    'Cannot load analyses "{}"'.format(
+                        ",".join([r.record_id for r in bad_records])
+                    )
                 )
-            )
             records = [r for r in records if r.repository_identifier is not None]
 
         if not records:
@@ -1250,6 +1255,7 @@ class DVC(Loggable):
                     sample_prep=sample_prep,
                     quick=quick,
                     reload=reload,
+                    warn=warn,
                     *args
                 )
             except BaseException:
@@ -1278,7 +1284,7 @@ class DVC(Loggable):
 
         nn = len(records)
         if len(records) != n:
-            if not self.confirmation_dialog(
+            if warn and not self.confirmation_dialog(
                 "Failed making {} of {} analyses. "
                 "Are you sure you want to continue?".format(nn - n, nn)
             ):
@@ -2204,6 +2210,7 @@ class DVC(Loggable):
         calculate_f_only=False,
         reload=False,
         quick=False,
+        warn=True,
     ):
         meta_repo = self.meta_repo
         if prog:
@@ -2245,13 +2252,14 @@ class DVC(Loggable):
                 a = DVCAnalysis(uuid, rid, expid)
             except AnalysisNotAnvailableError:
                 self.debug("uuid={}, rid={}, expid={}".format(uuid, rid, expid))
-                self.warning_dialog(
-                    "Analysis {} not in local repository {}. "
-                    "You may need to pull changes. If local repository is up to date you may "
-                    "need to push changes from the data collection computer".format(
-                        rid, expid
+                if warn:
+                    self.warning_dialog(
+                        "Analysis {} not in local repository {}. "
+                        "You may need to pull changes. If local repository is up to date you may "
+                        "need to push changes from the data collection computer".format(
+                            rid, expid
+                        )
                     )
-                )
                 return
 
             a.group_id = record.group_id

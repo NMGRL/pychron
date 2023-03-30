@@ -14,6 +14,8 @@
 # limitations under the License.
 # ===============================================================================
 import datetime
+import json
+import os
 import time
 from operator import attrgetter
 
@@ -266,11 +268,11 @@ class DataReductionLoad(HasTraits):
     def determine_status(self):
         if self.projects:
             if all(
-                (p.determine_reduction_state() == "complete" for p in self.projects)
+                    (p.determine_reduction_state() == "complete" for p in self.projects)
             ):
                 self.reduction_state = "complete"
             elif any(
-                (p.determine_reduction_state() == "complete" for p in self.projects)
+                    (p.determine_reduction_state() == "complete" for p in self.projects)
             ):
                 self.reduction_state = "incomplete"
 
@@ -285,6 +287,8 @@ class DataReductionLogbookHandler(Handler):
 
 
 class DataReductionLogbook(Loggable, ColumnSorterMixin):
+    stats = Str
+
     loads = List
     oloads = List
 
@@ -309,6 +313,17 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
 
     _cached_loads = None
 
+    def set_stats(self, loaded_manifest=None):
+
+        if loaded_manifest is None:
+            loaded_manifest = []
+            manifest_path = os.path.join(paths.meta_root, "dr_manifest.json")
+            if os.path.isfile(manifest_path):
+                with open(manifest_path, "r") as rfile:
+                    loaded_manifest = json.load(rfile)
+
+        self.stats = f'{len(loaded_manifest)}/{len(self.loads)}'
+
     def auto_examine(self):
         """
         for each load in all the loads in the db
@@ -319,7 +334,11 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
 
         self.populate()
 
+        self.dvc.backup_data_reduction_loads()
         drloads = self.dvc.get_data_reduction_loads()
+
+        # backup drloads
+        manifest_path = os.path.join(paths.meta_root, "dr_manifest.json")
 
         def get_dr_match(lname):
             return next((li for li in drloads if li["name"] == lname), None)
@@ -327,14 +346,30 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
         def get_dr_proj(dr, pname):
             return next((p for p in dr["projects"] if p["name"] == pname), None)
 
-        for li in self.loads[:10]:
+        loaded_manifest = []
+        if os.path.isfile(manifest_path):
+            with open(manifest_path, 'r') as rfile:
+                loaded_manifest = json.load(rfile)
+
+        self.set_stats(loaded_manifest=loaded_manifest)
+        cnt = 0
+        for li in self.loads:
+            if cnt > 30:
+                break
+
+            if li.name in loaded_manifest:
+                self.debug(f"skipping load {li.name}. already in manifest")
+                continue
+
+            cnt += 1
+            loaded_manifest.append(li.name)
             # for lj in drloads:
             #     if lj["name"] == li.name:
             #         if lj["status"] == "complete":
             #             break
             # else:
             drload = get_dr_match(li.name)
-            if drload and drload["status"] == "complete":
+            if drload and drload["reduction_state"] == "complete":
                 continue
 
             print(f"examine load {li.name}")
@@ -365,7 +400,10 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                 payload = self.selected.tohistory()
                 drloads.append(payload)
 
-        self.save(payload=drloads)
+            self.save(payload=drloads)
+
+            with open(manifest_path, 'w') as wfile:
+                json.dump(loaded_manifest, wfile, indent=4)
 
         # if not drload:
         #     payload = self.selected.tohistory()
@@ -410,26 +448,37 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             for m in l.measured_positions:
                 if self.selected_project:
                     if (
-                        self.selected_project.name
-                        != m.analysis.irradiation_position.sample.project.name
+                            self.selected_project.name
+                            != m.analysis.irradiation_position.sample.project.name
                     ):
                         continue
 
                 if self.selected_sample:
                     if (
-                        self.selected_sample.name
-                        != m.analysis.irradiation_position.sample.name
+                            self.selected_sample.name
+                            != m.analysis.irradiation_position.sample.name
                     ):
                         # print('skippoing', m.analysis.irradiation_position.sample.name)
                         continue
 
                 anss.append(m.analysis)
 
-            anns = self.dvc.make_analyses(anss)
+            anns = self.dvc.make_analyses(anss, warn=False, quick=True)
             for rname, gs in groupby_key(anns, key=lambda x: x.repository_identifier):
                 repo = self.dvc.get_repository(rname)
                 for sa, ais in groupby_key(list(gs), key=lambda x: x.identifier):
-                    reduction_state = "no reductionfff"
+                    if self.selected:
+                        ss = next(
+                            (
+                                s
+                                for s in self.selected_project.samples
+                                if s.identifier == sa
+                            )
+                        )
+                        if ss.reduction_state == "complete":
+                            continue
+
+                    reduction_state = "no reduction"
                     states = []
                     for ai in ais:
                         dcv = HistoryView()
@@ -446,13 +495,13 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                         reduction_state = "partial"
 
                     if self.selected:
-                        ss = next(
-                            (
-                                s
-                                for s in self.selected_project.samples
-                                if s.identifier == sa
-                            )
-                        )
+                        # ss = next(
+                        #     (
+                        #         s
+                        #         for s in self.selected_project.samples
+                        #         if s.identifier == sa
+                        #     )
+                        # )
                         ss.reduction_state = reduction_state
             self.update = True
 
@@ -485,6 +534,8 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             self.get_loads()
             self.get_projects()
 
+        self.set_stats()
+
     def save(self, payload=None, *args, **kw):
         self.debug("save")
         if payload is None:
@@ -492,7 +543,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
         self.dvc.save_data_reduction_loads(payload)
 
     def share(self):
-        self.save()
+        # self.save()
         self.dvc.share_data_reduction_loads()
         self.information_dialog("Data Reduction Log shared")
 
@@ -543,9 +594,9 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                     p
                     for p in ps
                     if p.name
-                    not in [
-                        "REFERENCES",
-                    ]
+                       not in [
+                           "REFERENCES",
+                       ]
                 ]
 
                 ps = [next(pis) for g, pis in groupby_key(ps, key=lambda x: x.name)]
@@ -568,7 +619,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
         with self.dvc.session_ctx() as sess:
             ls = []
             for li in self.dvc.get_labnumbers(
-                projects=[new.name], loads=[self.selected.name]
+                    projects=[new.name], loads=[self.selected.name]
             ):
                 if li.analyzed:
                     loads = self.dvc.get_data_reduction_loads()
@@ -589,6 +640,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             HGroup(
                 UItem("search_entry"), icon_button_editor("search_entry_clear", "clear")
             ),
+            HGroup(UItem('stats')),
             UItem(
                 "loads",
                 editor=TabularEditor(
@@ -636,6 +688,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                             width=300,
                             editor=TabularEditor(
                                 selected="selected_project",
+                                update="update",
                                 editable=False,
                                 adapter=ProjectAdapter(),
                             ),
@@ -667,6 +720,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                     action="examine",
                     enabled_when="object.selected",
                 ),
+                Action(name="Auto Examine", action="auto_examine"),
             ),
             title="Data Reduction Log",
             handler=DataReductionLogbookHandler(),
