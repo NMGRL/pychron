@@ -177,7 +177,7 @@ class BaseArArFigure(SelectionFigure):
                 kw["bounds"] = [50, height]
             elif po.height:
                 kw["bounds"] = [50, po.height]
-                kw["resizable"] = "hv"
+                kw["resizable"] = "h"
             else:
                 kw["resizable"] = "hv"
 
@@ -199,7 +199,7 @@ class BaseArArFigure(SelectionFigure):
 
             kw["padding"] = self.options.get_paddings()
 
-            print(kw)
+            print(kw, plot_dict)
             p = graph.new_plot(**kw)
             if i == (len(plots) - 1):
                 p.title_font = self.options.title_font
