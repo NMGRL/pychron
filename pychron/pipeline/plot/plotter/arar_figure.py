@@ -178,6 +178,8 @@ class BaseArArFigure(SelectionFigure):
             elif po.height:
                 kw["bounds"] = [50, po.height]
                 kw["resizable"] = "hv"
+            else:
+                kw["resizable"] = "hv"
 
             # if self.options.layout.fixed_width:
             #     kw['bounds'] = [self.options.layout.fixed_width, kw['bounds'][1]]
