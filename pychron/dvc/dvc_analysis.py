@@ -787,7 +787,7 @@ class DVCAnalysis(Analysis):
             repository_identifier = self.repository_identifier
         ret = analysis_path((self.uuid, self.record_id), repository_identifier, **kw)
         if ret is None:
-            if kw.get('modifier') in ('intercepts', 'baselines', 'blanks', 'icfactors'):
+            if kw.get("modifier") in ("intercepts", "baselines", "blanks", "icfactors"):
                 self.warning(
                     "Failed locating analysis path for uuid={}, record_id={} in {} {}".format(
                         self.uuid, self.record_id, repository_identifier, kw

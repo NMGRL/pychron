@@ -268,11 +268,11 @@ class DataReductionLoad(HasTraits):
     def determine_status(self):
         if self.projects:
             if all(
-                    (p.determine_reduction_state() == "complete" for p in self.projects)
+                (p.determine_reduction_state() == "complete" for p in self.projects)
             ):
                 self.reduction_state = "complete"
             elif any(
-                    (p.determine_reduction_state() == "complete" for p in self.projects)
+                (p.determine_reduction_state() == "complete" for p in self.projects)
             ):
                 self.reduction_state = "incomplete"
 
@@ -314,7 +314,6 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
     _cached_loads = None
 
     def set_stats(self, loaded_manifest=None):
-
         if loaded_manifest is None:
             loaded_manifest = []
             manifest_path = os.path.join(paths.meta_root, "dr_manifest.json")
@@ -322,7 +321,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                 with open(manifest_path, "r") as rfile:
                     loaded_manifest = json.load(rfile)
 
-        self.stats = f'{len(loaded_manifest)}/{len(self.loads)}'
+        self.stats = f"{len(loaded_manifest)}/{len(self.loads)}"
 
     def auto_examine(self):
         """
@@ -348,7 +347,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
 
         loaded_manifest = []
         if os.path.isfile(manifest_path):
-            with open(manifest_path, 'r') as rfile:
+            with open(manifest_path, "r") as rfile:
                 loaded_manifest = json.load(rfile)
 
         self.set_stats(loaded_manifest=loaded_manifest)
@@ -402,7 +401,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
 
             self.save(payload=drloads)
 
-            with open(manifest_path, 'w') as wfile:
+            with open(manifest_path, "w") as wfile:
                 json.dump(loaded_manifest, wfile, indent=4)
 
         # if not drload:
@@ -448,15 +447,15 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             for m in l.measured_positions:
                 if self.selected_project:
                     if (
-                            self.selected_project.name
-                            != m.analysis.irradiation_position.sample.project.name
+                        self.selected_project.name
+                        != m.analysis.irradiation_position.sample.project.name
                     ):
                         continue
 
                 if self.selected_sample:
                     if (
-                            self.selected_sample.name
-                            != m.analysis.irradiation_position.sample.name
+                        self.selected_sample.name
+                        != m.analysis.irradiation_position.sample.name
                     ):
                         # print('skippoing', m.analysis.irradiation_position.sample.name)
                         continue
@@ -594,9 +593,9 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                     p
                     for p in ps
                     if p.name
-                       not in [
-                           "REFERENCES",
-                       ]
+                    not in [
+                        "REFERENCES",
+                    ]
                 ]
 
                 ps = [next(pis) for g, pis in groupby_key(ps, key=lambda x: x.name)]
@@ -619,7 +618,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
         with self.dvc.session_ctx() as sess:
             ls = []
             for li in self.dvc.get_labnumbers(
-                    projects=[new.name], loads=[self.selected.name]
+                projects=[new.name], loads=[self.selected.name]
             ):
                 if li.analyzed:
                     loads = self.dvc.get_data_reduction_loads()
@@ -640,7 +639,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             HGroup(
                 UItem("search_entry"), icon_button_editor("search_entry_clear", "clear")
             ),
-            HGroup(UItem('stats')),
+            HGroup(UItem("stats")),
             UItem(
                 "loads",
                 editor=TabularEditor(
