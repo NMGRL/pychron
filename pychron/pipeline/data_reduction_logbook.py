@@ -18,6 +18,7 @@ import json
 import os
 import time
 from operator import attrgetter
+
 # from threading import Thread
 from threading import Event as TEvent
 from pyface.timer.do_later import do_later
@@ -273,11 +274,11 @@ class DataReductionLoad(HasTraits):
     def determine_status(self):
         if self.projects:
             if all(
-                    (p.determine_reduction_state() == "complete" for p in self.projects)
+                (p.determine_reduction_state() == "complete" for p in self.projects)
             ):
                 self.reduction_state = "complete"
             elif any(
-                    (p.determine_reduction_state() == "complete" for p in self.projects)
+                (p.determine_reduction_state() == "complete" for p in self.projects)
             ):
                 self.reduction_state = "incomplete"
 
@@ -470,35 +471,31 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             for m in l.measured_positions:
                 if project:
                     if (
-                            project.name
-                            != m.analysis.irradiation_position.sample.project.name
+                        project.name
+                        != m.analysis.irradiation_position.sample.project.name
                     ):
                         continue
 
                 if self.selected_sample:
                     if (
-                            self.selected_sample.name
-                            != m.analysis.irradiation_position.sample.name
+                        self.selected_sample.name
+                        != m.analysis.irradiation_position.sample.name
                     ):
-                        print('skippoing', m.analysis.irradiation_position.sample.name)
+                        print("skippoing", m.analysis.irradiation_position.sample.name)
                         continue
 
                 anss.append(m.analysis)
 
             print(anss)
-            anns = self.dvc.make_analyses(anss, warn=False, quick=True, use_progress=False)
+            anns = self.dvc.make_analyses(
+                anss, warn=False, quick=True, use_progress=False
+            )
             print(anns)
             for rname, gs in groupby_key(anns, key=lambda x: x.repository_identifier):
                 repo = self.dvc.get_repository(rname)
                 for sa, ais in groupby_key(list(gs), key=lambda x: x.identifier):
                     if selected:
-                        ss = next(
-                            (
-                                s
-                                for s in project.samples
-                                if s.identifier == sa
-                            )
-                        )
+                        ss = next((s for s in project.samples if s.identifier == sa))
                         if ss.reduction_state == "complete":
                             continue
 
@@ -619,9 +616,9 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                     p
                     for p in ps
                     if p.name
-                       not in [
-                           "REFERENCES",
-                       ]
+                    not in [
+                        "REFERENCES",
+                    ]
                 ]
 
                 ps = [next(pis) for g, pis in groupby_key(ps, key=lambda x: x.name)]
@@ -647,7 +644,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
         with self.dvc.session_ctx() as sess:
             ls = []
             for li in self.dvc.get_labnumbers(
-                    projects=[new.name], loads=[selected.name]
+                projects=[new.name], loads=[selected.name]
             ):
                 if li.analyzed:
                     loads = self.dvc.get_data_reduction_loads()
@@ -697,48 +694,49 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             ),
             label="Project",
         )
-        v = View(VGroup(
-            HGroup(Item('nloads_to_examine', label='N Loads to Examine')),
-            VSplit(
-                HGroup(grp, grp1),
-                HSplit(
-                    VGroup(
-                        BorderVGroup(
-                            UItem("object.selected.reduction_state"), label="Status"
-                        ),
-                        BorderVGroup(
-                            UItem("object.selected.comment", style="custom"),
-                            label="Comment",
-                        ),
-                    ),
-                    HGroup(
-                        UItem(
-                            "object.selected.projects",
-                            width=300,
-                            editor=TabularEditor(
-                                selected="selected_project",
-                                update="update",
-                                editable=False,
-                                stretch_last_section=False,
-                                adapter=ProjectAdapter(),
+        v = View(
+            VGroup(
+                HGroup(Item("nloads_to_examine", label="N Loads to Examine")),
+                VSplit(
+                    HGroup(grp, grp1),
+                    HSplit(
+                        VGroup(
+                            BorderVGroup(
+                                UItem("object.selected.reduction_state"), label="Status"
+                            ),
+                            BorderVGroup(
+                                UItem("object.selected.comment", style="custom"),
+                                label="Comment",
                             ),
                         ),
-                        UItem(
-                            "object.selected.samples",
-                            width=300,
-                            editor=TabularEditor(
-                                adapter=SampleAdapter(),
-                                editable=False,
-                                update="update",
-                                selected="object.selected_sample",
-                                column_clicked="sample_column_clicked",
-                                stretch_last_section=False,
+                        HGroup(
+                            UItem(
+                                "object.selected.projects",
+                                width=300,
+                                editor=TabularEditor(
+                                    selected="selected_project",
+                                    update="update",
+                                    editable=False,
+                                    stretch_last_section=False,
+                                    adapter=ProjectAdapter(),
+                                ),
+                            ),
+                            UItem(
+                                "object.selected.samples",
+                                width=300,
+                                editor=TabularEditor(
+                                    adapter=SampleAdapter(),
+                                    editable=False,
+                                    update="update",
+                                    selected="object.selected_sample",
+                                    column_clicked="sample_column_clicked",
+                                    stretch_last_section=False,
+                                ),
                             ),
                         ),
                     ),
                 ),
-            )
-        ),
+            ),
             # UItem('object.selected_project.samples',
             #       editor=TabularEditor(adapter=SampleAdapter()))),
             width=1200,
