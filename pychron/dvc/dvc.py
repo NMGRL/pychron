@@ -155,6 +155,8 @@ class DVC(Loggable):
 
     def get_data_reduction_loads(self):
         return self.meta_repo.get_data_reduction_loads()
+    def save_data_reduction_manifest(self, manifest):
+        self.meta_repo.save_data_reduction_manifest(manifest)
 
     def save_data_reduction_loads(self, objs):
         self.meta_repo.save_data_reduction_loads(objs)
