@@ -558,7 +558,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
 
         self.set_stats()
 
-    def save(self, payload=None, *args, **kw):
+    def save(self, uinfo=None, payload=None, *args, **kw):
         self.debug("save")
         if payload is None:
             payload = [l.tohistory() for l in self.loads]
