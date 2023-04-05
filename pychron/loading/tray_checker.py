@@ -44,6 +44,7 @@ from pychron.loggable import Loggable
 from pychron.mv.machine_vision_manager import MachineVisionManager
 from pychron.paths import paths
 
+
 # from skimage.io import imread, imsave
 
 
@@ -83,8 +84,8 @@ class TrayChecker(MachineVisionManager):
     multigrain_button = Button('MultiGrain')
     contaminant_button = Button('Contaminant')
 
-    post_move_delay = 0.125
-    post_check_delay = 0.125
+    post_move_delay = 0.250
+    post_check_delay = 0.0
 
     # traydb = Instance(TrayDB)
 
@@ -96,7 +97,7 @@ class TrayChecker(MachineVisionManager):
     _active_position = None
     _thread = None
 
-    def __init__(self, loading_manager, dbpath=None, *args, **kw):
+    def __init__(self, loading_manager, dbpath='', *args, **kw):
         super(TrayChecker, self).__init__(*args, **kw)
         if loading_manager:
             self._loading_manager = loading_manager
@@ -109,9 +110,9 @@ class TrayChecker(MachineVisionManager):
         self.debug('stop fired')
         self._alive = False
 
-    # def check_frame(self):
-    #     frame = self._loading_manager.stage_manager.autocenter_manager.new_image_frame(force=True)
-    #     return True
+    def check_frame(self):
+        #     frame = self._loading_manager.stage_manager.autocenter_manager.new_image_frame(force=True)
+        return True
 
     # def check(self):
     #     self._iter()
@@ -133,8 +134,8 @@ class TrayChecker(MachineVisionManager):
                              )
             v = okcancel_view(buttons,
                               UItem('object.display_image.source_frame',
-                                    width=640*1.25,
-                                    height=480*1.25,
+                                    width=640 * 1.25,
+                                    height=480 * 1.25,
                                     editor=ImageEditor(refresh='object.display_image.refresh_needed')),
                               )
 
@@ -154,7 +155,7 @@ class TrayChecker(MachineVisionManager):
                                               ))
 
             self._alive = True
-            self._thread = Thread(target=self._check, args=(info,))
+            self._thread = Thread(target=self._scan, args=(pipe, info,))
             self._thread.start()
 
     def _visit_next_position(self):
@@ -185,7 +186,6 @@ class TrayChecker(MachineVisionManager):
         # self.display_image.tile(frame)
         # self.display_image.tilify()
         self.display_image.refresh_needed = True
-
 
     # def dump_klasses(self):
     #     tray_name = self._loading_manager.stage_manager.stage_map.name
@@ -296,8 +296,9 @@ class TrayChecker(MachineVisionManager):
             self._add_unlabeled_image(pos, frame)
 
             self.display_image.clear()
-            self.display_image.tile(frame)
-            self.display_image.tilify()
+            self.display_image.set_frame(frame)
+            # self.display_image.tile(frame)
+            # self.display_image.tilify()
             self.display_image.refresh_needed = True
             time.sleep(self.post_check_delay)
 
@@ -430,6 +431,7 @@ class TrayChecker(MachineVisionManager):
         self._active_position = pos
 
         return frame
+
     # def _get_sample_labels(self):
     #     args = self.traydb.get_sample_labels()
     #     if args is not None:
@@ -472,7 +474,7 @@ class TrayChecker(MachineVisionManager):
             hole = self._loading_manager.stage_manager.stage_map.get_hole(pos)
             dim = hole.dimension
 
-        cw = ch = ceil(dim * 2.55)
+        cw = ch = dim * 2.75
         # new = 3
         # with open(os.path.join(paths.appdata_dir, 'zoom_level.csv')) as rfile:
         #     for line in rfile:
@@ -487,7 +489,6 @@ class TrayChecker(MachineVisionManager):
         pxpermm = self._loading_manager.stage_manager.autocenter_manager.pxpermm
         cw_px = int(cw * pxpermm)
         ch_px = int(ch * pxpermm)
-        print('fffffff', dim, pxpermm)
         w, h = get_size(frame)
         x = int((w - cw_px) / 2.0)
         y = int((h - ch_px) / 2.0)
@@ -548,9 +549,10 @@ class TrayChecker(MachineVisionManager):
         # self.traydb.add_labeled_sample(name, self._active_frame, label)
         self._add_labeled_sample(name, self._active_frame, label)
         self._visit_next_position()
-    def _add_unlabeled_image(self, load_pos, pos, frame):
-        host=''
-        url=f'http://{host}/unclassified_image'
+
+    def _add_unlabeled_image(self, pos, frame):
+        host = '129.138.12.35:8000'
+        url = f'http://{host}/add_unclassified_image'
 
         buf = io.BytesIO()
         im = Image.fromarray(frame)
@@ -558,10 +560,12 @@ class TrayChecker(MachineVisionManager):
 
 
         trayname = self._loading_manager.stage_manager.stage_map.name
+        zm = self._loading_manager.zoom_level
 
         data = {
                     'trayname': trayname,
                     'hole_id': pos,
+                    'zoom_level': zm,
                     'image': base64.b64encode(buf.getvalue()).decode()
                 }
 
@@ -577,8 +581,10 @@ class TrayChecker(MachineVisionManager):
 
         if self._loading_manager.load_instance:
             data['loadname'] = self._loading_manager.load_instance.name
-
-        resp = requests.post(url, json=data)
+        try:
+            resp = requests.post(url, json=data)
+        except requests.exceptions.ConnectionError:
+            self.warning('failed posting to central database')
 
     def _add_labeled_sample(self, name, frame, label):
         pass
@@ -604,6 +610,7 @@ def main():
                      dbpath='/Users/ross/Sandbox/loadimages/db.sqlite')
     # tc.train_ml()
     tc.test_ml()
+
 
 if __name__ == '__main__':
     paths.build('~/PychronDev')

@@ -304,15 +304,28 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
             return True
 
     def get_corrected_hole_pos(self, key):
+        # pos = next(
+        #     (
+        #         h. if h.has_correction else h.nominal_position
+        #         for h in self.sample_holes
+        #         if int(h.id) == int(key)
+        #     ),
+        #     None,
+        # )
         pos = next(
-            (
-                h.corrected_position if h.has_correction else h.nominal_position
+            ( h
                 for h in self.sample_holes
                 if int(h.id) == int(key)
             ),
             None,
         )
+
         if pos is not None:
+            if pos.has_correction():
+                pos = pos.corrected_position
+            else:
+                pos = pos.nominal_position
+
             self.load_correction_affine_file()
 
             if self.corrected_affine:

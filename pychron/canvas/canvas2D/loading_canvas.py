@@ -137,6 +137,7 @@ class LoadingCanvas(SceneCanvas):
     use_zoom = False
     selected = Any
     increment_event = Event
+    focus_event = Event
     # fill_padding = True
     # bgcolor = 'red'
     show_axes = False
@@ -234,13 +235,17 @@ class LoadingCanvas(SceneCanvas):
     def normal_key_released(self, event):
         if not self._last_key_press or time.time() - self._last_key_press > 1:
             self._last_key_press = time.time()
-            if event.character == 'b' and self._foot_pedal_mode:
+            if event.character in (' ', 'a') and self._foot_pedal_mode:
                 self.increment_event = True
                 return
         else:
             self._last_key_press = time.time()
 
     def normal_key_pressed(self, event):
+        print('fff', event.character)
+        if event.character in ('Up', 'Down'):
+            self.focus_event = event.character
+
         if self._foot_pedal_mode:
             return
 

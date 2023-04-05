@@ -63,10 +63,10 @@ class BaseCalibrator(Loggable):
                     obj = pickle.load(f)
                     return obj
                 except (
-                    pickle.PickleError,
-                    EOFError,
-                    AttributeError,
-                    UnicodeDecodeError,
+                        pickle.PickleError,
+                        EOFError,
+                        AttributeError,
+                        UnicodeDecodeError,
                 ) as e:
                     pass
                     #                    cls.debug(e)
@@ -99,20 +99,45 @@ class LinearCalibrator(BaseCalibrator):
             #                         rotation=canvas.calibration_item.rotation)
 
 
-class TrayCalibrator(BaseCalibrator):
+class BaseTrayCalibrator(BaseCalibrator):
+    _clear_corrections = True
+
     def handle(self, step, x, y, canvas):
+        print(step, x, y)
         if step == "Calibrate":
             canvas.new_calibration_item()
-            return dict(calibration_step="Locate Center")
+            return dict(calibration_step="Locate Center", clear_corrections=self._clear_corrections)
         elif step == "Locate Center":
             canvas.calibration_item.set_center(x, y)
-            return dict(calibration_step="Locate Right", cx=x, cy=y)
+            return dict(calibration_step="Locate Right", cx=x, cy=y, clear_corrections=self._clear_corrections)
         elif step == "Locate Right":
             canvas.calibration_item.set_right(x, y)
             self.save(canvas.calibration_item)
+            self._save_hook(canvas.calibration_item)
             return dict(
-                calibration_step="Calibrate", rotation=canvas.calibration_item.rotation
+                calibration_step="Calibrate", rotation=canvas.calibration_item.rotation,
+                clear_corrections=self._clear_corrections
             )
 
+    def _save_hook(self, ca):
+        pass
+
+
+class TrayCalibrator(BaseTrayCalibrator):
+    pass
+
+
+class SemiAutoCorrectionCalibrator(BaseTrayCalibrator):
+    _clear_corrections = False
+
+    def _save_hook(self, ca):
+        #print('vaasd', ca, ca.center, canvas.nominal_center)
+        # update the correction affine file
+        sm = self.stage_map
+
+        ch = self.stage_map.get_calibration_hole('center')
+        nx, ny = ch.corrected_position
+        sm.update_correction_affine_file((-nx+ca.center[0],
+                                          -ny+ca.center[1]), ca.rotation)
 
 # ============= EOF =============================================

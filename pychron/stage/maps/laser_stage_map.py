@@ -138,15 +138,25 @@ class LaserStageMap(BaseStageMap):
 
     _corrected_zoom_level = None
 
-    def load_correction_affine_file(self):
-        if not self.corrected_affine or self._corrected_zoom_level != self.zoom_level:
-            self.debug('load correction affine file')
+    def load_correction_affine_file(self, force=False):
+        if not self.corrected_affine or self._corrected_zoom_level != self.zoom_level or force:
+            self.debug(f'load correction affine file for zoom_level={self.zoom_level}')
             p = self.correction_affine_path
             correction_table = yload(p)
             self.corrected_affine = correction_table.get(str(self.zoom_level))
             self._corrected_zoom_level = self.zoom_level
 
             self.debug(f'corrected_affine {self.corrected_affine}')
+
+    def update_correction_affine_file(self, center, rotation):
+        self.debug(f'update correction affine file center={center} rotation={rotation}')
+        p = self.correction_affine_path
+        correction_table = yload(p)
+        correction_table[str(self.zoom_level)] = {'translation': list(center), 'rotation': rotation}
+        with open(p, 'w') as wfile:
+            yaml.dump(correction_table, wfile)
+
+        self.load_correction_affine_file(force=True)
 
     def load_correction_file(self):
         self.debug("load correction file")

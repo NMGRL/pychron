@@ -735,6 +735,7 @@ class LoadingManager(DVCIrradiationable):
             note=self.note,
         )
         self.positions.append(lp)
+        self.scroll_to_bottom = True
 
     def _auto_increment_identifier(self, force=False):
         if (force or self.auto_increment) and self.identifier:
@@ -1069,6 +1070,14 @@ class LoadingManager(DVCIrradiationable):
     @on_trait_change('stage_map:stage_map_name')
     def _handle_stage_map_changed(self):
         self.stage_manager.stage_map.zoom_level = self.zoom_level
+        self.stage_manager.stage_map.load_correction_affine_file()
+
+    @on_trait_change("canvas:focus_event")
+    def _handle_focus_event(self, new):
+        if new == 'Up':
+            self._up_button_fired()
+        else:
+            self._down_button_fired()
 
     @on_trait_change("canvas:increment_event")
     def _increment(self):
@@ -1234,6 +1243,7 @@ class LoadingManager(DVCIrradiationable):
                 self.debug(f'no zoom found for {new}. defaulting to {pxpermm}')
         self.stage_manager.set_zoom_manually(pxpermm)
         self.stage_manager.autocenter_manager.pxpermm = pxpermm
+        self.stage_manager.stage_map.load_correction_affine_file()
 
     def _focus_stepsperdata_changed(self, new):
         self.focus_motor.stepsperdata = new

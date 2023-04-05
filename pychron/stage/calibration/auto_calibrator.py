@@ -180,7 +180,7 @@ class SemiAutoCalibrator(TrayCalibrator):
             if center:
                 x, y = (
                     center.corrected_position
-                    if center.has_correction
+                    if center.has_correction()
                     else center.nominal_position
                 )
                 self.stage_manager.linear_move(

@@ -30,7 +30,7 @@ from pychron.stage.calibration.auto_calibrator import SemiAutoCalibrator, AutoCa
 from pychron.stage.calibration.calibrator import (
     TrayCalibrator,
     LinearCalibrator,
-    BaseCalibrator,
+    BaseCalibrator, SemiAutoCorrectionCalibrator
 )
 from pychron.stage.calibration.free_calibrator import FreeCalibrator
 from pychron.stage.calibration.hole_calibrator import HoleCalibrator
@@ -59,7 +59,8 @@ STYLE_DICT = {
     "Auto": AutoCalibrator,
     "SemiAutoFullTraversal": SemiAutoFullTraversalCalibrator,
     "TrayMapper": TrayMapper,
-    "TrayIdentifier": TrayIdentifier
+    "TrayIdentifier": TrayIdentifier,
+    "SemiAutoCorrection": SemiAutoCorrectionCalibrator
 }
 
 
@@ -85,7 +86,7 @@ class TrayCalibrationManager(Loggable):
     calibration_step = String("Calibrate")
     calibration_help = String(TRAY_HELP)
     style = Enum("Tray", "Free", "Hole", "Irregular", "Linear",
-                 "SemiAuto", "SemiAutoFullTraversal",
+                 "SemiAuto", "SemiAutoFullTraversal", "SemiAutoCorrection",
                  "TrayMapper", "TrayIdentifier")
     canvas = Any
     calibrator = Instance(BaseCalibrator)
@@ -158,11 +159,6 @@ class TrayCalibrationManager(Loggable):
     # ===============================================================================
     # handlers
     # ===============================================================================
-    def _set_corrections_affine_button_fired(self):
-        center = self.parent.get_current_position()
-        rot = 0
-        self.parent.stage_map.dump_corrections_affine(center, rot)
-
     def _clear_corrections_button_fired(self):
         self.clear_corrections()
 

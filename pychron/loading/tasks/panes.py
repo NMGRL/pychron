@@ -19,7 +19,7 @@ from enable.component_editor import ComponentEditor
 from pyface.action.menu_manager import MenuManager
 from pyface.tasks.traits_dock_pane import TraitsDockPane
 from pyface.tasks.traits_task_pane import TraitsTaskPane
-from traits.api import Int, Property, Instance
+from traits.api import Int, Property, Instance, Bool, Event
 from traitsui.api import (
     View,
     UItem,
@@ -257,8 +257,10 @@ class LoadInstanceAdapter(TabularAdapter):
 
 class LoadPane(TraitsTaskPane):
     def traits_view(self):
-        v = View(Tabbed(VGroup(UItem("canvas", style="custom", editor=ComponentEditor()), label='Canvas'),
-                        VGroup(UItem("mv_canvas", style="custom", editor=ComponentEditor()), label='MV')))
+        # v = View(Tabbed(VGroup(UItem("canvas", style="custom", editor=ComponentEditor()), label='Canvas'),
+        #                VGroup(UItem("mv_canvas", style="custom", editor=ComponentEditor()), label='MV')))
+
+        v = View(UItem("canvas", style="custom", editor=ComponentEditor()))
         return v
 
 
@@ -301,6 +303,11 @@ class VideoPane(TraitsDockPane):
 class StageManagerPane(TraitsDockPane):
     name = "Stage"
     id = "pychron.loading.stage"
+    advanced_view_enabled = Bool(False)
+    advanced_view_toggle_button = Event
+
+    def _advanced_view_toggle_button_fired(self):
+        self.advanced_view_enabled = not self.advanced_view_enabled
 
     def trait_context(self):
         sm = self.model.stage_manager
@@ -311,7 +318,8 @@ class StageManagerPane(TraitsDockPane):
             "foot_pedal": self.model.foot_pedal,
             "focus_motor": self.model.focus_motor,
             "loading_manager": self.model,
-            "canvas": sm.canvas
+            "canvas": sm.canvas,
+            "pane": self
         }
 
     def calibration_view(self):
@@ -366,7 +374,7 @@ class StageManagerPane(TraitsDockPane):
         tc_grp = VGroup(
             cal_grp,
             HGroup(
-                UItem("tray_calibration.set_corrections_affine_button"),
+                # UItem("tray_calibration.set_corrections_affine_button"),
                 UItem("tray_calibration.clear_corrections_button")
             ),
             UItem("tray_calibration.calibrator", style="custom"),
@@ -380,39 +388,58 @@ class StageManagerPane(TraitsDockPane):
     #     return g
 
     def traits_view(self):
-        v = View(
-            VGroup(BorderVGroup(HGroup(UItem("calibrated_position_entry",
-                                             tooltip="Enter a position e.g 1 for a hole, " "or 3,4 for X,Y"),
-                                       icon_button_editor('autocenter_button', "find")
-                                       ),
-                                UItem('stage_controller', style='custom'),
-                                HGroup(
-                                    Item("canvas.crosshairs_offsetx", label="Offset (mm)"),
-                                    UItem("canvas.crosshairs_offsety")),
-                                HGroup(UItem('home'),
-                                       icon_button_editor("snapshot_button", "camera"), spring),
-                                ),
-                   VGroup(BorderHGroup(UItem('loading_manager.loading_level_button'),
-                                       UItem('loading_manager.checking_level_button'),
-                                       UItem('loading_manager.scan_tray_button'),
-                                       label='Tray Scan'),
-                          BorderHGroup(UItem('loading_manager.zoom_level'), label='Zoom'),
-                          BorderHGroup(HGroup(icon_button_editor('loading_manager.up_button', 'arrow_up'),
-                                              icon_button_editor('loading_manager.down_button', 'arrow_down'),
-                                              UItem('loading_manager.home_button')),
-                                       Item('loading_manager.focus_scalar', label='Steps/mm'),
-                                       HGroup(UItem('loading_manager.focus_position_entry'),
-                                              UItem('loading_manager.focus_position_readback',
-                                                    format_str='%0.3f',
-                                                    style='readonly')),
+        sv = VGroup(BorderVGroup(HGroup(UItem("calibrated_position_entry",
+                                              tooltip="Enter a position e.g 1 for a hole, " "or 3,4 for X,Y"),
+                                        icon_button_editor('autocenter_button', "find")
+                                        ),
+                                 UItem('stage_controller', style='custom'),
+                                 HGroup(
+                                     Item("canvas.crosshairs_offsetx", label="Offset (mm)"),
+                                     UItem("canvas.crosshairs_offsety")),
+                                 HGroup(UItem('home'),
+                                        icon_button_editor("snapshot_button", "camera"), spring),
+                                 ),
+                    VGroup(BorderHGroup(UItem('loading_manager.loading_level_button'),
+                                        UItem('loading_manager.checking_level_button'),
+                                        UItem('loading_manager.scan_tray_button'),
+                                        label='Tray Scan'),
+                           BorderHGroup(UItem('loading_manager.zoom_level'), label='Zoom'),
+                           BorderHGroup(HGroup(icon_button_editor('loading_manager.up_button', 'arrow_up'),
+                                               icon_button_editor('loading_manager.down_button', 'arrow_down'),
+                                               UItem('loading_manager.home_button')),
+                                        Item('loading_manager.focus_scalar', label='Steps/mm'),
+                                        HGroup(UItem('loading_manager.focus_position_entry'),
+                                               UItem('loading_manager.focus_position_readback',
+                                                     format_str='%0.3f',
+                                                     style='readonly')),
 
-                                       label='Focus')),
+                                        label='Focus')),
 
-                   self.calibration_view(),
-                   # self.counter_view()
-                   )
+                    self.calibration_view(),
+                    # self.counter_view()
 
-        )
+                    visible_when='not pane.advanced_view_enabled'
+                    )
+
+        av = VGroup(BorderVGroup(HGroup(UItem("calibrated_position_entry",
+                                              tooltip="Enter a position e.g 1 for a hole, " "or 3,4 for X,Y"),
+                                        icon_button_editor('autocenter_button', "find")
+                                        ),
+                                 UItem('stage_controller', style='custom'),
+                                 HGroup(
+                                     Item("canvas.crosshairs_offsetx", label="Offset (mm)"),
+                                     UItem("canvas.crosshairs_offsety")),
+                                 HGroup(UItem('home'),
+                                        icon_button_editor("snapshot_button", "camera"), spring),
+                                 ),
+                    BorderHGroup(UItem('loading_manager.zoom_level'), label='Zoom'),
+                    visible_when='pane.advanced_view_enabled'
+                    )
+
+        v = View(VGroup(HGroup(spring, icon_button_editor('pane.advanced_view_toggle_button', 'cog')),
+                        sv, av)
+
+                 )
         return v
 
 
