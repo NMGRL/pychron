@@ -33,6 +33,7 @@ class FigureModel(HasTraits):
     # layout = Instance(FigureLayout, ())
     analysis_groups = List
     panel_gen = None
+    force_refresh_panels = True
 
     def refresh(self, force=False):
         if not self.panels or force:
@@ -62,8 +63,9 @@ class FigureModel(HasTraits):
     #     self.refresh_panels()
 
     def refresh_panels(self):
-        ps = self._make_panels()
-        self.panels = ps
+        if not self.panels or self.force_refresh_panels:
+            ps = self._make_panels()
+            self.panels = ps
         self.reset_panel_gen()
 
     def reset_panel_gen(self):

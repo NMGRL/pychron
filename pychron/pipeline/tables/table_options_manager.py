@@ -31,10 +31,10 @@ class TableOptionsManager(BaseOptionsManager):
         obj.set_persistence_path(self._pname(name))
         obj.dump()
 
-    def _selected_changed(self, new):
-        if new:
-            obj = self.options_klass(self._pname(new))
-            self.selected_options = obj
+    # def _selected_changed(self, new):
+    #     if new:
+    #         obj = self.options_klass(self._pname(new))
+    #         self.selected_options = obj
 
     @property
     def persistence_root(self):

@@ -195,12 +195,14 @@ class Spectrum(BaseArArFigure):
                 grp.calculate_fixed_plateau_end,
             )
         else:
-            ag.fixed_step_low, ag.fixed_step_high = ("", "")
+            if not ag.calculate_fixed_plateau:
+                ag.fixed_step_low, ag.fixed_step_high = ("", "")
 
         ag.dirty = True
 
         pma = None
         plateau_age = ag.plateau_age
+        print('plateau age', plateau_age, self, ag, ag.calculate_fixed_plateau, ag.fixed_step_low, ag.fixed_step_high)
         selections = ag.get_omitted_by_tag(self.sorted_analyses)
 
         spec = self._add_plot(xs, ys, es, pid, po)

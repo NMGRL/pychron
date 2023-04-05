@@ -228,6 +228,51 @@ class BaseOptionsManager(Loggable):
         self._save(name, obj)
         self._load_names()
 
+    def _selected_changed(self, new):
+        self._option_factory(new)
+
+    def _option_factory(self, new):
+        if new:
+            obj = None
+            name = new.lower()
+
+            yp = self._pname(name, ".json")
+            if os.path.isfile(yp):
+                obj = options_load_json(yp)
+                if obj:
+                    obj.manager_id = self.id
+                    p = self._pname(name)
+                    if os.path.isfile(p):
+                        dp = self._pname(name, ".p.bak")
+                        shutil.move(p, dp)
+
+            if obj is None:
+                p = self._pname(name)
+                if os.path.isfile(p):
+                    unp = None
+                    try:
+                        with open(p, "rb") as rfile:
+                            unp = OptionsUnpickler(rfile)
+                            obj = unp.load()
+                    except BaseException as e:
+                        self.debug_exception()
+                    finally:
+                        if unp:
+                            unp.destroy()
+
+            if obj is None:
+                obj = self.options_klass()
+
+            obj.initialize()
+            obj.setup()
+
+            obj.name = new
+            self.selected_options = obj
+        else:
+            self.selected_options = None
+
+        return obj
+
     def _pname(self, name, ext=".p"):
         name = add_extension(name, ext)
         return os.path.join(self.persistence_root, name)
@@ -430,43 +475,10 @@ class OptionsManager(BaseOptionsManager):
         #     spickle.dump(obj, wfile)
 
     def _selected_changed(self, new):
-        if new:
-            obj = None
-            name = new.lower()
+        obj = self._option_factory(new)
+        if obj:
 
-            yp = self._pname(name, ".json")
-            if os.path.isfile(yp):
-                obj = options_load_json(yp)
-                if obj:
-                    obj.manager_id = self.id
-                    p = self._pname(name)
-                    if os.path.isfile(p):
-                        dp = self._pname(name, ".p.bak")
-                        shutil.move(p, dp)
-
-            if obj is None:
-                p = self._pname(name)
-                if os.path.isfile(p):
-                    unp = None
-                    try:
-                        with open(p, "rb") as rfile:
-                            unp = OptionsUnpickler(rfile)
-                            obj = unp.load()
-                    except BaseException as e:
-                        self.debug_exception()
-                    finally:
-                        if unp:
-                            unp.destroy()
-
-            if obj is None:
-                obj = self.options_klass()
-
-            obj.initialize()
-            obj.setup()
-
-            obj.name = new
             self.subview_names = obj.subview_names
-            self.selected_options = obj
 
             o = self.selected_subview
             if not o:
@@ -475,8 +487,8 @@ class OptionsManager(BaseOptionsManager):
             self.selected_subview = ""
             self.selected_subview = o
 
-        else:
-            self.selected_options = None
+        # else:
+        #     self.selected_options = None
 
     @property
     def persistence_root(self):

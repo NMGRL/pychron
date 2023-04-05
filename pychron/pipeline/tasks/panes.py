@@ -535,6 +535,7 @@ class UnknownsAdapter(BaseAnalysesAdapter):
 
         return MenuManager(
             Action(name="Recall", action="recall_unknowns"),
+            Action(name="Fix Plateau Selected", action="unknowns_set_fixed_plateau"),
             Action(
                 name="Graph Group Selected", action="unknowns_graph_group_by_selected"
             ),
@@ -644,6 +645,10 @@ class AnalysesPaneHandler(Handler):
     def unknowns_clear_grouping(self, info, obj):
         obj = info.ui.context["object"]
         obj.unknowns_clear_grouping()
+
+    def unknowns_set_fixed_plateau(self, info, obj):
+        obj = info.ui.context["object"]
+        obj.unknowns_set_fixed_plateau()
 
     def unknowns_clear_all_grouping(self, info, obj):
         obj = info.ui.context["object"]

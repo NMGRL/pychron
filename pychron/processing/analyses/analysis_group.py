@@ -775,6 +775,7 @@ class StepHeatAnalysisGroup(AnalysisGroup):
     nsteps = Int
     fixed_step_low = StepStr
     fixed_step_high = StepStr
+    calculate_fixed_plateau = Bool(False)
     plateau_age_error_kind = Str
 
     plateau_nsteps = Int(3)
