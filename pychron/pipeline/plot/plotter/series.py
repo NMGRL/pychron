@@ -349,7 +349,7 @@ class Series(BaseSeries):
     #             ai = self.sorted_analyses[0]
     #             a = bool(ai.get_value(name))
     #     return a
-    def build(self, plots):
+    def build(self, plots, *args, **kwargs):
         graph = self.graph
         # plots = (pp for pp in plots if self._has_attr(pp.name))
 

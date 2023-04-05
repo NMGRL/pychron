@@ -563,6 +563,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
         if payload is None:
             payload = [l.tohistory() for l in self.loads]
         self.dvc.save_data_reduction_loads(payload)
+        self.dvc.clear_data_reduction_loads_cache()
 
     def share(self):
         # self.save()
