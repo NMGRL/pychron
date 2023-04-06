@@ -271,6 +271,7 @@ def launch(klass):
     try:
         try:
             import qdarktheme
+
             qdarktheme.setup_theme("light")
         except ImportError:
             pass
