@@ -106,7 +106,7 @@ class ErrorComponentsView(HasTraits):
             ObjectColumn(
                 name="value",
                 label="Value",
-                width=100,
+                # width=100,
                 format_func=lambda x: floatfmt(x, n=5),
             ),
         ]

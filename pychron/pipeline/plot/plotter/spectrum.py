@@ -196,15 +196,14 @@ class Spectrum(BaseArArFigure):
         ag.plateau_gas_fraction = opt.pc_gas_fraction
         ag.age_error_kind = opt.weighted_age_error_kind
         ag.integrated_age_weighting = opt.integrated_age_weighting
-
-        if grp.calculate_fixed_plateau:
-            ag.fixed_step_low, ag.fixed_step_high = (
-                grp.calculate_fixed_plateau_start,
-                grp.calculate_fixed_plateau_end,
-            )
-        else:
+        if not ag.calculate_fixed_plateau:
             ag.fixed_step_low, ag.fixed_step_high = ("", "")
-
+        else:
+            if grp.calculate_fixed_plateau:
+                ag.fixed_step_low, ag.fixed_step_high = (
+                    grp.calculate_fixed_plateau_start,
+                    grp.calculate_fixed_plateau_end,
+                )
         ag.dirty = True
 
         pma = None
@@ -519,7 +518,7 @@ class Spectrum(BaseArArFigure):
         sample = ag.sample
         identifier = ag.identifier
         fixed = ""
-        fixed_steps = ag.fixed_steps
+        fixed_steps = ag.valid_fixed_steps()
         if fixed_steps:
             if fixed_steps[0] or fixed_steps[1]:
                 a, b = fixed_steps

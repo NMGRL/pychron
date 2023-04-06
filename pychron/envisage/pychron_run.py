@@ -269,6 +269,9 @@ def launch(klass):
     app = app_factory(klass)
 
     try:
+        import qdarktheme
+
+        qdarktheme.setup_theme("light")
         # root = os.path.dirname(__file__)
         # r = QtGui.QApplication.instance()
         # p = os.path.join(root, 'stylesheets', 'qdark.css')

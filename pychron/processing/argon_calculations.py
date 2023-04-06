@@ -26,6 +26,7 @@ from pychron.core.stats.core import calculate_weighted_mean
 from pychron.core.utils import alpha_to_int
 from pychron.processing.age_converter import converter
 from pychron.processing.arar_constants import ArArConstants
+from pychron.processing.plateau import Plateau
 from pychron.pychron_constants import FLECK
 
 
@@ -133,6 +134,7 @@ def calculate_plateau_age(
     ages,
     errors,
     k39,
+    steps,
     kind="inverse_variance",
     method=FLECK,
     options=None,
@@ -142,6 +144,7 @@ def calculate_plateau_age(
     ages: list of ages
     errors: list of corresponding  1sigma errors
     k39: list of 39ArK signals
+    steps: list of step labels
 
     return age, error
     """
@@ -153,36 +156,43 @@ def calculate_plateau_age(
     k39 = asarray(k39)
 
     fixed_steps = options.get("fixed_steps", False)
+
+    p = Plateau(
+        ages=ages,
+        errors=errors,
+        signals=k39,
+        excludes=excludes,
+        overlap_sigma=options.get("overlap_sigma", 2),
+        nsteps=options.get("nsteps", 3),
+        gas_fraction=options.get("gas_fraction", 50),
+    )
+    pidx = None
     if fixed_steps and (fixed_steps[0] or fixed_steps[1]):
+        steps = [s.upper() for s in steps]
         sstep, estep = fixed_steps
         sstep, estep = sstep.upper(), estep.upper()
         if not sstep:
             sidx = 0
         else:
-            sidx = alpha_to_int(sstep)
+            try:
+                sidx = steps.index(sstep)
+            except ValueError:
+                sidx = None
 
-        n = ages.shape[0] - 1
-        if not estep:
-            eidx = n
-        else:
-            eidx = alpha_to_int(estep)
+        if sidx is not None:
+            n = ages.shape[0] - 1
+            if not estep:
+                eidx = n
+            else:
+                try:
+                    eidx = steps.index(estep)
+                except ValueError:
+                    eidx = None
+            if eidx is not None:
+                sidx, eidx = min(sidx, eidx), min(max(sidx, eidx), n)
+                pidx = (sidx, eidx) if sidx < n else None
 
-        sidx, eidx = min(sidx, eidx), min(max(sidx, eidx), n)
-        pidx = (sidx, eidx) if sidx < n else None
-
-    else:
-        from pychron.processing.plateau import Plateau
-
-        p = Plateau(
-            ages=ages,
-            errors=errors,
-            signals=k39,
-            excludes=excludes,
-            overlap_sigma=options.get("overlap_sigma", 2),
-            nsteps=options.get("nsteps", 3),
-            gas_fraction=options.get("gas_fraction", 50),
-        )
-
+    if pidx is None:
         pidx = p.find_plateaus(method)
 
     if pidx:
