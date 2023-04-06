@@ -478,7 +478,6 @@ class OptionsManager(BaseOptionsManager):
     def _selected_changed(self, new):
         obj = self._option_factory(new)
         if obj:
-
             self.subview_names = obj.subview_names
 
             o = self.selected_subview

@@ -57,7 +57,7 @@ class FigureEditor(GraphEditor):
         ags = []
         for p in self.figure_model.panels:
             for pp in p.figures:
-                print('pp', pp, pp.analysis_group)
+                print("pp", pp, pp.analysis_group)
                 ag = pp.analysis_group
                 group = pp.options.get_group(pp.group_id)
                 color = group.color
@@ -115,7 +115,7 @@ class FigureEditor(GraphEditor):
             model = self.figure_model_klass()
             self.figure_model = model
 
-        print('selfasd', self, self.figure_model)
+        print("selfasd", self, self.figure_model)
         model.trait_set(
             plot_options=self.plotter_options,
             # analysis_groups=self.analysis_groups,
