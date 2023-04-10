@@ -31,7 +31,7 @@ def get_dvc(**kw):
     )
     conn.update(**kw)
 
-    paths.build("~/PychronDev")
+    paths.build("~/PychronDirs/PychronDev")
     meta_name = "NMGRLMetaData"
     dvc = DVC(bind=False, organization="NMGRLData", meta_repo_name=meta_name)
     paths.meta_root = os.path.join(paths.dvc_dir, dvc.meta_repo_name)

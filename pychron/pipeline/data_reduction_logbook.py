@@ -21,6 +21,8 @@ from operator import attrgetter
 
 # from threading import Thread
 from threading import Event as TEvent
+
+from pyface.action.menu_manager import MenuManager
 from pyface.timer.do_later import do_later
 from traitsui.handler import Handler
 from traitsui.tabular_adapter import TabularAdapter
@@ -122,6 +124,9 @@ class LoadAdapter(ColorTabularAdapter):
 
 class ProjectAdapter(ColorTabularAdapter):
     columns = [("Project Name", "name"), ("UniqueID", "unique_id")]
+
+    def get_menu(self, obj, trait, row, column):
+        return MenuManager(Action(name='Deselect', action='deselect'))
 
 
 class SampleAdapter(TabularAdapter):
@@ -274,11 +279,11 @@ class DataReductionLoad(HasTraits):
     def determine_status(self):
         if self.projects:
             if all(
-                (p.determine_reduction_state() == "complete" for p in self.projects)
+                    (p.determine_reduction_state() == "complete" for p in self.projects)
             ):
                 self.reduction_state = "complete"
             elif any(
-                (p.determine_reduction_state() == "complete" for p in self.projects)
+                    (p.determine_reduction_state() == "complete" for p in self.projects)
             ):
                 self.reduction_state = "incomplete"
 
@@ -291,6 +296,9 @@ class DataReductionLogbookHandler(Handler):
     def closed(self, info, is_ok):
         info.ui.context["object"].closed()
 
+    def deselect(self, info, obj):
+        print('deselect', obj)
+        obj.deselect()
 
 class DataReductionLogbook(Loggable, ColumnSorterMixin):
     stats = Str
@@ -332,6 +340,10 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                     li.examined = True
 
         self.stats = f"{len(loaded_manifest)}/{len(self.loads)}"
+
+    def deselect(self):
+        print('deselect')
+        self.selected_project2 = None
 
     def stop_auto_examine(self):
         self._auto_examine_evt.set()
@@ -471,15 +483,15 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             for m in l.measured_positions:
                 if project:
                     if (
-                        project.name
-                        != m.analysis.irradiation_position.sample.project.name
+                            project.name
+                            != m.analysis.irradiation_position.sample.project.name
                     ):
                         continue
 
                 if self.selected_sample:
                     if (
-                        self.selected_sample.name
-                        != m.analysis.irradiation_position.sample.name
+                            self.selected_sample.name
+                            != m.analysis.irradiation_position.sample.name
                     ):
                         print("skippoing", m.analysis.irradiation_position.sample.name)
                         continue
@@ -540,7 +552,8 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                 ls.append(la)
 
             self.loads = ls
-            self.oloads = ls
+            if projects is None:
+                self.oloads = ls
 
     def get_projects(self):
         ps = sorted(
@@ -592,6 +605,7 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
             # for o in self.oloads:
             #     print(o.name.lower(),o.name.lower().startswith(new), new)
             # self.loads = [l for l in self.oloads if l.name.lower().startswith(new.lower())]
+            print('asdfasdfadsf', len(self.oloads), new)
             self.loads = fuzzyfinder(new, self.oloads, "name")
 
     def _selected_changed(self, new):
@@ -617,9 +631,9 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
                     p
                     for p in ps
                     if p.name
-                    not in [
-                        "REFERENCES",
-                    ]
+                       not in [
+                           "REFERENCES",
+                       ]
                 ]
 
                 ps = [next(pis) for g, pis in groupby_key(ps, key=lambda x: x.name)]
@@ -636,16 +650,22 @@ class DataReductionLogbook(Loggable, ColumnSorterMixin):
         #     self.dvc.clear_data_reduction_loads_cache()
 
     def _selected_project2_changed(self, new):
-        self.get_loads(projects=[new.name])
+        print('sadfasdf', new)
+        if new:
+            self.get_loads(projects=[new.name])
+        else:
+
+            self.loads = self.oloads[:]
 
     def _selected_project_changed(self, new):
         self._selected_project_change_handler(self.selected, new)
 
     def _selected_project_change_handler(self, selected, new):
+
         with self.dvc.session_ctx() as sess:
             ls = []
             for li in self.dvc.get_labnumbers(
-                projects=[new.name], loads=[selected.name]
+                    projects=[new.name], loads=[selected.name]
             ):
                 if li.analyzed:
                     loads = self.dvc.get_data_reduction_loads()
