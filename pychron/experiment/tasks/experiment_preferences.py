@@ -109,6 +109,8 @@ class ExperimentPreferences(BasePreferencesHelper):
     execute_open_queues = Bool
     save_all_runs = Bool
 
+    use_data_collection_branch = Bool(False)
+
     def _get_memory_threshold(self):
         return self._memory_threshold
 
@@ -280,6 +282,7 @@ class ExperimentPreferencesPane(PreferencesPane):
             Item("use_xls_persistence", label="Save analyses to Excel workbook"),
             Item("use_db_persistence", label="Save analyses to Database"),
             Item("use_uuid_path_name", label="Use UUID Path Names"),
+            Item("use_data_collection_branch", label="Use data_collection branch"),
             Item(
                 "save_all_runs",
                 label="Save All analyses",

@@ -24,6 +24,7 @@ from pprint import pformat
 
 from pychron import json
 from pychron.core.helpers.filetools import subdirize, add_extension
+from pychron.core.helpers.strtools import camel_case
 from pychron.paths import paths
 from pychron.wisc_ar_constants import WISCAR_ID_RE
 
@@ -97,9 +98,12 @@ def dvc_dump(obj, path):
             print("dvc dump exception. error:{}, {}".format(e, pformat(obj)))
 
 
-def dvc_load(path):
-    ret = {}
-    if os.path.isfile(path):
+def dvc_load(path, default=None):
+    if default is None:
+        ret = {}
+    else:
+        ret = default
+    if path and os.path.isfile(path):
         with open(path, "r") as rfile:
             try:
                 ret = json.load(rfile)
@@ -252,6 +256,14 @@ def repository_path(*args):
     return os.path.join(paths.repository_dataset_dir, *args)
 
 
+# def make_ref_plot_list(refs):
+#
+#     xs = [for r in refs]
+#     ys = [for r in refs]
+#
+#     return {"xs": xs, "ys": ys}
+
+
 def make_ref_list(refs):
     ret = ""
     if refs:
@@ -270,6 +282,14 @@ def list_frozen_productions(repo):
         name = "{}.{}".format(irrad, level)
         ps.append((name, prod))
     return ps
+
+
+def prep_repo_name(name):
+    # camel case and remove special characters
+    name = camel_case(name)
+    name = re.sub(r"[^.a-zA-Z0-9]", "-", name)
+
+    return name
 
 
 # ============= EOF =============================================

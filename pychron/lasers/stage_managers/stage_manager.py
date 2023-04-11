@@ -104,6 +104,15 @@ class StageManager(BaseStageManager):
 
     # def fiber_light_changed(self, v):
     #    pass
+    def block(self):
+        self.debug("blocking")
+
+        # if self.move_thread and self.move_thread.isRunning():
+        time.sleep(1)
+        while self.move_thread.isRunning():
+            time.sleep(1)
+
+        self.debug("blocking complete")
 
     def measure_grain_polygon(self):
         pass
@@ -271,7 +280,6 @@ class StageManager(BaseStageManager):
         abort_if_moving=False,
         **kw
     ):
-
         if check_moving:
             if self.moving():
                 self.warning("MotionController already in motion")
@@ -447,7 +455,6 @@ class StageManager(BaseStageManager):
         self._homing = True
 
         if self.home_option == "Home All":
-
             msg = "homing all motors"
             homed = ["x", "y", "z"]
             home_kwargs = dict(x=-25, y=-25, z=50)
@@ -681,7 +688,6 @@ class StageManager(BaseStageManager):
         end_callback=None,
         verbose=False,
     ):
-
         from pychron.core.geometry.scan_line import raster
 
         lines = raster(points, step=step, find_min=find_min)
@@ -1117,6 +1123,12 @@ class StageManager(BaseStageManager):
             )
 
             factory = ZaberMotionController
+        elif self.stage_controller_klass == "Kinesis":
+            from pychron.hardware.kinesis.kinesis_controller import (
+                KinesisMotionController,
+            )
+
+            factory = KinesisMotionController
 
         m = factory(
             name="{}controller".format(self.name),

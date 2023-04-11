@@ -98,7 +98,6 @@ class SwitchParser(XMLParser):
         return self._get_items("double_actuation_valve")
 
     def _get_items(self, attr, group=None, element=True):
-
         if self.is_yaml:
             return [i for i in self._yobj if i.get("kind", "valve") == attr]
         else:

@@ -120,7 +120,7 @@ class LabnumberAdapter(BrowserAdapter):
     odd_bg_color = "lightgray"
 
     name_width = Int(125)
-    labnumber_width = Int(60)
+    labnumber_width = Int(90)
     material_width = Int(75)
 
     def get_menu(self, obj, trait, row, column):
@@ -241,7 +241,6 @@ class AnalysisAdapter(BrowserAdapter):
         return "{:0.1f} {}".format(dt, units)
 
     def get_menu(self, obj, trait, row, column):
-
         tag_actions = [
             Action(name="OK", action="tag_ok"),
             Action(name="Omit", action="tag_omit"),

@@ -314,7 +314,6 @@ class CanvasEditor(Loggable):
 
     @on_trait_change("groups:items:[x,y,width,height]")
     def _handle(self, obj, name, old, new):
-
         if isinstance(obj, BaseValve):
             if obj not in self._valve_changes:
                 self._valve_changes.append(obj)

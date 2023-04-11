@@ -88,7 +88,6 @@ class BaseCamera(HasTraits):
         """ """
 
         def _set_limits(axis_key, px_per_mm, cur_pos, canvas):
-
             if axis_key == "x":
                 d = self.width
             else:

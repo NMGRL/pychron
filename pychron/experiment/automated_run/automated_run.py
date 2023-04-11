@@ -258,6 +258,7 @@ class AutomatedRun(Loggable):
     _truncate_signal = Bool
     _equilibration_done = False
     _integration_seconds = Float(1.1)
+    _previous_loaded = False
 
     min_ms_pumptime = Int(60)
     overlap_evt = None
@@ -334,6 +335,9 @@ class AutomatedRun(Loggable):
 
     def py_measure(self):
         return self.spectrometer_manager.measure()
+
+    def py_get_deflection(self, detector):
+        return self.get_deflection(detector, current=True)
 
     def py_get_intensity(self, detector):
         if self._intensities:
@@ -642,7 +646,6 @@ class AutomatedRun(Loggable):
         use_dac=False,
         check_conditionals=True,
     ):
-
         if not self._alive:
             return
 
@@ -795,12 +798,10 @@ class AutomatedRun(Loggable):
         fit_series=0,
         group="signal",
     ):
-
         if not self._alive:
             return
 
         with self.ion_optics_manager.mftable_ctx(mftable):
-
             is_baseline = False
             self.peak_hop_collector.is_baseline = is_baseline
             self.peak_hop_collector.fit_series_idx = fit_series
@@ -1096,13 +1097,15 @@ class AutomatedRun(Loggable):
     #
     # ===============================================================================
     def show_conditionals(self, tripped=None):
-
         self.tripped_conditional = tripped
 
         self.executor_event = {"kind": "show_conditionals", "tripped": tripped}
 
     def teardown(self):
         self.debug("tear down")
+
+        self._previous_loaded = False
+
         if self.measurement_script:
             self.measurement_script.automated_run = None
 
@@ -1116,6 +1119,8 @@ class AutomatedRun(Loggable):
         #     self.plot_panel.automated_run = None
 
         self._persister_action("trait_set", persistence_spec=None, monitor=None)
+        if self.runner:
+            self.runner.clear()
 
     def finish(self):
         self.debug("----------------- finish -----------------")
@@ -1335,9 +1340,11 @@ class AutomatedRun(Loggable):
                 self.equilibration_conditionals,
             )
 
+            # get environmental values such as temperature, pneumatics etc
             env = self._get_environmentals()
-            if env:
-                set_environmentals(self.spec, env)
+
+            # if env:
+            #     set_environmentals(self.spec, env)
 
             tag = "ok"
             if self.spec.state in (CANCELED, FAILED):
@@ -1348,6 +1355,7 @@ class AutomatedRun(Loggable):
                 conditionals=[c for cond in conds for c in cond],
                 tag=tag,
                 tripped_conditional=self.tripped_conditional,
+                pipette_counts=self.extraction_line_manager.get_pipette_counts(),
                 **env
             )
 
@@ -1531,6 +1539,7 @@ class AutomatedRun(Loggable):
             self.info("Requested Output= {:0.3f}".format(req))
             self.info("Achieved Output=  {:0.3f}".format(ach))
 
+            cblob = script.get_cryo_response_blob()
             rblob = script.get_response_blob()
             oblob = script.get_output_blob()
             sblob = script.get_setpoint_blob()
@@ -1553,6 +1562,7 @@ class AutomatedRun(Loggable):
                 videos=videos,
                 extraction_positions=ext_pos,
                 extraction_context=extraction_context,
+                cryo_response_blob=cblob,
             )
 
             self._persister_save_action("post_extraction_save")
@@ -1631,8 +1641,10 @@ class AutomatedRun(Loggable):
             return True
         else:
             if use_post_on_fail:
-                self.do_post_equilibration()
-                self.do_post_measurement()
+                if not self._aborted:
+                    self.do_post_equilibration()
+                    self.do_post_measurement()
+
             self.finish()
 
             self.heading(
@@ -1677,7 +1689,6 @@ class AutomatedRun(Loggable):
             t.start()
 
     def do_post_termination(self, do_post_equilibration=True):
-
         self.heading("Post Termination Started")
         if do_post_equilibration:
             self.do_post_equilibration()
@@ -1727,13 +1738,13 @@ anaylsis_type={}
         )
 
     def get_baselines(self):
+        ret = {}
         if self.isotope_group:
-            return {
+            ret = {
                 iso.name: (iso.detector, iso.baseline.uvalue)
                 for iso in self.isotope_group.values()
             }
-            # return dict([(iso.name, (iso.detector, iso.baseline.uvalue)) for iso in
-            #              self.isotope_group.values()])
+        return ret
 
     def get_baseline_corrected_signals(self):
         if self.isotope_group:
@@ -1798,7 +1809,6 @@ anaylsis_type={}
         return env
 
     def _start(self):
-
         # for testing only
         # self._get_environmentals()
 
@@ -2211,6 +2221,13 @@ anaylsis_type={}
         self.plot_panel = p
 
     def _load_previous(self):
+        # this is necessary for measuring the baseline before doing a peakhop or multicollect
+        if self._previous_loaded:
+            self.debug("previous blanks and baselines already loaded")
+            return
+
+        self._previous_loaded = True
+
         if not self.spec.analysis_type.startswith(
             "blank"
         ) and not self.spec.analysis_type.startswith("background"):
@@ -2231,7 +2248,6 @@ anaylsis_type={}
             self.isotope_group.set_baseline(iso, v[0], v[1])
 
     def _add_conditionals(self):
-
         t = self.spec.conditionals
         self.debug("adding conditionals {}".format(t))
         if t:
@@ -2305,7 +2321,6 @@ anaylsis_type={}
         return self._get_yaml_parameter(self.extraction_script, key, default)
 
     def _new_plot_panel(self, plot_panel, stack_order="bottom_to_top"):
-
         title = self.runid
         sample, irradiation = self.spec.sample, self.spec.display_irradiation
         if sample:
@@ -2339,7 +2354,6 @@ anaylsis_type={}
             valve = str(valve)
 
         if valve and not isinstance(valve, (tuple, list)):
-
             if "," in valve:
                 valve = [v.strip() for v in valve.split(",")]
             else:
@@ -2537,7 +2551,6 @@ anaylsis_type={}
                     items = list(items)
                     if len(items) > 1:
                         for det, items in groupby_key(items, key2):
-
                             items = list(items)
                             if len(items) > 1:
                                 for k, v in items:
@@ -2585,7 +2598,6 @@ anaylsis_type={}
                     )
                 )
                 if cnt >= fcnt:
-
                     try:
                         self.info("Saving run. Analysis did not complete successfully")
                         self.save()
@@ -2727,7 +2739,6 @@ anaylsis_type={}
         color,
         script=None,
     ):
-
         if script is None:
             script = self.measurement_script
 
@@ -2762,6 +2773,8 @@ anaylsis_type={}
             experiment_type=self.experiment_type,
             refresh_age=self.spec.analysis_type in ("unknown", "cocktail"),
         )
+
+        self._update_persister_spec(time_zero=starttime)
 
         m.set_starttime(starttime)
         if hasattr(self.spectrometer_manager.spectrometer, "trigger_acq"):
@@ -2856,7 +2869,6 @@ anaylsis_type={}
 
         series = self.collector.series_idx
         for k, iso in self.isotope_group.items():
-
             idx = self._get_plot_id_by_ytitle(graph, k, iso)
 
             if idx is not None:

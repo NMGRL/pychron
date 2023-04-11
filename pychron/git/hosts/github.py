@@ -20,11 +20,14 @@
 from __future__ import absolute_import
 
 import json
+import os
+from base64 import b64encode
 
 import requests
 from requests.exceptions import SSLError
 
 from pychron.git.hosts import GitHostService
+from pychron.paths import paths
 
 BASE_URL = "github.com"
 API_URL = "https://api.github.com"
@@ -67,9 +70,27 @@ class GitHubService(GitHostService):
             self.close_session()
         return ret, rsha
 
+    def post_file(self, remote, path, content, committer_name, committer_email=None):
+        if committer_email is None:
+            cn = committer_name.replace(" ", "_")
+            committer_email = f"{cn}@gmail.com"
+
+        url = f"{API_URL}/repos/{remote}/contents/{path}"
+
+        content = b64encode(content)
+        try:
+            self._put(
+                url,
+                message="Created shareable archive",
+                committer={"name": committer_name, "email": committer_email},
+                content=content,
+            )
+        except BaseException:
+            self.debug_exception()
+
     def post_issue(self, remote, issue):
         url = "{}/repos/{}/issues".format(API_URL, remote)
-        return self._post(url, **issue)
+        return self._post(url, issue)
 
     def get_labels(self, remote):
         cmd = "{}/repos/{}/labels".format(API_URL, remote)
@@ -129,12 +150,19 @@ class GitHubService(GitHostService):
         auth = ""
         # including the authenitcation when cloning presents an issue when cloning a repository
         # you only have read-only access to
-        if organization == self.organization:
-            if self.oauth_token:
-                auth = "{}@".format(self.oauth_token)
-            elif self.username and self.password:
-                auth = "{}:{}@".format(self.username, self.password)
-
+        # print(organization, self.organization)
+        # if organization == self.organization:
+        p = paths.oauth_file
+        if p and os.path.isfile(p):
+            with open(p, "r") as rfile:
+                obj = json.load(rfile)
+                # obj = obj["installed"]
+                token = obj["access_token"]
+                auth = "{}@".format(token)
+        elif self.oauth_token:
+            auth = "{}@".format(self.oauth_token)
+        elif self.username and self.password:
+            auth = "{}:{}@".format(self.username, self.password)
         url = "{}://{}{}/{}/{}.git".format(protocol, auth, BASE_URL, organization, name)
         return url
 

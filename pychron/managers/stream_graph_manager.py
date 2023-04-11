@@ -127,7 +127,6 @@ class StreamGraphManager(Manager):
         pass
 
     def _timer_factory(self, func=None, wait=True):
-
         if func is None:
             func = self._update_scan_graph
 

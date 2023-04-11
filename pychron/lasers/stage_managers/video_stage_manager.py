@@ -612,7 +612,6 @@ class VideoStageManager(StageManager):
             c.show_all()
 
     def _start_recording(self, path, basename):
-
         self.info("start video recording {}".format(path))
         d = os.path.dirname(path)
         if not os.path.isdir(d):
@@ -892,10 +891,8 @@ class VideoStageManager(StageManager):
         #            time.sleep(4)
         #            self.stop_recording()
         if self.is_recording:
-
             self.stop_recording()
         else:
-
             self.start_recording()
 
     def _use_video_server_changed(self):

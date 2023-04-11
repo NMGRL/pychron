@@ -362,7 +362,6 @@ class ExperimentEditor(BaseTraitsEditor):
             return True
 
     def _dump_experiment_queue(self, p):
-
         if not p:
             return
 

@@ -42,7 +42,6 @@ def time_generator(start):
     yt = start
     prev_time = 0
     while 1:
-
         current_time = time.time()
         if prev_time != 0:
             interval = current_time - prev_time
@@ -168,7 +167,6 @@ class StreamGraph(Graph):
         self.set_x_limits(max_=ma, min_=mi, plotid=plotid)
 
     def record(self, y, x=None, series=0, plotid=0, track_x=True, track_y=True):
-
         xn, yn = self.series[plotid][series]
 
         plot = self.plots[plotid]
@@ -193,7 +191,6 @@ class StreamGraph(Graph):
             self._set_xlimits(nx, plotid)
 
         if track_y and (self.track_y_min[plotid] or self.track_y_max[plotid]):
-
             if not self.track_y_max[plotid]:
                 ma = None
             else:

@@ -89,7 +89,6 @@ class ViewableDevice(HasTraits):
         return
 
     def info_view(self):
-
         info_grp = VGroup(
             Item("reinitialize_button", show_label=False),
             Item("name", style="readonly"),

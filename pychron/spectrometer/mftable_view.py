@@ -34,7 +34,6 @@ class MagnetFieldTableView(Controller):
             self.model.save()
 
     def traits_view(self):
-
         # self.model.load_mftable(True)
 
         cols = [ObjectColumn(name="isotope", editable=False)]

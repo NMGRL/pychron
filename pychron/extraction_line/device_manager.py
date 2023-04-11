@@ -21,7 +21,6 @@ from traitsui.api import View, UItem, Item, ListEditor, InstanceEditor
 
 
 class DeviceManager(Manager):
-
     period = Float(5)
     is_alive = Bool
     device_view_name = "device_view"

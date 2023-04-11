@@ -103,9 +103,9 @@ try:
             marker_size = self.marker_size
             points = [(-10 - self.marker_size / 2, (height + marker_size) / 2)]
             # points = [(0, 100)]
-            color = self.color
+            color = self.color_
             line_width = 1
-            outline_color = self.color
+            outline_color = self.color_
             render_markers(
                 gc, points, marker, marker_size, color, line_width, outline_color
             )

@@ -525,7 +525,6 @@ class PychronUVLaserManager(PychronLaserManager):
     #
     # ===============================================================================
     def _fire_fired(self):
-
         if self.fire_mode == "Continuous":
             mode = "continuous"
         else:
@@ -558,7 +557,6 @@ class PychronUVLaserManager(PychronLaserManager):
         self._mask = 0
 
     def _move_to_position(self, pos, autocenter, block):
-
         cmd = "GoToPoint"
 
         # if pos.startswith('t'):

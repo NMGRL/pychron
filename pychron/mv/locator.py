@@ -177,7 +177,6 @@ class Locator(Loggable):
         return rescale(src, v, preserve_range=True)
 
     def crop(self, src, cw, ch, ox=0, oy=0, verbose=True):
-
         cw_px = int(cw * self.pxpermm)
         ch_px = int(ch * self.pxpermm)
         w, h = get_size(src)
@@ -385,7 +384,6 @@ class Locator(Loggable):
         return ts
 
     def _mask(self, src, radius=None):
-
         radius *= self.pxpermm
         h, w = src.shape[:2]
         c = disk((h / 2.0, w / 2.0), radius, shape=(h, w))
@@ -851,7 +849,6 @@ class Locator(Loggable):
                         and cy is not None
                         and not isnan(cy)
                 ):
-
                     for cpt in cpts:
                         self._draw_indicator(src, cpt, size=1)
 
@@ -984,7 +981,6 @@ class Locator(Loggable):
         """
         # color = (255, 165, 0)
         if targets:
-
             size = 20
             sstep = 0
             start = 100

@@ -31,7 +31,7 @@ class Fit(HasTraits):
     fit = Str
     fit_types = Property
     error_type = Str
-    error_types = List(FIT_ERROR_TYPES)
+    error_types = List(FIT_ERROR_TYPES, transient=True)
 
     #     fit = Enum(FIT_TYPES)
     # valid = Property(depends_on=('fit, use, show'))

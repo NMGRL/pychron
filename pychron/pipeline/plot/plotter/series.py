@@ -43,6 +43,7 @@ AGE = "Age"
 EXTRACT_VALUE = "Extract Value"
 EXTRACT_DURATION = "Extract Duration"
 CLEANUP = "Cleanup"
+F = "F"
 
 ATTR_MAPPING = {
     PEAK_CENTER: "peak_center",
@@ -54,7 +55,7 @@ ATTR_MAPPING = {
     EXTRACT_VALUE: "extract_value",
     EXTRACT_DURATION: "extract_duration",
     CLEANUP: "cleanup",
-    "F": "uF",
+    F: "uF",
 }
 
 AR4039 = "Ar40/Ar39"
@@ -244,7 +245,6 @@ class BaseSeries(BaseArArFigure):
             print("Series", e)
 
     def _get_xs(self, plots, ans, tzero=None):
-
         if self.options.use_time_axis:
             xs = array([ai.timestamp for ai in ans])
             px = plots[0]
@@ -349,7 +349,7 @@ class Series(BaseSeries):
     #             ai = self.sorted_analyses[0]
     #             a = bool(ai.get_value(name))
     #     return a
-    def build(self, plots):
+    def build(self, plots, *args, **kwargs):
         graph = self.graph
         # plots = (pp for pp in plots if self._has_attr(pp.name))
 

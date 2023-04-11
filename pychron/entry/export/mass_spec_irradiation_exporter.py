@@ -154,7 +154,6 @@ class MassSpecIrradiationExporter(BaseIrradiationExporter):
             self._export_position(dest, irradname, src_level.name, pos)
 
     def _export_production_ratios(self, irrad, level):
-
         dest = self.destination
         action = "Skipping"
 

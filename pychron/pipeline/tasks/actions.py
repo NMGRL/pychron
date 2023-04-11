@@ -25,6 +25,8 @@ from traitsui.menu import Action
 
 from pychron.envisage.resources import icon
 from pychron.envisage.ui_actions import UIAction, UITaskAction
+from pychron.pipeline.data_reduction_logbook import DataReductionLogbook
+from pychron.pychron_constants import DVC_PROTOCOL
 
 
 class EditorAction(TaskAction):
@@ -38,6 +40,20 @@ class FigureAction(TaskAction):
 class IdentifyPeaksDemoAction(TaskAction):
     name = "Id peaks"
     method = "identify_peaks"
+
+
+class SignalEstimatorAction(Action):
+    name = "Signal Estimator"
+
+    def perform(self, event):
+        app = event.task.window.application
+        v = app.preferences.get("pychron.entry.j_multiplier", 0.0002)
+
+        from pychron.processing.signal_estimator import SignalEstimator
+
+        s = SignalEstimator()
+        s.j_per_hour = float(v)
+        s.edit_traits()
 
 
 class SavePipelineTemplateAction(TaskAction):
@@ -160,6 +176,11 @@ class BrowserAction(Action):
 class RecallAction(PipelineAction):
     name = "Recall..."
     action = "pipeline_recall"
+
+
+class DVCRecallAction(PipelineAction):
+    name = "DVC Recall..."
+    action = "pipeline_dvc_recall"
 
 
 class InterpretedAgeRecallAction(PipelineAction):
@@ -324,6 +345,17 @@ class MassSpecReducedAction(PipelineAction):
 class ImportOptionsActions(PipelineAction):
     name = "Import Options..."
     action = "import_options"
+
+
+class DataReductionLogAction(UIAction):
+    name = "Data Reduction Log"
+
+    def perform(self, event):
+        app = event.task.window.application
+        dvc = app.get_service(DVC_PROTOCOL)
+        d = DataReductionLogbook(dvc=dvc)
+        d.populate()
+        d.edit_traits()
 
 
 # ============= Quick Series ====================================

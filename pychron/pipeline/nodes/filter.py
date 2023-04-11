@@ -75,7 +75,6 @@ class PipelineFilter(HasTraits):
                 comp = "=="
 
             if comp in ("between", "not between"):
-
                 try:
                     low, high = crit.split(",")
                 except ValueError:

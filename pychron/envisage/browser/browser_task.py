@@ -128,7 +128,6 @@ class BaseBrowserTask(BaseEditorTask):
         ):
             editor.edit_view.show()
         else:
-
             e = AnalysisEditView(editor, dvc=self.dvc)
             info = open_view(e)
             # info = e.edit_traits()
@@ -224,7 +223,7 @@ class BaseBrowserTask(BaseEditorTask):
             self._open_recall_editors(records, use_quick=use_quick)
         else:
             self.warning_dialog(
-                "Failed to the requested analyses. Please check the log for more details"
+                "Failed to recall the requested analyses. Please check the log for more details"
             )
 
     def interpreted_age_recall(self, record):
@@ -244,7 +243,6 @@ class BaseBrowserTask(BaseEditorTask):
         tc = self.recall_configurer
         info = tc.edit_traits()
         if info.result:
-
             self._set_adapter_sig_figs()
 
             editors = self.get_recall_editors()
@@ -349,7 +347,6 @@ class BaseBrowserTask(BaseEditorTask):
         editor = None
         # check if record already is open
         for r in records:
-
             editor = self._get_editor_by_uuid(r.uuid)
             if editor:
                 records.remove(r)
@@ -408,7 +405,6 @@ class BaseBrowserTask(BaseEditorTask):
         if ans:
             quick = self.browser_model.use_quick_recall and use_quick
             for rec in ans:
-
                 av = rec.analysis_view_factory(quick=False)
                 av.isotope_view.isotope_adapter = self.isotope_adapter
                 av.isotope_view.intermediate_adapter = self.intermediate_adapter
@@ -418,7 +414,7 @@ class BaseBrowserTask(BaseEditorTask):
 
                 self.recall_configurer.set_fonts(av)
                 av.main_view.set_options(rec, self.recall_configurer.recall_options)
-
+                av.dvc = self.dvc
                 if quick:
                     editor = self.browser_model.recall_editor
                     if not editor:

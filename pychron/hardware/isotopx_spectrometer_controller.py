@@ -36,6 +36,9 @@ class NGXController(CoreDevice):
     canceled = False
     triggered = False
 
+    def select_read(self, *args, **kw):
+        return self.communicator.select_read(*args, **kw)
+
     def ask(self, cmd, *args, **kw):
         resp = super(NGXController, self).ask(cmd, *args, **kw)
         if any(
@@ -61,14 +64,14 @@ class NGXController(CoreDevice):
     def initialize(self, *args, **kw):
         ret = super(NGXController, self).initialize(*args, **kw)
 
-        self.commmunicator.strip = True
+        self.communicator.strip = False
         # trying a new locking mechanism see ngx.trigger for more details
         self.lock = Lock()
         #   self.event_buffer = Queue()
 
         if ret:
-            resp = self.read()
-
+            resp = self.read(datasize=2)
+            self.debug("*********** initial response from NGX: {}".format(resp))
             bind_preference(self, "username", "pychron.spectrometer.ngx.username")
             bind_preference(self, "password", "pychron.spectrometer.ngx.password")
 

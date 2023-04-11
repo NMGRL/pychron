@@ -528,7 +528,6 @@ class LabnumberEntry(DVCIrradiationable):
                 return True
 
     def check_monitor_name(self):
-
         if self.use_consecutive_identifiers:
             return
 
@@ -681,6 +680,9 @@ class LabnumberEntry(DVCIrradiationable):
         db = self.dvc.db
 
         if not self.dvc.meta_repo.smart_pull():
+            self.warning_dialog(
+                "Saving to database aborted. Failed pulling Meta Repo. Please contact an expert"
+            )
             return
 
         n = len(self.irradiated_positions)
@@ -779,7 +781,7 @@ class LabnumberEntry(DVCIrradiationable):
 
         if self.dvc.meta_repo.has_staged():
             self.dvc.meta_commit("Labnumber Entry Save")
-            self.dvc.meta_push()
+            self.dvc.meta_push(inform=True)
 
     def _increment(self, name):
         """
@@ -863,7 +865,6 @@ THIS CHANGE CANNOT BE UNDONE"
 
     # @simple_timer()
     def _update_level(self, name=None, debug=False):
-
         if name is None:
             name = self.level
 
@@ -1154,7 +1155,6 @@ THIS CHANGE CANNOT BE UNDONE"
             self.level = new_level
 
     def _irradiation_changed(self, old, new):
-
         if self.irradiation:
             self._old_irradiation = old
             self.level = ""

@@ -194,6 +194,8 @@ class Updater(Loggable):
                             #             "may be required. Set CONDA_ENV and CONDA_DISTRO environment "
                             #             "variables to resolve this issue"
                             #         )
+                            # self._install_dependencies_edm()
+
                             if os.getenv("PYCHRON_UPDATE_DATABASE", False):
                                 self._update_database()
 
@@ -254,7 +256,13 @@ class Updater(Loggable):
                 "PYCHRON_ALEMBIC_URL is correct"
             )
 
-    def _install_dependencies(self, conda_distro, conda_env):
+    def _install_dependencies_pip(self):
+        from library_manager import LibraryManager
+
+        lm = LibraryManager()
+        lm.install_dependencies()
+
+    def _install_dependencies_conda(self, conda_distro, conda_env):
         # install dependencies
         root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 

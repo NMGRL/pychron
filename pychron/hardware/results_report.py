@@ -79,7 +79,6 @@ class ResultsReport(Loggable):
         self.results.append(Result(*args))
 
     def traits_view(self):
-
         self.results = sorted(self.results, key=lambda r: r.key)
         v = View(
             Item(

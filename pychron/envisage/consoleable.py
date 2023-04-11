@@ -32,7 +32,7 @@ class Consoleable(Loggable):
     use_message_colormapping = Bool
     console_display = Instance("pychron.core.displays.display.DisplayController")
     # console_updated = Event
-    console_bgcolor = LIGHT_YELLOW
+    console_bgcolor = Color(LIGHT_YELLOW)
     console_fontsize = Int(11)
     console_default_color = Color("black")
 

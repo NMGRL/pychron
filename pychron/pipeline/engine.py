@@ -379,6 +379,25 @@ class PipelineEngine(Loggable):
         if info.result:
             agv.save(ans, self.dvc)
 
+    def unknowns_set_fixed_plateau(self):
+        items = self.selected_unknowns
+        if not items:
+            items = self.selected.unknowns
+
+        if len(items) > 1:
+            s, e = items[0], items[-1]
+            gs = self.selected.editor.get_analysis_groups()
+            for gi in gs:
+                if s in gi.analyses:
+                    gi.calculate_fixed_plateau = True
+                    gi.fixed_step_low = s.step
+                    gi.fixed_step_high = e.step
+
+                    self.selected.editor.figure_model.force_refresh_panels = False
+                    self.selected.editor.refresh_needed = True
+                    self.selected.editor.figure_model.force_refresh_panels = True
+                    break
+
     def unknowns_clear_all_grouping(self):
         self._set_grouping(self.selected.unknowns, 0)
 
@@ -401,10 +420,20 @@ class PipelineEngine(Loggable):
         self.refresh_figure_editors()
 
     def group_selected(self, key):
-        items = self.selected.unknowns
-        max_gid = max([getattr(si, key) for si in items]) + 1
+        # if there are multiple graphs only get the analyses from the selected graph
+        if key != "graph_id":
+            # e.g. key=='group_id'
+            items = self.selected_unknowns
+            graph_id = items[0].graph_id
+            items = [i for i in items if i.graph_id == graph_id]
+            items_to_set = items
+        else:
+            # graph grouping
+            items = self.selected.unknowns
+            items_to_set = self.selected_unknowns
 
-        self._set_grouping(self.selected_unknowns, max_gid, attr=key)
+        max_gid = max([getattr(si, key) for si in items]) + 1
+        self._set_grouping(items_to_set, max_gid, attr=key)
 
     def unknowns_toggle_status(self):
         for i in self.selected_unknowns:
@@ -437,7 +466,6 @@ class PipelineEngine(Loggable):
                 ("Ideogram", IdeogramNode, IdeogramEditor),
                 ("Spectrum", SpectrumNode, SpectrumEditor),
             ):
-
                 if isinstance(node, klass):
                     e = node.editor
                     es = [
@@ -756,7 +784,6 @@ class PipelineEngine(Loggable):
         for idx, node in enumerate(self.pipeline.iternodes(None)):
             if node.enabled:
                 with ActiveCTX(node):
-
                     if not node.pre_run(state, configure=False):
                         self.debug("Pre run failed {}".format(node))
                         return True
@@ -830,7 +857,6 @@ class PipelineEngine(Loggable):
             configure = False
 
         for idx, node in enumerate(pipeline.iternodes(start_node)):
-
             if node.enabled:
                 # node.editor = None
 

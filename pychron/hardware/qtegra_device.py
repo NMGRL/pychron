@@ -57,7 +57,6 @@ class QtegraDevice(CoreDevice):
     _parameters = Dict
 
     def load_additional_args(self, config):
-
         section = "Parameters"
         if config.has_section(section):
             for opt in config.options(section):

@@ -131,7 +131,6 @@ class NuFileSource(FileSource):
         signals = array(signals)
 
         with open(self.nice_path, "r") as nice:
-
             isotopes = {}
             parser = NiceParser(signals)
             for line in nice:

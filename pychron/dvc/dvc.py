@@ -60,7 +60,7 @@ from pychron.dvc.meta_repo import MetaRepo, get_frozen_flux, get_frozen_producti
 from pychron.dvc.tasks.dvc_preferences import DVCConnectionItem
 from pychron.dvc.util import Tag, DVCInterpretedAge
 from pychron.envisage.browser.record_views import InterpretedAgeRecordView
-from pychron.experiment.utilities.runid import make_increment
+from pychron.experiment.utilities.runid import make_increment, make_runid
 from pychron.git.hosts import IGitHost
 from pychron.git.hosts.local import LocalGitHostService
 from pychron.git_archive.author_view import GitCommitAuthorView
@@ -119,6 +119,7 @@ class DVC(Loggable):
     irradiation_prefix = Str
     irradiation_project_prefix = Str
 
+    git_service = None
     _cache = None
     _uuid_runid_cache = None
     _pull_cache = None
@@ -151,6 +152,21 @@ class DVC(Loggable):
 
         if self.db.connect():
             return True
+
+    def get_data_reduction_loads(self):
+        return self.meta_repo.get_data_reduction_loads()
+
+    def save_data_reduction_manifest(self, manifest):
+        self.meta_repo.save_data_reduction_manifest(manifest)
+
+    def save_data_reduction_loads(self, objs):
+        self.meta_repo.save_data_reduction_loads(objs)
+
+    def backup_data_reduction_loads(self):
+        self.meta_repo.backup_data_reduction_loads()
+
+    def share_data_reduction_loads(self):
+        self.meta_repo.share_data_reduction_loads()
 
     def fix_identifier(
         self,
@@ -371,6 +387,48 @@ class DVC(Loggable):
         #         self._uuid_runid_cache[uuid] = r
         # return r
 
+    def find_record(self, r):
+        def update_record(jobj):
+            r.record_id = make_runid(
+                jobj["identifier"], jobj["aliquot"], jobj["increment"]
+            )
+            r.irradiation = jobj["irradiation"]
+            r.irradiation_level = jobj["irradiation_level"]
+            r.irradiation_position = jobj["irradiation_position"]
+
+        path = analysis_path(
+            (r.uuid, r.record_id), r.repository_identifier, root=r.repository_root
+        )
+        if path:
+            with open(path, "r") as rfile:
+                jobj = json.load(rfile)
+                update_record(jobj)
+            return [jobj]
+        elif r.uuid:
+            # analysis may have been saved using record_id as the path instead of the uuid
+            # search for a match
+            root = os.path.join(r.repository_root, r.repository_identifier)
+            potential = []
+            for cd in os.listdir(root):
+                if cd.startswith("."):
+                    continue
+                cd = os.path.join(root, cd)
+                if os.path.isdir(cd):
+                    for f in os.listdir(cd):
+                        if f.startswith("."):
+                            continue
+
+                        p = os.path.join(cd, f)
+                        if p.endswith(".json"):
+                            with open(p, "r") as rfile:
+                                jobj = json.load(rfile)
+                                juuid = jobj.get("uuid", "")
+                                if r.uuid == juuid[: len(r.uuid)]:
+                                    potential.append(jobj)
+                                    update_record(jobj)
+                                    # return True
+            return potential
+
     def find_reference_repos(self, repo):
         irradiations = self.db.get_repository_irradiations(repo)
         low, high = self.db.get_repository_analyses_date_range(repo)
@@ -397,7 +455,7 @@ class DVC(Loggable):
         repos.extend(
             ["{}{}".format(irradiation_project_prefix, ir) for ir in irradiations]
         )
-
+        self.debug("reference repos {}".format(repos))
         return list(set(repos))
 
     def find_associated_identifiers(self, samples):
@@ -572,7 +630,6 @@ class DVC(Loggable):
         return ps
 
     def repository_transfer(self, ans, dest):
-
         destrepo = self._get_repository(dest, as_current=False)
         for src, ais in groupby_repo(ans):
             repo = self._get_repository(src, as_current=False)
@@ -736,7 +793,6 @@ class DVC(Loggable):
         return mod_repositories
 
     def update_analyses(self, ans, modifiers, msg, author=None):
-
         author = self.get_author(author)
 
         if not isinstance(modifiers, (list, tuple)):
@@ -780,7 +836,14 @@ class DVC(Loggable):
             self._update_current_age(ai)
 
     def save_icfactors(
-        self, ai, dets, fits, refs, use_source_correction, standard_ratios
+        self,
+        ai,
+        dets,
+        fits,
+        refs,
+        use_source_correction,
+        standard_ratios,
+        reference_data,
     ):
         if use_source_correction:
             ai.dump_source_correction_icfactors(refs)
@@ -788,7 +851,12 @@ class DVC(Loggable):
             if fits and dets:
                 self.info("Saving icfactors for {}".format(ai))
                 ai.dump_icfactors(
-                    dets, fits, refs, reviewed=True, standard_ratios=standard_ratios
+                    dets,
+                    fits,
+                    refs,
+                    reviewed=True,
+                    standard_ratios=standard_ratios,
+                    reference_data=reference_data,
                 )
 
         if self._cache:
@@ -896,7 +964,6 @@ class DVC(Loggable):
     #         self._update_current_age(ai)
 
     def save_csv_dataset(self, name, repository, lines, local_path=False):
-
         if local_path:
             p = add_extension(local_path, ".csv")
         else:
@@ -964,7 +1031,6 @@ class DVC(Loggable):
     def find_references_by_load(self, load, atypes, make_records=True, **kw):
         records = self.db.find_references_by_load(load, atypes, **kw)
         if records:
-
             for r in records:
                 r.bind()
 
@@ -1036,6 +1102,10 @@ class DVC(Loggable):
         quick=False,
         use_progress=True,
         pull_frequency=None,
+        use_cached=True,
+        sync_repo=True,
+        use_flux_histories=True,
+        warn=True,
     ):
         if not records:
             return []
@@ -1045,7 +1115,7 @@ class DVC(Loggable):
         # load repositories
         st = time.time()
 
-        if self.use_cache:
+        if self.use_cache and use_cached:
             cached_records = []
             nrecords = []
             cache = self._cache
@@ -1065,21 +1135,23 @@ class DVC(Loggable):
                 prog.change_message("Syncing repository= {}".format(xi))
             try:
                 self.sync_repo(xi, use_progress=False, pull_frequency=pull_frequency)
-            except BaseException:
+            except BaseException as e:
+                print("sync repo", e)
                 pass
 
         bad_records = [r for r in records if r.repository_identifier is None]
         if bad_records:
-            self.warning_dialog(
-                "Missing Repository Associations. Contact an expert!"
-                'Cannot load analyses "{}"'.format(
-                    ",".join([r.record_id for r in bad_records])
+            if warn:
+                self.warning_dialog(
+                    "Missing Repository Associations. Contact an expert!"
+                    'Cannot load analyses "{}"'.format(
+                        ",".join([r.record_id for r in bad_records])
+                    )
                 )
-            )
             records = [r for r in records if r.repository_identifier is not None]
 
         if not records:
-            if self.use_cache:
+            if self.use_cache and use_cached:
                 cache.clean()
                 return cached_records
             else:
@@ -1087,14 +1159,16 @@ class DVC(Loggable):
 
         exps = {r.repository_identifier for r in records}
 
-        if use_progress:
-            progress_iterator(exps, func, threshold=1)
-        else:
-            for ei in exps:
-                self.sync_repo(ei, use_progress=False)
+        if sync_repo:
+            if use_progress:
+                progress_iterator(exps, func, threshold=1)
+            else:
+                for ei in exps:
+                    self.sync_repo(ei, use_progress=False)
         try:
             branches = {ei: get_repository_branch(repository_path(ei)) for ei in exps}
-        except NoSuchPathError:
+        except NoSuchPathError as e:
+            print("e", e)
             return []
 
         flux_histories = {}
@@ -1146,14 +1220,17 @@ class DVC(Loggable):
                         fluxes[irrad] = flux_levels
                         productions[irrad] = prod_levels
 
-                    key = "{}{}".format(irrad, level)
-                    if key not in flux_histories:
-                        c = meta_repo.get_flux_history(irrad, level, max_count=1)
-                        v = None
-                        if c:
-                            c = c[0]
-                            v = "{} ({})".format(c.date.strftime(DATE_FORMAT), c.author)
-                        flux_histories[key] = v
+                    if use_flux_histories:
+                        key = "{}{}".format(irrad, level)
+                        if key not in flux_histories:
+                            c = meta_repo.get_flux_history(irrad, level, max_count=1)
+                            v = None
+                            if c:
+                                c = c[0]
+                                v = "{} ({})".format(
+                                    c.date.strftime(DATE_FORMAT), c.author
+                                )
+                            flux_histories[key] = v
 
                 if (
                     use_cocktail_irradiation
@@ -1181,6 +1258,7 @@ class DVC(Loggable):
                     sample_prep=sample_prep,
                     quick=quick,
                     reload=reload,
+                    warn=warn,
                     *args
                 )
             except BaseException:
@@ -1209,7 +1287,7 @@ class DVC(Loggable):
 
         nn = len(records)
         if len(records) != n:
-            if not self.confirmation_dialog(
+            if warn and not self.confirmation_dialog(
                 "Failed making {} of {} analyses. "
                 "Are you sure you want to continue?".format(nn - n, nn)
             ):
@@ -1271,7 +1349,6 @@ class DVC(Loggable):
 
     def get_author(self, author=None):
         if not self.use_default_commit_author:
-
             if self._author:
                 author = self._author
             elif author is None:
@@ -1365,35 +1442,50 @@ class DVC(Loggable):
 
             repo = self._get_repository(name)
             repo.pull(use_progress=use_progress, use_auto_pull=self.use_auto_pull)
+
+            # merge any new commits on the data_collection branch to this branch
+            try:
+                repo.merge("origin/data_collection", inform=False)
+            except BaseException:
+                self.debug(
+                    "merge with origin/data_collection failed. This is not an issue if you are only using local "
+                    "repos"
+                )
+
             return True
         else:
             self.debug("getting repository from remote")
 
-            service = self.application.get_service(IGitHost)
+            service = self.git_service
+            if not service:
+                service = self.application.get_service(IGitHost)
+
             if not service:
                 return True
             else:
-                if service.clone_from(name, root, self.organization):
+                if isinstance(service, LocalGitHostService):
+                    service.create_empty_repo(name)
+
                     return True
+                elif service.clone_from(name, root, self.organization):
+                    repo = self._get_repository(name)
+                    repo.merge("origin/data_collection", inform=False)
+                    return True
+                else:
+                    self.warning_dialog(
+                        "name={} not in available repos "
+                        "from service={}, organization={}".format(
+                            name, service.remote_url, self.organization
+                        )
+                    )
+                    names = self.remote_repository_names()
+                    for ni in names:
+                        self.debug("available repo== {}".format(ni))
+
                 # names = self.remote_repository_names()
                 # if name in names:
                 #     service.clone_from(name, root, self.organization)
                 #     return True
-                else:
-                    if isinstance(service, LocalGitHostService):
-                        service.create_empty_repo(name)
-                        return True
-                    else:
-
-                        self.warning_dialog(
-                            "name={} not in available repos "
-                            "from service={}, organization={}".format(
-                                name, service.remote_url, self.organization
-                            )
-                        )
-                        names = self.remote_repository_names()
-                        for ni in names:
-                            self.debug("available repo== {}".format(ni))
 
     def rollback_repository(self, expid):
         repo = self._get_repository(expid)
@@ -1468,7 +1560,6 @@ class DVC(Loggable):
         self.meta_repo.update_flux(*args, **kw)
 
     def set_identifier(self, irradiation, level, position, identifier):
-
         dbpos = self.db.get_irradiation_position(irradiation, level, position)
         if dbpos:
             dbpos.identifier = identifier
@@ -1491,8 +1582,8 @@ class DVC(Loggable):
     def meta_pull(self, **kw):
         return self.meta_repo.smart_pull(**kw)
 
-    def meta_push(self):
-        self.meta_repo.push()
+    def meta_push(self, *args, **kw):
+        self.meta_repo.push(*args, **kw)
 
     def meta_add_all(self):
         self.meta_repo.add_unstaged(paths.meta_root, add_all=True)
@@ -1563,7 +1654,6 @@ class DVC(Loggable):
             ialabels.append("{} {} {}".format(ia.name, ia.identifier, ia.sample))
 
         if self.repository_add_paths(rid, ps):
-
             sparrow = self.application.get_service(
                 "pychron.sparrow.sparrow_client.SparrowClient"
             )
@@ -2123,6 +2213,7 @@ class DVC(Loggable):
         calculate_f_only=False,
         reload=False,
         quick=False,
+        warn=True,
     ):
         meta_repo = self.meta_repo
         if prog:
@@ -2153,6 +2244,9 @@ class DVC(Loggable):
         if isinstance(record, DVCAnalysis) and not reload:
             a = record
         else:
+            if isinstance(record, DVCAnalysis):
+                record = self.db.get_analysis_uuid(record.uuid)
+
             # self.debug('use_repo_suffix={} record_id={}'.format(record.use_repository_suffix, record.record_id))
             rid = record.record_id
             uuid = record.uuid
@@ -2161,13 +2255,14 @@ class DVC(Loggable):
                 a = DVCAnalysis(uuid, rid, expid)
             except AnalysisNotAnvailableError:
                 self.debug("uuid={}, rid={}, expid={}".format(uuid, rid, expid))
-                self.warning_dialog(
-                    "Analysis {} not in local repository {}. "
-                    "You may need to pull changes. If local repository is up to date you may "
-                    "need to push changes from the data collection computer".format(
-                        rid, expid
+                if warn:
+                    self.warning_dialog(
+                        "Analysis {} not in local repository {}. "
+                        "You may need to pull changes. If local repository is up to date you may "
+                        "need to push changes from the data collection computer".format(
+                            rid, expid
+                        )
                     )
-                )
                 return
 
             a.group_id = record.group_id
@@ -2177,8 +2272,10 @@ class DVC(Loggable):
                 a.sample_prep_comment = sample_prep.get(
                     record.irradiation_position.sample.id
                 )
-
-            a.sample_note = record.irradiation_position.sample.note or ""
+            try:
+                a.sample_note = record.irradiation_position.sample.note or ""
+            except AttributeError as e:
+                self.debug("unable to set sample note. Error={}".format(e))
 
             if not quick:
                 a.load_name = record.load_name
@@ -2428,7 +2525,6 @@ class DVC(Loggable):
             ("productions", self._add_default_irradiation_productions),
             ("load holders", self._add_default_load_holders),
         ):
-
             d = os.path.join(self.meta_repo.path, tag.replace(" ", "_"))
             if not os.path.isdir(d):
                 os.mkdir(d)

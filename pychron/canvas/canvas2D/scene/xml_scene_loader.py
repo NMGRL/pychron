@@ -62,6 +62,9 @@ class XMLLoader(BaseLoader):
         return [float(i) for i in elem.find(name).text.split(",")]
 
     def _get_translation(self, elem, name="translation"):
+        if isinstance(elem, dict):
+            elem = elem["translation"]
+
         x, y = elem.find(name).text.split(",")
         try:
             x = float(x)
@@ -97,7 +100,6 @@ class XMLLoader(BaseLoader):
     def _new_rectangle(
         self, scene, elem, c, bw=3, layer=1, origin=None, klass=None, type_tag=""
     ):
-
         if klass is None:
             klass = RoundedRectangle
         if origin is None:

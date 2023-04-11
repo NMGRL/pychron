@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 
+
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -140,6 +141,10 @@ def to_int(i):
     except ValueError:
         pass
     return i
+
+
+def streq(a, b):
+    return a and b and a.casefold() == b.casefold()
 
 
 if __name__ == "__main__":

@@ -41,6 +41,12 @@ class FitOptions(AuxPlotFigureOptions):
     available_types = List(transient=True)
     reference_types = List(transient=True)
 
+    def setup(self):
+        super(FitOptions, self).setup()
+        c = self.aux_plot_klass()
+        for a in self.aux_plots:
+            a.error_types = c.error_types
+
     def set_names(self, names, clear_missing=True):
         for ai in self.aux_plots:
             if clear_missing and ai.name not in names:

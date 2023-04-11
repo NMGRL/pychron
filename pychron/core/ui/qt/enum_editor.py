@@ -63,6 +63,9 @@ class myEnumEditor(BasicEditorFactory):
 
     disable_scroll = Bool(True)
 
+    use_separator = Bool(False)
+    separator = Str
+
     def _values_changed(self):
         """Recomputes the mappings whenever the **values** trait is changed."""
         self._names, self._mapping, self._inverse_mapping = enum_values_changed(

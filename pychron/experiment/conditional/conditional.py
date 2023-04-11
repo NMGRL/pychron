@@ -18,6 +18,7 @@
 
 import os
 import pprint
+import json
 
 from traits.api import Str, Either, Int, Callable, Bool, Float, Enum, List
 
@@ -256,7 +257,6 @@ class AutomatedRunConditional(BaseConditional):
     _analysis_types_logged = False
 
     def __init__(self, teststr, start_count=0, frequency=1, *args, **kw):
-
         self.active = True
         # self.attr = attr
         self.teststr = teststr
@@ -326,7 +326,6 @@ class AutomatedRunConditional(BaseConditional):
             if isinstance(cnt, bool):
                 return cnt
             else:
-
                 ocnt = cnt - self.start_count
 
                 b = ocnt > 0
@@ -408,6 +407,35 @@ class AutomatedRunConditional(BaseConditional):
             new = obj.get_interpolated_value(temp)
             nts = nts.replace(temp, str(new))
         return nts
+
+
+class StatefullConditional(AutomatedRunConditional):
+    _state = None
+
+    def check(self, run, data, cnt):
+        self._load_state()
+        ret = super(StatefullConditional, self).check(run, data, cnt)
+        self._dump_state()
+        return ret
+
+    def _load_state(self):
+        p = self.persistence_path
+        if os.path.isfile(p):
+            self.debug("dump state from {}".format(p))
+            with open(p, "r") as rfile:
+                self._state = json.load(rfile)
+
+    def _dump_state(self):
+        p = self.persistence_path
+        self.debug("dump state to {}".format(p))
+        with open(p, "w") as wfile:
+            json.dump(self._state, wfile)
+
+    @property
+    def persistence_path(self):
+        return os.path.join(
+            paths.appdata_dir, "{}.conditional.json".format(self._hash_id())
+        )
 
 
 class TruncationConditional(AutomatedRunConditional):
@@ -562,7 +590,6 @@ class QueueModificationConditional(AutomatedRunConditional):
         self._skip_n_runs(runs, current_run, 1)
 
     def _skip_aliquot(self, queue, runs, current_run):
-
         identifier = current_run.spec.identifier
         aliquot = current_run.spec.aliquot
         for r in runs:
@@ -589,7 +616,6 @@ class QueueModificationConditional(AutomatedRunConditional):
                 pass
 
     def _set_extract(self, queue, runs, current_run):
-
         es = self.extraction_str
 
         identifier = current_run.spec.identifier

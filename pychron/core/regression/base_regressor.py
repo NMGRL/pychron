@@ -276,7 +276,6 @@ class BaseRegressor(HasTraits):
         raise NotImplementedError
 
     def calculate_pearsons_r(self, X, Y):
-
         Xbar = X.mean()
         Ybar = Y.mean()
 
@@ -401,7 +400,6 @@ class BaseRegressor(HasTraits):
         return ((x - xm) ** 2).sum()
 
     def tostring(self, sig_figs=5):
-
         cs = self.coefficients[::-1]
         ce = self.coefficient_errors[::-1]
 
@@ -465,7 +463,6 @@ class BaseRegressor(HasTraits):
         return cors
 
     def _calculate_confidence_interval(self, x, observations, rx, confidence=95):
-
         alpha = 1.0 - confidence / 100.0
 
         n = len(observations)

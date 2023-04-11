@@ -177,7 +177,6 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         p = self.open_file_dialog()
         if p is not None:
             with open(p, "r") as rfile:
-
                 positions = reversed(rfile.readlines())
                 for cpos in positions:
                     arun = next(
@@ -455,7 +454,6 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
 
         self._no_update = True
         if run is not None:
-
             self.automated_runs.remove(run)
             self.executed_runs.append(run)
 
@@ -474,7 +472,6 @@ class ExperimentQueue(BaseExperimentQueue, SelectSameMixin):
         return ci
 
     def paste_function(self, obj):
-
         ci = obj.clone_traits()
         ci.state = "not run"
         ci.aliquot = 0

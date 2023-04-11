@@ -287,7 +287,6 @@ class PatternExecutor(Patternable):
         controller = self.controller
         pattern = self.pattern
         if controller is not None:
-
             kind = pattern.kind
             if kind == "ArcPattern":
                 self._execute_arc(controller, pattern)
@@ -332,7 +331,6 @@ class PatternExecutor(Patternable):
         controller.arc_move(pattern.cx, pattern.cy, pattern.degrees, block=True)
 
     def _execute_seek(self, controller, pattern):
-
         duration = pattern.duration
         total_duration = pattern.total_duration
 
@@ -370,7 +368,6 @@ class PatternExecutor(Patternable):
         GUI.invoke_later(self._info.dispose)
 
     def _dragonfly_peak(self, st, pattern, lm, controller):
-
         # imgplot, imgplot2, imgplot3 = pattern.setup_execution_graph()
         # imgplot, imgplot2 = pattern.setup_execution_graph()
         imgplot, imgplot2 = pattern.setup_execution_graph(nplots=2)
@@ -480,7 +477,6 @@ class PatternExecutor(Patternable):
                 self.debug("generating new point={},{} ---- {},{}".format(x, y, px, py))
 
             else:
-
                 point_gen = None
 
                 # # wait = True

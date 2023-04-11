@@ -192,6 +192,7 @@ class IsotopicMeasurement(BaseMeasurement):
     use_stored_value = False
     reviewed = False
     ic_factor_reviewed = False
+    ic_factor_fit = None
 
     _value = 0
     _error = 0
@@ -339,7 +340,6 @@ class IsotopicMeasurement(BaseMeasurement):
         use_standard_deviation_filtering=False,
         use_iqr_filtering=False,
     ):
-
         self.filter_outliers_dict = {
             "filter_outliers": filter_outliers,
             "iterations": iterations,
@@ -369,7 +369,6 @@ class IsotopicMeasurement(BaseMeasurement):
             elif isinstance(fit, dict):
                 self.attr_set(**fit)
             else:
-
                 fitname = fit.fit
                 if fitname == AUTO_N:
                     fitname = fit.auto_fit(self.n)
@@ -692,6 +691,8 @@ class Isotope(BaseIsotope):
     discrimination = None
     interference_corrected_value = None
     blank_source = ""
+
+    klass = 1
 
     def __init__(self, name, detector):
         BaseIsotope.__init__(self, name, detector)

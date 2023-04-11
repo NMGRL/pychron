@@ -55,7 +55,6 @@ Do you want to send these parameters to the spectrometer?
             p
         )
         if self.confirmation_dialog(msg):
-
             if self.spectrometer:
                 self.spectrometer.send_configuration()
 

@@ -18,10 +18,15 @@
 from itertools import groupby
 from operator import attrgetter
 
-from chaco.scatter_inspector_overlay import ScatterInspectorOverlay
-from chaco.scatterplot import ScatterPlot
+try:
+    from chaco.overlays.scatter_inspector_overlay import ScatterInspectorOverlay
+    from chaco.plots.scatterplot import ScatterPlot
+except ImportError:
+    from chaco.api import ScatterInspectorOverlay, ScatterPlot
+
 from enable.component_editor import ComponentEditor
 from numpy import poly1d, linspace
+from pyface.action.menu_manager import MenuManager
 from traits.api import (
     Int,
     Property,
@@ -46,6 +51,7 @@ from traitsui.api import (
     VSplit,
     EnumEditor,
 )
+from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
 # ============= standard library imports ========================
@@ -67,7 +73,13 @@ from pychron.options.views.views import view
 from pychron.pipeline.plot.figure_container import FigureContainer
 from pychron.pipeline.plot.models.regression_series_model import RegressionSeriesModel
 from pychron.pipeline.results.iso_evo import ISO_EVO_RESULT_ARGS
-from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA, LIGHT_RED
+from pychron.pychron_constants import (
+    PLUSMINUS_ONE_SIGMA,
+    LIGHT_RED,
+    LIGHT_YELLOW,
+    BAD,
+    GOOD,
+)
 
 
 class IsoEvolutionResultsAdapter(TabularAdapter):
@@ -100,10 +112,16 @@ class IsoEvolutionResultsAdapter(TabularAdapter):
         return item.tooltip
 
     def get_bg_color(self, obj, trait, row, column=0):
+        color = None
+        item = getattr(obj, trait)[row]
         if not obj.display_only_bad:
-            item = getattr(obj, trait)[row]
             if not item.goodness:
-                return LIGHT_RED
+                color = LIGHT_RED
+
+        if not item.klass:
+            color = LIGHT_YELLOW
+
+        return color
 
     def _get_intercept_value_text(self):
         return self._format_number("intercept_value")
@@ -143,11 +161,15 @@ class IsoResultInspector(PointInspector):
 
 class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
     results = List
+    refresh_needed = Event
     adapter = Instance(IsoEvolutionResultsAdapter, ())
     dclicked = Event
     display_only_bad = Bool
     view_bad_button = Button("View Flagged")
     view_selected_button = Button("View Selected")
+    classify_good_button = Button("Classify Good")
+    classify_bad_button = Button("Classify Bad")
+
     selected = List
     xarg = Str("intercept_value")
     yarg = Str("slope")
@@ -287,12 +309,24 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
 
         self._show_results(ans)
 
+    def _classify_good_button_fired(self):
+        for s in self.selected:
+            s.klass = GOOD
+            s.isotope_obj.klass = GOOD
+
+        self.refresh_needed = True
+
+    def _classify_bad_button_fired(self):
+        for s in self.selected:
+            s.klass = BAD
+            s.isotope_obj.klass = BAD
+        self.refresh_needed = True
+
     def _view_bad_button_fired(self):
         ans = list({r.analysis for r in self.oresults if not r.goodness})
         self._show_results(ans)
 
     def _show_results(self, ans):
-
         c = FigureContainer()
         pom = RegressionSeriesOptionsManager()
         names = list({k for a in ans for k in a.isotope_keys})
@@ -331,6 +365,8 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
             Item("display_only_bad", label="Show Flagged Only"),
             UItem("view_bad_button"),
             UItem("view_selected_button"),
+            UItem("classify_good_button"),
+            UItem("classify_bad_button"),
         )
         ggrp = VGroup(
             VSplit(
@@ -352,6 +388,7 @@ class IsoEvolutionResultsEditor(BaseTraitsEditor, ColumnSorterMixin):
                 editor=TabularEditor(
                     adapter=self.adapter,
                     editable=False,
+                    refresh="refresh_needed",
                     multi_select=True,
                     selected="selected",
                     column_clicked="column_clicked",

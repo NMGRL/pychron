@@ -155,7 +155,6 @@ class Video(Image):
         self.width = 640
         self.height = 480
         if self.cap is None or force:
-
             if globalv.video_test:
                 self.cap = 1
             else:
@@ -174,7 +173,6 @@ class Video(Image):
                     elif identifier.startswith('toupcam'):
                         self.cap = ToupCamCamera()
                 else:
-
                     # ideally an identifier is passed in
                     try:
                         self.cap = get_capture_device()

@@ -68,7 +68,6 @@ class MotionProfiler(ConfigLoadable):
             self.write_configuration(config)
 
     def check_motion(self, displacement, obj, force=False):
-
         mv = obj.velocity
         mac = obj.acceleration
         mdc = obj.deceleration
@@ -105,7 +104,6 @@ class MotionProfiler(ConfigLoadable):
         return change, nv, max(0.1, nac), max(0.1, ndc)
 
     def calculate_corrected_parameters(self, cnt, displacement, acc, dec):
-
         vel = (displacement * 2 * acc / 3.0) ** 0.5
         vel = min(self.max_velocity, vel)
         vel = max(self.min_velocity, vel)

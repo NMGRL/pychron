@@ -63,7 +63,6 @@ class InterpolationRegressor(BaseRegressor):
         es = self.yserr
 
         if self._check_integrity(xs, ys) and self._check_integrity(ys, es):
-
             if direction == "before":
                 try:
                     ti = where(xs <= timestamp)[0][-1]
@@ -113,7 +112,6 @@ class InterpolationRegressor(BaseRegressor):
             elif tm <= x[0]:
                 v = self.yserr[0] if attr == "error" else self.ys[0]
             else:
-
                 if attr == "error":
                     """
                     geometrically sum the errors and weight by the fractional difference

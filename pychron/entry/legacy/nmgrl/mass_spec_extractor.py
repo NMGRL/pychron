@@ -94,7 +94,6 @@ class MassSpecExtractor(Loggable):
         self.db.connect()
 
     def import_irradiation(self, dest, name, progress, dry_run=True, **kw):
-
         self.connect()
         p, c = unique_path(paths.data_dir, "import")
         self._import_err_file = open(p, "w")
@@ -442,7 +441,6 @@ class MassSpecExtractor(Loggable):
             ln = bi.RID
 
             if not ln.startswith("bu"):
-
                 hid = bi.HeatingItemName
                 if hid in ("Eurotherm", "Furnace"):
                     ed = "F"
@@ -576,7 +574,6 @@ class MassSpecExtractor(Loggable):
         _ed_cache=[],
         _an_cache=[],
     ):
-
         # =======================================================================
         # add analysis
         # =======================================================================
@@ -664,7 +661,6 @@ class MassSpecExtractor(Loggable):
 
         ic_hist = None
         for iso in dbanalysis.isotopes:
-
             pkt = iso.peak_time_series[-1]
             blob = pkt.PeakTimeBlob
             endianness = ">"

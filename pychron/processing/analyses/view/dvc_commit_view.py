@@ -30,6 +30,7 @@ from traits.api import (
     Either,
     Float,
     on_trait_change,
+    Instance,
 )
 from traitsui.api import (
     View,
@@ -42,6 +43,7 @@ from traitsui.api import (
     VSplit,
 )
 from traitsui.tabular_adapter import TabularAdapter
+from uncertainties import nominal_value, std_dev
 
 from pychron import json
 from pychron.core.helpers.formatting import floatfmt
@@ -63,9 +65,10 @@ class HistoryCommitAdapter(CommitAdapter):
 
 class DiffAdapter(TabularAdapter):
     columns = [("Name", "name"), ("First", "lhs"), ("Second", "rhs"), ("Dev %", "dev")]
-    name_width = Int(50)
-    lhs_width = Int(150)
-    rhs_width = Int(150)
+    name_width = Int(100)
+    lhs_width = Int(250)
+    rhs_width = Int(250)
+    dev_width = Int(100)
     color_first = Bool(True)
 
     def get_bg_color(self, obj, trait, row, column=0):
@@ -212,6 +215,15 @@ class DiffView(BaseDiffView):
         ]
         self.ovalues = vs
 
+    def diff_analyses(self, la, ra):
+        a = DiffValue("Age", la.age, ra.age)
+        b = DiffValue("Age Err", la.age_err, ra.age_err)
+        self.ovalues.append(a)
+        self.ovalues.append(b)
+        self.set_analysis_icfactors(la, ra)
+        self.set_analysis_blanks(la, ra)
+        self.set_analysis_intercepts(la, ra)
+
     def finish(self):
         self._filter_values()
 
@@ -231,47 +243,83 @@ class DiffView(BaseDiffView):
             self.tags = self.otags[:]
             self.isoevos = self.oisoevos[:]
 
-    def set_intercepts(self, aj, bj):
-        self.oisoevos = [
-            DiffValue(t, aj[name][k], bj[name][k])
-            for name in aj.keys()
-            if name != "reviewed"
-            for t, k in (
-                (name, "value"),
-                (PLUSMINUS_ONE_SIGMA, "error"),
-                ("Fit", "fit"),
-            )
-        ]
+    def set_analysis_intercepts(self, la, ra):
+        vs = self._set_analysis_values(la, ra, "", lambda x: x.uvalue, lambda x: x.fit)
+        self.oisoevos = vs
 
-    def set_blanks(self, aj, bj):
-        keys = list(aj.keys())
-        self.oblanks = [
-            DiffValue(t, aj[name][k], bj[name][k])
-            for name in aj.keys()
-            if name != "reviewed"
-            for t, k in (
-                (name, "value"),
-                (PLUSMINUS_ONE_SIGMA, "error"),
-                ("Fit", "fit"),
-            )
-        ]
+    def set_analysis_blanks(self, la, ra):
+        vs = self._set_analysis_values(
+            la, ra, "Blank", lambda x: x.blank.uvalue, lambda x: x.blank.fit
+        )
+        self.oblanks = vs
 
-    def set_icfactors(self, aj, bj):
-        self.oicfactors = [
-            DiffValue(t, aj[name][k], bj[name][k])
-            for name in aj.keys()
-            if name != "reviewed"
-            for t, k in (
-                (name, "value"),
-                (PLUSMINUS_ONE_SIGMA, "error"),
-                ("Fit", "fit"),
-            )
-        ]
+    def set_analysis_icfactors(self, la, ra):
+        icfs = self._set_analysis_values(
+            la, ra, "IC", lambda x: x.ic_factor, lambda x: x.ic_factor_fit
+        )
+        self.oicfactors = icfs
 
-    def set_tags(self, aj, bj):
-        print("a", aj)
-        print("b", bj)
-        self.otags = [DiffValue(name, aj[name], bj[name]) for name in ("name",)]
+    def _set_analysis_values(self, la, ra, tag, getter, fit_getter):
+        keys = la.isotope_keys
+        vs = []
+        for name in keys:
+            liso = la.get_isotope(name)
+            riso = ra.get_isotope(name)
+            lv = getter(liso)
+            rv = getter(riso)
+
+            a = DiffValue(
+                "{} {}".format(name, tag), nominal_value(lv), nominal_value(rv)
+            )
+            vs.append(a)
+            a = DiffValue(PLUSMINUS_ONE_SIGMA, std_dev(lv), std_dev(rv))
+            vs.append(a)
+            a = DiffValue("Fit", fit_getter(liso), fit_getter(riso))
+            vs.append(a)
+
+        return vs
+
+    # def set_intercepts(self, aj, bj):
+    #     self.oisoevos = [
+    #         DiffValue(t, aj[name][k], bj[name][k])
+    #         for name in aj.keys()
+    #         if name != "reviewed"
+    #         for t, k in (
+    #             (name, "value"),
+    #             (PLUSMINUS_ONE_SIGMA, "error"),
+    #             ("Fit", "fit"),
+    #         )
+    #     ]
+    #
+    # def set_blanks(self, aj, bj):
+    #     keys = list(aj.keys())
+    #     self.oblanks = [
+    #         DiffValue(t, aj[name][k], bj[name][k])
+    #         for name in aj.keys()
+    #         if name != "reviewed"
+    #         for t, k in (
+    #             (name, "value"),
+    #             (PLUSMINUS_ONE_SIGMA, "error"),
+    #             ("Fit", "fit"),
+    #         )
+    #     ]
+    #
+    # def set_icfactors(self, aj, bj):
+    #     self.oicfactors = [
+    #         DiffValue(t, aj[name][k], bj[name][k])
+    #         for name in aj.keys()
+    #         if name != "reviewed"
+    #         for t, k in (
+    #             (name, "value"),
+    #             (PLUSMINUS_ONE_SIGMA, "error"),
+    #             ("Fit", "fit"),
+    #         )
+    #     ]
+    #
+    # def set_tags(self, aj, bj):
+    #     print("a", aj)
+    #     print("b", bj)
+    #     self.otags = [DiffValue(name, aj[name], bj[name]) for name in ("name",)]
 
     def traits_view(self):
         v = View(
@@ -280,8 +328,12 @@ class DiffView(BaseDiffView):
                 VGroup(
                     UItem(
                         "values",
-                        editor=TabularEditor(adapter=DiffAdapter(), editable=False),
-                        height=-100,
+                        editor=TabularEditor(
+                            adapter=DiffAdapter(),
+                            stretch_last_section=False,
+                            editable=False,
+                        ),
+                        # height=-100,
                     )
                 ),
                 VGroup(
@@ -290,7 +342,7 @@ class DiffView(BaseDiffView):
                         editor=TabularEditor(
                             adapter=DiffAdapter(color_first=False), editable=False
                         ),
-                        height=-100,
+                        # height=-100,
                     ),
                     show_border=True,
                     label="Iso Evo",
@@ -302,7 +354,7 @@ class DiffView(BaseDiffView):
                         editor=TabularEditor(
                             adapter=DiffAdapter(color_first=False), editable=False
                         ),
-                        height=-100,
+                        # height=-100,
                     ),
                     show_border=True,
                     label="Blanks",
@@ -312,9 +364,11 @@ class DiffView(BaseDiffView):
                     UItem(
                         "icfactors",
                         editor=TabularEditor(
-                            adapter=DiffAdapter(color_first=False), editable=False
+                            adapter=DiffAdapter(color_first=False),
+                            stretch_last_section=False,
+                            editable=False,
                         ),
-                        height=-100,
+                        # height=-100,
                     ),
                     show_border=True,
                     label="ICFactors",
@@ -326,7 +380,7 @@ class DiffView(BaseDiffView):
                         editor=TabularEditor(
                             adapter=DiffAdapter(color_first=False), editable=False
                         ),
-                        height=-100,
+                        # height=-100,
                     ),
                     show_border=True,
                     label="Tags",
@@ -336,7 +390,7 @@ class DiffView(BaseDiffView):
             title="Diff {}".format(self.record_id),
             # title='{} Diff {}'.format(self.base_title, self.record_id),
             resizable=True,
-            width=500,
+            width=750,
         )
         return v
 
@@ -375,7 +429,6 @@ class DVCCommitView(HasTraits):
 
     def _do_diff_fired(self):
         if self.selected_commits:
-
             lhs = self.selected_lhs
             rhs = self.selected_rhs
 
@@ -385,29 +438,37 @@ class DVCCommitView(HasTraits):
             rhsid = rhs.hexsha[:8]
             rhsdate = rhs.date.isoformat()
 
-            diffs = []
-            for a in ("blanks", "icfactors", "intercepts"):
-                p = analysis_path(
-                    (self.uuid, self.record_id), self.repository_identifier, modifier=a
-                )
-                dd = get_diff(self.repo, lhs.hexsha, rhs.hexsha, p)
-                if dd:
-                    diffs.append((a, dd))
+            # diffs = []
+            # for a in ("blanks", "icfactors", "intercepts"):
+            #     p = analysis_path(
+            #         (self.uuid, self.record_id), self.repository_identifier, modifier=a
+            #     )
+            #     dd = get_diff(self.repo, lhs.hexsha, rhs.hexsha, p)
+            #     if dd:
+            #         diffs.append((a, dd))
 
-            if diffs:
+            # if diffs:
+            if lhsid != rhsid:
                 v = DiffView(self.record_id, lhsid, rhsid, lhsdate, rhsdate)
-                for a, (aa, bb) in diffs:
-                    func = getattr(v, "set_{}".format(a))
-
-                    a = aa.data_stream.read().decode("utf-8")
-                    b = bb.data_stream.read().decode("utf-8")
-                    func(json.loads(a), json.loads(b))
+                # for a, (aa, bb) in diffs:
+                #     func = getattr(v, "set_{}".format(a))
+                #     try:
+                #         a = aa.data_stream.read().decode("utf-8")
+                #         b = bb.data_stream.read().decode("utf-8")
+                #         func(json.loads(a), json.loads(b))
+                #     except ValueError:
+                #         pass
+                self._diff_hook(v)
                 v.finish()
                 open_view(v)
             else:
-                information(
-                    None, "No Differences between {} and {}".format(lhsid, rhsid)
-                )
+                information(None, "Select an earlier commit")
+                # information(
+                #     None, "No Differences between {} and {}".format(lhsid, rhsid)
+                # )
+
+    def _diff_hook(self, v):
+        pass
 
     def traits_view(self):
         v = View(
@@ -444,22 +505,73 @@ class HistoryView(DVCCommitView):
     name = "History"
     _paths = None
 
-    sample_prep_comment = Str
-    sample_note = Str
+    dvc = Instance("pychron.dvc.dvc.DVC")
+    _analysis = None
+
+    def _diff_hook(self, v):
+        repo = self.repo
+        abranch = repo.active_branch
+        # branchname = "history"
+
+        # deletes = [branchname]
+        rhs_an = self._analysis
+        ps = self._paths
+
+        try:
+            if self.selected_rhs.hexsha != abranch.commit.hexsha:
+                # branch = repo.create_head('rhs')
+                # branch.checkout()
+                repo.git.checkout(self.selected_rhs.hexsha, "--", ps)
+
+                rhs_an = self.dvc.make_analysis(
+                    self._analysis,
+                    use_cached=False,
+                    reload=True,
+                    sync_repo=False,
+                    use_flux_histories=False,
+                )
+                # deletes.append('rhs')
+
+            # branch = repo.create_head(branchname)
+            # branch.checkout()
+            repo.git.checkout(self.selected_lhs.hexsha, "--", ps)
+            lhs_an = self.dvc.make_analysis(
+                self._analysis,
+                use_cached=False,
+                reload=True,
+                sync_repo=False,
+                use_flux_histories=False,
+            )
+
+            v.diff_analyses(lhs_an, rhs_an)
+
+        except BaseException as e:
+            print("asdf", e)
+        finally:
+            # abranch.checkout()
+            repo.git.restore("--staged", ps)
+            repo.git.restore(ps)
+            # for d in deletes:
+            #     repo.delete_head(d)
 
     def _show_all_commits_changed(self):
         self._load_commits()
 
-    def initialize(self, an, force=False):
-        self.repo = Repo(
-            os.path.join(paths.repository_dataset_dir, an.repository_identifier)
-        )
-        self.record_id = an.record_id
-        self.repository_identifier = an.repository_identifier
-        self.sample_prep_comment = an.sample_prep_comment
-        self.sample_note = an.sample_note
+    def initialize(self, an, force=False, repo=None):
+        if repo is None:
+            repo = Repo(
+                os.path.join(paths.repository_dataset_dir, an.repository_identifier)
+            )
 
+        self.repo = repo
+        self.record_id = an.record_id
+        self.uuid = an.uuid
+        self.repository_identifier = an.repository_identifier
+        # self.sample_prep_comment = an.sample_prep_comment
+        # self.sample_note = an.sample_note
+        self._analysis = an
         ps = [an.make_path(p) for p in HISTORY_PATHS]
+        ps = [pi for pi in ps if pi is not None]
         self._paths = ps
         if not self.commits or force:
             self._load_commits()
@@ -479,7 +591,6 @@ class HistoryView(DVCCommitView):
         args.extend(self._paths)
 
         txt = repo.git.log(*args)
-
         cs = []
         if txt:
             cs = [from_gitlog(l.strip()) for l in txt.split("\n")]
@@ -489,8 +600,6 @@ class HistoryView(DVCCommitView):
     def traits_view(self):
         v = View(
             VGroup(
-                BorderHGroup(UItem("sample_note"), label="Sample Note"),
-                BorderHGroup(UItem("sample_prep_comment"), label="Sample Prep"),
                 HGroup(
                     icon_button_editor(
                         "do_diff", "edit_diff", tooltip="Make Diff between two commits"
@@ -506,13 +615,13 @@ class HistoryView(DVCCommitView):
                             editable=False,
                             selected="selected_commits",
                         ),
-                    )
-                ),
-                UItem(
-                    "selected_message",
-                    style="custom",
-                    height=-200,
-                    editor=TextEditor(read_only=True),
+                    ),
+                    UItem(
+                        "selected_message",
+                        style="custom",
+                        height=-150,
+                        editor=TextEditor(read_only=True),
+                    ),
                 ),
             )
         )

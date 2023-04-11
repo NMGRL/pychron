@@ -760,7 +760,6 @@ class DBAnalysis(Analysis):
                 blank.name = n
 
     def _get_peak_center(self, meas_analysis):
-
         pc = meas_analysis.peak_center
         if pc:
             center = float(pc.center)

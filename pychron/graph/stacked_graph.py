@@ -105,7 +105,6 @@ class StackedGraph(Graph):
         return c
 
     def new_plot(self, **kw):
-
         if "title" in kw:
             if self._has_title:
                 kw.pop("title")
@@ -132,8 +131,7 @@ class StackedGraph(Graph):
 
         self.set_paddings()
         self._bounds_changed(self.plotcontainer.bounds)
-        # p.fill_padding=True
-        # p.bgcolor='green'
+
         return p
 
     def set_paddings(self):

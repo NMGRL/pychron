@@ -27,6 +27,7 @@ from pychron.core.pdf.save_pdf_dialog import save_pdf
 from pychron.core.printer.printer import print_component
 from pychron.dvc import dvc_dump
 from pychron.dvc.func import repository_has_staged
+from pychron.dvc.simple_recaller import SimpleDVCRecaller
 from pychron.dvc.util import DVCInterpretedAge
 from pychron.envisage.browser.browser_task import BaseBrowserTask
 from pychron.envisage.browser.recall_editor import RecallEditor
@@ -219,6 +220,36 @@ class PipelineTask(BaseBrowserTask):
                     left.record_id
                 )
             )
+
+    def pipeline_dvc_recall(self):
+        v = SimpleDVCRecaller()
+        while 1:
+            info = v.edit_traits()
+            if info.result:
+                record = v.record
+                potential = self.dvc.find_record(record)
+                if potential:
+                    if len(potential) > 1:
+                        self.warning_dialog(
+                            'More than one analysis matches the entered uuid "{}".'
+                            "Please enter more characters of the uuid".format(
+                                record.uuid
+                            )
+                        )
+                    else:
+                        self.debug(
+                            "Found record. RunID={}, UUID={}".format(
+                                record.record_id, record.uuid
+                            )
+                        )
+                        self.recall((record,), use_quick=False)
+                        break
+                else:
+                    self.warning_dialog(
+                        "No records found matching {}".format(record.uuid)
+                    )
+            else:
+                break
 
     def pipeline_recall(self):
         if self._browser_info:
@@ -620,9 +651,7 @@ class PipelineTask(BaseBrowserTask):
                 break
 
     def _run(self, message, func, close_all=False):
-
         if self.engine.pre_run_check(func):
-
             self.debug("{} started".format(message))
             if close_all:
                 self.close_all()

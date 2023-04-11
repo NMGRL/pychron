@@ -63,7 +63,6 @@ class GeochronService(Loggable):
         self._add_parameters(sample_elem, analysis_group)
 
     def _add_preferred_age(self, sample_elem, analysis_group):
-
         # preferred_age = analysis_group.preferred_age
 
         preferred_age_elem = etree.SubElement(sample_elem, "PreferredAge")

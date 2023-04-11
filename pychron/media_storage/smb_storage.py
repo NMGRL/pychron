@@ -53,7 +53,6 @@ class SMBStorage(RemoteStorage):
             conn.close()
 
     def get(self, src, dest, use_cache=True):
-
         src = ":".join(src.split(":")[2:])
 
         if isinstance(dest, str):

@@ -49,6 +49,7 @@ from pychron.core.helpers.iterfuncs import partition, groupby_key
 from pychron.core.helpers.strtools import camel_case
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.core.yaml import yload
+from pychron.dvc import prep_repo_name
 from pychron.dvc.dvc_irradiationable import DVCAble
 from pychron.entry.entry_views.repository_entry import RepositoryIdentifierEntry
 from pychron.envisage.view_util import open_view
@@ -138,6 +139,7 @@ from pychron.pychron_constants import (
     TEMPLATE,
     USERNAME,
     EDITABLE_RUN_CONDITIONALS,
+    DISABLE_BETWEEN_POSITIONS,
 )
 
 
@@ -240,6 +242,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     pre_cleanup = EKlass(Float)
     post_cleanup = EKlass(Float)
     cryo_temperature = EKlass(Float)
+    disable_between_positions = EKlass(Bool)
     light_value = EKlass(Float)
     beam_diameter = Property(EKlass(String), depends_on="_beam_diameter")
     _beam_diameter = String
@@ -361,6 +364,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         "conditionals_path",
         "use_project_based_repository_identifier",
         "delay_after",
+        DISABLE_BETWEEN_POSITIONS,
     )
 
     use_name_prefix = Bool
@@ -634,7 +638,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         self.display_irradiation = il
 
     def _new_run(self, excludes=None, **kw):
-
         # need to set the labnumber now because analysis_type depends on it
         arv = self._spec_klass(labnumber=self.labnumber, **kw)
 
@@ -771,7 +774,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             excludes.append("comment")
 
         for attr in self._get_clonable_attrs():
-
             if attr in excludes:
                 continue
             try:
@@ -927,7 +929,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
 
     def _update_run_values(self, attr, v):
         if self.edit_mode and self._selected_runs and not self.suppress_update:
-
             self._auto_save()
 
             self.edit_event = dict(
@@ -1017,7 +1018,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             self._load_default_scripts(tag, new)
 
     def _load_default_scripts(self, labnumber_tag, labnumber):
-
         # if labnumber is int use key='U'
         try:
             _ = int(labnumber_tag)
@@ -1175,6 +1175,9 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                             repo = project_name
                         else:
                             repo = camel_case(project_name)
+
+                        self.debug("unprepped repo={}".format(repo))
+                        repo = prep_repo_name(repo)
                         self.debug("setting repository to {}".format(repo))
 
                         self.repository_identifier = repo
@@ -1184,7 +1187,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                                 'Repository Identifier "{}" does not exist. Would you '
                                 "like to add it?".format(repo)
                             ):
-
                                 m = 'Repository "{}({})"'.format(repo, pi_name)
                                 # this will set self.repository_identifier
                                 if self._add_repository(repo, pi_name):
@@ -1549,7 +1551,6 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
             ct = CommentTemplater()
 
         for idn, runs in groupby_key(self._selected_runs, "identifier"):
-
             with self.dvc.session_ctx():
                 ipos = self.dvc.get_identifier(idn)
 
@@ -1767,6 +1768,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
                 SKIP,
                 USE_CDD_WARMING,
                 WEIGHT,
+                DISABLE_BETWEEN_POSITIONS,
             )
         )
     )

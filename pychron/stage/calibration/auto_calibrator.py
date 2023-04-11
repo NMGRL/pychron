@@ -328,7 +328,6 @@ class AutoCalibrator(SemiAutoCalibrator):
     _warned = False
 
     def handle(self, step, x, y, canvas):
-
         center_guess = self._get_center_guess()
         center_hole = self.stage_map.get_calibration_hole("center")
         if not self._check_auto_calibration():

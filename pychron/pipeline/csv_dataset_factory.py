@@ -335,7 +335,6 @@ e.g.
                 "Otherwise please select a repository to save the data "
                 "file",
             ):
-
                 dlg = FileDialog(action="save as", default_directory=paths.csv_data_dir)
                 if dlg.open():
                     local_path = dlg.path
@@ -369,7 +368,6 @@ e.g.
         return record
 
     def _add_record_button_fired(self):
-
         self.records.append(self._record_factory())
         self._make_groups()
 
@@ -489,9 +487,13 @@ e.g.
 
     def traits_view(self):
         def paste_factory(runid, row):
-            vs = row.split("\t")
+            if "," in row:
+                vs = row.split(",")
+            else:
+                vs = row.split("\t")
+
             n = len(vs)
-            group, aliquot, sample, label_name = 0, 0, "", ""
+            age, err, group, aliquot, sample, label_name = 0, 0, 0, 0, "", ""
             if n == 2:
                 age, err = vs
             elif n == 3:

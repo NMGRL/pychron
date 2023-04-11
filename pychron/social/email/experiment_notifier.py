@@ -24,14 +24,13 @@ from datetime import datetime
 import socket
 
 # ============= local library imports  ==========================
-from pychron.social.email.emailer import Emailer
 from pychron.version import __version__
 from pychron.experiment.notifier.templates import email_template
 from pychron.loggable import Loggable
 
 
 class ExperimentNotifier(Loggable):
-    emailer = Instance(Emailer)
+    emailer = Instance("pychron.social.email.emailer.Emailer")
     include_log = Bool
 
     def __init__(self, *args, **kw):
@@ -47,13 +46,14 @@ class ExperimentNotifier(Loggable):
             )
         )
         message = email_template(**mctx)
-        self.info(
-            "Notifying user={} email={}".format(
-                ctx.get("username"), ctx.get("user_email")
+
+        user_email = ctx.get("user_email")
+        if user_email:
+            self.info(
+                "Notifying user={} email={}".format(ctx.get("username"), user_email)
             )
-        )
-        subject = "{} {}".format(subject, datetime.now().isoformat())
-        self._send(ctx.get("user_email"), subject, message)
+            subject = "{} {}".format(subject, datetime.now().isoformat())
+            self._send(user_email, subject, message)
 
         if ctx.get("use_group_email"):
             pairs = ctx.get("group_emails")

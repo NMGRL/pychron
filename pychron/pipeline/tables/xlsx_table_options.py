@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import json
 import os
 
 from traits.api import Enum, Bool, Str, Int, Float, Color, List, Directory
@@ -25,12 +26,13 @@ from pychron.core.persistence_options import BasePersistenceOptions
 from pychron.core.pychron_traits import SingleStr, BorderHGroup, BorderVGroup
 from pychron.core.ui.combobox_editor import ComboboxEditor
 from pychron.core.yaml import yload
+from pychron.options.options import BaseOptions
 from pychron.paths import paths
 from pychron.persistence_loggable import dumpable
 from pychron.pychron_constants import SIGMA, AGE_SORT_KEYS
 
 
-class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
+class XLSXAnalysisTableWriterOptions(BaseOptions):
     sig_figs = dumpable(Int(6))
     j_sig_figs = dumpable(Int(6))
     ic_sig_figs = dumpable(Int(6))
@@ -60,6 +62,10 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
     intensity_units = dumpable(Enum("fA", "cps", "Volts"))
     age_units = dumpable(Enum("Ma", "Ga", "ka", "a"))
     hide_gridlines = dumpable(Bool(False))
+
+    include_meta_weight = dumpable(Bool(True))
+    include_meta_location = dumpable(Bool(True))
+
     include_F = dumpable(Bool(True))
     include_radiogenic_yield = dumpable(Bool(True))
     include_production_ratios = dumpable(Bool(True))
@@ -80,9 +86,12 @@ class XLSXAnalysisTableWriterOptions(BasePersistenceOptions):
 
     include_blanks = dumpable(Bool(True))
     include_intercepts = dumpable(Bool(True))
+    include_corrected_intensities = dumpable(Bool(True))
     include_percent_ar39 = dumpable(Bool(True))
     include_icfactors = dumpable(Bool(True))
     include_discrimination = dumpable(Bool(True))
+    include_decay_factors = dumpable(Bool(True))
+    include_j = dumpable(Bool(True))
     include_lambda_k = dumpable(Bool(True))
     include_monitor_age = dumpable(Bool(True))
     include_monitor_name = dumpable(Bool(True))
@@ -160,6 +169,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     include_summary_sample = dumpable(Bool(True))
     include_summary_j = dumpable(Bool(True))
 
+    include_summary_aliquot = dumpable(Bool(False))
     include_summary_identifier = dumpable(Bool(True))
     include_summary_unit = dumpable(Bool(True))
     include_summary_location = dumpable(Bool(True))
@@ -207,14 +217,16 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     include_decay_error = dumpable(Bool(False))
 
     human_sheet_name = dumpable(Str("Unknowns"))
-    machine_sheet_name = dumpable(Str("Unknowns (Machine)"))
+    machine_sheet_name = dumpable(Str("Nonformatted"))
     summary_sheet_name = dumpable(Str("Summary"))
 
     exclude_hidden_columns = dumpable(Bool(False))
     include_notes_border = dumpable(Bool(True))
 
-    def __init__(self, name, *args, **kw):
-        self._persistence_name = name
+    overwrite = Bool(False)
+
+    def __init__(self, *args, **kw):
+        # self._persistence_name = name
 
         super(XLSXAnalysisTableWriterOptions, self).__init__(*args, **kw)
         # self.load_notes()
@@ -222,6 +234,14 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
         self._load_notes()
         self._unknown_note_name_changed(self.unknown_note_name)
+
+    # def dump(self, wfile):
+    #     state = self.make_state()
+    #     json.dump(state, wfile, indent=4, sort_keys=True)
+    def _get_state_hook(self, state):
+        d = {k: getattr(self, k) for k in self.traits(dump=True).keys()}
+
+        state.update(**d)
 
     def _load_notes(self):
         p = os.path.join(paths.user_pipeline_dir, "table_notes.yaml")
@@ -265,6 +285,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
 
     @property
     def path(self):
+        return self.get_path(check_exists=True)
+
+    def get_path(self, check_exists=False):
         name = self.name
         root = paths.table_dir
 
@@ -277,7 +300,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
             path, _ = unique_path2(root, "Untitled", extension=".xlsx")
         else:
             path = os.path.join(root, add_extension(name, ext=".xlsx"))
-
+            if check_exists:
+                if os.path.isfile(path) and not self.overwrite:
+                    path, _ = unique_path2(root, name, extension=".xlsx")
         return path
 
     def traits_view(self):
@@ -455,9 +480,12 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
             Item("tag_enabled", label="Tag"),
             iinc("rundate", "Analysis RunDate"),
             iinc("blanks", "Applied Blank"),
+            iinc("corrected_intensities", "Corrected Intensities"),
             iinc("intercepts", "Intercepts"),
             iinc("icfactors", "ICFactors"),
             iinc("discrimination", "Discrimination"),
+            iinc("decay_factors", "Decay Factors"),
+            iinc("j", "J"),
             Item(
                 "use_sample_metadata_saved_with_run",
                 label="Use Sample Metadata Saved with Run",
@@ -475,9 +503,18 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
             iinc("trapped_ratio", "Trapped 40/36"),
             label="Summary Rows",
         )
+
+        meta_grp = BorderVGroup(
+            iinc("meta_weight", "Weight"),
+            iinc("meta_location", "Location"),
+            label="Meta Data",
+        )
+
         columns_grp = BorderHGroup(general_col_grp, arar_col_grp, label="Columns")
         unk_columns_grp = VGroup(
-            HGroup(columns_grp, sig_figs_grp), summary_rows_grp, label="Unknowns"
+            HGroup(columns_grp, sig_figs_grp),
+            HGroup(summary_rows_grp, meta_grp),
+            label="Unknowns",
         )
         g1 = VGroup(
             HGroup(grp, appearence_grp), HGroup(sheet_grp, behavior_grp), label="Main"
@@ -492,6 +529,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         summary_columns = BorderVGroup(
             iisum("sample", "Sample"),
             iisum("identifier", "Identifier"),
+            iisum("aliquot", "Aliquot"),
             iisum("unit", "Unit"),
             iisum("location", "Location"),
             iisum("material", "Material"),

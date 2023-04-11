@@ -60,7 +60,6 @@ class ToupCamCamera(object):
         image.save(p, extension, *args, **kw)
 
     def _do_save(self, im):
-
         # raw = im.view(uint8).reshape(im.shape+(-1,))
         # bgr = raw[...,:3]
         # image = pil.fromarray(bgr, 'RGB')
@@ -81,7 +80,6 @@ class ToupCamCamera(object):
         im.save(p, "TIFF")
 
     def get_jpeg_data(self, data=None, quality=75):
-
         im = self.get_pil_image(data)
 
         s = StringIO()

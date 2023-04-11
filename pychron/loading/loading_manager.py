@@ -703,7 +703,6 @@ class LoadingManager(DVCIrradiationable):
         )
 
     def _deselect_position(self, canvas_hole):
-
         # remove from position list
         pid = int(canvas_hole.name)
         p = next((p for p in self.positions if p.position == pid), None)

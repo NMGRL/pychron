@@ -175,7 +175,6 @@ class DashboardDevice(Loggable):
 
     def _push_value(self, pv, new):
         if pv.enabled:
-
             pv.last_time = time.time()
 
             try:

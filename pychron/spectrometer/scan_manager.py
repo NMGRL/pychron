@@ -465,7 +465,6 @@ class ScanManager(StreamGraphManager):
                                 det.intensity, self.detector
                             )
                         ):
-
                             self.debug(
                                 "aborting magnet move {} intensity {} > {}".format(
                                     det, det.intensity, threshold
@@ -644,7 +643,6 @@ class ScanManager(StreamGraphManager):
             det.series_id = i
 
         if plot.plots:
-
             cp = plot.plots[det.name][0]
             dt = DataTool(
                 plot=cp, component=plot, normalize_time=True, use_date_str=False

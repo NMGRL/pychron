@@ -145,6 +145,7 @@ class YAMLLoader(BaseLoader):
                 desc = vv.find("description")
                 desc = desc.text.strip() if desc is not None else ""
             v = ManualSwitch(x + ox, y + oy, display_name=desc, name=key)
+
             scene.add_item(v, layer=1)
             ndict[key] = v
 
@@ -284,6 +285,7 @@ class YAMLLoader(BaseLoader):
             default_color=c,
             type_tag=type_tag,
             fill=fill,
+            use_symbol=elem.get("use_symbol", False),
         )
         font = elem.get("font")
         if font is not None:

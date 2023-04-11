@@ -33,6 +33,7 @@ from traits.api import (
     File,
     Float,
     Enum,
+    Color,
 )
 
 from pychron.canvas.canvas_editor import CanvasEditor
@@ -52,7 +53,6 @@ from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
 from pychron.pychron_constants import NULL_STR
-
 
 MANAGERS = {
     "manometer_manager": (
@@ -117,7 +117,7 @@ class ExtractionLineManager(Manager, Consoleable):
     file_listener = None
 
     wait_group = Instance(WaitGroup, ())
-    console_bgcolor = "black"
+    console_bgcolor = Color("black")
 
     _active = False
     _update_status_flag = None
@@ -140,7 +140,6 @@ class ExtractionLineManager(Manager, Consoleable):
         self.devices = devs
 
     def deactivate(self):
-
         for t in ("gauge", "heater", "pump"):
             self.info("start {} scans".format(t))
             man = getattr(self, "{}_manager".format(t))
@@ -153,7 +152,6 @@ class ExtractionLineManager(Manager, Consoleable):
         self._deactivate_hook()
 
     def bind_preferences(self):
-
         prefid = "pychron.extraction_line"
 
         attrs = (
@@ -360,7 +358,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
             c.load_canvas_file()
             if self.switch_manager:
-
                 for k, v in self.switch_manager.switches.items():
                     vc = c.get_object(k)
                     if vc:
@@ -477,6 +474,18 @@ class ExtractionLineManager(Manager, Consoleable):
             names = self.switch_manager.get_valve_names()
         return names
 
+    def get_pipette_counts(self):
+        counts = []
+        if self.switch_manager is not None:
+            counts = self.switch_manager.get_pipette_counts()
+        return counts
+
+    def get_pipette_count(self, name):
+        count = 0
+        if self.switch_manager is not None:
+            count = self.switch_manager.get_pipette_count(name)
+        return count
+
     def get_pressure(self, controller, name):
         if self.gauge_manager:
             return self.gauge_manager.get_pressure(controller, name)
@@ -522,7 +531,6 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def cycle(self, name, **kw):
         def cycle():
-
             valve = self.switch_manager.get_switch_by_name(name)
             if valve is not None:
                 n = valve.cycle_n
@@ -600,6 +608,18 @@ class ExtractionLineManager(Manager, Consoleable):
             self.warning("cryo manager not available")
             return 0
 
+    def get_cryo_response_blob(self):
+        if self.cryo_manager:
+            return self.cryo_manager.response_recorder.get_response_blob()
+
+    def start_cryo_recorder(self):
+        if self.cryo_manager:
+            self.cryo_manager.start_response_recorder()
+
+    def stop_cryo_recorder(self):
+        if self.cryo_manager:
+            self.cryo_manager.stop_response_recorder()
+
     # ===============================================================================
 
     # ============= Manometer =======================================================
@@ -627,7 +647,6 @@ class ExtractionLineManager(Manager, Consoleable):
             self.canvases.append(c)
 
     def _activate_hook(self):
-
         self.monitor = SystemMonitor(manager=self, name="system_monitor")
         self.monitor.monitor()
 
@@ -775,6 +794,8 @@ class ExtractionLineManager(Manager, Consoleable):
 
             return result
 
+        return True, True
+
     def _change_switch_state(self, name, mode, action, sender_address=None, **kw):
         result, change = False, False
         if self._check_ownership(name, sender_address):
@@ -819,7 +840,7 @@ class ExtractionLineManager(Manager, Consoleable):
     def _set_pipette_counts(self, name, value):
         for c in self.canvases:
             scene = c.canvas2D.scene
-            obj = scene.get_item("vlabel_{}Pipette".format(name))
+            obj = scene.get_item("vlabel_{}".format(name))
             if obj is not None:
                 obj.value = int(value)
                 c.refresh()

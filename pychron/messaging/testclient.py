@@ -373,7 +373,6 @@ def timed_flag_test():
         c.ask("Open ChamberPumpTimeFlag")
 
         while 1:
-
             if abs(float(c.ask("Read ChamberPumpTimeFlag"))) < 0.001:
                 break
             time.sleep(1)

@@ -31,7 +31,6 @@ class AgilentMultifunction(AgilentMixin, GPActuator):
     def get_channel_state(self, obj, verbose=False, **kw):
         addr = get_switch_address(obj)
         if self._read_state_word(addr[0]):
-
             bitidx = int(addr[1:]) - 1
             state = bool(int(self._state_word[bitidx]))
             if verbose:

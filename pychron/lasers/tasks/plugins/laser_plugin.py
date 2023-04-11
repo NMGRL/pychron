@@ -221,7 +221,6 @@ class BaseLaserPlugin(BaseTaskPlugin):
             )
 
         if actions:
-
             actions.insert(
                 0,
                 SchemaAddition(
@@ -250,7 +249,6 @@ class BaseLaserPlugin(BaseTaskPlugin):
             )
 
     def _create_task_extensions(self):
-
         exts = []
         if self.mode != "client":
 

@@ -665,7 +665,6 @@ class NMGRLFurnaceManager(BaseFurnaceManager):
         lines = self._load_dump_script()
         progress.max = len(lines)
         for i, line in enumerate(lines):
-
             self.debug(line)
             if not self._execute_script_line(line, progress):
                 self.debug("FAILED: {}".format(line))

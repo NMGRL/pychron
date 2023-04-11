@@ -76,7 +76,6 @@ class CanvasGraphItem(HasTraits):
 
     @on_trait_change("canvas:scene:selected")
     def _selected_changed(self, new):
-
         if isinstance(new, RasterPolygon):
             self._replot_polygon(new)
 

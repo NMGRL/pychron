@@ -219,7 +219,6 @@ class LoadingCanvas(SceneCanvas):
         pass
 
     def normal_mouse_move(self, event):
-
         if self.editable:
             self.current_item = self.hittest(event)
             if self.current_item:

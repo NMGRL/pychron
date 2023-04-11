@@ -98,12 +98,33 @@ class BaseCorrectionFactorsEditor(BaseTraitsEditor):
         self.calculate()
 
     def calculate(self):
-        self._pre_calculate()
         raise NotImplementedError
 
     def _pre_calculate(self):
         for a in self.analyses:
             a.calculate_no_interference()
+
+    def _calculate(self, dkey, atmo_ratio, ratios, atmo_correction_key):
+        self._pre_calculate()
+
+        results = []
+        n = len(self.analyses)
+
+        dv = array([a.isotopes[dkey].decay_corrected for a in self.analyses])
+
+        for i, (nkey, tag) in enumerate(ratios):
+            nv = array([a.get_ic_corrected_value(nkey) for a in self.analyses])
+            if nkey == atmo_correction_key:
+                nv -= array(
+                    [a.get_ic_corrected_value(nkey) * atmo_ratio for a in self.analyses]
+                )
+            rs = nv / dv
+
+            results.append(Result(array(rs), tag))
+            self._plot(rs, tag, n, i)
+
+        self.graph.refresh()
+        self.results = results[::-1]
 
     def _plot(self, rs, tag, n, plotid):
         plot = self.graph.new_plot(padding_left=100)
@@ -145,34 +166,31 @@ class BaseCorrectionFactorsEditor(BaseTraitsEditor):
 
 class KCorrectionFactorsEditor(BaseCorrectionFactorsEditor):
     def calculate(self):
-        results = []
-        n = len(self.analyses)
-        tag = "(40/39)K"
-        rs = [a.computed["rad40"] / a.computed["k39"] for a in self.analyses]
+        dkey = "Ar39"
+        ratios = (
+            ("Ar37", "(37/39)K"),
+            ("Ar38", "(38/39)K"),
+            ("Ar40", "(40/39)K"),
+        )
+        atmo_ratio = self.analyses[0].arar_constants.atm4036
+        atmo_correction_key = "Ar40"
 
-        results.append(Result(array(rs), tag))
-        self._plot(rs, tag, n, 0)
-
-        self.graph.refresh()
-        self.results = results
+        self._calculate(dkey, atmo_ratio, ratios, atmo_correction_key)
 
 
 class CaCorrectionFactorsEditor(BaseCorrectionFactorsEditor):
     def calculate(self):
-        results = []
-        n = len(self.analyses)
-        dkey = "Ar39"
-        for i, (nkey, tag) in enumerate((("Ar36", "(36/39)Ca"), ("Ar37", "(37/39)Ca"))):
-            rs = [
-                a.corrected_intensities[nkey] / a.corrected_intensities[dkey]
-                for a in self.analyses
-            ]
+        dkey = "Ar37"
+        ratios = (
+            ("Ar36", "(36/37)Ca"),
+            ("Ar38", "(38/37)Ca"),
+            ("Ar39", "(39/37)Ca"),
+        )
 
-            results.append(Result(array(rs), tag))
-            self._plot(rs, tag, n, i)
+        atmo_ratio = self.analyses[0].arar_constants.atm3836
+        atmo_correction_key = "Ar38"
 
-        self.graph.refresh()
-        self.results = results[::-1]
+        self._calculate(dkey, atmo_ratio, ratios, atmo_correction_key)
 
 
 # ============= EOF =============================================

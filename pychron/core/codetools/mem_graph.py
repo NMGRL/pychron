@@ -11,7 +11,6 @@ def plot_mem(p, use_histogram=True):
         started = False
         mx, mn = -Inf, Inf
         for line in rfile:
-
             # print line
             msg, mem = list(map(str.strip, line.split(":")))
             x = float(mem)
@@ -62,7 +61,6 @@ def plot_file(p, normalize=False, stacked=False, use_gradient=False, memory=Fals
         #                 break
 
         for line in rfile:
-
             # print line
             msg, mem = list(map(str.strip, line.split(":")))
             #             print msg, mem

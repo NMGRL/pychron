@@ -358,7 +358,6 @@ class IsotopeEvolutionEditor(FigureEditor):
         from pychron.processing.utils.equilibration_utils import calc_optimal_eqtime
 
         for unk in self.analyses:
-
             for fit in self.tool.fits:
                 if fit.fit and fit.use:
                     isok = fit.name

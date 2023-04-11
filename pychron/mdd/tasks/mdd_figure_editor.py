@@ -256,7 +256,6 @@ class MDDFigureEditor(BaseTraitsEditor):
             for root in self.roots:
                 for i, tags in ps:
                     for tag in tags:
-
                         ltag = tag.lower().replace(" ", "_")
                         data = getattr(self, "_get_{}_data".format(ltag))(root)
                         if data is not None:

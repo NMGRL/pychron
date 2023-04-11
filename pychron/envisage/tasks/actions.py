@@ -192,7 +192,6 @@ class RestartAction(PAction):
 
 class WebAction(PAction):
     def _open_url(self, url):
-
         import webbrowser
         import requests
 
@@ -228,9 +227,18 @@ class IssueAction(WebAction):
         self._open_url(url)
 
 
+class ManageSettingsAction(Action):
+    name = "Install Settings..."
+
+    def perform(self, event):
+        from pychron.envisage.settings_manager import SettingsManager
+
+        man = SettingsManager()
+        man.edit_traits()
+
+
 class SettingsAction(Action):
     def perform(self, event):
-
         app = event.task.window.application
         name = app.preferences.get("pychron.general.remote")
         if not name:
@@ -261,7 +269,7 @@ class SettingsAction(Action):
 
 
 class ApplySettingsAction(SettingsAction):
-    name = "Apply Settings..."
+    name = "Apply Bulk Settings..."
 
     def _perform(self, repo):
         """

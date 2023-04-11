@@ -337,7 +337,6 @@ class SampleEntry(DVCAble):
     auto_add_project_repository = Bool
 
     def activated(self):
-
         bind_preference(
             self,
             "auto_add_project_repository",
@@ -360,7 +359,6 @@ class SampleEntry(DVCAble):
         self._make_sample_template()
 
     def import_sample_from_file(self):
-
         from pyface.file_dialog import FileDialog
 
         path = self.open_file_dialog(
@@ -604,7 +602,6 @@ class SampleEntry(DVCAble):
 
         for p in self._projects:
             with dvc.session_ctx(use_parent_session=False):
-
                 if p.name.startswith("?"):
                     if dvc.add_project(
                         p.name, p.principal_investigator.name, **p.optionals
@@ -834,7 +831,6 @@ class SampleEntry(DVCAble):
 
     def _add_sample_button_fired(self):
         if self.sample:
-
             material_spec = self._get_material_spec()
             if not material_spec or not material_spec.name:
                 self.information_dialog("Please enter a material for this sample")

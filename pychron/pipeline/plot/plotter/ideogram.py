@@ -162,6 +162,9 @@ class Ideogram(BaseArArFigure):
 
     subgroup = None
     peaks = None
+    _labels = None
+    _legend_plot = None
+    _legend_plots = None
 
     def plot(self, plots, legend=None):
         """
@@ -244,6 +247,8 @@ class Ideogram(BaseArArFigure):
             if args:
                 scatter, aux_selection, invalid = args
                 selection.extend(aux_selection)
+
+            self._add_guides(pid)
 
         t = index_attr
         if index_attr == "uF":
@@ -380,6 +385,9 @@ class Ideogram(BaseArArFigure):
             scatter = self._add_aux_plot(
                 ys, title, po, pid, gid=self.group_id or aux_id, es=yes, xs=xs
             )
+            func = self._get_index_attr_label_func()
+            self._add_scatter_inspector(scatter, items=items, additional_info=func)
+
             nsigma = self.options.error_bar_nsigma
             if xes:
                 self._add_error_bars(
@@ -406,9 +414,6 @@ class Ideogram(BaseArArFigure):
                 self._add_point_labels(scatter, ans=items)
             if self.options.show_subgroup_indicators:
                 self._add_subgroup_overlay(scatter, items)
-
-            func = self._get_index_attr_label_func()
-            self._add_scatter_inspector(scatter, items=items, additional_info=func)
 
         # return scatter, selection, invalid
 
@@ -530,7 +535,7 @@ class Ideogram(BaseArArFigure):
             )
 
             if opt.include_group_legend:
-                key = str(aux_id)
+                key = str(aux_id + self.group_id)
                 plots[key] = [scatter]
                 if gla == "Group":
                     label = key
@@ -588,11 +593,28 @@ class Ideogram(BaseArArFigure):
 
         if opt.include_group_legend:
             labels = sorted(labels, key=itemgetter(2))
-            self._add_group_legend(plot, plots, labels)
+            self._labels = labels
+            self._legend_plot = plot
+            self._legend_plots = plots
+
+            # self._add_group_legend(plot, plots, labels)
             # omits, invalids, outliers = self._do_aux_plot_filtering(scatter, po, xs, xes)
             # selection = omits + outliers
             # selection.extend(omits)
             # selection.extend(outliers)
+
+    def finalize_group_overlays(self, others):
+        plot = self._legend_plot
+        plots = self._legend_plots
+        labels = self._labels
+        if labels:
+            for o in others:
+                if o != self:
+                    labels.extend(o._labels)
+                    plots.update(o._legend_plots)
+
+            if len(labels) > 1:
+                self._add_group_legend(plot, plots, labels)
 
     def _add_subgroup_overlay(self, scatter, ans):
         idx = [i for i, a in enumerate(ans) if isinstance(a, InterpretedAgeGroup)]
@@ -610,7 +632,7 @@ class Ideogram(BaseArArFigure):
         else:
             name = ia
 
-        return lambda i, x, y, ai: "{}= {}".format(name, ai.value_string(ia))
+        return lambda i, x, y, ai: "{} = {}".format(name, ai.value_string(ia))
 
     def _plot_relative_probability(self, po, plot, pid):
         graph = self.graph
@@ -652,16 +674,6 @@ class Ideogram(BaseArArFigure):
         # d = lambda a, b, c, d: self.update_index_mapper(a, b, c, d)
         # if ogid == 0:
         plot.index_mapper.range.on_trait_change(self.update_index_mapper, "updated")
-
-        for gi in self.options.guides:
-            if gi.visible and gi.should_plot(pid):
-                graph.add_guide(gi.value, **gi.to_kwargs(), plotid=pid)
-
-        for gi in self.options.ranges:
-            if gi.visible and gi.should_plot(pid):
-                graph.add_range_guide(
-                    gi.minvalue, gi.maxvalue, **gi.to_kwargs(), plotid=pid
-                )
 
         if self.options.display_inset:
             xs = self.xs
@@ -714,6 +726,9 @@ class Ideogram(BaseArArFigure):
             xs, ys, xmi, xma = self._calculate_asymptotic_limits(
                 cfunc, tol=self.options.asymptotic_height_percent
             )
+
+            xmi = min(self.xs - self.xes) * 0.9
+            xma = max(self.xs + self.xes) * 1.1
             oo = IdeogramInset(
                 xs,
                 ys,
@@ -747,15 +762,25 @@ class Ideogram(BaseArArFigure):
                     ov.set_y_limits(0, yma2)
 
     def _add_group_legend(self, plot, plots, labels):
-
         ln, ns, _ = zip(*labels)
         labels = list(zip(ln, ns))
-
         legend = ExplicitLegend(
             plots=plots, labels=list(reversed(labels)), inside=True, align="ul"
         )
 
         plot.overlays.append(legend)
+
+    def _add_guides(self, pid):
+        graph = self.graph
+        for gi in self.options.guides:
+            if gi.visible and gi.should_plot(pid):
+                graph.add_guide(gi.value, **gi.to_kwargs(), plotid=pid)
+
+        for gi in self.options.ranges:
+            if gi.visible and gi.should_plot(pid):
+                graph.add_range_guide(
+                    gi.minvalue, gi.maxvalue, **gi.to_kwargs(), plotid=pid
+                )
 
     def _add_peak_labels(self, line, fxs):
         opt = self.options
@@ -768,7 +793,7 @@ class Ideogram(BaseArArFigure):
             for xmin, xmax in xr:
                 ans = [a for a in fxs if xmin <= a <= xmax]
                 n = len(ans)
-                ntxt = " n={}".format(n)
+                ntxt = " n = {}".format(n)
 
             self.peaks = xp
 
@@ -921,7 +946,6 @@ class Ideogram(BaseArArFigure):
                 ov.set_x(wm)
                 ov.error = we
                 if ov.label:
-
                     mswd_args = None
                     if opt.display_mean_mswd:
                         mswd_args = (mswd, valid_mswd, n, pvalue)
@@ -1011,6 +1035,9 @@ class Ideogram(BaseArArFigure):
 
         if "selection_marker_size" not in plotkw:
             plotkw["selection_marker_size"] = plotkw["marker_size"]
+
+        if "selection_marker" not in plotkw:
+            plotkw["selection_marker"] = plotkw["marker"]
 
         if "type" in plotkw:
             plotkw.pop("type")

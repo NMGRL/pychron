@@ -396,7 +396,6 @@ class NewportMotionController(MotionController):
             self._block()
 
     def get_load_position(self):
-
         x = self.axes["x"].loadposition
         y = self.axes["y"].loadposition
         z = self.axes["z"].loadposition
@@ -514,7 +513,6 @@ class NewportMotionController(MotionController):
     #                self.set_low_speed()
 
     def set_home_position(self, **kw):
-
         cmd = []
         for k in kw:
             if k in self.axes:
@@ -587,7 +585,6 @@ class NewportMotionController(MotionController):
         for i in range(n):
             r = self.ask(cmd)
             if r is not None and r != "simulation":
-
                 if not i:
                     self.debug("------------- Errors ------------")
                     has_error = True
@@ -873,13 +870,11 @@ class NewportMotionController(MotionController):
                 kwargs[k] = val
 
         if self.mode == "grouped":
-
             gid = self.groupobj.id
             st = "{:n}HL{x:0.5f},{y:0.5f}".format(gid, **kwargs)
 
             self.tell(st, verbose=True)
         else:
-
             self.multiple_axis_move(
                 [(self.axes["y"].id, kwargs["y"]), (self.axes["x"].id, kwargs["x"])]
             )
@@ -903,7 +898,6 @@ class NewportMotionController(MotionController):
                 self.start_timer()
 
             if block:
-
                 self.info("moving to {x:0.5f},{y:0.5f}".format(**kwargs))
                 self._block()
                 self.info("move to {x:0.5f},{y:0.5f} complete".format(**kwargs))

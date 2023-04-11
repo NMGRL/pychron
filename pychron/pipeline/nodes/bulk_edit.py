@@ -41,6 +41,7 @@ from pychron.pychron_constants import PLUSMINUS
 
 
 class ICFactor(HasTraits):
+    num = Str
     det = Str
     detectors = List
     value = Float
@@ -56,6 +57,7 @@ class ICFactor(HasTraits):
             HGroup(
                 UItem("use"),
                 UItem("det", editor=EnumEditor(name="detectors")),
+                UItem("num", label="Relative To", editor=EnumEditor(name="detectors")),
                 Item("value"),
                 Label(PLUSMINUS),
                 UItem("error"),
@@ -228,6 +230,7 @@ class BulkEditNode(BaseDVCNode):
 
             # print('ic', ic_factor.det, ic_factor.value, ic_factor.error)
             ic = ai.set_temporary_ic_factor(
+                ic_factor.num,
                 ic_factor.det,
                 ic_factor.value,
                 ic_factor.error,

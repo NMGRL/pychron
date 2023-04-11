@@ -320,7 +320,9 @@ class MassSpecPersistenceSpec(Loggable):
             t, v = iso.xs, iso.ys
 
         except KeyError:
-            t, v = [0,], [
+            t, v = [
+                0,
+            ], [
                 0,
             ]
 

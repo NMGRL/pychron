@@ -120,7 +120,6 @@ class ReferencesSeries(BaseSeries):
         key = key.format(0)
         for plotobj, reg in new:
             if isinstance(reg, BaseRegressor):
-
                 excluded = reg.get_excluded()
                 for i, r in enumerate(self.sorted_references):
                     r.set_temp_status("omit" if i in excluded else "ok")
@@ -135,8 +134,13 @@ class ReferencesSeries(BaseSeries):
             v, e = nominal_value(i), std_dev(i)
         return v, e
 
-    def _get_isotope(self, po, analysis):
-        return analysis.get_isotope(po.name)
+    def _get_isotope(self, po, analysis, parent_analysis=None):
+        det = None
+        name = po.name
+        if parent_analysis:
+            iso = parent_analysis.get_isotope(name)
+            det = iso.detector
+        return analysis.get_isotope(name, detector=det)
 
     def _calc_limits(self, ys, ye):
         return calc_limits(ys, ye, self.options.nsigma)
@@ -202,7 +206,6 @@ class ReferencesSeries(BaseSeries):
             scatter._layout_needed = True
 
     def reference_data(self, po):
-
         data = self._get_reference_data(po)
         if data:
             ans, xs, ys = data
@@ -229,7 +232,7 @@ class ReferencesSeries(BaseSeries):
     def _plot_unknowns_current(self, pid, po):
         ymi, yma = 0, 0
 
-        if self.analyses and self.show_current:
+        if self.analyses and self.options.show_current:
             graph = self.graph
             n = [ai.record_id for ai in self.sorted_analyses]
 
@@ -348,6 +351,7 @@ class ReferencesSeries(BaseSeries):
                     bind_id = hash(tuple([r.uuid for r in refs]))
 
                 ffit = "{}_{}".format(po.fit, po.error_type)
+
                 _, scatter, l = graph.new_series(
                     r_xs,
                     r_ys,

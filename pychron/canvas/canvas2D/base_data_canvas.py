@@ -88,7 +88,6 @@ class BaseDataCanvas(DataView):
 
             self.add(self.plot)
         else:
-
             datax = self.plot.index.get_data()
             datay = self.plot.value.get_data()
             nx = hstack((datax, [x]))

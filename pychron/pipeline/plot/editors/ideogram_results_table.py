@@ -63,7 +63,6 @@ class IdeogramResultsAdapter(TabularAdapter):
         return item.color
 
     def _get_skewness_text(self):
-
         txt = floatfmt(self.item.skewness, n=3)
         if txt:
             smi = self.item.outlier_options.get("skew_min", -0.02)

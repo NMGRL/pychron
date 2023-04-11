@@ -19,7 +19,7 @@ from pyface.confirmation_dialog import confirm
 from pyface.constant import YES
 
 # ============= enthought library imports =======================
-from traits.api import Bool, List
+from traits.api import Bool, List, Instance
 
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.progress import progress_loader
@@ -110,7 +110,6 @@ class FitReferencesNode(FitNode):
 
         # self.plotter_options.set_detectors(state.union_detectors)
         if state.references:
-
             for i, (gid, refs) in enumerate(groupby_group_id(state.references)):
                 if i == 0:
                     editor = self.editor
@@ -127,10 +126,9 @@ class FitReferencesNode(FitNode):
 
                 editor.set_references(list(refs))
 
-        self._set_saveable(state)
         self._set_additional_options(state)
-
         self.editor.force_update(force=True)
+        self._set_saveable(state)
 
     def _get_reference_analysis_types(self):
         return []
@@ -219,6 +217,18 @@ class FitICFactorNode(FitReferencesNode):
         state.saveable_keys = [p.denominator for p in ps]
         state.standard_ratios = [p.standard_ratio for p in ps]
 
+        rd = {}
+        for p in ps:
+            ans, xs, vs, es = (
+                self.editor.figure_model.panels[0].figures[0].reference_data(p)
+            )
+            rd[p.denominator] = {
+                "xs": [ai.timestamp for ai in ans],
+                "vs": vs.tolist(),
+                "es": es.tolist(),
+            }
+        state.reference_data = rd
+
     def _check_refit(self, ai):
         for k in self._keys:
             num, dem = k.split("/")
@@ -236,7 +246,6 @@ class FitICFactorNode(FitReferencesNode):
                 raise RefitException()
 
     def load(self, nodedict):
-
         pom = self.plotter_options_manager
         if pom.selected_options.name == "Default":
             try:
@@ -269,9 +278,10 @@ class FitIsotopeEvolutionNode(FitNode):
     use_plotting = False
     _refit_message = "The selected Isotope Evolutions have already been fit. Would you like to skip refitting?"
 
+    classifier = Instance("pychron.classifier.isotope_classifier.IsotopeClassifier")
+
     def _check_refit(self, analysis):
         for k in self._keys:
-
             i = analysis.get_isotope(k)
             if i is None:
                 i = analysis.get_isotope(detector=k)
@@ -422,10 +432,14 @@ class FitIsotopeEvolutionNode(FitNode):
                     signal_to_blank_goodness = (
                         signal_to_blank < signal_to_blank_threshold
                     )
+                klass = 1
+                if self.classifier:
+                    klass, prob = self.classifier.classify_isotope(iso)
 
                 yield IsoEvoResult(
                     analysis=xi,
                     isotope_obj=iso,
+                    klass=klass,
                     nstr=nstr,
                     intercept_value=i,
                     intercept_error=e,
@@ -552,7 +566,6 @@ class FitFluxNode(FitNode):
         else:
             klass = FluxResultsEditor
         editor = klass()
-
         editor.plotter_options = self.plotter_options
         return editor
 

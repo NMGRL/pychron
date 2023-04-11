@@ -84,9 +84,11 @@ class SessionCTX(object):
                 return self._parent.session
             else:
                 self._psession = self._parent.session
-                self._session = self._parent.session_factory()
-                self._parent.session = self._session
-                return self._session
+                factory = self._parent.session_factory
+                if factory:
+                    self._session = factory()
+                    self._parent.session = self._session
+                    return self._session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._session:
@@ -422,7 +424,6 @@ host= {}\nurl= {}'.format(
                 os.path.basename(self.path),
             )
         else:
-
             url = "{}:{}".format(obscure_host(self.host), self.name)
         return url
 
@@ -511,7 +512,6 @@ host= {}\nurl= {}'.format(
         return driver
 
     def _import_mysql_driver(self):
-
         try:
             """
             pymysql
@@ -647,7 +647,6 @@ host= {}\nurl= {}'.format(
         group_by=None,
         verbose_query=False,
     ):
-
         sess = self.session
         if sess is None or isinstance(sess, MockSession):
             self.debug("USING MOCKSESSION************** {}".format(sess))
@@ -693,7 +692,7 @@ host= {}\nurl= {}'.format(
             q = query_hook(q)
 
         if verbose_query or self.verbose_retrieve_query:
-            # print compile_query(q)
+            # print(compile_query(q))
             self.debug(compile_query(q))
 
         items = self._query(q, func, reraise)
@@ -763,7 +762,6 @@ host= {}\nurl= {}'.format(
                 raise e
 
     def _append_filters(self, f, kw):
-
         filters = kw.get("filters", [])
         if isinstance(f, (tuple, list)):
             filters.extend(f)
@@ -793,7 +791,6 @@ host= {}\nurl= {}'.format(
         verbose=True,
         verbose_query=False,
     ):
-
         if not isinstance(value, (str, int, six.text_type, int, float, list, tuple)):
             return value
 
@@ -888,7 +885,6 @@ host= {}\nurl= {}'.format(
         order=None,
         key=None,
     ):
-
         if isinstance(join_table, str):
             join_table = gtables[join_table]
 

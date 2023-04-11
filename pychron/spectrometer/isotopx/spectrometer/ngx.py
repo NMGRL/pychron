@@ -54,10 +54,13 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     use_deflection_correction = False
     use_hv_correction = False
     _triggered = False
+    acq_count = None
+    total_acq_count = 10
 
     def _microcontroller_default(self):
         service = "pychron.hardware.isotopx_spectrometer_controller.NGXController"
         s = self.application.get_service(service)
+        s.communicator.strip = False
         return s
 
     def make_configuration_dict(self):
@@ -123,6 +126,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
             self.ask("StopAcq", verbose=verbose)
             self.microcontroller.triggered = True
             # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
+            self.total_acq_count = int(self.integration_time)
             return self.ask(
                 "StartAcq {},{}".format(int(self.integration_time), self.rcs_id)
             )
@@ -151,9 +155,11 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     self.debug_exception()
                     self.debug(f"data left: {ds}")
 
-            if "#\r\n" in ds:
+            #            if "#\r\n" in ds:
+            #                ds = ds.split("#\r\n")[0]
 
-                ds = ds.split("#\r\n")[0]
+            if "#" in ds:
+                ds = ds.split("#")[0]
                 return ds
 
     def cancel(self):
@@ -192,8 +198,8 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         collection_time = None
         inc = False
         # self.debug(f'acquired mcir lock {self.microcontroller.lock}')
-        targetb = "#EVENT:ACQ.B,{}".format(self.rcs_id)
-        targeta = "#EVENT:ACQ,{}".format(self.rcs_id)
+        targetb = "EVENT:ACQ.B,{}".format(self.rcs_id)
+        targeta = "EVENT:ACQ,{}".format(self.rcs_id)
         if resp is not None:
             keys = self.detector_names[::-1]
             while self._read_enabled:
@@ -210,29 +216,28 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     try:
                         args = line.split(",")
 
-                        ct = datetime.strptime(args[4], "%H:%M:%S.%f")
+                        cd = datetime.today()
+                        ct = datetime.strptime(args[4], "%H:%M:%S.%f").time()
 
-                        collection_time = datetime.now()
-
-                        # copy to collection time
-                        collection_time.replace(
-                            hour=ct.hour,
-                            minute=ct.minute,
-                            second=ct.second,
-                            microsecond=ct.microsecond,
-                        )
+                        collection_time = datetime.combine(cd, ct)
                         signals = [float(i.strip()) for i in args[5:]]
-
+                        print("fad", keys, signals)
                         if line.startswith(targeta):
-                            nsignals, keys = [], []
-                            for i, di in enumerate(self.detectors[::-1]):
-                                if di.kind == "CDD":
-                                    nsignals.append(signals[i])
-                                    keys.append(di.name)
-                            signals = nsignals
-                            break
+                            self.acq_count += 1
+                            if self.acq_count == self.total_acq_count:
+                                # forget this ACQ and immediately get the ACQ.B record.
+                                continue
+                            else:
+                                nsignals, keys = [], []
+                                for i, di in enumerate(self.detectors[::-1]):
+                                    if di.kind == "CDD":
+                                        nsignals.append(signals[i])
+                                        keys.append(di.name)
+                                signals = nsignals
+                                break
 
                         elif line.startswith(targetb):
+                            self.acq_count = 0
                             self.microcontroller.triggered = False
                             inc = True
 
@@ -242,6 +247,13 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
         # self.microcontroller.lock.release()
         if len(signals) != len(keys):
+            self.debug("keys={}".format(keys))
+            self.debug("signals".format(signals))
+            self.debug(
+                "Number of signals {} and keys {} did not match".format(
+                    len(signals), len(keys)
+                )
+            )
             keys, signals = [], []
 
         if verbose:

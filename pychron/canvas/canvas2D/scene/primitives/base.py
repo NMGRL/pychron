@@ -120,7 +120,6 @@ class Primitive(HasTraits):
         self._layout_needed = True
 
     def render(self, gc):
-
         with gc:
             if self.visible:
                 self.set_stroke_color(gc)
@@ -156,7 +155,6 @@ class Primitive(HasTraits):
 
     def get_xy(self, x=None, y=None, clear_layout_needed=True):
         if self._layout_needed or not self._cached_xy:
-
             if x is None:
                 x = self.x
             if y is None:
@@ -265,7 +263,6 @@ class Primitive(HasTraits):
                 self._render_textbox(gc, x, y, w, h, txt)
 
     def _render_textbox(self, gc, x, y, w, h, txt):
-
         tw, th, _, _ = gc.get_full_text_extent(txt)
         x = x + w / 2.0 - tw / 2.0
         y = y + h / 2.0 - th / 2.0

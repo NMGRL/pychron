@@ -25,7 +25,6 @@ from chaco.api import (
     VPlotContainer,
     HPlotContainer,
     GridPlotContainer,
-    BasePlotContainer,
     Plot,
     ArrayPlotData,
 )
@@ -46,7 +45,7 @@ from pychron.graph.offset_plot_label import OffsetPlotLabel
 from pychron.graph.tools.axis_tool import AxisTool
 from .tools.contextual_menu_tool import ContextualMenuTool
 
-VALID_FONTS = ["Arial", "Lucida Grande", "Geneva", "Courier"]
+# VALID_FONTS = ["Arial", "Lucida Grande", "Geneva", "Courier"]
 # 'Helvetica',
 # 'Times New Roman'
 
@@ -237,8 +236,8 @@ class Graph(ContextMenuMixin):
         for po in self.plots:
             if is_equal(po.y_axis.title):
                 return po
-        else:
-            print("plot titles txt={} {}".format(txt, self.get_plot_ytitles()))
+        # else:
+        #     print("plot titles txt={} {}".format(txt, self.get_plot_ytitles()))
 
     def get_plot_ytitles(self):
         return [po.y_axis.title for po in self.plots]
@@ -580,8 +579,8 @@ class Graph(ContextMenuMixin):
         if pc.overlays:
             pc.overlays.pop()
 
-        if font not in VALID_FONTS:
-            font = "modern"
+        # if font not in VALID_FONTS:
+        #     font = "modern"
 
         if size is None:
             size = 12
@@ -872,7 +871,6 @@ class Graph(ContextMenuMixin):
         ymin_anchor=None,
         **kw
     ):
-
         try:
             names = self.series[plotid][series]
         except (IndexError, TypeError):
@@ -1082,7 +1080,6 @@ class Graph(ContextMenuMixin):
             if "xname" in kw:
                 xname = kw["xname"]
             else:
-
                 xname = next(self.xdataname_generators[plotid])
             if "yname" in kw:
                 yname = kw["yname"]
@@ -1238,8 +1235,8 @@ class Graph(ContextMenuMixin):
         axis = getattr(self.plots[plotid], axistag)
         params = dict(title=title)
 
-        if font not in VALID_FONTS:
-            font = "arial"
+        # if font not in VALID_FONTS:
+        #     font = "arial"
 
         if font is not None or size is not None:
             if size is None:
@@ -1281,7 +1278,6 @@ class Graph(ContextMenuMixin):
     def _set_limits(
         self, mi, ma, axis, plotid, pad, pad_style="symmetric", force=False
     ):
-
         if not plotid < len(self.plots):
             return
 
@@ -1373,7 +1369,7 @@ class Graph(ContextMenuMixin):
             if mi is not None:
                 change = ra.low != mi
                 if isinstance(mi, (int, float)):
-                    if mi < ra.high:
+                    if mi < ra.high or (ma is not None and mi < ma):
                         ra.low = mi
                 else:
                     ra.low = mi
@@ -1381,7 +1377,7 @@ class Graph(ContextMenuMixin):
             if ma is not None:
                 change = change or ra.high != ma
                 if isinstance(ma, (int, float)):
-                    if ma > ra.low:
+                    if ma > ra.low or (mi is not None and ma > mi):
                         ra.high = ma
                 else:
                     ra.high = ma

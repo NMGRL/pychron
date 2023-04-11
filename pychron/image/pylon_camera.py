@@ -30,7 +30,6 @@ from pychron.loggable import Loggable
 
 class PylonCamera(Loggable):
     def __init__(self, identifier, *args, **kw):
-
         available_cameras = pypylon.factory.find_devices()
         self.debug("Available cameras {}".format(available_cameras))
         try:
@@ -79,7 +78,6 @@ class PylonCamera(Loggable):
             self.pixel_depth = self._cam.properties["PixelDynamicRangeMax"]
 
     def read(self):
-
         if self._cam and not self._setting_config:
             try:
                 img = self._cam.grab_one()

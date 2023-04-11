@@ -32,6 +32,9 @@ from pychron.pychron_constants import (
     PLANE,
     GRIDDATA,
     IDW,
+    LINEAR,
+    WEIGHTED_MEAN,
+    AVERAGE,
 )
 
 
@@ -41,11 +44,23 @@ class BaseFluxOptions(FigureOptions):
     levels = Int(50, auto_set=False, enter_set=True)
     plot_kind = Enum("1D", "2D", "Grid")
     use_weighted_fit = Bool(False)
+    interpolation_style = Enum(WEIGHTED_MEAN, AVERAGE, LINEAR)
     monte_carlo_ntrials = Int(10)
     use_monte_carlo = Bool(False)
     position_error = Float
     predicted_j_error_type = Enum(*ERROR_TYPES)
     flux_scalar = Float(1000)
+
+    rbf_kind = Enum(
+        "multiquadric",
+        "inverse",
+        "gaussian",
+        "linear",
+        "cubic",
+        "quintic",
+        "thin_plate",
+    )
+    griddata_method = Enum("linear", "nearest", "cubic")
 
 
 class MonitorMixin(HasTraits):
@@ -79,6 +94,7 @@ class FluxOptions(BaseFluxOptions, MonitorMixin):
 
     least_squares_fit = Enum("Linear", "Parabolic", "Cubic", "Quartic")
     one_d_axis = Enum("X", "Y")
+    degree = Int(5)
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]
@@ -91,16 +107,6 @@ class FluxOptions(BaseFluxOptions, MonitorMixin):
 
 class FluxVisualizationOptions(BaseFluxOptions):
     model_kind = Enum(PLANE, BOWL, BSPLINE, RBF, GRIDDATA, IDW)
-    rbf_kind = Enum(
-        "multiquadric",
-        "inverse",
-        "gaussian",
-        "linear",
-        "cubic",
-        "quintic",
-        "thin_plate",
-    )
-    griddata_method = Enum("linear", "nearest", "cubic")
 
     def initialize(self):
         self.subview_names = [MAIN, APPEARANCE]

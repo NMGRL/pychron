@@ -260,8 +260,15 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         self.set_analyses(self.selected)
 
     def group_selected(self):
-        max_gid = max([si.group_id for si in self.analyses]) + 1
-        for s in self.get_selected_analyses():
+        # get the select graph_id
+        selected = self.get_selected_analyses()
+        graph_id = selected.graph_id
+
+        # get the max group id for this graph
+        max_gid = (
+            max([si.group_id for si in self.analyses if si.graph_id == graph_id]) + 1
+        )
+        for s in selected:
             s.group_id = max_gid
 
         self.clear_selection()
@@ -298,7 +305,6 @@ class AnalysisTable(ColumnSorterMixin, SelectSameMixin):
         records = self.get_analysis_records()
         if records:
             for repoid, rs in groupby_repo(records):
-
                 self.dvc.sync_repo(repoid)
                 for ri in rs:
                     get_review_status(ri)

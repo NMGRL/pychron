@@ -20,17 +20,22 @@ import time
 from operator import attrgetter
 
 import yaml
+from apptools.preferences.preference_binding import bind_preference
 from pyface.constant import OK
 from pyface.file_dialog import FileDialog
 from traits.api import Str, Button, List, Instance
-from traitsui.api import View, UItem, VGroup, SetEditor
+from traitsui.api import View, UItem, VGroup, SetEditor, Item
 from traitsui.menu import Action, ToolBar
 from traitsui.tabular_adapter import TabularAdapter
 
 from pychron.core.helpers.filetools import unique_path2, add_extension
 from pychron.core.progress import progress_iterator, open_progress
+from pychron.core.pychron_traits import BorderVGroup
 from pychron.dvc.dvc import DVC
-from pychron.envisage.browser.record_views import RepositoryRecordView
+
+# from pychron.envisage.browser.record_views import RepositoryRecordView
+from pychron.git.hosts import IGitHost
+from pychron.git.hosts.github import GitHubService
 from pychron.loggable import Loggable
 from pychron.paths import paths
 
@@ -49,12 +54,12 @@ def switch_to_offline_database(preferences):
     preferences.save()
 
 
-class RepositoryTabularAdapter(TabularAdapter):
-    columns = [
-        ("Name", "name"),
-        ("Create Date", "created_at"),
-        ("Last Change", "pushed_at"),
-    ]
+# class RepositoryTabularAdapter(TabularAdapter):
+#     columns = [
+#         ("Name", "name"),
+#         ("Create Date", "created_at"),
+#         ("Last Change", "pushed_at"),
+#     ]
 
 
 class WorkOffline(Loggable):
@@ -75,10 +80,19 @@ class WorkOffline(Loggable):
     work_offline_button = Button("Work Offline")
     dvc = Instance(DVC)
 
+    lab_name = Str
+    username = Str
+    description = Str
+    tags = Str
+
     def load_repos(self):
-        repos = self.dvc.remote_repositories()
-        # repos = [{'name': 'Foo', 'created_at': '2021-10-28 13:23:05,286 '},
-        #          {'name': 'Basdfarefasdasdc', 'created_at': '2021-10-28 13:23:05,286 '}]
+        if self.dvc:
+            repos = self.dvc.remote_repositories()
+        else:
+            repos = [
+                {"name": "Foo", "created_at": "2021-10-28 13:23:05,286 "},
+                {"name": "Basdfarefasdasdc", "created_at": "2021-10-28 13:23:05,286 "},
+            ]
 
         repos = [r["name"] for r in repos]
 
@@ -95,6 +109,9 @@ class WorkOffline(Loggable):
             a. check database
             b. check github
         """
+        bind_preference(self, "lab_name", "pychron.general.lab_name")
+        bind_preference(self, "username", "pychron.general.username")
+
         if self._check_database_connection():
             if self._check_githost_connection():
                 self.load_repos()
@@ -140,8 +157,26 @@ class WorkOffline(Loggable):
                         "meta_repo_dirname": self.dvc.meta_repo_dirname,
                         "organization": self.dvc.organization,
                         "database": dbfile.read(),
+                        "metadata": {
+                            "tags": self.tags.split(","),
+                            "description": self.description,
+                        },
                     }
                 yaml.dump(ctx, wfile, encoding="utf-8")
+                content = yaml.dump(ctx, encoding="utf-8")
+
+                # try to share with PychronLabsLLC/pzdata
+                gh = self.application.get_services(GitHubService)
+                if gh is not None:
+                    upath = os.path.join(
+                        self.lab_name or "NoLab", os.path.basename(apath)
+                    )
+                    gh.post_file(
+                        "PychronLabsLLC/pzdata",
+                        upath,
+                        content,
+                        committer_name=self.username,
+                    )
 
         # msg = 'Would you like to switch to the offline database?'
         # if self.confirmation_dialog(msg):
@@ -171,7 +206,6 @@ class WorkOffline(Loggable):
     def _clone_central_db(
         self, repositories, analyses=None, principal_investigators=None, projects=None
     ):
-
         self.info("--------- Clone DB -----------")
         # create an a sqlite database
         from pychron.dvc.dvc_orm import Base
@@ -185,7 +219,6 @@ class WorkOffline(Loggable):
                 'The database "{}" already exists. '
                 "Do you want to overwrite it".format(os.path.basename(path))
             ):
-
                 path = self._get_new_path()
             else:
                 os.remove(path)
@@ -237,7 +270,6 @@ class WorkOffline(Loggable):
                     ans = analyses
                     ras = [rai for ai in ans for rai in ai.repository_associations]
                 else:
-
                     # at = time.time()
                     ras = [ra for repo in repos for ra in repo.repository_associations]
                     # self.debug('association time={}'.format(time.time()-at))
@@ -322,7 +354,6 @@ class WorkOffline(Loggable):
                 return path
 
     def _copy_records(self, progress, dest, table, records):
-
         st = time.time()
         msg = "Copying records from {}. n={}".format(table.__tablename__, len(records))
         self.debug(msg)
@@ -330,7 +361,9 @@ class WorkOffline(Loggable):
 
         with dest.session_ctx(use_parent_session=False) as dest_sess:
             keys = list(table.__table__.columns.keys())
-            mappings = ({k: getattr(row, k) for k in keys} for row in records)
+            mappings = (
+                {k: getattr(row, k) for k in keys} for row in records if row is not None
+            )
             dest_sess.bulk_insert_mappings(table, mappings)
             dest_sess.commit()
         self.debug("copy finished et={:0.5f}".format(time.time() - st))
@@ -359,8 +392,10 @@ class WorkOffline(Loggable):
         nrepos = []
         for repo in self.selected_repositories:
             arepos = self.dvc.find_reference_repos(repo)
+            self.debug("found {} for {}".format(arepos, repo))
             nrepos.extend(arepos)
         nrepos = list(set(nrepos))
+
         self.selected_repositories.extend(nrepos)
 
     def _work_offline_button_fired(self):
@@ -381,6 +416,23 @@ class WorkOffline(Loggable):
                 UItem(
                     "selected_repositories",
                     editor=SetEditor(name="repositories", can_move_all=False),
+                ),
+                BorderVGroup(
+                    UItem(
+                        "description",
+                        style="custom",
+                        tooltip="Provide a description of this dataset to "
+                        "make it easier to identifier ",
+                    ),
+                    label="Description",
+                ),
+                BorderVGroup(
+                    UItem(
+                        "tags",
+                        tooltip="Provide a list of tags for this dataset, e.g. sanidine,"
+                        "san juan volcanic field.   Use commas (,) to add multiple tags",
+                    ),
+                    label="Tags",
                 ),
                 UItem("work_offline_button", enabled_when="selected_repositories"),
             ),

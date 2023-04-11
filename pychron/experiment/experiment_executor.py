@@ -243,6 +243,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
     # dvc
     use_dvc_persistence = Bool(False)
+    dvc_save_timeout_minutes = Int(5)
+    use_dvc_overlap_save = Bool(False)
     default_principal_investigator = Str
 
     baseline_color = Color
@@ -336,7 +338,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder(prefid, attrs)
 
         # dvc
-        self._preference_binder("pychron.dvc.experiment", ("use_dvc_persistence",))
+        self._preference_binder(
+            "pychron.dvc.experiment",
+            ("use_dvc_persistence", "dvc_save_timeout_minutes", "use_dvc_overlap_save"),
+        )
 
         # dashboard
         self._preference_binder(
@@ -369,7 +374,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.events.extend(events)
 
     def execute(self):
-
         prog = open_progress(100, position=(100, 100))
 
         pre_execute_result = False
@@ -535,6 +539,34 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         # scroll to the first run
         self.experiment_queue.automated_runs_scroll_to_row = 0
 
+    def _wait_for_dvc_save(self, spec):
+        if (
+            self.use_dvc_overlap_save
+            and self._save_complete_evt
+            and self.use_dvc_persistence
+        ):
+            timeout = self.dvc_save_timeout_minutes
+            self.debug(
+                "waiting for save event to clear. Timeout after {} minutes".format(
+                    timeout
+                )
+            )
+            timeoutseconds = timeout * 60
+            st = time.time()
+            while self._save_complete_evt.is_set():
+                self._save_complete_evt.wait(1)
+
+                if time.time() - st > timeoutseconds:
+                    self.warning_dialog("Saving run failed to complete success fully")
+                    self._save_complete_evt.set()
+                    # run.cancel_run()
+                    spec.state = FAILED
+                    return
+
+            self.debug("waiting complete")
+
+        return True
+
     def _wait_for_save(self):
         """
         wait for experiment queue to be saved.
@@ -647,6 +679,8 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         exp.start_timestamp = datetime.now()
 
+        self._save_complete_evt.clear()
+
         self._do_event(events.START_QUEUE)
 
         # save experiment to database
@@ -727,6 +761,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                             )
                         )
 
+                if not self._wait_for_dvc_save(spec):
+                    self.debug("wait for dvc save failed")
+                    break
+
                 run = self._make_run(spec)
                 if run is None:
                     self.debug("failed to make run")
@@ -778,10 +816,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     self.debug("end at run completion")
                     break
 
-                if spec.state in ("success", "truncated"):
-                    if self._ratio_change_detection(spec):
-                        self.warning("Ratio Change Detected")
-                        break
+                # if spec.state in ("success", "truncated"):
+                #     if self._ratio_change_detection(spec):
+                #         self.warning("Ratio Change Detected")
+                #         break
 
             self.debug(
                 "run loop exited. end at completion:{}".format(
@@ -935,14 +973,22 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.extracting_run = run
 
         # self.debug("parallel saving currently disabled")
-        if self._save_complete_evt:
-            self.debug("waiting for save event to clear")
-            while self._save_complete_evt.is_set():
-                self._save_complete_evt.wait(1)
-            self.debug("waiting complete")
+        # if self._save_complete_evt and self.use_dvc_persistence:
+        #     self.debug("waiting for save event to clear")
+        #     st = time.time()
+        #     while self._save_complete_evt.is_set():
+        #         self._save_complete_evt.wait(1)
+        #
+        #         if time.time() - st > 300:
+        #             self.warning_dialog("Saving run failed to complete success fully")
+        #             self._save_complete_evt.set()
+        #             run.cancel_run()
+        #             run.spec.state = FAILED
+        #             return
+        #
+        #     self.debug("waiting complete")
 
         for step in ("_start", "_extraction", "_measurement", "_post_measurement"):
-
             if not self.is_alive():
                 break
 
@@ -971,13 +1017,15 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         self._do_event(events.SAVE_RUN, run=run)
         if self.save_all_runs or run.spec.state in ("success", "truncated"):
-            # this needs to be non-blocking
-            run.save(
-                exception_queue=self._exception_queue,
-                complete_event=self._save_complete_evt,
-            )
-            self._save_complete_evt.set()
+            kw = {}
+            if self.use_dvc_overlap_save:
+                # run.save is non-blocked when exception queue defined
+                kw["exception_queue"] = self._exception_queue
+                kw["complete_event"] = self._save_complete_evt
 
+            run.save(**kw)
+
+        self._save_complete_evt.set()
         self.run_completed = run
 
         remove_backup(run.uuid)
@@ -1170,7 +1218,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self, active_run=None, tripped=None, conditionals=None, kind="live"
     ):
         try:
-
             v = ConditionalsView()
 
             self.debug("Show conditionals active run: {}".format(active_run))
@@ -1627,7 +1674,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         analysis_type = check["analysis_type"]
         mainstore = self.datahub.mainstore
         if atype == analysis_type:
-
             ratio_name = check["ratio"]
             threshold = check.get("threshold", 0)
             nsigma = check.get("nsigma", 0)
@@ -1665,7 +1711,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 )
                 ans = mainstore.make_analyses(ans, use_progress=False)
             else:
-
                 ratios = self._ratios.get(atype, [])
                 nn = max(nanalyses - len(ratios), 1)
 
@@ -1693,7 +1738,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     nominal_ratio, cur, dev, threshold
                 )
             else:
-
                 ratios = ratios[-nanalyses:]
                 self._ratios[atype] = ratios
 
@@ -1877,7 +1921,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     IPIPETTE_PROTOCOL,
                     CRYO_PROTOCOL,
                 ):
-
                     man = self.application.get_service(
                         protocol, 'name=="{}"'.format(extract_device)
                     )
@@ -2096,7 +2139,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         return True
 
     def _pre_step_check(self, run, tag):
-
         """
         do pre_run_terminations
 
@@ -2266,7 +2308,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                                     )
 
                                 else:
-
                                     self.debug(
                                         "Repository association conflict. "
                                         "repository={} "
@@ -2318,6 +2359,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         if not self.alive:
             return
         self.heading("Post Run Check")
+
+        if self._ratio_change_detection(run.spec):
+            self.warning("Ratio Change Detected")
+            return True
 
         # check user defined post run actions
         # conditionals = self._load_queue_conditionals('post_run_actions', klass='ActionConditional')
@@ -2596,14 +2641,13 @@ Use Last "blank_{}"= {}
 
     def _update_timeseries(self, low_post=None):
         if self.use_dvc_persistence:
-
             if low_post is None:
                 low_post = self._low_post
             else:
                 self._low_post = low_post
 
             dvc = self.datahub.mainstore
-            with dvc.session_ctx():
+            with dvc.session_ctx(use_parent_session=False):
                 if self.experiment_queue:
                     ms = self.experiment_queue.mass_spectrometer
                 else:
@@ -2621,7 +2665,8 @@ Use Last "blank_{}"= {}
                             ),
                             title="Please Select a Mass Spectrometer",
                             width=300,
-                        )
+                        ),
+                        kind="livemodal",
                     )
                     if info.result:
                         ms = self.timeseries_mass_spectrometer
@@ -2632,13 +2677,16 @@ Use Last "blank_{}"= {}
                     mass_spectrometer=ms,
                     exclude_types=("unknown",),
                     low_post=low_post,
-                    verbose=False,
+                    verbose=True,
+                    use_parent_session=False,
                 )
                 if ans:
                     ans = dvc.make_analyses(ans, use_progress=False)
 
                     self.timeseries_editor.set_items(ans)
                     invoke_in_main_thread(self.timeseries_editor.refresh)
+                else:
+                    self.warning("failed retrieving analyses for experiment timeseries")
 
     # ===============================================================================
     # handlers
@@ -2651,6 +2699,7 @@ Use Last "blank_{}"= {}
         self.information_dialog(
             "Timeseries reset to {}".format(self._low_post.strftime("%m/%d/%y %H:%M"))
         )
+        self._update_timeseries()
 
     # def _configure_timeseries_editor_button_fired(self):
     #

@@ -24,7 +24,7 @@ from traitsui.api import HGroup, VGroup, Item, UItem
 
 from pychron.core.helpers.filetools import add_extension
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
-from pychron.core.ui.strings import PascalCase, SpacelessStr
+from pychron.core.ui.strings import PascalCase, SpacelessStr, ExperimentStr
 
 
 class BaseSaveDialog(HasTraits):
@@ -64,7 +64,8 @@ class IncrementalHeatTemplateSaveDialog(BaseSaveDialog):
 
 
 class ExperimentSaveDialog(BaseSaveDialog):
-    name = PascalCase()
+    # name = PascalCase()
+    name = ExperimentStr
     use_current_exp = Bool
 
     help_str = Str(

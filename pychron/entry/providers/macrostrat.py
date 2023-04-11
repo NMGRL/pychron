@@ -86,7 +86,7 @@ def get_lithology_values():
 if __name__ == "__main__":
     rets = get_lithology_values()
     names = "liths", "groups", "classes", "types"
-    for (n, vs) in zip(names, rets):
+    for n, vs in zip(names, rets):
         with open("/Users/ross/Desktop/defs_{}.txt".format(n), "w") as wfile:
             for vi in vs:
                 wfile.write("{}\n".format(vi))

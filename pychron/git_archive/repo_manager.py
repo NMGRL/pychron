@@ -270,7 +270,6 @@ class GitRepoManager(Loggable):
         return local_commit != remote_commit
 
     def _get_local_remote_commit(self, branchname=None):
-
         repo = self._repo
         origin = repo.remotes.origin
         try:
@@ -337,7 +336,6 @@ class GitRepoManager(Loggable):
         #     # prog.close()
 
     def clone(self, url, path, reraise=False, **kw):
-
         # config = 'http.sslVerify={}'.format(globalv.VERIFY_SSL)
         # kw['config'] = config
         try:
@@ -518,9 +516,6 @@ class GitRepoManager(Loggable):
         # return index, patches
         #
 
-    def get_head_object(self):
-        return get_head_commit(self._repo)
-
     def get_head(self, commit=True, hexsha=True):
         head = self._repo
         if commit:
@@ -564,6 +559,7 @@ class GitRepoManager(Loggable):
 
     def has_unpushed_commits(self, remote="origin", branch="master"):
         if self._repo:
+            branch = self._clean_master_branch(branch)
             # return self._repo.git.log('--not', '--remotes', '--oneline')
             if remote in self._repo.remotes:
                 return self._repo.git.log(
@@ -630,16 +626,30 @@ class GitRepoManager(Loggable):
         repo = self._repo
         return repo.active_branch.name
 
-    def checkout_branch(self, name, inform=True):
+    def restore_branch(self, ps):
+        self._repo.git.restore("--staged", ps)
+        self._repo.git.restore(ps)
+
+    def checkout(self, *args, **kw):
+        self._repo.git.checkout(*args, **kw)
+
+    def reset(self):
+        """delete index.lock"""
+        p = os.path.join(self._repo.working_dir, ".git", "index.lock")
+        if os.path.isfile(p):
+            os.remove(p)
+
+    def checkout_branch(self, name, inform=True, load_history=True):
         repo = self._repo
         if name.startswith("origin"):
-            name = name[7:]
-            remote = repo.remote()
-            rref = getattr(remote.refs, name)
-            repo.create_head(name, rref)
-
-            branch = repo.heads[name]
-            branch.set_tracking_branch(rref)
+            self.warning_dialog("Contact developer")
+            # name = name[7:]
+            # remote = repo.remote()
+            # rref = getattr(remote.refs, name)
+            # repo.create_head(name, rref)
+            #
+            # branch = repo.heads[name]
+            # branch.set_tracking_branch(rref)
 
         else:
             branch = getattr(repo.heads, name)
@@ -647,11 +657,13 @@ class GitRepoManager(Loggable):
         try:
             branch.checkout()
             self.selected_branch = name
-            self._load_branch_history()
+            if load_history:
+                self._load_branch_history()
             if inform:
                 self.information_dialog('Repository now on branch "{}"'.format(name))
 
         except BaseException as e:
+            self.debug_exception()
             self.warning_dialog(
                 'There was an issue trying to checkout branch "{}"'.format(name)
             )
@@ -663,7 +675,7 @@ class GitRepoManager(Loggable):
     def get_branch(self, name):
         return getattr(self._repo.heads, name)
 
-    def create_branch(self, name=None, commit="HEAD", inform=True):
+    def create_branch(self, name=None, commit="HEAD", inform=True, push=False):
         repo = self._repo
 
         if name is None:
@@ -677,6 +689,10 @@ class GitRepoManager(Loggable):
         if name not in repo.branches:
             branch = repo.create_head(name, commit=commit)
             branch.checkout()
+
+            if push and repo.remotes:
+                origin = repo.remotes.origin
+                repo.git.push("--set-upstream", origin, repo.head.ref)
             if inform:
                 self.information_dialog('Repository now on branch "{}"'.format(name))
             return name
@@ -729,6 +745,18 @@ class GitRepoManager(Loggable):
         commit_view = CommitView(model=h)
         return commit_view
 
+    def _clean_master_branch(self, branch):
+        for ref in self._repo.references:
+            if ref.name == branch:
+                ret = branch
+                break
+        else:
+            if branch == "master":
+                ret = "main"
+
+        self.debug("clean master in = {} out={}".format(branch, ret))
+        return ret
+
     def pull(
         self,
         branch="master",
@@ -742,6 +770,7 @@ class GitRepoManager(Loggable):
 
         if use_auto_pull is False ask user if they want to accept the available updates
         """
+
         self.debug("pulling {} from {}".format(branch, remote))
 
         repo = self._repo
@@ -753,6 +782,8 @@ class GitRepoManager(Loggable):
 
         if remote:
             self.debug("pulling from url: {}".format(remote.url))
+
+            branch = self._clean_master_branch(branch)
             if use_progress:
                 prog = open_progress(
                     3,
@@ -816,7 +847,19 @@ class GitRepoManager(Loggable):
                 if inform:
                     self.information_dialog("{} push complete".format(self.name))
             except GitCommandError as e:
-                self.debug_exception()
+                if branch == "master":
+                    self.debug("retrying push")
+                    try:
+                        self._repo.git.push(remote, "main")
+                        if inform:
+                            self.information_dialog(
+                                "{} push complete".format(self.name)
+                            )
+                    except GitCommandError as e:
+                        self.debug_exception()
+                else:
+                    self.debug_exception()
+
                 if inform:
                     self.warning_dialog(
                         "{} push failed. See log file for more details".format(
@@ -836,12 +879,20 @@ class GitRepoManager(Loggable):
     def rebase(self, onto_branch="master"):
         if self._repo:
             repo = self._repo
-
             branch = self.get_current_branch()
-            self.checkout_branch(onto_branch)
-            self.pull()
+            if onto_branch.startswith("origin"):
+                remote = repo.remotes.origin
+                try:
+                    bn = onto_branch[7:]
+                    onto_branch = getattr(remote.refs, bn)
+                except AttributeError:
+                    onto_branch = None
+            else:
+                self.checkout_branch(onto_branch)
+                self.pull()
 
-            repo.git.rebase(onto_branch, branch)
+            if onto_branch is not None:
+                repo.git.rebase(onto_branch, branch)
 
     def smart_pull(
         self,
@@ -851,7 +902,6 @@ class GitRepoManager(Loggable):
         accept_our=False,
         accept_their=False,
     ):
-
         if remote not in self._repo.remotes:
             return True
 
@@ -892,6 +942,8 @@ class GitRepoManager(Loggable):
                         )
 
                         return
+
+                    branch = self._clean_master_branch(branch)
 
                     # do merge
                     try:
@@ -948,7 +1000,8 @@ class GitRepoManager(Loggable):
             else:
                 self.debug("merging {} commits".format(behind))
                 self._git_command(
-                    lambda g: g.merge("FETCH_HEAD"), "GitRepoManager.smart_pull/!ahead"
+                    lambda g: g.merge("-X", "theirs", "FETCH_HEAD"),
+                    "GitRepoManager.smart_pull/!ahead",
                 )
         else:
             self.debug("Up-to-date with {}".format(remote))
@@ -979,18 +1032,33 @@ class GitRepoManager(Loggable):
             dest = getattr(repo.branches, to_)
             dest.checkout()
 
-        src = getattr(repo.branches, from_)
+        if from_.startswith("origin"):
+            remote = repo.remotes.origin
+            try:
+                bn = from_[7:]
+                from_ = getattr(remote.refs, bn)
+            except AttributeError:
+                self.debug("available branches {}".format(repo.branches))
+                msg = "Could not locate {} for merge".format(from_)
+                self.warning(msg)
+                if inform:
+                    self.warning_dialog(msg)
 
-        try:
-            repo.git.merge(src.commit)
-        except GitCommandError:
-            self.debug_exception()
-            if inform:
-                self.warning_dialog(
-                    "Merging {} into {} failed. See log file for more details".format(
-                        from_, to_
+                return
+        else:
+            from_ = getattr(repo.branches, from_)
+
+        with StashCTX(repo):
+            try:
+                repo.git.merge(from_.commit)
+            except GitCommandError:
+                self.debug_exception()
+                if inform:
+                    self.warning_dialog(
+                        "Merging {} into {} failed. See log file for more details".format(
+                            from_, to_
+                        )
                     )
-                )
 
     def commit(self, msg, author=None):
         self.debug("commit message={}, author={}".format(msg, author))

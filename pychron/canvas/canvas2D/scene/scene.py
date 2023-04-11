@@ -41,7 +41,6 @@ class Scene(HasTraits):
                 ci.set_canvas(c)
 
     def reset_layers(self):
-
         self.set_canvas(None)
         for li in self.layers:
             li.destroy()
@@ -148,7 +147,6 @@ class Scene(HasTraits):
             else:
                 layer = olayer
         else:
-
             n = len(self.layers)
             if layer > n - 1:
                 self.layers.append(Layer(name="{}".format(n)))

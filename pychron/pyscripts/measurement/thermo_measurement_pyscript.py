@@ -60,7 +60,15 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
         :type detname: str
         :return: float
         """
-        return self._get_spectrometer_parameter("GetDeflection", detname)
+        v = self._get_spectrometer_parameter("GetDeflection {}".format(detname))
+        try:
+            v = float(v)
+        except (TypeError, ValueError):
+            self.warning("error getting deflection")
+            self.debug_exception()
+            v = 0
+
+        return v
 
     @verbose_skip
     @command_register

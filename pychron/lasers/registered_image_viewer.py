@@ -146,7 +146,6 @@ class RegisteredImage(HasTraits):
         plot.y_axis.visible = False
 
     def load_registration(self):
-
         refpoints = [
             [375.23, 443.17],
             [525.42, 183.47],

@@ -99,7 +99,6 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         """
         config = self.get_configuration()
         if config:
-
             if config.has_section("General"):
                 name = self.config_get(config, "General", "name", optional=True)
                 if name is not None:
@@ -246,7 +245,6 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         return random.randint(mi, ma) if globalv.communication_simulation else None
 
     def setup_scheduler(self, name=None):
-
         if self.application:
             if name is None:
                 name = self._scheduler_name
@@ -274,7 +272,6 @@ class BaseCoreDevice(HasCommunicator, ConsumerMixin):
         delay=None,
         **kw
     ):
-
         if isinstance(cmd, tuple):
             cmd = self._build_command(*cmd)
         else:

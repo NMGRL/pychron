@@ -51,7 +51,6 @@ class ErrorComponentsView(HasTraits):
         self._load(an)
 
     def _load(self, an):
-
         keys = [k for k in an.arar_mapping.values() if k in an.isotopes]
 
         def get_comp(age):
@@ -107,7 +106,7 @@ class ErrorComponentsView(HasTraits):
             ObjectColumn(
                 name="value",
                 label="Value",
-                width=100,
+                # width=100,
                 format_func=lambda x: floatfmt(x, n=5),
             ),
         ]
