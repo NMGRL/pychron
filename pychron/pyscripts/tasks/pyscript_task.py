@@ -26,6 +26,7 @@ from traits.api import String, List, Instance, Any, on_trait_change, Bool
 from traitsui.api import UItem, EnumEditor
 
 from pychron.core.helpers.filetools import add_extension
+from pychron.core.helpers.importtools import import_klass
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
@@ -118,14 +119,17 @@ class ScriptExecutorMixin(ExecuteMixin):
         from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
 
         klass = ExtractionPyScript
-        if kind == "Laser":
-            from pychron.pyscripts.laser_pyscript import LaserPyScript
+        if kind != "Extraction":
+            path = f"pychron.pyscripts.{kind.lower()}_pyscript import {kind}PyScript"
+            klass = import_klass(path)
 
-            klass = LaserPyScript
-        elif kind == "Spectrometer":
-            from pychron.pyscripts.spectrometer_pyscript import SpectrometerPyScript
-
-            klass = SpectrometerPyScript
+        # if kind == "Laser":
+        #     from pychron.pyscripts.laser_pyscript import LaserPyScript
+        #     klass = LaserPyScript
+        # elif kind == "Spectrometer":
+        #     from pychron.pyscripts.spectrometer_pyscript import SpectrometerPyScript
+        #     klass = SpectrometerPyScript
+        # elif kind == "Aqua":
 
         runner = self.application.get_service(IPyScriptRunner)
         script = klass(

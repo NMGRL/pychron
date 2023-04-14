@@ -27,6 +27,18 @@ class AquaController(CoreDevice):
 
     """
 
+    def get_report(self):
+        r = self.ask("report")
+        if r:
+            try:
+                r = json.loads(r)
+            except BaseException:
+                self.warning("failed reading response")
+                self.debug_exception()
+                return
+
+            return r
+
     def trigger(self):
         self.ask("trigger")
 
