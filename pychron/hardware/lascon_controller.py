@@ -20,8 +20,8 @@ from pychron.hardware.core.core_device import CoreDevice
 
 class LasconController(CoreDevice):
     def initialize(self, *args, **kw):
-        self.communicator.write_terminator("\r\n")
-        self.communicator.read_terminator("\r\n")
+        self.communicator.write_terminator = "\r\n"
+        self.communicator.read_terminator = "\r\n"
         return True
 
     def load_and_execute_script(self, script_number, block=True):
