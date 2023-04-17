@@ -317,8 +317,18 @@ class AutomatedRun(Loggable):
         """
         import csv
 
-        # spec = self.spectrometer_manager.spectrometer
-        spec = self.application.get_service('pychron.spectrometer.pfeiffer.manager.quadera.QuaderaSpectrometerManager')
+        man = self.spectrometer_manager
+        if man.__class__.__name__ != 'QuaderaSpectrometerManager':
+            try:
+                man = self.spectrometer_manager.application.get_service(
+                    "pychron.spectrometer.pfeiffer.manager.quadera.QuaderaSpectrometerManager"
+                )
+            except BaseException:
+                self.debug_exception()
+                self.warning_dialog("Spectrometer not available")
+                return
+
+        spec = man.spectrometer
 
         spec.set_data_pump_mode(1)
 
