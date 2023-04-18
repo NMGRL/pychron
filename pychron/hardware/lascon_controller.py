@@ -25,16 +25,16 @@ class LasconController(CoreDevice):
         return True
 
     def load_and_execute_script(self, script_number, block=True):
-        self.ask(f'PScriptLoad {script_number}')
-        self.ask(f'PScriptSet {script_number}')
+        self.ask(f"PScriptLoad {script_number}")
+        self.ask(f"PScriptSet {script_number}")
 
         if block:
             if isinstance(block, bool):
                 block = 5
 
             while 1:
-                resp = self.ask('PScriptGet')
-                if resp == '0':
+                resp = self.ask("PScriptGet")
+                if resp == "0":
                     break
                 time.sleep(block)
 

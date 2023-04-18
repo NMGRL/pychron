@@ -318,7 +318,7 @@ class AutomatedRun(Loggable):
         import csv
 
         man = self.spectrometer_manager
-        if man.__class__.__name__ != 'QuaderaSpectrometerManager':
+        if man.__class__.__name__ != "QuaderaSpectrometerManager":
             try:
                 man = self.spectrometer_manager.application.get_service(
                     "pychron.spectrometer.pfeiffer.manager.quadera.QuaderaSpectrometerManager"
