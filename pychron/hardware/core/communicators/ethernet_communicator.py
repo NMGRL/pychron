@@ -521,6 +521,9 @@ class EthernetCommunicator(Communicator):
             handler = self.get_read_handler(handler, timeout=timeout)
 
         if handler:
+            if isinstance(terminator, str):
+                terminator = terminator.encode('utf8')
+
             try:
                 return handler.readline(terminator)
             except socket.timeout as e:
