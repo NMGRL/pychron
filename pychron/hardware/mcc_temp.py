@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from pychron.hardware import get_float
 from pychron.hardware.core.core_device import CoreDevice
 
 
@@ -20,6 +21,13 @@ class MCCTemp(CoreDevice):
     def initialize(self):
         self.scan_func = "update_scan"
         return True
+
+    def read_channels(self, chs):
+        return [self.read_channel(ch) for ch in chs]
+
+    @get_float()
+    def read_channel(self, ch):
+        return self.communicator.a_in(ch)
 
     def update_scan(self):
         pass

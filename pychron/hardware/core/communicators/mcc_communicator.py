@@ -199,7 +199,7 @@ class MccCommunicator(Communicator):
 
         value = ul.a_in(self.board_num, channel, ai_range)
         # Convert the raw value to engineering units
-        eng_units_value = ul.to_eng_units(board_num, ai_range, value)
+        eng_units_value = ul.to_eng_units(self.board_num, ai_range, value)
         return eng_units_value
 
     def d_out(self, channel, bit_value):

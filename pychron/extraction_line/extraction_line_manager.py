@@ -536,6 +536,9 @@ class ExtractionLineManager(Manager, Consoleable):
         t = Thread(target=sample)
         t.start()
 
+    # ------------------------------------------------------------
+    # Aqua
+    # ------------------------------------------------------------
     script_executor = None
     _aqua_active_flag = False
 
@@ -552,11 +555,7 @@ class ExtractionLineManager(Manager, Consoleable):
         if os.path.isfile(p):
             context = {}
             se.execute_script(
-                name,
-                root,
-                delay_start=1,
-                manager=self,
-                context=context,
+                name, root, delay_start=1, manager=self, context=context, kind="Aqua"
             )
             self._aqua_active_flag = True
         else:
@@ -569,6 +568,11 @@ class ExtractionLineManager(Manager, Consoleable):
             if status.get("completed"):
                 self._aqua_active_flag = False
         return json.dumps(status)
+
+    def aqua_get_report(self):
+        if self.script_executor:
+            # get the last entry in the aqua log file and send
+            pass
 
     def cycle(self, name, **kw):
         def cycle():
