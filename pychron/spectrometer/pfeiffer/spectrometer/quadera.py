@@ -81,6 +81,7 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
         nowdate = datetime.now().date()
         buffer_empty = False
         while 1:
+            sti = time.time()
             if cnt > n:
                 break
 
@@ -124,6 +125,11 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
 
             # if not i:
             # construct and write the header
+            if 'Py-Data' in obj:
+                obj = obj['Py-Data']
+            else:
+                continue
+
             keys = list(obj.keys())
 
             if "amuNames" not in keys:
@@ -169,7 +175,7 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
             writer.writerow(row)
             cnt += 1
 
-            et = time.time() - st
+            et = time.time() - sti
             if et < delay:
                 time.sleep(delay - et)
 
