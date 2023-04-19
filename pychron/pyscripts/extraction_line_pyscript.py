@@ -45,7 +45,12 @@ from pychron.pyscripts.context_managers import (
     LightingCTX,
     GrainPolygonCTX,
 )
-from pychron.pyscripts.decorators import verbose_skip, makeRegistry, calculate_duration, device_verbose_skip
+from pychron.pyscripts.decorators import (
+    verbose_skip,
+    makeRegistry,
+    calculate_duration,
+    device_verbose_skip,
+)
 from pychron.pyscripts.valve_pyscript import ValvePyScript
 
 COMPRE = re.compile(r"[A-Za-z]*")

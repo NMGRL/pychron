@@ -40,10 +40,10 @@ def count_verbose_skip(func):
 def skip(func):
     def decorator(obj, *args, **kw):
         if (
-                obj.testing_syntax
-                or obj.is_canceled()
-                or obj.is_truncated()
-                or obj.is_aborted()
+            obj.testing_syntax
+            or obj.is_canceled()
+            or obj.is_truncated()
+            or obj.is_aborted()
         ):
             return
         return func(obj, *args, **kw)
@@ -88,10 +88,10 @@ def verbose_skip(func):
         def decorator(obj, *args, **kw):
             fname = check_parameters(func, args, kw)
             if (
-                    obj.testing_syntax
-                    or obj.is_canceled()
-                    or obj.is_truncated()
-                    or obj.is_aborted()
+                obj.testing_syntax
+                or obj.is_canceled()
+                or obj.is_truncated()
+                or obj.is_aborted()
             ):
                 return 0
 
@@ -116,10 +116,10 @@ def device_verbose_skip(func):
     def decorator(obj, *args, **kw):
         fname = check_parameters(func, args, kw)
         if (
-                obj.testing_syntax
-                or obj.is_canceled()
-                or obj.is_truncated()
-                or obj.is_aborted()
+            obj.testing_syntax
+            or obj.is_canceled()
+            or obj.is_truncated()
+            or obj.is_aborted()
         ):
             return MockDevice()
 
@@ -161,5 +161,6 @@ def makeNamedRegistry(cmd_register):
         return decorator
 
     return named_register
+
 
 # ============= EOF =============================================
