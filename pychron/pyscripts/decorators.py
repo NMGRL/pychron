@@ -40,10 +40,10 @@ def count_verbose_skip(func):
 def skip(func):
     def decorator(obj, *args, **kw):
         if (
-            obj.testing_syntax
-            or obj.is_canceled()
-            or obj.is_truncated()
-            or obj.is_aborted()
+                obj.testing_syntax
+                or obj.is_canceled()
+                or obj.is_truncated()
+                or obj.is_aborted()
         ):
             return
         return func(obj, *args, **kw)
@@ -88,10 +88,10 @@ def verbose_skip(func):
         def decorator(obj, *args, **kw):
             fname = check_parameters(func, args, kw)
             if (
-                obj.testing_syntax
-                or obj.is_canceled()
-                or obj.is_truncated()
-                or obj.is_aborted()
+                    obj.testing_syntax
+                    or obj.is_canceled()
+                    or obj.is_truncated()
+                    or obj.is_aborted()
             ):
                 return 0
 
@@ -100,6 +100,34 @@ def verbose_skip(func):
             return func(obj, *args, **kw)
 
         return decorator
+
+
+class MockFunction:
+    def __call__(self, *args, **kw):
+        return True
+
+
+class MockDevice:
+    def __getattribute__(self, item):
+        return MockFunction()
+
+
+def device_verbose_skip(func):
+    def decorator(obj, *args, **kw):
+        fname = check_parameters(func, args, kw)
+        if (
+                obj.testing_syntax
+                or obj.is_canceled()
+                or obj.is_truncated()
+                or obj.is_aborted()
+        ):
+            return MockDevice()
+
+        obj.debug("func_name={} args={} kw={}".format(fname, args, kw))
+
+        return func(obj, *args, **kw)
+
+    return decorator
 
 
 def calculate_duration(func):
@@ -133,6 +161,5 @@ def makeNamedRegistry(cmd_register):
         return decorator
 
     return named_register
-
 
 # ============= EOF =============================================

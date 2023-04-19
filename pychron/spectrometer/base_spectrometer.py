@@ -80,7 +80,7 @@ class BaseSpectrometer(SpectrometerDevice):
     def halted(self):
         pass
 
-    def sink_data(self, writer, n):
+    def sink_data(self, *args, **kw):
         pass
 
     def cancel(self):

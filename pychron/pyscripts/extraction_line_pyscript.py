@@ -45,7 +45,7 @@ from pychron.pyscripts.context_managers import (
     LightingCTX,
     GrainPolygonCTX,
 )
-from pychron.pyscripts.decorators import verbose_skip, makeRegistry, calculate_duration
+from pychron.pyscripts.decorators import verbose_skip, makeRegistry, calculate_duration, device_verbose_skip
 from pychron.pyscripts.valve_pyscript import ValvePyScript
 
 COMPRE = re.compile(r"[A-Za-z]*")
@@ -970,17 +970,16 @@ class ExtractionPyScript(ValvePyScript):
     def set_intensity_scalar(self, v):
         return self._automated_run_call("py_set_intensity_scalar", v)
 
-    @verbose_skip
+    @device_verbose_skip
     @command_register
     def get_device(self, name):
         return self._get_device(name)
 
-    @verbose_skip
-    @command_register
-    def load_and_execute_lascon_script(self, scriptnumber, block=True):
-        dev = self._get_device("lascon_controller")
-        dev.load_and_execute_script(scriptnumber, block=block)
-
+    # @verbose_skip
+    # @command_register
+    # def load_and_execute_lascon_script(self, scriptnumber, block=True):
+    #     dev = self._get_device('lascon_controller')
+    #     dev.load_and_execute_script(scriptnumber, block=block)
     # ==========================================================================
     # properties
     # ==========================================================================
