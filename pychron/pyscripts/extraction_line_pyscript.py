@@ -980,11 +980,6 @@ class ExtractionPyScript(ValvePyScript):
     def get_device(self, name):
         return self._get_device(name)
 
-    # @verbose_skip
-    # @command_register
-    # def load_and_execute_lascon_script(self, scriptnumber, block=True):
-    #     dev = self._get_device('lascon_controller')
-    #     dev.load_and_execute_script(scriptnumber, block=block)
     # ==========================================================================
     # properties
     # ==========================================================================

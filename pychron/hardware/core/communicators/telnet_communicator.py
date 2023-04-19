@@ -60,13 +60,13 @@ class TelnetCommunicator(Communicator):
         self._tn = telnetlib.Telnet(self.host, port=self.port, timeout=self.timeout)
         return True
 
-    def ask(self, cmd, verbose=False, *args, **kw):
-        cmd = f"{cmd}{self.write_terminator}"
-
-        self._tn.write(cmd.encode("utf8"))
+    def read(self, cmd='', verbose=True):
 
         if self.read_terminator:
-            r = self._tn.read_until(self.read_terminator, timeout=self.timeout)
+            rt = self.read_terminator
+            if isinstance(rt, str):
+                rt = rt.encode('utf8')
+            r = self._tn.read_until(rt, timeout=self.timeout)
         else:
             r = self._tn.read_all()
 
@@ -76,6 +76,15 @@ class TelnetCommunicator(Communicator):
 
         if verbose:
             self.log_response(cmd, re)
+
+        return r
+
+    def ask(self, cmd, verbose=True, *args, **kw):
+        cmd = f"{cmd}{self.write_terminator}"
+
+        self._tn.write(cmd.encode("utf8"))
+
+        r = self.read(cmd, verbose=verbose)
 
         return r
 
