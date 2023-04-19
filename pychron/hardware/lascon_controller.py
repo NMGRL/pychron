@@ -50,7 +50,6 @@ class LasconController(CoreDevice):
         self.ask('PScriptEnd')
         return sleep
 
-
     def load_and_execute_script(self, text, stop_on_completion=True):
         # self.ask('GetRights')
         # self.ask('GetCoreStatus')

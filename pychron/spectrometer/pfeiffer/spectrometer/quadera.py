@@ -125,8 +125,8 @@ class QuaderaSpectrometer(BaseSpectrometer, PfeifferMixin):
 
             # if not i:
             # construct and write the header
-            if 'Py-Data' in obj:
-                obj = obj['Py-Data']
+            if "Py-Data" in obj:
+                obj = obj["Py-Data"]
             else:
                 continue
 
