@@ -522,7 +522,7 @@ class EthernetCommunicator(Communicator):
 
         if handler:
             if isinstance(terminator, str):
-                terminator = terminator.encode('utf8')
+                terminator = terminator.encode("utf8")
 
             try:
                 return handler.readline(terminator)

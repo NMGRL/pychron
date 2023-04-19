@@ -22,32 +22,30 @@ class LasconController(CoreDevice):
     def initialize(self, *args, **kw):
         self.communicator.write_terminator = "\r\n"
         self.communicator.read_terminator = "\r\n"
-        self.debug(f'initialize response ={self.read()}')
+        self.debug(f"initialize response ={self.read()}")
 
         # login as master
-        self.ask('SendPassword 3')
+        self.ask("SendPassword 3")
         return True
-    
+
     def send_script(self, text, script_number, stop_on_completion):
         sleep = 0
-        self.ask(f'PScriptStart {script_number}')
-        for t in text.split('\n'):
+        self.ask(f"PScriptStart {script_number}")
+        for t in text.split("\n"):
             t = t.strip()
             if t:
-                self.ask(f'PScriptAdd {t}')
+                self.ask(f"PScriptAdd {t}")
 
                 # calculate how long to wait
                 t = t.lower()
-                if t.startswith('wait'):
-                    _, p, *_ = t.split(' ')
-                    sleep +=int(p)/1000
-                    
+                if t.startswith("wait"):
+                    _, p, *_ = t.split(" ")
+                    sleep += int(p) / 1000
 
-        end = 'STOP' if stop_on_completion else 'END'
-        self.ask(f'PScriptAdd {end}')
-        
+        end = "STOP" if stop_on_completion else "END"
+        self.ask(f"PScriptAdd {end}")
 
-        self.ask('PScriptEnd')
+        self.ask("PScriptEnd")
         return sleep
 
     def load_and_execute_script(self, text, stop_on_completion=True):
@@ -55,23 +53,21 @@ class LasconController(CoreDevice):
         # self.ask('GetCoreStatus')
 
         # self.ask('GetStatus')
-    
+
         script_number = 2
         sleep = self.send_script(text, script_number, stop_on_completion)
-        
-        
+
         # load
-        self.ask(f'PScriptLoad {script_number}')
-        self.ask(f'PScriptSet 1 {script_number}')
+        self.ask(f"PScriptLoad {script_number}")
+        self.ask(f"PScriptSet 1 {script_number}")
 
         # set this script to trigger via TCP
-        self.ask(f'PScriptSelect 1 {script_number}')
-        
-    
+        self.ask(f"PScriptSelect 1 {script_number}")
+
         # start the process and process script.
-        self.ask('ProcStart')
-        
-        #procstart triggers a few other messages 
+        self.ask("ProcStart")
+
+        # procstart triggers a few other messages
         # while 1:
         #     time.sleep(0.5)
         #     resp = self.communicator.readline()
@@ -81,23 +77,22 @@ class LasconController(CoreDevice):
         #     if resp.startswith('procstart'):
         #         self.debug('Process successfully started')
         #         break
-        
 
         # pad sleep
-        sleep *=1.25
+        sleep *= 1.25
 
         st = time.time()
         while 1:
-            resp = self.ask('GetCoreStatus')
+            resp = self.ask("GetCoreStatus")
             if resp is not None:
                 resp = resp.strip().lower()
-                if resp=='getcorestatus 3 0 0 0':
-                    self.debug('Process stopped')
+                if resp == "getcorestatus 3 0 0 0":
+                    self.debug("Process stopped")
                     break
 
-            if time.time()-st>sleep:
-                self.debug('timeout')
-                self.ask('ProcStop')
+            if time.time() - st > sleep:
+                self.debug("timeout")
+                self.ask("ProcStop")
                 break
 
             time.sleep(1)
@@ -106,10 +101,9 @@ class LasconController(CoreDevice):
         # self.ask('GetCoreStatus')
         # self.ask('SetCoreStatus 3')
         # self.ask('GetSetting')
-        self.ask(f'SetSetting {name}')
+        self.ask(f"SetSetting {name}")
         # self.ask('GetSetting')
         # self.ask('PScriptList')
-
 
     # def read_scripts(self):
     #     self.ask('PScriptList')
