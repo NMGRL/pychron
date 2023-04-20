@@ -79,7 +79,6 @@ class SelectionFigure(HasTraits):
 
 
 class BaseArArFigure(SelectionFigure):
-
     use_fixed_height = False
     analyses = Any
     sorted_analyses = Property(depends_on="analyses")
