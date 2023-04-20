@@ -134,7 +134,7 @@ class FigureEditor(GraphEditor):
                 + self.plotter_options.margin_right
             )
         else:
-            width = 1.0
+            width = -1.0
 
         return UItem(
             "component",

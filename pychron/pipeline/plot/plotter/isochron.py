@@ -232,6 +232,8 @@ class AtmInterceptOverlay(AbstractOverlay):
     value = Float
 
     def overlay(self, component, gc, view_bounds=None, mode="normal"):
+        return
+
         x, y = component.map_screen((0, self.value))
         xo = component.x
         if x < xo:
@@ -261,6 +263,8 @@ class Isochron(BaseArArFigure):
 
 
 class InverseIsochron(Isochron):
+    use_fixed_height = True
+
     _plot_label = None
     xpad = None
     _analysis_group_klass = StepHeatAnalysisGroup
