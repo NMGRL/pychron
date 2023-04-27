@@ -382,22 +382,22 @@ class ArArAge(IsotopeGroup):
         else:
             x = self.get_value(variable)
 
-        v = polyval(coefficients, x)
+        uv = polyval(coefficients, x)
         if tag:
-            v = ufloat(v.nominal_value, v.std_dev, tag=tag)
-        self.temporary_ic_factors[det] = uv = {
-            "value": v,
-            "variable": variable,
-            "scaling_value": nominal_value(x),
-            "reference_detector": det,
-            "coefficients": coefficients,
-        }
+            uv = ufloat(uv.nominal_value, uv.std_dev, tag=tag)
+
+        self.temporary_ic_factors[det] = {'value': uv,
+                                          'variable': variable,
+                                          'scaling_value': nominal_value(x),
+                                          'reference_detector': det,
+                                          'coefficients': coefficients}
         return uv
 
     def set_temporary_ic_factor(self, n, k, v, e, tag=None):
-        self.temporary_ic_factors[k] = uv = {
+        uv = ufloat(v, e, tag=tag)
+        self.temporary_ic_factors[k] = {
             "reference_detector": n,
-            "value": ufloat(v, e, tag=tag),
+            "value": uv,
         }
         return uv
 
