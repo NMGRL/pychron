@@ -386,11 +386,13 @@ class ArArAge(IsotopeGroup):
         if tag:
             uv = ufloat(uv.nominal_value, uv.std_dev, tag=tag)
 
-        self.temporary_ic_factors[det] = {'value': uv,
-                                          'variable': variable,
-                                          'scaling_value': nominal_value(x),
-                                          'reference_detector': det,
-                                          'coefficients': coefficients}
+        self.temporary_ic_factors[det] = {
+            "value": uv,
+            "variable": variable,
+            "scaling_value": nominal_value(x),
+            "reference_detector": det,
+            "coefficients": coefficients,
+        }
         return uv
 
     def set_temporary_ic_factor(self, n, k, v, e, tag=None):
