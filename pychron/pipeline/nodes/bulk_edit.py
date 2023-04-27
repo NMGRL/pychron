@@ -17,7 +17,7 @@ import os
 import shutil
 from operator import attrgetter
 
-from traits.api import HasTraits, Float, Str, List, Bool, Property, Int
+from traits.api import HasTraits, Float, Str, List, Bool, Property, Int, Enum
 from traitsui.api import (
     View,
     UItem,
@@ -32,7 +32,7 @@ from traitsui.api import (
 
 from pychron.core.helpers.iterfuncs import groupby_repo, groupby_key
 from pychron.core.helpers.traitsui_shortcuts import okcancel_view
-from pychron.core.pychron_traits import BorderVGroup, StepStr
+from pychron.core.pychron_traits import BorderVGroup, StepStr, BorderHGroup
 from pychron.core.utils import alpha_to_int
 from pychron.dvc import NPATH_MODIFIERS, analysis_path, dvc_load, dvc_dump
 from pychron.experiment.utilities.runid import make_runid
@@ -49,24 +49,39 @@ class ICFactor(HasTraits):
     use = Bool
     enabled = Property
 
+    scaling_variable = Enum('Ar40', 'Ar39', 'Ar38', 'Ar37', 'Ar36', 'TotalIntensity')
+    scaling_coefficients = Str
+
+    @property
+    def use_scaling(self):
+        return self.scaling_variable and self.scaling_coefficients
+
     def _get_enabled(self):
-        return self.use and self.det and self.value
+        return self.use and ((self.det and self.value) or self.use_scaling)
 
     def traits_view(self):
         v = View(
-            HGroup(
-                UItem("use"),
-                UItem("det", editor=EnumEditor(name="detectors")),
-                UItem("num", label="Relative To", editor=EnumEditor(name="detectors")),
-                Item("value"),
-                Label(PLUSMINUS),
-                UItem("error"),
-            )
-        )
+            BorderVGroup(BorderHGroup(UItem("use"),
+                                      UItem("det", editor=EnumEditor(name="detectors"))),
+                         BorderVGroup(BorderHGroup(
+                             Item("num", label="Relative To", editor=EnumEditor(name="detectors")),
+                             Item("value"),
+                             Label(PLUSMINUS),
+                             UItem("error"),
+                         ), BorderHGroup(Item('scaling_variable', label='Variable'),
+                                         Item('scaling_coefficients',
+                                              tooltip='Define coefficients as a comma separated list of values. e.g. 3,2,'
+                                                      '1 is equivalent to 3x^2 + 2x + 1',
+                                              label='Coefficients'),
+                                         label='Scaling')),
+                         ))
         return v
 
     def tostr(self):
-        return "{}:{}({})".format(self.det, self.value, self.error)
+        if self.use_scaling:
+            return '{}:{}({})'.format(self.det, self.scaling_variable, self.scaling_coefficients)
+        else:
+            return "{}:{}({})".format(self.det, self.value, self.error)
 
 
 class BulkOptions(HasTraits):
@@ -228,14 +243,20 @@ class BulkEditNode(BaseDVCNode):
             keys.append(ic_factor.det)
             fits.append("bulk_edit")
 
-            # print('ic', ic_factor.det, ic_factor.value, ic_factor.error)
-            ic = ai.set_temporary_ic_factor(
-                ic_factor.num,
-                ic_factor.det,
-                ic_factor.value,
-                ic_factor.error,
-                tag="{} IC".format(ic_factor.det),
-            )
+            if ic_factor.use_scaling:
+                ic = ai.calculate_scaled_ic_factor(ic_factor.det,
+                                                   ic_factor.scaling_variable,
+                                                   [float(c) for c in ic_factor.scaling_coefficients.split(',')],
+                                                   tag=f'{ic_factor.det} IC')
+            else:
+                # print('ic', ic_factor.det, ic_factor.value, ic_factor.error)
+                ic = ai.set_temporary_ic_factor(
+                    ic_factor.num,
+                    ic_factor.det,
+                    ic_factor.value,
+                    ic_factor.error,
+                    tag="{} IC".format(ic_factor.det),
+                )
             for iso in ai.get_isotopes_for_detector(ic_factor.det):
                 iso.ic_factor = ic
 

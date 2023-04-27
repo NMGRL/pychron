@@ -24,6 +24,7 @@ from __future__ import print_function
 from copy import copy
 from operator import itemgetter, attrgetter
 
+from numpy import polyval
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.codetools.simple_timeit import timethis
@@ -300,7 +301,7 @@ class ArArAge(IsotopeGroup):
             numkey, denkey = ratio.split("/")
 
             for name, isos in groupby_key(
-                self.isotopes.values(), key=attrgetter("name")
+                    self.isotopes.values(), key=attrgetter("name")
             ):
                 num, den = None, None
                 for iso in isos:
@@ -372,6 +373,24 @@ class ArArAge(IsotopeGroup):
             det = iso.detector
             self.temporary_ic_factors[det] = {"reference_detector": n, "value": v}
             self.info("setting ic factor={} to {}".format(det, v))
+
+    def calculate_scaled_ic_factor(self, det, variable, coefficients, tag=None):
+        if variable == 'TotalIntensity':
+            x = 0
+            for iso in self.isotopes:
+                x += iso.get_intensity()
+        else:
+            x = self.get_value(variable)
+
+        v = polyval(coefficients, x)
+        if tag:
+            v = ufloat(v.nominal_value, v.std_dev, tag=tag)
+        self.temporary_ic_factors[det] = uv = {'value': v,
+                                               'variable': variable,
+                                               'scaling_value': nominal_value(x),
+                                               'reference_detector': det,
+                                               'coefficients': coefficients}
+        return uv
 
     def set_temporary_ic_factor(self, n, k, v, e, tag=None):
         self.temporary_ic_factors[k] = uv = {
@@ -710,6 +729,5 @@ class ArArAge(IsotopeGroup):
     @property
     def moles_Ar40(self):
         return self.sensitivity * self.get_isotope("Ar40").get_intensity()
-
 
 # ============= EOF =============================================
