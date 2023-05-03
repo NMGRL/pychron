@@ -58,13 +58,13 @@ from pychron.lasers.stage_managers.video_stage_manager import VideoStageManager
 from pychron.loading.foot_pedal import FootPedal
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.loading.tray_checker import TrayChecker
+from pychron.loading.tray_code_reader import TrayCodeReader
 from pychron.loading.wizard import LoadingWizard
 from pychron.paths import paths
 
 # ============= enthought library imports =======================
 from pychron.pychron_constants import NULL_STR
 from pychron.regex import LOAD_REGEX
-from pychron.stage.calibration.auto_calibrator import TrayIdentifier
 
 
 def make_bound(st):
@@ -332,16 +332,15 @@ class LoadingManager(DVCIrradiationable):
         # get image frame
         frm = self.video.get_cached_frame(force=True)
 
-        tid = TrayIdentifier()
-        tid.identify(frm)
-
-        # preprocess image
-        # frm = preprocess_image(frm)
-
-
-        # analyze image
-
-
+        tidder = TrayCodeReader()
+        tray_name = tidder.identify(frm)
+        if tray_name is None:
+            self.warning_dialog('Tray not identified')
+            return
+        else:
+            if self.confirmation_dialog(f'Tray Identified as {tray_name}. Is this correct?'):
+                self.tray = ''
+                self.tray = tray_name
 
     def _calibrate_tray(self):
         self.debug('calibrate tray')

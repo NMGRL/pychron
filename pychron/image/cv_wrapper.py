@@ -100,8 +100,10 @@ def colorspace(src, cs=None):
 
 
 def grayspace(src):
-    from skimage.color.colorconv import rgb2gray
-
+    from skimage.color.colorconv import rgb2gray, rgba2rgb
+    if len(src.shape) == 3:
+        if src.shape[2] == 4:
+            src = rgba2rgb(src)
     dst = rgb2gray(src)
     return dst
 
