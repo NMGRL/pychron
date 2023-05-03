@@ -50,6 +50,42 @@ from pychron.core.ui.video_editor import VideoEditor
 from pychron.envisage.icon_button_editor import icon_button_editor
 
 
+class WizardPane(TraitsDockPane):
+    id = "pychron.loading.wizard"
+    name = "Wizard"
+
+    def traits_view(self):
+        v = View(VGroup(HGroup(UItem('dn_load_laser_tray_into_holder_button'),
+                               spring,
+                               UItem('dn_load_laser_tray_into_holder_state')),
+                        HGroup(UItem('dn_place_square_plate_button'),
+                               spring,
+                               UItem('dn_place_square_plate_state')),
+                        HGroup(UItem('identify_and_calibrate_button'),
+                               spring,
+                               UItem('identify_and_calibrate_state')),
+                        HGroup(UItem('check_empty_tray_button'),
+                               spring,
+                               UItem('check_empty_tray_state')),
+                        HGroup(UItem('load_samples_button'),
+                               spring,
+                               UItem('load_samples_state')),
+                        HGroup(UItem('check_loaded_tray_button'),
+                               spring,
+                               UItem('check_loaded_tray_state')),
+
+                        ),
+
+                 # title='Loading Wizard',
+                 # resizable=True,
+                 # width=500,
+                 # height=500,
+                 # buttons=['OK', 'Cancel'],
+                 # kind='livemodal'
+                 )
+        return v
+
+
 class PositionsAdapter(TabularAdapter, ConfigurableMixin):
     columns = [
         ("Identifier", "identifier"),

@@ -29,7 +29,7 @@ from pychron.loading.tasks.actions import (
     SaveLoadingDBAction, GotoModeAction, GotoEntryModeAction, FootPedalModeAction, CheckTrayAction, MapTrayAction,
 )
 from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane, StageManagerPane, VideoPane, \
-    MachineVisionPane, CounterPane
+    MachineVisionPane, CounterPane, WizardPane
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -80,7 +80,8 @@ class LoadingTask(BaseManagerTask):
         video_pane = VideoPane(model=self.manager.stage_manager)
         mv_pane = MachineVisionPane(model=self.manager.stage_manager)
         cpane = CounterPane(model=self.manager)
-        return [control_pane, table_pane, stage_pane, video_pane, mv_pane, cpane]
+        wpane = WizardPane(model=self.manager.wizard)
+        return [control_pane, table_pane, stage_pane, video_pane, mv_pane, cpane, wpane]
 
     def create_central_pane(self):
         self.load_pane = LoadPane(model=self.manager)

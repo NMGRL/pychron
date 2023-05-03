@@ -58,11 +58,13 @@ from pychron.lasers.stage_managers.video_stage_manager import VideoStageManager
 from pychron.loading.foot_pedal import FootPedal
 from pychron.loading.loading_pdf_writer import LoadingPDFWriter
 from pychron.loading.tray_checker import TrayChecker
+from pychron.loading.wizard import LoadingWizard
 from pychron.paths import paths
 
 # ============= enthought library imports =======================
 from pychron.pychron_constants import NULL_STR
 from pychron.regex import LOAD_REGEX
+from pychron.stage.calibration.auto_calibrator import TrayIdentifier
 
 
 def make_bound(st):
@@ -266,6 +268,8 @@ class LoadingManager(DVCIrradiationable):
 
     use_image_shift = True
 
+    wizard = Instance(LoadingWizard)
+
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
         self.dvc.create_session()
@@ -298,6 +302,51 @@ class LoadingManager(DVCIrradiationable):
             self._update_focus_position()
             self.focus_position_entry = round(self.focus_position_readback, 2)
 
+            self.wizard = LoadingWizard(manager=self)
+
+    # ===============================================================================
+    # wizard
+    # ===============================================================================
+    def identify_and_calibrate(self):
+        """
+        called by the wizard typically
+
+        1. identify tray
+            a. move to nominal position
+            b. take image
+            c. analyze image
+        2. calibrate tray
+            a. move to center position
+            b. move to east, move west, move north, move south to calibrate rotation
+            c. update existing corrected positions with calculated affine
+        """
+
+        self._identify_tray()
+        self._calibrate_tray()
+
+    def _identify_tray(self):
+        self.debug('identify tray')
+        # move to nominal position
+        self.stage_manager.move_to_xy(-10, -10)
+
+        # get image frame
+        frm = self.video.get_cached_frame(force=True)
+
+        tid = TrayIdentifier()
+        tid.identify(frm)
+
+        # preprocess image
+        # frm = preprocess_image(frm)
+
+
+        # analyze image
+
+
+
+    def _calibrate_tray(self):
+        self.debug('calibrate tray')
+
+
     def scan_tray(self):
         classify_now = False
         if self.confirmation_dialog('Would you like to classify each image'):
@@ -322,6 +371,7 @@ class LoadingManager(DVCIrradiationable):
     def clear(self):
         if self.canvas:
             self.canvas.clear_all()
+
     def get_load_position_by_position(self, pos):
         for p in self.positions:
             if p.position == pos:
@@ -1249,6 +1299,10 @@ class LoadingManager(DVCIrradiationable):
 
     def _focus_position_entry_changed(self, new):
         if new is not None:
+            if new > 52 or new < 0:
+                self.warning_dialog('Invalid focus position: Use a value between 0 and 52')
+                return
+
             def update(pos):
                 self.focus_position_readback = pos
 

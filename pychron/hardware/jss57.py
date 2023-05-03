@@ -140,8 +140,13 @@ class STP_MTRD(LinearDrive):
 
     def _read_motor_position(self, *args, **kw):
         resp = self.ask('IP')
-        _, v = resp.split('=')
-        return int(v, 16)
+        if resp:
+            _, v = resp.split('=')
+            v = int(v, 16)
+        else:
+            v = 0
+
+        return v
 
     def _set_acceleration(self, v):
         self.ask(f'AC{v}')

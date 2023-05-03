@@ -158,7 +158,7 @@ class VideoStageManager(StageManager):
 
         bind_preference(self, "video_identifier", "{}.video_identifier".format(pref_id))
 
-        bind_preference(self, "use_video_server", "{}.use_video_server".format(pref_id))
+        #bind_preference(self, "use_video_server", "{}.use_video_server".format(pref_id))
 
         bind_preference(
             self.video_archiver,
@@ -895,11 +895,11 @@ class VideoStageManager(StageManager):
         else:
             self.start_recording()
 
-    def _use_video_server_changed(self):
-        if self.use_video_server:
-            self.video_server.start()
-        else:
-            self.video_server.stop()
+    # def _use_video_server_changed(self):
+    #     if self.use_video_server:
+    #         self.video_server.start()
+    #     else:
+    #         self.video_server.stop()
 
     def _get_camera_zoom_coefficients(self):
         return self.camera.zoom_coefficients

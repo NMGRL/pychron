@@ -193,6 +193,7 @@ class _ComboboxEditor(SimpleEditor):
                     self.control.setEditText("")
             self._no_enum_update -= 1
 
+    use_separator = Bool(False)
 
 class ComboboxEditor(BasicEditorFactory):
     klass = _ComboboxEditor
@@ -208,4 +209,6 @@ class ComboboxEditor(BasicEditorFactory):
     separator = Str("")
 
 
+    #: The separator string used in values trait (Qt only)
+    separator = Str("")
 # ============= EOF =============================================

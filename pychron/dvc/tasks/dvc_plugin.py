@@ -74,13 +74,14 @@ class DVCPlugin(BaseTaskPlugin):
         # dvc.meta_repo.cmd('push', '-u','origin','master')
 
         dvc = self.application.get_service(DVC)
-        with dvc.session_ctx(use_parent_session=False):
-            names = dvc.get_usernames()
-            self.debug("dumping usernames {}".format(names))
-            if names:
-                from pychron.envisage.user_login import dump_user_file
+        if dvc:
+            with dvc.session_ctx(use_parent_session=False):
+                names = dvc.get_usernames()
+                self.debug("dumping usernames {}".format(names))
+                if names:
+                    from pychron.envisage.user_login import dump_user_file
 
-                dump_user_file(names)
+                    dump_user_file(names)
 
     def test_database(self):
         ret, err = True, ""

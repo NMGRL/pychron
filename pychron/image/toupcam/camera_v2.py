@@ -44,9 +44,14 @@ from pychron.image.toupcam.toupcam import Toupcam
 class ToupCamCamera(object):
     pixel_depth = 3
     hooks = None
+    buf = None
+
     def __init__(self):
-        a = Toupcam.EnumV2()
-        self.hcam = Toupcam.Open(a[0].id)
+        try:
+            a = Toupcam.EnumV2()
+            self.hcam = Toupcam.Open(a[0].id)
+        except OSError:
+            self.hcam = None
 
     def load_configuration(self, cfg):
 
@@ -62,12 +67,13 @@ class ToupCamCamera(object):
 
             self._set_esize(cfg.get('size', 0))
 
-        self.w, self.h = self.hcam.get_Size()
-        # bufsize = ((self.w * 24 + 31) // 32 * 4) * self.h
-        bufsize = self.w*self.h*self.pixel_depth
-        self.buf = bytes(bufsize)
+        if self.hcam:
+            self.w, self.h = self.hcam.get_Size()
+            # bufsize = ((self.w * 24 + 31) // 32 * 4) * self.h
+            bufsize = self.w*self.h*self.pixel_depth
+            self.buf = bytes(bufsize)
 
-        self.hcam.StartPullModeWithCallback(self.cameraCallback, self)
+            self.hcam.StartPullModeWithCallback(self.cameraCallback, self)
 
     def cameraCallback(self, nEvent, ctx):
         if nEvent == TOUPCAM_EVENT_IMAGE:
@@ -85,19 +91,27 @@ class ToupCamCamera(object):
                         break
 
     def read(self):
-        arr = frombuffer(self.buf, dtype=uint8).reshape(self.h, self.w, self.pixel_depth)
-        self._arr = arr
+        if self.buf:
+            arr = frombuffer(self.buf, dtype=uint8).reshape(self.h, self.w, self.pixel_depth)
+            self._arr = arr
 
-        return True, self._arr.copy()
+            return True, self._arr.copy()
+        else:
+            return False, None
+
     def _set_esize(self, e):
-        self.hcam.put_eSize(e)
+        if self.hcam:
+            self.hcam.put_eSize(e)
 
     def _set_hflip(self, s):
-        self.hcam.put_HFlip(s)
+        if self.hcam:
+            self.hcam.put_HFlip(s)
 
     def _set_auto_exposure(self, s):
-        self.hcam.put_AutoExpoEnable(s)
+        if self.hcam:
+            self.hcam.put_AutoExpoEnable(s)
 
     def _set_exposure(self, e):
-        self.hcam.put_ExpoTime(int(e*1000))
+        if self.hcam:
+            self.hcam.put_ExpoTime(int(e*1000))
 

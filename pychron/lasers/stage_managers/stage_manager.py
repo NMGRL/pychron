@@ -147,7 +147,7 @@ class StageManager(BaseStageManager):
         pos = self.get_current_position()
         if self.stage_map:
             if distance_threshold(
-                pos, self._cached_position, self.stage_map.g_dimension / 4
+                    pos, self._cached_position, self.stage_map.g_dimension / 4
             ):
                 h = self.get_calibrated_hole(*pos, tol=self.stage_map.g_dimension / 2.0)
                 if h is not None:
@@ -272,13 +272,13 @@ class StageManager(BaseStageManager):
         return self.stage_controller.single_axis_move(*args, **kw)
 
     def linear_move(
-        self,
-        x,
-        y,
-        use_calibration=True,
-        check_moving=False,
-        abort_if_moving=False,
-        **kw
+            self,
+            x,
+            y,
+            use_calibration=True,
+            check_moving=False,
+            abort_if_moving=False,
+            **kw
     ):
         if check_moving:
             if self.moving():
@@ -301,6 +301,9 @@ class StageManager(BaseStageManager):
     def move_to_hole(self, hole, **kw):
         if self.stage_map.check_valid_hole(hole, **kw):
             self._move(self._move_to_hole, hole, name="move_to_hole", **kw)
+
+    def move_to_xy(self, x, y):
+        self._move(self._move_to_xy, (x, y), name="move_to_xy")
 
     def move_to_point(self, pt):
         self._move(self._move_to_point, pt, name="move_to_point")
@@ -524,6 +527,7 @@ class StageManager(BaseStageManager):
                 self.parent.pattern_executor.stop()
         except AttributeError:
             pass
+
     # def _move(self, func, pos, name=None, *args, **kw):
     #     if pos is None:
     #         return
@@ -550,19 +554,19 @@ class StageManager(BaseStageManager):
         self.info("drilling complete. drilled for {}s".format(et))
 
     def _move_polygon(
-        self,
-        pts,
-        velocity=5,
-        offset=50,
-        use_outline=True,
-        find_min=False,
-        scan_size=None,
-        use_move=True,
-        use_convex_hull=True,
-        motors=None,
-        verbose=True,
-        start_callback=None,
-        end_callback=None,
+            self,
+            pts,
+            velocity=5,
+            offset=50,
+            use_outline=True,
+            find_min=False,
+            scan_size=None,
+            use_move=True,
+            use_convex_hull=True,
+            motors=None,
+            verbose=True,
+            start_callback=None,
+            end_callback=None,
     ):
         """
         motors is a dict of motor_name:value pairs
@@ -678,15 +682,15 @@ class StageManager(BaseStageManager):
         self.info("polygon raster complete")
 
     def _raster(
-        self,
-        points,
-        velocity,
-        step=500,
-        scale=1000,
-        find_min=False,
-        start_callback=None,
-        end_callback=None,
-        verbose=False,
+            self,
+            points,
+            velocity,
+            step=500,
+            scale=1000,
+            find_min=False,
+            start_callback=None,
+            end_callback=None,
+            verbose=False,
     ):
         from pychron.core.geometry.scan_line import raster
 
@@ -863,6 +867,16 @@ class StageManager(BaseStageManager):
     #        sc.execute_command_buffer()
     #        sc.end_command_buffer()
 
+    def _move_to_xy(self, x, y, block=True, *args, **kw):
+        self.debug("move to xy {},{}".format(x, y))
+        self.linear_move(x, y, block=block, *args, **kw)
+
+        if block:
+            self.info("Move complete")
+            self.update_axes()
+        else:
+            self.info('non block move started')
+
     def _move_to_point(self, pt):
         self.debug("move to point={}".format(pt))
         if isinstance(pt, str):
@@ -891,7 +905,7 @@ class StageManager(BaseStageManager):
         self.update_axes()
 
     def _move_to_hole(
-        self, key, correct_position=True, user_entry=False, autocenter_only=False
+            self, key, correct_position=True, user_entry=False, autocenter_only=False
     ):
         self.info("Move to hole {} type={}".format(key, str(type(key))))
 
@@ -1027,7 +1041,7 @@ class StageManager(BaseStageManager):
             return
 
         if (
-            self.move_thread is None or not self.move_thread.isRunning()
+                self.move_thread is None or not self.move_thread.isRunning()
         ) and v is not self._point:
             pos = self.canvas.get_item("point", int(v) - 1)
             if pos is not None:

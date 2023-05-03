@@ -35,7 +35,12 @@ from numpy import (
     ravel_multi_index,
 )
 from skimage.color import rgb2gray, gray2rgb
-from skimage.draw import circle, polygon
+
+from skimage.draw import polygon
+try:
+    from skimage.draw import disk
+except ImportError:
+    from skimage.draw import circle as disk
 
 # ============= local library imports  ==========================
 from skimage.feature import peak_local_max
@@ -262,7 +267,7 @@ class LumenDetector(Locator):
             self._draw_targets(img, targets, color=(252, 169, 3))
             self._draw_targets(img, [target], color=(3, 86, 252))
 
-            peak_img[circle(py, px, min_distance)] = 255
+            peak_img[disk(py, px, min_distance)] = 255
 
             # ilum = lum[target.mask].sum()
             # area = (target.area + target.pactual / 2)

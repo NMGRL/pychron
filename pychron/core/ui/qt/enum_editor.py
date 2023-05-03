@@ -66,6 +66,10 @@ class myEnumEditor(BasicEditorFactory):
     use_separator = Bool(False)
     separator = Str
 
+    use_separator = Bool(False)
+
+    #: The separator string used in values trait (Qt only)
+    separator = Str("")
     def _values_changed(self):
         """Recomputes the mappings whenever the **values** trait is changed."""
         self._names, self._mapping, self._inverse_mapping = enum_values_changed(
