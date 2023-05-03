@@ -97,7 +97,7 @@ def tail(f, lines=20):
 #         logger.addHandler(h)
 
 
-def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
+def logging_setup(name, use_archiver=True, root=None, use_file=True, level=None, **kw):
     """ """
     # set up deprecation warnings
     # import warnings
@@ -173,7 +173,9 @@ def logging_setup(name, use_archiver=True, root=None, use_file=True, **kw):
                 shutil.move(src, bk)
 
     root = logging.getLogger()
-    root.setLevel(gLEVEL)
+    if level is None:
+        level = gLEVEL
+    root.setLevel(level)
     shandler = logging.StreamHandler()
 
     handlers = [shandler]

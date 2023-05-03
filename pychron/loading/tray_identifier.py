@@ -15,9 +15,8 @@
 # ===============================================================================
 from PIL import Image
 from matplotlib import pyplot as plt
-from numpy import asarray, arange, argmax
-from numpy.fft import fftfreq
-from scipy.fft import fft
+from numpy import asarray, arange, argmax, sin
+from scipy.fft import fftfreq, rfftfreq, fft, rfft, irfft
 
 from pychron.image.cv_wrapper import grayspace
 from pychron.loggable import Loggable
@@ -41,20 +40,34 @@ class TrayIdentifier(Loggable):
 
         row = frm[110, :]
 
+        # clip
+        row = row[100:350]
+
+        md = (row.max()-row.min())/2+row.min()
+        nrow = ((row-md)/row.max())
         # t = max(row)*0.9
         # row[row > t] = 1
         # row[row <= t] = 0
-        fig, axs = plt.subplots(2, 1)
+        fig, axs = plt.subplots(3, 1)
 
-        c,r = frm.shape
-        yf = fft(row)
-        xf = fftfreq(c, 1)[:c//2]
+        # c,r = frm.shape
+        c = len(row)
+
+        yf = rfft(nrow)
+        xf = rfftfreq(c, 1)
         print(xf[argmax(abs(yf))])
-        axs[0].plot(xf, 2.0/c * abs(yf[0:c//2]))
-        axs[1].plot(arange(len(row)), row)
+        axs[0].plot(xf, abs(yf))
+        axs[1].plot(arange(c), nrow)
+        axs[2].plot(arange(c), row)
+        # xs = arange(c)
+        # f = xf[argmax(abs(yf))]
+        # axs[2].plot(xs, sin(f*xs))
+        # print(yf)
 
-
-
+        n=len(yf)
+        yf[-7*n//8:] = 0
+        print(yf)
+        axs[1].plot(irfft(yf))
         # plt.imshow(frm)
         plt.show()
         # identify peaks
@@ -68,7 +81,7 @@ class TrayIdentifier(Loggable):
 if __name__ == '__main__':
     from pychron.core.helpers.logger_setup import logging_setup
     paths.build('Dev')
-    logging_setup('tray_id')
+    logging_setup('tray_id', level='INFO')
     ti = TrayIdentifier()
 
     frm = Image.open('/Users/jross/Sandbox/snapshot-057.tif')
