@@ -485,6 +485,7 @@ class BaseSpectrometer(SpectrometerDevice):
                 try:
                     mws = {l[0]: float(l[1]) for l in reader}
                 except BaseException:
+                    self.debug_exception()
                     mws = None
         elif os.path.isfile(yp):
             self.info('loading "molecular_weights.yaml" file. {}'.format(yp))
