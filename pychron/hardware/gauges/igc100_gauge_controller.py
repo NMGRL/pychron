@@ -15,13 +15,20 @@
 # ===============================================================================
 from pychron.hardware.gauges.base_controller import BaseGaugeController
 
-PORT_MAPPING = {'IGC1': 1, 'IGC2': 2,
-                'PG1': 3, 'PG2': 4,
-                'CM1': 5, 'CM2': 6,
-                'CM3': 7, 'CM4': 8,
-                'AN1': 9, 'AN2': 10,
-                'AN3': 11, 'AN4': 12,
-                }
+PORT_MAPPING = {
+    "IGC1": 1,
+    "IGC2": 2,
+    "PG1": 3,
+    "PG2": 4,
+    "CM1": 5,
+    "CM2": 6,
+    "CM3": 7,
+    "CM4": 8,
+    "AN1": 9,
+    "AN2": 10,
+    "AN3": 11,
+    "AN4": 12,
+}
 
 
 class IGC100GaugeController(BaseGaugeController):
@@ -29,8 +36,11 @@ class IGC100GaugeController(BaseGaugeController):
         name = gauge.name
         port = PORT_MAPPING.get(name)
         if port is None:
-            return self.ask(f'GDAT? {port}')
+            return self.ask(f"GDAT? {port}")
 
-        self.warning(f'Invalid gauge name {name}. Valid names are {PORT_MAPPING.keys()}')
+        self.warning(
+            f"Invalid gauge name {name}. Valid names are {PORT_MAPPING.keys()}"
+        )
+
 
 # ============= EOF =============================================

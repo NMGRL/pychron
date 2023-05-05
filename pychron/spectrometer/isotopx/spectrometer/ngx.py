@@ -150,7 +150,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
             try:
                 ds += self.read(1)
-                #print(ds)
+                # print(ds)
                 # ds = self.microcontroller.communicator.readline("#\r\n")
                 # return ds
             except BaseException:
