@@ -55,9 +55,12 @@ class SPCIonPumpController(CoreDevice):
             return data
 
     def _make_command(self, cmd):
-        a = " ".join(("~", "{:02X}".format(self.address), cmd))
-        a = f'{a} '
-        return f"{a} {self._calculate_checksum(a)}"
+        if self.comminucator.name.endswith('telnet'):
+            return f'spc {cmd}'
+        else:
+            a = " ".join(("~", "{:02X}".format(self.address), cmd))
+            a = f'{a} '
+            return f"{a} {self._calculate_checksum(a)}"
         # return "{} {}".format(a, self._calculate_checksum(a))
 
     def _calculate_checksum(self, a):
