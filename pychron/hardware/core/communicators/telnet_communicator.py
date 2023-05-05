@@ -60,12 +60,11 @@ class TelnetCommunicator(Communicator):
         self._tn = telnetlib.Telnet(self.host, port=self.port, timeout=self.timeout)
         return True
 
-    def read(self, cmd='', verbose=True):
-
+    def read(self, cmd="", verbose=True):
         if self.read_terminator:
             rt = self.read_terminator
             if isinstance(rt, str):
-                rt = rt.encode('utf8')
+                rt = rt.encode("utf8")
             r = self._tn.read_until(rt, timeout=self.timeout)
         else:
             r = self._tn.read_all()
