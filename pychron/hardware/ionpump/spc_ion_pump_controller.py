@@ -30,6 +30,7 @@ class SPCIonPumpController(CoreDevice):
     display_name = Str
     low = 1e-10
     high = 1e-7
+    use_checksum_validation = False
 
     def load_additional_args(self, config):
         self.set_attribute(config, "address", "General", "address", cast="int")
@@ -46,16 +47,26 @@ class SPCIonPumpController(CoreDevice):
 
         return self.pressure
 
+    @property 
+    def telnet_mode(self):
+        return self.communicator.name.endswith('telnet')
+
     @get_float(0)
     def _read_pressure(self):
         cmd = self._make_command("0B")
-        resp = self.ask(cmd, verbose=False)
+        resp = self.ask(cmd, verbose=True)
         if resp:
-            addr, status, err, data, unit, chk = resp.split(" ")
+            
+            if self.telnet_mode:
+                # example response OK 00 4.1E-11 Torr
+                status, err, data, unit  = resp.split(' ')
+            else:
+                addr, status, err, data, unit, chk = resp.split(" ")
+
             return data
 
     def _make_command(self, cmd):
-        if self.comminucator.name.endswith('telnet'):
+        if self.telnet_mode:
             return f'spc {cmd}'
         else:
             a = " ".join(("~", "{:02X}".format(self.address), cmd))
@@ -80,7 +91,6 @@ class SPCIonPumpController(CoreDevice):
             HGroup(
                 UReadonly(
                     "display_name",
-                    width=-30,
                 ),
                 Item(
                     "pressure", format_str="%0.2e", show_label=False, style="readonly"
