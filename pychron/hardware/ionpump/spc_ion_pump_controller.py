@@ -56,10 +56,21 @@ class SPCIonPumpController(CoreDevice):
 
     def _make_command(self, cmd):
         a = " ".join(("~", "{:02X}".format(self.address), cmd))
-        return "{} {}".format(a, self._calculate_checksum(a))
+        a = f'{a} '
+        return f"{a} {self._calculate_checksum(a)}"
+        # return "{} {}".format(a, self._calculate_checksum(a))
 
     def _calculate_checksum(self, a):
-        return "00"
+        if self.use_checksum_validation:
+            checksum = 0
+            for c in a:
+                checksum += ord(c)
+
+            checksum = checksum % 256
+            checksum = f'{checksum:02X}'
+        else:
+            checksum = '00'
+        return checksum
 
     def pump_view(self):
         v = View(
@@ -83,6 +94,5 @@ class SPCIonPumpController(CoreDevice):
         )
 
         return v
-
 
 # ============= EOF =============================================
