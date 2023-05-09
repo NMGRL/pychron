@@ -258,7 +258,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
 
         columns = [
             Column(attr="status", width=2, enabled=options.status_enabled),
-            Column(label="Identifier", attr="identifier", enabled=options.identifier_enabled),
+            Column(
+                label="Identifier",
+                attr="identifier",
+                enabled=options.identifier_enabled,
+            ),
             Column(
                 label="N",
                 attr="aliquot_step_str",
@@ -782,8 +786,12 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 label="MSWD",
                 func=get_preferred_mswd,
             ),
-            Column(visible=opt.include_summary_kca, label="K/Ca",
-                   func=get_kca, sigformat="summary_kca"),
+            Column(
+                visible=opt.include_summary_kca,
+                label="K/Ca",
+                func=get_kca,
+                sigformat="summary_kca",
+            ),
             Column(
                 visible=opt.include_summary_kca,
                 label=PLUSMINUS_NSIGMA.format(opt.summary_kca_nsigma),

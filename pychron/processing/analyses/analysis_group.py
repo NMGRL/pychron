@@ -449,7 +449,7 @@ class AnalysisGroup(IdeogramPlotable):
 
     @property
     def identifier_str(self):
-        return ','.join({ai.identifier for ai in self.analyses})
+        return ",".join({ai.identifier for ai in self.analyses})
 
     @property
     def age_attr(self):
