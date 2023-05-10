@@ -253,7 +253,7 @@ class LoadingManager(DVCIrradiationable):
     focus_position_readback = Float
     focus_stepsperdata = Int(964)
     focus_scalar = Float(15.5)
-    zoom_level = Enum('1', ('0.8', '1', '2', '3', '4', '6', '8', ))
+    zoom_level = Enum('1', ('0.8', '1', '2', '3', '4', '6', '8',))
 
     loading_level_button = Button('Loading Level')
     checking_level_button = Button('Checking Level')
@@ -307,6 +307,11 @@ class LoadingManager(DVCIrradiationable):
     # ===============================================================================
     # wizard
     # ===============================================================================
+    alive = Bool(False)
+
+    def cancel_identify_and_calibrate(self):
+        self.alive = False
+
     def identify_and_calibrate(self):
         """
         called by the wizard typically
@@ -320,14 +325,17 @@ class LoadingManager(DVCIrradiationable):
             b. move to east, move west, move north, move south to calibrate rotation
             c. update existing corrected positions with calculated affine
         """
+        if self.alive:
+            self._identify_tray()
 
-        self._identify_tray()
-        self._calibrate_tray()
+        if self.alive:
+            self._calibrate_tray()
 
     def _identify_tray(self):
         self.debug('identify tray')
         # move to nominal position
-        self.stage_manager.move_to_xy(-10, -10)
+
+        self.stage_manager.move_to_corner('ul')
 
         # get image frame
         frm = self.video.get_cached_frame(force=True)
@@ -344,7 +352,8 @@ class LoadingManager(DVCIrradiationable):
 
     def _calibrate_tray(self):
         self.debug('calibrate tray')
-
+        self.stage_manager.tray_calibration_manager.style = 'Auto'
+        self.stage_manager.tray_calibration_manager.calibrate = True
 
     def scan_tray(self):
         classify_now = False

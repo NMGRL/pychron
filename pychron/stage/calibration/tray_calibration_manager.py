@@ -87,7 +87,7 @@ class TrayCalibrationManager(Loggable):
     calibration_help = String(TRAY_HELP)
     style = Enum("Tray", "Free", "Hole", "Irregular", "Linear",
                  "SemiAuto", "SemiAutoFullTraversal", "SemiAutoCorrection",
-                 "TrayMapper", "TrayIdentifier")
+                 "TrayMapper", "TrayIdentifier", "Auto")
     canvas = Any
     calibrator = Instance(BaseCalibrator)
     # calibrator = Property(depends_on='style')

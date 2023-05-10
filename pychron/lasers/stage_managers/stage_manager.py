@@ -302,6 +302,10 @@ class StageManager(BaseStageManager):
         if self.stage_map.check_valid_hole(hole, **kw):
             self._move(self._move_to_hole, hole, name="move_to_hole", **kw)
 
+    def move_to_corner(self, corner):
+        x, y = self.stage_controller.get_corner(corner)
+        self.move_to_xy(x, y)
+
     def move_to_xy(self, x, y):
         self._move(self._move_to_xy, (x, y), name="move_to_xy")
 

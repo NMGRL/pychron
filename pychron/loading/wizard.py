@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from threading import Thread
 
 from pychron.loggable import Loggable
 from traits.api import Button, Bool, observe
@@ -43,6 +44,8 @@ class LoadingWizard(Loggable):
     check_loaded_tray_button = Button("Check Loaded Tray")
     check_loaded_tray_state = Bool(False)
 
+    active_thread = None
+
     @observe('+do_nothing')
     def _handle_do_nothing(self,event):
         print(event)
@@ -52,8 +55,14 @@ class LoadingWizard(Loggable):
         setattr(self, name, not cv)
 
     def _identify_and_calibrate_button_fired(self):
+        if self.active_thread:
+            self.manager.cancel_identify_and_calibrate()
+            return
+
+        self.manager.alive = True
         self.identify_and_calibrate_state = not self.identify_and_calibrate_state
-        self.manager.identify_and_calibrate()
+        self.active_thread = Thread(target=self.manager.identify_and_calibrate)
+        self.active_thread.start()
 
     def _check_empty_tray_button_fired(self):
         self.check_empty_tray_state = not self.check_empty_tray_state

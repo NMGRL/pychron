@@ -93,6 +93,23 @@ class MotionController(CoreDevice):
     _stopped = True
     nonstoppable = Bool(False)
 
+    def get_corner(self, key, pad=0.9):
+
+        if key == 'ul':
+            x, y = self.xaxes_min, self.yaxes_max
+        elif key == 'ur':
+            x, y = self.xaxes_max, self.yaxes_max
+        elif key == 'll':
+            x, y = self.xaxes_min, self.yaxes_min
+        else:  # lr
+            x, y = self.xaxes_max, self.yaxes_min
+
+        if pad:
+            x *= pad
+            y *= pad
+
+        return x, y
+
     def xy_swapped(self):
         return False
 
@@ -248,6 +265,7 @@ class MotionController(CoreDevice):
 
     def stop(self, *args, **kw):
         pass
+
     # ===============================================================================
     # private
     # ===============================================================================
@@ -501,6 +519,5 @@ class MotionController(CoreDevice):
             p = os.path.join(self.configuration_dir_path, "motion_profiler.cfg")
             mp.load(p)
         return mp
-
 
 # ============= EOF ====================================
