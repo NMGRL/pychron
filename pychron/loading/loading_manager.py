@@ -309,27 +309,27 @@ class LoadingManager(DVCIrradiationable):
     # ===============================================================================
     alive = Bool(False)
 
-    def cancel_identify_and_calibrate(self):
-        self.alive = False
-
-    def identify_and_calibrate(self):
-        """
-        called by the wizard typically
-
-        1. identify tray
-            a. move to nominal position
-            b. take image
-            c. analyze image
-        2. calibrate tray
-            a. move to center position
-            b. move to east, move west, move north, move south to calibrate rotation
-            c. update existing corrected positions with calculated affine
-        """
-        if self.alive:
-            self._identify_tray()
-
-        if self.alive:
-            self._calibrate_tray()
+    # def cancel_identify_and_calibrate(self):
+    #     self.alive = False
+    #
+    # def identify_and_calibrate(self):
+    #     """
+    #     called by the wizard typically
+    #
+    #     1. identify tray
+    #         a. move to nominal position
+    #         b. take image
+    #         c. analyze image
+    #     2. calibrate tray
+    #         a. move to center position
+    #         b. move to east, move west, move north, move south to calibrate rotation
+    #         c. update existing corrected positions with calculated affine
+    #     """
+    #     if self.alive:
+    #         self._identify_tray()
+    #
+    #     if self.alive:
+    #         self._calibrate_tray()
 
     def _identify_tray(self):
         self.debug('identify tray')
@@ -345,10 +345,6 @@ class LoadingManager(DVCIrradiationable):
         if tray_name is None:
             self.warning_dialog('Tray not identified')
             return
-        else:
-            if self.confirmation_dialog(f'Tray Identified as {tray_name}. Is this correct?'):
-                self.tray = ''
-                self.tray = tray_name
 
     def _calibrate_tray(self):
         self.debug('calibrate tray')

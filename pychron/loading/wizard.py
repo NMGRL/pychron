@@ -55,14 +55,24 @@ class LoadingWizard(Loggable):
         setattr(self, name, not cv)
 
     def _identify_and_calibrate_button_fired(self):
-        if self.active_thread:
-            self.manager.cancel_identify_and_calibrate()
-            return
+        # if self.active_thread:
+        #     self.manager.cancel_identify_and_calibrate()
+        #     return
+        # self.manager.alive = True
+        # self.active_thread = Thread(target=self.manager.identify_and_calibrate)
+        # self.active_thread.start()
+        tray_name = self.manager.identify()
+        if tray_name:
+            if self.confirmation_dialog(f'Tray Identified as {tray_name}. Is this correct?'):
+                self.manager.tray = ''
+                self.manager.tray = tray_name
+                self.identify_and_calibrate_state = not self.identify_and_calibrate_state
+            else:
+                return
 
-        self.manager.alive = True
-        self.identify_and_calibrate_state = not self.identify_and_calibrate_state
-        self.active_thread = Thread(target=self.manager.identify_and_calibrate)
-        self.active_thread.start()
+            self.debug('calibrate tray')
+            self.manager.stage_manager.tray_calibration_manager.style = 'Auto'
+            self.manager.stage_manager.tray_calibration_manager.calibrate = True
 
     def _check_empty_tray_button_fired(self):
         self.check_empty_tray_state = not self.check_empty_tray_state

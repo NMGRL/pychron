@@ -28,9 +28,10 @@ from pychron.paths import paths
 
 
 class TrayCodeReader(Loggable):
-    def identify(self, frm):
+    def identify(self, frm, use_mpl=False):
         frm = self._preprocess_frame(frm)
-        # fig, axs = plt.subplots(2, 1)
+        if use_mpl:
+            fig, axs = plt.subplots(2, 1)
 
         allpeaks = []
         clip_max, clip_min = 400, 100
@@ -65,13 +66,14 @@ class TrayCodeReader(Loggable):
                     break
             else:
                 bits.append(0)
+            if use_mpl:
+                axs[1].axvline(bitt, color='green')
 
-            # axs[1].axvline(bitt, color='green')
-
-        # axs[0].hist(allpeaks, bins=nbins)
-        # axs[0].set_xlim(0, len(row))
-        # axs[1].set_xlim(0, len(row))
-        # plt.show()
+        if use_mpl:
+            axs[0].hist(allpeaks, bins=nbins)
+            axs[0].set_xlim(0, len(row))
+            axs[1].set_xlim(0, len(row))
+            plt.show()
 
         # bits = int(''.join(map(str, bits)),2)
         bitstr = ''.join(map(str, bits))
