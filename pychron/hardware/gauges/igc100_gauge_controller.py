@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from pychron.hardware.gauges.base_controller import BaseGaugeController
-
+from pychron.hardware.core.core_device import CoreDevice
 PORT_MAPPING = {'IGC1': 1, 'IGC2': 2,
                 'PG1': 3, 'PG2': 4,
                 'CM1': 5, 'CM2': 6,
@@ -24,12 +24,25 @@ PORT_MAPPING = {'IGC1': 1, 'IGC2': 2,
                 }
 
 
-class IGC100GaugeController(BaseGaugeController):
+class IGC100GaugeController(BaseGaugeController, CoreDevice):
+    def initialize(self, *args, **kw):
+        self.scan_func = "update_pressures"
+        self.graph_y_title = "Pressure (torr)"
+        self.ask(f'GDAT? 1', verbose=True)
+        return True
+    
+    def load_additional_args(self, config, *args, **kw):
+        self.display_name = self.config_get(
+            config, "General", "display_name", default=self.name
+        )
+        self._load_gauges(config)
+        return True
+
     def _read_pressure(self, gauge, *args, **kw):
         name = gauge.name
         port = PORT_MAPPING.get(name)
-        if port is None:
-            return self.ask(f'GDAT? {port}')
+        if port is not None:
+            return self.ask(f'GDAT? {port}', verbose=True)
 
         self.warning(f'Invalid gauge name {name}. Valid names are {PORT_MAPPING.keys()}')
 

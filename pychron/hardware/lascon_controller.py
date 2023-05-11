@@ -40,7 +40,7 @@ class LasconController(CoreDevice):
                 t = t.lower()
                 if t.startswith("wait"):
                     _, p, *_ = t.split(" ")
-                    sleep += int(p) / 1000
+                    sleep += float(p) / 1000
 
         end = "STOP" if stop_on_completion else "END"
         self.ask(f"PScriptAdd {end}")
