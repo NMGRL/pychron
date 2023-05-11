@@ -888,6 +888,10 @@ class MeasurementPyScript(ValvePyScript):
             return self.automated_run.spec.use_cdd_warming
             # return self._automated_run_call(lambda: self.automated_run.spec.use_cdd_warming)
 
+    def set_default_context(self, **kw):
+        self.setup_context(analysis_type='unknown',
+                           **kw)
+
     # private
     def _get_deflection_from_file(self, name):
         config = self._get_config()
