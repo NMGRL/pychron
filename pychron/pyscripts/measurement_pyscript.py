@@ -890,7 +890,7 @@ class MeasurementPyScript(ValvePyScript):
 
     def set_default_context(self, **kw):
         if 'analysis_type' not in kw:
-            kw['analysis_type'] = 'unknown'
+            kw['analysis_type'] = ''
 
         self.setup_context(**kw)
 
