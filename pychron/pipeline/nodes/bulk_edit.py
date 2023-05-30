@@ -49,7 +49,9 @@ class ICFactor(HasTraits):
     use = Bool
     enabled = Property
 
-    scaling_variable = Enum("Ar40", "Ar39", "Ar38", "Ar37", "Ar36", "TotalIntensity", "ICFactor")
+    scaling_variable = Enum(
+        "Ar40", "Ar39", "Ar38", "Ar37", "Ar36", "TotalIntensity", "ICFactor"
+    )
     scaling_coefficients = Str
 
     @property
