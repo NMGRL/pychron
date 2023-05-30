@@ -379,6 +379,9 @@ class ArArAge(IsotopeGroup):
             x = 0
             for iso in self.isotopes:
                 x += iso.get_intensity()
+        elif variable == "ICFactor":
+            iso = self.get_isotope(detector=det)
+            x = iso.ic_factor
         else:
             x = self.get_value(variable)
 
