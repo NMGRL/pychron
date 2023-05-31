@@ -48,46 +48,63 @@ class ICFactor(HasTraits):
     error = Float
     use = Bool
     enabled = Property
-
-    scaling_variable = Enum(
-        "Ar40", "Ar39", "Ar38", "Ar37", "Ar36", "TotalIntensity", "ICFactor"
+    mode = Enum("Direct", "Scale", "Transform")
+    transform_variable = Enum(
+        "Ar40", "Ar39", "Ar38", "Ar37", "Ar36", "TotalIntensity"
     )
-    scaling_coefficients = Str
-
-    @property
-    def use_scaling(self):
-        return self.scaling_variable and self.scaling_coefficients
+    scaling_value = Float
+    transform_coefficients = Str
 
     def _get_enabled(self):
-        return self.use and ((self.det and self.value) or self.use_scaling)
+        if self.use:
+            if self.mode == 'Direct':
+                return self.value and self.error
+            elif self.mode == 'Scale':
+                return self.scaling_value
+            elif self.mode == 'Transform':
+                return self.transform_variable and self.transform_coefficients
 
     def traits_view(self):
+        direct_grp = BorderHGroup(
+            Item(
+                "num",
+                label="Relative To",
+                editor=EnumEditor(name="detectors"),
+            ),
+            Item("value"),
+            Label(PLUSMINUS),
+            UItem("error"),
+            visible_when='mode=="Direct"',
+        )
+
+        scale_grp = BorderHGroup(
+            Item(
+                "scaling_value",
+            ),
+            visible_when='mode=="Scale"',
+
+        )
+        transform_grp = BorderHGroup(
+            Item("transform_variable", label="Variable"),
+            Item(
+                "transform_coefficients",
+                tooltip="Define coefficients as a comma separated list of values. e.g. 3,2,"
+                        "1 is equivalent to 3x^2 + 2x + 1",
+                label="Coefficients",
+            ),
+            visible_when='mode=="Transform"',
+        )
+
         v = View(
             BorderVGroup(
                 BorderHGroup(
-                    UItem("use"), UItem("det", editor=EnumEditor(name="detectors"))
+                    UItem("use"), UItem("det", editor=EnumEditor(name="detectors")),
+                    UItem("mode"),
                 ),
-                BorderVGroup(
-                    BorderHGroup(
-                        Item(
-                            "num",
-                            label="Relative To",
-                            editor=EnumEditor(name="detectors"),
-                        ),
-                        Item("value"),
-                        Label(PLUSMINUS),
-                        UItem("error"),
-                    ),
-                    BorderHGroup(
-                        Item("scaling_variable", label="Variable"),
-                        Item(
-                            "scaling_coefficients",
-                            tooltip="Define coefficients as a comma separated list of values. e.g. 3,2,"
-                            "1 is equivalent to 3x^2 + 2x + 1",
-                            label="Coefficients",
-                        ),
-                        label="Scaling",
-                    ),
+                VGroup(
+                    direct_grp,
+                    scale_grp,
+                    transform_grp,
                 ),
             )
         )
@@ -261,11 +278,18 @@ class BulkEditNode(BaseDVCNode):
             keys.append(ic_factor.det)
             fits.append("bulk_edit")
 
-            if ic_factor.use_scaling:
-                ic = ai.calculate_scaled_ic_factor(
+            if ic_factor.mode == 'Scale':
+                ic = ai.calculate_transform_ic_factor(
                     ic_factor.det,
-                    ic_factor.scaling_variable,
-                    [float(c) for c in ic_factor.scaling_coefficients.split(",")],
+                    "ICFactor",
+                    [ic_factor.scaling_value, 0],
+                    tag=f"{ic_factor.det} IC",
+                )
+            elif ic_factor == 'Transform':
+                ic = ai.calculate_transform_ic_factor(
+                    ic_factor.det,
+                    ic_factor.transform_variable,
+                    [float(c) for c in ic_factor.transform_coefficients.split(",")],
                     tag=f"{ic_factor.det} IC",
                 )
             else:

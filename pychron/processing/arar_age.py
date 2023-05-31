@@ -374,7 +374,7 @@ class ArArAge(IsotopeGroup):
             self.temporary_ic_factors[det] = {"reference_detector": n, "value": v}
             self.info("setting ic factor={} to {}".format(det, v))
 
-    def calculate_scaled_ic_factor(self, det, variable, coefficients, tag=None):
+    def calculate_transform_ic_factor(self, det, variable, coefficients, tag=None):
         if variable == "TotalIntensity":
             x = 0
             for iso in self.isotopes:
