@@ -72,6 +72,9 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     def make_deflection_dict(self):
         return {}
 
+    def protect_detector(self, pdets, protect):
+        self.microcontroller.protect_detector = protect
+
     def convert_to_axial(self, det, v):
         print("asdfsadf", det, det.index, v)
         v = v - (det.index - 2)
