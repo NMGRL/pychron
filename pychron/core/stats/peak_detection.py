@@ -507,7 +507,7 @@ if __name__ == '__main__':
          0]
     plt.plot(y)
     x = np.arange(len(y))
-    result = calculate_peak_center_psuedo(x, y)
+    result = calculate_peak_center_pseudo(x, y)
     print(result)
     plt.vlines(result[0][1], 0, 10)
     plt.show()
