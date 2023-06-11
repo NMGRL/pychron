@@ -115,7 +115,7 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
         if y < mx - delta and mx != Inf:
             # Maxima peak candidate found
             # look ahead in signal to ensure that this is a peak and not jitter
-            if y_axis[index : index + lookahead].max() < mx:
+            if y_axis[index: index + lookahead].max() < mx:
                 max_peaks.append([mxpos, mx])
                 dump.append(True)
                 # set algorithm to only find minima now
@@ -133,7 +133,7 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
         if y > mn + delta and mn != -Inf:
             # Minima peak candidate found
             # look ahead in signal to ensure that this is a peak and not jitter
-            if y_axis[index : index + lookahead].min() > mn:
+            if y_axis[index: index + lookahead].min() > mn:
                 min_peaks.append([mnpos, mn])
                 dump.append(False)
                 # set algorithm to only find maxima now
@@ -218,8 +218,48 @@ def calculate_resolving_power(x, y, format_str=None, return_all=False):
         return lrp, hrp
 
 
+def calculate_peak_center_pseudo(x, y, min_peak_height=1.0, flat_threshold=0.1, **kw):
+    x = array(x)
+    y = array(y)
+    xy = vstack((x, y)).T
+    x, y = xy[argsort(xy[:, 0])].T
+
+    dy = np.diff(y)
+    # plt.plot(np.gradient(y))
+    ady = abs(dy)
+    tady = ady < flat_threshold
+
+    max_i = argmax(y)
+    mx = x[max_i]
+    my = max(y)
+
+    # Get start, stop index pairs for islands/seq. of 1s
+    idx_pairs = np.where(np.diff(np.hstack(([False],
+                                            tady == True,
+                                            [False]))))[0].reshape(-1, 2)
+
+    # pair = idx_pairs[-1]
+    for pair in idx_pairs[::-1]:
+        xp = x[pair]
+        lx = int(xp[0])
+        hx = int(xp[1])
+        cx = (hx - lx) / 2 + lx
+        ly = y[lx]
+        hy = y[hx]
+        cy = (ly + hy) / 2
+        if cy > min_peak_height:
+            break
+    else:
+        raise PeakCenterError(f"No peak greater than {min_peak_height}. max = {my}")
+
+    # center = (pair[1]-pair[0])/2+pair[0]
+    # plt.vlines(center, 0, 10)
+
+    return [lx, cx, hx], [ly, cy, hy], mx, my
+
+
 def calculate_peak_center(
-    x, y, test_peak_flat=True, min_peak_height=1.0, percent=80, ignore_max=False
+        x, y, test_peak_flat=True, min_peak_height=1.0, percent=80, ignore_max=False, **kw
 ):
     """
     returns: (low_x, center_x, high_x), (low_y, center_y, high_y), max_y, min_y
@@ -304,7 +344,7 @@ def calculate_peak_center(
         # find index in x closest to cx
         ccx = abs(x - cx).argmin()
         # check to see if were on a plateau
-        yppts = y[ccx - 2 : ccx + 2]
+        yppts = y[ccx - 2: ccx + 2]
 
         slope, _ = polyfit(list(range(len(yppts))), yppts, 1)
         std = yppts.std()
@@ -410,7 +450,7 @@ def interpolate(x, y, ind=None, width=10, func=None):
 
             ind = indexes(y)
         for i, slice_ in (
-            (i, slice(max(0, i - width), min(i + width, y.shape[0]))) for i in ind
+                (i, slice(max(0, i - width), min(i + width, y.shape[0]))) for i in ind
         ):
             try:
                 fit = func(x[slice_], y[slice_])
@@ -429,5 +469,69 @@ def interpolate(x, y, ind=None, width=10, func=None):
 
     return array(out), pidx
 
+
+if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from numpy import linspace, sin, pi
+
+    y = [0,
+         1,
+         2,
+         3.5,
+         3.9,
+         4.9,
+         5.0,
+         5.1,
+         5.4,
+         5.5,
+         10,
+         10,
+         10.5,
+         10,
+         10,
+         4.5,
+         4.3,
+         4.25,
+         4.15,
+         4.1,
+         3.9,
+         2,
+         1,
+         0.5,
+         0.2,
+         0.1,
+         0,
+         0,
+         0,
+         0]
+    plt.plot(y)
+    x = np.arange(len(y))
+    result = calculate_peak_center_psuedo(x, y)
+    print(result)
+    plt.vlines(result[0][1], 0, 10)
+    plt.show()
+    # dy = np.diff(y)
+    # # plt.plot(np.gradient(y))
+    # ady = abs(dy)
+    # tady = ady < 0.1
+    # print(tady)
+    #
+    # # Get start, stop index pairs for islands/seq. of 1s
+    # idx_pairs = np.where(np.diff(np.hstack(([False],tady==True,[False]))))[0].reshape(-1,2)
+    # pair = idx_pairs[-1]
+    # center = (pair[1]-pair[0])/2+pair[0]
+    # plt.vlines(center, 0, 10)
+    # # Get the island lengths, whose argmax would give us the ID of longest island.
+    # # Start index of that island would be the desired output
+    # # start_longest_seq = idx_pairs[np.diff(idx_pairs,axis=1).argmax(),0]
+    # # print(start_longest_seq)
+    # plt.plot(abs(dy))
+
+    # grad = np.gradient(y)
+    # roots = grad>0
+    # print(roots)
+
+    # plt.show()
 
 # ============= EOF =============================================

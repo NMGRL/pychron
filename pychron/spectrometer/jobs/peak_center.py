@@ -29,7 +29,7 @@ from pychron.core.stats.peak_detection import (
     calculate_peak_center,
     PeakCenterError,
     calculate_resolution,
-    calculate_resolving_power,
+    calculate_resolving_power, calculate_peak_center_pseudo,
 )
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.graph.graph import Graph
@@ -75,6 +75,7 @@ class BasePeakCenter(HasTraits):
     window = Float  # (0.015)
     step_width = Float  # (0.0005)
     min_peak_height = Float(5.0)
+    use_pseudo_peak = False
     percent = Int
     use_interpolation = False
     interpolation_kind = Enum(
@@ -451,8 +452,18 @@ class BasePeakCenter(HasTraits):
             # return c[1 + 3 * (self.select_peak - 1)]
 
         try:
-            result = calculate_peak_center(
-                x, y, min_peak_height=self.min_peak_height, percent=self.percent
+            kw={}
+            if self.use_pseudo_peak:
+                func = calculate_peak_center_pseudo
+                kw["peak_flat_threshold"] = self.pseudo_peak_width
+            else:
+                func = calculate_peak_center
+
+            result = func(
+                x, y,
+                min_peak_height=self.min_peak_height,
+                percent=self.percent,
+                **kw
             )
             return result
         except PeakCenterError as e:
