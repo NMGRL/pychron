@@ -31,7 +31,7 @@ from numpy import (
     asarray,
     argsort,
     vstack,
-    arange,
+    arange, where, diff, hstack,
 )
 
 from pychron.pychron_constants import NULL_STR
@@ -218,7 +218,9 @@ def calculate_resolving_power(x, y, format_str=None, return_all=False):
         return lrp, hrp
 
 
-def calculate_peak_center_pseudo(x, y, min_peak_height=1.0, flat_threshold=0.1, **kw):
+def calculate_peak_center_pseudo(x, y, min_peak_height=1.0,
+                                 min_numpoints=3,
+                                 flat_threshold=0.1, **kw):
     x = array(x)
     y = array(y)
     xy = vstack((x, y)).T
@@ -234,12 +236,15 @@ def calculate_peak_center_pseudo(x, y, min_peak_height=1.0, flat_threshold=0.1, 
     my = max(y)
 
     # Get start, stop index pairs for islands/seq. of 1s
-    idx_pairs = np.where(np.diff(np.hstack(([False],
-                                            tady == True,
-                                            [False]))))[0].reshape(-1, 2)
+    idx_pairs = where(abs(diff(hstack(([False],
+                                       tady == True,
+                                       [False])))))[0].reshape(-1, 2)
 
     # pair = idx_pairs[-1]
     for pair in idx_pairs[::-1]:
+        if pair[1] - pair[0] < min_numpoints:
+            continue
+
         xp = x[pair]
         lx = int(xp[0])
         hx = int(xp[1])
