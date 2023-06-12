@@ -263,7 +263,7 @@ class BasePeakCenter(HasTraits):
                         idx = argmax(intensities)
                         center, success = dac_values[idx], False
 
-        if self.use_dac_offset:
+        if center and self.use_dac_offset:
             center += self.dac_offset
         return center, smart_shift, success
 
@@ -452,10 +452,10 @@ class BasePeakCenter(HasTraits):
             # return c[1 + 3 * (self.select_peak - 1)]
 
         try:
-            kw={}
+            kw = {}
             if self.use_pseudo_peak:
                 func = calculate_peak_center_pseudo
-                kw["peak_flat_threshold"] = self.pseudo_peak_width
+                kw["flat_threshold"] = self.pseudo_peak_width
             else:
                 func = calculate_peak_center
 
@@ -523,6 +523,5 @@ class PeakCenter(BasePeakCenter, MagnetSweep):
 
 class AccelVoltagePeakCenter(BasePeakCenter, AccelVoltageSweep):
     title = "Accel Voltage Peak Center"
-
 
 # ============= EOF =============================================
