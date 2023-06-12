@@ -288,7 +288,7 @@ class IonOpticsManager(Manager):
             calculate_all_peaks = pcc.calculate_all_peaks
             update_others = pcc.update_others
             use_pseudo_peak = pcc.use_pseudo_peak
-            peak_flat_threshold = pcc.peak_flat_threshold
+            # peak_flat_threshold = pcc.peak_flat_threshold
             if not pcc.use_mftable_dac and center_dac is None and use_configuration_dac:
                 center_dac = pcc.dac
 
@@ -350,7 +350,7 @@ class IonOpticsManager(Manager):
             calculate_all_peaks=calculate_all_peaks,
             update_others=update_others,
             use_pseudo_peak=use_pseudo_peak,
-            peak_flat_threshold=peak_flat_threshold,
+            # peak_flat_threshold=peak_flat_threshold,
         )
 
         graph = pc.graph

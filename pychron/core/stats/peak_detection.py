@@ -31,7 +31,7 @@ from numpy import (
     asarray,
     argsort,
     vstack,
-    arange, where, diff, hstack,
+    arange, where, diff, hstack, gradient, argmin,
 )
 
 from pychron.pychron_constants import NULL_STR
@@ -220,7 +220,39 @@ def calculate_resolving_power(x, y, format_str=None, return_all=False):
 
 def calculate_peak_center_pseudo(x, y, min_peak_height=1.0,
                                  min_numpoints=3,
-                                 flat_threshold=0.1, **kw):
+                                 offset=0.002, **kw):
+    x = array(x)
+    y = array(y)
+    xy = vstack((x, y)).T
+    x, y = xy[argsort(xy[:, 0])].T
+    max_i = argmax(y)
+    mx = x[max_i]
+    my = max(y)
+
+    gy = abs(gradient(y))
+    maxpeaks, minpeaks = find_peaks(gy, lookahead=10)
+
+    for pcidx, inten in maxpeaks[::-1]:
+        cx = x[pcidx]
+        ocx = cx + offset
+
+        # find idx in x that is closest to ocx
+        idx = argmin(abs(x - ocx))
+        cy = y[idx]
+
+        lx = x[pcidx - 1]
+        hx = x[pcidx + 1]
+        ly = y[pcidx - 1]
+        hy = y[pcidx + 1]
+        if cy > min_peak_height:
+            return [lx, cx, hx], [ly, cy, hy], mx, my
+    else:
+        raise PeakCenterError(f"No peak greater than {min_peak_height}. max = {my}")
+
+
+def calculate_peak_center_pseudo_old(x, y, min_peak_height=1.0,
+                                     min_numpoints=3,
+                                     flat_threshold=0.1, **kw):
     x = array(x)
     y = array(y)
     xy = vstack((x, y)).T
@@ -242,6 +274,7 @@ def calculate_peak_center_pseudo(x, y, min_peak_height=1.0,
 
     # pair = idx_pairs[-1]
     for pair in idx_pairs[::-1]:
+        print(pair, pair[1] - pair[0], min_numpoints)
         if pair[1] - pair[0] < min_numpoints:
             continue
 
@@ -480,42 +513,69 @@ if __name__ == '__main__':
     import numpy as np
     from numpy import linspace, sin, pi
 
-    y = [0,
-         1,
-         2,
-         3.5,
-         3.9,
-         4.9,
-         5.0,
-         5.1,
-         5.4,
-         5.5,
-         10,
-         10,
-         10.5,
-         10,
-         10,
-         4.5,
-         4.3,
-         4.25,
-         4.15,
-         4.1,
-         3.9,
-         2,
-         1,
-         0.5,
-         0.2,
-         0.1,
-         0,
-         0,
-         0,
-         0]
-    plt.plot(y)
-    x = np.arange(len(y))
-    result = calculate_peak_center_pseudo(x, y)
-    print(result)
-    plt.vlines(result[0][1], 0, 10)
+    # y = [0,
+    #      1,
+    #      2,
+    #      3.5,
+    #      3.9,
+    #      4.9,
+    #      5.0,
+    #      5.1,
+    #      5.4,
+    #      5.5,
+    #      10,
+    #      10,
+    #      10.5,
+    #      10,
+    #      10,
+    #      4.5,
+    #      4.3,
+    #      4.25,
+    #      4.15,
+    #      4.1,
+    #      3.9,
+    #      2,
+    #      1,
+    #      0.5,
+    #      0.2,
+    #      0.1,
+    #      0,
+    #      0,
+    #      0,
+    #      0]
+
+    p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/pseudo_PC_test_1.csv'
+    arr = np.loadtxt(p, delimiter=',')
+    x, y = arr.T
+    offset = -0.0015
+    try:
+        result = calculate_peak_center_pseudo(x, y, offset=offset)
+        print(result)
+    except PeakCenterError as e:
+        pass
+
+    plt.plot(x, y)
+    plt.vlines(result[0][1]+offset, 0, max(y), color='red')
     plt.show()
+
+    # gy = abs(gradient(y))
+    # maxpeaks, minpeaks = find_peaks(gy, lookahead=10)
+    #
+    # pc = array(minpeaks).T[0][-1]
+    #
+    # fig, (ax1, ax2) = plt.subplots(2, 1, sharex=False)
+    #
+    # ax1.plot(x, y)
+    # # ax1.vlines(xpc, 0, max(y), color='red')
+    #
+    # ax2.plot(x, gy)
+    # maxpeakidx = array(maxpeaks, dtype=int).T[0]
+    # ax2.vlines(x[maxpeakidx], 0, max(gy), color='red')
+    #
+    # offset = 0.001
+    # cp = maxpeakidx[-1]
+    # ax1.vlines(x[cp] - offset, 0, max(y), color='red')
+    # plt.show()
     # dy = np.diff(y)
     # # plt.plot(np.gradient(y))
     # ady = abs(dy)

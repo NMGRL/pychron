@@ -455,8 +455,8 @@ class BasePeakCenter(HasTraits):
             kw = {}
             if self.use_pseudo_peak:
                 func = calculate_peak_center_pseudo
-                kw["flat_threshold"] = self.peak_flat_threshold
-
+                kw["offset"] = self.dac_offset
+                # kw["flat_threshold"] = self.peak_flat_threshold
             else:
                 func = calculate_peak_center
 
