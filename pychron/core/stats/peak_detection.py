@@ -230,7 +230,7 @@ def calculate_peak_center_pseudo(x, y, min_peak_height=1.0,
     my = max(y)
 
     gy = abs(gradient(y))
-    maxpeaks, minpeaks = find_peaks(gy, lookahead=10)
+    maxpeaks, minpeaks = find_peaks(gy, lookahead=20)
 
     for pcidx, inten in maxpeaks[::-1]:
         cx = x[pcidx]
@@ -545,6 +545,7 @@ if __name__ == '__main__':
     #      0]
 
     p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/pseudo_PC_test_1.csv'
+    p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/pseduo_PC_tail.csv'
     arr = np.loadtxt(p, delimiter=',')
     x, y = arr.T
     offset = -0.0015
@@ -553,9 +554,15 @@ if __name__ == '__main__':
         print(result)
     except PeakCenterError as e:
         pass
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 
-    plt.plot(x, y)
-    plt.vlines(result[0][1]+offset, 0, max(y), color='red')
+    ax1.plot(x, y)
+    ax1.vlines(result[0][1]+offset, 0, max(y), color='red')
+    ax1.vlines(result[0][1], 0, max(y), color='blue')
+
+    ax2.plot(x, abs(gradient(y)))
+
+
     plt.show()
 
     # gy = abs(gradient(y))
