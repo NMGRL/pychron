@@ -226,7 +226,7 @@ def calculate_peak_center_pseudo(x, y, min_peak_height=1.0,
     xy = vstack((x, y)).T
     x, y = xy[argsort(xy[:, 0])].T
 
-    dy = np.diff(y)
+    dy = diff(y)
     # plt.plot(np.gradient(y))
     ady = abs(dy)
     tady = ady < flat_threshold
