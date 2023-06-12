@@ -34,6 +34,7 @@ from numpy import (
     arange, where, diff, hstack, gradient, argmin,
 )
 
+from pychron.core.time_series.time_series import smooth
 from pychron.pychron_constants import NULL_STR
 
 
@@ -219,7 +220,7 @@ def calculate_resolving_power(x, y, format_str=None, return_all=False):
 
 
 def calculate_peak_center_pseudo(x, y, min_peak_height=1.0,
-                                 min_numpoints=3,
+                                 use_smooth=False,
                                  offset=0.002, **kw):
     x = array(x)
     y = array(y)
@@ -228,6 +229,13 @@ def calculate_peak_center_pseudo(x, y, min_peak_height=1.0,
     max_i = argmax(y)
     mx = x[max_i]
     my = max(y)
+
+    if use_smooth:
+        window_len = 11
+        if isinstance(use_smooth, int):
+            window_len = use_smooth
+
+        y = smooth(y, window_len=window_len)
 
     gy = abs(gradient(y))
     maxpeaks, minpeaks = find_peaks(gy, lookahead=20)
@@ -545,24 +553,32 @@ if __name__ == '__main__':
     #      0]
 
     p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/pseudo_PC_test_1.csv'
-    p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/pseduo_PC_tail.csv'
+    # p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/pseduo_PC_tail.csv'
     arr = np.loadtxt(p, delimiter=',')
     x, y = arr.T
     offset = -0.0015
     try:
-        result = calculate_peak_center_pseudo(x, y, offset=offset)
+        result = calculate_peak_center_pseudo(x, y, offset=offset,
+                                              use_smooth=11,
+                                              min_peak_height=50000)
         print(result)
-    except PeakCenterError as e:
+    except (PeakCenterError, IndexError) as e:
         pass
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 
+    y = smooth(y)
+
     ax1.plot(x, y)
-    ax1.vlines(result[0][1]+offset, 0, max(y), color='red')
+    ax1.vlines(result[0][1]+offset, 0, max(y), color='green')
     ax1.vlines(result[0][1], 0, max(y), color='blue')
 
+    gy = abs(gradient(y))
+    maxpeaks, minpeaks = find_peaks(gy, lookahead=20)
+
     ax2.plot(x, abs(gradient(y)))
-
-
+    ax2.vlines(x[array(maxpeaks, dtype=int).T[0]], 0, max(gy), color='red')
+    # ax2.set_ylim(0, 1e4)
+    # ax1.set_ylim(0, 1e4)
     plt.show()
 
     # gy = abs(gradient(y))
