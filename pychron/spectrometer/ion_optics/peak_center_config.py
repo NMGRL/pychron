@@ -70,7 +70,8 @@ class PeakCenterConfig(HasTraits):
     percent = Int(80)
 
     use_pseudo_peak = Bool(False)
-    # peak_flat_threshold = Float(0.1)
+    peak_shift_threshold = Float(0.0)
+
     use_interpolation = Bool
     interpolation_kind = Enum(
         "linear", "nearest", "zero", "slinear", "quadratic", "cubic"
@@ -151,6 +152,9 @@ class PeakCenterConfig(HasTraits):
                  tooltip='Identify the high mass shoulder. Offset is added to the peak shoulder. i.e a negative '
                          'offset shifts the peak center to lower mass.',
                  label='Use Pseudo Peak Detection'),
+            Item('peak_shift_threshold',
+                 label='Peak Shift Threshold',
+                 tooltip='Fail peak center if the new peak center is shifted greater than this value'),
             Item("calculate_all_peaks"),
             show_border=True,
             label="Post Process",

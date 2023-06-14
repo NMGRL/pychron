@@ -519,48 +519,26 @@ def interpolate(x, y, ind=None, width=10, func=None):
     return array(out), pidx
 
 
-if __name__ == '__main__':
+def peak_shoulder_test():
+    root = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/peakcenter'
+    ps = [
+        'pseudo_PC_test_1.csv',
+        'a-01-N-140_chopped_1xHe.csv',
+        'a-01-N-141_chopped_1xHe.csv',
+        'a-01-N-142_chopped_1xHe.csv',
+        'a-01-N-146_1xHe.csv',
+        'ba-01-N-43.csv',
+        'a-01-N-147_1xHe_left-shoulder.csv']
+    for p in ps:
+        # plot = p == 'a-01-N-147_1xHe_left-shoulder.csv'
+        plot = False
+        result = peak_shoulder_test_i(os.path.join(root, p), plot=plot)
+        print(p, result)
+
+
+def peak_shoulder_test_i(p, plot=False):
     import matplotlib.pyplot as plt
     import numpy as np
-    from numpy import linspace, sin, pi
-
-    # y = [0,
-    #      1,
-    #      2,
-    #      3.5,
-    #      3.9,
-    #      4.9,
-    #      5.0,
-    #      5.1,
-    #      5.4,
-    #      5.5,
-    #      10,
-    #      10,
-    #      10.5,
-    #      10,
-    #      10,
-    #      4.5,
-    #      4.3,
-    #      4.25,
-    #      4.15,
-    #      4.1,
-    #      3.9,
-    #      2,
-    #      1,
-    #      0.5,
-    #      0.2,
-    #      0.1,
-    #      0,
-    #      0,
-    #      0,
-    #      0]
-
-    p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/pseudo_PC_test_1.csv'
-    p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/peakcenter/a-01-N-140_chopped_1xHe.csv'
-    p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/peakcenter/a-01-N-141_chopped_1xHe.csv'
-    p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/peakcenter/a-01-N-142_chopped_1xHe.csv'
-    p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/peakcenter/a-01-N-146_1xHe.csv'
-    p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/peakcenter/ba-01-N-43.csv'
 
     # p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/pseduo_PC_tail.csv'
     arr = np.loadtxt(p, delimiter=',')
@@ -571,26 +549,32 @@ if __name__ == '__main__':
         result = calculate_peak_center_pseudo(x, y, offset=offset,
                                               use_smooth=11,
                                               lookahead=lookahead,
-                                              min_peak_height=500)
-        print(result)
+                                              min_peak_height=0.00001)
     except (PeakCenterError, IndexError) as e:
         print('asdsdf', e)
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 
-    y = smooth(y)
-    fig.suptitle(os.path.basename(p))
-    ax1.plot(x, y)
-    ax1.vlines(result[0][1]+offset, 0, max(y), color='green')
-    ax1.vlines(result[0][1], 0, max(y), color='blue')
+    if plot:
+        fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 
-    gy = abs(gradient(y))
-    maxpeaks, minpeaks = find_peaks(gy, lookahead=lookahead)
+        y = smooth(y)
+        fig.suptitle(os.path.basename(p))
+        ax1.plot(x, y)
+        ax1.vlines(result[0][1] + offset, 0, max(y), color='green')
+        ax1.vlines(result[0][1], 0, max(y), color='blue')
 
-    ax2.plot(x, abs(gradient(y)))
-    ax2.vlines(x[array(maxpeaks, dtype=int).T[0]], 0, max(gy), color='red')
-    # ax2.set_ylim(0, 1e4)
-    # ax1.set_ylim(0, 1e4)
-    plt.show()
+        gy = abs(gradient(y))
+        maxpeaks, minpeaks = find_peaks(gy, lookahead=lookahead)
+
+        ax2.plot(x, abs(gradient(y)))
+        ax2.vlines(x[array(maxpeaks, dtype=int).T[0]], 0, max(gy), color='red')
+        # ax2.set_ylim(0, 1e4)
+        # ax1.set_ylim(0, 1e4)
+        plt.show()
+    return result[0][1] + offset
+
+
+if __name__ == '__main__':
+    peak_shoulder_test()
 
     # gy = abs(gradient(y))
     # maxpeaks, minpeaks = find_peaks(gy, lookahead=10)

@@ -85,6 +85,7 @@ class BasePeakCenter(HasTraits):
     select_peak = 1
     use_dac_offset = False
     dac_offset = 0
+    peak_shift_threshold = 0
     calculate_all_peaks = False
     reference_plot_kind = Enum("line_scatter", "line", "scatter")
     additional_plot_kind = Enum("line_scatter", "line", "scatter")
@@ -265,6 +266,13 @@ class BasePeakCenter(HasTraits):
 
         if center and self.use_dac_offset:
             center += self.dac_offset
+
+        pcenter = self.center_dac
+        if self.peak_shift_threshold and abs(center - pcenter) > self.peak_shift_threshold:
+            self.warning(f'Peak center moved too much. current={center}, previous={pcenter}, '
+                         f'dev={abs(center-pcenter)} > {self.peak_shift_threshold}')
+            center, smart_shift, success = None, False, False
+
         return center, smart_shift, success
 
     # private
