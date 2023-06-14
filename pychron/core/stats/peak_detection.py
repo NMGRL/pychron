@@ -22,6 +22,8 @@
 """
     https://gist.github.com/sixtenbe/1178136
 """
+import os
+
 from numpy import (
     Inf,
     isscalar,
@@ -221,6 +223,7 @@ def calculate_resolving_power(x, y, format_str=None, return_all=False):
 
 def calculate_peak_center_pseudo(x, y, min_peak_height=1.0,
                                  use_smooth=False,
+                                 lookahead=5,
                                  offset=0.002, **kw):
     x = array(x)
     y = array(y)
@@ -238,7 +241,7 @@ def calculate_peak_center_pseudo(x, y, min_peak_height=1.0,
         y = smooth(y, window_len=window_len)
 
     gy = abs(gradient(y))
-    maxpeaks, minpeaks = find_peaks(gy, lookahead=20)
+    maxpeaks, minpeaks = find_peaks(gy, lookahead=lookahead)
 
     for pcidx, inten in maxpeaks[::-1]:
         cx = x[pcidx]
@@ -553,27 +556,35 @@ if __name__ == '__main__':
     #      0]
 
     p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/pseudo_PC_test_1.csv'
+    p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/peakcenter/a-01-N-140_chopped_1xHe.csv'
+    p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/peakcenter/a-01-N-141_chopped_1xHe.csv'
+    p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/peakcenter/a-01-N-142_chopped_1xHe.csv'
+    p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/peakcenter/a-01-N-146_1xHe.csv'
+    p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/peakcenter/ba-01-N-43.csv'
+
     # p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/pseduo_PC_tail.csv'
     arr = np.loadtxt(p, delimiter=',')
     x, y = arr.T
     offset = -0.0015
+    lookahead = 5
     try:
         result = calculate_peak_center_pseudo(x, y, offset=offset,
                                               use_smooth=11,
-                                              min_peak_height=50000)
+                                              lookahead=lookahead,
+                                              min_peak_height=500)
         print(result)
     except (PeakCenterError, IndexError) as e:
-        pass
+        print('asdsdf', e)
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 
     y = smooth(y)
-
+    fig.suptitle(os.path.basename(p))
     ax1.plot(x, y)
     ax1.vlines(result[0][1]+offset, 0, max(y), color='green')
     ax1.vlines(result[0][1], 0, max(y), color='blue')
 
     gy = abs(gradient(y))
-    maxpeaks, minpeaks = find_peaks(gy, lookahead=20)
+    maxpeaks, minpeaks = find_peaks(gy, lookahead=lookahead)
 
     ax2.plot(x, abs(gradient(y)))
     ax2.vlines(x[array(maxpeaks, dtype=int).T[0]], 0, max(gy), color='red')
