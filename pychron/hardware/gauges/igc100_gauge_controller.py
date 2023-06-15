@@ -36,9 +36,9 @@ class IGC100GaugeController(BaseGaugeController, CoreDevice):
     def initialize(self, *args, **kw):
         self.scan_func = "update_pressures"
         self.graph_y_title = "Pressure (torr)"
-        self.ask(f'GDAT? 1', verbose=True)
+        self.ask(f"GDAT? 1", verbose=True)
         return True
-    
+
     def load_additional_args(self, config, *args, **kw):
         self.display_name = self.config_get(
             config, "General", "display_name", default=self.name
@@ -50,7 +50,7 @@ class IGC100GaugeController(BaseGaugeController, CoreDevice):
         name = gauge.name
         port = PORT_MAPPING.get(name)
         if port is not None:
-            return self.ask(f'GDAT? {port}', verbose=True)
+            return self.ask(f"GDAT? {port}", verbose=True)
 
         self.warning(
             f"Invalid gauge name {name}. Valid names are {PORT_MAPPING.keys()}"

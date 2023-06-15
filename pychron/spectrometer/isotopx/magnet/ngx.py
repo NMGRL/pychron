@@ -26,7 +26,6 @@ class NGXMagnet(IsotopxMagnet):
         return self.read_mass()
 
     def set_dac(self, v, *args, **kw):
-
         return self.set_mass(v, deflect=self.microcontroller.protect_detector)
 
     @get_float()

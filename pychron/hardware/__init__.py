@@ -84,7 +84,7 @@ HW_PACKAGE_MAP = {
     "ADCGaugeController": gauge_pkg("adc_gauge_controller"),
     "WatlowEZZone": hardware_pkg("watlow.watlow_ezzone"),
     "LasconController": hardware_pkg("lascon_controller"),
-    'IGC100GaugeController': gauge_pkg('igc100_gauge_controller'),
+    "IGC100GaugeController": gauge_pkg("igc100_gauge_controller"),
 }
 
 

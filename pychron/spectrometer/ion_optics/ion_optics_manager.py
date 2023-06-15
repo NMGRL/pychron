@@ -171,14 +171,14 @@ class IonOpticsManager(Manager):
         return spec.correct_dac(det, dac)
 
     def do_peak_center(
-            self,
-            save=True,
-            confirm_save=False,
-            warn=False,
-            new_thread=True,
-            message="",
-            on_end=None,
-            timeout=None,
+        self,
+        save=True,
+        confirm_save=False,
+        warn=False,
+        new_thread=True,
+        message="",
+        on_end=None,
+        timeout=None,
     ):
         self.debug("doing pc")
 
@@ -198,28 +198,28 @@ class IonOpticsManager(Manager):
             self._peak_center(*args)
 
     def setup_peak_center(
-            self,
-            detector=None,
-            isotope=None,
-            integration_time=1.04,
-            directions="Increase",
-            center_dac=None,
-            name="",
-            show_label=False,
-            window=0.015,
-            step_width=0.0005,
-            min_peak_height=1.0,
-            percent=80,
-            deconvolve=None,
-            use_interpolation=False,
-            interpolation_kind="linear",
-            dac_offset=None,
-            calculate_all_peaks=False,
-            config_name=None,
-            use_configuration_dac=True,
-            new=False,
-            update_others=True,
-            plot_panel=None,
+        self,
+        detector=None,
+        isotope=None,
+        integration_time=1.04,
+        directions="Increase",
+        center_dac=None,
+        name="",
+        show_label=False,
+        window=0.015,
+        step_width=0.0005,
+        min_peak_height=1.0,
+        percent=80,
+        deconvolve=None,
+        use_interpolation=False,
+        interpolation_kind="linear",
+        dac_offset=None,
+        calculate_all_peaks=False,
+        config_name=None,
+        use_configuration_dac=True,
+        new=False,
+        update_others=True,
+        plot_panel=None,
     ):
         if deconvolve is None:
             n_peaks, select_peak = 1, 1
@@ -323,9 +323,9 @@ class IonOpticsManager(Manager):
         pc = self.peak_center
         klass = AccelVoltagePeakCenter if use_accel_voltage else PeakCenter
         if (
-                not pc
-                or new
-                or (use_accel_voltage and not isinstance(pc, AccelVoltagePeakCenter))
+            not pc
+            or new
+            or (use_accel_voltage and not isinstance(pc, AccelVoltagePeakCenter))
         ):
             pc = klass()
 
