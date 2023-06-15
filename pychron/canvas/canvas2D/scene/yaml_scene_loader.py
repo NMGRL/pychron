@@ -146,10 +146,14 @@ class YAMLLoader(BaseLoader):
                 desc = desc.text.strip() if desc is not None else ""
 
             w, h = self._get_floats(mv, "dimension", default=self._valve_dimension)
-            v = ManualSwitch(x + ox, y + oy, display_name=desc, name=key,
-                             width=w,
-                             height=h,
-                             )
+            v = ManualSwitch(
+                x + ox,
+                y + oy,
+                display_name=desc,
+                name=key,
+                width=w,
+                height=h,
+            )
             scene.add_item(v, layer=1)
             ndict[key] = v
 
@@ -215,7 +219,7 @@ class YAMLLoader(BaseLoader):
         key = "{}-{}-{}".format(lname, mname, rname)
 
         dim = float(conn.get("dimension", self._connection_dimension))
-        print('adsfadsf', dim)
+        print("adsfadsf", dim)
         # if dim is not None:
         #     height = float(dim.strip())
         # klass = BorderLine

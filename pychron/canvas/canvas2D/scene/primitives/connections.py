@@ -234,7 +234,7 @@ class Fork(ConnectionMixin, QPrimitive, Bordered):
 
             fork(gc, lx, ly, rx, ry, mx, my, h)
 
-        gc.set_line_width(self.width+self.border_width)
+        gc.set_line_width(self.width + self.border_width)
         # self.set_fill_color(gc)
         fork(gc, lx, ly, rx, ry, mx, my, h)
 
@@ -281,7 +281,7 @@ class Tee(Fork):
         """
         mx = lx + (rx - lx) / 2.0
         with gc:
-            gc.set_line_width(self.width+self.border_width)
+            gc.set_line_width(self.width + self.border_width)
             gc.set_stroke_color(self._get_border_color())
             tee_v(gc, lx, ly, rx, mx, my)
 
@@ -299,7 +299,7 @@ class Tee(Fork):
 
         with gc:
             print(self.width, self.border_width)
-            gc.set_line_width(self.border_width+self.width)
+            gc.set_line_width(self.border_width + self.width)
             gc.set_stroke_color(self._get_border_color())
             tee_h(gc, lx, ly, mx, my, ry)
 
