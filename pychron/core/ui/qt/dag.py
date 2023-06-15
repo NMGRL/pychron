@@ -92,12 +92,12 @@ class CommitGraphicsItem(QGraphicsItem):
     selected_outline_color = commit_selected_color.darker()
 
     commit_pen = QtGui.QPen()
-    commit_pen.setWidth(1.0)
+    commit_pen.setWidth(1)
     commit_pen.setColor(outline_color)
 
     text_pen = QtGui.QPen()
     text_pen.setColor(QtGui.QColor(Qt.darkGray))
-    text_pen.setWidth(1.0)
+    text_pen.setWidth(1)
 
     def __init__(
         self,
@@ -212,11 +212,11 @@ class Label(QGraphicsItem):
 
     head_pen = QtGui.QPen()
     head_pen.setColor(head_color.darker().darker())
-    head_pen.setWidth(1.0)
+    head_pen.setWidth(1)
 
     text_pen = QtGui.QPen()
     text_pen.setColor(QtGui.QColor(Qt.darkGray))
-    text_pen.setWidth(1.0)
+    text_pen.setWidth(1)
 
     alpha = 180
     head_color.setAlpha(alpha)

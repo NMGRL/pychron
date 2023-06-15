@@ -84,8 +84,12 @@ class SessionCTX(object):
                 return self._parent.session
             else:
                 self._psession = self._parent.session
-                self._session = self._parent.session_factory()
-                self._parent.session = self._session
+                try:
+                    self._session = self._parent.session_factory()
+                    self._parent.session = self._session
+                except TypeError as e:
+                    print(f'session ctx error. {e}')
+
                 return self._session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
