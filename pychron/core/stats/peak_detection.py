@@ -33,7 +33,12 @@ from numpy import (
     asarray,
     argsort,
     vstack,
-    arange, where, diff, hstack, gradient, argmin,
+    arange,
+    where,
+    diff,
+    hstack,
+    gradient,
+    argmin,
 )
 
 from pychron.core.time_series.time_series import smooth
@@ -118,7 +123,7 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
         if y < mx - delta and mx != Inf:
             # Maxima peak candidate found
             # look ahead in signal to ensure that this is a peak and not jitter
-            if y_axis[index: index + lookahead].max() < mx:
+            if y_axis[index : index + lookahead].max() < mx:
                 max_peaks.append([mxpos, mx])
                 dump.append(True)
                 # set algorithm to only find minima now
@@ -136,7 +141,7 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
         if y > mn + delta and mn != -Inf:
             # Minima peak candidate found
             # look ahead in signal to ensure that this is a peak and not jitter
-            if y_axis[index: index + lookahead].min() > mn:
+            if y_axis[index : index + lookahead].min() > mn:
                 min_peaks.append([mnpos, mn])
                 dump.append(False)
                 # set algorithm to only find maxima now
@@ -221,10 +226,9 @@ def calculate_resolving_power(x, y, format_str=None, return_all=False):
         return lrp, hrp
 
 
-def calculate_peak_center_pseudo(x, y, min_peak_height=1.0,
-                                 use_smooth=False,
-                                 lookahead=5,
-                                 offset=0.002, **kw):
+def calculate_peak_center_pseudo(
+    x, y, min_peak_height=1.0, use_smooth=False, lookahead=5, offset=0.002, **kw
+):
     x = array(x)
     y = array(y)
     xy = vstack((x, y)).T
@@ -261,9 +265,9 @@ def calculate_peak_center_pseudo(x, y, min_peak_height=1.0,
         raise PeakCenterError(f"No peak greater than {min_peak_height}. max = {my}")
 
 
-def calculate_peak_center_pseudo_old(x, y, min_peak_height=1.0,
-                                     min_numpoints=3,
-                                     flat_threshold=0.1, **kw):
+def calculate_peak_center_pseudo_old(
+    x, y, min_peak_height=1.0, min_numpoints=3, flat_threshold=0.1, **kw
+):
     x = array(x)
     y = array(y)
     xy = vstack((x, y)).T
@@ -279,9 +283,9 @@ def calculate_peak_center_pseudo_old(x, y, min_peak_height=1.0,
     my = max(y)
 
     # Get start, stop index pairs for islands/seq. of 1s
-    idx_pairs = where(abs(diff(hstack(([False],
-                                       tady == True,
-                                       [False])))))[0].reshape(-1, 2)
+    idx_pairs = where(abs(diff(hstack(([False], tady == True, [False])))))[0].reshape(
+        -1, 2
+    )
 
     # pair = idx_pairs[-1]
     for pair in idx_pairs[::-1]:
@@ -308,7 +312,7 @@ def calculate_peak_center_pseudo_old(x, y, min_peak_height=1.0,
 
 
 def calculate_peak_center(
-        x, y, test_peak_flat=True, min_peak_height=1.0, percent=80, ignore_max=False, **kw
+    x, y, test_peak_flat=True, min_peak_height=1.0, percent=80, ignore_max=False, **kw
 ):
     """
     returns: (low_x, center_x, high_x), (low_y, center_y, high_y), max_y, min_y
@@ -393,7 +397,7 @@ def calculate_peak_center(
         # find index in x closest to cx
         ccx = abs(x - cx).argmin()
         # check to see if were on a plateau
-        yppts = y[ccx - 2: ccx + 2]
+        yppts = y[ccx - 2 : ccx + 2]
 
         slope, _ = polyfit(list(range(len(yppts))), yppts, 1)
         std = yppts.std()
@@ -499,7 +503,7 @@ def interpolate(x, y, ind=None, width=10, func=None):
 
             ind = indexes(y)
         for i, slice_ in (
-                (i, slice(max(0, i - width), min(i + width, y.shape[0]))) for i in ind
+            (i, slice(max(0, i - width), min(i + width, y.shape[0]))) for i in ind
         ):
             try:
                 fit = func(x[slice_], y[slice_])
@@ -520,15 +524,16 @@ def interpolate(x, y, ind=None, width=10, func=None):
 
 
 def peak_shoulder_test():
-    root = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/peakcenter'
+    root = "/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/peakcenter"
     ps = [
-        'pseudo_PC_test_1.csv',
-        'a-01-N-140_chopped_1xHe.csv',
-        'a-01-N-141_chopped_1xHe.csv',
-        'a-01-N-142_chopped_1xHe.csv',
-        'a-01-N-146_1xHe.csv',
-        'ba-01-N-43.csv',
-        'a-01-N-147_1xHe_left-shoulder.csv']
+        "pseudo_PC_test_1.csv",
+        "a-01-N-140_chopped_1xHe.csv",
+        "a-01-N-141_chopped_1xHe.csv",
+        "a-01-N-142_chopped_1xHe.csv",
+        "a-01-N-146_1xHe.csv",
+        "ba-01-N-43.csv",
+        "a-01-N-147_1xHe_left-shoulder.csv",
+    ]
     for p in ps:
         # plot = p == 'a-01-N-147_1xHe_left-shoulder.csv'
         plot = False
@@ -541,17 +546,21 @@ def peak_shoulder_test_i(p, plot=False):
     import numpy as np
 
     # p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/pseduo_PC_tail.csv'
-    arr = np.loadtxt(p, delimiter=',')
+    arr = np.loadtxt(p, delimiter=",")
     x, y = arr.T
     offset = -0.0015
     lookahead = 5
     try:
-        result = calculate_peak_center_pseudo(x, y, offset=offset,
-                                              use_smooth=11,
-                                              lookahead=lookahead,
-                                              min_peak_height=0.00001)
+        result = calculate_peak_center_pseudo(
+            x,
+            y,
+            offset=offset,
+            use_smooth=11,
+            lookahead=lookahead,
+            min_peak_height=0.00001,
+        )
     except (PeakCenterError, IndexError) as e:
-        print('asdsdf', e)
+        print("asdsdf", e)
 
     if plot:
         fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
@@ -559,21 +568,21 @@ def peak_shoulder_test_i(p, plot=False):
         y = smooth(y)
         fig.suptitle(os.path.basename(p))
         ax1.plot(x, y)
-        ax1.vlines(result[0][1] + offset, 0, max(y), color='green')
-        ax1.vlines(result[0][1], 0, max(y), color='blue')
+        ax1.vlines(result[0][1] + offset, 0, max(y), color="green")
+        ax1.vlines(result[0][1], 0, max(y), color="blue")
 
         gy = abs(gradient(y))
         maxpeaks, minpeaks = find_peaks(gy, lookahead=lookahead)
 
         ax2.plot(x, abs(gradient(y)))
-        ax2.vlines(x[array(maxpeaks, dtype=int).T[0]], 0, max(gy), color='red')
+        ax2.vlines(x[array(maxpeaks, dtype=int).T[0]], 0, max(gy), color="red")
         # ax2.set_ylim(0, 1e4)
         # ax1.set_ylim(0, 1e4)
         plt.show()
     return result[0][1] + offset
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     peak_shoulder_test()
 
     # gy = abs(gradient(y))

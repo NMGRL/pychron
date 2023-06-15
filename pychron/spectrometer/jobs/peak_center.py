@@ -29,7 +29,8 @@ from pychron.core.stats.peak_detection import (
     calculate_peak_center,
     PeakCenterError,
     calculate_resolution,
-    calculate_resolving_power, calculate_peak_center_pseudo,
+    calculate_resolving_power,
+    calculate_peak_center_pseudo,
 )
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.graph.graph import Graph
@@ -268,9 +269,14 @@ class BasePeakCenter(HasTraits):
             center += self.dac_offset
 
         pcenter = self.center_dac
-        if self.peak_shift_threshold and abs(center - pcenter) > self.peak_shift_threshold:
-            self.warning(f'Peak center moved too much. current={center}, previous={pcenter}, '
-                         f'dev={abs(center-pcenter)} > {self.peak_shift_threshold}')
+        if (
+            self.peak_shift_threshold
+            and abs(center - pcenter) > self.peak_shift_threshold
+        ):
+            self.warning(
+                f"Peak center moved too much. current={center}, previous={pcenter}, "
+                f"dev={abs(center-pcenter)} > {self.peak_shift_threshold}"
+            )
             center, smart_shift, success = None, False, False
 
         return center, smart_shift, success
@@ -469,10 +475,7 @@ class BasePeakCenter(HasTraits):
                 func = calculate_peak_center
 
             result = func(
-                x, y,
-                min_peak_height=self.min_peak_height,
-                percent=self.percent,
-                **kw
+                x, y, min_peak_height=self.min_peak_height, percent=self.percent, **kw
             )
             return result
         except PeakCenterError as e:
@@ -532,5 +535,6 @@ class PeakCenter(BasePeakCenter, MagnetSweep):
 
 class AccelVoltagePeakCenter(BasePeakCenter, AccelVoltageSweep):
     title = "Accel Voltage Peak Center"
+
 
 # ============= EOF =============================================

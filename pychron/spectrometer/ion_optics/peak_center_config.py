@@ -148,13 +148,17 @@ class PeakCenterConfig(HasTraits):
                 Item("use_dac_offset", label="DAC Offset"),
                 UItem("dac_offset", enabled_when="use_dac_offset"),
             ),
-            Item('use_pseudo_peak',
-                 tooltip='Identify the high mass shoulder. Offset is added to the peak shoulder. i.e a negative '
-                         'offset shifts the peak center to lower mass.',
-                 label='Use Pseudo Peak Detection'),
-            Item('peak_shift_threshold',
-                 label='Peak Shift Threshold',
-                 tooltip='Fail peak center if the new peak center is shifted greater than this value'),
+            Item(
+                "use_pseudo_peak",
+                tooltip="Identify the high mass shoulder. Offset is added to the peak shoulder. i.e a negative "
+                "offset shifts the peak center to lower mass.",
+                label="Use Pseudo Peak Detection",
+            ),
+            Item(
+                "peak_shift_threshold",
+                label="Peak Shift Threshold",
+                tooltip="Fail peak center if the new peak center is shifted greater than this value",
+            ),
             Item("calculate_all_peaks"),
             show_border=True,
             label="Post Process",
@@ -165,8 +169,8 @@ class PeakCenterConfig(HasTraits):
                 "update_others",
                 label="Update All Detectors",
                 tooltip="Update all the detectors in the "
-                        "mftable not only the reference "
-                        "detector",
+                "mftable not only the reference "
+                "detector",
             )
             pp_grp.content.append(itm)
         return pp_grp
@@ -413,6 +417,7 @@ class PeakCenterConfigurer(ItemConfigurer):
         item.detector = ""
         item.detector = det
         return item
+
 
 # if __name__ == '__main__':
 #     from pychron.paths import paths

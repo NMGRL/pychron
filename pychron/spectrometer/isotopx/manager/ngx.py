@@ -23,4 +23,6 @@ class NGXSpectrometerManager(BaseSpectrometerManager):
 
     def protect_detector(self, det, protect):
         self.spectrometer.protect_detector(det, protect)
+
+
 # ============= EOF =============================================

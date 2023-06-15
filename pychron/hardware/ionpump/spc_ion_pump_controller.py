@@ -47,19 +47,18 @@ class SPCIonPumpController(CoreDevice):
 
         return self.pressure
 
-    @property 
+    @property
     def telnet_mode(self):
-        return self.communicator.name.endswith('telnet')
+        return self.communicator.name.endswith("telnet")
 
     @get_float(0)
     def _read_pressure(self):
         cmd = self._make_command("0B")
         resp = self.ask(cmd, verbose=True)
         if resp:
-            
             if self.telnet_mode:
                 # example response OK 00 4.1E-11 Torr
-                status, err, data, unit  = resp.split(' ')
+                status, err, data, unit = resp.split(" ")
             else:
                 addr, status, err, data, unit, chk = resp.split(" ")
 
@@ -67,16 +66,17 @@ class SPCIonPumpController(CoreDevice):
 
     def _make_command(self, cmd):
         if self.telnet_mode:
-            return f'spc {cmd}'
+            return f"spc {cmd}"
         else:
             a = " ".join(("~", "{:02X}".format(self.address), cmd))
-            a = f'{a} '
+            a = f"{a} "
             return f"{a} {self._calculate_checksum(a)}"
-#         a = " ".join(("~", "{:02X}".format(self.address), cmd))
-#         a = f"{a} "
-#         return f"{a} {self._calculate_checksum(a)}"
 
-        # return "{} {}".format(a, self._calculate_checksum(a))
+    #         a = " ".join(("~", "{:02X}".format(self.address), cmd))
+    #         a = f"{a} "
+    #         return f"{a} {self._calculate_checksum(a)}"
+
+    # return "{} {}".format(a, self._calculate_checksum(a))
 
     def _calculate_checksum(self, a):
         if self.use_checksum_validation:

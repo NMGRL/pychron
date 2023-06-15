@@ -1929,7 +1929,6 @@ anaylsis_type={}
             # set the interpolation path
             self.measurement_script.interpolation_path = ip
 
-
         for si in ("extraction", "post_measurement", "post_equilibration"):
             script = getattr(self, "{}_script".format(si))
             if script:
