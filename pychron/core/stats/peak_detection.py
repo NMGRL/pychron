@@ -22,6 +22,8 @@
 """
     https://gist.github.com/sixtenbe/1178136
 """
+import os
+
 from numpy import (
     Inf,
     isscalar,
@@ -31,9 +33,10 @@ from numpy import (
     asarray,
     argsort,
     vstack,
-    arange,
+    arange, where, diff, hstack, gradient, argmin,
 )
 
+from pychron.core.time_series.time_series import smooth
 from pychron.pychron_constants import NULL_STR
 
 
@@ -115,7 +118,7 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
         if y < mx - delta and mx != Inf:
             # Maxima peak candidate found
             # look ahead in signal to ensure that this is a peak and not jitter
-            if y_axis[index : index + lookahead].max() < mx:
+            if y_axis[index: index + lookahead].max() < mx:
                 max_peaks.append([mxpos, mx])
                 dump.append(True)
                 # set algorithm to only find minima now
@@ -133,7 +136,7 @@ def find_peaks(y_axis, x_axis=None, lookahead=300, delta=0):
         if y > mn + delta and mn != -Inf:
             # Minima peak candidate found
             # look ahead in signal to ensure that this is a peak and not jitter
-            if y_axis[index : index + lookahead].min() > mn:
+            if y_axis[index: index + lookahead].min() > mn:
                 min_peaks.append([mnpos, mn])
                 dump.append(False)
                 # set algorithm to only find maxima now
@@ -218,8 +221,94 @@ def calculate_resolving_power(x, y, format_str=None, return_all=False):
         return lrp, hrp
 
 
+def calculate_peak_center_pseudo(x, y, min_peak_height=1.0,
+                                 use_smooth=False,
+                                 lookahead=5,
+                                 offset=0.002, **kw):
+    x = array(x)
+    y = array(y)
+    xy = vstack((x, y)).T
+    x, y = xy[argsort(xy[:, 0])].T
+    max_i = argmax(y)
+    mx = x[max_i]
+    my = max(y)
+
+    if use_smooth:
+        window_len = 11
+        if isinstance(use_smooth, int):
+            window_len = use_smooth
+
+        y = smooth(y, window_len=window_len)
+
+    gy = abs(gradient(y))
+    maxpeaks, minpeaks = find_peaks(gy, lookahead=lookahead)
+
+    for pcidx, inten in maxpeaks[::-1]:
+        cx = x[pcidx]
+        ocx = cx + offset
+
+        # find idx in x that is closest to ocx
+        idx = argmin(abs(x - ocx))
+        cy = y[idx]
+
+        lx = x[pcidx - 1]
+        hx = x[pcidx + 1]
+        ly = y[pcidx - 1]
+        hy = y[pcidx + 1]
+        if cy > min_peak_height:
+            return [lx, cx, hx], [ly, cy, hy], mx, my
+    else:
+        raise PeakCenterError(f"No peak greater than {min_peak_height}. max = {my}")
+
+
+def calculate_peak_center_pseudo_old(x, y, min_peak_height=1.0,
+                                     min_numpoints=3,
+                                     flat_threshold=0.1, **kw):
+    x = array(x)
+    y = array(y)
+    xy = vstack((x, y)).T
+    x, y = xy[argsort(xy[:, 0])].T
+
+    dy = diff(y)
+    # plt.plot(np.gradient(y))
+    ady = abs(dy)
+    tady = ady < flat_threshold
+
+    max_i = argmax(y)
+    mx = x[max_i]
+    my = max(y)
+
+    # Get start, stop index pairs for islands/seq. of 1s
+    idx_pairs = where(abs(diff(hstack(([False],
+                                       tady == True,
+                                       [False])))))[0].reshape(-1, 2)
+
+    # pair = idx_pairs[-1]
+    for pair in idx_pairs[::-1]:
+        print(pair, pair[1] - pair[0], min_numpoints)
+        if pair[1] - pair[0] < min_numpoints:
+            continue
+
+        xp = x[pair]
+        lx = int(xp[0])
+        hx = int(xp[1])
+        cx = (hx - lx) / 2 + lx
+        ly = y[lx]
+        hy = y[hx]
+        cy = (ly + hy) / 2
+        if cy > min_peak_height:
+            break
+    else:
+        raise PeakCenterError(f"No peak greater than {min_peak_height}. max = {my}")
+
+    # center = (pair[1]-pair[0])/2+pair[0]
+    # plt.vlines(center, 0, 10)
+
+    return [lx, cx, hx], [ly, cy, hy], mx, my
+
+
 def calculate_peak_center(
-    x, y, test_peak_flat=True, min_peak_height=1.0, percent=80, ignore_max=False
+        x, y, test_peak_flat=True, min_peak_height=1.0, percent=80, ignore_max=False, **kw
 ):
     """
     returns: (low_x, center_x, high_x), (low_y, center_y, high_y), max_y, min_y
@@ -304,7 +393,7 @@ def calculate_peak_center(
         # find index in x closest to cx
         ccx = abs(x - cx).argmin()
         # check to see if were on a plateau
-        yppts = y[ccx - 2 : ccx + 2]
+        yppts = y[ccx - 2: ccx + 2]
 
         slope, _ = polyfit(list(range(len(yppts))), yppts, 1)
         std = yppts.std()
@@ -410,7 +499,7 @@ def interpolate(x, y, ind=None, width=10, func=None):
 
             ind = indexes(y)
         for i, slice_ in (
-            (i, slice(max(0, i - width), min(i + width, y.shape[0]))) for i in ind
+                (i, slice(max(0, i - width), min(i + width, y.shape[0]))) for i in ind
         ):
             try:
                 fit = func(x[slice_], y[slice_])
@@ -429,5 +518,103 @@ def interpolate(x, y, ind=None, width=10, func=None):
 
     return array(out), pidx
 
+
+def peak_shoulder_test():
+    root = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/peakcenter'
+    ps = [
+        'pseudo_PC_test_1.csv',
+        'a-01-N-140_chopped_1xHe.csv',
+        'a-01-N-141_chopped_1xHe.csv',
+        'a-01-N-142_chopped_1xHe.csv',
+        'a-01-N-146_1xHe.csv',
+        'ba-01-N-43.csv',
+        'a-01-N-147_1xHe_left-shoulder.csv']
+    for p in ps:
+        # plot = p == 'a-01-N-147_1xHe_left-shoulder.csv'
+        plot = False
+        result = peak_shoulder_test_i(os.path.join(root, p), plot=plot)
+        print(p, result)
+
+
+def peak_shoulder_test_i(p, plot=False):
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # p = '/Users/jross/Programming/PychronLabs/pychron_purdue/sandbox/pseduo_PC_tail.csv'
+    arr = np.loadtxt(p, delimiter=',')
+    x, y = arr.T
+    offset = -0.0015
+    lookahead = 5
+    try:
+        result = calculate_peak_center_pseudo(x, y, offset=offset,
+                                              use_smooth=11,
+                                              lookahead=lookahead,
+                                              min_peak_height=0.00001)
+    except (PeakCenterError, IndexError) as e:
+        print('asdsdf', e)
+
+    if plot:
+        fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+
+        y = smooth(y)
+        fig.suptitle(os.path.basename(p))
+        ax1.plot(x, y)
+        ax1.vlines(result[0][1] + offset, 0, max(y), color='green')
+        ax1.vlines(result[0][1], 0, max(y), color='blue')
+
+        gy = abs(gradient(y))
+        maxpeaks, minpeaks = find_peaks(gy, lookahead=lookahead)
+
+        ax2.plot(x, abs(gradient(y)))
+        ax2.vlines(x[array(maxpeaks, dtype=int).T[0]], 0, max(gy), color='red')
+        # ax2.set_ylim(0, 1e4)
+        # ax1.set_ylim(0, 1e4)
+        plt.show()
+    return result[0][1] + offset
+
+
+if __name__ == '__main__':
+    peak_shoulder_test()
+
+    # gy = abs(gradient(y))
+    # maxpeaks, minpeaks = find_peaks(gy, lookahead=10)
+    #
+    # pc = array(minpeaks).T[0][-1]
+    #
+    # fig, (ax1, ax2) = plt.subplots(2, 1, sharex=False)
+    #
+    # ax1.plot(x, y)
+    # # ax1.vlines(xpc, 0, max(y), color='red')
+    #
+    # ax2.plot(x, gy)
+    # maxpeakidx = array(maxpeaks, dtype=int).T[0]
+    # ax2.vlines(x[maxpeakidx], 0, max(gy), color='red')
+    #
+    # offset = 0.001
+    # cp = maxpeakidx[-1]
+    # ax1.vlines(x[cp] - offset, 0, max(y), color='red')
+    # plt.show()
+    # dy = np.diff(y)
+    # # plt.plot(np.gradient(y))
+    # ady = abs(dy)
+    # tady = ady < 0.1
+    # print(tady)
+    #
+    # # Get start, stop index pairs for islands/seq. of 1s
+    # idx_pairs = np.where(np.diff(np.hstack(([False],tady==True,[False]))))[0].reshape(-1,2)
+    # pair = idx_pairs[-1]
+    # center = (pair[1]-pair[0])/2+pair[0]
+    # plt.vlines(center, 0, 10)
+    # # Get the island lengths, whose argmax would give us the ID of longest island.
+    # # Start index of that island would be the desired output
+    # # start_longest_seq = idx_pairs[np.diff(idx_pairs,axis=1).argmax(),0]
+    # # print(start_longest_seq)
+    # plt.plot(abs(dy))
+
+    # grad = np.gradient(y)
+    # roots = grad>0
+    # print(roots)
+
+    # plt.show()
 
 # ============= EOF =============================================

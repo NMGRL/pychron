@@ -35,6 +35,7 @@ class NGXController(CoreDevice):
     lock = None
     canceled = False
     triggered = False
+    protect_detector = False
 
     def select_read(self, *args, **kw):
         return self.communicator.select_read(*args, **kw)

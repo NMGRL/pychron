@@ -944,6 +944,15 @@ class PyScript(Loggable):
         return ctx.get(key, default)
 
     @property
+    def analysis_type(self):
+        at = self._get_property("analysis_type")
+        self.debug(
+            "getting analysis type for {}. "
+            "analysis_type={}".format(self.run_identifier, at)
+        )
+        return at
+
+    @property
     def filename(self):
         return os.path.join(self.root, self.name)
 

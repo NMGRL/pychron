@@ -1014,15 +1014,6 @@ class ExtractionPyScript(ValvePyScript):
         return self._get_property(PATTERN)
 
     @property
-    def analysis_type(self):
-        at = self._get_property("analysis_type")
-        self.debug(
-            "getting analysis type for {}. "
-            "analysis_type={}".format(self.run_identifier, at)
-        )
-        return at
-
-    @property
     def extract_device(self):
         return self._get_property("extract_device")
 

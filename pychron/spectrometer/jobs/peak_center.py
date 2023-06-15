@@ -29,7 +29,7 @@ from pychron.core.stats.peak_detection import (
     calculate_peak_center,
     PeakCenterError,
     calculate_resolution,
-    calculate_resolving_power,
+    calculate_resolving_power, calculate_peak_center_pseudo,
 )
 from pychron.core.ui.gui import invoke_in_main_thread
 from pychron.graph.graph import Graph
@@ -75,6 +75,7 @@ class BasePeakCenter(HasTraits):
     window = Float  # (0.015)
     step_width = Float  # (0.0005)
     min_peak_height = Float(5.0)
+    use_pseudo_peak = False
     percent = Int
     use_interpolation = False
     interpolation_kind = Enum(
@@ -84,6 +85,7 @@ class BasePeakCenter(HasTraits):
     select_peak = 1
     use_dac_offset = False
     dac_offset = 0
+    peak_shift_threshold = 0
     calculate_all_peaks = False
     reference_plot_kind = Enum("line_scatter", "line", "scatter")
     additional_plot_kind = Enum("line_scatter", "line", "scatter")
@@ -262,8 +264,15 @@ class BasePeakCenter(HasTraits):
                         idx = argmax(intensities)
                         center, success = dac_values[idx], False
 
-        if self.use_dac_offset:
+        if center and self.use_dac_offset:
             center += self.dac_offset
+
+        pcenter = self.center_dac
+        if self.peak_shift_threshold and abs(center - pcenter) > self.peak_shift_threshold:
+            self.warning(f'Peak center moved too much. current={center}, previous={pcenter}, '
+                         f'dev={abs(center-pcenter)} > {self.peak_shift_threshold}')
+            center, smart_shift, success = None, False, False
+
         return center, smart_shift, success
 
     # private
@@ -451,8 +460,19 @@ class BasePeakCenter(HasTraits):
             # return c[1 + 3 * (self.select_peak - 1)]
 
         try:
-            result = calculate_peak_center(
-                x, y, min_peak_height=self.min_peak_height, percent=self.percent
+            kw = {}
+            if self.use_pseudo_peak:
+                func = calculate_peak_center_pseudo
+                kw["offset"] = self.dac_offset
+                # kw["flat_threshold"] = self.peak_flat_threshold
+            else:
+                func = calculate_peak_center
+
+            result = func(
+                x, y,
+                min_peak_height=self.min_peak_height,
+                percent=self.percent,
+                **kw
             )
             return result
         except PeakCenterError as e:
@@ -512,6 +532,5 @@ class PeakCenter(BasePeakCenter, MagnetSweep):
 
 class AccelVoltagePeakCenter(BasePeakCenter, AccelVoltageSweep):
     title = "Accel Voltage Peak Center"
-
 
 # ============= EOF =============================================
