@@ -144,8 +144,12 @@ class YAMLLoader(BaseLoader):
             if vv is not None:
                 desc = vv.find("description")
                 desc = desc.text.strip() if desc is not None else ""
-            v = ManualSwitch(x + ox, y + oy, display_name=desc, name=key)
-            print("masdf", v)
+
+            w, h = self._get_floats(mv, "dimension", default=self._valve_dimension)
+            v = ManualSwitch(x + ox, y + oy, display_name=desc, name=key,
+                             width=w,
+                             height=h,
+                             )
             scene.add_item(v, layer=1)
             ndict[key] = v
 
@@ -210,12 +214,12 @@ class YAMLLoader(BaseLoader):
         rname = str(right["name"]).strip()
         key = "{}-{}-{}".format(lname, mname, rname)
 
-        height = 4
-        dim = conn.get("dimension")
-        if dim is not None:
-            height = float(dim.strip())
+        dim = float(conn.get("dimension", self._connection_dimension))
+        print('adsfadsf', dim)
+        # if dim is not None:
+        #     height = float(dim.strip())
         # klass = BorderLine
-        tt = klass(0, 0, default_color=(204, 204, 204), name=key, height=height)
+        tt = klass(0, 0, default_color=(204, 204, 204), name=key, width=dim)
 
         lf = scene.get_item(lname)
         rt = scene.get_item(rname)

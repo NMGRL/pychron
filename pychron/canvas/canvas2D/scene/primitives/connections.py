@@ -174,6 +174,7 @@ class Fork(ConnectionMixin, QPrimitive, Bordered):
     mid = None
     height = 10
     inverted = False
+    border_width = 10
 
     def set_midpoint(self, p1, **kw):
         if isinstance(p1, tuple):
@@ -223,7 +224,7 @@ class Fork(ConnectionMixin, QPrimitive, Bordered):
         # |   |
         # L   R
         with gc:
-            gc.set_line_width(20)
+            gc.set_line_width(self.width + self.border_width)
             gc.set_stroke_color(self._get_border_color())
 
             # gc.set_line_width(5)
@@ -233,7 +234,7 @@ class Fork(ConnectionMixin, QPrimitive, Bordered):
 
             fork(gc, lx, ly, rx, ry, mx, my, h)
 
-        gc.set_line_width(10)
+        gc.set_line_width(self.width+self.border_width)
         # self.set_fill_color(gc)
         fork(gc, lx, ly, rx, ry, mx, my, h)
 
@@ -280,11 +281,11 @@ class Tee(Fork):
         """
         mx = lx + (rx - lx) / 2.0
         with gc:
-            gc.set_line_width(20)
+            gc.set_line_width(self.width+self.border_width)
             gc.set_stroke_color(self._get_border_color())
             tee_v(gc, lx, ly, rx, mx, my)
 
-        gc.set_line_width(10)
+        gc.set_line_width(self.width)
         self.set_fill_color(gc)
         tee_v(gc, lx, ly, rx, mx, my)
 
@@ -297,11 +298,12 @@ class Tee(Fork):
         """
 
         with gc:
-            gc.set_line_width(20)
+            print(self.width, self.border_width)
+            gc.set_line_width(self.border_width+self.width)
             gc.set_stroke_color(self._get_border_color())
             tee_h(gc, lx, ly, mx, my, ry)
 
-        gc.set_line_width(10)
+        gc.set_line_width(self.width)
         self.set_fill_color(gc)
         tee_h(gc, lx, ly, mx, my, ry)
 
