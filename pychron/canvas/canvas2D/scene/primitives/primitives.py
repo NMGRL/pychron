@@ -133,9 +133,9 @@ class Line(QPrimitive):
             p1 = Point(*p1, **kw)
         self.end_point = p1
         if p1:
-            if self.orientation == 'vertical':
+            if self.orientation == "vertical":
                 self.start_point.x = p1.x
-            elif self.orientation == 'horizontal':
+            elif self.orientation == "horizontal":
                 self.start_point.y = p1.y
 
             if len(self.primitives) == 2:
@@ -150,9 +150,9 @@ class Line(QPrimitive):
         self.start_point = p1
 
         if p1:
-            if self.orientation == 'vertical':
+            if self.orientation == "vertical":
                 self.end_point.x = p1.x
-            elif self.orientation == 'horizontal':
+            elif self.orientation == "horizontal":
                 self.end_point.y = p1.y
 
             if len(self.primitives) > 0:
@@ -196,6 +196,7 @@ class Line(QPrimitive):
         self.start_point.request_layout()
         self.end_point.request_layout()
         super(Line, self).request_layout()
+
 
 class Triangle(QPrimitive):
     draw_text = False

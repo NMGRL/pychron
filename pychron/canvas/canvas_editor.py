@@ -189,7 +189,7 @@ class CanvasEditor(Loggable):
     def _save_yaml(self, p):
         obj = {}
         items = [i.toyaml() for i in self.canvas.scene.valves.values()]
-        obj['valve'] = items
+        obj["valve"] = items
 
         for klass, key in (
             (Switch, "switch"),
