@@ -128,10 +128,14 @@ class PointDraggingTool(DragTool):
 
 
 class IsochronMoveTool(PointDraggingTool):
-    pass
-    # updated = Event
-    # def drag_end(self, event):
-    #     self.updated = True
+    updated = Event
+
+    def dragging(self, event):
+        super().dragging(event)
+        self.updated = True
+
+    def drag_end(self, event):
+        self.updated = True
 
 
 def calculate_spectrum(ar39s, values):
@@ -212,7 +216,7 @@ class IsochronSandbox(HasTraits):
 
     analyses = List
     refresh_table = Event
-
+    j = 1e-3
     def init(self):
         self.spec = StackedGraph(
             container_dict=dict(padding=5, spacing=5, bgcolor="lightgray")
@@ -235,7 +239,7 @@ class IsochronSandbox(HasTraits):
             calculate_f((a40, a39, 0, 0, a36), decay_time=0)
             for a40, a39, a36 in zip(ar40, ar39, ar36)
         ]
-        ages = [age_equation(1e-9, f[0]) for f in fs]
+        ages = [age_equation(self.j, f[0]) for f in fs]
         xs, ys, es, c39s, s39, vs = calculate_spectrum(ar39, ages)
         self.spec.new_plot()
         self.spec.new_series(xs, ys)
@@ -250,11 +254,15 @@ class IsochronSandbox(HasTraits):
         reg, regx = get_isochron_regressors(ar40, ar39, ar36)
 
         self.isochron.new_plot()
-        iso, p = self.isochron.new_series(reg.xs, reg.ys, type="scatter")
+        iso, p = self.isochron.new_series(reg.xs, reg.ys,
+                                          type="scatter", marker="circle", marker_size=5)
+        # iso.selection_marker = "circle"
+        # iso.selection_marker_size = 5
         tool = IsochronMoveTool(component=iso)
         iso.tools.append(tool)
-        iso.index.on_trait_change(self.update_spec, "data_changed")
-        iso.value.on_trait_change(self.update_spec, "data_changed")
+        tool.on_trait_change(self.update_spec, "updated")
+        # iso.index.on_trait_change(self.update_spec, "data_changed")
+        # iso.value.on_trait_change(self.update_spec, "data_changed")
 
         self.isochron.set_x_limits(min(reg.xs), max(reg.xs), pad="0.1")
         self.isochron.set_y_limits(min(reg.ys), max(reg.ys), pad="0.1")
@@ -266,13 +274,15 @@ class IsochronSandbox(HasTraits):
         self.spec.set_y_title("Apparent Age (Ma)", plotid=0)
         self.spec.set_y_title("*Ar40%", plotid=1)
 
-    # def updated_index(self, obj, name, old, new):
+        self.ar40 = array([a.ar40 for a in self.analyses])
+
+# def updated_index(self, obj, name, old, new):
     #     self._update('index', obj, name, old, new)
 
     # def updated_value(self, obj, name, old, new):
     def update_spec(self):
         # a3640 = obj.get_data()
-        ar40 = array([a.ar40 for a in self.analyses])
+        ar40 = self.ar40
         isochron = self.isochron.plots[0].plots["plot0"][0]
         a3940 = isochron.index.get_data()
         a3640 = isochron.value.get_data()
@@ -288,7 +298,7 @@ class IsochronSandbox(HasTraits):
             calculate_f((a40, a39, 0, 0, a36), decay_time=0)
             for a40, a39, a36 in zip(ar40, ar39, ar36)
         ]
-        ages = [age_equation(1e-9, f[0]) for f in fs]
+        ages = [age_equation(self.j, f[0]) for f in fs]
         xs, ys, es, c39s, s39, vs = calculate_spectrum(ar39, ages)
 
         specplot = self.spec.plots[0].plots["plot0"][0]
@@ -305,7 +315,8 @@ class IsochronSandbox(HasTraits):
         specplot.value.set_data(ys)
         self.spec.set_y_limits(min(ys), max(ys), pad="0.1", plotid=1)
 
-        self.refresh_table = True
+        # self.refresh_table = True
+
         # self._update('value', obj, name, old, new)
 
     # def _update(self, key, obj, name, old, new):
@@ -337,7 +348,7 @@ class IsochronSandbox(HasTraits):
 
 def main():
     s = IsochronSandbox()
-    s.plot()
+    s.init()
     s.configure_traits()
 
 
