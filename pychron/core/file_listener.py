@@ -53,7 +53,7 @@ class FileListener(object):
 
         self._alive = True
         if os.path.isfile(self._path):
-            t = Thread(target=self._listen)
+            t = Thread(target=self._listen, daemon=True)
             t.start()
 
     @property

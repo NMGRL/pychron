@@ -319,16 +319,16 @@ class Connectable(QPrimitive):
         if not self._initialized:
             return
 
-        cvo = self.x != self.ox
-        cho = self.y != self.oy
-
+        # cvo = self.x != self.ox
+        # cho = self.y != self.oy
+        w, h = self.width, self.height
         for t, c in self.connections:
-            c.clear_vorientation = cvo
-            c.clear_horientation = cho
+            # c.clear_vorientation = cvo
+            # c.clear_horientation = cho
 
             func = getattr(c, "set_{}point".format(t))
-            w, h = self.width, self.height
             func((self.x + w / 2.0, self.y + h / 2.0))
+            c.request_layout()
 
         self.request_redraw()
 
