@@ -26,7 +26,11 @@ from uncertainties import nominal_value, std_dev
 from pychron.core.helpers.formatting import floatfmt
 from pychron.graph.graph import Graph
 from pychron.graph.stacked_graph import StackedGraph
-from pychron.processing.argon_calculations import calculate_f, age_equation, get_isochron_regressors
+from pychron.processing.argon_calculations import (
+    calculate_f,
+    age_equation,
+    get_isochron_regressors,
+)
 
 
 class PointDraggingTool(DragTool):
@@ -118,9 +122,7 @@ class PointDraggingTool(DragTool):
 
         if hasattr(self.component, "get_closest_point"):
             # This is on BaseXYPlots
-            return self.component.get_closest_point(
-                (x, y), threshold=self.threshold
-            )
+            return self.component.get_closest_point((x, y), threshold=self.threshold)
 
         return None
 
@@ -171,7 +173,7 @@ def calculate_spectrum(ar39s, values):
 
 
 class AnalysisAdapter(TabularAdapter):
-    columns = [('Ar40', 'ar40'), ('Ar39', 'ar39'), ('Ar36', 'ar36'), ('Rad40', 'rad40')]
+    columns = [("Ar40", "ar40"), ("Ar39", "ar39"), ("Ar36", "ar36"), ("Rad40", "rad40")]
 
     ar40_text = Property
     ar39_text = Property
@@ -179,19 +181,20 @@ class AnalysisAdapter(TabularAdapter):
     rad40_text = Property
 
     def _get_ar40_text(self):
-        return self._get_value('ar40')
+        return self._get_value("ar40")
 
     def _get_ar39_text(self):
-        return self._get_value('ar39')
+        return self._get_value("ar39")
 
     def _get_ar36_text(self):
-        return self._get_value('ar36')
+        return self._get_value("ar36")
 
     def _get_rad40_text(self):
-        return self._get_value('rad40')
+        return self._get_value("rad40")
 
     def _get_value(self, key):
         return floatfmt(getattr(self.item, key))
+
 
 class Analysis(HasTraits):
     ar40 = Float
@@ -211,51 +214,57 @@ class IsochronSandbox(HasTraits):
     refresh_table = Event
 
     def init(self):
-        self.spec = StackedGraph(container_dict=dict(padding=5, spacing=5, bgcolor="lightgray"))
+        self.spec = StackedGraph(
+            container_dict=dict(padding=5, spacing=5, bgcolor="lightgray")
+        )
         self.isochron = Graph()
 
         # plot the spectrum
 
-        self.analyses = [Analysis(ar40=10, ar39=1.5, ar36=0.001),
-                         Analysis(ar40=10, ar39=1.1, ar36=0.0015),
-                         Analysis(ar40=10, ar39=1, ar36=0.0018), ]
+        self.analyses = [
+            Analysis(ar40=10, ar39=1.5, ar36=0.001),
+            Analysis(ar40=10, ar39=1.1, ar36=0.0015),
+            Analysis(ar40=10, ar39=1, ar36=0.0018),
+        ]
 
         ar40 = array([a.ar40 for a in self.analyses])
         ar39 = array([a.ar39 for a in self.analyses])
         ar36 = array([a.ar36 for a in self.analyses])
 
-        fs = [calculate_f((a40, a39, 0, 0, a36), decay_time=0) for a40, a39, a36 in zip(ar40, ar39, ar36)]
+        fs = [
+            calculate_f((a40, a39, 0, 0, a36), decay_time=0)
+            for a40, a39, a36 in zip(ar40, ar39, ar36)
+        ]
         ages = [age_equation(1e-9, f[0]) for f in fs]
         xs, ys, es, c39s, s39, vs = calculate_spectrum(ar39, ages)
         self.spec.new_plot()
         self.spec.new_series(xs, ys)
-        self.spec.set_y_limits(min(ys), max(ys), pad='0.1', plotid=0)
+        self.spec.set_y_limits(min(ys), max(ys), pad="0.1", plotid=0)
 
         rad40s = [a.rad40 for a in self.analyses]
         xs, ys, es, c39s, s39, vs = calculate_spectrum(ar39, rad40s)
         self.spec.new_plot(padding=[60, 40, 30, 10])
         self.spec.new_series(xs, ys, plotid=1)
-        self.spec.set_y_limits(min(ys), max(ys), pad='0.1', plotid=1)
+        self.spec.set_y_limits(min(ys), max(ys), pad="0.1", plotid=1)
 
         reg, regx = get_isochron_regressors(ar40, ar39, ar36)
 
         self.isochron.new_plot()
-        iso, p = self.isochron.new_series(reg.xs,
-                                          reg.ys, type='scatter')
+        iso, p = self.isochron.new_series(reg.xs, reg.ys, type="scatter")
         tool = IsochronMoveTool(component=iso)
         iso.tools.append(tool)
-        iso.index.on_trait_change(self.update_spec, 'data_changed')
-        iso.value.on_trait_change(self.update_spec, 'data_changed')
+        iso.index.on_trait_change(self.update_spec, "data_changed")
+        iso.value.on_trait_change(self.update_spec, "data_changed")
 
-        self.isochron.set_x_limits(min(reg.xs), max(reg.xs), pad='0.1')
-        self.isochron.set_y_limits(min(reg.ys), max(reg.ys), pad='0.1')
+        self.isochron.set_x_limits(min(reg.xs), max(reg.xs), pad="0.1")
+        self.isochron.set_y_limits(min(reg.ys), max(reg.ys), pad="0.1")
 
-        self.isochron.set_y_title('Ar36/Ar40')
-        self.isochron.set_x_title('Ar39/Ar40')
+        self.isochron.set_y_title("Ar36/Ar40")
+        self.isochron.set_x_title("Ar39/Ar40")
 
-        self.spec.set_x_title('Cumulative %39Ar')
-        self.spec.set_y_title('Apparent Age (Ma)', plotid=0)
-        self.spec.set_y_title('*Ar40%', plotid=1)
+        self.spec.set_x_title("Cumulative %39Ar")
+        self.spec.set_y_title("Apparent Age (Ma)", plotid=0)
+        self.spec.set_y_title("*Ar40%", plotid=1)
 
     # def updated_index(self, obj, name, old, new):
     #     self._update('index', obj, name, old, new)
@@ -264,7 +273,7 @@ class IsochronSandbox(HasTraits):
     def update_spec(self):
         # a3640 = obj.get_data()
         ar40 = array([a.ar40 for a in self.analyses])
-        isochron = self.isochron.plots[0].plots['plot0'][0]
+        isochron = self.isochron.plots[0].plots["plot0"][0]
         a3940 = isochron.index.get_data()
         a3640 = isochron.value.get_data()
 
@@ -275,23 +284,26 @@ class IsochronSandbox(HasTraits):
             a.ar36 = a36
             a.ar39 = a39
 
-        fs = [calculate_f((a40, a39, 0, 0, a36), decay_time=0) for a40, a39, a36 in zip(ar40, ar39, ar36)]
+        fs = [
+            calculate_f((a40, a39, 0, 0, a36), decay_time=0)
+            for a40, a39, a36 in zip(ar40, ar39, ar36)
+        ]
         ages = [age_equation(1e-9, f[0]) for f in fs]
         xs, ys, es, c39s, s39, vs = calculate_spectrum(ar39, ages)
 
-        specplot = self.spec.plots[0].plots['plot0'][0]
+        specplot = self.spec.plots[0].plots["plot0"][0]
         specplot.index.set_data(xs)
         specplot.value.set_data(ys)
-        self.spec.set_y_limits(min(ys), max(ys), pad='0.1', plotid=1)
+        self.spec.set_y_limits(min(ys), max(ys), pad="0.1", plotid=1)
 
         # radiogenic yield
         rad40s = [a.rad40 for a in self.analyses]
         xs, ys, es, c39s, s39, vs = calculate_spectrum(ar39, rad40s)
 
-        specplot = self.spec.plots[1].plots['plot0'][0]
+        specplot = self.spec.plots[1].plots["plot0"][0]
         specplot.index.set_data(xs)
         specplot.value.set_data(ys)
-        self.spec.set_y_limits(min(ys), max(ys), pad='0.1', plotid=1)
+        self.spec.set_y_limits(min(ys), max(ys), pad="0.1", plotid=1)
 
         self.refresh_table = True
         # self._update('value', obj, name, old, new)
@@ -302,16 +314,24 @@ class IsochronSandbox(HasTraits):
     # source.set_data(new)
 
     def traits_view(self):
-        v = View(HSplit(UItem('analyses',
-                              width=300,
-                              editor=TabularEditor(refresh='refresh_table',
-                                                   stretch_last_section=False,
-                                                   adapter=AnalysisAdapter())),
-                        HGroup(UItem('spec', style='custom'),
-                        UItem('isochron', style='custom'))),
-
-                 title='Isochron Sandbox',
-                 resizable=True,)
+        v = View(
+            HSplit(
+                UItem(
+                    "analyses",
+                    width=300,
+                    editor=TabularEditor(
+                        refresh="refresh_table",
+                        stretch_last_section=False,
+                        adapter=AnalysisAdapter(),
+                    ),
+                ),
+                HGroup(
+                    UItem("spec", style="custom"), UItem("isochron", style="custom")
+                ),
+            ),
+            title="Isochron Sandbox",
+            resizable=True,
+        )
         return v
 
 
@@ -321,7 +341,7 @@ def main():
     s.configure_traits()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 
 # ============= EOF =============================================

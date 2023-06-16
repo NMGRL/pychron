@@ -55,7 +55,7 @@ def unpack_value_error(xx):
 
 
 def calculate_isochron(
-        analyses, error_calc_kind, exclude=None, reg="NewYork", include_j_err=True
+    analyses, error_calc_kind, exclude=None, reg="NewYork", include_j_err=True
 ):
     if exclude is None:
         exclude = []
@@ -101,7 +101,7 @@ def calculate_isochron(
     return age, yint, reg
 
 
-def get_isochron_regressors(a40, a39, a36, kind='NewYork'):
+def get_isochron_regressors(a40, a39, a36, kind="NewYork"):
     xx = a39 / a40
     yy = a36 / a40
 
@@ -115,13 +115,15 @@ def get_isochron_regressors(a40, a39, a36, kind='NewYork'):
     regx = isochron_regressor(
         ys, yerrs, xs, xerrs, xds, xdes, yns, ynes, xns, xnes, kind
     )
-    reg = isochron_regressor(xs, xerrs, ys, yerrs, xds, xdes, xns, xnes, yns, ynes, kind)
+    reg = isochron_regressor(
+        xs, xerrs, ys, yerrs, xds, xdes, xns, xnes, yns, ynes, kind
+    )
 
     return reg, regx
 
 
 def isochron_regressor(
-        xs, xes, ys, yes, xds, xdes, xns, xnes, yns, ynes, reg="NewYork"
+    xs, xes, ys, yes, xds, xdes, xns, xnes, yns, ynes, reg="NewYork"
 ):
     reg = reg.lower()
     if reg in ("newyork", "new_york"):
@@ -150,14 +152,14 @@ def isochron_regressor(
 
 
 def calculate_plateau_age(
-        ages,
-        errors,
-        k39,
-        steps,
-        kind="inverse_variance",
-        method=FLECK,
-        options=None,
-        excludes=None,
+    ages,
+    errors,
+    k39,
+    steps,
+    kind="inverse_variance",
+    method=FLECK,
+    options=None,
+    excludes=None,
 ):
     """
     ages: list of ages
@@ -265,10 +267,10 @@ def calculate_arar_decay_factors_dalrymple(dc37, dc39, segments):
         for pi, ti, ti_p, _, _ in segments:
             pti = (pi * ti) / tpower
             df37 += (
-                    pti * (ti * dc37 * math.exp(dc37 * ti_p)) / (1 - math.exp(-dc37 * ti))
+                pti * (ti * dc37 * math.exp(dc37 * ti_p)) / (1 - math.exp(-dc37 * ti))
             )
             df39 += (
-                    pti * (ti * dc39 * math.exp(dc39 * ti_p)) / (1 - math.exp(-dc39 * ti))
+                pti * (ti * dc39 * math.exp(dc39 * ti_p)) / (1 - math.exp(-dc39 * ti))
             )
     except ZeroDivisionError:
         df37, df39 = 1.0, 1.0
@@ -363,7 +365,7 @@ def apply_fixed_k3739(a39, pr, fixed_k3739):
 
 
 def interference_corrections(
-        a39, a37, production_ratios, arar_constants=None, fixed_k3739=False
+    a39, a37, production_ratios, arar_constants=None, fixed_k3739=False
 ):
     if production_ratios is None:
         production_ratios = {}
@@ -398,7 +400,7 @@ def interference_corrections(
 
 
 def calculate_atmospheric(
-        a38, a36, k38, ca38, ca36, decay_time, production_ratios=None, arar_constants=None
+    a38, a36, k38, ca38, ca36, decay_time, production_ratios=None, arar_constants=None
 ):
     """
     McDougall and Harrison
@@ -463,7 +465,7 @@ def calculate_cosmogenic_components(c36, c38, arar_constants):
 
 
 def calculate_f(
-        isotopes, decay_time, interferences=None, arar_constants=None, fixed_k3739=False
+    isotopes, decay_time, interferences=None, arar_constants=None, fixed_k3739=False
 ):
     """
     isotope values corrected for blank, baseline, (background)
@@ -555,7 +557,7 @@ def calculate_f(
 
 
 def convert_age(
-        uage, original_monitor_age, original_lambda_k, new_monitor_age, new_lambda_k
+    uage, original_monitor_age, original_lambda_k, new_monitor_age, new_lambda_k
 ):
     converter.setup(original_monitor_age, original_lambda_k)
     if new_monitor_age is None:
@@ -588,7 +590,7 @@ def age_equation(j, f, include_decay_error=False, lambda_k=None, arar_constants=
         lambda_k = nominal_value(lambda_k)
     try:
         # lambda is defined in years, so age is in years
-        age = lambda_k ** -1 * umath.log(1 + j * f)
+        age = lambda_k**-1 * umath.log(1 + j * f)
 
         return arar_constants.scale_age(age, current="a")
     except (ValueError, TypeError):
@@ -616,15 +618,15 @@ def calculate_error_F(signals, F, k4039, ca3937, ca3637):
     C3 = k4039.nominal_value
     C4 = ca3937.nominal_value
 
-    ssD = D.std_dev ** 2
-    ssB = B.std_dev ** 2
-    ssG = G.std_dev ** 2
+    ssD = D.std_dev**2
+    ssB = B.std_dev**2
+    ssG = G.std_dev**2
     G = G.nominal_value
     B = B.nominal_value
     D = D.nominal_value
 
-    ssF = ssG + C1 ** 2 * ssB + ssD * (C4 * G - C1 * C4 * B + C1 * C2) ** 2
-    return ssF ** 0.5
+    ssF = ssG + C1**2 * ssB + ssD * (C4 * G - C1 * C4 * B + C1 * C2) ** 2
+    return ssF**0.5
 
 
 def calculate_error_t(F, ssF, j, ssJ):
@@ -637,7 +639,7 @@ def calculate_error_t(F, ssF, j, ssJ):
     constants = ArArConstants()
     ll = constants().lambdak.nominal_value ** 2
     sst = (JJ * ssF + FF * ssJ) / (ll * (1 + F * j) ** 2)
-    return sst ** 0.5
+    return sst**0.5
 
 
 def calculate_fractional_loss(t, temp, a, model="plane", material="kfeldspar"):
@@ -665,9 +667,9 @@ def calculate_fractional_loss(t, temp, a, model="plane", material="kfeldspar"):
     d = d_0 * math.exp(-ea / (r * temp))
 
     if model == "plane":
-        f = 2 / math.pi ** 0.5 * (d * t / a ** 2) ** 0.5
+        f = 2 / math.pi**0.5 * (d * t / a**2) ** 0.5
         if 1 >= f >= 0.45:
-            f = 1 - (8 / math.pi ** 2) * math.exp(-math.pi ** 2 * d * t / (4 * a ** 2))
+            f = 1 - (8 / math.pi**2) * math.exp(-math.pi**2 * d * t / (4 * a**2))
 
     return f
 

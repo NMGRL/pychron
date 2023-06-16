@@ -61,6 +61,7 @@ class IsochronSandboxAction(UIAction):
 
     def perform(self, event):
         from pychron.pipeline.isochron_sandbox import IsochronSandbox
+
         s = IsochronSandbox()
         s.init()
         s.edit_traits()
