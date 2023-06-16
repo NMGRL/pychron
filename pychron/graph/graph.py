@@ -628,7 +628,7 @@ class Graph(ContextMenuMixin):
             t.on_trait_change(handler, "limits_updated")
 
     def add_plot_label(
-            self, txt, plotid=0, overlay_position="inside top", hjustify="left", **kw
+        self, txt, plotid=0, overlay_position="inside top", hjustify="left", **kw
     ):
         """ """
 
@@ -727,15 +727,15 @@ class Graph(ContextMenuMixin):
         raise NotImplementedError
 
     def new_series(
-            self,
-            x=None,
-            y=None,
-            yer=None,
-            plotid=None,
-            colors=None,
-            color_map_name="hot",
-            marker_size=2,
-            **kw
+        self,
+        x=None,
+        y=None,
+        yer=None,
+        plotid=None,
+        colors=None,
+        color_map_name="hot",
+        marker_size=2,
+        **kw,
     ):
         """ """
 
@@ -765,8 +765,8 @@ class Graph(ContextMenuMixin):
                 if "selection_outline_color" not in rd:
                     rd["selection_outline_color"] = rd["color"]
 
-                for k in ('color', 'marker', 'marker_size'):
-                    sk = f'selection_{k}'
+                for k in ("color", "marker", "marker_size"):
+                    sk = f"selection_{k}"
                     if sk not in rd:
                         rd[sk] = rd[k]
 
@@ -836,7 +836,7 @@ class Graph(ContextMenuMixin):
             self.add_datum(d, plotid=pi, **kw)
 
     def add_bulk_data(
-            self, xs, ys, plotid=0, series=0, ypadding="0.1", update_y_limits=False
+        self, xs, ys, plotid=0, series=0, ypadding="0.1", update_y_limits=False
     ):
         try:
             names = self.series[plotid][series]
@@ -867,14 +867,14 @@ class Graph(ContextMenuMixin):
             self.set_y_limits(min_=mi, max_=ma, plotid=plotid)
 
     def add_datum(
-            self,
-            datum,
-            plotid=0,
-            series=0,
-            update_y_limits=False,
-            ypadding=10,
-            ymin_anchor=None,
-            **kw
+        self,
+        datum,
+        plotid=0,
+        series=0,
+        update_y_limits=False,
+        ypadding=10,
+        ymin_anchor=None,
+        **kw,
     ):
         try:
             names = self.series[plotid][series]
@@ -1281,7 +1281,7 @@ class Graph(ContextMenuMixin):
             print("get_limits", e)
 
     def _set_limits(
-            self, mi, ma, axis, plotid, pad, pad_style="symmetric", force=False
+        self, mi, ma, axis, plotid, pad, pad_style="symmetric", force=False
     ):
         if not plotid < len(self.plots):
             return

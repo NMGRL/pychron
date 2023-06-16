@@ -217,6 +217,7 @@ class IsochronSandbox(HasTraits):
     analyses = List
     refresh_table = Event
     j = 1e-3
+
     def init(self):
         self.spec = StackedGraph(
             container_dict=dict(padding=5, spacing=5, bgcolor="lightgray")
@@ -254,8 +255,9 @@ class IsochronSandbox(HasTraits):
         reg, regx = get_isochron_regressors(ar40, ar39, ar36)
 
         self.isochron.new_plot()
-        iso, p = self.isochron.new_series(reg.xs, reg.ys,
-                                          type="scatter", marker="circle", marker_size=5)
+        iso, p = self.isochron.new_series(
+            reg.xs, reg.ys, type="scatter", marker="circle", marker_size=5
+        )
         # iso.selection_marker = "circle"
         # iso.selection_marker_size = 5
         tool = IsochronMoveTool(component=iso)
@@ -276,7 +278,7 @@ class IsochronSandbox(HasTraits):
 
         self.ar40 = array([a.ar40 for a in self.analyses])
 
-# def updated_index(self, obj, name, old, new):
+    # def updated_index(self, obj, name, old, new):
     #     self._update('index', obj, name, old, new)
 
     # def updated_value(self, obj, name, old, new):
