@@ -52,7 +52,7 @@ from pychron.pipeline.tasks.actions import (
     ImportOptionsActions,
     DVCRecallAction,
     SignalEstimatorAction,
-    DataReductionLogAction,
+    DataReductionLogAction, IsochronSandboxAction,
 )
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
@@ -219,6 +219,7 @@ class PipelinePlugin(BaseTaskPlugin):
             (SubgroupIdeogramAction, "subgroup_ideogram"),
             (HybridIdeogramAction, "hybrid_ideogram"),
             (HistoryIdeogramAction, "history_ideogram"),
+
         ):
             plot_actions.append(
                 SchemaAddition(
@@ -231,6 +232,7 @@ class PipelinePlugin(BaseTaskPlugin):
             (InverseIsochronAction, "inverse_isochron"),
             (SeriesAction, "series"),
             (ExtractionAction, "extraction"),
+            (IsochronSandboxAction, "isochron_sandbox"),
         ):
             plot_actions.append(
                 SchemaAddition(
