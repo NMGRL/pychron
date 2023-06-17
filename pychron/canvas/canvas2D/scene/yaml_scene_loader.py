@@ -28,7 +28,8 @@ from pychron.canvas.canvas2D.scene.primitives.connections import (
     Elbow,
     Tee,
     Fork,
-    Connection, Cross,
+    Connection,
+    Cross,
 )
 from pychron.canvas.canvas2D.scene.primitives.primitives import ValueLabel
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
@@ -196,9 +197,9 @@ class YAMLLoader(BaseLoader):
 
     def load_connections(self, scene):
         for tag, od in (
-                ("connection", None),
-                ("hconnection", "horizontal"),
-                ("vconnection", "vertical"),
+            ("connection", None),
+            ("hconnection", "horizontal"),
+            ("vconnection", "vertical"),
         ):
             for conn in self._yd.get(tag, []):
                 self._new_connection(scene, conn, orientation_default=od)
@@ -232,12 +233,17 @@ class YAMLLoader(BaseLoader):
         tname = extract_name(top)
         bname = extract_name(bot)
 
-        key = '_'.join((lname, rname, tname, bname))
+        key = "_".join((lname, rname, tname, bname))
         dim = float(conn.get("dimension", self._connection_dimension))
 
         cross = Cross(0, 0, default_color=(204, 204, 204), name=key, width=dim)
 
-        for key, tag in ((lname, 'left'), (rname, 'right'), (tname, 'top'), (bname, 'bottom')):
+        for key, tag in (
+            (lname, "left"),
+            (rname, "right"),
+            (tname, "top"),
+            (bname, "bottom"),
+        ):
             item = scene.get_item(key)
             if item is not None:
                 item.connections.append((tag, cross))
@@ -311,7 +317,7 @@ class YAMLLoader(BaseLoader):
         scene.add_item(tt, layer=0)
 
     def _new_rectangle(
-            self, scene, elem, c, bw=3, layer=1, origin=None, klass=None, type_tag=""
+        self, scene, elem, c, bw=3, layer=1, origin=None, klass=None, type_tag=""
     ):
         if klass is None:
             klass = RoundedRectangle

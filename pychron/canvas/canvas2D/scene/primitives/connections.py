@@ -267,6 +267,7 @@ class Cross(ConnectionMixin, QPrimitive, Bordered):
     bottom = None
     height = 10
     border_width = 10
+
     def set_points(self, lx, ly, rx, ry, tx, ty, bx, by):
         self.left = Point(lx, ly)
         self.right = Point(rx, ry)
@@ -316,6 +317,7 @@ def cross(gc, lx, ly, rx, ry, tx, ty, bx, by):
     gc.line_to(bx, by)
 
     gc.draw_path()
+
 
 class Tee(Fork):
     tag = "tee"
@@ -406,5 +408,6 @@ class Elbow(ConnectionMixin, BorderLine):
         gc.set_line_width(10)
         self.set_fill_color(gc)
         elbow(gc, sx, sy, ex, ey, self.corner)
+
 
 # ============= EOF =============================================
