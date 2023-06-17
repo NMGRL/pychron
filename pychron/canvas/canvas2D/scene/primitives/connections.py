@@ -259,6 +259,64 @@ def tee_v(gc, x1, y1, x2, mx, y2):
     gc.draw_path()
 
 
+class Cross(ConnectionMixin, QPrimitive, Bordered):
+    tag = "cross"
+    left = None
+    right = None
+    top = None
+    bottom = None
+    height = 10
+    border_width = 10
+    def set_points(self, lx, ly, rx, ry, tx, ty, bx, by):
+        self.left = Point(lx, ly)
+        self.right = Point(rx, ry)
+        self.top = Point(tx, ty)
+        self.bottom = Point(bx, by)
+
+    def set_canvas(self, canvas):
+        self.left.set_canvas(canvas)
+        self.right.set_canvas(canvas)
+        self.top.set_canvas(canvas)
+        self.bottom.set_canvas(canvas)
+        super(Cross, self).set_canvas(canvas)
+
+    def _render(self, gc):
+        lx, ly = self.left.get_xy()
+        rx, ry = self.right.get_xy()
+        tx, ty = self.top.get_xy()
+        bx, by = self.bottom.get_xy()
+
+        # ly, ry = ly - 30, ry - 30
+
+        # w, h = self.get_wh()
+
+        with gc:
+            gc.set_line_width(self.width + self.border_width)
+            gc.set_stroke_color(self._get_border_color())
+
+            # gc.set_line_width(5)
+            # fill in corners
+            # gc.move_to(lx - 10, ly + h - 5)
+            # gc.line_to(rx + 10, ly + h - 5)
+
+            cross(gc, lx, ly, rx, ry, tx, ty, bx, by)
+
+        gc.set_line_width(self.width)
+        self.set_fill_color(gc)
+        cross(gc, lx, ly, rx, ry, tx, ty, bx, by)
+
+
+def cross(gc, lx, ly, rx, ry, tx, ty, bx, by):
+    # draw main horizontal
+    gc.move_to(lx, ly)
+    gc.line_to(rx, ly)
+
+    # draw main vertical
+    gc.move_to(tx, ty)
+    gc.line_to(bx, by)
+
+    gc.draw_path()
+
 class Tee(Fork):
     tag = "tee"
 
@@ -348,6 +406,5 @@ class Elbow(ConnectionMixin, BorderLine):
         gc.set_line_width(10)
         self.set_fill_color(gc)
         elbow(gc, sx, sy, ex, ey, self.corner)
-
 
 # ============= EOF =============================================

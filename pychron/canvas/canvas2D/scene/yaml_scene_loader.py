@@ -28,7 +28,7 @@ from pychron.canvas.canvas2D.scene.primitives.connections import (
     Elbow,
     Tee,
     Fork,
-    Connection,
+    Connection, Cross,
 )
 from pychron.canvas.canvas2D.scene.primitives.primitives import ValueLabel
 from pychron.canvas.canvas2D.scene.primitives.rounded import RoundedRectangle
@@ -42,6 +42,15 @@ from pychron.core.helpers.strtools import to_bool
 from pychron.core.yaml import yload
 from pychron.extraction_line.switch_parser import SwitchParser
 from pychron.hardware.core.i_core_device import ICoreDevice
+
+
+def extract_name(elem):
+    if isinstance(elem, (str, int)):
+        name = str(elem).strip()
+    else:
+        name = str(elem["name"]).strip()
+
+    return name
 
 
 class YAMLLoader(BaseLoader):
@@ -187,12 +196,15 @@ class YAMLLoader(BaseLoader):
 
     def load_connections(self, scene):
         for tag, od in (
-            ("connection", None),
-            ("hconnection", "horizontal"),
-            ("vconnection", "vertical"),
+                ("connection", None),
+                ("hconnection", "horizontal"),
+                ("vconnection", "vertical"),
         ):
             for conn in self._yd.get(tag, []):
                 self._new_connection(scene, conn, orientation_default=od)
+
+        for i, conn in enumerate(self._yd.get("cross_connection", [])):
+            self._new_cross(scene, conn)
 
         for i, conn in enumerate(self._yd.get("elbow", [])):
             l = self._new_connection(scene, conn, Elbow)
@@ -209,13 +221,68 @@ class YAMLLoader(BaseLoader):
         pass
 
     # private
+    def _new_cross(self, scene, conn):
+        left = conn.get("left")
+        right = conn.get("right")
+        top = conn.get("top")
+        bot = conn.get("bottom")
+
+        lname = extract_name(left)
+        rname = extract_name(right)
+        tname = extract_name(top)
+        bname = extract_name(bot)
+
+        key = '_'.join((lname, rname, tname, bname))
+        dim = float(conn.get("dimension", self._connection_dimension))
+
+        cross = Cross(0, 0, default_color=(204, 204, 204), name=key, width=dim)
+
+        for key, tag in ((lname, 'left'), (rname, 'right'), (tname, 'top'), (bname, 'bottom')):
+            item = scene.get_item(key)
+            if item is not None:
+                item.connections.append((tag, cross))
+
+        # lf = scene.get_item(lname)
+        # rt = scene.get_item(rname)
+        # tp = scene.get_item(tname)
+        # bt = scene.get_item(bname)
+        #
+        # lf.connections.append(("left", cross))
+        # rt.connections.append(("right", cross))
+        # tp.connections.append(("top", cross))
+        # bt.connections.append(("bottom", cross))
+
+        def get_xy(item, elem):
+            ret = 0, 0
+            if item:
+                default = item.width / 2.0, item.height / 2.0
+                ox, oy, txt = get_offset(elem, default=default)
+                ret = item.x + ox, item.y + oy
+            return ret
+
+        args = []
+        for sname, obj in ((lname, left), (rname, right), (tname, top), (bname, bot)):
+            x, y = get_xy(scene.get_item(sname), obj)
+            args.append(x)
+            args.append(y)
+        # lx, ly = get_xy(sc, left)
+        # rx, ry = get_xy(rt, right)
+        # tx, ty = get_xy(tp, top)
+        # bx, by = get_xy(bt, bot)
+        # cross.set_points(lx, ly, rx, ry, tx, ty, bx, by)
+        cross.set_points(*args)
+
+        scene.add_item(cross, layer=0)
+
     def _new_fork(self, scene, klass, conn):
         left = conn.get("left")
         right = conn.get("right")
         mid = conn.get("mid")
-        lname = str(left["name"]).strip()
-        mname = str(mid["name"]).strip()
-        rname = str(right["name"]).strip()
+
+        lname = extract_name(left)
+        mname = extract_name(mid)
+        rname = extract_name(right)
+
         key = "{}-{}-{}".format(lname, mname, rname)
 
         dim = float(conn.get("dimension", self._connection_dimension))
@@ -244,7 +311,7 @@ class YAMLLoader(BaseLoader):
         scene.add_item(tt, layer=0)
 
     def _new_rectangle(
-        self, scene, elem, c, bw=3, layer=1, origin=None, klass=None, type_tag=""
+            self, scene, elem, c, bw=3, layer=1, origin=None, klass=None, type_tag=""
     ):
         if klass is None:
             klass = RoundedRectangle
@@ -320,8 +387,9 @@ class YAMLLoader(BaseLoader):
         start = conn.get("start")
         end = conn.get("end")
 
-        skey = str(start["name"]).strip()
-        ekey = str(end["name"]).strip()
+        skey = extract_name(start)
+        ekey = extract_name(end)
+
         key = "{}_{}".format(skey, ekey)
 
         orient = conn.get("orientation")
