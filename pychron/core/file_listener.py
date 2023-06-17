@@ -71,7 +71,7 @@ class FileListener(object):
                 try:
                     self._callback()
                 except BaseException as e:
-                    print(f'exception in file listener callback {e}')
+                    print(f"exception in file listener callback {e}")
                 self._otime = self.otime
 
     def _check(self):
