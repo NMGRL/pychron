@@ -414,4 +414,5 @@ class Elbow(ConnectionMixin, BorderLine):
         self.set_fill_color(gc)
         elbow(gc, sx, sy, ex, ey, self.corner)
 
+
 # ============= EOF =============================================

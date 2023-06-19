@@ -180,7 +180,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
 
                                         gc.move_to(xx, yy - cw4)
                                         gc.line_to(xx, yy + cw4)
-                                elif t == 'left':
+                                elif t == "left":
                                     xx, yy = c.left.get_xy()
                                     if c.is_vertical:
                                         xx += width / 2
@@ -200,7 +200,7 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
 
                                     gc.move_to(x1, y1)
                                     gc.line_to(x2, y2)
-                                elif t == 'right':
+                                elif t == "right":
                                     xx, _ = c.right.get_xy()
 
                                     if c.is_vertical:
@@ -230,27 +230,27 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                 gc.move_to(mx - cw4, yy)
                                 gc.line_to(mx + cw4, yy)
                             elif isinstance(c, Cross):
-                                if t == 'left':
+                                if t == "left":
                                     xx, yy = c.left.get_xy()
                                     x1 = xx
                                     x2 = xx
                                     y1 = yy - cw4
                                     y2 = yy + cw4
-                                elif t == 'right':
+                                elif t == "right":
                                     xx, yy = c.right.get_xy()
                                     xx -= width / 2
                                     x1 = xx
                                     x2 = xx
                                     y1 = yy - cw4
                                     y2 = yy + cw4
-                                elif t == 'top':
+                                elif t == "top":
                                     xx, yy = c.top.get_xy()
                                     yy -= height / 2
                                     x1 = xx - cw4
                                     x2 = xx + cw4
                                     y1 = yy
                                     y2 = yy
-                                elif t == 'bottom':
+                                elif t == "bottom":
                                     xx, yy = c.bottom.get_xy()
                                     yy += height / 2
                                     x1 = xx - cw4
@@ -349,19 +349,19 @@ class CircleStage(Connectable, Bordered):
 
                     dx = p2x - p1x
                     dy = p2y - p1y
-                    dr = (dx ** 2 + dy ** 2) ** 0.5
+                    dr = (dx**2 + dy**2) ** 0.5
                     D = p1x * p2y - p2x * p1y
 
-                    ss = (r ** 2 * dr ** 2 - D ** 2) ** 0.5
+                    ss = (r**2 * dr**2 - D**2) ** 0.5
                     plus_x = D * dy + sgn(dy) * dx * ss
                     minus_x = D * dy - sgn(dy) * dx * ss
 
                     plus_y = -D * dx + abs(dy) * ss
                     minus_y = -D * dx - abs(dy) * ss
-                    plus_x /= dr ** 2
-                    plus_y /= dr ** 2
-                    minus_x /= dr ** 2
-                    minus_y /= dr ** 2
+                    plus_x /= dr**2
+                    plus_y /= dr**2
+                    minus_x /= dr**2
+                    minus_y /= dr**2
 
                     if p2y > p1y:
                         if p2x > p1x:
@@ -388,5 +388,6 @@ class Gauge(RoundedRectangle):
 
 class ColdFinger(RoundedRectangle):
     pass
+
 
 # ============= EOF =============================================
