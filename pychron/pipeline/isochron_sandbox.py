@@ -17,7 +17,17 @@ from chaco.abstract_overlay import AbstractOverlay
 from enable.component import Component
 from enable.tools.drag_tool import DragTool
 from numpy import array
-from traits.api import HasTraits, Instance, Int, Tuple, Event, List, Float, Property, Bool
+from traits.api import (
+    HasTraits,
+    Instance,
+    Int,
+    Tuple,
+    Event,
+    List,
+    Float,
+    Property,
+    Bool,
+)
 from traitsui.api import View, UItem, HGroup, HSplit, VGroup, Item
 from chaco.tools.api import MoveTool
 from traitsui.editors import TabularEditor
@@ -210,9 +220,11 @@ class Analysis(HasTraits):
     def rad40(self):
         return (self.ar40 - self.ar36 * 295.5) / self.ar40 * 100
 
+
 class TieLineOverlay(AbstractOverlay):
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         pass
+
 
 class IsochronSandbox(HasTraits):
     spec = Instance(StackedGraph)
@@ -352,10 +364,11 @@ class IsochronSandbox(HasTraits):
                     ),
                 ),
                 VGroup(
-                    Item('show_tie_lines', label='Tie Lines'),
-                HGroup(
-                    UItem("spec", style="custom"), UItem("isochron", style="custom")
-                )),
+                    Item("show_tie_lines", label="Tie Lines"),
+                    HGroup(
+                        UItem("spec", style="custom"), UItem("isochron", style="custom")
+                    ),
+                ),
             ),
             title="Isochron Sandbox",
             resizable=True,
