@@ -269,20 +269,20 @@ class Cross(ConnectionMixin, QPrimitive, Bordered):
     border_width = 10
 
     def render_border_gaps(self, gc, t, x, y, cx, cy, width, height, cw4):
-        if t == 'left':
+        if t == "left":
             xx, yy = self.left.get_xy()
             x1 = xx
             x2 = xx
             y1 = yy - cw4
             y2 = yy + cw4
-        elif t == 'right':
+        elif t == "right":
             xx, yy = self.right.get_xy()
             xx -= width / 2
             x1 = xx
             x2 = xx
             y1 = yy - cw4
             y2 = yy + cw4
-        elif t == 'top':
+        elif t == "top":
             xx, yy = self.top.get_xy()
             yy -= height / 2
             x1 = xx - cw4
@@ -371,7 +371,7 @@ class Tee(Fork):
 
                 gc.move_to(xx, yy - cw4)
                 gc.line_to(xx, yy + cw4)
-        elif t == 'left':
+        elif t == "left":
             xx, yy = self.left.get_xy()
             if self.is_vertical:
                 xx += width / 2
@@ -391,7 +391,7 @@ class Tee(Fork):
 
             gc.move_to(x1, y1)
             gc.line_to(x2, y2)
-        elif t == 'right':
+        elif t == "right":
             xx, _ = self.right.get_xy()
 
             if self.is_vertical:

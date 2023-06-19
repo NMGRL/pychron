@@ -118,7 +118,9 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                     with gc:
                         gc.set_line_width(self.border_width + 1)
                         if isinstance(c, (BorderLine, Tee, Elbow, Cross)):
-                            c.render_border_gaps(gc, t, x, y, self.x, self.y, width, height, cw4)
+                            c.render_border_gaps(
+                                gc, t, x, y, self.x, self.y, width, height, cw4
+                            )
 
                         elif isinstance(c, Fork):
                             yy = y if c.left.y < self.y else y + height
