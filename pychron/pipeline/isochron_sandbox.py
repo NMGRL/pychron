@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from chaco.abstract_overlay import AbstractOverlay
 from enable.component import Component
 from enable.tools.drag_tool import DragTool
 from numpy import array
-from traits.api import HasTraits, Instance, Int, Tuple, Event, List, Float, Property
-from traitsui.api import View, UItem, HGroup, HSplit
+from traits.api import HasTraits, Instance, Int, Tuple, Event, List, Float, Property, Bool
+from traitsui.api import View, UItem, HGroup, HSplit, VGroup, Item
 from chaco.tools.api import MoveTool
 from traitsui.editors import TabularEditor
 from traitsui.tabular_adapter import TabularAdapter
@@ -209,6 +210,9 @@ class Analysis(HasTraits):
     def rad40(self):
         return (self.ar40 - self.ar36 * 295.5) / self.ar40 * 100
 
+class TieLineOverlay(AbstractOverlay):
+    def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
+        pass
 
 class IsochronSandbox(HasTraits):
     spec = Instance(StackedGraph)
@@ -217,6 +221,8 @@ class IsochronSandbox(HasTraits):
     analyses = List
     refresh_table = Event
     j = 1e-3
+
+    show_tie_lines = Bool(True)
 
     def init(self):
         self.spec = StackedGraph(
@@ -258,6 +264,10 @@ class IsochronSandbox(HasTraits):
         iso, p = self.isochron.new_series(
             reg.xs, reg.ys, type="scatter", marker="circle", marker_size=5
         )
+
+        to = TieLineOverlay(component=iso)
+        iso.overlays.append(to)
+
         # iso.selection_marker = "circle"
         # iso.selection_marker_size = 5
         tool = IsochronMoveTool(component=iso)
@@ -317,6 +327,9 @@ class IsochronSandbox(HasTraits):
         specplot.value.set_data(ys)
         self.spec.set_y_limits(min(ys), max(ys), pad="0.1", plotid=1)
 
+        if self.show_tie_lines:
+            self.tie_lines_overlay.update(self.analyses)
+
         # self.refresh_table = True
 
         # self._update('value', obj, name, old, new)
@@ -338,9 +351,11 @@ class IsochronSandbox(HasTraits):
                         adapter=AnalysisAdapter(),
                     ),
                 ),
+                VGroup(
+                    Item('show_tie_lines', label='Tie Lines'),
                 HGroup(
                     UItem("spec", style="custom"), UItem("isochron", style="custom")
-                ),
+                )),
             ),
             title="Isochron Sandbox",
             resizable=True,
