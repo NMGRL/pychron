@@ -327,10 +327,17 @@ class Tee(Fork):
         rx, ry = self.right.get_xy()
         mx, my = self.mid.get_xy()
         # ly, ry = ly - 30, ry - 30
-        if ly == ry:
+        if self.is_vertical:
             self._render_vertical(gc, lx, ly, rx, ry, mx, my)
         else:
             self._render_horizontal(gc, lx, ly, rx, ry, mx, my)
+
+    @property
+    def is_vertical(self):
+        lx, ly = self.left.get_xy()
+        rx, ry = self.right.get_xy()
+        mx, my = self.mid.get_xy()
+        return ly == ry or (my < ly and my < ry) or (my > ly and my > ry)
 
     def _render_vertical(self, gc, lx, ly, rx, ry, mx, my):
         """M       L _____ R
@@ -339,7 +346,6 @@ class Tee(Fork):
                        M
 
         """
-        mx = lx + (rx - lx) / 2.0
         with gc:
             gc.set_line_width(self.width + self.border_width)
             gc.set_stroke_color(self._get_border_color())
@@ -358,7 +364,6 @@ class Tee(Fork):
         """
 
         with gc:
-            print(self.width, self.border_width)
             gc.set_line_width(self.border_width + self.width)
             gc.set_stroke_color(self._get_border_color())
             tee_h(gc, lx, ly, mx, my, ry)

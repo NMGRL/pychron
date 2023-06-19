@@ -22,7 +22,7 @@ from numpy import array
 from traits.traits import Color
 
 from pychron.canvas.canvas2D.scene.primitives.base import Connectable
-from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow
+from pychron.canvas.canvas2D.scene.primitives.connections import Tee, Fork, Elbow, Cross
 from pychron.canvas.canvas2D.scene.primitives.primitives import (
     Rectangle,
     Bordered,
@@ -117,8 +117,8 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                 with gc:
                     for t, c in self.connections:
                         cw4 = c.width / 2
+
                         with gc:
-                            w2 = self.border_width
                             gc.set_line_width(self.border_width + 1)
                             if isinstance(c, Elbow):
                                 p1, p2 = c.start_point, c.end_point
@@ -142,7 +142,6 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                             xx = x + width
                                         gc.move_to(xx, p2y - cw4)
                                         gc.line_to(xx, p2y + cw4)
-
                             elif isinstance(c, BorderLine):
                                 p1, p2 = c.start_point, c.end_point
                                 p2x, p2y = p2.get_xy()
@@ -162,36 +161,104 @@ class RoundedRectangle(Rectangle, Connectable, Bordered):
                                         xx = x + width
                                     gc.move_to(xx, p2y - cw4)
                                     gc.line_to(xx, p2y + cw4)
-
                             elif isinstance(c, Tee):
+                                gc.set_line_width(self.border_width + 2)
+
                                 if t == "mid":
                                     # tee is vertical
-                                    if abs(c.left.x - c.right.x) <= 1:
-                                        xx = x if c.left.x < self.x else x + width
-                                        yy = y + height / 2
-                                        gc.move_to(xx, yy - cw4)
-                                        gc.line_to(xx, yy + cw4)
-                                    else:
-                                        mx = c.get_midx()
+                                    if c.is_vertical:
+                                        # mx = c.get_midx()
+                                        mx = c.mid.get_xy()[0]
                                         yy = y if c.left.y < self.y else y + height
                                         gc.move_to(mx - cw4, yy)
                                         gc.line_to(mx + cw4, yy)
-                                else:
-                                    gc.set_line_width(self.border_width + 2)
-                                    # gc.set_stroke_color((1,0,0))
-                                    if t == "left":
-                                        xx, yy = c.left.get_xy()
-                                        xx += 2.5
-                                    else:
-                                        xx, yy = c.right.get_xy()
 
-                                    gc.move_to(xx, yy - cw4)
-                                    gc.line_to(xx, yy + cw4)
+                                    else:
+                                        xx = x if c.left.x < self.x else x + width
+                                        # xx = c.mid.get_xy()[0]
+                                        yy = y + height / 2
+
+                                        gc.move_to(xx, yy - cw4)
+                                        gc.line_to(xx, yy + cw4)
+                                elif t == "left":
+                                    xx, yy = c.left.get_xy()
+                                    if c.is_vertical:
+                                        xx += width / 2
+                                        x1 = x2 = xx
+                                        y1 = yy - cw4
+                                        y2 = yy + cw4
+
+                                    else:
+                                        x1 = x2 = xx
+                                        x1 -= cw4
+                                        x2 += cw4
+                                        if c.left.y < c.right.y:
+                                            yy = y + height
+                                        else:
+                                            yy = y
+                                        y1 = y2 = yy
+
+                                    gc.move_to(x1, y1)
+                                    gc.line_to(x2, y2)
+                                elif t == "right":
+                                    xx, _ = c.right.get_xy()
+
+                                    if c.is_vertical:
+                                        xx -= width / 2
+                                        _, yy = c.left.get_xy()
+                                        x1 = x2 = xx
+                                        y1 = yy - cw4
+                                        y2 = yy + cw4
+
+                                    else:
+                                        xx = c.right.get_xy()[0]
+                                        if c.left.y > c.right.y:
+                                            yy = y + height
+                                        else:
+                                            yy = y
+                                        xx += c.border_width
+                                        x1 = xx - cw4
+                                        x2 = xx + cw4
+                                        y1 = y2 = yy
+
+                                    gc.move_to(x1, y1)
+                                    gc.line_to(x2, y2)
+
                             elif isinstance(c, Fork):
                                 yy = y if c.left.y < self.y else y + height
                                 mx = c.get_midx()
                                 gc.move_to(mx - cw4, yy)
                                 gc.line_to(mx + cw4, yy)
+                            elif isinstance(c, Cross):
+                                if t == "left":
+                                    xx, yy = c.left.get_xy()
+                                    x1 = xx
+                                    x2 = xx
+                                    y1 = yy - cw4
+                                    y2 = yy + cw4
+                                elif t == "right":
+                                    xx, yy = c.right.get_xy()
+                                    xx -= width / 2
+                                    x1 = xx
+                                    x2 = xx
+                                    y1 = yy - cw4
+                                    y2 = yy + cw4
+                                elif t == "top":
+                                    xx, yy = c.top.get_xy()
+                                    yy -= height / 2
+                                    x1 = xx - cw4
+                                    x2 = xx + cw4
+                                    y1 = yy
+                                    y2 = yy
+                                elif t == "bottom":
+                                    xx, yy = c.bottom.get_xy()
+                                    yy += height / 2
+                                    x1 = xx - cw4
+                                    x2 = xx + cw4
+                                    y1 = yy
+                                    y2 = yy
+                                gc.move_to(x1, y1)
+                                gc.line_to(x2, y2)
 
                             gc.draw_path()
 
