@@ -225,6 +225,8 @@ class TieLineOverlay(AbstractOverlay):
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         pass
 
+    def update(self, ans):
+        pass
 
 class IsochronSandbox(HasTraits):
     spec = Instance(StackedGraph)
@@ -235,6 +237,7 @@ class IsochronSandbox(HasTraits):
     j = 1e-3
 
     show_tie_lines = Bool(True)
+    tie_lines_overlay = Instance(TieLineOverlay)
 
     def init(self):
         self.spec = StackedGraph(
@@ -279,6 +282,7 @@ class IsochronSandbox(HasTraits):
 
         to = TieLineOverlay(component=iso)
         iso.overlays.append(to)
+        self.tie_lines_overlay = to
 
         # iso.selection_marker = "circle"
         # iso.selection_marker_size = 5
@@ -342,7 +346,7 @@ class IsochronSandbox(HasTraits):
         if self.show_tie_lines:
             self.tie_lines_overlay.update(self.analyses)
 
-        # self.refresh_table = True
+        self.refresh_table = True
 
         # self._update('value', obj, name, old, new)
 
