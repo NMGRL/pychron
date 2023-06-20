@@ -88,7 +88,7 @@ class SessionCTX(object):
                     self._session = self._parent.session_factory()
                     self._parent.session = self._session
                 except TypeError as e:
-                    print(f'session ctx error. {e}')
+                    print(f"session ctx error. {e}")
 
                 return self._session
 

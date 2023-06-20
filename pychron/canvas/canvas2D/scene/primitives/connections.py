@@ -234,7 +234,7 @@ class Fork(ConnectionMixin, QPrimitive, Bordered):
 
             fork(gc, lx, ly, rx, ry, mx, my, h)
 
-        gc.set_line_width(self.width+self.border_width)
+        gc.set_line_width(self.width + self.border_width)
         # self.set_fill_color(gc)
         fork(gc, lx, ly, rx, ry, mx, my, h)
 
@@ -259,18 +259,178 @@ def tee_v(gc, x1, y1, x2, mx, y2):
     gc.draw_path()
 
 
+class Cross(ConnectionMixin, QPrimitive, Bordered):
+    tag = "cross"
+    left = None
+    right = None
+    top = None
+    bottom = None
+    height = 10
+    border_width = 10
+
+    def render_border_gaps(self, gc, t, x, y, cx, cy, width, height, cw4):
+        if t == "left":
+            xx, yy = self.left.get_xy()
+            x1 = xx
+            x2 = xx
+            y1 = yy - cw4
+            y2 = yy + cw4
+        elif t == "right":
+            xx, yy = self.right.get_xy()
+            xx -= width / 2
+            x1 = xx
+            x2 = xx
+            y1 = yy - cw4
+            y2 = yy + cw4
+        elif t == "top":
+            xx, yy = self.top.get_xy()
+            yy -= height / 2
+            x1 = xx - cw4
+            x2 = xx + cw4
+            y1 = yy
+            y2 = yy
+        else:  # t == bottom
+            xx, yy = self.bottom.get_xy()
+            yy += height / 2
+            x1 = xx - cw4
+            x2 = xx + cw4
+            y1 = yy
+            y2 = yy
+
+        gc.move_to(x1, y1)
+        gc.line_to(x2, y2)
+
+    def set_points(self, lx, ly, rx, ry, tx, ty, bx, by):
+        self.left = Point(lx, ly)
+        self.right = Point(rx, ry)
+        self.top = Point(tx, ty)
+        self.bottom = Point(bx, by)
+
+    def set_canvas(self, canvas):
+        self.left.set_canvas(canvas)
+        self.right.set_canvas(canvas)
+        self.top.set_canvas(canvas)
+        self.bottom.set_canvas(canvas)
+        super(Cross, self).set_canvas(canvas)
+
+    def _render(self, gc):
+        lx, ly = self.left.get_xy()
+        rx, ry = self.right.get_xy()
+        tx, ty = self.top.get_xy()
+        bx, by = self.bottom.get_xy()
+
+        # ly, ry = ly - 30, ry - 30
+
+        # w, h = self.get_wh()
+
+        with gc:
+            gc.set_line_width(self.width + self.border_width)
+            gc.set_stroke_color(self._get_border_color())
+
+            # gc.set_line_width(5)
+            # fill in corners
+            # gc.move_to(lx - 10, ly + h - 5)
+            # gc.line_to(rx + 10, ly + h - 5)
+
+            cross(gc, lx, ly, rx, ry, tx, ty, bx, by)
+
+        gc.set_line_width(self.width)
+        self.set_fill_color(gc)
+        cross(gc, lx, ly, rx, ry, tx, ty, bx, by)
+
+
+def cross(gc, lx, ly, rx, ry, tx, ty, bx, by):
+    # draw main horizontal
+    gc.move_to(lx, ly)
+    gc.line_to(rx, ly)
+
+    # draw main vertical
+    gc.move_to(tx, ty)
+    gc.line_to(bx, by)
+
+    gc.draw_path()
+
+
 class Tee(Fork):
     tag = "tee"
+
+    def render_border_gaps(self, gc, t, x, y, cx, cy, width, height, cw4):
+        if t == "mid":
+            # tee is vertical
+            if self.is_vertical:
+                # mx = c.get_midx()
+                mx = self.mid.get_xy()[0]
+                yy = y if self.left.y < cy else y + height
+                gc.move_to(mx - cw4, yy)
+                gc.line_to(mx + cw4, yy)
+
+            else:
+                xx = x if self.left.x < cx else x + width
+                # xx = c.mid.get_xy()[0]
+                yy = y + height / 2
+
+                gc.move_to(xx, yy - cw4)
+                gc.line_to(xx, yy + cw4)
+        elif t == "left":
+            xx, yy = self.left.get_xy()
+            if self.is_vertical:
+                xx += width / 2
+                x1 = x2 = xx
+                y1 = yy - cw4
+                y2 = yy + cw4
+
+            else:
+                x1 = x2 = xx
+                x1 -= cw4
+                x2 += cw4
+                if self.left.y < self.right.y:
+                    yy = y + height
+                else:
+                    yy = y
+                y1 = y2 = yy
+
+            gc.move_to(x1, y1)
+            gc.line_to(x2, y2)
+        elif t == "right":
+            xx, _ = self.right.get_xy()
+
+            if self.is_vertical:
+                xx -= width / 2
+                _, yy = self.left.get_xy()
+                x1 = x2 = xx
+                y1 = yy - cw4
+                y2 = yy + cw4
+
+            else:
+                xx = self.right.get_xy()[0]
+                if self.left.y > self.right.y:
+                    yy = y + height
+                else:
+                    yy = y
+                xx += self.border_width
+                x1 = xx - cw4
+                x2 = xx + cw4
+                y1 = y2 = yy
+
+            gc.move_to(x1, y1)
+            gc.line_to(x2, y2)
 
     def _render(self, gc):
         lx, ly = self.left.get_xy()
         rx, ry = self.right.get_xy()
         mx, my = self.mid.get_xy()
         # ly, ry = ly - 30, ry - 30
-        if ly == ry:
+        if self.is_vertical:
             self._render_vertical(gc, lx, ly, rx, ry, mx, my)
         else:
             self._render_horizontal(gc, lx, ly, rx, ry, mx, my)
+
+    @property
+    def is_vertical(self):
+        lx, ly = self.left.get_xy()
+        rx, ry = self.right.get_xy()
+        mx, my = self.mid.get_xy()
+        return ly == ry or (my < ly and my < ry) or (my > ly and my > ry)
 
     def _render_vertical(self, gc, lx, ly, rx, ry, mx, my):
         """M       L _____ R
@@ -279,9 +439,8 @@ class Tee(Fork):
                        M
 
         """
-        mx = lx + (rx - lx) / 2.0
         with gc:
-            gc.set_line_width(self.width+self.border_width)
+            gc.set_line_width(self.width + self.border_width)
             gc.set_stroke_color(self._get_border_color())
             tee_v(gc, lx, ly, rx, mx, my)
 
@@ -298,7 +457,8 @@ class Tee(Fork):
         """
 
         with gc:
-            gc.set_line_width(self.border_width+self.width)
+
+            gc.set_line_width(self.border_width + self.width)
             gc.set_stroke_color(self._get_border_color())
             tee_h(gc, lx, ly, mx, my, ry)
 
@@ -335,6 +495,41 @@ def elbow(gc, sx, sy, ex, ey, corner="ul"):
 class Elbow(ConnectionMixin, BorderLine):
     corner = "ul"
     tag = "elbow"
+
+    def render_border_gaps(self, gc, t, x, y, cx, cy, width, height, cw4):
+        p1, p2 = self.start_point, self.end_point
+
+        if p1.y < p2.y:
+            p1x, p1y = p1.get_xy()
+            x1 = p1x - cw4
+            x2 = p1x + cw4
+            y1 = y2 = y + height
+            # gc.move_to(p1x - cw4, y + height)
+            # gc.line_to(p1x + cw4, y + height)
+        else:
+            if self.corner == "ll":
+                p1x, p1y = p1.get_xy()
+                x1 = p1x - cw4
+                x2 = p1x + cw4
+                y1 = y2 = p1y
+                # gc.move_to(p1x - 5, p1y)
+                # gc.line_to(p1x + 5, p1y)
+            else:
+                p2x, p2y = p2.get_xy()
+                xx = x
+
+                if p1.x >= cx:
+                    xx = x + width
+
+                x1 = x2 = xx
+                y1 = p2y - cw4
+                y2 = p2y + cw4
+
+                # gc.move_to(xx, p2y - cw4)
+                # gc.line_to(xx, p2y + cw4)
+
+        gc.move_to(x1, y1)
+        gc.line_to(x2, y2)
 
     def _render(self, gc):
         sx, sy = self.start_point.get_xy()

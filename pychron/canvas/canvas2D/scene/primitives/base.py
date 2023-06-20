@@ -306,8 +306,7 @@ class QPrimitive(Primitive):
     def is_in(self, x, y):
         mx, my = self.get_xy()
         w, h = self.get_wh()
-        if mx <= x <= (mx + w) and my <= y <= (my + h):
-            return True
+        return mx <= x <= (mx + w) and my <= y <= (my + h)
 
 
 class Connectable(QPrimitive):

@@ -68,7 +68,10 @@ class FileListener(object):
         while self._alive:
             time.sleep(1 / self._freq)
             if self._check():
-                self._callback()
+                try:
+                    self._callback()
+                except BaseException as e:
+                    print(f"exception in file listener callback {e}")
                 self._otime = self.otime
 
     def _check(self):

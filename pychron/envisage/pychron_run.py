@@ -271,8 +271,9 @@ def launch(klass):
     app = app_factory(klass)
     try:
         import qdarktheme
+
         # Apply the complete dark theme to your Qt App.
-        qdarktheme.setup_theme('light')
+        qdarktheme.setup_theme("light")
     except ImportError:
         pass
 
@@ -282,7 +283,6 @@ def launch(klass):
         # p = os.path.join(root, 'stylesheets', 'qdark.css')
         # with open(p) as rfile:
         #     r.setStyleSheet(rfile.read())
-
 
         app.run()
 
