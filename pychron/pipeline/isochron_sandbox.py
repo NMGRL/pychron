@@ -221,7 +221,9 @@ class Analysis(HasTraits):
         return (self.ar40 - self.ar36 * 295.5) / self.ar40 * 100
 
 
-IATM = 1/295.5
+IATM = 1 / 295.5
+
+
 class TieLineOverlay(AbstractOverlay):
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
@@ -311,7 +313,7 @@ class IsochronSandbox(HasTraits):
         # iso.value.on_trait_change(self.update_spec, "data_changed")
 
         self.isochron.set_x_limits(0, max(reg.xs), pad="0.1", pad_style="upper")
-        self.isochron.set_y_limits(0, 1/295.5, pad="0.1", pad_style='upper')
+        self.isochron.set_y_limits(0, 1 / 295.5, pad="0.1", pad_style="upper")
 
         self.isochron.set_y_title("Ar36/Ar40")
         self.isochron.set_x_title("Ar39/Ar40")
