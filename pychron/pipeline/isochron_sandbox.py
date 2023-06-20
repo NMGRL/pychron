@@ -16,7 +16,7 @@
 from chaco.abstract_overlay import AbstractOverlay
 from enable.component import Component
 from enable.tools.drag_tool import DragTool
-from numpy import array
+from numpy import array, polyfit, polyval
 from traits.api import (
     HasTraits,
     Instance,
@@ -221,9 +221,26 @@ class Analysis(HasTraits):
         return (self.ar40 - self.ar36 * 295.5) / self.ar40 * 100
 
 
+IATM = 1/295.5
 class TieLineOverlay(AbstractOverlay):
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
-        pass
+        with gc:
+            xs = other_component.index.get_data()
+            ys = other_component.value.get_data()
+            gc.set_line_width(1)
+            gc.set_stroke_color((0, 0, 1))
+
+            x0, y0 = (0, IATM)
+
+            for i, (x, y) in enumerate(zip(xs, ys)):
+                coeffs = polyfit((y0, y), (x0, x), 1)
+                xint = polyval(coeffs, (0,))
+
+                ((x1, y1), (x2, y2)) = other_component.map_screen([(x0, y0), (xint, 0)])
+
+                gc.move_to(x1, y1)
+                gc.line_to(x2, y2)
+                gc.draw_path()
 
     def update(self, ans):
         pass
@@ -293,8 +310,8 @@ class IsochronSandbox(HasTraits):
         # iso.index.on_trait_change(self.update_spec, "data_changed")
         # iso.value.on_trait_change(self.update_spec, "data_changed")
 
-        self.isochron.set_x_limits(min(reg.xs), max(reg.xs), pad="0.1")
-        self.isochron.set_y_limits(min(reg.ys), max(reg.ys), pad="0.1")
+        self.isochron.set_x_limits(0, max(reg.xs), pad="0.1", pad_style="upper")
+        self.isochron.set_y_limits(0, 1/295.5, pad="0.1", pad_style='upper')
 
         self.isochron.set_y_title("Ar36/Ar40")
         self.isochron.set_x_title("Ar39/Ar40")
