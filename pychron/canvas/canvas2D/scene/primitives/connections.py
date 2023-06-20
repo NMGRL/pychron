@@ -268,6 +268,38 @@ class Cross(ConnectionMixin, QPrimitive, Bordered):
     height = 10
     border_width = 10
 
+    def render_border_gaps(self, gc, t, x, y, cx, cy, width, height, cw4):
+        if t == "left":
+            xx, yy = self.left.get_xy()
+            x1 = xx
+            x2 = xx
+            y1 = yy - cw4
+            y2 = yy + cw4
+        elif t == "right":
+            xx, yy = self.right.get_xy()
+            xx -= width / 2
+            x1 = xx
+            x2 = xx
+            y1 = yy - cw4
+            y2 = yy + cw4
+        elif t == "top":
+            xx, yy = self.top.get_xy()
+            yy -= height / 2
+            x1 = xx - cw4
+            x2 = xx + cw4
+            y1 = yy
+            y2 = yy
+        else:  # t == bottom
+            xx, yy = self.bottom.get_xy()
+            yy += height / 2
+            x1 = xx - cw4
+            x2 = xx + cw4
+            y1 = yy
+            y2 = yy
+
+        gc.move_to(x1, y1)
+        gc.line_to(x2, y2)
+
     def set_points(self, lx, ly, rx, ry, tx, ty, bx, by):
         self.left = Point(lx, ly)
         self.right = Point(rx, ry)
@@ -321,6 +353,67 @@ def cross(gc, lx, ly, rx, ry, tx, ty, bx, by):
 
 class Tee(Fork):
     tag = "tee"
+
+    def render_border_gaps(self, gc, t, x, y, cx, cy, width, height, cw4):
+        if t == "mid":
+            # tee is vertical
+            if self.is_vertical:
+                # mx = c.get_midx()
+                mx = self.mid.get_xy()[0]
+                yy = y if self.left.y < cy else y + height
+                gc.move_to(mx - cw4, yy)
+                gc.line_to(mx + cw4, yy)
+
+            else:
+                xx = x if self.left.x < cx else x + width
+                # xx = c.mid.get_xy()[0]
+                yy = y + height / 2
+
+                gc.move_to(xx, yy - cw4)
+                gc.line_to(xx, yy + cw4)
+        elif t == "left":
+            xx, yy = self.left.get_xy()
+            if self.is_vertical:
+                xx += width / 2
+                x1 = x2 = xx
+                y1 = yy - cw4
+                y2 = yy + cw4
+
+            else:
+                x1 = x2 = xx
+                x1 -= cw4
+                x2 += cw4
+                if self.left.y < self.right.y:
+                    yy = y + height
+                else:
+                    yy = y
+                y1 = y2 = yy
+
+            gc.move_to(x1, y1)
+            gc.line_to(x2, y2)
+        elif t == "right":
+            xx, _ = self.right.get_xy()
+
+            if self.is_vertical:
+                xx -= width / 2
+                _, yy = self.left.get_xy()
+                x1 = x2 = xx
+                y1 = yy - cw4
+                y2 = yy + cw4
+
+            else:
+                xx = self.right.get_xy()[0]
+                if self.left.y > self.right.y:
+                    yy = y + height
+                else:
+                    yy = y
+                xx += self.border_width
+                x1 = xx - cw4
+                x2 = xx + cw4
+                y1 = y2 = yy
+
+            gc.move_to(x1, y1)
+            gc.line_to(x2, y2)
 
     def _render(self, gc):
         lx, ly = self.left.get_xy()
@@ -401,6 +494,41 @@ def elbow(gc, sx, sy, ex, ey, corner="ul"):
 class Elbow(ConnectionMixin, BorderLine):
     corner = "ul"
     tag = "elbow"
+
+    def render_border_gaps(self, gc, t, x, y, cx, cy, width, height, cw4):
+        p1, p2 = self.start_point, self.end_point
+
+        if p1.y < p2.y:
+            p1x, p1y = p1.get_xy()
+            x1 = p1x - cw4
+            x2 = p1x + cw4
+            y1 = y2 = y + height
+            # gc.move_to(p1x - cw4, y + height)
+            # gc.line_to(p1x + cw4, y + height)
+        else:
+            if self.corner == "ll":
+                p1x, p1y = p1.get_xy()
+                x1 = p1x - cw4
+                x2 = p1x + cw4
+                y1 = y2 = p1y
+                # gc.move_to(p1x - 5, p1y)
+                # gc.line_to(p1x + 5, p1y)
+            else:
+                p2x, p2y = p2.get_xy()
+                xx = x
+
+                if p1.x >= cx:
+                    xx = x + width
+
+                x1 = x2 = xx
+                y1 = p2y - cw4
+                y2 = p2y + cw4
+
+                # gc.move_to(xx, p2y - cw4)
+                # gc.line_to(xx, p2y + cw4)
+
+        gc.move_to(x1, y1)
+        gc.line_to(x2, y2)
 
     def _render(self, gc):
         sx, sy = self.start_point.get_xy()
