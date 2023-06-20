@@ -228,6 +228,7 @@ class TieLineOverlay(AbstractOverlay):
     def update(self, ans):
         pass
 
+
 class IsochronSandbox(HasTraits):
     spec = Instance(StackedGraph)
     isochron = Instance(Graph)
