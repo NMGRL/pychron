@@ -457,6 +457,7 @@ class Tee(Fork):
         """
 
         with gc:
+
             gc.set_line_width(self.border_width + self.width)
             gc.set_stroke_color(self._get_border_color())
             tee_h(gc, lx, ly, mx, my, ry)
