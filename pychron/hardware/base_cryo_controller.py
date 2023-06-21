@@ -71,4 +71,5 @@ class BaseCryoController(CoreDevice):
     def _read_input(self, v, **kw):
         raise NotImplementedError
 
+
 # ============= EOF =============================================

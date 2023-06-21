@@ -27,24 +27,25 @@ class SI9700(BaseCryoController):
         return True
 
     def set_setpoints(self, *setpoints, block=False, delay=1):
-        self.ask(f'SET {setpoints[0]}')
+        self.ask(f"SET {setpoints[0]}")
 
     def _write_setpoint(self, v, *args, **kw):
-        self.ask(f'SET {v}')
+        self.ask(f"SET {v}")
 
     def _read_setpoint(self, output, verbose=False):
-        resp = self.ask('SET?')
+        resp = self.ask("SET?")
         if resp:
-            cmd, value = resp.split(' ')
+            cmd, value = resp.split(" ")
             return value.strip()
 
     def _read_input(self, ch, **kw):
         if isinstance(ch, int):
-            ch = 'AB'[ch - 1]
+            ch = "AB"[ch - 1]
 
-        resp = self.ask(f'T{ch}?')
+        resp = self.ask(f"T{ch}?")
         if resp:
-            cmd, value = resp.split(' ')
+            cmd, value = resp.split(" ")
             return value.strip()
+
 
 # ============= EOF =============================================
