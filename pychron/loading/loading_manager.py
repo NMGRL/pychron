@@ -36,7 +36,8 @@ from traits.api import (
     on_trait_change,
     Enum,
     RGBColor,
-    Event
+    Event,
+    Datetime
 )
 from traitsui.api import Item, EnumEditor, UItem, ListStrEditor
 
@@ -170,7 +171,7 @@ class GroupedPosition(LoadPosition):
 
 class Load(HasTraits):
     name = Str
-    create_date = Str
+    create_date = Datetime
 
 
 class LoadingManager(DVCIrradiationable):
@@ -727,7 +728,8 @@ class LoadingManager(DVCIrradiationable):
         return [
             Load(name=li.name,
                  tray=li.holderName,
-                 create_date=li.create_date.strftime("%m/%d/%Y"))
+                 # create_date=li.create_date.strftime("%m/%d/%Y"))
+                 create_date=li.create_date)
             for li in loads
         ]
 

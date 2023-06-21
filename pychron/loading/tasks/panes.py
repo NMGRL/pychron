@@ -290,6 +290,10 @@ class LoadInstanceAdapter(TabularAdapter):
                ("Tray", "tray")]
     font = "modern 10"
 
+    create_date_text = Property
+    def _get_create_date_text(self):
+        return self.item.create_date.strftime("%Y-%m-%d")
+
 
 class LoadPane(TraitsTaskPane):
     def traits_view(self):
@@ -424,7 +428,8 @@ class StageManagerPane(TraitsDockPane):
     #     return g
 
     def traits_view(self):
-        sv = VGroup(BorderVGroup(HGroup(UItem("calibrated_position_entry",
+        sv = VGroup(BorderVGroup(HGroup(Item("calibrated_position_entry",
+                                              label='Hole #',
                                               tooltip="Enter a position e.g 1 for a hole, " "or 3,4 for X,Y"),
                                         icon_button_editor('autocenter_button', "find")
                                         ),

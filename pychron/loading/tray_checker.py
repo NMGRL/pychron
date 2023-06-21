@@ -100,6 +100,7 @@ class TrayChecker(MachineVisionManager):
     def __init__(self, loading_manager, dbpath='', *args, **kw):
         super(TrayChecker, self).__init__(*args, **kw)
         if loading_manager:
+            self._focus_motor = None
             self._loading_manager = loading_manager
             self.video = loading_manager.stage_manager.video
 
@@ -109,6 +110,33 @@ class TrayChecker(MachineVisionManager):
     def stop(self):
         self.debug('stop fired')
         self._alive = False
+
+    def check(self):
+        self._iter()
+
+    def map(self):
+        self._iter(map_positions=True)
+
+    def _iter(self, map_positions=False):
+        use_ml = True
+        pipe = None
+        if use_ml:
+            pipe = self._get_classifier()
+        self.edit_traits(view=View(UItem('stop_button'),
+                                   UItem('object.display_image.source_frame',
+                                         width=640,
+                                         height=480,
+                                         editor=ImageEditor(refresh='object.display_image.refresh_needed')),
+                                   # width=900,
+                                   # height=900,
+                                   ))
+        if map_positions:
+            func = self._map_positions
+        else:
+            func = self._check
+
+        self._thread = Thread(target=func, args=(pipe,))
+        self._thread.start()
 
     def check_frame(self):
         #     frame = self._loading_manager.stage_manager.autocenter_manager.new_image_frame(force=True)
@@ -494,8 +522,35 @@ class TrayChecker(MachineVisionManager):
         y = int((h - ch_px) / 2.0)
         return asarray(crop(frame, x, y, cw_px, ch_px))
 
-    def _check_position(self, hole):
-        pass
+    def _set_focus(self, position):
+        if not self._focus_motor:
+            return
+
+        self.debug(f'set focus {position}')
+        self._focus_motor.move_relative(position)
+
+    def _check_position(self, pos):
+        self.debug('check position {}'.format(pos))
+
+        self._focus(pos)
+
+        frame = self.new_image_frame(pos)
+        self._loading_manager.stage_manager.snapshot(name='{}.tc'.format(pos),
+                                                     render_canvas=False, inform=False)
+        self._focus(-pos)
+
+        blankframe = self._get_blankframe(pos)
+        self.display_image.clear()
+        self.display_image.tile(frame)
+        if blankframe is not None:
+            diff = frame - blankframe
+            self.display_image.tile(blankframe)
+            self.display_image.tile(diff)
+            # self.display_image.tile(diff)
+        self.display_image.tilify()
+        # invoke_in_main_thread(self.trait_set, refresh_image=True)
+        # self.refresh_image = True
+        self.display_image.refresh_needed = True
 
     # def _check_position(self, hole):
     #     pos = hole.id

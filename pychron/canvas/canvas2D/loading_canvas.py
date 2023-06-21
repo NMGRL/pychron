@@ -237,13 +237,21 @@ class LoadingCanvas(SceneCanvas):
             if event.character in (' ', 'a') and self._foot_pedal_mode:
                 self.increment_event = True
                 return
-        else:
-            self._last_key_press = time.time()
+
+
 
     def normal_key_pressed(self, event):
         print('fff', event.character)
-        if event.character in ('Up', 'Down'):
-            self.focus_event = event.character
+        if not self._last_key_press or time.time() - self._last_key_press > 0.1:
+            if event.character in ('f', 'g', 'Up', 'Down'):
+                self._last_key_press = time.time()
+                if event.character == 'f':
+                    self.focus_event = 'Up'
+                elif event.character == 'g':
+                    self.focus_event = 'Down'
+                elif event.character in ('Up', 'Down'):
+                    self.focus_event = event.character
+                return
 
         if self._foot_pedal_mode:
             return
