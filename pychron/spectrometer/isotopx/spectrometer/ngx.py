@@ -231,7 +231,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                         print("fad", keys, signals)
                         if line.startswith(targeta):
                             self.acq_count += 1
-                            if self.acq_count == self.total_acq_count and self.has_atonas:
+                            if (
+                                self.acq_count == self.total_acq_count
+                                and self.has_atonas
+                            ):
                                 # forget this ACQ and immediately get the ACQ.B record.
                                 continue
                             else:
