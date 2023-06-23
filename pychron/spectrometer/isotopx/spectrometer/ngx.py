@@ -96,8 +96,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                 self.magnet.field_table.path = mftable_name
                 self.magnet.field_table.load_table(load_items=True)
 
-            det = config["Default"]
-            self.has_atonas = det.get("atonas", True)
+        self.has_atonas = any([d for d in self.detectors if d.kind in (ATONA, 'CDD')])
 
     def _send_configuration(self, **kw):
         pass
