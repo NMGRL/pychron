@@ -308,6 +308,23 @@ def monkey_patch_checkbox_render():
 def monkey_patch_table_view():
     from traitsui.qt4.table_editor import TableView
 
+    def sizeHint(self):
+        size_hint = QtGui.QTableView.sizeHint(self)
+
+        # This method is sometimes called by Qt after the editor has been
+        # disposed but before this control has been deleted:
+        if self._editor.factory is None:
+            return size_hint
+
+        width = self.style().pixelMetric(
+            QtGui.QStyle.PixelMetric.PM_ScrollBarExtent, QtGui.QStyleOptionHeader(), self
+        )
+        for column in range(len(self._editor.columns)):
+            width += self.sizeHintForColumn(column)
+
+        size_hint.setWidth(int(width))
+        return size_hint
+
     def resizeColumnsToContents(self):
         """Support proportional column width specifications."""
 
@@ -354,6 +371,7 @@ def monkey_patch_table_view():
             hheader.resizeSection(column_index, width)
 
     TableView.resizeColumnsToContents = resizeColumnsToContents
+    TableView.sizeHint = sizeHint
 
 
 KLASS_MAP = {'pyexperiment': 'PyExperiment',

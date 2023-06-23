@@ -54,8 +54,9 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     use_deflection_correction = False
     use_hv_correction = False
     _triggered = False
-    acq_count = None
+    acq_count = 0
     total_acq_count = 10
+    has_atonas = True
 
     def _microcontroller_default(self):
         service = "pychron.hardware.isotopx_spectrometer_controller.NGXController"
@@ -94,6 +95,9 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                 self.debug("updating mftable name {}".format(mftable_name))
                 self.magnet.field_table.path = mftable_name
                 self.magnet.field_table.load_table(load_items=True)
+
+            det = config["Default"]
+            self.has_atonas = det.get("atonas", True)
 
     def _send_configuration(self, **kw):
         pass
@@ -227,16 +231,22 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                         print("fad", keys, signals)
                         if line.startswith(targeta):
                             self.acq_count += 1
-                            if self.acq_count == self.total_acq_count:
+                            if self.acq_count == self.total_acq_count and self.has_atonas:
                                 # forget this ACQ and immediately get the ACQ.B record.
                                 continue
                             else:
                                 nsignals, keys = [], []
                                 for i, di in enumerate(self.detectors[::-1]):
-                                    if di.kind == "CDD":
+                                    if di.kind in ("CDD", ATONA) or not self.has_atonas:
                                         nsignals.append(signals[i])
                                         keys.append(di.name)
                                 signals = nsignals
+
+                                if not self.has_atonas:
+                                    self.acq_count = 0
+                                    self.microcontroller.triggered = False
+                                    inc = True
+
                                 break
 
                         elif line.startswith(targetb):
