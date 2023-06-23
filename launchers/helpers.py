@@ -305,6 +305,56 @@ def monkey_patch_checkbox_render():
 
     checkbox_renderer.CheckboxRenderer = CheckboxRenderer
 
+def monkey_patch_table_view():
+    from traitsui.qt4.table_editor import TableView
+
+    def resizeColumnsToContents(self):
+        """Support proportional column width specifications."""
+
+        # TODO: The proportional size specification approach found in the
+        # TableColumns is not entirely compatible with the ability to
+        # specify the resize_mode.  Namely, there are combinations of
+        # specifications that are redundant, and others which are
+        # contradictory.  Rework this method so that the various values
+        # for **width** have a well-defined, sensible meaning for each
+        # of the possible values of resize_mode.
+
+        editor = self._editor
+        available_space = self.viewport().width()
+        hheader = self.horizontalHeader()
+
+        # Compute sizes for columns with absolute or no size requests
+        proportional = []
+        for column_index in range(len(editor.columns)):
+            column = editor.columns[column_index]
+            requested_width = column.get_width()
+            if (
+                    column.resize_mode in ("interactive", "stretch")
+                    and 0 < requested_width <= 1.0
+            ):
+                proportional.append((column_index, requested_width))
+            elif (
+                    column.resize_mode == "interactive"
+                    and requested_width < 0
+                    and self._initial_size
+            ):
+                # Keep previous size if initial sizing has been done
+                available_space -= hheader.sectionSize(column_index)
+            else:
+                base_width = hheader.sectionSizeHint(column_index)
+                width = int(max(base_width, self.sizeHintForColumn(column_index)))
+                hheader.resizeSection(column_index, width)
+                available_space -= width
+
+        # Now use the remaining space for columns with proportional width
+        # requests
+        for column_index, percent in proportional:
+            base_width = hheader.sectionSizeHint(column_index)
+            width = int(max(base_width, int(percent * available_space)))
+            hheader.resizeSection(column_index, width)
+
+    TableView.resizeColumnsToContents = resizeColumnsToContents
+
 
 KLASS_MAP = {'pyexperiment': 'PyExperiment',
              'pyview': 'PyView',
@@ -324,6 +374,7 @@ def entry_point(appname, debug=False):
     monkey_patch_preferences()
     monkey_patch_checkbox_render()
     monkey_patch_panel()
+    monkey_patch_table_view()
 
     # set_stylesheet('darkorange.css')
     env = initialize_version(appname, debug)

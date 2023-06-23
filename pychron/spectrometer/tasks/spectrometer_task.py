@@ -292,7 +292,7 @@ class SpectrometerTask(EditorTask):
             ),
             right=VSplitter(
                 PaneItem("pychron.spectrometer.intensities"),
-                PaneItem("pychron.spectrometer.readout"),
+                # PaneItem("pychron.spectrometer.readout"),
             ),
         )
 
