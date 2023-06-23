@@ -17,10 +17,11 @@
 import os
 import time
 from datetime import datetime
-
+from beepy import beep
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict, color_map_dict
 from numpy import linspace
+from pyface.beep import beep
 from traits.api import (
     HasTraits,
     cached_property,
@@ -270,6 +271,7 @@ class LoadingManager(DVCIrradiationable):
     use_image_shift = True
 
     wizard = Instance(LoadingWizard)
+    beep_kind = Enum('coin', 'robot_error', 'error', 'ping', 'ready', 'success', 'wilhelm')
 
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
@@ -1168,6 +1170,12 @@ class LoadingManager(DVCIrradiationable):
                       block=True, capture='.empty')
 
             if self.foot_pedal.increment():
+                try:
+                    beep(self.beep_kind)
+                except BaseException:
+                    from pyface.beep import beep
+                    beep()
+
                 if self.confirmation_dialog('Max count reached. Increment Identifier?'):
                     self._auto_increment_identifier(force=True)
 

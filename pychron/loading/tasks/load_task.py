@@ -64,6 +64,7 @@ class LoadingTask(BaseManagerTask):
         return TaskLayout(
             left=Tabbed(PaneItem("pychron.loading.controls"),
                         PaneItem("pychron.loading.machine_vision"),
+                        PaneItem("pychron.loading.wizard"),
                         ),
             right=PaneItem("pychron.loading.video"),
             bottom=HSplitter(PaneItem("pychron.loading.positions"),
