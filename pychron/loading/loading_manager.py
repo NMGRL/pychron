@@ -21,7 +21,7 @@ from beepy import beep
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict, color_map_dict
 from numpy import linspace
-from pyface.beep import beep
+
 from traits.api import (
     HasTraits,
     cached_property,
@@ -961,6 +961,13 @@ class LoadingManager(DVCIrradiationable):
             self.material = ""
             self.project = ""
             self.irradiation_hole = 0
+
+        self.canvas.set_status_text(identifier=self.identifier,
+                                    sample=self.sample,
+                                    max_count=self.foot_pedal.max_count,
+                                    count=self.foot_pedal.count,
+                                    position=self.foot_pedal.active_idx)
+
 
     def _archive_button_fired(self):
         # ls = LoadSelection(loads=self.loads)

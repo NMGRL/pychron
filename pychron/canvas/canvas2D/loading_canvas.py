@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
+from chaco.overlays.plot_label import PlotLabel
 # ===============================================================================
 # Copyright 2013 Jake Ross
 #
@@ -131,6 +131,9 @@ class LoadingOverlay(AbstractOverlay):
         else:
             self.info_str = ""
 
+class LoadingStatusOverlay(PlotLabel):
+    pass
+
 
 class LoadingCanvas(SceneCanvas):
     use_pan = False
@@ -171,14 +174,29 @@ class LoadingCanvas(SceneCanvas):
         self.scene = scene
         self.popup = LoadingOverlay()
         self.popup.visible = False
+        self.overlays.append(self.popup)
 
         if self.mode_overlay_enabled:
             self.mode_overlay = ModeOverlay()
             self.overlays.append(self.mode_overlay)
-        self.overlays.append(self.popup)
+
+        self.status_overlay = LoadingStatusOverlay(component=self,
+                                                   overlay_position="inside bottom",
+                                                   bgcolor='transparent')
+
+        self.overlays.append(self.status_overlay)
 
     def set_foot_pedal_mode(self, v):
         self._foot_pedal_mode = v
+
+    def set_status_text(self, identifier='', sample='', position='', count=0, max_count=0):
+        if self.mode_overlay.mode == 'FootPedal':
+            sttext = f'Identifier: {identifier}\n' \
+                     f'Sample: {sample}\n' \
+                     f'Position: {position}'\
+                     f'Count: {count}/{max_count}'
+
+            self.status_overlay.text = sttext
 
     def get_selection(self):
         return [item for item in self.scene.get_items(LoadIndicator) if item.state]
@@ -230,15 +248,14 @@ class LoadingCanvas(SceneCanvas):
         self._last_position = pos
 
     _last_key_press = 0
+    _last_key_release = 0
 
     def normal_key_released(self, event):
-        if not self._last_key_press or time.time() - self._last_key_press > 1:
-            self._last_key_press = time.time()
+        if not self._last_key_release or time.time() - self._last_key_release > 1:
+            self._last_key_release = time.time()
             if event.character in (' ', 'a') and self._foot_pedal_mode:
                 self.increment_event = True
                 return
-
-
 
     def normal_key_pressed(self, event):
         print('fff', event.character)
