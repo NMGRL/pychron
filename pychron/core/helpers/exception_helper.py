@@ -111,17 +111,28 @@ def create_issue(issue):
     org = os.environ.get("GITHUB_ORGANIZATION", "NMGRL")
 
     try:
-        subprocess.call(['gh', 'issue', 'create',
-                         '-R', f'{org}/pychron',
-                         '-t', issue['title'],
-                         '-b', issue['body'],
-                         '-l', issue['labels']])
+        subprocess.call(
+            [
+                "gh",
+                "issue",
+                "create",
+                "-R",
+                f"{org}/pychron",
+                "-t",
+                issue["title"],
+                "-b",
+                issue["body"],
+                "-l",
+                issue["labels"],
+            ]
+        )
         return True
     except BaseException:
         import traceback
+
         traceback.print_exc()
 
-        print('gh not installed. Using requests')
+        print("gh not installed. Using requests")
 
         data = json.dumps(issue)
         cmd = "{}/repos/{}/pychron/issues".format(GITHUB_API_URL, org)
@@ -146,7 +157,8 @@ def git_post(cmd, return_json=True, **kw):
         warning(
             None,
             'No Github token set for "{}". Please set the GITHUB_TOKEN environment variable, install "gh" or Contact '
-            "Pychron Developers")
+            "Pychron Developers",
+        )
 
         kw["auth"] = (tok, "")
 
