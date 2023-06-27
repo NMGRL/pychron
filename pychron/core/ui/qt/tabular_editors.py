@@ -185,7 +185,8 @@ class _FilterTabularEditor(_TabularEditor):
         proxyModel.setSourceModel(self.model)
         self.control.setSortingEnabled(True)
         self.control.setModel(proxyModel)
-        if self.factory.multi_select:
+
+        if self.factory and self.factory.multi_select:
             slot = self._on_rows_selection
         else:
             slot = self._on_row_selection
