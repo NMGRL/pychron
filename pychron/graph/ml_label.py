@@ -120,7 +120,7 @@ class MPlotAxis(PlotAxis):
 
         # get the _rotated_ bounding box of the label
         tl_bounds = array(title_label.get_bounding_box(gc), float64)
-        print('tlasd', tl_bounds)
+        print("tlasd", tl_bounds)
         text_center_to_corner = -tl_bounds / 2.0
         # which axis are we moving away from the axis line along?
         axis_index = self._major_axis.argmin()
@@ -191,19 +191,14 @@ class MLLabel(Label):
                         if width > max_width:
                             max_width = width
                         new_y_pos = (
-                                prev_y_pos
-                                + prev_y_height
-                                - descent
-                                + self.line_spacing
+                            prev_y_pos + prev_y_height - descent + self.line_spacing
                         )
                     else:
                         # For blank lines, we use the height of the previous
                         # line, if there is one.  The width is 0.
                         leading = 0
                         if prev_y_height != -self.line_spacing:
-                            new_y_pos = (
-                                    prev_y_pos + prev_y_height + self.line_spacing
-                            )
+                            new_y_pos = prev_y_pos + prev_y_height + self.line_spacing
                             height = prev_y_height
                         else:
                             new_y_pos = prev_y_pos
@@ -214,9 +209,7 @@ class MLLabel(Label):
                     prev_y_height = height
 
             width = max_width + 2 * margin + 2 * self.border_width
-            height = (
-                    prev_y_pos + prev_y_height + margin + 2 * self.border_width
-            )
+            height = prev_y_pos + prev_y_height + margin + 2 * self.border_width
             self._bounding_box = [width, height]
 
             if self.hjustify == "left":
