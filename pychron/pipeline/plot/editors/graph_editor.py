@@ -18,7 +18,7 @@
 
 import os
 
-from chaco.plot_label import PlotLabel
+from chaco.api import PlotLabel
 from enable.component_editor import ComponentEditor as EnableComponentEditor
 from traits.api import Property, Event, cached_property, Any
 from traitsui.api import View, UItem

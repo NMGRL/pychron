@@ -588,7 +588,7 @@ class Graph(ContextMenuMixin):
         # self._title_size = size
         font = "{} {}".format(font, size)
 
-        from chaco.plot_label import PlotLabel
+        from chaco.api import PlotLabel
 
         pl = PlotLabel(t, component=pc, font=font)
         pc.overlays.append(pl)
@@ -642,7 +642,7 @@ class Graph(ContextMenuMixin):
 
     def add_data_label(self, x, y, plotid=0):
         """ """
-        from chaco.data_label import DataLabel
+        from chaco.api import DataLabel
 
         plot = self.plots[plotid]
 
