@@ -119,7 +119,7 @@ class Updater(Loggable):
 
         repo = self._get_working_repo()
         if not repo:
-            self.debug('no repo')
+            self.debug("no repo")
             return
 
         if self.use_tag:
@@ -139,7 +139,7 @@ class Updater(Loggable):
                     repo.git.fetch()
                     repo.git.checkout("-b", mrtag.name, mrtag.name)
         else:
-            self.debug(f'checking for updates. branch={branch}, remote={remote}')
+            self.debug(f"checking for updates. branch={branch}, remote={remote}")
             if remote and branch:
                 if self._validate_origin(remote):
                     if self._validate_branch(branch):
@@ -438,7 +438,7 @@ class Updater(Loggable):
             local_commit="{} ({})".format(ld, lha),
             head_hexsha=lc.hexsha,
             latest_remote_commit="{} ({})".format(rd, rha),
-            **kw
+            **kw,
         )
 
         repo = self._repo
