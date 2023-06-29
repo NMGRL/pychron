@@ -767,7 +767,7 @@ class Graph(ContextMenuMixin):
 
                 for k in ("color", "marker", "marker_size"):
                     sk = f"selection_{k}"
-                    if sk not in rd:
+                    if sk not in rd and k in rd:
                         rd[sk] = rd[k]
 
             if ptype == "cmap_scatter":
