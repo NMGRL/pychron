@@ -323,10 +323,14 @@ class OLSRegressor(BaseRegressor):
     def _get_rsquared(self):
         if self._result:
             return self._result.rsquared
+        else:
+            return 0
 
     def _get_rsquared_adj(self):
         if self._result:
             return self._result.rsquared_adj
+        else:
+            return 0
 
     def _calculate_coefficients(self):
         """
