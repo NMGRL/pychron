@@ -27,27 +27,27 @@ from pychron.core.geometry.affine import AffineTransform
 
 
 def raster_rubberband_pattern(cx, cy, offset, l, dx, rotation, single_pass):
-
     a = AffineTransform()
     a.translate(cx, cy)
     a.rotate(rotation)
     a.translate(-cx, -cy)
     # print offset, l
     n = int((l + 2 * offset) / dx)
-    if n*dx<=l+2*offset:
-        n = n+1 if n%2 else n
-        dx = (l+2*offset)/float(n+1)
+    if n * dx <= l + 2 * offset:
+        n = n + 1 if n % 2 else n
+        dx = (l + 2 * offset) / float(n + 1)
         n = int((l + 2 * offset) / dx)
 
-    for i in range(0, n+1):
+    for i in range(0, n + 1):
         y = cy - offset if i % 2 else cy + offset
         yield a.transform(cx - offset + dx * i, y)
 
     if not single_pass:
-        for i in range(0, n+1):
+        for i in range(0, n + 1):
             y = cy - offset if i % 2 else cy + offset
-            yield a.transform(cx +l+offset - dx * i, y)
-        yield a.transform(cx-offset, cy+offset)
+            yield a.transform(cx + l + offset - dx * i, y)
+        yield a.transform(cx - offset, cy + offset)
+
 
 def rubberband_pattern(cx, cy, offset, l, rotation):
     p1 = cx - offset, cy + offset
@@ -66,11 +66,19 @@ def rubberband_pattern(cx, cy, offset, l, rotation):
         yield a.transform(*p)
 
 
-def trough_pattern(cx, cy, length, width, rotation, use_x):
+def trough_pattern(cx, cy, length, width, rotation, style):
     """
     1 -------------- 2
     |                |
     4 -------------- 3
+
+
+    1 -------------- 2
+    |                |
+    0                |
+    |                |
+    4 -------------- 3
+
     """
     p1 = (cx, cy)
     p2 = (cx + length, cy)
@@ -81,9 +89,15 @@ def trough_pattern(cx, cy, length, width, rotation, use_x):
     a.translate(cx, cy)
     a.rotate(rotation)
     a.translate(-cx, -cy)
-
-    if use_x:
+    if style == 'x':
         ps = (p1, p2, p4, p3, p1)
+    elif style == 'perimeter':
+        p0 = (cx, cy)
+        p1 = cx, cy-width/2
+        p2 = cx+length, cy-width/2
+        p3 = cx+length, cy+width/2
+        p4 = cx, cy+width/2
+        ps = p0, p1, p2, p3, p4, p0
     else:
         ps = (p1, p2, p3, p4, p1)
 
@@ -133,7 +147,7 @@ def arc_pattern(cx, cy, degrees, radius):
          only used for drawing
     """
 
-    rs = radians(linspace(0, degrees, degrees/10.0))
+    rs = radians(linspace(0, degrees, degrees / 10.0))
 
     x = radius * cos(rs) + cx
     y = radius * sin(rs) + cy
@@ -199,7 +213,7 @@ def diamond_pattern(cx, cy, width, height, **kw):
            (cx, cy - half_height),
            (cx + half_width, cy),
            (cx, cy)
-    ]
+           ]
     for pt in pts:
         yield pt
 
@@ -270,5 +284,3 @@ def line_spiral_pattern(cx, cy, R, ns, p, ss, direction='out', **kw):
             yield x, y
 
 # ============= EOF ====================================
-
-

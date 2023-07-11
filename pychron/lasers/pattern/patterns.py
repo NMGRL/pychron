@@ -641,9 +641,8 @@ class RasterRubberbandPattern(RubberbandPattern):
 class TroughPattern(Pattern):
     width = Range(0.0, 20., 10, mode='slider')
     length = Range(0.0, 20., 10, mode='slider')
-    use_x = Bool(True)
     rotation = Range(0.0, 360., mode='slider')
-
+    style = Enum('Perimeter', 'X', 'Corners')
     xbounds = (-5, 25)
     ybounds = (-5, 25)
 
@@ -651,6 +650,10 @@ class TroughPattern(Pattern):
 
     def set_stage_values(self, sm):
         self.rotation = sm.canvas.calibration_item.rotation
+
+    @property
+    def use_x(self):
+        return self.style == 'X'
 
     def _plot_hook(self):
         self.dir_overlay.trait_set(
@@ -669,13 +672,13 @@ class TroughPattern(Pattern):
         lp.overlays.append(o)
 
     def pattern_generator_factory(self, **kw):
-        return trough_pattern(self.cx, self.cy, self.length, self.width, self.rotation, self.use_x)
+        return trough_pattern(self.cx, self.cy, self.length, self.width, self.rotation, self.style.lower())
 
     def get_parameter_group(self):
         return Group(Item('length'),
                      Item('width'),
                      Item('rotation'),
-                     Item('use_x', label='Use X Pattern'), )
+                     Item('style'), )
 
 
 class LinearPattern(Pattern):
