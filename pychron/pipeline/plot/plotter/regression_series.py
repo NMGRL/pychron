@@ -19,7 +19,7 @@ from pychron.pipeline.plot.plotter.arar_figure import BaseArArFigure
 
 
 class RegressionSeries(BaseArArFigure):
-    def build(self, plots, plot_dict=None):
+    def build(self, plots, plot_dict=None, *args, **kwargs):
         """
         make plots
         """

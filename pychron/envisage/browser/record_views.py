@@ -147,9 +147,12 @@ class LabnumberRecordView(RecordView):
     irradiation_pos = ""
     packet = ""
 
+    analysis_count = 0
+    reduction_state = None
+
     def _create(self, dbrecord):
         self.labnumber = dbrecord.identifier or ""
-
+        self.analysis_count = dbrecord.analysis_count
         pos = dbrecord
         # pos = dbrecord.irradiation_position
         if pos:

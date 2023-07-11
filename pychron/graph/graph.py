@@ -45,7 +45,7 @@ from pychron.graph.offset_plot_label import OffsetPlotLabel
 from pychron.graph.tools.axis_tool import AxisTool
 from .tools.contextual_menu_tool import ContextualMenuTool
 
-VALID_FONTS = ["Arial", "Lucida Grande", "Geneva", "Courier"]
+# VALID_FONTS = ["Arial", "Lucida Grande", "Geneva", "Courier"]
 # 'Helvetica',
 # 'Times New Roman'
 
@@ -579,8 +579,8 @@ class Graph(ContextMenuMixin):
         if pc.overlays:
             pc.overlays.pop()
 
-        if font not in VALID_FONTS:
-            font = "modern"
+        # if font not in VALID_FONTS:
+        #     font = "modern"
 
         if size is None:
             size = 12
@@ -588,7 +588,7 @@ class Graph(ContextMenuMixin):
         # self._title_size = size
         font = "{} {}".format(font, size)
 
-        from chaco.plot_label import PlotLabel
+        from chaco.api import PlotLabel
 
         pl = PlotLabel(t, component=pc, font=font)
         pc.overlays.append(pl)
@@ -642,7 +642,7 @@ class Graph(ContextMenuMixin):
 
     def add_data_label(self, x, y, plotid=0):
         """ """
-        from chaco.data_label import DataLabel
+        from chaco.api import DataLabel
 
         plot = self.plots[plotid]
 
@@ -735,7 +735,7 @@ class Graph(ContextMenuMixin):
         colors=None,
         color_map_name="hot",
         marker_size=2,
-        **kw
+        **kw,
     ):
         """ """
 
@@ -764,6 +764,11 @@ class Graph(ContextMenuMixin):
                     rd["outline_color"] = rd["color"]
                 if "selection_outline_color" not in rd:
                     rd["selection_outline_color"] = rd["color"]
+
+                for k in ("color", "marker", "marker_size"):
+                    sk = f"selection_{k}"
+                    if sk not in rd and k in rd:
+                        rd[sk] = rd[k]
 
             if ptype == "cmap_scatter":
                 from chaco.default_colormaps import color_map_name_dict
@@ -869,7 +874,7 @@ class Graph(ContextMenuMixin):
         update_y_limits=False,
         ypadding=10,
         ymin_anchor=None,
-        **kw
+        **kw,
     ):
         try:
             names = self.series[plotid][series]
@@ -1235,8 +1240,8 @@ class Graph(ContextMenuMixin):
         axis = getattr(self.plots[plotid], axistag)
         params = dict(title=title)
 
-        if font not in VALID_FONTS:
-            font = "arial"
+        # if font not in VALID_FONTS:
+        #     font = "arial"
 
         if font is not None or size is not None:
             if size is None:
@@ -1369,7 +1374,7 @@ class Graph(ContextMenuMixin):
             if mi is not None:
                 change = ra.low != mi
                 if isinstance(mi, (int, float)):
-                    if mi < ra.high:
+                    if mi < ra.high or (ma is not None and mi < ma):
                         ra.low = mi
                 else:
                     ra.low = mi
@@ -1377,7 +1382,7 @@ class Graph(ContextMenuMixin):
             if ma is not None:
                 change = change or ra.high != ma
                 if isinstance(ma, (int, float)):
-                    if ma > ra.low:
+                    if ma > ra.low or (mi is not None and ma > mi):
                         ra.high = ma
                 else:
                     ra.high = ma

@@ -278,6 +278,13 @@ def launch(klass):
         pass
 
     try:
+        try:
+            import qdarktheme
+
+            qdarktheme.setup_theme("light")
+        except ImportError:
+            pass
+
         # root = os.path.dirname(__file__)
         # r = QtGui.QApplication.instance()
         # p = os.path.join(root, 'stylesheets', 'qdark.css')

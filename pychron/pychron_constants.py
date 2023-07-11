@@ -62,10 +62,11 @@ TTF_FONTS = [
 FONTS = TTF_FONTS
 SIZES = [10, 6, 8, 9, 10, 11, 12, 14, 15, 18, 24, 36]
 
-PLUSMINUS = "\N{Plus-minus sign}"
-SIGMA = "\N{Greek Small Letter Sigma}"
 LAMBDA = "\u03BB"
-DELTA = "\N{Greek Capital Letter Delta}"
+PLUSMINUS = "\u00b1"
+SIGMA = "\u03c3"  # greek small letter sigma
+DELTA = "\u0394"  # greek capital letter delta
+
 
 PLUSMINUS_NSIGMA = "{}{{}}{}".format(PLUSMINUS, SIGMA)
 PLUSMINUS_ONE_SIGMA = PLUSMINUS_NSIGMA.format(1)
@@ -92,8 +93,11 @@ SIMPLE = "simple"
 SE = "SE"
 SD = "SD"
 SEM = "SEM"
-MSEM = "SEM, but if MSWD>1 use SEM * sqrt(MSWD)"
-MSE = "SE but if MSWD>1 use SE * sqrt(MSWD)"
+MSE = "{} but if MSWD>1 use {} * sqrt(MSWD)".format(SE, SE)
+MSEM = MSE
+
+GOOD = 1
+BAD = 0
 
 ERROR_TYPES = [MSEM, SEM, SD]
 SIG_FIGS = range(0, 15)
@@ -115,18 +119,21 @@ PLATEAU_INTEGRATED = "{} Integrated".format(PLATEAU)
 AUTO_LINEAR_PARABOLIC = "Auto Linear/Parabolic"
 AUTO_N = "Auto N"
 EXPONENTIAL = "exponential"
+AVERAGE = "Average"
+LINEAR = "Linear"
+
 FIT_TYPES = [
-    "Linear",
+    LINEAR,
     "Parabolic",
     "Cubic",
-    "Average",
+    AVERAGE,
     EXPONENTIAL.capitalize(),
     WEIGHTED_MEAN,
     "Custom",
     AUTO_LINEAR_PARABOLIC,
 ]
 
-FIT_ERROR_TYPES = [SD, SEM, MSEM, "CI", "MonteCarlo"]
+FIT_ERROR_TYPES = [SD, SEM, MSEM, SE, "CI", "MonteCarlo"]
 SERIES_FIT_TYPES = [NULL_STR] + FIT_TYPES
 ISOCHRON_ERROR_TYPES = [SE, MSE]
 ISOCHRON_METHODS = ["NewYork", "York", "Reed"]
@@ -196,7 +203,7 @@ def format_mswd(m, v, n=3, include_tag=False):
         if isinstance(include_tag, str):
             tag = include_tag
         else:
-            tag = "MSWD="
+            tag = "MSWD = "
 
     return "{}{}{}".format(tag, "" if v else INVALID_MSWD_CHR, floatfmt(m, n=n))
 
@@ -368,15 +375,20 @@ BSPLINE = "BSpline"
 RBF = "RBF"
 GRIDDATA = "GridData"
 IDW = "IDW"
+HIGH_ORDER_POLY = "Order 5 Polynomial"
+
 FLUX_MODEL_KINDS = (
     PLANE,
     BOWL,
+    HIGH_ORDER_POLY,
     WEIGHTED_MEAN,
     MATCHING,
     NN,
     BRACKETING,
     LEAST_SQUARES_1D,
     WEIGHTED_MEAN_1D,
+    RBF,
+    GRIDDATA,
 )
 
 if paths.setup_dir:

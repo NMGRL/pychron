@@ -583,7 +583,9 @@ class ExperimentRepoTask(BaseTask, ColumnSorterMixin):
 
     # handlers
     def _refresh_branch_button_changed(self):
-        self._refresh_branches(fetch=True)
+        selected = self._has_selected_local()
+        if selected:
+            self._refresh_branches(fetch=True)
 
     def _selected_file_changed(self, new):
         if new:

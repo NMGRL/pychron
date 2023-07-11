@@ -84,13 +84,11 @@ class SessionCTX(object):
                 return self._parent.session
             else:
                 self._psession = self._parent.session
-                try:
-                    self._session = self._parent.session_factory()
+                factory = self._parent.session_factory
+                if factory:
+                    self._session = factory()
                     self._parent.session = self._session
-                except TypeError as e:
-                    print(f"session ctx error. {e}")
-
-                return self._session
+                    return self._session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._session:
@@ -689,7 +687,7 @@ host= {}\nurl= {}'.format(
             q = query_hook(q)
 
         if verbose_query or self.verbose_retrieve_query:
-            # print compile_query(q)
+            # print(compile_query(q))
             self.debug(compile_query(q))
 
         items = self._query(q, func, reraise)

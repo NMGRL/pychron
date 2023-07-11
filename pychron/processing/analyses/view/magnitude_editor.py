@@ -68,7 +68,7 @@ class MagnitudeRenderer(TableDelegate):
         rect = option.rect
         w = rect.width()
 
-        rect.setWidth(w * min(1.0, v))
+        rect.setWidth(int(w * min(1.0, v)))
         painter.fillRect(rect, brush)
         painter.restore()
 

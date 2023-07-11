@@ -75,8 +75,10 @@ class ArArConstants(HasTraits):
     atm4038_citation = Str  # 'Nier (1950)'
     lambda_b_citation = Str  # 'Min (2008)'
     lambda_e_citation = Str  # 'Min (2008)'
+    lambda_Cl36_citation = Str  # 'Min (2008)'
     lambda_Ar39_citation = Str  # 'Min (2008)'
     lambda_Ar37_citation = Str  # 'Min (2008)'
+    lambda_Cl36_citation = Str  # 'Min (2008)'
     use_irradiation_endtime = Bool
 
     allow_negative_ca_correction = Bool(True)
