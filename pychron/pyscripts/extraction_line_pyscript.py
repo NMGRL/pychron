@@ -408,7 +408,7 @@ class ExtractionPyScript(ValvePyScript):
 
         name = '{}{}'.format(prefix, name)
         snap = self._extraction_action(('take_snapshot', (name, pic_format),
-                                       {'view_snapshot': view_snapshot}))
+                                        {'view_snapshot': view_snapshot}))
         if snap:
             self.snapshots.append(snap)
 
@@ -500,7 +500,7 @@ class ExtractionPyScript(ValvePyScript):
             ed = self.extract_device
             self.console_info('{} move to position {}'.format(ed, position))
             success = self._extraction_action(('move_to_position',
-                                              (position, autocenter), {}))
+                                               (position, autocenter), {}))
 
             if not success:
                 self.info('{} move to position failed'.format(ed))
@@ -544,7 +544,9 @@ class ExtractionPyScript(ValvePyScript):
 
         st = time.time()
         # set block=True to wait for pattern completion
-        self._extraction_action(('execute_pattern', (pattern,), {'block': block, 'duration': duration}))
+        self._extraction_action("execute_pattern", (pattern,), {"block": block,
+                                                                "duration": duration,
+                                                                "position": self.position[0]})
 
         return time.time() - st
 

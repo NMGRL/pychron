@@ -153,7 +153,7 @@ class PatternExecutor(Patternable):
         self.pattern.window_y = 50
         open_view(self.pattern, view='graph_view')
 
-    def execute(self, block=False, duration=None, thread_safe=True):
+    def execute(self, block=False, duration=None, thread_safe=True, position=None):
         """
             if block is true wait for patterning to finish
             before returning
@@ -179,7 +179,7 @@ class PatternExecutor(Patternable):
             self.pattern.external_duration = float(duration)
 
         if xyp:
-            self._xy_thread = Thread(target=self._execute_xy_pattern)
+            self._xy_thread = Thread(target=self._execute_xy_pattern, args=(position,))
             self._xy_thread.start()
 
         pp = self.pattern.power_pattern
@@ -245,13 +245,22 @@ class PatternExecutor(Patternable):
             p = period - et
             time.sleep(p)
 
-    def _execute_xy_pattern(self):
+    def _execute_xy_pattern(self, position=None):
         pat = self.pattern
         self.info('starting pattern {}'.format(pat.name))
         st = time.time()
-        self.controller.update_position()
-        time.sleep(1)
-        pat.cx, pat.cy = self.controller.x, self.controller.y
+
+        if position:
+            self.info(f'execute pattern at position {position}')
+            pos = self.laser_manager.stage_manager.get_hole(position)
+            dimension = pos.dimension
+            pat.cx, pat.cy = pos.x, pos.y
+            pat.length = dimension
+
+        else:
+            self.controller.update_position()
+            time.sleep(1)
+            pat.cx, pat.cy = self.controller.x, self.controller.y
         try:
             for ni in range(pat.niterations):
                 if not self.isPatterning():
