@@ -649,7 +649,10 @@ class TroughPattern(Pattern):
     show_direction = Bool(True)
 
     def set_stage_values(self, sm):
-        self.rotation = sm.canvas.calibration_item.rotation
+        rot = sm.canvas.calibration_item.rotation
+        if rot < 0:
+            rot = 360 + rot
+        self.rotation = rot
 
     @property
     def use_x(self):
