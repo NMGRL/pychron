@@ -655,21 +655,21 @@ class TroughPattern(Pattern):
     def use_x(self):
         return self.style == 'X'
 
-    def _plot_hook(self):
-        self.dir_overlay.trait_set(
-            rotation=math.radians(self.rotation),
-            use_x=self.use_x,
-            olength=self.length,
-            owidth=self.width)
-
-    def _graph_factory_hook(self, lp):
-        self.dir_overlay = o = DirectionOverlay(component=lp,
-                                                visible=self.show_direction,
-                                                olength=self.length,
-                                                owidth=self.width,
-                                                use_x=self.use_x,
-                                                rotation=self.rotation)
-        lp.overlays.append(o)
+    # def _plot_hook(self):
+    #     self.dir_overlay.trait_set(
+    #         rotation=math.radians(self.rotation),
+    #         use_x=self.use_x,
+    #         olength=self.length,
+    #         owidth=self.width)
+    #
+    # def _graph_factory_hook(self, lp):
+    #     self.dir_overlay = o = DirectionOverlay(component=lp,
+    #                                             visible=self.show_direction,
+    #                                             olength=self.length,
+    #                                             owidth=self.width,
+    #                                             use_x=self.use_x,
+    #                                             rotation=self.rotation)
+    #     lp.overlays.append(o)
 
     def pattern_generator_factory(self, **kw):
         return trough_pattern(self.cx, self.cy, self.length, self.width, self.rotation, self.style.lower())
