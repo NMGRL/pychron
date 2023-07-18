@@ -88,7 +88,11 @@ class InfoInspector(ScatterInspector):
             return
 
         if isinstance(pos, (tuple, list)):
-            self.current_position = (pos[0][0], pos[1][0])
+            print(pos, 'asdfsdfsdf')
+            try:
+                self.current_position = (pos[0][0], pos[1][0])
+            except IndexError:
+                self.current_position = pos
             self.current_screen = xy
             event.handled = True
         else:
