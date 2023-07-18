@@ -88,7 +88,7 @@ class InfoInspector(ScatterInspector):
             return
 
         if isinstance(pos, (tuple, list)):
-            print(pos, 'asdfsdfsdf')
+            print(pos, "asdfsdfsdf")
             try:
                 self.current_position = (pos[0][0], pos[1][0])
             except IndexError:
