@@ -79,6 +79,7 @@ class SelectionFigure(HasTraits):
 
 
 class BaseArArFigure(SelectionFigure):
+    use_fixed_height = False
     analyses = Any
     sorted_analyses = Property(depends_on="analyses")
 
@@ -144,6 +145,7 @@ class BaseArArFigure(SelectionFigure):
         layout = self.options.layout
         fw = layout.fixed_width
         fh = layout.fixed_height
+
         # stretch_vertical = layout.stretch_vertical
 
         if fw and col[1] > 0:
@@ -159,10 +161,13 @@ class BaseArArFigure(SelectionFigure):
             if fw:
                 r = ""
                 if fh:
-                    if i == 0 and not po.height:
+                    if i == 0 and not po.height or self.use_fixed_height:
                         height = fh - oheights
                     else:
                         height = po.height
+
+                    if self.use_fixed_height:
+                        height = fh - oheights
                 else:
                     height = po.height
                     # if i == 0 and stretch_vertical:
@@ -171,7 +176,7 @@ class BaseArArFigure(SelectionFigure):
                 kw["resizable"] = r
             elif fh:
                 kw["resizable"] = "h"
-                if i == 0 and not po.height:
+                if i == 0 and not po.height or self.use_fixed_height:
                     height = fh - oheights
                 else:
                     height = po.height

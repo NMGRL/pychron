@@ -589,16 +589,22 @@ class DVCAnalysis(Analysis):
             if reference_data:
                 rd = reference_data[dk]
 
-            jd[dk] = {
-                "value": float(v),
-                "error": float(e),
-                "reviewed": reviewed,
-                "fit": fi,
-                "reference_detector": ticf["reference_detector"],
-                "standard_ratio": standard_ratio,
-                "references": make_ref_list(refs),
-                "reference_data": rd,
-            }
+            jd[dk] = {}
+            jd[dk].update(**ticf)
+
+            jd[dk].update(
+                **{
+                    "value": float(v),
+                    "error": float(e),
+                    "reviewed": reviewed,
+                    "fit": fi,
+                    # "reference_detector": ticf["reference_detector"],
+                    "standard_ratio": standard_ratio,
+                    "references": make_ref_list(refs),
+                    "reference_data": rd,
+                }
+            )
+
         self._dump(jd, path)
 
     def dump_source_correction_icfactors(self, refs=None, standard_ratio=None):

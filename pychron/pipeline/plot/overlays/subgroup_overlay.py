@@ -15,7 +15,7 @@
 # ===============================================================================
 
 from chaco.abstract_overlay import AbstractOverlay
-from chaco.scatterplot import render_markers
+from chaco.api import render_markers
 
 
 class SubGroupPointOverlay(AbstractOverlay):

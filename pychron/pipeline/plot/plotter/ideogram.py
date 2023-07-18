@@ -20,9 +20,9 @@ from operator import itemgetter
 
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
-from chaco.data_label import DataLabel
-from chaco.scatterplot import render_markers
-from chaco.tooltip import ToolTip
+from chaco.api import DataLabel
+from chaco.api import render_markers
+from chaco.api import ToolTip
 from enable.colors import ColorTrait
 from numpy import array, arange, Inf, argmax, asarray
 from pyface.message_dialog import warning

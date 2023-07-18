@@ -751,6 +751,7 @@ class GitRepoManager(Loggable):
                 ret = branch
                 break
         else:
+            ret = branch
             if branch == "master":
                 ret = "main"
 

@@ -16,8 +16,8 @@
 
 # ============= enthought library imports =======================
 from chaco.abstract_overlay import AbstractOverlay
-from chaco.plot_label import PlotLabel
-from chaco.scatterplot import render_markers
+from chaco.api import PlotLabel
+from chaco.api import render_markers
 from enable.markers import MarkerNameDict
 from traits.api import Color, Instance, Str, Float, Int, Any, Enum, Bool
 

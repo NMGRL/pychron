@@ -17,7 +17,7 @@
 # ============= standard library imports ========================
 import os
 
-from chaco.plot_label import PlotLabel
+from chaco.api import PlotLabel
 from chaco.svg_graphics_context import SVGGraphicsContext
 from kiva.ps import PSGC
 from pyface.constant import OK

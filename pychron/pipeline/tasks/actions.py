@@ -56,6 +56,17 @@ class SignalEstimatorAction(Action):
         s.edit_traits()
 
 
+class IsochronSandboxAction(UIAction):
+    name = "Isochron Sandbox"
+
+    def perform(self, event):
+        from pychron.pipeline.isochron_sandbox import IsochronSandbox
+
+        s = IsochronSandbox()
+        s.init()
+        s.edit_traits()
+
+
 class SavePipelineTemplateAction(TaskAction):
     name = "Save Pipeline Template"
     method = "save_pipeline_template"

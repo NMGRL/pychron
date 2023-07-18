@@ -39,7 +39,7 @@ from chaco.array_plot_data import ArrayPlotData
 from numpy import linspace, cos, sin, pi
 import os
 import csv
-from chaco.data_label import DataLabel
+from chaco.api import DataLabel
 from pychron.paths import paths
 from chaco.plot_graphics_context import PlotGraphicsContext
 from traitsui.menu import Action

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-from chaco.legend import Legend
+from chaco.api import Legend
 from enable.font_metrics_provider import font_metrics_provider
 from numpy import zeros_like, array
 from traits.api import Bool, Int

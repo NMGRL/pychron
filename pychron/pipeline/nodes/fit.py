@@ -376,7 +376,11 @@ class FitIsotopeEvolutionNode(FitNode):
                 signal_to_baseline = 0
                 if hasattr(iso, "baseline"):
                     bs = iso.baseline.error
-                    signal_to_baseline = abs(bs / i * 100)
+                    try:
+                        signal_to_baseline = abs(bs / i * 100)
+                    except ZeroDivisionError:
+                        signal_to_baseline = 0
+
                     if (
                         signal_to_baseline_threshold
                         and signal_to_baseline_percent_threshold
@@ -421,7 +425,10 @@ class FitIsotopeEvolutionNode(FitNode):
                     rsquared_goodness = rsquared > rsquared_threshold
 
                 if hasattr(iso, "blank"):
-                    signal_to_blank = iso.blank.value / iso.value * 100
+                    try:
+                        signal_to_blank = iso.blank.value / iso.value * 100
+                    except ZeroDivisionError:
+                        signal_to_blank = 0
                 else:
                     signal_to_blank = 0
 

@@ -19,12 +19,7 @@
 # ============= local library imports  ==========================
 import json
 import os
-import subprocess
-import datetime
-from json import JSONDecodeError
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
 from requests.exceptions import SSLError
 
 from pychron.git.hosts import IGitHost

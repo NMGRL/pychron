@@ -18,7 +18,7 @@
 from chaco.abstract_overlay import AbstractOverlay
 from chaco.array_data_source import ArrayDataSource
 from chaco.label import Label
-from chaco.plot_label import PlotLabel
+from chaco.api import PlotLabel
 from enable.enable_traits import LineStyle
 from kiva import FILL
 from kiva.trait_defs.kiva_font_trait import KivaFont
@@ -232,6 +232,8 @@ class AtmInterceptOverlay(AbstractOverlay):
     value = Float
 
     def overlay(self, component, gc, view_bounds=None, mode="normal"):
+        return
+
         x, y = component.map_screen((0, self.value))
         xo = component.x
         if x < xo:
@@ -261,6 +263,8 @@ class Isochron(BaseArArFigure):
 
 
 class InverseIsochron(Isochron):
+    use_fixed_height = True
+
     _plot_label = None
     xpad = None
     _analysis_group_klass = StepHeatAnalysisGroup

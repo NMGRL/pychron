@@ -557,6 +557,7 @@ class PipelineEngine(Loggable):
         unks = self.selected.unknowns
         self.selected.unknowns = [unk for unk in unks if unk.tag.lower() != "invalid"]
         self.refresh_table_needed = True
+        self.state.unknowns = self.selected.unknowns
 
     # ============================================================================================================
     # nodes

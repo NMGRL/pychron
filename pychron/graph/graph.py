@@ -588,7 +588,7 @@ class Graph(ContextMenuMixin):
         # self._title_size = size
         font = "{} {}".format(font, size)
 
-        from chaco.plot_label import PlotLabel
+        from chaco.api import PlotLabel
 
         pl = PlotLabel(t, component=pc, font=font)
         pc.overlays.append(pl)
@@ -642,7 +642,7 @@ class Graph(ContextMenuMixin):
 
     def add_data_label(self, x, y, plotid=0):
         """ """
-        from chaco.data_label import DataLabel
+        from chaco.api import DataLabel
 
         plot = self.plots[plotid]
 
@@ -735,7 +735,7 @@ class Graph(ContextMenuMixin):
         colors=None,
         color_map_name="hot",
         marker_size=2,
-        **kw
+        **kw,
     ):
         """ """
 
@@ -764,6 +764,11 @@ class Graph(ContextMenuMixin):
                     rd["outline_color"] = rd["color"]
                 if "selection_outline_color" not in rd:
                     rd["selection_outline_color"] = rd["color"]
+
+                for k in ("color", "marker", "marker_size"):
+                    sk = f"selection_{k}"
+                    if sk not in rd and k in rd:
+                        rd[sk] = rd[k]
 
             if ptype == "cmap_scatter":
                 from chaco.default_colormaps import color_map_name_dict
@@ -869,7 +874,7 @@ class Graph(ContextMenuMixin):
         update_y_limits=False,
         ypadding=10,
         ymin_anchor=None,
-        **kw
+        **kw,
     ):
         try:
             names = self.series[plotid][series]

@@ -24,6 +24,7 @@ from __future__ import print_function
 from copy import copy
 from operator import itemgetter, attrgetter
 
+from numpy import polyval
 from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.codetools.simple_timeit import timethis
@@ -373,10 +374,35 @@ class ArArAge(IsotopeGroup):
             self.temporary_ic_factors[det] = {"reference_detector": n, "value": v}
             self.info("setting ic factor={} to {}".format(det, v))
 
+    def calculate_transform_ic_factor(self, det, variable, coefficients, tag=None):
+        if variable == "TotalIntensity":
+            x = 0
+            for iso in self.isotopes:
+                x += iso.get_intensity()
+        elif variable == "ICFactor":
+            iso = self.get_isotope(detector=det)
+            x = iso.ic_factor
+        else:
+            x = self.get_value(variable)
+
+        uv = polyval(coefficients, x)
+        if tag:
+            uv = ufloat(uv.nominal_value, uv.std_dev, tag=tag)
+
+        self.temporary_ic_factors[det] = {
+            "value": uv,
+            "variable": variable,
+            "scaling_value": nominal_value(x),
+            "reference_detector": det,
+            "coefficients": coefficients,
+        }
+        return uv
+
     def set_temporary_ic_factor(self, n, k, v, e, tag=None):
-        self.temporary_ic_factors[k] = uv = {
+        uv = ufloat(v, e, tag=tag)
+        self.temporary_ic_factors[k] = {
             "reference_detector": n,
-            "value": ufloat(v, e, tag=tag),
+            "value": uv,
         }
         return uv
 

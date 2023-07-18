@@ -448,6 +448,10 @@ class AnalysisGroup(IdeogramPlotable):
         return self.identifier
 
     @property
+    def identifier_str(self):
+        return ",".join({ai.identifier for ai in self.analyses})
+
+    @property
     def age_attr(self):
         return "uage_w_position_err" if self.include_j_position_error else "uage"
 

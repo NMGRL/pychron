@@ -259,6 +259,11 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         columns = [
             Column(attr="status", width=2, enabled=options.status_enabled),
             Column(
+                label="Identifier",
+                attr="identifier",
+                enabled=options.identifier_enabled,
+            ),
+            Column(
                 label="N",
                 attr="aliquot_step_str",
                 enabled=options.analysis_label_enabled,
@@ -749,7 +754,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             ),
             Column(visible=opt.include_summary_unit, label="Unit", attr="unit"),
             Column(
-                visible=opt.include_summary_location, label="Location", attr="location"
+                visible=opt.include_summary_location, label="Location", attr="flatlon"
             ),
             Column(
                 visible=opt.include_summary_irradiation,
@@ -781,11 +786,17 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
                 label="MSWD",
                 func=get_preferred_mswd,
             ),
-            Column(visible=opt.include_summary_kca, label="K/Ca", func=get_kca),
+            Column(
+                visible=opt.include_summary_kca,
+                label="K/Ca",
+                func=get_kca,
+                sigformat="summary_kca",
+            ),
             Column(
                 visible=opt.include_summary_kca,
                 label=PLUSMINUS_NSIGMA.format(opt.summary_kca_nsigma),
                 func=get_kca_error(opt),
+                sigformat="summary_kca",
             ),
             Column(
                 visible=opt.include_summary_age,
@@ -1212,7 +1223,7 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
         sh.write_string(row, 2, group.sample, fmt)
 
         sh.write_string(row, 5, "Identifier:", fmt)
-        sh.write_string(row, 6, group.identifier, fmt)
+        sh.write_string(row, 6, group.identifier_str, fmt)
 
         self._current_row += 1
         row = self._current_row
@@ -1369,16 +1380,17 @@ class XLSXAnalysisTableWriter(BaseTableWriter):
             if is_last:
                 cfmt.set_bottom(1)
 
-            if c.label in ("N", "Power"):
-                sh.write(row, j + 1, txt, cfmt)
+            j_plus_1 = j + 1
+            if c.label in ("N", "Power", "Identifier"):
+                sh.write(row, j_plus_1, txt, cfmt)
             elif c.label == "RunDate":
-                sh.write_datetime(row, j + 1, txt, cfmt)
+                sh.write_datetime(row, j_plus_1, txt, cfmt)
             else:
                 # self.debug('writing {} attr={} label={}'.format(type(txt), c.attr, c.label))
                 if isinstance(txt, float):
-                    sh.write_number(row, j + 1, txt, cell_format=cfmt)
+                    sh.write_number(row, j_plus_1, txt, cell_format=cfmt)
                 else:
-                    sh.write(row, j + 1, txt, fmt)
+                    sh.write(row, j_plus_1, txt, fmt)
 
             c.calculate_width(txt)
         self._current_row += 1

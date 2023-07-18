@@ -186,7 +186,9 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     summary_trapped_ratio_nsigma = dumpable(Enum(1, 2, 3))
     summary_mswd_sig_figs = dumpable(Int(2))
     summary_percent_ar39_sig_figs = dumpable(Int(1))
+    summary_trapped_ratio_sig_figs = dumpable(Int(4))
 
+    # a for analysis. i.e analysis summary. This controls the summary of an individual group of analyses
     asummary_kca_nsigma = dumpable(Enum(1, 2, 3))
     asummary_age_nsigma = dumpable(Enum(1, 2, 3))
     asummary_trapped_ratio_nsigma = dumpable(Enum(1, 2, 3))
@@ -204,6 +206,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
     individual_age_sorting = dumpable(Enum(*AGE_SORT_KEYS))
 
     status_enabled = dumpable(Bool(True))
+    identifier_enabled = dumpable(Bool(True))
     tag_enabled = dumpable(Bool(True))
     analysis_label_enabled = dumpable(Bool(True))
 
@@ -477,6 +480,7 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
         general_col_grp = VGroup(
             Item("status_enabled", label="Status"),
             Item("analysis_label_enabled", label="Analysis Label"),
+            Item("identifier_enabled", label="Identifier"),
             Item("tag_enabled", label="Tag"),
             iinc("rundate", "Analysis RunDate"),
             iinc("blanks", "Applied Blank"),
@@ -553,6 +557,8 @@ Ages calculated relative to FC-2 Fish Canyon Tuff sanidine interlaboratory stand
             Item("summary_mswd_sig_figs", label="MSWD"),
             Item("summary_percent_ar39_sig_figs", label="%39Ar"),
             Item("summary_age_sig_figs", label="Age"),
+            Item("summary_kca_sig_figs", label="K/Ca"),
+            # Item("summary_kcl_sig_figs", label="Age"),
             label="Sig Figs",
         )
 
