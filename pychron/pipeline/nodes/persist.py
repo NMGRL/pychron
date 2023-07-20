@@ -379,7 +379,9 @@ class XLSXAnalysisTablePersistNode(BaseDVCNode):
                 p = self.options.selected_options.get_path()
                 if os.path.isfile(p):
                     if confirmation_dialog(
-                        "File {} already exists. Would you like to overwrite it?".format(p)
+                        "File {} already exists. Would you like to overwrite it?".format(
+                            p
+                        )
                     ):
                         self.options.selected_options.overwrite = True
                 return True
