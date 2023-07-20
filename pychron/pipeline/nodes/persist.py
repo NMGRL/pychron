@@ -373,15 +373,16 @@ class XLSXAnalysisTablePersistNode(BaseDVCNode):
         info = OptionsController(model=self.options).edit_traits(
             view=self.options_view, kind="livemodal"
         )
-        self.options.selected_options.overwrite = False
         if info.result:
-            p = self.options.selected_options.get_path()
-            if os.path.isfile(p):
-                if confirmation_dialog(
-                    "File {} already exists. Would you like to overwrite it?".format(p)
-                ):
-                    self.options.selected_options.overwrite = True
-            return True
+            if self.options.selected_options:
+                self.options.selected_options.overwrite = False
+                p = self.options.selected_options.get_path()
+                if os.path.isfile(p):
+                    if confirmation_dialog(
+                        "File {} already exists. Would you like to overwrite it?".format(p)
+                    ):
+                        self.options.selected_options.overwrite = True
+                return True
 
     def _pre_run_hook(self, state):
         if state.unknowns:
