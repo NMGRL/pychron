@@ -165,7 +165,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     self.debug_exception()
                     self.debug(f"data left: {ds}")
 
-            if ds and ds.endswith('#\r\n'):
+            if ds and ds.endswith("#\r\n"):
                 return ds[:-3]
 
             # if ds and "#\r\n" in ds:
