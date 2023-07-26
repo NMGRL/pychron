@@ -155,18 +155,22 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                 return
 
             try:
-                ds += self.read(1)
+                # ds += self.read(1)
                 # print(ds)
-                # ds = self.microcontroller.communicator.readline("#\r\n")
+                ds = self.microcontroller.communicator.readline("#\r\n")
+                # ds = self.microcontroller.communicator.select_read(terminator="#\r\n")
                 # return ds
             except BaseException:
                 if not self.microcontroller.canceled:
                     self.debug_exception()
                     self.debug(f"data left: {ds}")
 
-            if "#\r\n" in ds:
-                ds = ds.split("#\r\n")[0]
-                return ds
+            if ds and ds.endswith('#\r\n'):
+                return ds[:-3]
+
+            # if ds and "#\r\n" in ds:
+            #     ds = ds.split("#\r\n")[0]
+            #     return ds
 
     def cancel(self):
         self.debug("canceling")
@@ -227,7 +231,6 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
                         collection_time = datetime.combine(cd, ct)
                         signals = [float(i.strip()) for i in args[5:]]
-                        print("fad", keys, signals)
                         if line.startswith(targeta):
                             self.acq_count += 1
                             if (
