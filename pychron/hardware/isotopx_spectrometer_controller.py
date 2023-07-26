@@ -59,6 +59,14 @@ class NGXController(CoreDevice):
     #        resp = self.event_buffer.get()
     #    return resp
 
+    def stop_acquisition(self):
+        self.triggered = False
+        self.debug("stop acquisition")
+        self.ask("StopAcq")
+        self.canceled = True
+        # time.sleep(0.25)
+        # self.debug(self.communicator.readline())
+
     def set(self, *args, **kw):
         return HasTraits.set(self, *args, **kw)
 

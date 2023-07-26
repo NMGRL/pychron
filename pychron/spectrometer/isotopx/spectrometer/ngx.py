@@ -53,7 +53,6 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     _read_enabled = True
     use_deflection_correction = False
     use_hv_correction = False
-    _triggered = False
     acq_count = 0
     total_acq_count = 10
     has_atonas = True
@@ -129,7 +128,8 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         #    time.sleep(0.25)
 
         if not self.microcontroller.triggered:
-            self.ask("StopAcq", verbose=verbose)
+            # self.ask("StopAcq", verbose=verbose)
+            self.microcontroller.stop_acquisition()
             self.microcontroller.triggered = True
             # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
             self.total_acq_count = int(self.integration_time)
@@ -291,7 +291,8 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         self.debug(
             "acquisition period set to 1 second.  integration time set to {}".format(it)
         )
-        self.ask("StopAcq")
+        # self.ask("StopAcq")
+        self.microcontroller.stop_acquisition()
         self.ask("SetAcqPeriod 1000")
         self._read_enabled = False
         self.microcontroller.triggered = False
