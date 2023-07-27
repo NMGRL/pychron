@@ -64,7 +64,7 @@ class NGXController(CoreDevice):
         self.debug("stop acquisition")
         self.ask("StopAcq")
         self.canceled = True
-        # time.sleep(0.25)
+        time.sleep(0.25)
         # self.debug(self.communicator.readline())
 
     def set(self, *args, **kw):
