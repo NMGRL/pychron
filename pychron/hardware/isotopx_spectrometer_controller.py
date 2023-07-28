@@ -64,7 +64,7 @@ class NGXController(CoreDevice):
         self.debug("stop acquisition")
         self.ask("StopAcq")
         self.canceled = True
-        # time.sleep(0.25)
+        time.sleep(0.25)
         # self.debug(self.communicator.readline())
 
     def set(self, *args, **kw):
@@ -75,7 +75,7 @@ class NGXController(CoreDevice):
 
         self.communicator.strip = False
         # trying a new locking mechanism see ngx.trigger for more details
-        self.lock = Lock()
+        self.lock = RLock()
         #   self.event_buffer = Queue()
 
         if ret:

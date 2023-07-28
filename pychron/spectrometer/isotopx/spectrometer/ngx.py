@@ -128,6 +128,7 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         #    time.sleep(0.25)
 
         if not self.microcontroller.triggered:
+            self.microcontroller.lock.acquire()
             # self.ask("StopAcq", verbose=verbose)
             self.microcontroller.stop_acquisition()
             self.microcontroller.triggered = True
@@ -192,9 +193,13 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     trigger, self.microcontroller.triggered
                 )
             )
+
+        self.microcontroller.lock.acquire()
         resp = True
+        trigger_release = False
         if trigger or not self.microcontroller.triggered:
             resp = self.trigger_acq()
+            trigger_release = True
             # self.microcontroller.lock.release()
             if resp is not None:
                 # if verbose:
@@ -214,8 +219,8 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         if resp is not None:
             keys = self.detector_names[::-1]
             while self._read_enabled:
-                with self.microcontroller.lock:
-                    line = self.readline(verbose=True)
+                # with self.microcontroller.lock:
+                line = self.readline(verbose=True)
 
                 if verbose:
                     self.debug("raw: {}".format(line))
@@ -279,6 +284,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
             self.debug("collection time: {}".format(collection_time))
             self.debug("keys: {}".format(keys))
             self.debug("signals: {}".format(signals))
+
+        self.microcontroller.lock.release()
+        if trigger_release:
+            self.microcontroller.lock.release()
 
         return keys, signals, collection_time, inc
 
