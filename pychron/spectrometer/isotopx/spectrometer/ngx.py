@@ -149,8 +149,9 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     self.debug("readline timeout. raw={}".format(ds))
                 return
 
-            if not self._read_enabled or self.microcontroller.canceled:
-                self.microcontroller.canceled = False
+            if not self._read_enabled:
+                # or self.microcontroller.canceled:
+                # self.microcontroller.canceled = False
                 self.debug("readline canceled")
                 return
 
