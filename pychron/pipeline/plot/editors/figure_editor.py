@@ -100,7 +100,7 @@ class FigureEditor(GraphEditor):
             self.plotter_options.get_page_margins()
         )
         size = self.plotter_options.get_page_size()
-        print("asdfasdfasd", size)
+        # print("asdfasdfasd", size)
         if size is not None:
             width, height = size
             self.figure_container.component.bounds = [width, height]
@@ -115,7 +115,7 @@ class FigureEditor(GraphEditor):
             model = self.figure_model_klass()
             self.figure_model = model
 
-        print("selfasd", self, self.figure_model)
+        # print("selfasd", self, self.figure_model)
         model.trait_set(
             plot_options=self.plotter_options,
             # analysis_groups=self.analysis_groups,
