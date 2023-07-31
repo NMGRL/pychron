@@ -29,7 +29,7 @@ from pychron.loading.tasks.actions import (
     SaveLoadingDBAction, GotoModeAction, GotoEntryModeAction, FootPedalModeAction, CheckTrayAction, MapTrayAction,
 )
 from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane, StageManagerPane, VideoPane, \
-    MachineVisionPane, CounterPane, WizardPane
+    MachineVisionPane, CounterPane, WizardPane, SimplePane
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -62,14 +62,23 @@ class LoadingTask(BaseManagerTask):
 
     def _default_layout_default(self):
         return TaskLayout(
-            left=Tabbed(PaneItem("pychron.loading.controls"),
+
+            left=Tabbed(PaneItem("pychron.loading.simple"),
+                        PaneItem("pychron.loading.controls"),
                         PaneItem("pychron.loading.machine_vision"),
-                        PaneItem("pychron.loading.wizard"),
                         ),
             right=PaneItem("pychron.loading.video"),
-            bottom=HSplitter(PaneItem("pychron.loading.positions"),
-                             PaneItem("pychron.loading.stage"))
         )
+
+        # return TaskLayout(
+        #     left=Tabbed(PaneItem("pychron.loading.controls"),
+        #                 PaneItem("pychron.loading.machine_vision"),
+        #                 PaneItem("pychron.loading.wizard"),
+        #                 ),
+        #     right=PaneItem("pychron.loading.video"),
+        #     bottom=HSplitter(PaneItem("pychron.loading.positions"),
+        #                      PaneItem("pychron.loading.stage"))
+        # )
 
     def prepare_destroy(self):
         self.manager.dvc.close_session()
@@ -82,7 +91,8 @@ class LoadingTask(BaseManagerTask):
         mv_pane = MachineVisionPane(model=self.manager.stage_manager)
         cpane = CounterPane(model=self.manager)
         wpane = WizardPane(model=self.manager.wizard)
-        return [control_pane, table_pane, stage_pane, video_pane, mv_pane, cpane, wpane]
+        spane = SimplePane(model=self.manager)
+        return [control_pane, table_pane, stage_pane, video_pane, mv_pane, cpane, wpane, spane]
 
     def create_central_pane(self):
         self.load_pane = LoadPane(model=self.manager)

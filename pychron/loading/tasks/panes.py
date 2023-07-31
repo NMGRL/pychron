@@ -33,6 +33,7 @@ from traitsui.api import (
     Handler,
     CheckListEditor,
 )
+from traitsui.editors import TextEditor
 from traitsui.menu import Action
 from traitsui.tabular_adapter import TabularAdapter
 
@@ -285,12 +286,137 @@ class LoadTablePane(BaseLoadPane):
         return v
 
 
+class SimplePane(TraitsDockPane):
+    id = "pychron.loading.simple"
+    name = "Simple"
+
+    def traits_view(self):
+        focus_grp = HGroup(VGroup(
+            HGroup(Item('focus_inspect_button', show_label=False),
+                   spring,
+                   icon_button_editor('focus_inspect_reset_button', 'reset')),
+            HGroup(Item('focus_load_button', show_label=False),
+                   spring,
+                   icon_button_editor('focus_load_reset_button', 'reset')),
+            HGroup(Item('focus_traytop_button', show_label=False),
+                   spring,
+                   icon_button_editor('focus_traytop_reset_button', 'reset')),
+            HGroup(Item('focus_traybottom_button', show_label=False),
+                   spring,
+                   icon_button_editor('focus_traybottom_reset_button', 'reset')),
+
+        ),
+            VGroup(icon_button_editor('up_button', 'arrow_up'),
+                   UItem('focus_position_entry'),
+                   icon_button_editor('down_button', 'arrow_down'),
+                   )
+        )
+
+        status_grp = BorderVGroup(Item('load_name', label='Load', style='readonly'),
+                                  Item('tray', label='Tray', style='readonly'),
+                                  Item('sample', label='Sample', style='readonly'),
+                                  Item('object.foot_pedal.count', label='Count', style='readonly'),
+                                  Item('object.foot_pedal.active_idx', label='Position', style='readonly'),
+                                  label='Status')
+
+        dgrp = VGroup(icon_button_editor('up_button', 'arrow_up'),
+                      HGroup(icon_button_editor('left_button', 'arrow_left'),
+                             icon_button_editor('right_button', 'arrow_right')),
+                      icon_button_editor('down_button', 'arrow_down'))
+        xgrp = HGroup(Item('object.stage_manager.stage_controller.x', label='X', format_str='%0.3f', style='readonly'),
+                      UItem('object.stage_manager.stage_controller.x'))
+        ygrp = HGroup(Item('object.stage_manager.stage_controller.y', label='Y', format_str='%0.3f', style='readonly'),
+                      UItem('object.stage_manager.stage_controller.y'))
+        motion_controls = BorderHGroup(VGroup(xgrp, ygrp), dgrp,
+                                       label='Controls')
+
+        a = HGroup(UItem('message_text', style='custom',
+                         editor=TextEditor(read_only=True)))
+        b = HGroup(motion_controls, focus_grp)
+
+
+        load_grp = VGroup(
+            HGroup(
+                Item(
+                    "username",
+                    label="User",
+                    editor=EnumEditor(name="available_user_names"),
+                ),
+                icon_button_editor("add_button", "add", tooltip="Add a load"),
+                icon_button_editor(
+                    "delete_button", "delete", tooltip="Delete selected load"
+                ),
+                icon_button_editor(
+                    "archive_button",
+                    "application-x-archive",
+                    tooltip="Archive a set of loads",
+                ),
+                icon_button_editor(
+                    "unarchive_button",
+                    "application-x-archive",
+                    tooltip="Unarchive a set of loads",
+                ),
+            ),
+            UItem(
+                "loads",
+                editor=FilterTabularEditor(
+                    adapter=LoadInstanceAdapter(),
+                    use_fuzzy=True,
+                    editable=False,
+                    multi_select=True,
+                    selected="selected_instances",
+                    stretch_last_section=False,
+                ),
+                height=250,
+            ),
+            label="Load",
+            show_border=True,
+        )
+
+        samplegrp = VGroup(
+            HGroup(
+                UItem("irradiation", editor=EnumEditor(name="irradiations")),
+                UItem("level", editor=EnumEditor(name="levels")),
+                UItem("identifier", editor=EnumEditor(name="identifiers")),
+            ),
+            Item("sample_info", style="readonly"),
+            # Item("packet", style="readonly"),
+            # HGroup(
+            #     Item("weight", label="Weight (mg)", springy=True),
+            #     Item(
+            #         "retain_weight",
+            #         label="Lock",
+            #         tooltip="Retain the Weight for the next hole",
+            #     ),
+            # ),
+            # HGroup(
+            #     Item("nxtals", label="N. Xtals", springy=True),
+            #     Item(
+            #         "retain_nxtals",
+            #         label="Lock",
+            #         tooltip="Retain the N. Xtals for the next hole",
+            #     ),
+            # ),
+            # HGroup(
+            #     Item("npositions", label="NPositions", springy=True),
+            #     Item("auto_increment"),
+            # ),
+            enabled_when="load_name",
+            show_border=True,
+            label="Sample",
+        )
+
+        v = View(VGroup(a, load_grp, samplegrp, status_grp, b))
+        return v
+
+
 class LoadInstanceAdapter(TabularAdapter):
     columns = [("Load", "name"), ("Create Date", "create_date"),
                ("Tray", "tray")]
     font = "modern 10"
 
     create_date_text = Property
+
     def _get_create_date_text(self):
         return self.item.create_date.strftime("%Y-%m-%d")
 
@@ -429,8 +555,8 @@ class StageManagerPane(TraitsDockPane):
 
     def traits_view(self):
         sv = VGroup(BorderVGroup(HGroup(Item("calibrated_position_entry",
-                                              label='Hole #',
-                                              tooltip="Enter a position e.g 1 for a hole, " "or 3,4 for X,Y"),
+                                             label='Hole #',
+                                             tooltip="Enter a position e.g 1 for a hole, " "or 3,4 for X,Y"),
                                         icon_button_editor('autocenter_button', "find")
                                         ),
                                  UItem('stage_controller', style='custom'),

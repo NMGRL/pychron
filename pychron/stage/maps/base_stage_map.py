@@ -376,6 +376,10 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
                 x, y, ah = args
                 ah = ah.strip()
                 ah = ah[1:-1]
+            elif y.startswith('r'):
+                hole = str(hi + 1)
+                x, y, d = args
+                dimension = float(d[1:].strip())
 
         elif len(args) == 4:
             hole, x, y, ah = args
@@ -388,6 +392,8 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
                 "Problem with line {}: {}".format(self.file_path, hi + 3, line)
             )
             return
+
+        # print(x, y, ah, hole, shape, dimension)
         return SampleHole(
             id=hole,
             x=float(x),

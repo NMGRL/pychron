@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
-
+import json
 import os
 import time
 from datetime import datetime
-from beepy import beep
+# from beepy import beep
 from chaco.data_range_1d import DataRange1D
 from chaco.default_colormaps import color_map_name_dict, color_map_dict
 from numpy import linspace
@@ -207,7 +207,7 @@ class LoadingManager(DVCIrradiationable):
     loads = List
     load_instance = Any
     selected_instances = List
-
+    load_name = Property(depends_on='load_instance')
     canvas = Any
     mv_canvas = Any
 
@@ -259,8 +259,13 @@ class LoadingManager(DVCIrradiationable):
 
     loading_level_button = Button('Loading Level')
     checking_level_button = Button('Checking Level')
+    focus_up_button = Button('Up')
+    focus_down_button = Button('Down')
     up_button = Button('Up')
     down_button = Button('Down')
+    left_button = Button('Left')
+    right_button = Button('Right')
+
     home_button = Button('Home')
     scan_tray_button = Button("Scan Tray")
     refresh_table = Event
@@ -272,6 +277,68 @@ class LoadingManager(DVCIrradiationable):
 
     wizard = Instance(LoadingWizard)
     beep_kind = Enum('coin', 'robot_error', 'error', 'ping', 'ready', 'success', 'wilhelm')
+
+    focus_load_button = Button('Focus Load')
+    focus_traytop_button = Button('Focus Tray Top')
+    focus_traybottom_button = Button('Focus Tray Bottom')
+    focus_inspect_button = Button('Focus Inspect')
+
+    focus_load_reset_button = Button('reset')
+    focus_traytop_reset_button = Button('reset')
+    focus_traybottom_reset_button = Button('reset')
+    focus_inspect_reset_button = Button('reset')
+
+    status_load = Str
+    status_tray = Str
+    status_sample = Str
+    status_count = Str
+    message_text = Str
+
+    def _get_focus(self, name):
+        with open(self.focus_path) as f:
+            focus_levels = json.load(f)
+            return focus_levels.get(name)
+
+    def _goto_focus(self, name):
+        v = self._get_focus(name)
+        if v is not None:
+            self.focus_motor.set_position(
+                v,
+                use_absolute=True,
+                block=False)
+
+    def _set_focus(self, name):
+        v = self.focus_motor.get_position()
+        with open(self.focus_path, 'r') as f:
+            focus_levels = json.load(f)
+            focus_levels[name] = v
+
+        with open(self.focus_path, 'w') as f:
+            json.dump(focus_levels, f)
+
+    def _focus_load_button_fired(self):
+        self._goto_focus('load')
+
+    def _focus_traytop_button_fired(self):
+        self._goto_focus('tray_top')
+
+    def _focus_traybottom_button_fired(self):
+        self._goto_focus('tray_bottom')
+
+    def _focus_inspect_button_fired(self):
+        self._goto_focus('inspect')
+
+    def _focus_load_reset_button_fired(self):
+        self._set_focus('load')
+
+    def _focus_traytop_reset_button_fired(self):
+        self._set_focus('tray_top')
+
+    def _focus_traybottom_reset_button_fired(self):
+        self._set_focus('tray_bottom')
+
+    def _focus_inspect_reset_button_fired(self):
+        self._set_focus('inspect')
 
     def __init__(self, *args, **kw):
         super(LoadingManager, self).__init__(*args, **kw)
@@ -306,6 +373,9 @@ class LoadingManager(DVCIrradiationable):
             self.focus_position_entry = round(self.focus_position_readback, 2)
 
             self.wizard = LoadingWizard(manager=self)
+
+    def _get_load_name(self):
+        return self.load_instance.name if self.load_instance else ''
 
     # ===============================================================================
     # wizard
@@ -962,12 +1032,12 @@ class LoadingManager(DVCIrradiationable):
             self.project = ""
             self.irradiation_hole = 0
 
-        self.canvas.set_status_text(identifier=self.identifier,
-                                    sample=self.sample,
-                                    max_count=self.foot_pedal.max_count,
-                                    count=self.foot_pedal.count,
-                                    position=self.foot_pedal.active_idx)
-
+        # if self.canvas:
+        #     self.canvas.set_status_text(identifier=self.identifier,
+        #                             sample=self.sample,
+        #                             max_count=self.foot_pedal.max_count,
+        #                             count=self.foot_pedal.count,
+        #                             position=self.foot_pedal.active_idx)
 
     def _archive_button_fired(self):
         # ls = LoadSelection(loads=self.loads)
@@ -1010,7 +1080,7 @@ class LoadingManager(DVCIrradiationable):
             if m:
                 prefix = m.group("prefix")
                 inc = m.group("inc")
-                nv = "{{:0{}n}}".format(len(inc)).format(int(inc) + 1)
+                nv = "{{:0{}d}}".format(len(inc)).format(int(inc) + 1)
                 self.new_load_name = "{}{}".format(prefix, nv)
 
         info = self.edit_traits(view="_new_load_view")
@@ -1139,9 +1209,9 @@ class LoadingManager(DVCIrradiationable):
     @on_trait_change("canvas:focus_event")
     def _handle_focus_event(self, new):
         if new == 'Up':
-            self._up_button_fired()
+            self._focus_up_button_fired()
         else:
-            self._down_button_fired()
+            self._focus_down_button_fired()
 
     @on_trait_change("canvas:increment_event")
     def _increment(self):
@@ -1339,7 +1409,7 @@ class LoadingManager(DVCIrradiationable):
     def get_focus_scalar(self):
         return self.stage_manager.pxpermm / self.focus_scalar
 
-    def _up_button_fired(self):
+    def _focus_up_button_fired(self):
         pos = self.focus_motor.data_position
         self.debug(f'up pos={pos}')
         if self.focus_position_readback < 52:
@@ -1348,7 +1418,7 @@ class LoadingManager(DVCIrradiationable):
                 self.stage_manager.canvas.shift_right(self.get_focus_scalar() / 4.)
             self._update_focus_position()
 
-    def _down_button_fired(self):
+    def _focus_down_button_fired(self):
         pos = self.focus_motor.data_position
         self.debug(f'down pos={pos}')
         if self.focus_position_readback > 0:

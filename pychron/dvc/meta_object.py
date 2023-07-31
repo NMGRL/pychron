@@ -294,6 +294,10 @@ class BaseGeometry(MetaObject):
                 else:
                     x, y, r = args
 
+            if isinstance(r, str):
+                if r.startswith('r') or r.startswith('l'):
+                    r = float(r[1:])
+
             holes.append((float(x), float(y), float(r), holeid))
 
         self.holes = holes
