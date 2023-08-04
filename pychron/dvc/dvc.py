@@ -719,6 +719,14 @@ class DVC(Loggable):
         progress_loader(ai_gen(), func, threshold=1)
         self._commit_freeze(added, "<PR_FREEZE>")
 
+    def edit_comment(self, runid, repository_identifier, comment):
+        self.debug(f"edit comment {runid} {repository_identifier} {comment}")
+        path = analysis_path(runid, repository_identifier)
+        obj = dvc_load(path)
+        obj["comment"] = comment
+        dvc_dump(obj, path)
+        return path
+
     def manual_edit(self, runid, repository_identifier, values, errors, modifier):
         self.debug(
             "manual edit {} {} {}".format(runid, repository_identifier, modifier)
