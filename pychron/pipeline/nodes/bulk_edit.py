@@ -151,12 +151,15 @@ class BulkOptions(HasTraits):
             ),
             label="Sample",
         )
-        analysis_grp = BorderVGroup(Item("comment"),
-                                    label='Analysis')
+        analysis_grp = BorderVGroup(Item("comment"), label="Analysis")
         v = okcancel_view(
-            VGroup(icgrp, runid_grp, sample_grp,
-                   analysis_grp,
-                   ), title="Bulk Edit Options"
+            VGroup(
+                icgrp,
+                runid_grp,
+                sample_grp,
+                analysis_grp,
+            ),
+            title="Bulk Edit Options",
         )
         return v
 
@@ -222,7 +225,7 @@ class BulkEditNode(BaseDVCNode):
             if not author:
                 author = self.dvc.get_author()
 
-            message = '<EDIT>'
+            message = "<EDIT>"
             if self.options.sync_sample_enabled:
                 message = f"{message} Sync Sample MetaData"
 
@@ -242,9 +245,7 @@ class BulkEditNode(BaseDVCNode):
                         ps.append(p)
 
                 if self.dvc.repository_add_paths(repo, ps):
-                    self.dvc.repository_commit(
-                        repo, message, author
-                    )
+                    self.dvc.repository_commit(repo, message, author)
 
     def _bulk_runid(self, ai, aliquot, step):
         if not aliquot:

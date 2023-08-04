@@ -1267,7 +1267,7 @@ class DVC(Loggable):
                     quick=quick,
                     reload=reload,
                     warn=warn,
-                    *args
+                    *args,
                 )
             except BaseException:
                 record = args[0]
