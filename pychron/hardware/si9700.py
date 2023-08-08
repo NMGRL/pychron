@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 import string
+from traits.api import Float
 from traitsui.api import VGroup, Item
 
 from pychron.hardware.base_cryo_controller import BaseCryoController
@@ -21,6 +22,8 @@ from pychron.hardware.base_cryo_controller import BaseCryoController
 
 class SI9700Controller(BaseCryoController):
     scan_func = "update"
+    setpoint = Float
+    readback = Float
 
     def initialize(self, *args, **kw):
         self.communicator.write_terminator = "\r"
