@@ -61,9 +61,14 @@ class SI9700Controller(BaseCryoController):
             return value.strip()
 
     def get_control_group(self):
-        grp = VGroup(Item("setpoint"), UItem("readback",
-                                            editor=LCDEditor(width=120, height=30),
-                                            style="readonly",))
+        grp = VGroup(
+            Item("setpoint"),
+            UItem(
+                "readback",
+                editor=LCDEditor(width=120, height=30),
+                style="readonly",
+            ),
+        )
         return grp
 
 
