@@ -15,8 +15,10 @@
 # ===============================================================================
 import string
 from traits.api import Float
-from traitsui.api import VGroup, Item
+from traitsui.api import VGroup, Item, UItem
 
+from pychron.core.ui.lcd_editor import LCDEditor
+from pychron.hardware import get_float
 from pychron.hardware.base_cryo_controller import BaseCryoController
 
 
@@ -24,6 +26,10 @@ class SI9700Controller(BaseCryoController):
     scan_func = "update"
     setpoint = Float
     readback = Float
+
+    def update(self, **kw):
+        self.readback = self._read_input(1)
+        return self.readback
 
     def initialize(self, *args, **kw):
         self.communicator.write_terminator = "\r"
@@ -44,6 +50,7 @@ class SI9700Controller(BaseCryoController):
             cmd, value = resp.split(" ")
             return value.strip()
 
+    @get_float(default=0)
     def _read_input(self, ch, **kw):
         if isinstance(ch, int):
             ch = "AB"[ch - 1]
@@ -54,7 +61,9 @@ class SI9700Controller(BaseCryoController):
             return value.strip()
 
     def get_control_group(self):
-        grp = VGroup(Item("setpoint"), Item("readback"))
+        grp = VGroup(Item("setpoint"), UItem("readback",
+                                            editor=LCDEditor(width=120, height=30),
+                                            style="readonly",))
         return grp
 
 
