@@ -21,6 +21,8 @@ from pychron.hardware.core.core_device import CoreDevice
 
 
 class BaseCryoController(CoreDevice):
+    verify_setpoint = True
+
     def setpoints_achieved(self, setpoints, tol=1):
         pass
 

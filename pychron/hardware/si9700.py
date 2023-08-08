@@ -14,11 +14,14 @@
 # limitations under the License.
 # ===============================================================================
 import string
+from traitsui.api import VGroup, Item
 
 from pychron.hardware.base_cryo_controller import BaseCryoController
 
 
 class SI9700Controller(BaseCryoController):
+    scan_func = "update"
+
     def initialize(self, *args, **kw):
         self.communicator.write_terminator = "\r"
         return True
@@ -47,5 +50,8 @@ class SI9700Controller(BaseCryoController):
             cmd, value = resp.split(" ")
             return value.strip()
 
-
+    def get_control_group(self):
+        grp = VGroup(Item('sestpoint'),
+                     Item('readback'))
+        return grp
 # ============= EOF =============================================
