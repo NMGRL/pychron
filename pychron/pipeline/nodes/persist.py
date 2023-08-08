@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import os
 
 # ============= enthought library imports =======================
 from pyface.message_dialog import information
@@ -143,10 +144,17 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
     name = "Save Iso Evo"
     commit_tag = "ISOEVO"
     modifier = ("intercepts", "baselines")
+    classifier_db = Instance(
+        "pychron.classifier.database_adapter.ArgonIntelligenceDatabase"
+    )
 
     def run(self, state):
         if not state.saveable_keys:
             return
+
+        if self.classifier_db:
+            self.classifier_db.connect()
+            self.classifier_db.create_session()
 
         def wrapper(x, prog, i, n):
             self._save_fit(x, prog, i, n, state.saveable_keys)
@@ -162,12 +170,17 @@ class IsotopeEvolutionPersistNode(DVCPersistNode):
             msg = "fits={}".format(f)
 
         self._persist(state, msg)
+        if self.classifier_db:
+            self.classifier_db.close_session()
 
     def _save_fit(self, x, prog, i, n, keys):
         if prog:
             prog.change_message("Save Fits {} {}/{}".format(x.record_id, i, n))
 
         self.dvc.save_fits(x, keys)
+        if self.classifier_db:
+            for k in keys:
+                self.classifier_db.add_classification(x, k)
 
 
 class BlanksPersistNode(DVCPersistNode):
@@ -238,6 +251,7 @@ class ICFactorPersistNode(DVCPersistNode):
             state.references,
             state.use_source_correction,
             state.standard_ratios,
+            state.reference_data,
         )
 
 
@@ -248,7 +262,7 @@ class FluxPersistNode(DVCPersistNode):
     def run(self, state):
         if state.monitor_positions:
             meta_repo = self.dvc.meta_repo
-            meta_repo.smart_pull()
+            meta_repo.smart_pull(quiet=False)
             xs = [
                 xi
                 for xi in state.monitor_positions + state.unknown_positions
@@ -264,6 +278,7 @@ class FluxPersistNode(DVCPersistNode):
                 model_kind=po.model_kind,
                 predicted_j_error_type=po.predicted_j_error_type,
                 use_weighted_fit=po.use_weighted_fit,
+                interpolation_style=po.interpolation_style,
                 monte_carlo_ntrials=po.monte_carlo_ntrials,
                 use_monte_carlo=po.use_monte_carlo,
                 monitor_name=po.monitor_name,
@@ -358,16 +373,23 @@ class XLSXAnalysisTablePersistNode(BaseDVCNode):
         info = OptionsController(model=self.options).edit_traits(
             view=self.options_view, kind="livemodal"
         )
+        self.options.selected_options.overwrite = False
         if info.result:
+            p = self.options.selected_options.get_path()
+            if os.path.isfile(p):
+                if confirmation_dialog(
+                    "File {} already exists. Would you like to overwrite it?".format(p)
+                ):
+                    self.options.selected_options.overwrite = True
             return True
 
     def _pre_run_hook(self, state):
         if state.unknowns:
             ri = tuple({ai.repository_identifier for ai in state.unknowns})
             options = self.options.selected_options
-
-            if not options.root_name:
-                options.root_name = ri[0]
+            if options:
+                if not options.root_name:
+                    options.root_name = ri[0]
 
     def _finish_configure(self):
         self.options.dump()

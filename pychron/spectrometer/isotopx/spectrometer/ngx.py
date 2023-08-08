@@ -53,9 +53,9 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
     _read_enabled = True
     use_deflection_correction = False
     use_hv_correction = False
-    _triggered = False
-    acq_count = None
+    acq_count = 0
     total_acq_count = 10
+    has_atonas = True
 
     def _microcontroller_default(self):
         service = "pychron.hardware.isotopx_spectrometer_controller.NGXController"
@@ -95,6 +95,8 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                 self.magnet.field_table.path = mftable_name
                 self.magnet.field_table.load_table(load_items=True)
 
+        self.has_atonas = any([d for d in self.detectors if d.kind in (ATONA, "CDD")])
+
     def _send_configuration(self, **kw):
         pass
 
@@ -126,7 +128,9 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         #    time.sleep(0.25)
 
         if not self.microcontroller.triggered:
-            self.ask("StopAcq", verbose=verbose)
+            self.microcontroller.lock.acquire()
+            # self.ask("StopAcq", verbose=verbose)
+            self.microcontroller.stop_acquisition()
             self.microcontroller.triggered = True
             # return self.ask('StartAcq 1,{}'.format(self.rcs_id), verbose=verbose)
             self.total_acq_count = int(self.integration_time)
@@ -146,24 +150,29 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     self.debug("readline timeout. raw={}".format(ds))
                 return
 
-            if not self._read_enabled or self.microcontroller.canceled:
-                self.microcontroller.canceled = False
+            if not self._read_enabled:
+                # or self.microcontroller.canceled:
+                # self.microcontroller.canceled = False
                 self.debug("readline canceled")
                 return
 
             try:
-                ds += self.read(1)
+                # ds += self.read(1)
                 # print(ds)
-                # ds = self.microcontroller.communicator.readline("#\r\n")
+                ds = self.microcontroller.communicator.readline("#\r\n")
+                # ds = self.microcontroller.communicator.select_read(terminator="#\r\n")
                 # return ds
             except BaseException:
                 if not self.microcontroller.canceled:
                     self.debug_exception()
                     self.debug(f"data left: {ds}")
 
-            if "#\r\n" in ds:
-                ds = ds.split("#\r\n")[0]
-                return ds
+            if ds and ds.endswith("#\r\n"):
+                return ds[:-3]
+
+            # if ds and "#\r\n" in ds:
+            #     ds = ds.split("#\r\n")[0]
+            #     return ds
 
     def cancel(self):
         self.debug("canceling")
@@ -184,9 +193,13 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
                     trigger, self.microcontroller.triggered
                 )
             )
+
+        self.microcontroller.lock.acquire()
         resp = True
-        if trigger:
+        trigger_release = False
+        if trigger or not self.microcontroller.triggered:
             resp = self.trigger_acq()
+            trigger_release = True
             # self.microcontroller.lock.release()
             if resp is not None:
                 # if verbose:
@@ -206,8 +219,8 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         if resp is not None:
             keys = self.detector_names[::-1]
             while self._read_enabled:
-                with self.microcontroller.lock:
-                    line = self.readline(verbose=True)
+                # with self.microcontroller.lock:
+                line = self.readline(verbose=True)
 
                 if verbose:
                     self.debug("raw: {}".format(line))
@@ -224,19 +237,27 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
 
                         collection_time = datetime.combine(cd, ct)
                         signals = [float(i.strip()) for i in args[5:]]
-                        print("fad", keys, signals)
                         if line.startswith(targeta):
                             self.acq_count += 1
-                            if self.acq_count == self.total_acq_count:
+                            if (
+                                self.acq_count == self.total_acq_count
+                                and self.has_atonas
+                            ):
                                 # forget this ACQ and immediately get the ACQ.B record.
                                 continue
                             else:
                                 nsignals, keys = [], []
                                 for i, di in enumerate(self.detectors[::-1]):
-                                    if di.kind == "CDD":
+                                    if di.kind in ("CDD", ATONA) or not self.has_atonas:
                                         nsignals.append(signals[i])
                                         keys.append(di.name)
                                 signals = nsignals
+
+                                if not self.has_atonas:
+                                    self.acq_count = 0
+                                    self.microcontroller.triggered = False
+                                    inc = True
+
                                 break
 
                         elif line.startswith(targetb):
@@ -264,6 +285,10 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
             self.debug("keys: {}".format(keys))
             self.debug("signals: {}".format(signals))
 
+        self.microcontroller.lock.release()
+        if trigger_release:
+            self.microcontroller.lock.release()
+
         return keys, signals, collection_time, inc
 
     def read_integration_time(self):
@@ -279,7 +304,8 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         self.debug(
             "acquisition period set to 1 second.  integration time set to {}".format(it)
         )
-        self.ask("StopAcq")
+        # self.ask("StopAcq")
+        self.microcontroller.stop_acquisition()
         self.ask("SetAcqPeriod 1000")
         self._read_enabled = False
         self.microcontroller.triggered = False

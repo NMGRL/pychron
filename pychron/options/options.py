@@ -181,8 +181,26 @@ class AppearanceSubOptions(SubOptions):
         )
         return hg
 
+    def _get_margin_group(self):
+        return BorderVGroup(
+            HGroup(
+                Spring(springy=False, width=100),
+                Item("margin_top", label="Top"),
+                spring,
+            ),
+            HGroup(
+                Item("margin_left", label="Left"), Item("margin_right", label="Right")
+            ),
+            HGroup(
+                Spring(springy=False, width=100),
+                Item("margin_bottom", label="Bottom"),
+                spring,
+            ),
+            label="Page Margins",
+        )
+
     def _get_padding_group(self):
-        return VGroup(
+        return BorderVGroup(
             HGroup(
                 Spring(springy=False, width=100),
                 Item("padding_top", label="Top"),
@@ -201,7 +219,6 @@ class AppearanceSubOptions(SubOptions):
             ),
             enabled_when="not formatting_options",
             label="Padding/Spacing",
-            show_border=True,
         )
 
     def _get_bg_group(self):
@@ -234,6 +251,7 @@ class AppearanceSubOptions(SubOptions):
         g = VGroup(
             self._get_bg_group(),
             self._get_layout_group(),
+            self._get_margin_group(),
             self._get_padding_group(),
             self._get_grid_group(),
         )
@@ -245,7 +263,7 @@ class MainOptions(SubOptions):
     def _get_columns(self):
         cols = [
             checkbox_column(name="plot_enabled", label="Use"),
-            object_column(name="name", width=130, editor=EnumEditor(name="names")),
+            object_column(name="name", editor=EnumEditor(name="names")),
             object_column(name="scale"),
             object_column(name="height", format_func=lambda x: str(x) if x else ""),
             checkbox_column(name="show_labels", label="Labels"),
@@ -317,7 +335,7 @@ class MainOptions(SubOptions):
 
     def _get_edit_view(self):
         v = View(
-            BorderVGroup(
+            VGroup(
                 self._get_name_grp(),
                 self._get_yticks_grp(),
                 self._get_ylimits_group(),
@@ -370,6 +388,16 @@ class MainOptions(SubOptions):
 # ===============================================================
 
 
+def convert_color(ss):
+    from pyface.qt.QtGui import QColor
+
+    nd = {}
+    for k, v in ss.items():
+        if isinstance(v, QColor):
+            nd[k] = v.rgba()
+    ss.update(**nd)
+
+
 class BaseOptions(HasTraits):
     fontname = Enum(*FONTS)
     _main_options_klass = MainOptions
@@ -378,15 +406,6 @@ class BaseOptions(HasTraits):
     _subview_cache = None
 
     def make_state(self):
-        def convert_color(ss):
-            from pyface.qt.QtGui import QColor
-
-            nd = {}
-            for k, v in ss.items():
-                if isinstance(v, QColor):
-                    nd[k] = v.rgba()
-            ss.update(**nd)
-
         state = self.__getstate__()
         state["klass"] = str(self.__class__)
 
@@ -419,6 +438,8 @@ class BaseOptions(HasTraits):
 
         convert_color(state)
         self._get_state_hook(state)
+        convert_color(state)
+
         return state
 
     def dump(self, wfile):
@@ -440,6 +461,8 @@ class BaseOptions(HasTraits):
             if key == "aux_plots":
                 if "_plot_names" in ctx:
                     ctx.pop("_plot_names")
+                elif "error_types" in ctx:
+                    ctx.pop("error_types")
 
             return cls(**ctx)
 
@@ -614,6 +637,12 @@ class FigureOptions(BaseOptions, GroupMixin):
     padding_right = Int(100)
     padding_top = Int(100)
     padding_bottom = Int(100)
+
+    margin_left = Int(10)
+    margin_right = Int(10)
+    margin_top = Int(10)
+    margin_bottom = Int(10)
+
     auto_generate_title = Bool
     include_legend = Bool(False)
     include_sample_in_legend = Bool
@@ -642,6 +671,7 @@ class FigureOptions(BaseOptions, GroupMixin):
     xtitle_font = Property
     xtitle_fontsize = Enum(*SIZES)
     xtitle_fontname = Enum(*FONTS)
+    xtitle = Str
 
     ytick_font = Property
     ytick_fontsize = Enum(*SIZES)
@@ -662,7 +692,7 @@ class FigureOptions(BaseOptions, GroupMixin):
     # group_editor_klass = None
 
     # refresh_colors = Event
-
+    stretch_vertical = Bool
     xpadding = Property
     xpad = Float
     xpad_as_percent = Bool
@@ -673,6 +703,13 @@ class FigureOptions(BaseOptions, GroupMixin):
     # def initialize(self):
     #     if not self.groups:
     #         self.groups = self._groups_default()
+    def get_page_size(self):
+        fw, fh = self.layout.fixed_width, self.layout.fixed_height
+        if fw or fh:
+            return fw, fh
+
+    def get_page_margins(self):
+        return self.margin_left, self.margin_right, self.margin_top, self.margin_bottom
 
     def get_paddings(self):
         return (

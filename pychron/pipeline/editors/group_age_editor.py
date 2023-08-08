@@ -30,6 +30,7 @@ from traitsui.api import (
 from traitsui.menu import Action
 
 from pychron.column_sorter_mixin import ColumnSorterMixin
+from pychron.core.helpers.color_generators import colornames
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.core.pychron_traits import BorderVGroup, BorderHGroup
 from pychron.core.ui.tabular_editor import myTabularEditor
@@ -44,9 +45,9 @@ from pychron.pipeline.subgrouping import (
 from pychron.processing.analyses.analysis_group import InterpretedAgeGroup
 from pychron.processing.analyses.preferred import get_preferred_grp
 
-
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+from pychron.pychron_constants import PLUSMINUS_ONE_SIGMA
 
 
 class GroupAdapter(BaseAdapter):
@@ -73,6 +74,7 @@ class GroupAdapter(BaseAdapter):
 class SubGroupAdapter(GroupAdapter):
     columns = [
         ("Status", "tag"),
+        ("Sample", "sample"),
         ("Group", "group_id"),
         ("SubGroup", "subgroup_id"),
         ("Label", "label_name"),
@@ -96,14 +98,25 @@ class SubGroupAdapter(GroupAdapter):
 class AnalysesAdapter(SubGroupAdapter):
     columns = [
         ("RunID", "record_id"),
+        ("Sample", "sample"),
         ("Tag", "tag"),
         ("Group", "group_id"),
         ("SubGroup", "subgroup"),
+        ("Age", "age"),
+        (PLUSMINUS_ONE_SIGMA, "age_err"),
+        ("Exclude Isochron", "exclude_from_isochron"),
     ]
 
     subgroup_text = Property
     record_id_width = Int(60)
     subgroup_width = Int(100)
+    exclude_from_isochron_text = Property
+
+    def get_text_color(self, obj, trait, row, column=0):
+        return colornames[self.item.group_id % len(colornames)]
+
+    def _get_exclude_from_isochron_text(self):
+        return "Yes" if self.item.exclude_from_isochron else ""
 
     def _get_tag_text(self):
         return self.item.tag
@@ -122,11 +135,18 @@ class AnalysesAdapter(SubGroupAdapter):
             Action(name="Clear Grouping", action="clear_grouping"),
             Action(name="Group Selected", action="group_selected"),
             Action(name="SubGroup Selected", action="subgroup_selected"),
+            Action(
+                name="Toggle Exclude From Isochron",
+                action="toggle_exclude_from_isochron",
+            ),
         )
         return m
 
 
 class THandler(Handler):
+    def toggle_exclude_from_isochron(self, info, obj):
+        obj.toggle_exclude_from_isochron()
+
     def group_selected(self, info, obj):
         obj.group_selected()
 
@@ -184,6 +204,11 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
         gs = []
         unks = []
         for gid, ans in groupby_group_id(self.items):
+            try:
+                egroup = self.groups[gid]
+            except IndexError:
+                egroup = None
+
             ans = list(ans)
             if self.skip_meaning:
                 if "Human Table" in self.skip_meaning:
@@ -208,13 +233,21 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
                     dirty=True,
                 )
 
-            ag.set_preferred_kinds()
+            ag.set_preferred_kinds(sg=egroup)
+
             gs.append(ag)
 
         self.groups = gs
         self.unknowns = unks
+        self.selected_group = gs[:1]
 
     # action handlers
+    def toggle_exclude_from_isochron(self):
+        for a in self.selected:
+            a.exclude_from_isochron = not a.exclude_from_isochron
+
+        self.make_groups()
+
     def group_selected(self):
         gid = max({a.group_id for a in self.items}) + 1
         for a in self.selected:
@@ -322,9 +355,9 @@ class GroupAgeEditor(BaseTableEditor, ColumnSorterMixin, PersistenceMixin):
         return ggrp
 
     def get_options_group(self):
-        return BorderVGroup(  # Item('include_j_position_error'),
+        return BorderHGroup(  # Item('include_j_position_error'),
             Item("include_j_error_in_mean"),
-            # Item('include_decay_error_in_mean'),
+            Item("include_decay_error_in_mean"),
             label="Options",
         )
 

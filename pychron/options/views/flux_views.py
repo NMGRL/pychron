@@ -28,6 +28,9 @@ from pychron.pychron_constants import (
     BRACKETING,
     NN,
     MATCHING,
+    HIGH_ORDER_POLY,
+    RBF,
+    GRIDDATA,
 )
 
 
@@ -45,7 +48,13 @@ class FluxSubOptions(SubOptions):
                 Item("model_kind", label="Kind"),
                 Item("error_kind", label="Mean J Error"),
                 Item("predicted_j_error_type", label="Predicted J Error"),
-                Item("use_weighted_fit"),
+                Item(
+                    "use_weighted_fit",
+                    label="Use Weighted Mean Js",
+                    tooltip="Use the inverse variance weighted mean "
+                    "of the analyses from each position "
+                    "to calculate J curve",
+                ),
                 Item(
                     "least_squares_fit",
                     visible_when='model_kind=="{}"'.format(LEAST_SQUARES_1D),
@@ -61,6 +70,15 @@ class FluxSubOptions(SubOptions):
                     "n_neighbors",
                     label="N. Neighbors",
                     visible_when='model_kind == "{}"'.format(NN),
+                ),
+                Item(
+                    "degree",
+                    label="Polynominal Degree",
+                    visible_when='model_kind == "{}"'.format(HIGH_ORDER_POLY),
+                ),
+                Item(
+                    "interpolation_style",
+                    visible_when='model_kind == "{}"'.format(BRACKETING),
                 ),
                 label="Model",
             ),
@@ -106,6 +124,9 @@ class FluxAppearanceSubOptions(AppearanceSubOptions):
                 ),
                 Item("levels"),
             ),
+            Item("rbf_kind", visible_when='model_kind="{}"'.format(RBF)),
+            Item("griddata_method", visible_when='model_kind="{}"'.format(GRIDDATA)),
+            Item("degree", visible_when='model_kind="{}"'.format(HIGH_ORDER_POLY)),
             visible_when='plot_kind=="2D"',
             label="Options",
             show_border=True,

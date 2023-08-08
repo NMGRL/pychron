@@ -18,24 +18,53 @@
 # ============= standard library imports ========================
 from __future__ import absolute_import
 from __future__ import print_function
-from numpy import ones, vstack, zeros, hstack
+from numpy import ones, vstack, zeros, hstack, arange, digitize
 from numpy.random import random
 
 # ============= local library imports  ==========================
 from pychron.classifier.base_classifier import BaseClassifier
 
 
+# def make_sample(iso):
+#     print("make sample {} {} {}".format(iso.mass, iso.n, iso.intercept_percent_error))
+#     return (
+#         iso.mass,
+#         iso.n,
+#         iso.value,
+#         iso.intercept_percent_error,
+#         iso.get_slope(),
+#         iso.standard_fit_error(),
+#         iso.noutliers(),
+#     )
+NMAX = 1200 * 10
+PLACEHOLDER = -9999
+
+
 def make_sample(iso):
-    # print 'make sample {} {} {}'.format(iso.mass, iso.n, iso.intercept_percent_error)
-    return (
-        iso.mass,
-        iso.n,
-        iso.value,
-        iso.intercept_percent_error,
-        iso.get_slope(),
-        iso.standard_fit_error(),
-        iso.noutliers(),
-    )
+    xs = iso.xs
+    sxs = iso.sniff.xs
+    bxs = iso.baseline.xs
+    # vs = iso.sniff.ys
+
+    timebins = arange(NMAX)
+    vs = zeros(NMAX) * PLACEHOLDER
+    mxs = sxs * 10
+    # print(digitize(mxs, timebins))
+
+    vs[digitize(mxs, timebins)] = iso.sniff.ys
+    # print(vs)
+
+    # end = sxs[-1]
+    # start = xs[0]
+    # vs = hstack((vs, zeros(int(start-end))))
+    # vs = hstack((vs, iso.ys))
+    #
+    # end = xs[-1]
+    # start = bxs[0]
+    # vs = hstack((vs, zeros(int(start - end))))
+    # vs = hstack((vs, iso.baseline.ys))
+
+    return hstack(((iso.mass, PLACEHOLDER), vs))
 
 
 class IsotopeClassifier(BaseClassifier):
@@ -54,7 +83,7 @@ class IsotopeClassifier(BaseClassifier):
             klass=klass, *args, **kw
         )
 
-    def predict_isotope(self, iso):
+    def classify_isotope(self, iso):
         return self.predict(make_sample(iso))
 
     def add_isotopes(self, isos, klasses):
@@ -79,9 +108,8 @@ class IsotopeClassifier(BaseClassifier):
         if self._clf is None:
             self.load()
 
-        klass = None
+        klass = 1
         prob = 0
-        print(x)
         if self._clf:
             klass = int(self._clf.predict(x)[0])
             prob = self._clf.predict_proba(x)[0][klass]

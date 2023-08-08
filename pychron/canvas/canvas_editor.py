@@ -18,7 +18,7 @@ import shutil
 from operator import attrgetter
 
 import yaml
-from enable.colors import ColorTrait
+
 from traits.api import (
     HasTraits,
     List,
@@ -29,6 +29,7 @@ from traits.api import (
     Instance,
     Str,
     Bool,
+    Color,
 )
 from traits.traits import Color
 from traitsui.api import View, UItem, TableEditor

@@ -110,6 +110,7 @@ class RepoCentralPane(TraitsTaskPane):
                     icon_button_editor(
                         "refresh_branch_button",
                         "refresh",
+                        enabled_when="branches",
                         tooltip="Fetch the changes from remote to update the available "
                         "branches",
                     ),

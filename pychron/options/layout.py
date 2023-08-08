@@ -15,8 +15,11 @@
 # ===============================================================================
 
 # ============= enthought library imports =======================
-from traits.api import HasTraits, Str, Int, Enum, Property
+from traits.api import HasTraits, Str, Int, Enum, Property, Bool
 from traitsui.api import View, Item, HGroup, VGroup
+from traitsui.item import Label
+
+from pychron.core.ui.qt.custom_label_editor import CustomLabel
 
 
 # ============= standard library imports ========================
@@ -78,9 +81,14 @@ class FigureLayout(HasTraits):
     fixed_width = Int(0)
     fixed_height = Int(0)
 
+    stretch_vertical = Bool
     row_enabled = Property(depends_on="fixed")
     column_enabled = Property(depends_on="fixed")
 
+    remake_label = Str(
+        "You must remake the figure if you edit Fixed Width or Fixed Height. The figure "
+        "will not automatically resize"
+    )
     # def __init__(self, *args, **kw):
     #     super(FigureLayout, self).__init__(*args, **kw)
     #     self._fixed_changed()
@@ -128,6 +136,7 @@ class FigureLayout(HasTraits):
 
     def traits_view(self):
         rc_grp = VGroup(
+            CustomLabel("remake_label", color="red"),
             HGroup(
                 Item(
                     "fixed_width",
@@ -144,8 +153,16 @@ class FigureLayout(HasTraits):
                 Item("rows", enabled_when="row_enabled"),
                 Item("columns", enabled_when="column_enabled"),
                 Item("fixed"),
-                enabled_when="not fixed_width",
+                # enabled_when="not fixed_width",
             ),
+            # HGroup(
+            #     Item(
+            #         "stretch_vertical",
+            #         label="Vertical Stretch",
+            #         tooltip="Resize the main plot to fill the vertical space. "
+            #         "Best used when only using either a single figure or a single row of figures",
+            #     )
+            # ),
             label="Layout",
             show_border=True,
         )

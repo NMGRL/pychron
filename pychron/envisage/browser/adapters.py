@@ -120,7 +120,7 @@ class LabnumberAdapter(BrowserAdapter):
     odd_bg_color = "lightgray"
 
     name_width = Int(125)
-    labnumber_width = Int(60)
+    labnumber_width = Int(90)
     material_width = Int(75)
 
     def get_menu(self, obj, trait, row, column):

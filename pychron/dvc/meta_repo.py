@@ -113,6 +113,75 @@ def get_frozen_flux(repo, irradiation):
 class MetaRepo(GitRepoManager):
     clear_cache = Bool
 
+    @property
+    def data_reduction_log_path(self):
+        return os.path.join(paths.meta_root, "data_reduction_log.json")
+
+    @property
+    def data_reduction_manifest_path(self):
+        return os.path.join(paths.meta_root, "dr_manifest.json")
+
+    _cached_loads = None
+
+    def get_data_reduction_loads(self):
+        objs = self._cached_loads
+        if objs is None:
+            objs = dvc_load(self.data_reduction_log_path, default=[])
+            self._cached_loads = objs
+        return self._cached_loads
+
+    def clear_data_reduction_loads_cache(self):
+        self._cached_loads = None
+
+    def save_data_reduction_loads(self, objs):
+        eobjs = dvc_load(self.data_reduction_log_path, default=[])
+        # for ei in eobjs:
+        #     print(ei["name"])
+        #     if not next((oi for oi in objs if oi["name"] == ei["name"]), None):
+        #         print('not in objs')
+        #         objs.append(ei)
+        for oi in objs:
+            eoi = next((ei for ei in eobjs if ei["name"] == oi["name"]), None)
+            if eoi:
+                for k, v in oi.items():
+                    if k == "projects" and not v:
+                        continue
+                    eoi[k] = v
+
+                # print('a', eoi)
+                # eoi.update(oi)
+                # print('b', eoi)
+            else:
+                eobjs.append(oi)
+
+        eobjs = sorted(eobjs, key=lambda x: x["name"])
+        ret = dvc_dump(eobjs, self.data_reduction_log_path)
+        self.add(self.data_reduction_log_path, commit=False)
+
+        return ret
+
+    def save_data_reduction_manifest(self, manifest):
+        dvc_dump(manifest, self.data_reduction_manifest_path)
+
+    def get_data_reduction_manifest(self):
+        return dvc_load(self.data_reduction_manifest_path, default=[])
+
+        # main
+        # loaded_manifest = []
+        # if os.path.isfile(manifest_path):
+        #     with open(manifest_path, "r") as rfile:
+        #         loaded_manifest = json.load(rfile)
+
+    def backup_data_reduction_loads(self):
+        p = os.path.join(paths.meta_root, "data_reduction_log.json.bak")
+        shutil.copy(self.data_reduction_log_path, p)
+
+    def share_data_reduction_loads(self):
+        self.smart_pull()
+        self.add(self.data_reduction_log_path)
+        self.commit("updated date reduction log")
+        self.push()
+
     def get_correlation_ellipses(self):
         p = os.path.join(paths.meta_root, "correlation_ellipses.json")
         return dvc_load(p)
@@ -489,7 +558,10 @@ class MetaRepo(GitRepoManager):
             z = jd.get("z", 0)
 
         if not save_predicted:
-            j, e = jd.get("j", 0), jd.get("j_err", 0)
+            j, e = 0, 0
+            for p in positions:
+                if p["identifier"] == identifier:
+                    j, e = p.get("j", 0), p.get("j_err", 0)
 
         npos = {
             "position": pos,
@@ -686,10 +758,25 @@ class MetaRepo(GitRepoManager):
 
     # @cached('clear_cache')
     def get_production(self, irrad, level, allow_null=False, **kw):
-        path = os.path.join(paths.meta_root, irrad, "productions.json")
-        obj = dvc_load(path)
+        iroot = os.path.join(paths.meta_root, irrad)
+        if not os.path.isdir(iroot):
+            self.warning(
+                "The irradiation {} does not exist. Please check your Database and MetaRepo for "
+                "typos".format(irrad)
+            )
 
-        pname = obj.get(level, "")
+        ppath = os.path.join(iroot, "productions.json")
+        obj = dvc_load(ppath)
+        try:
+            pname = obj[level]
+        except KeyError:
+            pname = ""
+            self.warning(
+                'The irradiation level "{}" is not listed in your {}/productions.json file'.format(
+                    level, irrad
+                )
+            )
+
         p = os.path.join(
             paths.meta_root, irrad, "productions", add_extension(pname, ext=".json")
         )

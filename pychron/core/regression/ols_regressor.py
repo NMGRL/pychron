@@ -32,6 +32,7 @@ from traits.api import Int, Property
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.fits import FITS, fit_to_degree
+from pychron.core.helpers.strtools import streq
 from pychron.core.regression.base_regressor import BaseRegressor
 from pychron.pychron_constants import MSEM, SEM, AUTO_LINEAR_PARABOLIC
 
@@ -86,12 +87,13 @@ class OLSRegressor(BaseRegressor):
         """
         if not hasattr(self, "pinv_wexog"):
             self.pinv_wexog = linalg.pinv(self._ols.wexog)
+
         beta = dot(self.pinv_wexog, endog)
 
         return dot(exog, beta)
 
     def determine_fit(self):
-        if self._fit == AUTO_LINEAR_PARABOLIC.lower():
+        if streq(self._fit, AUTO_LINEAR_PARABOLIC):
             self.set_degree("linear", refresh=False)
             self.calculate()
             linear_r = self.rsquared_adj
@@ -321,10 +323,14 @@ class OLSRegressor(BaseRegressor):
     def _get_rsquared(self):
         if self._result:
             return self._result.rsquared
+        else:
+            return 0
 
     def _get_rsquared_adj(self):
         if self._result:
             return self._result.rsquared_adj
+        else:
+            return 0
 
     def _calculate_coefficients(self):
         """

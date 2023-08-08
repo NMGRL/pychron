@@ -17,9 +17,9 @@
 # ============= enthought library imports =======================
 from math import isinf
 
-from chaco.legend import Legend
+from chaco.api import Legend
 from numpy import inf
-from traits.api import HasTraits, Any, List, Str, Event
+from traits.api import HasTraits, Any, List, Str, Event, Int
 
 from pychron.core.helpers.iterfuncs import groupby_group_id
 from pychron.processing.analysis_graph import AnalysisStackedGraph
@@ -30,6 +30,7 @@ class FigurePanel(HasTraits):
     analyses = Any
     plot_options = Any
     equi_stack = False
+    graph_id = Int
 
     _index_attr = ""
     _graph_klass = AnalysisStackedGraph
@@ -51,7 +52,11 @@ class FigurePanel(HasTraits):
 
     def _figure_factory(self, *args, **kw):
         return self._figure_klass(
-            options=self.plot_options, equi_stack=self.equi_stack, *args, **kw
+            graph_id=self.graph_id,
+            options=self.plot_options,
+            equi_stack=self.equi_stack,
+            *args,
+            **kw
         )
 
     def _make_figures(self, **kw):
@@ -81,7 +86,7 @@ class FigurePanel(HasTraits):
             fig.suppress_ylimits_update = state
             fig.suppress_xlimits_update = state
 
-    def make_graph(self):
+    def make_graph(self, row=(0, 0), col=(0, 0)):
         po = self.plot_options
         g = self._graph_klass(
             # panel_height=200,
@@ -121,7 +126,7 @@ class FigurePanel(HasTraits):
                 )
 
                 if i == 0:
-                    fig.build(plots)
+                    fig.build(plots, row=row, col=col)
 
                 fig.plot(plots, legend)
 
@@ -131,6 +136,9 @@ class FigurePanel(HasTraits):
 
                 update_dict = fig.get_update_dict()
             self._suppress_limits(False)
+
+            # use the last figure to plot the group based overlays e.g. ExplicitLegent
+            fig.finalize_group_overlays(self.figures)
 
             if legend:
                 g.plots[0].overlays.append(legend)
@@ -152,7 +160,7 @@ class FigurePanel(HasTraits):
             for i, p in enumerate(plots):
                 g.plots[i].value_scale = p.scale
                 if p.ymin or p.ymax:
-                    # print("has ymin max set", p.ymin, p.ymax)
+                    # print("has ymin max set", i, p.ymin, p.ymax)
                     ymi, yma = p.ymin, p.ymax
                     if p.ymin > p.ymax:
                         yma = None
@@ -160,9 +168,14 @@ class FigurePanel(HasTraits):
                 elif p.has_ylimits():
                     # print("has ylimits", i, p.ylimits[0], p.ylimits[1])
                     g.set_y_limits(p.ylimits[0], p.ylimits[1], plotid=i)
-                elif p.calculated_ymin or p.calculated_ymax:
-                    # print("has calculated", p.calculated_ymin, p.calculated_ymax)
-                    g.set_y_limits(p.calculated_ymin, p.calculated_ymax, plotid=i)
+                elif p.calculated_ymin.get(self.graph_id) or p.calculated_ymax.get(
+                    self.graph_id
+                ):
+                    g.set_y_limits(
+                        p.calculated_ymin.get(self.graph_id),
+                        p.calculated_ymax.get(self.graph_id),
+                        plotid=i,
+                    )
 
             if mi is None and ma is None:
                 mi, ma = 0, 100
@@ -172,7 +185,7 @@ class FigurePanel(HasTraits):
                 g.set_x_limits(mi, ma, pad=xpad or self.plot_options.xpadding)
 
             self.figures[-1].post_make()
-            self.figures[-1].post_plot(plots)
+            self.figures[-1].post_plot(plots, row, col)
 
             for fig in self.figures:
                 for i in range(len(plots)):

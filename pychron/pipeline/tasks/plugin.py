@@ -50,6 +50,10 @@ from pychron.pipeline.tasks.actions import (
     InterpretedAgeRecallAction,
     IdentifyPeaksDemoAction,
     ImportOptionsActions,
+    DVCRecallAction,
+    SignalEstimatorAction,
+    DataReductionLogAction,
+    IsochronSandboxAction,
 )
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
@@ -178,6 +182,7 @@ class PipelinePlugin(BaseTaskPlugin):
         debug_additions = [
             SchemaAddition(factory=IdentifyPeaksDemoAction, path="MenuBar/tools.menu"),
             SchemaAddition(factory=ImportOptionsActions, path="MenuBar/tools.menu"),
+            SchemaAddition(factory=SignalEstimatorAction, path="MenuBar/tools.menu"),
         ]
         extensions.append(
             TaskExtension(actions=debug_additions, task_id="pychron.pipeline.task")
@@ -202,6 +207,7 @@ class PipelinePlugin(BaseTaskPlugin):
             (AnalysisTableAction, "table"),
             (FreezeProductionRatios, "freeze_production"),
             (MassSpecReducedAction, "mass_spec_reduced"),
+            (DataReductionLogAction, "data_reduction_log"),
         ):
             fit_actions.append(
                 SchemaAddition(
@@ -226,6 +232,7 @@ class PipelinePlugin(BaseTaskPlugin):
             (InverseIsochronAction, "inverse_isochron"),
             (SeriesAction, "series"),
             (ExtractionAction, "extraction"),
+            (IsochronSandboxAction, "isochron_sandbox"),
         ):
             plot_actions.append(
                 SchemaAddition(
@@ -244,6 +251,7 @@ class PipelinePlugin(BaseTaskPlugin):
         for f, t in (
             (RecallAction, "recall"),
             (InterpretedAgeRecallAction, "interpreted_age_recall"),
+            (DVCRecallAction, "dvc_recall"),
         ):
             recall_actions.append(
                 SchemaAddition(

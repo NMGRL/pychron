@@ -25,17 +25,16 @@ from chaco.label import Label
 try:
     from chaco.overlays.plot_label import PlotLabel
 except ImportError:
-    from chaco.plot_label import PlotLabel
+    from chaco.api import PlotLabel
 
 try:
     from chaco.overlays.data_label import draw_arrow
 except ImportError:
-    from chaco.data_label import draw_arrow
+    from chaco.api import draw_arrow
 
 from enable.font_metrics_provider import font_metrics_provider
 from enable.tools.drag_tool import DragTool
 from enable.api import ColorTrait
-from chaco.api import PlotLabel
 from kiva.trait_defs.kiva_font_trait import KivaFont
 
 # ============= standard library imports ========================

@@ -23,7 +23,7 @@ from requests.exceptions import InvalidSchema, ConnectTimeout, ConnectionError
 from traits.api import Str, Int
 from apptools.preferences.preference_binding import bind_preference
 
-from pychron.core.pychron_traits import URLStr
+from pychron.core.pychron_traits import HTTPStr
 from pychron.experiment.utilities.identifier import is_step_heat
 from pychron.loggable import Loggable
 
@@ -121,7 +121,7 @@ class SparrowClient(Loggable):
 
     username = Str
     password = Str
-    host = URLStr
+    host = HTTPStr
     token = Str
 
     def __init__(self, bind=True, *args, **kw):

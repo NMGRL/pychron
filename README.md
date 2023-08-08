@@ -102,5 +102,5 @@ To turn off App Nap system wide use
 
 
 # Citing Pychron 
-Are you using pychron for data collection and/or data reduction for published data? Please cite it by including as much
+Are you using pychron for data collection and/or data reduction for publishing data? Please cite it by including as much
 information as possible from the following: *Jake Ross. (2019). NMGRL/pychron v18.2 (v18.2). Zenodo. https://doi.org/10.5281/zenodo.3237834*
