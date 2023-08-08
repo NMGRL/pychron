@@ -19,7 +19,7 @@ from pychron.hardware.base_cryo_controller import BaseCryoController
 
 
 class SI9700Controller(BaseCryoController):
-    def initialize(self):
+    def initialize(self, *args, **kw):
         self.communicator.write_terminator = "\r"
         return True
 
