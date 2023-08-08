@@ -30,6 +30,7 @@ from traits.api import (
     Str,
     Bool,
 )
+from traits.traits import Color
 from traitsui.api import View, UItem, TableEditor
 from traitsui.table_column import ObjectColumn
 
@@ -103,7 +104,7 @@ class CanvasEditor(Loggable):
     height_increment_plus_button = Button
     height_increment_minus_button = Button
 
-    color = ColorTrait
+    color = Color
     add_item_button = Button("Add")
     new_item_kind = Enum(NULL_STR, "Valve", "Spectrometer", "Stage")
     new_item = Instance(Primitive)
