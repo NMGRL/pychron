@@ -85,6 +85,7 @@ HW_PACKAGE_MAP = {
     "WatlowEZZone": hardware_pkg("watlow.watlow_ezzone"),
     "LasconController": hardware_pkg("lascon_controller"),
     "IGC100GaugeController": gauge_pkg("igc100_gauge_controller"),
+    "KinesisMotionController": hardware_pkg("kinesis.kinesis_controller"),
 }
 
 

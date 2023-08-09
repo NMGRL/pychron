@@ -480,6 +480,7 @@ class ScanManager(StreamGraphManager):
     def _set_position(self):
         if self.isotope and self.isotope != NULL_STR and self.detector:
             self.info("set position {} on {}".format(self.isotope, self.detector))
+            self.spectrometer.set_position_hook()
             self.ion_optics_manager.position(self.isotope, self.detector.name)
 
     @property
