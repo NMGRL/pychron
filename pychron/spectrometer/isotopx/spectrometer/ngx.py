@@ -179,11 +179,11 @@ class NGXSpectrometer(BaseSpectrometer, IsotopxMixin):
         self._read_enabled = False
 
     def set_position_hook(self):
-        self.debug('set position hook')
+        self.debug("set position hook")
         self.microcontroller.stop_acquisition()
 
     def set_source_parameter(self, name, value):
-        self.ask(f'SetSourceOutput {name},{value}')
+        self.ask(f"SetSourceOutput {name},{value}")
 
     def read_intensities(
         self, timeout=60, trigger=False, target="ACQ.B", verbose=False
