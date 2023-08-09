@@ -528,6 +528,9 @@ class BaseSpectrometer(SpectrometerDevice):
         else:
             self._load_detectors_yaml(ypath)
 
+    def set_position_hook(self):
+        pass
+
     def _dump_detectors_yaml(self, ypath):
         self.information_dialog(
             'Automatically migrating "detectors.cfg" to "detectors.yaml"'
