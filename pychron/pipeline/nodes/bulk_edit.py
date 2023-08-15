@@ -110,12 +110,12 @@ class ICFactor(HasTraits):
 
     def tostr(self):
         if self.mode == "Direct":
-            return f'{self.mode}  {self.det}:{self.value}({self.error})'
+            return f"{self.mode}  {self.det}:{self.value}({self.error})"
             # return self.value and self.error
         elif self.mode == "Scale":
-            return f'{self.mode}  {self.det}:{self.scaling_value}'
+            return f"{self.mode}  {self.det}:{self.scaling_value}"
         elif self.mode == "Transform":
-            return f'{self.mode}  {self.det}:{self.transform_variable}({self.transform_coefficients})'
+            return f"{self.mode}  {self.det}:{self.transform_variable}({self.transform_coefficients})"
 
 
 class BulkOptions(HasTraits):
