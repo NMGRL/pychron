@@ -325,6 +325,16 @@ class BulkEditNode(BaseDVCNode):
         ai.dump_icfactors(keys, fits, reviewed=True)
 
 
+class RevertHistoryNode(BaseDVCNode):
+    name = "Revert History"
+    configurable = False
+
+    def run(self, state):
+        ans = state.unknowns
+        for repo, ais in groupby_repo(ans):
+            self.dvc.rollback_to_collection(ais, repo)
+
+
 if __name__ == "__main__":
     b = BulkOptions()
     b.detectors = ["H1", "AX", "CDD"]

@@ -415,6 +415,13 @@ nodes:
   - klass: AuditNode
 """
 
+REVERT_HISTORY = """
+required:
+nodes:
+    - klass: UnknownNode
+    - klass: RevertHistoryNode
+"""
+
 MASSSPEC_REDUCED = """
 required:
 nodes:
