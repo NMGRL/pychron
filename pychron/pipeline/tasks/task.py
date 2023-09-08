@@ -343,10 +343,10 @@ class PipelineTask(BaseBrowserTask):
                 except BaseException as e:
                     self.debug_exception()
                     if self.confirmation_dialog(
-                        "Any error occurred trying to tag the analyses. You may not have "
-                        "sufficient privileges to UPDATE the database. Contact your DB "
-                        "administrator. Would you like to try to report the error to Pychron "
-                        "developers?"
+                            "Any error occurred trying to tag the analyses. You may not have "
+                            "sufficient privileges to UPDATE the database. Contact your DB "
+                            "administrator. Would you like to try to report the error to Pychron "
+                            "developers?"
                     ):
                         raise e
 
@@ -709,7 +709,12 @@ class PipelineTask(BaseBrowserTask):
         )
 
     def _extra_actions_default(self):
-        sas = (("MenuBar/data.menu", RunAction, {}),)
+        sas = (("MenuBar/data.menu", RunAction, {}),
+               ("MenuBar/data.menu", ResumeAction, {}),
+               ("MenuBar/data.menu", RunFromAction, {}),
+               ("MenuBar/data.menu", ResetAction, {}),
+               ("MenuBar/data.menu", ClearAction, {}),
+               )
         return [self._sa_factory(path, factory, **kw) for path, factory, kw in sas]
 
     def _help_tips_default(self):
@@ -904,6 +909,5 @@ class PipelineTask(BaseBrowserTask):
     def _engine_default(self):
         e = PipelineEngine(application=self.application)
         return e
-
 
 # ============= EOF =============================================
