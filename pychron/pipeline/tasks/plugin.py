@@ -53,7 +53,11 @@ from pychron.pipeline.tasks.actions import (
     DVCRecallAction,
     SignalEstimatorAction,
     DataReductionLogAction,
-    IsochronSandboxAction, RunAction, RunFromAction, ClearAction, ResetAction,
+    IsochronSandboxAction,
+    RunAction,
+    RunFromAction,
+    ClearAction,
+    ResetAction,
 )
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
@@ -173,7 +177,7 @@ class PipelinePlugin(BaseTaskPlugin):
             ("plot", plot_group, "MenuBar/data.menu"),
             ("fit", reduction_group, "MenuBar/data.menu"),
             ("recall", recall_group, "MenuBar/data.menu"),
-            ("run", run_group, "MenuBar/data.menu")
+            ("run", run_group, "MenuBar/data.menu"),
         ):
             for eid, actions in exts:
                 for ai in actions:
