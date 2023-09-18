@@ -216,6 +216,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # ===========================================================================
     # preferences
     # ===========================================================================
+    laboratory = Str
     auto_save_delay = Int(30)
     use_auto_save = Bool(True)
 
@@ -329,7 +330,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             "use_xls_persistence",
             "use_db_persistence",
             "experiment_type",
-            "laboratory",
             "ratio_change_detection_enabled",
             "use_preceding_blank",
             "execute_open_queues",
@@ -368,7 +368,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder(prefid, ("use_message_colormapping",))
 
         # general
-        self._preference_binder("pychron.general", ("default_principal_investigator",))
+        self._preference_binder(
+            "pychron.general", ("default_principal_investigator", "laboratory")
+        )
 
     def add_event(self, *events):
         self.events.extend(events)

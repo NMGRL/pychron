@@ -86,6 +86,7 @@ HW_PACKAGE_MAP = {
     "LasconController": hardware_pkg("lascon_controller"),
     "IGC100GaugeController": gauge_pkg("igc100_gauge_controller"),
     "SI9700Controller": hardware_pkg("si9700"),
+    "KinesisMotionController": hardware_pkg("kinesis.kinesis_controller"),
 }
 
 
