@@ -367,7 +367,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder(prefid, ("use_message_colormapping",))
 
         # general
-        self._preference_binder("pychron.general", ("default_principal_investigator", "laboratory"))
+        self._preference_binder(
+            "pychron.general", ("default_principal_investigator", "laboratory")
+        )
 
     def add_event(self, *events):
         self.events.extend(events)
