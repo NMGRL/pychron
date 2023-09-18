@@ -143,7 +143,9 @@ class WatlowEZZone(BaseWatlowEZZone, CoreDevice):
                 label="setpoint",
                 editor=RangeEditor(
                     mode="slider",
-                    format_str="%0.2f", low_name="olsmin", high_name="olsmax"
+                    format_str="%0.2f",
+                    low_name="olsmin",
+                    high_name="olsmax",
                 ),
                 visible_when='control_mode=="open"',
             )
