@@ -216,6 +216,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # ===========================================================================
     # preferences
     # ===========================================================================
+    laboratory = Str
     auto_save_delay = Int(30)
     use_auto_save = Bool(True)
 
