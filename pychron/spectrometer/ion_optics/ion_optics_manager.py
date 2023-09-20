@@ -296,7 +296,11 @@ class IonOpticsManager(Manager):
             if not pcc.use_mftable_dac and center_dac is None and use_configuration_dac:
                 center_dac = pcc.dac
 
-        spec.set_integration_time(integration_time)
+        if integration_time:
+            spec.set_integration_time(integration_time)
+        else:
+            integration_time = spec.integration_time
+
         period = int(integration_time * 1000 * 0.9)
 
         if not isinstance(detector, (tuple, list)):
