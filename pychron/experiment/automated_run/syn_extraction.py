@@ -44,7 +44,7 @@ class SynExtractionSpec(HasTraits):
     def __getattr__(self, item):
         default = None
         if item in self.config:
-            if item in ('delay_between', 'end_threshold'):
+            if item in ("delay_between", "end_threshold"):
                 default = 0
             return self.config.get(item, default)
 
@@ -113,7 +113,9 @@ class SynExtractionCollector(Loggable):
         # return the persister to its original configuration
         # if self.persister:
         #     self.arun.persister = self.persister
-        self.arun.persister.trait_set(use_massspec_database=self.persister_use_massspec_database)
+        self.arun.persister.trait_set(
+            use_massspec_database=self.persister_use_massspec_database
+        )
 
     def _do_collection(self, cfg):
         self.info("Starting syn extraction collection")
@@ -236,9 +238,7 @@ class SynExtractionCollector(Loggable):
                 if not self.arun.do_post_measurement(script=post_script):
                     return
 
-            self.debug(
-                "delay between syn extractions {}".format(spec.delay_between)
-            )
+            self.debug("delay between syn extractions {}".format(spec.delay_between))
             self.arun.wait(spec.delay_between)
 
             return True
