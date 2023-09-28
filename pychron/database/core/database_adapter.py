@@ -308,13 +308,19 @@ class DatabaseAdapter(Loggable):
 
                     connect_args = {}
                     if globalv.ca_file and globalv.cert_file and globalv.key_file:
-                        connect_args = {'ssl': {'ca': globalv.ca_file,
-                                                'cert': globalv.cert_file,
-                                                'key': globalv.key_file}}
+                        connect_args = {
+                            "ssl": {
+                                "ca": globalv.ca_file,
+                                "cert": globalv.cert_file,
+                                "key": globalv.key_file,
+                            }
+                        }
 
                     engine = create_engine(
-                        url, echo=self.echo, pool_recycle=pool_recycle,
-                        connect_args=connect_args
+                        url,
+                        echo=self.echo,
+                        pool_recycle=pool_recycle,
+                        connect_args=connect_args,
                     )
 
                     self.session_factory = sessionmaker(

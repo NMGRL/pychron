@@ -21,7 +21,6 @@ from pychron.core.helpers.strtools import to_bool
 
 
 class Globals(object):
-
     ca_file = None
     key_file = None
     cert_file = None
