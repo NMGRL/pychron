@@ -307,12 +307,20 @@ class DatabaseAdapter(Loggable):
                     )
 
                     connect_args = {}
-                    if globalv.db_ca_file and globalv.db_cert_file and globalv.db_key_file:
+                    if (
+                        globalv.db_ca_file
+                        and globalv.db_cert_file
+                        and globalv.db_key_file
+                    ):
                         self.debug(
                             f"using ssl ca={globalv.db_ca_file}, cert={globalv.db_cert_file}, key={globalv.db_key_file}"
                         )
 
-                        for f in (globalv.db_ca_file, globalv.db_cert_file, globalv.db_key_file):
+                        for f in (
+                            globalv.db_ca_file,
+                            globalv.db_cert_file,
+                            globalv.db_key_file,
+                        ):
                             if not os.path.isfile(f):
                                 self.warning(f"file does not exist: {f}")
                                 break
