@@ -261,7 +261,7 @@ class DatabaseAdapter(Loggable):
 
     # @caller
     def connect(
-        self, test=True, force=False, warn=True, version_warn=True, attribute_warn=False
+            self, test=True, force=False, warn=True, version_warn=True, attribute_warn=False
     ):
         """
         Connect to the database
@@ -308,14 +308,19 @@ class DatabaseAdapter(Loggable):
 
                     connect_args = {}
                     if globalv.ca_file and globalv.cert_file and globalv.key_file:
-                        connect_args = {
-                            "ssl": {
-                                "ca": globalv.ca_file,
-                                "cert": globalv.cert_file,
-                                "key": globalv.key_file,
-                            }
-                        }
 
+                        self.debug(f'using ssl ca={globalv.ca_file}, cert={globalv.cert_file}, key={globalv.key_file}')
+
+                        for f in (globalv.ca_file, globalv.cert_file, globalv.key_file):
+                            if not os.path.isfile(f):
+                                self.warning(f'file does not exist: {f}')
+                                break
+                        else:
+                            connect_args = {'ssl': {'ca': globalv.ca_file,
+                                                    'cert': globalv.cert_file,
+                                                    'key': globalv.key_file}}
+
+                    self.debug(f'using connect_args {connect_args}')
                     engine = create_engine(
                         url,
                         echo=self.echo,
@@ -644,18 +649,18 @@ host= {}\nurl= {}'.format(
             self.session.delete(item)
 
     def _retrieve_items(
-        self,
-        table,
-        joins=None,
-        filters=None,
-        limit=None,
-        order=None,
-        distinct_=False,
-        query_hook=None,
-        reraise=False,
-        func="all",
-        group_by=None,
-        verbose_query=False,
+            self,
+            table,
+            joins=None,
+            filters=None,
+            limit=None,
+            order=None,
+            distinct_=False,
+            query_hook=None,
+            reraise=False,
+            func="all",
+            group_by=None,
+            verbose_query=False,
     ):
         sess = self.session
         if sess is None or isinstance(sess, MockSession):
@@ -790,16 +795,16 @@ host= {}\nurl= {}'.format(
         return kw
 
     def _retrieve_item(
-        self,
-        table,
-        value,
-        key="name",
-        last=None,
-        joins=None,
-        filters=None,
-        options=None,
-        verbose=True,
-        verbose_query=False,
+            self,
+            table,
+            value,
+            key="name",
+            last=None,
+            joins=None,
+            filters=None,
+            options=None,
+            verbose=True,
+            verbose_query=False,
     ):
         if not isinstance(value, (str, int, six.text_type, int, float, list, tuple)):
             return value
@@ -886,14 +891,14 @@ host= {}\nurl= {}'.format(
         return ret
 
     def _get_items(
-        self,
-        table,
-        gtables,
-        join_table=None,
-        filter_str=None,
-        limit=None,
-        order=None,
-        key=None,
+            self,
+            table,
+            gtables,
+            join_table=None,
+            filter_str=None,
+            limit=None,
+            order=None,
+            key=None,
     ):
         if isinstance(join_table, str):
             join_table = gtables[join_table]
