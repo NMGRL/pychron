@@ -21,8 +21,9 @@ from pychron.core.helpers.strtools import to_bool
 
 
 class Globals(object):
-    ca_file = None
-    key_file = None
+    db_ca_file = None
+    db_key_file = None
+    db_cert_file = None
     cert_file = None
     verify_ssl = True
     prev_db_kind = None
@@ -162,8 +163,9 @@ class Globals(object):
             ("entry_irradiation_import_from_file_debug", to_bool),
             ("client_only_locking", to_bool),
             ("cert_file", str),
-            ("ca_file", str),
-            ("key_file", str),
+            ("db_cert_file", str),
+            ("db_ca_file", str),
+            ("db_key_file", str),
             ("laser_version", int),
             ("verify_ssl", to_bool),
         ]:
