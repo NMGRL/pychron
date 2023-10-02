@@ -709,7 +709,13 @@ class PipelineTask(BaseBrowserTask):
         )
 
     def _extra_actions_default(self):
-        sas = (("MenuBar/data.menu", RunAction, {}),)
+        sas = (
+            ("MenuBar/data.menu", RunAction, {}),
+            ("MenuBar/data.menu", ResumeAction, {}),
+            ("MenuBar/data.menu", RunFromAction, {}),
+            ("MenuBar/data.menu", ResetAction, {}),
+            ("MenuBar/data.menu", ClearAction, {}),
+        )
         return [self._sa_factory(path, factory, **kw) for path, factory, kw in sas]
 
     def _help_tips_default(self):
