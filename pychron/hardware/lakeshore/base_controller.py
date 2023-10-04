@@ -300,6 +300,7 @@ class BaseLakeShoreController(BaseCryoController):
     def read_input_b(self, **kw):
         return self._read_input("b", **kw)
 
+    @get_float(default=0)
     def _read_input(self, tag, mode=None, verbose=False):
         if mode is None:
             mode = self.units

@@ -297,6 +297,7 @@ class IonOpticsManager(Manager):
                 center_dac = pcc.dac
 
         if integration_time:
+            self.debug(f'Using integration time {integration_time}')
             spec.set_integration_time(integration_time)
         else:
             integration_time = spec.integration_time
