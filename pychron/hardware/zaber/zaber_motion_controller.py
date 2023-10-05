@@ -105,12 +105,13 @@ class ZaberMotionController(MotionController):
             self._connection = conn
             # bs = BinarySerial(self.port, timeout=200, inter_char_timeout=2)
             #
-            if not self.integrated_axes:
-                for a in self.axes.values():
-                    a.device = next((d for d in devs if int(d.device_address) == int(a.id)), None)
-            else:
-                for a in self.axes.values():
-                    a.device = self._device.get_axis(a.id)
+            # if not self.integrated_axes:
+            #     for a in self.axes.values():
+            #         dd = next((d for d in devs if int(d.device_address) == int(a.id)), None)
+            #         a.device = dd.ax
+            # else:
+            for a in self.axes.values():
+                a.device = self._device.get_axis(a.id)
 
             return True
 
