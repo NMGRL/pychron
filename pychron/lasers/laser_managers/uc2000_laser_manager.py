@@ -22,4 +22,6 @@ class UC2000LaserManager(LaserManager):
     laser_controller = Instance(UC2000)
 
 
+class UC2000CO2Manager(UC2000LaserManager):
+    pass
 # ============= EOF =============================================
