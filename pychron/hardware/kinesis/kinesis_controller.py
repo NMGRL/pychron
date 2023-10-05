@@ -27,8 +27,7 @@ class KinesisMotionController(MotionController):
         self._axis_id_map = {"x": 1, "y": 2, "z": 3}
 
         self.set_attribute(config, "base_url", "General", "base_url")
-        if self.address is not None:
-            return True
+        return True
 
     def get_current_position(self, axis_id, *args, **kw):
         request = self._make_request("positions")
