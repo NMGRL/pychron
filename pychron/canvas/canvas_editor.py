@@ -31,6 +31,7 @@ from traits.api import (
     Bool,
     Color,
 )
+from traits.traits import Color
 from traitsui.api import View, UItem, TableEditor
 from traitsui.table_column import ObjectColumn
 

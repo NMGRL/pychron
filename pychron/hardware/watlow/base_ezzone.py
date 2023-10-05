@@ -680,7 +680,7 @@ class BaseWatlowEZZone(HasTraits):
         register = self.protocol.get_register("baud_rate")
 
         r = self.read(register[port - 1], response_type="int")
-        if r:
+        if r is not None:
             try:
                 return ibaudmap[str(r)]
             except KeyError as e:
