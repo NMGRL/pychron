@@ -111,7 +111,7 @@ class ZaberMotionController(MotionController):
             #         a.device = dd.ax
             # else:
             for a in self.axes.values():
-                a.device = self._device.get_axis(a.id)
+                a.device = self._device.get_axis(a.device_id)
 
             return True
 
