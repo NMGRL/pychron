@@ -54,6 +54,7 @@ class ZaberAxis(LegacyZaberAxis):
     def get_position(self):
         mm = 0
         if self.device:
+            self.debug(f'device {self.device}')
             mm = self.device.get_position(Units.LENGTH_MILLIMETRES)
 
         self.debug(f'get position {mm}, {self.device}')
