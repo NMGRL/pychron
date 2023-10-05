@@ -107,9 +107,7 @@ class ZaberMotionController(MotionController):
             #
             if not self.integrated_axes:
                 for a in self.axes.values():
-                    for d in devs:
-                        print(d.device_id, a.id, d.device_id == a.id, d.device_address, str(d.device_id)==str(a.id))
-                    a.device = next((d for d in devs if d.device_id == a.id), None)
+                    a.device = next((d for d in devs if int(d.device_address) == int(a.id)), None)
             else:
                 for a in self.axes.values():
                     a.device = self._device.get_axis(a.id)
