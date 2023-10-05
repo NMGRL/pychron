@@ -221,9 +221,9 @@ class UC2000CO2Task(BaseLaserTask):
         return [
             UC2000CO2StagePane(model=self.manager),
             UC2000CO2ControlPane(model=self.manager),
-            PulsePane(model=self.manager),
-            UC2000CO2SupplementalPane(model=self.manager),
-            AuxilaryGraphPane(model=self.manager),
+            # PulsePane(model=self.manager),
+            # UC2000CO2SupplementalPane(model=self.manager),
+            # AuxilaryGraphPane(model=self.manager),
         ]
 
 
