@@ -65,7 +65,9 @@ class ZaberMotionController(MotionController):
     def load(self, *args, **kw):
         config = self.get_configuration()
         if config:
-            self.set_attribute(config, "non_integrated_axes", "General", "non_integrated_axes")
+            self.set_attribute(config, "non_integrated_axes",
+                               "General", "non_integrated_axes",
+                               cast="boolean", default=False)
 
             section = "Communications"
             self.set_attribute(config, "port", section, "port")
