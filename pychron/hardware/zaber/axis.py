@@ -56,6 +56,7 @@ class ZaberAxis(LegacyZaberAxis):
         if self.device:
             mm = self.device.get_position(Units.LENGTH_MILLIMETRES)
 
+        self.debug(f'get position {mm}, {self.device}')
         if self.sign == -1:
             mm = self.positive_limit - mm
         return mm
