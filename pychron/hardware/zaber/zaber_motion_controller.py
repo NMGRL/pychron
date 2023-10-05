@@ -60,10 +60,13 @@ class ZaberMotionController(MotionController):
 
     # _units = Units.LENGTH_MILLIMETRES
     # _wrapper = None
+    non_integrated_axes = False
 
     def load(self, *args, **kw):
         config = self.get_configuration()
         if config:
+            self.set_attribute(config, "non_integrated_axes", "General", "non_integrated_axes")
+
             section = "Communications"
             self.set_attribute(config, "port", section, "port")
             self.set_attribute(
@@ -93,15 +96,19 @@ class ZaberMotionController(MotionController):
         self.debug('detecting connected devices')
         if devs:
             for d in devs:
-                self.debug('found device: {}'.format(d))
+                self.debug(f'found device: {d}, {d.device_id}')
 
             self._device = devs[0]
             self.debug('opened device  {}'.format(self._device))
             self._connection = conn
             # bs = BinarySerial(self.port, timeout=200, inter_char_timeout=2)
             #
-            for a in self.axes.values():
-                a.device = self._device.get_axis(a.id)
+            if self.non_integrated_axes:
+                for a in self.axes.values():
+                    a.device = next((d for d in devs if d.device_id == a.id), None)
+            else:
+                for a in self.axes.values():
+                    a.device = self._device.get_axis(a.id)
 
             return True
 
