@@ -18,7 +18,7 @@ import os
 import time
 from threading import Thread
 
-from numpy import array, hstack, average
+from numpy import array, hstack, average, Inf
 
 # ============= enthought library imports =======================
 from traits.api import Instance, HasTraits, Str, Bool, Float
@@ -48,7 +48,7 @@ class SemiAutoCalibrator(TrayCalibrator):
      b. record position
     3. traverse holes finding autocenter position
     """
-
+    full_traversal = False
     stage_map = Instance("pychron.stage.maps.base_stage_map.BaseStageMap")
 
     def handle(self, step, x, y, canvas):
@@ -90,16 +90,16 @@ class SemiAutoCalibrator(TrayCalibrator):
             t.start()
             self.calibration_enabled = False
             # self.calibration_step = 'Cancel'
-        elif step == "Traverse":
-            if self.confirmation_dialog("Start Autocentering Traverse"):
-                self._alive = True
-                t = Thread(target=self._traverse, args=(canvas.calibration_item,))
-                t.start()
-                self.calibration_enabled = False
-                # self.calibration_step = 'Cancel'
-            else:
-                self.calibration_step = "Calibrate"
-                self.calibration_enabled = True
+        # elif step == "Traverse":
+        #     if self.confirmation_dialog("Start Autocentering Traverse"):
+        #         self._alive = True
+        #         t = Thread(target=self._traverse, args=(canvas.calibration_item,))
+        #         t.start()
+        #         self.calibration_enabled = False
+        #         # self.calibration_step = 'Cancel'
+        #     else:
+        #         self.calibration_step = "Calibrate"
+        #         self.calibration_enabled = True
 
         return ret
 
@@ -165,8 +165,15 @@ class SemiAutoCalibrator(TrayCalibrator):
             self.rotation = rot
             self.save_event = {"clear_corrections": False}
 
+            if self.full_traversal:
+                holes = smap.all_holes()
+            else:
+                # holes = smap.row_ends(alternate=True)
+                holes = list(smap.circumference_holes())
+                holes.extend(smap.mid_holes())
+
             # traverse holes
-            self._traverse(calibration)
+            self._traverse(calibration, holes)
 
             # move back to center hole
             center = self.stage_map.get_calibration_hole("center")
@@ -186,18 +193,15 @@ class SemiAutoCalibrator(TrayCalibrator):
                     )
                 )
 
-    def _traverse(self, calibration):
+    def _traverse(self, calibration, holes=None, success_cb=False):
         """
         visit each hole in holes
         record autocenter position
         warn user about failures
         """
+        st = time.time()
         sm = self.stage_manager
         smap = self.stage_map
-
-        # holes = smap.row_ends(alternate=True)
-        holes = list(smap.circumference_holes())
-        holes.extend(smap.mid_holes())
 
         results = []
         points = []
@@ -257,6 +261,8 @@ class SemiAutoCalibrator(TrayCalibrator):
                 dy=dy,
                 nx=nominal_x,
                 ny=nominal_y,
+                x_cor=npt[0],
+                y_cor=npt[0],
             )
             results.append(res)
             points.append((npt, corrected))
@@ -270,9 +276,11 @@ class SemiAutoCalibrator(TrayCalibrator):
             sv.results = results
             sv.set_stage_map(self.stage_map, points, calibration)
             sv.save()
+            if success_cb:
+                success_cb(results)
 
             invoke_in_main_thread(open_view, sv)
-
+        self.debug(f'calibration time={time.time()-st:0.3f}s')
         # reset calibration manager
         self.calibration_step = "Calibrate"
         self.calibration_enabled = True
@@ -303,6 +311,10 @@ class SemiAutoCalibrator(TrayCalibrator):
         r = smap.get_calibration_hole("east")
 
         return l is not None or r is not None
+
+
+class SemiAutoFullTraversalCalibrator(SemiAutoCalibrator):
+    full_traversal = True
 
 
 class AutoCalibrator(SemiAutoCalibrator):
@@ -375,5 +387,55 @@ class AutoCalibrator(SemiAutoCalibrator):
                     "Failed parsing center guess file {}. error={}".format(path, e)
                 )
 
+
+class TrayIdentifier(SemiAutoCalibrator):
+    def handle(self, step, x, y, canvas):
+        ret = None
+        if step == "Calibrate":
+            self.stage_map.clear_correction_file()
+            canvas.new_calibration_item()
+            self.calibration_step = "Identify"
+
+        elif step == 'Identify':
+            holes = self.stage_map.random_choice(n=20)
+            t = Thread(target=self._traverse, args=(canvas.calibration_item, holes, self.identify))
+            t.start()
+            self.calibration_enabled = False
+
+        return ret
+
+    def identify(self, results):
+        # take current corrections these holes and compare to saved trays
+        bestmatch = None
+        scores = {}
+        maxscore = None
+
+        keys = [r.hole_id for r in results if r.corrected]
+        resultarr = array([(r.x_cor, r.y_cor) for r in results if r.corrected]).flat
+
+        for smap in self.stage_manager.stage_maps_iter():
+            if smap.has_correction_file():
+                smap.load_correction_file()
+                score = smap.finger_print(keys, resultarr)
+                scores[smap.name] = score
+                if maxscore is None or score > maxscore:
+                    maxscore = score
+                    bestmatch = smap
+
+        self.info(f'scores: {scores}')
+        self.info(f'bestmatch: {bestmatch}')
+
+        self.stage_manager.stage_map_name = bestmatch.name
+
+
+class TrayMapper(SemiAutoCalibrator):
+    def handle(self, step, x, y, canvas):
+        if step == 'Calibrate':
+            self.stage_map.clear_correction_file()
+            self.calibration_step = "Do Map"
+        if step == 'Do Map':
+            t = Thread(target=self._traverse, args=(canvas.calibration_item,))
+            t.start()
+            self.calibration_enabled = False
 
 # ============= EOF =============================================

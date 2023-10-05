@@ -219,7 +219,11 @@ class StageManager(BaseStageManager):
         bind_preference(
             self.canvas, "show_bounds_rect", "{}.show_bounds_rect".format(pref_id)
         )
+        bind_preference(
+            self.canvas, "aux_crosshairs_enabled", "{}.aux_crosshairs_enabled".format(pref_id)
+        )
 
+        self.canvas._show_bounds_rect_changed()
         self.canvas.request_redraw()
 
     def load(self):
@@ -359,7 +363,7 @@ class StageManager(BaseStageManager):
             moving = self.stage_controller.moving(**kw)
         elif self.stage_controller.timer is not None:
             moving = self.stage_controller.timer.isActive()
-
+            print('asdf', moving)
         return moving
 
     def get_brightness(self, **kw):
@@ -403,6 +407,7 @@ class StageManager(BaseStageManager):
             smap = self.stage_map
 
             xx, yy = smap.map_to_uncalibration((x, y), ca.center, ca.rotation)
+
             return next(
                 (
                     hole
@@ -514,9 +519,11 @@ class StageManager(BaseStageManager):
     # ===============================================================================
     def _stop(self, ax_key=None, verbose=False):
         self.stage_controller.stop(ax_key=ax_key, verbose=verbose)
-        if self.parent.pattern_executor:
-            self.parent.pattern_executor.stop()
-
+        try:
+            if self.parent.pattern_executor:
+                self.parent.pattern_executor.stop()
+        except AttributeError:
+            pass
     # def _move(self, func, pos, name=None, *args, **kw):
     #     if pos is None:
     #         return
@@ -1105,11 +1112,17 @@ class StageManager(BaseStageManager):
 
             factory = AerotechMotionController
         elif self.stage_controller_klass == "Zaber":
-            from pychron.hardware.zaber.zaber_motion_controller import (
+            from pychron.hardware.zaber.legacy_zaber_motion_controller import (
                 LegacyBinaryZaberMotionController,
             )
 
             factory = LegacyBinaryZaberMotionController
+        elif self.stage_controller_klass == "ZaberMotion":
+            from pychron.hardware.zaber.zaber_motion_controller import (
+                ZaberMotionController,
+            )
+
+            factory = ZaberMotionController
         elif self.stage_controller_klass == "Kinesis":
             from pychron.hardware.kinesis.kinesis_controller import (
                 KinesisMotionController,

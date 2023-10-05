@@ -13,12 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import time
+
 from traits.api import Str, CInt, Enum
-from zaber.serial import BinarySerial, BinaryDevice
+# from zaber.serial import BinarySerial, BinaryDevice
 
-# from zaber_motion import Library
+from zaber_motion import Library, Units, ConnectionFailedException
+from zaber_motion.ascii import Connection
 
-# Library.enable_device_db_store()
+Library.enable_device_db_store()
 
 from pychron.hardware.motion_controller import MotionController
 from pychron.hardware.zaber.axis import ZaberAxis
@@ -49,11 +52,12 @@ from pychron.hardware.zaber.axis import ZaberAxis
 #         return any((d.is_busy() for d in self._devices))
 
 
-class LegacyBinaryZaberMotionController(MotionController):
+class ZaberMotionController(MotionController):
     port = Str
     device_id = CInt
     baudrate = CInt
     _device = None
+
     # _units = Units.LENGTH_MILLIMETRES
     # _wrapper = None
 
@@ -77,36 +81,76 @@ class LegacyBinaryZaberMotionController(MotionController):
         return True
 
     def open(self, *args, **kw):
-        self.debug("scanning port {}".format(self.port))
-        bs = BinarySerial(self.port, timeout=200, inter_char_timeout=2)
+        self.debug("opening port {}".format(self.port))
+        try:
+            conn = Connection.open_serial_port(self.port)
+        except ConnectionFailedException as e:
+            self.critical('failed to connect. exception={}'.format(e))
+            return
 
-        for a in self.axes.values():
-            a.device = BinaryDevice(bs, a.device_id)
+        self.debug('opened connection {}'.format(conn))
+        devs = conn.detect_devices(True)
+        self.debug('detecting connected devices')
+        if devs:
+            for d in devs:
+                self.debug('found device: {}'.format(d))
 
-        return True
+            self._device = devs[0]
+            self.debug('opened device  {}'.format(self._device))
+            self._connection = conn
+            # bs = BinarySerial(self.port, timeout=200, inter_char_timeout=2)
+            #
+            for a in self.axes.values():
+                a.device = self._device.get_axis(a.id)
+
+            return True
 
     def _get_simulation(self):
         return False
+
+    def relative_move(self, ax_key, direction, distance=1):
+        axis = self.axes[ax_key]
+        dev = axis.device
+        sign = -1 if ax_key=='x' else 1
+        dev.move_relative(distance*direction*sign*0.1, Units.LENGTH_MILLIMETRES)
+        dev.wait_until_idle()
+        self.update_axes()
+        return dev
 
     def linear_move(self, x, y, block=True, *args, **kw):
         if kw.get("source") != "laser_canvas":
             xaxis = self.single_axis_move("x", x, block=False)
             yaxis = self.single_axis_move("y", y, block=False)
+
+            xaxis.wait_until_idle()
+            yaxis.wait_until_idle()
             self.update_axes()
+            # if kw.get("source") == "autocenter":
+            #     print('warint')
+            #     time.sleep(0.25)
 
     def single_axis_move(self, key, value, block=True, *args, **kw):
         axis = self.axes[key]
-        steps = axis.convert_to_steps(value)
-        self.debug("calculated steps={} value={}".format(steps, value))
-        axis.device.move_abs(steps)
+        dev = axis.device
+
+        if axis.sign == -1:
+            value = axis.positive_limit - value
+        # steps = axis.convert_to_steps(value)
+        # self.debug("calculated steps={} value={}".format(steps, value))
+        # axis.device.move_abs(steps)
+        # axis = self._device.get_axis(axis.id)
+        dev.move_absolute(value, Units.LENGTH_MILLIMETRES, wait_until_idle=block)
         if block:
             self.update_axes()
-        return axis
+        return dev
 
     def home(self, axes, block=True, *args, **kw):
         for a in self.axes.values():
             if a.name in axes:
                 a.device.home()
+                # axis = self._device.get_axis(a.id)
+                # axis.home()
+                # a.device.home()
             #     axis = self._wrapper.get_axis(a.device_id)
             #     axis.home(wait_until_idle=block)
 
@@ -127,7 +171,6 @@ class LegacyBinaryZaberMotionController(MotionController):
         a = ZaberAxis(parent=self, **kw)
         a.load(path)
         return a
-
 
 # class ZaberMotionController(MotionController):
 #     port = Str

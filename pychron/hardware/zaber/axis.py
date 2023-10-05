@@ -14,6 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from traits.api import Str, CInt, Enum
+from zaber_motion import Units
 
 from pychron.hardware.motion_controller import MotionController
 from pychron.hardware.axis import Axis
@@ -21,15 +22,14 @@ from pychron.hardware.axis import Axis
 import os
 
 
-class ZaberAxis(Axis):
+class LegacyZaberAxis(Axis):
     device_id = None
     microstep_size = 0.1905
     device = None
 
     def get_position(self):
         steps = self.device.get_position()
-        mm = self.convert_to_mm(steps)
-        return mm
+        return self.convert_to_mm(steps)
 
     def convert_to_mm(self, steps):
         return float(steps * self.microstep_size / 1000.0)
@@ -42,10 +42,22 @@ class ZaberAxis(Axis):
             path = os.path.join(path, "{}axis.cfg".format(self.name))
 
         config = self.get_configuration(path)
+        self.set_attribute(config, "sign", "Motion", "sign", cast="int", default=1)
         self.set_attribute(config, "device_id", "General", "device_id", cast="int")
         self.set_attribute(
             config, "microstep_size", "General", "microstep_size", cast="float"
         )
+        self.set_attribute(config, "positive_limit", "Motion", "positive_limit", cast="float", default=50)
 
+
+class ZaberAxis(LegacyZaberAxis):
+    def get_position(self):
+        mm = 0
+        if self.device:
+            mm = self.device.get_position(Units.LENGTH_MILLIMETRES)
+
+        if self.sign == -1:
+            mm = self.positive_limit - mm
+        return mm
 
 # ============= EOF =============================================
