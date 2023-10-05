@@ -47,7 +47,7 @@ class KinesisMotionController(MotionController):
         return vs
 
     def linear_move(self, x, y, *args, **kw):
-        request = self._make_request(f"/move/{x}/{y}")
+        request = self._make_request(f"move/{x}/{y}")
         resp = requests.post(request)
 
     def parse_position_response(self, pos, axis_id):
