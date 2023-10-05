@@ -23,5 +23,5 @@ class UC2000LaserManager(LaserManager):
 
 
 class UC2000CO2Manager(UC2000LaserManager):
-    pass
+    stage_manager_id = "uc2000.co2"
 # ============= EOF =============================================
