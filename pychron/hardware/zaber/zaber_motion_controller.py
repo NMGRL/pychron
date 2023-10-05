@@ -100,8 +100,8 @@ class ZaberMotionController(MotionController):
             for d in devs:
                 self.debug(f'found device: {d}, {d.device_id}')
 
-            self._device = devs[0]
-            self.debug('opened device  {}'.format(self._device))
+            # self._device = devs[0]
+            # self.debug('opened device  {}'.format(self._device))
             self._connection = conn
             # bs = BinarySerial(self.port, timeout=200, inter_char_timeout=2)
             #
@@ -112,6 +112,7 @@ class ZaberMotionController(MotionController):
             # else:
             for a in self.axes.values():
                 a.device = self._device.get_axis(a.device_id)
+                self.debug(f'setting axis {a} to device {a.device}')
 
             return True
 
