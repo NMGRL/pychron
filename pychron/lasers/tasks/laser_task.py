@@ -200,7 +200,7 @@ class UC2000CO2Task(BaseLaserTask):
 
     def create_central_pane(self):
         from pychron.lasers.tasks.panes.uc2000 import UC2000CO2Pane
-        return UC2000CO2Pane
+        return UC2000CO2Pane(model=self.manager)
 
         # if self.manager.mode == "client":
         #     from pychron.lasers.tasks.panes.tap import TAPDiodeClientPane
