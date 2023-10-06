@@ -221,10 +221,23 @@ class UC2000CO2Task(BaseLaserTask):
         return [
             UC2000CO2StagePane(model=self.manager),
             UC2000CO2ControlPane(model=self.manager),
-            # PulsePane(model=self.manager),
+            PulsePane(model=self.manager),
             # UC2000CO2SupplementalPane(model=self.manager),
             # AuxilaryGraphPane(model=self.manager),
         ]
+
+    def _default_layout_default(self):
+        return TaskLayout(
+            left=PaneItem("{}.stage".format(self.id)),
+            top=Splitter(
+                PaneItem("{}.control".format(self.id), width=200),
+                PaneItem("pychron.lasers.pulse", width=300),
+                # Tabbed(
+                #     PaneItem("pychron.lasers.optics"),
+                #     PaneItem("{}.supplemental".format(self.id)),
+                # ),
+            ),
+        )
 
 
 class AblationCO2Task(BaseLaserTask):
