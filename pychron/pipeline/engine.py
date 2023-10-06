@@ -123,6 +123,7 @@ from pychron.pipeline.pipeline_defaults import (
     RECENT_RUNS,
     CSV_INVERSE_ISOCHRON,
     CSV_REGRESSION,
+    REVERT_HISTORY,
 )
 from pychron.pipeline.plot.editors.figure_editor import FigureEditor
 from pychron.pipeline.plot.editors.ideogram_editor import IdeogramEditor
@@ -1054,7 +1055,14 @@ class PipelineEngine(Loggable):
                     ("Audit", AUDIT),
                 ),
             ),
-            ("Edit", (("Bulk Edit", BULK_EDIT), ("RunID Edit", RUNID_EDIT))),
+            (
+                "Edit",
+                (
+                    ("Bulk Edit", BULK_EDIT),
+                    ("RunID Edit", RUNID_EDIT),
+                    ("Revert History", REVERT_HISTORY),
+                ),
+            ),
             ("Plot", plots),
             ("Table", tables),
             (

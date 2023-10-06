@@ -109,12 +109,13 @@ class ICFactor(HasTraits):
         return v
 
     def tostr(self):
-        if self.use_scaling:
-            return "{}:{}({})".format(
-                self.det, self.scaling_variable, self.scaling_coefficients
-            )
-        else:
-            return "{}:{}({})".format(self.det, self.value, self.error)
+        if self.mode == "Direct":
+            return f"{self.mode}  {self.det}:{self.value}({self.error})"
+            # return self.value and self.error
+        elif self.mode == "Scale":
+            return f"{self.mode}  {self.det}:{self.scaling_value}"
+        elif self.mode == "Transform":
+            return f"{self.mode}  {self.det}:{self.transform_variable}({self.transform_coefficients})"
 
 
 class BulkOptions(HasTraits):
@@ -123,6 +124,7 @@ class BulkOptions(HasTraits):
 
     aliquot = Int
     step = StepStr
+    comment = Str
 
     sync_sample_enabled = Bool
 
@@ -150,8 +152,15 @@ class BulkOptions(HasTraits):
             ),
             label="Sample",
         )
+        analysis_grp = BorderVGroup(Item("comment"), label="Analysis")
         v = okcancel_view(
-            VGroup(icgrp, runid_grp, sample_grp), title="Bulk Edit Options"
+            VGroup(
+                icgrp,
+                runid_grp,
+                sample_grp,
+                analysis_grp,
+            ),
+            title="Bulk Edit Options",
         )
         return v
 
@@ -180,8 +189,8 @@ class BulkEditNode(BaseDVCNode):
         ans = state.unknowns
 
         icfs = [ic_factor for ic_factor in self.options.ic_factors if ic_factor.enabled]
+        author = self.dvc.get_author()
         if icfs:
-            author = self.dvc.get_author()
             for ai in ans:
                 self._bulk_ic_factor(ai, icfs)
 
@@ -213,20 +222,31 @@ class BulkEditNode(BaseDVCNode):
                 if self.dvc.repository_add_paths(expid, ps):
                     self.dvc.repository_commit(expid, "<EDIT> RunID", author)
 
-        if self.options.sync_sample_enabled:
+        if self.options.sync_sample_enabled or self.options.comment:
             if not author:
                 author = self.dvc.get_author()
 
+            message = "<EDIT>"
+            if self.options.sync_sample_enabled:
+                message = f"{message} Sync Sample MetaData"
+
             for repo, ais in groupby_repo(ans):
+                ais = list(ais)
                 self.dvc.pull_repository(repo)
                 ps = []
-                for identifier, ais in groupby_key(ais, attrgetter("identifier")):
-                    ps.extend(self.dvc.analyses_db_sync(identifier, ais, repo))
+                for identifier, aais in groupby_key(ais, attrgetter("identifier")):
+                    ps.extend(self.dvc.analyses_db_sync(identifier, aais, repo))
+
+                if self.options.comment:
+                    message = f"{message} {self.options.comment}"
+                    dbais = self.dvc.db.get_analyses_uuid([ai.uuid for ai in ais])
+                    for dbai, ai in zip(dbais, ais):
+                        ai.comment = self.options.comment
+                        p = self.dvc.edit_comment(ai.uuid, repo, self.options.comment)
+                        ps.append(p)
 
                 if self.dvc.repository_add_paths(repo, ps):
-                    self.dvc.repository_commit(
-                        repo, "<EDIT> Sync Sample MetaData", author
-                    )
+                    self.dvc.repository_commit(repo, message, author)
 
     def _bulk_runid(self, ai, aliquot, step):
         if not aliquot:
@@ -303,6 +323,16 @@ class BulkEditNode(BaseDVCNode):
                 iso.ic_factor = ic
 
         ai.dump_icfactors(keys, fits, reviewed=True)
+
+
+class RevertHistoryNode(BaseDVCNode):
+    name = "Revert History"
+    configurable = False
+
+    def run(self, state):
+        ans = state.unknowns
+        for repo, ais in groupby_repo(ans):
+            self.dvc.rollback_to_collection(ais, repo)
 
 
 if __name__ == "__main__":

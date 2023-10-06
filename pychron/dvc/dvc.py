@@ -719,6 +719,30 @@ class DVC(Loggable):
         progress_loader(ai_gen(), func, threshold=1)
         self._commit_freeze(added, "<PR_FREEZE>")
 
+    def rollback_to_collection(self, analyses, reponame):
+        repo = self.get_repository(reponame)
+        for analysis in analyses:
+            repo_id = analysis.repository_identifier
+            for mod, g in (
+                ("intercepts", "<ISOEVO> default collection fits"),
+                ("icfactors", "<ICFactor> default"),
+                ("baselines", "<ISOEVO> default collection fits"),
+                ("blanks", "<BLANKS> preceding"),
+            ):
+                sp = analysis_path(analysis, repo_id, modifier=mod)
+                cs = repo.get_commits_from_log(greps=(g,), path=sp)
+                print(sp, cs)
+                if sp and cs:
+                    repo.checkout(cs[-1].hexsha, "--", sp)
+
+    def edit_comment(self, runid, repository_identifier, comment):
+        self.debug(f"edit comment {runid} {repository_identifier} {comment}")
+        path = analysis_path(runid, repository_identifier)
+        obj = dvc_load(path)
+        obj["comment"] = comment
+        dvc_dump(obj, path)
+        return path
+
     def manual_edit(self, runid, repository_identifier, values, errors, modifier):
         self.debug(
             "manual edit {} {} {}".format(runid, repository_identifier, modifier)
@@ -1259,7 +1283,7 @@ class DVC(Loggable):
                     quick=quick,
                     reload=reload,
                     warn=warn,
-                    *args
+                    *args,
                 )
             except BaseException:
                 record = args[0]

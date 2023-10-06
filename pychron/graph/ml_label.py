@@ -120,7 +120,7 @@ class MPlotAxis(PlotAxis):
 
         # get the _rotated_ bounding box of the label
         tl_bounds = array(title_label.get_bounding_box(gc), float64)
-        print("tlasd", tl_bounds)
+        # print("tlasd", tl_bounds)
         text_center_to_corner = -tl_bounds / 2.0
         # which axis are we moving away from the axis line along?
         axis_index = self._major_axis.argmin()

@@ -54,6 +54,10 @@ from pychron.pipeline.tasks.actions import (
     SignalEstimatorAction,
     DataReductionLogAction,
     IsochronSandboxAction,
+    RunAction,
+    RunFromAction,
+    ClearAction,
+    ResetAction,
 )
 from pychron.pipeline.tasks.preferences import PipelinePreferencesPane
 
@@ -151,6 +155,9 @@ class PipelinePlugin(BaseTaskPlugin):
         def recall_group():
             return SGroup(id="recall.group")
 
+        def run_group():
+            return SGroup(id="run.group")
+
         exts = self._get_extensions()
         extensions = [
             TaskExtension(actions=actions, task_id=eid) for eid, actions in exts
@@ -170,6 +177,7 @@ class PipelinePlugin(BaseTaskPlugin):
             ("plot", plot_group, "MenuBar/data.menu"),
             ("fit", reduction_group, "MenuBar/data.menu"),
             ("recall", recall_group, "MenuBar/data.menu"),
+            ("run", run_group, "MenuBar/data.menu"),
         ):
             for eid, actions in exts:
                 for ai in actions:
@@ -197,6 +205,7 @@ class PipelinePlugin(BaseTaskPlugin):
         rg = "MenuBar/data.menu/reduction.group"
         ig = "MenuBar/data.menu/plot.group/ideogram.menu"
         reg = "MenuBar/data.menu/recall.group"
+        rung = "MenuBar/data.menu/run.group"
 
         fit_actions = []
         for f, t in (
