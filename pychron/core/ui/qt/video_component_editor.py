@@ -60,7 +60,7 @@ class _VideoComponentEditor(_LaserComponentEditor):
 
     def _update_fps(self):
         if self.value.fps:
-            self.playTimer.setInterval(1000 / float(self.value.fps))
+            self.playTimer.setInterval(int(1000 / float(self.value.fps)))
 
     # def _get_interval(self):
     # if self.value.fps:
