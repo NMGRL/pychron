@@ -15,6 +15,7 @@
 # ===============================================================================
 import base64
 import io
+
 # ============= enthought library imports =======================
 import os
 import time
@@ -31,6 +32,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from traits.api import Any, Instance, HasTraits, Dict, Enum, Event, Button
 from traitsui.api import View, UItem, Item, VGroup, HGroup
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.core.helpers.logger_setup import logging_setup
@@ -77,11 +79,11 @@ class TrayChecker(MachineVisionManager):
     positions = Dict
     display_image = Instance(FrameImage, ())
     refresh_image = Event
-    stop_button = Button('Stop')
-    good_button = Button('Good')
-    empty_button = Button('Empty')
-    multigrain_button = Button('MultiGrain')
-    contaminant_button = Button('Contaminant')
+    stop_button = Button("Stop")
+    good_button = Button("Good")
+    empty_button = Button("Empty")
+    multigrain_button = Button("MultiGrain")
+    contaminant_button = Button("Contaminant")
 
     post_move_delay = 0.125
     post_check_delay = 0.125
@@ -106,7 +108,7 @@ class TrayChecker(MachineVisionManager):
         # self.traydb.build_database()
 
     def stop(self):
-        self.debug('stop fired')
+        self.debug("stop fired")
         self._alive = False
 
     # def check_frame(self):
@@ -123,20 +125,26 @@ class TrayChecker(MachineVisionManager):
         if classify_now:
             self._samples = []
             self._labels = []
-            self._active_positions = self._loading_manager.stage_manager.stage_map.all_holes()
+            self._active_positions = (
+                self._loading_manager.stage_manager.stage_map.all_holes()
+            )
 
-            buttons = HGroup(UItem('stop_button'),
-                             UItem('good_button'),
-                             UItem('empty_button'),
-                             UItem('multigrain_button'),
-                             UItem('contaminant_button')
-                             )
-            v = okcancel_view(buttons,
-                              UItem('object.display_image.source_frame',
-                                    width=640*1.25,
-                                    height=480*1.25,
-                                    editor=ImageEditor(refresh='object.display_image.refresh_needed')),
-                              )
+            buttons = HGroup(
+                UItem("stop_button"),
+                UItem("good_button"),
+                UItem("empty_button"),
+                UItem("multigrain_button"),
+                UItem("contaminant_button"),
+            )
+            v = okcancel_view(
+                buttons,
+                UItem(
+                    "object.display_image.source_frame",
+                    width=640 * 1.25,
+                    height=480 * 1.25,
+                    editor=ImageEditor(refresh="object.display_image.refresh_needed"),
+                ),
+            )
 
             # go to first hole
             self._visit_next_position()
@@ -146,12 +154,19 @@ class TrayChecker(MachineVisionManager):
             #     self.dump_klasses()
         else:
             pipe = None
-            info = self.edit_traits(view=View(HGroup(UItem('stop_button')),
-                                              UItem('object.display_image.source_frame',
-                                                    width=640,
-                                                    height=480,
-                                                    editor=ImageEditor(refresh='object.display_image.refresh_needed')),
-                                              ))
+            info = self.edit_traits(
+                view=View(
+                    HGroup(UItem("stop_button")),
+                    UItem(
+                        "object.display_image.source_frame",
+                        width=640,
+                        height=480,
+                        editor=ImageEditor(
+                            refresh="object.display_image.refresh_needed"
+                        ),
+                    ),
+                )
+            )
 
             self._alive = True
             self._thread = Thread(target=self._check, args=(info,))
@@ -161,7 +176,7 @@ class TrayChecker(MachineVisionManager):
         try:
             hole = next(self._active_positions)
         except StopIteration:
-            self.information_dialog('Classification Complete')
+            self.information_dialog("Classification Complete")
             return
 
         trayname = self._loading_manager.stage_manager.stage_map.name
@@ -174,18 +189,20 @@ class TrayChecker(MachineVisionManager):
         time.sleep(self.post_move_delay)
         frame = self.new_image_frame(pos)
 
-        self._loading_manager.stage_manager.snapshot(name=os.path.join(traypath, '{}.tc'.format(pos)),
-                                                     render_canvas=False, inform=False)
+        self._loading_manager.stage_manager.snapshot(
+            name=os.path.join(traypath, "{}.tc".format(pos)),
+            render_canvas=False,
+            inform=False,
+        )
         # guess the label for this image
         possible_label = self._classify(frame)
-        self.debug(f'possible label={possible_label}')
+        self.debug(f"possible label={possible_label}")
 
         self.display_image.clear()
         self.display_image.source_frame = frame
         # self.display_image.tile(frame)
         # self.display_image.tilify()
         self.display_image.refresh_needed = True
-
 
     # def dump_klasses(self):
     #     tray_name = self._loading_manager.stage_manager.stage_map.name
@@ -277,7 +294,7 @@ class TrayChecker(MachineVisionManager):
 
         for hole in self._loading_manager.stage_manager.stage_map.all_holes():
             if not self._alive:
-                self.debug('exiting check loop')
+                self.debug("exiting check loop")
                 break
 
             pos = hole.id
@@ -302,12 +319,12 @@ class TrayChecker(MachineVisionManager):
             time.sleep(self.post_check_delay)
 
         info.dispose()
-        self.information_dialog(f'Scan of {trayname} complete')
+        self.information_dialog(f"Scan of {trayname} complete")
 
     def _check(self, info):
         for hole in self._loading_manager.stage_manager.stage_map.all_holes():
             if not self._alive:
-                self.debug('exiting check loop')
+                self.debug("exiting check loop")
                 break
 
             pos = hole.id
@@ -398,16 +415,17 @@ class TrayChecker(MachineVisionManager):
         # labels = randint(0,4, size=labels.size)
         use_nn = False
         if use_nn:
-            clf = MLPClassifier(hidden_layer_sizes=(5, 2),
-                                random_state=1)
+            clf = MLPClassifier(hidden_layer_sizes=(5, 2), random_state=1)
         else:
             clf = svm.SVC(gamma=0.001)
 
-        x_train, x_test, y_train, y_test = train_test_split(samples, labels, random_state=42)
+        x_train, x_test, y_train, y_test = train_test_split(
+            samples, labels, random_state=42
+        )
         pipe = make_pipeline(StandardScaler(), clf)
         pipe.fit(x_train, y_train)  # apply scaling on training data
 
-        tp = os.path.join(paths.loading_dir, 'tray.clf.joblib')
+        tp = os.path.join(paths.loading_dir, "tray.clf.joblib")
         joblib.dump(pipe, tp)
 
         score = pipe.score(x_test, y_test)
@@ -417,7 +435,7 @@ class TrayChecker(MachineVisionManager):
             f"Classification report for classifier {clf}:\n"
             f"{metrics.classification_report(y_test, predicted)}\n"
         )
-        self.info('training score={}'.format(score))
+        self.info("training score={}".format(score))
         # disp = metrics.ConfusionMatrixDisplay.from_predictions(y_test, predicted)
         # disp.figure_.suptitle("Confusion Matrix")
         # self.debug(f"Confusion matrix:\n{disp.confusion_matrix}")
@@ -430,6 +448,7 @@ class TrayChecker(MachineVisionManager):
         self._active_position = pos
 
         return frame
+
     # def _get_sample_labels(self):
     #     args = self.traydb.get_sample_labels()
     #     if args is not None:
@@ -449,7 +468,7 @@ class TrayChecker(MachineVisionManager):
     #     imsave(p, frame)
 
     def _get_classifier(self):
-        tp = os.path.join(paths.loading_dir, 'tray.clf.joblib')
+        tp = os.path.join(paths.loading_dir, "tray.clf.joblib")
         if os.path.isfile(tp):
             return joblib.load(tp)
 
@@ -464,7 +483,7 @@ class TrayChecker(MachineVisionManager):
     def _image_path(self, pos):
         loadname = self._loading_manager.load_instance.name
         dirname = os.path.join(paths.loading_dir, loadname)
-        p = os.path.join(dirname, '{}.empty.tif'.format(pos))
+        p = os.path.join(dirname, "{}.empty.tif".format(pos))
         return p
 
     def _crop(self, frame, dim=None, pos=1):
@@ -487,7 +506,7 @@ class TrayChecker(MachineVisionManager):
         pxpermm = self._loading_manager.stage_manager.autocenter_manager.pxpermm
         cw_px = int(cw * pxpermm)
         ch_px = int(ch * pxpermm)
-        print('fffffff', dim, pxpermm)
+        print("fffffff", dim, pxpermm)
         w, h = get_size(frame)
         x = int((w - cw_px) / 2.0)
         y = int((h - ch_px) / 2.0)
@@ -537,46 +556,46 @@ class TrayChecker(MachineVisionManager):
         pipe = self._get_classifier()
         if pipe:
             result = pipe.predict(frame.flatten())
-            self.debug(f'classify={result}')
+            self.debug(f"classify={result}")
 
     def _advance(self, label):
         self._labels.append(LABEL_MAP.get(label, -1))
         self._samples.append(self._active_frame)
 
         trayname = self._loading_manager.stage_manager.stage_map.name
-        name = f'{trayname}-{self._active_position}'
+        name = f"{trayname}-{self._active_position}"
         # self.traydb.add_labeled_sample(name, self._active_frame, label)
         self._add_labeled_sample(name, self._active_frame, label)
         self._visit_next_position()
+
     def _add_unlabeled_image(self, load_pos, pos, frame):
-        host=''
-        url=f'http://{host}/unclassified_image'
+        host = ""
+        url = f"http://{host}/unclassified_image"
 
         buf = io.BytesIO()
         im = Image.fromarray(frame)
-        im.save(buf, 'tiff')
-
+        im.save(buf, "tiff")
 
         trayname = self._loading_manager.stage_manager.stage_map.name
 
         data = {
-                    'trayname': trayname,
-                    'hole_id': pos,
-                    'image': base64.b64encode(buf.getvalue()).decode()
-                }
+            "trayname": trayname,
+            "hole_id": pos,
+            "image": base64.b64encode(buf.getvalue()).decode(),
+        }
 
         load_pos = self._loading_manager.get_load_position_by_position(pos)
         if load_pos:
-            data['identifier'] = load_pos.identifier
-            data['sample'] = load_pos.sample
-            data['material'] = load_pos.material
-            data['project'] = load_pos.project
-            data['note'] = load_pos.note
-            data['nxtals'] = load_pos.nxtals
-            data['weight'] = load_pos.weight
+            data["identifier"] = load_pos.identifier
+            data["sample"] = load_pos.sample
+            data["material"] = load_pos.material
+            data["project"] = load_pos.project
+            data["note"] = load_pos.note
+            data["nxtals"] = load_pos.nxtals
+            data["weight"] = load_pos.weight
 
         if self._loading_manager.load_instance:
-            data['loadname'] = self._loading_manager.load_instance.name
+            data["loadname"] = self._loading_manager.load_instance.name
 
         resp = requests.post(url, json=data)
 
@@ -587,27 +606,27 @@ class TrayChecker(MachineVisionManager):
         self.stop()
 
     def _good_button_fired(self):
-        self._advance('good')
+        self._advance("good")
 
     def _empty_button_fired(self):
-        self._advance('empty')
+        self._advance("empty")
 
     def _multigrain_button_fired(self):
-        self._advance('multigrain')
+        self._advance("multigrain")
 
     def _contaminant_button_fired(self):
-        self._advance('contaminant')
+        self._advance("contaminant")
 
 
 def main():
-    tc = TrayChecker(None,
-                     dbpath='/Users/ross/Sandbox/loadimages/db.sqlite')
+    tc = TrayChecker(None, dbpath="/Users/ross/Sandbox/loadimages/db.sqlite")
     # tc.train_ml()
     tc.test_ml()
 
-if __name__ == '__main__':
-    paths.build('~/PychronDev')
-    logging_setup('traydb')
+
+if __name__ == "__main__":
+    paths.build("~/PychronDev")
+    logging_setup("traydb")
     main()
 
 # ============= EOF =============================================

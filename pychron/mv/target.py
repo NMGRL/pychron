@@ -37,6 +37,7 @@ class Target:
 
     # _dev_centroid = None
     arc_centroid = None
+
     @property
     def dev_centroid(self):
         # if self._dev_centroid:

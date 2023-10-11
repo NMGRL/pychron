@@ -37,16 +37,19 @@ LABEL_MAP = dict(good=0, bad=1, empty=2, multigrain=3, contaminant=4, blurry=5)
 class LabelTbl(Base, BaseMixin):
     name = Column(String)
 
-class LabelsTbl(Base, BaseMixin):
-    sample_id = Column(Integer, ForeignKey('SampleTbl.id'))
-    label_id = Column(Integer, ForeignKey('LabelTbl.id'))
 
-    sample = relationship('SampleTbl', uselist=False)
-    label = relationship('LabelTbl', uselist=False)
+class LabelsTbl(Base, BaseMixin):
+    sample_id = Column(Integer, ForeignKey("SampleTbl.id"))
+    label_id = Column(Integer, ForeignKey("LabelTbl.id"))
+
+    sample = relationship("SampleTbl", uselist=False)
+    label = relationship("LabelTbl", uselist=False)
+
 
 class SampleTbl(Base, BaseMixin):
     blob = Column(BLOB)
     name = Column(String)
+
 
 class TrayDB(DatabaseAdapter):
     def __init__(self, *args, **kw):
@@ -62,29 +65,30 @@ class TrayDB(DatabaseAdapter):
                 Base.metadata.create_all(bind=sess.bind)
 
         with self.session_ctx():
-            for i, l in enumerate(('good', 'bad', 'empty', 'multigrain', 'contaminant', 'blurry')):
+            for i, l in enumerate(
+                ("good", "bad", "empty", "multigrain", "contaminant", "blurry")
+            ):
                 dbl = LabelTbl(id=i, name=l)
-                self._add_unique(dbl, 'label', l)
+                self._add_unique(dbl, "label", l)
 
     def get_label(self, lname):
         with self.session_ctx() as sess:
             q = sess.query(LabelTbl)
-            q = q.filter(LabelTbl.name==lname)
+            q = q.filter(LabelTbl.name == lname)
             return q.one()
 
     def add_labeled_sample(self, name, frame, label):
         # if not isinstance(sample, bytes):
         #     sample = sample.tobytes()
         sample = grayspace(frame).flatten().tobytes()
-        dbsam = SampleTbl(name=name,
-                          blob=sample)
+        dbsam = SampleTbl(name=name, blob=sample)
         dbl = self.get_label(label)
 
-        ls = LabelsTbl(sample=dbsam,
-                       label=dbl)
+        ls = LabelsTbl(sample=dbsam, label=dbl)
 
         self.add_item(dbsam)
         self.add_item(ls)
+
     def get_sample_labels(self):
         with self.session_ctx() as sess:
             q = sess.query(LabelsTbl)
@@ -102,15 +106,14 @@ class TrayDB(DatabaseAdapter):
             if labels:
                 return names, array(samples), array(labels)
 
+
 def load_test_data():
-    d = TrayDB(path='/Users/ross/Sandbox/loadimages/db.sqlite')
+    d = TrayDB(path="/Users/ross/Sandbox/loadimages/db.sqlite")
     d.build_database()
     with d.session_ctx():
-
-        for tag in ('blurry', 'empty'):
-            root = f'/Users/ross/Sandbox/loadimages/421{tag}'
+        for tag in ("blurry", "empty"):
+            root = f"/Users/ross/Sandbox/loadimages/421{tag}"
             for f in os.listdir(root):
-
                 p = os.path.join(root, f)
                 try:
                     img = Image.open(p)
@@ -119,8 +122,8 @@ def load_test_data():
                 d.add_labeled_sample(p, array(img), tag)
 
 
-if __name__ == '__main__':
-    paths.build('~/PychronDev')
-    logging_setup('traydb')
+if __name__ == "__main__":
+    paths.build("~/PychronDev")
+    logging_setup("traydb")
     load_test_data()
 # ============= EOF =============================================

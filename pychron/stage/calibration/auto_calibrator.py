@@ -48,6 +48,7 @@ class SemiAutoCalibrator(TrayCalibrator):
      b. record position
     3. traverse holes finding autocenter position
     """
+
     full_traversal = False
     stage_map = Instance("pychron.stage.maps.base_stage_map.BaseStageMap")
 
@@ -280,7 +281,7 @@ class SemiAutoCalibrator(TrayCalibrator):
                 success_cb(results)
 
             invoke_in_main_thread(open_view, sv)
-        self.debug(f'calibration time={time.time()-st:0.3f}s')
+        self.debug(f"calibration time={time.time()-st:0.3f}s")
         # reset calibration manager
         self.calibration_step = "Calibrate"
         self.calibration_enabled = True
@@ -396,9 +397,12 @@ class TrayIdentifier(SemiAutoCalibrator):
             canvas.new_calibration_item()
             self.calibration_step = "Identify"
 
-        elif step == 'Identify':
+        elif step == "Identify":
             holes = self.stage_map.random_choice(n=20)
-            t = Thread(target=self._traverse, args=(canvas.calibration_item, holes, self.identify))
+            t = Thread(
+                target=self._traverse,
+                args=(canvas.calibration_item, holes, self.identify),
+            )
             t.start()
             self.calibration_enabled = False
 
@@ -422,20 +426,21 @@ class TrayIdentifier(SemiAutoCalibrator):
                     maxscore = score
                     bestmatch = smap
 
-        self.info(f'scores: {scores}')
-        self.info(f'bestmatch: {bestmatch}')
+        self.info(f"scores: {scores}")
+        self.info(f"bestmatch: {bestmatch}")
 
         self.stage_manager.stage_map_name = bestmatch.name
 
 
 class TrayMapper(SemiAutoCalibrator):
     def handle(self, step, x, y, canvas):
-        if step == 'Calibrate':
+        if step == "Calibrate":
             self.stage_map.clear_correction_file()
             self.calibration_step = "Do Map"
-        if step == 'Do Map':
+        if step == "Do Map":
             t = Thread(target=self._traverse, args=(canvas.calibration_item,))
             t.start()
             self.calibration_enabled = False
+
 
 # ============= EOF =============================================

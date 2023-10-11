@@ -108,7 +108,7 @@ class Video(Image):
     output_pic_mode = Enum("jpg", "tif")
     ffmpeg_path = Str
     fps = Int
-    identifier = 'toupcam'
+    identifier = "toupcam"
     max_recording_duration = Float
 
     @property
@@ -125,7 +125,7 @@ class Video(Image):
         return self.cap is not None
 
     def load_configuration(self, p):
-        print('asdfsda', p)
+        print("asdfsda", p)
         if os.path.isfile(p):
             cfg = yload(p)
 
@@ -170,7 +170,7 @@ class Video(Image):
                         _, i = identifier.split(":")
                         self.cap = self._get_pylon_device(i)
                         # identifier is a url
-                    elif identifier.startswith('toupcam'):
+                    elif identifier.startswith("toupcam"):
                         self.cap = ToupCamCamera()
                 else:
                     # ideally an identifier is passed in

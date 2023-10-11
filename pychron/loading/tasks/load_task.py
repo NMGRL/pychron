@@ -26,10 +26,22 @@ from pychron.globals import globalv
 from pychron.loading.tasks.actions import (
     SaveLoadingPDFAction,
     ConfigurePDFAction,
-    SaveLoadingDBAction, GotoModeAction, GotoEntryModeAction, FootPedalModeAction, CheckTrayAction, MapTrayAction,
+    SaveLoadingDBAction,
+    GotoModeAction,
+    GotoEntryModeAction,
+    FootPedalModeAction,
+    CheckTrayAction,
+    MapTrayAction,
 )
-from pychron.loading.tasks.panes import LoadPane, LoadControlPane, LoadTablePane, StageManagerPane, VideoPane, \
-    MachineVisionPane, CounterPane
+from pychron.loading.tasks.panes import (
+    LoadPane,
+    LoadControlPane,
+    LoadTablePane,
+    StageManagerPane,
+    VideoPane,
+    MachineVisionPane,
+    CounterPane,
+)
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
@@ -43,13 +55,15 @@ class LoadingTask(BaseManagerTask):
     tool_bars = [
         SToolBar(SaveLoadingPDFAction(), ConfigurePDFAction()),
         SToolBar(SaveLoadingDBAction()),
-        SToolBar(GotoModeAction(enabled_name='interaction_mode_enabled'),
-                 GotoEntryModeAction(enabled_name='interaction_mode_enabled'),
-                 FootPedalModeAction(enabled_name='interaction_mode_enabled')),
+        SToolBar(
+            GotoModeAction(enabled_name="interaction_mode_enabled"),
+            GotoEntryModeAction(enabled_name="interaction_mode_enabled"),
+            FootPedalModeAction(enabled_name="interaction_mode_enabled"),
+        ),
         # SToolBar(CheckTrayAction(),
         #          MapTrayAction())
     ]
-    interaction_mode_enabled = DelegatesTo('manager')
+    interaction_mode_enabled = DelegatesTo("manager")
 
     def activated(self):
         if self.manager.verify_database_connection(inform=True):
@@ -62,12 +76,14 @@ class LoadingTask(BaseManagerTask):
 
     def _default_layout_default(self):
         return TaskLayout(
-            left=Tabbed(PaneItem("pychron.loading.controls"),
-                        PaneItem("pychron.loading.machine_vision"),
-                        ),
+            left=Tabbed(
+                PaneItem("pychron.loading.controls"),
+                PaneItem("pychron.loading.machine_vision"),
+            ),
             right=PaneItem("pychron.loading.video"),
-            bottom=HSplitter(PaneItem("pychron.loading.positions"),
-                             PaneItem("pychron.loading.stage"))
+            bottom=HSplitter(
+                PaneItem("pychron.loading.positions"), PaneItem("pychron.loading.stage")
+            ),
         )
 
     def prepare_destroy(self):
@@ -105,13 +121,13 @@ class LoadingTask(BaseManagerTask):
         self.manager.check_tray()
 
     def goto_mode(self):
-        self.manager.set_interaction_mode('Goto')
+        self.manager.set_interaction_mode("Goto")
 
     def goto_entry_mode(self):
-        self.manager.set_interaction_mode('GotoEntry')
+        self.manager.set_interaction_mode("GotoEntry")
 
     def foot_pedal_mode(self):
-        self.manager.set_interaction_mode('FootPedal')
+        self.manager.set_interaction_mode("FootPedal")
 
     def configure_pdf(self):
         self.manager.configure_pdf()
@@ -136,5 +152,6 @@ class LoadingTask(BaseManagerTask):
                 return self.manager.save()
             return ret
         return True
+
 
 # ============= EOF =============================================

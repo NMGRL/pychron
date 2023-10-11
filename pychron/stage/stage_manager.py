@@ -26,7 +26,11 @@ from traits.api import Event, Str, List, Instance, String
 
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.map_canvas import MapCanvas
-from pychron.core.helpers.filetools import glob_list_directory, add_extension, list_directory
+from pychron.core.helpers.filetools import (
+    glob_list_directory,
+    add_extension,
+    list_directory,
+)
 from pychron.core.ui.stage_component_editor import LaserComponentEditor
 from pychron.core.ui.thread import Thread
 from pychron.managers.manager import Manager
@@ -144,7 +148,9 @@ class BaseStageManager(Manager):
                 npos = smap.map_to_calibration(pos, cpos=cpos, rot=rot, scale=scale)
                 if key:
                     hole = smap.get_hole(key)
-                    hole.calibrated_position = smap.map_to_calibration(pos, cpos=cpos, rot=rot, scale=scale)
+                    hole.calibrated_position = smap.map_to_calibration(
+                        pos, cpos=cpos, rot=rot, scale=scale
+                    )
                 pos = npos
         return pos
 

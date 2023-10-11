@@ -47,11 +47,10 @@ else:
         func = ctypes.windll.LoadLibrary()
 
     try:
-        lib = func(
-            os.path.join(root, directory, "toupcam.{}".format(ext))
-        )
+        lib = func(os.path.join(root, directory, "toupcam.{}".format(ext)))
     except OSError as e:
-        print('load library error', e)
+        print("load library error", e)
+
 
 class HToupCam(ctypes.Structure):
     _fields_ = [("unused", ctypes.c_int)]

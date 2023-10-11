@@ -16,6 +16,7 @@
 import time
 
 from traits.api import Str, CInt, Enum
+
 # from zaber.serial import BinarySerial, BinaryDevice
 
 from zaber_motion import Library, Units, ConnectionFailedException
@@ -65,9 +66,14 @@ class ZaberMotionController(MotionController):
     def load(self, *args, **kw):
         config = self.get_configuration()
         if config:
-            self.set_attribute(config, "integrated_axes",
-                               "General", "integrated_axes",
-                               cast="boolean", default=True)
+            self.set_attribute(
+                config,
+                "integrated_axes",
+                "General",
+                "integrated_axes",
+                cast="boolean",
+                default=True,
+            )
 
             section = "Communications"
             self.set_attribute(config, "port", section, "port")
@@ -90,24 +96,27 @@ class ZaberMotionController(MotionController):
         try:
             conn = Connection.open_serial_port(self.port)
         except ConnectionFailedException as e:
-            self.critical('failed to connect. exception={}'.format(e))
+            self.critical("failed to connect. exception={}".format(e))
             return
 
-        self.debug('opened connection {}'.format(conn))
+        self.debug("opened connection {}".format(conn))
         devs = conn.detect_devices(True)
-        self.debug('detecting connected devices')
+        self.debug("detecting connected devices")
         if devs:
             for d in devs:
-                self.debug(f'found device: {d}, {d.device_id}')
+                self.debug(f"found device: {d}, {d.device_id}")
 
             # self._device = devs[0]
-            self.debug('opened device  {}'.format(self._device))
+            self.debug("opened device  {}".format(self._device))
             self._connection = conn
             # bs = BinarySerial(self.port, timeout=200, inter_char_timeout=2)
             #
             if not self.integrated_axes:
                 for a in self.axes.values():
-                    dd = next((d for d in devs if int(d.device_address) == int(a.device_id)), None)
+                    dd = next(
+                        (d for d in devs if int(d.device_address) == int(a.device_id)),
+                        None,
+                    )
                     a.device = dd.get_axis(1)
             else:
                 for a in self.axes.values():
@@ -121,8 +130,8 @@ class ZaberMotionController(MotionController):
     def relative_move(self, ax_key, direction, distance=1):
         axis = self.axes[ax_key]
         dev = axis.device
-        sign = -1 if ax_key=='x' else 1
-        dev.move_relative(distance*direction*sign*0.1, Units.LENGTH_MILLIMETRES)
+        sign = -1 if ax_key == "x" else 1
+        dev.move_relative(distance * direction * sign * 0.1, Units.LENGTH_MILLIMETRES)
         dev.wait_until_idle()
         self.update_axes()
         return dev
@@ -181,6 +190,7 @@ class ZaberMotionController(MotionController):
         a = ZaberAxis(parent=self, **kw)
         a.load(path)
         return a
+
 
 # class ZaberMotionController(MotionController):
 #     port = Str

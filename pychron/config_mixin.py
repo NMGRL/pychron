@@ -104,7 +104,7 @@ class ConfigMixin:
         return r
 
     def config_get(
-            self, config, section, option, cast=None, optional=False, default=None
+        self, config, section, option, cast=None, optional=False, default=None
     ):
         if cast is not None:
             func = getattr(config, "get{}".format(cast))
@@ -173,5 +173,6 @@ class ConfigMixin:
             config.read(p)
 
         return config
+
 
 # ============= EOF =============================================

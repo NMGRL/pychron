@@ -57,12 +57,12 @@ class TestAutocenter(HasTraits):
         self.display_image = a.display_image
         self.manager = a
 
-    @on_trait_change('offx, offy, pxpermm')
+    @on_trait_change("offx, offy, pxpermm")
     def _test_co2_locator(self):
         self._set_test_image()
         self.manager.pxpermm = self.pxpermm
         # self.manager.selected_configuration.low_rank = 50
-        loc = self.manager._get_locator(shape='circle')
+        loc = self.manager._get_locator(shape="circle")
         loc.use_tile = True
         self.manager.locator = loc
         self.manager.calculate_new_center(0, 0, self.offx, self.offy, 1)
@@ -115,7 +115,7 @@ if __name__ == "__main__":
     t.configure_traits(
         view=View(
             UItem("test1_button"),
-            HGroup(Item('offx'),Item('offy'),Item('pxpermm')),
+            HGroup(Item("offx"), Item("offy"), Item("pxpermm")),
             UItem(
                 "object.display_image.source_frame",
                 width=1000,

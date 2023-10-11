@@ -220,7 +220,9 @@ class StageManager(BaseStageManager):
             self.canvas, "show_bounds_rect", "{}.show_bounds_rect".format(pref_id)
         )
         bind_preference(
-            self.canvas, "aux_crosshairs_enabled", "{}.aux_crosshairs_enabled".format(pref_id)
+            self.canvas,
+            "aux_crosshairs_enabled",
+            "{}.aux_crosshairs_enabled".format(pref_id),
         )
 
         self.canvas._show_bounds_rect_changed()
@@ -363,7 +365,7 @@ class StageManager(BaseStageManager):
             moving = self.stage_controller.moving(**kw)
         elif self.stage_controller.timer is not None:
             moving = self.stage_controller.timer.isActive()
-            print('asdf', moving)
+            print("asdf", moving)
         return moving
 
     def get_brightness(self, **kw):
@@ -524,6 +526,7 @@ class StageManager(BaseStageManager):
                 self.parent.pattern_executor.stop()
         except AttributeError:
             pass
+
     # def _move(self, func, pos, name=None, *args, **kw):
     #     if pos is None:
     #         return

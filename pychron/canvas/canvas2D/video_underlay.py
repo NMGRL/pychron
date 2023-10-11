@@ -40,7 +40,7 @@ class VideoUnderlay(AbstractOverlay):
 
     def __init__(self, *args, **kw):
         super(VideoUnderlay, self).__init__(*args, **kw)
-        self.offset = (0,0)
+        self.offset = (0, 0)
 
     def overlay(self, component, gc, *args, **kw):
         """ """

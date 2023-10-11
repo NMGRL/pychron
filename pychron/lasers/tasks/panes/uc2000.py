@@ -27,8 +27,6 @@ from pychron.lasers.tasks.laser_panes import (
 from traitsui.api import View, Item, VGroup, HGroup, UItem, InstanceEditor
 
 
-
-
 class UC2000CO2Pane(BaseLaserPane):
     pass
 

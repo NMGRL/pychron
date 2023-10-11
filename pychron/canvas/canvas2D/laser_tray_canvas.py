@@ -556,10 +556,13 @@ class LaserTrayCanvas(StageCanvas):
             self.overlays.append(BoundsOverlay(component=self))
 
     def _add_aux_crosshairs(self):
-        ch = CrosshairsOverlay(component=self, circle_only=True,
-                               show_hole_label=False,
-                               tag="aux",
-                               visible=self.aux_crosshairs_enabled)
+        ch = CrosshairsOverlay(
+            component=self,
+            circle_only=True,
+            show_hole_label=False,
+            tag="aux",
+            visible=self.aux_crosshairs_enabled,
+        )
         self.aux_crosshairs = ch
         self.overlays.append(ch)
 

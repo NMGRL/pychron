@@ -408,7 +408,9 @@ class PatternExecutor(Patternable):
         color = 2**15 - 1
 
         # perimeter_circle = _coords_inside_image(pcx, pcy, per_img.shape)
-        perimeter_circle = disk((img_h/2, img_w/2), pattern.perimeter_radius*pxpermm)
+        perimeter_circle = disk(
+            (img_h / 2, img_w / 2), pattern.perimeter_radius * pxpermm
+        )
         per_img[perimeter_circle] = 50
         set_data("imagedata", gray2rgb(per_img.astype(uint8)))
 

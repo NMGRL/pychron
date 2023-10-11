@@ -76,7 +76,7 @@ class FrameImage(Viewable):
                 startw = 0
                 starth += h + 5
 
-            nf[starth:starth + h, startw:startw + w] = t
+            nf[starth : starth + h, startw : startw + w] = t
             startw += w + 5
 
         self.source_frame = colorspace(nf)
@@ -123,5 +123,6 @@ class StandAloneImage(FrameImage):
             vv = img
         v = self.view_factory(VGroup(vv))
         return v
+
 
 # ============= EOF =============================================

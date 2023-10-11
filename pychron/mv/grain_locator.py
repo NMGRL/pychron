@@ -29,4 +29,6 @@ class GrainLocator(Locator):
 
     def train_image(self, klass):
         pass
+
+
 # ============= EOF =============================================

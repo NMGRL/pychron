@@ -28,6 +28,7 @@ from numpy import zeros, uint8, uint32
 from qimage2ndarray import recarray_view
 from traits.api import provides
 from numpy import asarray, array, load, frombuffer
+
 # ============= local library imports  ==========================
 from pychron.image.i_camera import ICamera
 from pychron.image.toupcam import (
@@ -44,27 +45,27 @@ from pychron.image.toupcam.toupcam import Toupcam
 class ToupCamCamera(object):
     pixel_depth = 3
     hooks = None
+
     def __init__(self):
         a = Toupcam.EnumV2()
         self.hcam = Toupcam.Open(a[0].id)
 
     def load_configuration(self, cfg):
-
-        cfg = cfg.get('Device')
+        cfg = cfg.get("Device")
         if cfg:
-            exp = cfg.get('exposure')
+            exp = cfg.get("exposure")
             if exp:
                 self._set_auto_exposure(False)
                 self._set_exposure(exp)
 
-            hflip = cfg.get('hflip', False)
+            hflip = cfg.get("hflip", False)
             self._set_hflip(hflip)
 
-            self._set_esize(cfg.get('size', 0))
+            self._set_esize(cfg.get("size", 0))
 
         self.w, self.h = self.hcam.get_Size()
         # bufsize = ((self.w * 24 + 31) // 32 * 4) * self.h
-        bufsize = self.w*self.h*self.pixel_depth
+        bufsize = self.w * self.h * self.pixel_depth
         self.buf = bytes(bufsize)
 
         self.hcam.StartPullModeWithCallback(self.cameraCallback, self)
@@ -75,7 +76,13 @@ class ToupCamCamera(object):
             if self.hooks:
                 # arr = frombuffer(self.buf, dtype=uint8).reshape(self.h, self.w, self.pixel_depth)
 
-                img = QImage(copy(self.buf), self.w, self.h, (self.w * 24 + 31) // 32 * 4, QImage.Format_RGB888)
+                img = QImage(
+                    copy(self.buf),
+                    self.w,
+                    self.h,
+                    (self.w * 24 + 31) // 32 * 4,
+                    QImage.Format_RGB888,
+                )
                 for h in self.hooks:
                     try:
                         h(img)
@@ -85,10 +92,13 @@ class ToupCamCamera(object):
                         break
 
     def read(self):
-        arr = frombuffer(self.buf, dtype=uint8).reshape(self.h, self.w, self.pixel_depth)
+        arr = frombuffer(self.buf, dtype=uint8).reshape(
+            self.h, self.w, self.pixel_depth
+        )
         self._arr = arr
 
         return True, self._arr.copy()
+
     def _set_esize(self, e):
         self.hcam.put_eSize(e)
 
@@ -99,5 +109,4 @@ class ToupCamCamera(object):
         self.hcam.put_AutoExpoEnable(s)
 
     def _set_exposure(self, e):
-        self.hcam.put_ExpoTime(int(e*1000))
-
+        self.hcam.put_ExpoTime(int(e * 1000))

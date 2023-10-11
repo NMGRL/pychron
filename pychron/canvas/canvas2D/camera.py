@@ -100,8 +100,9 @@ class BaseCamera(HasTraits):
             if canvas:
                 d /= 2.0 * px_per_mm
                 lim = (-d + cur_pos, d + cur_pos)
-                print('asdfasdfsdaf', self.width, self.height, axis_key, lim, px_per_mm)
+                print("asdfasdfsdaf", self.width, self.height, axis_key, lim, px_per_mm)
                 canvas.set_mapper_limits(axis_key, lim)
+
         if pxpermm is None:
             pxpermm = self.calculate_pxpermm(zoom)
         if cx is not None:

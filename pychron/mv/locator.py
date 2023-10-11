@@ -45,7 +45,9 @@ from numpy import (
     ones,
     count_nonzero,
     unique,
-    isnan, linalg, diag,
+    isnan,
+    linalg,
+    diag,
 )
 from scipy import ndimage
 
@@ -56,7 +58,14 @@ except ImportError:
 
 from skimage.draw import polygon, disk, circle_perimeter
 from skimage.exposure import rescale_intensity, adjust_gamma, adjust_log
-from skimage.filters import gaussian, rank, sobel, unsharp_mask, window, difference_of_gaussians
+from skimage.filters import (
+    gaussian,
+    rank,
+    sobel,
+    unsharp_mask,
+    window,
+    difference_of_gaussians,
+)
 from skimage import feature, segmentation, color, filters, morphology, exposure
 
 # ============= local library imports  ==========================
@@ -212,7 +221,9 @@ class Locator(Loggable):
             dx, dy = self._calculate_error(targets)
             # if not image.tiles:
             y, x = frame.shape[:2]
-            self._draw_indicator(src, (x / 2 + dx, y / 2 - dy), shape='circle', size=dim)
+            self._draw_indicator(
+                src, (x / 2 + dx, y / 2 - dy), shape="circle", size=dim
+            )
 
             self._draw_center_indicator(
                 src, size=max(10, int(src.shape[0] * 0.25)), shape="crosshairs"
@@ -231,21 +242,21 @@ class Locator(Loggable):
         return dx, dy
 
     def _find_targets_bs(
-            self,
-            image,
-            frame,
-            dim,
-            shape,
-            preprocess,
-            mask=False,
-            annular_mask=False,
-            inverted=True,
-            search_depth=10,
-            min_targets=3,
-            threshold_limiting=True,
-            filter_targets=True,
-            search_start=False,
-            **kw
+        self,
+        image,
+        frame,
+        dim,
+        shape,
+        preprocess,
+        mask=False,
+        annular_mask=False,
+        inverted=True,
+        search_depth=10,
+        min_targets=3,
+        threshold_limiting=True,
+        filter_targets=True,
+        search_start=False,
+        **kw
     ):
         self._tile(image, frame)
 
@@ -310,7 +321,7 @@ class Locator(Loggable):
             self._draw_targets(nsrc, ts)
             self._tile(image, nsrc)
 
-            self.debug('t={} filtered poly={}'.format(t, len(ts) if ts else 0))
+            self.debug("t={} filtered poly={}".format(t, len(ts) if ts else 0))
             # ts = _arc_approximation_filter(image, nsrc, ts, dim)
             return ts
 
@@ -394,10 +405,7 @@ class Locator(Loggable):
         return invert(mask)
 
     def _annular_mask(self, src, radius):
-        """
-
-
-        """
+        """ """
         outer_radius, inner_radius = radius
         outer_radius = outer_radius * self.pxpermm
         h, w = src.shape[:2]
@@ -415,13 +423,12 @@ class Locator(Loggable):
 
         # return invert(mask)
 
-
     # ===============================================================================
     # filter
     # ===============================================================================
 
     def _filter_targets(
-            self, image, frame, dim, targets, fa, threshold=0.35, use_segmentation=True
+        self, image, frame, dim, targets, fa, threshold=0.35, use_segmentation=True
     ):
         """
         filter targets using the _filter_test function
@@ -445,7 +452,7 @@ class Locator(Loggable):
         return [ta[0] for ta in ts if ta[1]]
 
     def _filter_test(
-            self, image, frame, target, dim, cthreshold, mi, ma, use_segmentation=True
+        self, image, frame, target, dim, cthreshold, mi, ma, use_segmentation=True
     ):
         """
         if the convexity of the target is <threshold try to do a watershed segmentation
@@ -543,13 +550,13 @@ class Locator(Loggable):
         # self.wait()
         self.debug("number markers={}".format(ns))
         ttsrc = zeros_like(wsrc, dtype="uint8")
-        step = 200/ns
+        step = 200 / ns
 
         # for i in range(1, ns+1):
         target = None
         tsrc = zeros_like(wsrc, dtype="uint8")
-        for i in range(1, ns+1):
-            mask = wsrc==i
+        for i in range(1, ns + 1):
+            mask = wsrc == i
             tsrc[mask] = 255
         # ttsrc[mask] = (i+1) * step
 
@@ -646,13 +653,15 @@ class Locator(Loggable):
     # ===============================================================================
     # preprocessing
     # ===============================================================================
-    def _preprocess(self, image, frame, stretch_intensity=True, blur=0, denoise=0, low_rank=None):
+    def _preprocess(
+        self, image, frame, stretch_intensity=True, blur=0, denoise=0, low_rank=None
+    ):
         """
         1. convert frame to grayscale
         2. remove noise from frame. increase denoise value for more noise filtering
         3. stretch contrast
         """
-        self.debug('preprocess ==================')
+        self.debug("preprocess ==================")
         # labels1 = segmentation.slic(frame, compactness=30, n_segments=400, start_label=1)
         # frame = color.label2rgb(labels1, frame, kind='avg', bg_label=0)
 
@@ -666,33 +675,34 @@ class Locator(Loggable):
             frm = frame / self.pixel_depth
         # frm = frame
         # frm = frm.astype("uint8")
-        self._tile(image, frm*255)
+        self._tile(image, frm * 255)
 
         if blur:
-            self.debug('blurring: {}'.format(blur))
+            self.debug("blurring: {}".format(blur))
             frm = gaussian(frm, blur) * 255
             frm = frm.astype("uint8")
         #     d = disk(int(frm.shape[0]/2))
         #     frm = rank.equalize(frm, d)
         if low_rank:
-            self.debug('low_rank')
+            self.debug("low_rank")
             u, s, vh = linalg.svd(frm, full_matrices=False)
             k = low_rank
             s = diag(s)
             frm = u[:, :k] @ s[0:k, :k] @ vh[:k, :]
             self._tile(image, frm)
 
-        wavelet = ''
+        wavelet = ""
         if wavelet:
             try:
                 import pywt
-                self.debug('wavelet: {}'.format(wavelet))
+
+                self.debug("wavelet: {}".format(wavelet))
                 coeffs2 = pywt.dwt2(frm, wavelet)
                 LL, (LH, HL, HH) = coeffs2
                 frm = LL
                 frm = (frm - frm.min()) / frm.max() * 255
             except ImportError:
-                self.debug('pywt required')
+                self.debug("pywt required")
 
         gamma = 0
         # gamma = 1
@@ -700,26 +710,25 @@ class Locator(Loggable):
         log = 0
 
         if gamma:
-            self.debug('gamma {}'.format(gamma))
+            self.debug("gamma {}".format(gamma))
             frm = adjust_gamma(frm, gamma)
-            self._tile(image, frm*255)
+            self._tile(image, frm * 255)
 
         elif log:
-            self.debug('log {}'.format(log))
+            self.debug("log {}".format(log))
             frm = adjust_log(frm, log)
             self._tile(image, frm)
 
-        sharpen = {'radius': 10,
-                   'amount': 3}
+        sharpen = {"radius": 10, "amount": 3}
         # sharpen = False
         if sharpen:
-            self.debug('sharpen {}'.format(sharpen))
+            self.debug("sharpen {}".format(sharpen))
             frm = unsharp_mask(frm, **sharpen)
-            self._tile(image, frm*255)
+            self._tile(image, frm * 255)
 
         if stretch_intensity:
-            self.debug('stretch intensity')
-            frm = rescale_intensity(frm)*255
+            self.debug("stretch intensity")
+            frm = rescale_intensity(frm) * 255
         # frm = frm*255
         # frm = exposure.equalize_adapthist(frm/255, clip_limit=0.03)*255
         # self._tile(image, frm)
@@ -764,7 +773,7 @@ class Locator(Loggable):
         #     frm = adjust_log(frm, log)
         #     image.tile(frm)
 
-        self.debug('=============================')
+        self.debug("=============================")
         return frm
 
     def _tile(self, image, frame):
@@ -844,10 +853,10 @@ class Locator(Loggable):
                 )
 
                 if (
-                        cx is not None
-                        and not isnan(cx)
-                        and cy is not None
-                        and not isnan(cy)
+                    cx is not None
+                    and not isnan(cx)
+                    and cy is not None
+                    and not isnan(cy)
                 ):
                     for cpt in cpts:
                         self._draw_indicator(src, cpt, size=1)
@@ -953,8 +962,8 @@ class Locator(Loggable):
         if shape == "circle":
             miholedim = 0.5 * dim
             maholedim = 1.25 * dim
-            mi = miholedim ** 2 * 3.1415
-            ma = maholedim ** 2 * 3.1415
+            mi = miholedim**2 * 3.1415
+            ma = maholedim**2 * 3.1415
         else:
             d = (2 * dim) ** 2
             mi = 0.5 * d
@@ -1016,7 +1025,7 @@ class Locator(Loggable):
                 draw_polygons(src, [ta.poly_points], color=_color, thickness=1)
 
     def _draw_center_indicator(
-            self, src, color=(0, 0, 255), shape="crosshairs", size=10, thickness=1
+        self, src, color=(0, 0, 255), shape="crosshairs", size=10, thickness=1
     ):
         """
         draw indicator at center of frame
@@ -1032,7 +1041,7 @@ class Locator(Loggable):
         )
 
     def _draw_indicator(
-            self, src, center, color=(255, 0, 0), shape="circle", size=4, thickness=1
+        self, src, center, color=(255, 0, 0), shape="circle", size=4, thickness=1
     ):
         """
         convenience function for drawing indicators
@@ -1061,6 +1070,7 @@ class Locator(Loggable):
             )
         else:
             draw_circle_perimeter(src, center[0], center[1], size, color=color)
+
 
 # ============= EOF =============================================
 #  def _segment_polygon2(self, image, frame, target,

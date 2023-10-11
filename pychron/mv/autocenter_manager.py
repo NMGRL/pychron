@@ -29,7 +29,7 @@ from traits.api import (
     HasTraits,
     Str,
     List,
-    on_trait_change
+    on_trait_change,
 )
 from traitsui.api import View, Item, HGroup, RangeEditor
 from math import ceil
@@ -61,9 +61,11 @@ class AutoCenterConfig(HasTraits):
 
     @property
     def preprop(self):
-        return {"stretch_intensity": self.stretch_intensity,
-                "blur": self.blur,
-                "low_rank": self.low_rank}
+        return {
+            "stretch_intensity": self.stretch_intensity,
+            "blur": self.blur,
+            "low_rank": self.low_rank,
+        }
 
     @property
     def search(self):
@@ -125,7 +127,9 @@ class AutoCenterManager(MachineVisionManager):
         if self.locator:
             self.locator.cancel()
 
-    def calculate_new_center(self, cx, cy, offx, offy, dim=1.0, shape="circle", scale = 1, **kw):
+    def calculate_new_center(
+        self, cx, cy, offx, offy, dim=1.0, shape="circle", scale=1, **kw
+    ):
         frame = self.new_image_frame()
         loc = self._get_locator(shape=shape)
         self.locator = loc
@@ -162,8 +166,8 @@ class AutoCenterManager(MachineVisionManager):
             return
         else:
             # pdx, pdy = round(dx), round(dy)
-            mdx = dx / self.pxpermm *self.x_correction_sign
-            mdy = dy / self.pxpermm *self.y_correction_sign
+            mdx = dx / self.pxpermm * self.x_correction_sign
+            mdy = dy / self.pxpermm * self.y_correction_sign
             self.info(
                 "calculated deviation px={:n},{:n}, "
                 "mm={:0.3f},{:0.3f} ({})".format(dx, dy, mdx, mdy, self.pxpermm)

@@ -147,7 +147,9 @@ def list_subdirectories(root):
     ]
 
 
-def glob_list_directory(root, extension=None, filtername=None, remove_extension=False, use_sort=True):
+def glob_list_directory(
+    root, extension=None, filtername=None, remove_extension=False, use_sort=True
+):
     if os.path.isdir(root):
         ret = list(ilist_directory(root, extension, filtername, remove_extension))
     else:
@@ -168,7 +170,9 @@ def list_gits(root):
     return list(ilist_gits(root))
 
 
-def list_directory(p, extension=None, filtername=None, remove_extension=False, use_sort=True):
+def list_directory(
+    p, extension=None, filtername=None, remove_extension=False, use_sort=True
+):
     ds = []
 
     if os.path.isdir(p):

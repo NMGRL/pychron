@@ -234,15 +234,18 @@ class LoadTablePane(BaseLoadPane):
 
         b = UItem(
             "positions",
-            editor=TabularEditor(adapter=self.position_adapter,
-                                 refresh="refresh_table",
-                                 multi_select=True),
+            editor=TabularEditor(
+                adapter=self.position_adapter,
+                refresh="refresh_table",
+                multi_select=True,
+            ),
         )
         c = UItem(
             "grouped_positions",
             label="Grouped Positions",
-            editor=TabularEditor(adapter=self.grouped_position_adapter,
-                                 refresh="refresh_table"),
+            editor=TabularEditor(
+                adapter=self.grouped_position_adapter, refresh="refresh_table"
+            ),
         )
 
         v = View(VGroup(spring, a, Tabbed(b, c)), handler=LoadTableHandler())
@@ -250,15 +253,24 @@ class LoadTablePane(BaseLoadPane):
 
 
 class LoadInstanceAdapter(TabularAdapter):
-    columns = [("Load", "name"), ("Create Date", "create_date"),
-               ("Tray", "tray")]
+    columns = [("Load", "name"), ("Create Date", "create_date"), ("Tray", "tray")]
     font = "modern 10"
 
 
 class LoadPane(TraitsTaskPane):
     def traits_view(self):
-        v = View(Tabbed(VGroup(UItem("canvas", style="custom", editor=ComponentEditor()), label='Canvas'),
-                        VGroup(UItem("mv_canvas", style="custom", editor=ComponentEditor()), label='MV')))
+        v = View(
+            Tabbed(
+                VGroup(
+                    UItem("canvas", style="custom", editor=ComponentEditor()),
+                    label="Canvas",
+                ),
+                VGroup(
+                    UItem("mv_canvas", style="custom", editor=ComponentEditor()),
+                    label="MV",
+                ),
+            )
+        )
         return v
 
 
@@ -267,16 +279,20 @@ class MachineVisionPane(TraitsDockPane):
     id = "pychron.loading.machine_vision"
 
     def traits_view(self):
-        v = View(VGroup(UItem('object.autocenter_manager.pxpermm'),
-                        UItem(
-                            "object.autocenter_manager.display_image",
-                            width=-400,
-                            height=-400,
-                            editor=ImageEditor(
-                                refresh="object.autocenter_manager."
-                                        "display_image.refresh_needed"
-                            )),
-                        ))
+        v = View(
+            VGroup(
+                UItem("object.autocenter_manager.pxpermm"),
+                UItem(
+                    "object.autocenter_manager.display_image",
+                    width=-400,
+                    height=-400,
+                    editor=ImageEditor(
+                        refresh="object.autocenter_manager."
+                        "display_image.refresh_needed"
+                    ),
+                ),
+            )
+        )
         return v
 
 
@@ -311,7 +327,7 @@ class StageManagerPane(TraitsDockPane):
             "foot_pedal": self.model.foot_pedal,
             "focus_motor": self.model.focus_motor,
             "loading_manager": self.model,
-            "canvas": sm.canvas
+            "canvas": sm.canvas,
         }
 
     def calibration_view(self):
@@ -351,9 +367,7 @@ class StageManagerPane(TraitsDockPane):
             UItem(
                 "tray_calibration.calibrate",
                 enabled_when="tray_calibration.calibration_enabled",
-                editor=ButtonEditor(
-                    label_value="tray_calibration.calibration_step"
-                ),
+                editor=ButtonEditor(label_value="tray_calibration.calibration_step"),
                 width=-125,
             ),
             UItem(
@@ -367,7 +381,7 @@ class StageManagerPane(TraitsDockPane):
             cal_grp,
             HGroup(
                 UItem("tray_calibration.set_corrections_affine_button"),
-                UItem("tray_calibration.clear_corrections_button")
+                UItem("tray_calibration.clear_corrections_button"),
             ),
             UItem("tray_calibration.calibrator", style="custom"),
             HGroup(cal_results_grp, cal_help_grp),
@@ -381,37 +395,58 @@ class StageManagerPane(TraitsDockPane):
 
     def traits_view(self):
         v = View(
-            VGroup(BorderVGroup(HGroup(UItem("calibrated_position_entry",
-                                             tooltip="Enter a position e.g 1 for a hole, " "or 3,4 for X,Y"),
-                                       icon_button_editor('autocenter_button', "find")
-                                       ),
-                                UItem('stage_controller', style='custom'),
-                                HGroup(
-                                    Item("canvas.crosshairs_offsetx", label="Offset (mm)"),
-                                    UItem("canvas.crosshairs_offsety")),
-                                HGroup(UItem('home'),
-                                       icon_button_editor("snapshot_button", "camera"), spring),
-                                ),
-                   VGroup(BorderHGroup(UItem('loading_manager.loading_level_button'),
-                                       UItem('loading_manager.checking_level_button'),
-                                       UItem('loading_manager.scan_tray_button'),
-                                       label='Tray Scan'),
-                          BorderHGroup(UItem('loading_manager.zoom_level'), label='Zoom'),
-                          BorderHGroup(HGroup(icon_button_editor('loading_manager.up_button', 'arrow_up'),
-                                              icon_button_editor('loading_manager.down_button', 'arrow_down'),
-                                              UItem('loading_manager.home_button')),
-                                       Item('loading_manager.focus_scalar', label='Steps/mm'),
-                                       HGroup(UItem('loading_manager.focus_position_entry'),
-                                              UItem('loading_manager.focus_position_readback',
-                                                    format_str='%0.3f',
-                                                    style='readonly')),
-
-                                       label='Focus')),
-
-                   self.calibration_view(),
-                   # self.counter_view()
-                   )
-
+            VGroup(
+                BorderVGroup(
+                    HGroup(
+                        UItem(
+                            "calibrated_position_entry",
+                            tooltip="Enter a position e.g 1 for a hole, "
+                            "or 3,4 for X,Y",
+                        ),
+                        icon_button_editor("autocenter_button", "find"),
+                    ),
+                    UItem("stage_controller", style="custom"),
+                    HGroup(
+                        Item("canvas.crosshairs_offsetx", label="Offset (mm)"),
+                        UItem("canvas.crosshairs_offsety"),
+                    ),
+                    HGroup(
+                        UItem("home"),
+                        icon_button_editor("snapshot_button", "camera"),
+                        spring,
+                    ),
+                ),
+                VGroup(
+                    BorderHGroup(
+                        UItem("loading_manager.loading_level_button"),
+                        UItem("loading_manager.checking_level_button"),
+                        UItem("loading_manager.scan_tray_button"),
+                        label="Tray Scan",
+                    ),
+                    BorderHGroup(UItem("loading_manager.zoom_level"), label="Zoom"),
+                    BorderHGroup(
+                        HGroup(
+                            icon_button_editor("loading_manager.up_button", "arrow_up"),
+                            icon_button_editor(
+                                "loading_manager.down_button", "arrow_down"
+                            ),
+                            UItem("loading_manager.home_button"),
+                        ),
+                        Item("loading_manager.focus_scalar", label="Steps/mm"),
+                        HGroup(
+                            UItem("loading_manager.focus_position_entry"),
+                            UItem(
+                                "loading_manager.focus_position_readback",
+                                format_str="%0.3f",
+                                style="readonly",
+                            ),
+                        ),
+                        label="Focus",
+                    ),
+                ),
+                self.calibration_view(),
+                # self.counter_view()
+            )
         )
         return v
 
@@ -428,18 +463,23 @@ class CounterPane(TraitsDockPane):
             "object": sm,
             "foot_pedal": self.model.foot_pedal,
             "focus_motor": self.model.focus_motor,
-            "loading_manager": self.model
+            "loading_manager": self.model,
         }
 
     def traits_view(self):
-        v = View(HGroup(Item('foot_pedal.max_count'),
-                        CustomLabel('foot_pedal.count',
-                                    size=20,
-                                    color='orange',
-                                    bgcolor='black',
-                                    use_color_background=True,
-                                    style='readonly'),
-                        ))
+        v = View(
+            HGroup(
+                Item("foot_pedal.max_count"),
+                CustomLabel(
+                    "foot_pedal.count",
+                    size=20,
+                    color="orange",
+                    bgcolor="black",
+                    use_color_background=True,
+                    style="readonly",
+                ),
+            )
+        )
         return v
 
 
@@ -559,5 +599,6 @@ class LoadControlPane(TraitsDockPane):
 
         v = View(VFold(load_grp, samplegrp, notegrp, viewgrp))
         return v
+
 
 # ============= EOF =============================================

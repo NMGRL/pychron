@@ -41,7 +41,11 @@ from traits.api import (
 
 from pychron.canvas.canvas2D.camera import Camera, YamlCamera, BaseCamera
 from pychron.core.helpers.binpack import pack, encode_blob
-from pychron.core.helpers.filetools import unique_path, unique_path_from_manifest, add_extension
+from pychron.core.helpers.filetools import (
+    unique_path,
+    unique_path_from_manifest,
+    add_extension,
+)
 from pychron.core.ui.stage_component_editor import VideoComponentEditor
 from pychron.core.ui.thread import Thread as QThread
 from pychron.core.ui.thread import sleep
@@ -386,7 +390,6 @@ class VideoStageManager(StageManager):
                 path = self.save_file_dialog()
 
         if path:
-
             # play camera shutter sound
             # play_sound('shutter')
 
@@ -582,7 +585,7 @@ class VideoStageManager(StageManager):
     def _crop_to_hole(self, frame):
         dim = self.get_target_dimension()
         cropdim = dim * 8 * self.pxpermm
-        return self.video.crop(frame, 0,0, cropdim, cropdim)
+        return self.video.crop(frame, 0, 0, cropdim, cropdim)
 
     def _render_snapshot(self, path):
         from chaco.plot_graphics_context import PlotGraphicsContext
@@ -730,7 +733,6 @@ class VideoStageManager(StageManager):
         sm = self.stage_map
         st = time.time()
         if self.autocenter_manager.use_autocenter:
-
             dim = self.get_target_dimension()
             shape = sm.g_shape
             if holenum is not None:
@@ -752,7 +754,7 @@ class VideoStageManager(StageManager):
                     oy,
                     dim=dim,
                     shape=shape,
-                    annular_mask=(dim*1.4, 0)
+                    annular_mask=(dim * 1.4, 0),
                 )
                 # rpos = rpos[0]*0.75, rpos[1]*0.75
 
@@ -918,7 +920,6 @@ class VideoStageManager(StageManager):
         x = self.stage_controller.get_current_position("x")
         y = self.stage_controller.get_current_position("y")
         self.camera.set_limits_by_zoom(None, x, y, self.canvas, pxpermm=pxpermm)
-
 
     def _update_xy_limits(self, z=0):
         if self.parent is not None:

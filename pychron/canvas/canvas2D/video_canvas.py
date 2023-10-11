@@ -66,12 +66,12 @@ class VideoCanvas(SceneCanvas):
             self.fps = self.video.fps
 
     def shift_left(self, px=1):
-        ox,oy = self.video_underlay.offset
-        self.video_underlay.offset = (ox-px, oy)
+        ox, oy = self.video_underlay.offset
+        self.video_underlay.offset = (ox - px, oy)
 
     def shift_right(self, px=1):
-        ox,oy = self.video_underlay.offset
-        self.video_underlay.offset = (ox+px, oy)
+        ox, oy = self.video_underlay.offset
+        self.video_underlay.offset = (ox + px, oy)
 
     def set_offset(self, x):
         self.video_underlay.offset = (x, 0)

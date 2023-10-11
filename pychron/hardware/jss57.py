@@ -11,7 +11,9 @@ class LinearDrive(CoreDevice):
     stepsperdata = Int(2000)
     data_position = 0
 
-    def set_position(self, data=None, steps=None, block=True, use_absolute=False, update=None):
+    def set_position(
+        self, data=None, steps=None, block=True, use_absolute=False, update=None
+    ):
         if data is not None:
             self.data_position = data
             v = int(data * self.stepsperdata)
@@ -23,13 +25,14 @@ class LinearDrive(CoreDevice):
             self.block()
 
         if update:
+
             def loop():
                 c = 0
                 n = 2
                 while 1:
                     if self.moving():
                         pos = self._update_position()
-                        update(pos/self.stepsperdata)
+                        update(pos / self.stepsperdata)
                         continue
 
                     c += 1
@@ -37,18 +40,21 @@ class LinearDrive(CoreDevice):
                         break
 
                     time.sleep(0.05)
+
             t = Thread(target=loop)
             t.start()
 
     def get_position(self):
         pos = self._update_position()
-        print('asdf', pos, self.stepsperdata)
-        return pos/self.stepsperdata
+        print("asdf", pos, self.stepsperdata)
+        return pos / self.stepsperdata
 
     def _set_motor(self, v, use_absolute):
         raise NotImplementedError
 
-    def block(self, n=4, tolerance=1, progress=None, homing=False, verbose=False, timeout=30):
+    def block(
+        self, n=4, tolerance=1, progress=None, homing=False, verbose=False, timeout=30
+    ):
         c = 0
         st = time.time()
         while 1:
@@ -70,13 +76,13 @@ class LinearDrive(CoreDevice):
 
 
 class STP_MTRD(LinearDrive):
-    address = Str('1')
+    address = Str("1")
     nominal_home_position = 0.75
 
     def test(self):
-        self.debug('asdfsadf')
-        self.ask('1PM')
-        resp = self.ask('1MV')
+        self.debug("asdfsadf")
+        self.ask("1PM")
+        resp = self.ask("1MV")
         self._update_position()
         self.set_position(2)
         time.sleep(1)
@@ -86,7 +92,7 @@ class STP_MTRD(LinearDrive):
         #
         # time.sleep(1)
         # self.move_mm(2)
-        
+
     # def move_mm(self, mm):
     #     self.set_position(mm/self.mmperturn)
 
@@ -96,9 +102,10 @@ class STP_MTRD(LinearDrive):
 
         # homing
         # setup digital inputs
-        self.ask('DL3')
+        self.ask("DL3")
 
     _homing = False
+
     def home(self):
         if not self._homing:
             self._homing = True
@@ -107,16 +114,16 @@ class STP_MTRD(LinearDrive):
 
     def _home(self):
         # set distance to -1 to set direction of seek home
-        self.ask('DI-1')
+        self.ask("DI-1")
 
         # seek home
-        self.ask('SH1H')
+        self.ask("SH1H")
         self.block()
 
         # set encoder position to 0
-        self.ask('EP0')
+        self.ask("EP0")
         # set position to 0
-        self.ask('SP0')
+        self.ask("SP0")
 
         # move to nominal position
         self.set_absolute_position(self.nominal_home_position)
@@ -127,38 +134,38 @@ class STP_MTRD(LinearDrive):
 
     def moving(self):
         sc = self._read_status_code()
-        _, v = sc.split('=')
+        _, v = sc.split("=")
         return int(v, 16) > 16  # moving \x0010
 
     def _update_position(self):
         pos = self._read_motor_position()
-        self.debug(f'current motor position = {pos}')
+        self.debug(f"current motor position = {pos}")
         return pos
 
     def _read_status_code(self):
-        return self.ask('SC')
+        return self.ask("SC")
 
     def _read_motor_position(self, *args, **kw):
-        resp = self.ask('IP')
-        _, v = resp.split('=')
+        resp = self.ask("IP")
+        _, v = resp.split("=")
         return int(v, 16)
 
     def _set_acceleration(self, v):
-        self.ask(f'AC{v}')
-        self.ask(f'DE{v}')
+        self.ask(f"AC{v}")
+        self.ask(f"DE{v}")
 
     def _set_velocity(self, v):
-        self.ask(f'VE{v}')
+        self.ask(f"VE{v}")
 
     def ask(self, cmd, *args, **kw):
         return super(STP_MTRD, self).ask(f"{self.address}{cmd}", *args, **kw)
 
     def _set_motor(self, value, use_absolute):
         if use_absolute:
-            self.ask(f'DI{value}')
-            self.ask('FP')
+            self.ask(f"DI{value}")
+            self.ask("FP")
         else:
-            self.ask(f'FL{value}')
+            self.ask(f"FL{value}")
 
         # cmds = ['1IFH','1BR1','1JA10', '1JL10', '1JS1',]
         # for cmd in cmds:
@@ -172,13 +179,13 @@ class STP_MTRD(LinearDrive):
         #         time.sleep(1)
 
 
-if __name__ == '__main__':
-    paths.build('~/Pychron')
+if __name__ == "__main__":
+    paths.build("~/Pychron")
     from pychron.core.helpers.logger_setup import logging_setup
 
     logging_setup("motor")
 
-    dev = STP_MTRD(name='focusmotor')
+    dev = STP_MTRD(name="focusmotor")
     dev.bootstrap()
-    print('asdf')
+    print("asdf")
     # dev.test()

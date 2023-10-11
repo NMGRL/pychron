@@ -58,12 +58,12 @@ class LoadingPreferencesPane(PreferencesPane):
         )
         aux_crosshairs_grp = BorderVGroup(
             HGroup(
-                Item('aux_crosshairs_enabled', label='Show Aux Crosshairs'),
+                Item("aux_crosshairs_enabled", label="Show Aux Crosshairs"),
                 Item(
                     "aux_crosshairs_kind",
                     label="Crosshairs",
                     enabled_when="aux_show_laser_position",
-                )
+                ),
             ),
             Item(
                 "aux_crosshairs_radius",
@@ -93,8 +93,7 @@ class LoadingPreferencesPane(PreferencesPane):
             Item("scaling"),
             label="Canvas",
         )
-        v = View(VGroup(Item("save_directory", label="Output Directory"),
-                 canvasgrp))
+        v = View(VGroup(Item("save_directory", label="Output Directory"), canvasgrp))
         return v
 
 

@@ -36,6 +36,7 @@ from kiva import Font
 from kiva.fonttools import str_to_font
 from traits.api import Any, Event, Enum
 import time
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.loading_canvas import LoadingCanvas
@@ -51,5 +52,6 @@ class CalibrationCanvas(LoadingCanvas):
         item = self.scene.get_item(hole.id)
         item.corrected_position = unmapped_corrected_position
         self.request_redraw()
+
 
 # ============= EOF =============================================

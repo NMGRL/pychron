@@ -42,11 +42,11 @@ class Test(HasTraits):
 
     def _test_fired(self):
         h = 3
-        p = '~/mldata/mldata/421/filled/{}.filled.tif'.format(h)
+        p = "~/mldata/mldata/421/filled/{}.filled.tif".format(h)
         filled_img = self._get_image_from_path(p)
         self.display_image.tile(filled_img)
 
-        p = '~/mldata/mldata/421/empty/{}.map_pos.tif'.format(h)
+        p = "~/mldata/mldata/421/empty/{}.map_pos.tif".format(h)
         empty_img = self._get_image_from_path(p)
         self.display_image.tile(empty_img)
 
@@ -64,14 +64,17 @@ class Test(HasTraits):
         self.display_image.tilify()
 
     def traits_view(self):
-        v = View(UItem('test'),
-                 UItem('object.display_image.source_frame',
-                       width=640,
-                       height=480,
-                       editor=ImageEditor(refresh='object.display_image.refresh_needed')),
-                 # width=900,
-                 # height=900,
-                 )
+        v = View(
+            UItem("test"),
+            UItem(
+                "object.display_image.source_frame",
+                width=640,
+                height=480,
+                editor=ImageEditor(refresh="object.display_image.refresh_needed"),
+            ),
+            # width=900,
+            # height=900,
+        )
         return v
 
 
@@ -83,5 +86,5 @@ def main():
     # blankframe = self._crop(blankframe, pos=pos)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

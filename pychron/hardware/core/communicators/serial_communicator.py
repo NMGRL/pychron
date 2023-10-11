@@ -37,7 +37,7 @@ def get_ports():
         furpi = glob.glob("/dev/furpi.*")
         pychron = glob.glob("/dev/pychron.*")
         slab = glob.glob("/dev/tty.SLAB*")
-        acm = glob.glob('/dev/ttyACM*')
+        acm = glob.glob("/dev/ttyACM*")
         if sys.platform == "darwin":
             keyspan = glob.glob("/dev/tty.U*")
         else:

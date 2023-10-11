@@ -60,10 +60,11 @@ class VideoFrame(QLabel):
     # def resizeEvent(self, event):
     #     super(VideoFrame, self).resizeEvent(event)
     #     print('resasd', event.size().width())
-        # self.resize(event.size())
+    # self.resize(event.size())
 
     def sizeHint(self):
         return QSize(320, 240)
+
 
 class _VideoEditor(Editor):
     videoframe = Any
@@ -77,7 +78,9 @@ class _VideoEditor(Editor):
         frame = VideoFrame()
         frame.setScaledContents(True)
         frame.setSizePolicy(
-            QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+            QtWidgets.QSizePolicy.MinimumExpanding,
+            QtWidgets.QSizePolicy.MinimumExpanding,
+        )
         width = self.item.width
         if width < 0:
             width = self.factory.size[0]
@@ -101,12 +104,10 @@ class _VideoEditor(Editor):
 
             s = self.control.size()
 
-            qp.drawEllipse(QPoint(img.width()/2, img.height()/2), 32, 32)
+            qp.drawEllipse(QPoint(img.width() / 2, img.height() / 2), 32, 32)
 
             pixmap = QPixmap.fromImage(img)
             pixmap4 = pixmap.scaled(s.width(), s.height(), QtCore.Qt.KeepAspectRatio)
-
-
 
             self.control.setPixmap(pixmap4)
 

@@ -76,7 +76,9 @@ class LaserStageMap(BaseStageMap):
     def correction_affine_path(self):
         p = ""
         if paths.hidden_dir:
-            p = os.path.join(paths.hidden_dir, "{}_correction_affine_file.yaml".format(self.name))
+            p = os.path.join(
+                paths.hidden_dir, "{}_correction_affine_file.yaml".format(self.name)
+            )
         return p
 
     @property
@@ -101,9 +103,7 @@ class LaserStageMap(BaseStageMap):
                 wfile.write(lin.encode("utf-8"))
 
     def finger_print(self, keys, resultarr):
-        """
-
-        """
+        """ """
         # get our same holes as those in results
         holes = [self.get_hole(k.hole_id) for k in keys]
 
@@ -140,13 +140,13 @@ class LaserStageMap(BaseStageMap):
 
     def load_correction_affine_file(self):
         if not self.corrected_affine or self._corrected_zoom_level != self.zoom_level:
-            self.debug('load correction affine file')
+            self.debug("load correction affine file")
             p = self.correction_affine_path
             correction_table = yload(p)
             self.corrected_affine = correction_table.get(str(self.zoom_level))
             self._corrected_zoom_level = self.zoom_level
 
-            self.debug(f'corrected_affine {self.corrected_affine}')
+            self.debug(f"corrected_affine {self.corrected_affine}")
 
     def load_correction_file(self):
         self.debug("load correction file")
@@ -163,7 +163,7 @@ class LaserStageMap(BaseStageMap):
                         "recalibration is required".format(p)
                     )
                     if self.confirmation_dialog(
-                            "Would you like to delete the file:\n {}".format(p)
+                        "Would you like to delete the file:\n {}".format(p)
                     ):
                         os.remove(p)
             if cors:
@@ -213,7 +213,7 @@ class LaserStageMap(BaseStageMap):
         if os.path.isfile(p):
             # os.remove(p)
             root, name = os.path.split(p)
-            bp = os.path.join(root, f'~{name}')
+            bp = os.path.join(root, f"~{name}")
             shutil.move(p, bp)
             self.info(f"backup correction file {p} to {bp}")
 
@@ -234,9 +234,9 @@ class LaserStageMap(BaseStageMap):
 
     def dump_corrections_affine(self):
         p = self.correction_affine_path
-        with open(p, 'w') as wfile:
+        with open(p, "w") as wfile:
             yaml.dump(self.corrected_affine, wfile)
-        self.info(f'saved correction affine file to {p}')
+        self.info(f"saved correction affine file to {p}")
 
     def dump_correction_file(self):
         p = self.correction_path
@@ -315,5 +315,6 @@ class UVLaserStageMap(LaserStageMap):
             pos = items[v - 1]
 
         return pos
+
 
 # ============= EOF =============================================

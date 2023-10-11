@@ -36,6 +36,7 @@ from kiva import Font
 from kiva.fonttools import str_to_font
 from traits.api import Any, Event, Enum
 import time
+
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
 from pychron.canvas.canvas2D.scene.loading_scene import LoadingScene
@@ -63,7 +64,7 @@ def group_position(pos, func=None):
 
 
 class ModeOverlay(AbstractOverlay):
-    mode = Enum('Entry', 'Goto', 'GotoEntry', 'FootPedal')
+    mode = Enum("Entry", "Goto", "GotoEntry", "FootPedal")
 
     def overlay(self, other_component, gc, view_bounds=None, mode="normal"):
         with gc:
@@ -72,7 +73,7 @@ class ModeOverlay(AbstractOverlay):
             y2 = other_component.y2
             x = other_component.x
             w = other_component.width
-            states = ('Entry', 'Goto', 'GotoEntry', 'FootPedal')
+            states = ("Entry", "Goto", "GotoEntry", "FootPedal")
             n = len(states)
             ww = n * 100 + 5 * n / 2
             gc.translate_ctm((w - ww) / 2 + x, y2 - 20)
@@ -81,11 +82,10 @@ class ModeOverlay(AbstractOverlay):
                     self._render_state(gc, i, state)
 
     def _render_state(self, gc, idx, state):
-
         gc.set_stroke_color((0, 0, 0))
         w = 100
         x = idx * w
-        gc.set_font(str_to_font('arial 12'))
+        gc.set_font(str_to_font("arial 12"))
         gc.set_text_position(x + 2, 2)
         gc.show_text(state)
         gc.rect(x, 0, w - 5, 20)
@@ -233,7 +233,7 @@ class LoadingCanvas(SceneCanvas):
     def normal_key_released(self, event):
         if not self._last_key_press or time.time() - self._last_key_press > 1:
             self._last_key_press = time.time()
-            if event.character == 'b' and self._foot_pedal_mode:
+            if event.character == "b" and self._foot_pedal_mode:
                 self.increment_event = True
                 return
         else:
@@ -277,5 +277,6 @@ class LoadingCanvas(SceneCanvas):
         # self.popup.set_item(self.current_item)
         # self.popup.visible = True
         # self.request_redraw()
+
 
 # ============= EOF =============================================

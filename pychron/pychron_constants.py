@@ -258,7 +258,7 @@ LASER_PLUGINS = [
         ABLATION_CO2,
         OSTECH_DIODE,
         TAP_DIODE,
-        UC2000_CO2
+        UC2000_CO2,
     )
 ]
 

@@ -31,7 +31,6 @@ def fswap_rb(frame):
     frame[:, :, 2] = blue
 
 
-
 class Image(HasTraits):
     """ """
 

@@ -135,7 +135,7 @@ class BaseStageMap(Loggable):
 
     def random_choice(self, k=10):
         holes = random.choice(self.sample_holes, k=k)
-        return sorted(holes, key=attrgetter('id'))
+        return sorted(holes, key=attrgetter("id"))
 
     def row_dict(self):
         return {k: list(v) for k, v in self._grouped_rows()}
@@ -199,8 +199,8 @@ class BaseStageMap(Loggable):
 
         self.load_correction_affine_file()
         if self.corrected_affine:
-            cpos = self.corrected_affine['translation']
-            rot = self.corrected_affine['rotation']
+            cpos = self.corrected_affine["translation"]
+            rot = self.corrected_affine["rotation"]
             npos = itransform_point(npos, cpos, rot, 1)
 
         return npos
@@ -316,12 +316,14 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
             self.load_correction_affine_file()
 
             if self.corrected_affine:
-                cpos = self.corrected_affine['translation']
-                rot = self.corrected_affine['rotation']
+                cpos = self.corrected_affine["translation"]
+                rot = self.corrected_affine["rotation"]
                 scale = 1
-                self.debug(f'applying corrected affine pos={pos} cpos={cpos}, rot={rot}')
+                self.debug(
+                    f"applying corrected affine pos={pos} cpos={cpos}, rot={rot}"
+                )
                 pos = transform_point(pos, cpos, rot, scale)
-                self.debug(f'new pos {pos}')
+                self.debug(f"new pos {pos}")
         return pos
 
     def load_correction_affine_file(self):
@@ -427,5 +429,6 @@ Check that the file is UTF-8 and Unix (LF) linefeed""".format(
         lines[0] = "{},{}\n".format(self.g_shape, self.g_dimension)
         with open(self.file_path, "w") as f:
             f.writelines(lines)
+
 
 # ============= EOF =============================================
