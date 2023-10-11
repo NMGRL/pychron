@@ -162,7 +162,7 @@ class VideoStageManager(StageManager):
 
         bind_preference(self, "video_identifier", "{}.video_identifier".format(pref_id))
 
-        bind_preference(self, "use_video_server", "{}.use_video_server".format(pref_id))
+        # bind_preference(self, "use_video_server", "{}.use_video_server".format(pref_id))
 
         bind_preference(
             self.video_archiver,
