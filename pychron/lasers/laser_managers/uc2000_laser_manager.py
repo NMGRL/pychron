@@ -22,4 +22,7 @@ class UC2000LaserManager(LaserManager):
     laser_controller = Instance(UC2000)
 
 
+class UC2000CO2Manager(UC2000LaserManager):
+    stage_manager_id = "uc2000.co2"
+    stage_controller_klass = 'ZaberMotion'
 # ============= EOF =============================================

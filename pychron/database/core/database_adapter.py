@@ -228,6 +228,7 @@ class DatabaseAdapter(Loggable):
             else:
                 self.warning("no session factory")
         else:
+            self.critical('using Mock session')
             self.session = MockSession()
 
     def close_session(self):
@@ -633,7 +634,11 @@ host= {}\nurl= {}'.format(
             self.critical("No session")
 
     def _add_unique(self, item, attr, name):
-        nitem = getattr(self, "get_{}".format(attr))(name)
+        try:
+            nitem = getattr(self, "get_{}".format(attr))(name)
+        except NoResultFound:
+            nitem = None
+
         if nitem is None:
             self.info("adding {}= {}".format(attr, name))
             self._add_item(item)
