@@ -17,9 +17,6 @@
 import numpy as np
 from numpy.fft import fftshift, fftn
 from scipy.ndimage import binary_fill_holes
-from skimage.feature import canny
-from skimage.future import graph
-from skimage.restoration import denoise_wavelet
 from skimage.transform import rescale
 from traits.api import Float
 
