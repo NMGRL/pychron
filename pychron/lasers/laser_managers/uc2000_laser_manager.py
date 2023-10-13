@@ -21,6 +21,13 @@ from traits.api import Instance
 class UC2000LaserManager(LaserManager):
     laser_controller = Instance(UC2000)
 
+    def _laser_controller_default(self):
+        return UC2000(
+            name="laser_controller",
+            configuration_name="laser_controller",
+            configuration_dir_name=self.configuration_dir_name,
+        )
+
 
 class UC2000CO2Manager(UC2000LaserManager):
     stage_manager_id = "uc2000.co2"
