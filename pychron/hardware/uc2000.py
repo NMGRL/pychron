@@ -34,6 +34,7 @@ class UC2000(CoreDevice):
         self.communicator = SerialCommunicator(name="uc2000")
         self.communicator.load(config, self.config_path)
         self.communicator.baudrate = 9600
+        return True
 
     def initialize(self, *args, **kw):
         return True
