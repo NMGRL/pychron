@@ -644,18 +644,20 @@ class ScanManager(StreamGraphManager):
             det.series_id = i
 
         if plot.plots:
-            cp = plot.plots[det.name][0]
-            dt = DataTool(
-                plot=cp, component=plot, normalize_time=True, use_date_str=False
-            )
-            dto = DataToolOverlay(component=plot, tool=dt)
-            plot.tools.append(dt)
-            plot.overlays.append(dto)
-
-            n = self.graph_scan_width
-            n = max(n, 1 / 60.0)
-            mins = n * 60
-            g.data_limits[0] = 1.8 * mins
+            pass
+            # disable datatool for now
+            # cp = plot.plots[det.name][0]
+            # dt = DataTool(
+            #     plot=cp, component=plot, normalize_time=True, use_date_str=False
+            # )
+            # dto = DataToolOverlay(component=plot, tool=dt)
+            # plot.tools.append(dt)
+            # plot.overlays.append(dto)
+            #
+            # n = self.graph_scan_width
+            # n = max(n, 1 / 60.0)
+            # mins = n * 60
+            # g.data_limits[0] = 1.8 * mins
 
         return g
 
