@@ -330,11 +330,11 @@ class SpectrometerTask(EditorTask):
         self.scan_manager.activate()
 
         self._scan_factory()
-        ee = [
-            e
-            for e in self.editor_area.control.children()
-            if isinstance(e, EditorWidget)
-        ][0]
+        # ee = [
+        #     e
+        #     for e in self.editor_area.control.children()
+        #     if isinstance(e, EditorWidget)
+        # ][0]
         # print int(ee.features())
         # ee.setFeatures(QtGui.QDockWidget.NoDockWidgetFeatures)
         # print int(ee.features())
