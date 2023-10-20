@@ -69,7 +69,7 @@ class UC2000(CoreDevice):
             cmd = f"{cmd}{databyte}"
 
         cmd = f"{cmd}{chksum}"
-        resp = self.communicator.ask(cmd, verbose=True)
+        resp = self.communicator.ask(cmd, verbose=True, is_hex=True)
         if resp != ACK:
             self.warning(
                 f"response was not an ACK. resp={resp}. returning default={default}"
