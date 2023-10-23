@@ -78,12 +78,6 @@ class UC2000(CoreDevice):
         cmd = f"{cmd}{chksum}"
         self.debug(f"ask {cmd}")
 
-        import codecs
-        command = cmd
-        command = bytes(command, "utf-8")
-        command = codecs.decode(command, "hex")
-        print(cmd, command)
-
         resp = self.communicator.ask(cmd, verbose=True, is_hex=True)
         if resp != ACK:
             self.warning(
