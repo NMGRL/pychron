@@ -53,7 +53,6 @@ class FusionsCO2Manager(FusionsLaserManager):
 
     def set_laser_power_hook(self, rp, **kw):
         """ """
-        self.laser_controller.set_laser_power(rp, **kw)
         if self.monitor:
             self.monitor.setpoint = self._requested_power
         else:

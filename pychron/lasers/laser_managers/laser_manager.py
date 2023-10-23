@@ -172,6 +172,7 @@ class LaserManager(BaseLaserManager):
 
         self._requested_power = power
         self._calibrated_power = p
+        self.laser_controller.set_laser_power(p, verbose=verbose)
         self.set_laser_power_hook(p, verbose=verbose)
         return True
 
