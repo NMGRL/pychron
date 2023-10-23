@@ -114,8 +114,12 @@ class UC2000(CoreDevice):
         return is_ack(self._ask(cmd))
 
     def _disable_laser(self):
+
         cmd = "76"
-        return is_ack(self._ask(cmd))
+        resp = is_ack(self._ask(cmd))
+        self.set_laser_power(0)
+
+        return resp
 
 
 if __name__ == '__main__':
