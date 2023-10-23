@@ -59,6 +59,7 @@ class UC2000(CoreDevice):
             databyte = f"{percentage * 2:x}"
             # checksum = self._calculate_checksum(cmd, databyte)
             # resp = self._ask(f"{cmd}{databyte}{checksum}")
+
             resp = self._ask(cmd, databyte)
             self.debug(f"set laser power {percentage} {resp}")
 
@@ -75,7 +76,15 @@ class UC2000(CoreDevice):
             cmd = f"{cmd}{databyte}"
 
         cmd = f"{cmd}{chksum}"
-        resp = self.communicator.ask(cmd, verbose=True, is_hex=True, nbytes=nbytes)
+        self.debug(f"ask {cmd}")
+
+        import codecs
+        command = cmd
+        command = bytes(command, "utf-8")
+        command = codecs.decode(command, "hex")
+        print(cmd, command)
+
+        resp = self.communicator.ask(cmd, verbose=True, is_hex=True)
         if resp != ACK:
             self.warning(
                 f"response was not an ACK. resp={resp}. returning default={default}"
@@ -90,7 +99,7 @@ class UC2000(CoreDevice):
             d += int(value, 16)
         nc = d & 255
         ones_compliment = nc ^ 255
-        return f"{ones_compliment:x}"
+        return f"{ones_compliment:02x}"
 
     def _enable_laser(self, **kw):
         cmd = "75"
@@ -100,4 +109,8 @@ class UC2000(CoreDevice):
         cmd = "76"
         return is_ack(self._ask(cmd))
 
+
+if __name__ == '__main__':
+    uc = UC2000()
+    uc.set_laser_power(63)
 # ============= EOF =============================================
