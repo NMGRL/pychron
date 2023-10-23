@@ -57,7 +57,7 @@ class UC2000(CoreDevice):
         if 0 <= percentage <= 100:
             cmd = "7F"
             data = int(percentage * 2)
-            databyte = f"{data:x}"
+            databyte = f"{data:02x}"
             # checksum = self._calculate_checksum(cmd, databyte)
             # resp = self._ask(f"{cmd}{databyte}{checksum}")
 
