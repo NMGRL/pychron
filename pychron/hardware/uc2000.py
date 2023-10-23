@@ -63,7 +63,7 @@ class UC2000(CoreDevice):
         self.debug(f"status {status}")
 
     # private
-    def _ask(self, cmd, databyte=None, default=None):
+    def _ask(self, cmd, databyte=None, default=None, nbytes=1):
         chksum = self._calculate_checksum(cmd, databyte)
         cmd = f"{STX}{cmd}"
 
@@ -71,7 +71,7 @@ class UC2000(CoreDevice):
             cmd = f"{cmd}{databyte}"
 
         cmd = f"{cmd}{chksum}"
-        resp = self.communicator.ask(cmd, verbose=True, is_hex=True)
+        resp = self.communicator.ask(cmd, verbose=True, is_hex=True, nbytes=nbytes)
         if resp != ACK:
             self.warning(
                 f"response was not an ACK. resp={resp}. returning default={default}"
