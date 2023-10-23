@@ -21,6 +21,10 @@ ACK = b"\xAA"
 NAK = b"\x3F"
 
 
+def is_ack(resp):
+    return resp == ACK
+
+
 class UC2000(CoreDevice):
     """
 
@@ -72,8 +76,6 @@ class UC2000(CoreDevice):
 
         cmd = f"{cmd}{chksum}"
         resp = self.communicator.ask(cmd, verbose=True, is_hex=True, nbytes=nbytes)
-        self.debug(f"ask {cmd} response={resp}, {resp == ACK}, ACK={ACK}")
-
         if resp != ACK:
             self.warning(
                 f"response was not an ACK. resp={resp}. returning default={default}"
@@ -92,11 +94,10 @@ class UC2000(CoreDevice):
 
     def _enable_laser(self, **kw):
         cmd = "75"
-        return self._ask(cmd)
+        return is_ack(self._ask(cmd))
 
     def _disable_laser(self):
         cmd = "76"
-        return self._ask(cmd)
-
+        return is_ack(self._ask(cmd))
 
 # ============= EOF =============================================
