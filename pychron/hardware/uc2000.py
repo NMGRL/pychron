@@ -17,8 +17,8 @@ from pychron.hardware.core.communicators.serial_communicator import SerialCommun
 from pychron.hardware.core.core_device import CoreDevice
 
 STX = "5B"
-ACK = "AA"
-NAK = "3F"
+ACK = b"\xAA"
+NAK = b"\x3F"
 
 
 class UC2000(CoreDevice):
@@ -53,8 +53,10 @@ class UC2000(CoreDevice):
         if 0 <= percentage <= 100:
             cmd = "7F"
             databyte = f"{percentage * 2:x}"
-            checksum = self._calculate_checksum(cmd, databyte)
-            resp = self._ask(f"{cmd}{databyte}{checksum}")
+            # checksum = self._calculate_checksum(cmd, databyte)
+            # resp = self._ask(f"{cmd}{databyte}{checksum}")
+            resp = self._ask(cmd, databyte)
+            self.debug(f"set laser power {percentage} {resp}")
 
     def get_status(self):
         status = self.communicator.ask("7E")
