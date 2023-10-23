@@ -20,6 +20,7 @@ from traits.api import Instance
 
 class UC2000LaserManager(LaserManager):
     laser_controller = Instance(UC2000)
+    configuration_dir_name = "uc2000"
 
     def _laser_controller_default(self):
         return UC2000(
