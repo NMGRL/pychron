@@ -72,6 +72,8 @@ class UC2000(CoreDevice):
 
         cmd = f"{cmd}{chksum}"
         resp = self.communicator.ask(cmd, verbose=True, is_hex=True, nbytes=nbytes)
+        self.debug(f"ask {cmd} response={resp}, {resp == ACK}, ACK={ACK}")
+
         if resp != ACK:
             self.warning(
                 f"response was not an ACK. resp={resp}. returning default={default}"
