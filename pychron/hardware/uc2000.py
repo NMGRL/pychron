@@ -110,8 +110,12 @@ class UC2000(CoreDevice):
         return f"{ones_compliment:02x}"
 
     def _enable_laser(self, **kw):
+        self.set_laser_power(0)
+
         cmd = "75"
-        return is_ack(self._ask(cmd))
+        resp = is_ack(self._ask(cmd))
+        self.set_laser_power(0)
+        return resp
 
     def _disable_laser(self):
 
