@@ -433,11 +433,14 @@ class SampleEntry(DVCAble):
             self.selected_samples = []
 
     def save(self):
+        self.debug('doing save')
         msg = None
         if not self.sample_edit_model.save():
             self._backup()
             if self._save():
                 msg = "Samples added to database"
+            else:
+                msg = "Nothing to Save"
         else:
             # refresh samples in display table
             self._handle_sample_filter()
