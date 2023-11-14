@@ -43,9 +43,9 @@ class IFurnaceController(Interface):
     def set_pid(self, param_str):
         pass
 
-    def read_temperature(self, force=False, verbose=False):
-        pass
-
-    def read_output_percent(self, force=False, verbose=False):
-        pass
+    # def read_temperature(self, force=False, verbose=False):
+    #     pass
+    #
+    # def read_output_percent(self, force=False, verbose=False):
+    #     pass
 # ============= EOF =============================================

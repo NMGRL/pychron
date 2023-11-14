@@ -25,6 +25,7 @@ from traits.api import HasTraits, Float, Property, provides, TraitError
 # ============= local library imports  ==========================
 from pychron.furnace.ifurnace_controller import IFurnaceController
 from pychron.hardware.eurotherm import STX, ETX, EOT, ACK, ENQ
+from pychron.hardware.furnace.base_furnace_controller import BaseFurnaceController
 from pychron.paths import paths
 
 PID_REGEX = re.compile(r"[A-Z]{2},\d+(;[A-Z]{2},\d+)*")
@@ -72,8 +73,7 @@ def get_pid_parameters(v):
         #     return pa,
 
 
-@provides(IFurnaceController)
-class BaseEurotherm(HasTraits):
+class BaseEurotherm(BaseFurnaceController):
     """
 
     Series 2000 Communications Handbook
@@ -88,35 +88,17 @@ class BaseEurotherm(HasTraits):
     UID = 1
     protocol = "ei_bisynch"
 
-    output_value = Float
-    process_value = Float
-    process_setpoint = Property(
-        Float(enter_set=True, auto_set=False), depends_on="_setpoint"
-    )
-    _setpoint = Float
-    setpoint_min = 0
-    setpoint_max = 1800
     use_pid_table = False
 
     # ifurnacecontroller
-    def get_output(self, **kw):
+    def get_output_hook(self, **kw):
         resp = self._query("OP", **kw)
-        try:
-            self.output_value = resp
-        except TraitError:
-            pass
-
         return resp
-
-    read_percent_output = get_output
 
     def get_response(self, force=False):
         if force or not self.process_value:
             self.get_process_value()
         return self.process_value
-
-    def set_setpoint(self, v):
-        self.process_setpoint = v
 
     # configloadable
     def load_additional_args(self, config):
@@ -159,7 +141,7 @@ class BaseEurotherm(HasTraits):
         if params:
             self.set_pid_str(params[1])
 
-    def set_process_setpoint(self, v):
+    def set_process_setpoint_hook(self, v):
         """ """
         if v and self.use_pid_table:
             self.set_pid_parameters(v)
@@ -174,15 +156,9 @@ class BaseEurotherm(HasTraits):
         else:
             return True
 
-    def get_process_value(self, **kw):
+    def get_process_value_hook(self, **kw):
         """ """
-        resp = self._query("PV", **kw)
-        try:
-            self.process_value = resp
-        except TraitError:
-            pass
-
-        return resp
+        return self._query("PV", **kw)
 
     # private
     def _command(self, cmd, v, **kw):
@@ -254,25 +230,7 @@ class BaseEurotherm(HasTraits):
         """ """
         return resp == ACK
 
-    def _get_process_setpoint(self):
-        """ """
-        return self._setpoint
 
-    def _set_process_setpoint(self, v):
-        """ """
-        if v is not None:
-            self._setpoint = v
-            self.set_process_setpoint(v)
-
-    def _validate_process_setpoint(self, v):
-        """ """
-        try:
-            float(v)
-        except ValueError:
-            pass
-
-        if self.setpoint_min <= v < self.setpoint_max:
-            return v
 
 
 # ============= EOF =============================================
