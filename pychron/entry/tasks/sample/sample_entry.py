@@ -433,7 +433,7 @@ class SampleEntry(DVCAble):
             self.selected_samples = []
 
     def save(self):
-        self.debug('doing save')
+        self.debug("doing save")
         msg = None
         if not self.sample_edit_model.save():
             self._backup()

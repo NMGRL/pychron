@@ -489,7 +489,6 @@ class DVC(Loggable):
                     path = os.path.join(paths.dvc_dir, name)
                     self.meta_repo.clone(url, path)
                 else:
-
                     r_mkdir(root)
                     mrepo.init_repo(root)
 

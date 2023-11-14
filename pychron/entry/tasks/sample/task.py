@@ -72,7 +72,7 @@ class SampleEntryTask(BaseManagerTask):
         self.manager.clear()
 
     def save(self):
-        self.debug('save samples to database')
+        self.debug("save samples to database")
         self.manager.save()
 
     def load(self):
