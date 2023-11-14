@@ -580,6 +580,7 @@ host= {}\nurl= {}'.format(
 
             connected = True
         except OperationalError:
+            self.debug_exception()
             self.warning("Operational connection failed to {}".format(self.public_url))
             connected = False
             self._test_connection_enabled = False

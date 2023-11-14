@@ -489,6 +489,9 @@ class DVC(Loggable):
                     path = os.path.join(paths.dvc_dir, name)
                     self.meta_repo.clone(url, path)
                 else:
+                    r_mkdir(root)
+                    mrepo.init_repo(root)
+
                     self.debug(
                         "no url returned for MetaData repository. You need to clone your MetaData repository "
                         "manually"
