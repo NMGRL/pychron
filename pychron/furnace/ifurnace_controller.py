@@ -31,5 +31,21 @@ class IFurnaceController(Interface):
     def set_setpoint(self, v):
         pass
 
+    def test_connection(self):
+        pass
 
+    def get_process_value(self):
+        pass
+
+    def get_output(self):
+        pass
+
+    def set_pid(self, param_str):
+        pass
+
+    def read_temperature(self, force=False, verbose=False):
+        pass
+
+    def read_output_percent(self, force=False, verbose=False):
+        pass
 # ============= EOF =============================================

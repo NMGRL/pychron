@@ -1,5 +1,5 @@
 # ===============================================================================
-# Copyright 2023 ross
+# Copyright 2023 Jake Ross
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,19 +13,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+from traits.api import provides
+
+from pychron.furnace.ifurnace_controller import IFurnaceController
+from pychron.hardware.core.core_device import CoreDevice
+from pychron.hardware.eurotherm.base import BaseEurotherm
 
 
-from pychron.furnace.base_furnace_manager import BaseFurnaceManager
-from traits.api import Instance, provides
+@provides(IFurnaceController)
+class Eurotherm818(CoreDevice):
+    def read_setpoint(self):
+        pass
 
-from pychron.furnace.ifurnace_manager import IFurnaceManager
-from pychron.hardware.eurotherm.eurotherm import Eurotherm
-from pychron.hardware.eurotherm.eurotherm818 import Eurotherm818
+    def set_setpoint(self, v):
+        pass
 
+    def test_connection(self):
+        pass
 
-@provides(IFurnaceManager)
-class RestonFurnaceManager(BaseFurnaceManager):
-    controller_klass = Eurotherm818
+    def get_process_value(self):
+        pass
 
+    def get_output(self):
+        pass
 
+    def set_pid(self, param_str):
+        pass
+
+    def read_temperature(self, force=False, verbose=False):
+        pass
+
+    def read_output_percent(self, force=False, verbose=False):
+        pass
 # ============= EOF =============================================
