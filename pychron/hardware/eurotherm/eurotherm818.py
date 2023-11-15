@@ -78,7 +78,14 @@ class Eurotherm800Series(CoreDevice):
     def initialize(self, *args, **kw):
         if self.communicator:
             self.communicator.write_terminator = None
+
         return True
+
+    def open(self, *args, **kw):
+        ret = super().open(*args, **kw)
+        if ret:
+            self.communicator.handle.write_termination = ''
+        return ret
 
 
 class Eurotherm818(Eurotherm800Series, BaseFurnaceController):
