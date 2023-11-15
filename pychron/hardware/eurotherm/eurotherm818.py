@@ -25,11 +25,12 @@ from pychron.hardware.furnace.base_furnace_controller import BaseFurnaceControll
 class Eurotherm800Series(CoreDevice):
     GID = Int
     UID = Int
+    protocol = Str('bisynch')
 
-    def enquiry(self, mnenonic):
+    def enquiry(self, mnenonic, verbose=True):
         address = self.unit_address
         transmission = f'{EOT}{address}{mnenonic}{ENQ}'
-        resp = self.ask(transmission, verbose=True)
+        resp = self.ask(transmission, verbose=verbose)
         if resp:
             stx = resp[0]
             rmnenonic = resp[1:3]
@@ -37,14 +38,14 @@ class Eurotherm800Series(CoreDevice):
             bcc = resp[-2:]
             return float(resp[3:-3])
 
-    def change(self, mnenonic, value):
+    def change(self, mnenonic, value, verbose=True):
         address = self.unit_address
 
         packet = f'{mnenonic}{value}{ETX}'
         bcc = calculate_bcc(packet)
         transmission = f'{EOT}{address}{STX}{packet}{bcc}'
 
-        resp = self.ask(transmission, verbose=True)
+        resp = self.ask(transmission, verbose=verbose)
         # if resp:
         #     stx = resp[0]
         #     rmnenonic = resp[1:3]
@@ -92,11 +93,11 @@ class Eurotherm818(Eurotherm800Series, BaseFurnaceController):
     def test_connection(self):
         return self.read_setpoint()
 
-    def set_process_setpoint_hook(self, v):
-        self.change('SL', v)
+    def set_process_setpoint_hook(self, v, **kw):
+        self.change('SL', v, **kw)
 
-    def get_process_value_hook(self):
-        return self.enquiry('PV')
+    def get_process_value_hook(self, *args, **kw):
+        return self.enquiry('PV', **kw)
 
     def get_output_hook(self):
         return self.enquiry('OP')
@@ -110,7 +111,5 @@ class Eurotherm818(Eurotherm800Series, BaseFurnaceController):
             return True
         else:
             self.warning('invalid pid string "{}"'.format(s))
-
-
 
 # ============= EOF =============================================

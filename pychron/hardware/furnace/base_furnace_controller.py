@@ -52,9 +52,9 @@ class BaseFurnaceController(HasTraits):
 
     read_percent_output = get_output
 
-    def get_process_value(self):
+    def get_process_value(self, *args, **kw):
         try:
-            self.process_value = self.get_process_value_hook()
+            self.process_value = self.get_process_value_hook(verbose=kw.get('verbose', True))
         except TraitError:
             pass
 
