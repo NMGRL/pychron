@@ -23,8 +23,8 @@ from pychron.hardware.furnace.base_furnace_controller import BaseFurnaceControll
 
 
 class Eurotherm800Series(CoreDevice):
-    GID = Int
-    UID = Int
+    gid = Int(0)
+    uid = Int(1)
     protocol = Str('bisynch')
 
     def enquiry(self, mnenonic, verbose=True):
@@ -66,11 +66,11 @@ class Eurotherm800Series(CoreDevice):
 
         if self.protocol == "bisynch":
             self.set_attribute(
-                config, "GID", "Communications", "GID", cast="int", optional=True
+                config, "gid", "Communications", "GID", cast="int", optional=True
             )
 
             self.set_attribute(
-                config, "UID", "Communications", "UID", cast="int", optional=True
+                config, "uid", "Communications", "UID", cast="int", optional=True
             )
 
         return True
