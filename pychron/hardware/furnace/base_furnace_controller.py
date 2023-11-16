@@ -33,15 +33,15 @@ class BaseFurnaceController(HasTraits):
     def set_setpoint(self, v):
         self.process_setpoint = v
 
-    def get_output(self):
+    def get_output(self, *args, **kw):
         try:
-            self.output_value = self.get_output_hook()
+            self.output_value = self.get_output_hook(*args, **kw)
         except TraitError:
             pass
 
         return self.output_value
 
-    def get_output_hook(self):
+    def get_output_hook(self, *args, **kw):
         raise NotImplementedError
 
     def get_process_value_hook(self, *args, **kw):

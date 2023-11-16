@@ -106,8 +106,8 @@ class Eurotherm818(Eurotherm800Series, BaseFurnaceController):
     def get_process_value_hook(self, *args, **kw):
         return self.enquiry('PV', **kw)
 
-    def get_output_hook(self):
-        return self.enquiry('OP')
+    def get_output_hook(self, *args, **kw):
+        return self.enquiry('OP', **kw)
 
     def set_pid(self, s):
         if PID_REGEX.match(s):
