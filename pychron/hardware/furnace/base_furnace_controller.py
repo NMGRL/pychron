@@ -30,6 +30,9 @@ class BaseFurnaceController(HasTraits):
     setpoint_min = Int(0)
     setpoint_max = Int(1800)
 
+    def get_setpoint(self, *args, **kw):
+        return self.process_setpoint
+
     def set_setpoint(self, v):
         self.process_setpoint = v
 
