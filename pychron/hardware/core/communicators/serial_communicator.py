@@ -514,17 +514,13 @@ class SerialCommunicator(Communicator):
                 r += self.handle.read(inw)
                 if r and r.strip():
                     for ti in terminator:
-                        print(ti, ord(ti), r, terminator_position)
-                        if terminator_position:
-                            print(r[terminator_position], ti, type(ti), type(r[terminator_position]) ,r[
-                                                                                                       terminator_position] == ti)
-                            if isinstance(ti, int) and not isinstance(r[terminator_position], int):
-                                ti = chr(ti)
+                        if isinstance(ti, str):
+                            ti = ti.encode()
 
+                        if terminator_position:
                             terminated = r[terminator_position] == ti
                         else:
-                            if isinstance(ti, str):
-                                ti = ti.encode()
+
                             terminated = r.endswith(ti)
                         if terminated:
                             break
