@@ -519,7 +519,7 @@ class SerialCommunicator(Communicator):
 
                         print(ti, type(ti), r[terminator_position], type(r[terminator_position]))
                         if terminator_position:
-                            terminated = r[terminator_position] == ti
+                            terminated = chr(r[terminator_position]).encode() == ti
                         else:
 
                             terminated = r.endswith(ti)
