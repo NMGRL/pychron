@@ -518,12 +518,15 @@ class SerialCommunicator(Communicator):
                             ti = ti.encode()
 
                         if terminator_position:
+                            if not len(r) >= terminator_position:
+                                continue
                             terminated = chr(r[terminator_position]).encode() == ti
                         else:
 
                             terminated = r.endswith(ti)
                         if terminated:
                             break
+
             except BaseException as e:
                 self.warning(e)
             return r, terminated
