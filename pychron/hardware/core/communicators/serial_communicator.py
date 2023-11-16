@@ -517,6 +517,7 @@ class SerialCommunicator(Communicator):
                         if isinstance(ti, str):
                             ti = ti.encode()
 
+                        print(ti, type(ti), r[terminator_position], type(r[terminator_position]))
                         if terminator_position:
                             terminated = r[terminator_position] == ti
                         else:
