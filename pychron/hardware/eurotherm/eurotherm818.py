@@ -30,7 +30,7 @@ class Eurotherm800Series(CoreDevice):
     def enquiry(self, mnenonic, verbose=True):
         address = self.unit_address
         transmission = f'{EOT}{address}{mnenonic}{ENQ}'
-        resp = self.ask(transmission, verbose=verbose)
+        resp = self.ask(transmission, verbose=True)
         if resp:
             stx = resp[0]
             rmnenonic = resp[1:3]
