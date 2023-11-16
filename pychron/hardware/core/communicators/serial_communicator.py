@@ -518,6 +518,9 @@ class SerialCommunicator(Communicator):
                         if terminator_position:
                             print(r[terminator_position], ti, type(ti), type(r[terminator_position]) ,r[
                                                                                                        terminator_position] == ti)
+                            if isinstance(ti, int) and not isinstance(r[terminator_position], int):
+                                ti = chr(ti)
+
                             terminated = r[terminator_position] == ti
                         else:
                             if isinstance(ti, str):

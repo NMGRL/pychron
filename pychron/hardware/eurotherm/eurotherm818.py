@@ -17,7 +17,7 @@ from traits.api import provides, Str, Int
 
 from pychron.furnace.ifurnace_controller import IFurnaceController
 from pychron.hardware.core.core_device import CoreDevice
-from pychron.hardware.eurotherm import ENQ, EOT, STX, calculate_bcc, ETX
+from pychron.hardware.eurotherm import ENQ, EOT, STX, calculate_bcc, ETX, ACK
 from pychron.hardware.eurotherm.base import BaseEurotherm, PID_REGEX
 from pychron.hardware.furnace.base_furnace_controller import BaseFurnaceController
 
@@ -45,7 +45,8 @@ class Eurotherm800Series(CoreDevice):
         bcc = calculate_bcc(packet)
         transmission = f'{EOT}{address}{STX}{packet}{bcc}'
 
-        resp = self.ask(transmission, verbose=verbose)
+        resp = self.ask(transmission, verbose=verbose,
+                        read_terminator=ACK, terminator_position=0)
         # if resp:
         #     stx = resp[0]
         #     rmnenonic = resp[1:3]
