@@ -518,7 +518,7 @@ class SerialCommunicator(Communicator):
                             ti = ti.encode()
 
                         if terminator_position:
-                            if not len(r) >= terminator_position:
+                            if not len(r) >= abs(terminator_position):
                                 continue
                             terminated = chr(r[terminator_position]).encode() == ti
                         else:
