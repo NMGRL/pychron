@@ -61,7 +61,7 @@ class BaseFurnaceController(HasTraits):
         except TraitError:
             pass
 
-        return self.output_value
+        return self.process_value
 
     def _get_process_setpoint(self):
         """ """
