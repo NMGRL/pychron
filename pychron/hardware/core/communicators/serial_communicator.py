@@ -514,6 +514,7 @@ class SerialCommunicator(Communicator):
                 r += self.handle.read(inw)
                 if r and r.strip():
                     for ti in terminator:
+                        print(ti, ord(ti), r, terminator_position)
                         if terminator_position:
                             terminated = r[terminator_position] == ti
                         else:
