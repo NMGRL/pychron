@@ -112,6 +112,7 @@ class PatternMakerView(Saveable, Patternable):
     def save_as(self):
         try:
             from pychron.stage.stage_manager import get_stage_map_names
+
             self.trays = get_stage_map_names()
         except ImportError:
             self.trays = []
