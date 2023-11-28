@@ -55,7 +55,7 @@ class BaseCryoController(CoreDevice):
             if not self.verify_setpoint:
                 break
 
-            time.sleep(0.25) # wait for setpoint to be set
+            time.sleep(0.25)  # wait for setpoint to be set
 
             sp = self.read_setpoint(output, verbose=True)
             if sp == v:
