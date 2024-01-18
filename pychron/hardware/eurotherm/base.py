@@ -41,9 +41,17 @@ def modify_pid_parameter(param_str, key, value):
     return ";".join(nparam)
 
 
+def pid_parameters_path():
+    p = os.path.join(paths.device_dir, "furnace", "eurotherm_control_parameters.txt")
+    return p, os.path.isfile(p)
+
+
 def get_pid_parameters(v):
     """ """
-    p = os.path.join(paths.device_dir, "furnace", "eurotherm_control_parameters.txt")
+    p, exists = pid_parameters_path()
+    if not exists:
+        return
+
     with open(p) as f:
         params = [[li.strip() for li in l.split("|")] for l in f]
 

@@ -17,11 +17,13 @@ import os
 import time
 
 from traits.api import Instance, Float, Bool, Any
+from traits.has_traits import on_trait_change
 from traits.trait_errors import TraitError
 
 from pychron.extraction_line.switch_manager import SwitchManager
 from pychron.furnace.base_stage_manager import BaseFurnaceStageManager
 from pychron.graph.time_series_graph import TimeSeriesStreamStackedGraph
+from pychron.hardware.eurotherm.base import pid_parameters_path
 from pychron.managers.stream_graph_manager import StreamGraphManager
 from pychron.paths import paths
 from pychron.response_recorder import ResponseRecorder
@@ -130,6 +132,10 @@ class BaseFurnaceManager(StreamGraphManager):
         return result
 
     def set_pid_parameters(self, v):
+        p, exists = pid_parameters_path()
+        if not exists:
+            self.unique_warning(f"No PID parameters file at {p}. Cannot set PID parameters")
+
         self.debug("setting pid parameters for {}".format(v))
         from pychron.hardware.eurotherm.base import (
             get_pid_parameters,
@@ -144,6 +150,7 @@ class BaseFurnaceManager(StreamGraphManager):
             self._pid_str = param_str
             self.controller.set_pid(param_str)
 
+    @on_trait_change('setpoint')
     def set_setpoint(self, v):
         self.debug("set setpoint={}".format(v))
         self.set_pid_parameters(v)

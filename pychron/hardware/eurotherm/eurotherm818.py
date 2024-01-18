@@ -36,7 +36,7 @@ class Eurotherm800Series(CoreDevice):
             rmnenonic = resp[1:3]
             etx = resp[-3]
             bcc = resp[-2:]
-            return float(resp[3:-3])
+            return float(resp[3:-2])
 
     def change(self, mnenonic, value, verbose=True):
         address = self.unit_address
