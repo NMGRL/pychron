@@ -217,9 +217,9 @@ class BaseFurnaceManager(StreamGraphManager):
         self.output_percent_readback = output or 0
 
         setpoint = self.controller.get_setpoint(verbose=False)
-        self._update_scan_graph(response, output, setpoint or 0)
+        self._set_scan_graph_values(response, output, setpoint or 0)
 
-    def _update_scan_graph(self, response, output, setpoint):
+    def _set_scan_graph_values(self, response, output, setpoint):
         x = None
         update = False
         if response is not None:

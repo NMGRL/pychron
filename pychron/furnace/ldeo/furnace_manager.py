@@ -182,7 +182,7 @@ class LDEOFurnaceManager(SwitchableFurnaceManager):
                     output1 * 10
                 )  # this is a voltage on a 0-10 scale
 
-            self._update_scan_graph(
+            self._set_scan_graph_values(
                 output1, temp1, 0
             )  # not writing setpoint at moment since not implemented
 

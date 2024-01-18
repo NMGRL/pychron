@@ -458,7 +458,7 @@ class NMGRLFurnaceManager(SwitchableFurnaceManager):
             if output is not None:
                 self.output_percent_readback = output
 
-            self._update_scan_graph(response, output, d["setpoint"])
+            self._set_scan_graph_values(response, output, d["setpoint"])
 
     # def _update_scan_graph(self, response, output, setpoint):
     #     x = None
