@@ -35,8 +35,12 @@ def calculate_bcc(packet):
     STX) up to and including (ETX).
     """
     def exclusive_or(a, b):
-        return ord(a) ^ ord(b)
+        return a ^ b
 
+    packet = [ord(p) for p in packet]
     return chr(reduce(exclusive_or, packet))
 
+
+if __name__ == '__main__':
+    print(calculate_bcc('0011OP'))
 # ============= EOF =============================================
