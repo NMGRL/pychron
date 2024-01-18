@@ -71,7 +71,7 @@ from pychron.experiment.queue.increment_heat_template import (
     BaseIncrementalHeatTemplate,
 )
 from pychron.experiment.queue.run_block import RunBlock
-from pychron.experiment.script.script import Script, ScriptOptions
+from pychron.experiment.script.script import Script, ScriptOptions, SynExtractionScript
 from pychron.experiment.utilities.comment_template import CommentTemplater
 from pychron.experiment.utilities.frequency_edit_view import FrequencyModel
 from pychron.experiment.utilities.identifier import (
@@ -154,6 +154,7 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
     measurement_script = Instance(Script)
     post_measurement_script = Instance(Script)
     post_equilibration_script = Instance(Script)
+    syn_extraction_script = Instance(SynExtractionScript)
 
     script_options = Instance(ScriptOptions, ())
     load_defaults_button = Button("Default")
@@ -1782,7 +1783,8 @@ class AutomatedRunFactory(DVCAble, PersistenceLoggable):
         """measurement_script:name, 
 extraction_script:name, 
 post_measurement_script:name,
-post_equilibration_script:name"""
+post_equilibration_script:name
+syn_extraction_script:name"""
     )
     def _edit_script_handler(self, obj, name, new):
         self.debug(

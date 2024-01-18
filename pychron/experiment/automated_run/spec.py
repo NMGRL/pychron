@@ -159,6 +159,8 @@ class AutomatedRunSpec(HasTraits):
     post_measurement_script = Str
     post_equilibration_script = Str
     extraction_script = Str
+    syn_extraction_script = Str
+
     script_options = Str
     use_cdd_warming = Bool
 
@@ -186,7 +188,6 @@ class AutomatedRunSpec(HasTraits):
     _overlap = Int
     _min_ms_pumptime = Int
     conditionals = Str
-    syn_extraction = Str
     collection_time_zero_offset = Float
     repository_identifier = Str
 

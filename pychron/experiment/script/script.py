@@ -78,33 +78,149 @@ class ScriptOptions(HasTraits):
         return r
 
 
-class Script(Loggable):
-    # application = Any
-    default_event = Event
-    edit_event = Event
-    refresh_lists = Event
+class BaseScript(Loggable):
     label = Str
+    directory = Str(NULL_STR)
+    directories = Property(depends_on="refresh_lists")
+    refresh_lists = Event
 
     name_prefix = Property
     _name_prefix = Str
     use_name_prefix = Bool
-    mass_spectrometer = String
-    extract_device = String
 
-    name = Str
     # names = Property(depends_on='mass_spectrometer, directory, refresh_lists')
     names = Property(
         depends_on="_name_prefix, directory, refresh_lists, mass_spectrometer"
     )
+    enabled = Property(depends_on="name")
+    extension = '.py'
+
+    def script_path(self):
+        name = self.name
+        if self.name_prefix:
+            name = "{}{}".format(self.name_prefix, name)
+
+        name = add_extension(name, extension=self.extension)
+        p = os.path.join(self._get_root(), name)
+
+        return p
+
+    def _get_root(self):
+        d = self.label.lower().replace(" ", "_")
+        p = os.path.join(paths.scripts_dir, d)
+        if self.directory != NULL_STR:
+            p = os.path.join(p, self.directory)
+
+        return p
+
+    def _load_script_names(self):
+        p = self._get_root()
+        if os.path.isdir(p):
+            return sorted(
+                [
+                    s
+                    for s in os.listdir(p)
+                    if not s.startswith(".")
+                       and s.endswith(self.extension)
+                       and s != "__init__.py"
+                ]
+            )
+        else:
+            self.warning_dialog("{} script directory does not exist!".format(p))
+
+    @cached_property
+    def _get_directories(self):
+        p = self._get_root()
+        return [NULL_STR] + [
+            s
+            for s in os.listdir(p)
+            if os.path.isdir(os.path.join(p, s)) and s != "zobs"
+        ]
+
+    @cached_property
+    def _get_names(self):
+        names = [NULL_STR]
+        ms = self._load_script_names()
+        if ms:
+            names.extend(
+                [
+                    self._clean_script_name(ei)
+                    for ei in ms
+                    if not self.name_prefix or ei.startswith(self.name_prefix)
+                ]
+            )
+        return names
+
+    @cached_property
+    def _get_enabled(self):
+        return (
+                self.name
+                and self.name != NULL_STR
+                and self.name is not None
+                and self.name in self.names
+        )
+
+    def _clean_script_name(self, name):
+        if self.name_prefix:
+            name = self._remove_name_prefix(name)
+
+        return self._remove_file_extension(name)
+
+    def _remove_file_extension(self, name):
+        if name is NULL_STR:
+            return NULL_STR
+
+        return remove_extension(name)
+
+    def _remove_name_prefix(self, name):
+        if self.name_prefix:
+            name = name[len(self.name_prefix):]
+        return name
+
+    def _get_name_prefix(self):
+        r = ""
+        if self.use_name_prefix:
+            r = (
+                self._name_prefix
+                if self._name_prefix
+                else "{}_".format(self.mass_spectrometer.lower())
+            )
+        return r
+
+    def _set_name_prefix(self, new):
+        self._name_prefix = new
+
+    def traits_view(self):
+        return View(
+            HGroup(
+                Label(self.label),
+                spring,
+                UItem("directory", width=-100, editor=myEnumEditor(name="directories")),
+                UItem("name", width=-200, editor=myEnumEditor(name="names")),
+                UItem("edit", visible_when="editable", enabled_when="enabled"),
+                UItem("default", visible_when="editable", enabled_when="enabled"),
+            )
+        )
+
+
+class SynExtractionScript(BaseScript):
+    editable = False
+    extension = '.yaml'
+
+
+class Script(BaseScript):
+    # application = Any
+    default_event = Event
+    edit_event = Event
     edit = Button
+
+    mass_spectrometer = String
+    extract_device = String
+
     default = Button
     editable = Bool(True)
-    enabled = Property(depends_on="name")
     kind = "ExtractionLine"
     shared_logger = True
-
-    directory = Str(NULL_STR)
-    directories = Property(depends_on="refresh_lists")
 
     def get_parameter(self, key, default=None):
         p = self.script_path()
@@ -129,123 +245,16 @@ class Script(Loggable):
 
         return default
 
-    def script_path(self):
-        name = self.name
-        if self.name_prefix:
-            name = "{}{}".format(self.name_prefix, name)
-
-        name = add_extension(name, ".py")
-        p = os.path.join(self._get_root(), name)
-
-        return p
-
     def _default_fired(self):
         if self.confirmation_dialog(
-            'Are you sure you want to make "{}" the default {} script'.format(
-                self.name, self.label
-            )
+                'Are you sure you want to make "{}" the default {} script'.format(
+                    self.name, self.label
+                )
         ):
             self.default_event = (self.name, self.label)
 
     def _edit_fired(self):
         self.edit_event = (self.script_path(), self.kind)
-
-    def traits_view(self):
-        return View(
-            HGroup(
-                Label(self.label),
-                spring,
-                UItem("directory", width=-100, editor=myEnumEditor(name="directories")),
-                UItem("name", width=-200, editor=myEnumEditor(name="names")),
-                UItem("edit", visible_when="editable", enabled_when="enabled"),
-                UItem("default", visible_when="editable", enabled_when="enabled"),
-            )
-        )
-
-    def _clean_script_name(self, name):
-        if self.name_prefix:
-            name = self._remove_name_prefix(name)
-
-        return self._remove_file_extension(name)
-
-    def _remove_file_extension(self, name):
-        if name is NULL_STR:
-            return NULL_STR
-
-        return remove_extension(name)
-
-    def _remove_name_prefix(self, name):
-        if self.name_prefix:
-            name = name[len(self.name_prefix) :]
-        return name
-
-    def _get_root(self):
-        d = self.label.lower().replace(" ", "_")
-        p = os.path.join(paths.scripts_dir, d)
-        if self.directory != NULL_STR:
-            p = os.path.join(p, self.directory)
-
-        return p
-
-    def _load_script_names(self):
-        p = self._get_root()
-        if os.path.isdir(p):
-            return sorted(
-                [
-                    s
-                    for s in os.listdir(p)
-                    if not s.startswith(".")
-                    and s.endswith(".py")
-                    and s != "__init__.py"
-                ]
-            )
-        else:
-            self.warning_dialog("{} script directory does not exist!".format(p))
-
-    @cached_property
-    def _get_enabled(self):
-        return (
-            self.name
-            and self.name != NULL_STR
-            and self.name is not None
-            and self.name in self.names
-        )
-
-    def _get_name_prefix(self):
-        r = ""
-        if self.use_name_prefix:
-            r = (
-                self._name_prefix
-                if self._name_prefix
-                else "{}_".format(self.mass_spectrometer.lower())
-            )
-        return r
-
-    def _set_name_prefix(self, new):
-        self._name_prefix = new
-
-    @cached_property
-    def _get_directories(self):
-        p = self._get_root()
-        return [NULL_STR] + [
-            s
-            for s in os.listdir(p)
-            if os.path.isdir(os.path.join(p, s)) and s != "zobs"
-        ]
-
-    @cached_property
-    def _get_names(self):
-        names = [NULL_STR]
-        ms = self._load_script_names()
-        if ms:
-            names.extend(
-                [
-                    self._clean_script_name(ei)
-                    for ei in ms
-                    if not self.name_prefix or ei.startswith(self.name_prefix)
-                ]
-            )
-        return names
 
 
 if __name__ == "__main__":

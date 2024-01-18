@@ -439,7 +439,7 @@ class BaseExperimentQueue(RunBlock):
             ("t_o", COLLECTION_TIME_ZERO_OFFSET),
             ("measurement", "measurement_script"),
             ("conditionals", "conditionals"),
-            "syn_extraction",
+            ("syn_extraction", "syn_extraction_script"),
             USE_CDD_WARMING,
             ("post_meas", "post_measurement_script"),
             ("post_eq", "post_equilibration_script"),

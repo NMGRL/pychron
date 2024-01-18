@@ -1527,9 +1527,9 @@ class AutomatedRun(Loggable):
 
         syn_extractor = None
         if script.syntax_ok(warn=False):
-            if self.use_syn_extraction and self.spec.syn_extraction:
+            if self.use_syn_extraction and self.spec.syn_extraction_script:
                 p = os.path.join(
-                    paths.scripts_dir, "syn_extraction", self.spec.syn_extraction
+                    paths.scripts_dir, "syn_extraction", self.spec.syn_extraction_script
                 )
                 p = add_extension(p, ".yaml")
 

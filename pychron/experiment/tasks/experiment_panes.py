@@ -445,6 +445,7 @@ class ExperimentFactoryPane(TraitsDockPane):
             run_factory_uitem("measurement_script", style="custom"),
             run_factory_uitem("post_equilibration_script", style="custom"),
             run_factory_uitem("post_measurement_script", style="custom"),
+            run_factory_uitem("syn_extraction_script", style="custom"),
             run_factory_uitem("script_options", style="custom"),
             HGroup(
                 spring,
