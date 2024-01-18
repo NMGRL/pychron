@@ -93,7 +93,7 @@ class BaseScript(Loggable):
         depends_on="_name_prefix, directory, refresh_lists, mass_spectrometer"
     )
     enabled = Property(depends_on="name")
-    extension = '.py'
+    extension = ".py"
 
     def script_path(self):
         name = self.name
@@ -121,8 +121,8 @@ class BaseScript(Loggable):
                     s
                     for s in os.listdir(p)
                     if not s.startswith(".")
-                       and s.endswith(self.extension)
-                       and s != "__init__.py"
+                    and s.endswith(self.extension)
+                    and s != "__init__.py"
                 ]
             )
         else:
@@ -154,10 +154,10 @@ class BaseScript(Loggable):
     @cached_property
     def _get_enabled(self):
         return (
-                self.name
-                and self.name != NULL_STR
-                and self.name is not None
-                and self.name in self.names
+            self.name
+            and self.name != NULL_STR
+            and self.name is not None
+            and self.name in self.names
         )
 
     def _clean_script_name(self, name):
@@ -174,7 +174,7 @@ class BaseScript(Loggable):
 
     def _remove_name_prefix(self, name):
         if self.name_prefix:
-            name = name[len(self.name_prefix):]
+            name = name[len(self.name_prefix) :]
         return name
 
     def _get_name_prefix(self):
@@ -205,7 +205,7 @@ class BaseScript(Loggable):
 
 class SynExtractionScript(BaseScript):
     editable = False
-    extension = '.yaml'
+    extension = ".yaml"
 
 
 class Script(BaseScript):
@@ -247,9 +247,9 @@ class Script(BaseScript):
 
     def _default_fired(self):
         if self.confirmation_dialog(
-                'Are you sure you want to make "{}" the default {} script'.format(
-                    self.name, self.label
-                )
+            'Are you sure you want to make "{}" the default {} script'.format(
+                self.name, self.label
+            )
         ):
             self.default_event = (self.name, self.label)
 
