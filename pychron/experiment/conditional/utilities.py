@@ -260,8 +260,18 @@ def remove_comp(s):
 
 def extract_attr(key):
     """ """
-    if key.startswith("L2(CDD)"):
+    ukey = key.upper()
+    # this probably needs to be more sophisticated
+    if ukey.startswith("L2(CDD)"):
         return "L2(CDD)"
+    elif ukey.startswith("L1(CDD)"):
+        return "L1(CDD)"
+    elif ukey.startswith("AX(CDD)"):
+        return "AX(CDD)"
+    elif ukey.startswith("H1(CDD)"):
+        return "H1(CDD)"
+    elif ukey.startswith("H2(CDD)"):
+        return "H2(CDD)"
 
     try:
         aa = ARGS_REGEX.search(key).group(0)[1:-1].split(",")
