@@ -66,9 +66,9 @@ def analyses_payload(ans, preferred_kinds):
     analyses = [
         {
             "is_bad": ai.get("tag", "ok").lower() == "invalid",
-            "analysis_type": "Step Heat"
-            if is_step_heat(ai.get("record_id"))
-            else "Fusion",
+            "analysis_type": (
+                "Step Heat" if is_step_heat(ai.get("record_id")) else "Fusion"
+            ),
             "analysis_name": ai.get("record_id"),
             "uuid": ai.get("uuid"),
             "datum": [

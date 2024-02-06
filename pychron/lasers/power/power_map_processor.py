@@ -75,7 +75,7 @@ class PowerMapProcessor(HasTraits):
             padding=0,
             width=400,
             height=400,
-            resizable=""
+            resizable="",
             #                             aspect_ratio=1
         )
         center_plot.index_axis.visible = False

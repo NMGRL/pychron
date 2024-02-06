@@ -103,7 +103,7 @@ PACKAGE_DICT = dict(
     # social
     EmailPlugin="pychron.social.email.tasks.plugin",
     GoogleCalendarPlugin="pychron.social.google_calendar.tasks.plugin",
-    TwitterPlugin="pychron.social.twitter.plugin"
+    TwitterPlugin="pychron.social.twitter.plugin",
     # WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
     # LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
     # SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
