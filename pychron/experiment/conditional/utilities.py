@@ -48,20 +48,20 @@ def interpolate_teststr():
 
 def get_teststr_attr_func(token):
     for args in (
-        (DEVICE_REGEX, "obj.get_device_value(attr)", wrapper, device_teststr),
-        (PRESSURE_REGEX, "obj.get_pressure(attr)", wrapper, pressure_teststr),
-        (DEFLECTION_REGEX, "obj.get_deflection(attr, current=True)"),
-        (ACTIVE_REGEX, "attr not in data[0] if data is not None else False"),
-        (CP_REGEX, "aa.get_current_intensity(attr)"),
-        (BASELINECOR_REGEX, "aa.get_baseline_corrected_value(attr, default=None)"),
-        (BASELINE_REGEX, "aa.get_baseline_value(attr)"),
-        (SLOPE_REGEX, "aa.get_slope(attr, window or -1)"),
-        (AVG_REGEX, "aa.get_values(attr, window or -1).mean()"),
-        (MAX_REGEX, "aa.get_values(attr, window or -1).max()"),
-        (MIN_REGEX, "aa.get_values(attr, window or -1).min()"),
-        (RATIO_REGEX, "aa.get_value(attr)", wrapper, ratio_teststr),
-        (BETWEEN_REGEX, "aa.get_value(attr)", between_wrapper, between_teststr),
-        (INSTANT_AGE_REGEX, "aa.instant_age(window or -1)"),
+            (DEVICE_REGEX, "obj.get_device_value(attr)", wrapper, device_teststr),
+            (PRESSURE_REGEX, "obj.get_pressure(attr)", wrapper, pressure_teststr),
+            (DEFLECTION_REGEX, "obj.get_deflection(attr, current=True)"),
+            (ACTIVE_REGEX, "attr not in data[0] if data is not None else False"),
+            (CP_REGEX, "aa.get_current_intensity(attr)"),
+            (BASELINECOR_REGEX, "aa.get_baseline_corrected_value(attr, default=None)"),
+            (BASELINE_REGEX, "aa.get_baseline_value(attr)"),
+            (SLOPE_REGEX, "aa.get_slope(attr, window or -1)"),
+            (AVG_REGEX, "aa.get_values(attr, window or -1).mean()"),
+            (MAX_REGEX, "aa.get_values(attr, window or -1).max()"),
+            (MIN_REGEX, "aa.get_values(attr, window or -1).min()"),
+            (RATIO_REGEX, "aa.get_value(attr)", wrapper, ratio_teststr),
+            (BETWEEN_REGEX, "aa.get_value(attr)", between_wrapper, between_teststr),
+            (INSTANT_AGE_REGEX, "aa.instant_age(window or -1)"),
     ):
         wfunc = wrapper
         if len(args) == 2:
@@ -119,12 +119,12 @@ def between_wrapper(fstr, token, ai):
         kk = kk.split(".")[0].strip()
 
     for aa in (
-        (DEFLECTION_REGEX, "obj.get_deflection(attr, current=True)"),
-        (BASELINECOR_REGEX, "aa.get_baseline_corrected_value(attr)"),
-        (BASELINE_REGEX, "aa.get_baseline_value(attr)"),
-        (MIN_REGEX, "aa.get_values(attr, window or -1).min()", kfunc()),
-        (MAX_REGEX, "aa.get_values(attr, window or -1).max()", kfunc()),
-        (CP_REGEX, "aa.get_current_intensity(attr)"),
+            (DEFLECTION_REGEX, "obj.get_deflection(attr, current=True)"),
+            (BASELINECOR_REGEX, "aa.get_baseline_corrected_value(attr)"),
+            (BASELINE_REGEX, "aa.get_baseline_value(attr)"),
+            (MIN_REGEX, "aa.get_values(attr, window or -1).min()", kfunc()),
+            (MAX_REGEX, "aa.get_values(attr, window or -1).max()", kfunc()),
+            (CP_REGEX, "aa.get_current_intensity(attr)"),
     ):
         if len(aa) == 2:
             r, ff = aa
@@ -261,17 +261,11 @@ def remove_comp(s):
 def extract_attr(key):
     """ """
     ukey = key.upper()
-    # this probably needs to be more sophisticated
-    if ukey.startswith("L2(CDD)"):
-        return "L2(CDD)"
-    elif ukey.startswith("L1(CDD)"):
-        return "L1(CDD)"
-    elif ukey.startswith("AX(CDD)"):
-        return "AX(CDD)"
-    elif ukey.startswith("H1(CDD)"):
-        return "H1(CDD)"
-    elif ukey.startswith("H2(CDD)"):
-        return "H2(CDD)"
+
+    for uikey in ("AX", "H1", "H2", "L1", "L2"):
+        uikey = f'{uikey}(CDD)'
+        if ukey.startswith(uikey):
+            return uikey
 
     try:
         aa = ARGS_REGEX.search(key).group(0)[1:-1].split(",")
@@ -293,6 +287,5 @@ def extract_attr(key):
             key = k
 
     return key
-
 
 # ============= EOF =============================================
