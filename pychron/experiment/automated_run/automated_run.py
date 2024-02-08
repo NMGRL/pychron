@@ -97,6 +97,7 @@ from pychron.pychron_constants import (
     TRUNCATED,
     SUCCESS,
     CANCELED,
+    SYN_EXTRACTION
 )
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
 from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
@@ -165,6 +166,7 @@ class AutomatedRun(Loggable):
     extraction_line_manager = Any
     # experiment_executor = Any
     ion_optics_manager = Any
+    syn_extractor = Any
 
     multi_collector = Instance(
         "pychron.experiment.automated_run.multi_collector.MultiCollector"
@@ -248,6 +250,7 @@ class AutomatedRun(Loggable):
 
     previous_blanks = Tuple
     previous_baselines = Dict
+    baseline_modifiers = Dict
 
     _active_detectors = List
     _peak_center_detectors = List
@@ -280,6 +283,8 @@ class AutomatedRun(Loggable):
 
     failed_intensity_count_threshold = Int(3)
     use_equilibration_analysis = Bool(False)
+
+    _syn_extraction_active = Bool(False)
 
     def set_preferences(self, preferences):
         self.debug("set preferences")
@@ -914,7 +919,7 @@ class AutomatedRun(Loggable):
                     )
 
             if not self.plot_panel:
-                p = self._new_plot_panel(self.plot_panel, stack_order="top_to_bottom")
+                p = self._new_plot_panel(stack_order="top_to_bottom")
                 self.plot_panel = p
 
             self.debug("peak center started")
@@ -1390,6 +1395,8 @@ class AutomatedRun(Loggable):
 
             self.spec.new_result(self)
 
+            self._apply_baseline_modification()
+
             # save to database
             if exception_queue:  # parallel save not currently working
                 t = Thread(
@@ -1418,6 +1425,33 @@ class AutomatedRun(Loggable):
         #         return True
         # else:
         #     return True
+    def _apply_baseline_modification(self):
+
+        def make_modifier_function(detector):
+            config = self.baseline_modifiers[detector]
+
+            def func():
+                ar40 = self.persistence_spec.get_isotope('Ar40').uvalue
+                ar39 = self.persistence_spec.get_isotope('Ar39').uvalue
+                xvar = re.match(r"[A-Za-z]+", config['function'])
+                xvalue = eval(config['variable'].lower(), {'ar40': ar40, 'ar39': ar39})
+                eval(config['function'], {xvar: xvalue})
+
+                return 0
+
+            return func
+
+        def apply_correction(iso):
+            m = make_modifier_function(iso.detector)()
+            iso.baseline.ys += m
+
+        if self.baseline_modifiers:
+            self._update_persister_spec(baseline_modifiers=self.baseline_modifiers)
+
+            for key, iso in self.persistence_spec.isotope_group.items():
+                if iso.detector in self.baseline_modifiers:
+                    apply_correction(iso)
+
 
     # ===============================================================================
     # setup
@@ -1507,10 +1541,12 @@ class AutomatedRun(Loggable):
         self.persister.insure_run()
         return self._start_script(MEASUREMENT)
 
-    def do_extraction(self):
+    def do_extraction(self, syn_extractor=None):
         self.debug("do extraction")
 
         self._persister_action("pre_extraction_save")
+
+        self.syn_extractor = syn_extractor
 
         self.info_color = EXTRACTION_COLOR
         script = self.extraction_script
@@ -1525,7 +1561,8 @@ class AutomatedRun(Loggable):
         queue = self.experiment_queue
         script.set_load_identifier(queue.load_name)
 
-        syn_extractor = None
+        self._syn_extraction_active = False
+        use_syn_extraction = False
         if script.syntax_ok(warn=False):
             if self.use_syn_extraction and self.spec.syn_extraction_script:
                 p = os.path.join(
@@ -1539,10 +1576,14 @@ class AutomatedRun(Loggable):
                     )
 
                     dur = script.calculate_estimated_duration(force=True)
-                    syn_extractor = SynExtractionCollector(
-                        arun=weakref.ref(self)(), path=p, extraction_duration=dur
-                    )
-                    syn_extractor.start()
+                    # syn_extractor = SynExtractionCollector(
+                    #     arun=weakref.ref(self)(), path=p, extraction_duration=dur
+                    # )
+                    self.syn_extractor.arun = self
+                    self.syn_extractor.path = p
+                    self.syn_extractor.start()
+                    self._update_persister_spec(baseline_modifiers=self.syn_extractor.baseline_modifiers)
+                    use_syn_extraction = True
                 else:
                     self.warning(
                         "Cannot start syn extraction collection. Configuration file does not exist. {}".format(
@@ -1559,10 +1600,12 @@ class AutomatedRun(Loggable):
             ex_result = False
             self.debug("extraction exception={}".format(e))
 
-        if ex_result:
-            if syn_extractor:
-                syn_extractor.stop()
+        if syn_extractor:
+            syn_extractor.stop()
 
+        if use_syn_extraction:
+            self._syn_extraction_active = True
+        if ex_result:
             # report the extraction results
             ach, req = script.output_achieved()
             self.info("Requested Output= {:0.3f}".format(req))
@@ -1603,8 +1646,7 @@ class AutomatedRun(Loggable):
             self._wait_for_min_ms_pumptime()
 
         else:
-            if syn_extractor:
-                syn_extractor.stop()
+
 
             self.do_post_equilibration()
             self.do_post_measurement()
@@ -1970,6 +2012,9 @@ anaylsis_type={}
             i.baseline.set_filtering(fod)
             self.debug("setting fod for {}= {}".format(i.detector, fod))
 
+    def update_persister_spec(self, **kw):
+        self._update_persister_spec(**kw)
+
     def _update_persister_spec(self, **kw):
         ps = self.persistence_spec
         for k, v in kw.items():
@@ -2113,6 +2158,8 @@ anaylsis_type={}
 
     def _refresh_scripts(self):
         for name in SCRIPT_KEYS:
+            if name == SYN_EXTRACTION:
+                continue
             setattr(self, "{}_script".format(name), self._load_script(name))
 
     def _get_default_fits_file(self):
@@ -2218,16 +2265,17 @@ anaylsis_type={}
 
         """
         self.debug("activate detectors")
+        p = self.plot_panel
 
-        create = True
+        create = not self._syn_extraction_active or p is None
         # if self.plot_panel is None:
         #     create = True
         # else:
         #     cd = set([d.name for d in self.plot_panel.detectors])
         #     ad = set(dets)
         #     create = cd - ad or ad - cd
-
-        p = self._new_plot_panel(self.plot_panel, stack_order="top_to_bottom")
+        if create:
+            p = self._new_plot_panel(stack_order="top_to_bottom")
 
         self._active_detectors = self._set_active_detectors(dets)
 
@@ -2240,9 +2288,10 @@ anaylsis_type={}
 
         self.debug("clear isotope group")
 
-        self.isotope_group.clear_isotopes()
-        self.isotope_group.clear_error_components()
-        self.isotope_group.clear_blanks()
+        if not self._syn_extraction_active:
+            self.isotope_group.clear_isotopes()
+            self.isotope_group.clear_error_components()
+            self.isotope_group.clear_blanks()
 
         cb = (
             False
@@ -2258,7 +2307,7 @@ anaylsis_type={}
         self._load_previous()
 
         # self.debug('load analysis view')
-        # p.analysis_view.load(self)
+        p.analysis_view.load(self)
         self.plot_panel = p
 
     def _load_previous(self):
@@ -2282,11 +2331,12 @@ anaylsis_type={}
                 previous_blanks=blanks, previous_blank_runid=runid
             )
 
-        self.isotope_group.clear_baselines()
+        if not self._syn_extraction_active:
+            self.isotope_group.clear_baselines()
 
-        baselines = self.previous_baselines
-        for iso, v in baselines.items():
-            self.isotope_group.set_baseline(iso, v[0], v[1])
+            baselines = self.previous_baselines
+            for iso, v in baselines.items():
+                self.isotope_group.set_baseline(iso, v[0], v[1])
 
     def _add_conditionals(self):
         t = self.spec.conditionals
@@ -2361,7 +2411,7 @@ anaylsis_type={}
     def _get_extraction_parameter(self, key, default=None):
         return self._get_yaml_parameter(self.extraction_script, key, default)
 
-    def _new_plot_panel(self, plot_panel, stack_order="bottom_to_top"):
+    def _new_plot_panel(self, stack_order="bottom_to_top"):
         title = self.runid
         sample, irradiation = self.spec.sample, self.spec.display_irradiation
         if sample:

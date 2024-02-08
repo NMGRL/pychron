@@ -83,10 +83,13 @@ class BaseScript(Loggable):
     directory = Str(NULL_STR)
     directories = Property(depends_on="refresh_lists")
     refresh_lists = Event
+    edit = Button
+    default = Button
 
     name_prefix = Property
     _name_prefix = Str
     use_name_prefix = Bool
+    mass_spectrometer = String
 
     # names = Property(depends_on='mass_spectrometer, directory, refresh_lists')
     names = Property(
@@ -197,14 +200,14 @@ class BaseScript(Loggable):
                 spring,
                 UItem("directory", width=-100, editor=myEnumEditor(name="directories")),
                 UItem("name", width=-200, editor=myEnumEditor(name="names")),
-                UItem("edit", visible_when="editable", enabled_when="enabled"),
-                UItem("default", visible_when="editable", enabled_when="enabled"),
+                UItem("edit", enabled_when="enabled and editable"),
+                UItem("default", enabled_when="enabled and editable"),
             )
         )
 
 
 class SynExtractionScript(BaseScript):
-    editable = False
+    editable = Bool(False)
     extension = ".yaml"
 
 
@@ -212,12 +215,10 @@ class Script(BaseScript):
     # application = Any
     default_event = Event
     edit_event = Event
-    edit = Button
 
-    mass_spectrometer = String
+
     extract_device = String
 
-    default = Button
     editable = Bool(True)
     kind = "ExtractionLine"
     shared_logger = True

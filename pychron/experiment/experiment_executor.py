@@ -64,6 +64,7 @@ from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.view_util import open_view
 from pychron.experiment import events, PreExecuteCheckException
 from pychron.experiment.automated_run.persistence import ExcelPersister
+from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
 from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.conditional.conditionals_view import ConditionalsView
 from pychron.experiment.conflict_resolver import ConflictResolver
@@ -780,6 +781,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     exp.delay_after_blank,
                     exp.delay_after_air,
                 )
+                if exp.delay_after_conditional:
+                    # calculate conditional delay
+                    conditional_delay = 0
+                    delay_after_previous_analysis = max(delay_after_previous_analysis, conditional_delay)
 
                 if (
                     not run.is_last
@@ -1337,12 +1342,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # make sure status monitor is running a
         self.extraction_line_manager.setup_status_monitor()
-
+        syn_extractor = SynExtractionCollector(executor=self)
         self.extraction_line_manager.set_experiment_type(self.experiment_type)
+
         ret = True
         if ai.start_extraction():
             self.extracting = True
-            if not ai.do_extraction():
+            if not ai.do_extraction(syn_extractor):
                 ret = self._failed_execution_step("Extraction Failed")
         else:
             ret = ai.is_alive()
@@ -1352,7 +1358,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.extracting_run = None
         return ret
 
-    def _measurement(self, ai):
+    def syn_measure(self, ai, script):
+        self._measurement(ai, script=script, use_post_on_fail=False)
+
+    def _measurement(self, ai, **measurement_kwargs):
         """
         ai: AutomatedRun
         measurement step
@@ -1379,7 +1388,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             # automated run has a measurement_script
             self.measuring = True
 
-            if not ai.do_measurement():
+            if not ai.do_measurement(**measurement_kwargs):
                 ret = self._failed_execution_step("Measurement Failed")
         else:
             ret = ai.is_alive()
@@ -1486,7 +1495,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         arun.persister.datahub = self.datahub
         arun.persister.dbexperiment_identifier = exp.database_identifier
 
-        arun.use_syn_extraction = False
+        arun.use_syn_extraction = True
 
         if self.use_dvc_persistence:
             dvcp = self.application.get_service(

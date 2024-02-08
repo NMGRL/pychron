@@ -83,7 +83,7 @@ class PersistenceSpec(HasTraits):
     trap = Float
     emission = Float
     active_detectors = List
-
+    baseline_modifiers = Dict
     previous_blank_runid = Str
     previous_blank_id = Long
     previous_blanks = Dict

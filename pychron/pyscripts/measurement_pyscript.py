@@ -94,7 +94,7 @@ class MeasurementPyScript(ValvePyScript):
         super(MeasurementPyScript, self).truncate(style=style)
 
     def get_variables(self):
-        return ["truncated", "eqtime", "use_cdd_warming"]
+        return ["truncated", "eqtime", "use_cdd_warming", "analysis_type"]
 
     def increment_series_counts(self, s, f):
         self._series_count += s
@@ -830,6 +830,10 @@ class MeasurementPyScript(ValvePyScript):
     @command_register
     def set_isotope_group(self, name):
         self._automated_run_call("py_set_isotope_group", name)
+
+    @property
+    def analysis_type(self):
+        return self.automated_run.spec.analysis_type
 
     @property
     def truncated(self):

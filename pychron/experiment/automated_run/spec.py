@@ -311,6 +311,7 @@ class AutomatedRunSpec(HasTraits):
             "extract_device",
             "extraction_script",
             "measurement_script",
+            "syn_extraction_script",
             "post_equilibration_script",
             "post_measurement_script",
         ]
@@ -591,7 +592,7 @@ class AutomatedRunSpec(HasTraits):
     # ===============================================================================
     @on_trait_change(
         """measurement_script, post_measurement_script,
-post_equilibration_script, extraction_script, script_options, position, duration, cleanup, pre_cleanup, post_cleanup"""
+post_equilibration_script, extraction_script, syn_extraction_script, script_options, position, duration, cleanup, pre_cleanup, post_cleanup"""
     )
     def _change_handler(self, name, new):
         if new == "None":
@@ -704,6 +705,10 @@ post_equilibration_script, extraction_script, script_options, position, duration
     @property
     def measurement_script_name(self):
         return self.measurement_script
+
+    @property
+    def syn_extraction_script_name(self):
+        return self.syn_extraction_script
 
     @property
     def sensitivity(self):

@@ -88,6 +88,7 @@ delay_before_analyses: {delay_before_analyses:}
 delay_between_analyses: {delay_between_analyses:}
 delay_after_blank: {delay_after_blank:}
 delay_after_air: {delay_after_air:}
+delay_after_conditional: {delay_after_conditional:}
 extract_device: {extract_device:}
 default_lighting: {default_lighting:}
 tray: {tray:}
@@ -114,6 +115,7 @@ class BaseExperimentQueue(RunBlock):
     delay_between_analyses = CInt(30)
     delay_after_blank = CInt(15)
     delay_after_air = CInt(10)
+    delay_after_conditional = Str
 
     default_lighting = CInt(0)
 
@@ -370,6 +372,7 @@ class BaseExperimentQueue(RunBlock):
         self._set_meta_param("delay_before_analyses", meta, default_int)
         self._set_meta_param("delay_after_blank", meta, default_int)
         self._set_meta_param("delay_after_air", meta, default_int)
+        self._set_meta_param("delay_after_conditional", meta, default)
         self._set_meta_param("username", meta, default)
         self._set_meta_param("use_email", meta, bool_default)
         self._set_meta_param("email", meta, default)
@@ -477,6 +480,7 @@ class BaseExperimentQueue(RunBlock):
             delay_between_analyses=self.delay_between_analyses,
             delay_after_blank=self.delay_after_blank,
             delay_after_air=self.delay_after_air,
+            delay_after_conditional=self.delay_after_conditional,
             extract_device=self.extract_device,
             default_lighting=self.default_lighting,
             tray=self.tray or "",

@@ -178,7 +178,7 @@ class ExecutedAutomatedRunSpecAdapter(TabularAdapter, ConfigurableMixin):
         ("T_o Offset", "collection_time_zero_offset"),
         ("Measurement", "measurement_script"),
         ("Conditionals", "conditionals"),
-        ("SynExtraction", "syn_extraction"),
+        ("SynExtraction", "syn_extraction_script"),
         ("CDDWarm", USE_CDD_WARMING),
         ("Post Eq.", "post_equilibration_script"),
         ("Post Meas.", "post_measurement_script"),
