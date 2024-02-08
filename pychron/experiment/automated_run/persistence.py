@@ -128,7 +128,7 @@ class ExcelPersister(BasePersister):
 
         rs = self.per_spec.run_spec
         for i, (tag, attr) in enumerate(
-                (("User", "username"), ("AnalysisType", "analysis_type"), ("UUID", "uuid"))
+            (("User", "username"), ("AnalysisType", "analysis_type"), ("UUID", "uuid"))
         ):
             sh.write(i, 0, tag)
             sh.write(i, 1, getattr(rs, attr))
@@ -251,9 +251,9 @@ class AutomatedRunPersister(BasePersister):
         self.debug("set preferences")
 
         for attr, cast in (
-                ("use_analysis_grouping", to_bool),
-                ("grouping_threshold", float),
-                ("grouping_suffix", str),
+            ("use_analysis_grouping", to_bool),
+            ("grouping_threshold", float),
+            ("grouping_suffix", str),
         ):
             set_preference(
                 preferences, self, attr, "pychron.experiment.{}".format(attr), cast
@@ -1068,5 +1068,6 @@ class AutomatedRunPersister(BasePersister):
         # def _get_default_outlier_filtering(self):
         # return dict(filter_outliers=self.filter_outliers, iterations=self.fo_iterations,
         # std_dev=self.fo_std_dev)
+
 
 # ============= EOF =============================================

@@ -275,13 +275,13 @@ class MassSpecPersistenceSpec(Loggable):
 
             if iso.detector in self.modified_baselines:
                 mb = self.modified_baselines[iso.detector]
-                mm = mb['modifier']
+                mm = mb["modifier"]
 
         if error == "sem":
             s = (s / fncnts**0.5) if fncnts else 0
 
         if mm:
-            rv = ufloat(m, s)+mm
+            rv = ufloat(m, s) + mm
         else:
             rv = ufloat(m, s)
         return rv, fncnts
@@ -292,7 +292,7 @@ class MassSpecPersistenceSpec(Loggable):
             v = io.baseline.uvalue
             if io.detector in self.modified_baselines:
                 mb = self.modified_baselines[io.detector]
-                v = mb['modified_baseline']
+                v = mb["modified_baseline"]
         except KeyError:
             v = ufloat(0, 0)
 

@@ -696,7 +696,7 @@ class DVCPersister(BasePersister):
 
                 mv = per_spec.modified_baselines.get(iso.detector)
                 if mv:
-                    mv = mv['modifier']
+                    mv = mv["modifier"]
                 if not mv:
                     mv = 0
 
@@ -707,7 +707,7 @@ class DVCPersister(BasePersister):
                     "value": float(iso.baseline.value),
                     "error": float(iso.baseline.error),
                     "modifier_value": float(nominal_value(mv)),
-                    'modifier_error': float(std_dev(mv)),
+                    "modifier_error": float(std_dev(mv)),
                 }
 
             intercepts[key] = {

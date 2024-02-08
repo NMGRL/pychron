@@ -1429,7 +1429,7 @@ class AutomatedRun(Loggable):
 
     def _apply_baseline_modification(self):
         if not os.path.isfile(paths.baseline_model):
-            self.warning('No baseline model file available to do baseline modification')
+            self.warning("No baseline model file available to do baseline modification")
             return
 
         def modifier_function(model, detector):
@@ -1441,15 +1441,18 @@ class AutomatedRun(Loggable):
             # self.debug(f'applying baseline modification {config["function"]} {xvar}={xvalue}')
             # return eval(config["function"], {xvar: xvalue})
             prediction = model.get_prediction(xvalue)
-            return ufloat(prediction.predicted_mean, prediction.se_mean, tag='baseline_modifier')
+            return ufloat(
+                prediction.predicted_mean, prediction.se_mean, tag="baseline_modifier"
+            )
 
         if self.baseline_modifiers:
             self._update_persister_spec(baseline_modifiers=self.baseline_modifiers)
             import pandas as pd
             from statsmodels.api import OLS
+
             with open(paths.baseline_model) as rfile:
                 data = pd.read_csv(rfile)
-                model = OLS(data['y'], data['x']).fit()
+                model = OLS(data["y"], data["x"]).fit()
 
             md = {}
             for key, iso in self.persistence_spec.isotope_group.items():
@@ -1459,8 +1462,12 @@ class AutomatedRun(Loggable):
 
                     nm = iso.baseline.ys.mean()
                     ns = iso.baseline.ys.std()
-                    md[iso.detector] = {'modified_baseline': ufloat(nm+nominal_value(m), (ns**2 + std_dev(m)**2)**0.5),
-                                        'modifier': m}
+                    md[iso.detector] = {
+                        "modified_baseline": ufloat(
+                            nm + nominal_value(m), (ns**2 + std_dev(m) ** 2) ** 0.5
+                        ),
+                        "modifier": m,
+                    }
 
             self.update_persister_spec(modified_baselines=md)
 
