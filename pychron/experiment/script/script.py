@@ -216,7 +216,6 @@ class Script(BaseScript):
     default_event = Event
     edit_event = Event
 
-
     extract_device = String
 
     editable = Bool(True)

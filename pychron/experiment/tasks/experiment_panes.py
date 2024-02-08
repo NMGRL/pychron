@@ -216,7 +216,9 @@ class ExperimentFactoryPane(TraitsDockPane):
             queue_factory_item("delay_between_analyses", label="Between Analyses (s)"),
             queue_factory_item("delay_after_blank", label="After Blank (s)"),
             queue_factory_item("delay_after_air", label="After Air (s)"),
-            queue_factory_item("delay_after_conditional", label='Conditional Delay (s)'),
+            queue_factory_item(
+                "delay_after_conditional", label="Conditional Delay (s)"
+            ),
             label="Delays",
         )
 

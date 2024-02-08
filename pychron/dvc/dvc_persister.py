@@ -725,7 +725,7 @@ class DVCPersister(BasePersister):
         from pychron.experiment import __version__ as eversion
         from pychron.dvc import __version__ as dversion
 
-        obj['baseline_modifiers'] = self.per_spec.baseline_modifiers
+        obj["baseline_modifiers"] = self.per_spec.baseline_modifiers
         obj["timestamp"] = timestamp.isoformat()
         if per_spec.time_zero:
             obj["time_zero_timestamp"] = get_datetime(per_spec.time_zero).isoformat()

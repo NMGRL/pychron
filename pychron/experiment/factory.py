@@ -106,7 +106,7 @@ class ExperimentFactory(DVCAble):
             "delay_after_blank",
             "delay_between_analyses",
             "delay_after_air",
-                "delay_after_conditional",
+            "delay_after_conditional",
             "default_lighting",
             "queue_conditionals_name",
             "note",

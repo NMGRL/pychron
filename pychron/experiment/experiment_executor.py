@@ -784,7 +784,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                 if exp.delay_after_conditional:
                     # calculate conditional delay
                     conditional_delay = 0
-                    delay_after_previous_analysis = max(delay_after_previous_analysis, conditional_delay)
+                    delay_after_previous_analysis = max(
+                        delay_after_previous_analysis, conditional_delay
+                    )
 
                 if (
                     not run.is_last

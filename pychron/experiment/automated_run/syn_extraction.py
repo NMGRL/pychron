@@ -32,7 +32,9 @@ from pychron.experiment.utilities.runid import make_runid
 from pychron.loggable import Loggable
 from pychron.paths import paths
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
-from pychron.pyscripts.measurement.thermo_measurement_pyscript import ThermoSynMeasurementPyScript
+from pychron.pyscripts.measurement.thermo_measurement_pyscript import (
+    ThermoSynMeasurementPyScript,
+)
 from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 
 
@@ -194,7 +196,7 @@ class SynExtractionCollector(Loggable):
 
     def _setup_script(self, spec):
         p = spec.measurement
-        p = add_extension(p, '.py')
+        p = add_extension(p, ".py")
         for p in (p, os.path.join(paths.measurement_dir, p)):
             if p and os.path.isfile(p):
                 self.debug('measurement script "{}"'.format(p))
@@ -202,8 +204,9 @@ class SynExtractionCollector(Loggable):
                 sname = os.path.basename(p)
 
                 # setup the script
-                ms = ThermoSynMeasurementPyScript(root=root, name=sname,
-                                                  automated_run=self.arun)
+                ms = ThermoSynMeasurementPyScript(
+                    root=root, name=sname, automated_run=self.arun
+                )
                 self.arun.baseline_modifiers = spec.baseline_modifiers
                 if ms.bootstrap():
                     if ms.syntax_ok(warn=False):
@@ -244,20 +247,23 @@ class SynExtractionCollector(Loggable):
             self.arun.measurement_script = script
 
             if self.executor.syn_measure(self.arun, script):
-            # if self.arun.do_measurement(script=script, use_post_on_fail=False):
+                # if self.arun.do_measurement(script=script, use_post_on_fail=False):
                 if post_script:
                     self.debug("starting post measurement")
                     if not self.arun.do_post_measurement(script=post_script):
                         return
 
-                self.debug("delay between syn extractions {}".format(spec.delay_between))
+                self.debug(
+                    "delay between syn extractions {}".format(spec.delay_between)
+                )
                 self.arun.wait(spec.delay_between or 0)
 
                 return True
         except BaseException as e:
-            self.debug(f'failed doing measurement {e}')
+            self.debug(f"failed doing measurement {e}")
         finally:
             self.arun.measurement_script = oscript
+
     # def _spec_generator(self, config):
     #     pattern = config.get("pattern", "S")
     #

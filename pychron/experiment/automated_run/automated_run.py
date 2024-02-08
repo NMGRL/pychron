@@ -97,7 +97,7 @@ from pychron.pychron_constants import (
     TRUNCATED,
     SUCCESS,
     CANCELED,
-    SYN_EXTRACTION
+    SYN_EXTRACTION,
 )
 from pychron.spectrometer.base_spectrometer import NoIntensityChange
 from pychron.spectrometer.isotopx.manager.ngx import NGXSpectrometerManager
@@ -1425,17 +1425,18 @@ class AutomatedRun(Loggable):
         #         return True
         # else:
         #     return True
+
     def _apply_baseline_modification(self):
 
         def make_modifier_function(detector):
             config = self.baseline_modifiers[detector]
 
             def func():
-                ar40 = self.persistence_spec.get_isotope('Ar40').uvalue
-                ar39 = self.persistence_spec.get_isotope('Ar39').uvalue
-                xvar = re.match(r"[A-Za-z]+", config['function'])
-                xvalue = eval(config['variable'].lower(), {'ar40': ar40, 'ar39': ar39})
-                eval(config['function'], {xvar: xvalue})
+                ar40 = self.persistence_spec.get_isotope("Ar40").uvalue
+                ar39 = self.persistence_spec.get_isotope("Ar39").uvalue
+                xvar = re.match(r"[A-Za-z]+", config["function"])
+                xvalue = eval(config["variable"].lower(), {"ar40": ar40, "ar39": ar39})
+                eval(config["function"], {xvar: xvalue})
 
                 return 0
 
@@ -1451,7 +1452,6 @@ class AutomatedRun(Loggable):
             for key, iso in self.persistence_spec.isotope_group.items():
                 if iso.detector in self.baseline_modifiers:
                     apply_correction(iso)
-
 
     # ===============================================================================
     # setup
@@ -1582,7 +1582,9 @@ class AutomatedRun(Loggable):
                     self.syn_extractor.arun = self
                     self.syn_extractor.path = p
                     self.syn_extractor.start()
-                    self._update_persister_spec(baseline_modifiers=self.syn_extractor.baseline_modifiers)
+                    self._update_persister_spec(
+                        baseline_modifiers=self.syn_extractor.baseline_modifiers
+                    )
                     use_syn_extraction = True
                 else:
                     self.warning(
@@ -1646,7 +1648,6 @@ class AutomatedRun(Loggable):
             self._wait_for_min_ms_pumptime()
 
         else:
-
 
             self.do_post_equilibration()
             self.do_post_measurement()

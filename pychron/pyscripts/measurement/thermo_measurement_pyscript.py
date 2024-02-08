@@ -195,8 +195,10 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
     def set_accelerating_voltage(self, v=""):
         self._set_spectrometer_parameter("SetHV", v)
 
+
 class ThermoSynMeasurementPyScript(ThermoMeasurementPyScript):
     baseline_modifiers = Dict
+
     def baselines(
         self,
         ncounts=1,
@@ -207,7 +209,7 @@ class ThermoSynMeasurementPyScript(ThermoMeasurementPyScript):
         settling_time=4,
         check_conditionals=True,
         calc_time=False,
-            use_baseline_modifier=True
+        use_baseline_modifier=True,
     ):
 
         if use_baseline_modifier:
