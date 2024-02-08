@@ -693,12 +693,21 @@ class DVCPersister(BasePersister):
                     "fit": "default",
                     "references": [],
                 }
+
+                mv = per_spec.modified_baselines.get(iso.detector)
+                if mv:
+                    mv = mv['modifier']
+                if not mv:
+                    mv = 0
+
                 cbaselines[iso.detector] = {
                     "fit": iso.baseline.fit,
                     "error_type": iso.baseline.error_type,
                     "filter_outliers_dict": iso.baseline.filter_outliers_dict,
                     "value": float(iso.baseline.value),
                     "error": float(iso.baseline.error),
+                    "modifier_value": float(nominal_value(mv)),
+                    'modifier_error': float(std_dev(mv)),
                 }
 
             intercepts[key] = {

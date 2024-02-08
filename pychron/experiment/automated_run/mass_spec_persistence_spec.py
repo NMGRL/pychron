@@ -30,7 +30,7 @@ from traits.api import (
     Bool,
     List,
 )
-from uncertainties import ufloat
+from uncertainties import ufloat, nominal_value, std_dev
 
 # ============= local library imports  ==========================
 from pychron.core.helpers.strtools import csv_to_ints
@@ -46,6 +46,7 @@ class MassSpecPersistenceSpec(Loggable):
     irradpos = CStr
 
     isotopes = Dict
+    modified_baselines = Dict
 
     mass_spectrometer = Str
     extract_device = Str
@@ -246,7 +247,7 @@ class MassSpecPersistenceSpec(Loggable):
         return self._get_data("signal", iso, det, **kw)
 
     def get_filtered_baseline_uvalue(self, iso, nsigma=2, niter=1, error="sem"):
-        m, s, fncnts = 0, 0, 0
+        m, s, fncnts, mm = 0, 0, 0, None
         # n_filtered_pts = 0
         if iso in self.isotopes:
             iso = self.isotopes[iso]
@@ -272,16 +273,29 @@ class MassSpecPersistenceSpec(Loggable):
             m, s = mean(ys), std(ys, ddof=1)
             fncnts = ys.shape[0]
 
+            if iso.detector in self.modified_baselines:
+                mb = self.modified_baselines[iso.detector]
+                mm = mb['modifier']
+
         if error == "sem":
             s = (s / fncnts**0.5) if fncnts else 0
 
-        return ufloat(m, s), fncnts
+        if mm:
+            rv = ufloat(m, s)+mm
+        else:
+            rv = ufloat(m, s)
+        return rv, fncnts
 
     def get_baseline_uvalue(self, iso):
         try:
-            v = self.isotopes[iso].baseline.uvalue
+            io = self.isotopes[iso]
+            v = io.baseline.uvalue
+            if io.detector in self.modified_baselines:
+                mb = self.modified_baselines[io.detector]
+                v = mb['modified_baseline']
         except KeyError:
             v = ufloat(0, 0)
+
         return v
 
         # def get_baseline_uvalue(self, det):

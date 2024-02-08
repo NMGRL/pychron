@@ -277,6 +277,7 @@ class Paths(object):
 
     oauth_file = None
     packages_file = None
+    baseline_model = None
     # plot_factory_defaults = (('ideogram_defaults', 'IDEOGRAM_DEFAULTS', True),
     #                          ('spectrum_defaults', 'SPECTRUM_DEFAULTS', True))
 
@@ -525,6 +526,7 @@ class Paths(object):
 
         self.packages_file = join(self.appdata_dir, "packages.json")
 
+        self.baseline_model = join(self.setup_dir, "baseline_model.csv")
         build_directories()
 
         migrate_hidden()

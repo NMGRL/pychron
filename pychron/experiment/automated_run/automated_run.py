@@ -43,6 +43,7 @@ from traits.api import (
     Dict,
 )
 from traits.trait_errors import TraitError
+from uncertainties import ufloat, std_dev, nominal_value
 
 from pychron.core.helpers.filetools import add_extension, unique_path2
 from pychron.core.helpers.filetools import get_path
@@ -1427,31 +1428,41 @@ class AutomatedRun(Loggable):
         #     return True
 
     def _apply_baseline_modification(self):
+        if not os.path.isfile(paths.baseline_model):
+            self.warning('No baseline model file available to do baseline modification')
+            return
 
-        def make_modifier_function(detector):
+        def modifier_function(model, detector):
             config = self.baseline_modifiers[detector]
-
-            def func():
-                ar40 = self.persistence_spec.get_isotope("Ar40").uvalue
-                ar39 = self.persistence_spec.get_isotope("Ar39").uvalue
-                xvar = re.match(r"[A-Za-z]+", config["function"])
-                xvalue = eval(config["variable"].lower(), {"ar40": ar40, "ar39": ar39})
-                eval(config["function"], {xvar: xvalue})
-
-                return 0
-
-            return func
-
-        def apply_correction(iso):
-            m = make_modifier_function(iso.detector)()
-            iso.baseline.ys += m
+            ar40 = self.persistence_spec.get_isotope("Ar40").uvalue
+            ar39 = self.persistence_spec.get_isotope("Ar39").uvalue
+            # xvar = re.match(r"[A-Za-z]+", config["function"])
+            xvalue = eval(config["variable"].lower(), {"ar40": ar40, "ar39": ar39})
+            # self.debug(f'applying baseline modification {config["function"]} {xvar}={xvalue}')
+            # return eval(config["function"], {xvar: xvalue})
+            prediction = model.get_prediction(xvalue)
+            return ufloat(prediction.predicted_mean, prediction.se_mean, tag='baseline_modifier')
 
         if self.baseline_modifiers:
             self._update_persister_spec(baseline_modifiers=self.baseline_modifiers)
+            import pandas as pd
+            from statsmodels.api import OLS
+            with open(paths.baseline_model) as rfile:
+                data = pd.read_csv(rfile)
+                model = OLS(data['y'], data['x']).fit()
 
+            md = {}
             for key, iso in self.persistence_spec.isotope_group.items():
                 if iso.detector in self.baseline_modifiers:
-                    apply_correction(iso)
+                    m = modifier_function(model, iso.detector)
+                    iso.baseline.ys += m.nominal_value
+
+                    nm = iso.baseline.ys.mean()
+                    ns = iso.baseline.ys.std()
+                    md[iso.detector] = {'modified_baseline': ufloat(nm+nominal_value(m), (ns**2 + std_dev(m)**2)**0.5),
+                                        'modifier': m}
+
+            self.update_persister_spec(modified_baselines=md)
 
     # ===============================================================================
     # setup
