@@ -1429,7 +1429,7 @@ class AutomatedRun(Loggable):
 
     def _apply_baseline_modification(self):
         use_model = False
-        if use_model and  not os.path.isfile(paths.baseline_model):
+        if use_model and not os.path.isfile(paths.baseline_model):
             self.warning("No baseline model file available to do baseline modification")
             return
 
@@ -1440,12 +1440,16 @@ class AutomatedRun(Loggable):
 
             xvar = re.match(r"[A-Za-z]+", config["function"])
             xvalue = eval(config["variable"].lower(), {"ar40": ar40, "ar39": ar39})
-            self.debug(f'applying baseline modification {config["function"]} {xvar}={xvalue}')
+            self.debug(
+                f'applying baseline modification {config["function"]} {xvar}={xvalue}'
+            )
 
             if use_model:
                 prediction = model.get_prediction(xvalue)
                 return ufloat(
-                    prediction.predicted_mean, prediction.se_mean, tag="baseline_modifier"
+                    prediction.predicted_mean,
+                    prediction.se_mean,
+                    tag="baseline_modifier",
                 )
             else:
                 return eval(config["function"], {xvar: xvalue})
