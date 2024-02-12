@@ -1428,7 +1428,8 @@ class AutomatedRun(Loggable):
         #     return True
 
     def _apply_baseline_modification(self):
-        if not os.path.isfile(paths.baseline_model):
+        use_model = False
+        if use_model and  not os.path.isfile(paths.baseline_model):
             self.warning("No baseline model file available to do baseline modification")
             return
 
@@ -1436,23 +1437,30 @@ class AutomatedRun(Loggable):
             config = self.baseline_modifiers[detector]
             ar40 = self.persistence_spec.get_isotope("Ar40").uvalue
             ar39 = self.persistence_spec.get_isotope("Ar39").uvalue
-            # xvar = re.match(r"[A-Za-z]+", config["function"])
+
+            xvar = re.match(r"[A-Za-z]+", config["function"])
             xvalue = eval(config["variable"].lower(), {"ar40": ar40, "ar39": ar39})
-            # self.debug(f'applying baseline modification {config["function"]} {xvar}={xvalue}')
-            # return eval(config["function"], {xvar: xvalue})
-            prediction = model.get_prediction(xvalue)
-            return ufloat(
-                prediction.predicted_mean, prediction.se_mean, tag="baseline_modifier"
-            )
+            self.debug(f'applying baseline modification {config["function"]} {xvar}={xvalue}')
+
+            if use_model:
+                prediction = model.get_prediction(xvalue)
+                return ufloat(
+                    prediction.predicted_mean, prediction.se_mean, tag="baseline_modifier"
+                )
+            else:
+                return eval(config["function"], {xvar: xvalue})
 
         if self.baseline_modifiers:
             self._update_persister_spec(baseline_modifiers=self.baseline_modifiers)
-            import pandas as pd
-            from statsmodels.api import OLS
 
-            with open(paths.baseline_model) as rfile:
-                data = pd.read_csv(rfile)
-                model = OLS(data["y"], data["x"]).fit()
+            model = None
+            if use_model:
+                import pandas as pd
+                from statsmodels.api import OLS
+
+                with open(paths.baseline_model) as rfile:
+                    data = pd.read_csv(rfile)
+                    model = OLS(data["y"], data["x"]).fit()
 
             md = {}
             for key, iso in self.persistence_spec.isotope_group.items():
