@@ -1433,12 +1433,12 @@ class AutomatedRun(Loggable):
 
         def modifier_function(model, detector):
             config = self.baseline_modifiers[detector]
-            ar40iso = self.isotope_group.get_isotope('Ar40')
+            ar40iso = self.isotope_group.get_isotope("Ar40")
             ar40 = self.isotope_group.get_isotope("Ar40").uvalue
             ar39 = self.isotope_group.get_isotope("Ar39").uvalue
             xvalue = eval(config["variable"].lower(), {"ar40": ar40, "ar39": ar39})
 
-            if config['function'] == 'model':
+            if config["function"] == "model":
                 if model:
                     prediction = model.get_prediction(nominal_value(xvalue))
                     v, e = prediction.predicted_mean, prediction.se_mean
@@ -1446,18 +1446,20 @@ class AutomatedRun(Loggable):
                     v, e = 0, 0
                 mb = ufloat(v, e, tag="baseline_modifier")
             else:
-                mb = eval(config["function"], {'x': xvalue})
+                mb = eval(config["function"], {"x": xvalue})
 
-            fe = config.get('function_err', '')
-            if 'countingstatistics' in fe:
+            fe = config.get("function_err", "")
+            if "countingstatistics" in fe:
                 countingtime = ar40iso.baseline.xs[-1] - ar40iso.baseline.xs[0]
                 n = nominal_value(mb) * 6250 * countingtime
-                self.debug(f'using counting statistics error n={n} countingtime={countingtime} modified_baseline={mb}')
+                self.debug(
+                    f"using counting statistics error n={n} countingtime={countingtime} modified_baseline={mb}"
+                )
 
                 sigma = n**-0.5
-                self.debug('counting stats')
-                sigma = eval(fe, {'countingstatistics': sigma})
-                mb = ufloat(nominal_value(mb), (sigma)/6250, tag='baseline_modifier')
+                self.debug("counting stats")
+                sigma = eval(fe, {"countingstatistics": sigma})
+                mb = ufloat(nominal_value(mb), (sigma) / 6250, tag="baseline_modifier")
 
             self.debug(
                 f'applying baseline modification det={detector} {config["function"]} x={xvalue} modification={mb}'
@@ -1474,18 +1476,18 @@ class AutomatedRun(Loggable):
 
                 with open(paths.baseline_model) as rfile:
                     data = pd.read_csv(rfile)
-                    a40 = data['ar40']
-                    a40e = data['ar40err']
-                    a39 = data['ar39']
-                    a39e = data['ar39err']
+                    a40 = data["ar40"]
+                    a40e = data["ar40err"]
+                    a39 = data["ar39"]
+                    a39e = data["ar39err"]
 
-                    a40u = [ufloat(a,e) for a, e in zip(a40, a40e)]
-                    a39u = [ufloat(a,e) for a, e in zip(a39, a39e)]
-                    x = [a+b for a,b in zip(a40u, a39u)]
+                    a40u = [ufloat(a, e) for a, e in zip(a40, a40e)]
+                    a39u = [ufloat(a, e) for a, e in zip(a39, a39e)]
+                    x = [a + b for a, b in zip(a40u, a39u)]
                     exo = [nominal_value(xi) for xi in x]
-                    endo = data['baseline']
+                    endo = data["baseline"]
                     w = array([std_dev(xi) for xi in x])
-                    model = WLS(endo, exo, weights=1.0/(w**2)).fit()
+                    model = WLS(endo, exo, weights=1.0 / (w**2)).fit()
 
             md = {}
             for key, iso in self.persistence_spec.isotope_group.items():
@@ -1505,7 +1507,7 @@ class AutomatedRun(Loggable):
                         ),
                         "modifier": m,
                     }
-            self.debug(f'modified baselines {md}')
+            self.debug(f"modified baselines {md}")
             self.update_persister_spec(modified_baselines=md)
 
     # ===============================================================================
@@ -1620,12 +1622,10 @@ class AutomatedRun(Loggable):
         use_syn_extraction = False
         if script.syntax_ok(warn=False):
             if self.use_syn_extraction and self.spec.syn_extraction_script:
-                pp = f'{self.spectrometer_manager.spectrometer.name}_{self.spec.syn_extraction_script}'
-                p = os.path.join(
-                    paths.scripts_dir, "syn_extraction", pp
-                )
+                pp = f"{self.spectrometer_manager.spectrometer.name}_{self.spec.syn_extraction_script}"
+                p = os.path.join(paths.scripts_dir, "syn_extraction", pp)
                 p = add_extension(p, ".yaml")
-                self.debug(f'using syn_extracion file: {p}')
+                self.debug(f"using syn_extracion file: {p}")
                 if os.path.isfile(p):
                     from pychron.experiment.automated_run.syn_extraction import (
                         SynExtractionCollector,

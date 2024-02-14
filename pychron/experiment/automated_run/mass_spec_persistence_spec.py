@@ -285,12 +285,12 @@ class MassSpecPersistenceSpec(Loggable):
         # else:
         rv = ufloat(m, s)
 
-        self.debug(f'using modified baselines {self.modified_baselines}')
+        self.debug(f"using modified baselines {self.modified_baselines}")
         if self.modified_baselines:
             if iso.detector in self.modified_baselines:
                 m = self.modified_baselines[iso.detector]
-                self.debug(f'using modified baseline modifier={m} obaseline={rv}')
-                rv += m['modifier']
+                self.debug(f"using modified baseline modifier={m} obaseline={rv}")
+                rv += m["modifier"]
         return rv, fncnts
 
     def get_baseline_uvalue(self, iso):
@@ -300,7 +300,9 @@ class MassSpecPersistenceSpec(Loggable):
             if io.detector in self.modified_baselines:
                 mb = self.modified_baselines[io.detector]
                 m = mb["modifier"]
-                self.debug(f'using modified unfiltered baseline modifier={m} obaseline={v}')
+                self.debug(
+                    f"using modified unfiltered baseline modifier={m} obaseline={v}"
+                )
                 v += m
         except KeyError:
             self.debug_exception()

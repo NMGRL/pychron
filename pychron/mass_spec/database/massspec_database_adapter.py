@@ -489,7 +489,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
                 Level=name,
                 SampleHolder=holder,
                 # ProductionRatiosID=production,
-                **kw
+                **kw,
             )
             i.production = production
 
@@ -639,7 +639,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         return analysis
 
     def add_baseline(self, blob, label, cnts, iso, **kw):
-        self.debug(f'adding baseline label={label} cnts={cnts} iso={iso}')
+        self.debug(f"adding baseline label={label} cnts={cnts} iso={iso}")
         bs = BaselinesTable(PeakTimeBlob=blob, Label=label, NumCnts=cnts)
         if iso is not None:
             iso.baseline = bs
@@ -650,7 +650,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
         fit = self.get_fittype(
             fit,
         )
-        self.debug(f'add baseline changeable {fit}')
+        self.debug(f"add baseline changeable {fit}")
         bs = BaselinesChangeableItemsTable(
             Fit=fit, DataReductionSessionID=data_reduction_session_id, InfoBlob=infoblob
         )
@@ -728,7 +728,7 @@ class MassSpecDatabaseAdapter(DatabaseAdapter):
             mass spec does not propogate baseline error
         :param is_blank:
         """
-        self.debug(f'adding isotope result iso={isotope} int={intercept} bs={baseline}')
+        self.debug(f"adding isotope result iso={isotope} int={intercept} bs={baseline}")
         isotope = self.get_isotope(
             isotope,
         )
