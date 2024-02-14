@@ -26,7 +26,7 @@ import weakref
 from pprint import pformat
 from threading import Event as TEvent, Thread
 
-from numpy import Inf, polyfit, linspace, polyval
+from numpy import Inf, polyfit, linspace, polyval, array
 from traits.api import (
     Any,
     Str,
@@ -1428,49 +1428,74 @@ class AutomatedRun(Loggable):
         #     return True
 
     def _apply_baseline_modification(self):
-        use_model = False
-        if use_model and not os.path.isfile(paths.baseline_model):
+        if not os.path.isfile(paths.baseline_model):
             self.warning("No baseline model file available to do baseline modification")
-            return
 
         def modifier_function(model, detector):
             config = self.baseline_modifiers[detector]
-            ar40 = self.persistence_spec.get_isotope("Ar40").uvalue
-            ar39 = self.persistence_spec.get_isotope("Ar39").uvalue
-
-            xvar = re.match(r"[A-Za-z]+", config["function"])
+            ar40iso = self.isotope_group.get_isotope('Ar40')
+            ar40 = self.isotope_group.get_isotope("Ar40").uvalue
+            ar39 = self.isotope_group.get_isotope("Ar39").uvalue
             xvalue = eval(config["variable"].lower(), {"ar40": ar40, "ar39": ar39})
-            self.debug(
-                f'applying baseline modification {config["function"]} {xvar}={xvalue}'
-            )
 
-            if use_model:
-                prediction = model.get_prediction(xvalue)
-                return ufloat(
-                    prediction.predicted_mean,
-                    prediction.se_mean,
-                    tag="baseline_modifier",
-                )
+            if config['function'] == 'model':
+                if model:
+                    prediction = model.get_prediction(nominal_value(xvalue))
+                    v, e = prediction.predicted_mean, prediction.se_mean
+                else:
+                    v, e = 0, 0
+                mb = ufloat(v, e, tag="baseline_modifier")
             else:
-                return eval(config["function"], {xvar: xvalue})
+                mb = eval(config["function"], {'x': xvalue})
+
+            fe = config.get('function_err', '')
+            if 'countingstatistics' in fe:
+                countingtime = ar40iso.baseline.xs[-1] - ar40iso.baseline.xs[0]
+                n = nominal_value(mb) * 6250 * countingtime
+                self.debug(f'using counting statistics error n={n} countingtime={countingtime} modified_baseline={mb}')
+
+                sigma = n**-0.5
+                self.debug('counting stats')
+                sigma = eval(fe, {'countingstatistics': sigma})
+                mb = ufloat(nominal_value(mb), (sigma)/6250, tag='baseline_modifier')
+
+            self.debug(
+                f'applying baseline modification det={detector} {config["function"]} x={xvalue} modification={mb}'
+            )
+            return mb
 
         if self.baseline_modifiers:
             self._update_persister_spec(baseline_modifiers=self.baseline_modifiers)
 
             model = None
-            if use_model:
+            if os.path.isfile(paths.baseline_model):
                 import pandas as pd
-                from statsmodels.api import OLS
+                from statsmodels.api import OLS, WLS
 
                 with open(paths.baseline_model) as rfile:
                     data = pd.read_csv(rfile)
-                    model = OLS(data["y"], data["x"]).fit()
+                    a40 = data['ar40']
+                    a40e = data['ar40err']
+                    a39 = data['ar39']
+                    a39e = data['ar39err']
+
+                    a40u = [ufloat(a,e) for a, e in zip(a40, a40e)]
+                    a39u = [ufloat(a,e) for a, e in zip(a39, a39e)]
+                    x = [a+b for a,b in zip(a40u, a39u)]
+                    exo = [nominal_value(xi) for xi in x]
+                    endo = data['baseline']
+                    w = array([std_dev(xi) for xi in x])
+                    model = WLS(endo, exo, weights=1.0/(w**2)).fit()
 
             md = {}
             for key, iso in self.persistence_spec.isotope_group.items():
                 if iso.detector in self.baseline_modifiers:
                     m = modifier_function(model, iso.detector)
                     iso.baseline.ys += m.nominal_value
+
+                    # this needs to incorporate filtering
+                    # use logic from MassSpecPersistenceSpec.get_filtered_baseline_uvalue
+                    # refactor into Isotope
 
                     nm = iso.baseline.ys.mean()
                     ns = iso.baseline.ys.std()
@@ -1480,7 +1505,7 @@ class AutomatedRun(Loggable):
                         ),
                         "modifier": m,
                     }
-
+            self.debug(f'modified baselines {md}')
             self.update_persister_spec(modified_baselines=md)
 
     # ===============================================================================
@@ -1595,11 +1620,12 @@ class AutomatedRun(Loggable):
         use_syn_extraction = False
         if script.syntax_ok(warn=False):
             if self.use_syn_extraction and self.spec.syn_extraction_script:
+                pp = f'{self.spectrometer_manager.spectrometer.name}_{self.spec.syn_extraction_script}'
                 p = os.path.join(
-                    paths.scripts_dir, "syn_extraction", self.spec.syn_extraction_script
+                    paths.scripts_dir, "syn_extraction", pp
                 )
                 p = add_extension(p, ".yaml")
-
+                self.debug(f'using syn_extracion file: {p}')
                 if os.path.isfile(p):
                     from pychron.experiment.automated_run.syn_extraction import (
                         SynExtractionCollector,
@@ -1612,9 +1638,6 @@ class AutomatedRun(Loggable):
                     self.syn_extractor.arun = self
                     self.syn_extractor.path = p
                     self.syn_extractor.start()
-                    self._update_persister_spec(
-                        baseline_modifiers=self.syn_extractor.baseline_modifiers
-                    )
                     use_syn_extraction = True
                 else:
                     self.warning(
@@ -3258,6 +3281,10 @@ anaylsis_type={}
         okinds = []
         bs = []
         for s in kinds:
+
+            if s is SYN_EXTRACTION:
+                continue
+
             sc = getattr(self, "{}_script".format(s))
             if sc is not None:
                 bs.append((sc.name, sc.toblob()))

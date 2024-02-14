@@ -526,7 +526,8 @@ class Paths(object):
 
         self.packages_file = join(self.appdata_dir, "packages.json")
 
-        self.baseline_model = join(self.setup_dir, "baseline_model.csv")
+        self.baseline_model = join(self.scripts_dir, "syn_extraction", "baseline_model.csv")
+
         build_directories()
 
         migrate_hidden()

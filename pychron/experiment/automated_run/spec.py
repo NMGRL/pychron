@@ -561,7 +561,7 @@ class AutomatedRunSpec(HasTraits):
             "_overlap",
             "_min_ms_pumptime",
             "conditionals",
-            "syn_extraction",
+            "syn_extraction_script",
             COLLECTION_TIME_ZERO_OFFSET,
             WEIGHT,
             COMMENT,

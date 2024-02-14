@@ -197,23 +197,7 @@ class ThermoMeasurementPyScript(MeasurementPyScript):
 
 
 class ThermoSynMeasurementPyScript(ThermoMeasurementPyScript):
-    baseline_modifiers = Dict
-
-    def baselines(
-        self,
-        ncounts=1,
-        mass=None,
-        detector="",
-        use_dac=False,
-        integration_time=1.04,
-        settling_time=4,
-        check_conditionals=True,
-        calc_time=False,
-        use_baseline_modifier=True,
-    ):
-
-        if use_baseline_modifier:
-            pass
+    pass
 
 
 class NGXMeasurementPyScript(MeasurementPyScript):

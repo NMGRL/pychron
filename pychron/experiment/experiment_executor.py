@@ -2660,38 +2660,40 @@ Use Last "blank_{}"= {}
                 self._low_post = low_post
 
             dvc = self.datahub.mainstore
-            with dvc.session_ctx(use_parent_session=False):
-                if self.experiment_queue:
-                    ms = self.experiment_queue.mass_spectrometer
-                else:
-                    if not self.timeseries_mass_spectrometers:
-                        self.timeseries_mass_spectrometers = (
-                            dvc.get_mass_spectrometer_names()
-                        )
-
-                    info = self.edit_traits(
-                        view=okcancel_view(
-                            UItem(
-                                "timeseries_mass_spectrometer",
-                                # label='Mass Spectrometer',
-                                editor=EnumEditor(name="timeseries_mass_spectrometers"),
-                            ),
-                            title="Please Select a Mass Spectrometer",
-                            width=300,
-                        ),
-                        kind="livemodal",
+            # with dvc.session_ctx(use_parent_session=True):
+            if self.experiment_queue:
+                ms = self.experiment_queue.mass_spectrometer
+            else:
+                if not self.timeseries_mass_spectrometers:
+                    self.timeseries_mass_spectrometers = (
+                        dvc.get_mass_spectrometer_names()
                     )
-                    if info.result:
-                        ms = self.timeseries_mass_spectrometer
-                    else:
-                        return
+
+                info = self.edit_traits(
+                    view=okcancel_view(
+                        UItem(
+                            "timeseries_mass_spectrometer",
+                            # label='Mass Spectrometer',
+                            editor=EnumEditor(name="timeseries_mass_spectrometers"),
+                        ),
+                        title="Please Select a Mass Spectrometer",
+                        width=300,
+                    ),
+                    kind="livemodal",
+                )
+                if info.result:
+                    ms = self.timeseries_mass_spectrometer
+                else:
+                    return
+
+            with dvc.session_ctx(use_parent_session=False):
                 ans = dvc.get_last_n_analyses(
                     self.timeseries_n_recall,
                     mass_spectrometer=ms,
                     exclude_types=("unknown",),
                     low_post=low_post,
                     verbose=True,
-                    use_parent_session=False,
+                    # use_parent_session=True,
                 )
                 if ans:
                     ans = dvc.make_analyses(ans, use_progress=False)

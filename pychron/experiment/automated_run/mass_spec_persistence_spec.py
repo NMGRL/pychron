@@ -273,17 +273,24 @@ class MassSpecPersistenceSpec(Loggable):
             m, s = mean(ys), std(ys, ddof=1)
             fncnts = ys.shape[0]
 
-            if iso.detector in self.modified_baselines:
-                mb = self.modified_baselines[iso.detector]
-                mm = mb["modifier"]
+            # if iso.detector in self.modified_baselines:
+            #     mb = self.modified_baselines[iso.detector]
+            #     mm = mb["modifier"]
 
         if error == "sem":
             s = (s / fncnts**0.5) if fncnts else 0
 
-        if mm:
-            rv = ufloat(m, s) + mm
-        else:
-            rv = ufloat(m, s)
+        # if mm:
+        #     rv = ufloat(m, s) + mm
+        # else:
+        rv = ufloat(m, s)
+
+        self.debug(f'using modified baselines {self.modified_baselines}')
+        if self.modified_baselines:
+            if iso.detector in self.modified_baselines:
+                m = self.modified_baselines[iso.detector]
+                self.debug(f'using modified baseline modifier={m} obaseline={rv}')
+                rv += m['modifier']
         return rv, fncnts
 
     def get_baseline_uvalue(self, iso):
@@ -292,8 +299,11 @@ class MassSpecPersistenceSpec(Loggable):
             v = io.baseline.uvalue
             if io.detector in self.modified_baselines:
                 mb = self.modified_baselines[io.detector]
-                v = mb["modified_baseline"]
+                m = mb["modifier"]
+                self.debug(f'using modified unfiltered baseline modifier={m} obaseline={v}')
+                v += m
         except KeyError:
+            self.debug_exception()
             v = ufloat(0, 0)
 
         return v
