@@ -2686,8 +2686,8 @@ Use Last "blank_{}"= {}
                 else:
                     return
 
-            with dvc.session_ctx(use_parent_session=False):
-                ans = dvc.get_last_n_analyses(
+            with dvc.db.session_ctx():
+                ans = dvc.db.get_last_n_analyses(
                     self.timeseries_n_recall,
                     mass_spectrometer=ms,
                     exclude_types=("unknown",),
@@ -2695,9 +2695,8 @@ Use Last "blank_{}"= {}
                     verbose=True,
                     # use_parent_session=True,
                 )
+                ans = dvc.make_analyses(ans, use_progress=False)
                 if ans:
-                    ans = dvc.make_analyses(ans, use_progress=False)
-
                     self.timeseries_editor.set_items(ans)
                     invoke_in_main_thread(self.timeseries_editor.refresh)
                 else:

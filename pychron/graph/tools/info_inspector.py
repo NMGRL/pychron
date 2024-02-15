@@ -83,7 +83,7 @@ class InfoInspector(ScatterInspector):
         try:
             pos = self.component.hittest(xy, threshold=self.hittest_threshold)
             event.window.set_pointer("cross")
-        except IndexError:
+        except (IndexError, ValueError):
             event.window.set_pointer("arrow")
             return
 
