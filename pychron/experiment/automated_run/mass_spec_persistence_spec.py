@@ -291,7 +291,7 @@ class MassSpecPersistenceSpec(Loggable):
             if iso.detector in self.modified_baselines:
                 m = self.modified_baselines[iso.detector]
                 self.debug(f"using modified baseline modifier={m} obaseline={rv}")
-                rv = ufloat(nominal_value(rv), std_dev(m['modifier']))
+                rv = ufloat(nominal_value(rv), std_dev(m["modifier"]))
                 self.debug(f"using modified baseline {rv}")
                 # rv += m["modifier"]
 
@@ -312,26 +312,26 @@ class MassSpecPersistenceSpec(Loggable):
     #
     #     return v
 
-        # def get_baseline_uvalue(self, det):
-        # vb = []
-        #
-        # dm = self.data_manager
-        # hfile = dm._frame
-        # root = dm._frame.root
-        # v, e = 0, 0
-        # if hasattr(root, 'baseline'):
-        # baseline = root.baseline
-        # for isogroup in hfile.list_nodes(baseline):
-        # for dettable in hfile.list_nodes(isogroup):
-        #             if dettable.name == det:
-        #                 vb = [r['value'] for r in dettable.iterrows()]
-        #                 break
-        #
-        #     vb = array(vb)
-        #     v = vb.mean()
-        #     e = vb.std()
-        #
-        # return ufloat(v, e)
+    # def get_baseline_uvalue(self, det):
+    # vb = []
+    #
+    # dm = self.data_manager
+    # hfile = dm._frame
+    # root = dm._frame.root
+    # v, e = 0, 0
+    # if hasattr(root, 'baseline'):
+    # baseline = root.baseline
+    # for isogroup in hfile.list_nodes(baseline):
+    # for dettable in hfile.list_nodes(isogroup):
+    #             if dettable.name == det:
+    #                 vb = [r['value'] for r in dettable.iterrows()]
+    #                 break
+    #
+    #     vb = array(vb)
+    #     v = vb.mean()
+    #     e = vb.std()
+    #
+    # return ufloat(v, e)
 
     # def _get_baseline_detector(self, iso, det):
     # if self.is_peak_hop:

@@ -1452,15 +1452,17 @@ class AutomatedRun(Loggable):
             if "countingstatistics" in fe:
                 countingtime = ar40iso.baseline.xs[-1] - ar40iso.baseline.xs[0]
                 cpsTofA = 6250.0 * countingtime
-                n = nominal_value(mb)*cpsTofA
+                n = nominal_value(mb) * cpsTofA
                 self.debug(
                     f"using counting statistics error n={n} countingtime={countingtime} modified_baseline={mb}"
                 )
 
-                sigma = n**0.5 #n/n**-0.5
+                sigma = n**0.5  # n/n**-0.5
                 self.debug("counting stats")
                 sigma = eval(fe, {"countingstatistics": sigma})
-                mb = ufloat(nominal_value(mb), (sigma) / cpsTofA, tag="baseline_modifier")
+                mb = ufloat(
+                    nominal_value(mb), (sigma) / cpsTofA, tag="baseline_modifier"
+                )
 
             self.debug(
                 f'applying baseline modification det={detector} {config["function"]} x={xvalue} modification={mb}'
