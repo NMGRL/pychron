@@ -38,7 +38,15 @@ from pychron.pychron_constants import (
     PRECLEANUP,
     CLEANUP,
     DURATION,
-    CRYO_TEMP, POSITION, NEXT_POSITION, EXTRACT_DEVICE, TRAY, EXTRACT_VALUE, EXTRACT_UNITS, BEAM_DIAMETER, LIGHT_VALUE,
+    CRYO_TEMP,
+    POSITION,
+    NEXT_POSITION,
+    EXTRACT_DEVICE,
+    TRAY,
+    EXTRACT_VALUE,
+    EXTRACT_UNITS,
+    BEAM_DIAMETER,
+    LIGHT_VALUE,
 )
 from pychron.pyscripts.context_managers import (
     RecordingCTX,

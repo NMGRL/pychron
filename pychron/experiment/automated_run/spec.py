@@ -403,7 +403,8 @@ class AutomatedRunSpec(HasTraits):
         ctx = dict(
             position=self.get_position_list(),
             next_position=self.get_position_list(self.next_position),
-            extract_device=hdn, analysis_type=an
+            extract_device=hdn,
+            analysis_type=an,
         )
 
         for attr in (
