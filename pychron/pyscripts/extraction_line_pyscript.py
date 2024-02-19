@@ -38,7 +38,7 @@ from pychron.pychron_constants import (
     PRECLEANUP,
     CLEANUP,
     DURATION,
-    CRYO_TEMP,
+    CRYO_TEMP, POSITION, NEXT_POSITION, EXTRACT_DEVICE, TRAY, EXTRACT_VALUE, EXTRACT_UNITS, BEAM_DIAMETER, LIGHT_VALUE,
 )
 from pychron.pyscripts.context_managers import (
     RecordingCTX,
@@ -187,6 +187,7 @@ class ExtractionPyScript(ValvePyScript):
 
         self.setup_context(
             position="",
+            next_position="",
             pattern="",
             extract_value=0,
             extract_units="",
@@ -1015,36 +1016,37 @@ class ExtractionPyScript(ValvePyScript):
 
     @property
     def extract_device(self):
-        return self._get_property("extract_device")
+        return self._get_property(EXTRACT_DEVICE)
 
     @property
     def tray(self):
-        return self._get_property("tray")
-        # return self.get_context()['tray']
+        return self._get_property(TRAY)
 
     @property
     def position(self):
         """
         if position is 0 return None
         """
-        # pos = self.get_context()['position']
-        pos = self._get_property("position")
+        pos = self._get_property(POSITION)
         if pos:
             return pos
 
     @property
+    def next_position(self):
+        return self._get_property(NEXT_POSITION)
+
+    @property
     def extract_value(self):
-        return self._get_property("extract_value")
-        # return self.get_context()['extract_value']
+        return self._get_property(EXTRACT_VALUE)
 
     @property
     def extract_units(self):
-        return self._get_property("extract_units")
+        return self._get_property(EXTRACT_UNITS)
         # return self.get_context()['extract_units']
 
     @property
     def beam_diameter(self):
-        return self._get_property("beam_diameter")
+        return self._get_property(BEAM_DIAMETER)
         # return self.get_context()['beam_diameter']
 
     @property
@@ -1057,7 +1059,7 @@ class ExtractionPyScript(ValvePyScript):
 
     @property
     def light_value(self):
-        return self._get_property("light_value")
+        return self._get_property(LIGHT_VALUE)
 
     # ===============================================================================
     # private
