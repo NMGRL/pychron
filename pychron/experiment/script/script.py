@@ -90,7 +90,7 @@ class BaseScript(Loggable):
     _name_prefix = Str
     use_name_prefix = Bool
     mass_spectrometer = String
-
+    warn_existence = True
     # names = Property(depends_on='mass_spectrometer, directory, refresh_lists')
     names = Property(
         depends_on="_name_prefix, directory, refresh_lists, mass_spectrometer"
@@ -129,16 +129,21 @@ class BaseScript(Loggable):
                 ]
             )
         else:
-            self.warning_dialog("{} script directory does not exist!".format(p))
+            if self.warn_existence:
+                self.warning_dialog("{} script directory does not exist!".format(p))
 
     @cached_property
     def _get_directories(self):
         p = self._get_root()
-        return [NULL_STR] + [
-            s
-            for s in os.listdir(p)
-            if os.path.isdir(os.path.join(p, s)) and s != "zobs"
-        ]
+        ds =[NULL_STR]
+        if p and os.path.isdir(p):
+            ds += [
+                s
+                for s in os.listdir(p)
+                if os.path.isdir(os.path.join(p, s)) and s != "zobs"
+            ]
+
+        return ds
 
     @cached_property
     def _get_names(self):
@@ -209,6 +214,7 @@ class BaseScript(Loggable):
 class SynExtractionScript(BaseScript):
     editable = Bool(False)
     extension = ".yaml"
+    warn_existence = False
 
 
 class Script(BaseScript):

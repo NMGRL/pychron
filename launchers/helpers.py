@@ -305,6 +305,7 @@ def monkey_patch_checkbox_render():
 
     checkbox_renderer.CheckboxRenderer = CheckboxRenderer
 
+
 def monkey_patch_table_view():
     from traitsui.qt4.table_editor import TableView
 
@@ -316,9 +317,13 @@ def monkey_patch_table_view():
         if self._editor.factory is None:
             return size_hint
 
-        width = self.style().pixelMetric(
-            QtGui.QStyle.PixelMetric.PM_ScrollBarExtent, QtGui.QStyleOptionHeader(), self
-        )
+        try:
+            width = self.style().pixelMetric(
+                QtGui.QStyle.PixelMetric.PM_ScrollBarExtent, QtGui.QStyleOptionHeader(), self
+            )
+        except AttributeError:
+            width = 100
+
         for column in range(len(self._editor.columns)):
             width += self.sizeHintForColumn(column)
 
