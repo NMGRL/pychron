@@ -1451,15 +1451,16 @@ class AutomatedRun(Loggable):
             fe = config.get("function_err", "")
             if "countingstatistics" in fe:
                 countingtime = ar40iso.baseline.xs[-1] - ar40iso.baseline.xs[0]
-                n = nominal_value(mb) * 6250 * countingtime
+                cpsTofA = 6250.0 * countingtime
+                n = nominal_value(mb)*cpsTofA
                 self.debug(
                     f"using counting statistics error n={n} countingtime={countingtime} modified_baseline={mb}"
                 )
 
-                sigma = n**-0.5
+                sigma = n**0.5 #n/n**-0.5
                 self.debug("counting stats")
                 sigma = eval(fe, {"countingstatistics": sigma})
-                mb = ufloat(nominal_value(mb), (sigma) / 6250, tag="baseline_modifier")
+                mb = ufloat(nominal_value(mb), (sigma) / cpsTofA, tag="baseline_modifier")
 
             self.debug(
                 f'applying baseline modification det={detector} {config["function"]} x={xvalue} modification={mb}'
@@ -1499,12 +1500,12 @@ class AutomatedRun(Loggable):
                     # use logic from MassSpecPersistenceSpec.get_filtered_baseline_uvalue
                     # refactor into Isotope
 
-                    nm = iso.baseline.ys.mean()
-                    ns = iso.baseline.ys.std()
+                    # nm = iso.baseline.ys.mean()
+                    # ns = iso.baseline.ys.std()
                     md[iso.detector] = {
-                        "modified_baseline": ufloat(
-                            nm + nominal_value(m), (ns**2 + std_dev(m) ** 2) ** 0.5
-                        ),
+                        # "modified_baseline": ufloat(
+                        #     nm + nominal_value(m), (ns**2 + std_dev(m) ** 2) ** 0.5
+                        # ),
                         "modifier": m,
                     }
             self.debug(f"modified baselines {md}")

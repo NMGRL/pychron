@@ -239,50 +239,51 @@ class MassSpecPersistenceSpec(Loggable):
         self.debug("get baseline data {} {}".format(iso, det))
         # if self.is_peak_hop and det == self.peak_hop_detector:
         # iso = None
+        t, v = self._get_data("baseline", iso, det)
+        # self.debug(f'modified baselines ={self.modified_baselines}')
+        # if self.modified_baselines:
+        #     self.debug(f'detector {det}, {det in self.modified_baselines}')
+        #
+        #     if det in self.modified_baselines:
+        #         m = self.modified_baselines[det]
+        #         self.debug(f'applying baseline modifier to all points {m["modifier"]}')
+        #         v += nominal_value(m['modifier'])
 
-        return self._get_data("baseline", iso, det)
+        return t, v
 
     def get_signal_data(self, iso, det, **kw):
         self.debug("get signal data {} {}".format(iso, det))
         return self._get_data("signal", iso, det, **kw)
 
     def get_filtered_baseline_uvalue(self, iso, nsigma=2, niter=1, error="sem"):
+        """
+        filter baselines using nsigma threshold. i.e if a point is greater than nsigma from the mean
+        exclude it.
+
+        at the end add in the baseline_modifier if applicable
+        """
         m, s, fncnts, mm = 0, 0, 0, None
-        # n_filtered_pts = 0
+
         if iso in self.isotopes:
             iso = self.isotopes[iso]
             xs, ys = iso.baseline.xs, iso.baseline.ys
-            # s_dict={'filter_outliers':filter_outliers,
-            #                                    'iterations':iterations,
-            #                                    'std_devs':std_devs}
-            #         self.dirty=notify
             fod = iso.baseline.filter_outliers_dict
             niter = fod.get("iterations", niter)
             nsigma = fod.get("std_devs", nsigma)
-            # reg = MeanRegressor(xs=xs, ys=ys)
-            # reg.calculate()
-            # reg.
+
             for i in range(niter):
                 m, s = mean(ys), std(ys, ddof=1)
                 res = abs(ys - m)
 
                 outliers = where(res > (s * nsigma))[0]
                 ys = delete(ys, outliers)
-                # n_filtered_pts += len(outliers)
 
             m, s = mean(ys), std(ys, ddof=1)
             fncnts = ys.shape[0]
 
-            # if iso.detector in self.modified_baselines:
-            #     mb = self.modified_baselines[iso.detector]
-            #     mm = mb["modifier"]
-
         if error == "sem":
             s = (s / fncnts**0.5) if fncnts else 0
 
-        # if mm:
-        #     rv = ufloat(m, s) + mm
-        # else:
         rv = ufloat(m, s)
 
         self.debug(f"using modified baselines {self.modified_baselines}")
@@ -290,25 +291,26 @@ class MassSpecPersistenceSpec(Loggable):
             if iso.detector in self.modified_baselines:
                 m = self.modified_baselines[iso.detector]
                 self.debug(f"using modified baseline modifier={m} obaseline={rv}")
-                rv += m["modifier"]
+                rv = ufloat(nominal_value(rv), std_dev(m['modifier']))
+                self.debug(f"using modified baseline {rv}")
+                # rv += m["modifier"]
+
         return rv, fncnts
 
-    def get_baseline_uvalue(self, iso):
-        try:
-            io = self.isotopes[iso]
-            v = io.baseline.uvalue
-            if io.detector in self.modified_baselines:
-                mb = self.modified_baselines[io.detector]
-                m = mb["modifier"]
-                self.debug(
-                    f"using modified unfiltered baseline modifier={m} obaseline={v}"
-                )
-                v += m
-        except KeyError:
-            self.debug_exception()
-            v = ufloat(0, 0)
-
-        return v
+    # def get_baseline_uvalue(self, iso):
+    #     try:
+    #         io = self.isotopes[iso]
+    #         v = io.baseline.uvalue
+    #         if io.detector in self.modified_baselines:
+    #             mb = self.modified_baselines[io.detector]
+    #             m = mb["modifier"]
+    #             self.debug(f'using modified unfiltered baseline modifier={m} obaseline={v}')
+    #             v += m
+    #     except KeyError:
+    #         self.debug_exception()
+    #         v = ufloat(0, 0)
+    #
+    #     return v
 
         # def get_baseline_uvalue(self, det):
         # vb = []

@@ -103,7 +103,7 @@ class BaseScript(Loggable):
         if self.name_prefix:
             name = "{}{}".format(self.name_prefix, name)
 
-        name = add_extension(name, extension=self.extension)
+        name = add_extension(name, ext=self.extension)
         p = os.path.join(self._get_root(), name)
 
         return p
