@@ -135,7 +135,7 @@ class BaseScript(Loggable):
     @cached_property
     def _get_directories(self):
         p = self._get_root()
-        ds =[NULL_STR]
+        ds = [NULL_STR]
         if p and os.path.isdir(p):
             ds += [
                 s
