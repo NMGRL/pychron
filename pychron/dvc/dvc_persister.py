@@ -17,6 +17,7 @@
 import hashlib
 import os
 import shutil
+import time
 from datetime import datetime
 
 from apptools.preferences.preference_binding import bind_preference
@@ -285,6 +286,8 @@ class DVCPersister(BasePersister):
         """
         self.info("================= post measurement save started =================")
 
+        self._timings = {}
+        self._start_save_timing()
         ar = self.active_repository
 
         # save spectrometer
@@ -308,10 +311,15 @@ class DVCPersister(BasePersister):
         self._check_repository_identifier()
 
         self._save_analysis(timestamp)
+        self._save_time('_save_analysis dvc')
+
         dvc = self.dvc
         with dvc.session_ctx():
             try:
+                self._start_save_timing()
                 self._save_analysis_db(timestamp)
+                self._save_time('_save_analysis_db')
+
             except DatabaseError as e:
                 self.debug_exception()
                 self.warning(e)
@@ -346,30 +354,41 @@ class DVCPersister(BasePersister):
                     spec_path,
                 ] + [self._make_path(modifier=m) for m in NPATH_MODIFIERS]
 
+                self._start_save_timing()
                 for p in paths:
                     if os.path.isfile(p):
                         ar.add(p, commit=False)
                     else:
                         self.debug("not at valid file {}".format(p))
 
+                self._save_time('add files 1')
+
+                self._start_save_timing()
                 # commit files
                 ar.commit("<{}>".format(commit_tag))
+                self._save_time('commit files 1')
 
+                self._start_save_timing()
                 # commit default data reduction
                 add = False
                 p = self._make_path(INTERCEPTS)
                 if os.path.isfile(p):
                     ar.add(p, commit=False)
                     add = True
-
+                self._save_time('add intercepts')
+                self._start_save_timing()
                 p = self._make_path(BASELINES)
                 if os.path.isfile(p):
                     ar.add(p, commit=False)
                     add = True
+                self._save_time('add baselines')
 
+                self._start_save_timing()
                 if add:
                     ar.commit("<ISOEVO> default collection fits")
 
+                self._save_time('commit default collection fits')
+                self._start_save_timing()
                 for pp, tag, msg in (
                     (
                         "blanks",
@@ -382,10 +401,14 @@ class DVCPersister(BasePersister):
                     if os.path.isfile(p):
                         ar.add(p, commit=False)
                         ar.commit("<{}> {}".format(tag, msg))
+
+                self._save_time('commit blanks and icfactors')
                 try:
                     if push:
                         # push changes
+                        self._start_save_timing()
                         dvc.push_repository(ar)
+                        self._save_time('push repository')
                 except GitCommandError as e:
                     self.debug_exception()
                     self.warning(e)
@@ -399,17 +422,24 @@ class DVCPersister(BasePersister):
                             )
                         )
 
+                self._start_save_timing()
                 # update meta
                 dvc.meta_pull(accept_our=True)
+                self._save_time('meta pull')
 
+                self._start_save_timing()
                 dvc.meta_commit(
                     "repo updated for analysis {}".format(self.per_spec.run_spec.runid)
                 )
+                self._save_time('meta commit')
 
                 try:
                     if push:
                         # push commit
+                        self._start_save_timing()
                         dvc.meta_push()
+                        self._save_time('meta push')
+
                 except GitCommandError as e:
                     self.debug_exception()
                     self.warning(e)
@@ -428,6 +458,8 @@ class DVCPersister(BasePersister):
             self.debug("clear save flag")
             complete_event.clear()
 
+        self._dump_timings()
+
     def save_run_log_file(self, path):
         if self.save_enabled and self.save_log_enabled:
             self.debug("saving run log file")
@@ -441,6 +473,27 @@ class DVCPersister(BasePersister):
             self.dvc.push_repository(ar)
 
     # private
+
+    def _start_save_timing(self):
+        self._st = time.time()
+
+    def _save_time(self, tag):
+        self._timings[tag] = time.time() - self._st
+
+    def _dump_timings(self):
+        self.debug('timing {}'.format(self._timings))
+        runid = self.per_spec.run_spec.runid
+        p = os.path.join(paths.data_dir, 'save_timing.csv'.format(runid))
+        header = self._timings.keys().sorted()
+        if not os.path.isfile(p):
+            with open(p, 'w') as wfile:
+                wfile.write(','.join(['RunID',]+header))
+                wfile.write('\n')
+
+        with open(p, 'a') as wfile:
+            wfile.write(','.join([runid,]+['{:0.3f}'.format(self._timings[h]) for h in header]))
+            wfile.write('\n')
+
     def _load_arar_mapping(self):
         """
         Isotope: IsotopeKey
