@@ -322,7 +322,10 @@ class BasePeakCenter(HasTraits):
 
     def _get_result(self, i, det):
         xs = self.graph.get_data(series=i)
-        ys = getattr(self.graph.plots[0], "odata{}".format(i))
+        try:
+            ys = getattr(self.graph.plots[0], "odata{}".format(i))
+        except AttributeError:
+            print('get result exception')
 
         if xs.shape == ys.shape:
             pts = vstack((xs, ys)).T
