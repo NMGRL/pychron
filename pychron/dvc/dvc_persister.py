@@ -311,14 +311,14 @@ class DVCPersister(BasePersister):
         self._check_repository_identifier()
 
         self._save_analysis(timestamp)
-        self._save_time('_save_analysis dvc')
+        self._save_time("_save_analysis dvc")
 
         dvc = self.dvc
         with dvc.session_ctx():
             try:
                 self._start_save_timing()
                 self._save_analysis_db(timestamp)
-                self._save_time('_save_analysis_db')
+                self._save_time("_save_analysis_db")
 
             except DatabaseError as e:
                 self.debug_exception()
@@ -361,12 +361,12 @@ class DVCPersister(BasePersister):
                     else:
                         self.debug("not at valid file {}".format(p))
 
-                self._save_time('add files 1')
+                self._save_time("add files 1")
 
                 self._start_save_timing()
                 # commit files
                 ar.commit("<{}>".format(commit_tag))
-                self._save_time('commit files 1')
+                self._save_time("commit files 1")
 
                 self._start_save_timing()
                 # commit default data reduction
@@ -375,19 +375,19 @@ class DVCPersister(BasePersister):
                 if os.path.isfile(p):
                     ar.add(p, commit=False)
                     add = True
-                self._save_time('add intercepts')
+                self._save_time("add intercepts")
                 self._start_save_timing()
                 p = self._make_path(BASELINES)
                 if os.path.isfile(p):
                     ar.add(p, commit=False)
                     add = True
-                self._save_time('add baselines')
+                self._save_time("add baselines")
 
                 self._start_save_timing()
                 if add:
                     ar.commit("<ISOEVO> default collection fits")
 
-                self._save_time('commit default collection fits')
+                self._save_time("commit default collection fits")
                 self._start_save_timing()
                 for pp, tag, msg in (
                     (
@@ -402,13 +402,13 @@ class DVCPersister(BasePersister):
                         ar.add(p, commit=False)
                         ar.commit("<{}> {}".format(tag, msg))
 
-                self._save_time('commit blanks and icfactors')
+                self._save_time("commit blanks and icfactors")
                 try:
                     if push:
                         # push changes
                         self._start_save_timing()
                         dvc.push_repository(ar)
-                        self._save_time('push repository')
+                        self._save_time("push repository")
                 except GitCommandError as e:
                     self.debug_exception()
                     self.warning(e)
@@ -425,20 +425,20 @@ class DVCPersister(BasePersister):
                 self._start_save_timing()
                 # update meta
                 dvc.meta_pull(accept_our=True)
-                self._save_time('meta pull')
+                self._save_time("meta pull")
 
                 self._start_save_timing()
                 dvc.meta_commit(
                     "repo updated for analysis {}".format(self.per_spec.run_spec.runid)
                 )
-                self._save_time('meta commit')
+                self._save_time("meta commit")
 
                 try:
                     if push:
                         # push commit
                         self._start_save_timing()
                         dvc.meta_push()
-                        self._save_time('meta push')
+                        self._save_time("meta push")
 
                 except GitCommandError as e:
                     self.debug_exception()
@@ -481,18 +481,32 @@ class DVCPersister(BasePersister):
         self._timings[tag] = time.time() - self._st
 
     def _dump_timings(self):
-        self.debug('timing {}'.format(self._timings))
+        self.debug("timing {}".format(self._timings))
         runid = self.per_spec.run_spec.runid
-        p = os.path.join(paths.data_dir, 'save_timing.csv'.format(runid))
+        p = os.path.join(paths.data_dir, "save_timing.csv".format(runid))
         header = self._timings.keys().sorted()
         if not os.path.isfile(p):
-            with open(p, 'w') as wfile:
-                wfile.write(','.join(['RunID',]+header))
-                wfile.write('\n')
+            with open(p, "w") as wfile:
+                wfile.write(
+                    ",".join(
+                        [
+                            "RunID",
+                        ]
+                        + header
+                    )
+                )
+                wfile.write("\n")
 
-        with open(p, 'a') as wfile:
-            wfile.write(','.join([runid,]+['{:0.3f}'.format(self._timings[h]) for h in header]))
-            wfile.write('\n')
+        with open(p, "a") as wfile:
+            wfile.write(
+                ",".join(
+                    [
+                        runid,
+                    ]
+                    + ["{:0.3f}".format(self._timings[h]) for h in header]
+                )
+            )
+            wfile.write("\n")
 
     def _load_arar_mapping(self):
         """
