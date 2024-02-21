@@ -1625,16 +1625,12 @@ class AutomatedRun(Loggable):
         use_syn_extraction = False
         if script.syntax_ok(warn=False):
             if self.use_syn_extraction and self.spec.syn_extraction_script:
-                pp = f"{self.spectrometer_manager.spectrometer.name}_{self.spec.syn_extraction_script}"
+
+                pp = self._make_script_name(self.spec.syn_extraction_script, extension='.yaml')
                 p = os.path.join(paths.scripts_dir, "syn_extraction", pp)
-                p = add_extension(p, ".yaml")
                 self.debug(f"using syn_extracion file: {p}")
                 if os.path.isfile(p):
-                    from pychron.experiment.automated_run.syn_extraction import (
-                        SynExtractionCollector,
-                    )
-
-                    dur = script.calculate_estimated_duration(force=True)
+                    # dur = script.calculate_estimated_duration(force=True)
                     # syn_extractor = SynExtractionCollector(
                     #     arun=weakref.ref(self)(), path=p, extraction_duration=dur
                     # )
@@ -3163,9 +3159,7 @@ anaylsis_type={}
 
     def _measurement_script_factory(self):
         from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
-
         sname = self.script_info.measurement_script_name
-        sname = self._make_script_name(sname)
 
         klass = MeasurementPyScript
         if isinstance(self.spectrometer_manager, ThermoSpectrometerManager):
@@ -3187,50 +3181,61 @@ anaylsis_type={}
 
             klass = QuaderaMeasurementPyScript
 
-        ms = klass(
-            root=paths.measurement_dir,
-            name=sname,
-            automated_run=self,
-            runner=self.runner,
-        )
-        return ms
+        return self._script_factory(paths.measurement_dir, sname, klass=klass)
 
     def _extraction_script_factory(self, klass=None):
-        ext = self._ext_factory(
+        return self._script_factory(
             paths.extraction_dir, self.script_info.extraction_script_name, klass=klass
         )
-        if ext is not None:
-            ext.automated_run = self
-        return ext
 
     def _post_measurement_script_factory(self):
-        return self._ext_factory(
-            paths.post_measurement_dir, self.script_info.post_measurement_script_name
+        from pychron.pyscripts.post_measurement_pyscript import PostMeasurementPyScript
+        return self._script_factory(
+            paths.post_measurement_dir, self.script_info.post_measurement_script_name,
+            klass=PostMeasurementPyScript
         )
 
     def _post_equilibration_script_factory(self):
-        return self._ext_factory(
+        return self._script_factory(
             paths.post_equilibration_dir,
             self.script_info.post_equilibration_script_name,
         )
 
-    def _ext_factory(self, root, file_name, klass=None):
+    # def _ext_factory(self, root, file_name, klass=None):
+    #     file_name = self._make_script_name(file_name)
+    #     if os.path.isfile(os.path.join(root, file_name)):
+    #         if klass is None:
+    #             from pychron.pyscripts.extraction_line_pyscript import (
+    #                 ExtractionPyScript,
+    #             )
+    #
+    #             klass = ExtractionPyScript
+    #
+    #         obj = klass(root=root,
+    #                     automated_run=self,
+    #                     name=file_name, runner=self.runner)
+    #
+    #         return obj
+
+    def _script_factory(self, root, file_name, klass=None):
+        if klass is None:
+            from pychron.pyscripts.extraction_line_pyscript import (
+                ExtractionPyScript,
+            )
+
+            klass = ExtractionPyScript
+
         file_name = self._make_script_name(file_name)
         if os.path.isfile(os.path.join(root, file_name)):
-            if klass is None:
-                from pychron.pyscripts.extraction_line_pyscript import (
-                    ExtractionPyScript,
-                )
-
-                klass = ExtractionPyScript
-
-            obj = klass(root=root, name=file_name, runner=self.runner)
+            obj = klass(root=root,
+                        automated_run=self,
+                        name=file_name, runner=self.runner)
 
             return obj
 
-    def _make_script_name(self, name):
+    def _make_script_name(self, name, extension='.py'):
         name = "{}_{}".format(self.spec.mass_spectrometer.lower(), name)
-        return add_extension(name, ".py")
+        return add_extension(name, extension)
 
     def _setup_context(self, script):
         """

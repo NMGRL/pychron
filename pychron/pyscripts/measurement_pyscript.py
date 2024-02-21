@@ -40,13 +40,14 @@ ESTIMATED_DURATION_FF = 1.0
 
 command_register = makeRegistry()
 
+from pychron.pyscripts.automated_run_pyscript import AutomatedRunPyScript
 
-class MeasurementPyScript(ValvePyScript):
+
+class MeasurementPyScript(AutomatedRunPyScript):
     """
     MeasurementPyScripts are used to collect isotopic data
     """
 
-    automated_run = None
     ncounts = 0
     info_color = MEASUREMENT_COLOR
     abbreviated_count_ratio = None
@@ -934,15 +935,6 @@ class MeasurementPyScript(ValvePyScript):
         config.read(p)
 
         return config
-
-    def _automated_run_call(self, func, *args, **kw):
-        if self.automated_run is None:
-            return
-
-        if isinstance(func, str):
-            func = getattr(self.automated_run, func)
-
-        return func(*args, **kw)
 
     def _set_spectrometer_parameter(self, *args, **kw):
         self._automated_run_call("py_set_spectrometer_parameter", *args, **kw)

@@ -60,7 +60,7 @@ from pychron.pyscripts.decorators import (
     device_verbose_skip,
 )
 from pychron.pyscripts.valve_pyscript import ValvePyScript
-
+from pychron.pyscripts.automated_run_pyscript import AutomatedRunPyScript
 COMPRE = re.compile(r"[A-Za-z]*")
 
 # make a registry to hold all the commands exposed by ExtractionPyScript
@@ -69,13 +69,12 @@ COMPRE = re.compile(r"[A-Za-z]*")
 command_register = makeRegistry()
 
 
-class ExtractionPyScript(ValvePyScript):
+class ExtractionPyScript(AutomatedRunPyScript):
     """
     The ExtractionPyScript is used to program the extraction and gettering of
     sample gas.
     """
 
-    automated_run = None
 
     _resource_flag = None
     info_color = EXTRACTION_COLOR
@@ -1184,15 +1183,6 @@ class ExtractionPyScript(ValvePyScript):
 
     def _stop_pattern(self, protocol=None):
         self._extraction_action(("stop_pattern", (), {}), protocol=protocol)
-
-    def _automated_run_call(self, func, *args, **kw):
-        if self.automated_run is None:
-            return
-
-        if isinstance(func, str):
-            func = getattr(self.automated_run, func)
-
-        return func(*args, **kw)
 
 
 # ============= EOF ====================================

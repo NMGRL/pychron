@@ -1361,7 +1361,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         return ret
 
     def syn_measure(self, ai, script):
-        self._measurement(ai, script=script, use_post_on_fail=False)
+        return self._measurement(ai, script=script, use_post_on_fail=False)
 
     def _measurement(self, ai, **measurement_kwargs):
         """

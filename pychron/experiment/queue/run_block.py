@@ -74,7 +74,9 @@ class RunBlock(Loggable):
         if self.extract_device == FUSIONS_UV:
             pklass = UVRunParser
         parser = pklass()
-        for linenum, line in enumerate(lines[1:]):
+        # trim off header
+        lines = lines[1:]
+        for linenum, line in enumerate(lines):
             # self.debug('loading line {}'.format(linenum))
             skip = False
             line = line.rstrip()
