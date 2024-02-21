@@ -23,6 +23,7 @@ from pychron.pyscripts.decorators import (
 )
 
 from pychron.pyscripts.extraction_line_pyscript import ExtractionPyScript
+
 COMPRE = re.compile(r"[A-Za-z]*")
 
 # make a registry to hold all the commands exposed by ExtractionPyScript
@@ -44,4 +45,6 @@ class PostMeasurementPyScript(ExtractionPyScript):
 
         # ensure the script always gets a number
         return 0 or v
+
+
 # ============= EOF ====================================

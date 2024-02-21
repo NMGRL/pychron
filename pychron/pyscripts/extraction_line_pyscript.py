@@ -61,6 +61,7 @@ from pychron.pyscripts.decorators import (
 )
 from pychron.pyscripts.valve_pyscript import ValvePyScript
 from pychron.pyscripts.automated_run_pyscript import AutomatedRunPyScript
+
 COMPRE = re.compile(r"[A-Za-z]*")
 
 # make a registry to hold all the commands exposed by ExtractionPyScript
@@ -74,7 +75,6 @@ class ExtractionPyScript(AutomatedRunPyScript):
     The ExtractionPyScript is used to program the extraction and gettering of
     sample gas.
     """
-
 
     _resource_flag = None
     info_color = EXTRACTION_COLOR

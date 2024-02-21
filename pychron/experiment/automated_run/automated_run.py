@@ -1626,7 +1626,9 @@ class AutomatedRun(Loggable):
         if script.syntax_ok(warn=False):
             if self.use_syn_extraction and self.spec.syn_extraction_script:
 
-                pp = self._make_script_name(self.spec.syn_extraction_script, extension='.yaml')
+                pp = self._make_script_name(
+                    self.spec.syn_extraction_script, extension=".yaml"
+                )
                 p = os.path.join(paths.scripts_dir, "syn_extraction", pp)
                 self.debug(f"using syn_extracion file: {p}")
                 if os.path.isfile(p):
@@ -3159,6 +3161,7 @@ anaylsis_type={}
 
     def _measurement_script_factory(self):
         from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
+
         sname = self.script_info.measurement_script_name
 
         klass = MeasurementPyScript
@@ -3190,9 +3193,11 @@ anaylsis_type={}
 
     def _post_measurement_script_factory(self):
         from pychron.pyscripts.post_measurement_pyscript import PostMeasurementPyScript
+
         return self._script_factory(
-            paths.post_measurement_dir, self.script_info.post_measurement_script_name,
-            klass=PostMeasurementPyScript
+            paths.post_measurement_dir,
+            self.script_info.post_measurement_script_name,
+            klass=PostMeasurementPyScript,
         )
 
     def _post_equilibration_script_factory(self):
@@ -3227,13 +3232,13 @@ anaylsis_type={}
 
         file_name = self._make_script_name(file_name)
         if os.path.isfile(os.path.join(root, file_name)):
-            obj = klass(root=root,
-                        automated_run=self,
-                        name=file_name, runner=self.runner)
+            obj = klass(
+                root=root, automated_run=self, name=file_name, runner=self.runner
+            )
 
             return obj
 
-    def _make_script_name(self, name, extension='.py'):
+    def _make_script_name(self, name, extension=".py"):
         name = "{}_{}".format(self.spec.mass_spectrometer.lower(), name)
         return add_extension(name, extension)
 
