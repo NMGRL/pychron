@@ -113,7 +113,8 @@ class RunBlock(Loggable):
                 next_params = None
                 if nextline:
                     _, next_params = parser.parse(header, nextline)
-
+                # self.debug(f"next line {nextline}")
+                # self.debug(f'next_params {next_params}')
                 arun = klass()
                 arun.load(script_info, params, next_params)
 

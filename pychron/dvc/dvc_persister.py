@@ -484,7 +484,7 @@ class DVCPersister(BasePersister):
         self.debug("timing {}".format(self._timings))
         runid = self.per_spec.run_spec.runid
         p = os.path.join(paths.data_dir, "save_timing.csv".format(runid))
-        header = self._timings.keys().sorted()
+        header = sorted(self._timings.keys())
         if not os.path.isfile(p):
             with open(p, "w") as wfile:
                 wfile.write(

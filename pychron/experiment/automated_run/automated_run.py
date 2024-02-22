@@ -1724,8 +1724,10 @@ class AutomatedRun(Loggable):
             self.warning("run is not alive")
             return
 
+        self.debug(f'do measurement script {script}')
         if script is None:
             script = self.measurement_script
+            self.debug(f'using measurement script {script}, {script.name}')
 
         if script is None:
             self.warning("no measurement script")

@@ -38,6 +38,19 @@ from pychron.pyscripts.measurement.thermo_measurement_pyscript import (
 from pychron.pyscripts.measurement_pyscript import MeasurementPyScript
 
 
+class SynExtractionCTX:
+    def __init__(self, run, syn_script):
+        self.run = run
+        self.oscript = run.measurement_script
+        self.run.measurement_script = syn_script
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.run.measurement_script = self.oscript
+
+
 class SynExtractionSpec(HasTraits):
     # mode = Str
     # duration = Float
@@ -242,27 +255,33 @@ class SynExtractionCollector(Loggable):
         #     self.arun.persister.trait_set(
         #         use_massspec_database=False, runid=runid, uuid=str(uuid.uuid4())
         #     )
-        oscript = self.arun.measurement_script
-        try:
-            self.arun.measurement_script = script
+        # oscript = self.arun.measurement_script
+        # self.debug(f'oscript {oscript}')
 
-            if self.executor.syn_measure(self.arun, script):
-                # if self.arun.do_measurement(script=script, use_post_on_fail=False):
-                if post_script:
-                    self.debug("starting post measurement")
-                    if not self.arun.do_post_measurement(script=post_script):
-                        return
+        with SynExtractionCTX(self.arun, script):
+            # self.arun.measurement_script = script
+            try:
+                if self.executor.syn_measure(self.arun, script):
+                    # if self.arun.do_measurement(script=script, use_post_on_fail=False):
+                    if post_script:
+                        self.debug("starting post measurement")
+                        if not self.arun.do_post_measurement(script=post_script):
+                            return
 
-                self.debug(
-                    "delay between syn extractions {}".format(spec.delay_between)
-                )
-                self.arun.wait(spec.delay_between or 0)
+                    # self.debug(
+                    #     "delay between syn extractions {}".format(spec.delay_between)
+                    # )
+                    # self.arun.wait(spec.delay_between or 0)
+                    # self.arun.measurement_script = oscript
+                    # self.debug(f'setting {self.arun} {oscript}')
+                    return True
+                # else:
+                #     self.arun.measurement_script = oscript
 
-                return True
-        except BaseException as e:
-            self.debug(f"failed doing measurement {e}")
-        finally:
-            self.arun.measurement_script = oscript
+            except BaseException as e:
+                self.debug(f"failed doing measurement {e}")
+        # finally:
+        #     self.arun.measurement_script = oscript
 
     # def _spec_generator(self, config):
     #     pattern = config.get("pattern", "S")
