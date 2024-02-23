@@ -205,8 +205,6 @@ class ComboboxEditor(BasicEditorFactory):
     use_filter = Bool(True)
     completion_mode = Enum(("popup", "inline"))
     use_separator = Bool(False)
-    separator = Str
-    use_separator = Bool(False)
     separator = Str("")
 
 

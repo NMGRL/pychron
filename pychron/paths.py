@@ -275,6 +275,8 @@ class Paths(object):
     ratio_change_detection = None
     actuation_tracker_file = None
 
+    oauth_file = None
+    packages_file = None
     # plot_factory_defaults = (('ideogram_defaults', 'IDEOGRAM_DEFAULTS', True),
     #                          ('spectrum_defaults', 'SPECTRUM_DEFAULTS', True))
 
@@ -518,6 +520,10 @@ class Paths(object):
         self.ratio_change_detection = join(
             paths.setup_dir, "ratio_change_detection.yaml"
         )
+
+        self.oauth_file = join(self.appdata_dir, "oauth.json")
+
+        self.packages_file = join(self.appdata_dir, "packages.json")
 
         build_directories()
 

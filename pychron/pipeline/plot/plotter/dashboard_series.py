@@ -34,7 +34,7 @@ class DashboardSeries(BaseArArFigure):
     xs = Array
     measurements = Dict
 
-    def build(self, plots):
+    def build(self, plots, *args, **kwargs):
         graph = self.graph
         for po in plots:
             if po.use:

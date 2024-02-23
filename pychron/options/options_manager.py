@@ -78,6 +78,7 @@ from pychron.pipeline.plot.plotter.series import (
     EXTRACT_DURATION,
     RADIOGENIC_YIELD,
     AGE,
+    F,
 )
 from pychron.pychron_constants import (
     EXTRACT_VALUE,
@@ -477,11 +478,10 @@ class OptionsManager(BaseOptionsManager):
     def _selected_changed(self, new):
         obj = self._option_factory(new)
         if obj:
-
             self.subview_names = obj.subview_names
 
             o = self.selected_subview
-            if not o:
+            if not o and self.subview_names:
                 o = self.subview_names[0]
 
             self.selected_subview = ""
@@ -571,6 +571,7 @@ class SeriesOptionsManager(FigureOptionsManager):
             if analysis_type in (UNKNOWN, COCKTAIL):
                 names.append(AGE)
                 names.append(RADIOGENIC_YIELD)
+                names.append(F)
 
             if analysis_type in (DETECTOR_IC,):
                 for i, di in enumerate(detectors):

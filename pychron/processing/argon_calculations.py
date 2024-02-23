@@ -101,6 +101,27 @@ def calculate_isochron(
     return age, yint, reg
 
 
+def get_isochron_regressors(a40, a39, a36, kind="NewYork"):
+    xx = a39 / a40
+    yy = a36 / a40
+
+    xs, xerrs = unpack_value_error(xx)
+    ys, yerrs = unpack_value_error(yy)
+
+    xds, xdes = unpack_value_error(a40)
+    yns, ynes = unpack_value_error(a36)
+    xns, xnes = unpack_value_error(a39)
+
+    regx = isochron_regressor(
+        ys, yerrs, xs, xerrs, xds, xdes, yns, ynes, xns, xnes, kind
+    )
+    reg = isochron_regressor(
+        xs, xerrs, ys, yerrs, xds, xdes, xns, xnes, yns, ynes, kind
+    )
+
+    return reg, regx
+
+
 def isochron_regressor(
     xs, xes, ys, yes, xds, xdes, xns, xnes, yns, ynes, reg="NewYork"
 ):

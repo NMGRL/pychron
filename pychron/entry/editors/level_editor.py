@@ -304,9 +304,6 @@ class IrradiationLevelEditor(PackageLevelEditor):
                     else:
                         return
 
-                level.note = self.level_note
-                level.z = self.z
-
                 # save z to meta repo
                 self.dvc.meta_repo.update_level_z(self.irradiation, self.name, self.z)
 
@@ -335,6 +332,9 @@ class IrradiationLevelEditor(PackageLevelEditor):
                 if original_tray != self.selected_tray:
                     self._save_tray(level, original_tray)
 
+                level.note = self.level_note
+                level.z = self.z
+
                 break
             else:
                 break
@@ -352,9 +352,11 @@ class IrradiationLevelEditor(PackageLevelEditor):
         return self.name
 
     def _save_tray(self, level, original_tray):
+        irradname = level.irradiation.name
+        levelname = level.name
         self.debug(
             "saving tray {}. original={}, current={}".format(
-                level.name, original_tray, self.selected_tray
+                levelname, original_tray, self.selected_tray
             )
         )
         db = self.dvc.db
@@ -386,38 +388,29 @@ class IrradiationLevelEditor(PackageLevelEditor):
                             p.labnumber.identifier,
                         )
                     )
-                    db.delete_irradiation_position(p)
+                    break
+            else:
+                if self.confirmation_dialog(
+                    "You are about to delete {} irradiation positions. "
+                    "Are you sure you want to continue?".format(on - n)
+                ):
+                    for p in level.positions[n:]:
+                        self.debug(
+                            "deleting {} {} {} {}".format(
+                                irradname,
+                                levelname,
+                                p.position,
+                                p.identifier,
+                            )
+                        )
+                        db.delete_irradiation_position(p)
+
+                    level.holder = self.selected_tray
         else:
             level.holder = self.selected_tray
 
-        print(level, level.holder, self.selected_tray)
+        # print(level, level.holder, self.selected_tray)
         db.commit()
-
-    # def _add_level(self):
-    #
-    #     self._pre_add_level()
-    #
-    #     av = AddView(model=self)
-    #     info = av.edit_traits()
-    #     while 1:
-    #         if info.result:
-    #             for attr, msg in self._check_attrs:
-    #                 info = self._check_attr_set(av, attr, msg)
-    #                 if info == 'break':
-    #                     break
-    #                 elif info is not None:
-    #                     continue
-    #
-    #             if not next((li for li in self.irradiation.levels if li.name == self.name), None):
-    #                 if self._save_level():
-    #                     return self.name
-    #                 else:
-    #                     break
-    #             else:
-    #                 self.warning_dialog('Level {} already exists for Irradiation {}'.format(self.name,
-    #                                                                                         self.irradiation))
-    #         else:
-    #             break
 
     def _load_productions(self, load_reactors=True):
         self.dvc.meta_repo.smart_pull()

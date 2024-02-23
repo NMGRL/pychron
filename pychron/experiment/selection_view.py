@@ -17,7 +17,7 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 from chaco.abstract_overlay import AbstractOverlay
-from chaco.data_label import DataLabel
+from chaco.api import DataLabel
 from chaco.tools.scatter_inspector import ScatterInspector
 from chaco.tools.zoom_tool import ZoomTool
 from kiva.fonttools import Font

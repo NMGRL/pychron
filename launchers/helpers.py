@@ -497,6 +497,12 @@ def initialize_version(appname, debug):
                       ' Error: {}'.format(e))
 
         return False
+    except FileExistsError as e:
+        emsg = str(e)
+        path = emsg.split('File exists:')[-1]
+        warning(None, """Failed to setup logging.  Error: {}\n\n
+Delete directory {} to proceed""".format(e, path))
+        return False
 
     return env
 

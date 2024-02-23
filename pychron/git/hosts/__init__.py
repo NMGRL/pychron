@@ -271,27 +271,33 @@ class GitHostService(BaseGitHostService):
         self._session = None
 
     def _post(self, cmd, **payload):
-        headers = self._get_authorization()
-        kw = {}
-        if globalv.cert_file:
-            kw["verify"] = globalv.cert_file
-        else:
-            kw["verify"] = globalv.verify_ssl
-
-        r = requests.post(cmd, data=json.dumps(payload), headers=headers, **kw)
+        # headers = self._get_authorization()
+        # kw = {}
+        # if globalv.cert_file:
+        #     kw["verify"] = globalv.cert_file
+        # else:
+        #     kw["verify"] = globalv.verify_ssl
+        # r = requests.post(cmd, data=json.dumps(payload), headers=headers, **kw)
+        r = self._request_wrapper("post", cmd, payload)
         if not r.status_code == 201:
             print(json.dumps(payload))
             print(r.status_code, r.reason)
         return r
 
     def _put(self, cmd, **payload):
-        headers = self._get_authorization()
-        kw = {}
-        if globalv.cert_file:
-            kw["verify"] = globalv.cert_file
+        return self._request_wrapper("put", cmd, payload)
 
-        r = requests.put(cmd, data=json.dumps(payload), headers=headers, **kw)
-        return r
+    def _request_wrapper(self, func, cmd, payload, **kw):
+        headers = self._get_authorization()
+        func = getattr(requests, func)
+
+        return func(
+            cmd,
+            data=json.dumps(payload),
+            headers=headers,
+            verify=globalv.cert_file or globalv.verify_ssl,
+            **kw
+        )
 
     def _get_oauth_token(self):
         raise NotImplementedError

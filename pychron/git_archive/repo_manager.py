@@ -516,9 +516,6 @@ class GitRepoManager(Loggable):
         # return index, patches
         #
 
-    def get_head_object(self):
-        return get_head_commit(self._repo)
-
     def get_head(self, commit=True, hexsha=True):
         head = self._repo
         if commit:
@@ -629,6 +626,13 @@ class GitRepoManager(Loggable):
         repo = self._repo
         return repo.active_branch.name
 
+    def restore_branch(self, ps):
+        self._repo.git.restore("--staged", ps)
+        self._repo.git.restore(ps)
+
+    def checkout(self, *args, **kw):
+        self._repo.git.checkout(*args, **kw)
+
     def reset(self):
         """delete index.lock"""
         p = os.path.join(self._repo.working_dir, ".git", "index.lock")
@@ -638,13 +642,14 @@ class GitRepoManager(Loggable):
     def checkout_branch(self, name, inform=True, load_history=True):
         repo = self._repo
         if name.startswith("origin"):
-            name = name[7:]
-            remote = repo.remote()
-            rref = getattr(remote.refs, name)
-            repo.create_head(name, rref)
-
-            branch = repo.heads[name]
-            branch.set_tracking_branch(rref)
+            self.warning_dialog("Contact developer")
+            # name = name[7:]
+            # remote = repo.remote()
+            # rref = getattr(remote.refs, name)
+            # repo.create_head(name, rref)
+            #
+            # branch = repo.heads[name]
+            # branch.set_tracking_branch(rref)
 
         else:
             branch = getattr(repo.heads, name)
@@ -746,6 +751,7 @@ class GitRepoManager(Loggable):
                 ret = branch
                 break
         else:
+            ret = branch
             if branch == "master":
                 ret = "main"
 
@@ -995,7 +1001,8 @@ class GitRepoManager(Loggable):
             else:
                 self.debug("merging {} commits".format(behind))
                 self._git_command(
-                    lambda g: g.merge("FETCH_HEAD"), "GitRepoManager.smart_pull/!ahead"
+                    lambda g: g.merge("-X", "theirs", "FETCH_HEAD"),
+                    "GitRepoManager.smart_pull/!ahead",
                 )
         else:
             self.debug("Up-to-date with {}".format(remote))
@@ -1105,7 +1112,9 @@ class GitRepoManager(Loggable):
         # l = repo.active_branch.log(*args)
         return self.cmd("log", branch, "--oneline", *args).split("\n")
 
-    def get_commits_from_log(self, greps=None, max_count=None, after=None, before=None):
+    def get_commits_from_log(
+        self, greps=None, max_count=None, after=None, before=None, path=None
+    ):
         repo = self._repo
         args = [repo.active_branch.name, "--remove-empty", "--simplify-merges"]
         if max_count:
@@ -1120,6 +1129,9 @@ class GitRepoManager(Loggable):
             args.append("--grep=^{}".format(greps))
 
         args.append(LOGFMT)
+        if path:
+            args.append("--")
+            args.append(path)
         # txt = self.cmd('log', *args)
         # self.debug('git log {}'.format(' '.join(args)))
 

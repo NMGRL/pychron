@@ -19,7 +19,7 @@ from pychron.pipeline.plot.plotter.series import Series
 
 
 class RatioSeries(Series):
-    def build(self, plots, plot_dict=None):
+    def build(self, plots, plot_dict=None, *args, **kwargs):
         graph = self.graph
         # plots = (pp for pp in plots if self._has_attr(pp.name))
 

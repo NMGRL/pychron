@@ -145,7 +145,7 @@ class YAMLLoader(BaseLoader):
                 desc = vv.find("description")
                 desc = desc.text.strip() if desc is not None else ""
             v = ManualSwitch(x + ox, y + oy, display_name=desc, name=key)
-            print("masdf", v)
+
             scene.add_item(v, layer=1)
             ndict[key] = v
 

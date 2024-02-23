@@ -328,7 +328,7 @@ def fast_find_peaks(ys, xs, **kw):
             "PeakUtils required to identify and label peaks.\n\n"
             'Please install PeakUtils. From commandline use "pip install peakutils"',
         )
-        return [], []
+        return [], [], []
 
     ys, xs = asarray(ys), asarray(xs)
     idx = indexes(ys, **kw)

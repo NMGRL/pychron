@@ -101,7 +101,7 @@ PACKAGE_DICT = dict(
     # social
     EmailPlugin="pychron.social.email.tasks.plugin",
     GoogleCalendarPlugin="pychron.social.google_calendar.tasks.plugin",
-    TwitterPlugin="pychron.social.twitter.plugin"
+    TwitterPlugin="pychron.social.twitter.plugin",
     # WorkspacePlugin='pychron.workspace.tasks.workspace_plugin',
     # LabBookPlugin='pychron.labbook.tasks.labbook_plugin',
     # SystemMonitorPlugin='pychron.system_monitor.tasks.system_monitor_plugin',
@@ -269,9 +269,13 @@ def launch(klass):
     app = app_factory(klass)
 
     try:
-        import qdarktheme
+        try:
+            import qdarktheme
 
-        qdarktheme.setup_theme("light")
+            qdarktheme.setup_theme("light")
+        except ImportError:
+            pass
+
         # root = os.path.dirname(__file__)
         # r = QtGui.QApplication.instance()
         # p = os.path.join(root, 'stylesheets', 'qdark.css')

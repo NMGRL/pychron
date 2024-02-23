@@ -115,7 +115,7 @@ rsquared={rsquared:}
             scatter,
             use_pane=False,
             analyses=items,
-            include_x=True
+            include_x=True,
             # convert_index=convert_index,
             # index_tag=index_tag,
             # index_attr=index_attr,

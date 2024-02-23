@@ -68,7 +68,7 @@ class myTableView(TableView):
 
     def sizeHintForColumn(self, column_index):
         try:
-            return super(myTableView, self).sizeHintForColumn(column_index)
+            return int(super(myTableView, self).sizeHintForColumn(column_index))
         except AttributeError:
             return 0
 

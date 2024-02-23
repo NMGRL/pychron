@@ -19,7 +19,6 @@ from collections import namedtuple
 from math import ceil
 from operator import attrgetter
 
-import six
 from chaco.array_data_source import ArrayDataSource
 from numpy import Inf, polyfit, polyval, arange, argmin
 from pyface.message_dialog import information
@@ -160,7 +159,7 @@ def show_equilibration_inspector(record_id, ar_ar_age):
 
     else:
         for i, (num, den) in enumerate(
-            (("age", "age"), ("Ar40", "Ar39"), ("Ar40", "Ar36"))
+            (("age", "age"), ("Ar40", "Ar39"), ("Ar37", "Ar39"), ("Ar40", "Ar36"))
         ):
             g.new_plot(padding_right=75, padding_left=100)
 
@@ -456,6 +455,18 @@ class IdeogramPlotable(HasTraits):
         if make_arar_constants:
             self.arar_constants = ArArConstants()
 
+    def trigger_invalid(self):
+        raise NotImplementedError
+
+    def trigger_omit(self):
+        raise NotImplementedError
+
+    def trigger_recall(self):
+        raise NotImplementedError
+
+    def trigger_tag(self):
+        raise NotImplementedError
+
     def baseline_corrected_intercepts_to_dict(self):
         pass
 
@@ -734,7 +745,7 @@ class Analysis(ArArAge, IdeogramPlotable):
 
     def get_isotope_evolutions(self, isotopes=None, load_data=True, **kw):
         if isotopes:
-            if isinstance(isotopes[0], (str, six.text_type)):
+            if isinstance(isotopes[0], str):
                 nisotopes = []
                 for i in isotopes:
                     try:

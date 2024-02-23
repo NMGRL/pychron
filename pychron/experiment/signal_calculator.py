@@ -241,7 +241,7 @@ class SignalCalculator(HasTraits):
         g.new_plot(
             xtitle="weight (mg)",
             ytitle="40Ar* (fA)",
-            padding=[60, 20, 60, 60]
+            padding=[60, 20, 60, 60],
             #                   padding=60
         )
 

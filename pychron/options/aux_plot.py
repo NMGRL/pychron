@@ -114,8 +114,8 @@ class AuxPlot(HasTraits):
     marker_size = Float(2)
     marker_color = Color("black")
 
-    calculated_ymax = Any(transient=True)
-    calculated_ymin = Any(transient=True)
+    calculated_ymax = Dict(transient=True)
+    calculated_ymin = Dict(transient=True)
 
     use_integer_ticks = False
 
@@ -141,9 +141,18 @@ class AuxPlot(HasTraits):
     def has_ylimits(self):
         return self._has_ylimits or has_limits(self.ylimits)
 
+    def has_fixed_ylimits(self):
+        return self.ymin or self.ymax
+
     @on_trait_change("clear_ylimits_button")
-    def clear_ylimits(self):
+    def handle_clear_ylimits(self):
         self.ymin, self.ymax = 0, 0
+        self.clear_ylimits()
+        # self.ylimits = (self.ymin, self.ymax)
+        # self._has_ylimits = has_limits(self.ylimits)
+
+    def clear_ylimits(self):
+        # self.ymin, self.ymax = 0, 0
         self.ylimits = (self.ymin, self.ymax)
         self._has_ylimits = has_limits(self.ylimits)
 
