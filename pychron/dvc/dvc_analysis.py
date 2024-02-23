@@ -726,8 +726,8 @@ class DVCAnalysis(Analysis):
                 if iso.detector == det:
                     self._load_value_error(iso.baseline, v)
 
-                    if 'modifier_error' in v:
-                        iso.baseline.error = v['modifier_error']
+                    if "modifier_error" in v:
+                        iso.baseline.error = v["modifier_error"]
 
                     iso.baseline.set_fit(v["fit"], notify=False)
                     fod = v.get("filter_outliers_dict")

@@ -527,9 +527,9 @@ class FindReferencesNode(FindNode):
         atypes = [ai.lower().replace(" ", "_") for ai in self.analysis_types]
         kw = dict(
             extract_devices=self.extract_device if self.use_extract_device else "",
-            mass_spectrometers=self.mass_spectrometer
-            if self.use_mass_spectrometer
-            else "",
+            mass_spectrometers=(
+                self.mass_spectrometer if self.use_mass_spectrometer else ""
+            ),
             make_records=False,
         )
 

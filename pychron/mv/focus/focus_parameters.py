@@ -91,7 +91,7 @@ class FocusParameters(HasTraits):
                 Item("negative_window"),
                 Item("positive_window"),
                 Item("velocity_scalar2"),
-                VGroup(Item("crop_width"), Item("crop_height"), Item("crop_bind"))
+                VGroup(Item("crop_width"), Item("crop_height"), Item("crop_bind")),
                 #                     enabled_when='style=="2step"'
             ),
         )

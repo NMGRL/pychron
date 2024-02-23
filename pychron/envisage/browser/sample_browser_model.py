@@ -276,9 +276,9 @@ class SampleBrowserModel(AnalysisBrowserModel):
             now = datetime.now()
             lp = now - timedelta(hours=v.nhours)
             ls = self.db.get_labnumbers(
-                mass_spectrometers=v.mass_spectrometers
-                if v.use_mass_spectrometers
-                else None,
+                mass_spectrometers=(
+                    v.mass_spectrometers if v.use_mass_spectrometers else None
+                ),
                 analysis_types=v.analysis_types,
                 high_post=now,
                 low_post=lp,

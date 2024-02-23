@@ -61,7 +61,7 @@ class XYScatterMainOptions(MainOptions):
                 label="Multiplier",
                 format_func=lambda x: floatfmt(x, n=2, s=2, use_scientific=True),
             ),
-            checkbox_column(name="has_filter", label="Filter", editable=False)
+            checkbox_column(name="has_filter", label="Filter", editable=False),
             # object_column(name='filter_str', label='Filter')
         ]
 
