@@ -505,7 +505,7 @@ class IsotopicMeasurement(BaseMeasurement):
         if self.truncate:
             reg.set_truncate(self.truncate)
         try:
-            fit = reg.determine_fit()
+            fit = reg.determine_fit(lfit)
             self.fit = fit
             reg.calculate()
         except FitError as e:
