@@ -19,6 +19,7 @@ from __future__ import absolute_import
 
 
 from pyface.qt.QtCore import Qt
+
 try:
     from pyface.qt.QtCore import QRegExp
 except ImportError:

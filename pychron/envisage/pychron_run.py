@@ -222,9 +222,11 @@ def get_user_plugins():
     dvcplugin = next((p for p in plugins if p.name == "DVCPlugin"), None)
     if dvcplugin is not None:
         # ensure a githost plugin is available
-        githost = next((p for p in plugins if p.name in ('GitHubPlugin', 'LocalGitPlugin')), None)
+        githost = next(
+            (p for p in plugins if p.name in ("GitHubPlugin", "LocalGitPlugin")), None
+        )
         if githost is None:
-            plugins.append(get_plugin('LocalGitPlugin'))
+            plugins.append(get_plugin("LocalGitPlugin"))
 
         # make githost plugin run prior to dvc plugin
         plugins.remove(githost)
