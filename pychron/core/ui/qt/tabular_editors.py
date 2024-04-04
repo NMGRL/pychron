@@ -17,7 +17,13 @@
 # ============= enthought library imports =======================
 from __future__ import absolute_import
 
-from pyface.qt.QtCore import QRegExp, Qt
+
+from pyface.qt.QtCore import Qt
+try:
+    from pyface.qt.QtCore import QRegExp
+except ImportError:
+    from pyface.qt.QtCore import QRegularExpression as QRegExp
+
 from pyface.qt.QtGui import (
     QHBoxLayout,
     QPushButton,

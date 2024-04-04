@@ -84,7 +84,7 @@ class _ComboboxEditor(SimpleEditor):
         # QtCore.QObject.connect(control,
         #                        QtCore.SIGNAL('currentIndexChanged(QString)'),
         #                        self.update_object)
-        control.currentIndexChanged[str].connect(self.update_object)
+        control.currentIndexChanged[int].connect(self.update_object)
 
         if self.factory.evaluate is not None:
             control.setEditable(True)
