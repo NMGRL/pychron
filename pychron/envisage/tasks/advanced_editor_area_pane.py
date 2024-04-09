@@ -176,12 +176,16 @@ class myAdvancedEditorAreaPane(AdvancedEditorAreaPane):
         # Add shortcuts for switching to a specific tab.
         mod = "Ctrl+" if sys.platform == "darwin" else "Alt+"
         mapper = QtCore.QSignalMapper(self.control)
-        mapper.mapped.connect(self._activate_tab)
-        for i in range(1, 10):
-            sequence = QtGui.QKeySequence(mod + str(i))
-            shortcut = QtGui.QShortcut(sequence, self.control)
-            shortcut.activated.connect(mapper.map)
-            mapper.setMapping(shortcut, i - 1)
+        try:
+            mapper.mapped.connect(self._activate_tab)
+            for i in range(1, 10):
+                sequence = QtGui.QKeySequence(mod + str(i))
+                shortcut = QtGui.QShortcut(sequence, self.control)
+                shortcut.activated.connect(mapper.map)
+                mapper.setMapping(shortcut, i - 1)
+        except AttributeError as e:
+            # pyside6 does not have mapped signal
+            print(f"mapped signal not available {e}")
 
     def remove_editor(self, editor):
         """Removes an editor from the pane."""
