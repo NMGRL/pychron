@@ -592,7 +592,7 @@ class RegressionGraph(Graph, RegressionContextMenuMixin):
             return
 
         r.set_truncate(scatter.truncate)
-        r.determine_fit()
+        r.determine_fit(fit)
         r.calculate()
 
         self._set_excluded(scatter, r)
