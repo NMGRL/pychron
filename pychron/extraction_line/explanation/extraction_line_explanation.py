@@ -31,6 +31,7 @@ class ELEHandler(Handler):
             info.object.selection_ok = True
         return True
 
+
 class ExplanationAdapter(TabularAdapter):
     columns = [
         ("Name", "name"),

@@ -41,6 +41,7 @@ class CRHandler(Handler):
         info.object.test_connection()
         return True
 
+
 class CommandRepeater(ConfigLoadable):
     """ """
 

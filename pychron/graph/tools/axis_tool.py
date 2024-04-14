@@ -95,6 +95,7 @@ class AxisViewHandler(Handler):
         info.ui.control.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         return True
 
+
 class WrapAxis(HasTraits):
     title_font = Font
     tick_label_format_str = Str(enter_set=True, auto_set=False)
