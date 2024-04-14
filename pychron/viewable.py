@@ -35,6 +35,7 @@ class ViewableHandler(Handler):
         #        try:
         info.object.ui_opened(info.ui)
         return True
+
     #        except AttributeError:
     #            pass
 

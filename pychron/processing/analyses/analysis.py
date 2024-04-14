@@ -76,6 +76,7 @@ class CloseHandler(Handler):
         info.ui.control.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         return True
 
+
 def show_inspection_factory(record_id, isotopes):
     from pychron.graph.stacked_graph import StackedGraph
 
