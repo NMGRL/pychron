@@ -93,7 +93,7 @@ class OLSRegressor(BaseRegressor):
         return dot(exog, beta)
 
     def determine_fit(self, fit):
-        if streq(fit, AUTO_LINEAR_PARABOLIC):
+        if isinstance(fit, str) and streq(fit, AUTO_LINEAR_PARABOLIC):
             self.set_degree("linear", refresh=False)
             self.calculate()
             linear_r = self.rsquared_adj
