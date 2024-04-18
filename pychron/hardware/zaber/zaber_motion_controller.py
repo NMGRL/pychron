@@ -141,6 +141,7 @@ class ZaberMotionController(MotionController):
             xaxis = self.single_axis_move("x", x, block=False)
             yaxis = self.single_axis_move("y", y, block=False)
 
+            self.timer = self.timer_factory()
             xaxis.wait_until_idle()
             yaxis.wait_until_idle()
             self.update_axes()
@@ -159,6 +160,9 @@ class ZaberMotionController(MotionController):
         # axis.device.move_abs(steps)
         # axis = self._device.get_axis(axis.id)
         dev.move_absolute(value, Units.LENGTH_MILLIMETRES, wait_until_idle=block)
+
+        self.timer = self.timer_factory()
+
         if block:
             self.update_axes()
         return dev
@@ -183,8 +187,10 @@ class ZaberMotionController(MotionController):
         # else:
         #     axis = self._get_device_axis(axis)
         #     moving = axis.is_busy()
-
-        return False
+        if axis is None:
+            return self._device.all_axes.is_busy()
+        else:
+            return self.axes[axis].device.is_busy()
 
     def _axis_factory(self, path, **kw):
         a = ZaberAxis(parent=self, **kw)
