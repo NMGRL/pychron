@@ -22,6 +22,9 @@ class UC2000LaserManager(LaserManager):
     laser_controller = Instance(UC2000)
     configuration_dir_name = "uc2000"
 
+    def extract(self, power, units='percent', **kw):
+        self.set_laser_power(power, units=units)
+
     def _laser_controller_default(self):
         return UC2000(
             name="laser_controller",

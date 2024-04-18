@@ -188,7 +188,10 @@ class ZaberMotionController(MotionController):
         #     axis = self._get_device_axis(axis)
         #     moving = axis.is_busy()
         if axis is None:
-            return self._device.all_axes.is_busy()
+            if self._device is not None:
+                return self._device.all_axes.is_busy()
+            else:
+                return any((a.device.is_busy() for a in self.axes.values()))
         else:
             return self.axes[axis].device.is_busy()
 
