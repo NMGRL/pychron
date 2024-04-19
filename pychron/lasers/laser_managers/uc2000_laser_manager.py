@@ -21,6 +21,10 @@ from traits.api import Instance
 class UC2000LaserManager(LaserManager):
     laser_controller = Instance(UC2000)
     configuration_dir_name = "uc2000"
+    power_setpoint = Int(0, enter_set=True, auto_set=False)
+
+    def _power_setpoint_changed(self):
+        self.extract(self.power_setpoint)
 
     def extract(self, power, units='percent', **kw):
         self.set_laser_power(power, units=units)
