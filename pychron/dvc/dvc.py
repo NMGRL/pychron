@@ -1469,10 +1469,10 @@ class DVC(Loggable):
 
             # merge any new commits on the data_collection branch to this branch
             try:
-                repo.merge("origin/data_collection", inform=False)
+                repo.rebase("origin/data_collection")
             except BaseException:
                 self.debug(
-                    "merge with origin/data_collection failed. This is not an issue if you are only using local "
+                    "rebase with origin/data_collection failed. This is not an issue if you are only using local "
                     "repos"
                 )
 
