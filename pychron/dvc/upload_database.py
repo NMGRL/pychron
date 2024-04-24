@@ -25,7 +25,7 @@ class UploadDatabase(Loggable):
     path = File
     # path = File('/Users/jross/dumps/_localhost_pychrondvc_2024_04_24_14_08_29.sql')
     # path = File('/Users/jross/dumps/_localhost_pychrondvc_2024_04_24_14_24_04.sql')
-    database_name = Str('pychron_foo')
+    database_name = Str("pychron_foo")
 
     def _upload_fired(self):
         # get dvc connection info
@@ -36,9 +36,9 @@ class UploadDatabase(Loggable):
         password = self.dvc.data_source.password
         kind = self.dvc.data_source.kind
 
-        host = 'localhost'
-        user = 'root'
-        password = 'argon4039'
+        host = "localhost"
+        user = "root"
+        password = "argon4039"
 
         # if host != 'localhost':
         #     self.warning_dialog('Database must be localhost')
@@ -81,10 +81,10 @@ class UploadDatabase(Loggable):
         prefid = "pychron.dvc.connection"
 
         favorites = preferences.get(f"{prefid}.favorites")
-        favorites = favorites.strip()[1:-1].split(', ')
+        favorites = favorites.strip()[1:-1].split(", ")
 
         for fav in favorites:
-            args = fav.split(',')
+            args = fav.split(",")
             if args[4].strip() == self.database_name:
                 break
         else:
@@ -92,15 +92,15 @@ class UploadDatabase(Loggable):
             idx = None
             args = None
             for i, fav in enumerate(favorites):
-                args = fav.split(',')
-                if args[1] == 'mysql' and args[3] == 'localhost':
+                args = fav.split(",")
+                if args[1] == "mysql" and args[3] == "localhost":
                     idx = i
                     break
 
             if args and idx is not None:
                 args[0] = f"'{self.database_name}"
                 args[4] = self.database_name
-                favorites.append(','.join(args))
+                favorites.append(",".join(args))
             favorites = [f[1:-1] for f in favorites]
 
             preferences.set(f"{prefid}.favorites", favorites)
@@ -113,17 +113,17 @@ class UploadDatabase(Loggable):
 
     def traits_view(self):
         return View(
-            Item('database_name', label='Database Name'),
-            Item('path', label='Select a Database File'),
-            UItem('upload', enabled_when='path'),
+            Item("database_name", label="Database Name"),
+            Item("path", label="Select a Database File"),
+            UItem("upload", enabled_when="path"),
             resizable=True,
             width=500,
             buttons=[],
-            title='Database Upload'
+            title="Database Upload",
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     u = UploadDatabase()
     u.configure_traits()
 # ============= EOF =============================================
