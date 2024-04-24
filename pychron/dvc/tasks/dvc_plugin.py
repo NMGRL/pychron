@@ -34,7 +34,8 @@ from pychron.dvc.tasks.actions import (
     UseOfflineDatabase,
     ShareChangesAction,
     ClearCacheAction,
-    GenerateCurrentsAction, UploadDatabaseAction,
+    GenerateCurrentsAction,
+    UploadDatabaseAction,
 )
 from pychron.dvc.tasks.dvc_preferences import (
     DVCConnectionPreferencesPane,
@@ -169,7 +170,7 @@ class DVCPlugin(BaseTaskPlugin):
             SchemaAddition(factory=UseOfflineDatabase, path="MenuBar/tools.menu"),
             SchemaAddition(factory=ShareChangesAction, path="MenuBar/tools.menu"),
             SchemaAddition(factory=ClearCacheAction, path="MenuBar/tools.menu"),
-            SchemaAddition(factory=UploadDatabaseAction, path="MenuBar/tools.menu")
+            SchemaAddition(factory=UploadDatabaseAction, path="MenuBar/tools.menu"),
         ]
 
         pipeline_actions = [

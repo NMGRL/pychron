@@ -22,9 +22,9 @@ class UploadDatabase(Loggable):
     dvc = Instance("pychron.dvc.dvc.DVC")
 
     upload = Button("Upload")
-    path = File('/Users/jross/dumps/_localhost_pychrondvc_2024_04_24_14_08_29.sql')
+    path = File("/Users/jross/dumps/_localhost_pychrondvc_2024_04_24_14_08_29.sql")
     # path = File('/Users/jross/dumps/_localhost_pychrondvc_2024_04_24_14_24_04.sql')
-    database_name = Str('pychron_foo')
+    database_name = Str("pychron_foo")
 
     def _upload_fired(self):
         # get dvc connection info
@@ -35,14 +35,15 @@ class UploadDatabase(Loggable):
         password = self.dvc.data_source.password
         kind = self.dvc.data_source.kind
 
-        if host != 'localhost':
-            self.warning_dialog('Database must be localhost')
+        if host != "localhost":
+            self.warning_dialog("Database must be localhost")
             return
-        if kind != 'mysql':
-            self.warning_dialog('Database must be mysql')
+        if kind != "mysql":
+            self.warning_dialog("Database must be mysql")
             return
 
         import pymysql
+
         conn = pymysql.connect(
             host=host,
             port=3306,
@@ -53,7 +54,9 @@ class UploadDatabase(Loggable):
         cur = conn.cursor()
         # check if the database exists
         if self._schema_exists(conn, self.database_name):
-            if not self.confirmation_dialog(f'Database "{self.database_name}" already exists. Overwrite?'):
+            if not self.confirmation_dialog(
+                f'Database "{self.database_name}" already exists. Overwrite?'
+            ):
                 return
             # drop the database
             cur.execute(f"DROP DATABASE {self.database_name}")
@@ -62,13 +65,13 @@ class UploadDatabase(Loggable):
         cur.execute(f"CREATE DATABASE {self.database_name}")
 
         # upload the database
-        with open(self.path, 'r') as rfile:
+        with open(self.path, "r") as rfile:
             cur.execute(f"USE {self.database_name};")
-            lines = rfile.read().split(';\n')
-            self.debug('upload started')
+            lines = rfile.read().split(";\n")
+            self.debug("upload started")
             for i, line in enumerate(lines):
                 cur.execute(line)
-            self.debug('upload finished')
+            self.debug("upload finished")
 
         cur.close()
 
@@ -76,24 +79,24 @@ class UploadDatabase(Loggable):
         prefid = "pychron.dvc.connection"
 
         favorites = preferences.get(f"{prefid}.favorites")
-        favorites = favorites.strip()[1:-1].split(', ')
+        favorites = favorites.strip()[1:-1].split(", ")
 
         for fav in favorites:
-            args = fav.split(',')
+            args = fav.split(",")
             if args[0] == self.database_name:
                 break
         else:
             # find the enabled connection localhost connection
             idx = None
             for i, fav in enumerate(favorites):
-                args = fav.split(',')
-                if args[1] == 'mysql' and args[3] == 'localhost':
+                args = fav.split(",")
+                if args[1] == "mysql" and args[3] == "localhost":
                     idx = i
                     break
 
             if idx is not None:
                 args[0] = f"'{self.database_name}"
-                favorites.append(','.join(args))
+                favorites.append(",".join(args))
             favorites = [f[1:-1] for f in favorites]
 
             preferences.set(f"{prefid}.favorites", favorites)
@@ -106,17 +109,17 @@ class UploadDatabase(Loggable):
 
     def traits_view(self):
         return View(
-            Item('database_name', label='Database Name'),
-            Item('path', label='Select a Database File'),
-            UItem('upload', enabled_when='path'),
+            Item("database_name", label="Database Name"),
+            Item("path", label="Select a Database File"),
+            UItem("upload", enabled_when="path"),
             resizable=True,
             width=500,
             buttons=[],
-            title='Database Upload'
+            title="Database Upload",
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     u = UploadDatabase()
     u.configure_traits()
 # ============= EOF =============================================

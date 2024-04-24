@@ -298,4 +298,6 @@ class UploadDatabaseAction(Action):
 
         ud = UploadDatabase(dvc=dvc, application=app)
         ud.edit_traits()
+
+
 # ============= EOF =============================================
