@@ -25,7 +25,7 @@ class UploadDatabase(Loggable):
     path = File
     # path = File('/Users/jross/dumps/_localhost_pychrondvc_2024_04_24_14_08_29.sql')
     # path = File('/Users/jross/dumps/_localhost_pychrondvc_2024_04_24_14_24_04.sql')
-    database_name = Str("pychron_foo")
+    database_name = Str("pychrondvc")
 
     def _upload_fired(self):
         # get dvc connection info
@@ -104,6 +104,8 @@ class UploadDatabase(Loggable):
 
             preferences.set(f"{prefid}.favorites", favorites)
             preferences.save()
+
+        self.information_dialog('Database upload complete!')
 
     def _schema_exists(self, conn, schema):
         cur = conn.cursor()
