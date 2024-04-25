@@ -56,8 +56,9 @@ class UploadDatabase(Loggable):
         # check if the database exists
         if self._schema_exists(conn, self.database_name):
             if not self.confirmation_dialog(
-                f'Database "{self.database_name}" already exists. Overwrite?'
+                f'Database "{self.database_name}" already exists. Do you want to overwrite it and continue?'
             ):
+                self.information_dialog('Database upload canceled')
                 return
             # drop the database
             cur.execute(f"DROP DATABASE {self.database_name}")
