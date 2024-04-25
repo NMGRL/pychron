@@ -16,10 +16,7 @@
 
 # ============= enthought library imports =======================
 
-from __future__ import absolute_import
 
-from numpy.ma import arange
-from pyface.timer.do_later import do_later, do_after
 from traits.api import HasTraits, Instance, Event, Str, Bool, List, Any, on_trait_change
 from traitsui.api import (
     View,
@@ -34,9 +31,7 @@ from traitsui.api import (
 )
 
 from pychron.core.helpers.binpack import unpack
-from pychron.core.regression.ols_regressor import PolynomialRegressor
 from pychron.core.ui.tabular_editor import myTabularEditor
-from pychron.envisage.view_util import open_view
 from pychron.graph.stacked_graph import StackedGraph
 from pychron.processing.analyses.view.adapters import (
     IsotopeTabularAdapter,
