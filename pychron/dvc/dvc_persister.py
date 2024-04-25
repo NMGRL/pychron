@@ -337,18 +337,19 @@ class DVCPersister(BasePersister):
         if self.stage_files:
             if commit:
                 if self.use_data_collection_branch:
-                    ar.create_branch("data_collection", inform=False, push=True)
+                    branch = f"data_collection/{self.per_spec.run_spec.mass_spectrometer}"
+                    ar.create_branch(branch, inform=False, push=True)
                     try:
                         ar.checkout_branch(
-                            "data_collection", inform=False, load_history=False
+                            branch, inform=False, load_history=False
                         )
                     except GitCommandError:
                         ar.reset()
                         ar.checkout_branch(
-                            "data_collection", inform=False, load_history=False
+                            branch, inform=False, load_history=False
                         )
 
-                    ar.smart_pull(branch="data_collection", accept_our=True)
+                    ar.smart_pull(branch=branch, accept_our=True)
 
                 paths = [
                     spec_path,
