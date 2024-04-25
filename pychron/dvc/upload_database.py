@@ -105,7 +105,7 @@ class UploadDatabase(Loggable):
             preferences.set(f"{prefid}.favorites", favorites)
             preferences.save()
 
-        self.information_dialog('Database upload complete!')
+        self.information_dialog("Database upload complete!")
 
     def _schema_exists(self, conn, schema):
         cur = conn.cursor()
