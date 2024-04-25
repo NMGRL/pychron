@@ -1469,9 +1469,9 @@ class DVC(Loggable):
 
             # merge any new commits on the data_collection branch to this branch
             try:
-                repo.active_repo.git.checkout('origin/data_collection', '.')
-                repo.active_repo.git.add('.')
-                repo.active_repo.git.commit('-m', 'Merge origin/data_collection branch')
+                repo.active_repo.git.checkout("origin/data_collection", ".")
+                repo.active_repo.git.add(".")
+                repo.active_repo.git.commit("-m", "Merge origin/data_collection branch")
                 # repo.merge("origin/data_collection", inform=False)
             except BaseException:
                 self.debug_exception()
