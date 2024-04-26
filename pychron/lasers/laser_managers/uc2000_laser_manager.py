@@ -25,7 +25,7 @@ class UC2000LaserManager(LaserManager):
 
     def _enable_hook(self, **kw):
         self.set_laser_power(self.power_setpoint)
-        super()._enable_hook(**kw)
+        return super()._enable_hook(**kw)
 
     def _power_setpoint_changed(self):
         self.extract(self.power_setpoint)
