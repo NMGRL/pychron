@@ -15,7 +15,7 @@
 # ===============================================================================
 from pychron.hardware.uc2000 import UC2000
 from pychron.lasers.laser_managers.laser_manager import LaserManager
-from traits.api import Instance
+from traits.api import Instance, Int
 
 
 class UC2000LaserManager(LaserManager):
