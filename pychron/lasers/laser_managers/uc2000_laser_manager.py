@@ -23,6 +23,10 @@ class UC2000LaserManager(LaserManager):
     configuration_dir_name = "uc2000"
     power_setpoint = Float(0, enter_set=True, auto_set=False)
 
+    def _enable_hook(self, **kw):
+        self.set_laser_power(self.power_setpoint)
+        super()._enable_hook(**kw)
+
     def _power_setpoint_changed(self):
         self.extract(self.power_setpoint)
 
