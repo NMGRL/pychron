@@ -337,9 +337,11 @@ class DVCPersister(BasePersister):
         if self.stage_files:
             if commit:
                 if self.use_data_collection_branch:
-                    branch = (
-                        f"data_collection/{self.per_spec.run_spec.mass_spectrometer}"
-                    )
+                    # branch = (
+                    #     f"data_collection/{self.per_spec.run_spec.mass_spectrometer}"
+                    # )
+
+                    branch = "data_collection"
                     ar.create_branch(branch, inform=False, push=True)
                     try:
                         ar.checkout_branch(branch, inform=False, load_history=False)
