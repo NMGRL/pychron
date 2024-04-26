@@ -1509,9 +1509,10 @@ class DVC(Loggable):
     def _merge_data_collection(self, repo):
         # merge any new commits on the data_collection branch to this branch
         # get all branches like data_collection
-        branches = repo.active_repo.git.branch("-a").split("\n")
-        branches = [b.strip() for b in branches]
-        branches = [b for b in branches if "data_collection" in b]
+        # branches = repo.active_repo.git.branch('-a').split('\n')
+        # branches = [b.strip() for b in branches]
+        # branches = [b for b in branches if 'data_collection' in b]
+        branches = ['origin/data_collection']
         for b in branches:
             if b.startswith("remotes"):
                 b = b.replace("remotes/", "")
@@ -1521,8 +1522,8 @@ class DVC(Loggable):
                 # repo.active_repo.git.add('.')
                 # repo.active_repo.git.commit('-m', 'Merge origin/data_collection branch')
                 # repo.merge("origin/data_collection", inform=False)
-                if repo.name == "Henry<GitRepo>" and b == "origin/data_collection":
-                    continue
+                # if repo.name == 'Henry<GitRepo>' and b == 'origin/data_collection':
+                #     continue
                 repo.merge(b, inform=False)
 
             except BaseException:

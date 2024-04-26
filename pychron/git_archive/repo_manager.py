@@ -1051,7 +1051,7 @@ class GitRepoManager(Loggable):
 
         with StashCTX(repo):
             try:
-                repo.git.merge(from_.commit)
+                repo.git.merge(from_)
             except GitCommandError:
                 self.debug_exception()
                 if inform:
