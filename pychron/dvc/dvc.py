@@ -169,14 +169,14 @@ class DVC(Loggable):
         self.meta_repo.share_data_reduction_loads()
 
     def fix_identifier(
-        self,
-        src_uuid,
-        src_id,
-        dest_id,
-        repo_identifier,
-        dest_identifier,
-        dest_aliquot,
-        dest_step,
+            self,
+            src_uuid,
+            src_id,
+            dest_id,
+            repo_identifier,
+            dest_identifier,
+            dest_aliquot,
+            dest_step,
     ):
         self.info("converting {} to {}".format(src_id, dest_id))
         err = self.db.map_runid(src_id, dest_id)
@@ -226,13 +226,13 @@ class DVC(Loggable):
             os.remove(sp)
 
             for modifier in (
-                "baselines",
-                "blanks",
-                "extraction",
-                "intercepts",
-                "icfactors",
-                "peakcenter",
-                ".data",
+                    "baselines",
+                    "blanks",
+                    "extraction",
+                    "intercepts",
+                    "icfactors",
+                    "peakcenter",
+                    ".data",
             ):
                 sp = analysis_path(
                     src_id, repo_identifier, modifier=modifier, root=root
@@ -262,8 +262,8 @@ class DVC(Loggable):
             return
 
         if not self.confirmation_dialog(
-            "Are you sure you want to generate current values for the entire database? "
-            "This could take a while!"
+                "Are you sure you want to generate current values for the entire database? "
+                "This could take a while!"
         ):
             return
 
@@ -276,7 +276,7 @@ class DVC(Loggable):
 
         def chunks(l, n):
             for i in range(0, len(l), n):
-                yield l[i : i + n]
+                yield l[i: i + n]
 
         def func(ai, prog, i, n):
             if prog:
@@ -324,11 +324,11 @@ class DVC(Loggable):
         with db.session_ctx():
             for repo in db.get_repositories():
                 if repo.name in (
-                    "JIRSandbox",
-                    "REEFenite",
-                    "Henry01184",
-                    "FractionatedRes",
-                    "PowerZPattern",
+                        "JIRSandbox",
+                        "REEFenite",
+                        "Henry01184",
+                        "FractionatedRes",
+                        "PowerZPattern",
                 ):
                     continue
                 self.debug("Updating currents for {}".format(repo.name))
@@ -609,12 +609,12 @@ class DVC(Loggable):
             material = ip.sample.material.name
             changed = False
             for attr, v in (
-                ("sample", sample),
-                ("project", project),
-                ("material", material),
-                ("irradiation", irrad),
-                ("irradiation_level", level),
-                ("irradiation_position", pos),
+                    ("sample", sample),
+                    ("project", project),
+                    ("material", material),
+                    ("irradiation", irrad),
+                    ("irradiation_level", level),
+                    ("irradiation_position", pos),
             ):
                 ov = obj.get(attr)
                 if ov != v:
@@ -724,10 +724,10 @@ class DVC(Loggable):
         for analysis in analyses:
             repo_id = analysis.repository_identifier
             for mod, g in (
-                ("intercepts", "<ISOEVO> default collection fits"),
-                ("icfactors", "<ICFactor> default"),
-                ("baselines", "<ISOEVO> default collection fits"),
-                ("blanks", "<BLANKS> preceding"),
+                    ("intercepts", "<ISOEVO> default collection fits"),
+                    ("icfactors", "<ICFactor> default"),
+                    ("baselines", "<ISOEVO> default collection fits"),
+                    ("blanks", "<BLANKS> preceding"),
             ):
                 sp = analysis_path(analysis, repo_id, modifier=mod)
                 cs = repo.get_commits_from_log(greps=(g,), path=sp)
@@ -860,14 +860,14 @@ class DVC(Loggable):
             self._update_current_age(ai)
 
     def save_icfactors(
-        self,
-        ai,
-        dets,
-        fits,
-        refs,
-        use_source_correction,
-        standard_ratios,
-        reference_data,
+            self,
+            ai,
+            dets,
+            fits,
+            refs,
+            use_source_correction,
+            standard_ratios,
+            reference_data,
     ):
         if use_source_correction:
             ai.dump_source_correction_icfactors(refs)
@@ -1063,7 +1063,7 @@ class DVC(Loggable):
             return records
 
     def find_references(
-        self, times, atypes, hours, exclude=None, make_records=True, **kw
+            self, times, atypes, hours, exclude=None, make_records=True, **kw
     ):
         records = self.db.find_references(times, atypes, hours, exclude=exclude, **kw)
 
@@ -1119,17 +1119,17 @@ class DVC(Loggable):
             return a[0]
 
     def make_analyses(
-        self,
-        records,
-        calculate_f_only=False,
-        reload=False,
-        quick=False,
-        use_progress=True,
-        pull_frequency=None,
-        use_cached=True,
-        sync_repo=True,
-        use_flux_histories=True,
-        warn=True,
+            self,
+            records,
+            calculate_f_only=False,
+            reload=False,
+            quick=False,
+            use_progress=True,
+            pull_frequency=None,
+            use_cached=True,
+            sync_repo=True,
+            use_flux_histories=True,
+            warn=True,
     ):
         if not records:
             return []
@@ -1257,9 +1257,9 @@ class DVC(Loggable):
                             flux_histories[key] = v
 
                 if (
-                    use_cocktail_irradiation
-                    and r.analysis_type == "cocktail"
-                    and "cocktail" not in chronos
+                        use_cocktail_irradiation
+                        and r.analysis_type == "cocktail"
+                        and "cocktail" not in chronos
                 ):
                     cirr = meta_repo.get_cocktail_irradiation()
                     chronos["cocktail"] = cirr.get("chronology")
@@ -1312,8 +1312,8 @@ class DVC(Loggable):
         nn = len(records)
         if len(records) != n:
             if warn and not self.confirmation_dialog(
-                "Failed making {} of {} analyses. "
-                "Are you sure you want to continue?".format(nn - n, nn)
+                    "Failed making {} of {} analyses. "
+                    "Are you sure you want to continue?".format(nn - n, nn)
             ):
                 return
 
@@ -1467,27 +1467,7 @@ class DVC(Loggable):
             repo = self._get_repository(name)
             repo.pull(use_progress=use_progress, use_auto_pull=self.use_auto_pull)
 
-            # merge any new commits on the data_collection branch to this branch
-            # get all branches like data_collection
-            branches = repo.active_repo.git.branch("-a").split("\n")
-            branches = [b.strip() for b in branches]
-            branches = [b for b in branches if "data_collection" in b]
-            for b in branches:
-                try:
-                    # repo.active_repo.git.checkout('origin/data_collection', '.')
-                    # repo.active_repo.git.add('.')
-                    # repo.active_repo.git.commit('-m', 'Merge origin/data_collection branch')
-                    # repo.merge("origin/data_collection", inform=False)
-                    if repo.name == "Henry" and b == "origin/data_collection":
-                        continue
-                    repo.merge(b, inform=False)
-
-                except BaseException:
-                    self.debug_exception()
-                    self.debug(
-                        f"merge with {b} failed. This is not an issue if you are only using local "
-                        "repos"
-                    )
+            self._merge_data_collection(repo)
 
             return True
         else:
@@ -1506,7 +1486,9 @@ class DVC(Loggable):
                     return True
                 elif service.clone_from(name, root, self.organization):
                     repo = self._get_repository(name)
-                    repo.merge("origin/data_collection", inform=False)
+                    self._merge_data_collection(repo)
+                    # repo.merge("origin/data_collection", inform=False)
+
                     return True
                 else:
                     self.warning_dialog(
@@ -1523,6 +1505,32 @@ class DVC(Loggable):
                 # if name in names:
                 #     service.clone_from(name, root, self.organization)
                 #     return True
+
+    def _merge_data_collection(self, repo):
+        # merge any new commits on the data_collection branch to this branch
+        # get all branches like data_collection
+        branches = repo.active_repo.git.branch('-a').split('\n')
+        branches = [b.strip() for b in branches]
+        branches = [b for b in branches if 'data_collection' in b]
+        for b in branches:
+            if b.startswith('remotes'):
+                b = b.replace('remotes/', '')
+
+            try:
+                # repo.active_repo.git.checkout('origin/data_collection', '.')
+                # repo.active_repo.git.add('.')
+                # repo.active_repo.git.commit('-m', 'Merge origin/data_collection branch')
+                # repo.merge("origin/data_collection", inform=False)
+                if repo.name == 'Henry<GitRepo>' and b == 'origin/data_collection':
+                    continue
+                repo.merge(b, inform=False)
+
+            except BaseException:
+                self.debug_exception()
+                self.debug(
+                    f"merge with {b} failed. This is not an issue if you are only using local "
+                    "repos"
+                )
 
     def rollback_repository(self, expid):
         repo = self._get_repository(expid)
@@ -1570,7 +1578,7 @@ class DVC(Loggable):
 
     def push_repositories(self, changes):
         if self.use_auto_push or self.confirmation_dialog(
-            "Would you like to push (share) your changes?"
+                "Would you like to push (share) your changes?"
         ):
             for gi in self.application.get_services(IGitHost):
                 push_repositories(changes, gi, quiet=False)
@@ -1838,12 +1846,12 @@ class DVC(Loggable):
         repo.create_branch(branch, inform=False)
 
     def add_repository(
-        self,
-        identifier,
-        principal_investigator,
-        inform=True,
-        license_template=None,
-        private=True,
+            self,
+            identifier,
+            principal_investigator,
+            inform=True,
+            license_template=None,
+            private=True,
     ):
         self.debug(
             "trying to add repository identifier={}, pi={}".format(
@@ -1886,10 +1894,10 @@ class DVC(Loggable):
                         )
 
                         if gi.create_repo(
-                            identifier,
-                            organization=self.organization,
-                            license_template=license_template,
-                            private=private,
+                                identifier,
+                                organization=self.organization,
+                                license_template=license_template,
+                                private=private,
                         ):
                             ret = True
                             if isinstance(gi, LocalGitHostService):
@@ -2024,7 +2032,7 @@ class DVC(Loggable):
 
     # private
     def _update_current_blanks(
-        self, ai, keys=None, dban=None, force=False, update_age=True, commit=True
+            self, ai, keys=None, dban=None, force=False, update_age=True, commit=True
     ):
         if self.update_currents_enabled:
             db = self.db
@@ -2077,7 +2085,7 @@ class DVC(Loggable):
                 )
 
     def _update_current(
-        self, ai, keys=None, dban=None, force=False, update_age=True, commit=True
+            self, ai, keys=None, dban=None, force=False, update_age=True, commit=True
     ):
         if self.update_currents_enabled:
             db = self.db
@@ -2233,24 +2241,24 @@ class DVC(Loggable):
         self.sync_repo(expid)
 
     def _make_record(
-        self,
-        record,
-        prog,
-        i,
-        n,
-        productions=None,
-        chronos=None,
-        branches=None,
-        fluxes=None,
-        sens=None,
-        frozen_fluxes=None,
-        frozen_productions=None,
-        flux_histories=None,
-        sample_prep=None,
-        calculate_f_only=False,
-        reload=False,
-        quick=False,
-        warn=True,
+            self,
+            record,
+            prog,
+            i,
+            n,
+            productions=None,
+            chronos=None,
+            branches=None,
+            fluxes=None,
+            sens=None,
+            frozen_fluxes=None,
+            frozen_productions=None,
+            flux_histories=None,
+            sample_prep=None,
+            calculate_f_only=False,
+            reload=False,
+            quick=False,
+            warn=True,
     ):
         meta_repo = self.meta_repo
         if prog:
@@ -2558,9 +2566,9 @@ class DVC(Loggable):
         self.debug("writing defaults")
         self.db.add_save_user()
         for tag, func in (
-            ("irradiation holders", self._add_default_irradiation_holders),
-            ("productions", self._add_default_irradiation_productions),
-            ("load holders", self._add_default_load_holders),
+                ("irradiation holders", self._add_default_irradiation_holders),
+                ("productions", self._add_default_irradiation_productions),
+                ("load holders", self._add_default_load_holders),
         ):
             d = os.path.join(self.meta_repo.path, tag.replace(" ", "_"))
             if not os.path.isdir(d):
@@ -2569,7 +2577,7 @@ class DVC(Loggable):
             if self.auto_add:
                 func()
             elif self.confirmation_dialog(
-                "You have no {}. Would you like to add some defaults?".format(tag)
+                    "You have no {}. Would you like to add some defaults?".format(tag)
             ):
                 func()
 
