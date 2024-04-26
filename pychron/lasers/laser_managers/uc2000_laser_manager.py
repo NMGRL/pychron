@@ -15,13 +15,13 @@
 # ===============================================================================
 from pychron.hardware.uc2000 import UC2000
 from pychron.lasers.laser_managers.laser_manager import LaserManager
-from traits.api import Instance, Int
+from traits.api import Instance, Int, Float
 
 
 class UC2000LaserManager(LaserManager):
     laser_controller = Instance(UC2000)
     configuration_dir_name = "uc2000"
-    power_setpoint = Int(0, enter_set=True, auto_set=False)
+    power_setpoint = Float(0, enter_set=True, auto_set=False)
 
     def _power_setpoint_changed(self):
         self.extract(self.power_setpoint)
