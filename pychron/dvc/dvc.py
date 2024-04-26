@@ -1512,7 +1512,7 @@ class DVC(Loggable):
         # branches = repo.active_repo.git.branch('-a').split('\n')
         # branches = [b.strip() for b in branches]
         # branches = [b for b in branches if 'data_collection' in b]
-        branches = ['origin/data_collection']
+        branches = ["origin/data_collection"]
         for b in branches:
             if b.startswith("remotes"):
                 b = b.replace("remotes/", "")
