@@ -23,6 +23,21 @@ class UC2000LaserManager(LaserManager):
     configuration_dir_name = "uc2000"
     power_setpoint = Float(0, enter_set=True, auto_set=False)
 
+    def _move_to_position(self, position, *args, **kw):
+        if self.stage_manager is not None:
+            if isinstance(position, tuple):
+                if len(position) > 1:
+                    x, y = position[:2]
+                    self.stage_manager.linear_move(x, y, **kw)
+                    if len(position) == 3:
+                        self.stage_manager.set_z(position[2])
+            else:
+                self.stage_manager.move_to_hole(position, correct_position=False)
+                if kw.get("block"):
+                    self.stage_manager.block()
+
+            return True
+
     def _enable_hook(self, **kw):
         if not self.power_setpoint:
             self.power_setpoint = 0.5
