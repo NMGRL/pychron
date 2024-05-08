@@ -38,6 +38,7 @@ class BaseFurnaceManager(StreamGraphManager):
     temperature_readback = Float
     output_percent_readback = Float
 
+    use_full_power = Bool(False)
     response_recorder = Instance(ResponseRecorder)
 
     use_network = False

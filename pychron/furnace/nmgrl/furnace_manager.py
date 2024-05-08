@@ -77,7 +77,6 @@ class NMGRLFurnaceManager(SwitchableFurnaceManager):
     # settings_name = "furnace_settings"
     status_txt = Str
 
-    use_full_power = Bool(False)
     dump_sample_enabled = Property(
         depends_on="dump_funnel_safety_override, funnel_up_enabled"
     )
