@@ -27,10 +27,10 @@ class Eurotherm800Series(CoreDevice):
     uid = Int(1)
     protocol = Str('bisynch')
 
-    def enquiry(self, mnenonic, verbose=True):
+    def enquiry(self, mnenonic, verbose=False):
         address = self.unit_address
         transmission = f'{EOT}{address}{mnenonic}{ENQ}'
-        resp = self.ask(transmission, verbose=True)
+        resp = self.ask(transmission, verbose=verbose)
         if resp:
             stx = resp[0]
             rmnenonic = resp[1:3]

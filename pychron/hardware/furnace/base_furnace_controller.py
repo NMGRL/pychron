@@ -30,6 +30,10 @@ class BaseFurnaceController(HasTraits):
     setpoint_min = Int(0)
     setpoint_max = Int(1800)
 
+    def test_connection(self):
+        pv = self.get_process_value()
+        return pv is not None
+
     def get_setpoint(self, *args, **kw):
         return self.process_setpoint
 
