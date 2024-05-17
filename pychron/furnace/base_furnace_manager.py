@@ -81,6 +81,12 @@ class BaseFurnaceManager(StreamGraphManager):
     def _handle_state(self, new):
         pass
 
+    def extract(self, v, **kw):
+        self.debug("extract")
+        # self.response_recorder.start()
+        self.debug("set setpoint to {}".format(v))
+        self.setpoint = v
+
     def test_furnace_api(self):
         self.info("testing furnace api")
         ret, err = False, ""

@@ -598,9 +598,6 @@ class NMGRLFurnaceManager(SwitchableFurnaceManager):
         return self.funnel_up_enabled or self.dump_funnel_safety_override
 
     # handlers
-    def _setpoint_changed(self, new):
-        self.set_setpoint(new)
-
     def _stage_manager_default(self):
         sm = NMGRLFurnaceStageManager(stage_manager_id="nmgrl.furnace.stage_map")
         return sm
