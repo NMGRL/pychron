@@ -86,6 +86,7 @@ class BaseFurnaceManager(StreamGraphManager):
         ret, err = False, ""
         if self.controller:
             ret, err = self.controller.test_connection()
+        self.debug(f'testing result {ret} {err}')
         return ret, err
 
     def test_connection(self):

@@ -99,7 +99,7 @@ class Eurotherm818(Eurotherm800Series, BaseFurnaceController):
         return self.enquiry('SL', **kw)
 
     def test_connection(self):
-        return bool(self.read_setpoint(verbose=True)), None
+        return self.read_setpoint(verbose=True) is not None, None
 
     def set_process_setpoint_hook(self, v, **kw):
         self.change('SL', v, **kw)
