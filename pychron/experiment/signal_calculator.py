@@ -19,7 +19,16 @@ from __future__ import absolute_import
 import math
 
 import numpy as np
-from traits.api import HasTraits, Str, Float, on_trait_change, Instance, Enum, String, List
+from traits.api import (
+    HasTraits,
+    Str,
+    Float,
+    on_trait_change,
+    Instance,
+    Enum,
+    String,
+    List,
+)
 from traitsui.api import View, Item, HGroup, VGroup
 
 from pychron.core.ui.enum_editor import myEnumEditor
