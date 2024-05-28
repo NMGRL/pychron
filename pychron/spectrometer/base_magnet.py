@@ -361,7 +361,7 @@ class BaseMagnet(SpectrometerDevice, FieldMixin):
                             mode="slider",
                             low_name="massmin",
                             high_name="massmax",
-                            format="%0.3f",
+                            format_str="%0.3f",
                         ),
                     ),
                     HGroup(
