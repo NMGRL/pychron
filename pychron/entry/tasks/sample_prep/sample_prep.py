@@ -242,7 +242,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
             self.camera.activate()
         except Exception as e:
             self.debug_exception()
-            self.warning_dialog(f'Failed to activate camera.  {e}')
+            self.warning_dialog(f"Failed to activate camera.  {e}")
 
         self._load_choices()
 
@@ -351,7 +351,7 @@ class SamplePrep(DVCAble, PersistenceMixin):
                 # se=s.se or '',
                 timestamp=ts,
                 nimages=len(s.images),
-                **params
+                **params,
             )
             return pstep
 
