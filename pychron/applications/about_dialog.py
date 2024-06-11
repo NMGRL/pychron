@@ -21,7 +21,7 @@ from pyface.qt import QtGui, QtCore
 from pyface.qt.QtGui import QPlainTextEdit
 
 # ============= enthought library imports =======================
-from pyface.ui.qt4.about_dialog import AboutDialog
+from pyface.about_dialog import AboutDialog
 from traits.api import List, Str
 
 # ============= local library imports  ==========================
