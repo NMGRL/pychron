@@ -78,7 +78,7 @@ class EquilibrationInspector(HasTraits):
             #                            HGroup(Item('Ar40'),
             #                                Item('Ar39'),
             #                                ),
-            HGroup(Item("max_time"), Item("vary_time_zero"))
+            HGroup(Item("max_time"), Item("vary_time_zero")),
             #                            Item('pump_rate')
         )
 

@@ -57,6 +57,7 @@ class FigureEditor(GraphEditor):
         ags = []
         for p in self.figure_model.panels:
             for pp in p.figures:
+                print("pp", pp, pp.analysis_group)
                 ag = pp.analysis_group
                 group = pp.options.get_group(pp.group_id)
                 color = group.color
@@ -95,6 +96,16 @@ class FigureEditor(GraphEditor):
         if model == omodel:
             self.figure_container.model_changed()
 
+        self.figure_container.component.padding = (
+            self.plotter_options.get_page_margins()
+        )
+        size = self.plotter_options.get_page_size()
+        # print("asdfasdfasd", size)
+        if size is not None:
+            width, height = size
+            self.figure_container.component.bounds = [width, height]
+            self.figure_container.component.resizable = ""
+
         self._get_component_hook(model)
         return self.figure_container.component
 
@@ -104,6 +115,7 @@ class FigureEditor(GraphEditor):
             model = self.figure_model_klass()
             self.figure_model = model
 
+        # print("selfasd", self, self.figure_model)
         model.trait_set(
             plot_options=self.plotter_options,
             # analysis_groups=self.analysis_groups,
@@ -115,10 +127,19 @@ class FigureEditor(GraphEditor):
         return model
 
     def get_component_view(self):
+        if self.plotter_options.layout.fixed_width:
+            width = -(
+                self.plotter_options.layout.fixed_width
+                + self.plotter_options.margin_left
+                + self.plotter_options.margin_right
+            )
+        else:
+            width = -1.0
+
         return UItem(
             "component",
             style="custom",
-            width=-self.plotter_options.layout.fixed_width,
+            width=width,
             editor=ComponentEditor(),
         )
 

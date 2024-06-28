@@ -14,7 +14,7 @@
 # limitations under the License.
 # ===============================================================================
 from pychron.dvc.dvc_orm import AnalysisTbl
-from pychron.dvc.fix import get_dvc
+from pychron.dvc.dvc_helper import get_dvc
 
 DRY = False
 

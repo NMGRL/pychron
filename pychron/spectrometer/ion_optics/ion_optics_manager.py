@@ -240,6 +240,10 @@ class IonOpticsManager(Manager):
         dataspace = "dac"
         use_accel_voltage = False
         use_extend = False
+        use_pseudo_peak = False
+        peak_shift_threshold = 0
+        n_peaks = 1
+        select_peak = 1
         self._setup_config()
         if config_name:
             pcconfig.load()
@@ -285,10 +289,19 @@ class IonOpticsManager(Manager):
             dac_offset = pcc.dac_offset
             calculate_all_peaks = pcc.calculate_all_peaks
             update_others = pcc.update_others
+            use_pseudo_peak = pcc.use_pseudo_peak
+            peak_shift_threshold = pcc.peak_shift_threshold
+
+            # peak_flat_threshold = pcc.peak_flat_threshold
             if not pcc.use_mftable_dac and center_dac is None and use_configuration_dac:
                 center_dac = pcc.dac
 
-        spec.set_integration_time(integration_time)
+        if integration_time:
+            self.debug(f"Using integration time {integration_time}")
+            spec.set_integration_time(integration_time)
+        else:
+            integration_time = spec.integration_time
+
         period = int(integration_time * 1000 * 0.9)
 
         if not isinstance(detector, (tuple, list)):
@@ -345,6 +358,9 @@ class IonOpticsManager(Manager):
             dac_offset=dac_offset,
             calculate_all_peaks=calculate_all_peaks,
             update_others=update_others,
+            use_pseudo_peak=use_pseudo_peak,
+            peak_shift_threshold=peak_shift_threshold,
+            # peak_flat_threshold=peak_flat_threshold,
         )
 
         graph = pc.graph

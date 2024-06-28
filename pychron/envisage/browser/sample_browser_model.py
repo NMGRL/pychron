@@ -17,6 +17,8 @@
 from datetime import datetime, timedelta
 from operator import attrgetter
 
+import sqlalchemy.orm.exc
+
 # ============= enthought library imports =======================
 from apptools.preferences.preference_binding import bind_preference
 from traits.api import Str
@@ -48,15 +50,22 @@ class SampleBrowserModel(AnalysisBrowserModel):
     def reattach(self):
         self.debug("reattach")
 
-        ans = sorted(self.table.oanalyses, key=attrgetter("uuid"))
-        uuids = [ai.uuid for ai in ans]
-        nans = self.db.get_analyses_uuid(uuids)
+        try:
+            ans = sorted(self.table.oanalyses, key=attrgetter("uuid"))
+            uuids = [ai.uuid for ai in ans]
+            nans = self.db.get_analyses_uuid(uuids)
 
-        for ni, ai in zip(nans, ans):
-            ai.dbrecord = ni
+            for ni, ai in zip(nans, ans):
+                ai.dbrecord = ni
 
-        if self.selected_projects:
-            self._load_associated_groups(self.selected_projects)
+            if self.selected_projects:
+                self._load_associated_groups(self.selected_projects)
+        except sqlalchemy.orm.exc.DetachedInstanceError:
+            self.warning_dialog(
+                "There is an issue with pychron's connection to the database. "
+                "Please restart pychron and try again"
+            )
+            self.application.stop()
 
     def dump_browser(self):
         super(SampleBrowserModel, self).dump_browser()
@@ -267,9 +276,9 @@ class SampleBrowserModel(AnalysisBrowserModel):
             now = datetime.now()
             lp = now - timedelta(hours=v.nhours)
             ls = self.db.get_labnumbers(
-                mass_spectrometers=v.mass_spectrometers
-                if v.use_mass_spectrometers
-                else None,
+                mass_spectrometers=(
+                    v.mass_spectrometers if v.use_mass_spectrometers else None
+                ),
                 analysis_types=v.analysis_types,
                 high_post=now,
                 low_post=lp,

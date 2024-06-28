@@ -16,7 +16,7 @@
 import os
 
 from pychron.dvc import analysis_path
-from pychron.dvc.fix import get_dvc
+from pychron.dvc.dvc_helper import get_dvc
 from pychron.paths import paths
 
 

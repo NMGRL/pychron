@@ -35,6 +35,7 @@ class NGXController(CoreDevice):
     lock = None
     canceled = False
     triggered = False
+    protect_detector = False
 
     def select_read(self, *args, **kw):
         return self.communicator.select_read(*args, **kw)
@@ -58,6 +59,14 @@ class NGXController(CoreDevice):
     #        resp = self.event_buffer.get()
     #    return resp
 
+    def stop_acquisition(self):
+        self.triggered = False
+        self.debug("stop acquisition")
+        self.ask("StopAcq")
+        self.canceled = True
+        time.sleep(0.25)
+        # self.debug(self.communicator.readline())
+
     def set(self, *args, **kw):
         return HasTraits.set(self, *args, **kw)
 
@@ -66,11 +75,11 @@ class NGXController(CoreDevice):
 
         self.communicator.strip = False
         # trying a new locking mechanism see ngx.trigger for more details
-        self.lock = Lock()
+        self.lock = RLock()
         #   self.event_buffer = Queue()
 
         if ret:
-            resp = self.read(datasize=2)
+            resp = self.communicator.readline()
             self.debug("*********** initial response from NGX: {}".format(resp))
             bind_preference(self, "username", "pychron.spectrometer.ngx.username")
             bind_preference(self, "password", "pychron.spectrometer.ngx.password")

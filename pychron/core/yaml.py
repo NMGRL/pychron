@@ -43,6 +43,9 @@ def yload(stream, default=None, reraise=False):
             if reraise:
                 raise e
 
+    if yd == stream:
+        yd = default
+
     return yd
 
 

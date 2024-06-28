@@ -77,7 +77,7 @@ class CoreLaserPlugin(BaseTaskPlugin):
 
 
 class BaseLaserPlugin(BaseTaskPlugin):
-    managers = List(contributes_to="pychron.hardware.managers")
+    # managers = List(contributes_to="pychron.hardware.managers")
     klass = None
     mode = None
 

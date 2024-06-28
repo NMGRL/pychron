@@ -100,11 +100,11 @@ class MikronGA140Pyrometer(Pyrometer):
         fmt = (
             "{}{}"
             if value is None
-            else "{}{}{:04d}"
-            if per_mil
-            else "{}{}{:d}"
-            if single_digit
-            else "{}{}{:02d}"
+            else (
+                "{}{}{:04d}"
+                if per_mil
+                else "{}{}{:d}" if single_digit else "{}{}{:02d}"
+            )
         )
         args = (self.device_address, cmd)
 

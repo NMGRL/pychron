@@ -129,7 +129,6 @@ class Handler(object):
 
             sum += len(s)
             data += s
-
             if terminator is not None:
                 if data.endswith(terminator):
                     break
@@ -169,7 +168,7 @@ class Handler(object):
         inputs = [self.sock]
         outputs = []
         readable, writable, exceptional = select.select(
-            inputs, outputs, inputs, timeout=timeout
+            inputs, outputs, inputs, timeout
         )
 
         buff = bytearray(2**12)
@@ -179,6 +178,7 @@ class Handler(object):
                 st = time.time()
                 while 1:
                     rsock.recv_into(buff)
+                    print(buff)
                     if terminator in buff:
                         data = buff.split(terminator)[0]
                         return data.decode("utf-8")
@@ -202,7 +202,7 @@ class TCPHandler(Handler):
         return self._recvall(self.sock.recv, datasize=datasize, frame=message_frame)
 
     def readline(self, terminator):
-        return self._recvall(self.sock.recv, terminator=terminator)
+        return self._recvall(self.sock.recv, terminator=terminator, datasize=1)
 
     def send_packet(self, p):
         self.sock.send(p.encode("utf-8"))
@@ -521,6 +521,9 @@ class EthernetCommunicator(Communicator):
             handler = self.get_read_handler(handler, timeout=timeout)
 
         if handler:
+            if isinstance(terminator, str):
+                terminator = terminator.encode("utf8")
+
             try:
                 return handler.readline(terminator)
             except socket.timeout as e:

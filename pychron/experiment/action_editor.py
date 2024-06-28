@@ -142,6 +142,7 @@ class ActionEditor(Controller):
         # if self.model.path:  #
         if self.title:
             info.ui.title = self.title
+        return True
 
     def closed(self, info, is_ok):
         if is_ok:

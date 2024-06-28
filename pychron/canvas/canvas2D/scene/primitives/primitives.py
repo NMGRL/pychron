@@ -337,6 +337,7 @@ class Span(Line):
 
 
 class LoadIndicator(Circle):
+    corrected_position = None
     degas_indicator = False
     measured_indicator = False
     monitor_indicator = False
@@ -442,6 +443,13 @@ class LoadIndicator(Circle):
         nr = r * 0.25
 
         super(LoadIndicator, self)._render(gc)
+        if self.corrected_position:
+            ox, oy = self.canvas.map_screen([self.corrected_position])[0]
+            with gc:
+                gc.set_stroke_color((0, 0.75, 0))
+                gc.arc(ox, oy, r, 0, 360)
+                gc.stroke_path()
+
         if self.monitor_indicator:
             with gc:
                 gc.set_line_width(1)
@@ -699,6 +707,33 @@ class BorderLine(Line, Bordered):
 
     # clear_vorientation = False
     # clear_horientation = False
+
+    def render_border_gaps(self, gc, t, x, y, cx, cy, width, height, cw4):
+        p1, p2 = self.start_point, self.end_point
+        p2x, p2y = p2.get_xy()
+        if p1.x == p2.x:
+            yy = y
+            if p1.y >= cy:
+                if p1.y - self.y != 1:
+                    yy = y + height
+
+            p1x, p1y = p1.get_xy()
+            x1 = p1x - cw4
+            x2 = p1x + cw4
+            y1 = y2 = yy
+
+        else:
+            xx = x
+
+            if p1.x >= cx:
+                xx = x + width
+
+            x1 = x2 = xx
+            y1 = p2y - cw4
+            y2 = p2y + cw4
+
+        gc.move_to(x1, y1)
+        gc.line_to(x2, y2)
 
     def _render(self, gc):
         # gc.save_state()

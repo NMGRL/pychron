@@ -23,6 +23,34 @@ from pychron.envisage.resources import icon
 
 # ============= standard library imports ========================
 # ============= local library imports  ==========================
+class MapTrayAction(TaskAction):
+    name = "Map Tray"
+    method = "map_tray"
+    image = icon("")
+
+
+class CheckTrayAction(TaskAction):
+    name = "Check Tray"
+    method = "check_tray"
+    image = icon("")
+
+
+class GotoModeAction(TaskAction):
+    name = "Goto"
+    method = "goto_mode"
+    image = icon("")
+
+
+class GotoEntryModeAction(TaskAction):
+    name = "GotoEntry"
+    method = "goto_entry_mode"
+    image = icon("")
+
+
+class FootPedalModeAction(TaskAction):
+    name = "FootPedal"
+    method = "foot_pedal_mode"
+    image = icon("")
 
 
 class SaveLoadingDBAction(TaskAction):

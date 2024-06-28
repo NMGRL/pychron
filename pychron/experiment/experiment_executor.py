@@ -64,6 +64,7 @@ from pychron.envisage.preference_mixin import PreferenceMixin
 from pychron.envisage.view_util import open_view
 from pychron.experiment import events, PreExecuteCheckException
 from pychron.experiment.automated_run.persistence import ExcelPersister
+from pychron.experiment.automated_run.syn_extraction import SynExtractionCollector
 from pychron.experiment.conditional.conditional import conditionals_from_file
 from pychron.experiment.conditional.conditionals_view import ConditionalsView
 from pychron.experiment.conflict_resolver import ConflictResolver
@@ -216,6 +217,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
     # ===========================================================================
     # preferences
     # ===========================================================================
+    laboratory = Str
     auto_save_delay = Int(30)
     use_auto_save = Bool(True)
 
@@ -329,7 +331,6 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             "use_xls_persistence",
             "use_db_persistence",
             "experiment_type",
-            "laboratory",
             "ratio_change_detection_enabled",
             "use_preceding_blank",
             "execute_open_queues",
@@ -368,7 +369,9 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self._preference_binder(prefid, ("use_message_colormapping",))
 
         # general
-        self._preference_binder("pychron.general", ("default_principal_investigator",))
+        self._preference_binder(
+            "pychron.general", ("default_principal_investigator", "laboratory")
+        )
 
     def add_event(self, *events):
         self.events.extend(events)
@@ -778,6 +781,12 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
                     exp.delay_after_blank,
                     exp.delay_after_air,
                 )
+                if exp.delay_after_conditional:
+                    # calculate conditional delay
+                    conditional_delay = 0
+                    delay_after_previous_analysis = max(
+                        delay_after_previous_analysis, conditional_delay
+                    )
 
                 if (
                     not run.is_last
@@ -1335,12 +1344,13 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
 
         # make sure status monitor is running a
         self.extraction_line_manager.setup_status_monitor()
-
+        syn_extractor = SynExtractionCollector(executor=self)
         self.extraction_line_manager.set_experiment_type(self.experiment_type)
+
         ret = True
         if ai.start_extraction():
             self.extracting = True
-            if not ai.do_extraction():
+            if not ai.do_extraction(syn_extractor):
                 ret = self._failed_execution_step("Extraction Failed")
         else:
             ret = ai.is_alive()
@@ -1350,7 +1360,10 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         self.extracting_run = None
         return ret
 
-    def _measurement(self, ai):
+    def syn_measure(self, ai, script):
+        return self._measurement(ai, script=script, use_post_on_fail=False)
+
+    def _measurement(self, ai, **measurement_kwargs):
         """
         ai: AutomatedRun
         measurement step
@@ -1377,7 +1390,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
             # automated run has a measurement_script
             self.measuring = True
 
-            if not ai.do_measurement():
+            if not ai.do_measurement(**measurement_kwargs):
                 ret = self._failed_execution_step("Measurement Failed")
         else:
             ret = ai.is_alive()
@@ -1484,7 +1497,7 @@ class ExperimentExecutor(Consoleable, PreferenceMixin):
         arun.persister.datahub = self.datahub
         arun.persister.dbexperiment_identifier = exp.database_identifier
 
-        arun.use_syn_extraction = False
+        arun.use_syn_extraction = True
 
         if self.use_dvc_persistence:
             dvcp = self.application.get_service(
@@ -2647,42 +2660,43 @@ Use Last "blank_{}"= {}
                 self._low_post = low_post
 
             dvc = self.datahub.mainstore
-            with dvc.session_ctx(use_parent_session=False):
-                if self.experiment_queue:
-                    ms = self.experiment_queue.mass_spectrometer
-                else:
-                    if not self.timeseries_mass_spectrometers:
-                        self.timeseries_mass_spectrometers = (
-                            dvc.get_mass_spectrometer_names()
-                        )
-
-                    info = self.edit_traits(
-                        view=okcancel_view(
-                            UItem(
-                                "timeseries_mass_spectrometer",
-                                # label='Mass Spectrometer',
-                                editor=EnumEditor(name="timeseries_mass_spectrometers"),
-                            ),
-                            title="Please Select a Mass Spectrometer",
-                            width=300,
-                        ),
-                        kind="livemodal",
+            # with dvc.session_ctx(use_parent_session=True):
+            if self.experiment_queue:
+                ms = self.experiment_queue.mass_spectrometer
+            else:
+                if not self.timeseries_mass_spectrometers:
+                    self.timeseries_mass_spectrometers = (
+                        dvc.get_mass_spectrometer_names()
                     )
-                    if info.result:
-                        ms = self.timeseries_mass_spectrometer
-                    else:
-                        return
-                ans = dvc.get_last_n_analyses(
+
+                info = self.edit_traits(
+                    view=okcancel_view(
+                        UItem(
+                            "timeseries_mass_spectrometer",
+                            # label='Mass Spectrometer',
+                            editor=EnumEditor(name="timeseries_mass_spectrometers"),
+                        ),
+                        title="Please Select a Mass Spectrometer",
+                        width=300,
+                    ),
+                    kind="livemodal",
+                )
+                if info.result:
+                    ms = self.timeseries_mass_spectrometer
+                else:
+                    return
+
+            with dvc.db.session_ctx():
+                ans = dvc.db.get_last_n_analyses(
                     self.timeseries_n_recall,
                     mass_spectrometer=ms,
                     exclude_types=("unknown",),
                     low_post=low_post,
                     verbose=True,
-                    use_parent_session=False,
+                    # use_parent_session=True,
                 )
+                ans = dvc.make_analyses(ans, use_progress=False)
                 if ans:
-                    ans = dvc.make_analyses(ans, use_progress=False)
-
                     self.timeseries_editor.set_items(ans)
                     invoke_in_main_thread(self.timeseries_editor.refresh)
                 else:

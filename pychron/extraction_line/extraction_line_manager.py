@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===============================================================================
+import json
 import logging
+import os
 import time
 from socket import gethostbyname, gethostname
 from threading import Thread
@@ -52,6 +54,7 @@ from pychron.globals import globalv
 from pychron.hardware.core.i_core_device import ICoreDevice
 from pychron.managers.manager import Manager
 from pychron.monitors.system_monitor import SystemMonitor
+from pychron.paths import paths
 from pychron.pychron_constants import NULL_STR
 
 MANAGERS = {
@@ -382,7 +385,7 @@ class ExtractionLineManager(Manager, Consoleable):
 
     def update_switch_owned_state(self, *args, **kw):
         for c in self.canvases:
-            if state in kw:
+            if "state" in kw:
                 try:
                     c.update_switch_owned_state(*args, **kw)
                 except BaseException:
@@ -533,6 +536,44 @@ class ExtractionLineManager(Manager, Consoleable):
 
         t = Thread(target=sample)
         t.start()
+
+    # ------------------------------------------------------------
+    # Aqua
+    # ------------------------------------------------------------
+    script_executor = None
+    _aqua_active_flag = False
+
+    def aqua_trigger(self):
+        app = self.application
+        se = self.script_executor
+        if not se:
+            se = app.get_service("pychron.pyscripts.tasks.pyscript_task.ScriptExecutor")
+            self.script_executor = se
+        # context = {"analysis_type": "blank" if "blank" in name else "unknown"}
+        name = "aqua.py"
+        root = os.path.join(paths.scripts_dir)
+        p = os.path.join(root, name)
+        if os.path.isfile(p):
+            context = {}
+            se.execute_script(
+                name, root, delay_start=1, manager=self, context=context, kind="Aqua"
+            )
+            self._aqua_active_flag = True
+        else:
+            self.warning(f"{p} is not a valid file")
+
+    def aqua_get_status(self):
+        status = {}
+        if self.script_executor and self._aqua_active_flag:
+            status = self.script_executor.get_script_status()
+            if status.get("completed"):
+                self._aqua_active_flag = False
+        return json.dumps(status)
+
+    def aqua_get_report(self):
+        if self.script_executor:
+            # get the last entry in the aqua log file and send
+            pass
 
     def cycle(self, name, **kw):
         def cycle():

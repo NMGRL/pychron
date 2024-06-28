@@ -19,7 +19,10 @@ from __future__ import absolute_import
 
 import os
 import pickle
+import shutil
 
+import yaml
+from numpy import array, mean, correlate, std, corrcoef
 from traits.api import Button, on_trait_change
 
 from pychron.core.yaml import yload
@@ -61,12 +64,22 @@ class LaserStageMap(BaseStageMap):
 
     cpos = None
     rotation = None
+    zoom_level = 1
 
     @property
     def center_guess_path(self):
         head, tail = os.path.splitext(self.file_path)
         path = "{}.center.txt".format(head)
         return path
+
+    @property
+    def correction_affine_path(self):
+        p = ""
+        if paths.hidden_dir:
+            p = os.path.join(
+                paths.hidden_dir, "{}_correction_affine_file.yaml".format(self.name)
+            )
+        return p
 
     @property
     def correction_path(self):
@@ -88,6 +101,52 @@ class LaserStageMap(BaseStageMap):
         with open(p, "wb") as wfile:
             for lin in previous:
                 wfile.write(lin.encode("utf-8"))
+
+    def finger_print(self, keys, resultarr):
+        """ """
+        # get our same holes as those in results
+        holes = [self.get_hole(k.hole_id) for k in keys]
+
+        # get our corrected positions as an array
+        hs = array([(h.x_cor, h.y_cor) for h in holes]).flat
+
+        # calculate correlation coeffs
+        corr = corrcoef(hs.flat, resultarr)
+        return corr[0, 1]
+
+        """
+        do a normalized cross correlation between our corrected positions and the correct positions for `tholes`
+
+        the larger the value the better the match. 1.0 indicates perfect match i.e. autocorrelation
+        """
+        # holes = [self.get_hole(k.id) for k in tholes]
+        #
+        # def crosscorr(k):
+        #     hs = array([getattr(h, k) for h in holes])
+        #     ts = array([getattr(h, k) for h in tholes])
+        #     if hs.any() and ts.any():
+        #         hs = (hs - mean(hs)) / (std(hs) * len(hs))
+        #         ts = (ts - mean(ts)) / (std(ts))
+        #         return correlate(hs, ts)
+        #     else:
+        #         return 0
+        #
+        # return ((crosscorr('x_cor') + crosscorr('y_cor')) / 2)[0]
+
+    def has_correction_file(self):
+        return os.path.isfile(self.correction_path)
+
+    _corrected_zoom_level = None
+
+    def load_correction_affine_file(self):
+        if not self.corrected_affine or self._corrected_zoom_level != self.zoom_level:
+            self.debug("load correction affine file")
+            p = self.correction_affine_path
+            correction_table = yload(p)
+            self.corrected_affine = correction_table.get(str(self.zoom_level))
+            self._corrected_zoom_level = self.zoom_level
+
+            self.debug(f"corrected_affine {self.corrected_affine}")
 
     def load_correction_file(self):
         self.debug("load correction file")
@@ -146,26 +205,38 @@ class LaserStageMap(BaseStageMap):
     # private
     def _load_hook(self):
         self.load_correction_file()
+        self.load_correction_affine_file()
 
     @on_trait_change("clear_corrections")
     def clear_correction_file(self):
         p = self.correction_path
         if os.path.isfile(p):
-            os.remove(p)
-            self.info("removed correction file {}".format(p))
+            # os.remove(p)
+            root, name = os.path.split(p)
+            bp = os.path.join(root, f"~{name}")
+            shutil.move(p, bp)
+            self.info(f"backup correction file {p} to {bp}")
 
         for h in self.sample_holes:
             h.x_cor = 0
             h.y_cor = 0
             h.corrected = False
             h.interpolated = False
+            h.calibrated_position = None
 
+        self.secondary_calibration = None
         return p
 
     def clear_interpolations(self):
         for h in self.sample_holes:
             h.interpolated = False
             h.interpolation_holes = None
+
+    def dump_corrections_affine(self):
+        p = self.correction_affine_path
+        with open(p, "w") as wfile:
+            yaml.dump(self.corrected_affine, wfile)
+        self.info(f"saved correction affine file to {p}")
 
     def dump_correction_file(self):
         p = self.correction_path
@@ -175,15 +246,17 @@ class LaserStageMap(BaseStageMap):
         self.info("saved correction file {}".format(p))
 
     def set_hole_correction(self, hole, x_cor, y_cor):
+        hole = self.get_hole(hole)
         self.debug("set hole correction {}, x={}, y={}".format(hole, x_cor, y_cor))
-        if not isinstance(hole, SampleHole):
-            hole = next((h for h in self.sample_holes if h.id == hole), None)
+        # if not isinstance(hole, SampleHole):
+        #     hole = next((h for h in self.sample_holes if int(h.id) == int(hole)), None)
 
         if hole is not None:
             self.debug("setting correction {}".format(hole.id))
             hole.x_cor = x_cor
             hole.y_cor = y_cor
             hole.corrected = True
+            # self.update_secondary_calibration(hole)
 
     def _get_hole_by_position(self, x, y, tol=None):
         return self._get_hole_by_pos(x, y, "x", "y", tol)

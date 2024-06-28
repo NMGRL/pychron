@@ -209,7 +209,7 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
         x = option.rect.left() + 5
         y = option.rect.top() + (option.rect.height() - r) / 2
 
-        painter.drawEllipse(x, y, r, r)
+        painter.drawEllipse(int(x), int(y), int(r), int(r))
         # painter.drawEllipse(rect.left() + 3, top+3.5, r, r)
 
         # draw text
@@ -221,7 +221,7 @@ class PipelineDelegate(QtGui.QStyledItemDelegate):
         painter.drawText(
             option.rect.left() + iconwidth,
             # option.rect.top(),
-            option.rect.top() + option.rect.height() / 3,
+            option.rect.top() + option.rect.height() // 3,
             option.rect.width() - iconwidth,
             option.rect.height(),
             QtCore.Qt.TextWordWrap,

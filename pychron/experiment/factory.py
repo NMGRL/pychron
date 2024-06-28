@@ -106,6 +106,7 @@ class ExperimentFactory(DVCAble):
             "delay_after_blank",
             "delay_between_analyses",
             "delay_after_air",
+            "delay_after_conditional",
             "default_lighting",
             "queue_conditionals_name",
             "note",
@@ -185,9 +186,9 @@ class ExperimentFactory(DVCAble):
             q,
             positions=positions,
             auto_increment_position=self.auto_increment_position,
-            auto_increment_id=self.auto_increment_id_count
-            if self.auto_increment_id
-            else 0,
+            auto_increment_id=(
+                self.auto_increment_id_count if self.auto_increment_id else 0
+            ),
         )
 
         if new_runs:

@@ -134,17 +134,25 @@ class Spectrum(BaseArArFigure):
         # except ValueError:
         #     _mi = 0
         #     _ma = 1
+
+        # attaching the calculated limits to the aux plot is not working when using a multi graph figure.
+        # the easiest thing to go is give this figure a graph_id
+
         _ma, _mi = self.get_ybounds(vs=vs, s39=s39, pma=pma)
         if not po.has_ylimits():
-            if po.calculated_ymin is None:
-                po.calculated_ymin = _mi
+            if self.graph_id not in po.calculated_ymin:
+                po.calculated_ymin[self.graph_id] = _mi
             else:
-                po.calculated_ymin = min(po.calculated_ymin, _mi)
+                po.calculated_ymin[self.graph_id] = min(
+                    po.calculated_ymin[self.graph_id], _mi
+                )
 
-            if po.calculated_ymax is None:
-                po.calculated_ymax = _ma
+            if self.graph_id not in po.calculated_ymax:
+                po.calculated_ymax[self.graph_id] = _ma
             else:
-                po.calculated_ymax = max(po.calculated_ymax, _ma)
+                po.calculated_ymax[self.graph_id] = max(
+                    po.calculated_ymax[self.graph_id], _ma
+                )
 
     # ===============================================================================
     # plotters
@@ -194,8 +202,9 @@ class Spectrum(BaseArArFigure):
                 grp.calculate_fixed_plateau_start,
                 grp.calculate_fixed_plateau_end,
             )
-        else:
-            ag.fixed_step_low, ag.fixed_step_high = ("", "")
+
+        # if not ag.calculate_fixed_plateau:
+        #     ag.fixed_step_low, ag.fixed_step_high = ("", "")
 
         ag.dirty = True
 
@@ -252,8 +261,8 @@ class Spectrum(BaseArArFigure):
         if self.group_id == 0:
             if self.options.show_info:
                 ts = [
-                    "Ages {}{}{}".format(PLUSMINUS, self.options.nsigma, SIGMA),
-                    "Error Env. {}{}{}".format(
+                    "Ages {} {}{}".format(PLUSMINUS, self.options.nsigma, SIGMA),
+                    "Error Env. {} {}{}".format(
                         PLUSMINUS, self.options.step_nsigma, SIGMA
                     ),
                 ]
@@ -269,7 +278,7 @@ class Spectrum(BaseArArFigure):
             vjustify="bottom",
             font=font,
             relative_position=relative_position,
-            **kw
+            **kw,
         )
         self.age_label = o
         plot.overlays.append(o)
@@ -511,12 +520,18 @@ class Spectrum(BaseArArFigure):
         sample = ag.sample
         identifier = ag.identifier
         fixed = ""
-        fixed_steps = ag.fixed_steps
+        fixed_steps = ag.valid_fixed_steps()
         if fixed_steps:
             if fixed_steps[0] or fixed_steps[1]:
-                fixed = "Fixed ({}-{})".format(*fixed_steps)
+                a, b = fixed_steps
+                if a:
+                    a = f"{a.upper()}"
+                if b:
+                    b = f"{b.upper()}"
 
-        text = "{}Plateau= {}".format(fixed, text)
+                fixed = "Fixed ({}-{})".format(a, b)
+
+        text = "{}Plateau = {}".format(fixed, text)
 
         if op.include_plateau_sample:
             if op.include_plateau_identifier:
@@ -546,7 +561,7 @@ class Spectrum(BaseArArFigure):
             mswd_sig_figs=op.mswd_sig_figs,
             sig_figs=op.weighted_mean_sig_figs,
         )
-        text = "Weighted Mean= {}".format(text)
+        text = "Weighted Mean = {}".format(text)
         return text
 
     def _make_integrated_text(self):
@@ -587,7 +602,7 @@ class Spectrum(BaseArArFigure):
                 sig_figs=self.options.integrated_sig_figs,
             )
 
-        return "Integrated Age= {}".format(txt)
+        return "Integrated Age = {}".format(txt)
 
 
 # ============= EOF =============================================
